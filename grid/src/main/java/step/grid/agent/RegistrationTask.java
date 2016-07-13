@@ -30,6 +30,7 @@ public class RegistrationTask extends TimerTask {
 		if(!interrupted) {
 			try {		
 				RegistrationMessage message = new RegistrationMessage(new AgentRef(agent.getId(), agent.getAgentUrl()), agent.getTokens());
+				logger.debug("Sending registration message "+message.toString());
 				client.sendRegistrationMessage(message);
 			} catch (Exception e) {
 				logger.error("An unexpected error occurred while registering the adapter.",e);
@@ -46,11 +47,7 @@ public class RegistrationTask extends TimerTask {
 	}
 	
 	protected void unregister() {
-		try {
-			agent.getTokens().forEach(t->client.unregisterToken(t));
-		} catch (Exception e) {
-			logger.error("An error occurred while unregistering the adapter.",e);
-		}
+		// TODO IMPLEMENT
 	}
 	
 	protected void destroy() {

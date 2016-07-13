@@ -8,9 +8,9 @@ import step.grid.tokenpool.Interest;
 
 public class Token {
 	
-	String agentid;
+	String id;
 	
-	String uid;
+	String agentid;
 	
 	Map<String, String> attributes;
 	
@@ -19,6 +19,14 @@ public class Token {
 	public Token() {
 		super();
 	}
+	
+	public String getId() {
+		return id;
+	}
+	
+	public void setId(String id) {
+		this.id = id;
+	}
 
 	public String getAgentid() {
 		return agentid;
@@ -26,14 +34,6 @@ public class Token {
 
 	public void setAgentid(String agentid) {
 		this.agentid = agentid;
-	}
-
-	public String getUid() {
-		return uid;
-	}
-
-	public void setUid(String uid) {
-		this.uid = uid;
 	}
 
 	public Map<String, String> getAttributes() {

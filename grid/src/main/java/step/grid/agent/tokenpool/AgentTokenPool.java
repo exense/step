@@ -36,13 +36,16 @@ public class AgentTokenPool {
 	
 	public synchronized AgentTokenWrapper getToken(String tokenId) {
 		AgentTokenWrapper token = pool.get(tokenId);
-		if(token.inUse) {
-			throw new RuntimeException("Token " + tokenId + " already in use. This should never happen!");
-		} else {
-			token.inUse = true;
+		if(token!=null) {
+			if(token.inUse) {
+				throw new RuntimeException("Token " + tokenId + " already in use. This should never happen!");
+			} else {
+				token.inUse = true;
+			}
+			logger.debug("getToken: " + token.toString());
 		}
-		logger.debug("getToken: " + token.toString());
 		return token;
+		
 	}
 	
 	public synchronized void returnToken(String tokenId) {

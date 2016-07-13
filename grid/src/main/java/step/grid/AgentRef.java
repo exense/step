@@ -1,7 +1,7 @@
 package step.grid;
 
 public class AgentRef {
-
+	
 	private String agentId;
 	
 	private String agentUrl;
@@ -31,4 +31,5 @@ public class AgentRef {
 	public void setAgentUrl(String agentUrl) {
 		this.agentUrl = agentUrl;
 	}
+
 }

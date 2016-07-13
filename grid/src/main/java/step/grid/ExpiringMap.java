@@ -1,7 +1,5 @@
 package step.grid;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,6 +9,8 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
+
+import org.jvnet.hk2.internal.Closeable;
 
 public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 	
@@ -98,7 +98,8 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 
 	@Override
 	public V put(T key, V value) {
-		return (map.put(key, new Wrapper(value))).value;
+		Wrapper wrapper = map.put(key, new Wrapper(value));
+		return wrapper!=null?wrapper.value:null;
 	}
 
 	@Override
@@ -160,8 +161,9 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 	}
 
 	@Override
-	public void close() throws IOException {
+	public boolean close() {
 		keepaliveTimeoutCheckTimer.cancel();
+		return true;
 	}
 	
 	public void putOrTouch(T key, V value) {
@@ -177,5 +179,11 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 		if(v!=null) {
 			v.lasttouch = System.currentTimeMillis();
 		}
+	}
+
+	@Override
+	public boolean isClosed() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

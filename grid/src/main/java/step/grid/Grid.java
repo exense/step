@@ -8,7 +8,6 @@ import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
@@ -26,14 +25,14 @@ public class Grid {
 	
 	private Server server;
 	
-	
 	public Grid(Integer port) {
 		super();
 		
 		this.port = port;
 	}
 
-	public void destroy() {
+	public void stop() throws Exception {
+		server.stop();
 	}
 
 	public void start() throws Exception {
@@ -57,7 +56,7 @@ public class Grid {
 	private void initializeServer() {
 		ResourceConfig resourceConfig = new ResourceConfig();
 		resourceConfig.packages(GridServices.class.getPackage().getName());
-		resourceConfig.register(JacksonFeature.class);
+		//resourceConfig.register(JacksonFeature.class);
 		final Grid grid = this;
 		resourceConfig.register(new AbstractBinder() {	
 			@Override
@@ -96,7 +95,7 @@ public class Grid {
 		return tokenPool;
 	}
 	
-	protected ExpiringMap<String, AgentRef> getAgentRefs() {
+	public ExpiringMap<String, AgentRef> getAgentRefs() {
 		return agentRefs;
 	}
 

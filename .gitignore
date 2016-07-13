@@ -3,7 +3,6 @@ target/
 .settings/
 *.class
 *.log
-djigger.settings
-*lastsession.xml
-agent.jar
-collector.jar
+*.bak
+.classpath
+.project

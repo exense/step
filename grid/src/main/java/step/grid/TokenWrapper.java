@@ -28,7 +28,7 @@ public class TokenWrapper implements Identity {
 
 	@Override
 	public String getID() {
-		return token.getUid();
+		return token.getId();
 	}
 
 	public Token getToken() {

@@ -25,7 +25,7 @@ public class AgentTokenWrapper {
 		String uid = UUID.randomUUID().toString();
 		
 		token = new Token();
-		token.setUid(uid);
+		token.setId(uid);
 	}
 
 	public TokenSession getSession() {
@@ -73,7 +73,7 @@ public class AgentTokenWrapper {
 	}
 
 	public String getUid() {
-		return token.getUid();
+		return token.getId();
 	}
 
 	@Override

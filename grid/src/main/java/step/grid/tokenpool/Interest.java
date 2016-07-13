@@ -8,6 +8,10 @@ public class Interest {
 	
 	boolean must;
 
+	public Interest() {
+		super();
+	}
+
 	public Interest(Pattern selectionPattern, boolean must) {
 		super();
 		this.selectionPattern = selectionPattern;

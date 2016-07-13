@@ -17,12 +17,17 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.grid.Token;
+import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.io.ObjectMapperResolver;
 import step.grid.tokenpool.Interest;
 
 public class Agent {
@@ -37,9 +42,11 @@ public class Agent {
 
 	private String agentUrl;
 	
-	private AgentServlet agentServlet;
+	private Server server;
 	
 	private AgentTokenPool tokenPool;
+	
+	private TokenHandlerPool handlerPool;
 	
 	private Timer timer;
 	
@@ -53,6 +60,7 @@ public class Agent {
 		
 		id = UUID.randomUUID().toString();
 		tokenPool = new AgentTokenPool(10000);
+		handlerPool = new TokenHandlerPool();
 	}
 	
 	public String getId() {
@@ -81,7 +89,7 @@ public class Agent {
 		return result;
 	}
 
-	public void run() {
+	public void start() throws Exception {
 		if(agentUrl==null) {
 			try {
 				agentUrl = "http://" + Inet4Address.getLocalHost().getHostName() + ":" + agentPort;
@@ -90,16 +98,27 @@ public class Agent {
 				e.printStackTrace();
 			}
 		}
+		
+		ResourceConfig resourceConfig = new ResourceConfig();
+		resourceConfig.packages(AgentServices.class.getPackage().getName());
+		//resourceConfig.register(JacksonFeature.class);
+		resourceConfig.register(ObjectMapperResolver.class);
+		final Agent agent = this;
+		resourceConfig.register(new AbstractBinder() {	
+			@Override
+			protected void configure() {
+				bind(agent).to(Agent.class);
+			}
+		});
+		ServletContainer servletContainer = new ServletContainer(resourceConfig);
 
-		Server server = new Server(agentPort);
+		ServletHolder sh = new ServletHolder(servletContainer);
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		context.setContextPath("/grid");
+		context.setContextPath("/");
+		context.addServlet(sh, "/*");
 		
-		agentServlet = new AgentServlet(this);
-		
-		context.addServlet(new ServletHolder(agentServlet), "/*");		
-		
-		
+		server = new Server(agentPort);
+
 		ContextHandlerCollection contexts = new ContextHandlerCollection();
         contexts.setHandlers(new Handler[] { context });
 		server.setHandler(contexts);
@@ -107,29 +126,23 @@ public class Agent {
 		timer = new Timer();
 		
 		registrationTask = new RegistrationTask(this);
-		timer.schedule(registrationTask, 10000,10000);
+
+		server.start();
 		
+		timer.schedule(registrationTask, 0, 10000);
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				tokenPool.evictSessions();
 			}
 		}, 15000, 10000);
-
-		try {
-			server.start();
-			server.join();
-		} catch (Exception e) {
-			logger.error("Error while starting server",e);
-		}
-		
 	}
 	
 	protected String getAgentUrl() {
 		return agentUrl;
 	}
 
-	public void destroy() {
+	public void stop() throws Exception {
 		if(timer!=null) {
 			timer.cancel();
 		}
@@ -139,6 +152,20 @@ public class Agent {
 			registrationTask.unregister();
 			registrationTask.destroy();
 		}
+
+		server.stop();
+	}
+
+	protected AgentTokenPool getTokenPool() {
+		return tokenPool;
+	}
+	
+	protected TokenHandlerPool getHandlerPool() {
+		return handlerPool;
+	}
+
+	protected RegistrationTask getRegistrationTask() {
+		return registrationTask;
 	}
 
 	protected List<Token> getTokens() {
