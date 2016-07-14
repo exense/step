@@ -52,34 +52,61 @@ public class GridClient {
 		client.register(ObjectMapperResolver.class);
 	}
 	
-	public OutputMessage processInput(String function, JsonObject argument, String handler) {
-		return processInput(function, argument, handler, null, null);
-	}
-	
-	public OutputMessage processInput(String function, JsonObject argument, String handler, Map<String, String> attributes, Map<String, Interest> interests) {
-		
-		TokenPretender tokenPretender = new TokenPretender(attributes, interests);
-		TokenWrapper tokenWrapper = getAdapterToken(null, tokenPretender);
+	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
 		Token token = tokenWrapper.getToken();
 		
 		AgentRef agent = adapterGrid.getAgentRefs().get(token.getAgentid());
 		
-		try {
-			InputMessage message = new InputMessage();
-			message.setArguments(argument);
-			message.setFunction(function);
-			message.setTokenId(token.getId());
-			message.setHandler(handler);
-			OutputMessage output = callAgent(agent, token, message);			
-			token.getAttributes().put(SELECTION_CRITERION_THREAD, Long.toString(Thread.currentThread().getId()));
-			return output;
-		} finally {
-			tokenWrapper.setCurrentOwner(null);
-			returnAdapterToken(null, tokenWrapper);						
+		InputMessage message = new InputMessage();
+		message.setArgument(argument);
+		message.setFunction(function);
+		message.setTokenId(token.getId());
+		message.setHandler(handler);
+		message.setProperties(properties);
+		OutputMessage output = callAgent(agent, token, message);			
+		token.getAttributes().put(SELECTION_CRITERION_THREAD, Long.toString(Thread.currentThread().getId()));
+		return output;
+	}
+
+	public TokenFacade getToken() {
+		TokenPretender tokenPretender = new TokenPretender(null, null);
+		TokenWrapper tokenWrapper = getToken(tokenPretender);
+		return new TokenFacade(tokenWrapper);
+	}
+	
+	public TokenFacade getToken(Map<String, String> attributes, Map<String, Interest> interests) {
+		TokenPretender tokenPretender = new TokenPretender(attributes, interests);
+		TokenWrapper tokenWrapper = getToken(tokenPretender);
+		return new TokenFacade(tokenWrapper);
+	}
+	
+	public class TokenFacade {
+		
+		TokenWrapper token;
+		
+		public TokenFacade(TokenWrapper token) {
+			super();
+			this.token = token;
+		}
+
+		public OutputMessage process(String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
+			return processInput(token, function, argument, handler, properties);
+		}
+		
+		public OutputMessage processAndRelease(String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
+			try {
+				return processInput(token, function, argument, handler, properties);
+			} finally {
+				release();
+			}
+		}
+		
+		public void release() {
+			returnAdapterTokenToRegister(token);
 		}
 	}
 	
-	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) {
+	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) throws Exception {
 		// TODO get from config?
 		int connectionTimeout = 3000;
 		int callTimeout = 180000;
@@ -90,38 +117,19 @@ public class GridClient {
 			Entity<InputMessage> entity = Entity.entity(message, MediaType.APPLICATION_JSON);
 			Response response = client.target(agentUrl + "/process").request().property(ClientProperties.READ_TIMEOUT, callTimeout)
 					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).post(entity);
-			//response.readEntity(String.class)
-			OutputMessage output = response.readEntity(OutputMessage.class);
-			return output;
+			if(response.getStatus()==200) {
+				OutputMessage output = response.readEntity(OutputMessage.class);
+				return output;				
+			} else {
+				String error = response.readEntity(String.class);
+				throw new Exception("Error while calling agent with ref " + agentRef.toString()+ ". HTTP Response: "+error);
+			}
 		} catch (ProcessingException e) {
 			throw e;
 		}
 	}
-
-//	public void releaseSession(GridSession adapterSession) {
-//		if(adapterSession!=null) {
-//			for(TokenWrapper token:adapterSession.getAllTokens()) {
-//				returnAdapterTokenToRegister(token);
-//			}
-//		}
-//	}
-//	
 	
-	private TokenWrapper getAdapterToken(GridSession adapterSession, Identity tokenPretender) {
-		TokenWrapper token = null;
-		if(adapterSession != null) {
-			token = adapterSession.getToken(tokenPretender);
-			if(token == null) {
-				token = getAdapterTokenFromRegister(tokenPretender);
-				adapterSession.putToken(tokenPretender, token);
-			}
-		} else {
-			token = getAdapterTokenFromRegister(tokenPretender);
-		}
-		return token;
-	}
-	
-	private TokenWrapper getAdapterTokenFromRegister(final Identity tokenPretender) {
+	private TokenWrapper getToken(final Identity tokenPretender) {
 		TokenWrapper adapterToken = null;
 		try {
 			adapterToken = adapterGrid.selectToken(tokenPretender, matchExistsTimeout, noMatchExistsTimeout);
@@ -132,12 +140,6 @@ public class GridClient {
 			throw new RuntimeException(e);
 		}
 		return adapterToken;
-	}
-	
-	private void returnAdapterToken(GridSession adapterSession, TokenWrapper adapterToken) {
-		if(adapterSession==null) {
-			returnAdapterTokenToRegister(adapterToken);
-		}
 	}
 
 	private void returnAdapterTokenToRegister(TokenWrapper adapterToken) {

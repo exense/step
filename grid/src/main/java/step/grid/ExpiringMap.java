@@ -3,12 +3,12 @@ package step.grid;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.stream.Collectors;
 
 import org.jvnet.hk2.internal.Closeable;
 
@@ -125,12 +125,20 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 
 	@Override
 	public Collection<V> values() {
-		return map.values().stream().map(v->v.value).collect(Collectors.toList());
+		List<V> values = new ArrayList<>();
+		for(ExpiringMap<T, V>.Wrapper entry:map.values()) {
+			values.add(entry.value);
+		}
+		return values;
 	}
 
 	@Override
 	public Set<java.util.Map.Entry<T, V>> entrySet() {
-		return map.entrySet().stream().map(e->new Entry(e.getKey(), e.getValue().value)).collect(Collectors.toSet());
+		Set<java.util.Map.Entry<T, V>> result = new HashSet<>();
+		for(java.util.Map.Entry<T, ExpiringMap<T, V>.Wrapper> e:map.entrySet()) {
+			result.add(new Entry(e.getKey(), e.getValue().value));
+		}
+		return result;
 	}
 	
 	private class Entry implements java.util.Map.Entry<T, V> {

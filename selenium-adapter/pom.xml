@@ -16,6 +16,13 @@
 		    <groupId>org.seleniumhq.selenium</groupId>
 		    <artifactId>selenium-api</artifactId>
 		    <version>2.53.1</version>
-		</dependency>				
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-firefox-driver -->
+		<dependency>
+		    <groupId>org.seleniumhq.selenium</groupId>
+		    <artifactId>selenium-firefox-driver</artifactId>
+		    <version>2.53.1</version>
+		</dependency>
+						
 	</dependencies>
 </project>

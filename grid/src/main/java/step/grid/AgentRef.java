@@ -32,4 +32,9 @@ public class AgentRef {
 		this.agentUrl = agentUrl;
 	}
 
+	@Override
+	public String toString() {
+		return "AgentRef [agentId=" + agentId + ", agentUrl=" + agentUrl + "]";
+	}
+
 }

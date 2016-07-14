@@ -31,6 +31,7 @@ public class AgentTokenPool {
 		logger.debug("offerToken: " + token.toString());
 		token.inUse = false;
 		token.lastTouch = System.currentTimeMillis();
+		token.session = new TokenSession();
 		pool.put(token.getUid(), token);
 	}
 	

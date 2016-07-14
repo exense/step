@@ -1,5 +1,7 @@
 package step.grid.io;
 
+import java.util.Map;
+
 import javax.json.JsonObject;
 
 public class InputMessage {
@@ -11,6 +13,8 @@ public class InputMessage {
 	private String handler;
 
 	private JsonObject argument;
+	
+	private Map<String, String> properties;
 
 	public InputMessage() {
 		super();
@@ -44,8 +48,16 @@ public class InputMessage {
 		return argument;
 	}
 
-	public void setArguments(JsonObject argument) {
+	public void setArgument(JsonObject argument) {
 		this.argument = argument;
+	}
+
+	public Map<String, String> getProperties() {
+		return properties;
+	}
+
+	public void setProperties(Map<String, String> properties) {
+		this.properties = properties;
 	}
 	
 	

@@ -1,5 +1,7 @@
 package step.grid.agent;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -11,10 +13,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import step.grid.Token;
-import step.grid.agent.handler.TokenHandler;
+import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.tokenpool.AgentTokenPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.agent.tokenpool.TokenSession;
+import step.grid.io.Attachment;
+import step.grid.io.AttachmentHelper;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
@@ -37,11 +40,17 @@ public class AgentServices {
 			
 			if(tokenWrapper!=null) {
 				try {
-					TokenSession session = tokenWrapper.getSession();
-					TokenHandler tokenHandler = getTokenHandler(message, tokenWrapper);
+					MessageHandler tokenHandler = getTokenHandler(message, tokenWrapper);
 					
-					OutputMessage output = tokenHandler.handle(tokenWrapper.getToken(), session, message);
-					return output;
+					try {
+						OutputMessage output = tokenHandler.handle(tokenWrapper, message);
+						return output;						
+					} catch(Exception e) {
+						OutputMessage output = new  OutputMessage();
+						output.addAttachment(generateAttachmentForException(e));
+						output.setError(e.getMessage());
+						return output;
+					}
 				} finally {
 					tokenPool.returnToken(tokenId);
 				}
@@ -53,6 +62,15 @@ public class AgentServices {
 		}
 	}
 	
+	protected Attachment generateAttachmentForException(Throwable e) {
+		Attachment attachment = new Attachment();	
+		attachment.setName("exception.log");
+		StringWriter w = new StringWriter();
+		e.printStackTrace(new PrintWriter(w));
+		attachment.setHexContent(AttachmentHelper.getHex(w.toString().getBytes()));
+		return attachment;
+	}
+	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/token/list")
@@ -60,7 +78,7 @@ public class AgentServices {
 		return agent.getTokens();
 	}
 
-	private TokenHandler getTokenHandler(InputMessage message, AgentTokenWrapper tokenWrapper) throws Exception {
+	private MessageHandler getTokenHandler(InputMessage message, AgentTokenWrapper tokenWrapper) throws Exception {
 		String handler;
 		if(message.getHandler()!=null) {
 			handler = message.getHandler();

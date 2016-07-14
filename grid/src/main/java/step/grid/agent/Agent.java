@@ -1,7 +1,7 @@
 package step.grid.agent;
 
 import java.net.Inet4Address;
-import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +10,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -52,6 +51,17 @@ public class Agent {
 	
 	private RegistrationTask registrationTask;
 	
+	public static void main(String[] args) throws Exception {
+		ArgumentParser arguments = new ArgumentParser(args);
+		
+		String gridHost = arguments.getOption("gridhost");
+		String agentPortStr = arguments.getOption("agentPort");
+		Integer agentPort = agentPortStr!=null?Integer.decode(agentPortStr):null;
+		String agentUrl = arguments.getOption("agentUrl");
+		
+		(new Agent(gridHost, agentUrl, agentPort)).start();
+	}
+	
 	public Agent(String gridHost, String agentUrl, Integer agentPort) {
 		super();
 		this.gridHost = gridHost;
@@ -91,12 +101,7 @@ public class Agent {
 
 	public void start() throws Exception {
 		if(agentUrl==null) {
-			try {
-				agentUrl = "http://" + Inet4Address.getLocalHost().getHostName() + ":" + agentPort;
-			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			agentUrl = "http://" + Inet4Address.getLocalHost().getHostName() + ":" + agentPort;
 		}
 		
 		ResourceConfig resourceConfig = new ResourceConfig();
@@ -169,7 +174,11 @@ public class Agent {
 	}
 
 	protected List<Token> getTokens() {
-		return ((List<AgentTokenWrapper>)tokenPool.getTokens()).stream().map(t->t.getToken()).collect(Collectors.toList());
+		List<Token> tokens = new ArrayList<>();
+		for(AgentTokenWrapper wrapper:tokenPool.getTokens()) {
+			tokens.add(wrapper.getToken());
+		}
+		return tokens;
 	}
 	
 	protected String getGridHost() {

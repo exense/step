@@ -7,5 +7,5 @@ import step.grid.io.OutputMessage;
 
 public interface SeleniumScript {
 
-	public OutputMessage run(WebDriver driver, InputMessage input);
+	public OutputMessage run(WebDriver driver, InputMessage input) throws Exception;
 }
