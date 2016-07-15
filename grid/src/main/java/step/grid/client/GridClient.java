@@ -89,6 +89,14 @@ public class GridClient {
 			this.token = token;
 		}
 
+		public OutputMessage process(String function, JsonObject argument) throws Exception {
+			return processInput(token, function, argument, null, null);
+		}
+		
+		public OutputMessage process(String function, JsonObject argument, String handler) throws Exception {
+			return processInput(token, function, argument, handler, null);
+		}
+		
 		public OutputMessage process(String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
 			return processInput(token, function, argument, handler, properties);
 		}
@@ -96,6 +104,14 @@ public class GridClient {
 		public OutputMessage processAndRelease(String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
 			try {
 				return processInput(token, function, argument, handler, properties);
+			} finally {
+				release();
+			}
+		}
+		
+		public OutputMessage processAndRelease(String function, JsonObject argument, String handler) throws Exception {
+			try {
+				return processInput(token, function, argument, handler, null);
 			} finally {
 				release();
 			}

@@ -20,9 +20,37 @@ public class AgentTest extends AbstractGridTest {
 		Map<String, Interest> interests = new HashMap<>();
 		interests.put("att1", new Interest(Pattern.compile("val.*"), true));
 		
-		JsonObject o = Json.createObjectBuilder().add("a", "b").build();
+		JsonObject o = newDummyJson();
 		
 		OutputMessage outputMessage = client.getToken(null, interests).processAndRelease("testFunction", o, "class:step.grid.agent.TestTokenHandler", null);
 		Assert.assertEquals(outputMessage.getPayload(), o);;
+	}
+	
+	@Test
+	public void testDefaultHandler() throws Exception {
+		Map<String, Interest> interests = new HashMap<>();
+		interests.put("att1", new Interest(Pattern.compile("val2"), true));
+		
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put("att1", "val2");
+		
+		Map<String, String> properties = new HashMap<>();
+		properties.put("tokenhandler.default", "class:step.grid.agent.TestTokenHandler");
+		
+		addToken(1, attributes, properties);
+		
+		JsonObject o = newDummyJson();
+		
+		OutputMessage outputMessage = client.getToken(null, interests).processAndRelease("testFunction", o, null);
+		Assert.assertEquals(outputMessage.getPayload(), o);;
+	}
+	
+	@Test
+	public void testHandlerChain() throws Exception {		
+		final String uri = "class:step.grid.agent.TestTokenHandlerDelegator|class:step.grid.agent.TestTokenHandler";
+		JsonObject o = newDummyJson();
+		OutputMessage outputMessage = client.getToken().processAndRelease("function1",  o, uri, null);
+		Assert.assertEquals(o, outputMessage.getPayload());
+		Assert.assertEquals("Test error", outputMessage.getError());
 	}
 }

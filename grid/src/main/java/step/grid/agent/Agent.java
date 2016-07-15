@@ -49,6 +49,8 @@ public class Agent {
 	
 	private Timer timer;
 	
+	private long registrationIntervalMs = 10000;
+	
 	private RegistrationTask registrationTask;
 	
 	public static void main(String[] args) throws Exception {
@@ -77,13 +79,13 @@ public class Agent {
 		return id;
 	}
 	
-	public void addTokens(int count, Map<String, String> attributes, Map<String, String> selectionPatterns) {
+	public void addTokens(int count, Map<String, String> attributes, Map<String, String> selectionPatterns, Map<String, String> properties) {
 		for(int i=0;i<count;i++) {
 			AgentTokenWrapper token = new AgentTokenWrapper();
 			token.getToken().setAgentid(id);
 			token.setAttributes(attributes);
 			token.setSelectionPatterns(createInterestMap(selectionPatterns));
-			token.setProperties(null);
+			token.setProperties(properties);
 			tokenPool.offerToken(token);
 		}
 	}
@@ -134,7 +136,7 @@ public class Agent {
 
 		server.start();
 		
-		timer.schedule(registrationTask, 0, 10000);
+		timer.schedule(registrationTask, 0, registrationIntervalMs);
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
@@ -143,6 +145,14 @@ public class Agent {
 		}, 15000, 10000);
 	}
 	
+	public long getRegistrationIntervalMs() {
+		return registrationIntervalMs;
+	}
+
+	public void setRegistrationIntervalMs(long registrationIntervalMs) {
+		this.registrationIntervalMs = registrationIntervalMs;
+	}
+
 	protected String getAgentUrl() {
 		return agentUrl;
 	}

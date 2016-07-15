@@ -83,7 +83,7 @@ public class AgentServices {
 		if(message.getHandler()!=null) {
 			handler = message.getHandler();
 		} else {
-			String defaultHandler = tokenWrapper.getProperties().get("tokenhandler.default");
+			String defaultHandler = tokenWrapper.getProperties()!=null?tokenWrapper.getProperties().get("tokenhandler.default"):null;
 			if(defaultHandler!=null) {
 				handler = defaultHandler;
 			} else {
