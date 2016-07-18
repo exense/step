@@ -1,0 +1,50 @@
+<div class="container" ng-controller="RepositoryLoadCtrl">
+<div class="panel panel-default" >
+	<div class="panel-heading">
+		Repository Artefact
+	</div>
+	<div class="panel-body" ng-controller="RepositoryCtrl" ng-if="reload">
+		<div ng-show="error">
+			<div class="alert alert-danger" role="alert">
+  				<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+  				<span class="sr-only">Error:</span>
+  				{{error}}
+			</div>
+		</div>
+		<div ng-show="loading" class="row"><div class="col-md-6"><i class="glyphicon glyphicon-refresh icon-refresh-animate"/> Loading...</div></div>
+		<div ng-show="artefactInfo" class="row">
+			<div class="col-md-8">
+				<h4>{{artefactInfo.name}}</h4>
+				<div>
+					<div>
+						<span>Type</span>
+						<span>{{artefactInfo.type}}</span>
+					</div>
+					<div>
+						<span>Repository</span>
+						<span>{{repoRef.repositoryID}}{{test}}</span>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="panel panel-default">
+					<div class="panel-body">
+						<execution-commands description="artefactInfo.name" artefact="repoRef" included-testcases="functions.getIncludedTestcases()" />
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="row">&nbsp;</div>
+		
+		<div ng-if="artefactInfo.type=='TestSet'" ng-controller="TestSetOverviewCtrl">
+			<div>
+				<div ng-show="!testCaseTable.data" class="row"><div class="col-md-6"><i class="glyphicon glyphicon-refresh icon-refresh-animate"/> Loading...</div></div>
+				<div ng-show="testCaseTable.data">
+					<datatable tabledef="testCaseTable" handle="testCaseTable" selectionmode="multiple" columnsearch="true" order="[[1, &quot;asc&quot;]]"/>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</div>

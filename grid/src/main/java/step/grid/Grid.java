@@ -1,5 +1,7 @@
 package step.grid;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jetty.server.Handler;
@@ -93,6 +95,14 @@ public class Grid {
 
 	protected TokenPool<Identity, TokenWrapper> getTokenPool() {
 		return tokenPool;
+	}
+	
+	public List<TokenWrapper> getTokens() {
+		List<TokenWrapper> tokens = new ArrayList<>();
+		for(step.grid.tokenpool.Token<TokenWrapper> token:tokenPool.getTokens()) {
+			tokens.add(token.getObject());
+		}
+		return tokens;
 	}
 	
 	public ExpiringMap<String, AgentRef> getAgentRefs() {

@@ -1,0 +1,9 @@
+<QuotaManagerConfig>
+  <quotas>
+    <Quota>
+      <quotaKeyFunction>key</quotaKeyFunction>
+      <permits>1</permits>
+      <acquireTimeoutMs>0</acquireTimeoutMs>
+    </Quota>
+  </quotas>
+</QuotaManagerConfig>

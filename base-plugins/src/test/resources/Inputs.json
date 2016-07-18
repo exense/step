@@ -1,0 +1,10 @@
+{
+"inputs":[
+{"type":"String","name":"Profile","label":"Profile","activationExpression":{"script":"screen=='testScreen1'"}},
+{"type":"String","name":"Param2","label":"Param2","activationExpression":{"script":"screen=='testScreen1'"}},
+{"type":"Boolean","name":"TD","label":"TD"}
+],
+"options":[
+
+]
+}

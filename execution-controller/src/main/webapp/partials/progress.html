@@ -1,0 +1,124 @@
+<div class="toolbar">
+	<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox ><span class="glyphicon glyphicon-refresh"/></button>
+</div>
+<div class="row">
+<div class="col-xs-9">
+
+
+<div class="panel panel-default">
+	<div class="panel-heading"><a ng-click="displayTestCasePanel=!displayTestCasePanel">Test cases</a></div>
+  	<div class="panel-body" ng-show="displayTestCasePanel">
+  		<datatable tabledef="testCaseTable" handle="testCaseTable" selectionmode="multiple" columnsearch="true" order="[[1, &quot;asc&quot;]]"/>
+	</div>
+</div>
+
+<div class="panel panel-default">
+	<div class="panel-heading"><a ng-click="displayTestStepsPanel=!displayTestStepsPanel">Steps</a> 
+		<div ng-if="progress.maxProgress>0" style="width: 200px" class="progress pull-right" tooltip="PASSED: {{progress.reportNodeStatus.PASSED}}, FAILED: {{progress.reportNodeStatus.FAILED}}, TECHNICAL_ERROR: {{progress.reportNodeStatus.TECHNICAL_ERROR}} ">
+		  <div class="progress-bar status-PASSED" ng-attr-style="width:{{progress.reportNodeStatus.PASSED/(progress.reportNodeStatus.PASSED+progress.reportNodeStatus.FAILED+progress.reportNodeStatus.TECHNICAL_ERROR)*100}}%;">
+		    {{progress.reportNodeStatus.PASSED}}
+		  </div>
+		  <div class="progress-bar status-FAILED" ng-attr-style="width:{{progress.reportNodeStatus.FAILED/(progress.reportNodeStatus.PASSED+progress.reportNodeStatus.FAILED+progress.reportNodeStatus.TECHNICAL_ERROR)*100}}%;">
+		    {{progress.reportNodeStatus.FAILED}}
+		  </div>
+		  <div class="progress-bar status-TECHNICAL_ERROR" ng-attr-style="width:{{progress.reportNodeStatus.TECHNICAL_ERROR/(progress.reportNodeStatus.PASSED+progress.reportNodeStatus.FAILED+progress.reportNodeStatus.TECHNICAL_ERROR)*100}}%;">
+		    {{progress.reportNodeStatus.TECHNICAL_ERROR}}
+		  </div>
+		</div>
+		<div ng-if="execution.status != 'ENDED' && progress.maxProgress>0" tooltip="Progress: {{progress.currentProgress}}/{{progress.maxProgress}}" style="margin-right:20px; width: 200px" class="progress pull-right">
+		  <div class="progress-bar" role="progressbar" aria-valuenow="{{progress.currentProgress}}" aria-valuemin="0" aria-valuemax="{{progress.maxProgress}}" ng-attr-style="min-width: 2em; width: {{progress.currentProgress/progress.maxProgress*100}}%;">
+		    {{progress.currentProgress}}/{{progress.maxProgress}}
+		  </div>
+		</div>
+	</div>
+  	<div class="panel-body" ng-show="displayTestStepsPanel">
+		<datatable serverside="reports" tabledef="stepsTable" handle="stepsTable" params="eid={{eid}}" selectionmode="single" columnsearch="true" order="[[1, &quot;desc&quot;]]"/>
+	</div>
+</div>
+
+<div class="panel panel-default">
+	<div class="panel-heading"><a ng-click="displayParameters=!displayParameters">Parameters</a></div>
+  	<div class="panel-body" ng-show="displayParameters">
+		<datatable tabledef="configParamTable" handle="configParamTable" columnsearch="true" order="[[0, &quot;asc&quot;]]"/>
+	</div>
+</div>
+
+</div> 
+
+<div class="col-xs-3">
+<div class="panel panel-default">
+	<div class="panel-body">
+		<execution-commands description="execution.description" artefact="execution.executionParameters.artefact" included-testcases="getIncludedTestcases()" on-execute="onTestExecutionStarted()" execution="execution"/>
+	</div>
+</div>
+
+<div class="panel panel-default">
+ 	<div class="panel-heading">Execution<div class="executionStatus status-{{execution.status}} pull-right">{{execution.status}}</div></div>
+	<div class="panel-body">
+		<ul class="list-unstyled">
+			<li>
+				<strong>Description</strong>
+				<span>{{execution.description}}</span>
+			</li>
+			<li ng-repeat="(key, value) in execution.executionParameters.customParameters">
+				<strong>{{key}}</strong>
+				<span>{{value}}</span>
+			</li>
+			<li>
+				<strong>Mode</strong>
+				<span>{{execution.executionParameters.mode}}</span>
+			</li>
+			<li>
+				<strong>User</strong>
+				<span>{{execution.executionParameters.userID}}</span>
+			</li>
+			<li>
+				<strong>Start</strong>
+				<span>{{ execution.startTime | date:'dd.MM.yyyy HH:mm:ss'}}</span>
+			</li>
+			<li>
+				<strong>End</strong>
+				<span>{{ execution.endTime | date:'dd.MM.yyyy HH:mm:ss'}}</span>
+			</li>
+			<li>
+				<strong>Execution ID</strong>
+				<span>{{execution._id}}</span>
+			</li>
+			<li>
+				<strong>Artefact</strong>
+				<span>Repository={{execution.executionParameters.artefact.repositoryID}}</span>
+				<span ng-repeat="(key, value) in execution.executionParameters.artefact.repositoryParameters">
+					{{key}}={{value}}
+				</span>	
+			</li>
+			<li>
+				<strong>Measurements</strong>
+				<a target="blank" ng-href="{{rtmlink}}">Analyze in RTM</a>
+			</li>
+		</ul>
+	</div>
+</div>
+
+<div ng-if="execution.status != 'ENDED'" class="panel panel-default">
+  <div class="panel-heading">Current operations</div>
+  <div class="panel-body">
+	<datatable tabledef="currentOperationsTable" handle="currentOperationsTable" order="[[0, &quot;asc&quot;]]"/>
+  </div>
+</div>
+
+<div ng-if="progress.maxProgress>1" >
+<div class="panel panel-default">
+  <div class="panel-heading">Throughput</div>
+  <div class="panel-body" style="height: 300px; width: 100%">
+  	<canvas id="line" class="chart chart-line" data="data"
+	  labels="labels" legend="true" series="series"
+	  click="onClick">
+	</canvas> 
+	<!-- <linechart data="data" options="options" mode="" width="" height=""></linechart> -->
+  </div>
+</div>
+</div>
+</div>
+
+
+</div>

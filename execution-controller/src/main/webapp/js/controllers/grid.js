@@ -1,0 +1,153 @@
+angular.module('gridControllers', [ 'dataTable', 'step' ])
+
+.controller('GridCtrl', ['$scope', 'stateStorage',
+    function($scope, $stateStorage) {
+      $stateStorage.push($scope, 'grid', {lasttab:'adapter'});
+      
+      $scope.autorefresh = true;
+      
+      $scope.tabState = {adapters:false, tokens:false, quotamanager:false};
+      if($scope.$state == null) { $scope.$state = 'adapters' };
+      
+      $scope.$watch('$state',function() {
+        if($scope.$state!=null&&_.findWhere($scope.tabs, {id:$scope.$state})==null) {
+          _.each(_.keys($scope.tabState),function(key) {
+            $scope.tabState[key] = false;
+          })
+          $scope.tabState[$scope.$state] = true;
+        }
+      });
+      
+      $scope.$watchCollection('tabState',function() {
+        _.each(_.keys($scope.tabState),function(key) {
+          if($scope.tabState[key]) {
+            $scope.$state =  key;
+          }
+        })
+      })
+  
+}])   
+
+.controller('AdapterListCtrl', [
+  	'$scope',
+  	'$interval',
+  	'$http',
+  	'helpers',
+  	function($scope, $interval, $http, helpers) {
+  	  $scope.$state = 'adapters';
+  	  
+  	  $scope.keySelectioModel = {'url':true};
+  	  
+  	  $http.get("rest/grid/keys").success(
+          function(data) { 
+            $scope.keys = ['url']; $scope.keySelectioModel['url']=false;
+            _.each(data,function(key){$scope.keys.push(key); $scope.keySelectioModel[key]=true});
+          })
+      
+  	  $scope.loadTable = function loadTable() {
+  	    var queryParam='';
+  	    _.each(_.keys($scope.keySelectioModel),function(key){
+  	      if($scope.keySelectioModel[key]) {
+  	      queryParam+='groupby='+key+'&'
+  	      }
+  	    })
+  		$http.get("rest/grid/token/usage?"+queryParam).success(
+  			function(data) {
+  			  var dataSet = [];
+  			  for (i = 0; i < data.length; i++) {
+  				dataSet[i] = [ helpers.formatAsKeyValueList(data[i].key), {usage:data[i].usage, capacity:data[i].capacity} ];
+  			  }
+  			  $scope.tabledef.data = dataSet;
+  			});
+  	  };
+  	  
+  	  $scope.$watchCollection('keySelectioModel',function() {$scope.loadTable()});
+  	  
+  	  var refreshTimer = $interval(function(){
+        if($scope.autorefresh){$scope.loadTable();}}, 2000);
+      
+      $scope.$on('$destroy', function() {
+        $interval.cancel(refreshTimer);
+      });
+  	  
+  	  $scope.tabledef = {};
+  	  $scope.tabledef.columns = [ { "title" : "URL" }, 
+  	                     { "title" : "Usage", "render" : function(data, type, row) {
+                            	var usagePerc = data.usage*100/data.capacity;
+                            	var style;
+                            	if (usagePerc>90) {
+                            	  style = 'progress-bar-danger'
+                            	} else if (usagePerc>70) {
+                            	  style = 'progress-bar-warning'
+                                } else {
+                                  style = 'progress-bar-success'
+                            	}
+                            	
+                            	return '<div class="progress">'
+                            	  		+'<div class="progress-bar ' + style + '" role="progressbar" aria-valuenow="'+usagePerc+'" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;width: '+usagePerc+'%;">'
+                            	  		+data.usage+'/'+data.capacity
+                            			+'</div></div>';
+                              } }];
+
+  	} ])
+
+.controller('TokenListCtrl', [
+	'$scope',
+	'$interval',
+	'$http',
+	function($scope, $interval, $http) {
+	  $scope.$state = 'tokens'
+	  
+	  $scope.loadTable = function loadTable() {
+		$http.get("rest/grid/token").success(
+			function(data) {
+			  var dataSet = [];
+			  for (i = 0; i < data.length; i++) {
+				dataSet[i] = [ data[i].token.uid, data[i].token.groupid, data[i].token.url,
+					data[i].token.attributes != null ? JSON.stringify(data[i].token.attributes) : '',
+					data[i].token.selectionPatterns != null ? JSON.stringify(data[i].token.selectionPatterns) : '',
+					data[i].owner != null ? data[i].owner.executionID : '-'   ];
+			  }
+			  $scope.tabledef.data = dataSet;
+			});
+	  };
+
+	  $scope.tabledef = {};
+	  $scope.tabledef.columns = [ { "title" : "ID" }, { "title" : "GroupID" }, { "title" : "URL" }, { "title" : "Attributes" },
+		  { "title" : "Selection Pattern" }, { "title" : "Execution ID", "render": function (value) {return '<a href="#/root/executions/'+value+'">'+value+'</a>'}} ];
+
+	  $scope.loadTable();
+      
+      var refreshTimer = $interval(function(){
+        if($scope.autorefresh){$scope.loadTable()}}, 2000);
+      
+      $scope.$on('$destroy', function() {
+        $interval.cancel(refreshTimer);
+      });
+
+	} ])
+	
+.controller('QuotaManagerCtrl', [
+    '$scope',
+    '$http',
+    '$interval',
+    function($scope, $http, $interval) {
+      $scope.$state = 'quotamanager'
+      
+      $scope.load = function loadTable() {
+        $http.get("rest/quotamanager/status").success(
+            function(data) {
+              $scope.statusText = data;
+            });
+      };
+      
+      var refreshTimer = $interval(function(){
+        if($scope.autorefresh){$scope.load();}}, 2000);
+      
+      $scope.$on('$destroy', function() {
+        $interval.cancel(refreshTimer);
+      });
+      
+      $scope.load();
+
+    } ]);

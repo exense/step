@@ -1,0 +1,158 @@
+.navbar-default .navbar-nav>li>div {
+	padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.toolbar {
+	position: absolute;
+	top: 15px;
+	right: 150px;
+}
+
+.executionStatus { 
+	  	color: white;
+	    /* padding:7px;
+	    border-radius:6px; */
+	    padding: 4px;
+		border-radius: 4px;
+		font-size: 75%;
+	  }
+	  
+i.executionStatus {
+	background:transparent;
+}
+
+div.executionStatus,span.executionStatus {
+	color:white;
+}
+
+.status-ENDED {
+	background:gray;
+	color:gray
+}
+
+.status-INITIALIZING {
+	background:gray;
+	color:gray;
+}
+
+.status-IMPORTING {
+	background:orange;
+	color:orange;
+}
+
+.status-EXPORTING {
+	background:orange;
+	color:orange;
+}
+
+.status-RUNNING {
+	background:#5cb85c;
+	color:#5cb85c;
+}
+
+.status-ABORTING {
+	background:#d9534f;
+	color:#d9534f;
+}
+
+.reportNodeStatus { 
+	  	background:gray;
+	  	color: white;
+	    padding: 4px;
+		border-radius: 4px;
+		font-size: 75%;
+	    /* width:15px; */
+/* 	    font-size:0; */
+	  }
+
+.status-SKIPPED {
+	background:#A0A0A0;
+}
+
+.status-NORUN {
+	background:#A0A0A0;
+}
+	  
+.status-PASSED {
+	background:#5cb85c;
+}
+
+.status-FAILED {
+	background:#d9534f;
+}
+
+.status-TECHNICAL_ERROR {
+	background:black;
+}
+	  
+.selected {
+	background:#abb9d3;
+}
+
+table.dataTable {
+	word-break:break-all;
+}
+
+table.dataTable thead > tr > th {
+	padding-left: 8px;
+	padding-right: 8px;
+}
+
+table.dataTable.table-hover tbody tr:hover.selected {
+  background-color: #a9b7d1;
+}
+
+table.dataTable thead div, table.dataTable thead input.form-control {
+	width: 100%;
+}
+
+table.dataTable thead tr.tableactions div {
+	width: auto;
+}
+
+table.dataTable thead input.form-control {
+  padding: 3px 6px;
+}
+
+.icon-invisible {
+    visibility: hidden;
+}
+
+.dropdown-menu>li>label {
+display: block;
+padding: 3px 20px;
+clear: both;
+font-weight: 400;
+line-height: 1.42857143;
+color: #333;
+white-space: nowrap;
+}
+
+.icon-refresh-animate {
+	animation-name: rotateThis;
+	animation-duration: .5s;
+	animation-iteration-count: infinite;
+	animation-timing-function: linear;
+}
+
+@keyframes rotateThis {
+	from { transform: scale( 1 ) rotate( 0deg );   }
+	to   { transform: scale( 1 ) rotate( 360deg ); }
+}
+
+ul.node-details {
+	margin-left: 15px;
+	margin-right: 15px;
+}
+
+table.stacktrace {
+	margin-top: 5px;
+}
+table.stacktrace td {
+    padding-left: 5px;
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
