@@ -1,17 +1,13 @@
 package step.artefacts.handlers;
 
-import java.util.HashMap;
-
 import step.artefacts.IfBlock;
 import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
 import step.artefacts.reports.IfBlockReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.TestArtefactResultHandler;
 import step.expressions.ExpressionHandler;
-import step.expressions.placeholder.PlaceHolderHandler;
 
 public class IfBlockHandler extends ArtefactHandler<IfBlock, IfBlockReportNode> {
 
@@ -26,20 +22,23 @@ public class IfBlockHandler extends ArtefactHandler<IfBlock, IfBlockReportNode> 
 	}
 
 	private void evaluateExpressionAndDelegate(IfBlockReportNode node, IfBlock testArtefact, boolean execution) {
-		PlaceHolderHandler placeholderHandler = new PlaceHolderHandler(ExecutionContext.getCurrentContext(), new HashMap<String, String>());
-		ExpressionHandler expressionHandler = new ExpressionHandler(placeholderHandler);
-		boolean checkResult;
+		ExpressionHandler expressionHandler = new ExpressionHandler();
 		try {
-			checkResult = expressionHandler.handleCheck(testArtefact.getCondition());
-			if(checkResult) {
-				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
-				if(execution) {
-					scheduler.execute_(node, testArtefact);
+			Object checkResult = expressionHandler.evaluate(testArtefact.getCondition());
+			
+			if(checkResult!=null && checkResult instanceof Boolean) {
+				if((boolean)checkResult) {
+					SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+					if(execution) {
+						scheduler.execute_(node, testArtefact);
+					} else {
+						scheduler.createReportSkeleton_(node, testArtefact);
+					}
 				} else {
-					scheduler.createReportSkeleton_(node, testArtefact);
-				}
+					node.setStatus(ReportNodeStatus.PASSED);	
+				} 
 			} else {
-				node.setStatus(ReportNodeStatus.PASSED);	
+				throw new Exception("The expression '"+testArtefact.getCondition()+"' returned '"+checkResult +"' instead of a boolean");
 			}
 		} catch (Exception e) {
 			TestArtefactResultHandler.failWithException(node, e);

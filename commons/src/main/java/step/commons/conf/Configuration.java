@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -14,7 +13,7 @@ public class Configuration {
 	
 	private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
 	
-	private static Configuration INSTANCE = new Configuration();
+	private static Configuration INSTANCE;
 	
 	private File propertyFile;
 	
@@ -23,15 +22,12 @@ public class Configuration {
 	public Configuration() {
 		super();
 
-		String configFile = "step.properties";
-		
-		URL propertyURL = this.getClass().getClassLoader().getResource(configFile);
-		if(propertyURL!=null) {
-			propertyFile = new File(propertyURL.getFile());
-		} else {
-			logger.warn("Unable to find configuration file '"+configFile+"' in the classpath. Default settings will be used.");
-		}
-		
+		properties = new Properties();
+	}
+
+	public Configuration(File propertyFile) {
+		super();
+
 		try {
 			load();			
 		} catch (Exception e) {
@@ -60,12 +56,20 @@ public class Configuration {
 		}
 	}
 	
+	public static void setInstance(Configuration instance) {
+		INSTANCE = instance;
+	}
+	
 	public static Configuration getInstance() {
 		return INSTANCE;
 	}
 
 	public String getProperty(String name) {
 		return properties.getProperty(name);
+	}
+	
+	public String getProperty(String name, String defaultValue) {
+		return properties.getProperty(name, defaultValue);
 	}
 	
 	public void putProperty(String name, String value) {

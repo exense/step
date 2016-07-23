@@ -9,11 +9,11 @@ import java.util.regex.Pattern;
 
 import step.common.managedoperations.Operation;
 import step.common.managedoperations.OperationManager;
-import step.commons.pools.selectionpool.TokenPool;
 import step.core.GlobalContext;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
+import step.grid.client.GridClient;
 import step.plugins.quotamanager.QuotaManager;
 
 @Plugin
@@ -52,7 +52,7 @@ public class ThreadManager extends AbstractPlugin {
 		context.put(THREAD_MANAGER_INSTANCE_KEY, this);
 		
 		registerPattern(Pattern.compile(".*\\.sleep$"));
-		registerPattern(Pattern.compile(TokenPool.class.getName()+".*"));
+		registerClass(GridClient.class);
 		registerClass(QuotaManager.class);
 	}
 

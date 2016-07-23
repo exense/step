@@ -1,9 +1,6 @@
 package step.core.deployment;
 
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Context;
-
-import org.glassfish.jersey.server.ResourceConfig;
+import javax.inject.Inject;
 
 import step.core.Controller;
 import step.core.GlobalContext;
@@ -12,6 +9,7 @@ import step.core.scheduler.ExecutionScheduler;
 
 public class AbstractServices {
 
+	@Inject
 	protected Controller controller;
 
 	public AbstractServices() {
@@ -34,11 +32,4 @@ public class AbstractServices {
 		}
 		return null;
 	}
-	
-	@Context
-	public void setController(Application controller) {
-		// this is ugly. Reason is that jersey injects a wrapper of the application instead of the instance
-		this.controller = ((ControllerApplication) ((ResourceConfig) controller).getApplication()).getController();
-	}
-
 }

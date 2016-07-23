@@ -21,7 +21,7 @@ import step.grid.reports.TokenGroupCapacity;
 public class GridServices extends AbstractServices {
 
 	private Grid getAdapterGrid() {
-		return (Grid) getContext().get(AdapterClientPlugin.ADAPTER_GRID_KEY);
+		return (Grid) getContext().get(GridPlugin.GRID_KEY);
 	}
 	
 	private GridReportBuilder getReportBuilder() {

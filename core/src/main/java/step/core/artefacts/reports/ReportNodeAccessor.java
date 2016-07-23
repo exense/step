@@ -142,21 +142,24 @@ public class ReportNodeAccessor {
 				.sort("{executionTime: 1}").as(ReportNode.class).iterator();
 	}
 	
+	// TODO check if still working
 	public DataTable getTimeBasedReport(String executionID, int resolution) {
 		String reportNodeClass = "step.artefacts.reports.TestStepReportNode";
 		DataTable t = new DataTable();
 		final double normalizationFactor = (1.0*resolution)/1000;
 				
-		t.addRows(reports.aggregate("{$match:{executionID:'"+executionID+"',_class:'"+reportNodeClass+"'}}").
+		reports.aggregate("{$match:{executionID:'"+executionID+"',_class:'"+reportNodeClass+"'}}").
 				and("{$group:{_id:{time:{$subtract:[\"$executionTime\",{$mod:[\"$executionTime\","+resolution+"]}]}},value:{$sum:1}}}").
 				and("{$sort:{\"_id\":1}}").map(new ResultHandler<TableRow>() {
 			@Override
 			public TableRow map(DBObject result) {
 				Date date = new Date((long) ((DBObject)result.get("_id")).get("time"));
 				double value = new Double((Integer) result.get("value"))/normalizationFactor;
-				return new TableRow(date, value);
+				TableRow r = new TableRow(date, value);
+				t.addRow(r);
+				return r;
 			}
-		}));
+		});
 		
 		return t;
 	}

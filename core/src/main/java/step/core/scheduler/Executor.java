@@ -54,7 +54,7 @@ public class Executor {
 
 	private Properties getProperties() {
 		Properties props = new Properties();
-		props.put("org.quartz.threadPool.threadCount", Configuration.getInstance().getProperty("tec.executor.threads"));
+		props.put("org.quartz.threadPool.threadCount", Configuration.getInstance().getProperty("tec.executor.threads", "10"));
 		return props;
 	}
 

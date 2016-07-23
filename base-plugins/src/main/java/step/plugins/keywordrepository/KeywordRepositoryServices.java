@@ -9,7 +9,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import step.core.deployment.AbstractServices;
-import step.plugins.adaptergrid.AdapterClientPlugin;
+import step.plugins.adaptergrid.GridPlugin;
 
 @Singleton
 @Path("/keyword")
@@ -19,7 +19,7 @@ public class KeywordRepositoryServices extends AbstractServices {
 	@Path("/list")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<String> getKeywordList() {
-		KeywordRepository repository = (KeywordRepository) getContext().get(AdapterClientPlugin.KEYWORD_REPOSITORY_KEY);
+		KeywordRepository repository = (KeywordRepository) getContext().get(GridPlugin.KEYWORD_REPOSITORY_KEY);
 		
 		return repository.getKeywordList();
 	}

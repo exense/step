@@ -2,20 +2,16 @@ package step.core.artefacts.handlers;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.DynamicAttribute;
-import step.core.execution.ExecutionContext;
 import step.expressions.ExpressionHandler;
-import step.expressions.placeholder.PlaceHolderHandler;
 
 public class ArtefactAttributesHandler {
 
 	public static AbstractArtefact evaluateAttributes(AbstractArtefact artefact) {
 		AbstractArtefact result = (AbstractArtefact) cloneBean(artefact);
-		PlaceHolderHandler placeHolderHandler = new PlaceHolderHandler(ExecutionContext.getCurrentContext(), new HashMap<String, String>());
-		ExpressionHandler expressionHandler = new ExpressionHandler(placeHolderHandler);
+		ExpressionHandler expressionHandler = new ExpressionHandler();
 		processResolvableParameter(result, expressionHandler);
 		return result;
 	}
