@@ -54,7 +54,7 @@ public class Controller {
 		context.setArtefactAccessor(new ArtefactAccessor(mongoClient));
 		context.setReportAccessor(new ReportNodeAccessor(mongoClient));
 		context.setScheduleAccessor(new ExecutionTaskAccessor(mongoClient));
-		context.setRepositoryObjectManager(new RepositoryObjectManager());
+		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		context.setExecutionLifecycleManager(new ExecutionLifecycleManager(context));
 	}
 

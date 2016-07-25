@@ -62,7 +62,7 @@ public class ExecutionTestHelper {
 		
 		ExecutionTaskAccessor schedulerAccessor = Mockito.mock(ExecutionTaskAccessor.class);
 		context.setScheduleAccessor(schedulerAccessor);
-		context.setRepositoryObjectManager(new RepositoryObjectManager());
+		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		context.setExecutionLifecycleManager(new ExecutionLifecycleManager(context));
 		
 		return context;

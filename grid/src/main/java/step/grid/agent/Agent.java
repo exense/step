@@ -1,5 +1,6 @@
 package step.grid.agent;
 
+import java.io.File;
 import java.net.Inet4Address;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.grid.Token;
+import step.grid.agent.conf.AgentConf;
+import step.grid.agent.conf.AgentConfParser;
+import step.grid.agent.conf.TokenConf;
+import step.grid.agent.conf.TokenGroupConf;
 import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
@@ -34,6 +39,8 @@ public class Agent {
 	private static final Logger logger = LoggerFactory.getLogger(Agent.class);
 	
 	private String id;
+	
+	private AgentConf agentConf;
 	
 	private String gridHost;
 	
@@ -56,19 +63,29 @@ public class Agent {
 	public static void main(String[] args) throws Exception {
 		ArgumentParser arguments = new ArgumentParser(args);
 		
+		String agentConf = arguments.getOption("config");
 		String gridHost = arguments.getOption("gridhost");
 		String agentPortStr = arguments.getOption("agentPort");
-		Integer agentPort = agentPortStr!=null?Integer.decode(agentPortStr):null;
+		Integer agentPort = agentPortStr!=null?Integer.decode(agentPortStr):12131;
 		String agentUrl = arguments.getOption("agentUrl");
 		
-		(new Agent(gridHost, agentUrl, agentPort)).start();
+		(new Agent(agentConf, gridHost, agentUrl, agentPort)).start();
 	}
 	
-	public Agent(String gridHost, String agentUrl, Integer agentPort) {
+	public Agent(String gridHost, String agentUrl, Integer agentPort) throws Exception {
+		this(null, gridHost, agentUrl, agentPort);
+	}
+	
+	public Agent(String agentConf, String gridHost, String agentUrl, Integer agentPort) throws Exception {
 		super();
 		this.gridHost = gridHost;
 		this.agentUrl = agentUrl;
 		this.agentPort = agentPort;
+		
+		if(agentConf!=null) {
+			AgentConfParser parser = new AgentConfParser();
+			this.agentConf = parser.parser(new File(agentConf));
+		}
 		
 		id = UUID.randomUUID().toString();
 		tokenPool = new AgentTokenPool(10000);
@@ -102,6 +119,15 @@ public class Agent {
 	}
 
 	public void start() throws Exception {
+		
+		if(agentConf!=null) {
+			for(TokenGroupConf group:agentConf.getTokenGroups()) {
+				TokenConf tokenConf = group.getTokenConf();
+				addTokens(group.getCapacity(), tokenConf.getAttributes(), tokenConf.getSelectionPatterns(), 
+						tokenConf.getProperties());
+			}
+		}
+		
 		if(agentUrl==null) {
 			agentUrl = "http://" + Inet4Address.getLocalHost().getHostName() + ":" + agentPort;
 		}

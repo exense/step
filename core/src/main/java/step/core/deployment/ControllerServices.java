@@ -256,7 +256,7 @@ public class ControllerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ArtefactInfo getArtefactInfo(RepositoryObjectReference ref) {
 		try {
-			return RepositoryObjectManager.executeRequest(ref, "/artefact/info", ArtefactInfo.class);
+			return getContext().getRepositoryObjectManager().getArtefactInfo(ref);
 		} catch (Exception e) {
 			 throw new WebApplicationException(Response.status(500).entity("Unable to retrieve artefact.").type("text/plain").build());
 		}

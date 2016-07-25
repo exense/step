@@ -64,6 +64,10 @@ public class Configuration {
 		return INSTANCE;
 	}
 
+	public Object put(Object arg0, Object arg1) {
+		return properties.put(arg0, arg1);
+	}
+
 	public String getProperty(String name) {
 		return properties.getProperty(name);
 	}

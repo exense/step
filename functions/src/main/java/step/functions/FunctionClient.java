@@ -13,6 +13,12 @@ public class FunctionClient {
 	
 	private FunctionRepository functionRepository;
 	
+	public FunctionClient(GridClient gridClient, FunctionRepository functionRepository) {
+		super();
+		this.gridClient = gridClient;
+		this.functionRepository = functionRepository;
+	}
+
 	public FunctionToken getFunctionToken(Map<String, String> attributes, Map<String, Interest> interest) {
 		return new FunctionToken(gridClient.getToken(attributes, interest));
 	}
@@ -34,18 +40,33 @@ public class FunctionClient {
 			return callFunction(this, functionId, input);
 		}
 		
+		public Output call(Map<String, String> attributes, Input input) {
+			return callFunction(this, attributes, input);
+		}
+		
+		
 		public void release() {
 			releaseFunctionToken(this);
 		}
 	}
+
+	public Output callFunction(FunctionToken functionToken, Map<String, String> attributes, Input input) {
+		Function function = functionRepository.getFunctionByAttributes(attributes);
+		return callFunction(functionToken, function, input);
+	}
 	
 	private Output callFunction(FunctionToken functionToken, String functionId, Input input) {
-		
 		Function function = functionRepository.getFunctionById(functionId);
+		return callFunction(functionToken, function, input);
+	}
+
+	private Output callFunction(FunctionToken functionToken, Function function, Input input) {
+		FunctionConfiguration functionConf = functionRepository.getFunctionConfigurationById(function.getId());
 		
-		FunctionConfiguration functionConf = functionRepository.getFunctionConfigurationById(functionId);
-		
-		String handlerChain = functionConf.getHandlerChain();
+		String handlerChain = null;
+		if(functionConf!=null) {
+			handlerChain = functionConf.getHandlerChain();
+		}
 		
 		try {
 			OutputMessage outputMessage = functionToken.getToken().process(function.getName(), input.getArgument(), handlerChain);
@@ -56,7 +77,6 @@ public class FunctionClient {
 			// TODO typed error
 			throw new RuntimeException("Unmapped error");
 		}
-		
 	}
 	
 	private void releaseFunctionToken(FunctionToken functionToken) {

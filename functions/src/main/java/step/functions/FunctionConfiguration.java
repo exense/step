@@ -1,6 +1,8 @@
 package step.functions;
 
-public class FunctionConfiguration {
+import step.commons.activation.ActivableObject;
+
+public class FunctionConfiguration extends ActivableObject {
 
 	String functionId;
 	

@@ -7,14 +7,17 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+
 import step.commons.conf.Configuration;
+import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.ArtefactAccessor;
 import step.core.execution.model.ReportExport;
 import step.core.execution.model.ReportExportStatus;
-
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 public class RepositoryObjectManager {
 
@@ -24,6 +27,13 @@ public class RepositoryObjectManager {
 	
 	private Client client = ClientBuilder.newClient();
 	
+	private ArtefactAccessor artefactAccessor;
+	
+	public RepositoryObjectManager(ArtefactAccessor artefactAccessor) {
+		super();
+		this.artefactAccessor = artefactAccessor;
+	}
+
 	public void close() {
 		client.close();
 	}
@@ -66,6 +76,22 @@ public class RepositoryObjectManager {
 
 		
 		return export;
+	}
+	
+	private static final String LOCAL = "local";
+	private static final String ARTEFACT_ID = "artefactid";
+	
+	public ArtefactInfo getArtefactInfo(RepositoryObjectReference ref) {
+		if(ref.getRepositoryID().equals(LOCAL)) {
+			String artefactid = ref.getRepositoryParameters().get(ARTEFACT_ID);
+			AbstractArtefact artefact = artefactAccessor.get(new ObjectId(artefactid));
+			
+			ArtefactInfo info = new ArtefactInfo();
+			info.setName(artefact.getName());
+			return info;
+		} else {
+			return RepositoryObjectManager.executeRequest(ref, "/artefact/info", ArtefactInfo.class);
+		}
 	}
 
 	public static <T extends Object> T executeRequest(RepositoryObjectReference ref, String service, Class<T> resultClass) {

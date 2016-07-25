@@ -5,6 +5,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
@@ -33,8 +34,11 @@ public class RegistrationClient {
 		int callTimeout = 3000;
 		
 		try {			
-			client.target(registrationServer + "/grid/register").request().property(ClientProperties.READ_TIMEOUT, callTimeout)
+			Response r = client.target(registrationServer + "/grid/register").request().property(ClientProperties.READ_TIMEOUT, callTimeout)
 					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).post(Entity.entity(message, MediaType.APPLICATION_JSON));
+			
+			r.readEntity(String.class);
+			
 		} catch (ProcessingException e) {
 			logger.error("An error occurred while registering tokens to " + registrationServer, e);
 		}

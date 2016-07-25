@@ -95,7 +95,11 @@ public class ExecutionRunnable implements Runnable {
 		if(context.getExecutionParameters().getArtefact()!=null) {
 			RepositoryObjectReference artefactPointer = context.getExecutionParameters().getArtefact();
 			if(artefactPointer!=null) {
-				artefactID = context.getGlobalContext().getRepositoryObjectManager().importArtefact(artefactPointer);
+				if("local".equals(artefactPointer.getRepositoryID())) {
+					artefactID = artefactPointer.getRepositoryParameters().get("artefactid");
+				} else {
+					artefactID = context.getGlobalContext().getRepositoryObjectManager().importArtefact(artefactPointer);					
+				}
 			} else {
 				throw new Exception("context.artefactID is null and no ArtefactPointer has been specified. This shouldn't happen.");
 			}

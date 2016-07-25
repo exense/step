@@ -103,7 +103,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
 			function(data) {
 			  var dataSet = [];
 			  for (i = 0; i < data.length; i++) {
-				dataSet[i] = [ data[i].token.uid, data[i].token.groupid, data[i].token.url,
+				dataSet[i] = [ data[i].token.id, data[i].token.agentid,
 					data[i].token.attributes != null ? JSON.stringify(data[i].token.attributes) : '',
 					data[i].token.selectionPatterns != null ? JSON.stringify(data[i].token.selectionPatterns) : '',
 					data[i].owner != null ? data[i].owner.executionID : '-'   ];
@@ -113,7 +113,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
 	  };
 
 	  $scope.tabledef = {};
-	  $scope.tabledef.columns = [ { "title" : "ID" }, { "title" : "GroupID" }, { "title" : "URL" }, { "title" : "Attributes" },
+	  $scope.tabledef.columns = [ { "title" : "ID" }, { "title" : "AgentID" }, { "title" : "Attributes" },
 		  { "title" : "Selection Pattern" }, { "title" : "Execution ID", "render": function (value) {return '<a href="#/root/executions/'+value+'">'+value+'</a>'}} ];
 
 	  $scope.loadTable();

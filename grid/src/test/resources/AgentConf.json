@@ -1,0 +1,7 @@
+{
+"tokenGroups":[
+{"capacity":10, 
+"tokenConf":{"attributes":{"key":"val"}}
+}
+]
+}

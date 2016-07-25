@@ -1,6 +1,8 @@
 package step.artefacts.handlers;
 
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -13,6 +15,7 @@ import step.core.execution.ExecutionContext;
 import step.functions.FunctionClient;
 import step.functions.FunctionClient.FunctionToken;
 import step.functions.Input;
+import step.plugins.adaptergrid.GridPlugin;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepReportNode> {
 
@@ -36,22 +39,35 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 		
 		String functionName = testArtefact.getFunctionName();
 		
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put("name", functionName);
+		
 		Input input = new Input();
 		input.setArgument(argument);
-		FunctionClient functionClient = (FunctionClient) ExecutionContext.getCurrentContext().getGlobalContext().get("");
+		FunctionClient functionClient = (FunctionClient) ExecutionContext.getCurrentContext().getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
 		
-		FunctionToken functionToken = functionClient.getFunctionToken(null, null);
+		boolean releaseTOkenAfterExecution = false;
+		FunctionToken functionToken;
+		Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
+		if(o!=null && o instanceof FunctionToken) {
+			functionToken = (FunctionToken) o;
+		} else {
+			functionToken = functionClient.getFunctionToken(null, null);
+			releaseTOkenAfterExecution = true;
+		}
+		
 		try {
-			functionToken.call(functionName, input);			
+			functionToken.call(attributes, input);			
 		} finally {
-			functionToken.release();
+			if(releaseTOkenAfterExecution) {				
+				functionToken.release();
+			}
 		}
 	}
 
 
 	@Override
 	public TestStepReportNode createReportNode_(ReportNode parentNode, CallFunction testArtefact) {
-		// TODO Auto-generated method stub
-		return null;
+		return new TestStepReportNode();
 	}
 }

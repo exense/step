@@ -42,7 +42,12 @@ public class ReportNodeAttachmentManager {
 				varManager.putVariable(context.getReportNodeTree().getRoot(), QUOTA_COUNT_VARNAME, count);				
 			}
 			
-			Integer quota = varManager.getVariableAsInteger(QUOTA_VARNAME);
+			Integer quota;
+			try {
+				quota = varManager.getVariableAsInteger(QUOTA_VARNAME);
+			} catch (UndefinedVariableException e) {
+				quota = 100;
+			}
 			
 			if(quota==count) {
 				logger.info(ExecutionContext.getCurrentContext().getExecutionId().toString() + ". Maximum number of attachment (" +quota+") reached. Next attachments will be skipped.");

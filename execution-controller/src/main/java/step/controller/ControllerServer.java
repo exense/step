@@ -1,6 +1,7 @@
 package step.controller;
 
 import java.io.File;
+import java.util.Map.Entry;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -45,6 +46,9 @@ public class ControllerServer {
 		} else {
 			configuration = new Configuration();
 		}
+		
+		arguments.entrySet().forEach(e->configuration.putProperty(e.getKey(),e.getValue()));
+		
 		Configuration.setInstance(configuration);
 		
 		(new ControllerServer(port)).start();
