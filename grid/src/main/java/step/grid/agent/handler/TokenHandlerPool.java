@@ -4,7 +4,9 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,7 +16,7 @@ public class TokenHandlerPool {
 	private Map<String, MessageHandler> pool = new HashMap<>();
 	
 	public MessageHandler get(String handlerKey) throws Exception {
-		MessageHandler handler = pool.get(handlerKey); 
+		MessageHandler handler = createHandler(handlerKey); //pool.get(handlerKey); 
 		
 		if(handler==null) {
 			handler = createHandler(handlerKey);
@@ -53,9 +55,23 @@ public class TokenHandlerPool {
 				} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 					throw e;
 				}
-			} else if (factory.equals("classuri")) {				
+			} else if (factory.equals("classuri")) {		
+				//JarClassLoader jcl = new JarClassLoader();
+				//jcl.add(factoryKey);			
+				List<URL> urls = new ArrayList<>();
 				File f = new File(factoryKey);
-				ClassLoader cl = new URLClassLoader(new URL[] { f.toURI().toURL() }, this.getClass().getClassLoader());
+				if(f.isDirectory()) {
+					for(File file:f.listFiles()) {
+						if(file.getName().endsWith(".jar")) {
+							urls.add(file.toURI().toURL());
+						}
+					}
+				}
+				urls.add(f.toURI().toURL());
+				
+				//(new URLClassLoader(new URL[]{new File("D:/Workspace/step/selenium-scripts-oam/target/classes/selenium-api-2.53.1.jar").toURI().toURL()})).loadClass("org.openqa.selenium.WebDriver")
+				
+				ClassLoader cl = new URLClassLoader(urls.toArray(new URL[urls.size()]), Thread.currentThread().getContextClassLoader());
 				handler = new ClassLoaderMessageHandlerWrapper(cl);
 			} else {
 				throw new RuntimeException("Unknown handler factory: "+factory);

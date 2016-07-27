@@ -42,15 +42,8 @@ public class AgentServices {
 				try {
 					MessageHandler tokenHandler = getTokenHandler(message, tokenWrapper);
 					
-					try {
-						OutputMessage output = tokenHandler.handle(tokenWrapper, message);
-						return output;						
-					} catch(Exception e) {
-						OutputMessage output = new  OutputMessage();
-						output.addAttachment(generateAttachmentForException(e));
-						output.setError(e.getMessage());
-						return output;
-					}
+					OutputMessage output = tokenHandler.handle(tokenWrapper, message);
+					return output;						
 				} finally {
 					tokenPool.returnToken(tokenId);
 				}
@@ -58,7 +51,10 @@ public class AgentServices {
 				throw new RuntimeException("No token found with id "+tokenId);
 			}
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			OutputMessage output = new OutputMessage();
+			output.addAttachment(generateAttachmentForException(e));
+			output.setError(e.getClass().getName()+":"+e.getMessage());
+			return output;
 		}
 	}
 	

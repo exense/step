@@ -360,7 +360,7 @@ angular.module('dataTable', [])
           $http.get('rest/datatable/exports/' + scope.reportID).success(function (data) {
             if(data.ready) {
               var attachmentID = data.attachmentID;
-              $.fileDownload('DownloadFileServlet?uuid='+attachmentID)
+              $.fileDownload('files?uuid='+attachmentID)
               .done(function () { alert('File download a success!'); })
               .fail(function () { alert('File download failed!'); });
             } else {

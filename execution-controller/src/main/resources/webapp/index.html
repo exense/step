@@ -27,6 +27,7 @@ window.console.log = window.console.log || function(){};
 <script src="js/controllers.js"></script>
 <script src="js/controllers/scheduler.js"></script>
 <script src="js/controllers/grid.js"></script>
+<script src="js/controllers/functions.js"></script> 
 <script src="js/controllers/repository.js"></script>
 <script src="js/tables.js"></script>
 
@@ -76,6 +77,8 @@ window.console.log = window.console.log || function(){};
 						ui-sref="scheduler" ng-click="setView('scheduler')">Scheduler</a></li>
 					<li ng-class="{ active: isViewActive('grid') }"><a
 						ui-sref="grid" ng-click="setView('grid')">Adapter Grid</a></li>
+					<li ng-class="{ active: isViewActive('functions') }"><a
+						ui-sref="grid" ng-click="setView('functions')">Functions</a></li>
 				</ul>
 				<ul class="nav navbar-nav navbar-right">
 					<li><a>{{context.userID}}</a></li>
@@ -91,6 +94,7 @@ window.console.log = window.console.log || function(){};
         <div ng-if="isViewActive('executions')" ng-compiled-include="partials/execution.html"></div>
         <div ng-if="isViewActive('scheduler')" ng-compiled-include="partials/scheduler.html"></div>
         <div ng-if="isViewActive('repository')" ng-compiled-include="partials/repository.html"></div>
+        <div ng-if="isViewActive('functions')" ng-compiled-include="partials/functionList.html"></div>
         
         
 	</div>

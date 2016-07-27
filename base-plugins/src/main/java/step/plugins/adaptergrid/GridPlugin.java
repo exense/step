@@ -2,7 +2,6 @@ package step.plugins.adaptergrid;
 
 import org.jongo.MongoCollection;
 
-import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 
 import step.commons.conf.Configuration;
@@ -36,10 +35,9 @@ public class GridPlugin extends AbstractPlugin {
 		GridClient client = new GridClient(grid);
 
 		MongoClient mongoClient = context.getMongoClient();
-		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(mongoClient, "functions");
-		MongoCollection functionConfigurationCollection = MongoDBAccessorHelper.getCollection(mongoClient, "functionConfigurations");		
+		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(mongoClient, "functions");	
 		
-		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection, functionConfigurationCollection);
+		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
 		FunctionClient functionClient = new FunctionClient(client, functionRepository);
 		
@@ -48,6 +46,7 @@ public class GridPlugin extends AbstractPlugin {
 		context.put(FUNCTIONCLIENT_KEY, functionClient);
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
+		context.getServiceRegistrationCallback().registerService(FunctionRepositoryServices.class);
 	}
 
 	@Override

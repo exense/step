@@ -1,4 +1,4 @@
-var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','ngCookies'])
+var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','ngCookies'])
 
 .config(['$httpProvider', function($httpProvider) {
   //initialize get if not there

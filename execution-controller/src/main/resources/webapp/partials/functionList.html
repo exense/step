@@ -1,0 +1,62 @@
+<div id="FunctionListCtrl" ng-controller="FunctionListCtrl">
+	<div class="row">
+	<div class="panel-body pull-right">
+		<button type="button" class="btn btn-success" ng-click="addFunction()">New function</button>
+	</div>
+	</div>
+	<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
+</div>
+
+<script type="text/ng-template" id="newFunctionModalContent.html">
+        <div class="modal-header">
+            <h3 class="modal-title">New function</h3>
+        </div>
+		
+        <div class="modal-body">
+			<strong>{{description}}</strong>
+<form>
+	<span ng-repeat-start="input in inputs" ng-if="0" />
+		<div ng-if="input.type=='TEXT'" class="form-group">
+    		<label for="{{input.id}}">{{input.label}}</label>
+    		<input class="form-control" id="{{input.id}}" ng-model="model[input.id]" placeholder="{{input.label}}">
+  		</div>
+		<div  ng-if="input.type=='DROPDOWN'" class="form-group">
+			<label>{{input.label}}</label>
+			<select ng-model="model[input.id]" ng-options="option.value as option.value for option in input.options" class="form-control" />
+		</div>
+	<span ng-repeat-end ng-if="0" />	
+</form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" type="button" ng-click="ok()">OK</button>
+            <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+        </div>
+</script>
+
+<script type="text/ng-template" id="executeFunctionModalContent.html">
+        <div class="modal-header">
+            <h3 class="modal-title">Execute function</h3>
+        </div>
+		
+        <div class="modal-body">
+			<strong>{{description}}</strong>
+<form>
+	<label for="comment">Argument (JSON):</label>	
+	<textarea class="form-control" ng-model="argument" rows="5" id="comment"></textarea>
+</form>
+<div ng-show="output!=null">
+<div>
+<label>Output:</label>	
+<textarea class="form-control" ng-model="output.result" rows="5"></textarea>
+</div>
+<div>
+<label>Error:</label>	
+<textarea class="form-control" ng-model="output.error" rows="5"></textarea>
+</div>
+</div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" type="button" ng-click="ok()">Execute</button>
+            <button class="btn btn-warning" type="button" ng-click="cancel()">Close</button>
+        </div>
+</script>

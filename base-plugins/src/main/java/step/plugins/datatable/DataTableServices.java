@@ -89,9 +89,21 @@ public class DataTableServices extends AbstractServices {
 		BackendDataTable artefactTable = new BackendDataTable(new Collection(client, "artefacts"));
 		artefactTable.addColumn("ID", "_id").addColumn("Name", "name").addJsonColumn("Attachments", "attachments").addJsonColumn("Childrens", "childrenIDs");
 		
+		BackendDataTable functionTable = new BackendDataTable(new Collection(client, "functions"));
+		functionTable.addColumn("ID", "_id");
+		if(screenTemplates!=null) {
+			for(Input input:screenTemplates.getInputsForScreen("functionTable", null)) {
+				functionTable.addColumn(input.getLabel(), input.getId());
+			}
+		}
+		functionTable.addJsonColumn("Actions", "_id");
+		
+		
 		tables.put("executions", executions);
 		tables.put("reports", leafReportNodes);
-		tables.put("artefacts", artefactTable);		
+		tables.put("artefacts", artefactTable);
+		tables.put("functions", functionTable);		
+
 	}
 	
 	@PreDestroy
@@ -208,7 +220,9 @@ public class DataTableServices extends AbstractServices {
 				
 				Object value = row;
 				for(String key:keys) {
-					value = ((DBObject)value).get(key);
+					if(value!=null) {
+						value = ((DBObject)value).get(key);
+					}
 				}
 				
 				rowFormatted[columnID] = value!=null?format(value,row,column):"";

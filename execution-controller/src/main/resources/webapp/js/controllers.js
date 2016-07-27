@@ -230,13 +230,13 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                   var attachment = data[i];
                   var description = attachment.name?attachment.name:attachment._id
                   var id = attachment._id?attachment._id.$oid:attachment.$oid
-                  dropdownHtml = dropdownHtml + '<li role="presentation"><a role="menuitem" tabindex="-1" href="DownloadFileServlet?uuid='+id+'">'+description+'</a></li>';
+                  dropdownHtml = dropdownHtml + '<li role="presentation"><a role="menuitem" tabindex="-1" href="files?uuid='+id+'">'+description+'</a></li>';
                 }
                 dropdownHtml = dropdownHtml+ '</ul></div>';
               } else if(data!=null&&data.length==1) {
                 var attachment = data[0];
                 var id = attachment._id?attachment._id.$oid:attachment.$oid
-                dropdownHtml = '<a href="DownloadFileServlet?uuid='+id+'"><span class="glyphicon glyphicon-paperclip dropdown-toggle" aria-hidden="true"></span></a>';
+                dropdownHtml = '<a href="files?uuid='+id+'"><span class="glyphicon glyphicon-paperclip dropdown-toggle" aria-hidden="true"></span></a>';
               }
             } else {
               dropdownHtml = '';

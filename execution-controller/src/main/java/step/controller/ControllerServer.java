@@ -17,6 +17,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
+import step.attachments.DownloadFileServlet;
 import step.commons.conf.Configuration;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
@@ -64,9 +65,10 @@ public class ControllerServer {
 
 		ServletContextHandler context = initController();
 		ContextHandler webappContext = initWebapp();
+		ContextHandler fileServletCtx = initDownloadServlet();
 		
 		ContextHandlerCollection contexts = new ContextHandlerCollection();
-        contexts.setHandlers(new Handler[] { context, webappContext });
+        contexts.setHandlers(new Handler[] { context, webappContext, fileServletCtx });
 		server.setHandler(contexts);
 
 		server.start();
@@ -112,6 +114,18 @@ public class ControllerServer {
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/rest");
 		context.addServlet(sh, "/*");
+
+		
+		
+		
+		return context;
+	}
+	
+	private ServletContextHandler initDownloadServlet() {
+		ServletHolder downloadServlet = new ServletHolder(new DownloadFileServlet());
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		context.setContextPath("/files");
+		context.addServlet(downloadServlet, "/*");
 		return context;
 	}
 }

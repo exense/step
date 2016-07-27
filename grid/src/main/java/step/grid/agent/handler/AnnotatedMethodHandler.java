@@ -22,14 +22,19 @@ public class AnnotatedMethodHandler implements MessageHandler {
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
 		
 		Reflections reflections = new Reflections(new ConfigurationBuilder()
-	            .setUrls(ClasspathHelper.forPackage("step"))
+				.addClassLoader(Thread.currentThread().getContextClassLoader())
+	            .setUrls(ClasspathHelper.forPackage("step", Thread.currentThread().getContextClassLoader()))
 	            .setScanners(new MethodAnnotationsScanner()));
 		
+		try {
 		Set<Method> jobSubTypes = reflections.getMethodsAnnotatedWith(Function.class);
 		for(Method m:jobSubTypes) {
 			if(m.getAnnotation(Function.class).name().equals(message.getFunction())) {
 				return (OutputMessage) m.invoke(null,token, message);
 			}
+		}
+		} catch (Throwable e) {
+			throw e;
 		}
 		throw new Exception("Unable to find method annoted by '"+Function.class.getName()+"' with name=='"+message.getFunction()+"'");
 	}

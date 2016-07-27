@@ -2,8 +2,11 @@ package step.functions;
 
 import java.util.Map;
 
+import step.grid.agent.handler.MessageHandler;
+import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.client.GridClient;
 import step.grid.client.GridClient.TokenFacade;
+import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
@@ -17,6 +20,10 @@ public class FunctionClient {
 		super();
 		this.gridClient = gridClient;
 		this.functionRepository = functionRepository;
+	}
+	
+	public FunctionToken getLocalFunctionToken() {
+		return new FunctionToken(null);
 	}
 
 	public FunctionToken getFunctionToken(Map<String, String> attributes, Map<String, Interest> interest) {
@@ -61,17 +68,24 @@ public class FunctionClient {
 	}
 
 	private Output callFunction(FunctionToken functionToken, Function function, Input input) {
-		FunctionConfiguration functionConf = functionRepository.getFunctionConfigurationById(function.getId());
-		
-		String handlerChain = null;
-		if(functionConf!=null) {
-			handlerChain = functionConf.getHandlerChain();
-		}
-		
+		String handlerChain = function.getHandlerChain();
+
 		try {
-			OutputMessage outputMessage = functionToken.getToken().process(function.getName(), input.getArgument(), handlerChain);
+			OutputMessage outputMessage;
+			if(functionToken.getToken()!=null) {
+				outputMessage = functionToken.getToken().process(function.getAttributes().get("name"), input.getArgument(), handlerChain);		
+			} else {
+				TokenHandlerPool p = new TokenHandlerPool();
+				MessageHandler h = p.get(handlerChain);
+				InputMessage inputMessage = new InputMessage();
+				inputMessage.setArgument(input.getArgument());
+				outputMessage = h.handle(null, inputMessage);
+				
+			}
 			Output output = new Output();
 			output.setResult(outputMessage.getPayload());
+			output.setError(outputMessage.getError());
+			output.setAttachments(outputMessage.getAttachments());
 			return output;
 		} catch (Exception e) {
 			// TODO typed error
@@ -80,7 +94,13 @@ public class FunctionClient {
 	}
 	
 	private void releaseFunctionToken(FunctionToken functionToken) {
-		functionToken.getToken().release();
+		if(functionToken.getToken()!=null) {
+			functionToken.getToken().release();			
+		}
+	}
+
+	public FunctionRepository getFunctionRepository() {
+		return functionRepository;
 	}
 	
 }

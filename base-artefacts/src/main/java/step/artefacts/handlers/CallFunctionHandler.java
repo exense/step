@@ -9,12 +9,19 @@ import javax.json.JsonObject;
 
 import step.artefacts.CallFunction;
 import step.artefacts.reports.TestStepReportNode;
+import step.attachments.AttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
+import step.core.miscellaneous.ReportNodeAttachmentManager;
+import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
 import step.functions.FunctionClient;
 import step.functions.FunctionClient.FunctionToken;
 import step.functions.Input;
+import step.functions.Output;
+import step.grid.io.Attachment;
+import step.grid.io.AttachmentHelper;
 import step.plugins.adaptergrid.GridPlugin;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepReportNode> {
@@ -46,20 +53,36 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 		input.setArgument(argument);
 		FunctionClient functionClient = (FunctionClient) ExecutionContext.getCurrentContext().getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
 		
-		boolean releaseTOkenAfterExecution = false;
+		boolean releaseTokenAfterExecution = false;
 		FunctionToken functionToken;
 		Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
 		if(o!=null && o instanceof FunctionToken) {
 			functionToken = (FunctionToken) o;
 		} else {
 			functionToken = functionClient.getFunctionToken(null, null);
-			releaseTOkenAfterExecution = true;
+			releaseTokenAfterExecution = true;
 		}
 		
 		try {
-			functionToken.call(attributes, input);			
+			Output output = functionToken.call(attributes, input);
+			if(output.getError()!=null) {
+				node.setError(output.getError());
+				for(Attachment a:output.getAttachments()) {
+					AttachmentMeta attachmentMeta;
+					try {
+						attachmentMeta = ReportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+						node.addAttachment(attachmentMeta);					
+					} catch (AttachmentQuotaException e) {
+						logger.error("Error while converting attachment:" +a.getName(),e);
+					}
+				}
+				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+			} else {
+				node.setStatus(ReportNodeStatus.PASSED);
+				node.setOutput(output.getResult().toString());
+			}
 		} finally {
-			if(releaseTOkenAfterExecution) {				
+			if(releaseTokenAfterExecution) {				
 				functionToken.release();
 			}
 		}

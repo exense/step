@@ -8,7 +8,9 @@ public interface FunctionRepository {
 	
 	public Function getFunctionById(String id);
 	
-	public FunctionConfiguration getFunctionConfigurationById(String functionId);
+	public void addFunction(Function function);
+	
+	public void deleteFunction(String functionId);
 	
 	
 }

@@ -1,7 +1,9 @@
 {
 "tokenGroups":[
 {"capacity":10, 
-"tokenConf":{"attributes":{"key":"val"}}
+"tokenConf":{
+	"attributes":{"key":"val"},
+	"properties":{"tokenhandler.default":"classuri:C:/Users/EX3CV/Programs/selenium-java-2.53.1/selenium-2.53.1/libs/|class:step.grid.agent.handler.AnnotatedMethodHandler"}}
 }
 ]
 }
