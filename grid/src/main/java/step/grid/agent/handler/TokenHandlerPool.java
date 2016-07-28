@@ -16,7 +16,7 @@ public class TokenHandlerPool {
 	private Map<String, MessageHandler> pool = new HashMap<>();
 	
 	public MessageHandler get(String handlerKey) throws Exception {
-		MessageHandler handler = createHandler(handlerKey); //pool.get(handlerKey); 
+		MessageHandler handler = pool.get(handlerKey); 
 		
 		if(handler==null) {
 			handler = createHandler(handlerKey);

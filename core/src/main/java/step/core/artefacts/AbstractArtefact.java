@@ -34,6 +34,10 @@ public abstract class AbstractArtefact {
 		return _id;
 	}
 	
+	public void setId(ObjectId _id) {
+		this._id = _id;
+	}
+
 	public String getName() {
 		return name;
 	}

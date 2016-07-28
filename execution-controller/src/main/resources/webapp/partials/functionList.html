@@ -24,7 +24,15 @@
 			<label>{{input.label}}</label>
 			<select ng-model="model[input.id]" ng-options="option.value as option.value for option in input.options" class="form-control" />
 		</div>
-	<span ng-repeat-end ng-if="0" />	
+	<span ng-repeat-end ng-if="0" />
+	<div class="form-group">
+		<label>Type</label>
+		<select ng-model="type" ng-options="option as option for option in ['STEP-Flow','Handler']" class="form-control" />
+	</div>
+	<div  ng-if="type=='Handler'" class="form-group">
+		<label>Handler chain</label>
+		<select ng-model="hanlder" ng-options="" class="form-control" />
+	</div>	
 </form>
         </div>
         <div class="modal-footer">
@@ -47,11 +55,11 @@
 <div ng-show="output!=null">
 <div>
 <label>Output:</label>	
-<textarea class="form-control" ng-model="output.result" rows="5"></textarea>
+<textarea class="form-control" ng-model="result" rows="5"></textarea>
 </div>
 <div>
 <label>Error:</label>	
-<textarea class="form-control" ng-model="output.error" rows="5"></textarea>
+<textarea class="form-control" ng-model="error" rows="5"></textarea>
 </div>
 </div>
         </div>

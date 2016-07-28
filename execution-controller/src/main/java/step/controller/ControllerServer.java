@@ -87,7 +87,7 @@ public class ControllerServer {
 		ResourceConfig resourceConfig = new ResourceConfig();
 		resourceConfig.packages(ControllerServices.class.getPackage().getName());
 		//resourceConfig.register(JacksonFeature.class);
-		resourceConfig.register(ObjectMapperResolver.class);
+		//resourceConfig.register(ObjectMapperResolver.class);
 
 		controller = new Controller();
 		
@@ -97,8 +97,8 @@ public class ControllerServer {
 			}
 		});
 		
-		resourceConfig.register(JacksonMapperProvider.class);
 		resourceConfig.register(JacksonJaxbJsonProvider.class);
+		resourceConfig.register(JacksonMapperProvider.class);
 		
 		resourceConfig.registerClasses(ControllerServices.class);
 		

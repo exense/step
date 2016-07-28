@@ -29,6 +29,7 @@ window.console.log = window.console.log || function(){};
 <script src="js/controllers/grid.js"></script>
 <script src="js/controllers/functions.js"></script> 
 <script src="js/controllers/repository.js"></script>
+<script src="js/controllers/artefactEditor.js"></script>
 <script src="js/tables.js"></script>
 
 <script src="js/lib/moment.js"></script>
@@ -41,12 +42,14 @@ window.console.log = window.console.log || function(){};
 <script src="js/lib/underscore-min.js"></script>
 <script src="js/lib/prefixfree.min.js"></script>
 <script src="js/lib/fileDownload.js"></script>
+<script src="js/lib/jstree.js"></script>
 
 
 <!-- <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.5/css/jquery.dataTables.css"> -->
 <link rel="stylesheet" href="css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="css/dataTables.bootstrap.css">
 <link rel="stylesheet" type="text/css" href="css/step.css">
+<link rel="stylesheet" type="text/css" href="css/lib/style.css">
 
 
 <!-- <script src="js/angular-datatables.min.js"></script>
@@ -95,7 +98,7 @@ window.console.log = window.console.log || function(){};
         <div ng-if="isViewActive('scheduler')" ng-compiled-include="partials/scheduler.html"></div>
         <div ng-if="isViewActive('repository')" ng-compiled-include="partials/repository.html"></div>
         <div ng-if="isViewActive('functions')" ng-compiled-include="partials/functionList.html"></div>
-        
+        <div ng-if="isViewActive('artefacteditor')" ng-compiled-include="partials/artefactEditor.html"></div>
         
 	</div>
 	

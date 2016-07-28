@@ -22,6 +22,7 @@ angular.module('functionsControllers',['dataTable','step'])
 
             modalInstance.result.then(function (functionParams) {
                 $http.post("rest/functions",functionParams).success(function() {
+                  if()
                 		if($scope.table) {
                 			$scope.table.Datatable.ajax.reload(null, false);
             			}
@@ -96,6 +97,9 @@ angular.module('functionsControllers',['dataTable','step'])
 .controller('newFunctionModalCtrl', function ($scope, $modalInstance, $http) {
 
   $scope.model = {};
+  $scope.type = "STEP-Flow";
+  $scope.handler = '';
+  
   
   $http.get("rest/screens/functionTable").success(function(data){
 	$scope.inputs=data;
@@ -105,6 +109,11 @@ angular.module('functionsControllers',['dataTable','step'])
 	var function_ = {"attributes":{}};
 	_.mapObject($scope.model,function(value,key) {
 	  eval('function_.'+key+"='"+value+"'");
+	  if($scope.type=='STEP-Flow') {
+		function_.handler = "class:step.core.tokenhandlers.ArtefactMessageHandler";
+	  } else {
+		function_.handler = $scope.handler;
+	  }
 	});
 	
     $modalInstance.close(function_);
@@ -122,6 +131,10 @@ angular.module('functionsControllers',['dataTable','step'])
   $scope.ok = function () {
 	$http.post("rest/functions/"+functionId+"/execute",$scope.argument).success(function(data) {
 		$scope.output = data;
+		if(data) {
+		  $scope.result = JSON.stringify(data.result)
+		  $scope.error = data.error
+		}
 	});
   };
 

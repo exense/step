@@ -5,6 +5,7 @@ import java.io.StringReader;
 import javax.json.Json;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -71,6 +72,12 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Path("/{id}")
 	public void delete(@PathParam("id") String functionId) {
 		getFunctionRepository().deleteFunction(functionId);
+	}
+	
+	@GET
+	@Path("/{id}")
+	public Function get(@PathParam("id") String functionId) {
+		return getFunctionRepository().getFunctionById(functionId);
 	}
 	
 	

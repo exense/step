@@ -278,6 +278,71 @@ public class ControllerServices extends AbstractServices {
 		return getContext().getArtefactAccessor().get(new ObjectId(id));
 	}
 	
+	@GET
+	@Path("/artefact/{id}/descendants")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public ArtefactTree getArtefactDescendants(@PathParam("id") String id) {
+		ArtefactAccessor a = getContext().getArtefactAccessor();
+		AbstractArtefact root = a.get(id);
+		ArtefactTree rootNode = new ArtefactTree(root);
+		getChildrenRecursive(a, rootNode);
+		return rootNode;
+	}
+	
+	public class ArtefactTree {
+		
+		AbstractArtefact artefact;
+		
+		List<ArtefactTree> children;
+
+		public ArtefactTree(AbstractArtefact artefact) {
+			super();
+			this.artefact = artefact;
+		}
+
+		public AbstractArtefact getArtefact() {
+			return artefact;
+		}
+
+		public List<ArtefactTree> getChildren() {
+			return children;
+		}
+
+		public void setChildren(List<ArtefactTree> children) {
+			this.children = children;
+		}
+	}
+	
+	private void getChildrenRecursive(ArtefactAccessor a, ArtefactTree current) {
+		AbstractArtefact parent = current.getArtefact();
+		if(parent.getChildrenIDs()!=null) {
+			List<ArtefactTree> childrenNodes = new ArrayList<>();
+			for(ObjectId childId:parent.getChildrenIDs()) {
+				AbstractArtefact child = a.get(childId);
+				ArtefactTree childNode = new ArtefactTree(child);
+				childrenNodes.add(childNode);
+				getChildrenRecursive(a, childNode);
+			}
+			current.setChildren(childrenNodes);
+		}
+	}
+	
+	@POST
+	@Path("/artefact/{id}/children")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public void addChild(@PathParam("id") String id, AbstractArtefact child) {
+		ArtefactAccessor a = getContext().getArtefactAccessor();
+		
+		child = a.save(child);
+		
+		AbstractArtefact artefact = a.get(id);
+		artefact.addChild(child.getId());
+		
+		a.save(artefact);
+	}
+	
 	@POST
 	@Path("/artefact/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)

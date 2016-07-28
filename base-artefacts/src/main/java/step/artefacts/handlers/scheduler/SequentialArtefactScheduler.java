@@ -47,7 +47,7 @@ public class SequentialArtefactScheduler {
 								break;
 							}
 						} else {
-							if (!context.getVariablesManager().getVariableAsBoolean(ArtefactHandler.CONTINUE_EXECUTION)) {
+							if (!context.getVariablesManager().getVariableAsBoolean(ArtefactHandler.CONTINUE_EXECUTION, false)) {
 								break;
 							}
 						}

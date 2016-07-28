@@ -1,0 +1,20 @@
+<div id="ArtefactEditorCtrl" ng-controller="ArtefactEditorCtrl">
+	<div class="row">
+		<div class="col-xs-8">
+			<div class="panel panel-default">
+				<div class="panel-heading">Artefact</div>
+				<div class="panel-body">
+					<artefact handle="handle" artefactid="'5798c6eee1cf8360db453633'" />
+				</div>
+			</div>		
+		</div>
+		<div class="col-xs-4">
+			<div class="panel panel-default">
+				<div class="panel-heading">Available components</div>
+				<div class="panel-body">
+					<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

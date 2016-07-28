@@ -79,7 +79,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 			} else {
 				node.setStatus(ReportNodeStatus.PASSED);
-				node.setOutput(output.getResult().toString());
+				node.setOutput(output.getResult()!=null?output.getResult().toString():null);
 			}
 		} finally {
 			if(releaseTokenAfterExecution) {				
