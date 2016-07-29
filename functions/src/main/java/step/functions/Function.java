@@ -12,6 +12,8 @@ public class Function {
 	
 	String handlerChain;
 
+	Map<String, String> handlerProperties;
+
 	public ObjectId getId() {
 		return _id;
 	}
@@ -26,6 +28,14 @@ public class Function {
 
 	public void setAttributes(Map<String, String> attributes) {
 		this.attributes = attributes;
+	}
+
+	public Map<String, String> getHandlerProperties() {
+		return handlerProperties;
+	}
+
+	public void setHandlerProperties(Map<String, String> handlerProperties) {
+		this.handlerProperties = handlerProperties;
 	}
 
 	public String getHandlerChain() {

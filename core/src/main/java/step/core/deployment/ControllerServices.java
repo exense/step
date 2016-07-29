@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
@@ -26,6 +27,7 @@ import step.commons.datatable.DataTable;
 import step.commons.datatable.TableRow;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
+import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionRunnable;
@@ -278,6 +280,15 @@ public class ControllerServices extends AbstractServices {
 		return getContext().getArtefactAccessor().get(new ObjectId(id));
 	}
 	
+	@POST
+	@Path("/artefact")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public AbstractArtefact saveArtefact(AbstractArtefact artefact) {
+		return getContext().getArtefactAccessor().save(artefact);
+	}
+	
+	
 	@GET
 	@Path("/artefact/{id}/descendants")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -288,6 +299,26 @@ public class ControllerServices extends AbstractServices {
 		ArtefactTree rootNode = new ArtefactTree(root);
 		getChildrenRecursive(a, rootNode);
 		return rootNode;
+	}
+	
+	@GET
+	@Path("/artefact/types")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Set<String> getArtefactTypes() {
+		return ArtefactRegistry.getInstance().getArtefactNames();
+	}
+	
+	@GET
+	@Path("/artefact/types/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
+		Class<? extends AbstractArtefact> clazz = ArtefactRegistry.getInstance().getArtefactType(type);		
+		AbstractArtefact sample = clazz.newInstance();
+		sample.setName(type);
+		getContext().getArtefactAccessor().save(sample);
+		return sample;
 	}
 	
 	public class ArtefactTree {
@@ -340,6 +371,17 @@ public class ControllerServices extends AbstractServices {
 		AbstractArtefact artefact = a.get(id);
 		artefact.addChild(child.getId());
 		
+		a.save(artefact);
+	}
+	
+	@DELETE
+	@Path("/artefact/{id}/children/{childid}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public void addChild(@PathParam("id") String parentid, @PathParam("childid") String childid) {
+		ArtefactAccessor a = getContext().getArtefactAccessor();
+		AbstractArtefact artefact = a.get(parentid);
+		artefact.removeChild(new ObjectId(childid));
 		a.save(artefact);
 	}
 	

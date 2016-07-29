@@ -52,6 +52,10 @@ public abstract class AbstractArtefact {
 		}
 		childrenIDs.add(artefactID);
 	}
+	
+	public void removeChild(ObjectId artefactID) {
+		childrenIDs.remove(artefactID);
+	}
 
 	public List<ObjectId> getChildrenIDs() {
 		return childrenIDs;

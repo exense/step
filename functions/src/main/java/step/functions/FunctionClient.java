@@ -3,6 +3,7 @@ package step.functions;
 import java.util.Map;
 
 import step.grid.agent.handler.MessageHandler;
+import step.grid.agent.handler.PropertyAwareMessageHandler;
 import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.client.GridClient;
 import step.grid.client.GridClient.TokenFacade;
@@ -79,8 +80,11 @@ public class FunctionClient {
 				MessageHandler h = p.get(handlerChain);
 				InputMessage inputMessage = new InputMessage();
 				inputMessage.setArgument(input.getArgument());
-				outputMessage = h.handle(null, inputMessage);
-				
+				if(h instanceof PropertyAwareMessageHandler) {
+					outputMessage = ((PropertyAwareMessageHandler)h).handle(null, function.getHandlerProperties(), inputMessage);
+				} else {
+					outputMessage = h.handle(null, inputMessage);
+				}
 			}
 			Output output = new Output();
 			output.setResult(outputMessage.getPayload());

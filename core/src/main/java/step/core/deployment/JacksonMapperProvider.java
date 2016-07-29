@@ -30,7 +30,7 @@ public class JacksonMapperProvider implements ContextResolver<ObjectMapper> {
         return mapper;
     }
  
-    private static ObjectMapper createMapper() {
+    public static ObjectMapper createMapper() {
         ObjectMapper mapper = new ObjectMapper();
 //        mapper.configure(AUTO_DETECT_GETTERS, false);
 //        mapper.configure(AUTO_DETECT_SETTERS, false);

@@ -50,7 +50,11 @@ public class FunctionRepositoryServices extends AbstractServices {
 		try {
 			ExecutionContext.setCurrentContext(createContext(getContext()));
 			Input input = new Input();		
-			input.setArgument(Json.createReader(new StringReader(argument)).readObject());
+			if(argument!=null&&argument.length()>0) {
+				input.setArgument(Json.createReader(new StringReader(argument)).readObject());				
+			} else {
+				input.setArgument(Json.createObjectBuilder().build());
+			}
 			return token.call(functionId, input);
 		} finally {
 			token.release();

@@ -96,7 +96,8 @@ public class DataTableServices extends AbstractServices {
 				functionTable.addColumn(input.getLabel(), input.getId());
 			}
 		}
-		functionTable.addJsonColumn("Actions", "_id");
+		functionTable.addColumn("Type", "handlerChain");
+		functionTable.addRowAsJson("Actions");
 		
 		
 		tables.put("executions", executions);

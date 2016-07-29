@@ -1,10 +1,10 @@
-<div id="ArtefactEditorCtrl" ng-controller="ArtefactEditorCtrl">
+<div id="ArtefactEditorCtrl" ng-controller="ArtefactEditorCtrl" class="container-fluid">
 	<div class="row">
 		<div class="col-xs-8">
 			<div class="panel panel-default">
 				<div class="panel-heading">Artefact</div>
 				<div class="panel-body">
-					<artefact handle="handle" artefactid="'5798c6eee1cf8360db453633'" />
+					<artefact handle="handle" artefactid="artefactId" />
 				</div>
 			</div>		
 		</div>
@@ -12,7 +12,23 @@
 			<div class="panel panel-default">
 				<div class="panel-heading">Available components</div>
 				<div class="panel-body">
-					<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
+						<tabset>
+							<tab heading="Controls" active="$parent.tabState['controls']">
+								<div class="panel-body">
+									<div class="row">
+										<datatable tabledef="controlsTable" handle="controlsTable" columnsearch="true" order="[[1, &quot;asc&quot;]]"/>
+									</div>								
+								</div>	
+							</tab>
+							<tab heading="Functions" active="$parent.tabState['functions']">
+								<div class="row">
+									<div class="panel-body">	
+										<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
+									</div>		
+								</div>				
+							</tab>
+						</tabset>
+					</div>
 				</div>
 			</div>
 		</div>

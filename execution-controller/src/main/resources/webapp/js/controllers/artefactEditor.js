@@ -3,9 +3,30 @@ angular.module('artefactEditor',['dataTable','step'])
 .controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $modal) {
       stateStorage.push($scope, 'artefacteditor', {});
 
+      $scope.artefactId = $scope.$state;
+            
+      $scope.tabState = {'controls':true,'functions':false};
+      
+      $scope.controlsTable = {};
+      $scope.controlsTable.columns = [ { "title" : "ID", "visible" : false },
+                                   {"title" : "Name"},
+                                   { "title" : "Actions", "width":"80px", "render": function ( data, type, row ) {
+                                	 return '<button type="button" class="btn btn-default  btn-xs" aria-label="Left Align"' + 
+                                         	'onclick="angular.element(\'#ArtefactEditorCtrl\').scope().addControl(\''+row[0]+'\')">' +
+                             				'<span class="glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>' +
+                             				'</button> '
+                                   }} ];
+      
+      $http.get("rest/controller/artefact/types").success(function(data){ 
+        var dataSet = [];
+        for (i = 0; i < data.length; i++) {
+          dataSet[i] = [ data[i], data[i], ''];
+        }
+        $scope.controlsTable.data = dataSet;
+      })
+      
+      
       $scope.handle = {};
-      
-      
       $scope.table = {};
 
       $scope.tabledef = {}
@@ -16,7 +37,7 @@ angular.module('artefactEditor',['dataTable','step'])
         _.each(_.where(columns, { 'title' : 'Name' }), function(col) {
 
         });
-        _.each(_.where(columns, { 'title' : 'Handler chain' }), function(col) {
+        _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
           col.visible = false
         });
         _.each(_.where(columns,{'title':'Actions'}),function(col){
@@ -32,6 +53,10 @@ angular.module('artefactEditor',['dataTable','step'])
       
       $scope.addFunction = function(id) {
     	$scope.handle.addFunction(id);
+      }
+      
+      $scope.addControl = function(id) {
+    	$scope.handle.addControl(id);
       }
 })
 
@@ -92,6 +117,24 @@ angular.module('artefactEditor',['dataTable','step'])
     		load();
     	  })
     		
+    	});
+      }
+      
+      $scope.handle.addControl = function(id) {
+    	var selectedArtefact = tree.get_selected(true);
+    	
+    	$http.get("rest/controller/artefact/types/"+id).success(function(artefact) {
+    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",artefact).success(function(){
+    		load();
+    	  })
+    	});
+      }
+      
+      $scope.remove = function() {
+    	var selectedArtefact = tree.get_selected(true)[0];
+    	var parentid = tree.get_parent(selectedArtefact);
+    	$http.delete("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id).success(function() {
+    	  load();
     	});
       }
       

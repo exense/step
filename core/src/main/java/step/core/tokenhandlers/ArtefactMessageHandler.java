@@ -1,6 +1,7 @@
 package step.core.tokenhandlers;
 
 import java.io.StringReader;
+import java.util.Map;
 
 import javax.json.Json;
 
@@ -12,22 +13,29 @@ import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.deployment.JacksonMapperProvider;
 import step.core.execution.ExecutionContext;
-import step.grid.agent.handler.MessageHandler;
+import step.grid.agent.handler.PropertyAwareMessageHandler;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
-public class ArtefactMessageHandler implements MessageHandler {
+public class ArtefactMessageHandler implements PropertyAwareMessageHandler {
 
 	
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public OutputMessage handle(AgentTokenWrapper token, Map<String, String> properties, InputMessage message)
+			throws Exception {
 		ExecutionContext executionContext = ExecutionContext.getCurrentContext();
 		GlobalContext globalContext = executionContext.getGlobalContext();
 		
 		
-		String artefactId = message.getArgument().getString("artefactid");
+		String artefactId = properties.get("artefactid");
 		String parentReportId = null;
 		
 		ReportNode parentNode;
@@ -47,7 +55,7 @@ public class ArtefactMessageHandler implements MessageHandler {
 		
 		output.setError(node.getError());
 		
-		ObjectMapper m = new ObjectMapper();
+		ObjectMapper m = JacksonMapperProvider.createMapper();
 		output.setPayload(Json.createReader(new StringReader(m.writeValueAsString(node))).readObject());
 		return output;
 	}

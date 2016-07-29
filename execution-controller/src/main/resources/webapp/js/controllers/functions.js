@@ -2,7 +2,7 @@ angular.module('functionsControllers',['dataTable','step'])
 
 .controller('FunctionListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal',
     function($scope, $compile, $http, $stateStorage, $interval, $modal) {
-      $stateStorage.push($scope, 'functions', {});
+      $stateStorage.push($scope, 'functions', {});	
 
       $scope.autorefresh = true;
 
@@ -22,10 +22,10 @@ angular.module('functionsControllers',['dataTable','step'])
 
             modalInstance.result.then(function (functionParams) {
                 $http.post("rest/functions",functionParams).success(function() {
-                  if()
-                		if($scope.table) {
-                			$scope.table.Datatable.ajax.reload(null, false);
-            			}
+                  
+                	if($scope.table) {
+               			$scope.table.Datatable.ajax.reload(null, false);
+            		}
                 });
 
             }, function () {});
@@ -73,6 +73,20 @@ angular.module('functionsControllers',['dataTable','step'])
             return '<a href="#/root/executions/' + row[0] + '">' + data + '</a>'
           };
         });
+        _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
+          col.render = function(data, type, row) {
+        	var function_ = JSON.parse(row[row.length-1]);
+        	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
+        	  if(function_.handlerProperties) {
+        		return '<a href="#/root/artefacteditor/' + function_.handlerProperties['artefactid'] + '">STEP-Flow</a>'
+        	  } else {
+        		return 'Unknown';
+        	  }
+        	} else {
+        	  return 'Handler'        	  
+        	}
+          };
+        });
         _.each(_.where(columns,{'title':'Actions'}),function(col){
             col.title="Actions";
             col.searchmode="none";
@@ -107,16 +121,25 @@ angular.module('functionsControllers',['dataTable','step'])
 	
   $scope.ok = function () {
 	var function_ = {"attributes":{}};
+	
+	function close() {
+	  $modalInstance.close(function_);
+	}
+	
 	_.mapObject($scope.model,function(value,key) {
 	  eval('function_.'+key+"='"+value+"'");
 	  if($scope.type=='STEP-Flow') {
-		function_.handler = "class:step.core.tokenhandlers.ArtefactMessageHandler";
+		var newArtefact = {"name":function_.attributes.name,"_class":"step.artefacts.Sequence"};
+  	  	$http.post("rest/controller/artefact",newArtefact).success(function(artefact){
+  	  	  function_.handlerChain = "class:step.core.tokenhandlers.ArtefactMessageHandler";
+  	  	  function_.handlerProperties = {"artefactid":artefact.id}
+  	  	  close();
+  	  	})
 	  } else {
-		function_.handler = $scope.handler;
+		function_.handlerChain = $scope.handler;
+		close();
 	  }
 	});
-	
-    $modalInstance.close(function_);
   };
 
   $scope.cancel = function () {
