@@ -378,10 +378,28 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}/children/{childid}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public void addChild(@PathParam("id") String parentid, @PathParam("childid") String childid) {
+	public void removeChild(@PathParam("id") String parentid, @PathParam("childid") String childid) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
 		AbstractArtefact artefact = a.get(parentid);
 		artefact.removeChild(new ObjectId(childid));
+		a.save(artefact);
+	}
+	
+	@POST
+	@Path("/artefact/{id}/children/{childid}/move")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public void moveChildUp(@PathParam("id") String parentid, @PathParam("childid") String childid, int offset) {
+		ArtefactAccessor a = getContext().getArtefactAccessor();
+		AbstractArtefact artefact = a.get(parentid);
+		
+		ObjectId child = new ObjectId(childid);
+		int pos = artefact.indexOf(child);
+		int newPos = pos+offset;
+		if(newPos>=0&&newPos<artefact.getChildrenIDs().size()) {
+			artefact.removeChild(child);
+			artefact.add(newPos, child);		
+		}
 		a.save(artefact);
 	}
 	

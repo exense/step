@@ -70,18 +70,18 @@ window.console.log = window.console.log || function(){};
 						class="icon-bar"></span> <span class="icon-bar"></span> <span
 						class="icon-bar"></span>
 				</button> -->
-				<a class="navbar-brand" href="#">STEP 2.2.7</a>
+				<a class="navbar-brand" href="#">STEP 3.0.0</a>
 			</div>
 			<div class="collapse navbar-collapse">
 				<ul class="nav navbar-nav">
+					<li ng-class="{ active: isViewActive('functions') }"><a
+						ui-sref="grid" ng-click="setView('functions')">Keywords</a></li>
 					<li ng-class="{ active: isViewActive('executions') }"><a
 						ui-sref="execution" ng-click="setView('executions')">Executions</a></li>
 					<li ng-class="{ active: isViewActive('scheduler') }"><a
 						ui-sref="scheduler" ng-click="setView('scheduler')">Scheduler</a></li>
 					<li ng-class="{ active: isViewActive('grid') }"><a
 						ui-sref="grid" ng-click="setView('grid')">Adapter Grid</a></li>
-					<li ng-class="{ active: isViewActive('functions') }"><a
-						ui-sref="grid" ng-click="setView('functions')">Functions</a></li>
 				</ul>
 				<ul class="nav navbar-nav navbar-right">
 					<li><a>{{context.userID}}</a></li>

@@ -56,6 +56,14 @@ public abstract class AbstractArtefact {
 	public void removeChild(ObjectId artefactID) {
 		childrenIDs.remove(artefactID);
 	}
+	
+	public int indexOf(ObjectId artefactID) {
+		return childrenIDs.indexOf(artefactID);
+	}
+	
+	public void add(int pos, ObjectId artefactID) {
+		childrenIDs.add(pos, artefactID);
+	}
 
 	public List<ObjectId> getChildrenIDs() {
 		return childrenIDs;

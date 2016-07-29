@@ -1,6 +1,6 @@
 angular.module('artefactEditor',['dataTable','step'])
 
-.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $modal) {
+.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $modal, $location) {
       stateStorage.push($scope, 'artefacteditor', {});
 
       $scope.artefactId = $scope.$state;
@@ -57,6 +57,10 @@ angular.module('artefactEditor',['dataTable','step'])
       
       $scope.addControl = function(id) {
     	$scope.handle.addControl(id);
+      }
+      
+      $scope.execute = function() {
+    	$location.path('/root/repository').search({repositoryId:'local',artefactid:$scope.artefactId});
       }
 })
 
@@ -134,6 +138,14 @@ angular.module('artefactEditor',['dataTable','step'])
     	var selectedArtefact = tree.get_selected(true)[0];
     	var parentid = tree.get_parent(selectedArtefact);
     	$http.delete("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id).success(function() {
+    	  load();
+    	});
+      }
+      
+      $scope.move = function(offset) {
+    	var selectedArtefact = tree.get_selected(true)[0];
+    	var parentid = tree.get_parent(selectedArtefact);
+    	$http.post("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id+"/move",offset).success(function() {
     	  load();
     	});
       }
