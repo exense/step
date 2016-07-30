@@ -9,11 +9,12 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO refactor this class
 public class Configuration {
 	
 	private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
 	
-	private static Configuration INSTANCE;
+	private static Configuration INSTANCE = new Configuration();
 	
 	private File propertyFile;
 	

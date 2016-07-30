@@ -1,5 +1,6 @@
 package step.artefacts.handlers;
 
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -16,11 +17,11 @@ public class TestStepHandlerTest extends AbstractArtefactHandlerTest {
 //	
 //	QuotaManagerMock quotaManagerMock;
 //	
-//	@Test
-//	public void test() throws Exception {
+	@Test
+	public void test() throws Exception {
 //		TestStepReportNode child = execute("<test/>", buildOutput("<Result />"), true);
 //		assertEquals(ReportNodeStatus.PASSED, child.getStatus());
-//	}
+	}
 //	
 //	@Test
 //	public void testBusinessException() throws Exception {

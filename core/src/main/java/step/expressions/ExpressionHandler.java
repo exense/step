@@ -80,14 +80,19 @@ public class ExpressionHandler {
 			}
 			long duration = System.currentTimeMillis()-t1;
 			
-			int warnThreshold = Configuration.getInstance().getPropertyAsInteger("tec.expressions.warningthreshold");
-			if(duration > warnThreshold) {
+			Integer warnThreshold = Configuration.getInstance().getPropertyAsInteger("tec.expressions.warningthreshold");
+			if(warnThreshold!=null && duration > warnThreshold) {
 				logger.warn("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
 			} else {
-				logger.debug("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
+				if(logger.isDebugEnabled()) {
+					logger.debug("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
+				}
 			}
 			
-			logger.debug("Groovy Result:\n" + result);
+			if(logger.isDebugEnabled()) {
+				logger.debug("Groovy Result:\n" + result);
+			}
+			
 			return result;
 		} catch (CompilationFailedException cfe) {
 			throw new RuntimeException(

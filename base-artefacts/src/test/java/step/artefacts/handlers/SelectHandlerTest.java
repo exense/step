@@ -24,7 +24,7 @@ public class SelectHandlerTest extends AbstractArtefactHandlerTest {
 		ExecutionContext.getCurrentContext().getVariablesManager().getVariable("var");
 		
 		Select select = new Select();
-		select.setVar("{var}");
+		select.setVar("val1");
 		add(select);
 		
 		Case c1 = new Case();
