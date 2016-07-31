@@ -44,10 +44,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 		String argumentStr = testArtefact.getArgument();
 		JsonObject argument = Json.createReader(new StringReader(argumentStr)).readObject();
 		
-		String functionName = testArtefact.getFunctionName();
+		String functionAttributesStr = testArtefact.getFunction();
+		JsonObject attributesJson = Json.createReader(new StringReader(functionAttributesStr)).readObject();
 		
 		Map<String, String> attributes = new HashMap<>();
-		attributes.put("name", functionName);
+		attributesJson.forEach((key,value)->attributes.put(key, attributesJson.getString(key)));
 		
 		Input input = new Input();
 		input.setArgument(argument);
@@ -59,9 +60,16 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 		if(o!=null && o instanceof FunctionToken) {
 			functionToken = (FunctionToken) o;
 		} else {
-			functionToken = functionClient.getFunctionToken(null, null);
+			String token = testArtefact.getToken();
+			if(token!=null && token.equals("local")) {
+				functionToken = functionClient.getLocalFunctionToken();
+			} else {
+				functionToken = functionClient.getFunctionToken(null, null);				
+			}
 			releaseTokenAfterExecution = true;
 		}
+		
+		node.setAdapter(functionToken.getToken()!=null?functionToken.getToken().getToken().getToken().getId():"local");
 		
 		try {
 			Output output = functionToken.call(attributes, input);

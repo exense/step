@@ -5,7 +5,7 @@ import static junit.framework.Assert.assertEquals;
 import org.junit.Test;
 
 import step.artefacts.IfBlock;
-import step.artefacts.SetVar;
+import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 
@@ -16,7 +16,7 @@ public class IfBlockHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		IfBlock block = add(new IfBlock("true"));
-		SetVar set = addAsChildOf(new SetVar(), block);
+		Set set = addAsChildOf(new Set(), block);
 
 		execute(block);
 		
@@ -33,7 +33,7 @@ public class IfBlockHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		IfBlock block = add(new IfBlock("false"));
-		addAsChildOf(new SetVar(), block);
+		addAsChildOf(new Set(), block);
 
 		execute(block);
 		

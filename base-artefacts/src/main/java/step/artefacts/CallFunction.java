@@ -10,20 +10,20 @@ import step.core.artefacts.DynamicAttribute;
 public class CallFunction extends AbstractArtefact {
 	
 	@DynamicAttribute
-	String functionName;
+	String function;
 	
 	@DynamicAttribute
 	String argument;
 	
 	@DynamicAttribute
-	String resultMap;
+	String token;
 
-	public String getFunctionName() {
-		return functionName;
+	public String getFunction() {
+		return function;
 	}
 
-	public void setFunctionName(String functionName) {
-		this.functionName = functionName;
+	public void setFunction(String function) {
+		this.function = function;
 	}
 
 	public String getArgument() {
@@ -34,11 +34,11 @@ public class CallFunction extends AbstractArtefact {
 		this.argument = argument;
 	}
 
-	public String getResultMap() {
-		return resultMap;
+	public String getToken() {
+		return token;
 	}
 
-	public void setResultMap(String resultMap) {
-		this.resultMap = resultMap;
+	public void setToken(String token) {
+		this.token = token;
 	}
 }

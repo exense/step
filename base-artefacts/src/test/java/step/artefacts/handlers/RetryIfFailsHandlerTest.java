@@ -8,7 +8,7 @@ import org.junit.Test;
 import step.artefacts.CheckArtefact;
 import step.artefacts.IfBlock;
 import step.artefacts.RetryIfFails;
-import step.artefacts.SetVar;
+import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
@@ -66,7 +66,7 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		IfBlock block = add(new IfBlock("false"));
-		addAsChildOf(new SetVar(), block);
+		addAsChildOf(new Set(), block);
 
 		execute(block);
 		

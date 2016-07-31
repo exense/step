@@ -1,5 +1,7 @@
 package step.artefacts.handlers;
 
+import java.util.Map;
+
 import step.artefacts.IfBlock;
 import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
 import step.artefacts.reports.IfBlockReportNode;
@@ -23,8 +25,9 @@ public class IfBlockHandler extends ArtefactHandler<IfBlock, IfBlockReportNode> 
 
 	private void evaluateExpressionAndDelegate(IfBlockReportNode node, IfBlock testArtefact, boolean execution) {
 		ExpressionHandler expressionHandler = new ExpressionHandler();
+		Map<String, Object> bindings = context.getVariablesManager().getAllVariables();
 		try {
-			Object checkResult = expressionHandler.evaluate(testArtefact.getCondition());
+			Object checkResult = expressionHandler.evaluateGroovyExpression(testArtefact.getCondition(), bindings);
 			
 			if(checkResult!=null && checkResult instanceof Boolean) {
 				if((boolean)checkResult) {

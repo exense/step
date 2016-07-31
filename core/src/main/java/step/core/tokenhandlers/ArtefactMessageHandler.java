@@ -15,6 +15,7 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.execution.ExecutionContext;
+import step.core.variables.VariableType;
 import step.grid.agent.handler.PropertyAwareMessageHandler;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.InputMessage;
@@ -34,9 +35,8 @@ public class ArtefactMessageHandler implements PropertyAwareMessageHandler {
 		ExecutionContext executionContext = ExecutionContext.getCurrentContext();
 		GlobalContext globalContext = executionContext.getGlobalContext();
 		
-		
 		String artefactId = properties.get("artefactid");
-		String parentReportId = null;
+		String parentReportId = null; // TODO message.getProperties().get("parentreportid");;
 		
 		ReportNode parentNode;
 		if(parentReportId == null) {
@@ -47,16 +47,24 @@ public class ArtefactMessageHandler implements PropertyAwareMessageHandler {
 			parentNode = globalContext.getReportAccessor().get(new ObjectId(parentReportId));
 		}
 		
+		executionContext.setCurrentReportNode(parentNode);
+		executionContext.getReportNodeCache().put(parentNode);
+		
 		AbstractArtefact artefact = globalContext.getArtefactAccessor().get(artefactId);
 		
-		ReportNode node = ArtefactHandler.delegateExecute(artefact,parentNode);
-
+		executionContext.getVariablesManager().putVariable(parentNode, "args", message.getArgument());
 		OutputMessage output = new OutputMessage();
+		executionContext.getVariablesManager().putVariable(parentNode, VariableType.RESERVED, "output", output);
 		
-		output.setError(node.getError());
+		try {
+			ReportNode node = ArtefactHandler.delegateExecute(artefact,parentNode);
+			output.setError(node.getError());			
+		} finally {
+			executionContext.getVariablesManager().removeVariable(parentNode, "output");
+		}
 		
 		ObjectMapper m = JacksonMapperProvider.createMapper();
-		output.setPayload(Json.createReader(new StringReader(m.writeValueAsString(node))).readObject());
+		//output.setPayload(Json.createReader(new StringReader(m.writeValueAsString(node))).readObject());
 		return output;
 	}
 

@@ -2,6 +2,8 @@ package step.expressions;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -13,7 +15,6 @@ import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import step.commons.conf.Configuration;
-import step.core.execution.ExecutionContext;
 
 public class ExpressionHandler {
 		
@@ -35,29 +36,42 @@ public class ExpressionHandler {
 			groovyCompilerConfiguration.setScriptBaseClass(baseScriptBase);
 		}
 	}
-
-	public String evaluateAttributeParameter(String initialValue) {
-		String replacedValue = replace(initialValue);
-		return replacedValue;
+	
+	static Pattern expressionPattern = Pattern.compile("\\[\\[(.+?)\\]\\]");
+	
+	public String evaluate(String original, Map<String, Object> bindings) {
+		StringBuffer sb = new StringBuffer();
+		Matcher m = expressionPattern.matcher(original);
+		while(m.find()) {
+			String expression = m.group(1);
+			Object result = evaluateGroovyExpression(expression, bindings);
+			if(result!=null) {
+				m.appendReplacement(sb, result.toString());				
+			} else {
+				m.appendReplacement(sb, "");
+			}
+		}
+		m.appendTail(sb);
+		return sb.toString();
 	}
 
-	public Object evaluate(String expression) {
+	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings) {
 		Object result;
 		try {			
 			logger.debug("Groovy evaluation:\n" + expression);
 
 			Binding binding = new Binding(); 
 			
-			ExecutionContext context = ExecutionContext.getCurrentContext();
-			Map<String, Object> variableMap = context.getVariablesManager().getAllVariables();
-			for(Entry<String, Object> varEntry : variableMap.entrySet()) {
-				Object value =  varEntry.getValue();
-				binding.setVariable(varEntry.getKey(), value);
+			if(bindings!=null) {
+				for(Entry<String, Object> varEntry : bindings.entrySet()) {
+					Object value =  varEntry.getValue();
+					binding.setVariable(varEntry.getKey(), value);
+				}				
 			}
 
 			long t1 = System.currentTimeMillis();	
 			try {
-				if(Configuration.getInstance().getPropertyAsBoolean("tec.expressions.usecache")) {
+				if(Configuration.getInstance().getPropertyAsBoolean("tec.expressions.usecache",true)) {
 					GroovyPoolEntry entry = GroovyPool.getINSTANCE().borrowShell(expression);
 					try {
 						Script script = entry.getScript();
@@ -100,13 +114,7 @@ public class ExpressionHandler {
 		} catch (Exception e){
 			throw new RuntimeException(
 					"Fehler waehrend Evaluierung: " + expression, e);
-
 		}
 	}
 
-	
-	private String replace(String original) {
-		// TODO implement
-		return original;
-	}
 }

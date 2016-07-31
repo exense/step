@@ -29,6 +29,9 @@ public class VariablesManager {
 		if(variableMap!=null) {
 			variableMap.remove(key);
 		}
+		if(reservedVariables.containsKey(key)) {
+			reservedVariables.remove(key);
+		}
 	}
 	
 	public void updateVariable(ReportNode node, String key, Object value) throws ImmutableVariableException {

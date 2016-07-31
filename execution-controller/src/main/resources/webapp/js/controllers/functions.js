@@ -70,7 +70,7 @@ angular.module('functionsControllers',['dataTable','step'])
         });
         _.each(_.where(columns, { 'title' : 'Name' }), function(col) {
           col.render = function(data, type, row) {
-            return '<a href="#/root/executions/' + row[0] + '">' + data + '</a>'
+            return data
           };
         });
         _.each(_.where(columns, { 'title' : 'Type' }), function(col) {

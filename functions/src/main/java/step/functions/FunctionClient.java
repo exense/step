@@ -1,5 +1,6 @@
 package step.functions;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import step.grid.agent.handler.MessageHandler;
@@ -40,7 +41,7 @@ public class FunctionClient {
 			this.token = token;
 		}
 
-		protected TokenFacade getToken() {
+		public TokenFacade getToken() {
 			return token;
 		}
 		
@@ -71,6 +72,7 @@ public class FunctionClient {
 	private Output callFunction(FunctionToken functionToken, Function function, Input input) {
 		String handlerChain = function.getHandlerChain();
 
+		Output output = new Output();
 		try {
 			OutputMessage outputMessage;
 			if(functionToken.getToken()!=null) {
@@ -86,15 +88,15 @@ public class FunctionClient {
 					outputMessage = h.handle(null, inputMessage);
 				}
 			}
-			Output output = new Output();
 			output.setResult(outputMessage.getPayload());
 			output.setError(outputMessage.getError());
 			output.setAttachments(outputMessage.getAttachments());
 			return output;
 		} catch (Exception e) {
-			// TODO typed error
-			throw new RuntimeException("Unmapped error");
+			output.setError(e.getClass().getName() + " " + e.getMessage());
+			// TODO 
 		}
+		return output;
 	}
 	
 	private void releaseFunctionToken(FunctionToken functionToken) {

@@ -117,6 +117,10 @@ public class GridClient {
 			}
 		}
 		
+		public TokenWrapper getToken() {
+			return token;
+		}
+		
 		public void release() {
 			returnAdapterTokenToRegister(token);
 		}

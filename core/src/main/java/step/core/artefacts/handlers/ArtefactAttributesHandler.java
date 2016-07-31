@@ -2,9 +2,11 @@ package step.core.artefacts.handlers;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Map;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.DynamicAttribute;
+import step.core.execution.ExecutionContext;
 import step.expressions.ExpressionHandler;
 
 public class ArtefactAttributesHandler {
@@ -12,11 +14,12 @@ public class ArtefactAttributesHandler {
 	public static AbstractArtefact evaluateAttributes(AbstractArtefact artefact) {
 		AbstractArtefact result = (AbstractArtefact) cloneBean(artefact);
 		ExpressionHandler expressionHandler = new ExpressionHandler();
-		processResolvableParameter(result, expressionHandler);
+		Map<String, Object> bindings = ExecutionContext.getCurrentContext().getVariablesManager().getAllVariables();
+		processResolvableParameter(result, expressionHandler, bindings);
 		return result;
 	}
 	
-	private static void processResolvableParameter(Object o, ExpressionHandler expressionHandler) {
+	private static void processResolvableParameter(Object o, ExpressionHandler expressionHandler, Map<String, Object> bindings) {
 		if(o!=null) {
 			Class<?> clazz = o.getClass();
 			do {
@@ -28,10 +31,10 @@ public class ArtefactAttributesHandler {
 							Object object = field.get(o);
 							if(object instanceof String) {
 								String string = (String) object;
-								String newString = expressionHandler.evaluateAttributeParameter(string);
+								String newString = expressionHandler.evaluate(string, bindings);
 								field.set(o, newString);
 							} else {	
-								processResolvableParameter(object, expressionHandler);
+								processResolvableParameter(object, expressionHandler, bindings);
 							}
 						} catch (IllegalArgumentException | IllegalAccessException e) {
 							throw new RuntimeException(e);

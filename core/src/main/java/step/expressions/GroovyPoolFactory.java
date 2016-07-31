@@ -16,7 +16,7 @@ public class GroovyPoolFactory implements KeyedPoolableObjectFactory<GroovyPoolK
 	
 	public GroovyPoolFactory() {
 		super();
-		groovyCompilerConfiguration.setScriptBaseClass("step.expressions.GroovyFunctions");	
+		//groovyCompilerConfiguration.setScriptBaseClass("step.expressions.GroovyFunctions");	
 	}
 
 	@Override

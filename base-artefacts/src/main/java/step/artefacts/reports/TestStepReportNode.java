@@ -9,9 +9,6 @@ public class TestStepReportNode extends ReportNode {
 	protected String input;
 	
 	protected String output;
-	
-	// TODO solang die Testartefacts nicht in der DB persistiert sind, wird der Expected block im ReportNode gespeichert.
-	protected String expected;
 
 	public TestStepReportNode() {
 		super();
@@ -39,13 +36,5 @@ public class TestStepReportNode extends ReportNode {
 
 	public void setOutput(String output) {
 		this.output = output;
-	}
-
-	public String getExpected() {
-		return expected;
-	}
-
-	public void setExpected(String expected) {
-		this.expected = expected;
 	}
 }

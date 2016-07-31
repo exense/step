@@ -116,7 +116,7 @@ angular.module('artefactEditor',['dataTable','step'])
     	
     	$http.get("rest/functions/"+id).success(function(function_) {
 
-    	  var newArtefact = {"name":function_.attributes.name,"functionName":function_.attributes.name,"_class":"step.artefacts.CallFunction"};
+    	  var newArtefact = {"name":function_.attributes.name,"function":JSON.stringify(function_.attributes),"token":"local","_class":"step.artefacts.CallFunction"};
     	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).success(function(){
     		load();
     	  })

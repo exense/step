@@ -7,7 +7,7 @@ import org.junit.Test;
 import step.artefacts.Case;
 import step.artefacts.IfBlock;
 import step.artefacts.Select;
-import step.artefacts.SetVar;
+import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
@@ -31,13 +31,13 @@ public class SelectHandlerTest extends AbstractArtefactHandlerTest {
 		c1.setValue("val1");
 		addAsChildOf(c1, select);
 		
-		SetVar set1 = addAsChildOf(new SetVar(), c1);
+		Set set1 = addAsChildOf(new Set(), c1);
 		
 		Case c2 = new Case();
 		c2.setValue("val2");
 		addAsChildOf(c1, select);
 		
-		SetVar set2 = addAsChildOf(new SetVar(), c1);
+		Set set2 = addAsChildOf(new Set(), c1);
 		
 		execute(select);
 		
@@ -56,7 +56,7 @@ public class SelectHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		IfBlock block = add(new IfBlock("false"));
-		addAsChildOf(new SetVar(), block);
+		addAsChildOf(new Set(), block);
 
 		execute(block);
 		
