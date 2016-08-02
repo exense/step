@@ -38,7 +38,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/")
-	public void execute(Function function) {
+	public void save(Function function) {
 		getFunctionRepository().addFunction(function);
 	}
 	

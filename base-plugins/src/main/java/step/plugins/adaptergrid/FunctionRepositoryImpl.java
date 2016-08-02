@@ -43,7 +43,7 @@ public class FunctionRepositoryImpl implements FunctionRepository {
 
 	@Override
 	public void addFunction(Function function) {
-		functions.insert(function);
+		functions.save(function);
 	}
 
 	@Override

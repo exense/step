@@ -9,34 +9,28 @@
 
 <script type="text/ng-template" id="newFunctionModalContent.html">
         <div class="modal-header">
-            <h3 class="modal-title">New Keyword</h3>
+            <h3 class="modal-title">{{mode=='edit'?'Edit':'New'}} Keyword</h3>
         </div>
 		
         <div class="modal-body">
 			<strong>{{description}}</strong>
 <form>
-	<span ng-repeat-start="input in inputs" ng-if="0" />
-		<div ng-if="input.type=='TEXT'" class="form-group">
-    		<label for="{{input.id}}">{{input.label}}</label>
-    		<input class="form-control" id="{{input.id}}" ng-model="model[input.id]" placeholder="{{input.label}}">
-  		</div>
-		<div  ng-if="input.type=='DROPDOWN'" class="form-group">
-			<label>{{input.label}}</label>
-			<select ng-model="model[input.id]" ng-options="option.value as option.value for option in input.options" class="form-control" />
-		</div>
-	<span ng-repeat-end ng-if="0" />
+	<div ng-repeat="key in getFunctionAttributes()" class="form-group">
+		<label>{{key}}</label>
+		<input ng-model="function_.attributes[key]" class="form-control form-control-sm"></input>
+	</div>
 	<div class="form-group">
 		<label>Type</label>
-		<select ng-model="type" ng-options="option as option for option in ['Composite','Handler']" class="form-control" />
+		<select ng-model="type" ng-model-options="{ getterSetter: true }" ng-options="option as option for option in ['Composite','Handler']" class="form-control" />
 	</div>
-	<div  ng-if="type=='Handler'" class="form-group">
+	<div  ng-if="type()=='Handler'" class="form-group">
 		<label>Handler chain</label>
-		<input ng-model="hanlder" ng-options="" class="form-control" />
+		<input ng-model="function_.handlerChain" ng-options="" class="form-control" />
 	</div>	
 </form>
         </div>
         <div class="modal-footer">
-			<button ng-if="type!='Handler'" class="btn btn-primary" type="button" ng-click="save(true)">Save and edit</button>
+			<button ng-if="type()!='Handler'" class="btn btn-primary" type="button" ng-click="save(true)">Save and edit</button>
             <button class="btn btn-primary" type="button" ng-click="save(false)">Save</button>
             <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
         </div>
