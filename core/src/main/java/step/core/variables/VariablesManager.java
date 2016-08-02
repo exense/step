@@ -96,6 +96,14 @@ public class VariablesManager {
 		return Integer.parseInt(o.toString());
 	}
 	
+	public Integer getVariableAsInteger(String key, Integer default_) {
+		try {
+			return getVariableAsInteger(key);			
+		} catch(UndefinedVariableException e) {
+			return default_;
+		}
+	}
+	
 	public Boolean getVariableAsBoolean(String key, boolean default_) {
 		try {
 			return getVariableAsBoolean(key);			

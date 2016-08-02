@@ -81,6 +81,7 @@ public class FunctionClient {
 				TokenHandlerPool p = new TokenHandlerPool();
 				MessageHandler h = p.get(handlerChain);
 				InputMessage inputMessage = new InputMessage();
+				inputMessage.setFunction(function.getAttributes().get("name"));
 				inputMessage.setArgument(input.getArgument());
 				if(h instanceof PropertyAwareMessageHandler) {
 					outputMessage = ((PropertyAwareMessageHandler)h).handle(null, function.getHandlerProperties(), inputMessage);

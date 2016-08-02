@@ -9,7 +9,7 @@
 
 <script type="text/ng-template" id="newFunctionModalContent.html">
         <div class="modal-header">
-            <h3 class="modal-title">New function</h3>
+            <h3 class="modal-title">New Keyword</h3>
         </div>
 		
         <div class="modal-body">
@@ -27,23 +27,24 @@
 	<span ng-repeat-end ng-if="0" />
 	<div class="form-group">
 		<label>Type</label>
-		<select ng-model="type" ng-options="option as option for option in ['STEP-Flow','Handler']" class="form-control" />
+		<select ng-model="type" ng-options="option as option for option in ['Composite','Handler']" class="form-control" />
 	</div>
 	<div  ng-if="type=='Handler'" class="form-group">
 		<label>Handler chain</label>
-		<select ng-model="hanlder" ng-options="" class="form-control" />
+		<input ng-model="hanlder" ng-options="" class="form-control" />
 	</div>	
 </form>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-primary" type="button" ng-click="ok()">OK</button>
+			<button ng-if="type!='Handler'" class="btn btn-primary" type="button" ng-click="save(true)">Save and edit</button>
+            <button class="btn btn-primary" type="button" ng-click="save(false)">Save</button>
             <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
         </div>
 </script>
 
 <script type="text/ng-template" id="executeFunctionModalContent.html">
         <div class="modal-header">
-            <h3 class="modal-title">Execute function</h3>
+            <h3 class="modal-title">Execute Keyword</h3>
         </div>
 		
         <div class="modal-body">

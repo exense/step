@@ -87,7 +87,7 @@ public class DataTableServices extends AbstractServices {
 		.addJsonColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new TestStepReportNodeFilter()).setExportColumns(leafReportNodesColumns.build());
 		
 		BackendDataTable artefactTable = new BackendDataTable(new Collection(client, "artefacts"));
-		artefactTable.addColumn("ID", "_id").addColumn("Name", "name").addJsonColumn("Attachments", "attachments").addJsonColumn("Childrens", "childrenIDs");
+		artefactTable.addColumn("ID", "_id").addColumn("Name", "name").addColumn("Type", "_class").addRowAsJson("Actions");;
 		
 		BackendDataTable functionTable = new BackendDataTable(new Collection(client, "functions"));
 		functionTable.addColumn("ID", "_id");

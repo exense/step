@@ -78,7 +78,7 @@ angular.module('functionsControllers',['dataTable','step'])
         	var function_ = JSON.parse(row[row.length-1]);
         	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
         	  if(function_.handlerProperties) {
-        		return '<a href="#/root/artefacteditor/' + function_.handlerProperties['artefactid'] + '">STEP-Flow</a>'
+        		return '<a href="#/root/artefacteditor/' + function_.handlerProperties['artefactid'] + '">Composite</a>'
         	  } else {
         		return 'Unknown';
         	  }
@@ -108,10 +108,10 @@ angular.module('functionsControllers',['dataTable','step'])
       };
     } ])
     
-.controller('newFunctionModalCtrl', function ($scope, $modalInstance, $http) {
+.controller('newFunctionModalCtrl', function ($scope, $modalInstance, $http, $location) {
 
   $scope.model = {};
-  $scope.type = "STEP-Flow";
+  $scope.type = "Composite";
   $scope.handler = '';
   
   
@@ -119,7 +119,7 @@ angular.module('functionsControllers',['dataTable','step'])
 	$scope.inputs=data;
   });	
 	
-  $scope.ok = function () {
+  $scope.save = function (editAfterSave) {
 	var function_ = {"attributes":{}};
 	
 	function close() {
@@ -128,12 +128,18 @@ angular.module('functionsControllers',['dataTable','step'])
 	
 	_.mapObject($scope.model,function(value,key) {
 	  eval('function_.'+key+"='"+value+"'");
-	  if($scope.type=='STEP-Flow') {
+	  if($scope.type=='Composite') {
 		var newArtefact = {"name":function_.attributes.name,"_class":"step.artefacts.Sequence"};
   	  	$http.post("rest/controller/artefact",newArtefact).success(function(artefact){
   	  	  function_.handlerChain = "class:step.core.tokenhandlers.ArtefactMessageHandler";
   	  	  function_.handlerProperties = {"artefactid":artefact.id}
   	  	  close();
+  	  	  
+  	  	  if(editAfterSave) {
+  	  		$location.path('/root/artefacteditor/' + function_.handlerProperties['artefactid'])
+  	  	  }
+  	  	  
+  	  	  
   	  	})
 	  } else {
 		function_.handlerChain = $scope.handler;

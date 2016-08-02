@@ -27,6 +27,7 @@ window.console.log = window.console.log || function(){};
 <script src="js/controllers.js"></script>
 <script src="js/controllers/scheduler.js"></script>
 <script src="js/controllers/grid.js"></script>
+<script src="js/controllers/artefacts.js"></script>
 <script src="js/controllers/functions.js"></script> 
 <script src="js/controllers/repository.js"></script>
 <script src="js/controllers/artefactEditor.js"></script>
@@ -74,6 +75,8 @@ window.console.log = window.console.log || function(){};
 			</div>
 			<div class="collapse navbar-collapse">
 				<ul class="nav navbar-nav">
+					<li ng-class="{ active: isViewActive('artefacts') }"><a
+						ui-sref="grid" ng-click="setView('artefacts')">Artefacts</a></li>
 					<li ng-class="{ active: isViewActive('functions') }"><a
 						ui-sref="grid" ng-click="setView('functions')">Keywords</a></li>
 					<li ng-class="{ active: isViewActive('executions') }"><a
@@ -81,7 +84,7 @@ window.console.log = window.console.log || function(){};
 					<li ng-class="{ active: isViewActive('scheduler') }"><a
 						ui-sref="scheduler" ng-click="setView('scheduler')">Scheduler</a></li>
 					<li ng-class="{ active: isViewActive('grid') }"><a
-						ui-sref="grid" ng-click="setView('grid')">Adapter Grid</a></li>
+						ui-sref="grid" ng-click="setView('grid')">Grid</a></li>
 				</ul>
 				<ul class="nav navbar-nav navbar-right">
 					<li><a>{{context.userID}}</a></li>
@@ -93,6 +96,7 @@ window.console.log = window.console.log || function(){};
 
 	<div class="container-fluid">
 		<!-- <div ui-view></div> -->
+		<div ng-if="isViewActive('artefacts')" ng-compiled-include="partials/artefactList.html"></div>
         <div ng-if="isViewActive('grid')" ng-compiled-include="partials/grid.html"></div>
         <div ng-if="isViewActive('executions')" ng-compiled-include="partials/execution.html"></div>
         <div ng-if="isViewActive('scheduler')" ng-compiled-include="partials/scheduler.html"></div>

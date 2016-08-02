@@ -3,6 +3,7 @@ package step.artefacts.handlers;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -22,6 +23,7 @@ import step.functions.Input;
 import step.functions.Output;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
+import step.grid.tokenpool.Interest;
 import step.plugins.adaptergrid.GridPlugin;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepReportNode> {
@@ -42,7 +44,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 	@Override
 	protected void execute_(TestStepReportNode node, CallFunction testArtefact) {
 		String argumentStr = testArtefact.getArgument();
-		JsonObject argument = Json.createReader(new StringReader(argumentStr)).readObject();
+		JsonObject argument;
+		if(argumentStr!=null) {
+			argument = Json.createReader(new StringReader(argumentStr)).readObject();
+		} else {
+			argument = Json.createObjectBuilder().build();
+		}
 		
 		String functionAttributesStr = testArtefact.getFunction();
 		JsonObject attributesJson = Json.createReader(new StringReader(functionAttributesStr)).readObject();
@@ -61,12 +68,21 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 			functionToken = (FunctionToken) o;
 		} else {
 			String token = testArtefact.getToken();
-			if(token!=null && token.equals("local")) {
-				functionToken = functionClient.getLocalFunctionToken();
+			if(token!=null) {
+				JsonObject selectionCriteriaJson = Json.createReader(new StringReader(token)).readObject();
+				
+				if(selectionCriteriaJson.getString("route").equals("local")) {
+					functionToken = functionClient.getLocalFunctionToken();
+				} else {
+					Map<String, Interest> selectionCriteria = new HashMap<>();
+					selectionCriteriaJson.keySet().stream().filter(e->!e.equals("route"))
+						.forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
+					functionToken = functionClient.getFunctionToken(null, selectionCriteria);				
+				}
+				releaseTokenAfterExecution = true;
 			} else {
-				functionToken = functionClient.getFunctionToken(null, null);				
+				throw new RuntimeException("Token field hasn't been specified");
 			}
-			releaseTokenAfterExecution = true;
 		}
 		
 		node.setAdapter(functionToken.getToken()!=null?functionToken.getToken().getToken().getToken().getId():"local");
@@ -75,13 +91,15 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 			Output output = functionToken.call(attributes, input);
 			if(output.getError()!=null) {
 				node.setError(output.getError());
-				for(Attachment a:output.getAttachments()) {
-					AttachmentMeta attachmentMeta;
-					try {
-						attachmentMeta = ReportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
-						node.addAttachment(attachmentMeta);					
-					} catch (AttachmentQuotaException e) {
-						logger.error("Error while converting attachment:" +a.getName(),e);
+				if(output.getAttachments()!=null) {
+					for(Attachment a:output.getAttachments()) {
+						AttachmentMeta attachmentMeta;
+						try {
+							attachmentMeta = ReportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+							node.addAttachment(attachmentMeta);					
+						} catch (AttachmentQuotaException e) {
+							logger.error("Error while converting attachment:" +a.getName(),e);
+						}
 					}
 				}
 				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);

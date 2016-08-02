@@ -1,0 +1,33 @@
+<div id="ArtefactListCtrl" ng-controller="ArtefactListCtrl">
+	<div class="row">
+	<div class="panel-body pull-right">
+		<button type="button" class="btn btn-success" ng-click="addArtefact()">New artefact</button>
+	</div>
+	</div>
+	<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="artefacts" order="[[1, &quot;desc&quot;]]" />
+</div>
+
+<script type="text/ng-template" id="newArtefactModalContent.html">
+        <div class="modal-header">
+            <h3 class="modal-title">New Artefact</h3>
+        </div>
+		
+        <div class="modal-body">
+			<strong>{{description}}</strong>
+<form>
+	<div class="form-group">
+    	<label for="name">Name</label>
+    	<input class="form-control" id="name" ng-model="name" placeholder="Name">
+  	</div>
+	<div class="form-group">
+		<label>Type</label>
+		<select ng-model="artefacttype" ng-options="option as option for option in artefactTypes" class="form-control" />
+	</div>
+</form>
+        </div>
+        <div class="modal-footer">
+			<button ng-if="type!='Handler'" class="btn btn-primary" type="button" ng-click="save(true)">Save and edit</button>
+            <button class="btn btn-primary" type="button" ng-click="save(false)">Save</button>
+            <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+        </div>
+</script>

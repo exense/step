@@ -28,7 +28,7 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	}
 
 	private void runParallel(ReportNode node, TestSet testSet, boolean execution) {
-		int numberOfThreads = ExecutionContext.getCurrentContext().getVariablesManager().getVariableAsInteger("tec.execution.threads");
+		int numberOfThreads = ExecutionContext.getCurrentContext().getVariablesManager().getVariableAsInteger("tec.execution.threads",1);
 
 		TestSetScheduler scheduler = new DefaultTestSetScheduler();
 		List<TestCaseBundle> bundles = scheduler.bundleTestCases(getChildren(testSet), numberOfThreads);
