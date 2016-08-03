@@ -16,7 +16,9 @@ public class SetHandler extends ArtefactHandler<Set, ReportNode> {
 	protected void execute_(ReportNode node, Set testArtefact) {
 		node.setStatus(ReportNodeStatus.PASSED);
 		ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
-		context.getVariablesManager().putVariable(parentNode, testArtefact.getKey(), testArtefact.getValue());
+		if(testArtefact.getKey()!=null) {
+			context.getVariablesManager().putVariable(parentNode, testArtefact.getKey(), testArtefact.getValue());			
+		}
 	}
 
 	@Override

@@ -1,0 +1,15 @@
+<configuration scan="true">
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%msg%n</pattern>
+		</encoder>
+	</appender>
+	<logger name="org.lightcouch" level="error" />
+	<logger name="org.glassfish.jersey" level="config" />
+	<logger name="org.glassfish.jersey" level="debug" />
+	<!-- <logger name="io.djigger...." level="debug" /> -->
+	
+	<root level="info">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>

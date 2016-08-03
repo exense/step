@@ -91,21 +91,21 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 			Output output = functionToken.call(attributes, input);
 			if(output.getError()!=null) {
 				node.setError(output.getError());
-				if(output.getAttachments()!=null) {
-					for(Attachment a:output.getAttachments()) {
-						AttachmentMeta attachmentMeta;
-						try {
-							attachmentMeta = ReportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
-							node.addAttachment(attachmentMeta);					
-						} catch (AttachmentQuotaException e) {
-							logger.error("Error while converting attachment:" +a.getName(),e);
-						}
-					}
-				}
 				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 			} else {
 				node.setStatus(ReportNodeStatus.PASSED);
 				node.setOutput(output.getResult()!=null?output.getResult().toString():null);
+			}
+			if(output.getAttachments()!=null) {
+				for(Attachment a:output.getAttachments()) {
+					AttachmentMeta attachmentMeta;
+					try {
+						attachmentMeta = ReportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+						node.addAttachment(attachmentMeta);					
+					} catch (AttachmentQuotaException e) {
+						logger.error("Error while converting attachment:" +a.getName(),e);
+					}
+				}
 			}
 		} finally {
 			if(releaseTokenAfterExecution) {				

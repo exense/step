@@ -14,18 +14,16 @@ import step.grid.io.OutputMessage;
 
 public class AnnotatedMethodHandler implements MessageHandler {
 
+	static Reflections reflections = new Reflections(new ConfigurationBuilder()
+            .setUrls(ClasspathHelper.forPackage("step", Thread.currentThread().getContextClassLoader()))
+            .setScanners(new MethodAnnotationsScanner()));
+	
 	public AnnotatedMethodHandler() {
 		super();
 	}
 
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
-		
-		Reflections reflections = new Reflections(new ConfigurationBuilder()
-				.addClassLoader(Thread.currentThread().getContextClassLoader())
-	            .setUrls(ClasspathHelper.forPackage("step", Thread.currentThread().getContextClassLoader()))
-	            .setScanners(new MethodAnnotationsScanner()));
-		
+	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {		
 		try {
 		Set<Method> jobSubTypes = reflections.getMethodsAnnotatedWith(Function.class);
 		for(Method m:jobSubTypes) {

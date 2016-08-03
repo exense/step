@@ -86,8 +86,6 @@ public class ControllerServer {
 	private ServletContextHandler initController() throws Exception {
 		ResourceConfig resourceConfig = new ResourceConfig();
 		resourceConfig.packages(ControllerServices.class.getPackage().getName());
-		//resourceConfig.register(JacksonFeature.class);
-		//resourceConfig.register(ObjectMapperResolver.class);
 
 		controller = new Controller();
 		

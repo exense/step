@@ -11,7 +11,10 @@ import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+
 import step.grid.RegistrationMessage;
+import step.grid.io.ObjectMapperResolver;
 
 public class RegistrationClient {
 	
@@ -25,7 +28,8 @@ public class RegistrationClient {
 		super();
 		this.registrationServer = registrationServer;
 		this.client = ClientBuilder.newClient();
-		//client.register(JacksonJsonProvider.class);
+		this.client.register(ObjectMapperResolver.class);
+		this.client.register(JacksonJsonProvider.class);
 	}
 	
 	public void sendRegistrationMessage(RegistrationMessage message) {

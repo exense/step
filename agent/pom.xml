@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>tec</artifactId>
+	<artifactId>agent</artifactId>
 	<packaging>jar</packaging>
 
 	<parent>
@@ -14,33 +14,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>core</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>base-artefacts</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>base-plugins</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-server</artifactId>
-			<version>9.2.17.v20160517</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-servlet</artifactId>
-			<version>9.2.17.v20160517</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-webapp</artifactId>
-			<version>9.2.17.v20160517</version>
+			<artifactId>grid</artifactId>
+			<version>3.0.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	
@@ -52,7 +27,7 @@
 				<configuration>
 					<archive>
 						<manifestEntries>
-							<Main-Class>step.controller.ControllerServer</Main-Class>
+							<Main-Class>step.grid.agent.Agent</Main-Class>
 						</manifestEntries>
 					</archive>
 					<appendAssemblyId>true</appendAssemblyId>

@@ -6,10 +6,8 @@ import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
-public class MethodDispatcherHandler implements MessageHandler, MessageHandlerDelegate {
+public class MethodDispatcherHandler extends MessageHandlerDelegate {
 	
-	MessageHandler delegate;
-
 	public MethodDispatcherHandler() {
 		super();
 	}
@@ -23,9 +21,4 @@ public class MethodDispatcherHandler implements MessageHandler, MessageHandlerDe
 		}
 		throw new Exception("Unable to find method '"+message.getFunction()+"' in class "+delegate.getClass());
 	}
-
-	@Override
-	public void setDelegate(MessageHandler delegate) {
-		this.delegate = delegate;
-	} 
 }

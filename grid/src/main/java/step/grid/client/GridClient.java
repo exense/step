@@ -15,6 +15,8 @@ import org.glassfish.jersey.client.ClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+
 import step.grid.AgentRef;
 import step.grid.Grid;
 import step.grid.Token;
@@ -50,6 +52,7 @@ public class GridClient {
 		
 		client = ClientBuilder.newClient();
 		client.register(ObjectMapperResolver.class);
+		client.register(JacksonJsonProvider.class);
 	}
 	
 	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {

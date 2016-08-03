@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.json.Json;
 import javax.json.JsonObject;
 
 import org.junit.Assert;

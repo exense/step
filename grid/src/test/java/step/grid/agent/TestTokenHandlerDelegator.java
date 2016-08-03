@@ -1,14 +1,11 @@
 package step.grid.agent;
 
-import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.handler.MessageHandlerDelegate;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
-public class TestTokenHandlerDelegator implements MessageHandler, MessageHandlerDelegate {
-
-	MessageHandler delegate;
+public class TestTokenHandlerDelegator extends MessageHandlerDelegate {
 	
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
@@ -16,10 +13,4 @@ public class TestTokenHandlerDelegator implements MessageHandler, MessageHandler
 		output.setError("Test error");
 		return output;
 	}
-
-	@Override
-	public void setDelegate(MessageHandler delegate) {
-		this.delegate = delegate;
-	}
-
 }

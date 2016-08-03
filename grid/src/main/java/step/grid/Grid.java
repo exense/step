@@ -13,6 +13,8 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.SimpleAffinityEvaluator;
 import step.grid.tokenpool.TokenPool;
@@ -58,7 +60,7 @@ public class Grid {
 	private void initializeServer() {
 		ResourceConfig resourceConfig = new ResourceConfig();
 		resourceConfig.packages(GridServices.class.getPackage().getName());
-		//resourceConfig.register(JacksonFeature.class);
+		resourceConfig.register(JacksonJaxbJsonProvider.class);
 		final Grid grid = this;
 		resourceConfig.register(new AbstractBinder() {	
 			@Override

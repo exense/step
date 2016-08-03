@@ -23,6 +23,8 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+
 import step.grid.Token;
 import step.grid.agent.conf.AgentConf;
 import step.grid.agent.conf.AgentConfParser;
@@ -134,7 +136,7 @@ public class Agent {
 		
 		ResourceConfig resourceConfig = new ResourceConfig();
 		resourceConfig.packages(AgentServices.class.getPackage().getName());
-		//resourceConfig.register(JacksonFeature.class);
+		resourceConfig.register(JacksonJsonProvider.class);
 		resourceConfig.register(ObjectMapperResolver.class);
 		final Agent agent = this;
 		resourceConfig.register(new AbstractBinder() {	

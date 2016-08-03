@@ -5,9 +5,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,32 +18,56 @@ public class TokenHandlerPool {
 
 	private Map<String, MessageHandler> pool = new HashMap<>();
 	
-	public MessageHandler get(String handlerKey) throws Exception {
+	public synchronized MessageHandler get(String handlerKey) throws Exception {
 		MessageHandler handler = pool.get(handlerKey); 
 		
 		if(handler==null) {
 			handler = createHandler(handlerKey);
 			pool.put(handlerKey, handler);
 		}
-
-		return handler;
+		
+		return handler;			
 	}
 
 	private static final String DELIMITER = "\\|";
 	
 	private MessageHandler createHandler(String handlerChain) throws Exception {
-		String[] handlers = handlerChain.split(DELIMITER); 
+		Iterator<String> handlerKeys = Arrays.asList(handlerChain.split(DELIMITER)).iterator();
 
-		MessageHandler previous = null;
-		for(int i=handlers.length-1;i>=0;i--) {
-			String handlerKey = handlers[i];
-			previous =  createHandler_(handlerKey, previous);
-		}
+		MessageHandler rootHandler = createHandlerRecursive(null, handlerKeys);
 		
-		return previous;
+		return rootHandler;
 	}
 
-	private MessageHandler createHandler_(String handlerKey, MessageHandler previous) throws ReflectiveOperationException, MalformedURLException,
+	private MessageHandler createHandlerRecursive(final MessageHandlerDelegate parent, Iterator<String> handlerKeys) throws Exception {
+		final String handlerKey = handlerKeys.next();
+		
+		MessageHandler handler;
+		if(parent!=null) {
+			handler = parent.runInContext(new Callable<MessageHandler>() {
+				@Override
+				public MessageHandler call() throws Exception {
+					return createHandler_(handlerKey, parent);
+				}	
+			});
+		} else {
+			handler = createHandler_(handlerKey, parent);
+		}
+		
+		if(handlerKeys.hasNext()) {
+			if(handler instanceof MessageHandlerDelegate) {
+				MessageHandlerDelegate delegator = (MessageHandlerDelegate)handler;
+				MessageHandler next = createHandlerRecursive(delegator, handlerKeys);
+				delegator.setDelegate(next);
+			} else {
+				throw new RuntimeException("The handler '"+handlerKey+"' should implement the interface MessageHandlerDelegate if used in an handler chain.");
+			}
+		}
+		
+		return handler;
+	}
+
+	private MessageHandler createHandler_(String handlerKey, MessageHandlerDelegate previous) throws ReflectiveOperationException, MalformedURLException,
 			ClassNotFoundException, InstantiationException, IllegalAccessException {
 		MessageHandler handler;
 		Matcher m = HANDLER_KEY_PATTERN.matcher(handlerKey);
@@ -55,9 +82,7 @@ public class TokenHandlerPool {
 				} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 					throw e;
 				}
-			} else if (factory.equals("classuri")) {		
-				//JarClassLoader jcl = new JarClassLoader();
-				//jcl.add(factoryKey);			
+			} else if (factory.equals("classuri")) {	
 				List<URL> urls = new ArrayList<>();
 				File f = new File(factoryKey);
 				if(f.isDirectory()) {
@@ -68,17 +93,11 @@ public class TokenHandlerPool {
 					}
 				}
 				urls.add(f.toURI().toURL());
-				
-				//(new URLClassLoader(new URL[]{new File("D:/Workspace/step/selenium-scripts-oam/target/classes/selenium-api-2.53.1.jar").toURI().toURL()})).loadClass("org.openqa.selenium.WebDriver")
-				
+								
 				ClassLoader cl = new URLClassLoader(urls.toArray(new URL[urls.size()]), Thread.currentThread().getContextClassLoader());
 				handler = new ClassLoaderMessageHandlerWrapper(cl);
 			} else {
 				throw new RuntimeException("Unknown handler factory: "+factory);
-			}
-			
-			if(handler instanceof MessageHandlerDelegate) {
-				((MessageHandlerDelegate)handler).setDelegate(previous);
 			}
 				
 		} else {

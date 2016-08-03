@@ -18,6 +18,7 @@
 		<module>../base-plugins</module>
 		<module>../base-artefacts</module>
 		<module>../execution-controller</module>
+		<module>../agent</module>
 	</modules>
 
 	<dependencies>
