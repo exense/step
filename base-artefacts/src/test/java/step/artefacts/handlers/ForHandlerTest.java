@@ -70,8 +70,7 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 			@Override
 			public void run() {
 				if(i.get()==2) {
-					ExecutionContext.getCurrentContext().getVariablesManager().updateVariable(
-							ExecutionContext.getCurrentContext().getCurrentReportNode(), "break", "true");
+					ExecutionContext.getCurrentContext().getVariablesManager().updateVariable("break", "true");
 				}
 				i.addAndGet(1);
 			}

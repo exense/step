@@ -1,0 +1,11 @@
+<QuotaManagerConfig>
+  <id>TestStep</id>
+  <quotas>
+<!--     <Quota>
+	  <id>quotaManagerTest</id>
+      <quotaKeyFunction><![CDATA[(input.parameters['quotaManagerTest']==null||input.parameters['quotaManagerTest']=='pass')?null:'']]></quotaKeyFunction>
+      <permits>0</permits>
+      <acquireTimeoutMs>0</acquireTimeoutMs>
+    </Quota> -->	
+  </quotas>
+</QuotaManagerConfig>

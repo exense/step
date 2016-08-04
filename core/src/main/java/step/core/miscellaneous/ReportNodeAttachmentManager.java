@@ -36,7 +36,7 @@ public class ReportNodeAttachmentManager {
 			Integer count;
 			try {
 				count = varManager.getVariableAsInteger(QUOTA_COUNT_VARNAME);
-				varManager.updateVariable(ExecutionContext.getCurrentContext().getReport(), QUOTA_COUNT_VARNAME, count+1); 
+				varManager.updateVariable(QUOTA_COUNT_VARNAME, count+1); 
 			} catch (UndefinedVariableException e) {
 				count = 1;
 				varManager.putVariable(context.getReportNodeTree().getRoot(), QUOTA_COUNT_VARNAME, count);				

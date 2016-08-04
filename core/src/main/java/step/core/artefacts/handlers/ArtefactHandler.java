@@ -244,4 +244,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected static Boolean asBoolean(String string, Boolean defaultValue) {
 		return string!=null&&string.length()>0?Boolean.valueOf(string):defaultValue;
 	}
+	
+	protected void fail(ReportNode node, String error) {
+		node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+		node.setError(error);
+	}
 }

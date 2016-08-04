@@ -18,7 +18,7 @@ public class SetVarHandlerTest extends AbstractArtefactHandlerTest {
 		
 		Set set = add(new Set());
 		set.setKey("var");
-		set.setValue("val1");
+		set.setExpression("'val1'");
 
 		execute(set);
 		

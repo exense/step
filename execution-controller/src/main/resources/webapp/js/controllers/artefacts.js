@@ -88,13 +88,16 @@ angular.module('artefactsControllers',['dataTable','step'])
 .controller('newArtefactModalCtrl', function ($scope, $modalInstance, $http, $location, artefactTypes) {
   $scope.artefactTypes = artefactTypes;
 	
-  $scope.save = function (editAfterSave) {
+  $scope.save = function (editAfterSave) {  
 	$http.get("rest/controller/artefact/types/"+$scope.artefacttype).success(function(artefact) {
-	  $modalInstance.close(artefact);
-	  	  
-	  if(editAfterSave) {
-	  	$location.path('/root/artefacteditor/' + artefact.id)
-	  }
+		artefact.name = $scope.name;
+		$http.post("rest/controller/artefact", artefact).success(function(artefact) {
+			$modalInstance.close(artefact);
+			
+			if(editAfterSave) {
+				$location.path('/root/artefacteditor/' + artefact.id)
+			}			
+		});
 	});
   };
 

@@ -11,8 +11,7 @@ public class Set extends AbstractArtefact {
 	@DynamicAttribute
 	private String key;
 	
-	@DynamicAttribute
-	private String value;
+	private String expression;
 	
 	public String getKey() {
 		return key;
@@ -22,11 +21,11 @@ public class Set extends AbstractArtefact {
 		this.key = key;
 	}
 
-	public String getValue() {
-		return value;
+	public String getExpression() {
+		return expression;
 	}
 
-	public void setValue(String value) {
-		this.value = value;
+	public void setExpression(String expression) {
+		this.expression = expression;
 	}
 }

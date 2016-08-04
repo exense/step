@@ -6,13 +6,13 @@ import org.junit.Test;
 
 import step.artefacts.Case;
 import step.artefacts.IfBlock;
-import step.artefacts.Select;
+import step.artefacts.Switch;
 import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 
-public class SelectHandlerTest extends AbstractArtefactHandlerTest {
+public class SwitchHandlerTest extends AbstractArtefactHandlerTest {
 	
 	@Test
 	public void testTrue() {
@@ -23,8 +23,8 @@ public class SelectHandlerTest extends AbstractArtefactHandlerTest {
 		
 		ExecutionContext.getCurrentContext().getVariablesManager().getVariable("var");
 		
-		Select select = new Select();
-		select.setVar("val1");
+		Switch select = new Switch();
+		select.setExpression("'val1'");
 		add(select);
 		
 		Case c1 = new Case();

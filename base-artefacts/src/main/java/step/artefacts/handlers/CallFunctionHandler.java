@@ -9,6 +9,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 
 import step.artefacts.CallFunction;
+import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
 import step.artefacts.reports.TestStepReportNode;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -94,7 +95,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 			} else {
 				node.setStatus(ReportNodeStatus.PASSED);
-				node.setOutput(output.getResult()!=null?output.getResult().toString():null);
+				if(output.getResult() != null) {
+					context.getVariablesManager().putVariable(node, "output", output.getResult());
+					node.setOutput(output.getResult().toString());
+				}
 			}
 			if(output.getAttachments()!=null) {
 				for(Attachment a:output.getAttachments()) {
@@ -110,6 +114,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 		} finally {
 			if(releaseTokenAfterExecution) {				
 				functionToken.release();
+			}
+
+			if(testArtefact.getChildrenIDs()!=null&&testArtefact.getChildrenIDs().size()>0) {
+				context.getVariablesManager().putVariable(node, "callReport", node);
+				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+				scheduler.execute_(node, testArtefact);				
 			}
 		}
 	}

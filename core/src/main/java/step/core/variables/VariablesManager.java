@@ -34,7 +34,7 @@ public class VariablesManager {
 		}
 	}
 	
-	public void updateVariable(ReportNode node, String key, Object value) throws ImmutableVariableException {
+	public void updateVariable(String key, Object value) throws ImmutableVariableException {
 		ReportNode currentNode = ExecutionContext.getCurrentReportNode();
 		Variable closestVariable = getVariable_(currentNode, key, true);
 		if(closestVariable!=null) {
