@@ -5,6 +5,7 @@ import step.artefacts.ForBlock;
 import step.artefacts.ForEachBlock;
 import step.datapool.excel.ExcelDataPoolImpl;
 import step.datapool.file.FileDataPoolImpl;
+import step.datapool.jdbc.SQLTableDataPool;
 import step.datapool.sequence.IntSequenceDataPoolImpl;
 
 
@@ -17,7 +18,10 @@ public class DataPoolFactory {
 		if(dataPoolConfiguration instanceof ForEachBlock) {
 			ForEachBlock forEach = (ForEachBlock) dataPoolConfiguration;
 			if(forEach.getFolder() != null && forEach.getFolder().length() > 0) {
-				result = new FileDataPoolImpl(forEach);				
+				if(forEach.getFolder().startsWith("jdbc:"))
+					result = new SQLTableDataPool(forEach);
+				else
+					result = new FileDataPoolImpl(forEach);				
 			} else {
 				result = new ExcelDataPoolImpl(forEach);
 			}

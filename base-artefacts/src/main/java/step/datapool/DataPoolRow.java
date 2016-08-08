@@ -20,4 +20,6 @@ public class DataPoolRow {
 		return value;
 	}
 
+	public String toString(){return value.toString();}
+	
 }

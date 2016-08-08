@@ -1,10 +1,5 @@
 package step.grid;
 
-import javax.json.JsonObject;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import step.grid.agent.handler.Function;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.InputMessage;
