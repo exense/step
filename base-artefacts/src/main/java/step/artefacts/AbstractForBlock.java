@@ -6,7 +6,7 @@ import step.core.artefacts.AbstractArtefact;
 
 public class AbstractForBlock extends AbstractArtefact {
 	
-	private String item;
+	private String item = "dataPool";
 	
 	@DynamicAttribute
 	private String maxFailedLoops;
@@ -15,15 +15,10 @@ public class AbstractForBlock extends AbstractArtefact {
 	private String maxLoops;
 	
 	@DynamicAttribute
-	private String parallel;
+	private String parallel = "false";
 	
 	@DynamicAttribute
-	private String threads;
-
-	// Backward compatibility
-	public void setVar(String var) {
-		this.item = var;
-	}
+	private String threads = "1";
 	
 	public void setItem(String item) {
 		this.item = item;

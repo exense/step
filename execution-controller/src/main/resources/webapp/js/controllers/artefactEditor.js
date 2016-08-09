@@ -100,7 +100,7 @@ angular.module('artefactEditor',['dataTable','step'])
         		children.push(asJSTreeNode(child))
         	  }) 	  
         	  var artefact = currentNode.artefact;
-        	  return { "id" : artefact.id, "children" : children, "text" : artefact.name }
+        	  return { "id" : artefact.id, "children" : children, "text" : artefact._class }
         	}
           
         	treeData.push(asJSTreeNode(data))
@@ -118,7 +118,7 @@ angular.module('artefactEditor',['dataTable','step'])
 
     	  var tokenDefault = function_.handlerChain.indexOf('ArtefactMessageHandler')!=-1?"{\"route\":\"local\"}":"{\"route\":\"remote\"}";
     	  
-    	  var newArtefact = {"name":function_.attributes.name,"function":JSON.stringify(function_.attributes),"token":tokenDefault,"_class":"step.artefacts.CallFunction"};
+    	  var newArtefact = {"function":JSON.stringify(function_.attributes),"token":tokenDefault,"_class":"CallFunction"};
     	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).success(function(){
     		load();
     	  })
@@ -166,22 +166,23 @@ angular.module('artefactEditor',['dataTable','step'])
     controller: function($scope,$location) {
       
       $scope.$watch('artefactid', function() {
-    	var artefactid = $scope.artefactid;
-    	
-    	$http({url:"rest/controller/artefact/"+artefactid,method:"GET"}).success(function(artefact) {
-    	  $scope.artefact = artefact;
-    	})
-    	
-    	$scope.save = function() {
-    	  $http.post("rest/controller/artefact/"+artefactid, $scope.artefact).success(function() {
-    		
-    	  });
-    	}
-    	
+        if($scope.artefactid) {
+        	var artefactid = $scope.artefactid;
+        	
+        	$http({url:"rest/controller/artefact/"+artefactid,method:"GET"}).success(function(artefact) {
+        	  $scope.artefact = artefact;
+        	})
+        	
+        	$scope.save = function() {
+        	  $http.post("rest/controller/artefact/"+artefactid, $scope.artefact).success(function() {
+        		
+        	  });
+        	}
+        }
       })
       
       $scope.getEditableArtefactProperties = function() {
-    	return _.without(_.keys($scope.artefact),'id','_id','childrenIDs','createSkeleton','_class','attachments')
+    	return _.without(_.keys($scope.artefact),'id','_id','root','attributes','childrenIDs','createSkeleton','_class','attachments')
       }
     	  
       

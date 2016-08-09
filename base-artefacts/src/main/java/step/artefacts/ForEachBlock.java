@@ -8,7 +8,7 @@ import step.core.artefacts.DynamicAttribute;
 public class ForEachBlock extends AbstractForBlock {
 	
 	@DynamicAttribute
-	String header;
+	String header = "true";
 	
 	@DynamicAttribute
 	String table;

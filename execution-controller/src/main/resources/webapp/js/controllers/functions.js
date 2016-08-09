@@ -1,7 +1,7 @@
 angular.module('functionsControllers',['dataTable','step'])
 
-.controller('FunctionListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal',
-    function($scope, $compile, $http, $stateStorage, $interval, $modal) {
+.controller('FunctionListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal', '$location',
+    function($scope, $compile, $http, $stateStorage, $interval, $modal, $location) {
       $stateStorage.push($scope, 'functions', {});	
 
       $scope.autorefresh = true;
@@ -24,9 +24,15 @@ angular.module('functionsControllers',['dataTable','step'])
       }
 
       $scope.editFunction = function(id) {
-    	$http.get("rest/functions/"+id).success(function(function_) {
-    	  openModal(function_);
-    	});
+      	$http.get("rest/functions/"+id).success(function(function_) {
+      	  openModal(function_);
+      	});
+      }
+      
+      $scope.editFlow = function(id) {
+        $scope.$apply(function() {
+          $location.path('/root/artefacteditor/' + id)
+        })
       }
       
       $scope.addFunction = function() {
@@ -92,19 +98,27 @@ angular.module('functionsControllers',['dataTable','step'])
         _.each(_.where(columns,{'title':'Actions'}),function(col){
             col.title="Actions";
             col.searchmode="none";
-            col.width="130px";
+            col.width="160px";
             col.render = function ( data, type, row ) {
+              var function_ = JSON.parse(row[row.length-1]);
             	var html = '<div class="input-group">' +
 	            	'<div class="btn-group">' +
 	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
+	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>';
+            	
+            	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
+            	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFlow(\''+function_.handlerProperties['artefactid']+'\')">' +
+                '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>';
+            	}
+            	
+            	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
 	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
 	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().deleteFunction(\''+row[0]+'\')">' +
 	            	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
 	            	'</button> ' +
 	            	'</div>' +
 	            	'</div>';
+            	
             	return html;
             }
            });
@@ -118,25 +132,26 @@ angular.module('functionsControllers',['dataTable','step'])
   $scope.mode = newFunction?"add":"edit";
   
   $scope.getFunctionAttributes = function() {
-	return _.keys($scope.function_.attributes); 
+  	return _.keys($scope.function_.attributes); 
   }
   
   $scope.type = function(value) {
-	if(value) {
-	  $scope.function_.handlerChain = (value=="Composite")?"class:step.core.tokenhandlers.ArtefactMessageHandler":"";
-	}
-	return  ($scope.function_.handlerChain&&$scope.function_.handlerChain.indexOf("ArtefactMessageHandler")!=-1)?"Composite":"Handler";
+  	if(value) {
+  	  $scope.function_.handlerChain = (value=="Composite")?"class:step.core.tokenhandlers.ArtefactMessageHandler":"";
+  	}
+  	return  ($scope.function_.handlerChain&&$scope.function_.handlerChain.indexOf("ArtefactMessageHandler")!=-1)?"Composite":"Handler";
   }
   
   if(newFunction) {
-	$scope.function_= {"attributes":{}};
-	$http.get("rest/screens/functionTable").success(function(data){
-	  _.each(data,function(input) {
-		eval('$scope.function_.'+input.id+"=''");
-	  })
-	});	
+  	$scope.function_= {"attributes":{}};
+  	$scope.type('Composite');
+  	$http.get("rest/screens/functionTable").success(function(data){
+  	  _.each(data,function(input) {
+  	    eval('$scope.function_.'+input.id+"=''");
+  	  })
+  	});	
   } else {
-	$scope.function_=function_;	
+    $scope.function_=function_;	
   } 
   
   $scope.save = function (editAfterSave) {	
@@ -153,7 +168,7 @@ angular.module('functionsControllers',['dataTable','step'])
   	  }
 	
   	  if(newFunction || !($scope.function_.handlerProperties && $scope.function_.handlerProperties.artefactid)  ) {
-  		var newArtefact = {"name":$scope.function_.attributes.name,"_class":"step.artefacts.Sequence"};
+  		var newArtefact = {"_class":"Sequence"};
   		$http.post("rest/controller/artefact",newArtefact).success(function(artefact){
 			$scope.function_.handlerProperties = {"artefactid":artefact.id}
 			closeAndEdit();

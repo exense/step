@@ -316,7 +316,6 @@ public class ControllerServices extends AbstractServices {
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
 		Class<? extends AbstractArtefact> clazz = ArtefactRegistry.getInstance().getArtefactType(type);		
 		AbstractArtefact sample = clazz.newInstance();
-		sample.setName(type);
 		getContext().getArtefactAccessor().save(sample);
 		return sample;
 	}

@@ -87,7 +87,19 @@ public class DataTableServices extends AbstractServices {
 		.addJsonColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new TestStepReportNodeFilter()).setExportColumns(leafReportNodesColumns.build());
 		
 		BackendDataTable artefactTable = new BackendDataTable(new Collection(client, "artefacts"));
-		artefactTable.addColumn("ID", "_id").addColumn("Name", "name").addColumn("Type", "_class").addRowAsJson("Actions");;
+		artefactTable.addColumn("ID", "_id");
+		if(screenTemplates!=null) {
+			for(Input input:screenTemplates.getInputsForScreen("artefactTable", null)) {
+				artefactTable.addColumn(input.getLabel(), input.getId());
+			}
+		}
+		artefactTable.addColumn("Type", "_class").addRowAsJson("Actions");
+		artefactTable.setQuery(new CollectionQueryFactory() {
+			@Override
+			public String buildAdditionalQuery(JsonObject filter) {
+				return "root: true";
+			}
+		});
 		
 		BackendDataTable functionTable = new BackendDataTable(new Collection(client, "functions"));
 		functionTable.addColumn("ID", "_id");
@@ -174,12 +186,15 @@ public class DataTableServices extends AbstractServices {
 		SearchOrder order = new SearchOrder(sortColumn.getValue(), sortDir.equals("asc")?1:-1);
 		
 		String additionalQuery;
-		if(params.containsKey("params")) {
-			JsonReader reader = Json.createReader(new StringReader(params.getFirst("params")));
-			JsonObject filter = reader.readObject();
+		if(table.getQuery()!=null) {
+			JsonObject filter = null;
+			if(params.containsKey("params")) {
+				JsonReader reader = Json.createReader(new StringReader(params.getFirst("params")));
+				filter = reader.readObject();
+			}
 			additionalQuery = table.getQuery().buildAdditionalQuery(filter);
 			queryFragments.add(additionalQuery);
-		} 
+		}
 		
 		if(params.containsKey("export")) {
 			String reportID = params.getFirst("export");

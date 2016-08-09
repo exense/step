@@ -32,7 +32,6 @@ public class ArtefactAccessor {
 	public <T extends AbstractArtefact> T  createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name, boolean copyChildren) {
 		try {
 			T artefact = artefactClass.newInstance();
-			artefact.setName(name);
 			if(copyChildren) {
 				for(ObjectId childId:parentArtefact.getChildrenIDs()) {
 					artefact.addChild(childId);

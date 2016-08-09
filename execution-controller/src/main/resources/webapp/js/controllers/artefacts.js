@@ -5,7 +5,7 @@ angular.module('artefactsControllers',['dataTable','step'])
       $stateStorage.push($scope, 'artefacts', {});	
 
       $scope.autorefresh = true;
-
+      
       $scope.editArtefact = function(id) {
     	$scope.$apply(function() {
     	  $location.path('/root/artefacteditor/' + id);
@@ -86,11 +86,23 @@ angular.module('artefactsControllers',['dataTable','step'])
     } ])
     
 .controller('newArtefactModalCtrl', function ($scope, $modalInstance, $http, $location, artefactTypes) {
+  
   $scope.artefactTypes = artefactTypes;
+  $scope.artefacttype = 'Sequence';
 	
+  $scope.attributes= {};
+  
+  $http.get("rest/screens/artefactTable").success(function(data){
+    $scope.inputs=data;
+  });	
+  
   $scope.save = function (editAfterSave) {  
 	$http.get("rest/controller/artefact/types/"+$scope.artefacttype).success(function(artefact) {
-		artefact.name = $scope.name;
+		artefact.root = true;
+		artefact.attributes = {};
+		_.mapObject($scope.attributes,function(value,key) {
+			  eval('artefact.'+key+"='"+value+"'");
+		})
 		$http.post("rest/controller/artefact", artefact).success(function(artefact) {
 			$modalInstance.close(artefact);
 			

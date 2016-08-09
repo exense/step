@@ -10,17 +10,11 @@ public class CheckArtefact extends AbstractArtefact {
 
 	public CheckArtefact() {
 		super();
-		// TODO Auto-generated constructor stub
-	}
-
-	public CheckArtefact(Runnable executionRunnable) {
-		this(null, executionRunnable);
 	}
 	
-	public CheckArtefact(String name, Runnable executionRunnable) {
+	public CheckArtefact(Runnable executionRunnable) {
 		super();
 		this.executionRunnable = executionRunnable;
-		this.name = name;
 	}
 
 	public Runnable getExecutionRunnable() {

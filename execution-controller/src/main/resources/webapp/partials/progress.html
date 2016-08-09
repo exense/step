@@ -58,7 +58,7 @@
 		<ul class="list-unstyled">
 			<li>
 				<strong>Description</strong>
-				<span>{{execution.description}}</span>
+				<span><a ng-href="#/root/artefacteditor/{{execution.artefactID}}">{{execution.description}}</a></span>
 			</li>
 			<li ng-repeat="(key, value) in execution.executionParameters.customParameters">
 				<strong>{{key}}</strong>
@@ -85,7 +85,7 @@
 				<span>{{execution._id}}</span>
 			</li>
 			<li>
-				<strong>Artefact</strong>
+				<strong>Origin</strong>
 				<span>Repository={{execution.executionParameters.artefact.repositoryID}}</span>
 				<span ng-repeat="(key, value) in execution.executionParameters.artefact.repositoryParameters">
 					{{key}}={{value}}

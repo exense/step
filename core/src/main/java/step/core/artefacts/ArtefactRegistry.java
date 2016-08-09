@@ -28,7 +28,7 @@ public class ArtefactRegistry {
 	Map<String, Class<? extends AbstractArtefact>> register = new HashMap<>();
 	
 	public void register(Class<? extends AbstractArtefact> artefact) {
-		register.put(getName(artefact), artefact);
+		register.put(getArtefactName(artefact), artefact);
 	}
 	
 	public Set<String> getArtefactNames() {
@@ -39,7 +39,7 @@ public class ArtefactRegistry {
 		return register.get(name);
 	}
 	
-	private static String getName(Class<? extends AbstractArtefact> artefactClass) {
+	public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {
 		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
 		return annotation.name().length()>0?annotation.name():artefactClass.getSimpleName();
 	}

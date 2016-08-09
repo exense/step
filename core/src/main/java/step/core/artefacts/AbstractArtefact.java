@@ -9,14 +9,16 @@ import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 
-@JsonTypeInfo(use=Id.CLASS,property="_class")
+@JsonTypeInfo(use=Id.CUSTOM,property="_class")
+@JsonTypeIdResolver(ArtefactTypeIdResolver.class)
 public abstract class AbstractArtefact {
 	
 	public ObjectId _id;
 	
-	protected String name;
-	
+	protected Map<String, String> attributes;
+		
 	protected List<ObjectId> childrenIDs;
 	
 	protected Map<String, String> customAttributes;
@@ -24,6 +26,8 @@ public abstract class AbstractArtefact {
 	protected List<ObjectId> attachments;
 	
 	protected boolean createSkeleton = false;
+	
+	protected boolean root;
 		
 	public AbstractArtefact() {
 		super();
@@ -37,15 +41,15 @@ public abstract class AbstractArtefact {
 	public void setId(ObjectId _id) {
 		this._id = _id;
 	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
 	
+	public Map<String, String> getAttributes() {
+		return attributes;
+	}
+
+	public void setAttributes(Map<String, String> attributes) {
+		this.attributes = attributes;
+	}
+
 	public void addChild(ObjectId artefactID) {
 		if(childrenIDs==null) {
 			childrenIDs = new ArrayList<>();
@@ -67,6 +71,14 @@ public abstract class AbstractArtefact {
 
 	public List<ObjectId> getChildrenIDs() {
 		return childrenIDs;
+	}
+
+	public boolean isRoot() {
+		return root;
+	}
+
+	public void setRoot(boolean root) {
+		this.root = root;
 	}
 
 	public String getCustomAttribute(String key) {

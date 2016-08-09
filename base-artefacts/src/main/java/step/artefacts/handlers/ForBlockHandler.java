@@ -6,8 +6,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import step.artefacts.AbstractForBlock;
 import step.artefacts.Sequence;
@@ -24,8 +22,6 @@ import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
 
 public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockReportNode> {
-	
-	Pattern itemPattern = Pattern.compile("^\\{(.+?)\\}$");
 	
 	private static final String BREAK_VARIABLE = "break";
 	
@@ -46,7 +42,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 				count++;
 	
 				HashMap<String, Object> newVariable = new HashMap<>();
-				newVariable.put(getItemName(testArtefact), nextValue.getValue());
+				newVariable.put(testArtefact.getItem(), nextValue.getValue());
 				
 				ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
 				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+nextValue.getRowNum());
@@ -152,7 +148,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					}
 	
 					HashMap<String, Object> newVariable = new HashMap<>();
-					newVariable.put(getItemName(testArtefact), nextValue.getValue());
+					newVariable.put(testArtefact.getItem(), nextValue.getValue());
 					
 					ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
 					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+nextValue.getRowNum());
@@ -172,25 +168,8 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		}
 	}
 	
-	private String getItemName(AbstractForBlock artefact) {
-		String itemName;
-		String itemStr = artefact.getItem();
-		if(itemStr!=null) {
-			Matcher matcher = itemPattern.matcher(itemStr);
-			if(matcher.matches()) {
-				itemName = matcher.group(1);
-			} else {
-				itemName = itemStr;
-			}
-		} else {
-			itemName = "dataPool";
-		}		
-		return itemName;
-	}
-
 	@Override
 	public ForBlockReportNode createReportNode_(ReportNode parentNode, AbstractForBlock testArtefact) {
 		return new ForBlockReportNode();
 	}
-
 }

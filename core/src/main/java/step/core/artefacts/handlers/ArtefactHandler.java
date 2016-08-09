@@ -15,6 +15,7 @@ import step.attachments.AttachmentManager;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactFilter;
+import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -201,7 +202,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private REPORT_NODE createReportNode(ReportNode parentNode, ARTEFACT testArtefact) {
 		REPORT_NODE node = createReportNode_(parentNode, testArtefact);
 		node._id = new ObjectId();
-		node.setName(testArtefact.getName());
+		node.setName(testArtefact.getAttributes()!=null?testArtefact.getAttributes().get("name"):ArtefactRegistry.getArtefactName(testArtefact.getClass()));
 		node.setParentID(parentNode.getId());
 		node.setArtefactID(testArtefact.getId());
 		node.setExecutionID(context.getExecutionId().toString());

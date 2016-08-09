@@ -3,6 +3,7 @@ package step.core.execution;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import step.core.artefacts.AbstractArtefact;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
@@ -33,7 +34,8 @@ public class ExecutionStatusManager {
 		if(context.getArtefact()!=null) {
 			execution.setArtefactID(context.getArtefact().getId().toString());
 			if(execution.getDescription()==null) {
-				execution.setDescription(context.getArtefact().getName());
+				AbstractArtefact artefact = context.getArtefact();
+				execution.setDescription(artefact.getAttributes()!=null?artefact.getAttributes().get("name"):null);
 			}
 		}
 		accessor.save(execution);

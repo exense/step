@@ -87,7 +87,7 @@ public class RepositoryObjectManager {
 			AbstractArtefact artefact = artefactAccessor.get(new ObjectId(artefactid));
 			
 			ArtefactInfo info = new ArtefactInfo();
-			info.setName(artefact.getName());
+			info.setName(artefact.getAttributes()!=null?artefact.getAttributes().get("name"):null);
 			return info;
 		} else {
 			return RepositoryObjectManager.executeRequest(ref, "/artefact/info", ArtefactInfo.class);

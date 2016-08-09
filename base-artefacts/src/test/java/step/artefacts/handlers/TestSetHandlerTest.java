@@ -46,7 +46,7 @@ public class TestSetHandlerTest extends AbstractArtefactHandlerTest {
 		int nChilds = 20;
 		
 		for(int j=0;j<nChilds;j++) {
-			addAsChildOf(new CheckArtefact(childNamePattern.replace("{childID}", Integer.toString(j)), new Runnable() {
+			addAsChildOf(new CheckArtefact(new Runnable() {
 				@Override
 				public void run() {
 					synchronized (threadIdSet) {

@@ -6,7 +6,9 @@
   {"id":"executionParameters.customParameters.profile","label":"Profile"}
 ],
 "functionTable":[
-	{"id":"attributes.name","label":"Name","type":"TEXT"},
-    {"id":"attributes.version","label":"Version","type":"TEXT"}
+  {"id":"attributes.name","label":"Name","type":"TEXT"}
+],
+"artefactTable":[
+  {"id":"attributes.name","label":"Name","type":"TEXT"}
 ]
 }
