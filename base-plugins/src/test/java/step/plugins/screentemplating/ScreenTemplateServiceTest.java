@@ -6,6 +6,7 @@ import java.util.List;
 
 import junit.framework.Assert;
 
+import org.eclipse.jetty.server.Handler;
 import org.junit.Test;
 
 import step.core.Controller.ServiceRegistrationCallback;
@@ -19,6 +20,9 @@ public class ScreenTemplateServiceTest {
 		dummyContext.setServiceRegistrationCallback(new ServiceRegistrationCallback() {
 			@Override
 			public void registerService(Class<?> serviceClass) {}
+
+			@Override
+			public void registerHandler(Handler handler) {}
 		});
 		ScreenTemplatePlugin s = new ScreenTemplatePlugin();
 		s.executionControllerStart(dummyContext);

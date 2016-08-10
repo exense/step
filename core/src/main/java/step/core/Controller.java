@@ -2,6 +2,7 @@ package step.core;
 
 import java.util.List;
 
+import org.eclipse.jetty.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,6 +105,8 @@ public class Controller {
 	public interface ServiceRegistrationCallback {
 		
 		public void registerService(Class<?> serviceClass);
+		
+		public void registerHandler(Handler handler);
 	}
 	
 }

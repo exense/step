@@ -12,6 +12,8 @@ public class OutputMessage {
 	private String error;
 	
 	private List<Attachment> attachments;
+	
+	private List<Measure> measures;
 
 	public OutputMessage() {
 		super();
@@ -46,5 +48,13 @@ public class OutputMessage {
 
 	public void setAttachments(List<Attachment> attachments) {
 		this.attachments = attachments;
+	}
+
+	public List<Measure> getMeasures() {
+		return measures;
+	}
+
+	public void setMeasures(List<Measure> measures) {
+		this.measures = measures;
 	}
 }

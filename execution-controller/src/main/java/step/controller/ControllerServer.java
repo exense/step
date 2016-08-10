@@ -32,6 +32,8 @@ public class ControllerServer {
 	
 	private Server server;
 	
+	private ContextHandlerCollection handlers;
+	
 	private Integer port;
 	
 	public static void main(String[] args) throws Exception {
@@ -62,28 +64,27 @@ public class ControllerServer {
 
 	public void start() throws Exception {
 		server = new Server(port);
+		handlers = new ContextHandlerCollection();
 
-		ServletContextHandler context = initController();
-		ContextHandler webappContext = initWebapp();
-		ContextHandler fileServletCtx = initDownloadServlet();
+		initController();
+		initWebapp();
+		initDownloadServlet();
 		
-		ContextHandlerCollection contexts = new ContextHandlerCollection();
-        contexts.setHandlers(new Handler[] { context, webappContext, fileServletCtx });
-		server.setHandler(contexts);
-
+		server.setHandler(handlers);
 		server.start();
 	}
 
-	private ContextHandler initWebapp() throws Exception {
+	private void initWebapp() throws Exception {
 		ResourceHandler bb = new ResourceHandler();
 		bb.setResourceBase(Resource.newClassPathResource("webapp").getURI().toString());
 		
 		ContextHandler ctx = new ContextHandler("/"); /* the server uri path */
 		ctx.setHandler(bb);
-		return ctx;
+		
+		addHandler(ctx);
 	}
 
-	private ServletContextHandler initController() throws Exception {
+	private void initController() throws Exception {
 		ResourceConfig resourceConfig = new ResourceConfig();
 		resourceConfig.packages(ControllerServices.class.getPackage().getName());
 
@@ -92,6 +93,11 @@ public class ControllerServer {
 		controller.init(new ServiceRegistrationCallback() {
 			public void registerService(Class<?> serviceClass) {
 				resourceConfig.registerClasses(serviceClass);
+			}
+
+			@Override
+			public void registerHandler(Handler handler) {
+				addHandler(handler);
 			}
 		});
 		
@@ -113,17 +119,18 @@ public class ControllerServer {
 		context.setContextPath("/rest");
 		context.addServlet(sh, "/*");
 
-		
-		
-		
-		return context;
+		addHandler(context);
 	}
 	
-	private ServletContextHandler initDownloadServlet() {
+	private synchronized void addHandler(Handler handler) {
+		handlers.addHandler(handler);
+	}
+	
+	private void initDownloadServlet() {
 		ServletHolder downloadServlet = new ServletHolder(new DownloadFileServlet());
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/files");
 		context.addServlet(downloadServlet, "/*");
-		return context;
+		addHandler(context);
 	}
 }
