@@ -164,7 +164,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       };
       
       var reportNodeRenderer = {
-          'step.artefacts.reports.TestStepReportNode' : {
+          'step.artefacts.reports.CallFunctionReportNode' : {
             renderer: function (reportNode) {
               var html = "";
               if(reportNode.name)

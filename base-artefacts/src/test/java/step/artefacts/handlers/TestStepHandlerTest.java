@@ -19,34 +19,34 @@ public class TestStepHandlerTest extends AbstractArtefactHandlerTest {
 //	
 	@Test
 	public void test() throws Exception {
-//		TestStepReportNode child = execute("<test/>", buildOutput("<Result />"), true);
+//		CallFunctionReportNode child = execute("<test/>", buildOutput("<Result />"), true);
 //		assertEquals(ReportNodeStatus.PASSED, child.getStatus());
 	}
 //	
 //	@Test
 //	public void testBusinessException() throws Exception {
-//		TestStepReportNode child = execute("<test/>", outputBuilder().setBusinessError("Test Error").build(), true);
+//		CallFunctionReportNode child = execute("<test/>", outputBuilder().setBusinessError("Test Error").build(), true);
 //		assertEquals(ReportNodeStatus.FAILED, child.getStatus());
 //	}
 //	
 //	@Test
 //	public void testTechnicalException() throws Exception {
-//		TestStepReportNode child = execute("<test/>", outputBuilder().setTechnicalError("Test Error").build(), true);
+//		CallFunctionReportNode child = execute("<test/>", outputBuilder().setTechnicalError("Test Error").build(), true);
 //		assertEquals(ReportNodeStatus.TECHNICAL_ERROR, child.getStatus());
 //	}
 //	
 //	@Test
 //	public void testSkipped() throws Exception {
-//		TestStepReportNode child = execute("<test Para1=\"SKIP\"/>", null, false);
+//		CallFunctionReportNode child = execute("<test Para1=\"SKIP\"/>", null, false);
 //		assertEquals(ReportNodeStatus.PASSED, child.getStatus());
 //	}
 //	
-//	private void genericChecks(TestStepReportNode child) {
+//	private void genericChecks(CallFunctionReportNode child) {
 //		assertEquals(quotaManagerMock.getAcquiredPermit(), quotaManagerMock.getReleasedPermit());	
 //		assertEquals(s.getInput(),child.getInput());
 //	}
 //	
-//	private TestStepReportNode execute(String input, Output output, boolean adapterCall) throws Exception {
+//	private CallFunctionReportNode execute(String input, Output output, boolean adapterCall) throws Exception {
 //		setupContext();
 //
 //		quotaManagerMock = new QuotaManagerMock();
@@ -90,7 +90,7 @@ public class TestStepHandlerTest extends AbstractArtefactHandlerTest {
 //		execute(s);
 //		
 //		Assert.assertTrue(adapterCall?b.get():!b.get());
-//		TestStepReportNode child = (TestStepReportNode) getFirstReportNode();
+//		CallFunctionReportNode child = (CallFunctionReportNode) getFirstReportNode();
 //		
 //		genericChecks(child);
 //		DocumentTransformer t = new DocumentTransformer();

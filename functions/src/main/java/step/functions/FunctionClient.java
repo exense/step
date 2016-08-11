@@ -73,6 +73,7 @@ public class FunctionClient {
 		String handlerChain = function.getHandlerChain();
 
 		Output output = new Output();
+		output.setFunction(function);
 		try {
 			OutputMessage outputMessage;
 			if(functionToken.getToken()!=null) {
@@ -92,6 +93,7 @@ public class FunctionClient {
 			output.setResult(outputMessage.getPayload());
 			output.setError(outputMessage.getError());
 			output.setAttachments(outputMessage.getAttachments());
+			output.setMeasures(outputMessage.getMeasures());
 			return output;
 		} catch (Exception e) {
 			output.setError(e.getClass().getName() + " " + e.getMessage());

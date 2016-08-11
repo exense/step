@@ -1,6 +1,6 @@
 package step.artefacts.handlers.teststep;
 
-import step.artefacts.reports.TestStepReportNode;
+import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.reports.ReportNode;
 import step.plugins.progressunit.ProgressView;
 
@@ -10,7 +10,7 @@ public class TestStepProgressView implements ProgressView {
 		
 	@Override
 	public void skeletonReportNodeCreated(ReportNode node) {
-		if(node instanceof TestStepReportNode) {
+		if(node instanceof CallFunctionReportNode) {
 			max++;
 		}
 	}

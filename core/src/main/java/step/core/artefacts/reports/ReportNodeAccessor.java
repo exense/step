@@ -75,7 +75,7 @@ public class ReportNodeAccessor {
 	public Iterator<ReportNode> getLeafReportNodesByExecutionID(String executionID) {
 		assert executionID != null;
 		return reports.find(
-				"{executionID: #, $or: [ { _class: 'step.commons.model.report.TestStepReportNode' }, { status: 'TECHNICAL_ERROR'} ]}", executionID)
+				"{executionID: #, $or: [ { _class: 'step.commons.model.report.CallFunctionReportNode' }, { status: 'TECHNICAL_ERROR'} ]}", executionID)
 				.sort("{executionTime: 1}").as(ReportNode.class).iterator();
 	}
 	
@@ -90,7 +90,7 @@ public class ReportNodeAccessor {
 //		Iterator<ReportNode> filterIt = new FilterIterator<ReportNode>(treeIt, new ObjectFilter<ReportNode>() {
 //			@Override
 //			public boolean matches(ReportNode o) {
-//				return ((o instanceof TestStepReportNode) || o.getStatus() == ReportNodeStatus.TECHNICAL_ERROR); 
+//				return ((o instanceof CallFunctionReportNode) || o.getStatus() == ReportNodeStatus.TECHNICAL_ERROR); 
 //			}
 //		});
 //		return filterIt;
@@ -121,7 +121,7 @@ public class ReportNodeAccessor {
 			}
 			query.append("]},");
 		}
-		query.append("{$or: [ { _class: 'step.artefacts.reports.TestStepReportNode' }, { status: 'TECHNICAL_ERROR'} ]}]}");
+		query.append("{$or: [ { _class: 'step.artefacts.reports.CallFunctionReportNode' }, { status: 'TECHNICAL_ERROR'} ]}]}");
 		
 		return reports.find(query.toString(), executionID).sort("{executionTime: 1}").as(ReportNode.class).iterator();
 	}
@@ -138,13 +138,13 @@ public class ReportNodeAccessor {
 	
 	public Iterator<ReportNode> getFailedLeafReportNodesByExecutionID(String executionID) {
 		assert executionID != null;
-		return reports.find("{executionID: #, $or: [ { _class: 'step.commons.model.report.TestStepReportNode', status: {$ne:'PASSED'}}, { status: 'TECHNICAL_ERROR'} ]}", executionID)
+		return reports.find("{executionID: #, $or: [ { _class: 'step.commons.model.report.CallFunctionReportNode', status: {$ne:'PASSED'}}, { status: 'TECHNICAL_ERROR'} ]}", executionID)
 				.sort("{executionTime: 1}").as(ReportNode.class).iterator();
 	}
 	
 	// TODO check if still working
 	public DataTable getTimeBasedReport(String executionID, int resolution) {
-		String reportNodeClass = "step.artefacts.reports.TestStepReportNode";
+		String reportNodeClass = "step.artefacts.reports.CallFunctionReportNode";
 		DataTable t = new DataTable();
 		final double normalizationFactor = (1.0*resolution)/1000;
 				

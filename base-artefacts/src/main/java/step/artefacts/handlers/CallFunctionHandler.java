@@ -10,7 +10,7 @@ import javax.json.JsonObject;
 
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
-import step.artefacts.reports.TestStepReportNode;
+import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
@@ -27,7 +27,7 @@ import step.grid.io.AttachmentHelper;
 import step.grid.tokenpool.Interest;
 import step.plugins.adaptergrid.GridPlugin;
 
-public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepReportNode> {
+public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
 	public static final String STEP_NODE_KEY = "currentStep";
 	
@@ -36,15 +36,18 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 	}
 
 	@Override
-	protected void createReportSkeleton_(TestStepReportNode parentNode, CallFunction testArtefact) {
+	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {
 		// TODO Auto-generated method stub
 		
 	}
 
 
 	@Override
-	protected void execute_(TestStepReportNode node, CallFunction testArtefact) {
+	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) {
 		String argumentStr = testArtefact.getArgument();
+		
+		node.setInput(argumentStr);
+		
 		JsonObject argument;
 		if(argumentStr!=null) {
 			argument = Json.createReader(new StringReader(argumentStr)).readObject();
@@ -88,8 +91,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 		
 		node.setAdapter(functionToken.getToken()!=null?functionToken.getToken().getToken().getToken().getId():"local");
 		
+		
 		try {
 			Output output = functionToken.call(attributes, input);
+			node.setName(output.getFunction().getAttributes().get("name"));
+			node.setFunctionId(output.getFunction().getId().toString());
 			if(output.getError()!=null) {
 				node.setError(output.getError());
 				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
@@ -111,6 +117,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 					}
 				}
 			}
+			if(output.getMeasures()!=null) {
+				node.setMeasures(output.getMeasures());
+			}
 		} finally {
 			if(releaseTokenAfterExecution) {				
 				functionToken.release();
@@ -126,7 +135,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, TestStepR
 
 
 	@Override
-	public TestStepReportNode createReportNode_(ReportNode parentNode, CallFunction testArtefact) {
-		return new TestStepReportNode();
+	public CallFunctionReportNode createReportNode_(ReportNode parentNode, CallFunction testArtefact) {
+		return new CallFunctionReportNode();
 	}
 }

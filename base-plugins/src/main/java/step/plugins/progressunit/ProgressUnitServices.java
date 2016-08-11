@@ -20,7 +20,7 @@ public class ProgressUnitServices extends AbstractServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Progress getProgress(@PathParam("id") String executionID) {
-		String reportNodeClass = "step.artefacts.reports.TestStepReportNode";
+		String reportNodeClass = "step.artefacts.reports.CallFunctionReportNode";
 		ExecutionRunnable task = getExecutionRunnable(executionID);
 		Progress p = new Progress();
 		p.setReportNodeStatus(getStatusReport(executionID, reportNodeClass));

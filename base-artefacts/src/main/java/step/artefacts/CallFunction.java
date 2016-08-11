@@ -1,12 +1,12 @@
 package step.artefacts;
 
 import step.artefacts.handlers.CallFunctionHandler;
-import step.artefacts.reports.TestStepReportNode;
+import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.DynamicAttribute;
 
-@Artefact(handler = CallFunctionHandler.class, report = TestStepReportNode.class)
+@Artefact(handler = CallFunctionHandler.class, report = CallFunctionReportNode.class)
 public class CallFunction extends AbstractArtefact {
 	
 	@DynamicAttribute
