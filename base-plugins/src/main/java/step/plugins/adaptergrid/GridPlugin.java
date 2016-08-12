@@ -27,7 +27,7 @@ public class GridPlugin extends AbstractPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		
-		Integer gridPort = Configuration.getInstance().getPropertyAsInteger("grid.port");
+		Integer gridPort = Configuration.getInstance().getPropertyAsInteger("grid.port",8081);
 		
 		Grid grid = new Grid(gridPort);
 		grid.start();

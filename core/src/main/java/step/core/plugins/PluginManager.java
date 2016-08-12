@@ -56,7 +56,7 @@ public class PluginManager implements InvocationHandler{
 				try {
 					method.invoke(plugin, args);
 				} catch (Throwable e) {
-					logger.error("Error invoking method #" + method.getName() + " of plugin '" + plugin.getClass().getName() + "'" + "(" + e.toString() + ")");
+					logger.error("Error invoking method #" + method.getName() + " of plugin '" + plugin.getClass().getName() + "'" + "(" + e.toString() + ")", e);
 				}
 			}
 		}

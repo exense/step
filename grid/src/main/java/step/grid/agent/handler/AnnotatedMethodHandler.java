@@ -14,12 +14,14 @@ import step.grid.io.OutputMessage;
 
 public class AnnotatedMethodHandler implements MessageHandler {
 
-	static Reflections reflections = new Reflections(new ConfigurationBuilder()
-            .setUrls(ClasspathHelper.forPackage("step", Thread.currentThread().getContextClassLoader()))
-            .setScanners(new MethodAnnotationsScanner()));
+	Reflections reflections;
 	
 	public AnnotatedMethodHandler() {
 		super();
+		
+		reflections = new Reflections(new ConfigurationBuilder()
+	            .setUrls(ClasspathHelper.forPackage("", Thread.currentThread().getContextClassLoader()))
+	            .setScanners(new MethodAnnotationsScanner()));
 	}
 
 	@Override

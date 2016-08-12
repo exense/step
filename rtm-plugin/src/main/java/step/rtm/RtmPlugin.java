@@ -33,7 +33,7 @@ public class RtmPlugin extends AbstractPlugin {
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
 				
-		webappCtx.setWar(Resource.newClassPathResource("rtm-0.3.0.3.war").getURI().toString());
+		webappCtx.setWar(Resource.newClassPathResource("rtm-0.3.0.3").getURI().toString());
 		webappCtx.setParentLoaderPriority(true);
 		context.getServiceRegistrationCallback().registerHandler(webappCtx);
 		

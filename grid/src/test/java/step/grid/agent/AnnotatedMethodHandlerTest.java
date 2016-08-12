@@ -17,7 +17,7 @@ public class AnnotatedMethodHandlerTest extends AbstractGridTest {
 		final String handler = "class:step.grid.agent.handler.AnnotatedMethodHandler";
 		JsonObject o = newDummyJson();
 		OutputMessage outputMessage = client.getToken().processAndRelease("testFunction", o, handler, null);
-		Assert.assertEquals(outputMessage.getPayload(), o);
+		Assert.assertEquals(o,outputMessage.getPayload());
 	}
 	
 	@Function(name="testFunction")

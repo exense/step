@@ -3,7 +3,7 @@
 {"capacity":10, 
 "tokenConf":{
 	"attributes":{"key":"val"},
-	"properties":{"phantomjs.binary.path":"C:/Users/EX3CV/Programs/phantomjs-2.1.1-windows/bin/phantomjs.exe","tokenhandler.default":"classuri:C:/Users/EX3CV/Programs/selenium-java-2.53.1/selenium-2.53.1/libs/|class:step.grid.agent.handler.AnnotatedMethodHandler"}}
+	"properties":{}}
 }
 ]
 }

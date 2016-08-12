@@ -1,6 +1,6 @@
 {
 "executionParameters":[
-  {"id":"usr","options":["ex3cv"]}
+  {"id":"env","options":["TEST","PROD"],"label":"Environment"}
 ],
 "executionTable":[
   {"id":"executionParameters.customParameters.profile","label":"Profile"}
