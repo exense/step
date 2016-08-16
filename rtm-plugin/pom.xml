@@ -28,6 +28,11 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>step</groupId>
+			<artifactId>grid</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.rtm</groupId>
 			<artifactId>rtm-commons</artifactId>
 			<version>0.3.0.3</version>

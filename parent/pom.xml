@@ -19,6 +19,7 @@
 		<module>../base-artefacts</module>
 		<module>../execution-controller</module>
 		<module>../agent</module>
+		<module>../distribution</module>
 	</modules>
 
 	<dependencies>

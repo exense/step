@@ -1,14 +1,15 @@
-package step.grid.agent;
+package step.script;
 
 import javax.json.JsonObject;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import step.grid.agent.handler.Function;
+import step.grid.agent.AbstractGridTest;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+import step.script.Function;
 
 public class AnnotatedMethodHandlerTest extends AbstractGridTest {
 	

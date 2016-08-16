@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	
-	<artifactId>functions</artifactId>
+
+	<artifactId>selenium-script-api</artifactId>
 	<packaging>jar</packaging>
 
 	<parent>
@@ -10,33 +10,33 @@
 		<version>3.0.0</version>
 		<relativePath>../parent</relativePath>
 	</parent>
-
+	
 	<dependencies>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>grid</artifactId>
+			<artifactId>script-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>step</groupId>
-			<artifactId>commons</artifactId>
-			<version>${project.version}</version>
+		    <groupId>org.seleniumhq.selenium</groupId>
+		    <artifactId>selenium-api</artifactId>
+		    <version>2.53.1</version>
 		</dependency>
 		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>bson</artifactId>
-			<version>2.11.3</version>
+		    <groupId>com.jayway.jsonpath</groupId>
+		    <artifactId>json-path</artifactId>
+		    <version>2.2.0</version>
 		</dependency>
-      	<dependency>
-      		<groupId>junit</groupId>
-      		<artifactId>junit</artifactId>
-      		<version>4.8.1</version>
-      		<scope>test</scope>
-    	</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.1</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<plugins>
-		</plugins>
-	</build>
+		</plugins>	
+	</build>	
 </project>
