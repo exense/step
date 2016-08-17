@@ -17,11 +17,17 @@ import step.grid.io.OutputMessage;
 
 public class AnnotatedMethodHandler implements MessageHandler {
 
+	boolean alwaysThrowExceptions;
+	
 	Reflections reflections;
 	
 	public AnnotatedMethodHandler() {
+		this(false);
+	}
+
+	public AnnotatedMethodHandler(boolean alwaysThrowExceptions) {
 		super();
-		
+		this.alwaysThrowExceptions = alwaysThrowExceptions;
 		reflections = new Reflections(new ConfigurationBuilder()
 	            .setUrls(ClasspathHelper.forPackage("", Thread.currentThread().getContextClassLoader()))
 	            .setScanners(new MethodAnnotationsScanner()));
@@ -51,7 +57,7 @@ public class AnnotatedMethodHandler implements MessageHandler {
 				AnnotatedMethodInvoker.invoke(instance, m, message.getArgument().toString(), message.getProperties());
 			} catch(Exception e) {
 				boolean errorHandled = script.onError(token, message, e);
-				if(errorHandled) {
+				if(!alwaysThrowExceptions && errorHandled) {
 					// Nothing to be done here as the exception has already be handled by the script
 				} else {
 					throw e;

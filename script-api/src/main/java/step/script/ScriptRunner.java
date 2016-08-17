@@ -28,7 +28,7 @@ public class ScriptRunner {
 			return run(function, read(argument), properties);
 		}
 		
-		public OutputMessage run(String function, String argument) throws Exception {
+		public OutputMessage run(String function, String argument) {
 			return run(function, read(argument), new HashMap<String, String>());
 		}
 
@@ -40,15 +40,19 @@ public class ScriptRunner {
 			return run(function, argument, new HashMap<String, String>());
 		}
 		
-		public OutputMessage run(String function, JsonObject argument, Map<String, String> properties) throws Exception {
-			AnnotatedMethodHandler handler = new AnnotatedMethodHandler();
+		public OutputMessage run(String function, JsonObject argument, Map<String, String> properties) {
+			AnnotatedMethodHandler handler = new AnnotatedMethodHandler(true);
 			
 			InputMessage input = new InputMessage();
 			input.setFunction(function);
 			input.setArgument(argument);			
 			input.setProperties(properties);
 			
-			return handler.handle(token, input);
+			try {
+				return handler.handle(token, input);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 	

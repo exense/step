@@ -2,17 +2,17 @@ package step.grid.io;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Base64;
 
-import org.glassfish.jersey.internal.util.Base64;
 
 public class AttachmentHelper {
 	
 	public static String getHex(byte[] raw) {
-		return new String(Base64.encode(raw));
+		return Base64.getEncoder().encodeToString(raw);
 	}
 	
 	public static byte[] hexStringToByteArray(String s) {
-		return Base64.decode(s.getBytes());
+		return Base64.getDecoder().decode(s);
 	}
 
 	public static Attachment generateAttachmentForException(Throwable e) {
