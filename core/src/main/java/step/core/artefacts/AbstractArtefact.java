@@ -73,6 +73,10 @@ public abstract class AbstractArtefact {
 		return childrenIDs;
 	}
 
+	public void setChildrenIDs(List<ObjectId> childrenIDs) {
+		this.childrenIDs = childrenIDs;
+	}
+
 	public boolean isRoot() {
 		return root;
 	}

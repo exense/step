@@ -71,7 +71,7 @@ angular.module('artefactEditor',['dataTable','step'])
       artefactid: '=',
       handle: '='
     },
-    controller: function($scope,$location) {
+    controller: function($scope,$location,$rootScope) {
       
       var artefactid = $scope.artefactid;
       
@@ -79,17 +79,28 @@ angular.module('artefactEditor',['dataTable','step'])
       $('#jstree_demo_div').jstree(
 				  {
 					'core' : {
-					  'data' : []
-					}
+					  'data' : [],
+					  'check_callback' : function (operation, node, node_parent, node_position, more) {
+	            return true;
+					  }
+					}, 
+					"plugins" : ["dnd"]
 				  });
       tree = $('#jstree_demo_div').jstree(true);
       
       $('#jstree_demo_div').on('changed.jstree', function (e, data) {
-    	var selectedArtefact = tree.get_selected(true);
-    	$scope.selectedArtefactId = selectedArtefact?(selectedArtefact.length>0?selectedArtefact[0].id:null):null;
-    	$scope.$apply();
+      	var selectedArtefact = tree.get_selected(true);
+      	$scope.selectedArtefactId = selectedArtefact?(selectedArtefact.length>0?selectedArtefact[0].id:null):null;
+      	$scope.$apply();
       })
       
+      $('#jstree_demo_div').on("move_node.jstree", function (e, data) {
+        $http.post("rest/controller/artefact/"+data.node.id+"/move?from="+data.old_parent+"&to="+data.parent+"&pos="+data.position)
+        .success(function() {
+          load();
+        })
+      })
+
       function load() {
     	
     	$http({url:"rest/controller/artefact/"+artefactid+"/descendants", method:"GET"}).success(function(data){ 
@@ -138,13 +149,28 @@ angular.module('artefactEditor',['dataTable','step'])
     	});
       }
       
-      $scope.remove = function() {
-    	var selectedArtefact = tree.get_selected(true)[0];
-    	var parentid = tree.get_parent(selectedArtefact);
-    	$http.delete("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id).success(function() {
-    	  load();
-    	});
+      $scope.copy = function() {
+        var selectedArtefact = tree.get_selected(true)[0];
+        $rootScope.clipboard = {object:"artefact",id:selectedArtefact.id};
       }
+      
+      $scope.paste = function() {
+        var selectedArtefact = tree.get_selected(true)[0];
+        if($rootScope.clipboard && $rootScope.clipboard.object=="artefact") {
+          $http.post("rest/controller/artefact/"+$rootScope.clipboard.id+"/copy?to="+selectedArtefact.id)
+          .success(function() {
+            load();
+          });
+        }
+      }
+      
+      $scope.remove = function() {
+        var selectedArtefact = tree.get_selected(true)[0];
+        var parentid = tree.get_parent(selectedArtefact);
+        $http.delete("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id).success(function() {
+          load();
+        });
+        }
       
       $scope.move = function(offset) {
     	var selectedArtefact = tree.get_selected(true)[0];

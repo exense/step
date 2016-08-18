@@ -403,6 +403,50 @@ public class ControllerServices extends AbstractServices {
 	}
 	
 	@POST
+	@Path("/artefact/{id}/move")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public void moveArtefact(@PathParam("id") String id, @QueryParam("from") String originParentId, 
+			@QueryParam("to") String targetParentId, @QueryParam("pos") int newPosition) {
+		ArtefactAccessor a = getContext().getArtefactAccessor();
+		AbstractArtefact origin = a.get(originParentId);
+		origin.removeChild(new ObjectId(id));
+		a.save(origin);
+		
+		AbstractArtefact target = a.get(targetParentId);
+		target.add(newPosition, new ObjectId(id));		
+		a.save(target);
+	}
+	
+	@POST
+	@Path("/artefact/{id}/copy")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public void copyArtefact(@PathParam("id") String id, 
+			@QueryParam("to") String targetParentId, @QueryParam("pos") int newPosition) {
+		ArtefactAccessor a = getContext().getArtefactAccessor();
+		ObjectId cloneId = copyRecursive(a, new ObjectId(id));
+		AbstractArtefact target = a.get(targetParentId);
+		target.addChild(cloneId);
+		a.save(target);
+	}
+	
+	private ObjectId copyRecursive(ArtefactAccessor a, ObjectId id) {
+		ObjectId cloneId = new ObjectId(); 
+		AbstractArtefact artefact = a.get(id);
+		artefact.setId(cloneId);	
+		if(artefact.getChildrenIDs()!=null) {
+			List<ObjectId> newChildren = new ArrayList<>();
+			for(ObjectId childId:artefact.getChildrenIDs()) {
+				newChildren.add(copyRecursive(a, childId));
+			}
+			artefact.setChildrenIDs(newChildren);
+		}
+		a.save(artefact);
+		return cloneId;
+	}
+	
+	@POST
 	@Path("/artefact/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
