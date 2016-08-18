@@ -18,9 +18,12 @@ public class ScriptRunner {
 		
 		AgentTokenWrapper token;
 
-		public ScriptContext() {
+		public ScriptContext(Map<String, String> properties) {
 			super();
 			token = new AgentTokenWrapper();
+			if(properties!=null) {
+				token.setProperties(properties);
+			}
 			token.setSession(new TokenSession());
 		} 
 		
@@ -57,7 +60,11 @@ public class ScriptRunner {
 	}
 	
 	public static ScriptContext getExecutionContext() {
-		return new ScriptContext();
+		return new ScriptContext(null);
+	}
+	
+	public static ScriptContext getExecutionContext(Map<String, String> properties) {
+		return new ScriptContext(properties);
 	}
 	
 }

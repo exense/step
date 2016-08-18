@@ -19,6 +19,8 @@
 		<module>../base-artefacts</module>
 		<module>../execution-controller</module>
 		<module>../agent</module>
+		<module>../script-api</module>
+		<module>../selenium-script-api</module>
 		<module>../distribution</module>
 	</modules>
 

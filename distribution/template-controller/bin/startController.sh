@@ -3,4 +3,4 @@ JAVA_PATH=""
 
 JAVA_OPTS="-DcollectorConfig=../conf/Collector.xml -Dlogback.configurationFile=logback-collector.xml"
 
-${JAVA_PATH}java ${JAVA_OPTS} -cp "../lib/*" io.djigger.collector.server.Server
+${JAVA_PATH}java ${JAVA_OPTS} -cp "../lib/*" step.controller.ControllerServer -grid.port=8081
