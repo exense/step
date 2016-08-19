@@ -46,6 +46,8 @@ public class AbstractSeleniumScript extends AbstractScript {
 			addAttachment(a);
 			
 			addAttachment(AttachmentHelper.generateAttachmentForException(e));
+			
+			setError(e.getMessage(), e);
 		}
 		super.onError(token, message, e);
 		return true;

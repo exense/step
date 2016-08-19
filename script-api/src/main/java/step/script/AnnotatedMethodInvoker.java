@@ -11,6 +11,7 @@ import java.util.Set;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.PathNotFoundException;
 import com.jayway.jsonpath.ReadContext;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
@@ -62,7 +63,11 @@ public class AnnotatedMethodInvoker {
 			for(Annotation a:parameter.getAnnotations()) {
 				if(a instanceof Arg) {
 					String jsonPath = ((Arg)a).value();
-					value = docCtx.read(jsonPath, parameter.getType());
+					try {
+						value = docCtx.read(jsonPath, parameter.getType());
+					} catch(PathNotFoundException e) {
+						value = null;
+					}
 				} else if(a instanceof Prop) {
 					String key = ((Prop)a).value();
 					if(key==null) {

@@ -14,6 +14,16 @@
 			<artifactId>grid</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>script-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>selenium-script-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>		
 	</dependencies>
 	
 	<build>
