@@ -14,6 +14,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.ReportExport;
 import step.core.repositories.RepositoryObjectReference;
+import step.core.variables.UndefinedVariableException;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JavaType;
@@ -116,26 +117,30 @@ public class ExecutionRunnable implements Runnable {
 	private List<ReportExport> exportTestExecutionReport() {
 		List<ReportExport> exports = new ArrayList<>();
 		
-		String exportsParam = context.getVariablesManager().getVariableAsString(EXPORTS_PARAM);
-		ObjectMapper m = new ObjectMapper();
-		m.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-		JavaType type = m.getTypeFactory().constructCollectionType(List.class, RepositoryObjectReference.class);
-
-		List<RepositoryObjectReference> exportRefs = new ArrayList<>();
-		
 		try {
-			exportRefs.addAll((List<RepositoryObjectReference>) m.readValue(exportsParam, type));
-		} catch (IOException e) {
-			logger.error("Error occurred while parsing parameter as JSON " + EXPORTS_PARAM, e);
-		}
-		
-		exportRefs.addAll(context.getExecutionParameters().getExports());
-		
-		logger.info("Exporting test to repositories: " + exportRefs.toString());
-		
-		for(RepositoryObjectReference reportPointer:exportRefs) {
-			ReportExport report = context.getGlobalContext().getRepositoryObjectManager().exportTestExecutionReport(reportPointer, context.getExecutionId());
-			exports.add(report);
+			String exportsParam = context.getVariablesManager().getVariableAsString(EXPORTS_PARAM);
+			ObjectMapper m = new ObjectMapper();
+			m.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+			JavaType type = m.getTypeFactory().constructCollectionType(List.class, RepositoryObjectReference.class);
+	
+			List<RepositoryObjectReference> exportRefs = new ArrayList<>();
+			
+			try {
+				exportRefs.addAll((List<RepositoryObjectReference>) m.readValue(exportsParam, type));
+			} catch (IOException e) {
+				logger.error("Error occurred while parsing parameter as JSON " + EXPORTS_PARAM, e);
+			}
+			
+			exportRefs.addAll(context.getExecutionParameters().getExports());
+			
+			logger.info("Exporting test to repositories: " + exportRefs.toString());
+			
+			for(RepositoryObjectReference reportPointer:exportRefs) {
+				ReportExport report = context.getGlobalContext().getRepositoryObjectManager().exportTestExecutionReport(reportPointer, context.getExecutionId());
+				exports.add(report);
+			}
+		} catch (UndefinedVariableException e) {
+			logger.info("No repository defined for export.");
 		}
 		return exports;
 		

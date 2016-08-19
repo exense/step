@@ -87,6 +87,14 @@ public class VariablesManager {
 		return o.toString();
 	}
 	
+	public String getVariableAsString(String key, String default_) {
+		try {
+			return getVariableAsString(key);			
+		} catch(UndefinedVariableException e) {
+			return default_;
+		}
+	}
+	
 	/**
 	 * @throws UndefinedVariableException if the variable is undefined
 	 */

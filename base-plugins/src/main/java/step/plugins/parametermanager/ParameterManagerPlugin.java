@@ -2,6 +2,11 @@ package step.plugins.parametermanager;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
 import step.commons.activation.Expression;
 import step.commons.conf.FileRepository;
 import step.commons.conf.FileRepository.FileRepositoryCallback;
@@ -14,10 +19,10 @@ import step.core.plugins.Plugin;
 import step.core.variables.VariableType;
 import step.core.variables.VariablesManager;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 @Plugin
 public class ParameterManagerPlugin extends AbstractPlugin {
+	
+	public static Logger logger = LoggerFactory.getLogger(ParameterManagerPlugin.class);
 	
 	public static final String KEY = "ParameterManager_Instance";
 	
@@ -47,15 +52,18 @@ public class ParameterManagerPlugin extends AbstractPlugin {
 	@Override
 	public void executionStart(ExecutionContext context) {
 		ParameterManager parameterManager = (ParameterManager) context.getGlobalContext().get(ParameterManagerPlugin.KEY);
-				
-		ReportNode rootNode = context.getReport();
-		VariablesManager varMan = context.getVariablesManager();
-		varMan.putVariable(rootNode, VariableType.RESERVED, "user", context.getExecutionParameters().getUserID());
-		putVariables(context, rootNode, context.getExecutionParameters().getCustomParameters(), VariableType.RESERVED);
 		
-		Map<String, String> parameters = parameterManager.getAllParameters(ExecutionContextBindings.get(context));
-		putVariables(context, rootNode, parameters, VariableType.IMMUTABLE);		
-
+		if(parameterManager!=null) {
+			ReportNode rootNode = context.getReport();
+			VariablesManager varMan = context.getVariablesManager();
+			varMan.putVariable(rootNode, VariableType.RESERVED, "user", context.getExecutionParameters().getUserID());
+			putVariables(context, rootNode, context.getExecutionParameters().getCustomParameters(), VariableType.RESERVED);
+			
+			Map<String, String> parameters = parameterManager.getAllParameters(ExecutionContextBindings.get(context));
+			putVariables(context, rootNode, parameters, VariableType.IMMUTABLE);		
+		} else {
+			logger.warn("Not able to read parameters. ParameterManager has not been initialized during controller start.");
+		}
 		super.executionStart(context);
 	}
 		

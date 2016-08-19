@@ -51,21 +51,28 @@ public abstract class AbstractArtefact {
 	}
 
 	public void addChild(ObjectId artefactID) {
+		createChildrenIDListIfNeeded();
+		childrenIDs.add(artefactID);
+	}
+
+	private void createChildrenIDListIfNeeded() {
 		if(childrenIDs==null) {
 			childrenIDs = new ArrayList<>();
 		}
-		childrenIDs.add(artefactID);
 	}
 	
 	public void removeChild(ObjectId artefactID) {
-		childrenIDs.remove(artefactID);
+		if(childrenIDs!=null) {
+			childrenIDs.remove(artefactID);
+		}
 	}
 	
 	public int indexOf(ObjectId artefactID) {
-		return childrenIDs.indexOf(artefactID);
+		return childrenIDs!=null?childrenIDs.indexOf(artefactID):-1;
 	}
 	
 	public void add(int pos, ObjectId artefactID) {
+		createChildrenIDListIfNeeded();
 		childrenIDs.add(pos, artefactID);
 	}
 

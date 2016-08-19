@@ -32,15 +32,7 @@ angular.module('artefactsControllers',['dataTable','step'])
         	}
           });
           
-          modalInstance.result.then(function (functionParams) {
-        	$http.post("rest/functions",functionParams).success(function() {
-        	  
-        	  if($scope.table) {
-        		$scope.table.Datatable.ajax.reload(null, false);
-        	  }
-        	});
-        	
-          }, function () {}); 
+          modalInstance.result.then(function (functionParams) {}, function () {}); 
         });
       }
       

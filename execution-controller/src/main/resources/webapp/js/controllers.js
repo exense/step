@@ -368,8 +368,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
     link: function($scope, $element) {
       var eId = $scope.eid;
       
-      $http.get('rest/controller/execution/' + eId + '/rtmlink').success(function(data) {
-        $scope.rtmlink = "../rtm/"+data.link;
+      $http.get('rest/rtm/rtmlink/' + eId).success(function(data) {
+        $scope.rtmlink = data.link;
       })
       
       var refreshTestCaseTable = function() {        
