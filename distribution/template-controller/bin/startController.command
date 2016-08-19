@@ -5,6 +5,6 @@ JAVA_PATH=""
 
 ABSPATH=$(cd "$(dirname "$0")"; pwd)
 
-JAVA_OPTS="-DcollectorConfig=${ABSPATH}/../conf/Collector.xml -Dlogback.configurationFile=logback-collector.xml"
+JAVA_OPTS="-Dlogback.configurationFile=logback.xml"
 
-${JAVA_PATH}java ${JAVA_OPTS} -cp ${ABSPATH}/../lib/*: io.djigger.collector.server.Server
+${JAVA_PATH}java ${JAVA_OPTS} -cp ${ABSPATH}/../lib/*: step.controller.ControllerServer -config=../conf/step.properties

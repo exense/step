@@ -28,6 +28,8 @@ public class Configuration {
 
 	public Configuration(File propertyFile) {
 		super();
+		
+		this.propertyFile = propertyFile;
 
 		try {
 			load();			

@@ -8,7 +8,7 @@ import step.commons.conf.Configuration;
 
 public class AttachmentManager {
 	
-	private static String filerPath = Configuration.getInstance().getProperty("attachmentsdir");
+	private static String filerPath = Configuration.getInstance().getProperty("attachmentsdir","attachments");
 	
 	public static AttachmentContainer createAttachmentContainer() {
 		AttachmentMeta meta = new AttachmentMeta();

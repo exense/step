@@ -1,7 +1,6 @@
 package step.controller;
 
 import java.io.File;
-import java.util.Map.Entry;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -24,7 +23,6 @@ import step.core.Controller.ServiceRegistrationCallback;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.JacksonMapperProvider;
 import step.grid.agent.ArgumentParser;
-import step.grid.io.ObjectMapperResolver;
 
 public class ControllerServer {
 
@@ -39,9 +37,6 @@ public class ControllerServer {
 	public static void main(String[] args) throws Exception {
 		ArgumentParser arguments = new ArgumentParser(args);
 		
-		String portStr = arguments.getOption("port");
-		Integer port = portStr!=null?Integer.decode(portStr):8080;
-		
 		Configuration configuration; 
 		String configStr = arguments.getOption("config");
 		if(configStr!=null) {
@@ -54,12 +49,16 @@ public class ControllerServer {
 		
 		Configuration.setInstance(configuration);
 		
-		(new ControllerServer(port)).start();
+		(new ControllerServer()).start();
 	}
 	
 	public ControllerServer(Integer port) {
 		super();
 		this.port = port;
+	}
+	
+	public ControllerServer() {
+		this(Configuration.getInstance().getPropertyAsInteger("port", 8080));
 	}
 
 	public void start() throws Exception {

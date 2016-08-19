@@ -6,4 +6,4 @@ SET JAVA_PATH=
 
 SET JAVA_OPTS=-Dlogback.configurationFile=logback.xml
 
-%JAVA_PATH%java.exe %JAVA_OPTS% -cp "..\lib\*;" step.controller.ControllerServer -grid.port=8081
+%JAVA_PATH%java.exe %JAVA_OPTS% -cp "..\lib\*;" step.controller.ControllerServer -config=../conf/step.properties

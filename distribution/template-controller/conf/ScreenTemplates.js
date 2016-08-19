@@ -1,0 +1,14 @@
+{
+"executionParameters":[
+  {"id":"env","options":["TEST","PROD"],"label":"Environment"}
+],
+"executionTable":[
+  {"id":"executionParameters.customParameters.profile","label":"Profile"}
+],
+"functionTable":[
+  {"id":"attributes.name","label":"Name","type":"TEXT"}
+],
+"artefactTable":[
+  {"id":"attributes.name","label":"Name","type":"TEXT"}
+]
+}

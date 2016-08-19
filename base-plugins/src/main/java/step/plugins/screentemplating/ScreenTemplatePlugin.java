@@ -1,19 +1,22 @@
 package step.plugins.screentemplating;
 
+import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.script.ScriptException;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import step.commons.activation.Activator;
+import step.commons.conf.Configuration;
 import step.commons.conf.FileRepository;
 import step.commons.conf.FileRepository.FileRepositoryCallback;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
-
-import com.fasterxml.jackson.core.type.TypeReference;
 
 @Plugin
 public class ScreenTemplatePlugin extends AbstractPlugin {
@@ -26,24 +29,36 @@ public class ScreenTemplatePlugin extends AbstractPlugin {
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) {
-		repo = new FileRepository<Map<String, List<Input>>>("ScreenTemplates.js", new TypeReference<Map<String, List<Input>>>() {}, new FileRepositoryCallback<Map<String, List<Input>>>() {
-			@Override
-			public void onLoad(Map<String, List<Input>> screens) throws ScriptException {
-				for(String screenId:screens.keySet()) {
-					List<Input> inputs = screens.get(screenId);
-					Activator.compileActivationExpressions(inputs);
-					for(Input input:inputs) {
-						if(input.getOptions()!=null) {
-							Activator.compileActivationExpressions(input.getOptions());
-						}
-					}	
-				}
-				screenTemplates = screens;
-				
-			}} );
+		String config = Configuration.getInstance().getProperty("screentemplate.config");
+		if(config==null) {
+			URL url = this.getClass().getClassLoader().getResource("ScreenTemplates.js");
+			if(url!=null) {
+				config = url.getFile();
+			}
+		}
 		
-		context.put(SCREEN_TEMPLATE_KEY, this);
-		context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
+		if(config!=null) {
+			repo = new FileRepository<Map<String, List<Input>>>(new File(config), new TypeReference<Map<String, List<Input>>>() {}, new FileRepositoryCallback<Map<String, List<Input>>>() {
+				@Override
+				public void onLoad(Map<String, List<Input>> screens) throws ScriptException {
+					for(String screenId:screens.keySet()) {
+						List<Input> inputs = screens.get(screenId);
+						Activator.compileActivationExpressions(inputs);
+						for(Input input:inputs) {
+							if(input.getOptions()!=null) {
+								Activator.compileActivationExpressions(input.getOptions());
+							}
+						}	
+					}
+					screenTemplates = screens;
+					
+				}} );
+			
+			context.put(SCREEN_TEMPLATE_KEY, this);
+			context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
+		} else {
+			
+		}
 	}
 	
 	public List<Input> getInputsForScreen(String screenId, Map<String,Object> contextBindings) {

@@ -29,7 +29,7 @@ public class ManagedProcess {
 	
 	private final ProcessBuilder builder;
 		
-	private static File logFolder = new File(Configuration.getInstance().getProperty("adapters.logdir"));
+	private static File logFolder = new File(Configuration.getInstance().getProperty("managedprocesses.logdir"));
 	
 	private File processOutputLog;
 	

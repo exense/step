@@ -1,9 +1,9 @@
 package step.commons.conf;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +16,6 @@ public class FileRepository<T> {
 	
 	private File configFile;
 	
-	private URL fileUrl;
-	
 	private TypeReference<T> typeRef;
 	
 	private Class<T> objectClass;
@@ -26,20 +24,22 @@ public class FileRepository<T> {
 	
 	private static Logger logger = LoggerFactory.getLogger(FileRepository.class);
 	
-	public FileRepository(String resourceName, Class<T> objectClass, FileRepositoryCallback<T> callback) {
+	public FileRepository(File file, Class<T> objectClass, FileRepositoryCallback<T> callback) {
 		super();
 		this.objectClass = objectClass;
 		this.callback = callback;
+		this.configFile = file;
 		
-		init(resourceName);
+		init();
 	}
 	
-	public FileRepository(String resourceName, TypeReference<T> typeRef, FileRepositoryCallback<T> callback) {
+	public FileRepository(File file, TypeReference<T> typeRef, FileRepositoryCallback<T> callback) {
 		super();
 		this.typeRef = typeRef;
 		this.callback = callback;
-		
-		init(resourceName);
+		this.configFile = file;
+
+		init();
 	}
 
 	public interface FileRepositoryCallback<T> {
@@ -47,10 +47,7 @@ public class FileRepository<T> {
 		public void onLoad(T object) throws Exception;
 	}
 	
-	public void init(String resourceName) {
-		fileUrl = this.getClass().getClassLoader().getResource(resourceName);
-		configFile = new File(fileUrl.getFile());
-		
+	public void init() {
 		loadConfigAndCallback();
 		
 		FileWatchService.getInstance().register(configFile, new Runnable() {
@@ -58,8 +55,7 @@ public class FileRepository<T> {
 			public void run() {
 				loadConfigAndCallback();
 			}
-		});
-		
+		});					
 	}
 	
 	public void destroy() {
@@ -76,7 +72,7 @@ public class FileRepository<T> {
 	}
 	
 	private T parseConfig() throws IOException {
-		InputStream stream = fileUrl.openStream();
+		InputStream stream = new FileInputStream(configFile);
 		try {
 			ObjectMapper mapper = new ObjectMapper();
 			if(objectClass!=null) {
