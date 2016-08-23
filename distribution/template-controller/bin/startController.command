@@ -7,4 +7,4 @@ ABSPATH=$(cd "$(dirname "$0")"; pwd)
 
 JAVA_OPTS="-Dlogback.configurationFile=logback.xml"
 
-${JAVA_PATH}java ${JAVA_OPTS} -cp ${ABSPATH}/../lib/*: step.controller.ControllerServer -config=../conf/step.properties
+${JAVA_PATH}java ${JAVA_OPTS} -cp ${ABSPATH}/../lib/*: step.controller.ControllerServer -config=${ABSPATH}/../conf/step.properties
