@@ -38,16 +38,20 @@ public class AbstractSeleniumScript extends AbstractScript {
 
 	@Override
 	public boolean onError(AgentTokenWrapper token, InputMessage message, Exception e) {
+		setError("Error in selenium script: "+e.getMessage(), e);
+
 		if(driver!=null && driver instanceof TakesScreenshot) {
-			String base64 = ((TakesScreenshot)driver).getScreenshotAs(OutputType.BASE64);
-			Attachment a = new Attachment();
-			a.setHexContent(base64);
-			a.setName("screenshot.jpg");
-			addAttachment(a);
+			try {
+				String base64 = ((TakesScreenshot)driver).getScreenshotAs(OutputType.BASE64);
+				Attachment a = new Attachment();
+				a.setHexContent(base64);
+				a.setName("screenshot.jpg");
+				addAttachment(a);
 			
-			addAttachment(AttachmentHelper.generateAttachmentForException(e));
-			
-			setError(e.getMessage(), e);
+				addAttachment(AttachmentHelper.generateAttachmentForException(e));
+			} catch(Exception exception) {
+				addAttachment(AttachmentHelper.generateAttachmentForException(exception));
+			}
 		}
 		super.onError(token, message, e);
 		return true;
