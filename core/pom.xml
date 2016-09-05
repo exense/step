@@ -81,11 +81,6 @@
 		    <artifactId>javax.json</artifactId>
 		    <version>1.0.4</version>
 		</dependency>
-<!-- 		<dependency>
-			<groupId>org.rtm</groupId>
-			<artifactId>rtm-commons</artifactId>
-			<version>0.3.0.4</version>
-		</dependency> -->
 		<dependency>
 			<groupId>commons-pool</groupId>
 			<artifactId>commons-pool</artifactId>
