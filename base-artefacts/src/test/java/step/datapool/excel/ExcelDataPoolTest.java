@@ -8,13 +8,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.Assert;
+import javax.json.JsonObject;
 
 import org.junit.Test;
 
+import junit.framework.Assert;
 import step.artefacts.ForEachBlock;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolRow;
+import step.datapool.Utils;
 
 public class ExcelDataPoolTest {
 
@@ -62,6 +64,8 @@ public class ExcelDataPoolTest {
 							SimpleStringMap row = (SimpleStringMap)pool.next().getValue();
 							row.put("Result", uid+ "_" + row.get("Values"));
 							map.put(row.get("Keys"), row.get("Values"));
+							
+							
 						} catch(Exception e) {
 							synchronized (e) {
 								exceptions.add(e);
@@ -152,6 +156,11 @@ public class ExcelDataPoolTest {
 			SimpleStringMap row = (SimpleStringMap)pool.next().getValue();
 			Assert.assertEquals("Value"+i, row.get("Values"));
 			Assert.assertEquals("Key"+i, row.get("Keys"));
+		
+			// Test the Utils class at the same time
+			JsonObject jsonRow = Utils.toJson(row);
+			Assert.assertEquals("Key"+i, jsonRow.getString("Keys"));
+			Assert.assertEquals("Value"+i, jsonRow.getString("Values"));
 		}
 		
 		Assert.assertNull(pool.next());

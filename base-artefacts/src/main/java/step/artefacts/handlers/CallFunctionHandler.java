@@ -7,6 +7,8 @@ import java.util.regex.Pattern;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonValue;
+import javax.json.JsonValue.ValueType;
 
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
@@ -42,6 +44,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) {
 		String argumentStr = testArtefact.getArgument();
@@ -119,6 +122,21 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			}
 			if(output.getMeasures()!=null) {
 				node.setMeasures(output.getMeasures());
+			}
+			
+			if(testArtefact.getResultMap()!=null) {
+				Object var = context.getVariablesManager().getVariable(testArtefact.getResultMap());
+				if(var instanceof Map) {
+					JsonObject result = output.getResult();
+					for(String key:result.keySet()) {
+						JsonValue value = result.get(key);
+						if(value.getValueType() == ValueType.STRING) {
+							((Map<String, String>) var).put(key, value.toString());
+						}
+					}
+				} else {
+					throw new RuntimeException("The variable '"+testArtefact.getResultMap()+"' is not a Map");
+				}
 			}
 		} finally {
 			if(releaseTokenAfterExecution) {				

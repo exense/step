@@ -40,6 +40,8 @@ public class ScriptHandler implements MessageHandler {
 	public static final String SCRIPT_DIR = "scripthandler.script.dir";
 
 	public static final String SCRIPT_ENGINE = "scripthandler.script.engine";
+
+	public static final String ERROR_HANDLER_SCRIPT = "scripthandler.script.errorhandler";
 	
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {        
@@ -56,6 +58,9 @@ public class ScriptHandler implements MessageHandler {
         Bindings binding = createBindings(token, message, outputBuilder, properties);     
         try {
         	engine.eval(reader, binding);
+        } catch(Exception e) {
+        	// TODO error script handler
+        	throw e;
         } finally {
         	if(reader!=null) {
         		reader.close();
