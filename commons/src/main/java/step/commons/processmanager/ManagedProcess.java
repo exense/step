@@ -29,7 +29,7 @@ public class ManagedProcess {
 	
 	private final ProcessBuilder builder;
 		
-	private static File logFolder = new File(Configuration.getInstance().getProperty("managedprocesses.logdir"));
+	private static File logFolder;
 	
 	private File processOutputLog;
 	
@@ -52,6 +52,9 @@ public class ManagedProcess {
 	public ManagedProcess(List<String> commands, String name) throws ManagedProcessException {
 		super();
 
+		String logdir = Configuration.getInstance().getProperty("managedprocesses.logdir");
+		logFolder = new File(logdir!=null?logdir:".");
+		
 		UUID uuid = UUID.randomUUID();
 		this.id = name+"_"+uuid;
 		builder = new ProcessBuilder(commands);
