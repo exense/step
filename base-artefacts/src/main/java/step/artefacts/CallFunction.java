@@ -17,6 +17,9 @@ public class CallFunction extends AbstractArtefact {
 	
 	@DynamicAttribute
 	String token;
+	
+	@DynamicAttribute
+	String resultMap;
 
 	public String getFunction() {
 		return function;
@@ -40,5 +43,13 @@ public class CallFunction extends AbstractArtefact {
 
 	public void setToken(String token) {
 		this.token = token;
+	}
+
+	public String getResultMap() {
+		return resultMap;
+	}
+
+	public void setResultMap(String resultMap) {
+		this.resultMap = resultMap;
 	}
 }

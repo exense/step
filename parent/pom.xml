@@ -17,6 +17,7 @@
 		<module>../commons</module>
 		<module>../base-plugins</module>
 		<module>../base-artefacts</module>
+		<module>../base-handlers</module>
 		<module>../execution-controller</module>
 		<module>../agent</module>
 		<module>../script-api</module>

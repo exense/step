@@ -2,6 +2,10 @@ package step.datapool.excel;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -106,6 +110,16 @@ public class ExcelDataPoolImpl extends DataSet {
 		}
 	}
 	
+	private List<String> getHeaders() {
+		List<String> headers = new ArrayList<>();
+		Row row = sheet.getRow(0);
+		for(Cell cell:row) {
+			String key = ExcelFunctions.getCellValueAsString(cell, workbookSet.getMainFormulaEvaluator());
+			headers.add(key);
+		}
+		return headers;
+	}
+	
 	private static final String SKIP_STRING = "@SKIP"; 
 
 	@Override
@@ -195,6 +209,12 @@ public class ExcelDataPoolImpl extends DataSet {
 		public RowWrapper(int cursor) {
 			super();
 			this.cursor = cursor;
+		}
+
+		@Override
+		public Set<String> keySet() {
+			Set<String> headers = new HashSet<>(getHeaders());
+			return headers;
 		}
 
 		@Override
