@@ -17,6 +17,14 @@ angular.module('artefactEditor',['dataTable','step'])
                              				'</button> '
                                    }} ];
       
+      $http({url:"rest/controller/artefact/"+$scope.artefactId, method:"GET"}).success(function(data){
+    	  $scope.artefact = data;
+      })
+      
+      $scope.save = function() {
+    	  $http.post("rest/controller/artefact", $scope.artefact);
+      }
+      
       $http.get("rest/controller/artefact/types").success(function(data){ 
         var dataSet = [];
         for (i = 0; i < data.length; i++) {
@@ -75,6 +83,7 @@ angular.module('artefactEditor',['dataTable','step'])
       
       var artefactid = $scope.artefactid;
       
+      
       var tree;
       $('#jstree_demo_div').jstree(
 				  {
@@ -101,7 +110,7 @@ angular.module('artefactEditor',['dataTable','step'])
         })
       })
 
-      function load() {
+      function load(callback) {
     	
     	$http({url:"rest/controller/artefact/"+artefactid+"/descendants", method:"GET"}).success(function(data){ 
     	  	treeData = [];
@@ -115,14 +124,35 @@ angular.module('artefactEditor',['dataTable','step'])
         	  
         	  return { "id" : artefact.id, "children" : children, "text" : label }
         	}
+        	
+        	var root = asJSTreeNode(data);
           
-        	treeData.push(asJSTreeNode(data))
+        	treeData.push(root)
         	tree.settings.core.data = treeData;
+        	
+        	$('#jstree_demo_div').one("refresh.jstree", function() {
+        		if(callback) {
+        			callback(root); 		
+        		}
+        	})
+
         	tree.refresh();
         });
       }
       
-      load();
+      load(function(root) {
+    	  
+    	  tree.open_all();
+    	  tree.select_node(root.id);
+      });
+      
+      function reloadAfterArtefactInsertion(artefact) {
+    	load(function() {
+  			tree.deselect_all(true);
+  			tree._open_to(artefact.id);
+  			tree.select_node(artefact.id);    			
+  		});  
+      }
       
       $scope.handle.addFunction = function(id) {
     	var selectedArtefact = tree.get_selected(true);
@@ -132,8 +162,8 @@ angular.module('artefactEditor',['dataTable','step'])
     	  var tokenDefault = function_.handlerChain.indexOf('ArtefactMessageHandler')!=-1?"{\"route\":\"local\"}":"{\"route\":\"remote\"}";
     	  
     	  var newArtefact = {"function":JSON.stringify(function_.attributes),"token":tokenDefault,"_class":"CallFunction"};
-    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).success(function(){
-    		load();
+    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).success(function(artefact){
+    		  reloadAfterArtefactInsertion(artefact);
     	  })
     		
     	});
@@ -144,7 +174,7 @@ angular.module('artefactEditor',['dataTable','step'])
     	
     	$http.get("rest/controller/artefact/types/"+id).success(function(artefact) {
     	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",artefact).success(function(){
-    		load();
+    		  reloadAfterArtefactInsertion(artefact);
     	  })
     	});
       }

@@ -1,7 +1,7 @@
 <div id="ArtefactListCtrl" ng-controller="ArtefactListCtrl">
 	<div class="row">
 	<div class="panel-body pull-right">
-		<button type="button" class="btn btn-success" ng-click="addArtefact()">New artefact</button>
+		<button type="button" class="btn btn-success" ng-click="addArtefact()">New plan</button>
 	</div>
 	</div>
 	<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="artefacts" order="[[1, &quot;desc&quot;]]" />
@@ -9,7 +9,7 @@
 
 <script type="text/ng-template" id="newArtefactModalContent.html">
         <div class="modal-header">
-            <h3 class="modal-title">New Artefact</h3>
+            <h3 class="modal-title">New plan</h3>
         </div>
 		
         <div class="modal-body">

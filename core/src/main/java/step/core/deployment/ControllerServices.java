@@ -362,7 +362,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}/children")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public void addChild(@PathParam("id") String id, AbstractArtefact child) {
+	public AbstractArtefact addChild(@PathParam("id") String id, AbstractArtefact child) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
 		
 		child = a.save(child);
@@ -371,6 +371,8 @@ public class ControllerServices extends AbstractServices {
 		artefact.addChild(child.getId());
 		
 		a.save(artefact);
+		
+		return child;
 	}
 	
 	@DELETE
