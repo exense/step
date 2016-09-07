@@ -2,6 +2,7 @@ package step.rtm;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -25,10 +26,14 @@ public class RtmPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		context.getServiceRegistrationCallback().registerService(RtmPluginServices.class);
 		
-		String host = Configuration.getInstance().getProperty("ds.host");
-		if(host==null || host.length()==0) {
-			Configuration.getInstance().getUnderlyingPropertyObject().put("ds.host", context.getMongoClient().getAddress().getHost());			
-		}
+		Properties rtmProperties = Configuration.getInstance().getUnderlyingPropertyObject();
+		step.commons.conf.Configuration stepProperties = step.commons.conf.Configuration.getInstance(); 
+
+		cloneProperty(rtmProperties, stepProperties, "db.host");
+		cloneProperty(rtmProperties, stepProperties, "db.port");
+		cloneProperty(rtmProperties, stepProperties, "db.database");
+		cloneProperty(rtmProperties, stepProperties, "db.username");
+		cloneProperty(rtmProperties, stepProperties, "db.password");
 		
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
@@ -38,6 +43,12 @@ public class RtmPlugin extends AbstractPlugin {
 		context.getServiceRegistrationCallback().registerHandler(webappCtx);
 		
 		accessor = MeasurementAccessor.getInstance();
+	}
+
+	private void cloneProperty(Properties rtmProperties, step.commons.conf.Configuration stepProperties, String property) {
+		if(stepProperties.getProperty(property)!=null) {
+			rtmProperties.put(property, stepProperties.getProperty(property));			
+		}
 	}
 
 	@Override
