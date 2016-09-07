@@ -13,6 +13,8 @@ import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
+import step.commons.conf.Configuration;
+
 public class Collection {
 
 	MongoCollection collection;
@@ -23,7 +25,9 @@ public class Collection {
 	}
 	
 	private MongoCollection getCollection(MongoClient client, String collectionName) {
-		DB db = client.getDB( "step" );
+		//TODO pass DB Object instead of MongoClient
+		String database = Configuration.getInstance().getProperty("db.database","step");
+		DB db = client.getDB(database);
 		
 		Jongo jongo = new Jongo(db);
 		MongoCollection collection = jongo.getCollection(collectionName);

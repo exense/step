@@ -63,7 +63,8 @@ public class GridReportBuilder {
 			return aToken.getID();
 		}
 		if(key.equals(URL_KEY)) {
-			return aToken.getToken().getAgentid();
+			AgentRef ref = grid.getAgentRefs().get(aToken.getToken().getAgentid());
+			return ref!=null?ref.getAgentUrl():"-";
 		}
 		if(aToken.getAttributes()!=null) {
 			String attribute = aToken.getAttributes().get(key);
