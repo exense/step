@@ -4,7 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -24,24 +25,15 @@ import step.grid.io.OutputMessage;
 
 public class ScriptHandler implements MessageHandler {
 
+	public static final String SCRIPT_DIR = "scripthandler.script.dir";
+	public static final String SCRIPT_ENGINE = "scripthandler.script.engine";
+	public static final String ERROR_HANDLER_SCRIPT = "scripthandler.script.errorhandler";
+	
 	protected ScriptEngineManager manager = new ScriptEngineManager();
-
-	protected boolean alwaysThrowExceptions;
 		
 	public ScriptHandler() {
-		this(false);
+
 	}
-
-	public ScriptHandler(boolean alwaysThrowExceptions) {
-		super();
-		this.alwaysThrowExceptions = alwaysThrowExceptions;
-	}
-	
-	public static final String SCRIPT_DIR = "scripthandler.script.dir";
-
-	public static final String SCRIPT_ENGINE = "scripthandler.script.engine";
-
-	public static final String ERROR_HANDLER_SCRIPT = "scripthandler.script.errorhandler";
 	
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {        
@@ -53,21 +45,37 @@ public class ScriptHandler implements MessageHandler {
         String scriptDirectory = getScriptDirectory(properties);
         File scriptFile = searchScriptFile(message, scriptDirectory);        
 
-        Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(scriptFile), Charset.forName("UTF-8")));     
         OutputMessageBuilder outputBuilder = new OutputMessageBuilder();
         Bindings binding = createBindings(token, message, outputBuilder, properties);     
+
+        try {
+        	executeScript(scriptFile, binding, engine);        	
+        } catch(Exception e) {        	
+        	executeErrorHandlerScript(properties, engine, binding);
+        	throw e;
+        }
+        
+        return outputBuilder.build();
+	}
+
+	private void executeErrorHandlerScript(Map<String, String> properties, ScriptEngine engine, Bindings binding)
+			throws FileNotFoundException, Exception, IOException {
+		if(properties.containsKey(ERROR_HANDLER_SCRIPT)) {
+			String errorScript = properties.get(ERROR_HANDLER_SCRIPT);
+			executeScript(new File(errorScript), binding, engine);
+		}
+	}
+
+	private void executeScript(File scriptFile, Bindings binding, ScriptEngine engine)
+			throws FileNotFoundException, Exception, IOException {
+		Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(scriptFile), Charset.forName("UTF-8")));     
         try {
         	engine.eval(reader, binding);
-        } catch(Exception e) {
-        	// TODO error script handler
-        	throw e;
         } finally {
         	if(reader!=null) {
         		reader.close();
         	}
         }
-        
-        return outputBuilder.build();
 	}
 
 	private Bindings createBindings(AgentTokenWrapper token, InputMessage message, OutputMessageBuilder outputBuilder,

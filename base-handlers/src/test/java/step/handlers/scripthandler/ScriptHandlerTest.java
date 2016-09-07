@@ -80,7 +80,23 @@ public class ScriptHandlerTest {
 			context.run("testGroovy", "{\"key1\":\"val1\"}");
 		} catch(Exception e) {
 			Assert.assertTrue(e.getMessage().contains("Unable to find script engine with name 'dummy'"));			
-		}
+		}		
+	}
+	
+	@Test 
+	public void testErrorHandler() {
+		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
 		
+		Map<String, String> properties = new HashMap<>();
+		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
+		properties.put(ScriptHandler.ERROR_HANDLER_SCRIPT, scriptDir + "/errorHandler.js");
+		
+		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
+		try {
+			OutputMessage out = context.run("errorScript", "{\"key1\":\"val1\"}");
+			Assert.assertFalse(true);
+		} catch(Exception e) {
+			Assert.assertEquals("executed", System.getProperties().get("errorHandler"));
+		}
 	}
 }

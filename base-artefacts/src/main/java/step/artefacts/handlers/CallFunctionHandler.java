@@ -48,24 +48,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	@Override
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) {
 		String argumentStr = testArtefact.getArgument();
-		
 		node.setInput(argumentStr);
 		
-		JsonObject argument;
-		if(argumentStr!=null) {
-			argument = Json.createReader(new StringReader(argumentStr)).readObject();
-		} else {
-			argument = Json.createObjectBuilder().build();
-		}
+		Input input = buildInput(argumentStr);
 		
-		String functionAttributesStr = testArtefact.getFunction();
-		JsonObject attributesJson = Json.createReader(new StringReader(functionAttributesStr)).readObject();
-		
-		Map<String, String> attributes = new HashMap<>();
-		attributesJson.forEach((key,value)->attributes.put(key, attributesJson.getString(key)));
-		
-		Input input = new Input();
-		input.setArgument(argument);
 		FunctionClient functionClient = (FunctionClient) ExecutionContext.getCurrentContext().getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
 		
 		boolean releaseTokenAfterExecution = false;
@@ -94,7 +80,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 		node.setAdapter(functionToken.getToken()!=null?functionToken.getToken().getToken().getToken().getId():"local");
 		
-		
+		Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
 		try {
 			Output output = functionToken.call(attributes, input);
 			node.setName(output.getFunction().getAttributes().get("name"));
@@ -131,7 +117,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					for(String key:result.keySet()) {
 						JsonValue value = result.get(key);
 						if(value.getValueType() == ValueType.STRING) {
-							((Map<String, String>) var).put(key, value.toString());
+							((Map<String, String>) var).put(key, result.getString(key));
 						}
 					}
 				} else {
@@ -149,6 +135,31 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				scheduler.execute_(node, testArtefact);				
 			}
 		}
+	}
+
+	private Map<String, String> buildFunctionAttributesMap(String functionAttributesStr) {
+		JsonObject attributesJson = Json.createReader(new StringReader(functionAttributesStr)).readObject();
+		
+		Map<String, String> attributes = new HashMap<>();
+		attributesJson.forEach((key,value)->attributes.put(key, attributesJson.getString(key)));
+		return attributes;
+	}
+
+	private Input buildInput(String argumentStr) {
+		JsonObject argument;
+		if(argumentStr!=null) {
+			argument = Json.createReader(new StringReader(argumentStr)).readObject();
+		} else {
+			argument = Json.createObjectBuilder().build();
+		}
+		
+		Map<String, String> properties = new HashMap<>();
+		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
+
+		Input input = new Input();
+		input.setArgument(argument);
+		input.setProperties(properties);
+		return input;
 	}
 
 
