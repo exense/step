@@ -93,17 +93,11 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
           animation: $scope.animationsEnabled,
           templateUrl: 'newTaskModalContent.html',
           controller: 'newTaskModalCtrl',
-          resolve: {
-            items: function () {
-              return $scope.items;
-            }
-          }
+          resolve: {}
         });
 
-        modalInstance.result.then(function (cronExpression) {
-          
-          var executionParams = buildExecutionParams(false);
-          var taskParams = {'cronExpression':cronExpression, 'executionsParameters':executionParams};
+        modalInstance.result.then(function (taskParams) {
+          taskParams.executionsParameters=buildExecutionParams(false);
           $http.post("rest/controller/task",taskParams).success(
             function(data) {
               $location.path('/root/scheduler/');
@@ -119,9 +113,12 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 }]);
 
 tecAdminControllers.controller('newTaskModalCtrl', function ($scope, $modalInstance) {
-
+	
+  $scope.name = $scope.description;
+  
   $scope.ok = function () {
-    $modalInstance.close($scope.cron);
+    var taskParams = {'name': $scope.name, 'cronExpression':$scope.cron};
+    $modalInstance.close(taskParams);
   };
 
   $scope.cancel = function () {

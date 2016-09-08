@@ -9,6 +9,8 @@ public class ExecutiontTaskParameters {
 	@ObjectId
 	public String _id;
 	
+	public String name;
+	
 	public ExecutionParameters executionsParameters;
 	
 	public String cronExpression;
@@ -35,12 +37,28 @@ public class ExecutiontTaskParameters {
 		_id = id;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public ExecutionParameters getExecutionsParameters() {
 		return executionsParameters;
 	}
 
-	public String getCronExpr() {
+	public String getCronExpression() {
 		return cronExpression;
+	}
+
+	public void setExecutionsParameters(ExecutionParameters executionsParameters) {
+		this.executionsParameters = executionsParameters;
+	}
+
+	public void setCronExpression(String cronExpression) {
+		this.cronExpression = cronExpression;
 	}
 
 	public boolean isActive() {

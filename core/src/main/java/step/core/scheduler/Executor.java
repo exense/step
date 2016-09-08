@@ -85,7 +85,16 @@ public class Executor {
 	}
 
 	public boolean schedule(ExecutiontTaskParameters task) {
-		Trigger trigger = TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(task.getCronExpr())).build();
+		JobKey key = new JobKey(task.getId());
+		try {
+			if(scheduler.checkExists(key)) {
+				deleteSchedule(task);
+			}
+		} catch (SchedulerException e) {
+			logger.error("An error occurred while checking if task exists in scheduler: " + task);
+			throw new RuntimeException(e);
+		}
+		Trigger trigger = TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(task.getCronExpression())).build();
 		JobDetail job = buildScheduledJob(task);
 		scheduleJob(trigger, job);
 		return trigger.mayFireAgain();

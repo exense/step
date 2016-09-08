@@ -1,18 +1,39 @@
 var schedulerController = angular.module('schedulerControllers',['dataTable']);
 
-schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage',
-  function($scope, $http,$stateStorage) {
+schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$modal', 
+  function($scope, $http,$stateStorage, $modal) {
     $stateStorage.push($scope, 'scheduler', {});
     
 	console.log('Entering SchedulerCtrl');
 	
 	$scope.datatable = {}
+
+	var actionColRender = function ( data, type, row ) {
+    	var html = '<div class="input-group">' +
+        	'<div class="btn-group">' +
+        	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#SchedulerCtrl\').scope().editTask(\''+row[0]+'\')">' +
+        	'<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
+        	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#SchedulerCtrl\').scope().deleteTask(\''+row[0]+'\',true)">' +
+        	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
+        	'</button> ' +
+        	'</div>' +
+        	'</div>';
+    	return html;
+    }
+	
+	var statusColRender = function ( data, type, row ) {
+    	var html = '<button type="button" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off">On</button>';
+    	return html;
+	}
 	
 	$scope.tabledef = {}
 	$scope.tabledef.columns = [ {"title" : "ID", "visible": false}, 
 	                   {"title" : "cronExpression"}, 
-	                   {"title" : "executionsParameters"},
-	                   {"title" : "Status"}];
+	                   {"title" : "Description"},
+	                   {"title" : "Actions", "render" : actionColRender},
+	                   {"title" : "Status", "render" : statusColRender}];
+	
+
 	
 	$scope.loadTable = function loadTable() {	
 		$http.get("rest/controller/task").success(function(data) {
@@ -20,7 +41,8 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 			for (i = 0; i < data.length; i++) {
 				dataSet[i] = [data[i]._id,
 				              data[i].cronExpression,
-				              JSON.stringify(data[i].executionsParameters),
+				              data[i].name,
+				              data[i]._id,
 				              data[i].active];
 			}
 			$scope.tabledef.data = dataSet;
@@ -32,21 +54,73 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
       var rows = $scope.datatable.getSelection().selectedItems;
       
       for(i=0;i<rows.length;i++) {
-          $http.put("rest/controller/task/"+rows[i][0]).success(function(data) {
-              $scope.loadTable();
-          });         
+    	  $scope.enableTask(rows[i][0]);       
       }
-  };
+    };
+  
+    $scope.enableTask = function(id) {
+    	$http.put("rest/controller/task/"+id).success(function(data) {
+            $scope.loadTable();
+        });
+    }
 
 	$scope.deleteSelected = function(remove) {
 		var rows = $scope.datatable.getSelection().selectedItems;
 		
 		for(i=0;i<rows.length;i++) {
-			$http.delete("rest/controller/task/"+rows[i][0]+"?remove="+remove).success(function(data) {
-				$scope.loadTable();
-			});			
+			$scope.deleteTask(rows[i][0], remove);		
 		}
 	};
 	
+	$scope.editTask = function(id) {
+	  $http.get("rest/controller/task/"+id).success(function(task){
+      var modalInstance = $modal.open({
+        animation: $scope.animationsEnabled,
+        templateUrl: 'editSchedulerTaskModalContent.html',
+        controller: 'editSchedulerTaskModalCtrl',
+        resolve: {
+          task: function () {
+          return task;
+          }
+        }
+        });
+        
+      modalInstance.result.then(function (functionParams) {
+        $scope.loadTable()}, 
+      function (task) {});
+    }); 
+	}
+	
+	$scope.deleteTask = function(id, remove) {
+		$http.delete("rest/controller/task/"+id+"?remove="+remove).success(function(data) {
+			$scope.loadTable();
+		});		
+	}
+	
 	$scope.loadTable($scope,$http);
   }]);
+
+schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $modalInstance, $http, $location, task) {
+	  
+  $scope.task = task;
+
+  $scope.executionsParameters = function(value) {
+    if(arguments.length) {
+      $scope.task.executionsParameters = JSON.parse(value);
+      return value;
+    } else {
+      return JSON.stringify($scope.task.executionsParameters);
+    }
+  }
+  
+  $scope.save = function () {  
+    $http.post("rest/controller/task",$scope.task).success(
+      function(data) {
+        $modalInstance.close(data);
+      });
+  };
+
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };
+});
