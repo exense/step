@@ -30,6 +30,10 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
     return ($scope.$state === view);
   };
   
+  if(!$location.path()) {
+    $location.path('/root/functions')    
+  }
+  
 }])
 
 .directive('ngCompiledInclude', [
@@ -87,7 +91,9 @@ angular.module('step',['ngStorage'])
     }
   }
   
-  lockLocationChangesUntilPathIsReached($location.path().substr(1).split("/"));
+  if($location.path()) {
+    lockLocationChangesUntilPathIsReached($location.path().substr(1).split("/"));
+  }
   
   $rootScope.$on('$locationChangeStart',function(event) {
 //    if($rootScope.locationChangeBlocked) {
