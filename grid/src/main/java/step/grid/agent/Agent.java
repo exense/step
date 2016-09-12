@@ -131,7 +131,7 @@ public class Agent {
 		}
 		
 		if(agentUrl==null) {
-			agentUrl = "http://" + Inet4Address.getLocalHost().getHostName() + ":" + agentPort;
+			agentUrl = "http://" + Inet4Address.getLocalHost().getCanonicalHostName() + ":" + agentPort;
 		}
 		
 		ResourceConfig resourceConfig = new ResourceConfig();
