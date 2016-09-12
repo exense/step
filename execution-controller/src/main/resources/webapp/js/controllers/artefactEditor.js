@@ -90,7 +90,11 @@ angular.module('artefactEditor',['dataTable','step'])
 					'core' : {
 					  'data' : [],
 					  'check_callback' : function (operation, node, node_parent, node_position, more) {
-	            return true;
+	            if(operation=='move_node') {
+	              return node_parent.parent?true:false;
+	            } else {
+	              return true;	              
+	            }
 					  }
 					}, 
 					"plugins" : ["dnd"]
