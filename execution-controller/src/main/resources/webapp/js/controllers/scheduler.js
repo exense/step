@@ -22,8 +22,8 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
     }
 	
 	var statusColRender = function ( data, type, row ) {
-    	var html = '<button type="button" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off">On</button>';
-    	return html;
+	  var html = '<button type="button" class="btn btn-primary" onclick="angular.element(\'#SchedulerCtrl\').scope().toggleTaskState(\''+row[0]+'\','+data+')" aria-pressed="false" autocomplete="off">'+(data?'On':'Off')+'</button>';
+    return html;
 	}
 	
 	$scope.tabledef = {}
@@ -58,11 +58,19 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
       }
     };
   
-    $scope.enableTask = function(id) {
-    	$http.put("rest/controller/task/"+id).success(function(data) {
-            $scope.loadTable();
-        });
+  $scope.toggleTaskState = function(id, currentState) {
+    if(currentState) {
+      $scope.deleteTask(id, false);
+    } else {
+      $scope.enableTask(id);
     }
+  }
+    
+  $scope.enableTask = function(id) {
+  	$http.put("rest/controller/task/"+id).success(function(data) {
+          $scope.loadTable();
+      });
+  }
 
 	$scope.deleteSelected = function(remove) {
 		var rows = $scope.datatable.getSelection().selectedItems;
@@ -117,6 +125,8 @@ schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $
     $http.post("rest/controller/task",$scope.task).success(
       function(data) {
         $modalInstance.close(data);
+      }).error(function(error) {
+        $scope.error = "Invalid CRON expression or server error.";
       });
   };
 
