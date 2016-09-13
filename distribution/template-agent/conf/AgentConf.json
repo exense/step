@@ -1,4 +1,5 @@
 {
+"gridHost":"http://localhost:8081", 
 "tokenGroups":[
 {"capacity":10, 
 "tokenConf":{

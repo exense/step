@@ -1,6 +1,7 @@
 package step.grid.agent;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -30,5 +31,9 @@ public class ArgumentParser {
 
 	public Set<Entry<String, String>> entrySet() {
 		return options.entrySet();
+	}
+
+	public Map<String, String> getOptions() {
+		return options;
 	}
 }

@@ -44,12 +44,6 @@ public class Agent {
 	
 	private AgentConf agentConf;
 	
-	private String gridHost;
-	
-	private Integer agentPort;
-
-	private String agentUrl;
-	
 	private Server server;
 	
 	private AgentTokenPool tokenPool;
@@ -64,29 +58,40 @@ public class Agent {
 	
 	public static void main(String[] args) throws Exception {
 		ArgumentParser arguments = new ArgumentParser(args);
+
+		String agentConfStr = arguments.getOption("config");
 		
-		String agentConf = arguments.getOption("config");
-		String gridHost = arguments.getOption("gridhost");
-		String agentPortStr = arguments.getOption("agentPort");
-		Integer agentPort = agentPortStr!=null?Integer.decode(agentPortStr):12131;
-		String agentUrl = arguments.getOption("agentUrl");
-		
-		(new Agent(agentConf, gridHost, agentUrl, agentPort)).start();
-	}
-	
-	public Agent(String gridHost, String agentUrl, Integer agentPort) throws Exception {
-		this(null, gridHost, agentUrl, agentPort);
-	}
-	
-	public Agent(String agentConf, String gridHost, String agentUrl, Integer agentPort) throws Exception {
-		super();
-		this.gridHost = gridHost;
-		this.agentUrl = agentUrl;
-		this.agentPort = agentPort;
-		
-		if(agentConf!=null) {
+		if(agentConfStr!=null) {
 			AgentConfParser parser = new AgentConfParser();
-			this.agentConf = parser.parser(new File(agentConf));
+			AgentConf agentConf = parser.parser(new File(agentConfStr));
+
+			if(arguments.hasOption("gridHost")) {
+				agentConf.setGridHost(arguments.getOption("gridHost"));
+			}
+			
+			if(arguments.hasOption("agentPort")) {
+				agentConf.setAgentPort(Integer.decode(arguments.getOption("agentPort")));
+			} else {
+				agentConf.setAgentPort(12131);
+			}
+			
+			if(arguments.hasOption("agentUrl")) {
+				agentConf.setAgentUrl(arguments.getOption("agentUrl"));
+			}
+
+			(new Agent(agentConf)).start();
+		} else {
+			throw new RuntimeException("Argument '-config' is missing.");
+		}
+	}
+	
+	public Agent(AgentConf agentConf) throws Exception {
+		super();
+
+		this.agentConf = agentConf;
+		
+		if(agentConf.getAgentUrl()==null) {
+			agentConf.setAgentUrl("http://" + Inet4Address.getLocalHost().getCanonicalHostName() + ":" + agentConf.getAgentPort());
 		}
 		
 		id = UUID.randomUUID().toString();
@@ -122,16 +127,12 @@ public class Agent {
 
 	public void start() throws Exception {
 		
-		if(agentConf!=null) {
+		if(agentConf.getTokenGroups()!=null) {
 			for(TokenGroupConf group:agentConf.getTokenGroups()) {
 				TokenConf tokenConf = group.getTokenConf();
 				addTokens(group.getCapacity(), tokenConf.getAttributes(), tokenConf.getSelectionPatterns(), 
 						tokenConf.getProperties());
 			}
-		}
-		
-		if(agentUrl==null) {
-			agentUrl = "http://" + Inet4Address.getLocalHost().getCanonicalHostName() + ":" + agentPort;
 		}
 		
 		ResourceConfig resourceConfig = new ResourceConfig();
@@ -152,7 +153,7 @@ public class Agent {
 		context.setContextPath("/");
 		context.addServlet(sh, "/*");
 		
-		server = new Server(agentPort);
+		server = new Server(agentConf.getAgentPort());
 
 		ContextHandlerCollection contexts = new ContextHandlerCollection();
         contexts.setHandlers(new Handler[] { context });
@@ -182,7 +183,7 @@ public class Agent {
 	}
 
 	protected String getAgentUrl() {
-		return agentUrl;
+		return agentConf.getAgentUrl();
 	}
 
 	public void stop() throws Exception {
@@ -220,7 +221,7 @@ public class Agent {
 	}
 	
 	protected String getGridHost() {
-		return gridHost;
+		return agentConf.getGridHost();
 	}
 
 }

@@ -7,4 +7,4 @@ ABSPATH=$(cd "$(dirname "$0")"; pwd)
 
 JAVA_OPTS=-Dlogback.configurationFile=./logback.xml
 
-${JAVA_PATH}java ${JAVA_OPTS} -cp ${ABSPATH}/../lib/*: step.grid.agent.Agent -config=${ABSPATH}/../conf/AgentConf.json -gridhost=http://localhost:8081
+${JAVA_PATH}java ${JAVA_OPTS} -cp ${ABSPATH}/../lib/*: step.grid.agent.Agent -config=${ABSPATH}/../conf/AgentConf.json

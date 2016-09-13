@@ -10,6 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 
 import step.grid.Grid;
+import step.grid.agent.conf.AgentConf;
 import step.grid.client.GridClient;
 
 public abstract class AbstractGridTest {
@@ -36,7 +37,7 @@ public abstract class AbstractGridTest {
 		grid = new Grid(8081);
 		grid.start();
 		
-		agent = new Agent("http://localhost:8081", null, 8080);
+		agent = new Agent(new AgentConf("http://localhost:8081", 8080, null));
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("att1", "val1");
 		agent.addTokens(nTokens, attributes, null, null);
