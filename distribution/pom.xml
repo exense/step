@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>step</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.0.0</version>
+		<version>3.1.0</version>
 		<relativePath>../parent</relativePath>
 	</parent>
 
@@ -46,6 +46,20 @@
 							<appendAssemblyId>false</appendAssemblyId>
 							<descriptors>
 								<descriptor>src/assembly/bin-controller.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+					<execution>
+						<id>distro-assembly-dev</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<finalName>step-dev-${project.version}</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+							<descriptors>
+								<descriptor>src/assembly/bin-dev.xml</descriptor>
 							</descriptors>
 						</configuration>
 					</execution>
