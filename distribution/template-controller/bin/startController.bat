@@ -4,6 +4,6 @@ rem if java.exe isn't on your path or is too old, then set your own as follows (
 rem  SET JAVA_PATH="D:\Program Files\Java\jdk1.8.0_73\jre\bin"\
 SET JAVA_PATH=
 
-SET JAVA_OPTS=-Dlogback.configurationFile=logback.xml
+SET JAVA_OPTS=-Dlogback.configurationFile=./logback.xml
 
 %JAVA_PATH%java.exe %JAVA_OPTS% -cp "..\lib\*;" step.controller.ControllerServer -config=../conf/step.properties
