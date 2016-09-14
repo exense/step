@@ -71,8 +71,8 @@ public class Agent {
 			
 			if(arguments.hasOption("agentPort")) {
 				agentConf.setAgentPort(Integer.decode(arguments.getOption("agentPort")));
-			} else {
-				agentConf.setAgentPort(12131);
+			} else if (agentConf.getAgentPort() == null) {
+					agentConf.setAgentPort(12131);
 			}
 			
 			if(arguments.hasOption("agentUrl")) {
