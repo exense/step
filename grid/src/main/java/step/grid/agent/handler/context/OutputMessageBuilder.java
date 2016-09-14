@@ -70,6 +70,7 @@ public class OutputMessageBuilder {
 	}
 	
 	public OutputMessageBuilder setError(String errorMessage, Throwable e) {
+		setError(errorMessage);
 		addAttachment(generateAttachmentForException(e));
 		return this;
 	}
