@@ -71,6 +71,7 @@ public class RtmPlugin extends AbstractPlugin {
 					measurement.setNumericalAttribute("value", measure.getDuration());
 					measurement.setNumericalAttribute("begin", measure.getBegin());
 					measurement.setTextAttribute("rnid", stepReport.getId().toString());
+					measurement.setTextAttribute("rnstatus", stepReport.getStatus().toString());
 					measurements.add(measurement);
 				}
 			}
