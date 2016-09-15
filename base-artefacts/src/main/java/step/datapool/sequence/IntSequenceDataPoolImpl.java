@@ -25,7 +25,7 @@ public class IntSequenceDataPoolImpl extends DataSet {
 	@Override
 	public void reset_() {
 		init=true;
-		cursor = configuration.getStart();
+		cursor = configuration.getStartInt();
 	}
 
 	@Override
@@ -33,17 +33,17 @@ public class IntSequenceDataPoolImpl extends DataSet {
 		if(init) {
 			init=false;
 		} else {
-			cursor+=configuration.getInc();
+			cursor+=configuration.getIncInt();
 		}
 		
-		if(configuration.getInc()>0) {
-			if(cursor<configuration.getEnd()+1) {
+		if(configuration.getIncInt()>0) {
+			if(cursor<configuration.getEndInt()+1) {
 				return cursor;
 			} else {
 				return null;
 			}
 		} else {
-			if(cursor>configuration.getEnd()-1) {
+			if(cursor>configuration.getEndInt()-1) {
 				return cursor;
 			} else {
 				return null;

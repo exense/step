@@ -1,5 +1,7 @@
 package step.artefacts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import step.artefacts.handlers.ForBlockHandler;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.DynamicAttribute;
@@ -16,15 +18,18 @@ public class ForBlock extends AbstractForBlock {
 	@DynamicAttribute
 	String inc;
 
-	public Integer getStart() {
+	@JsonIgnore
+	public Integer getStartInt() {
 		return start!=null&&start.length()>0?Integer.parseInt(start):0;
 	}
 
-	public Integer getEnd() {
+	@JsonIgnore
+	public Integer getEndInt() {
 		return end!=null&&end.length()>0?Integer.parseInt(end):null;
 	}
 
-	public Integer getInc() {
+	@JsonIgnore
+	public Integer getIncInt() {
 		return inc!=null&&inc.length()>0?Integer.parseInt(inc):1;
 	}
 
@@ -38,5 +43,17 @@ public class ForBlock extends AbstractForBlock {
 
 	public void setInc(String inc) {
 		this.inc = inc;
+	}
+
+	public String getStart() {
+		return start;
+	}
+
+	public String getEnd() {
+		return end;
+	}
+
+	public String getInc() {
+		return inc;
 	}
 }
