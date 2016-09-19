@@ -23,6 +23,7 @@
 		<module>../script-api</module>
 		<module>../selenium-script-api</module>
 		<module>../distribution</module>
+		<module>../initialization</module>
 	</modules>
 
 	<dependencies>
