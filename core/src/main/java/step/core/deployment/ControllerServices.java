@@ -466,12 +466,14 @@ public class ControllerServices extends AbstractServices {
 
 	private void removeRecursive(ObjectId id, ArtefactAccessor a) {
 		AbstractArtefact artefact = a.get(id);
-		if(artefact.getChildrenIDs()!=null) {
-			for(ObjectId childId:artefact.getChildrenIDs()) {
-				removeRecursive(childId, a);
+		if(artefact!=null) {
+			if(artefact.getChildrenIDs()!=null) {
+				for(ObjectId childId:artefact.getChildrenIDs()) {
+					removeRecursive(childId, a);
+				}
 			}
+			a.remove(id);
 		}
-		a.remove(id);
 	}
 	
 }
