@@ -51,27 +51,52 @@ public class InitializationPlugin extends AbstractPlugin {
 		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
-		Function demoFunction = new Function();
-		
-		Map<String, String> kwAttributes = new HashMap<>();
-		kwAttributes.put("name", "Demo_Keyword");
-		
-		demoFunction.setAttributes(kwAttributes);
-		demoFunction.setHandlerChain("class:step.handlers.scripthandler.ScriptHandler");
-		functionRepository.addFunction(demoFunction);
+		addFunction(functionRepository, "Demo_Echo");
+		addFunction(functionRepository, "Demo_HTTPGet");
 		
 		ArtefactAccessor artefacts = context.getArtefactAccessor();
 		
+		createDemoPlan(artefacts,"Demo_TestCase_Echo","Demo_Echo","{\"arg1\":\"val1\"}","output.getString(\"output1\")==\"val1\"");
+		createDemoPlan(artefacts,"Demo_TestCase_HTTPGet","Demo_HTTPGet","{\"url\":\"http://denkbar.io\"}","output.getInt(\"statusCode\")==200");
+	}
+
+	private void createDemoPlan(ArtefactAccessor artefacts, String planName, String functionName, String args, String check) {
 		Map<String, String> tcAttributes = new HashMap<>();
 		TestCase testCase = new TestCase();
 		testCase.setRoot(true);
 		
-		tcAttributes.put("name", "Demo_TestCase");
+		tcAttributes.put("name", planName);
 		testCase.setAttributes(tcAttributes);
 		
 		Set set1 = new Set();
 		set1.setKey("scripthandler.script.dir");
 		
+		String scriptPath = getDemoScriptPath();
+		
+		set1.setExpression("'"+scriptPath+"'");
+		artefacts.save(set1);
+		
+		
+		Check check1 = new Check();
+		check1.setExpression(check);
+		artefacts.save(check1);
+		
+		CallFunction call1 = new CallFunction();
+		call1.setFunction("{\"name\":\""+functionName+"\"}");
+		call1.setArgument(args);
+		call1.setToken("{\"route\":\"remote\"}");
+		call1.addChild(check1.getId());
+		artefacts.save(call1);
+		
+		
+		testCase.addChild(set1.getId());
+		testCase.addChild(call1.getId());
+		
+		testCase.setRoot(true);
+		artefacts.save(testCase);
+	}
+
+	private String getDemoScriptPath() {
 		String scriptPath = "/path/to/your/scripts";
 		String currentDir = System.getProperty("user.dir");
 		if(currentDir!=null) {
@@ -84,28 +109,18 @@ public class InitializationPlugin extends AbstractPlugin {
 				}
 			}
 		}
+		return scriptPath;
+	}
+
+	private void addFunction(FunctionRepositoryImpl functionRepository, String name) {
+		Function demoFunction = new Function();
 		
-		set1.setExpression("'"+scriptPath+"'");
-		artefacts.save(set1);
+		Map<String, String> kwAttributes = new HashMap<>();
+		kwAttributes.put("name", name);
 		
-		
-		Check check1 = new Check();
-		check1.setExpression("output.getString(\"output1\")==\"val1\"");
-		artefacts.save(check1);
-		
-		CallFunction call1 = new CallFunction();
-		call1.setFunction("{\"name\":\"Demo_Keyword\"}");
-		call1.setArgument("{\"arg1\":\"val1\"}");
-		call1.setToken("{\"route\":\"remote\"}");
-		call1.addChild(check1.getId());
-		artefacts.save(call1);
-		
-		
-		testCase.addChild(set1.getId());
-		testCase.addChild(call1.getId());
-		
-		testCase.setRoot(true);
-		artefacts.save(testCase);
+		demoFunction.setAttributes(kwAttributes);
+		demoFunction.setHandlerChain("class:step.handlers.scripthandler.ScriptHandler");
+		functionRepository.addFunction(demoFunction);
 	}
 
 	
