@@ -3,7 +3,7 @@
 *
 * http://www.johnculviner.com
 *
-* Copyright (c) 2013 - John Culviner
+* Copyright (c) 2013, 2016 - John Culviner
 *
 * Licensed under the MIT license:
 *   http://www.opensource.org/licenses/mit-license.php
