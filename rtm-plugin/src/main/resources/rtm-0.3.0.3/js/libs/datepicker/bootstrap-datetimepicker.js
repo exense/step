@@ -1,7 +1,7 @@
 ﻿/* =========================================================
  * bootstrap-datetimepicker.js
  * =========================================================
- * Copyright 2012, 2016 Stefan Petre
+ * Copyright 2012 Stefan Petre
  * Improvements by Andrew Rowls
  * Improvements by Sébastien Malot
  * Improvements by Yun Lai
