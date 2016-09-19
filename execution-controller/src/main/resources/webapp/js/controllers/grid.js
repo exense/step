@@ -36,12 +36,12 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
   	function($scope, $interval, $http, helpers) {
   	  $scope.$state = 'adapters';
   	  
-  	  $scope.keySelectioModel = {'url':true};
+  	  $scope.keySelectioModel = {};
   	  
   	  $http.get("rest/grid/keys").success(
           function(data) { 
-            $scope.keys = ['url']; $scope.keySelectioModel['url']=false;
-            _.each(data,function(key){$scope.keys.push(key); $scope.keySelectioModel[key]=true});
+            $scope.keys = ['url']; $scope.keySelectioModel['url']=true;
+            _.each(data,function(key){$scope.keys.push(key); $scope.keySelectioModel[key]=false});
           })
       
   	  $scope.loadTable = function loadTable() {
