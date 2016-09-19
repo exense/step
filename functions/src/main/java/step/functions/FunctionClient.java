@@ -77,7 +77,7 @@ public class FunctionClient {
 		try {
 			OutputMessage outputMessage;
 			if(functionToken.getToken()!=null) {
-				outputMessage = functionToken.getToken().process(function.getAttributes().get("name"), input.getArgument(), handlerChain);		
+				outputMessage = functionToken.getToken().process(function.getAttributes().get("name"), input.getArgument(), handlerChain, input.getProperties());		
 			} else {
 				TokenHandlerPool p = new TokenHandlerPool();
 				MessageHandler h = p.get(handlerChain);
