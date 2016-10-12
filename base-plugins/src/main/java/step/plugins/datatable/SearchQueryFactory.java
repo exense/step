@@ -18,7 +18,9 @@
  *******************************************************************************/
 package step.plugins.datatable;
 
+import org.bson.conversions.Bson;
+
 public interface SearchQueryFactory {
 
-	public String createQuery(String attributeName, String expression);
+	public Bson createQuery(String attributeName, String expression);
 }

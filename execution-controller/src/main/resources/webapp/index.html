@@ -31,6 +31,7 @@ window.console.log = window.console.log || function(){};
 <script src="js/controllers/functions.js"></script> 
 <script src="js/controllers/repository.js"></script>
 <script src="js/controllers/artefactEditor.js"></script>
+<script src="js/controllers/reportBrowser.js"></script>
 <script src="js/tables.js"></script>
 
 <script src="js/lib/moment.js"></script>
@@ -83,6 +84,8 @@ window.console.log = window.console.log || function(){};
 						ui-sref="grid" ng-click="setView('functions')">Keywords</a></li>
 					<li ng-class="{ active: isViewActive('executions') }"><a
 						ui-sref="execution" ng-click="setView('executions')">Executions</a></li>
+					<li ng-class="{ active: isViewActive('reportBrowser') }"><a
+						ui-sref="reportBrowser" ng-click="setView('reportBrowser')">Reports</a></li>	
 					<li ng-class="{ active: isViewActive('scheduler') }"><a
 						ui-sref="scheduler" ng-click="setView('scheduler')">Scheduler</a></li>
 					<li ng-class="{ active: isViewActive('grid') }"><a
@@ -105,6 +108,8 @@ window.console.log = window.console.log || function(){};
         <div ng-if="isViewActive('repository')" ng-compiled-include="partials/repository.html"></div>
         <div ng-if="isViewActive('functions')" ng-compiled-include="partials/functionList.html"></div>
         <div ng-if="isViewActive('artefacteditor')" ng-compiled-include="partials/artefactEditor.html"></div>
+        <div ng-if="isViewActive('reportBrowser')" ng-compiled-include="partials/reportBrowser.html"></div>
+        
         
 	</div>
 	

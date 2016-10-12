@@ -65,19 +65,13 @@ public class MongoDBAccessorHelper {
 	}
 	
 	public MongoClient getMongoClient() {
-		try {
-			ServerAddress address = new ServerAddress(host, port);
-			List<MongoCredential> credentials = new ArrayList<>();
-			if(user!=null) {
-				MongoCredential credential = MongoCredential.createMongoCRCredential(user, db, pwd.toCharArray());
-				credentials.add(credential);
-			}
-			return new MongoClient(address, credentials);
-		} catch (UnknownHostException e1) {
-			throw new RuntimeException(e1);
+		ServerAddress address = new ServerAddress(host, port);
+		List<MongoCredential> credentials = new ArrayList<>();
+		if(user!=null) {
+			MongoCredential credential = MongoCredential.createMongoCRCredential(user, db, pwd.toCharArray());
+			credentials.add(credential);
 		}
-		
-		
+		return new MongoClient(address, credentials);
 	}
 	
 	public static MongoCollection getCollection(MongoClient client, String collectionName) {

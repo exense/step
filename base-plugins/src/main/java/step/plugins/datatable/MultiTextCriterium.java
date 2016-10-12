@@ -18,9 +18,17 @@
  *******************************************************************************/
 package step.plugins.datatable;
 
+import static com.mongodb.client.model.Filters.or;
+import static com.mongodb.client.model.Filters.regex;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import org.bson.conversions.Bson;
+
+
 
 public class MultiTextCriterium implements SearchQueryFactory {
 
@@ -37,18 +45,13 @@ public class MultiTextCriterium implements SearchQueryFactory {
 	}
 
 	@Override
-	public String createQuery(String attributeName, String expression) {
-		StringBuilder query = new StringBuilder();
-		query.append("$or:[");
+	public Bson createQuery(String attributeName, String expression) {
+		List<Bson> fragments = new ArrayList<>();
 		Iterator<String> it = attributes.iterator();
 		while(it.hasNext()) {
-			query.append("{"+it.next()+":{$regex:'"+expression+"'}}");
-			if(it.hasNext()) {
-				query.append(",");
-			}
+			fragments.add(regex(it.next(), expression));
 		}
-		query.append("]");
-		return query.toString();
+		return or(fragments);
 	}
 
 }

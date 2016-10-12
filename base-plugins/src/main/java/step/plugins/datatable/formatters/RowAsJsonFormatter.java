@@ -18,7 +18,7 @@
  *******************************************************************************/
 package step.plugins.datatable.formatters;
 
-import com.mongodb.DBObject;
+import org.bson.Document;
 
 public class RowAsJsonFormatter implements Formatter {
 	
@@ -27,8 +27,8 @@ public class RowAsJsonFormatter implements Formatter {
 	}
 
 	@Override
-	public String format(Object value, DBObject row) {
-		return row.toString();
+	public String format(Object value, Document row) {
+		return row.toJson();
 	}
 
 	@Override

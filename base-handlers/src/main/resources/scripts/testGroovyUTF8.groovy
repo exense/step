@@ -16,20 +16,4 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.datatable.formatters;
-
-import org.bson.Document;
-
-public class StringFormatter implements Formatter {
-
-	@Override
-	public String format(Object value, Document row) {
-		return value.toString();
-	}
-
-	@Override
-	public Object parse(String formattedValue) {
-		return formattedValue;
-	}
-
-}
+output.add('key1','kéÿ1')

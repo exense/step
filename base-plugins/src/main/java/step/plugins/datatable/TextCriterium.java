@@ -18,18 +18,15 @@
  *******************************************************************************/
 package step.plugins.datatable;
 
+import org.bson.conversions.Bson;
+
+import com.mongodb.client.model.Filters;
+
 public class TextCriterium implements SearchQueryFactory {
 
 	@Override
-	public String createQuery(String attributeName, String expression) {
-		StringBuilder query = new StringBuilder();
-		query.append(attributeName);
-		query.append(":");
-		query.append("{$regex:'");
-		query.append(expression);
-		query.append("'}");
-
-		return query.toString();
+	public Bson createQuery(String attributeName, String expression) {
+		return Filters.regex(attributeName, expression);
 	}
 
 }

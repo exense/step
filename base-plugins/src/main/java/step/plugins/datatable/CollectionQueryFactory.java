@@ -20,7 +20,9 @@ package step.plugins.datatable;
 
 import javax.json.JsonObject;
 
+import org.bson.conversions.Bson;
+
 public interface CollectionQueryFactory {
 
-	public String buildAdditionalQuery(JsonObject filter);
+	public Bson buildAdditionalQuery(JsonObject filter);
 }

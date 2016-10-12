@@ -21,21 +21,24 @@ package step.plugins.datatable.formatters;
 import java.util.Collection;
 import java.util.Iterator;
 
-import com.mongodb.DBObject;
+import org.bson.Document;
 
 public class ArrayFormatter implements Formatter {
 
 	@Override
-	public String format(Object value, DBObject row) {
+	public String format(Object value, Document row) {
 		if(value!=null && value instanceof Collection) {
 			StringBuilder b = new StringBuilder();
+			b.append("[");
 			Iterator<?> i = ((Collection<?>)value).iterator();
 			while(i.hasNext()) {
-				b.append(i.next().toString());
+				Object next = i.next();
+				b.append(next instanceof Document?((Document)next).toJson():next.toString());
 				if(i.hasNext()) {
-					b.append(";");
+					b.append(",");
 				}
 			}
+			b.append("]");
 			return b.toString();
 		} else {
 			return null;

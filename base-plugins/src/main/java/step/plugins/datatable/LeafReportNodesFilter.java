@@ -18,37 +18,30 @@
  *******************************************************************************/
 package step.plugins.datatable;
 
+import static com.mongodb.client.model.Filters.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.json.JsonObject;
+
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 public class LeafReportNodesFilter implements CollectionQueryFactory {
 
-	public String buildAdditionalQuery(JsonObject filter) {
-		StringBuilder query = new StringBuilder();
-		query.append("executionID: '" + filter.getString("eid") + "', $or: [ { _class: 'step.artefacts.reports.CallFunctionReportNode' }, { status: 'TECHNICAL_ERROR'} ]");
-		if(filter.containsKey("testcases")) {
-			query.append(", customAttributes.TestCase: { $in: "+filter.getJsonArray("testcases").toString()+"}");
+	public Bson buildAdditionalQuery(JsonObject filter) {		
+		List<Bson> fragments = new ArrayList<>();
+		if(filter.containsKey("eid")) {
+			fragments.add(new Document("executionID", filter.getString("eid")));
 		}
-		return query.toString();
 		
-//		filter.getJsonArray(name)
+		fragments.add(or(new Document("_class","step.artefacts.reports.CallFunctionReportNode"),new Document("status","TECHNICAL_ERROR")));
+		if(filter.containsKey("testcases")) {
+			//customAttributes.TestCase
+			fragments.add(in("customAttributes.TestCase",filter.getJsonArray("testcases")));
+		}
 		
-//		StringBuffer populatedQuery = new StringBuffer(); 
-//		String query = table.getQuery();
-//		if(query!=null) {
-//			Pattern p = Pattern.compile("\\{(.+?)\\}");
-//			Matcher m = p.matcher(query);
-//			while(m.find()) {
-//				String key = m.group(1);
-//				String value = params.getFirst(key);
-//				if(value!=null) {
-//					m.appendReplacement(populatedQuery, "'"+value+"'");
-//				}
-//			}
-//			m.appendTail(populatedQuery);
-//			return populatedQuery.toString();
-//		} else {
-//			return null;
-//		}
-//		return null;
+		return and(fragments);
 	}
 }

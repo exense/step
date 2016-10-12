@@ -1,0 +1,29 @@
+<div class="panel panel-default" ng-controller="ReportNodeBrowserCtrl" id="ReportNodeBrowserCtrl">
+
+	<div style="background-color: #f1f1f1; padding-bottom: 15px; padding-top: 15px;">
+		<div style="margin: 5px;">
+			<form ng-submit="search()">
+				<div class="input-group">
+					<input ng-model="query" type="text" class="form-control"
+						aria-label="...">
+					<div class="input-group-btn">
+						<button type="button" class="btn btn-default"
+							aria-label="Left Align" ng-click="search()">
+							<span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+						</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	<div class="panel-body">
+		<div class="panel panel-default">
+			<div class="panel-body">
+				<datatable serverside="reportsByOQL" tabledef="stepsTable"
+					handle="stepsTable" selectionmode="single" columnsearch="true"
+					order="[[1, &quot;desc&quot;]]" />
+			</div>
+		</div>
+	</div>
+
+</div>

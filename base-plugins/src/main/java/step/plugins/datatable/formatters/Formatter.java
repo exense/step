@@ -18,12 +18,12 @@
  *******************************************************************************/
 package step.plugins.datatable.formatters;
 
-import com.mongodb.DBObject;
+import org.bson.Document;
 
 
 public interface Formatter {
 
-	public String format(Object value, DBObject row);
+	public String format(Object value, Document row);
 	
 	public Object parse(String formattedValue);
 }

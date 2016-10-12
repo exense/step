@@ -52,8 +52,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.client.model.Filters;
 
 import step.attachments.AttachmentContainer;
 import step.attachments.AttachmentManager;
@@ -64,9 +70,6 @@ import step.core.deployment.AbstractServices;
 import step.core.execution.model.ExecutionStatus;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
-
-import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 
 @Singleton
 @Path("datatable")
@@ -102,7 +105,7 @@ public class DataTableServices extends AbstractServices {
 
 		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(client, "reports"));
 		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
-		.addJsonColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
+		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
 		
 		BackendDataTable artefactTable = new BackendDataTable(new Collection(client, "artefacts"));
 		artefactTable.addColumn("ID", "_id");
@@ -114,8 +117,8 @@ public class DataTableServices extends AbstractServices {
 		artefactTable.addColumn("Type", "_class").addRowAsJson("Actions");
 		artefactTable.setQuery(new CollectionQueryFactory() {
 			@Override
-			public String buildAdditionalQuery(JsonObject filter) {
-				return "root: true";
+			public Bson buildAdditionalQuery(JsonObject filter) {
+				return new Document("root", true);
 			}
 		});
 		
@@ -129,9 +132,13 @@ public class DataTableServices extends AbstractServices {
 		functionTable.addColumn("Type", "handlerChain");
 		functionTable.addRowAsJson("Actions");
 		
-		
+		BackendDataTable leafReportNodesOQL = new BackendDataTable(new Collection(client, "reports"));
+		leafReportNodesOQL.addColumn("ID", "_id").addColumn("Execution", "executionID").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
+		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
+
 		tables.put("executions", executions);
 		tables.put("reports", leafReportNodes);
+		tables.put("reportsByOQL", leafReportNodesOQL);
 		tables.put("artefacts", artefactTable);
 		tables.put("functions", functionTable);		
 
@@ -171,7 +178,7 @@ public class DataTableServices extends AbstractServices {
 	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params) throws Exception {		
 		BackendDataTable table = tables.get(collectionID);
 		
-		List<String> queryFragments = new ArrayList<>();
+		List<Bson> queryFragments = new ArrayList<>();
 		for(String key:params.keySet()) {
 			Matcher m = columnSearchPattern.matcher(key);
 			Matcher searchMatcher = searchPattern.matcher(key);
@@ -203,16 +210,20 @@ public class DataTableServices extends AbstractServices {
 		String sortDir = params.getFirst("order[0][dir]");
 		SearchOrder order = new SearchOrder(sortColumn.getValue(), sortDir.equals("asc")?1:-1);
 		
-		String additionalQuery;
 		if(table.getQuery()!=null) {
 			JsonObject filter = null;
 			if(params.containsKey("params")) {
 				JsonReader reader = Json.createReader(new StringReader(params.getFirst("params")));
 				filter = reader.readObject();
+				
 			}
-			additionalQuery = table.getQuery().buildAdditionalQuery(filter);
-			queryFragments.add(additionalQuery);
+			Bson fragment = table.getQuery().buildAdditionalQuery(filter);
+			if(fragment!=null) {
+				queryFragments.add(fragment);				
+			}
 		}
+		
+		Bson query = queryFragments.size()>0?Filters.and(queryFragments):new Document();
 		
 		if(params.containsKey("export")) {
 			String reportID = params.getFirst("export");
@@ -221,22 +232,22 @@ public class DataTableServices extends AbstractServices {
 			reportExecutor.execute(new Runnable() {			
 				@Override
 				public void run() {
-					export(reportID, table, queryFragments, order);					
+					export(reportID, table, query, order);					
 				}
 			});
 		}
 		
-		CollectionFind<DBObject> find = table.getCollection().find(queryFragments, order, skip, limit);
+		CollectionFind<Document> find = table.getCollection().find(query, order, skip, limit);
 		
-		Iterator<DBObject> it = find.getIterator();
-		List<DBObject> objects = new ArrayList<>();	
+		Iterator<Document> it = find.getIterator();
+		List<Document> objects = new ArrayList<>();	
 		while(it.hasNext()) {
 			objects.add(it.next());
 		}
 		
 		String[][] data = new String[objects.size()][table.getColumns().size()];
 		for(int i = 0; i<objects.size();i++) {
-			DBObject row = objects.get(i);
+			Document row = objects.get(i);
 			String[] rowFormatted = formatRow(table.getColumns(), row);
 			data[i] = rowFormatted;
 		}
@@ -245,7 +256,7 @@ public class DataTableServices extends AbstractServices {
 		return response;
 	}
 
-	private String[] formatRow(List<ColumnDef> columns, DBObject row) {
+	private String[] formatRow(List<ColumnDef> columns, Document row) {
 		int columnID = 0;
 		String[] rowFormatted = new String[columns.size()];
 		for(ColumnDef column:columns) {
@@ -255,10 +266,9 @@ public class DataTableServices extends AbstractServices {
 				Object value = row;
 				for(String key:keys) {
 					if(value!=null) {
-						value = ((DBObject)value).get(key);
+						value = ((Document)value).get(key);
 					}
 				}
-				
 				rowFormatted[columnID] = value!=null?format(value,row,column):"";
 			} else {
 				rowFormatted[columnID] = format(null,row,column);
@@ -318,13 +328,13 @@ public class DataTableServices extends AbstractServices {
 	
 	private static final String CSV_DELIMITER = ";";
 	
-	private void export(String id, BackendDataTable table, List<String> queryFragments, SearchOrder order) {
+	private void export(String id, BackendDataTable table, Bson query, SearchOrder order) {
 		AttachmentContainer container = AttachmentManager.createAttachmentContainer();
 		ReportStatus status = reports.get(id);
 		status.setAttachmentID(container.getMeta().getId().toString());
 		
 		try {
-			CollectionFind<DBObject> find = table.getCollection().find(queryFragments, order, null, null);		
+			CollectionFind<Document> find = table.getCollection().find(query, order, null, null);		
 
 			PrintWriter writer = new PrintWriter(new File(container.getContainer().getAbsoluteFile()+"/export.csv"),"UTF-8");
 			
@@ -341,12 +351,12 @@ public class DataTableServices extends AbstractServices {
 				
 				find.getRecordsFiltered();
 				
-				Iterator<DBObject> it = find.getIterator();
+				Iterator<Document> it = find.getIterator();
 				
 				int count = 0;
 				while(it.hasNext()) {
 					count++;
-					DBObject object = it.next();
+					Document object = it.next();
 					String[] formattedRow = formatRow(columns, object);
 					for(String val:formattedRow) {
 						if(val.contains(CSV_DELIMITER)||val.contains("\n")||val.contains("\"")) {
@@ -384,7 +394,7 @@ public class DataTableServices extends AbstractServices {
 		}
 	}
 	
-	private String format(Object value, DBObject row, ColumnDef column) {
+	private String format(Object value, Document row, ColumnDef column) {
 		return column.format.format(value, row);
 	}
 }

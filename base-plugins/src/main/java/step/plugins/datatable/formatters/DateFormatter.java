@@ -21,7 +21,7 @@ package step.plugins.datatable.formatters;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import com.mongodb.DBObject;
+import org.bson.Document;
 
 public class DateFormatter implements Formatter {
 
@@ -32,7 +32,7 @@ public class DateFormatter implements Formatter {
 	}
 	
 	@Override
-	public String format(Object value, DBObject row) {
+	public String format(Object value, Document row) {
 		synchronized (format) {
 			return format.format(new Date((long) value));
 		}

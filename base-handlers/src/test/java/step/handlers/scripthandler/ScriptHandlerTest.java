@@ -51,6 +51,20 @@ public class ScriptHandlerTest {
 		
 		Assert.assertEquals("val1",out.getPayload().getString("key1"));
 	}
+
+	@Test 
+	public void testGroovy1() {
+		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		
+		Map<String, String> properties = new HashMap<>();
+		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
+		properties.put(ScriptHandler.SCRIPT_ENGINE, "groovy");
+		
+		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
+		OutputMessage out = context.run("testGroovy1", "{\"key1\":\"val1\"}");
+		
+		Assert.assertEquals("val1",out.getPayload().getString("key1"));
+	}
 	
 	@Test 
 	public void testParallel() throws InterruptedException, ExecutionException, TimeoutException {
@@ -86,7 +100,7 @@ public class ScriptHandlerTest {
 	}
 	
 	@Test 
-	public void testGroovy() {
+	public void testWrongScriptEngine() {
 		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
 		
 		Map<String, String> properties = new HashMap<>();
@@ -99,6 +113,19 @@ public class ScriptHandlerTest {
 		} catch(Exception e) {
 			Assert.assertTrue(e.getMessage().contains("Unable to find script engine with name 'dummy'"));			
 		}		
+	}
+	
+	@Test 
+	public void testGroovy() {
+		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		
+		Map<String, String> properties = new HashMap<>();
+		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
+		properties.put(ScriptHandler.SCRIPT_ENGINE, "groovy");
+		
+		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
+		OutputMessage out = context.run("testGroovyUTF8", "{\"key1\":\"val1\"}");
+		Assert.assertEquals("kéÿ1",out.getPayload().getString("key1"));
 	}
 	
 	@Test 

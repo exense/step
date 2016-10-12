@@ -23,6 +23,10 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.bson.conversions.Bson;
+
+import com.mongodb.client.model.Filters;
+
 public class DateRangeCriterium implements SearchQueryFactory {
 	
 	private SimpleDateFormat DATE_FORMAT;
@@ -34,7 +38,7 @@ public class DateRangeCriterium implements SearchQueryFactory {
 	}
 
 	@Override
-	public String createQuery(String attributeName, String expression) {
+	public Bson createQuery(String attributeName, String expression) {
 
 		try {
 			Date from;
@@ -48,7 +52,7 @@ public class DateRangeCriterium implements SearchQueryFactory {
 			
 			Date to = c.getTime();
 			
-			return attributeName+": {$lt: "+to.getTime()+",$gte: "+from.getTime()+"}";
+			return Filters.and(Filters.lt(attributeName, to.getTime()), Filters.gte(attributeName, from.getTime()));
 		} catch (ParseException e) {
 			return null;
 		}

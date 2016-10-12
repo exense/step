@@ -16,20 +16,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.datatable.formatters;
+package step.plugins.datatable;
 
-import org.bson.Document;
+import javax.json.JsonObject;
 
-public class StringFormatter implements Formatter {
+import org.bson.conversions.Bson;
 
-	@Override
-	public String format(Object value, Document row) {
-		return value.toString();
+import step.core.ql.OQLMongoDBBuilder;
+
+public class OQLFilter implements CollectionQueryFactory {
+
+	public Bson buildAdditionalQuery(JsonObject filter) {
+		if(filter.containsKey("oql")) {
+			Bson bson = OQLMongoDBBuilder.build(filter.getString("oql"));
+			return bson;
+		} else {
+			throw new RuntimeException("Attribute 'oql' missing.");
+		}
 	}
-
-	@Override
-	public Object parse(String formattedValue) {
-		return formattedValue;
-	}
-
 }
