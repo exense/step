@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>org.rtm</groupId>
 			<artifactId>rtm-commons</artifactId>
-			<version>0.3.0.3</version>
+			<version>0.3.0.4</version>
 		</dependency>
    	   	<dependency>
     	  		<groupId>junit</groupId>

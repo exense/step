@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Implementation-Title: Response Time Manager
-Implementation-Version: 0.3.0.3
+Implementation-Version: 0.3.0.4
 Implementation-Vendor-Id: org.rtm
-Built-By: ex3cv
+Built-By: EX3CV
 Build-Jdk: 1.7.0_80
 Created-By: Apache Maven 3.3.3
 Archiver-Version: Plexus Archiver
