@@ -32,12 +32,24 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   // extra
   $httpProvider.defaults.headers.get['Cache-Control'] = 'no-cache';
   $httpProvider.defaults.headers.get['Pragma'] = 'no-cache';
+  $httpProvider.defaults.withCredentials = true;
+  $httpProvider.interceptors.push('authInterceptor');
 }])
 
-.controller('AppController', ['$rootScope','$scope', '$location', 'stateStorage', function($rootScope, $scope, $location, $stateStorage) {
-  $stateStorage.push($scope, 'root',{});
+.controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService) {
+  stateStorage.push($scope, 'root',{});
   
-  $rootScope.context = {'userID':'anonymous'};
+  $scope.isInitialized = false;
+  
+  $http.get('rest/access/profile')
+  .success(function(user) {
+    $rootScope.context = {'userID':user.username};
+    $scope.isInitialized = true;
+  })
+  .error(function() {
+    $rootScope.context = {'userID':'anonymous'};
+    $scope.isInitialized = true;
+  })
   
   $scope.setView = function (view) {
     $scope.$state = view;
@@ -48,11 +60,15 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
     return ($scope.$state === view);
   };
   
+  $scope.isLoggedIn = function () {
+    return ($rootScope.context.userID != 'anonymous');
+  };
+  
   if(!$location.path()) {
     $location.path('/root/functions')    
   }
   
-}])
+})
 
 .directive('ngCompiledInclude', [
   '$compile',
@@ -186,5 +202,56 @@ angular.module('step',['ngStorage'])
       this.localStore[$scope.$$statepath.join('.')]=model;
     }
   };
-}]);
+}])
+
+.factory('AuthService', function ($http) {
+  var authService = {};
+ 
+  authService.login = function (credentials) {
+    return $http
+      .post('rest/access/login', credentials)
+      .then(function (res) {
+        
+        return credentials.username;
+      });
+  };
+ 
+  authService.isAuthenticated = function () {
+    return !!Session.userId;
+  };
+ 
+  authService.isAuthorized = function (authorizedRoles) {
+    if (!angular.isArray(authorizedRoles)) {
+      authorizedRoles = [authorizedRoles];
+    }
+    return (authService.isAuthenticated() &&
+      authorizedRoles.indexOf(Session.userRole) !== -1);
+  };
+ 
+  return authService;
+})
+
+.controller('LoginController', function ($scope, $rootScope, AuthService) {
+  $scope.credentials = {
+    username: '',
+    password: ''
+  };
+  $scope.login = function (credentials) {
+    AuthService.login(credentials).then(function (user) {
+      $rootScope.context = {'userID':credentials.username};
+    }, function () {
+    });
+  };
+})
+
+.service('authInterceptor', function($q, $rootScope) {
+    var service = this;
+    service.responseError = function(response) {
+        if (response.status == 401){
+          $rootScope.context = {'userID':'anonymous'};
+        }
+        return $q.reject(response);
+    };
+})
+;
 

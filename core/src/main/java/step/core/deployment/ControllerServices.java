@@ -93,6 +93,7 @@ public class ControllerServices extends AbstractServices {
 		return getScheduler().get(executionTaskID);
 	}
 	
+	@Secured
 	@GET
 	@Path("/task")
 	@Produces(MediaType.APPLICATION_JSON)

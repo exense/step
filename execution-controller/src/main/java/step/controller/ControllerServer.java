@@ -38,6 +38,8 @@ import step.attachments.DownloadFileServlet;
 import step.commons.conf.Configuration;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
+import step.core.deployment.AuthenticationFilter;
+import step.core.deployment.AccessServices;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.JacksonMapperProvider;
 import step.grid.agent.ArgumentParser;
@@ -122,6 +124,8 @@ public class ControllerServer {
 		resourceConfig.register(JacksonMapperProvider.class);
 		
 		resourceConfig.registerClasses(ControllerServices.class);
+		resourceConfig.registerClasses(AccessServices.class);
+		resourceConfig.registerClasses(AuthenticationFilter.class);
 		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override

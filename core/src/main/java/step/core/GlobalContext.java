@@ -19,6 +19,7 @@
 package step.core;
 
 import step.core.Controller.ServiceRegistrationCallback;
+import step.core.access.UserAccessor;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionLifecycleManager;
@@ -44,6 +45,8 @@ public class GlobalContext extends AbstractContext {
 	private ReportNodeAccessor reportAccessor;
 	
 	private ExecutionTaskAccessor scheduleAccessor;
+	
+	private UserAccessor userAccessor;
 	
 	private ExecutionLifecycleManager executionLifecycleManager;
 	
@@ -91,6 +94,14 @@ public class GlobalContext extends AbstractContext {
 
 	public void setScheduleAccessor(ExecutionTaskAccessor scheduleAccessor) {
 		this.scheduleAccessor = scheduleAccessor;
+	}
+
+	public UserAccessor getUserAccessor() {
+		return userAccessor;
+	}
+
+	public void setUserAccessor(UserAccessor userAccessor) {
+		this.userAccessor = userAccessor;
 	}
 
 	public PluginManager getPluginManager() {

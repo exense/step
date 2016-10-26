@@ -24,6 +24,7 @@ import org.eclipse.jetty.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.access.UserAccessor;
 import step.core.accessors.MongoDBAccessorHelper;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.reports.ReportNodeAccessor;
@@ -73,6 +74,7 @@ public class Controller {
 		context.setArtefactAccessor(new ArtefactAccessor(mongoClient));
 		context.setReportAccessor(new ReportNodeAccessor(mongoClient));
 		context.setScheduleAccessor(new ExecutionTaskAccessor(mongoClient));
+		context.setUserAccessor(new UserAccessor(mongoClient));
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		context.setExecutionLifecycleManager(new ExecutionLifecycleManager(context));
 	}
