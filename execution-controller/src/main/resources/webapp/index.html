@@ -62,7 +62,7 @@ window.console.log = window.console.log || function(){};
 <body>
 
 <div ng-controller="AppController">
-	<div ng-if="isInitialized && isLoggedIn()">
+	<div ng-if="isInitialized && authService.isAuthenticated()">
 		<nav class="navbar navbar-default">
 			<div class="container-fluid">
 				<div class="navbar-header">
@@ -89,7 +89,7 @@ window.console.log = window.console.log || function(){};
 							ui-sref="reportBrowser" ng-click="setView('reportBrowser')">Reports</a></li>	
 						<li ng-class="{ active: isViewActive('scheduler') }"><a
 							ui-sref="scheduler" ng-click="setView('scheduler')">Scheduler</a></li>
-						<li ng-class="{ active: isViewActive('grid') }"><a
+						<li ng-if="authService.hasMininumRole('developer')" ng-class="{ active: isViewActive('grid') }"><a
 							ui-sref="grid" ng-click="setView('grid')">Grid</a></li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
@@ -103,7 +103,7 @@ window.console.log = window.console.log || function(){};
 		<div class="container-fluid">
 			<!-- <div ui-view></div> -->
 			<div ng-if="isViewActive('artefacts')" ng-compiled-include="partials/artefactList.html"></div>
-	        <div ng-if="isViewActive('grid')" ng-compiled-include="partials/grid.html"></div>
+	        <div ng-if="authService.hasMininumRole('user') && isViewActive('grid')" ng-compiled-include="partials/grid.html"></div>
 	        <div ng-if="isViewActive('executions')" ng-compiled-include="partials/execution.html"></div>
 	        <div ng-if="isViewActive('scheduler')" ng-compiled-include="partials/scheduler.html"></div>
 	        <div ng-if="isViewActive('repository')" ng-compiled-include="partials/repository.html"></div>
@@ -114,7 +114,7 @@ window.console.log = window.console.log || function(){};
 	        
 		</div>
 	</div>
-	<div ng-if="isInitialized && !isLoggedIn()" ng-compiled-include="partials/loginForm.html">
+	<div ng-if="isInitialized && !authService.isAuthenticated()" ng-compiled-include="partials/loginForm.html">
 	</div>
 </div>
 

@@ -1,8 +1,12 @@
 package step.core.deployment;
 
+import step.core.access.Profile;
+
 public class Session {
 	
 	String username;
+	
+	Profile profile;
 	
 	String token;
 	
@@ -19,6 +23,14 @@ public class Session {
 
 	public void setUsername(String username) {
 		this.username = username;
+	}
+
+	public Profile getProfile() {
+		return profile;
+	}
+
+	public void setProfile(Profile profile) {
+		this.profile = profile;
 	}
 
 	public String getToken() {

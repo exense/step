@@ -3,6 +3,7 @@ package step.core.deployment;
 import java.io.IOException;
 
 import javax.annotation.Priority;
+import javax.inject.Inject;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -10,10 +11,17 @@ import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
+import org.glassfish.jersey.server.ExtendedUriInfo;
+
+import step.core.access.Profile;
+
 @Secured
 @Provider
 @Priority(Priorities.AUTHENTICATION)
 public class AuthenticationFilter extends AbstractServices implements ContainerRequestFilter {
+	
+	@Inject
+	private ExtendedUriInfo extendendUriInfo;
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
@@ -23,6 +31,18 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 			try {
 				Session session = validateToken(token);
 				requestContext.setProperty("session", session);
+				
+				Secured annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Secured.class);
+				String minRole = annotation.minRole();
+				if(minRole.length()>0) {
+					Profile profile = session.getProfile();
+					
+					boolean hasMinimumRole = (AccessServices.roleHierarchy.subList(AccessServices.roleHierarchy.indexOf(minRole),AccessServices.roleHierarchy.size()).indexOf(profile.getRole()))!=-1;
+					
+					if(!hasMinimumRole) {
+						requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+					}
+				}
 			} catch (Exception e) {
 				requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 			}

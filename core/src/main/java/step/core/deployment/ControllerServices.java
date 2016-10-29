@@ -300,6 +300,7 @@ public class ControllerServices extends AbstractServices {
 	}
 	
 	@POST
+	@Secured(minRole="executor")
 	@Path("/artefact")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)

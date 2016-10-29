@@ -1,5 +1,7 @@
 package step.core.deployment;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -24,7 +26,7 @@ import step.commons.conf.Configuration;
 import step.core.access.Authenticator;
 import step.core.access.Credentials;
 import step.core.access.DefaultAuthenticator;
-import step.core.access.User;
+import step.core.access.Profile;
 
 @Singleton
 @Path("/access")
@@ -33,6 +35,8 @@ public class AccessServices extends AbstractServices {
 	private static Logger logger = LoggerFactory.getLogger(AccessServices.class);
 	
 	public static final String AUTHENTICATION_SERVICE = "AuthenticationService";
+	
+	public static List<String> roleHierarchy = Arrays.asList(new String[]{"guest","executor","developer","admin"});
 	
 	private ConcurrentHashMap<String, Session> sessions;
 	
@@ -86,7 +90,9 @@ public class AccessServices extends AbstractServices {
         if(authenticated) {
         	Session session = issueToken(credentials.getUsername());
         	NewCookie cookie = new NewCookie("sessionid", session.getToken(), "/", null, 1, null, -1, null, false, false);
-        	return Response.ok().cookie(cookie).build();            	
+        	Profile profile = getProfile(credentials.getUsername());
+        	session.setProfile(profile);
+        	return Response.ok(session).cookie(cookie).build();            	
         } else {
         	return Response.status(Response.Status.UNAUTHORIZED).build();            	
         }    
@@ -94,13 +100,17 @@ public class AccessServices extends AbstractServices {
 	
 	@GET
 	@Secured
-	@Path("/profile")
-	public User getProfile(@Context ContainerRequestContext crc) {
+	@Path("/session")
+	public Session getSession(@Context ContainerRequestContext crc) {
 		Session session = (Session) crc.getProperty("session");
-		User user = new User();
-		user.setUsername(session.getUsername());
-		//controller.getContext().getUserAccessor().getByUsername(session.getUsername());
-		return user;
+		return session;
+	}
+
+	private Profile getProfile(String username) {
+		String role = authenticator.getRole(username);
+		Profile profile = new Profile();
+		profile.setRole(role);
+		return profile;
 	}
 
     private Session issueToken(String username) {

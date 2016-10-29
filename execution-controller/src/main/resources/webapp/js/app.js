@@ -40,29 +40,19 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   stateStorage.push($scope, 'root',{});
   
   $scope.isInitialized = false;
-  
-  $http.get('rest/access/profile')
-  .success(function(user) {
-    $rootScope.context = {'userID':user.username};
-    $scope.isInitialized = true;
-  })
-  .error(function() {
-    $rootScope.context = {'userID':'anonymous'};
-    $scope.isInitialized = true;
-  })
+  function finishInitialization() {$scope.isInitialized = true;}
+  AuthService.getSession().then(finishInitialization,finishInitialization)
   
   $scope.setView = function (view) {
     $scope.$state = view;
-    $stateStorage.store($scope, {lastview:view});
+    stateStorage.store($scope, {lastview:view});
   };
   
   $scope.isViewActive = function (view) {
     return ($scope.$state === view);
   };
   
-  $scope.isLoggedIn = function () {
-    return ($rootScope.context.userID != 'anonymous');
-  };
+  $scope.authService = AuthService;
   
   if(!$location.path()) {
     $location.path('/root/functions')    
@@ -204,20 +194,31 @@ angular.module('step',['ngStorage'])
   };
 }])
 
-.factory('AuthService', function ($http) {
+.factory('AuthService', function ($http, $rootScope) {
   var authService = {};
- 
+
+  function setContext(session) {
+    $rootScope.context = {'userID':session.username, 'role':session.profile.role};
+  }
+  
+  authService.getSession = function() {
+    return $http.get('rest/access/session')
+      .then(function(res) {
+        setContext(res.data)
+      })
+  }
+  
   authService.login = function (credentials) {
     return $http
       .post('rest/access/login', credentials)
       .then(function (res) {
-        
-        return credentials.username;
+        var session = res.data;
+        setContext(session);
       });
   };
  
   authService.isAuthenticated = function () {
-    return !!Session.userId;
+    return $rootScope.context.userID && $rootScope.context.userID!='anonymous';
   };
  
   authService.isAuthorized = function (authorizedRoles) {
@@ -225,23 +226,15 @@ angular.module('step',['ngStorage'])
       authorizedRoles = [authorizedRoles];
     }
     return (authService.isAuthenticated() &&
-      authorizedRoles.indexOf(Session.userRole) !== -1);
+      authorizedRoles.indexOf($rootScope.context.role) !== -1);
   };
+  
+  authService.hasMininumRole = function (minimalRole) {
+    var rolesHierarchy = ['guest','executor','developer','admin']
+    return rolesHierarchy.slice(rolesHierarchy.indexOf(minimalRole)).indexOf($rootScope.context.role) !== -1;
+  };  
  
   return authService;
-})
-
-.controller('LoginController', function ($scope, $rootScope, AuthService) {
-  $scope.credentials = {
-    username: '',
-    password: ''
-  };
-  $scope.login = function (credentials) {
-    AuthService.login(credentials).then(function (user) {
-      $rootScope.context = {'userID':credentials.username};
-    }, function () {
-    });
-  };
 })
 
 .service('authInterceptor', function($q, $rootScope) {
@@ -252,6 +245,19 @@ angular.module('step',['ngStorage'])
         }
         return $q.reject(response);
     };
+})
+
+.controller('LoginController', function ($scope, $rootScope, AuthService) {
+  $scope.credentials = {
+    username: '',
+    password: ''
+  };
+  $scope.login = function (credentials) {
+    AuthService.login(credentials).then(function (user) {
+    }, function () {
+      $scope.error = "Invalid username/password";
+    });
+  };
 })
 ;
 

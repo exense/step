@@ -1,14 +1,12 @@
 package step.core.access;
 
-import java.util.List;
-
 public class User {
 
 	private String username;
 
 	private String password;
 	
-	private List<String> roles;
+	private String role;
 
 	public User() {
 		super();
@@ -28,5 +26,13 @@ public class User {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
 	}
 }
