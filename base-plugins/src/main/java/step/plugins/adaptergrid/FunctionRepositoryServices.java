@@ -32,6 +32,7 @@ import javax.ws.rs.core.MediaType;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
+import step.core.deployment.Secured;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
@@ -56,6 +57,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/")
+	@Secured(right="kw-write")
 	public void save(Function function) {
 		getFunctionRepository().addFunction(function);
 	}
@@ -63,6 +65,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}/execute")
+	@Secured(right="kw-execute")
 	public Output executeFunction(@PathParam("id") String functionId, String argument) {
 		FunctionToken token = getFunctionClient().getLocalFunctionToken();
 		try {
@@ -92,12 +95,14 @@ public class FunctionRepositoryServices extends AbstractServices {
 	
 	@DELETE
 	@Path("/{id}")
+	@Secured(right="kw-delete")
 	public void delete(@PathParam("id") String functionId) {
 		getFunctionRepository().deleteFunction(functionId);
 	}
 	
 	@GET
 	@Path("/{id}")
+	@Secured(right="kw-read")
 	public Function get(@PathParam("id") String functionId) {
 		return getFunctionRepository().getFunctionById(functionId);
 	}

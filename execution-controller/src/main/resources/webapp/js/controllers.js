@@ -24,7 +24,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 };
 
-tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$modal','$timeout',function($rootScope, $http, $location,$stateStorage,$modal,$timeout) {
+tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$modal','$timeout','AuthService',function($rootScope, $http, $location,$stateStorage,$modal,$timeout,AuthService) {
   return {
     restrict: 'E',
     scope: {
@@ -40,6 +40,8 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
       //$stateStorage.push($scope, 'execCmd',{});
 
       $scope.model = {};
+      
+      $scope.authService = AuthService;
       
       $scope.$watchCollection('model',function(){
         retrieveInputs();

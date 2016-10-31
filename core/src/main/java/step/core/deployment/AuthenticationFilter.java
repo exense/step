@@ -5,6 +5,9 @@ import java.io.IOException;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.ws.rs.Priorities;
+import javax.ws.rs.client.ClientRequestContext;
+import javax.ws.rs.client.ClientResponseContext;
+import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Cookie;
@@ -18,7 +21,7 @@ import step.core.access.Profile;
 @Secured
 @Provider
 @Priority(Priorities.AUTHENTICATION)
-public class AuthenticationFilter extends AbstractServices implements ContainerRequestFilter {
+public class AuthenticationFilter extends AbstractServices implements ContainerRequestFilter, ClientResponseFilter {
 	
 	@Inject
 	private ExtendedUriInfo extendendUriInfo;
@@ -33,13 +36,13 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 				requestContext.setProperty("session", session);
 				
 				Secured annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Secured.class);
-				String minRole = annotation.minRole();
-				if(minRole.length()>0) {
+				String right = annotation.right();
+				if(right.length()>0) {
 					Profile profile = session.getProfile();
 					
-					boolean hasMinimumRole = (AccessServices.roleHierarchy.subList(AccessServices.roleHierarchy.indexOf(minRole),AccessServices.roleHierarchy.size()).indexOf(profile.getRole()))!=-1;
+					boolean hasRight = AccessServices.roleHierarchy.get(profile.getRole()).indexOf(right)!=-1;
 					
-					if(!hasMinimumRole) {
+					if(!hasRight) {
 						requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 					}
 				}
@@ -63,5 +66,10 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 		} else {
 			throw new Exception("authenticationService is null");
 		}
+	}
+
+	@Override
+	public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext) throws IOException {
+		
 	}
 }

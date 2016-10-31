@@ -18,10 +18,12 @@
  *******************************************************************************/
 angular.module('artefactEditor',['dataTable','step'])
 
-.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $modal, $location) {
+.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $modal, $location, AuthService) {
       stateStorage.push($scope, 'artefacteditor', {});
 
       $scope.artefactId = $scope.$state;
+      
+      $scope.authService = AuthService;
             
       $scope.tabState = {'controls':true,'functions':false};
       
@@ -97,10 +99,11 @@ angular.module('artefactEditor',['dataTable','step'])
       artefactid: '=',
       handle: '='
     },
-    controller: function($scope,$location,$rootScope) {
+    controller: function($scope,$location,$rootScope, AuthService) {
       
       var artefactid = $scope.artefactid;
       
+      $scope.authService = AuthService;
       
       var tree;
       $('#jstree_demo_div').jstree(
@@ -108,11 +111,15 @@ angular.module('artefactEditor',['dataTable','step'])
 					'core' : {
 					  'data' : [],
 					  'check_callback' : function (operation, node, node_parent, node_position, more) {
-	            if(operation=='move_node') {
-	              return node_parent.parent?true:false;
-	            } else {
-	              return true;	              
-	            }
+					    if(AuthService.hasRight('plan-write')) {
+					      if(operation=='move_node') {
+					        return node_parent.parent?true:false;
+					      } else {
+					        return true;	              
+					      }					      
+					    } else {
+					      return false;
+					    }
 					  }
 					}, 
 					"plugins" : ["dnd"]
@@ -243,7 +250,9 @@ angular.module('artefactEditor',['dataTable','step'])
       artefactid: '=',
       handle: '='
     },
-    controller: function($scope,$location) {
+    controller: function($scope,$location, AuthService) {
+      
+      $scope.authService = AuthService;
       
       $scope.$watch('artefactid', function() {
         if($scope.artefactid) {

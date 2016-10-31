@@ -8,7 +8,7 @@
 		</div>
 		<div class="form-group">
    			<div>
-     			<button type="submit" class="btn btn-default" ng-click="save()">Save</button>
+     			<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default" ng-click="save()">Save</button>
     		</div>
   		</div>
 				

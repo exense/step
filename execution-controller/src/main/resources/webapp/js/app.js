@@ -41,7 +41,9 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   
   $scope.isInitialized = false;
   function finishInitialization() {$scope.isInitialized = true;}
-  AuthService.getSession().then(finishInitialization,finishInitialization)
+  AuthService.init().then(function() {
+    AuthService.getSession().then(finishInitialization,finishInitialization)
+  })
   
   $scope.setView = function (view) {
     $scope.$state = view;
@@ -196,9 +198,17 @@ angular.module('step',['ngStorage'])
 
 .factory('AuthService', function ($http, $rootScope) {
   var authService = {};
+  var rightMatrix;
 
   function setContext(session) {
     $rootScope.context = {'userID':session.username, 'role':session.profile.role};
+  }
+  
+  authService.init = function() {
+    return $http.get('rest/access/matrix')
+      .then(function(res) {
+        rightMatrix = res.data;
+      })
   }
   
   authService.getSession = function() {
@@ -234,6 +244,10 @@ angular.module('step',['ngStorage'])
     return rolesHierarchy.slice(rolesHierarchy.indexOf(minimalRole)).indexOf($rootScope.context.role) !== -1;
   };  
  
+  authService.hasRight = function (right) {
+    return rightMatrix[$rootScope.context.role].indexOf(right) !== -1;
+  }; 
+  
   return authService;
 })
 

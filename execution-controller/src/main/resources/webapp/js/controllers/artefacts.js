@@ -18,11 +18,13 @@
  *******************************************************************************/
 angular.module('artefactsControllers',['dataTable','step'])
 
-.controller('ArtefactListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal','$location', 
-    function($scope, $compile, $http, $stateStorage, $interval, $modal, $location) {
+.controller('ArtefactListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal','$location', 'AuthService',
+    function($scope, $compile, $http, $stateStorage, $interval, $modal, $location, AuthService) {
       $stateStorage.push($scope, 'artefacts', {});	
 
       $scope.autorefresh = true;
+      
+      $scope.authService = AuthService;
       
       $scope.editArtefact = function(id) {
     	$scope.$apply(function() {
@@ -82,12 +84,14 @@ angular.module('artefactsControllers',['dataTable','step'])
 	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().editArtefact(\''+row[0]+'\')">' +
 	            	'<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
 	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().executeArtefact(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().removeArtefact(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
-	            	'</button> ' +
-	            	'</div>' +
-	            	'</div>';
+	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>';
+            	
+            	if(AuthService.hasRight('plan-delete')) {
+            	  html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().removeArtefact(\''+row[0]+'\')">' +
+                '<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
+                '</button> ';
+            	}
+            	html+='</div></div>';
             	return html;
             }
            });

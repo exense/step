@@ -18,10 +18,12 @@
  *******************************************************************************/
 angular.module('functionsControllers',['dataTable','step'])
 
-.controller('FunctionListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal', '$location',
-    function($scope, $compile, $http, $stateStorage, $interval, $modal, $location) {
+.controller('FunctionListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal', '$location','AuthService',
+    function($scope, $compile, $http, $stateStorage, $interval, $modal, $location, AuthService) {
       $stateStorage.push($scope, 'functions', {});	
 
+      $scope.authService = AuthService;
+      
       $scope.autorefresh = true;
 
       function openModal(function_) {
@@ -119,23 +121,33 @@ angular.module('functionsControllers',['dataTable','step'])
             col.width="160px";
             col.render = function ( data, type, row ) {
               var function_ = JSON.parse(row[row.length-1]);
-            	var html = '<div class="input-group">' +
-	            	'<div class="btn-group">' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>';
+            	var html = '<div class="input-group"><div class="btn-group">';
             	
-            	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
-            	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFlow(\''+function_.handlerProperties['artefactid']+'\')">' +
-                '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>';
+            	if(AuthService.hasRight('kw-read')) {
+              	html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
+  	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>'+
+              	  '</button> ';
+              	
+              	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
+              	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFlow(\''+function_.handlerProperties['artefactid']+'\')">' +
+                  '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>'+
+                  '</button> ';
+              	}
             	}
             	
-            	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().deleteFunction(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
-	            	'</button> ' +
-	            	'</div>' +
-	            	'</div>';
+            	if(AuthService.hasRight('kw-execute')) {
+              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
+  	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
+  	            	'</button> ';
+            	}
+            	
+            	if(AuthService.hasRight('kw-delete')) {
+              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().deleteFunction(\''+row[0]+'\')">' +
+  	            	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
+  	            	'</button> ';
+            	}
+            	
+            	html+='</div></div>';
             	
             	return html;
             }

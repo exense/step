@@ -110,6 +110,7 @@ public class ControllerServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/execution")
+	@Secured(right="plan-execute")
 	public String execute(ExecutionParameters executionParams) {
 		String executionID = getScheduler().execute(executionParams);
 		return executionID;
@@ -118,6 +119,7 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/execution/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
 	public Execution getExecution(@PathParam("id") String executionID) {
 		return getContext().getExecutionAccessor().get(executionID);
 	}	
@@ -132,6 +134,7 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/execution/{id}/rtmlink")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
 	public RTMLink getRtmLink(@PathParam("id") String executionID) {
 		RTMLink link = new RTMLink();
 //		link.link = RTMLinkGenerator.getAggregateViewByEid(executionID);
@@ -149,6 +152,7 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/execution/{id}/statusdistribution")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
 	public Map<ReportNodeStatus, Integer> getStatusReport(@PathParam("id") String executionID, @QueryParam("class") String reportNodeClass) {
 		return getContext().getReportAccessor().getLeafReportNodesStatusDistribution(executionID, reportNodeClass);
 	}
@@ -156,6 +160,7 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/execution/{id}/throughput")
 	@Produces({"application/json;response-pass-through=true"})
+	@Secured(right="report-read")
 	public DataTable getStatusReport(@PathParam("id") String executionID, @QueryParam("resolution") Integer nInterval)  {
 		Execution e = getContext().getExecutionAccessor().get(executionID);
 		
@@ -186,6 +191,7 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/execution/{id}/reportnodes")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
 	public List<ReportNode> getReportNodesByExecutionID(@PathParam("id") String executionID, @QueryParam("class") String reportNodeClass, @QueryParam("limit") int limit) {
 		List<ReportNode> result = new ArrayList<>();
 		Iterator<ReportNode> iterator;
@@ -204,6 +210,7 @@ public class ControllerServices extends AbstractServices {
 	
 	@GET
 	@Path("/execution/{id}/stop")
+	@Secured(right="plan-execute")
 	public void abort(@PathParam("id") String executionID) {
 		ExecutionRunnable task = getExecutionRunnable(executionID);
 		if(task!=null) {
@@ -213,12 +220,14 @@ public class ControllerServices extends AbstractServices {
 	
 	@GET
 	@Path("/reportnode/{id}")
+	@Secured(right="report-read")
 	public ReportNode getReportNode(@PathParam("id") String reportNodeId) {
 		return getContext().getReportAccessor().get(new ObjectId(reportNodeId));
 	}
 	
 	@GET
 	@Path("/reportnode/{id}/path")
+	@Secured(right="report-read")
 	public List<ReportNodeAndArtefact> getReportNodePath(@PathParam("id") String reportNodeId) {
 		List<ReportNodeAndArtefact> result = new ArrayList<>();
 		ArtefactAccessor artefactAccessor = getContext().getArtefactAccessor();
@@ -262,6 +271,7 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/executions")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
 	public List<Execution> getExecutions(@QueryParam("limit") int limit) {		
 		List<Execution> result = new ArrayList<>();
 		for(Execution e:getContext().getExecutionAccessor().findLastStarted(limit)) {
@@ -275,6 +285,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/repository/artefact/info")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
 	public ArtefactInfo getArtefactInfo(RepositoryObjectReference ref) {
 		try {
 			return getContext().getRepositoryObjectManager().getArtefactInfo(ref);
@@ -287,6 +298,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/repository/report")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
 	public TestSetStatusOverview getReport(RepositoryObjectReference report) {
 		return RepositoryObjectManager.getReport(report);
 	}
@@ -295,15 +307,16 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
 	public AbstractArtefact getArtefact(@PathParam("id") String id) {
 		return getContext().getArtefactAccessor().get(new ObjectId(id));
 	}
 	
 	@POST
-	@Secured(minRole="executor")
 	@Path("/artefact")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
 	public AbstractArtefact saveArtefact(AbstractArtefact artefact) {
 		return getContext().getArtefactAccessor().save(artefact);
 	}
@@ -313,6 +326,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}/descendants")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
 	public ArtefactTree getArtefactDescendants(@PathParam("id") String id) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
 		AbstractArtefact root = a.get(id);
@@ -325,6 +339,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/types")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
 	public Set<String> getArtefactTypes() {
 		return ArtefactRegistry.getInstance().getArtefactNames();
 	}
@@ -333,6 +348,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/types/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
 		Class<? extends AbstractArtefact> clazz = ArtefactRegistry.getInstance().getArtefactType(type);		
 		AbstractArtefact sample = clazz.newInstance();
@@ -382,6 +398,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}/children")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
 	public AbstractArtefact addChild(@PathParam("id") String id, AbstractArtefact child) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
 		
@@ -399,6 +416,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}/children/{childid}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
 	public void removeChild(@PathParam("id") String parentid, @PathParam("childid") String childid) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
 		AbstractArtefact artefact = a.get(parentid);
@@ -410,6 +428,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}/children/{childid}/move")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
 	public void moveChildUp(@PathParam("id") String parentid, @PathParam("childid") String childid, int offset) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
 		AbstractArtefact artefact = a.get(parentid);
@@ -428,6 +447,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}/move")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
 	public void moveArtefact(@PathParam("id") String id, @QueryParam("from") String originParentId, 
 			@QueryParam("to") String targetParentId, @QueryParam("pos") int newPosition) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
@@ -444,6 +464,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}/copy")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
 	public void copyArtefact(@PathParam("id") String id, 
 			@QueryParam("to") String targetParentId, @QueryParam("pos") int newPosition) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
@@ -472,6 +493,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
 	public void updateArtefact(AbstractArtefact artefact) {
 		getContext().getArtefactAccessor().save(artefact);
 	}
@@ -479,6 +501,7 @@ public class ControllerServices extends AbstractServices {
 	@DELETE
 	@Path("/artefact/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-delete")
 	public void deleteArtefact(@PathParam("id") String id) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
 		removeRecursive(new ObjectId(id), a);

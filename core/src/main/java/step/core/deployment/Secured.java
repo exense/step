@@ -12,6 +12,6 @@ import javax.ws.rs.NameBinding;
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Secured {
 	
-	String minRole() default "";
+	String right() default "";
 
 }

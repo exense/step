@@ -1,7 +1,8 @@
 package step.core.deployment;
 
-import java.util.Arrays;
+import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -23,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.commons.conf.Configuration;
+import step.core.access.AccessMatrixReader;
 import step.core.access.Authenticator;
 import step.core.access.Credentials;
 import step.core.access.DefaultAuthenticator;
@@ -36,7 +38,7 @@ public class AccessServices extends AbstractServices {
 	
 	public static final String AUTHENTICATION_SERVICE = "AuthenticationService";
 	
-	public static List<String> roleHierarchy = Arrays.asList(new String[]{"guest","executor","developer","admin"});
+	public static Map<String,List<String>> roleHierarchy;
 	
 	private ConcurrentHashMap<String, Session> sessions;
 	
@@ -54,6 +56,9 @@ public class AccessServices extends AbstractServices {
 		controller.getContext().put(AUTHENTICATION_SERVICE, this);
 		
 		initAuthenticator();
+		
+		AccessMatrixReader matrixReader = new AccessMatrixReader();
+		roleHierarchy = matrixReader.readAccessMatrix(new File(AccessServices.class.getClassLoader().getResource("DefaultAccessMatrix.csv").getFile()));
 
 		sessionExpirationTimer = new Timer("Session expiration timer");
 		sessionExpirationTimer.schedule(new TimerTask() {
@@ -97,6 +102,12 @@ public class AccessServices extends AbstractServices {
         	return Response.status(Response.Status.UNAUTHORIZED).build();            	
         }    
     }
+	
+	@GET
+	@Path("/matrix")
+	public Map<String, List<String>> getAccessControlMatrix() {
+		return roleHierarchy;
+	}
 	
 	@GET
 	@Secured
