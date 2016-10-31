@@ -35,6 +35,10 @@ public class SequentialArtefactScheduler {
 	}
 	
 	public void execute_(ReportNode node, AbstractArtefact testArtefact) {
+		execute_(node, testArtefact, null);
+	}
+	
+	public void execute_(ReportNode node, AbstractArtefact testArtefact, Boolean continueOnError) {
 		ExecutionContext context = ExecutionContext.getCurrentContext();
 		try {
 			boolean failed = false;
@@ -65,8 +69,14 @@ public class SequentialArtefactScheduler {
 								break;
 							}
 						} else {
-							if (!context.getVariablesManager().getVariableAsBoolean(ArtefactHandler.CONTINUE_EXECUTION, false)) {
-								break;
+							if(continueOnError!=null) {
+								if(!continueOnError) {
+									break;
+								}
+							} else {
+								if (!context.getVariablesManager().getVariableAsBoolean(ArtefactHandler.CONTINUE_EXECUTION, false)) {
+									break;
+								}								
 							}
 						}
 					}
