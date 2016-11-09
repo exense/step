@@ -105,5 +105,53 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals(2, getChildren(child).size());
 	}
 	
+	@Test
+	public void testContinueOnError() {
+		setupContext();
+		
+		Sequence block = add(new Sequence());
+		block.setContinueOnError("true");
+		addAsChildOf(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR), block);
+		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
+
+		execute(block);
+		
+		ReportNode child = getFirstReportNode();
+		assertEquals(ReportNodeStatus.TECHNICAL_ERROR, child.getStatus());
+		assertEquals(2, getChildren(child).size());
+	}
+	
+	@Test
+	public void testContinueOnError_2() {
+		setupContext();
+		
+		Sequence block = add(new Sequence());
+		block.setContinueOnError("true");
+		addAsChildOf(newTestArtefact(ReportNodeStatus.FAILED), block);
+		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
+
+		execute(block);
+		
+		ReportNode child = getFirstReportNode();
+		assertEquals(ReportNodeStatus.FAILED, child.getStatus());
+		assertEquals(2, getChildren(child).size());
+	}
+	
+	@Test
+	public void testNotContinueOnError() {
+		setupContext();
+		
+		Sequence block = add(new Sequence());
+		block.setContinueOnError("false");
+		addAsChildOf(newTestArtefact(ReportNodeStatus.FAILED), block);
+		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
+
+		execute(block);
+		
+		ReportNode child = getFirstReportNode();
+		assertEquals(ReportNodeStatus.FAILED, child.getStatus());
+		assertEquals(1, getChildren(child).size());
+	}
+	
 }
 
