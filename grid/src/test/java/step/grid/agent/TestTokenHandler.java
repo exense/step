@@ -29,6 +29,22 @@ public class TestTokenHandler implements MessageHandler {
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) {
 		OutputMessage output = new OutputMessage();
 		output.setPayload(message.getArgument());
+		
+		if(message.getArgument().containsKey("delay")) {
+			Integer delay = message.getArgument().getInt("delay");
+			
+			try {
+				Thread.sleep(delay.longValue());
+			} catch (InterruptedException e) {
+				if(message.getArgument().containsKey("delayAfterInterruption")) {
+					Integer d =  message.getArgument().getInt("delayAfterInterruption");
+					try {
+						Thread.sleep(d.longValue());
+					} catch (InterruptedException e1) {}				
+				}
+			}			
+		}
+		
 		return output;
 	}
 

@@ -73,7 +73,7 @@ public class GridClient {
 		client.register(JacksonJsonProvider.class);
 	}
 	
-	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
+	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties, int callTimeout) throws Exception {
 		Token token = tokenWrapper.getToken();
 		
 		AgentRef agent = adapterGrid.getAgentRefs().get(token.getAgentid());
@@ -84,6 +84,7 @@ public class GridClient {
 		message.setTokenId(token.getId());
 		message.setHandler(handler);
 		message.setProperties(properties);
+		message.setCallTimeout(callTimeout);
 		OutputMessage output = callAgent(agent, token, message);			
 		token.getAttributes().put(SELECTION_CRITERION_THREAD, Long.toString(Thread.currentThread().getId()));
 		return output;
@@ -105,34 +106,39 @@ public class GridClient {
 		
 		TokenWrapper token;
 		
+		String handler = null;
+		
+		Map<String,String> properties = null;
+		
+		int callTimeout = 180000;
+		
 		public TokenFacade(TokenWrapper token) {
 			super();
 			this.token = token;
 		}
 
+		public TokenFacade setCallTimeout(int callTimeout) {
+			this.callTimeout = callTimeout;
+			return this;
+		}
+
+		public TokenFacade setHandler(String handler) {
+			this.handler = handler;
+			return this;
+		}
+
+		public TokenFacade setProperties(Map<String, String> properties) {
+			this.properties = properties;
+			return this;
+		}
+
 		public OutputMessage process(String function, JsonObject argument) throws Exception {
-			return processInput(token, function, argument, null, null);
+			return processInput(token, function, argument, handler, properties, callTimeout);
 		}
 		
-		public OutputMessage process(String function, JsonObject argument, String handler) throws Exception {
-			return processInput(token, function, argument, handler, null);
-		}
-		
-		public OutputMessage process(String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
-			return processInput(token, function, argument, handler, properties);
-		}
-		
-		public OutputMessage processAndRelease(String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
+		public OutputMessage processAndRelease(String function, JsonObject argument) throws Exception {
 			try {
-				return processInput(token, function, argument, handler, properties);
-			} finally {
-				release();
-			}
-		}
-		
-		public OutputMessage processAndRelease(String function, JsonObject argument, String handler) throws Exception {
-			try {
-				return processInput(token, function, argument, handler, null);
+				return processInput(token, function, argument, handler, properties, callTimeout);
 			} finally {
 				release();
 			}
@@ -150,13 +156,13 @@ public class GridClient {
 	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) throws Exception {
 		// TODO get from config?
 		int connectionTimeout = 3000;
-		int callTimeout = 180000;
+		int callTimeoutOffset = 3000;
 		
 		String agentUrl = agentRef.getAgentUrl();
 		
 		try {			
 			Entity<InputMessage> entity = Entity.entity(message, MediaType.APPLICATION_JSON);
-			Response response = client.target(agentUrl + "/process").request().property(ClientProperties.READ_TIMEOUT, callTimeout)
+			Response response = client.target(agentUrl + "/process").request().property(ClientProperties.READ_TIMEOUT, message.getCallTimeout()+callTimeoutOffset)
 					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).post(entity);
 			if(response.getStatus()==200) {
 				OutputMessage output = response.readEntity(OutputMessage.class);

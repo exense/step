@@ -18,7 +18,6 @@
  *******************************************************************************/
 package step.functions;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import step.grid.agent.handler.MessageHandler;
@@ -95,7 +94,11 @@ public class FunctionClient {
 		try {
 			OutputMessage outputMessage;
 			if(functionToken.getToken()!=null) {
-				outputMessage = functionToken.getToken().process(function.getAttributes().get("name"), input.getArgument(), handlerChain, input.getProperties());		
+				TokenFacade facade = functionToken.getToken().setHandler(handlerChain).setProperties(input.getProperties());
+				if(function.getCallTimeout()!=null) {
+					facade.setCallTimeout(function.getCallTimeout());
+				}
+				outputMessage = facade.process(function.getAttributes().get("name"), input.getArgument());		
 			} else {
 				TokenHandlerPool p = new TokenHandlerPool();
 				MessageHandler h = p.get(handlerChain);

@@ -94,6 +94,10 @@ public class AgentTokenWrapper {
 		return token.getId();
 	}
 
+	public boolean isInUse() {
+		return inUse;
+	}
+
 	@Override
 	public String toString() {
 		return "Token [uid=" + getUid()
