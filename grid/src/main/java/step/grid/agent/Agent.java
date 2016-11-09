@@ -238,6 +238,16 @@ public class Agent {
 		return tokens;
 	}
 	
+	protected List<Token> getAvailableTokens() {
+		List<Token> tokens = new ArrayList<>();
+		for(AgentTokenWrapper wrapper:tokenPool.getTokens()) {
+			if(!wrapper.isInUse()) {
+				tokens.add(wrapper.getToken());				
+			}
+		}
+		return tokens;
+	}
+	
 	protected String getGridHost() {
 		return agentConf.getGridHost();
 	}

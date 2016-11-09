@@ -31,7 +31,7 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.functions.FunctionClient;
-import step.functions.FunctionClient.FunctionToken;
+import step.functions.FunctionClient.FunctionTokenHandle;
 import step.grid.tokenpool.Interest;
 import step.plugins.adaptergrid.GridPlugin;
 
@@ -55,7 +55,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		if(testArtefact.getSelectionCriteria()!=null) {
 			testArtefact.getSelectionCriteria().forEach((e,v)->interests.put(e, new Interest(Pattern.compile(v), true)));
 		}
-		FunctionToken token = functionClient.getFunctionToken(testArtefact.getAttributes(), interests);
+		FunctionTokenHandle token = functionClient.getFunctionToken(testArtefact.getAttributes(), interests);
 		context.getVariablesManager().putVariable(node, TOKEN_PARAM_KEY, token);
 		
 		try {

@@ -35,11 +35,11 @@ import step.attachments.AttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
+import step.functions.Function;
 import step.functions.FunctionClient;
-import step.functions.FunctionClient.FunctionToken;
+import step.functions.FunctionClient.FunctionTokenHandle;
 import step.functions.Input;
 import step.functions.Output;
 import step.grid.io.Attachment;
@@ -51,15 +51,15 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	public static final String STEP_NODE_KEY = "currentStep";
 	
+	protected final FunctionClient functionClient;
+	
 	public CallFunctionHandler() {
 		super();
+		functionClient = (FunctionClient) context.getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
 	}
 
 	@Override
-	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {
-		// TODO Auto-generated method stub
-		
-	}
+	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {}
 
 
 	@SuppressWarnings("unchecked")
@@ -70,49 +70,40 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 		Input input = buildInput(argumentStr);
 		
-		FunctionClient functionClient = (FunctionClient) ExecutionContext.getCurrentContext().getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
-		
-		boolean releaseTokenAfterExecution = false;
-		FunctionToken functionToken;
+		boolean releaseTokenAfterExecution = true;
+		FunctionTokenHandle token;
 		Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
-		if(o!=null && o instanceof FunctionToken) {
-			functionToken = (FunctionToken) o;
+		if(o!=null && o instanceof FunctionTokenHandle) {
+			token = (FunctionTokenHandle) o;
+			releaseTokenAfterExecution = false;
 		} else {
-			String token = testArtefact.getToken();
-			if(token!=null) {
-				JsonObject selectionCriteriaJson = Json.createReader(new StringReader(token)).readObject();
-				
-				if(selectionCriteriaJson.getString("route").equals("local")) {
-					functionToken = functionClient.getLocalFunctionToken();
-				} else {
-					Map<String, Interest> selectionCriteria = new HashMap<>();
-					selectionCriteriaJson.keySet().stream().filter(e->!e.equals("route"))
-						.forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
-					functionToken = functionClient.getFunctionToken(null, selectionCriteria);				
-				}
-				releaseTokenAfterExecution = true;
-			} else {
-				throw new RuntimeException("Token field hasn't been specified");
-			}
+			token = selectToken(testArtefact, functionClient);
 		}
-		
-		node.setAdapter(functionToken.getToken()!=null?functionToken.getToken().getToken().getToken().getId():"local");
-		
-		Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
+				
 		try {
-			Output output = functionToken.call(attributes, input);
-			node.setName(output.getFunction().getAttributes().get("name"));
-			node.setFunctionId(output.getFunction().getId().toString());
+			node.setAdapter(token.toString());
+			token.setCurrentOwner(node);
+			
+			Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
+			
+			Output output = token.call(attributes, input);
+			
+			Function function = output.getFunction();
+			node.setName(function.getAttributes().get("name"));
+			node.setFunctionId(function.getId().toString());
+			
 			if(output.getError()!=null) {
 				node.setError(output.getError());
 				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 			} else {
 				node.setStatus(ReportNodeStatus.PASSED);
-				if(output.getResult() != null) {
-					context.getVariablesManager().putVariable(node, "output", output.getResult());
-					node.setOutput(output.getResult().toString());
-				}
 			}
+
+			if(output.getResult() != null) {
+				context.getVariablesManager().putVariable(node, "output", output.getResult());
+				node.setOutput(output.getResult().toString());
+			}
+			
 			if(output.getAttachments()!=null) {
 				for(Attachment a:output.getAttachments()) {
 					AttachmentMeta attachmentMeta;
@@ -144,14 +135,38 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			}
 		} finally {
 			if(releaseTokenAfterExecution) {				
-				functionToken.release();
+				token.release();
 			}
 
-			if(testArtefact.getChildrenIDs()!=null&&testArtefact.getChildrenIDs().size()>0) {
-				context.getVariablesManager().putVariable(node, "callReport", node);
-				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
-				scheduler.execute_(node, testArtefact);				
+			callChildrenArtefacts(node, testArtefact);
+		}
+	}
+
+	private FunctionTokenHandle selectToken(CallFunction testArtefact, FunctionClient functionClient) {
+		FunctionTokenHandle tokenHandle;
+		String token = testArtefact.getToken();
+		if(token!=null) {
+			JsonObject selectionCriteriaJson = Json.createReader(new StringReader(token)).readObject();
+			
+			if(selectionCriteriaJson.getString("route").equals("local")) {
+				tokenHandle = functionClient.getLocalFunctionToken();
+			} else {
+				Map<String, Interest> selectionCriteria = new HashMap<>();
+				selectionCriteriaJson.keySet().stream().filter(e->!e.equals("route"))
+					.forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
+				tokenHandle = functionClient.getFunctionToken(null, selectionCriteria);				
 			}
+		} else {
+			throw new RuntimeException("Token field hasn't been specified");
+		}
+		return tokenHandle;
+	}
+
+	private void callChildrenArtefacts(CallFunctionReportNode node, CallFunction testArtefact) {
+		if(testArtefact.getChildrenIDs()!=null&&testArtefact.getChildrenIDs().size()>0) {
+			context.getVariablesManager().putVariable(node, "callReport", node);
+			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+			scheduler.execute_(node, testArtefact);				
 		}
 	}
 

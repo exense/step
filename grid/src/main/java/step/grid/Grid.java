@@ -39,6 +39,8 @@ import step.grid.tokenpool.TokenPool;
 
 public class Grid {
 
+	public static final String LOCAL_AGENT = "local";
+
 	private ExpiringMap<String, AgentRef> agentRefs;
 	
 	private TokenPool<Identity, TokenWrapper> tokenPool;
@@ -125,8 +127,16 @@ public class Grid {
 		return tokens;
 	}
 	
-	public ExpiringMap<String, AgentRef> getAgentRefs() {
+	protected ExpiringMap<String, AgentRef> getAgentRefs() {
 		return agentRefs;
+	}
+	
+	public AgentRef getAgentRef(String agentId) {
+		if(agentId.equals(LOCAL_AGENT)) {
+			return new AgentRef(LOCAL_AGENT, "localhost");
+		} else {
+			return agentRefs.get(agentId);
+		}
 	}
 
 	public boolean existsAvailableMatchingToken(Identity pretender) {

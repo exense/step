@@ -28,7 +28,7 @@ import javax.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
 
-import step.grid.client.GridClient.TokenFacade;
+import step.grid.client.GridClient.TokenHandle;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
@@ -49,22 +49,22 @@ public class AgentTest extends AbstractGridTest {
 	public void testTimeout() throws Exception {		
 		JsonObject o = Json.createObjectBuilder().add("delay", 4000).build();
 		
-		TokenFacade f = client.getToken().setCallTimeout(1).setHandler("class:step.grid.agent.TestTokenHandler");
+		TokenHandle f = client.getToken().setCallTimeout(1).setHandler("class:step.grid.agent.TestTokenHandler");
 		OutputMessage outputMessage = f.processAndRelease("testFunction", o);
-		Assert.assertEquals("Timeout while processing message. Message execution interrupted successfully.",outputMessage.getError());
+		Assert.assertEquals("Timeout while processing request. Request execution interrupted successfully.",outputMessage.getError());
 		
 		// check if the token has been returned to the pool. In this case the second call should return the same error
 		outputMessage = f.processAndRelease("testFunction", o);
-		Assert.assertEquals("Timeout while processing message. Message execution interrupted successfully.",outputMessage.getError());
+		Assert.assertEquals("Timeout while processing request. Request execution interrupted successfully.",outputMessage.getError());
 	}
 	
 	@Test
 	public void testTimeoutNoTokenReturn() throws Exception {		
 		JsonObject o = Json.createObjectBuilder().add("delay", 4000).add("delayAfterInterruption", 150).build();
 		
-		TokenFacade f = client.getToken().setCallTimeout(1).setHandler("class:step.grid.agent.TestTokenHandler");
+		TokenHandle f = client.getToken().setCallTimeout(1).setHandler("class:step.grid.agent.TestTokenHandler");
 		OutputMessage outputMessage = f.processAndRelease("testFunction", o);
-		Assert.assertEquals("Timeout while processing message. WARNING: Message execution couldn't be interrupted and the token couldn't be returned to the pool. Subsequent calls to that token may fail!",outputMessage.getError());
+		Assert.assertEquals("Timeout while processing request. WARNING: Request execution couldn't be interrupted and the token couldn't be returned to the pool. Subsequent calls to that token may fail!",outputMessage.getError());
 		
 		// check if the token has been returned to the pool. In this case the second call should return the same error
 		outputMessage = f.processAndRelease("testFunction", o);
@@ -107,5 +107,13 @@ public class AgentTest extends AbstractGridTest {
 		OutputMessage outputMessage = client.getToken().setHandler(uri).processAndRelease("function1",  o);
 		Assert.assertEquals(o, outputMessage.getPayload());
 		Assert.assertEquals("Test error", outputMessage.getError());
+	}
+	
+	@Test
+	public void testLocalToken() throws Exception {
+		JsonObject o = newDummyJson();
+		
+		OutputMessage outputMessage = client.getLocalToken().setHandler("class:step.grid.agent.TestTokenHandler").processAndRelease("testFunction", o);
+		Assert.assertEquals(outputMessage.getPayload(), o);;
 	}
 }

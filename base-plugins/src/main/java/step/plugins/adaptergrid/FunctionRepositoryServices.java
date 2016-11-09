@@ -38,7 +38,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.functions.Function;
 import step.functions.FunctionClient;
-import step.functions.FunctionClient.FunctionToken;
+import step.functions.FunctionClient.FunctionTokenHandle;
 import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
@@ -67,7 +67,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Path("/{id}/execute")
 	@Secured(right="kw-execute")
 	public Output executeFunction(@PathParam("id") String functionId, String argument) {
-		FunctionToken token = getFunctionClient().getLocalFunctionToken();
+		FunctionTokenHandle token = getFunctionClient().getLocalFunctionToken();
 		try {
 			ExecutionContext.setCurrentContext(createContext(getContext()));
 			Input input = new Input();		

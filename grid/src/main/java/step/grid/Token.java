@@ -20,6 +20,8 @@ package step.grid;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import step.grid.tokenpool.Interest;
 
 
@@ -52,6 +54,11 @@ public class Token {
 
 	public void setAgentid(String agentid) {
 		this.agentid = agentid;
+	}
+	
+	@JsonIgnore
+	public boolean isLocal() {
+		return agentid.equals("local");
 	}
 
 	public Map<String, String> getAttributes() {

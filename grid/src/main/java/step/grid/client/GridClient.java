@@ -18,7 +18,10 @@
  *******************************************************************************/
 package step.grid.client;
 
+import java.io.Closeable;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 import javax.json.JsonObject;
@@ -39,29 +42,27 @@ import step.grid.AgentRef;
 import step.grid.Grid;
 import step.grid.Token;
 import step.grid.TokenWrapper;
+import step.grid.agent.handler.MessageHandler;
+import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.io.InputMessage;
 import step.grid.io.ObjectMapperResolver;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;
 
-public class GridClient {
+public class GridClient implements Closeable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridClient.class);
 	
 	public static final String SELECTION_CRITERION_THREAD = "#THREADID#";
 	
-	private Grid adapterGrid;
+	private final Grid adapterGrid;
 	
 	private Client client;
 	
 	private long noMatchExistsTimeout = 10000;
 	
 	private long matchExistsTimeout = 60000;
-	
-	public GridClient() {
-		super();
-	}
 
 	public GridClient(Grid adapterGrid) {
 		super();
@@ -76,7 +77,7 @@ public class GridClient {
 	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties, int callTimeout) throws Exception {
 		Token token = tokenWrapper.getToken();
 		
-		AgentRef agent = adapterGrid.getAgentRefs().get(token.getAgentid());
+		AgentRef agent = adapterGrid.getAgentRef(token.getAgentid());
 		
 		InputMessage message = new InputMessage();
 		message.setArgument(argument);
@@ -85,51 +86,81 @@ public class GridClient {
 		message.setHandler(handler);
 		message.setProperties(properties);
 		message.setCallTimeout(callTimeout);
-		OutputMessage output = callAgent(agent, token, message);			
+		
+		OutputMessage output;
+		if(token.isLocal()) {
+			output = callLocalToken(message);
+		} else {
+			output = callAgent(agent, token, message);						
+		}
 		token.getAttributes().put(SELECTION_CRITERION_THREAD, Long.toString(Thread.currentThread().getId()));
 		return output;
 	}
 
-	public TokenFacade getToken() {
+	private OutputMessage callLocalToken(InputMessage message) throws Exception {
+		OutputMessage output;
+		TokenHandlerPool p = new TokenHandlerPool();
+		MessageHandler h = p.get(message.getHandler());
+		output = h.handle(null, message);
+		return output;
+	}
+
+	public TokenHandle getLocalToken() {
+		Token localToken = new Token();
+		localToken.setId(UUID.randomUUID().toString());
+		localToken.setAgentid(Grid.LOCAL_AGENT);		
+		localToken.setAttributes(new HashMap<String, String>());
+		localToken.setSelectionPatterns(new HashMap<String, Interest>());
+		TokenWrapper tokenWrapper = new TokenWrapper(localToken);
+		return new TokenHandle(tokenWrapper);
+	}
+	
+	public TokenHandle getToken() {
 		TokenPretender tokenPretender = new TokenPretender(null, null);
 		TokenWrapper tokenWrapper = getToken(tokenPretender);
-		return new TokenFacade(tokenWrapper);
+		return new TokenHandle(tokenWrapper);
 	}
 	
-	public TokenFacade getToken(Map<String, String> attributes, Map<String, Interest> interests) {
+	public TokenHandle getToken(Map<String, String> attributes, Map<String, Interest> interests) {
 		TokenPretender tokenPretender = new TokenPretender(attributes, interests);
 		TokenWrapper tokenWrapper = getToken(tokenPretender);
-		return new TokenFacade(tokenWrapper);
+		return new TokenHandle(tokenWrapper);
 	}
 	
-	public class TokenFacade {
+	public class TokenHandle {
 		
 		TokenWrapper token;
 		
 		String handler = null;
 		
-		Map<String,String> properties = null;
+		Map<String,String> properties = new HashMap<>();
 		
 		int callTimeout = 180000;
 		
-		public TokenFacade(TokenWrapper token) {
+		private TokenHandle(TokenWrapper token) {
 			super();
 			this.token = token;
 		}
 
-		public TokenFacade setCallTimeout(int callTimeout) {
+		public TokenHandle setCallTimeout(int callTimeout) {
 			this.callTimeout = callTimeout;
 			return this;
 		}
 
-		public TokenFacade setHandler(String handler) {
+		public TokenHandle setHandler(String handler) {
 			this.handler = handler;
 			return this;
 		}
-
-		public TokenFacade setProperties(Map<String, String> properties) {
-			this.properties = properties;
+		
+		public TokenHandle addProperties(Map<String, String> properties) {
+			if(properties!=null) {
+				this.properties.putAll(properties);
+			}
 			return this;
+		}
+
+		public void setCurrentOwner(Object currentOwner) {
+			token.setCurrentOwner(currentOwner);
 		}
 
 		public OutputMessage process(String function, JsonObject argument) throws Exception {
@@ -149,7 +180,9 @@ public class GridClient {
 		}
 		
 		public void release() {
-			returnAdapterTokenToRegister(token);
+			if(!token.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
+				returnAdapterTokenToRegister(token);				
+			}
 		}
 	}
 	
@@ -193,6 +226,7 @@ public class GridClient {
 		adapterGrid.returnToken(adapterToken);		
 	}
 	
+	@Override
 	public void close() {
 		client.close();
 	}

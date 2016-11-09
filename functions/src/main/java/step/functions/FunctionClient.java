@@ -20,20 +20,16 @@ package step.functions;
 
 import java.util.Map;
 
-import step.grid.agent.handler.MessageHandler;
-import step.grid.agent.handler.PropertyAwareMessageHandler;
-import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.client.GridClient;
-import step.grid.client.GridClient.TokenFacade;
-import step.grid.io.InputMessage;
+import step.grid.client.GridClient.TokenHandle;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
 public class FunctionClient {
 
-	private GridClient gridClient;
+	private final GridClient gridClient;
 	
-	private FunctionRepository functionRepository;
+	private final FunctionRepository functionRepository;
 	
 	public FunctionClient(GridClient gridClient, FunctionRepository functionRepository) {
 		super();
@@ -41,76 +37,62 @@ public class FunctionClient {
 		this.functionRepository = functionRepository;
 	}
 	
-	public FunctionToken getLocalFunctionToken() {
-		return new FunctionToken(null);
+	public FunctionTokenHandle getLocalFunctionToken() {
+		return new FunctionTokenHandle(gridClient.getLocalToken());
 	}
 
-	public FunctionToken getFunctionToken(Map<String, String> attributes, Map<String, Interest> interest) {
-		return new FunctionToken(gridClient.getToken(attributes, interest));
+	public FunctionTokenHandle getFunctionToken(Map<String, String> attributes, Map<String, Interest> interest) {
+		return new FunctionTokenHandle(gridClient.getToken(attributes, interest));
 	}
 	
-	public class FunctionToken {
-
-		private final TokenFacade token;
-
-		public FunctionToken(TokenFacade token) {
-			super();
-			this.token = token;
-		}
-
-		public TokenFacade getToken() {
-			return token;
-		}
+	public class FunctionTokenHandle {
 		
-		public Output call(String functionId, Input input) {
-			return callFunction(this, functionId, input);
+		TokenHandle tokenHandle;
+
+		private FunctionTokenHandle(TokenHandle tokenHandle) {
+			super();
+			this.tokenHandle = tokenHandle;
 		}
 		
 		public Output call(Map<String, String> attributes, Input input) {
-			return callFunction(this, attributes, input);
+			Function function = functionRepository.getFunctionByAttributes(attributes);
+			return callFunction(tokenHandle, function, input);
 		}
 		
+		public Output call(String functionId, Input input) {
+			Function function = functionRepository.getFunctionById(functionId);
+			return callFunction(tokenHandle, function, input);
+		}
 		
 		public void release() {
-			releaseFunctionToken(this);
+			tokenHandle.release();		
+			tokenHandle.setCurrentOwner(null);
 		}
+		
+		public void setCurrentOwner(Object owner) {
+			tokenHandle.setCurrentOwner(owner);
+		}
+
+		@Override
+		public String toString() {
+			return tokenHandle.getToken().getID();
+		}
+		
+		
 	}
 
-	public Output callFunction(FunctionToken functionToken, Map<String, String> attributes, Input input) {
-		Function function = functionRepository.getFunctionByAttributes(attributes);
-		return callFunction(functionToken, function, input);
-	}
-	
-	private Output callFunction(FunctionToken functionToken, String functionId, Input input) {
-		Function function = functionRepository.getFunctionById(functionId);
-		return callFunction(functionToken, function, input);
-	}
-
-	private Output callFunction(FunctionToken functionToken, Function function, Input input) {
+	private Output callFunction(TokenHandle tokenHandle, Function function, Input input) {
 		String handlerChain = function.getHandlerChain();
 
 		Output output = new Output();
 		output.setFunction(function);
 		try {
-			OutputMessage outputMessage;
-			if(functionToken.getToken()!=null) {
-				TokenFacade facade = functionToken.getToken().setHandler(handlerChain).setProperties(input.getProperties());
-				if(function.getCallTimeout()!=null) {
-					facade.setCallTimeout(function.getCallTimeout());
-				}
-				outputMessage = facade.process(function.getAttributes().get("name"), input.getArgument());		
-			} else {
-				TokenHandlerPool p = new TokenHandlerPool();
-				MessageHandler h = p.get(handlerChain);
-				InputMessage inputMessage = new InputMessage();
-				inputMessage.setFunction(function.getAttributes().get("name"));
-				inputMessage.setArgument(input.getArgument());
-				if(h instanceof PropertyAwareMessageHandler) {
-					outputMessage = ((PropertyAwareMessageHandler)h).handle(null, function.getHandlerProperties(), inputMessage);
-				} else {
-					outputMessage = h.handle(null, inputMessage);
-				}
+			TokenHandle facade = tokenHandle.setHandler(handlerChain).addProperties(input.getProperties())
+					.addProperties(function.getHandlerProperties());
+			if(function.getCallTimeout()!=null) {
+				facade.setCallTimeout(function.getCallTimeout());
 			}
+			OutputMessage outputMessage = facade.process(function.getAttributes().get("name"), input.getArgument());		
 			output.setResult(outputMessage.getPayload());
 			output.setError(outputMessage.getError());
 			output.setAttachments(outputMessage.getAttachments());
@@ -121,12 +103,6 @@ public class FunctionClient {
 			// TODO 
 		}
 		return output;
-	}
-	
-	private void releaseFunctionToken(FunctionToken functionToken) {
-		if(functionToken.getToken()!=null) {
-			functionToken.getToken().release();			
-		}
 	}
 
 	public FunctionRepository getFunctionRepository() {

@@ -54,7 +54,7 @@ public class AgentServices {
 	@Inject
 	Agent agent;
 	
-	ExecutorService executor;
+	final ExecutorService executor;
 		
 	public AgentServices() {
 		super();
@@ -70,19 +70,20 @@ public class AgentServices {
 		try {
 			final String tokenId = message.getTokenId();
 			final AgentTokenPool tokenPool = agent.getTokenPool();
-			final AgentTokenWrapper tokenWrapper = tokenPool.getToken(tokenId);
 			
+			final AgentTokenWrapper tokenWrapper = tokenPool.getToken(tokenId);
 			if(tokenWrapper!=null) {
-				final MessageHandler tokenHandler = getTokenHandler(message, tokenWrapper);
-				
 				final Object terminationLock = new Object();
 				
 				Future<OutputMessage> future = executor.submit(new Callable<OutputMessage>() {
 					@Override
 					public OutputMessage call() throws Exception {
 						try {
+							final MessageHandler tokenHandler = getTokenHandler(message, tokenWrapper);
 							OutputMessage output = tokenHandler.handle(tokenWrapper, message);
 							return output;
+						} catch (Exception e) {
+							return handleUnexpectedError(e);
 						} finally {
 							tokenPool.returnToken(tokenId);
 							synchronized (terminationLock) {
@@ -100,14 +101,14 @@ public class AgentServices {
 					
 					synchronized (terminationLock) {
 						if(tokenWrapper.isInUse()) {
-							terminationLock.wait(100);
+							terminationLock.wait(100); 
 						}
 					}
 					
 					if(tokenWrapper.isInUse()) {
-						return newErrorOutput("Timeout while processing message. WARNING: Message execution couldn't be interrupted and the token couldn't be returned to the pool. Subsequent calls to that token may fail!");		
+						return newErrorOutput("Timeout while processing request. WARNING: Request execution couldn't be interrupted and the token couldn't be returned to the pool. Subsequent calls to that token may fail!");		
 					} else {
-						return newErrorOutput("Timeout while processing message. Message execution interrupted successfully.");						
+						return newErrorOutput("Timeout while processing request. Request execution interrupted successfully.");						
 					}
 				}
 			} else {
@@ -116,10 +117,15 @@ public class AgentServices {
 		} catch(TokenInUseException e) {
 			return newErrorOutput("Token " + e.getToken().getUid() + " already in use. This should never happen!");
 		} catch (Exception e) {
-			OutputMessage output = newErrorOutput("Unexpected error while processing message.");
-			output.addAttachment(generateAttachmentForException(e));
-			return output;
+			return handleUnexpectedError(e);
 		}
+	}
+	
+
+	protected OutputMessage handleUnexpectedError(Exception e) {
+		OutputMessage output = newErrorOutput("Unexpected error while processing message.");
+		output.addAttachment(generateAttachmentForException(e));
+		return output;
 	}
 	
 	protected OutputMessage newErrorOutput(String error) {
