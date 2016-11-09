@@ -27,7 +27,11 @@ import step.core.miscellaneous.TestArtefactResultHandler;
 import step.core.variables.UndefinedVariableException;
 
 public class SequentialArtefactScheduler {
-	
+
+	public SequentialArtefactScheduler() {
+		super();
+	}
+
 	public void createReportSkeleton_(ReportNode node, AbstractArtefact testArtefact) {		
 		for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact)) {
 			ArtefactHandler.delegateCreateReportSkeleton(child, node);
@@ -36,15 +40,17 @@ public class SequentialArtefactScheduler {
 	
 	public void execute_(ReportNode node, AbstractArtefact testArtefact) {
 		ExecutionContext context = ExecutionContext.getCurrentContext();
-		try {
-			boolean failed = false;
-			boolean notCompleted = false;
+		ReportNodeStatus parentResultStatus = node.getStatus(); 
+		try {			
 			for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact)) {
 				if(context.isInterrupted()) {
-					node.setStatus(ReportNodeStatus.INTERRUPTED);
 					break;
 				}
 				ReportNode resultNode = ArtefactHandler.delegateExecute(child, node);
+				
+				if(parentResultStatus==null || resultNode.getStatus().ordinal()<parentResultStatus.ordinal()) {
+					parentResultStatus = resultNode.getStatus();
+				}
 				
 				Boolean continueOnce = null;
 				try {
@@ -53,12 +59,7 @@ public class SequentialArtefactScheduler {
 					context.getVariablesManager().removeVariable(node, ArtefactHandler.CONTINUE_EXECUTION_ONCE);												
 				}
 				
-				if(resultNode.getStatus()==ReportNodeStatus.NOT_COMPLETED) {
-					notCompleted = true;
-				}
-				
 				if(resultNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || resultNode.getStatus()==ReportNodeStatus.FAILED) {
-					failed = true;
 					if(!context.isSimulation()) {
 						if(continueOnce!=null) {
 							if(!continueOnce) {
@@ -72,23 +73,19 @@ public class SequentialArtefactScheduler {
 					}
 				}
 			}
-	
+		} catch (Exception e) {
+			TestArtefactResultHandler.failWithException(node, e);
+		} finally {
 			Object forcedStatus = context.getVariablesManager().getVariable("tec.forceparentstatus");
 			if(forcedStatus!=null) {
 				node.setStatus(ReportNodeStatus.valueOf(forcedStatus.toString()));
 			} else {
-				if(failed) {
-					node.setStatus(ReportNodeStatus.FAILED);
+				if(context.isInterrupted()) {
+					node.setStatus(ReportNodeStatus.INTERRUPTED);
 				} else {
-					if(!notCompleted) {
-						node.setStatus(ReportNodeStatus.PASSED);
-					} else {
-						node.setStatus(ReportNodeStatus.NOT_COMPLETED);
-					}
+					node.setStatus(parentResultStatus);					
 				}
 			}
-		} catch (Exception e) {
-			TestArtefactResultHandler.failWithException(node, e);
 		}
 	}
 

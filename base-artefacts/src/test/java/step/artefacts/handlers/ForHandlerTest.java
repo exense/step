@@ -51,6 +51,7 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
 			@Override
 			public void run() {
+				ExecutionContext.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 				assertEquals(i.get(),(int)ExecutionContext.getCurrentContext().getVariablesManager().getVariableAsInteger("item"));
 				i.addAndGet(2);
 			}
