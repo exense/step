@@ -20,13 +20,13 @@ package step.grid;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.jvnet.hk2.internal.Closeable;
 
@@ -36,7 +36,7 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 	
 	Timer keepaliveTimeoutCheckTimer;
 	
-	private Map<T, Wrapper> map = new HashMap<>();
+	private ConcurrentHashMap<T, Wrapper> map = new ConcurrentHashMap<>();
 	
 	private class Wrapper {
 		
@@ -51,8 +51,14 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 		}
 	}
 
-	public ExpiringMap() {
+	public ExpiringMap(long keepaliveTimeout) {
+		this(keepaliveTimeout, keepaliveTimeout/10);
+	}
+	
+	public ExpiringMap(long keepaliveTimeout, long checkIntervalMs) {
 		super();
+		
+		this.keepaliveTimeout = keepaliveTimeout;
 		
 		keepaliveTimeoutCheckTimer = new Timer();
 		keepaliveTimeoutCheckTimer.schedule(new TimerTask() {
@@ -64,21 +70,16 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 					
 				}
 			}
-		}, 10000,10000);
+		}, checkIntervalMs,checkIntervalMs);
 	}
 	
 	private void keepaliveTimeoutCheck() {
 		if(keepaliveTimeout>0) {
-			synchronized (map) {
-				long now = System.currentTimeMillis();
-				List<T> invalidKeys = new ArrayList<>();
-				for(Map.Entry<T, ExpiringMap<T, V>.Wrapper> entry:map.entrySet()) {
-					if(entry.getValue().lasttouch+keepaliveTimeout<now) {
-						invalidKeys.add(entry.getKey());
-					}
-				}
-				for(T key:invalidKeys) {
-					map.remove(key);				
+			long now = System.currentTimeMillis();			
+			Set<Map.Entry<T, ExpiringMap<T, V>.Wrapper>> set = map.entrySet();
+			for(Map.Entry<T, ExpiringMap<T, V>.Wrapper> entry:set) {
+				if(entry.getValue().lasttouch+keepaliveTimeout<now) {
+					set.remove(entry);
 				}
 			}
 		}
@@ -111,28 +112,29 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 
 	@Override
 	public V get(Object key) {
-		return map.get(key).value;
+		Wrapper w = map.get(key);
+		return w!=null?w.value:null;
 	}
 
 	@Override
-	public V put(T key, V value) {
+	public synchronized V put(T key, V value) {
 		Wrapper wrapper = map.put(key, new Wrapper(value));
 		return wrapper!=null?wrapper.value:null;
 	}
 
 	@Override
-	public V remove(Object key) {
+	public synchronized V remove(Object key) {
 		Wrapper w = map.remove(key);
 		return w!=null?w.value:null;
 	}
 
 	@Override
 	public void putAll(Map<? extends T, ? extends V> m) {
-		
+		throw new RuntimeException("not implemented");
 	}
 
 	@Override
-	public void clear() {
+	public synchronized void clear() {
 		map.clear();
 	}
 
@@ -192,7 +194,7 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 		return true;
 	}
 	
-	public void putOrTouch(T key, V value) {
+	public synchronized void putOrTouch(T key, V value) {
 		if(containsKey(key)) {
 			touch(key);
 		} else {
@@ -200,7 +202,7 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 		}
 	}
 	
-	public void touch(T key) {
+	public synchronized void touch(T key) {
 		Wrapper v = map.get(key);
 		if(v!=null) {
 			v.lasttouch = System.currentTimeMillis();
@@ -209,7 +211,6 @@ public class ExpiringMap<T,V> implements Map<T,V>, Closeable{
 
 	@Override
 	public boolean isClosed() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 }

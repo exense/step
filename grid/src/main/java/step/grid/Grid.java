@@ -18,7 +18,7 @@
  *******************************************************************************/
 package step.grid;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -35,6 +35,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.SimpleAffinityEvaluator;
+import step.grid.tokenpool.Token;
 import step.grid.tokenpool.TokenPool;
 
 public class Grid {
@@ -47,11 +48,12 @@ public class Grid {
 
 	private Integer port;
 	
+	private Integer keepAliveTimeout = 60000;
+	
 	private Server server;
 	
 	public Grid(Integer port) {
 		super();
-		
 		this.port = port;
 	}
 
@@ -67,14 +69,12 @@ public class Grid {
 	}
 
 	private void initializeAgentRefs() {
-		agentRefs = new ExpiringMap<>();
+		agentRefs = new ExpiringMap<>(keepAliveTimeout);
 	}
 	
 	private void initializeTokenPool() {
 		tokenPool = new TokenPool<>(new SimpleAffinityEvaluator());
-		//TODO Configuration
-		Integer timeout = 60000;
-		tokenPool.setKeepaliveTimeout(timeout);
+		tokenPool.setKeepaliveTimeout(keepAliveTimeout);
 	}
 	
 	private void initializeServer() {
@@ -106,6 +106,14 @@ public class Grid {
 		server.start();
 	}
 	
+	protected void handleRegistrationMessage(RegistrationMessage message) {
+		AgentRef agentRef = message.getAgentRef();
+		agentRefs.putOrTouch(agentRef.getAgentId(), agentRef);
+		for (step.grid.Token token : message.getTokens()) {
+			tokenPool.offerToken(new TokenWrapper(token));			
+		}	
+	}
+	
 	public TokenWrapper selectToken(Identity pretender, long matchTimeout, long noMatchTimeout)
 			throws TimeoutException, InterruptedException {
 		return tokenPool.selectToken(pretender, matchTimeout, noMatchTimeout);
@@ -115,31 +123,19 @@ public class Grid {
 		tokenPool.returnToken(object);
 	}
 
-	protected TokenPool<Identity, TokenWrapper> getTokenPool() {
-		return tokenPool;
+	public List<Token<TokenWrapper>> getTokens() {
+		return tokenPool.getTokens();
 	}
 	
-	public List<TokenWrapper> getTokens() {
-		List<TokenWrapper> tokens = new ArrayList<>();
-		for(step.grid.tokenpool.Token<TokenWrapper> token:tokenPool.getTokens()) {
-			tokens.add(token.getObject());
-		}
-		return tokens;
+	public Collection<AgentRef> getAgents() {
+		return agentRefs.values();
 	}
-	
-	protected ExpiringMap<String, AgentRef> getAgentRefs() {
-		return agentRefs;
-	}
-	
+
 	public AgentRef getAgentRef(String agentId) {
 		if(agentId.equals(LOCAL_AGENT)) {
 			return new AgentRef(LOCAL_AGENT, "localhost");
 		} else {
 			return agentRefs.get(agentId);
 		}
-	}
-
-	public boolean existsAvailableMatchingToken(Identity pretender) {
-		return tokenPool.existsAvailableMatchingToken(pretender);
 	}
 }

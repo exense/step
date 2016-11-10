@@ -19,6 +19,7 @@
 package step.plugins.adaptergrid;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -30,6 +31,7 @@ import javax.ws.rs.core.MediaType;
 
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
+import step.grid.AgentRef;
 import step.grid.Grid;
 import step.grid.GridReportBuilder;
 import step.grid.reports.TokenAssociation;
@@ -44,6 +46,14 @@ public class GridServices extends AbstractServices {
 	
 	private GridReportBuilder getReportBuilder() {
 		return new GridReportBuilder(getAdapterGrid());
+	}
+	
+
+	@GET
+	@Path("/agent")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Collection<AgentRef> getAgents() {
+		return getAdapterGrid().getAgents();
 	}
 
 	@GET

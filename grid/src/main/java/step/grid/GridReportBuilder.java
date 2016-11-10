@@ -41,7 +41,7 @@ public class GridReportBuilder {
 	public List<TokenGroupCapacity> getUsageByIdentity(List<String> groupbys) {		
 		Map<Map<String, String>, TokenGroupCapacity> countsByIdentity = new HashMap<>();
 		
-		for(step.grid.tokenpool.Token<TokenWrapper> token:grid.getTokenPool().getTokens()) {
+		for(step.grid.tokenpool.Token<TokenWrapper> token:grid.getTokens()) {
 			TokenWrapper aToken = token.getObject();
 			
 			Map<String, String> key = new HashMap<>(); 
@@ -65,7 +65,7 @@ public class GridReportBuilder {
 	
 	public Set<String> getTokenAttributeKeys() {
 		Set<String> result = new HashSet<>();
-		for(step.grid.tokenpool.Token<TokenWrapper> token:grid.getTokenPool().getTokens()) {
+		for(step.grid.tokenpool.Token<TokenWrapper> token:grid.getTokens()) {
 			result.addAll(token.getObject().getAttributes().keySet());
 			result.addAll(token.getObject().getInterests().keySet());
 		}
@@ -81,7 +81,7 @@ public class GridReportBuilder {
 			return aToken.getID();
 		}
 		if(key.equals(URL_KEY)) {
-			AgentRef ref = grid.getAgentRefs().get(aToken.getToken().getAgentid());
+			AgentRef ref = grid.getAgentRef(aToken.getToken().getAgentid());
 			return ref!=null?ref.getAgentUrl():"-";
 		}
 		if(aToken.getAttributes()!=null) {
@@ -101,7 +101,7 @@ public class GridReportBuilder {
 	
 	public List<TokenAssociation> getTokenAssociations(boolean onlyWithOwner) {
 		List<TokenAssociation> tokens = new ArrayList<>();
-		for(step.grid.tokenpool.Token<TokenWrapper> token:grid.getTokenPool().getTokens()) {
+		for(step.grid.tokenpool.Token<TokenWrapper> token:grid.getTokens()) {
 			Object currentOwner = token.getObject().getCurrentOwner();
 			if(currentOwner!=null||(currentOwner==null&&!onlyWithOwner)) {
 				tokens.add(new TokenAssociation(token.getObject().getToken(), currentOwner));
