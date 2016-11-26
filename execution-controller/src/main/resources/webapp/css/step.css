@@ -173,4 +173,18 @@ footer {
   padding: 25px 35px 45px;
   margin: 0 auto;
   background-color: #fff;
-  border: 1px solid rgba(0,0,0,0.1);  
+  border: 1px solid rgba(0,0,0,0.1); 
+}
+
+.text-grey {
+	color: #777;
+}
+
+ul.attribute-list li p {
+    margin: 0;
+    padding: 0;
+}
+
+ul.attribute-list li {
+    margin-bottom: 20px;
+}

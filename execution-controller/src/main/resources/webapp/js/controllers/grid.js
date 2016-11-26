@@ -46,6 +46,72 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
   
 }])   
 
+.controller('AgentListCtrl', [
+    '$scope',
+    '$interval',
+    '$http',
+    'helpers',
+    function($scope, $interval, $http, helpers) {
+      $scope.$state = 'agents';
+      
+      $scope.datatable = {}
+      
+      $scope.loadTable = function loadTable() {
+        $http.get("rest/grid/agent").success(
+          function(data) {
+            var dataSet = [];
+            for (i = 0; i < data.length; i++) {
+              dataSet[i] = [ data[i].agentId, data[i].agentUrl];
+            }
+            $scope.tabledef.data = dataSet;
+          });
+        };
+
+        $scope.tabledef = {};
+        $scope.tabledef.columns = [ { "title" : "ID", "visible" : false}, { "title" : "Url" } ];
+
+        $scope.tabledef.actions = [{"label":"Interrupt","action":function() {$scope.interruptSelected()}},
+                                   {"label":"Resume","action":function() {$scope.resumeSelected()}}];
+        
+        $scope.loadTable();
+        
+        $scope.interruptSelected = function() {
+          var rows = $scope.datatable.getSelection().selectedItems;
+          
+          for(i=0;i<rows.length;i++) {
+            $scope.interrupt(rows[i][0]);       
+          }
+        };
+          
+        $scope.interrupt = function(id) {
+          $http.put("rest/grid/agent/"+id+"/interrupt").success(function(data) {
+                $scope.loadTable();
+            });
+        }
+        
+        $scope.resumeSelected = function() {
+          var rows = $scope.datatable.getSelection().selectedItems;
+          
+          for(i=0;i<rows.length;i++) {
+            $scope.resume(rows[i][0]);       
+          }
+        };
+          
+        $scope.resume = function(id) {
+          $http.put("rest/grid/agent/"+id+"/resume").success(function(data) {
+                $scope.loadTable();
+            });
+        }
+          
+        var refreshTimer = $interval(function(){
+            if($scope.autorefresh){$scope.loadTable()}}, 2000);
+          
+          $scope.$on('$destroy', function() {
+            $interval.cancel(refreshTimer);
+          });
+
+      } ])
+
 .controller('AdapterListCtrl', [
   	'$scope',
   	'$interval',

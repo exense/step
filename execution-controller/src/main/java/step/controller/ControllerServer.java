@@ -41,6 +41,7 @@ import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.AccessFilter;
 import step.core.deployment.AuthenticationFilter;
 import step.core.deployment.AccessServices;
+import step.core.deployment.AdminServices;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.JacksonMapperProvider;
 import step.grid.agent.ArgumentParser;
@@ -128,6 +129,7 @@ public class ControllerServer {
 		resourceConfig.registerClasses(AccessServices.class);
 		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(AccessFilter.class);
+		resourceConfig.registerClasses(AdminServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override

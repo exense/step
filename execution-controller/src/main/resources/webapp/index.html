@@ -32,6 +32,8 @@ window.console.log = window.console.log || function(){};
 <script src="js/controllers/repository.js"></script>
 <script src="js/controllers/artefactEditor.js"></script>
 <script src="js/controllers/reportBrowser.js"></script>
+<script src="js/controllers/admin.js"></script>
+
 <script src="js/tables.js"></script>
 
 <script src="js/lib/moment.js"></script>
@@ -73,7 +75,7 @@ window.console.log = window.console.log || function(){};
 							class="icon-bar"></span> <span class="icon-bar"></span> <span
 							class="icon-bar"></span>
 					</button> -->
-					<a class="navbar-brand" href="#">
+					<a class="navbar-brand">
 						<img alt="" src="images/logo_step_line_black.png" style="max-width:100px; margin-top: -3px;">						
 					</a>
 				</div>
@@ -91,9 +93,11 @@ window.console.log = window.console.log || function(){};
 							ui-sref="scheduler" ng-click="setView('scheduler')">Scheduler</a></li>
 						<li ng-if="authService.hasMininumRole('developer')" ng-class="{ active: isViewActive('grid') }"><a
 							ui-sref="grid" ng-click="setView('grid')">Grid</a></li>
+						<li ng-if="authService.hasMininumRole('admin')" ng-class="{ active: isViewActive('admin') }"><a
+							ui-sref="admin" ng-click="setView('admin')">Admin</a></li>
 					</ul>
 					<ul class="nav navbar-nav navbar-right">
-						<li><a>{{context.userID}}</a></li>
+						<li><a ng-click="setView('myaccount')">{{context.userID}} [{{context.role}}]</a></li>
 					</ul>
 				</div>
 			</div>
@@ -110,7 +114,8 @@ window.console.log = window.console.log || function(){};
 	        <div ng-if="isViewActive('functions')" ng-compiled-include="partials/functionList.html"></div>
 	        <div ng-if="isViewActive('artefacteditor')" ng-compiled-include="partials/artefactEditor.html"></div>
 	        <div ng-if="isViewActive('reportBrowser')" ng-compiled-include="partials/reportBrowser.html"></div>
-	        
+	        <div ng-if="isViewActive('admin')" ng-compiled-include="partials/admin.html"></div>
+	        <div ng-if="isViewActive('myaccount')" ng-compiled-include="partials/myaccount.html"></div>
 	        
 		</div>
 	</div>

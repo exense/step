@@ -8,4 +8,5 @@ kw-write,,,,x,x
 kw-delete,,,,x,x
 kw-execute,,,x,x,x
 report-read,x,x,x,x,x
-report-read-all,,,,,
+user-write,,,,,x
+user-read,,,,,x

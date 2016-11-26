@@ -1,6 +1,10 @@
 package step.core.access;
 
+import org.bson.types.ObjectId;
+
 public class User {
+	
+	public ObjectId _id;
 
 	private String username;
 
@@ -10,6 +14,14 @@ public class User {
 
 	public User() {
 		super();
+	}
+
+	public ObjectId getId() {
+		return _id;
+	}
+	
+	public void setId(ObjectId _id) {
+		this._id = _id;
 	}
 
 	public String getUsername() {

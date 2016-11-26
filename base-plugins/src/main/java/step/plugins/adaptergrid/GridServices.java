@@ -24,7 +24,9 @@ import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -54,6 +56,20 @@ public class GridServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Collection<AgentRef> getAgents() {
 		return getAdapterGrid().getAgents();
+	}
+	
+	@PUT
+	@Path("/agent/{id}/interrupt")
+	@Produces(MediaType.APPLICATION_JSON)
+	public void interruptAgent(@PathParam("id") String agentId) {
+		getAdapterGrid().getAgentRef(agentId);
+	}
+	
+	@PUT
+	@Path("/agent/{id}/resume")
+	@Produces(MediaType.APPLICATION_JSON)
+	public void resumeAgent(@PathParam("id") String agentId) {
+		getAdapterGrid().getAgentRef(agentId);
 	}
 
 	@GET
