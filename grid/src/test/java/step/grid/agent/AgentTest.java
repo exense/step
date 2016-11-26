@@ -49,9 +49,11 @@ public class AgentTest extends AbstractGridTest {
 	public void testTimeout() throws Exception {		
 		JsonObject o = Json.createObjectBuilder().add("delay", 4000).build();
 		
-		TokenHandle f = client.getToken().setCallTimeout(1).setHandler("class:step.grid.agent.TestTokenHandler");
+		TokenHandle f = client.getToken().setCallTimeout(10).setHandler("class:step.grid.agent.TestTokenHandler");
 		OutputMessage outputMessage = f.processAndRelease("testFunction", o);
 		Assert.assertEquals("Timeout while processing request. Request execution interrupted successfully.",outputMessage.getError());
+		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace.log"));
+		
 		
 		// check if the token has been returned to the pool. In this case the second call should return the same error
 		outputMessage = f.processAndRelease("testFunction", o);
@@ -62,9 +64,11 @@ public class AgentTest extends AbstractGridTest {
 	public void testTimeoutNoTokenReturn() throws Exception {		
 		JsonObject o = Json.createObjectBuilder().add("delay", 4000).add("delayAfterInterruption", 150).build();
 		
-		TokenHandle f = client.getToken().setCallTimeout(1).setHandler("class:step.grid.agent.TestTokenHandler");
+		TokenHandle f = client.getToken().setCallTimeout(10).setHandler("class:step.grid.agent.TestTokenHandler");
 		OutputMessage outputMessage = f.processAndRelease("testFunction", o);
 		Assert.assertEquals("Timeout while processing request. WARNING: Request execution couldn't be interrupted and the token couldn't be returned to the pool. Subsequent calls to that token may fail!",outputMessage.getError());
+		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace.log"));
+
 		
 		// check if the token has been returned to the pool. In this case the second call should return the same error
 		outputMessage = f.processAndRelease("testFunction", o);

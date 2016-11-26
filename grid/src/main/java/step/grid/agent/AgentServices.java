@@ -28,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
@@ -55,13 +56,25 @@ public class AgentServices {
 	Agent agent;
 	
 	final ExecutorService executor;
+	
+	AgentTokenPool tokenPool;
 		
 	public AgentServices() {
-		super();
-		
+		super();	
 		executor = Executors.newCachedThreadPool();
 	}
+	
+	@PostConstruct
+	public void init() {
+		tokenPool = agent.getTokenPool();
+	}
 
+	class ExecutionContext {
+		protected Thread t;
+		protected boolean running = true;
+	}
+	
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -69,25 +82,24 @@ public class AgentServices {
 	public OutputMessage process(final InputMessage message) {
 		try {
 			final String tokenId = message.getTokenId();
-			final AgentTokenPool tokenPool = agent.getTokenPool();
-			
 			final AgentTokenWrapper tokenWrapper = tokenPool.getToken(tokenId);
-			if(tokenWrapper!=null) {
-				final Object terminationLock = new Object();
-				
+			if(tokenWrapper!=null) {				
+				final ExecutionContext context = new ExecutionContext();
 				Future<OutputMessage> future = executor.submit(new Callable<OutputMessage>() {
 					@Override
 					public OutputMessage call() throws Exception {
 						try {
-							final MessageHandler tokenHandler = getTokenHandler(message, tokenWrapper);
+							context.t = Thread.currentThread();
+							MessageHandler tokenHandler = getTokenHandler(message, tokenWrapper);
 							OutputMessage output = tokenHandler.handle(tokenWrapper, message);
 							return output;
 						} catch (Exception e) {
 							return handleUnexpectedError(e);
 						} finally {
 							tokenPool.returnToken(tokenId);
-							synchronized (terminationLock) {
-								terminationLock.notify();
+							synchronized (context) {
+								context.running = false;								
+								context.notify();
 							}
 						}
 					}
@@ -97,19 +109,30 @@ public class AgentServices {
 					OutputMessage output = future.get(message.getCallTimeout(), TimeUnit.MILLISECONDS);
 					return output;
 				} catch(TimeoutException e) {
-					future.cancel(true);
+					Attachment stacktraceAttachment = null;
 					
-					synchronized (terminationLock) {
-						if(tokenWrapper.isInUse()) {
-							terminationLock.wait(100); 
+					synchronized (context) {
+						if(context.running && context.t!=null) {
+							StackTraceElement[] stacktrace = context.t.getStackTrace();
+							stacktraceAttachment = generateAttachmentForStacktrace(stacktrace);							
 						}
 					}
 					
-					if(tokenWrapper.isInUse()) {
-						return newErrorOutput("Timeout while processing request. WARNING: Request execution couldn't be interrupted and the token couldn't be returned to the pool. Subsequent calls to that token may fail!");		
-					} else {
-						return newErrorOutput("Timeout while processing request. Request execution interrupted successfully.");						
+					future.cancel(true);
+					
+					synchronized (context) {
+						if(context.running) {
+							context.wait(100); 
+						}
 					}
+					
+					if(context.running) {
+						return newErrorOutput("Timeout while processing request. WARNING: Request execution couldn't be interrupted and the token couldn't be returned to the pool. "
+								+ "Subsequent calls to that token may fail!", stacktraceAttachment);		
+					} else {
+						return newErrorOutput("Timeout while processing request. Request execution interrupted successfully.", stacktraceAttachment);			
+					}						
+					
 				}
 			} else {
 				return newErrorOutput("No token found with id "+tokenId);
@@ -128,9 +151,14 @@ public class AgentServices {
 		return output;
 	}
 	
-	protected OutputMessage newErrorOutput(String error) {
+	protected OutputMessage newErrorOutput(String error, Attachment...attachments) {
 		OutputMessage output = new OutputMessage();
 		output.setError(error);
+		if(attachments!=null) {
+			for (Attachment attachment : attachments) {
+				output.addAttachment(attachment);			
+			}
+		}
 		return output;
 	}
 	
@@ -142,6 +170,19 @@ public class AgentServices {
 		attachment.setHexContent(AttachmentHelper.getHex(w.toString().getBytes()));
 		return attachment;
 	}
+	
+	protected Attachment generateAttachmentForStacktrace(StackTraceElement[] e) {
+		Attachment attachment = new Attachment();	
+		attachment.setName("stacktrace.log");
+		StringWriter str = new StringWriter();
+		PrintWriter w = new PrintWriter(str);
+		for (StackTraceElement traceElement : e)
+			w.println("\tat " + traceElement);
+		attachment.setHexContent(AttachmentHelper.getHex(str.toString().getBytes()));
+		return attachment;
+	}
+	
+
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
