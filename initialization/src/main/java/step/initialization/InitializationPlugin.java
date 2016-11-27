@@ -63,6 +63,7 @@ public class InitializationPlugin extends AbstractPlugin {
 	private void setupUsers(GlobalContext context) {
 		User user = new User();
 		user.setUsername("admin");
+		user.setRole("admin");
 		user.setPassword(UserAccessor.encryptPwd("init"));
 		context.getUserAccessor().save(user);
 	}
