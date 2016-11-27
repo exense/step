@@ -139,7 +139,7 @@ angular.module('dataTable', [])
         });
         
         var nCol = tableElement.find('thead tr[role="row"] th').length;
-        var cmdRow = tableElement.find('thead').prepend('<tr class="tableactions"><th colspan="'+nCol+'"><div id="commandButtons" class="btn-group btn-group-xs pull-right"></div><div id="selectionButtons" class="btn-group btn-group-xs pull-right"></div></th></tr>');
+        var cmdRow = tableElement.find('thead').prepend('<tr class="tableactions"><th colspan="'+nCol+'"></div><div id="selectionButtons" class="btn-group btn-group-xs pull-right"></div><div id="commandButtons" class="btn-group btn-group-xs pull-right" style="margin-right:10px"></th></tr>');
         var selectionButtons = cmdRow.find('#selectionButtons');
         var commandButtons = cmdRow.find('#commandButtons');
 

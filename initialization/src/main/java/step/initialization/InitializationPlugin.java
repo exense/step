@@ -31,6 +31,8 @@ import step.artefacts.Check;
 import step.artefacts.Set;
 import step.artefacts.TestCase;
 import step.core.GlobalContext;
+import step.core.access.User;
+import step.core.access.UserAccessor;
 import step.core.accessors.MongoDBAccessorHelper;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.plugins.AbstractPlugin;
@@ -49,14 +51,20 @@ public class InitializationPlugin extends AbstractPlugin {
 		
 		if(runCounts==0) {
 			// First start
+			setupUsers(context);
 			setupDemo(context);
-			
-			
 		}
 		
 		insertLogEntry(controllerLogs);
 		
 		super.executionControllerStart(context);
+	}
+
+	private void setupUsers(GlobalContext context) {
+		User user = new User();
+		user.setUsername("admin");
+		user.setPassword(UserAccessor.encryptPwd("init"));
+		context.getUserAccessor().save(user);
 	}
 
 	private void insertLogEntry(MongoCollection controllerLogs) {

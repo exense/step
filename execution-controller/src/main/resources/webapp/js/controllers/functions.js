@@ -106,7 +106,11 @@ angular.module('functionsControllers',['dataTable','step'])
         	var function_ = JSON.parse(row[row.length-1]);
         	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
         	  if(function_.handlerProperties) {
-        		return '<a href="#/root/artefacteditor/' + function_.handlerProperties['artefactid'] + '">Composite</a>'
+        	    if(AuthService.hasRight('kw-write')) { 
+        	      return '<a href="#/root/artefacteditor/' + function_.handlerProperties['artefactid'] + '">Composite</a>'        	      
+        	    } else {
+        	      return 'Composite';
+        	    }
         	  } else {
         		return 'Unknown';
         	  }
@@ -123,7 +127,7 @@ angular.module('functionsControllers',['dataTable','step'])
               var function_ = JSON.parse(row[row.length-1]);
             	var html = '<div class="input-group"><div class="btn-group">';
             	
-            	if(AuthService.hasRight('kw-read')) {
+            	if(AuthService.hasRight('kw-write')) {
               	html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
   	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>'+
               	  '</button> ';

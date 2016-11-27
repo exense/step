@@ -57,7 +57,6 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.model.Filters;
 
@@ -67,6 +66,7 @@ import step.core.accessors.Collection;
 import step.core.accessors.CollectionFind;
 import step.core.accessors.SearchOrder;
 import step.core.deployment.AbstractServices;
+import step.core.deployment.Secured;
 import step.core.execution.model.ExecutionStatus;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
@@ -155,6 +155,7 @@ public class DataTableServices extends AbstractServices {
 	@GET
 	@Path("/{id}/columns")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
 	public List<ColumnDef> getTableColumnDefs(@PathParam("id") String collectionID) {
 		BackendDataTable table = tables.get(collectionID);
 		return table.getColumns();
@@ -164,6 +165,7 @@ public class DataTableServices extends AbstractServices {
 	@Path("/{id}/data")
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
 	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form) throws Exception {
 		return getTableData(collectionID, form);
 	}
@@ -171,6 +173,7 @@ public class DataTableServices extends AbstractServices {
 	@GET
 	@Path("/{id}/data")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
 	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
 		return getTableData(collectionID, uriInfo.getQueryParameters());
 	}
@@ -318,6 +321,7 @@ public class DataTableServices extends AbstractServices {
 	@GET
 	@Path("/exports/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
 	public ReportStatus getExport(@PathParam("id") String reportID) throws Exception {
 		ReportStatus report = reports.get(reportID);
 		if(report.ready) {

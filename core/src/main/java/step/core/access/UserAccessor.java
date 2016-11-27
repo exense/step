@@ -3,6 +3,7 @@ package step.core.access;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 
@@ -44,6 +45,10 @@ public class UserAccessor {
 	public User getByUsername(String username) {
 		assert username != null;
 		return users.findOne("{username: #}", username).as(User.class);
+	}
+	
+	public static String encryptPwd(String pwd) {
+		return DigestUtils.sha512Hex(pwd);
 	}
 
 }

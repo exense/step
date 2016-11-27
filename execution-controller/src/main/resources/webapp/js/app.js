@@ -238,11 +238,6 @@ angular.module('step',['ngStorage'])
     return (authService.isAuthenticated() &&
       authorizedRoles.indexOf($rootScope.context.role) !== -1);
   };
-  
-  authService.hasMininumRole = function (minimalRole) {
-    var rolesHierarchy = ['guest','executor','developer','admin']
-    return rolesHierarchy.slice(rolesHierarchy.indexOf(minimalRole)).indexOf($rootScope.context.role) !== -1;
-  };  
  
   authService.hasRight = function (right) {
     return rightMatrix[$rootScope.context.role].indexOf(right) !== -1;

@@ -66,18 +66,21 @@ public class ControllerServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/task")
+	@Secured(right="task-write")
 	public void execute(ExecutiontTaskParameters schedule) {
 		getScheduler().addExecutionTask(schedule);
 	}
 	
 	@PUT
 	@Path("/task/{id}")
+	@Secured(right="task-write")
 	public void enableExecutionTask(@PathParam("id") String executionTaskID) {
 		getScheduler().enableExecutionTask(executionTaskID);
 	}
 	
 	@DELETE
 	@Path("/task/{id}")
+	@Secured(right="task-delete")
 	public void removeExecutionTask(@PathParam("id") String executionTaskID, @QueryParam("remove") Boolean remove) {
 		if(remove!=null && remove) {
 			getScheduler().removeExecutionTask(executionTaskID);
@@ -89,14 +92,15 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/task/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="task-read")
 	public ExecutiontTaskParameters getExecutionTask(@PathParam("id") String executionTaskID) {
 		return getScheduler().get(executionTaskID);
 	}
 	
-	@Secured
 	@GET
 	@Path("/task")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="task-read")
 	public List<ExecutiontTaskParameters> getScheduledExecutions() {
 		List<ExecutiontTaskParameters> result = new ArrayList<ExecutiontTaskParameters>();
 		Iterator<ExecutiontTaskParameters> it = getScheduler().getActiveAndInactiveExecutionTasks();

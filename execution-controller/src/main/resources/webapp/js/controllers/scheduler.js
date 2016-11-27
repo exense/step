@@ -22,8 +22,6 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
   function($scope, $http,$stateStorage, $modal) {
     $stateStorage.push($scope, 'scheduler', {});
     
-	console.log('Entering SchedulerCtrl');
-	
 	$scope.datatable = {}
 
 	var actionColRender = function ( data, type, row ) {
@@ -51,7 +49,9 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	                   {"title" : "Actions", "render" : actionColRender},
 	                   {"title" : "Status", "render" : statusColRender}];
 	
-
+	$scope.tabledef.actions = [{"label":"Enable","action":function() {$scope.enableSelected()}},
+                             {"label":"Disable","action":function() {$scope.deleteSelected(false)}},
+                             {"label":"Remove","action":function() {$scope.deleteSelected(true)}}];
 	
 	$scope.loadTable = function loadTable() {	
 		$http.get("rest/controller/task").success(function(data) {

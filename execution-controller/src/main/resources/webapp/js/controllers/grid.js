@@ -24,7 +24,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
       
       $scope.autorefresh = true;
       
-      $scope.tabState = {adapters:false, tokens:false, quotamanager:false};
+      $scope.tabState = {agents:false, adapters:true, tokens:false, quotamanager:false};
       if($scope.$state == null) { $scope.$state = 'adapters' };
       
       $scope.$watch('$state',function() {

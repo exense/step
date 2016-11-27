@@ -109,12 +109,25 @@ public class AccessServices extends AbstractServices {
 		return roleHierarchy;
 	}
 	
+	static Session ANONYMOUS_SESSION = new Session();
+	{
+		ANONYMOUS_SESSION.setUsername("admin");
+		Profile profile = new Profile();
+		profile.setRole("admin");
+		ANONYMOUS_SESSION.setProfile(profile);
+	}
+	
 	@GET
 	@Secured
 	@Path("/session")
 	public Session getSession(@Context ContainerRequestContext crc) {
-		Session session = (Session) crc.getProperty("session");
-		return session;
+		boolean useAuthentication = Configuration.getInstance().getPropertyAsBoolean("authentication", true);
+		if(useAuthentication) {
+			Session session = (Session) crc.getProperty("session");
+			return session;			
+		} else {
+			return ANONYMOUS_SESSION;
+		}
 	}
 
 	private Profile getProfile(String username) {
