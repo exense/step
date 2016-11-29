@@ -57,7 +57,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   $scope.authService = AuthService;
   
   if(!$location.path()) {
-    $location.path('/root/functions')    
+    $location.path('/root/artefacts')    
   }
   
 })
