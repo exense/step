@@ -59,7 +59,7 @@ angular.module('functionsControllers',['dataTable','step'])
     	openModal();
       }
       
-      $scope.executeFunction = function(id) {
+      $scope.executeFunction = function(id, executeLocally) {
   	  var modalInstance = $modal.open({
             animation: $scope.animationsEnabled,
             templateUrl: 'executeFunctionModalContent.html',
@@ -67,18 +67,14 @@ angular.module('functionsControllers',['dataTable','step'])
             resolve: {
               functionId: function () {
                 return id;
+              },
+              executeLocally: function () {
+                return executeLocally;
               }
             }
           });
 
-          modalInstance.result.then(function (argument) {
-              $http.post("rest/functions/"+id+"/execute",argument).success(function() {
-              		if($scope.table) {
-              			$scope.table.Datatable.ajax.reload(null, false);
-          			}
-              });
-
-          }, function () {});
+          modalInstance.result.then(function (argument) {}, function () {});
       }
       
       $scope.deleteFunction = function(id) {
@@ -125,6 +121,7 @@ angular.module('functionsControllers',['dataTable','step'])
             col.width="160px";
             col.render = function ( data, type, row ) {
               var function_ = JSON.parse(row[row.length-1]);
+              var isComposite = data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1;
             	var html = '<div class="input-group"><div class="btn-group">';
             	
             	if(AuthService.hasRight('kw-write')) {
@@ -132,7 +129,7 @@ angular.module('functionsControllers',['dataTable','step'])
   	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>'+
               	  '</button> ';
               	
-              	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
+              	if(isComposite) {
               	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFlow(\''+function_.handlerProperties['artefactid']+'\')">' +
                   '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>'+
                   '</button> ';
@@ -140,7 +137,7 @@ angular.module('functionsControllers',['dataTable','step'])
             	}
             	
             	if(AuthService.hasRight('kw-execute')) {
-              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
+              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\','+isComposite+')">' +
   	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
   	            	'</button> ';
             	}
@@ -220,17 +217,35 @@ angular.module('functionsControllers',['dataTable','step'])
   };
 })
 
-.controller('executeFunctionModalCtrl', function ($scope, $modalInstance, $http, functionId) {
+.controller('executeFunctionModalCtrl', function ($scope, $modalInstance, $http, functionId, executeLocally) {
 
   $scope.argument = '';
+	$scope.running = false;
+  
+	$scope.properties = [];
+	
+	$scope.addProperty = function() {
+	  $scope.properties.push({key:"",value:""})
+	}
 	
   $scope.ok = function () {
-	$http.post("rest/functions/"+functionId+"/execute",$scope.argument).success(function(data) {
+    $scope.running=true;
+    var properties = {};
+    _.each($scope.properties,function(prop){properties[prop.key]=prop.value});
+    $http.post("rest/functions/"+functionId+"/execute",{'executeLocally':executeLocally, 'properties':properties,'argument':$scope.argument}).success(function(data) {
 		$scope.output = data;
+		$scope.running=false;
 		if(data) {
-		  $scope.result = JSON.stringify(data.result)
-		  $scope.error = data.error
+		  var output = data.output;
+		  if(output.result) {
+		    $scope.result = JSON.stringify(output.result)		    
+		  }
+		  $scope.attachments=data.attachments;
+		  $scope.error = output.error
 		}
+	}).error(function(error) {
+	  $scope.running=false;
+	  $scope.error=error;
 	});
   };
 

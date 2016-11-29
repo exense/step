@@ -45,6 +45,10 @@ public class FunctionClient {
 		return new FunctionTokenHandle(gridClient.getToken(attributes, interest));
 	}
 	
+	public FunctionTokenHandle getFunctionToken() {
+		return new FunctionTokenHandle(gridClient.getToken());
+	}
+	
 	public class FunctionTokenHandle {
 		
 		TokenHandle tokenHandle;
