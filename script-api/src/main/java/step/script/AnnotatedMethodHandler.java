@@ -57,7 +57,9 @@ public class AnnotatedMethodHandler implements MessageHandler {
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {		
 		Set<Method> jobSubTypes = reflections.getMethodsAnnotatedWith(Function.class);
 		for(Method m:jobSubTypes) {
-			if(m.getAnnotation(Function.class).name().equals(message.getFunction())) {
+			String annotatedFunctionName = m.getAnnotation(Function.class).name();
+			if(((annotatedFunctionName==null || annotatedFunctionName.length()==0)&&m.getName().equals(message.getFunction()))||
+					m.getAnnotation(Function.class).name().equals(message.getFunction())) {
 				return invokeMethod(m, token, message);
 			}
 		}
