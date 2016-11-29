@@ -28,6 +28,7 @@ import org.jongo.MongoCollection;
 
 import step.artefacts.CallFunction;
 import step.artefacts.Check;
+import step.artefacts.Return;
 import step.artefacts.Set;
 import step.artefacts.TestCase;
 import step.core.GlobalContext;
@@ -53,6 +54,8 @@ public class InitializationPlugin extends AbstractPlugin {
 			// First start
 			setupUsers(context);
 			setupDemo(context);
+			setupBasicFunctions(context);
+			setupSleepFunction(context);
 		}
 		
 		insertLogEntry(controllerLogs);
@@ -73,6 +76,45 @@ public class InitializationPlugin extends AbstractPlugin {
 		logEntry.setStart(new Date());
 		controllerLogs.insert(logEntry);
 	}
+	
+	private void setupBasicFunctions(GlobalContext context) {
+		ArtefactAccessor artefacts = context.getArtefactAccessor();
+		
+		Return r = new Return();
+		r.setRoot(false);
+		r.setValue("[[args]]");
+		artefacts.save(r);
+		
+		Function echoFunction = createFunction("Echo", "class:step.core.tokenhandlers.ArtefactMessageHandler");
+		
+		Map<String, String> handlerProperties = new HashMap<>();
+		handlerProperties.put("artefactid", r.getId().toString());
+		echoFunction.setHandlerProperties(handlerProperties);
+		
+		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
+		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
+		functionRepository.addFunction(echoFunction);
+	}
+	
+	private void setupSleepFunction(GlobalContext context) {
+		ArtefactAccessor artefacts = context.getArtefactAccessor();
+		
+		Check c = new Check();
+		c.setExpression("java.lang.Thread.sleep(args.getInt(\"ms\"));return true;");
+		c.setRoot(false);
+		artefacts.save(c);
+				
+		Function sleepFunction = createFunction("Sleep", "class:step.core.tokenhandlers.ArtefactMessageHandler");
+		
+		Map<String, String> handlerProperties = new HashMap<>();
+		handlerProperties.put("artefactid", c.getId().toString());
+		sleepFunction.setHandlerProperties(handlerProperties);
+		
+		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
+		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
+		functionRepository.addFunction(sleepFunction);
+	}
+
 
 	private void setupDemo(GlobalContext context) {
 		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
@@ -138,16 +180,26 @@ public class InitializationPlugin extends AbstractPlugin {
 		}
 		return scriptPath;
 	}
-
+	
 	private void addFunction(FunctionRepositoryImpl functionRepository, String name) {
+		addFunction(functionRepository, name, "class:step.handlers.scripthandler.ScriptHandler");
+	}
+
+	
+	private void addFunction(FunctionRepositoryImpl functionRepository, String name, String handlerChain) {
+		Function demoFunction = createFunction(name, handlerChain);
+		functionRepository.addFunction(demoFunction);
+	}
+
+	private Function createFunction(String name, String handlerChain) {
 		Function demoFunction = new Function();
 		
 		Map<String, String> kwAttributes = new HashMap<>();
 		kwAttributes.put("name", name);
 		
 		demoFunction.setAttributes(kwAttributes);
-		demoFunction.setHandlerChain("class:step.handlers.scripthandler.ScriptHandler");
-		functionRepository.addFunction(demoFunction);
+		demoFunction.setHandlerChain(handlerChain);
+		return demoFunction;
 	}
 
 	
