@@ -168,14 +168,14 @@ angular.module('functionsControllers',['dataTable','step'])
   
   $scope.type = function(value) {
   	if(value) {
-  	  $scope.function_.handlerChain = (value=="Composite")?"class:step.core.tokenhandlers.ArtefactMessageHandler":"";
+  	  $scope.function_.handlerChain = (value=="Composite")?"class:step.core.tokenhandlers.ArtefactMessageHandler":"class:step.handlers.scripthandler.ScriptHandler";
   	}
   	return  ($scope.function_.handlerChain&&$scope.function_.handlerChain.indexOf("ArtefactMessageHandler")!=-1)?"Composite":"Handler";
   }
   
   if(newFunction) {
   	$scope.function_= {"attributes":{}};
-  	$scope.type('Composite');
+  	$scope.type('Handler');
   	$http.get("rest/screens/functionTable").success(function(data){
   	  _.each(data,function(input) {
   	    eval('$scope.function_.'+input.id+"=''");
