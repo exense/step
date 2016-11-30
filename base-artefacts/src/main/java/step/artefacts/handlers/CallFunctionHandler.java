@@ -100,7 +100,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			node.setFunctionId(function.getId().toString());
 			
 			if(output.getError()!=null) {
-				node.setError(output.getError());
+				String errorMessage = output.getError();
+				if(output.getAttachments()!=null&&output.getAttachments().size()>0) {
+					errorMessage+=". Check the attachments for more details.";
+				}
+				node.setError(errorMessage);
 				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 			} else {
 				node.setStatus(ReportNodeStatus.PASSED);

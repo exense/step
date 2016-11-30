@@ -146,7 +146,11 @@ public class AgentServices {
 	
 
 	protected OutputMessage handleUnexpectedError(Exception e) {
-		OutputMessage output = newErrorOutput("Unexpected error while processing message.");
+		String message = "Error while processing message";
+		if(e.getMessage()!=null) {
+			message += ": "+e.getMessage(); 
+		}
+		OutputMessage output = newErrorOutput(message);
 		output.addAttachment(generateAttachmentForException(e));
 		return output;
 	}

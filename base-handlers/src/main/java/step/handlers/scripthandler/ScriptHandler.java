@@ -136,20 +136,24 @@ public class ScriptHandler implements MessageHandler {
 
 	private File searchScriptFile(InputMessage message, String scriptDirectory) {
 		File directory = new File(scriptDirectory);
-        File[] files = directory.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File file) {
-				return file.getName().startsWith(message.getFunction());
-			}
-        });
-        if(files.length==0) {
-        	throw new RuntimeException("No script found for function '"+message.getFunction()+"'");
-        } else if(files.length>1) {
-        	throw new RuntimeException("More than one script found for function '"+message.getFunction()+"'");
-        }
-        
-        File scriptFile = files[0];
-		return scriptFile;
+		if(!directory.exists()||!directory.isDirectory()) {
+			throw new RuntimeException("Invalid script directory '"+scriptDirectory+"' set by property '"+SCRIPT_DIR+"'");
+		} else {
+	        File[] files = directory.listFiles(new FileFilter() {
+				@Override
+				public boolean accept(File file) {
+					return file.getName().startsWith(message.getFunction());
+				}
+	        });
+	        if(files.length==0) {
+	        	throw new RuntimeException("No script found for function '"+message.getFunction()+"'");
+	        } else if(files.length>1) {
+	        	throw new RuntimeException("More than one script found for function '"+message.getFunction()+"'");
+	        }
+	        
+	        File scriptFile = files[0];
+			return scriptFile;
+		}
 	}
 
 	private Map<String, String> buildPropertyMap(AgentTokenWrapper token, InputMessage message) {
