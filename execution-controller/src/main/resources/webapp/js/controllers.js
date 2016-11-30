@@ -308,14 +308,17 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       }
       
       var operationRenderer = {
-          'Adapter Call' : {
+          'Keyword Call' : {
             renderer: function (details) {
               var html = "";
-              if(details[1]) {
-                html += details[1].name;
+              if(details[0]) {
+                html += details[0].name;
               } 
-              if(details[0].token) {
-                html += '<div><small>' + details[0].token.url + '</small></div>';
+              if(details[1]) {
+                html += '<div><small>' + details[1].id + '</small></div>';
+              }
+              if(details[2]) {
+                html += '<div><small>' + details[2].agentUrl + '</small></div>';
               }
               // html += '<div>Input: <small><em>' + addWordBreakingPoints(escapeHtml(reportNode.input)) + '</em></small></div>';
               return html},
@@ -330,15 +333,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                 } 
                 return html},
               icon: '' },
-          'Capacity acquisition' : {
-              renderer: function (details) {
-                var html = "";
-                if(details) {
-                  if(details.description)
-                    html += '<div><small>' + details.description + '</small></div>';
-                } 
-                return html},
-              icon: '' },
           'Sleep' : {
                 renderer: function (details) {
                   var html = details + "ms";
@@ -347,32 +341,27 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           'Token selection' : {
             renderer: function (details) {
               var html = "";
-              if(details.interests && Object.keys(details.interests).length) {
-                html += '<small><label>Criteria: </label>';
-                _.mapObject(details.interests,function(value, key) {
+              if(details && Object.keys(details).length) {
+                html += '<div><small><label>Criteria: </label>';
+                _.mapObject(details,function(value, key) {
                   html += key + '=' + value.selectionPattern + ","
                 })
-                html += '</small>'
-              }
-              if(details.attributes && Object.keys(details.attributes).length) {
-                html += '<small><label>Attributes: </label>';
-                _.mapObject(details.attributes,function(value, key) {
-                  html += key + '=' + value + ","
-                })
-                html += '</small>'
+                html += '</small></div>'
               }
               return html},
             icon: '' },
           };
       
       $scope.currentOperationsTable = {};
-      $scope.currentOperationsTable.columns = [ { "title" : "Operation"}, 
-                                                {"title" : "Details", "render": function ( data, type, row ) {
+      $scope.currentOperationsTable.columns = [ 
+                                                {"title" : "Operation", "render": function ( data, type, row ) {
         var renderer = operationRenderer[data.name];
         if(!renderer) {
           renderer = reportNodeRenderer['default'];
         }
-        return renderer.renderer(data.details);
+        var html = data.name;
+        html+=renderer.renderer(data.details);
+        return html;
         }}];
       
       $scope.getIncludedTestcases = function() {
@@ -455,7 +444,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
               var dataSet = [];
               for (i = 0; i < data.length; i++) {
                 if(data[i]) {
-                  dataSet.push([ data[i].name, data[i]]);
+                  dataSet.push([data[i]]);
                 }
               }
               $scope.currentOperationsTable.data = dataSet;

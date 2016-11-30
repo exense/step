@@ -81,7 +81,7 @@ public class GridReportBuilder {
 			return aToken.getID();
 		}
 		if(key.equals(URL_KEY)) {
-			AgentRef ref = grid.getAgentRef(aToken.getToken().getAgentid());
+			AgentRef ref = aToken.getAgent();
 			return ref!=null?ref.getAgentUrl():"-";
 		}
 		if(aToken.getAttributes()!=null) {

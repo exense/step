@@ -110,7 +110,7 @@ public class Grid {
 		AgentRef agentRef = message.getAgentRef();
 		agentRefs.putOrTouch(agentRef.getAgentId(), agentRef);
 		for (step.grid.Token token : message.getTokens()) {
-			tokenPool.offerToken(new TokenWrapper(token));			
+			tokenPool.offerToken(new TokenWrapper(token, agentRef));			
 		}	
 	}
 	
@@ -129,13 +129,5 @@ public class Grid {
 	
 	public Collection<AgentRef> getAgents() {
 		return agentRefs.values();
-	}
-
-	public AgentRef getAgentRef(String agentId) {
-		if(agentId.equals(LOCAL_AGENT)) {
-			return new AgentRef(LOCAL_AGENT, "localhost");
-		} else {
-			return agentRefs.get(agentId);
-		}
 	}
 }

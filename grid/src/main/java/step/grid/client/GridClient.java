@@ -77,7 +77,7 @@ public class GridClient implements Closeable {
 	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties, int callTimeout) throws Exception {
 		Token token = tokenWrapper.getToken();
 		
-		AgentRef agent = adapterGrid.getAgentRef(token.getAgentid());
+		AgentRef agent = tokenWrapper.getAgent();
 		
 		InputMessage message = new InputMessage();
 		message.setArgument(argument);
@@ -111,7 +111,7 @@ public class GridClient implements Closeable {
 		localToken.setAgentid(Grid.LOCAL_AGENT);		
 		localToken.setAttributes(new HashMap<String, String>());
 		localToken.setSelectionPatterns(new HashMap<String, Interest>());
-		TokenWrapper tokenWrapper = new TokenWrapper(localToken);
+		TokenWrapper tokenWrapper = new TokenWrapper(localToken, new AgentRef(Grid.LOCAL_AGENT, "localhost"));
 		return new TokenHandle(tokenWrapper);
 	}
 	

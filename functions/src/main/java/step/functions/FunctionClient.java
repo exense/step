@@ -20,6 +20,8 @@ package step.functions;
 
 import java.util.Map;
 
+import step.grid.AgentRef;
+import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
 import step.grid.client.GridClient.TokenHandle;
 import step.grid.io.OutputMessage;
@@ -80,6 +82,14 @@ public class FunctionClient {
 		@Override
 		public String toString() {
 			return tokenHandle.getToken().getID();
+		}
+
+		public AgentRef getAgentRef() {
+			return tokenHandle.getToken().getAgent();
+		}
+		
+		public TokenWrapper getToken() {
+			return tokenHandle.getToken();
 		}
 		
 		

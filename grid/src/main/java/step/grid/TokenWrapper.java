@@ -27,11 +27,14 @@ public class TokenWrapper implements Identity {
 	
 	private final Token token;
 	
+	private final AgentRef agent;
+	
 	private Object currentOwner;
 	
-	public TokenWrapper(Token token) {
+	public TokenWrapper(Token token, AgentRef agent) {
 		super();
-		this.token = token;		
+		this.token = token;	
+		this.agent = agent;
 	}
 
 	@Override
@@ -51,6 +54,10 @@ public class TokenWrapper implements Identity {
 
 	public Token getToken() {
 		return token;
+	}
+
+	public AgentRef getAgent() {
+		return agent;
 	}
 
 	public Object getCurrentOwner() {

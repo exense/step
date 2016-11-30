@@ -62,14 +62,14 @@ public class GridServices extends AbstractServices {
 	@Path("/agent/{id}/interrupt")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void interruptAgent(@PathParam("id") String agentId) {
-		getAdapterGrid().getAgentRef(agentId);
+		
 	}
 	
 	@PUT
 	@Path("/agent/{id}/resume")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void resumeAgent(@PathParam("id") String agentId) {
-		getAdapterGrid().getAgentRef(agentId);
+		
 	}
 
 	@GET

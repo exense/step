@@ -32,6 +32,7 @@ import step.artefacts.CallFunction;
 import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -69,7 +70,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		node.setInput(argumentStr);
 		
 		Input input = buildInput(argumentStr);
-		
+				
 		boolean releaseTokenAfterExecution = true;
 		FunctionTokenHandle token;
 		Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
@@ -86,7 +87,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			
 			Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
 			
-			Output output = token.call(attributes, input);
+			OperationManager.getInstance().enter("Keyword Call", new Object[]{attributes, token.getToken().getToken(), token.getAgentRef()});
+			Output output;
+			try {
+				output = token.call(attributes, input);
+			} finally {
+				OperationManager.getInstance().exit();
+			}
 			
 			Function function = output.getFunction();
 			node.setName(function.getAttributes().get("name"));
@@ -154,7 +161,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				Map<String, Interest> selectionCriteria = new HashMap<>();
 				selectionCriteriaJson.keySet().stream().filter(e->!e.equals("route"))
 					.forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
-				tokenHandle = functionClient.getFunctionToken(null, selectionCriteria);				
+				
+				OperationManager.getInstance().enter("Token selection", selectionCriteria);
+				try {
+					tokenHandle = functionClient.getFunctionToken(null, selectionCriteria);
+				} finally {
+					OperationManager.getInstance().exit();					
+				}
 			}
 		} else {
 			throw new RuntimeException("Token field hasn't been specified");
