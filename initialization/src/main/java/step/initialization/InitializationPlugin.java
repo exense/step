@@ -123,10 +123,15 @@ public class InitializationPlugin extends AbstractPlugin {
 		addFunction(functionRepository, "Demo_Echo");
 		addFunction(functionRepository, "Demo_HTTPGet");
 		
+		addFunction(functionRepository, "Selenium_StartChrome");
+		addFunction(functionRepository, "Selenium_StartFirefox");
+		addFunction(functionRepository, "Selenium_Navigate");
+		
 		ArtefactAccessor artefacts = context.getArtefactAccessor();
 		
 		createDemoPlan(artefacts,"Demo_TestCase_Echo","Demo_Echo","{\"arg1\":\"val1\"}","output.getString(\"output1\")==\"val1\"");
 		createDemoPlan(artefacts,"Demo_TestCase_HTTPGet","Demo_HTTPGet","{\"url\":\"http://denkbar.io\"}","output.getInt(\"statusCode\")==200");
+		createSeleniumDemoPlan(artefacts);
 	}
 
 	private void createDemoPlan(ArtefactAccessor artefacts, String planName, String functionName, String args, String check) {
@@ -164,12 +169,74 @@ public class InitializationPlugin extends AbstractPlugin {
 		testCase.setRoot(true);
 		artefacts.save(testCase);
 	}
+	
+	private void createSeleniumDemoPlan(ArtefactAccessor artefacts) {
+		Map<String, String> tcAttributes = new HashMap<>();
+		TestCase testCase = new TestCase();
+		testCase.setRoot(true);
+		
+		tcAttributes.put("name", "Demo_Selenium");
+		testCase.setAttributes(tcAttributes);
+		
+		Set set1 = new Set();
+		set1.setKey("scripthandler.script.dir");
+		String scriptPath = getDemoScriptPath();
+		set1.setExpression("'"+scriptPath+"'");
+		artefacts.save(set1);
+		
+		Set set2 = new Set();
+		set2.setKey("webdriver.gecko.driver");
+		String binPath = getBinPath();
+		if (System.getProperty("os.name").startsWith("Windows")) {
+			set2.setExpression("'"+binPath+"/geckodriver/geckodriver.exe'");
+		} else {
+			set2.setExpression("'"+binPath+"/geckodriver/geckodriver'");
+		}
+		artefacts.save(set2);
+		
+		CallFunction call1 = new CallFunction();
+		call1.setFunction("{\"name\":\"Selenium_StartFirefox\"}");
+		call1.setArgument("{}");
+		call1.setToken("{\"route\":\"remote\"}");
+		artefacts.save(call1);
+		
+		CallFunction call2 = new CallFunction();
+		call2.setFunction("{\"name\":\"Selenium_Navigate\"}");
+		call2.setArgument("{\"url\":\"http://denkbar.io\"}");
+		call2.setToken("{\"route\":\"remote\"}");
+		artefacts.save(call2);
+		
+		
+		testCase.addChild(set1.getId());
+		testCase.addChild(set2.getId());
+		testCase.addChild(call1.getId());
+		testCase.addChild(call2.getId());
+		
+		testCase.setRoot(true);
+		artefacts.save(testCase);
+	}
 
 	private String getDemoScriptPath() {
 		String scriptPath = "/path/to/your/scripts";
 		String currentDir = System.getProperty("user.dir");
 		if(currentDir!=null) {
 			File demoScripts = new File(currentDir+"/../data/scripts");
+			if(demoScripts.exists()) {
+				try {
+					scriptPath = demoScripts.getCanonicalPath().replace("\\", "/");
+				} catch (IOException e) {
+					
+				}
+			}
+		}
+		return scriptPath;
+	}
+	
+	private String getBinPath() {
+		String scriptPath = "/path/to/the/bin/folder/of/the/controller";
+		String currentDir = System.getProperty("user.dir");
+		if(currentDir!=null) {
+			File demoScripts = new File(currentDir);
 			if(demoScripts.exists()) {
 				try {
 					scriptPath = demoScripts.getCanonicalPath().replace("\\", "/");
