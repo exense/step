@@ -25,6 +25,7 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
+import step.core.variables.ImmutableVariableException;
 import step.core.variables.UndefinedVariableException;
 import step.core.variables.VariablesManager;
 import step.expressions.ExpressionHandler;
@@ -52,7 +53,7 @@ public class SetHandler extends ArtefactHandler<Set, ReportNode> {
 			VariablesManager varMan = context.getVariablesManager();
 			try {
 				varMan.updateVariable(testArtefact.getKey(), result);
-			} catch(UndefinedVariableException e) {
+			} catch(UndefinedVariableException|ImmutableVariableException e) {
 				ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
 				varMan.putVariable(parentNode, testArtefact.getKey(), result);
 			}
