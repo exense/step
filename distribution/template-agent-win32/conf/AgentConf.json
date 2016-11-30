@@ -1,0 +1,11 @@
+{
+"gridHost":"http://localhost:8081",
+"agentPort":12131,
+"tokenGroups":[
+{"capacity":10, 
+"tokenConf":{
+	"attributes":{},
+	"properties":{"phantomjs.binary.path":"path_to_phantomjs_binary"}}
+}
+]
+}

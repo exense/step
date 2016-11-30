@@ -40,6 +40,20 @@
 				<version>2.6</version>
 				<executions>
 					<execution>
+						<id>distro-assembly-agent-win32</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<finalName>step-agent-win32-${project.version}</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+							<descriptors>
+								<descriptor>src/assembly/bin-agent-win32.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+					<execution>
 						<id>distro-assembly-agent</id>
 						<phase>package</phase>
 						<goals>
