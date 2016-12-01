@@ -473,9 +473,17 @@ public class ControllerServices extends AbstractServices {
 			@QueryParam("to") String targetParentId, @QueryParam("pos") int newPosition) {
 		ArtefactAccessor a = getContext().getArtefactAccessor();
 		ObjectId cloneId = copyRecursive(a, new ObjectId(id));
-		AbstractArtefact target = a.get(targetParentId);
-		target.addChild(cloneId);
-		a.save(target);
+		
+		if(targetParentId!=null) {
+			AbstractArtefact target = a.get(targetParentId);
+			target.addChild(cloneId);
+			a.save(target);
+		} else {
+			AbstractArtefact target = a.get(cloneId);
+			String name = target.getAttributes().get("name");
+			target.getAttributes().put("name", name+"_Copy");
+			a.save(target);
+		}
 	}
 	
 	private ObjectId copyRecursive(ArtefactAccessor a, ObjectId id) {

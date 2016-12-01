@@ -272,5 +272,28 @@ angular.module('step',['ngStorage'])
     });
   };
 })
-;
 
+.factory('Dialogs', function ($http, $rootScope, $modal) {
+  var dialogs = {};
+  
+  dialogs.showDeleteWarning = function() {
+    var modalInstance = $modal.open({animation: false, templateUrl: 'partials/confirmationDialog.html',
+      controller: 'DialogCtrl', 
+      resolve: {message:function(){return 'Are you sure you want to delete this item?'}}});
+    return modalInstance.result;
+  }
+  
+  return dialogs;
+})
+
+.controller('DialogCtrl', function ($scope, $modalInstance, message) {
+  $scope.message = message;
+  
+  $scope.ok = function() {
+    $modalInstance.close(); 
+  }
+  
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };  
+})

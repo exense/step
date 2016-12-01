@@ -18,8 +18,8 @@
  *******************************************************************************/
 angular.module('functionsControllers',['dataTable','step'])
 
-.controller('FunctionListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal', '$location','AuthService',
-    function($scope, $compile, $http, $stateStorage, $interval, $modal, $location, AuthService) {
+.controller('FunctionListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal', 'Dialogs', '$location','AuthService',
+    function($scope, $compile, $http, $stateStorage, $interval, $modal, Dialogs, $location, AuthService) {
       $stateStorage.push($scope, 'functions', {});	
 
       $scope.authService = AuthService;
@@ -78,11 +78,13 @@ angular.module('functionsControllers',['dataTable','step'])
       }
       
       $scope.deleteFunction = function(id) {
-    	  $http.delete("rest/functions/"+id).success(function() {
-      		if($scope.table) {
-      			$scope.table.Datatable.ajax.reload(null, false);
-  			}
-      });
+        Dialogs.showDeleteWarning().then(function() {
+          $http.delete("rest/functions/"+id).success(function() {
+            if($scope.table) {
+              $scope.table.Datatable.ajax.reload(null, false);
+          }
+          });
+        })
       }
       
       $scope.table = {};
