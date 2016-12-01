@@ -1,9 +1,9 @@
 package step.core.access;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,12 +11,12 @@ import java.util.Map;
 
 public class AccessMatrixReader {
 	
-	public Map<String, List<String>> readAccessMatrix(File file) throws IOException {		
+	public Map<String, List<String>> readAccessMatrix(InputStream reader) throws IOException {		
 		Map<String, List<String>> result = new HashMap<>();
 
         String cvsSplitBy = ",";
 
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(reader))) {
         	Map<Integer, String> indexToRole = new HashMap<>();
         	String headerLine = br.readLine();
         	String[] roles = headerLine.split(cvsSplitBy);

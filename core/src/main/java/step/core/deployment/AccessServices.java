@@ -1,6 +1,5 @@
 package step.core.deployment;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -58,7 +57,7 @@ public class AccessServices extends AbstractServices {
 		initAuthenticator();
 		
 		AccessMatrixReader matrixReader = new AccessMatrixReader();
-		roleHierarchy = matrixReader.readAccessMatrix(new File(AccessServices.class.getClassLoader().getResource("DefaultAccessMatrix.csv").getFile()));
+		roleHierarchy = matrixReader.readAccessMatrix(AccessServices.class.getClassLoader().getResourceAsStream("DefaultAccessMatrix.csv"));
 
 		sessionExpirationTimer = new Timer("Session expiration timer");
 		sessionExpirationTimer.schedule(new TimerTask() {
