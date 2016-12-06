@@ -317,6 +317,18 @@ public class ControllerServices extends AbstractServices {
 	}
 	
 	@POST
+	@Path("/artefact/{id}/attributes")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
+	public AbstractArtefact saveArtefactAttributes(Map<String, String> attributes, @PathParam("id") String id) {
+		ArtefactAccessor accessor = getContext().getArtefactAccessor();
+		AbstractArtefact artefact = accessor.get(id);
+		artefact.setAttributes(attributes);
+		return accessor.save(artefact);
+	}
+	
+	@POST
 	@Path("/artefact")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)

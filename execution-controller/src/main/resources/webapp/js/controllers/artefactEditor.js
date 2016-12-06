@@ -41,8 +41,8 @@ angular.module('artefactEditor',['dataTable','step'])
     	  $scope.artefact = data;
       })
       
-      $scope.save = function() {
-    	  $http.post("rest/controller/artefact", $scope.artefact);
+      $scope.saveAttributes = function() {
+    	  $http.post("rest/controller/artefact/"+$scope.artefact.id+"/attributes", $scope.artefact.attributes);
       }
       
       $http.get("rest/controller/artefact/types").success(function(data){ 
