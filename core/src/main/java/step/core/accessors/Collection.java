@@ -25,7 +25,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import com.mongodb.MongoClient;
-import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -58,11 +57,7 @@ public class Collection {
 	}
 	
 	public List<String> distinct(String key) {
-		DistinctIterable<String> it = collection.distinct(key,String.class);
-		List<String> list = new ArrayList<>();
-		it.iterator().forEachRemaining(list::add);
-		return list;
-		
+		return collection.distinct(key, String.class).filter(new Document(key,new Document("$ne",null))).into(new ArrayList<String>());
 	}
 
 	public CollectionFind<Document> find(Bson query, SearchOrder order, Integer skip, Integer limit) {
