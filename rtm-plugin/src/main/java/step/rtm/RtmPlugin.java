@@ -76,18 +76,20 @@ public class RtmPlugin extends AbstractPlugin {
 					measurement.setTextAttribute("rnstatus", stepReport.getStatus().toString());
 					measurements.add(measurement);
 
-					for(Map.Entry<String,String> entry : measure.getData().entrySet()){
-						String key = entry.getKey();
-						String val = entry.getValue();
-						if((key != null) && (val != null)){
-							if(	StringUtils.isNumeric(val)){
-								try{
-									measurement.setNumericalAttribute(key, Long.parseLong(val));
-								}catch (NumberFormatException e){
-									measurement.setTextAttribute(key, "unparsable_numeric_" + val);
+					if(measure.getData() != null){
+						for(Map.Entry<String,String> entry : measure.getData().entrySet()){
+							String key = entry.getKey();
+							String val = entry.getValue();
+							if((key != null) && (val != null)){
+								if(	StringUtils.isNumeric(val)){
+									try{
+										measurement.setNumericalAttribute(key, Long.parseLong(val));
+									}catch (NumberFormatException e){
+										measurement.setTextAttribute(key, "unparsable_numeric_" + val);
+									}
+								}else{
+									measurement.setTextAttribute(key, val);
 								}
-							}else{
-								measurement.setTextAttribute(key, val);
 							}
 						}
 					}
