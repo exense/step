@@ -46,10 +46,10 @@
 							<goal>single</goal>
 						</goals>
 						<configuration>
-							<finalName>step-agent-win32-${project.version}</finalName>
+							<finalName>step-agent-windows-${project.version}</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 							<descriptors>
-								<descriptor>src/assembly/bin-agent-win32.xml</descriptor>
+								<descriptor>src/assembly/bin-agent-windows.xml</descriptor>
 							</descriptors>
 						</configuration>
 					</execution>
