@@ -198,7 +198,7 @@ angular.module('step',['ngStorage'])
 
 .factory('AuthService', function ($http, $rootScope) {
   var authService = {};
-  var rightMatrix;
+  var serviceContext = {};
 
   function setContext(session) {
     $rootScope.context = {'userID':session.username, 'role':session.profile.role};
@@ -207,7 +207,7 @@ angular.module('step',['ngStorage'])
   authService.init = function() {
     return $http.get('rest/access/matrix')
       .then(function(res) {
-        rightMatrix = res.data;
+        serviceContext.rightMatrix = res.data;
       })
   }
   
@@ -240,11 +240,11 @@ angular.module('step',['ngStorage'])
   };
  
   authService.hasRight = function (right) {
-    return rightMatrix[$rootScope.context.role].indexOf(right) !== -1;
+    return serviceContext.rightMatrix[$rootScope.context.role].indexOf(right) !== -1;
   }; 
   
   authService.getRoles = function() {
-    return rightMatrix;
+    return serviceContext.rightMatrix;
   }
   
   return authService;
