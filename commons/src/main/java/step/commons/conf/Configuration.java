@@ -114,6 +114,15 @@ public class Configuration {
 		}
 	}
 	
+	public Long getPropertyAsLong(String name, Long defaultValue) {
+		String prop = properties.getProperty(name);
+		if(prop!=null) {
+			return Long.parseLong(prop);
+		} else {
+			return defaultValue;
+		}
+	}
+	
 	public boolean getPropertyAsBoolean(String name) {
 		return getPropertyAsBoolean(name, false);
 	}
