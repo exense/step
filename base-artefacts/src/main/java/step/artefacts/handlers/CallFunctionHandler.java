@@ -36,6 +36,7 @@ import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
 import step.functions.Function;
@@ -205,7 +206,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
-
+		properties.put("parentreportid", ExecutionContext.getCurrentReportNode().getId().toString());
+		
 		Input input = new Input();
 		input.setArgument(argument);
 		input.setProperties(properties);

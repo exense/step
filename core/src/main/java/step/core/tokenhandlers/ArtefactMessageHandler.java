@@ -41,16 +41,18 @@ public class ArtefactMessageHandler implements MessageHandler {
 		GlobalContext globalContext = executionContext.getGlobalContext();
 		
 		String artefactId = message.getProperties().get("artefactid");
-		String parentReportId = null; // TODO message.getProperties().get("parentreportid");;
+		String parentReportId = message.getProperties().get("parentreportid");
 		
 		ReportNode parentNode;
-		if(parentReportId == null) {
-			parentNode = new ReportNode();
-			globalContext.getReportAccessor().save(parentNode);
-		} else {
-			parentNode = globalContext.getReportAccessor().get(new ObjectId(parentReportId));
+		parentNode = new ReportNode();
+		if(parentReportId!=null) {
+			parentNode.setParentID(new ObjectId(parentReportId));
 		}
+		parentNode.setExecutionID(executionContext.getExecutionId());
 		
+		globalContext.getReportAccessor().save(parentNode);
+
+		ReportNode previousCurrentNode = ExecutionContext.getCurrentReportNode();
 		ExecutionContext.setCurrentReportNode(parentNode);
 		executionContext.getReportNodeCache().put(parentNode);
 		
@@ -69,6 +71,7 @@ public class ArtefactMessageHandler implements MessageHandler {
 			return output;
 		} finally {
 			executionContext.getVariablesManager().removeVariable(parentNode, "output");
+			ExecutionContext.setCurrentReportNode(previousCurrentNode);
 		}
 		
 	}
