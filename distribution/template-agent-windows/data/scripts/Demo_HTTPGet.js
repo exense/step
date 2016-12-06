@@ -16,7 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
+output.startMeasure("Demo_HTTPGet_Transaction1");
 var result = httpGet(input.url);
+output.stopMeasure()
 output.add('statusCode',result.statusCode);
 output.add('data',result.data);
 
