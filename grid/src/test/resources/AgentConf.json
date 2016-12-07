@@ -1,7 +1,8 @@
 {
 "gridHost":"http://localhost:8081", 
+"registrationPeriod":1000,
 "tokenGroups":[
-{"capacity":10, 
+{"capacity":1, 
 "tokenConf":{
 	"attributes":{"key":"val"},
 	"properties":{}}

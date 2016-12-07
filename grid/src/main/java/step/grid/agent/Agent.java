@@ -70,9 +70,7 @@ public class Agent {
 	private TokenHandlerPool handlerPool;
 	
 	private Timer timer;
-	
-	private long registrationIntervalMs = 10000;
-	
+		
 	private RegistrationTask registrationTask;
 	
 	public static void main(String[] args) throws Exception {
@@ -183,22 +181,14 @@ public class Agent {
 		if(agentConf.getAgentUrl()==null) {
 			agentConf.setAgentUrl("http://" + Inet4Address.getLocalHost().getCanonicalHostName() + ":" + ((ServerConnector)server.getConnectors()[0]).getLocalPort());
 		}
-
-		timer.schedule(registrationTask, 0, registrationIntervalMs);
+		
+		timer.schedule(registrationTask, 0, agentConf.getRegistrationPeriod());
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				tokenPool.evictSessions();
 			}
 		}, 15000, 10000);
-	}
-	
-	public long getRegistrationIntervalMs() {
-		return registrationIntervalMs;
-	}
-
-	public void setRegistrationIntervalMs(long registrationIntervalMs) {
-		this.registrationIntervalMs = registrationIntervalMs;
 	}
 
 	protected String getAgentUrl() {

@@ -46,15 +46,22 @@ public class Grid {
 	
 	private TokenPool<Identity, TokenWrapper> tokenPool;
 
-	private Integer port;
+	private final Integer port;
 	
-	private Integer keepAliveTimeout = 60000;
+	private final Integer keepAliveTimeout;
 	
 	private Server server;
 	
 	public Grid(Integer port) {
 		super();
 		this.port = port;
+		this.keepAliveTimeout = 60000;
+	}
+	
+	public Grid(Integer port, Integer ttl) {
+		super();
+		this.port = port;
+		this.keepAliveTimeout = ttl;
 	}
 
 	public void stop() throws Exception {

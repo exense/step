@@ -1,6 +1,6 @@
 {
 "gridHost":"http://localhost:8081",
-"agentPort":12131,
+"registrationPeriod":1000,
 "tokenGroups":[
 {"capacity":10, 
 "tokenConf":{
