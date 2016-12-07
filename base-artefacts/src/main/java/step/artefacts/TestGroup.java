@@ -41,9 +41,6 @@ public class TestGroup extends AbstractArtefact {
 	@DynamicAttribute
 	private String startOffset = "0";
 
-	@DynamicAttribute
-	private String duration = Integer.toString(Integer.MAX_VALUE);
-
 	public String getRampup() {
 		return rampup;
 	}
@@ -82,14 +79,6 @@ public class TestGroup extends AbstractArtefact {
 
 	public void setStartOffset(String startOffset) {
 		this.startOffset = startOffset;
-	}
-
-	public String getDuration() {
-		return duration;
-	}
-
-	public void setDuration(String duration) {
-		this.duration = duration;
 	}
 
 }
