@@ -57,7 +57,7 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
 import step.attachments.AttachmentContainer;
@@ -85,9 +85,9 @@ public class DataTableServices extends AbstractServices {
 	
 	@PostConstruct
 	public void init() {
-		MongoClient client = getContext().getMongoClient();
+		MongoDatabase database = getContext().getMongoDatabase();
 		
-		BackendDataTable executions = new BackendDataTable(new Collection(client, "executions"));
+		BackendDataTable executions = new BackendDataTable(new Collection(database, "executions"));
 		executions.addColumn("ID", "_id").addColumn("Description", "description").addDateColumn("Start time", "startTime")
 		.addDateColumn("End time", "endTime").addColumn("User", "executionParameters.userID");
 				
@@ -103,11 +103,11 @@ public class DataTableServices extends AbstractServices {
 		leafReportNodesColumns.addDateColumn("Begin", "executionTime").addColumn("Name","name").addColumn("Status","status").addColumn("Error", "error")
 		.addColumn("Input","input").addColumn("Output","output").addColumn("Duration","duration").addColumn("Adapter", "adapter");
 
-		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(client, "reports"));
+		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports"));
 		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
 		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
 		
-		BackendDataTable artefactTable = new BackendDataTable(new Collection(client, "artefacts"));
+		BackendDataTable artefactTable = new BackendDataTable(new Collection(database, "artefacts"));
 		artefactTable.addColumn("ID", "_id");
 		if(screenTemplates!=null) {
 			for(Input input:screenTemplates.getInputsForScreen("artefactTable", null)) {
@@ -122,7 +122,7 @@ public class DataTableServices extends AbstractServices {
 			}
 		});
 		
-		BackendDataTable functionTable = new BackendDataTable(new Collection(client, "functions"));
+		BackendDataTable functionTable = new BackendDataTable(new Collection(database, "functions"));
 		functionTable.addColumn("ID", "_id");
 		if(screenTemplates!=null) {
 			for(Input input:screenTemplates.getInputsForScreen("functionTable", null)) {
@@ -132,7 +132,7 @@ public class DataTableServices extends AbstractServices {
 		functionTable.addColumn("Type", "handlerChain");
 		functionTable.addRowAsJson("Actions");
 		
-		BackendDataTable leafReportNodesOQL = new BackendDataTable(new Collection(client, "reports"));
+		BackendDataTable leafReportNodesOQL = new BackendDataTable(new Collection(database, "reports"));
 		leafReportNodesOQL.addColumn("ID", "_id").addColumn("Execution", "executionID").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
 		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
 

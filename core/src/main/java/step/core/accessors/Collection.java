@@ -24,36 +24,17 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
-import step.commons.conf.Configuration;
-
 public class Collection {
 
 	MongoCollection<Document> collection;
-	
-	
-		
-	public Collection(MongoClient client, String collectionName) {
+
+	public Collection(MongoDatabase mongoDatabase, String collectionName) {
 		super();
-		this.collection = getCollection(client, collectionName);
-	}
-	
-	private MongoCollection<Document> getCollection(MongoClient client, String collectionName) {
-		//TODO pass DB Object instead of MongoClient
-		String databaseName = Configuration.getInstance().getProperty("db.database","step");
-		//DB db = client.getDB(databaseName);
-		MongoDatabase database = client.getDatabase(databaseName);
-		collection = database.getCollection(collectionName);
-		
-	
-		//Jongo jongo = new Jongo(db);
-		//MongoCollection collection = jongo.getCollection(collectionName);
-		
-		return collection;
+		collection = mongoDatabase.getCollection(collectionName);
 	}
 	
 	public List<String> distinct(String key) {

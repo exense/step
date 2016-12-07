@@ -71,6 +71,7 @@ public class Controller {
 		
 		MongoClient mongoClient = MongoDBAccessorHelper.getClient();
 		context.setMongoClient(mongoClient);
+		context.setMongoDatabase(MongoDBAccessorHelper.getInstance().getMongoDatabase(mongoClient));
 		context.setExecutionAccessor(new ExecutionAccessor(mongoClient));
 		context.setArtefactAccessor(new ArtefactAccessor(mongoClient));
 		context.setReportAccessor(new ReportNodeAccessor(mongoClient));

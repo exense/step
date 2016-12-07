@@ -33,6 +33,7 @@ import com.mongodb.client.MongoDatabase;
 
 import step.commons.conf.Configuration;
 
+// TODO rewrite this ugly class without static
 public class MongoDBAccessorHelper {
 
 	private static MongoDBAccessorHelper INSTANCE = new MongoDBAccessorHelper();
@@ -89,8 +90,13 @@ public class MongoDBAccessorHelper {
 	}
 	
 	public static com.mongodb.client.MongoCollection<Document> getMongoCollection_(MongoClient client, String collectionName) {		
-		MongoDatabase db_ = client.getDatabase(getInstance().db);
+		MongoDatabase db_ = getInstance().getMongoDatabase(client);
 		return db_.getCollection(collectionName);
+	}
+
+	public MongoDatabase getMongoDatabase(MongoClient client) {
+		MongoDatabase db_ = client.getDatabase(getInstance().db);
+		return db_;
 	}
 	
 }

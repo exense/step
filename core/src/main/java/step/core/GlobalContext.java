@@ -29,6 +29,7 @@ import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
 
 import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
 
 public class GlobalContext extends AbstractContext {
 	
@@ -37,6 +38,8 @@ public class GlobalContext extends AbstractContext {
 	private RepositoryObjectManager repositoryObjectManager;
 	
 	private MongoClient mongoClient;
+	
+	private MongoDatabase mongoDatabase;
 	
 	private ExecutionAccessor executionAccessor;
 	
@@ -62,6 +65,14 @@ public class GlobalContext extends AbstractContext {
 
 	public void setMongoClient(MongoClient mongoClient) {
 		this.mongoClient = mongoClient;
+	}
+
+	public MongoDatabase getMongoDatabase() {
+		return mongoDatabase;
+	}
+
+	public void setMongoDatabase(MongoDatabase mongoDatabase) {
+		this.mongoDatabase = mongoDatabase;
 	}
 
 	public ExecutionAccessor getExecutionAccessor() {
