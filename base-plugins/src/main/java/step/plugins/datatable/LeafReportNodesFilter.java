@@ -18,12 +18,15 @@
  *******************************************************************************/
 package step.plugins.datatable;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.or;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.json.JsonObject;
+import javax.json.JsonString;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -39,7 +42,9 @@ public class LeafReportNodesFilter implements CollectionQueryFactory {
 		fragments.add(or(new Document("_class","step.artefacts.reports.CallFunctionReportNode"),new Document("status","TECHNICAL_ERROR")));
 		if(filter.containsKey("testcases")) {
 			//customAttributes.TestCase
-			fragments.add(in("customAttributes.TestCase",filter.getJsonArray("testcases")));
+			List<String> testcaseIds = new ArrayList<>();
+			filter.getJsonArray("testcases").forEach(v->testcaseIds.add(((JsonString)v).getString()));
+			fragments.add(in("customAttributes.TestCase",testcaseIds));
 		}
 		
 		return and(fragments);
