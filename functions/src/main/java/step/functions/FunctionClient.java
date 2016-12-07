@@ -20,6 +20,7 @@ package step.functions;
 
 import java.util.Map;
 
+import step.commons.conf.Configuration;
 import step.grid.AgentRef;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
@@ -103,9 +104,15 @@ public class FunctionClient {
 		try {
 			TokenHandle facade = tokenHandle.setHandler(handlerChain).addProperties(input.getProperties())
 					.addProperties(function.getHandlerProperties());
+			
+			int callTimeout;
 			if(function.getCallTimeout()!=null) {
-				facade.setCallTimeout(function.getCallTimeout());
+				callTimeout = function.getCallTimeout();
+			} else {
+				callTimeout = Configuration.getInstance().getPropertyAsInteger("keywords.calltimeout.default", 180000);
 			}
+			facade.setCallTimeout(callTimeout);
+
 			OutputMessage outputMessage = facade.process(function.getAttributes().get("name"), input.getArgument());		
 			output.setResult(outputMessage.getPayload());
 			output.setError(outputMessage.getError());
