@@ -1,1 +1,1 @@
-See https://github.com/denkbar/djigger/wiki
+See https://github.com/denkbar/step/wiki
