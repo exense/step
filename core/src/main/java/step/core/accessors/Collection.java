@@ -27,6 +27,9 @@ import org.bson.conversions.Bson;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CountOptions;
+
+import step.commons.conf.Configuration;
 
 public class Collection {
 
@@ -63,7 +66,11 @@ public class Collection {
 //			.append(Integer.toString(order.getOrder())).append("}");
 		
 		long count = collection.count();
-		long countResults = collection.count(query);
+		
+		int countLimit = Configuration.getInstance().getPropertyAsInteger("db.collection.count.limit.default", 1000);
+		CountOptions option = new CountOptions();
+		option.skip(0).limit(countLimit);
+		long countResults = collection.count(query, option);
 		
 		FindIterable<Document> find = collection.find(query).sort(sortDoc);
 		if(skip!=null) {
