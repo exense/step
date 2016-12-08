@@ -7,7 +7,19 @@ import step.plugins.views.ViewModel;
 
 public class ReportNodeStatusDistribution extends ViewModel {
 
-	Map<ReportNodeStatus, Entry> progress;
+	Map<ReportNodeStatus, Entry> distribution;
+	
+	long countForecast = 0;
+	
+	long count = 0;
+
+	public long getCountForecast() {
+		return countForecast;
+	}
+
+	public long getCount() {
+		return count;
+	}
 
 	public ReportNodeStatusDistribution() {
 		super();
@@ -15,15 +27,15 @@ public class ReportNodeStatusDistribution extends ViewModel {
 	
 	public ReportNodeStatusDistribution(Map<ReportNodeStatus, Entry> progress) {
 		super();
-		this.progress = progress;
+		this.distribution = progress;
 	}
 
-	public Map<ReportNodeStatus, Entry> getProgress() {
-		return progress;
+	public Map<ReportNodeStatus, Entry> getDistribution() {
+		return distribution;
 	}
 
-	public void setProgress(Map<ReportNodeStatus, Entry> progress) {
-		this.progress = progress;
+	public void setDistribution(Map<ReportNodeStatus, Entry> progress) {
+		this.distribution = progress;
 	}
 
 	public static class Entry {
@@ -31,8 +43,6 @@ public class ReportNodeStatusDistribution extends ViewModel {
 		ReportNodeStatus status;
 		
 		long count = 0;
-		
-		long max = 0;
 
 		public Entry() {
 			super();
@@ -53,10 +63,6 @@ public class ReportNodeStatusDistribution extends ViewModel {
 
 		public long getCount() {
 			return count;
-		}
-
-		public long getMax() {
-			return max;
 		}
 	}
 }

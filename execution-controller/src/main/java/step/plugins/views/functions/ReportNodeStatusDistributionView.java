@@ -12,14 +12,19 @@ public class ReportNodeStatusDistributionView extends View<ReportNodeStatusDistr
 
 	@Override
 	public void afterReportNodeSkeletonCreation(ReportNodeStatusDistribution model, ReportNode node) {
-		// TODO Auto-generated method stub
-		
+		if(node instanceof CallFunctionReportNode) {
+			model.countForecast++;
+		}
 	}
 
 	@Override
 	public void afterReportNodeExecution(ReportNodeStatusDistribution model, ReportNode node) {
 		if(node instanceof CallFunctionReportNode) {
-			model.progress.get(node.getStatus()).count++;
+			model.distribution.get(node.getStatus()).count++;
+			model.count++;
+			if(model.countForecast<model.count) {
+				model.countForecast=model.count;
+			}
 		}
 	}
 
