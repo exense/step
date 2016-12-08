@@ -52,6 +52,7 @@ public class InitializationPlugin extends AbstractPlugin {
 			setupUsers(context);
 			setupDemo(context);
 			setupBasicFunctions(context);
+			setupExecuteProcessFunction(context);
 			setupSleepFunction(context);
 		}
 		
@@ -91,6 +92,14 @@ public class InitializationPlugin extends AbstractPlugin {
 		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		functionRepository.addFunction(echoFunction);
+	}
+	
+	private void setupExecuteProcessFunction(GlobalContext context) {		
+		Function executeProcessFunction = createFunction("ExecuteProcess", "class:step.handlers.processhandler.ProcessHandler");
+		
+		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
+		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
+		functionRepository.addFunction(executeProcessFunction);
 	}
 	
 	private void setupSleepFunction(GlobalContext context) {

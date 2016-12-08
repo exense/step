@@ -69,6 +69,7 @@ public class FunctionTester {
 			input.setFunction(function);
 			input.setArgument(argument);			
 			input.setProperties(properties);
+			input.setCallTimeout(Integer.MAX_VALUE);
 			
 			try {
 				return handler.handle(token, input);

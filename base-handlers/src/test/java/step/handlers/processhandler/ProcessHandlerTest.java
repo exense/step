@@ -16,33 +16,27 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.grid.io;
+package step.handlers.processhandler;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.junit.Test;
 
-public class AttachmentHelper {
-	
-	public static String getHex(byte[] raw) {
-		return Base64.getEncoder().encodeToString(raw);
-	}
-	
-	public static byte[] hexStringToByteArray(String s) {
-		return Base64.getDecoder().decode(s);
+import junit.framework.Assert;
+import step.grid.agent.handler.FunctionTester;
+import step.grid.agent.handler.FunctionTester.Context;
+import step.grid.io.OutputMessage;
+
+public class ProcessHandlerTest {
+
+	@Test 
+	public void testt1() {
+		Map<String, String> properties = new HashMap<>();
+		Context context = FunctionTester.getContext(new ProcessHandler(), properties);
+		OutputMessage out = context.run("test1", "{\"cmd\":\"cmd.exe /r echo test\"}");
+		
+		Assert.assertEquals("test\n",out.getPayload().getString("stdout"));
 	}
 
-	public static Attachment generateAttachmentForException(Throwable e) {
-		StringWriter w = new StringWriter();
-		e.printStackTrace(new PrintWriter(w));
-		return generateAttachmentFromByteArray(w.toString().getBytes(), "exception.log");
-	}
-	
-	public static Attachment generateAttachmentFromByteArray(byte[] bytes, String attachmentName) {
-		Attachment attachment = new Attachment();	
-		attachment.setName(attachmentName);
-		attachment.setHexContent(AttachmentHelper.getHex(bytes));
-		return attachment;
-	}
 }
