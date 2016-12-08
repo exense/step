@@ -1,12 +1,12 @@
 package step.rtm;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.rtm.commons.Configuration;
 import org.rtm.commons.Measurement;
@@ -43,7 +43,16 @@ public class RtmPlugin extends AbstractPlugin {
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
 
-		webappCtx.setWar(Resource.newClassPathResource("rtm-0.3.0.4.war").getURI().toString());
+		String war = step.commons.conf.Configuration.getInstance().getProperty("plugins.rtm.war");
+		if(war==null) {
+			throw new RuntimeException("Property 'plugins.rtm.war' is null. Unable to start RTM.");
+		} else {
+			File warFile = new File(war);
+			if(!warFile.exists()||!warFile.canRead()) {
+				throw new RuntimeException("The file '"+war+"' set by the property 'plugins.rtm.war' doesn't exist or cannot be read. Unable to start RTM.");	
+			}
+		}
+		webappCtx.setWar(war);
 		webappCtx.setParentLoaderPriority(true);
 		context.getServiceRegistrationCallback().registerHandler(webappCtx);
 
