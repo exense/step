@@ -27,6 +27,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.json.JsonValue.ValueType;
+import javax.json.stream.JsonParsingException;
 
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
@@ -201,10 +202,14 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	private Input buildInput(String argumentStr) {
 		JsonObject argument;
-		if(argumentStr!=null) {
-			argument = Json.createReader(new StringReader(argumentStr)).readObject();
-		} else {
-			argument = Json.createObjectBuilder().build();
+		try {
+			if(argumentStr!=null&&argumentStr.trim().length()>0) {
+				argument = Json.createReader(new StringReader(argumentStr)).readObject();
+			} else {
+				argument = Json.createObjectBuilder().build();
+			}
+		} catch(JsonParsingException e) {
+			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage());
 		}
 		
 		Map<String, String> properties = new HashMap<>();
