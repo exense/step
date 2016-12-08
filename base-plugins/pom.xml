@@ -39,6 +39,11 @@
 		</dependency>
 		<dependency>
 			<groupId>step</groupId>
+			<artifactId>commons</artifactId>
+			<version>${project.version}</version>
+		</dependency>		
+		<dependency>
+			<groupId>step</groupId>
 			<artifactId>core</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
