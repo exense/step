@@ -9,7 +9,7 @@ import com.mongodb.client.model.IndexOptions;
 
 public class AbstractAccessor {
 
-	protected void createOrUpdateIndex(MongoCollection<Document> collection, String attribute) {
+	public static void createOrUpdateIndex(MongoCollection<Document> collection, String attribute) {
 		Document index = getIndex(collection, attribute);
 		if(index==null) {
 			collection.createIndex(new Document(attribute,1));
@@ -58,7 +58,7 @@ public class AbstractAccessor {
 		collection.createIndex(new Document(attribute, 1), options);
 	}
 
-	private Document getIndex(MongoCollection<Document> collection, String indexName) {
+	private static Document getIndex(MongoCollection<Document> collection, String indexName) {
 		for(Document index:collection.listIndexes()) {
 			Object o = index.get("key");
 			if(o instanceof Document) {

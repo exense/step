@@ -14,6 +14,7 @@ import org.rtm.commons.MeasurementAccessor;
 
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
@@ -36,6 +37,8 @@ public class RtmPlugin extends AbstractPlugin {
 		cloneProperty(rtmProperties, stepProperties, "db.database");
 		cloneProperty(rtmProperties, stepProperties, "db.username");
 		cloneProperty(rtmProperties, stepProperties, "db.password");
+		
+		AbstractAccessor.createOrUpdateIndex(context.getMongoDatabase().getCollection("measurements"),"t.eid");
 
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
