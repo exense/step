@@ -409,7 +409,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       }
       
       var refresh = function() {        
-        $http.get('rest/progress/' + eId).success(function(data) {
+        $http.get('rest/views/statusDistributionForFunctionCalls/' + eId).success(function(data) {
           $scope.progress = data;
         });
         
@@ -423,7 +423,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           console.log(points, evt);
         };
         
-        $http.get("rest/controller/execution/" + eId + "/throughput?resolution=20")
+        /* $http.get("rest/controller/execution/" + eId + "/throughput?resolution=20")
             .success(
                 function(data) {
                   $scope.data = [[]];
@@ -436,7 +436,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                       id : "series_0" } ], tooltip : { mode : "scrubber", formatter : function(x, y, series) {
                       return x + ' : ' + y;
                     } }, stacks : [], lineMode : "linear", tension : 0.7, drawLegend : true, drawDots : true, columnsHGap : 5 };
-                });
+                }); */
         
         $http.get("rest/threadmanager/operations?eid=" + eId)
         .success(
