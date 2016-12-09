@@ -18,8 +18,8 @@
  *******************************************************************************/
 angular.module('functionsControllers',['dataTable','step'])
 
-.controller('FunctionListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal', 'Dialogs', '$location','AuthService',
-    function($scope, $compile, $http, $stateStorage, $interval, $modal, Dialogs, $location, AuthService) {
+.controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$modal', 'Dialogs', '$location','AuthService',
+    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $modal, Dialogs, $location, AuthService) {
       $stateStorage.push($scope, 'functions', {});	
 
       $scope.authService = AuthService;
@@ -42,11 +42,28 @@ angular.module('functionsControllers',['dataTable','step'])
   
           }, function () {});
       }
+      
+      function reload() {
+        $scope.table.Datatable.ajax.reload(null, false);
+      }
 
       $scope.editFunction = function(id) {
       	$http.get("rest/functions/"+id).success(function(function_) {
       	  openModal(function_);
       	});
+      }
+      
+      $scope.copyFunction = function(id) {
+        $rootScope.clipboard = {object:"function",id:id};
+      }
+      
+      $scope.pasteFunction = function() {
+        if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
+          $http.post("rest/functions/"+$rootScope.clipboard.id+"/copy")
+          .success(function() {
+            reload();
+          });
+        }
       }
       
       $scope.editFlow = function(id) {
@@ -56,7 +73,7 @@ angular.module('functionsControllers',['dataTable','step'])
       }
       
       $scope.addFunction = function() {
-    	openModal();
+        openModal();
       }
       
       $scope.executeFunction = function(id, executeLocally) {
@@ -81,7 +98,7 @@ angular.module('functionsControllers',['dataTable','step'])
         Dialogs.showDeleteWarning().then(function() {
           $http.delete("rest/functions/"+id).success(function() {
             if($scope.table) {
-              $scope.table.Datatable.ajax.reload(null, false);
+              reload();
           }
           });
         })
@@ -90,6 +107,7 @@ angular.module('functionsControllers',['dataTable','step'])
       $scope.table = {};
 
       $scope.tabledef = {}
+      $scope.tabledef.actions = [{"label":"Paste","action":function() {$scope.pasteFunction()}}];
       $scope.tabledef.columns = function(columns) {
         _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
           col.visible = false
@@ -120,7 +138,7 @@ angular.module('functionsControllers',['dataTable','step'])
         _.each(_.where(columns,{'title':'Actions'}),function(col){
             col.title="Actions";
             col.searchmode="none";
-            col.width="160px";
+            col.width="200px";
             col.render = function ( data, type, row ) {
               var function_ = JSON.parse(row[row.length-1]);
               var isComposite = data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1;
@@ -143,6 +161,12 @@ angular.module('functionsControllers',['dataTable','step'])
   	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
   	            	'</button> ';
             	}
+            	
+              if(AuthService.hasRight('kw-write')) {
+                html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().copyFunction(\''+row[0]+'\')">' +
+                '<span class="glyphicon glyphicon glyphicon-copy" aria-hidden="true"></span>' +
+                '</button> ';
+              }
             	
             	if(AuthService.hasRight('kw-delete')) {
               	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().deleteFunction(\''+row[0]+'\')">' +

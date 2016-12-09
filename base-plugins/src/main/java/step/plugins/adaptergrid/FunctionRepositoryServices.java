@@ -30,6 +30,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import step.attachments.AttachmentMeta;
@@ -185,6 +186,21 @@ public class FunctionRepositoryServices extends AbstractServices {
 			result.setOutput(output);
 		}
 		return result;
+	}
+	
+	@POST
+	@Path("/{id}/copy")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-write")
+	public void copyFunction(@PathParam("id") String id) {		
+		FunctionRepository repo = getFunctionRepository();
+		Function source = repo.getFunctionById(id);
+		if(source!=null) {
+			source.setId(null);
+			source.getAttributes().put("name",source.getAttributes().get("name")+"_Copy");
+			repo.addFunction(source);
+		}
 	}
 	
 	public static ExecutionContext createContext(GlobalContext g) {
