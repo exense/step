@@ -81,7 +81,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
         executionParams.exports = [];
         var includedTestcases = $scope.includedTestcases();
         if(includedTestcases) {
-          executionParams.artefactFilter = {"class":"step.artefacts.filters.TestCaseFilter","includedNames":includedTestcases};
+          executionParams.artefactFilter = {"class":"step.artefacts.filters.TestCaseIdFilter","includedIds":includedTestcases};
         }
         executionParams.customParameters = $scope.model;
         return executionParams;
@@ -367,7 +367,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       $scope.getIncludedTestcases = function() {
         var result = [];
         if($scope.testCaseTable.getRows!=null) {
-          _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[1])});
+          _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[0])});
         }
         return result;
       }
