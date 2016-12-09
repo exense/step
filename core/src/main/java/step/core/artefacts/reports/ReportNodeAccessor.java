@@ -56,9 +56,10 @@ public class ReportNodeAccessor extends AbstractAccessor {
 	}
 	
 	public void createIndexesIfNeeded(Long ttl) {
-		createOrUpdateIndex(reports_, "executionID");
 		createOrUpdateIndex(reports_, "parentID");
 		createOrUpdateIndex(reports_, "status");
+		createOrUpdateCompoundIndex(reports_, "executionID", "executionTime");
+		createOrUpdateCompoundIndex(reports_, "executionID", "_class");
 	}
 
 	public void save(ReportNode node) {
@@ -103,7 +104,7 @@ public class ReportNodeAccessor extends AbstractAccessor {
 	public Iterator<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
 		assert executionID != null;
 		return reports.find(
-				"{executionID: #, _class: #}", executionID, class_).sort("{executionTime: 1}").as(ReportNode.class).iterator();
+				"{executionID: #, _class: #}", executionID, class_).as(ReportNode.class).iterator();
 	}
     
 	public Iterator<ReportNode> getLeafReportNodesByExecutionID(String executionID) {
