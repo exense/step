@@ -39,7 +39,11 @@ public class TestGroupHandler extends ArtefactHandler<TestGroup, ReportNode> {
 
 	@Override
 	public void execute_(final ReportNode node, final TestGroup testArtefact) {		
-		final int numberOfUsers = asInteger(testArtefact.getUsers());
+		final Integer numberOfUsers = asInteger(testArtefact.getUsers());
+		if(numberOfUsers==null||numberOfUsers<=0) {
+			throw new RuntimeException("Invalid argument: 'users' has to be higher than 0.");
+		}
+		
 		final int numberOfIterations = asInteger(testArtefact.getIterations());
 		final int pacing;
 		if(testArtefact.getPacing()!=null&&testArtefact.getPacing().trim().length()>0) {
