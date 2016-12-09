@@ -90,7 +90,7 @@ public class AbstractAccessor {
 					else
 						check = i;
 				}
-				if(check == len) // match
+				if(check == (len - 1)) // match
 				{
 					ret = d;
 					break;
