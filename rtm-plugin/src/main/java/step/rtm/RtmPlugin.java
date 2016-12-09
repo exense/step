@@ -38,7 +38,7 @@ public class RtmPlugin extends AbstractPlugin {
 		cloneProperty(rtmProperties, stepProperties, "db.username");
 		cloneProperty(rtmProperties, stepProperties, "db.password");
 		
-		AbstractAccessor.createOrUpdateIndex(context.getMongoDatabase().getCollection("measurements"),"t.eid");
+		AbstractAccessor.createOrUpdateCompoundIndex(context.getMongoDatabase().getCollection("measurements"),"t.eid", "n.begin");
 
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");

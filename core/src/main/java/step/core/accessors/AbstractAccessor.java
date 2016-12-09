@@ -1,5 +1,7 @@
 package step.core.accessors;
 
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import org.bson.Document;
@@ -13,6 +15,19 @@ public class AbstractAccessor {
 		Document index = getIndex(collection, attribute);
 		if(index==null) {
 			collection.createIndex(new Document(attribute,1));
+		}
+	}
+	
+	public static void createOrUpdateCompoundIndex(MongoCollection<Document> collection, String... attribute) {
+		Document index = getIndex(collection, attribute);
+		
+		Map<String, Object> compound = new TreeMap<String, Object>();
+		
+		for(String s : attribute)
+			compound.put(s, 1L);
+		
+		if(index==null) {
+			collection.createIndex(new Document(compound));
 		}
 	}
 	
@@ -58,15 +73,27 @@ public class AbstractAccessor {
 		collection.createIndex(new Document(attribute, 1), options);
 	}
 
-	private static Document getIndex(MongoCollection<Document> collection, String indexName) {
-		for(Document index:collection.listIndexes()) {
+	private static Document getIndex(MongoCollection<Document> collection, String... attribute) {
+		int len = attribute.length;
+		int check = 0;
+		Document ret = null;
+
+		
+		for(Document index:collection.listIndexes()) {  // inspect all indexes, looking for a match
 			Object o = index.get("key");
+			
 			if(o instanceof Document) {
-				if(((Document)o).containsKey(indexName)) {
-					return (Document) index;
+				Document d = ((Document)o);
+				for (int i=0; i<len; i++){              // check if all the required attributes are contained
+					if(!d.containsKey(attribute[i]))    // if one is missing, move on to the next index
+						break;
+					else
+						check = i;
 				}
+				if(check == len) // match
+					ret = d;
 			}
 		}
-		return null;
+		return ret;
 	}
 }
