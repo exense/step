@@ -5,7 +5,7 @@
 {"capacity":10, 
 "tokenConf":{
 	"attributes":{},
-	"properties":{"phantomjs.binary.path":"path_to_phantomjs_binary"}}
+	"properties":{}}
 }
 ]
 }
