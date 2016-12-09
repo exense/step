@@ -1,0 +1,2 @@
+result = "toto"
+output = result;
