@@ -3,12 +3,20 @@
 
 from net.grinder.script import Test
 from net.grinder.plugin.http import HTTPPluginControl, HTTPRequest, FakeGrinderObject
-from HTTPClient import NVPair
+from HTTPClient import NVPair, DefaultAuthHandler, CookieModule
 from java.lang import System as javasystem
 connectionDefaults = HTTPPluginControl.getConnectionDefaults()
 httpUtilities = HTTPPluginControl.getHTTPUtilities()
 
+# Stuff you have to add to be able to use grinder-proxy-generated scripts (for quick compatibility)
 grinder = FakeGrinderObject()
+
+# Load or unload the modules you want, set handlers the handlers you want
+modules = "HTTPClient.RetryModule|HTTPClient.CookieModule|HTTPClient.RedirectionModule|HTTPClient.AuthorizationModule|HTTPClient.DefaultModule|HTTPClient.TransferEncodingModule|HTTPClient.ContentMD5Module|HTTPClient.ContentEncodingModule"
+javasystem.setProperty("HTTPClient.Modules", modules)
+CookieModule.setCookiePolicyHandler(None);
+DefaultAuthHandler.setAuthorizationPrompter(None);
+
 # To use a proxy server, uncomment the next line and set the host and port.
 # connectionDefaults.setProxyServer("localhost", 8001)
 
@@ -1537,6 +1545,7 @@ class TestRunner:
     self.page60()     # GET trans.gif (request 6001)
     return sample
 
+# the TestRunner needs to be invoked explicitely now..
 tr = TestRunner()
 #output.startMeasure("test")
 output = tr.__call__()
