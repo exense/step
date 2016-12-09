@@ -2,12 +2,13 @@
 # HTTP script recorded by TCPProxy at 2 dec. 2016 08:54:39
 
 from net.grinder.script import Test
-from net.grinder.plugin.http import HTTPPluginControl, HTTPRequest
+from net.grinder.plugin.http import HTTPPluginControl, HTTPRequest, FakeGrinderObject
 from HTTPClient import NVPair
 from java.lang import System as javasystem
 connectionDefaults = HTTPPluginControl.getConnectionDefaults()
 httpUtilities = HTTPPluginControl.getHTTPUtilities()
 
+grinder = FakeGrinderObject()
 # To use a proxy server, uncomment the next line and set the host and port.
 # connectionDefaults.setProxyServer("localhost", 8001)
 
@@ -1537,7 +1538,6 @@ class TestRunner:
     return sample
 
 tr = TestRunner()
-
 #output.startMeasure("test")
 output = tr.__call__()
 #output.stopMeasure()
