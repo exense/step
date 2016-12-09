@@ -17,20 +17,20 @@ public class AbstractAccessor {
 			collection.createIndex(new Document(attribute,1));
 		}
 	}
-	
+
 	public static void createOrUpdateCompoundIndex(MongoCollection<Document> collection, String... attribute) {
 		Document index = getIndex(collection, attribute);
-		
+
 		Map<String, Object> compound = new TreeMap<String, Object>();
-		
+
 		for(String s : attribute)
-			compound.put(s, 1L);
-		
+			compound.put(s, 1);
+
 		if(index==null) {
 			collection.createIndex(new Document(compound));
 		}
 	}
-	
+
 	protected void createOrUpdateTTLIndex(MongoCollection<Document> collection, String attribute, Long ttl) {
 		Document ttlIndex = getIndex(collection, attribute);
 		if(ttlIndex==null) {
@@ -53,7 +53,7 @@ public class AbstractAccessor {
 			}
 		}
 	}
-	
+
 	private void dropIndex(MongoCollection<Document> collection, Document ttlIndex) {
 		collection.dropIndex(ttlIndex.getString("name"));
 	}
@@ -78,10 +78,10 @@ public class AbstractAccessor {
 		int check = 0;
 		Document ret = null;
 
-		
+
 		for(Document index:collection.listIndexes()) {  // inspect all indexes, looking for a match
 			Object o = index.get("key");
-			
+
 			if(o instanceof Document) {
 				Document d = ((Document)o);
 				for (int i=0; i<len; i++){              // check if all the required attributes are contained
@@ -91,7 +91,10 @@ public class AbstractAccessor {
 						check = i;
 				}
 				if(check == len) // match
+				{
 					ret = d;
+					break;
+				}
 			}
 		}
 		return ret;
