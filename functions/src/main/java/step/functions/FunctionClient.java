@@ -18,12 +18,16 @@
  *******************************************************************************/
 package step.functions;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import step.grid.AgentRef;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
 import step.grid.client.GridClient.TokenHandle;
+import step.grid.io.Attachment;
+import step.grid.io.AttachmentHelper;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
@@ -119,8 +123,14 @@ public class FunctionClient {
 			output.setMeasures(outputMessage.getMeasures());
 			return output;
 		} catch (Exception e) {
-			output.setError(e.getClass().getName() + " " + e.getMessage());
-			// TODO 
+			output.setError("Unexpected error while calling function: " + e.getClass().getName() + " " + e.getMessage());
+			Attachment attachment = AttachmentHelper.generateAttachmentForException(e);
+			List<Attachment> attachments = output.getAttachments();
+			if(attachments==null) {
+				attachments = new ArrayList<>();
+				output.setAttachments(attachments);
+			}
+			attachments.add(attachment);
 		}
 		return output;
 	}
