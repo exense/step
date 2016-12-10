@@ -21,9 +21,9 @@ package step.core.plugins;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -32,8 +32,8 @@ import org.slf4j.LoggerFactory;
 public class PluginManager implements InvocationHandler{
 	
 	private static Logger logger = LoggerFactory.getLogger(PluginManager.class);
-
-	private List<AbstractPlugin> plugins = new ArrayList<>();
+	
+	private List<AbstractPlugin> plugins = new CopyOnWriteArrayList<>();
 	
 	public void initialize() throws Exception {
 		loadAnnotatedPlugins();
@@ -57,9 +57,7 @@ public class PluginManager implements InvocationHandler{
 	}
 
 	public void register(AbstractPlugin plugin) {
-		synchronized (plugins) {
-			plugins.add(plugin);
-		}
+		plugins.add(plugin);
 	}
 
 	private AbstractPlugin newPluginInstance(Class<AbstractPlugin> _class) throws InstantiationException, IllegalAccessException  {
@@ -69,13 +67,11 @@ public class PluginManager implements InvocationHandler{
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		synchronized (plugins) {
-			for(AbstractPlugin plugin:plugins) {
-				try {
-					method.invoke(plugin, args);
-				} catch (Throwable e) {
-					logger.error("Error invoking method #" + method.getName() + " of plugin '" + plugin.getClass().getName() + "'" + "(" + e.toString() + ")", e);
-				}
+		for(AbstractPlugin plugin:plugins) {
+			try {
+				method.invoke(plugin, args);
+			} catch (Throwable e) {
+				logger.error("Error invoking method #" + method.getName() + " of plugin '" + plugin.getClass().getName() + "'" + "(" + e.toString() + ")", e);
 			}
 		}
 		return null;
