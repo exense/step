@@ -197,12 +197,16 @@ public class GridClient implements Closeable {
 			Entity<InputMessage> entity = Entity.entity(message, MediaType.APPLICATION_JSON);
 			Response response = client.target(agentUrl + "/process").request().property(ClientProperties.READ_TIMEOUT, message.getCallTimeout()+callTimeoutOffset)
 					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).post(entity);
-			if(response.getStatus()==200) {
-				OutputMessage output = response.readEntity(OutputMessage.class);
-				return output;				
-			} else {
-				String error = response.readEntity(String.class);
-				throw new Exception("Error while calling agent with ref " + agentRef.toString()+ ". HTTP Response: "+error);
+			try {
+				if(response.getStatus()==200) {
+					OutputMessage output = response.readEntity(OutputMessage.class);
+					return output;				
+				} else {
+					String error = response.readEntity(String.class);
+					throw new Exception("Error while calling agent with ref " + agentRef.toString()+ ". HTTP Response: "+error);
+				}
+			} finally {
+				response.close();
 			}
 		} catch (ProcessingException e) {
 			throw e;
