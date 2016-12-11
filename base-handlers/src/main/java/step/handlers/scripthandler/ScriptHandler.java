@@ -29,11 +29,14 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
+
+import com.google.common.io.Files;
 
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
@@ -44,24 +47,29 @@ import step.grid.io.OutputMessage;
 public class ScriptHandler implements MessageHandler {
 
 	public static final String SCRIPT_DIR = "scripthandler.script.dir";
-	public static final String SCRIPT_ENGINE = "scripthandler.script.engine";
 	public static final String ERROR_HANDLER_SCRIPT = "scripthandler.script.errorhandler";
+	
+	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
 	
 	protected ScriptEngineManager manager = new ScriptEngineManager();
 		
 	public ScriptHandler() {
-
+		fileExtensionMap.put("groovy", "groovy");
+		fileExtensionMap.put("gy", "groovy");
+		fileExtensionMap.put("py", "python");
+		fileExtensionMap.put("jy", "python");
+		fileExtensionMap.put("js", "nashorn");
 	}
 	
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {        
         Map<String, String> properties = buildPropertyMap(token, message);
         
-        String engineName = getScriptEngine(properties);
-        ScriptEngine engine = loadScriptEngine(engineName);	
-                
         String scriptDirectory = getScriptDirectory(properties);
         File scriptFile = searchScriptFile(message, scriptDirectory);        
+        
+        String engineName = getScriptEngineName(scriptFile);
+        ScriptEngine engine = loadScriptEngine(engineName);	      
 
         OutputMessageBuilder outputBuilder = new OutputMessageBuilder();
         Bindings binding = createBindings(token, message, outputBuilder, properties);     
@@ -74,6 +82,20 @@ public class ScriptHandler implements MessageHandler {
         }
         
         return outputBuilder.build();
+	}
+
+	private String getScriptEngineName(File scriptFile) {
+		String extension = Files.getFileExtension(scriptFile.getName());
+        if(extension.length()>0) {
+        	String enginName = fileExtensionMap.get(extension);
+        	if(enginName==null) {
+        		throw new RuntimeException("No script engine found for extension '"+extension+"' of file '"+scriptFile.getName()+"'");
+        	} else {
+        		return enginName;
+        	}
+        } else {
+    		throw new RuntimeException("The file '"+scriptFile.getName()+"' has no extension. Please add one of the following extensions: "+fileExtensionMap.keySet());
+        }
 	}
 
 	private void executeErrorHandlerScript(Map<String, String> properties, ScriptEngine engine, Bindings binding)
@@ -112,16 +134,6 @@ public class ScriptHandler implements MessageHandler {
 			throw new RuntimeException("Unable to find script engine with name '"+engineName+"'");
 		}
 		return engine;
-	}
-
-	private String getScriptEngine(Map<String, String> properties) {
-		String engineName;
-        if(properties.containsKey(SCRIPT_ENGINE)) {
-        	engineName = properties.get(SCRIPT_ENGINE);
-        } else {
-        	engineName = "nashorn";
-        }
-		return engineName;
 	}
 
 	private String getScriptDirectory(Map<String, String> properties) {

@@ -3,5 +3,7 @@ from net.grinder.plugin.http import HTTPPlugin
 from net.grinder.plugin.http import HTTPRequest
 
 request = HTTPRequest()
-result = request.GET("http://www.denkbar.io/")
-output = result.text;
+output.startMeasure("Grinder_Demo_Transaction1")
+result = request.GET(input.getString("url"))
+output.stopMeasure()
+output.add("out",result.text);

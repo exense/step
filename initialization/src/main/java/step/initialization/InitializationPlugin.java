@@ -127,7 +127,8 @@ public class InitializationPlugin extends AbstractPlugin {
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
 		addFunction(functionRepository, "Demo_Echo");
-		addFunction(functionRepository, "Demo_HTTPGet");
+		addFunction(functionRepository, "Javascript_HttpGet");
+		addFunction(functionRepository, "Grinder_HttpGet", "classuri:../ext/lib/grinder|class:step.handlers.scripthandler.ScriptHandler");
 		
 		addFunction(functionRepository, "Selenium_StartChrome");
 		addFunction(functionRepository, "Selenium_StartFirefox");
@@ -136,7 +137,9 @@ public class InitializationPlugin extends AbstractPlugin {
 		ArtefactAccessor artefacts = context.getArtefactAccessor();
 		
 		createDemoPlan(artefacts,"Demo_TestCase_Echo","Demo_Echo","{\"arg1\":\"val1\"}","output.getString(\"output1\")==\"val1\"");
-		createDemoPlan(artefacts,"Demo_TestCase_HTTPGet","Demo_HTTPGet","{\"url\":\"http://denkbar.io\"}","output.getInt(\"statusCode\")==200");
+		createDemoPlan(artefacts,"Demo_TestCase_Javascript_HttpGet","Javascript_HttpGet","{\"url\":\"http://www.denkbar.io\"}","output.getInt(\"statusCode\")==200");
+		createDemoPlan(artefacts,"Demo_TestCase_Grinder_HttpGet","Grinder_HttpGet","{\"url\":\"http://www.denkbar.io\"}",null);
+
 		createSeleniumDemoPlan(artefacts);
 	}
 
@@ -148,15 +151,18 @@ public class InitializationPlugin extends AbstractPlugin {
 		tcAttributes.put("name", planName);
 		testCase.setAttributes(tcAttributes);
 		
-		Check check1 = new Check();
-		check1.setExpression(check);
-		artefacts.save(check1);
-		
 		CallFunction call1 = new CallFunction();
 		call1.setFunction("{\"name\":\""+functionName+"\"}");
 		call1.setArgument(args);
 		call1.setToken("{\"route\":\"remote\"}");
-		call1.addChild(check1.getId());
+
+		if(check!=null) {
+			Check check1 = new Check();
+			check1.setExpression(check);
+			artefacts.save(check1);
+			call1.addChild(check1.getId());
+		}
+		
 		artefacts.save(call1);
 		
 		testCase.addChild(call1.getId());
