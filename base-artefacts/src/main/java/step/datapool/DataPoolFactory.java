@@ -51,7 +51,7 @@ public class DataPoolFactory {
 					if(filename.endsWith(".csv"))                     // CSV
 						result = new CSVReaderDataPool(forEach);
 					else
-						if(filename.endsWith(".xlsx"))                    // Excel
+						if(filename.endsWith(".xlsx")||filename.endsWith(".xls"))                    // Excel
 							result = new ExcelDataPoolImpl(forEach);
 						else
 							result = new FlatFileReaderDataPool(forEach); // flat file
