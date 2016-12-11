@@ -204,6 +204,15 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
               }
               return html},
             icon: '' },
+            'step.artefacts.reports.EchoReportNode' : {
+              renderer: function (reportNode) {
+                var html = "";
+                if(reportNode.name)
+                  html += '<div><small>' + reportNode.name + '</small></div>';
+                if(reportNode.echo)
+                  html += '<div>Echo: <small><em>' + escapeHtml(reportNode.echo) + '</em></small></div>';
+                return html},
+              icon: '' },            
           'default' : {
             renderer: function (reportNode) {
               var html = "";

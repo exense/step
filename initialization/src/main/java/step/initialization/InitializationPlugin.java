@@ -51,9 +51,7 @@ public class InitializationPlugin extends AbstractPlugin {
 			// First start
 			setupUsers(context);
 			setupDemo(context);
-			setupBasicFunctions(context);
 			setupExecuteProcessFunction(context);
-			setupSleepFunction(context);
 		}
 		
 		insertLogEntry(controllerLogs);
@@ -75,25 +73,6 @@ public class InitializationPlugin extends AbstractPlugin {
 		controllerLogs.insert(logEntry);
 	}
 	
-	private void setupBasicFunctions(GlobalContext context) {
-		ArtefactAccessor artefacts = context.getArtefactAccessor();
-		
-		Return r = new Return();
-		r.setRoot(false);
-		r.setValue("[[args]]");
-		artefacts.save(r);
-		
-		Function echoFunction = createFunction("Echo", "class:step.core.tokenhandlers.ArtefactMessageHandler");
-		
-		Map<String, String> handlerProperties = new HashMap<>();
-		handlerProperties.put("artefactid", r.getId().toString());
-		echoFunction.setHandlerProperties(handlerProperties);
-		
-		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
-		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
-		functionRepository.addFunction(echoFunction);
-	}
-	
 	private void setupExecuteProcessFunction(GlobalContext context) {		
 		Function executeProcessFunction = createFunction("ExecuteProcess", "class:step.handlers.processhandler.ProcessHandler");
 		
@@ -101,26 +80,6 @@ public class InitializationPlugin extends AbstractPlugin {
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		functionRepository.addFunction(executeProcessFunction);
 	}
-	
-	private void setupSleepFunction(GlobalContext context) {
-		ArtefactAccessor artefacts = context.getArtefactAccessor();
-		
-		Check c = new Check();
-		c.setExpression("java.lang.Thread.sleep(args.getInt(\"ms\"));return true;");
-		c.setRoot(false);
-		artefacts.save(c);
-				
-		Function sleepFunction = createFunction("Sleep", "class:step.core.tokenhandlers.ArtefactMessageHandler");
-		
-		Map<String, String> handlerProperties = new HashMap<>();
-		handlerProperties.put("artefactid", c.getId().toString());
-		sleepFunction.setHandlerProperties(handlerProperties);
-		
-		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
-		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
-		functionRepository.addFunction(sleepFunction);
-	}
-
 
 	private void setupDemo(GlobalContext context) {
 		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				

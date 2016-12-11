@@ -40,6 +40,7 @@ public class LeafReportNodesFilter implements CollectionQueryFactory {
 		}
 		
 		fragments.add(or(new Document("_class","step.artefacts.reports.CallFunctionReportNode"),
+				new Document("_class","step.artefacts.reports.EchoReportNode"),
 				new Document("error.root",true)));
 		if(filter.containsKey("testcases")) {
 			//customAttributes.TestCase
