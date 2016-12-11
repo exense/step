@@ -51,12 +51,12 @@ public class CheckHandler extends ArtefactHandler<Check, ReportNode> {
 					try {
 						resultBoolean = Boolean.parseBoolean((String)result);
 					} catch (Exception e) {
-						node.setError("The check expression didn't return a boolean");
+						node.setError("The check expression didn't return a boolean", 0, true);
 						node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 						return;
 					} 				
 				} else {
-					node.setError("The check expression returned an instance of "+result.getClass().getName());
+					node.setError("The check expression returned an instance of "+result.getClass().getName(), 0, true);
 					node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 					return;
 				}
@@ -66,7 +66,7 @@ public class CheckHandler extends ArtefactHandler<Check, ReportNode> {
 					node.setStatus(ReportNodeStatus.FAILED);
 				}
 			} else {
-				node.setError("The check expression is null");
+				node.setError("The check expression is null",0,true);
 				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 				return;
 			}

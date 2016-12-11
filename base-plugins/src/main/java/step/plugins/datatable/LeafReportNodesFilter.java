@@ -39,7 +39,8 @@ public class LeafReportNodesFilter implements CollectionQueryFactory {
 			fragments.add(new Document("executionID", filter.getString("eid")));
 		}
 		
-		fragments.add(or(new Document("_class","step.artefacts.reports.CallFunctionReportNode"),new Document("status","TECHNICAL_ERROR")));
+		fragments.add(or(new Document("_class","step.artefacts.reports.CallFunctionReportNode"),
+				new Document("error.root",true)));
 		if(filter.containsKey("testcases")) {
 			//customAttributes.TestCase
 			List<String> testcaseIds = new ArrayList<>();

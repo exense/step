@@ -195,8 +195,13 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                 html += '<div>Input: <small><em>' + escapeHtml(reportNode.input) + '</em></small></div>';
               if(reportNode.output)
                 html += '<div>Output: <small><em>' + escapeHtml(reportNode.output) + '</em></small></div>';
-              if(reportNode.error)
-                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error) + '</em></small></div>';
+              if(reportNode.error) {
+                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error.msg);
+                if(reportNode.attachments && reportNode.attachments.length>0) {
+                  html += '. Check the attachments for more details.';
+                }
+                html += '</em></small></div>';
+              }
               return html},
             icon: '' },
           'default' : {
@@ -204,8 +209,13 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
               var html = "";
               if(reportNode.name)
                 html += '<div><small>' + reportNode.name + '</small></div>';
-              if(reportNode.error)
-                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error) + '</em></small></div>';
+              if(reportNode.error) {
+                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error.msg);
+                if(reportNode.attachments && reportNode.attachments.length>0) {
+                  html += '. Check the attachments for more details.';
+                }
+                html += '</em></small></div>';
+              }
               return html},
             icon: '' },
           };

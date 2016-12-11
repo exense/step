@@ -110,7 +110,7 @@ angular.module('reportBrowserControllers', [ 'dataTable', 'step' ])
               if(reportNode.output)
                 html += '<div>Output: <small><em>' + escapeHtml(reportNode.output) + '</em></small></div>';
               if(reportNode.error)
-                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error) + '</em></small></div>';
+                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error.msg) + '</em></small></div>';
               return html},
             icon: '' },
           'default' : {
@@ -119,7 +119,7 @@ angular.module('reportBrowserControllers', [ 'dataTable', 'step' ])
               if(reportNode.name)
                 html += '<div><small>' + reportNode.name + '</small></div>';
               if(reportNode.error)
-                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error) + '</em></small></div>';
+                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error.msg) + '</em></small></div>';
               return html},
             icon: '' },
           };

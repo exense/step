@@ -66,7 +66,7 @@ public class ArtefactMessageHandler implements MessageHandler {
 			ReportNode node = ArtefactHandler.delegateExecute(artefact,parentNode);
 			if(node.getStatus()== ReportNodeStatus.TECHNICAL_ERROR || node.getStatus()== ReportNodeStatus.FAILED) {
 				output.setError("Error in composite execution. Composite status: " + node.getStatus() + 
-						(node.getError()!=null?". Error message: "+node.getError():""));						
+						(node.getError()!=null?". Error message: "+node.getError().getMsg():""));						
 			}
 			return output;
 		} finally {

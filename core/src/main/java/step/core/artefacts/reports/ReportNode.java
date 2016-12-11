@@ -51,8 +51,8 @@ public class ReportNode {
 	protected List<AttachmentMeta> attachments;
 		
 	protected ReportNodeStatus status;
-	
-	protected String error;
+		
+	protected Error error;
 	
 	protected Map<String, String> customAttributes;
 	
@@ -131,20 +131,28 @@ public class ReportNode {
 		this.status = status;
 	}
 
-	public String getError() {
+	public Error getError() {
 		return error;
 	}
 
-	public void setError(String error) {
+	public void setError(Error error) {
 		this.error = error;
 	}
-
+	
+	public void setError(String errorMessage, int errorCode, boolean isRoot) {
+		Error errorObject = new Error();
+		errorObject.setMsg(errorMessage);
+		errorObject.setRoot(isRoot);
+		errorObject.setCode(0);
+		this.error = errorObject;
+	}
+	
 	public void addError(String error) {
 		if(error!=null) {
 			if(this.error!=null) {
-				this.error = this.error+"\n"+error;
+				getError().setMsg(getError().getMsg()+"\n"+error);
 			} else {
-				this.error = error;
+				setError(error, 0, true);
 			}
 		}
 	}
