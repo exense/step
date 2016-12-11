@@ -65,6 +65,7 @@ import step.attachments.AttachmentManager;
 import step.core.accessors.Collection;
 import step.core.accessors.CollectionFind;
 import step.core.accessors.SearchOrder;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.execution.model.ExecutionStatus;
@@ -105,7 +106,8 @@ public class DataTableServices extends AbstractServices {
 
 		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports"));
 		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
-		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
+		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
+		.setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
 		
 		BackendDataTable artefactTable = new BackendDataTable(new Collection(database, "artefacts"));
 		artefactTable.addColumn("ID", "_id");
@@ -134,7 +136,8 @@ public class DataTableServices extends AbstractServices {
 		
 		BackendDataTable leafReportNodesOQL = new BackendDataTable(new Collection(database, "reports"));
 		leafReportNodesOQL.addColumn("ID", "_id").addColumn("Execution", "executionID").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
-		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
+		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
+		.setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
 
 		tables.put("executions", executions);
 		tables.put("reports", leafReportNodes);
