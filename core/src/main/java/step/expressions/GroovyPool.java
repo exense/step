@@ -44,6 +44,7 @@ public class GroovyPool {
 			pool.setTestOnBorrow(true);
 			pool.setMaxTotal(Configuration.getInstance().getPropertyAsInteger("tec.expressions.pool.maxtotal",1000));
 			pool.setMaxActive(-1);
+			pool.setMaxIdle(Configuration.getInstance().getPropertyAsInteger("tec.expressions.pool.maxidle",-1));
 			pool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
 			pool.setTimeBetweenEvictionRunsMillis(30000);
 			pool.setMinEvictableIdleTimeMillis(-1);
