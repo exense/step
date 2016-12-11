@@ -66,7 +66,7 @@ public class PluginManager implements InvocationHandler{
 	}
 
 	@Override
-	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+	public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		for(AbstractPlugin plugin:plugins) {
 			try {
 				method.invoke(plugin, args);
