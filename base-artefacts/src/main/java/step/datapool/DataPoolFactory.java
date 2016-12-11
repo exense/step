@@ -22,7 +22,9 @@ import step.artefacts.AbstractForBlock;
 import step.artefacts.ForBlock;
 import step.artefacts.ForEachBlock;
 import step.datapool.excel.ExcelDataPoolImpl;
+import step.datapool.file.CSVReaderDataPool;
 import step.datapool.file.FileDataPoolImpl;
+import step.datapool.file.FlatFileReaderDataPool;
 import step.datapool.jdbc.SQLTableDataPool;
 import step.datapool.sequence.IntSequenceDataPoolImpl;
 
@@ -32,23 +34,35 @@ public class DataPoolFactory {
 
 	public static DataSet getDataPool(AbstractForBlock dataPoolConfiguration) {
 		DataSet result = null;
-		
+
 		if(dataPoolConfiguration instanceof ForEachBlock) {
 			ForEachBlock forEach = (ForEachBlock) dataPoolConfiguration;
-			if(forEach.getFolder() != null && forEach.getFolder().length() > 0) {
+			if(forEach.getFolder() != null && forEach.getFolder().length() > 0) { // we're using the Folder field
 				if(forEach.getFolder().startsWith("jdbc:"))
-					result = new SQLTableDataPool(forEach);
+					result = new SQLTableDataPool(forEach); // SQL
 				else
-					result = new FileDataPoolImpl(forEach);				
+					result = new FileDataPoolImpl(forEach); // Folder based datapool
 			} else {
-				result = new ExcelDataPoolImpl(forEach);
+
+				if(forEach.getTable() == null || forEach.getTable().length() < 1) // we're using the Table field ONLY
+					throw new RuntimeException("ForEach Table and/or Folder are not filled out correctly.");
+				else{
+					String filename = forEach.getTable().toLowerCase();
+					if(filename.endsWith(".csv"))                     // CSV
+						result = new CSVReaderDataPool(forEach);
+					else
+						if(filename.endsWith(".xlsx"))                    // Excel
+							result = new ExcelDataPoolImpl(forEach);
+						else
+							result = new FlatFileReaderDataPool(forEach); // flat file
+				}
 			}
 		} else if (dataPoolConfiguration instanceof ForBlock) {
 			result = new IntSequenceDataPoolImpl((ForBlock)dataPoolConfiguration);
 		} else {
 			throw new RuntimeException("No data pool configured for the artefact type " + dataPoolConfiguration.getClass());
 		}
-		
+
 		return result;
 	}
 }
