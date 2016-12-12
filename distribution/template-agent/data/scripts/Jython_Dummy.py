@@ -1,2 +1,0 @@
-result = "toto"
-output = result;

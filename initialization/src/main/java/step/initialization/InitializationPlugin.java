@@ -92,6 +92,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		
 		addFunction(functionRepository, "Selenium_StartChrome");
 		addFunction(functionRepository, "Selenium_StartFirefox");
+		addFunction(functionRepository, "Selenium_StartHTMLUnit");
 		addFunction(functionRepository, "Selenium_Navigate");
 		
 		ArtefactAccessor artefacts = context.getArtefactAccessor();
@@ -105,7 +106,8 @@ public class InitializationPlugin extends AbstractPlugin {
 		createDemoPlan(artefacts,"Demo_Testcase_ProcessExecution_Linux","ExecuteProcess","{\"cmd\":\"echo TEST\"}",null);
 
 		
-		createSeleniumDemoPlan(artefacts);
+		createSeleniumDemoPlan(artefacts, "Firefox");
+		createSeleniumDemoPlan(artefacts, "HTMLUnit");
 	}
 
 	private void createDemoPlan(ArtefactAccessor artefacts, String planName, String functionName, String args, String check) {
@@ -136,16 +138,16 @@ public class InitializationPlugin extends AbstractPlugin {
 		artefacts.save(testCase);
 	}
 	
-	private void createSeleniumDemoPlan(ArtefactAccessor artefacts) {
+	private void createSeleniumDemoPlan(ArtefactAccessor artefacts, String browser) {
 		Map<String, String> tcAttributes = new HashMap<>();
 		TestCase testCase = new TestCase();
 		testCase.setRoot(true);
 		
-		tcAttributes.put("name", "Demo_Selenium");
+		tcAttributes.put("name", "Demo_Selenium_" + browser);
 		testCase.setAttributes(tcAttributes);
 		
 		CallFunction call1 = new CallFunction();
-		call1.setFunction("{\"name\":\"Selenium_StartFirefox\"}");
+		call1.setFunction("{\"name\":\"Selenium_Start"+ browser +"\"}");
 		call1.setArgument("{}");
 		call1.setToken("{\"route\":\"remote\"}");
 		artefacts.save(call1);
