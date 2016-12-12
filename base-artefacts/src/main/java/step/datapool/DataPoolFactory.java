@@ -33,11 +33,6 @@ public class DataPoolFactory {
 	public static DataSet getDataPool(AbstractForBlock dataPoolConfiguration) {
 		DataSet result = null;
 		
-		System.out.println("------------------------- FUCKING HELL -------------------------------");
-		System.out.println("------------------------- FUCKING HELL -------------------------------");
-		System.out.println("------------------------- FUCKING HELL -------------------------------");
-		System.out.println("------------------------- FUCKING HELL -------------------------------");
-
 		if(dataPoolConfiguration instanceof ForEachBlock) {
 			ForEachBlock forEach = (ForEachBlock) dataPoolConfiguration;
 
