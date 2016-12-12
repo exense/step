@@ -10,9 +10,16 @@ import step.datapool.file.FlatFileReaderDataPool.FlatLineRowWrapper;
 public class CSVReaderDataPool extends FileReaderDataPool {
 
 	Vector<String> headers;
+	String delimiter;
 		
 	public CSVReaderDataPool(ForEachBlock forEach) {
 		super(forEach);
+		
+		String delim = forEach.getFolder();
+		if(delim == null || delim.trim().isEmpty())
+			this.delimiter = ",";
+		else
+			this.delimiter = delim;
 	}
 
 	@Override
@@ -57,7 +64,7 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 	
 	public Vector<String> splitCSV(String readOneLine) {
 		Vector<String> v = new Vector<String>();
-		for(String s : readOneLine.split(";"))
+		for(String s : readOneLine.split(this.delimiter))
 			v.add(s);
 		
 		return v;
