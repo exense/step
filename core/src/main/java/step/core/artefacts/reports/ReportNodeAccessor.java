@@ -57,7 +57,7 @@ public class ReportNodeAccessor extends AbstractAccessor {
 	
 	public void createIndexesIfNeeded(Long ttl) {
 		createOrUpdateIndex(reports_, "parentID");
-		createOrUpdateIndex(reports_, "status");
+		createOrUpdateCompoundIndex(reports_, "executionID", "status", "executionTime");
 		createOrUpdateCompoundIndex(reports_, "executionID", "executionTime");
 		createOrUpdateCompoundIndex(reports_, "executionID", "_class");
 	}

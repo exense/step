@@ -106,7 +106,7 @@ public class DataTableServices extends AbstractServices {
 
 		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports"));
 		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
-		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
+		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumnOptimized("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
 		.setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
 		
 		BackendDataTable artefactTable = new BackendDataTable(new Collection(database, "artefacts"));
