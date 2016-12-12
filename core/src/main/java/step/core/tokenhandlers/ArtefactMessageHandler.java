@@ -28,6 +28,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.variables.VariableType;
 import step.grid.agent.handler.MessageHandler;
+import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
@@ -58,8 +59,8 @@ public class ArtefactMessageHandler implements MessageHandler {
 		
 		AbstractArtefact artefact = globalContext.getArtefactAccessor().get(artefactId);
 		
-		executionContext.getVariablesManager().putVariable(parentNode, "args", message.getArgument());
-		OutputMessage output = new OutputMessage();
+		executionContext.getVariablesManager().putVariable(parentNode, "input", message.getArgument());
+		OutputMessageBuilder output = new OutputMessageBuilder();
 		executionContext.getVariablesManager().putVariable(parentNode, VariableType.IMMUTABLE, "output", output);
 		
 		try {
@@ -68,7 +69,7 @@ public class ArtefactMessageHandler implements MessageHandler {
 				output.setError("Error in composite execution. Composite status: " + node.getStatus() + 
 						(node.getError()!=null?". Error message: "+node.getError().getMsg():""));						
 			}
-			return output;
+			return output.build();
 		} finally {
 			executionContext.getVariablesManager().removeVariable(parentNode, "output");
 			ExecutionContext.setCurrentReportNode(previousCurrentNode);
