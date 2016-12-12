@@ -88,6 +88,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		addFunction(functionRepository, "Demo_Echo");
 		addFunction(functionRepository, "Javascript_HttpGet");
 		addFunction(functionRepository, "Grinder_HttpGet", "classuri:../ext/lib/grinder|class:step.handlers.scripthandler.ScriptHandler");
+		addFunction(functionRepository, "Demo_Java_Clock", "classuri:../data/scripts/java/bin|class:step.script.AnnotatedMethodHandler");
 		
 		addFunction(functionRepository, "Selenium_StartChrome");
 		addFunction(functionRepository, "Selenium_StartFirefox");
@@ -98,7 +99,8 @@ public class InitializationPlugin extends AbstractPlugin {
 		createDemoPlan(artefacts,"Demo_TestCase_Echo","Demo_Echo","{\"arg1\":\"val1\"}","output.getString(\"output1\")==\"val1\"");
 		createDemoPlan(artefacts,"Demo_TestCase_Javascript_HttpGet","Javascript_HttpGet","{\"url\":\"http://www.denkbar.io\"}","output.getInt(\"statusCode\")==200");
 		createDemoPlan(artefacts,"Demo_TestCase_Grinder_HttpGet","Grinder_HttpGet","{\"url\":\"http://www.denkbar.io\"}",null);
-
+		createDemoPlan(artefacts,"Demo_TestCase_Java_Clock","Demo_Java_Clock","{ \"prettyString\" : \"Current time is : \" }",null);
+		
 		createSeleniumDemoPlan(artefacts);
 	}
 
