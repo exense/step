@@ -101,6 +101,10 @@ public class InitializationPlugin extends AbstractPlugin {
 		createDemoPlan(artefacts,"Demo_TestCase_Grinder_HttpGet","Grinder_HttpGet","{\"url\":\"http://www.denkbar.io\"}",null);
 		createDemoPlan(artefacts,"Demo_TestCase_Java_Clock","Demo_Java_Clock","{ \"prettyString\" : \"Current time is : \" }",null);
 		
+		createDemoPlan(artefacts,"Demo_Testcase_ProcessExecution_Windows","ExecuteProcess","{\"cmd\":\"cmd.exe /r echo TEST\"}",null);
+		createDemoPlan(artefacts,"Demo_Testcase_ProcessExecution_Linux","ExecuteProcess","{\"cmd\":\"echo TEST\"}",null);
+
+		
 		createSeleniumDemoPlan(artefacts);
 	}
 
