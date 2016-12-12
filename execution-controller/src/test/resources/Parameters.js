@@ -1,6 +1,10 @@
 [
-["selenium.webdriver.firefox.bin","firefox/FirefoxPortable_50.0.1_English/App/Firefox/firefox.exe",""],
-["selenium.webdriver.gecko.driver","geckodriver/geckodriver.exe",""],
-["scripthandler.script.dir","../distribution/template-agent/data/scripts",""],
+["selenium.webdriver.firefox.bin","../ext/bin/firefox/FirefoxPortable_50.0.1_English/App/Firefox/firefox.exe","Java.type('java.lang.System').getProperty('os.name').startsWith('Windows')"],
+["selenium.webdriver.gecko.driver","../ext/bin/geckodriver/geckodriver.exe","Java.type('java.lang.System').getProperty('os.name').startsWith('Windows')"],
+["selenium.webdriver.phantomjs.driver","../ext/bin/phantomjs/phantomjs.exe","Java.type('java.lang.System').getProperty('os.name').startsWith('Windows')"],
+["selenium.webdriver.firefox.bin","../ext/bin/firefox/FirefoxPortable_50.0.1_English/App/Firefox/firefox",""],
+["selenium.webdriver.gecko.driver","../ext/bin/geckodriver/geckodriver",""],
+["selenium.webdriver.phantomjs.driver","../ext/bin/phantomjs/phantomjs",""],
+["scripthandler.script.dir","../data/scripts",""],
 ["keywords.calltimeout.default",180000,""]
 ]
