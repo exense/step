@@ -94,7 +94,7 @@ public class AgentServices {
 							OutputMessage output = tokenHandler.handle(tokenWrapper, message);
 							return output;
 						} catch (Exception e) {
-							return handleUnexpectedError(e);
+							return handleUnexpectedError(message, e);
 						} finally {
 							tokenPool.returnToken(tokenId);
 							synchronized (context) {
@@ -140,17 +140,21 @@ public class AgentServices {
 		} catch(TokenInUseException e) {
 			return newErrorOutput("Token " + e.getToken().getUid() + " already in use. This should never happen!");
 		} catch (Exception e) {
-			return handleUnexpectedError(e);
+			return handleUnexpectedError(message, e);
 		}
 	}
 	
 
-	protected OutputMessage handleUnexpectedError(Exception e) {
-		String message = "Error while processing message";
-		if(e.getMessage()!=null) {
-			message += ": "+e.getMessage(); 
+	protected OutputMessage handleUnexpectedError(InputMessage inputMessage, Exception e) {
+		StringBuilder message = new StringBuilder();
+		message.append("Error in agent '").append(agent.getAgentUrl()).append("'");
+		if(inputMessage!=null && inputMessage.getFunction()!=null) {
+			message.append(" while executing '").append(inputMessage.getFunction()).append("'");
 		}
-		OutputMessage output = newErrorOutput(message);
+		if(e.getMessage()!=null) {
+			message.append(": ").append(e.getMessage()); 
+		}
+		OutputMessage output = newErrorOutput(message.toString());
 		output.addAttachment(generateAttachmentForException(e));
 		return output;
 	}
