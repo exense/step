@@ -24,6 +24,8 @@ import step.grid.io.Measure;
 public class RtmPlugin extends AbstractPlugin {
 
 	MeasurementAccessor accessor;
+	
+	boolean measureReportNodes;
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
@@ -37,6 +39,8 @@ public class RtmPlugin extends AbstractPlugin {
 		cloneProperty(rtmProperties, stepProperties, "db.database");
 		cloneProperty(rtmProperties, stepProperties, "db.username");
 		cloneProperty(rtmProperties, stepProperties, "db.password");
+		
+		measureReportNodes = stepProperties.getPropertyAsBoolean("plugins.rtm.measurereportnodes", true);
 		
 		AbstractAccessor.createOrUpdateCompoundIndex(context.getMongoDatabase().getCollection("measurements"),"t.eid", "n.begin");
 
@@ -70,12 +74,19 @@ public class RtmPlugin extends AbstractPlugin {
 		if(node instanceof CallFunctionReportNode) {
 			CallFunctionReportNode stepReport = (CallFunctionReportNode) node;
 			List<Measurement> measurements = new ArrayList<>();
-			Measurement measurement = new Measurement();
-			measurement.setTextAttribute("eid", stepReport.getExecutionID());
-			measurement.setTextAttribute("name", stepReport.getName());
-			measurement.setNumericalAttribute("value", (long)stepReport.getDuration());
-			measurement.setNumericalAttribute("begin", stepReport.getExecutionTime());
-			measurements.add(measurement);
+			
+			Measurement measurement;
+			if(measureReportNodes) {
+				measurement = new Measurement();
+				measurement.setTextAttribute("eid", stepReport.getExecutionID());
+				measurement.setTextAttribute("name", stepReport.getName());
+				measurement.setNumericalAttribute("value", (long)stepReport.getDuration());
+				measurement.setNumericalAttribute("begin", stepReport.getExecutionTime());
+				measurement.setTextAttribute("rnid", stepReport.getId().toString());
+				measurement.setTextAttribute("rnstatus", stepReport.getStatus().toString());
+				measurements.add(measurement);
+				
+			}
 
 			if(stepReport.getMeasures()!=null) {
 				for(Measure measure:stepReport.getMeasures()) {
@@ -86,7 +97,7 @@ public class RtmPlugin extends AbstractPlugin {
 					measurement.setNumericalAttribute("begin", measure.getBegin());
 					measurement.setTextAttribute("rnid", stepReport.getId().toString());
 					measurement.setTextAttribute("rnstatus", stepReport.getStatus().toString());
-					measurements.add(measurement);
+					measurement.setTextAttribute("type", "custom");
 
 					if(measure.getData() != null){
 						for(Map.Entry<String,String> entry : measure.getData().entrySet()){
@@ -105,6 +116,8 @@ public class RtmPlugin extends AbstractPlugin {
 							}
 						}
 					}
+
+					measurements.add(measurement);
 				}
 			}
 
