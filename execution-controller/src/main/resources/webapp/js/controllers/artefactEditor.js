@@ -149,8 +149,12 @@ angular.module('artefactEditor',['dataTable','step'])
         		children.push(asJSTreeNode(child))
         	  }) 	  
         	  var artefact = currentNode.artefact;
-        	  var label = (artefact._class=='CallFunction'&&artefact['function'])?JSON.parse(artefact['function']).name:artefact._class;
-        	  
+        	  var label = artefact._class
+        	  if(artefact._class=='CallFunction'&&artefact['function']) {
+        	    try {
+        	      label = JSON.parse(artefact['function']).name;
+        	    } catch(e) {}
+        	  }        	  
         	  return { "id" : artefact.id, "children" : children, "text" : label }
         	}
         	
