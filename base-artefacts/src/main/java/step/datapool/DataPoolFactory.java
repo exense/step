@@ -28,34 +28,39 @@ import step.datapool.file.FlatFileReaderDataPool;
 import step.datapool.jdbc.SQLTableDataPool;
 import step.datapool.sequence.IntSequenceDataPoolImpl;
 
-
-
 public class DataPoolFactory {
 
 	public static DataSet getDataPool(AbstractForBlock dataPoolConfiguration) {
 		DataSet result = null;
+		
+		System.out.println("------------------------- FUCKING HELL -------------------------------");
+		System.out.println("------------------------- FUCKING HELL -------------------------------");
+		System.out.println("------------------------- FUCKING HELL -------------------------------");
+		System.out.println("------------------------- FUCKING HELL -------------------------------");
 
 		if(dataPoolConfiguration instanceof ForEachBlock) {
 			ForEachBlock forEach = (ForEachBlock) dataPoolConfiguration;
-			if(forEach.getFolder() != null && forEach.getFolder().length() > 0) { // we're using the Folder field
-				if(forEach.getFolder().startsWith("jdbc:"))
-					result = new SQLTableDataPool(forEach); // SQL
-				else
-					result = new FileDataPoolImpl(forEach); // Folder based datapool
-			} else {
 
-				if(forEach.getTable() == null || forEach.getTable().length() < 1) // we're using the Table field ONLY
-					throw new RuntimeException("ForEach Table and/or Folder are not filled out correctly.");
+			if(forEach.getTable() != null && forEach.getTable().length() > 0){ // Something in Table
+				String filename = forEach.getTable().toLowerCase();
+				if(filename.endsWith(".csv"))
+					result = new CSVReaderDataPool(forEach);                    // CSV
 				else{
-					String filename = forEach.getTable().toLowerCase();
-					if(filename.endsWith(".csv"))                     // CSV
-						result = new CSVReaderDataPool(forEach);
-					else
-						if(filename.endsWith(".xlsx")||filename.endsWith(".xls"))                    // Excel
-							result = new ExcelDataPoolImpl(forEach);
-						else
-							result = new FlatFileReaderDataPool(forEach); // flat file
+					if(filename.endsWith(".xlsx")||filename.endsWith(".xls"))
+						result = new ExcelDataPoolImpl(forEach);                // Excel
+					else{
+						if(forEach.getFolder() != null && forEach.getFolder().length() > 0) { // Not CSV nor Excel, but has something in Folder
+							if(forEach.getFolder().startsWith("jdbc:"))
+								result = new SQLTableDataPool(forEach);         // SQL
+							else // Not CSV nor Excel, has something in Table but not JDBC -> there no such thing right now -> Error
+								throw new RuntimeException("Unsupported datapool for folder " + forEach.getFolder()+ "and table " + forEach.getTable() +".");
+						}
+						else // Not CSV nor Excel, has nothing in Folder -> default case (Flat Filer = any extension)
+							result = new FlatFileReaderDataPool(forEach);       // flat file
+					}
 				}
+			} else { // Nothing in Table, but something in Folder
+				result = new FileDataPoolImpl(forEach); 						// Folder based
 			}
 		} else if (dataPoolConfiguration instanceof ForBlock) {
 			result = new IntSequenceDataPoolImpl((ForBlock)dataPoolConfiguration);
