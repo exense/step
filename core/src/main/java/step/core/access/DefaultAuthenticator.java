@@ -40,15 +40,4 @@ public class DefaultAuthenticator implements Authenticator {
     		return false;
     	} 	
 	}
-
-	@Override
-	public String getRole(String username) {
-    	User user = users.getByUsername(username);
-    	if(user!=null) {
-    		return user.getRole();
-    	} else {
-    		return null;
-    	}
-	}
-
 }

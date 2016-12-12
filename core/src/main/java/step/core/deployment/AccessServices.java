@@ -1,7 +1,6 @@
 package step.core.deployment;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -23,9 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.commons.conf.Configuration;
-import step.core.access.AccessMatrixReader;
+import step.core.access.AccessConfiguration;
+import step.core.access.AccessManager;
 import step.core.access.Authenticator;
 import step.core.access.Credentials;
+import step.core.access.DefaultAccessManager;
 import step.core.access.DefaultAuthenticator;
 import step.core.access.Profile;
 
@@ -36,14 +37,14 @@ public class AccessServices extends AbstractServices {
 	private static Logger logger = LoggerFactory.getLogger(AccessServices.class);
 	
 	public static final String AUTHENTICATION_SERVICE = "AuthenticationService";
-	
-	public static Map<String,List<String>> roleHierarchy;
-	
+		
 	private ConcurrentHashMap<String, Session> sessions;
 	
 	private Timer sessionExpirationTimer; 
 	
 	private Authenticator authenticator;
+	
+	private AccessManager accessManager;
 	
 	public AccessServices() {
 		super();
@@ -55,10 +56,8 @@ public class AccessServices extends AbstractServices {
 		controller.getContext().put(AUTHENTICATION_SERVICE, this);
 		
 		initAuthenticator();
+		initAccessManager();
 		
-		AccessMatrixReader matrixReader = new AccessMatrixReader();
-		roleHierarchy = matrixReader.readAccessMatrix(AccessServices.class.getClassLoader().getResourceAsStream("DefaultAccessMatrix.csv"));
-
 		sessionExpirationTimer = new Timer("Session expiration timer");
 		sessionExpirationTimer.schedule(new TimerTask() {
 			@Override
@@ -84,6 +83,21 @@ public class AccessServices extends AbstractServices {
 		}
 		authenticator.init(getContext());
 	}
+	
+	private void initAccessManager() throws Exception {
+		String accessManagerClass = Configuration.getInstance().getProperty("ui.accessmanager",null);
+		if(accessManager==null) {
+			accessManager = new DefaultAccessManager();
+		} else {
+			try {
+				accessManager = (AccessManager) this.getClass().getClassLoader().loadClass(accessManagerClass).newInstance();
+			} catch (Exception e) {
+				logger.error("Error while initializing access manager '"+accessManagerClass+"'",e);
+				throw e;
+			}
+		}
+		accessManager.init(getContext());
+	}
 
 	@POST
 	@Path("/login")
@@ -103,16 +117,23 @@ public class AccessServices extends AbstractServices {
     }
 	
 	@GET
-	@Path("/matrix")
-	public Map<String, List<String>> getAccessControlMatrix() {
-		return roleHierarchy;
+	@Path("/conf")
+	public AccessConfiguration getAccessConfiguration() {
+		AccessConfiguration conf = new AccessConfiguration();
+		conf.setAuthentication(useAuthentication());
+		conf.setRoles(accessManager.getRoles());
+		return conf;
+	}
+	
+	public static boolean useAuthentication() {
+		return Configuration.getInstance().getPropertyAsBoolean("authentication", true);
 	}
 	
 	static Session ANONYMOUS_SESSION = new Session();
 	{
 		ANONYMOUS_SESSION.setUsername("admin");
 		Profile profile = new Profile();
-		profile.setRole("admin");
+		profile.setRole("default");
 		ANONYMOUS_SESSION.setProfile(profile);
 	}
 	
@@ -130,9 +151,10 @@ public class AccessServices extends AbstractServices {
 	}
 
 	private Profile getProfile(String username) {
-		String role = authenticator.getRole(username);
 		Profile profile = new Profile();
-		profile.setRole(role);
+		List<String> rights = accessManager.getRights(username);
+		profile.setRights(rights);
+		profile.setRole(accessManager.getRole(username));
 		return profile;
 	}
 

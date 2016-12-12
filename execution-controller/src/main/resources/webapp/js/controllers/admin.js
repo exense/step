@@ -130,7 +130,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
       })
       
 .controller('editUserModalCtrl', function ($scope, $modalInstance, $http, $location, AuthService, user) {
-   $scope.roles = _.keys(AuthService.getRoles());
+   $scope.roles = AuthService.getConf().roles;
    $scope.user = user;
    
    if(!user.role) {

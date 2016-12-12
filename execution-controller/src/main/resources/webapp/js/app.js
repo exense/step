@@ -201,13 +201,13 @@ angular.module('step',['ngStorage'])
   var serviceContext = {};
 
   function setContext(session) {
-    $rootScope.context = {'userID':session.username, 'role':session.profile.role};
+    $rootScope.context = {'userID':session.username, 'rights':session.profile.rights, 'role':session.profile.role};
   }
   
   authService.init = function() {
-    return $http.get('rest/access/matrix')
+    return $http.get('rest/access/conf')
       .then(function(res) {
-        serviceContext.rightMatrix = res.data;
+        serviceContext.conf = res.data;
       })
   }
   
@@ -231,20 +231,16 @@ angular.module('step',['ngStorage'])
     return $rootScope.context.userID && $rootScope.context.userID!='anonymous';
   };
  
-  authService.isAuthorized = function (authorizedRoles) {
-    if (!angular.isArray(authorizedRoles)) {
-      authorizedRoles = [authorizedRoles];
-    }
-    return (authService.isAuthenticated() &&
-      authorizedRoles.indexOf($rootScope.context.role) !== -1);
-  };
- 
   authService.hasRight = function (right) {
-    return serviceContext.rightMatrix[$rootScope.context.role].indexOf(right) !== -1;
+    if(serviceContext.conf.authentication) {
+      return $rootScope.context&&$rootScope.context.rights?$rootScope.context.rights.indexOf(right) !== -1:false;      
+    } else {
+      return true;
+    }
   }; 
   
-  authService.getRoles = function() {
-    return serviceContext.rightMatrix;
+  authService.getConf = function() {
+    return serviceContext.conf;
   }
   
   return authService;

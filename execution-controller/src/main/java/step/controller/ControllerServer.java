@@ -44,7 +44,6 @@ import step.attachments.DownloadFileServlet;
 import step.commons.conf.Configuration;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
-import step.core.access.AccessFilter;
 import step.core.deployment.AccessServices;
 import step.core.deployment.AdminServices;
 import step.core.deployment.AuthenticationFilter;
@@ -169,7 +168,6 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ControllerServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
 		resourceConfig.registerClasses(AuthenticationFilter.class);
-		resourceConfig.registerClasses(AccessFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	

@@ -16,7 +16,6 @@ import javax.ws.rs.ext.Provider;
 
 import org.glassfish.jersey.server.ExtendedUriInfo;
 
-import step.commons.conf.Configuration;
 import step.core.access.Profile;
 
 @Secured
@@ -29,7 +28,7 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
-		boolean useAuthentication = Configuration.getInstance().getPropertyAsBoolean("authentication", true);
+		boolean useAuthentication = AccessServices.useAuthentication();
 		if(useAuthentication) {
 			Cookie sessionCookie = requestContext.getCookies().get("sessionid");
 			if(sessionCookie!=null) {
@@ -43,7 +42,7 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 					if(right.length()>0) {
 						Profile profile = session.getProfile();
 						
-						boolean hasRight = AccessServices.roleHierarchy.get(profile.getRole()).indexOf(right)!=-1;
+						boolean hasRight = profile.getRights().contains(right);
 						
 						if(!hasRight) {
 							requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
