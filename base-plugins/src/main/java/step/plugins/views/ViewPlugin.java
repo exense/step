@@ -58,7 +58,8 @@ public class ViewPlugin extends AbstractPlugin {
 				if(model!=null) {
 					return model;
 				} else {
-					throw new RuntimeException("Unable to find model for view '"+viewId+"' and execution: "+executionId);
+					// return default view
+					return view.init();
 				}
 			} else {
 				return model;
