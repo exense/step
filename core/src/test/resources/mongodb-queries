@@ -1,0 +1,1 @@
+db.reports.explain().find({$and:[{executionID:"584ed7a5a4b88c152c61e81a"},{$or:[{_class:"step.artefacts.reports.CallFunctionReportNode"},{"error.root":true}]}]})
