@@ -26,7 +26,7 @@ import org.jongo.MongoCollection;
 
 import step.artefacts.CallFunction;
 import step.artefacts.Check;
-import step.artefacts.Return;
+import step.artefacts.ForEachBlock;
 import step.artefacts.TestCase;
 import step.core.GlobalContext;
 import step.core.access.User;
@@ -105,11 +105,30 @@ public class InitializationPlugin extends AbstractPlugin {
 		createDemoPlan(artefacts,"Demo_Testcase_ProcessExecution_Windows","ExecuteProcess","{\"cmd\":\"cmd.exe /r echo TEST\"}",null);
 		createDemoPlan(artefacts,"Demo_Testcase_ProcessExecution_Linux","ExecuteProcess","{\"cmd\":\"echo TEST\"}",null);
 
+		createDemoForEachPlan(artefacts, "Demo_Testcase_ForEach_CSV");
 		
 		createSeleniumDemoPlan(artefacts, "Firefox");
 		createSeleniumDemoPlan(artefacts, "HTMLUnit");
 	}
 
+	private void createDemoForEachPlan(ArtefactAccessor artefacts, String planName)  {
+		CallFunction call1 = createCallFunctionWithCheck(artefacts,"Javascript_HttpGet","{\"url\":\"[[dataPool.url]]\"}","output.getString(\"data\").contains(\"[[dataPool.check]]\")");
+		
+		ForEachBlock forEach = new ForEachBlock();
+		forEach.setTable("../data/testdata/demo.csv");
+		forEach.addChild(call1.getId());
+		artefacts.save(forEach);
+
+		Map<String, String> tcAttributes = new HashMap<>();
+		TestCase testCase = new TestCase();
+		testCase.setRoot(true);
+		
+		tcAttributes.put("name", planName);
+		testCase.setAttributes(tcAttributes);
+		testCase.addChild(forEach.getId());
+		artefacts.save(testCase);
+	}
+	
 	private void createDemoPlan(ArtefactAccessor artefacts, String planName, String functionName, String args, String check) {
 		Map<String, String> tcAttributes = new HashMap<>();
 		TestCase testCase = new TestCase();
@@ -118,10 +137,17 @@ public class InitializationPlugin extends AbstractPlugin {
 		tcAttributes.put("name", planName);
 		testCase.setAttributes(tcAttributes);
 		
-		CallFunction call1 = new CallFunction();
-		call1.setFunction("{\"name\":\""+functionName+"\"}");
-		call1.setArgument(args);
-		call1.setToken("{\"route\":\"remote\"}");
+		CallFunction call1 = createCallFunctionWithCheck(artefacts, functionName, args, check);
+		
+		testCase.addChild(call1.getId());
+		
+		testCase.setRoot(true);
+		artefacts.save(testCase);
+	}
+
+	private CallFunction createCallFunctionWithCheck(ArtefactAccessor artefacts, String functionName, String args,
+			String check) {
+		CallFunction call1 = createCallFunction(functionName, args);
 
 		if(check!=null) {
 			Check check1 = new Check();
@@ -131,11 +157,15 @@ public class InitializationPlugin extends AbstractPlugin {
 		}
 		
 		artefacts.save(call1);
-		
-		testCase.addChild(call1.getId());
-		
-		testCase.setRoot(true);
-		artefacts.save(testCase);
+		return call1;
+	}
+
+	private CallFunction createCallFunction(String functionName, String args) {
+		CallFunction call1 = new CallFunction();
+		call1.setFunction("{\"name\":\""+functionName+"\"}");
+		call1.setArgument(args);
+		call1.setToken("{\"route\":\"remote\"}");
+		return call1;
 	}
 	
 	private void createSeleniumDemoPlan(ArtefactAccessor artefacts, String browser) {
