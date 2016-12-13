@@ -62,6 +62,7 @@
 		    <groupId>org.python</groupId>
 		    <artifactId>jython</artifactId>
 		    <version>2.5.4-rc1</version>
+			<scope>test</scope>		    
 		</dependency>
 	</dependencies>
 

@@ -87,7 +87,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		
 		addFunction(functionRepository, "Demo_Echo");
 		addFunction(functionRepository, "Javascript_HttpGet");
-		addFunction(functionRepository, "Grinder_HttpGet", "classuri:../ext/lib/grinder|class:step.handlers.scripthandler.ScriptHandler");
+		addFunction(functionRepository, "Grinder_HttpGet", "classuri:../ext/lib/jython|classuri:../ext/lib/grinder|class:step.handlers.scripthandler.ScriptHandler");
 		addFunction(functionRepository, "Demo_Java_Clock", "classuri:../data/scripts/java/bin|class:step.script.AnnotatedMethodHandler");
 		
 		addFunction(functionRepository, "Selenium_StartChrome");
