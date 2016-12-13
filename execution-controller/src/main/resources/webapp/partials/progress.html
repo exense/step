@@ -14,7 +14,7 @@
 
 <div class="panel panel-default">
 	<div class="panel-heading"><a ng-click="displayTestStepsPanel=!displayTestStepsPanel">Steps</a> 
-		<div style="width: 200px" class="progress pull-right" tooltip="PASSED: {{progress.distribution.PASSED}}, FAILED: {{progress.distribution.FAILED}}, TECHNICAL_ERROR: {{progress.distribution.TECHNICAL_ERROR}} ">
+		<div style="width: 200px" class="progress pull-right" tooltip="PASSED: {{progress.distribution.PASSED.count}}, FAILED: {{progress.distribution.FAILED.count}}, TECHNICAL_ERROR: {{progress.distribution.TECHNICAL_ERROR.count}} ">
 		  <div class="progress-bar status-PASSED" ng-attr-style="width:{{progress.distribution.PASSED.count/progress.count*100}}%;">
 		    {{progress.distribution.PASSED.count}}
 		  </div>
