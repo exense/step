@@ -305,19 +305,4 @@ public class TokenPool<P extends Identity, F extends Identity> {
 			return result;
 		}
 	}
-	
-	public boolean existsAvailableMatchingToken(P pretender) {
-		boolean poolContainsAvailableMatchingToken = false;
-		
-		synchronized (tokens) {
-			MatchingResult matchingResult =  searchMatchesInTokenList(pretender);
-			if(matchingResult.bestAvailableMatch != null) {
-				poolContainsAvailableMatchingToken = true;
-			}
-			
-			return poolContainsAvailableMatchingToken;
-		}
-		
-	}
-
 }

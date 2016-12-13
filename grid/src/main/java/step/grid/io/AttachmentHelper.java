@@ -34,11 +34,15 @@ public class AttachmentHelper {
 	}
 
 	public static Attachment generateAttachmentForException(Throwable e) {
-		Attachment attachment = new Attachment();	
-		attachment.setName("exception.log");
 		StringWriter w = new StringWriter();
 		e.printStackTrace(new PrintWriter(w));
-		attachment.setHexContent(AttachmentHelper.getHex(w.toString().getBytes()));
+		return generateAttachmentFromByteArray(w.toString().getBytes(), "exception.log");
+	}
+	
+	public static Attachment generateAttachmentFromByteArray(byte[] bytes, String attachmentName) {
+		Attachment attachment = new Attachment();	
+		attachment.setName(attachmentName);
+		attachment.setHexContent(AttachmentHelper.getHex(bytes));
 		return attachment;
 	}
 }

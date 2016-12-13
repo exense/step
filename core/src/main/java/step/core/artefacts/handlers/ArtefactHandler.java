@@ -266,6 +266,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	protected void fail(ReportNode node, String error) {
 		node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
-		node.setError(error);
+		node.setError(error, 0, true);
 	}
 }

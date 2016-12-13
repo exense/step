@@ -57,8 +57,7 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
 import step.attachments.AttachmentContainer;
@@ -66,7 +65,9 @@ import step.attachments.AttachmentManager;
 import step.core.accessors.Collection;
 import step.core.accessors.CollectionFind;
 import step.core.accessors.SearchOrder;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.AbstractServices;
+import step.core.deployment.Secured;
 import step.core.execution.model.ExecutionStatus;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
@@ -85,9 +86,9 @@ public class DataTableServices extends AbstractServices {
 	
 	@PostConstruct
 	public void init() {
-		MongoClient client = getContext().getMongoClient();
+		MongoDatabase database = getContext().getMongoDatabase();
 		
-		BackendDataTable executions = new BackendDataTable(new Collection(client, "executions"));
+		BackendDataTable executions = new BackendDataTable(new Collection(database, "executions"));
 		executions.addColumn("ID", "_id").addColumn("Description", "description").addDateColumn("Start time", "startTime")
 		.addDateColumn("End time", "endTime").addColumn("User", "executionParameters.userID");
 				
@@ -103,11 +104,12 @@ public class DataTableServices extends AbstractServices {
 		leafReportNodesColumns.addDateColumn("Begin", "executionTime").addColumn("Name","name").addColumn("Status","status").addColumn("Error", "error")
 		.addColumn("Input","input").addColumn("Output","output").addColumn("Duration","duration").addColumn("Adapter", "adapter");
 
-		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(client, "reports"));
+		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports"));
 		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
-		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
+		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumnOptimized("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
+		.setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
 		
-		BackendDataTable artefactTable = new BackendDataTable(new Collection(client, "artefacts"));
+		BackendDataTable artefactTable = new BackendDataTable(new Collection(database, "artefacts"));
 		artefactTable.addColumn("ID", "_id");
 		if(screenTemplates!=null) {
 			for(Input input:screenTemplates.getInputsForScreen("artefactTable", null)) {
@@ -122,7 +124,7 @@ public class DataTableServices extends AbstractServices {
 			}
 		});
 		
-		BackendDataTable functionTable = new BackendDataTable(new Collection(client, "functions"));
+		BackendDataTable functionTable = new BackendDataTable(new Collection(database, "functions"));
 		functionTable.addColumn("ID", "_id");
 		if(screenTemplates!=null) {
 			for(Input input:screenTemplates.getInputsForScreen("functionTable", null)) {
@@ -132,9 +134,10 @@ public class DataTableServices extends AbstractServices {
 		functionTable.addColumn("Type", "handlerChain");
 		functionTable.addRowAsJson("Actions");
 		
-		BackendDataTable leafReportNodesOQL = new BackendDataTable(new Collection(client, "reports"));
+		BackendDataTable leafReportNodesOQL = new BackendDataTable(new Collection(database, "reports"));
 		leafReportNodesOQL.addColumn("ID", "_id").addColumn("Execution", "executionID").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
-		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status").setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
+		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
+		.setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
 
 		tables.put("executions", executions);
 		tables.put("reports", leafReportNodes);
@@ -155,6 +158,7 @@ public class DataTableServices extends AbstractServices {
 	@GET
 	@Path("/{id}/columns")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
 	public List<ColumnDef> getTableColumnDefs(@PathParam("id") String collectionID) {
 		BackendDataTable table = tables.get(collectionID);
 		return table.getColumns();
@@ -164,6 +168,7 @@ public class DataTableServices extends AbstractServices {
 	@Path("/{id}/data")
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
 	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form) throws Exception {
 		return getTableData(collectionID, form);
 	}
@@ -171,6 +176,7 @@ public class DataTableServices extends AbstractServices {
 	@GET
 	@Path("/{id}/data")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
 	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
 		return getTableData(collectionID, uriInfo.getQueryParameters());
 	}
@@ -318,6 +324,7 @@ public class DataTableServices extends AbstractServices {
 	@GET
 	@Path("/exports/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
 	public ReportStatus getExport(@PathParam("id") String reportID) throws Exception {
 		ReportStatus report = reports.get(reportID);
 		if(report.ready) {

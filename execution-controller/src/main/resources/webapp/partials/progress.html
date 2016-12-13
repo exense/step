@@ -14,20 +14,20 @@
 
 <div class="panel panel-default">
 	<div class="panel-heading"><a ng-click="displayTestStepsPanel=!displayTestStepsPanel">Steps</a> 
-		<div ng-if="progress.maxProgress>0" style="width: 200px" class="progress pull-right" tooltip="PASSED: {{progress.reportNodeStatus.PASSED}}, FAILED: {{progress.reportNodeStatus.FAILED}}, TECHNICAL_ERROR: {{progress.reportNodeStatus.TECHNICAL_ERROR}} ">
-		  <div class="progress-bar status-PASSED" ng-attr-style="width:{{progress.reportNodeStatus.PASSED/(progress.reportNodeStatus.PASSED+progress.reportNodeStatus.FAILED+progress.reportNodeStatus.TECHNICAL_ERROR)*100}}%;">
-		    {{progress.reportNodeStatus.PASSED}}
+		<div style="width: 200px" class="progress pull-right" tooltip="PASSED: {{progress.distribution.PASSED.count}}, FAILED: {{progress.distribution.FAILED.count}}, TECHNICAL_ERROR: {{progress.distribution.TECHNICAL_ERROR.count}} ">
+		  <div class="progress-bar status-PASSED" ng-attr-style="width:{{progress.distribution.PASSED.count/progress.count*100}}%;">
+		    {{progress.distribution.PASSED.count}}
 		  </div>
-		  <div class="progress-bar status-FAILED" ng-attr-style="width:{{progress.reportNodeStatus.FAILED/(progress.reportNodeStatus.PASSED+progress.reportNodeStatus.FAILED+progress.reportNodeStatus.TECHNICAL_ERROR)*100}}%;">
-		    {{progress.reportNodeStatus.FAILED}}
+		  <div class="progress-bar status-FAILED" ng-attr-style="width:{{progress.distribution.FAILED.count/progress.count*100}}%;">
+		    {{progress.distribution.FAILED.count}}
 		  </div>
-		  <div class="progress-bar status-TECHNICAL_ERROR" ng-attr-style="width:{{progress.reportNodeStatus.TECHNICAL_ERROR/(progress.reportNodeStatus.PASSED+progress.reportNodeStatus.FAILED+progress.reportNodeStatus.TECHNICAL_ERROR)*100}}%;">
-		    {{progress.reportNodeStatus.TECHNICAL_ERROR}}
+		  <div class="progress-bar status-TECHNICAL_ERROR" ng-attr-style="width:{{progress.distribution.TECHNICAL_ERROR.count/progress.count*100}}%;">
+		    {{progress.distribution.TECHNICAL_ERROR.count}}
 		  </div>
 		</div>
-		<div ng-if="execution.status != 'ENDED' && progress.maxProgress>0" tooltip="Progress: {{progress.currentProgress}}/{{progress.maxProgress}}" style="margin-right:20px; width: 200px" class="progress pull-right">
-		  <div class="progress-bar" role="progressbar" aria-valuenow="{{progress.currentProgress}}" aria-valuemin="0" aria-valuemax="{{progress.maxProgress}}" ng-attr-style="min-width: 2em; width: {{progress.currentProgress/progress.maxProgress*100}}%;">
-		    {{progress.currentProgress}}/{{progress.maxProgress}}
+		<div ng-if="execution.status != 'ENDED' && progress.countForecast>0" tooltip="Progress: {{progress.count}}/{{progress.countForecast}}" style="margin-right:20px; width: 200px" class="progress pull-right">
+		  <div class="progress-bar" role="progressbar" aria-valuenow="{{progress.count}}" aria-valuemin="0" aria-valuemax="{{progress.countForecast}}" ng-attr-style="min-width: 2em; width: {{progress.count/progress.countForecast*100}}%;">
+		    {{progress.count}}/{{progress.countForecast}}
 		  </div>
 		</div>
 	</div>
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<div ng-if="progress.maxProgress>1" >
+<!-- <div ng-if="progress.count>1" >
 <div class="panel panel-default">
   <div class="panel-heading">Throughput</div>
   <div class="panel-body" style="height: 300px; width: 100%">
@@ -114,9 +114,8 @@
 	  labels="labels" legend="true" series="series"
 	  click="onClick">
 	</canvas> 
-	<!-- <linechart data="data" options="options" mode="" width="" height=""></linechart> -->
   </div>
-</div>
+</div>  -->
 </div>
 </div>
 

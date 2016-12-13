@@ -18,10 +18,12 @@
  *******************************************************************************/
 angular.module('functionsControllers',['dataTable','step'])
 
-.controller('FunctionListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal', '$location',
-    function($scope, $compile, $http, $stateStorage, $interval, $modal, $location) {
+.controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$modal', 'Dialogs', '$location','AuthService',
+    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $modal, Dialogs, $location, AuthService) {
       $stateStorage.push($scope, 'functions', {});	
 
+      $scope.authService = AuthService;
+      
       $scope.autorefresh = true;
 
       function openModal(function_) {
@@ -40,11 +42,28 @@ angular.module('functionsControllers',['dataTable','step'])
   
           }, function () {});
       }
+      
+      function reload() {
+        $scope.table.Datatable.ajax.reload(null, false);
+      }
 
       $scope.editFunction = function(id) {
       	$http.get("rest/functions/"+id).success(function(function_) {
       	  openModal(function_);
       	});
+      }
+      
+      $scope.copyFunction = function(id) {
+        $rootScope.clipboard = {object:"function",id:id};
+      }
+      
+      $scope.pasteFunction = function() {
+        if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
+          $http.post("rest/functions/"+$rootScope.clipboard.id+"/copy")
+          .success(function() {
+            reload();
+          });
+        }
       }
       
       $scope.editFlow = function(id) {
@@ -54,10 +73,10 @@ angular.module('functionsControllers',['dataTable','step'])
       }
       
       $scope.addFunction = function() {
-    	openModal();
+        openModal();
       }
       
-      $scope.executeFunction = function(id) {
+      $scope.executeFunction = function(id, executeLocally) {
   	  var modalInstance = $modal.open({
             animation: $scope.animationsEnabled,
             templateUrl: 'executeFunctionModalContent.html',
@@ -65,31 +84,30 @@ angular.module('functionsControllers',['dataTable','step'])
             resolve: {
               functionId: function () {
                 return id;
+              },
+              executeLocally: function () {
+                return executeLocally;
               }
             }
           });
 
-          modalInstance.result.then(function (argument) {
-              $http.post("rest/functions/"+id+"/execute",argument).success(function() {
-              		if($scope.table) {
-              			$scope.table.Datatable.ajax.reload(null, false);
-          			}
-              });
-
-          }, function () {});
+          modalInstance.result.then(function (argument) {}, function () {});
       }
       
       $scope.deleteFunction = function(id) {
-    	  $http.delete("rest/functions/"+id).success(function() {
-      		if($scope.table) {
-      			$scope.table.Datatable.ajax.reload(null, false);
-  			}
-      });
+        Dialogs.showDeleteWarning().then(function() {
+          $http.delete("rest/functions/"+id).success(function() {
+            if($scope.table) {
+              reload();
+          }
+          });
+        })
       }
       
       $scope.table = {};
 
       $scope.tabledef = {}
+      $scope.tabledef.actions = [{"label":"Paste","action":function() {$scope.pasteFunction()}}];
       $scope.tabledef.columns = function(columns) {
         _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
           col.visible = false
@@ -104,7 +122,11 @@ angular.module('functionsControllers',['dataTable','step'])
         	var function_ = JSON.parse(row[row.length-1]);
         	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
         	  if(function_.handlerProperties) {
-        		return '<a href="#/root/artefacteditor/' + function_.handlerProperties['artefactid'] + '">Composite</a>'
+        	    if(AuthService.hasRight('kw-write')) { 
+        	      return '<a href="#/root/artefacteditor/' + function_.handlerProperties['artefactid'] + '">Composite</a>'        	      
+        	    } else {
+        	      return 'Composite';
+        	    }
         	  } else {
         		return 'Unknown';
         	  }
@@ -116,26 +138,43 @@ angular.module('functionsControllers',['dataTable','step'])
         _.each(_.where(columns,{'title':'Actions'}),function(col){
             col.title="Actions";
             col.searchmode="none";
-            col.width="160px";
+            col.width="200px";
             col.render = function ( data, type, row ) {
               var function_ = JSON.parse(row[row.length-1]);
-            	var html = '<div class="input-group">' +
-	            	'<div class="btn-group">' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>';
+              var isComposite = data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1;
+            	var html = '<div class="input-group"><div class="btn-group">';
             	
-            	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
-            	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFlow(\''+function_.handlerProperties['artefactid']+'\')">' +
-                '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>';
+            	if(AuthService.hasRight('kw-write')) {
+              	html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
+  	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>'+
+              	  '</button> ';
+              	
+              	if(isComposite) {
+              	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFlow(\''+function_.handlerProperties['artefactid']+'\')">' +
+                  '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>'+
+                  '</button> ';
+              	}
             	}
             	
-            	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().deleteFunction(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
-	            	'</button> ' +
-	            	'</div>' +
-	            	'</div>';
+            	if(AuthService.hasRight('kw-execute')) {
+              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\','+isComposite+')">' +
+  	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
+  	            	'</button> ';
+            	}
+            	
+              if(AuthService.hasRight('kw-write')) {
+                html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().copyFunction(\''+row[0]+'\')">' +
+                '<span class="glyphicon glyphicon glyphicon-copy" aria-hidden="true"></span>' +
+                '</button> ';
+              }
+            	
+            	if(AuthService.hasRight('kw-delete')) {
+              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().deleteFunction(\''+row[0]+'\')">' +
+  	            	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
+  	            	'</button> ';
+            	}
+            	
+            	html+='</div></div>';
             	
             	return html;
             }
@@ -155,14 +194,14 @@ angular.module('functionsControllers',['dataTable','step'])
   
   $scope.type = function(value) {
   	if(value) {
-  	  $scope.function_.handlerChain = (value=="Composite")?"class:step.core.tokenhandlers.ArtefactMessageHandler":"";
+  	  $scope.function_.handlerChain = (value=="Composite")?"class:step.core.tokenhandlers.ArtefactMessageHandler":"class:step.handlers.scripthandler.ScriptHandler";
   	}
   	return  ($scope.function_.handlerChain&&$scope.function_.handlerChain.indexOf("ArtefactMessageHandler")!=-1)?"Composite":"Handler";
   }
   
   if(newFunction) {
   	$scope.function_= {"attributes":{}};
-  	$scope.type('Composite');
+  	$scope.type('Handler');
   	$http.get("rest/screens/functionTable").success(function(data){
   	  _.each(data,function(input) {
   	    eval('$scope.function_.'+input.id+"=''");
@@ -204,17 +243,35 @@ angular.module('functionsControllers',['dataTable','step'])
   };
 })
 
-.controller('executeFunctionModalCtrl', function ($scope, $modalInstance, $http, functionId) {
+.controller('executeFunctionModalCtrl', function ($scope, $modalInstance, $http, functionId, executeLocally) {
 
   $scope.argument = '';
+	$scope.running = false;
+  
+	$scope.properties = [];
+	
+	$scope.addProperty = function() {
+	  $scope.properties.push({key:"",value:""})
+	}
 	
   $scope.ok = function () {
-	$http.post("rest/functions/"+functionId+"/execute",$scope.argument).success(function(data) {
+    $scope.running=true;
+    var properties = {};
+    _.each($scope.properties,function(prop){properties[prop.key]=prop.value});
+    $http.post("rest/functions/"+functionId+"/execute",{'executeLocally':executeLocally, 'properties':properties,'argument':$scope.argument}).success(function(data) {
 		$scope.output = data;
+		$scope.running=false;
 		if(data) {
-		  $scope.result = JSON.stringify(data.result)
-		  $scope.error = data.error
+		  var output = data.output;
+		  if(output.result) {
+		    $scope.result = JSON.stringify(output.result)		    
+		  }
+		  $scope.attachments=data.attachments;
+		  $scope.error = output.error
 		}
+	}).error(function(error) {
+	  $scope.running=false;
+	  $scope.error=error;
 	});
   };
 

@@ -21,13 +21,19 @@ package step.controller;
 import java.io.File;
 
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -38,6 +44,9 @@ import step.attachments.DownloadFileServlet;
 import step.commons.conf.Configuration;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
+import step.core.deployment.AccessServices;
+import step.core.deployment.AdminServices;
+import step.core.deployment.AuthenticationFilter;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.JacksonMapperProvider;
 import step.grid.agent.ArgumentParser;
@@ -80,15 +89,50 @@ public class ControllerServer {
 	}
 
 	public void start() throws Exception {
-		server = new Server(port);
+		server = new Server();
 		handlers = new ContextHandlerCollection();
 
 		initController();
 		initWebapp();
 		initDownloadServlet();
 		
+		setupConnectors();
+
+		
 		server.setHandler(handlers);
 		server.start();
+	}
+
+	private void setupConnectors() {
+		Configuration conf = Configuration.getInstance();
+
+		HttpConfiguration http = new HttpConfiguration();
+		http.addCustomizer(new SecureRequestCustomizer());
+		http.setSecureScheme("https");
+
+		ServerConnector connector = new ServerConnector(server);
+		connector.addConnectionFactory(new HttpConnectionFactory(http));
+		connector.setPort(port);
+		
+		if(conf.getPropertyAsBoolean("ui.ssl.enabled", false)) {
+			int httpsPort = conf.getPropertyAsInteger("ui.ssl.port", 443);
+			
+			http.setSecurePort(httpsPort);
+
+			HttpConfiguration https = new HttpConfiguration();
+			https.addCustomizer(new SecureRequestCustomizer());
+			
+			SslContextFactory sslContextFactory = new SslContextFactory();
+			sslContextFactory.setKeyStorePath(conf.getProperty("ui.ssl.keystore.path"));
+			sslContextFactory.setKeyStorePassword(conf.getProperty("ui.ssl.keystore.password"));
+			sslContextFactory.setKeyManagerPassword(conf.getProperty("ui.ssl.keymanager.password"));
+			
+			ServerConnector sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(https));
+			sslConnector.setPort(httpsPort);
+			server.addConnector(sslConnector);
+		}
+
+		server.addConnector(connector);
 	}
 
 	private void initWebapp() throws Exception {
@@ -122,6 +166,9 @@ public class ControllerServer {
 		resourceConfig.register(JacksonMapperProvider.class);
 		
 		resourceConfig.registerClasses(ControllerServices.class);
+		resourceConfig.registerClasses(AccessServices.class);
+		resourceConfig.registerClasses(AuthenticationFilter.class);
+		resourceConfig.registerClasses(AdminServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override

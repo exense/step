@@ -33,6 +33,8 @@ public class InputMessage {
 	private JsonObject argument;
 	
 	private Map<String, String> properties;
+	
+	private int callTimeout;
 
 	public InputMessage() {
 		super();
@@ -76,6 +78,14 @@ public class InputMessage {
 
 	public void setProperties(Map<String, String> properties) {
 		this.properties = properties;
+	}
+
+	public int getCallTimeout() {
+		return callTimeout;
+	}
+
+	public void setCallTimeout(int callTimeout) {
+		this.callTimeout = callTimeout;
 	}
 	
 	

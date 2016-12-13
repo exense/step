@@ -22,11 +22,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import javax.json.Json;
 import javax.json.JsonObject;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.grid.client.GridClient.TokenHandle;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
@@ -39,9 +41,49 @@ public class AgentTest extends AbstractGridTest {
 		
 		JsonObject o = newDummyJson();
 		
-		OutputMessage outputMessage = client.getToken(null, interests).processAndRelease("testFunction", o, "class:step.grid.agent.TestTokenHandler", null);
+		OutputMessage outputMessage = client.getToken(null, interests).setHandler("class:step.grid.agent.TestTokenHandler").processAndRelease("testFunction", o);
 		Assert.assertEquals(outputMessage.getPayload(), o);;
 	}
+	
+	@Test
+	public void testTimeout() throws Exception {		
+		JsonObject o = Json.createObjectBuilder().add("delay", 4000).build();
+		
+		TokenHandle f = client.getToken().setCallTimeout(10).setHandler("class:step.grid.agent.TestTokenHandler");
+		OutputMessage outputMessage = f.processAndRelease("testFunction", o);
+		Assert.assertEquals("Timeout while processing request. Request execution interrupted successfully.",outputMessage.getError());
+		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace.log"));
+		
+		
+		// check if the token has been returned to the pool. In this case the second call should return the same error
+		outputMessage = f.processAndRelease("testFunction", o);
+		Assert.assertEquals("Timeout while processing request. Request execution interrupted successfully.",outputMessage.getError());
+	}
+	
+	@Test
+	public void testTimeoutNoTokenReturn() throws Exception {		
+		JsonObject o = Json.createObjectBuilder().add("delay", 4000).add("delayAfterInterruption", 150).build();
+		
+		TokenHandle f = client.getToken().setCallTimeout(10).setHandler("class:step.grid.agent.TestTokenHandler");
+		OutputMessage outputMessage = f.processAndRelease("testFunction", o);
+		Assert.assertEquals("Timeout while processing request. WARNING: Request execution couldn't be interrupted and the token couldn't be returned to the pool. Subsequent calls to that token may fail!",outputMessage.getError());
+		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace.log"));
+
+		
+		// check if the token has been returned to the pool. In this case the second call should return the same error
+		outputMessage = f.processAndRelease("testFunction", o);
+		Assert.assertTrue(outputMessage.getError().contains("already in use"));
+		
+		Thread.sleep(150);
+		o = newDummyJson();
+		
+		// After "delayAfterInterruption" the token should have been returned to the pool
+		outputMessage = f.processAndRelease("testFunction", o);
+		Assert.assertEquals(outputMessage.getPayload(), o);;
+	}
+	
+	
+	
 	
 	@Test
 	public void testDefaultHandler() throws Exception {
@@ -58,7 +100,7 @@ public class AgentTest extends AbstractGridTest {
 		
 		JsonObject o = newDummyJson();
 		
-		OutputMessage outputMessage = client.getToken(null, interests).processAndRelease("testFunction", o, null);
+		OutputMessage outputMessage = client.getToken(null, interests).processAndRelease("testFunction", o);
 		Assert.assertEquals(outputMessage.getPayload(), o);;
 	}
 	
@@ -66,8 +108,16 @@ public class AgentTest extends AbstractGridTest {
 	public void testHandlerChain() throws Exception {		
 		final String uri = "class:step.grid.agent.TestTokenHandlerDelegator|class:step.grid.agent.TestTokenHandler";
 		JsonObject o = newDummyJson();
-		OutputMessage outputMessage = client.getToken().processAndRelease("function1",  o, uri, null);
+		OutputMessage outputMessage = client.getToken().setHandler(uri).processAndRelease("function1",  o);
 		Assert.assertEquals(o, outputMessage.getPayload());
 		Assert.assertEquals("Test error", outputMessage.getError());
+	}
+	
+	@Test
+	public void testLocalToken() throws Exception {
+		JsonObject o = newDummyJson();
+		
+		OutputMessage outputMessage = client.getLocalToken().setHandler("class:step.grid.agent.TestTokenHandler").processAndRelease("testFunction", o);
+		Assert.assertEquals(outputMessage.getPayload(), o);;
 	}
 }

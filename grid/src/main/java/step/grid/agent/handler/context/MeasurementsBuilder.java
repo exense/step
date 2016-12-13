@@ -54,7 +54,6 @@ public class MeasurementsBuilder {
 		if(tr!=null) {
 			tr.setDuration(end-tr.getBegin());
 			tr.setData(data);
-			System.out.println("Closing "+tr.getName());
 			synchronized (closedMeasures) {
 				closedMeasures.add(tr);
 			}

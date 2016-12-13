@@ -19,6 +19,9 @@
 package step.plugins.adaptergrid;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import javax.json.Json;
 import javax.ws.rs.Consumes;
@@ -27,20 +30,27 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import step.attachments.AttachmentMeta;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
+import step.core.deployment.Secured;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.miscellaneous.ReportNodeAttachmentManager;
+import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
 import step.functions.Function;
 import step.functions.FunctionClient;
-import step.functions.FunctionClient.FunctionToken;
+import step.functions.FunctionClient.FunctionTokenHandle;
 import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
+import step.grid.io.Attachment;
+import step.grid.io.AttachmentHelper;
 
 @Path("/functions")
 public class FunctionRepositoryServices extends AbstractServices {
@@ -56,26 +66,140 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/")
+	@Secured(right="kw-write")
 	public void save(Function function) {
 		getFunctionRepository().addFunction(function);
+	}
+	
+	public static class ExecutionOutput {
+		
+		Output output;
+		
+		List<AttachmentMeta> attachments;
+
+		public ExecutionOutput() {
+			super();
+		}
+
+		public Output getOutput() {
+			return output;
+		}
+
+		public void setOutput(Output output) {
+			this.output = output;
+		}
+
+		public List<AttachmentMeta> getAttachments() {
+			return attachments;
+		}
+
+		public void setAttachments(List<AttachmentMeta> attachments) {
+			this.attachments = attachments;
+		}
+	}
+	
+	public static class ExecutionInput {
+		
+		boolean executeLocally;
+		
+		String argument;
+		
+		Map<String, String> properties;
+
+		public ExecutionInput() {
+			super();
+		}
+
+		public boolean isExecuteLocally() {
+			return executeLocally;
+		}
+
+		public void setExecuteLocally(boolean executeLocally) {
+			this.executeLocally = executeLocally;
+		}
+
+		public String getArgument() {
+			return argument;
+		}
+
+		public void setArgument(String argument) {
+			this.argument = argument;
+		}
+
+		public Map<String, String> getProperties() {
+			return properties;
+		}
+
+		public void setProperties(Map<String, String> properties) {
+			this.properties = properties;
+		}
 	}
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}/execute")
-	public Output executeFunction(@PathParam("id") String functionId, String argument) {
-		FunctionToken token = getFunctionClient().getLocalFunctionToken();
+	@Secured(right="kw-execute")
+	public ExecutionOutput executeFunction(@PathParam("id") String functionId, ExecutionInput executionInput) {
+		ExecutionOutput result = new ExecutionOutput();
 		try {
-			ExecutionContext.setCurrentContext(createContext(getContext()));
-			Input input = new Input();		
-			if(argument!=null&&argument.length()>0) {
-				input.setArgument(Json.createReader(new StringReader(argument)).readObject());				
+			FunctionTokenHandle token;
+			if(executionInput.isExecuteLocally()) {
+				token = getFunctionClient().getLocalFunctionToken();
 			} else {
-				input.setArgument(Json.createObjectBuilder().build());
+				token = getFunctionClient().getFunctionToken();
 			}
-			return token.call(functionId, input);
-		} finally {
-			token.release();
+			try {
+				ExecutionContext.setCurrentContext(createContext(getContext()));
+				Input input = new Input();		
+				String argument = executionInput.getArgument();
+				if(argument!=null&&argument.length()>0) {
+					input.setArgument(Json.createReader(new StringReader(argument)).readObject());				
+				} else {
+					input.setArgument(Json.createObjectBuilder().build());
+				}
+				
+				input.setProperties(executionInput.getProperties());
+				
+
+				Output output = token.call(functionId, input);
+				result.setOutput(output);
+				
+				List<AttachmentMeta> attachmentMetas = new ArrayList<>();
+				result.setAttachments(attachmentMetas);
+				if(output.getAttachments()!=null) {
+					for(Attachment a:output.getAttachments()) {
+						AttachmentMeta attachmentMeta;
+						try {
+							attachmentMeta = ReportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+							attachmentMetas.add(attachmentMeta);
+						} catch (AttachmentQuotaException e) {
+							
+						}
+					}
+				}
+			} finally {
+				token.release();
+			}
+		} catch(Exception e) {
+			Output output = new Output();
+			output.setError(e.getMessage());
+			result.setOutput(output);
+		}
+		return result;
+	}
+	
+	@POST
+	@Path("/{id}/copy")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-write")
+	public void copyFunction(@PathParam("id") String id) {		
+		FunctionRepository repo = getFunctionRepository();
+		Function source = repo.getFunctionById(id);
+		if(source!=null) {
+			source.setId(null);
+			source.getAttributes().put("name",source.getAttributes().get("name")+"_Copy");
+			repo.addFunction(source);
 		}
 	}
 	
@@ -92,12 +216,14 @@ public class FunctionRepositoryServices extends AbstractServices {
 	
 	@DELETE
 	@Path("/{id}")
+	@Secured(right="kw-delete")
 	public void delete(@PathParam("id") String functionId) {
 		getFunctionRepository().deleteFunction(functionId);
 	}
 	
 	@GET
 	@Path("/{id}")
+	@Secured(right="kw-read")
 	public Function get(@PathParam("id") String functionId) {
 		return getFunctionRepository().getFunctionById(functionId);
 	}

@@ -139,10 +139,25 @@ angular.module('dataTable', [])
         });
         
         var nCol = tableElement.find('thead tr[role="row"] th').length;
-        var row = tableElement.find('thead').prepend('<tr class="tableactions"><th colspan="'+nCol+'"><div class="btn-group btn-group-xs pull-right"></div></th></tr>').find('div');
+        var cmdRow = tableElement.find('thead').prepend('<tr class="tableactions"><th colspan="'+nCol+'"></div><div id="selectionButtons" class="btn-group btn-group-xs pull-right"></div><div id="commandButtons" class="btn-group btn-group-xs pull-right" style="margin-right:10px"></th></tr>');
+        var selectionButtons = cmdRow.find('#selectionButtons');
+        var commandButtons = cmdRow.find('#commandButtons');
 
+        if(scope.handle) {
+          scope.handle.buttonRow = commandButtons;
+        }
+        
+        if(scope.tabledef.actions) {
+          _.each(scope.tabledef.actions, function(action){
+            $('<button type="button" class="btn btn-default" aria-label="Left Align">'+action.label+'</button>').appendTo(commandButtons).click(function(){
+              action.action();
+            });
+          })
+        }
+        
+        
         if(tableOptions.serverSide) {
-          $('<button type="button" class="btn btn-default" aria-label="Left Align">Export as CSV</button>').appendTo(row).click(function(){
+          $('<button type="button" class="btn btn-default" aria-label="Left Align">Export as CSV</button>').appendTo(selectionButtons).click(function(){
             scope.export()
           });
         }
@@ -155,13 +170,13 @@ angular.module('dataTable', [])
             scope.$digest();
           });
           
-          $('<button type="button" class="btn btn-default" aria-label="Left Align">Unselect all</button>').appendTo(row).click(function(){
+          $('<button type="button" class="btn btn-default" aria-label="Left Align">Unselect all</button>').appendTo(selectionButtons).click(function(){
             scope.setSelectionOnFilteredRows(false);
             scope.sendSelectionChangeEvent();
             scope.refreshInputs();
           });
           
-          $('<button type="button" class="btn btn-default" aria-label="Left Align">Select all</button>').appendTo(row).click(function(){
+          $('<button type="button" class="btn btn-default" aria-label="Left Align">Select all</button>').appendTo(selectionButtons).click(function(){
             scope.setSelectionOnFilteredRows(true);
             scope.sendSelectionChangeEvent();
             scope.refreshInputs();
@@ -404,3 +419,14 @@ angular.module('dataTable', [])
     templateUrl: 'partials/datatable.html'
   };
 }])
+
+// hack to suppress DataTable warning
+// see http://stackoverflow.com/questions/11941876/correctly-suppressing-warnings-in-datatables
+window.alert = (function() {
+    var nativeAlert = window.alert;
+    return function(message) {
+        message.indexOf("DataTables warning") === 0 ?
+            console.warn(message) :
+            nativeAlert(message);
+    }
+})();

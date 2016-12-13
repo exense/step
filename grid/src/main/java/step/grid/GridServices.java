@@ -34,10 +34,6 @@ public class GridServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/register")
 	public void register(RegistrationMessage message) {
-		AgentRef agentRef = message.getAgentRef();
-		grid.getAgentRefs().putOrTouch(agentRef.getAgentId(), agentRef);
-		for (Token token : message.getTokens()) {
-			grid.getTokenPool().offerToken(new TokenWrapper(token));			
-		}
+		grid.handleRegistrationMessage(message);
 	}
 }

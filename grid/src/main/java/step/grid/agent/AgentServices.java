@@ -21,8 +21,16 @@ package step.grid.agent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -33,47 +41,133 @@ import javax.ws.rs.core.MediaType;
 import step.grid.Token;
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.tokenpool.AgentTokenPool;
+import step.grid.agent.tokenpool.AgentTokenPool.TokenInUseException;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
+@Singleton
 @Path("/")
 public class AgentServices {
 
 	@Inject
 	Agent agent;
+	
+	final ExecutorService executor;
+	
+	AgentTokenPool tokenPool;
 		
+	public AgentServices() {
+		super();	
+		executor = Executors.newCachedThreadPool();
+	}
+	
+	@PostConstruct
+	public void init() {
+		tokenPool = agent.getTokenPool();
+	}
+
+	class ExecutionContext {
+		protected Thread t;
+		protected boolean running = true;
+	}
+	
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/process")
-	public OutputMessage process(InputMessage message) {
+	public OutputMessage process(final InputMessage message) {
 		try {
-			String tokenId = message.getTokenId();
-			
-			AgentTokenPool tokenPool = agent.getTokenPool();
-			AgentTokenWrapper tokenWrapper = tokenPool.getToken(tokenId);
-			
-			if(tokenWrapper!=null) {
+			final String tokenId = message.getTokenId();
+			final AgentTokenWrapper tokenWrapper = tokenPool.getToken(tokenId);
+			if(tokenWrapper!=null) {				
+				final ExecutionContext context = new ExecutionContext();
+				Future<OutputMessage> future = executor.submit(new Callable<OutputMessage>() {
+					@Override
+					public OutputMessage call() throws Exception {
+						try {
+							context.t = Thread.currentThread();
+							MessageHandler tokenHandler = getTokenHandler(message, tokenWrapper);
+							OutputMessage output = tokenHandler.handle(tokenWrapper, message);
+							return output;
+						} catch (Exception e) {
+							return handleUnexpectedError(message, e);
+						} finally {
+							tokenPool.returnToken(tokenId);
+							synchronized (context) {
+								context.running = false;								
+								context.notify();
+							}
+						}
+					}
+				});
+				
 				try {
-					MessageHandler tokenHandler = getTokenHandler(message, tokenWrapper);
+					OutputMessage output = future.get(message.getCallTimeout(), TimeUnit.MILLISECONDS);
+					return output;
+				} catch(TimeoutException e) {
+					Attachment stacktraceAttachment = null;
 					
-					OutputMessage output = tokenHandler.handle(tokenWrapper, message);
-					return output;						
-				} finally {
-					tokenPool.returnToken(tokenId);
+					synchronized (context) {
+						if(context.running && context.t!=null) {
+							StackTraceElement[] stacktrace = context.t.getStackTrace();
+							stacktraceAttachment = generateAttachmentForStacktrace(stacktrace);							
+						}
+					}
+					
+					future.cancel(true);
+					
+					synchronized (context) {
+						if(context.running) {
+							context.wait(100); 
+						}
+					}
+					
+					if(context.running) {
+						return newErrorOutput("Timeout while processing request. WARNING: Request execution couldn't be interrupted and the token couldn't be returned to the pool. "
+								+ "Subsequent calls to that token may fail!", stacktraceAttachment);		
+					} else {
+						return newErrorOutput("Timeout while processing request. Request execution interrupted successfully.", stacktraceAttachment);			
+					}						
+					
 				}
 			} else {
-				throw new RuntimeException("No token found with id "+tokenId);
+				return newErrorOutput("No token found with id "+tokenId);
 			}
+		} catch(TokenInUseException e) {
+			return newErrorOutput("Token " + e.getToken().getUid() + " already in use. This should never happen!");
 		} catch (Exception e) {
-			OutputMessage output = new OutputMessage();
-			output.addAttachment(generateAttachmentForException(e));
-			output.setError(e.getClass().getName()+":"+e.getMessage());
-			return output;
+			return handleUnexpectedError(message, e);
 		}
+	}
+	
+
+	protected OutputMessage handleUnexpectedError(InputMessage inputMessage, Exception e) {
+		StringBuilder message = new StringBuilder();
+		message.append("Error in agent '").append(agent.getAgentUrl()).append("'");
+		if(inputMessage!=null && inputMessage.getFunction()!=null) {
+			message.append(" while executing '").append(inputMessage.getFunction()).append("'");
+		}
+		if(e.getMessage()!=null) {
+			message.append(": ").append(e.getMessage()); 
+		}
+		OutputMessage output = newErrorOutput(message.toString());
+		output.addAttachment(generateAttachmentForException(e));
+		return output;
+	}
+	
+	protected OutputMessage newErrorOutput(String error, Attachment...attachments) {
+		OutputMessage output = new OutputMessage();
+		output.setError(error);
+		if(attachments!=null) {
+			for (Attachment attachment : attachments) {
+				output.addAttachment(attachment);			
+			}
+		}
+		return output;
 	}
 	
 	protected Attachment generateAttachmentForException(Throwable e) {
@@ -85,10 +179,23 @@ public class AgentServices {
 		return attachment;
 	}
 	
+	protected Attachment generateAttachmentForStacktrace(StackTraceElement[] e) {
+		Attachment attachment = new Attachment();	
+		attachment.setName("stacktrace.log");
+		StringWriter str = new StringWriter();
+		PrintWriter w = new PrintWriter(str);
+		for (StackTraceElement traceElement : e)
+			w.println("\tat " + traceElement);
+		attachment.setHexContent(AttachmentHelper.getHex(str.toString().getBytes()));
+		return attachment;
+	}
+	
+
+	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/token/list")
-	public List<Token> interrupt() {
+	public List<Token> listTokens() {
 		return agent.getTokens();
 	}
 

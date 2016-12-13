@@ -29,6 +29,8 @@ public class Function {
 	Map<String, String> attributes;
 	
 	String handlerChain;
+	
+	Integer callTimeout;
 
 	Map<String, String> handlerProperties;
 
@@ -54,6 +56,14 @@ public class Function {
 
 	public void setHandlerProperties(Map<String, String> handlerProperties) {
 		this.handlerProperties = handlerProperties;
+	}
+
+	public Integer getCallTimeout() {
+		return callTimeout;
+	}
+
+	public void setCallTimeout(Integer callTimeout) {
+		this.callTimeout = callTimeout;
 	}
 
 	public String getHandlerChain() {

@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -69,9 +70,7 @@ public class Agent {
 	private TokenHandlerPool handlerPool;
 	
 	private Timer timer;
-	
-	private long registrationIntervalMs = 10000;
-	
+		
 	private RegistrationTask registrationTask;
 	
 	public static void main(String[] args) throws Exception {
@@ -90,7 +89,7 @@ public class Agent {
 			if(arguments.hasOption("agentPort")) {
 				agentConf.setAgentPort(Integer.decode(arguments.getOption("agentPort")));
 			} else if (agentConf.getAgentPort() == null) {
-					agentConf.setAgentPort(12131);
+				agentConf.setAgentPort(0);
 			}
 			
 			if(arguments.hasOption("agentUrl")) {
@@ -107,10 +106,6 @@ public class Agent {
 		super();
 
 		this.agentConf = agentConf;
-		
-		if(agentConf.getAgentUrl()==null) {
-			agentConf.setAgentUrl("http://" + Inet4Address.getLocalHost().getCanonicalHostName() + ":" + agentConf.getAgentPort());
-		}
 		
 		id = UUID.randomUUID().toString();
 		tokenPool = new AgentTokenPool(10000);
@@ -172,7 +167,7 @@ public class Agent {
 		context.addServlet(sh, "/*");
 		
 		server = new Server(agentConf.getAgentPort());
-
+		
 		ContextHandlerCollection contexts = new ContextHandlerCollection();
         contexts.setHandlers(new Handler[] { context });
 		server.setHandler(contexts);
@@ -183,21 +178,17 @@ public class Agent {
 
 		server.start();
 		
-		timer.schedule(registrationTask, 0, registrationIntervalMs);
+		if(agentConf.getAgentUrl()==null) {
+			agentConf.setAgentUrl("http://" + Inet4Address.getLocalHost().getCanonicalHostName() + ":" + ((ServerConnector)server.getConnectors()[0]).getLocalPort());
+		}
+		
+		timer.schedule(registrationTask, 0, agentConf.getRegistrationPeriod());
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				tokenPool.evictSessions();
 			}
 		}, 15000, 10000);
-	}
-	
-	public long getRegistrationIntervalMs() {
-		return registrationIntervalMs;
-	}
-
-	public void setRegistrationIntervalMs(long registrationIntervalMs) {
-		this.registrationIntervalMs = registrationIntervalMs;
 	}
 
 	protected String getAgentUrl() {
@@ -234,6 +225,16 @@ public class Agent {
 		List<Token> tokens = new ArrayList<>();
 		for(AgentTokenWrapper wrapper:tokenPool.getTokens()) {
 			tokens.add(wrapper.getToken());
+		}
+		return tokens;
+	}
+	
+	protected List<Token> getAvailableTokens() {
+		List<Token> tokens = new ArrayList<>();
+		for(AgentTokenWrapper wrapper:tokenPool.getTokens()) {
+			if(!wrapper.isInUse()) {
+				tokens.add(wrapper.getToken());				
+			}
 		}
 		return tokens;
 	}

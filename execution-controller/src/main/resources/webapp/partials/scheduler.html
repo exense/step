@@ -1,13 +1,6 @@
 <div class="panel panel-default" id="SchedulerCtrl" ng-controller="SchedulerCtrl">
 	<div class="panel-heading">
 		Scheduler tasks
-		<div class="pull-right">
-			<div class="btn-group">
-				<button type="button" ng-click="enableSelected()" class="btn btn-default btn-xs">Enable</button>
-				<button type="button" ng-click="deleteSelected(false)" class="btn btn-default btn-xs">Disable</button>
-				<button type="button" ng-click="deleteSelected(true)" class="btn btn-default btn-xs">Remove</button>
-			</div>
-		</div>
 	</div>
 	<div class="panel-body">
 		<datatable handle="datatable" tabledef="tabledef" selectionmode="multiple" columns="columns" columnsearch="true" />

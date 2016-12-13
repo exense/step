@@ -58,10 +58,23 @@ public class ScriptHandlerTest {
 		
 		Map<String, String> properties = new HashMap<>();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
-		properties.put(ScriptHandler.SCRIPT_ENGINE, "groovy");
 		
 		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
 		OutputMessage out = context.run("testGroovy1", "{\"key1\":\"val1\"}");
+		
+		Assert.assertEquals("val1",out.getPayload().getString("key1"));
+	}
+	
+
+	@Test 
+	public void testPython1() {
+		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		
+		Map<String, String> properties = new HashMap<>();
+		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
+		
+		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
+		OutputMessage out = context.run("testPython", "{\"key1\":\"val1\"}");
 		
 		Assert.assertEquals("val1",out.getPayload().getString("key1"));
 	}
@@ -105,13 +118,12 @@ public class ScriptHandlerTest {
 		
 		Map<String, String> properties = new HashMap<>();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
-		properties.put(ScriptHandler.SCRIPT_ENGINE, "dummy");
 		
 		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
 		try {
-			context.run("testGroovy", "{\"key1\":\"val1\"}");
+			context.run("noextension", "{\"key1\":\"val1\"}");
 		} catch(Exception e) {
-			Assert.assertTrue(e.getMessage().contains("Unable to find script engine with name 'dummy'"));			
+			Assert.assertTrue(e.getMessage().contains("The file 'noextension' has no extension. Please add one of the following extensions:"));			
 		}		
 	}
 	
@@ -121,7 +133,6 @@ public class ScriptHandlerTest {
 		
 		Map<String, String> properties = new HashMap<>();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
-		properties.put(ScriptHandler.SCRIPT_ENGINE, "groovy");
 		
 		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
 		OutputMessage out = context.run("testGroovyUTF8", "{\"key1\":\"val1\"}");

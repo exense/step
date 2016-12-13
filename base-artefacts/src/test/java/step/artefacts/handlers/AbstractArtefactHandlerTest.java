@@ -24,11 +24,13 @@ import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import step.artefacts.CheckArtefact;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionTestHelper;
 
@@ -70,5 +72,14 @@ public class AbstractArtefactHandlerTest {
 
 	private ReportNodeAccessor getReportNodeAccessor() {
 		return ExecutionContext.getCurrentContext().getGlobalContext().getReportAccessor();
+	}
+	
+	protected CheckArtefact newTestArtefact(final ReportNodeStatus status) {
+		return new CheckArtefact(new Runnable() {
+			@Override
+			public void run() {
+				ExecutionContext.getCurrentReportNode().setStatus(status);
+			}
+		});
 	}
 }

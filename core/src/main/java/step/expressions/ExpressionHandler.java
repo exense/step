@@ -122,16 +122,16 @@ public class ExpressionHandler {
 			}
 			
 			if(logger.isDebugEnabled()) {
-				logger.debug("Groovy Result:\n" + result);
+				logger.debug("Groovy result:\n" + result);
 			}
 			
 			return result;
 		} catch (CompilationFailedException cfe) {
 			throw new RuntimeException(
-					"Fehler im Groovyausdruck: " + expression, cfe);
+					"Error in while compilating groovy expression: " + expression, cfe);
 		} catch (Exception e){
 			throw new RuntimeException(
-					"Fehler waehrend Evaluierung: " + expression, e);
+					"Error in while running groovy expression: " + expression, e);
 		}
 	}
 

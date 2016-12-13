@@ -1,7 +1,7 @@
 <div id="ArtefactListCtrl" ng-controller="ArtefactListCtrl">
 	<div class="row">
 	<div class="panel-body pull-right">
-		<button type="button" class="btn btn-success" ng-click="addArtefact()">New plan</button>
+		<button type="button" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-success" ng-click="addArtefact()">New plan</button>
 	</div>
 	</div>
 	<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="artefacts" order="[[1, &quot;desc&quot;]]" />

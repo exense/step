@@ -36,37 +36,40 @@ public class CheckHandler extends ArtefactHandler<Check, ReportNode> {
 
 	@Override
 	protected void execute_(ReportNode node, Check testArtefact) {
-		ExpressionHandler expressionHandler = new ExpressionHandler();
-		Map<String, Object> bindings = ExecutionContext.getCurrentContext().getVariablesManager().getAllVariables();
-		
-		Object result = expressionHandler.evaluateGroovyExpression(testArtefact.getExpression(), bindings);
-
-		if(result!=null) {
-			Boolean resultBoolean;
-			if(result instanceof Boolean) {
-				resultBoolean = (Boolean) result;
-			} else if (result instanceof String) {
-				try {
-					resultBoolean = Boolean.parseBoolean((String)result);
-				} catch (Exception e) {
-					node.setError("The check expression didn't return a boolean");
+		ReportNode callFunctionReport = (ReportNode) context.getVariablesManager().getVariable("callReport"); 
+		if(callFunctionReport==null || callFunctionReport.getStatus()==ReportNodeStatus.PASSED) {
+			ExpressionHandler expressionHandler = new ExpressionHandler();
+			Map<String, Object> bindings = ExecutionContext.getCurrentContext().getVariablesManager().getAllVariables();
+			
+			Object result = expressionHandler.evaluateGroovyExpression(testArtefact.getExpression(), bindings);
+	
+			if(result!=null) {
+				Boolean resultBoolean;
+				if(result instanceof Boolean) {
+					resultBoolean = (Boolean) result;
+				} else if (result instanceof String) {
+					try {
+						resultBoolean = Boolean.parseBoolean((String)result);
+					} catch (Exception e) {
+						node.setError("The check expression didn't return a boolean", 0, true);
+						node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+						return;
+					} 				
+				} else {
+					node.setError("The check expression returned an instance of "+result.getClass().getName(), 0, true);
 					node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 					return;
-				} 				
+				}
+				if(resultBoolean) {
+					node.setStatus(ReportNodeStatus.PASSED);
+				} else {
+					node.setStatus(ReportNodeStatus.FAILED);
+				}
 			} else {
-				node.setError("The check expression returned an instance of "+result.getClass().getName());
+				node.setError("The check expression is null",0,true);
 				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 				return;
 			}
-			if(resultBoolean) {
-				node.setStatus(ReportNodeStatus.PASSED);
-			} else {
-				node.setStatus(ReportNodeStatus.FAILED);
-			}
-		} else {
-			node.setError("The check expression is null");
-			node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
-			return;
 		}
 	}
 

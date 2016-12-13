@@ -28,13 +28,13 @@ import step.core.artefacts.DynamicAttribute;
 public class ForBlock extends AbstractForBlock {
 		
 	@DynamicAttribute
-	String start;
+	String start = "1";
 	
 	@DynamicAttribute
-	String end;
+	String end = "2";
 	
 	@DynamicAttribute
-	String inc;
+	String inc = "1";
 
 	@JsonIgnore
 	public Integer getStartInt() {

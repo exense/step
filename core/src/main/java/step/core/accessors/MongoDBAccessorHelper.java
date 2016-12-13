@@ -18,10 +18,10 @@
  *******************************************************************************/
 package step.core.accessors;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.Document;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 
@@ -29,9 +29,11 @@ import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
 
 import step.commons.conf.Configuration;
 
+// TODO rewrite this ugly class without static
 public class MongoDBAccessorHelper {
 
 	private static MongoDBAccessorHelper INSTANCE = new MongoDBAccessorHelper();
@@ -85,6 +87,16 @@ public class MongoDBAccessorHelper {
 		MongoCollection collection = jongo.getCollection(collectionName);
 		
 		return collection;
+	}
+	
+	public static com.mongodb.client.MongoCollection<Document> getMongoCollection_(MongoClient client, String collectionName) {		
+		MongoDatabase db_ = getInstance().getMongoDatabase(client);
+		return db_.getCollection(collectionName);
+	}
+
+	public MongoDatabase getMongoDatabase(MongoClient client) {
+		MongoDatabase db_ = client.getDatabase(getInstance().db);
+		return db_;
 	}
 	
 }

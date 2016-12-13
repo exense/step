@@ -18,23 +18,61 @@
  *******************************************************************************/
 package step.script;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Assert;
 import org.junit.Test;
 
-import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.io.InputMessage;
+import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.io.OutputMessage;
+import step.script.ScriptRunner.ScriptContext;
 
 public class AnnotatedMethodHandlerTest {
-	
+
 	@Test
-	public void test() throws Exception {		
-		// TODO implement
+	public void testProperties() throws Exception {
+		Map<String, String> properties = new HashMap<>();
+		properties.put("test", "test");
+		ScriptContext ctx = ScriptRunner.getExecutionContext(properties);
+		OutputMessage out = ctx.run("testProperties", "{}");
+		Assert.assertEquals("test", out.getPayload().getString("test"));
 	}
 	
-	@Function(name="testFunction")
-	public static OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
-		OutputMessage output = new OutputMessage();
-		output.setPayload(message.getArgument());
-		return output;
+	@Test
+	public void test() throws Exception {
+		Map<String, String> properties = new HashMap<>();
+		ScriptContext ctx = ScriptRunner.getExecutionContext(properties);
+		OutputMessage out = ctx.run("testFunction", "{\"test\":\"test\"}");
+		Assert.assertEquals("test", out.getPayload().getString("test"));
+	}
+	
+	@Test
+	public void testByMethodName() throws Exception {
+		Map<String, String> properties = new HashMap<>();
+		ScriptContext ctx = ScriptRunner.getExecutionContext(properties);
+		OutputMessage out = ctx.run("testFunctionByMethodName", "{\"test\":\"test\"}");
+		Assert.assertEquals("test", out.getPayload().getString("test"));
+	}
+
+	@Function(name = "testFunction")
+	public static OutputMessage test(@Arg("test")String test) throws Exception {
+		OutputMessageBuilder output = new OutputMessageBuilder();
+		output.add("test", test);
+		return output.build();
+	}
+	
+	@Function
+	public static OutputMessage testFunctionByMethodName(@Arg("test")String test) throws Exception {
+		OutputMessageBuilder output = new OutputMessageBuilder();
+		output.add("test", test);
+		return output.build();
+	}
+	
+	@Function
+	public static OutputMessage testProperties(@Prop("test")String propTest) throws Exception {
+		OutputMessageBuilder output = new OutputMessageBuilder();
+		output.add("test", propTest);
+		return output.build();
 	}
 }

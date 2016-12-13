@@ -25,21 +25,25 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 import org.jongo.ResultHandler;
 
-import step.commons.datatable.DataTable;
-import step.commons.datatable.TableRow;
-import step.core.accessors.MongoDBAccessorHelper;
-
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
+import step.commons.datatable.DataTable;
+import step.commons.datatable.TableRow;
+import step.core.accessors.AbstractAccessor;
+import step.core.accessors.MongoDBAccessorHelper;
 
-public class ReportNodeAccessor {
+
+public class ReportNodeAccessor extends AbstractAccessor {
 		
 	MongoCollection reports;
+	
+	com.mongodb.client.MongoCollection<Document> reports_;
 	
 	public ReportNodeAccessor() {
 		super();
@@ -48,6 +52,14 @@ public class ReportNodeAccessor {
 	public ReportNodeAccessor(MongoClient client) {
 		super();
 		reports = MongoDBAccessorHelper.getCollection(client, "reports");
+		reports_ = MongoDBAccessorHelper.getMongoCollection_(client, "reports");
+	}
+	
+	public void createIndexesIfNeeded(Long ttl) {
+		createOrUpdateIndex(reports_, "parentID");
+		createOrUpdateCompoundIndex(reports_, "executionID", "status", "executionTime");
+		createOrUpdateCompoundIndex(reports_, "executionID", "executionTime");
+		createOrUpdateCompoundIndex(reports_, "executionID", "_class");
 	}
 
 	public void save(ReportNode node) {
@@ -83,11 +95,16 @@ public class ReportNodeAccessor {
 		assert executionID != null;
 		return reports.find("{executionID: #}", executionID).sort("{executionTime: 1}").as(ReportNode.class).iterator();
 	}
+	
+	public long countReportNodesByExecutionID(String executionID) {
+		assert executionID != null;
+		return reports.count("{executionID: #}");
+	}
 
 	public Iterator<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
 		assert executionID != null;
 		return reports.find(
-				"{executionID: #, _class: #}", executionID, class_).sort("{executionTime: 1}").as(ReportNode.class).iterator();
+				"{executionID: #, _class: #}", executionID, class_).as(ReportNode.class).iterator();
 	}
     
 	public Iterator<ReportNode> getLeafReportNodesByExecutionID(String executionID) {
@@ -174,11 +191,9 @@ public class ReportNodeAccessor {
 				Date date = new Date((long) ((DBObject)result.get("_id")).get("time"));
 				double value = new Double((Integer) result.get("value"))/normalizationFactor;
 				TableRow r = new TableRow(date, value);
-				t.addRow(r);
 				return r;
 			}
-		});
-		
+		}).forEach(row->t.addRow(row));		
 		return t;
 	}
     

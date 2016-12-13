@@ -27,6 +27,8 @@ public class AgentConf {
 	Integer agentPort;
 	
 	String agentUrl;
+	
+	Integer registrationPeriod = 10000;
 
 	List<TokenGroupConf> tokenGroups;
 
@@ -39,6 +41,14 @@ public class AgentConf {
 		this.gridHost = gridHost;
 		this.agentPort = agentPort;
 		this.agentUrl = agentUrl;
+	}
+
+	public AgentConf(String gridHost, Integer agentPort, String agentUrl, Integer registrationPeriod) {
+		super();
+		this.gridHost = gridHost;
+		this.agentPort = agentPort;
+		this.agentUrl = agentUrl;
+		this.registrationPeriod = registrationPeriod;
 	}
 
 	public String getGridHost() {
@@ -71,5 +81,13 @@ public class AgentConf {
 
 	public void setTokenGroups(List<TokenGroupConf> tokenGroups) {
 		this.tokenGroups = tokenGroups;
+	}
+
+	public Integer getRegistrationPeriod() {
+		return registrationPeriod;
+	}
+
+	public void setRegistrationPeriod(Integer registrationPeriod) {
+		this.registrationPeriod = registrationPeriod;
 	} 
 }

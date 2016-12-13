@@ -19,6 +19,7 @@
 package step.core;
 
 import step.core.Controller.ServiceRegistrationCallback;
+import step.core.access.UserAccessor;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionLifecycleManager;
@@ -28,6 +29,7 @@ import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
 
 import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
 
 public class GlobalContext extends AbstractContext {
 	
@@ -37,6 +39,8 @@ public class GlobalContext extends AbstractContext {
 	
 	private MongoClient mongoClient;
 	
+	private MongoDatabase mongoDatabase;
+	
 	private ExecutionAccessor executionAccessor;
 	
 	private ArtefactAccessor artefactAccessor;
@@ -44,6 +48,8 @@ public class GlobalContext extends AbstractContext {
 	private ReportNodeAccessor reportAccessor;
 	
 	private ExecutionTaskAccessor scheduleAccessor;
+	
+	private UserAccessor userAccessor;
 	
 	private ExecutionLifecycleManager executionLifecycleManager;
 	
@@ -59,6 +65,14 @@ public class GlobalContext extends AbstractContext {
 
 	public void setMongoClient(MongoClient mongoClient) {
 		this.mongoClient = mongoClient;
+	}
+
+	public MongoDatabase getMongoDatabase() {
+		return mongoDatabase;
+	}
+
+	public void setMongoDatabase(MongoDatabase mongoDatabase) {
+		this.mongoDatabase = mongoDatabase;
 	}
 
 	public ExecutionAccessor getExecutionAccessor() {
@@ -91,6 +105,14 @@ public class GlobalContext extends AbstractContext {
 
 	public void setScheduleAccessor(ExecutionTaskAccessor scheduleAccessor) {
 		this.scheduleAccessor = scheduleAccessor;
+	}
+
+	public UserAccessor getUserAccessor() {
+		return userAccessor;
+	}
+
+	public void setUserAccessor(UserAccessor userAccessor) {
+		this.userAccessor = userAccessor;
 	}
 
 	public PluginManager getPluginManager() {

@@ -79,8 +79,8 @@ public class ParameterManagerPlugin extends AbstractPlugin {
 		if(parameterManager!=null) {
 			ReportNode rootNode = context.getReport();
 			VariablesManager varMan = context.getVariablesManager();
-			varMan.putVariable(rootNode, VariableType.RESERVED, "user", context.getExecutionParameters().getUserID());
-			putVariables(context, rootNode, context.getExecutionParameters().getCustomParameters(), VariableType.RESERVED);
+			varMan.putVariable(rootNode, VariableType.IMMUTABLE, "user", context.getExecutionParameters().getUserID());
+			putVariables(context, rootNode, context.getExecutionParameters().getCustomParameters(), VariableType.IMMUTABLE);
 			
 			Map<String, String> parameters = parameterManager.getAllParameters(ExecutionContextBindings.get(context));
 			putVariables(context, rootNode, parameters, VariableType.IMMUTABLE);		

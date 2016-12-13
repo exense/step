@@ -23,24 +23,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 
+import step.core.accessors.AbstractAccessor;
 import step.core.accessors.MongoDBAccessorHelper;
 
 import com.mongodb.MongoClient;
 
-public class ExecutionAccessor  {
+public class ExecutionAccessor extends AbstractAccessor {
 		
 	MongoCollection executions;
+	
+	com.mongodb.client.MongoCollection<Document> executions_;
 	
 	public ExecutionAccessor(MongoClient client) {
 		super();
 		executions = MongoDBAccessorHelper.getCollection(client, "executions");
+		executions_ = MongoDBAccessorHelper.getMongoCollection_(client, "executions");
 	}
 	
 	public ExecutionAccessor() {
 		super();
+	}
+	
+	public void createIndexesIfNeeded(Long ttl) {
+		createOrUpdateIndex(executions_, "startTime");
+		createOrUpdateIndex(executions_, "description");
+		createOrUpdateIndex(executions_, "executionParameters.userID");
 	}
 
 	public Execution get(String nodeId) {

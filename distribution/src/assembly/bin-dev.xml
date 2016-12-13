@@ -30,6 +30,7 @@
 			<useAllReactorProjects>true</useAllReactorProjects>
 			<includes>
 				<include>step:script-api</include>
+				<include>step:selenium-script-api</include>
 			</includes>
 			<binaries>
 				<unpack>true</unpack>

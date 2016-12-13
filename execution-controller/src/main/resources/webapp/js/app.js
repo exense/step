@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','artefactsControllers','artefactEditor','reportBrowserControllers','ngCookies'])
+var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','artefactsControllers','artefactEditor','reportBrowserControllers','adminControllers','ngCookies'])
 
 .config(['$httpProvider', function($httpProvider) {
   //initialize get if not there
@@ -32,27 +32,35 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   // extra
   $httpProvider.defaults.headers.get['Cache-Control'] = 'no-cache';
   $httpProvider.defaults.headers.get['Pragma'] = 'no-cache';
+  $httpProvider.defaults.withCredentials = true;
+  $httpProvider.interceptors.push('authInterceptor');
 }])
 
-.controller('AppController', ['$rootScope','$scope', '$location', 'stateStorage', function($rootScope, $scope, $location, $stateStorage) {
-  $stateStorage.push($scope, 'root',{});
+.controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService) {
+  stateStorage.push($scope, 'root',{});
   
-  $rootScope.context = {'userID':'anonymous'};
+  $scope.isInitialized = false;
+  function finishInitialization() {$scope.isInitialized = true;}
+  AuthService.init().then(function() {
+    AuthService.getSession().then(finishInitialization,finishInitialization)
+  })
   
   $scope.setView = function (view) {
     $scope.$state = view;
-    $stateStorage.store($scope, {lastview:view});
+    stateStorage.store($scope, {lastview:view});
   };
   
   $scope.isViewActive = function (view) {
     return ($scope.$state === view);
   };
   
+  $scope.authService = AuthService;
+  
   if(!$location.path()) {
-    $location.path('/root/functions')    
+    $location.path('/root/artefacts')    
   }
   
-}])
+})
 
 .directive('ngCompiledInclude', [
   '$compile',
@@ -186,5 +194,102 @@ angular.module('step',['ngStorage'])
       this.localStore[$scope.$$statepath.join('.')]=model;
     }
   };
-}]);
+}])
 
+.factory('AuthService', function ($http, $rootScope) {
+  var authService = {};
+  var serviceContext = {};
+
+  function setContext(session) {
+    $rootScope.context = {'userID':session.username, 'rights':session.profile.rights, 'role':session.profile.role};
+  }
+  
+  authService.init = function() {
+    return $http.get('rest/access/conf')
+      .then(function(res) {
+        serviceContext.conf = res.data;
+      })
+  }
+  
+  authService.getSession = function() {
+    return $http.get('rest/access/session')
+      .then(function(res) {
+        setContext(res.data)
+      })
+  }
+  
+  authService.login = function (credentials) {
+    return $http
+      .post('rest/access/login', credentials)
+      .then(function (res) {
+        var session = res.data;
+        setContext(session);
+      });
+  };
+ 
+  authService.isAuthenticated = function () {
+    return $rootScope.context.userID && $rootScope.context.userID!='anonymous';
+  };
+ 
+  authService.hasRight = function (right) {
+    if(serviceContext.conf.authentication) {
+      return $rootScope.context&&$rootScope.context.rights?$rootScope.context.rights.indexOf(right) !== -1:false;      
+    } else {
+      return true;
+    }
+  }; 
+  
+  authService.getConf = function() {
+    return serviceContext.conf;
+  }
+  
+  return authService;
+})
+
+.service('authInterceptor', function($q, $rootScope) {
+    var service = this;
+    service.responseError = function(response) {
+        if (response.status == 401){
+          $rootScope.context = {'userID':'anonymous'};
+        }
+        return $q.reject(response);
+    };
+})
+
+.controller('LoginController', function ($scope, $rootScope, AuthService) {
+  $scope.credentials = {
+    username: '',
+    password: ''
+  };
+  $scope.login = function (credentials) {
+    AuthService.login(credentials).then(function (user) {
+    }, function () {
+      $scope.error = "Invalid username/password";
+    });
+  };
+})
+
+.factory('Dialogs', function ($http, $rootScope, $modal) {
+  var dialogs = {};
+  
+  dialogs.showDeleteWarning = function() {
+    var modalInstance = $modal.open({animation: false, templateUrl: 'partials/confirmationDialog.html',
+      controller: 'DialogCtrl', 
+      resolve: {message:function(){return 'Are you sure you want to delete this item?'}}});
+    return modalInstance.result;
+  }
+  
+  return dialogs;
+})
+
+.controller('DialogCtrl', function ($scope, $modalInstance, message) {
+  $scope.message = message;
+  
+  $scope.ok = function() {
+    $modalInstance.close(); 
+  }
+  
+  $scope.cancel = function () {
+    $modalInstance.dismiss('cancel');
+  };  
+})

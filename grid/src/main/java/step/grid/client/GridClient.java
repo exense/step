@@ -18,7 +18,10 @@
  *******************************************************************************/
 package step.grid.client;
 
+import java.io.Closeable;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 import javax.json.JsonObject;
@@ -39,29 +42,27 @@ import step.grid.AgentRef;
 import step.grid.Grid;
 import step.grid.Token;
 import step.grid.TokenWrapper;
+import step.grid.agent.handler.MessageHandler;
+import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.io.InputMessage;
 import step.grid.io.ObjectMapperResolver;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;
 
-public class GridClient {
+public class GridClient implements Closeable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridClient.class);
 	
 	public static final String SELECTION_CRITERION_THREAD = "#THREADID#";
 	
-	private Grid adapterGrid;
+	private final Grid adapterGrid;
 	
 	private Client client;
 	
 	private long noMatchExistsTimeout = 10000;
 	
 	private long matchExistsTimeout = 60000;
-	
-	public GridClient() {
-		super();
-	}
 
 	public GridClient(Grid adapterGrid) {
 		super();
@@ -73,10 +74,10 @@ public class GridClient {
 		client.register(JacksonJsonProvider.class);
 	}
 	
-	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
+	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties, int callTimeout) throws Exception {
 		Token token = tokenWrapper.getToken();
 		
-		AgentRef agent = adapterGrid.getAgentRefs().get(token.getAgentid());
+		AgentRef agent = tokenWrapper.getAgent();
 		
 		InputMessage message = new InputMessage();
 		message.setArgument(argument);
@@ -84,55 +85,91 @@ public class GridClient {
 		message.setTokenId(token.getId());
 		message.setHandler(handler);
 		message.setProperties(properties);
-		OutputMessage output = callAgent(agent, token, message);			
+		message.setCallTimeout(callTimeout);
+		
+		OutputMessage output;
+		if(token.isLocal()) {
+			output = callLocalToken(message);
+		} else {
+			output = callAgent(agent, token, message);						
+		}
 		token.getAttributes().put(SELECTION_CRITERION_THREAD, Long.toString(Thread.currentThread().getId()));
 		return output;
 	}
 
-	public TokenFacade getToken() {
+	private OutputMessage callLocalToken(InputMessage message) throws Exception {
+		OutputMessage output;
+		TokenHandlerPool p = new TokenHandlerPool();
+		MessageHandler h = p.get(message.getHandler());
+		output = h.handle(null, message);
+		return output;
+	}
+
+	public TokenHandle getLocalToken() {
+		Token localToken = new Token();
+		localToken.setId(UUID.randomUUID().toString());
+		localToken.setAgentid(Grid.LOCAL_AGENT);		
+		localToken.setAttributes(new HashMap<String, String>());
+		localToken.setSelectionPatterns(new HashMap<String, Interest>());
+		TokenWrapper tokenWrapper = new TokenWrapper(localToken, new AgentRef(Grid.LOCAL_AGENT, "localhost"));
+		return new TokenHandle(tokenWrapper);
+	}
+	
+	public TokenHandle getToken() {
 		TokenPretender tokenPretender = new TokenPretender(null, null);
 		TokenWrapper tokenWrapper = getToken(tokenPretender);
-		return new TokenFacade(tokenWrapper);
+		return new TokenHandle(tokenWrapper);
 	}
 	
-	public TokenFacade getToken(Map<String, String> attributes, Map<String, Interest> interests) {
+	public TokenHandle getToken(Map<String, String> attributes, Map<String, Interest> interests) {
 		TokenPretender tokenPretender = new TokenPretender(attributes, interests);
 		TokenWrapper tokenWrapper = getToken(tokenPretender);
-		return new TokenFacade(tokenWrapper);
+		return new TokenHandle(tokenWrapper);
 	}
 	
-	public class TokenFacade {
+	public class TokenHandle {
 		
 		TokenWrapper token;
 		
-		public TokenFacade(TokenWrapper token) {
+		String handler = null;
+		
+		Map<String,String> properties = new HashMap<>();
+		
+		int callTimeout = 180000;
+		
+		private TokenHandle(TokenWrapper token) {
 			super();
 			this.token = token;
 		}
 
-		public OutputMessage process(String function, JsonObject argument) throws Exception {
-			return processInput(token, function, argument, null, null);
+		public TokenHandle setCallTimeout(int callTimeout) {
+			this.callTimeout = callTimeout;
+			return this;
+		}
+
+		public TokenHandle setHandler(String handler) {
+			this.handler = handler;
+			return this;
 		}
 		
-		public OutputMessage process(String function, JsonObject argument, String handler) throws Exception {
-			return processInput(token, function, argument, handler, null);
-		}
-		
-		public OutputMessage process(String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
-			return processInput(token, function, argument, handler, properties);
-		}
-		
-		public OutputMessage processAndRelease(String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
-			try {
-				return processInput(token, function, argument, handler, properties);
-			} finally {
-				release();
+		public TokenHandle addProperties(Map<String, String> properties) {
+			if(properties!=null) {
+				this.properties.putAll(properties);
 			}
+			return this;
+		}
+
+		public void setCurrentOwner(Object currentOwner) {
+			token.setCurrentOwner(currentOwner);
+		}
+
+		public OutputMessage process(String function, JsonObject argument) throws Exception {
+			return processInput(token, function, argument, handler, properties, callTimeout);
 		}
 		
-		public OutputMessage processAndRelease(String function, JsonObject argument, String handler) throws Exception {
+		public OutputMessage processAndRelease(String function, JsonObject argument) throws Exception {
 			try {
-				return processInput(token, function, argument, handler, null);
+				return processInput(token, function, argument, handler, properties, callTimeout);
 			} finally {
 				release();
 			}
@@ -143,27 +180,33 @@ public class GridClient {
 		}
 		
 		public void release() {
-			returnAdapterTokenToRegister(token);
+			if(!token.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
+				returnAdapterTokenToRegister(token);				
+			}
 		}
 	}
 	
 	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) throws Exception {
 		// TODO get from config?
 		int connectionTimeout = 3000;
-		int callTimeout = 180000;
+		int callTimeoutOffset = 3000;
 		
 		String agentUrl = agentRef.getAgentUrl();
 		
 		try {			
 			Entity<InputMessage> entity = Entity.entity(message, MediaType.APPLICATION_JSON);
-			Response response = client.target(agentUrl + "/process").request().property(ClientProperties.READ_TIMEOUT, callTimeout)
+			Response response = client.target(agentUrl + "/process").request().property(ClientProperties.READ_TIMEOUT, message.getCallTimeout()+callTimeoutOffset)
 					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).post(entity);
-			if(response.getStatus()==200) {
-				OutputMessage output = response.readEntity(OutputMessage.class);
-				return output;				
-			} else {
-				String error = response.readEntity(String.class);
-				throw new Exception("Error while calling agent with ref " + agentRef.toString()+ ". HTTP Response: "+error);
+			try {
+				if(response.getStatus()==200) {
+					OutputMessage output = response.readEntity(OutputMessage.class);
+					return output;				
+				} else {
+					String error = response.readEntity(String.class);
+					throw new Exception("Error while calling agent with ref " + agentRef.toString()+ ". HTTP Response: "+error);
+				}
+			} finally {
+				response.close();
 			}
 		} catch (ProcessingException e) {
 			throw e;
@@ -187,6 +230,7 @@ public class GridClient {
 		adapterGrid.returnToken(adapterToken);		
 	}
 	
+	@Override
 	public void close() {
 		client.close();
 	}

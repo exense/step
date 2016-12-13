@@ -53,11 +53,11 @@ public class AgentTokenPool {
 		pool.put(token.getUid(), token);
 	}
 	
-	public synchronized AgentTokenWrapper getToken(String tokenId) {
+	public synchronized AgentTokenWrapper getToken(String tokenId) throws TokenInUseException {
 		AgentTokenWrapper token = pool.get(tokenId);
 		if(token!=null) {
 			if(token.inUse) {
-				throw new RuntimeException("Token " + tokenId + " already in use. This should never happen!");
+				throw new TokenInUseException(token);
 			} else {
 				token.inUse = true;
 			}
@@ -88,6 +88,21 @@ public class AgentTokenPool {
 		return evictedTokenss;
 	}
 	
+	public class TokenInUseException extends Exception {
+
+		private static final long serialVersionUID = 7146003476845362228L;
+		
+		private AgentTokenWrapper token;
+
+		public TokenInUseException(AgentTokenWrapper token) {
+			super();
+			this.token = token;
+		}
+
+		public AgentTokenWrapper getToken() {
+			return token;
+		}
+	}
 	
 	
 

@@ -1,0 +1,30 @@
+<div class="container-fluid" id="MyAccountCtrl" ng-controller="MyAccountCtrl">
+	<div class="panel panel-default">
+		<div class="panel-body">
+			<div class="row">
+				<div class="col-md-12">
+					<h3 class="page-header">My account</h3>
+					<div class="col-md-6">
+						<ul class="list-unstyled attribute-list">
+							<li>
+								<p class="text-grey">Username</p>
+								<p>{{user.username}}</p>
+							</li>
+							<li>
+								<p class="text-grey">Role</p>
+								<p>{{user.role}}</p>
+							</li>
+						</ul>
+					</div>
+					<div class="col-md-6">
+						<ul class="list-unstyled attribute-list">
+							<li>
+								<a ng-click="changePwd()">Change password</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

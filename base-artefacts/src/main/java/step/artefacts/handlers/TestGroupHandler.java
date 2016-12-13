@@ -39,18 +39,23 @@ public class TestGroupHandler extends ArtefactHandler<TestGroup, ReportNode> {
 
 	@Override
 	public void execute_(final ReportNode node, final TestGroup testArtefact) {		
-		final int numberOfUsers = asInteger(testArtefact.getUsers());
-		final int duration = asInteger(testArtefact.getDuration());
+		final Integer numberOfUsers = asInteger(testArtefact.getUsers());
+		if(numberOfUsers==null||numberOfUsers<=0) {
+			throw new RuntimeException("Invalid argument: 'users' has to be higher than 0.");
+		}
+		
 		final int numberOfIterations = asInteger(testArtefact.getIterations());
+		final int pacing;
+		if(testArtefact.getPacing()!=null&&testArtefact.getPacing().trim().length()>0) {
+			pacing = asInteger(testArtefact.getPacing());
+		} else {
+			pacing = 0;
+		}
 		final long rampup;
-		if(testArtefact.getRampup()!=null) {
+		if(testArtefact.getRampup()!=null&&testArtefact.getRampup().trim().length()>0) {
 			rampup =asInteger( testArtefact.getRampup());
 		} else {
-			if(testArtefact.getPacing()!=null) {
-				rampup = asInteger(testArtefact.getPacing());
-			} else {
-				rampup = 0;
-			}
+			rampup = pacing;
 		}
 		
 		ExecutorService executor = Executors.newFixedThreadPool(numberOfUsers);
@@ -81,7 +86,7 @@ public class TestGroupHandler extends ArtefactHandler<TestGroup, ReportNode> {
 
 								iterationReportNode = delegateExecute(iterationTestCase, node);
 								
-								if(testArtefact.getPacing()!=null) {
+								if(pacing!=0) {
 									long endTime = System.currentTimeMillis();
 									long duration = endTime-startTime;
 									long pacingWait = asInteger(testArtefact.getPacing())-duration;
@@ -104,8 +109,7 @@ public class TestGroupHandler extends ArtefactHandler<TestGroup, ReportNode> {
 			}
 			
 			executor.shutdown();
-
-			executor.awaitTermination(duration, TimeUnit.SECONDS);
+			executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
 			node.setStatus(ReportNodeStatus.PASSED);
 		} catch (InterruptedException e) {
 			TestArtefactResultHandler.failWithException(node, e);

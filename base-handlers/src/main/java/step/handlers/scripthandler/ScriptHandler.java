@@ -29,11 +29,14 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
+
+import com.google.common.io.Files;
 
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
@@ -44,24 +47,29 @@ import step.grid.io.OutputMessage;
 public class ScriptHandler implements MessageHandler {
 
 	public static final String SCRIPT_DIR = "scripthandler.script.dir";
-	public static final String SCRIPT_ENGINE = "scripthandler.script.engine";
 	public static final String ERROR_HANDLER_SCRIPT = "scripthandler.script.errorhandler";
+	
+	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
 	
 	protected ScriptEngineManager manager = new ScriptEngineManager();
 		
 	public ScriptHandler() {
-
+		fileExtensionMap.put("groovy", "groovy");
+		fileExtensionMap.put("gy", "groovy");
+		fileExtensionMap.put("py", "python");
+		fileExtensionMap.put("jy", "python");
+		fileExtensionMap.put("js", "nashorn");
 	}
 	
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {        
         Map<String, String> properties = buildPropertyMap(token, message);
         
-        String engineName = getScriptEngine(properties);
-        ScriptEngine engine = loadScriptEngine(engineName);	
-                
         String scriptDirectory = getScriptDirectory(properties);
         File scriptFile = searchScriptFile(message, scriptDirectory);        
+        
+        String engineName = getScriptEngineName(scriptFile);
+        ScriptEngine engine = loadScriptEngine(engineName);	      
 
         OutputMessageBuilder outputBuilder = new OutputMessageBuilder();
         Bindings binding = createBindings(token, message, outputBuilder, properties);     
@@ -74,6 +82,20 @@ public class ScriptHandler implements MessageHandler {
         }
         
         return outputBuilder.build();
+	}
+
+	private String getScriptEngineName(File scriptFile) {
+		String extension = Files.getFileExtension(scriptFile.getName());
+        if(extension.length()>0) {
+        	String enginName = fileExtensionMap.get(extension);
+        	if(enginName==null) {
+        		throw new RuntimeException("No script engine found for extension '"+extension+"' of file '"+scriptFile.getName()+"'");
+        	} else {
+        		return enginName;
+        	}
+        } else {
+    		throw new RuntimeException("The file '"+scriptFile.getName()+"' has no extension. Please add one of the following extensions: "+fileExtensionMap.keySet());
+        }
 	}
 
 	private void executeErrorHandlerScript(Map<String, String> properties, ScriptEngine engine, Bindings binding)
@@ -114,16 +136,6 @@ public class ScriptHandler implements MessageHandler {
 		return engine;
 	}
 
-	private String getScriptEngine(Map<String, String> properties) {
-		String engineName;
-        if(properties.containsKey(SCRIPT_ENGINE)) {
-        	engineName = properties.get(SCRIPT_ENGINE);
-        } else {
-        	engineName = "nashorn";
-        }
-		return engineName;
-	}
-
 	private String getScriptDirectory(Map<String, String> properties) {
 		String scriptDirectory;
         if(properties.containsKey(SCRIPT_DIR)) {
@@ -136,20 +148,24 @@ public class ScriptHandler implements MessageHandler {
 
 	private File searchScriptFile(InputMessage message, String scriptDirectory) {
 		File directory = new File(scriptDirectory);
-        File[] files = directory.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File file) {
-				return file.getName().startsWith(message.getFunction());
-			}
-        });
-        if(files.length==0) {
-        	throw new RuntimeException("No script found for function '"+message.getFunction()+"'");
-        } else if(files.length>1) {
-        	throw new RuntimeException("More than one script found for function '"+message.getFunction()+"'");
-        }
-        
-        File scriptFile = files[0];
-		return scriptFile;
+		if(!directory.exists()||!directory.isDirectory()) {
+			throw new RuntimeException("Invalid script directory '"+scriptDirectory+"' set by property '"+SCRIPT_DIR+"'");
+		} else {
+	        File[] files = directory.listFiles(new FileFilter() {
+				@Override
+				public boolean accept(File file) {
+					return file.getName().startsWith(message.getFunction());
+				}
+	        });
+	        if(files.length==0) {
+	        	throw new RuntimeException("No script found for function '"+message.getFunction()+"'");
+	        } else if(files.length>1) {
+	        	throw new RuntimeException("More than one script found for function '"+message.getFunction()+"'");
+	        }
+	        
+	        File scriptFile = files[0];
+			return scriptFile;
+		}
 	}
 
 	private Map<String, String> buildPropertyMap(AgentTokenWrapper token, InputMessage message) {

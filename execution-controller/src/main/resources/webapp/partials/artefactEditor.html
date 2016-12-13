@@ -20,7 +20,7 @@
 										autofocus>
 								</div>
 								<div>
-					     			<button type="submit" class="btn btn-default" ng-click="save()">Save</button>
+					     			<button ng-if="authService.hasRight('plan-write')" type="submit" class="btn btn-default" ng-click="saveAttributes()">Save</button>
 					    		</div>
 								<input type="submit"
 									style="position: absolute; left: -9999px; width: 1px; height: 1px;" />

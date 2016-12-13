@@ -19,7 +19,6 @@
 package step.grid.agent.tokenpool;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,7 +41,7 @@ public class TokenSession {
 			logger.debug("Attempted to replace session object with key '"+arg0+"'. Closing previous object.");
 			try {
 				((Closeable)previous).close();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				logger.error("Error while closing '"+arg0+"' from session.",e);
 			}
 		}

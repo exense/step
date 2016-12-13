@@ -18,8 +18,6 @@
  *******************************************************************************/
 package step.initialization;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,9 +26,11 @@ import org.jongo.MongoCollection;
 
 import step.artefacts.CallFunction;
 import step.artefacts.Check;
-import step.artefacts.Set;
+import step.artefacts.Return;
 import step.artefacts.TestCase;
 import step.core.GlobalContext;
+import step.core.access.User;
+import step.core.access.UserAccessor;
 import step.core.accessors.MongoDBAccessorHelper;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.plugins.AbstractPlugin;
@@ -49,9 +49,9 @@ public class InitializationPlugin extends AbstractPlugin {
 		
 		if(runCounts==0) {
 			// First start
+			setupUsers(context);
 			setupDemo(context);
-			
-			
+			setupExecuteProcessFunction(context);
 		}
 		
 		insertLogEntry(controllerLogs);
@@ -59,10 +59,26 @@ public class InitializationPlugin extends AbstractPlugin {
 		super.executionControllerStart(context);
 	}
 
+	private void setupUsers(GlobalContext context) {
+		User user = new User();
+		user.setUsername("admin");
+		user.setRole("default");
+		user.setPassword(UserAccessor.encryptPwd("init"));
+		context.getUserAccessor().save(user);
+	}
+
 	private void insertLogEntry(MongoCollection controllerLogs) {
 		ControllerLog logEntry = new ControllerLog();
 		logEntry.setStart(new Date());
 		controllerLogs.insert(logEntry);
+	}
+	
+	private void setupExecuteProcessFunction(GlobalContext context) {		
+		Function executeProcessFunction = createFunction("ExecuteProcess", "class:step.handlers.processhandler.ProcessHandler");
+		
+		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
+		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
+		functionRepository.addFunction(executeProcessFunction);
 	}
 
 	private void setupDemo(GlobalContext context) {
@@ -70,12 +86,28 @@ public class InitializationPlugin extends AbstractPlugin {
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
 		addFunction(functionRepository, "Demo_Echo");
-		addFunction(functionRepository, "Demo_HTTPGet");
+		addFunction(functionRepository, "Javascript_HttpGet");
+		addFunction(functionRepository, "Grinder_HttpGet", "classuri:../ext/lib/jython|classuri:../ext/lib/grinder|class:step.handlers.scripthandler.ScriptHandler");
+		addFunction(functionRepository, "Demo_Java_Clock", "classuri:../data/scripts/java/src|class:step.script.AnnotatedMethodHandler");
+		
+		addFunction(functionRepository, "Selenium_StartChrome");
+		addFunction(functionRepository, "Selenium_StartFirefox");
+		addFunction(functionRepository, "Selenium_StartHTMLUnit");
+		addFunction(functionRepository, "Selenium_Navigate");
 		
 		ArtefactAccessor artefacts = context.getArtefactAccessor();
 		
 		createDemoPlan(artefacts,"Demo_TestCase_Echo","Demo_Echo","{\"arg1\":\"val1\"}","output.getString(\"output1\")==\"val1\"");
-		createDemoPlan(artefacts,"Demo_TestCase_HTTPGet","Demo_HTTPGet","{\"url\":\"http://denkbar.io\"}","output.getInt(\"statusCode\")==200");
+		createDemoPlan(artefacts,"Demo_TestCase_Javascript_HttpGet","Javascript_HttpGet","{\"url\":\"http://www.denkbar.io\"}","output.getInt(\"statusCode\")==200");
+		createDemoPlan(artefacts,"Demo_TestCase_Grinder_HttpGet","Grinder_HttpGet","{\"url\":\"http://www.denkbar.io\"}",null);
+		createDemoPlan(artefacts,"Demo_TestCase_Java_Clock","Demo_Java_Clock","{ \"prettyString\" : \"Current time is : \" }",null);
+		
+		createDemoPlan(artefacts,"Demo_Testcase_ProcessExecution_Windows","ExecuteProcess","{\"cmd\":\"cmd.exe /r echo TEST\"}",null);
+		createDemoPlan(artefacts,"Demo_Testcase_ProcessExecution_Linux","ExecuteProcess","{\"cmd\":\"echo TEST\"}",null);
+
+		
+		createSeleniumDemoPlan(artefacts, "Firefox");
+		createSeleniumDemoPlan(artefacts, "HTMLUnit");
 	}
 
 	private void createDemoPlan(ArtefactAccessor artefacts, String planName, String functionName, String args, String check) {
@@ -86,59 +118,72 @@ public class InitializationPlugin extends AbstractPlugin {
 		tcAttributes.put("name", planName);
 		testCase.setAttributes(tcAttributes);
 		
-		Set set1 = new Set();
-		set1.setKey("scripthandler.script.dir");
-		
-		String scriptPath = getDemoScriptPath();
-		
-		set1.setExpression("'"+scriptPath+"'");
-		artefacts.save(set1);
-		
-		
-		Check check1 = new Check();
-		check1.setExpression(check);
-		artefacts.save(check1);
-		
 		CallFunction call1 = new CallFunction();
 		call1.setFunction("{\"name\":\""+functionName+"\"}");
 		call1.setArgument(args);
 		call1.setToken("{\"route\":\"remote\"}");
-		call1.addChild(check1.getId());
+
+		if(check!=null) {
+			Check check1 = new Check();
+			check1.setExpression(check);
+			artefacts.save(check1);
+			call1.addChild(check1.getId());
+		}
+		
 		artefacts.save(call1);
 		
-		
-		testCase.addChild(set1.getId());
 		testCase.addChild(call1.getId());
 		
 		testCase.setRoot(true);
 		artefacts.save(testCase);
 	}
-
-	private String getDemoScriptPath() {
-		String scriptPath = "/path/to/your/scripts";
-		String currentDir = System.getProperty("user.dir");
-		if(currentDir!=null) {
-			File demoScripts = new File(currentDir+"/../data/scripts");
-			if(demoScripts.exists()) {
-				try {
-					scriptPath = demoScripts.getCanonicalPath().replace("\\", "/");
-				} catch (IOException e) {
-					
-				}
-			}
-		}
-		return scriptPath;
+	
+	private void createSeleniumDemoPlan(ArtefactAccessor artefacts, String browser) {
+		Map<String, String> tcAttributes = new HashMap<>();
+		TestCase testCase = new TestCase();
+		testCase.setRoot(true);
+		
+		tcAttributes.put("name", "Demo_Selenium_" + browser);
+		testCase.setAttributes(tcAttributes);
+		
+		CallFunction call1 = new CallFunction();
+		call1.setFunction("{\"name\":\"Selenium_Start"+ browser +"\"}");
+		call1.setArgument("{}");
+		call1.setToken("{\"route\":\"remote\"}");
+		artefacts.save(call1);
+		
+		CallFunction call2 = new CallFunction();
+		call2.setFunction("{\"name\":\"Selenium_Navigate\"}");
+		call2.setArgument("{\"url\":\"http://denkbar.io\"}");
+		call2.setToken("{\"route\":\"remote\"}");
+		artefacts.save(call2);
+		
+		testCase.addChild(call1.getId());
+		testCase.addChild(call2.getId());
+		
+		testCase.setRoot(true);
+		artefacts.save(testCase);
+	}
+	
+	private void addFunction(FunctionRepositoryImpl functionRepository, String name) {
+		addFunction(functionRepository, name, "class:step.handlers.scripthandler.ScriptHandler");
 	}
 
-	private void addFunction(FunctionRepositoryImpl functionRepository, String name) {
+	
+	private void addFunction(FunctionRepositoryImpl functionRepository, String name, String handlerChain) {
+		Function demoFunction = createFunction(name, handlerChain);
+		functionRepository.addFunction(demoFunction);
+	}
+
+	private Function createFunction(String name, String handlerChain) {
 		Function demoFunction = new Function();
 		
 		Map<String, String> kwAttributes = new HashMap<>();
 		kwAttributes.put("name", name);
 		
 		demoFunction.setAttributes(kwAttributes);
-		demoFunction.setHandlerChain("class:step.handlers.scripthandler.ScriptHandler");
-		functionRepository.addFunction(demoFunction);
+		demoFunction.setHandlerChain(handlerChain);
+		return demoFunction;
 	}
 
 	

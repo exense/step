@@ -18,10 +18,12 @@
  *******************************************************************************/
 angular.module('artefactEditor',['dataTable','step'])
 
-.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $modal, $location) {
+.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $modal, $location, AuthService) {
       stateStorage.push($scope, 'artefacteditor', {});
 
       $scope.artefactId = $scope.$state;
+      
+      $scope.authService = AuthService;
             
       $scope.tabState = {'controls':true,'functions':false};
       
@@ -39,8 +41,8 @@ angular.module('artefactEditor',['dataTable','step'])
     	  $scope.artefact = data;
       })
       
-      $scope.save = function() {
-    	  $http.post("rest/controller/artefact", $scope.artefact);
+      $scope.saveAttributes = function() {
+    	  $http.post("rest/controller/artefact/"+$scope.artefact.id+"/attributes", $scope.artefact.attributes);
       }
       
       $http.get("rest/controller/artefact/types").success(function(data){ 
@@ -97,10 +99,11 @@ angular.module('artefactEditor',['dataTable','step'])
       artefactid: '=',
       handle: '='
     },
-    controller: function($scope,$location,$rootScope) {
+    controller: function($scope,$location,$rootScope, AuthService) {
       
       var artefactid = $scope.artefactid;
       
+      $scope.authService = AuthService;
       
       var tree;
       $('#jstree_demo_div').jstree(
@@ -108,11 +111,15 @@ angular.module('artefactEditor',['dataTable','step'])
 					'core' : {
 					  'data' : [],
 					  'check_callback' : function (operation, node, node_parent, node_position, more) {
-	            if(operation=='move_node') {
-	              return node_parent.parent?true:false;
-	            } else {
-	              return true;	              
-	            }
+					    if(AuthService.hasRight('plan-write')) {
+					      if(operation=='move_node') {
+					        return node_parent.parent?true:false;
+					      } else {
+					        return true;	              
+					      }					      
+					    } else {
+					      return false;
+					    }
 					  }
 					}, 
 					"plugins" : ["dnd"]
@@ -142,8 +149,12 @@ angular.module('artefactEditor',['dataTable','step'])
         		children.push(asJSTreeNode(child))
         	  }) 	  
         	  var artefact = currentNode.artefact;
-        	  var label = (artefact._class=='CallFunction'&&artefact['function'])?JSON.parse(artefact['function']).name:artefact._class;
-        	  
+        	  var label = artefact._class
+        	  if(artefact._class=='CallFunction'&&artefact['function']) {
+        	    try {
+        	      label = JSON.parse(artefact['function']).name;
+        	    } catch(e) {}
+        	  }        	  
         	  return { "id" : artefact.id, "children" : children, "text" : label }
         	}
         	
@@ -243,7 +254,9 @@ angular.module('artefactEditor',['dataTable','step'])
       artefactid: '=',
       handle: '='
     },
-    controller: function($scope,$location) {
+    controller: function($scope,$location, AuthService) {
+      
+      $scope.authService = AuthService;
       
       $scope.$watch('artefactid', function() {
         if($scope.artefactid) {

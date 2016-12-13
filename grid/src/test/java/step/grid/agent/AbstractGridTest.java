@@ -55,11 +55,10 @@ public abstract class AbstractGridTest {
 		grid = new Grid(8081);
 		grid.start();
 		
-		agent = new Agent(new AgentConf("http://localhost:8081", 8080, null));
+		agent = new Agent(new AgentConf("http://localhost:8081", 8080, null, 100));
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("att1", "val1");
 		agent.addTokens(nTokens, attributes, null, null);
-		agent.setRegistrationIntervalMs(100);
 		agent.start();
 
 		client = new GridClient(grid);

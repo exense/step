@@ -24,7 +24,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 };
 
-tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$modal','$timeout',function($rootScope, $http, $location,$stateStorage,$modal,$timeout) {
+tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$modal','$timeout','AuthService',function($rootScope, $http, $location,$stateStorage,$modal,$timeout,AuthService) {
   return {
     restrict: 'E',
     scope: {
@@ -40,6 +40,8 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
       //$stateStorage.push($scope, 'execCmd',{});
 
       $scope.model = {};
+      
+      $scope.authService = AuthService;
       
       $scope.$watchCollection('model',function(){
         retrieveInputs();
@@ -79,7 +81,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
         executionParams.exports = [];
         var includedTestcases = $scope.includedTestcases();
         if(includedTestcases) {
-          executionParams.artefactFilter = {"class":"step.artefacts.filters.TestCaseFilter","includedNames":includedTestcases};
+          executionParams.artefactFilter = {"class":"step.artefacts.filters.TestCaseIdFilter","includedIds":includedTestcases};
         }
         executionParams.customParameters = $scope.model;
         return executionParams;
@@ -193,17 +195,36 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                 html += '<div>Input: <small><em>' + escapeHtml(reportNode.input) + '</em></small></div>';
               if(reportNode.output)
                 html += '<div>Output: <small><em>' + escapeHtml(reportNode.output) + '</em></small></div>';
-              if(reportNode.error)
-                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error) + '</em></small></div>';
+              if(reportNode.error) {
+                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error.msg);
+                if(reportNode.attachments && reportNode.attachments.length>0) {
+                  html += '. Check the attachments for more details.';
+                }
+                html += '</em></small></div>';
+              }
               return html},
             icon: '' },
+            'step.artefacts.reports.EchoReportNode' : {
+              renderer: function (reportNode) {
+                var html = "";
+                if(reportNode.name)
+                  html += '<div><small>' + reportNode.name + '</small></div>';
+                if(reportNode.echo)
+                  html += '<div>Echo: <small><em>' + escapeHtml(reportNode.echo) + '</em></small></div>';
+                return html},
+              icon: '' },            
           'default' : {
             renderer: function (reportNode) {
               var html = "";
               if(reportNode.name)
                 html += '<div><small>' + reportNode.name + '</small></div>';
-              if(reportNode.error)
-                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error) + '</em></small></div>';
+              if(reportNode.error) {
+                html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error.msg);
+                if(reportNode.attachments && reportNode.attachments.length>0) {
+                  html += '. Check the attachments for more details.';
+                }
+                html += '</em></small></div>';
+              }
               return html},
             icon: '' },
           };
@@ -306,14 +327,17 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       }
       
       var operationRenderer = {
-          'Adapter Call' : {
+          'Keyword Call' : {
             renderer: function (details) {
               var html = "";
-              if(details[1]) {
-                html += details[1].name;
+              if(details[0]) {
+                html += details[0].name;
               } 
-              if(details[0].token) {
-                html += '<div><small>' + details[0].token.url + '</small></div>';
+              if(details[1]) {
+                html += '<div><small>' + details[1].id + '</small></div>';
+              }
+              if(details[2]) {
+                html += '<div><small>' + details[2].agentUrl + '</small></div>';
               }
               // html += '<div>Input: <small><em>' + addWordBreakingPoints(escapeHtml(reportNode.input)) + '</em></small></div>';
               return html},
@@ -328,15 +352,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                 } 
                 return html},
               icon: '' },
-          'Capacity acquisition' : {
-              renderer: function (details) {
-                var html = "";
-                if(details) {
-                  if(details.description)
-                    html += '<div><small>' + details.description + '</small></div>';
-                } 
-                return html},
-              icon: '' },
           'Sleep' : {
                 renderer: function (details) {
                   var html = details + "ms";
@@ -345,38 +360,33 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           'Token selection' : {
             renderer: function (details) {
               var html = "";
-              if(details.interests && Object.keys(details.interests).length) {
-                html += '<small><label>Criteria: </label>';
-                _.mapObject(details.interests,function(value, key) {
+              if(details && Object.keys(details).length) {
+                html += '<div><small><label>Criteria: </label>';
+                _.mapObject(details,function(value, key) {
                   html += key + '=' + value.selectionPattern + ","
                 })
-                html += '</small>'
-              }
-              if(details.attributes && Object.keys(details.attributes).length) {
-                html += '<small><label>Attributes: </label>';
-                _.mapObject(details.attributes,function(value, key) {
-                  html += key + '=' + value + ","
-                })
-                html += '</small>'
+                html += '</small></div>'
               }
               return html},
             icon: '' },
           };
       
       $scope.currentOperationsTable = {};
-      $scope.currentOperationsTable.columns = [ { "title" : "Operation"}, 
-                                                {"title" : "Details", "render": function ( data, type, row ) {
+      $scope.currentOperationsTable.columns = [ 
+                                                {"title" : "Operation", "render": function ( data, type, row ) {
         var renderer = operationRenderer[data.name];
         if(!renderer) {
           renderer = reportNodeRenderer['default'];
         }
-        return renderer.renderer(data.details);
+        var html = data.name;
+        html+=renderer.renderer(data.details);
+        return html;
         }}];
       
       $scope.getIncludedTestcases = function() {
         var result = [];
         if($scope.testCaseTable.getRows!=null) {
-          _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[1])});
+          _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[0])});
         }
         return result;
       }
@@ -418,7 +428,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       }
       
       var refresh = function() {        
-        $http.get('rest/progress/' + eId).success(function(data) {
+        $http.get('rest/views/statusDistributionForFunctionCalls/' + eId).success(function(data) {
           $scope.progress = data;
         });
         
@@ -432,7 +442,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           console.log(points, evt);
         };
         
-        $http.get("rest/controller/execution/" + eId + "/throughput?resolution=20")
+        /* $http.get("rest/controller/execution/" + eId + "/throughput?resolution=20")
             .success(
                 function(data) {
                   $scope.data = [[]];
@@ -445,7 +455,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                       id : "series_0" } ], tooltip : { mode : "scrubber", formatter : function(x, y, series) {
                       return x + ' : ' + y;
                     } }, stacks : [], lineMode : "linear", tension : 0.7, drawLegend : true, drawDots : true, columnsHGap : 5 };
-                });
+                }); */
         
         $http.get("rest/threadmanager/operations?eid=" + eId)
         .success(
@@ -453,7 +463,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
               var dataSet = [];
               for (i = 0; i < data.length; i++) {
                 if(data[i]) {
-                  dataSet.push([ data[i].name, data[i]]);
+                  dataSet.push([data[i]]);
                 }
               }
               $scope.currentOperationsTable.data = dataSet;

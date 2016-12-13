@@ -19,6 +19,7 @@
 package step.grid.agent.handler;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -32,8 +33,13 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TokenHandlerPool {
 
+	private static final Logger logger = LoggerFactory.getLogger(TokenHandlerPool.class);
+	
 	private Map<String, MessageHandler> pool = new HashMap<>();
 	
 	public synchronized MessageHandler get(String handlerKey) throws Exception {
@@ -110,7 +116,11 @@ public class TokenHandlerPool {
 						}
 					}
 				}
-				urls.add(f.toURI().toURL());
+				try {
+					urls.add(f.getCanonicalFile().toURI().toURL());
+				} catch (IOException e) {
+					logger.warn("Error while getting canonical file name of '"+f.getPath()+"'",e );
+				}
 								
 				ClassLoader cl = new URLClassLoader(urls.toArray(new URL[urls.size()]), Thread.currentThread().getContextClassLoader());
 				handler = new ClassLoaderMessageHandlerWrapper(cl);

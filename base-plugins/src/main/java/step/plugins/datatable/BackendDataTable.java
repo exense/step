@@ -84,6 +84,11 @@ public class BackendDataTable {
 		return this;
 	}
 	
+	public BackendDataTable addTextWithDropdownColumnOptimized(String columnTitle, String value, List<String> options) {
+		columns.add(new ColumnDef(columnTitle, value, InputType.TEXT_DROPDOWN, new StringFormatter(), new PrefixedTextCriterium(), options));
+		return this;
+	}
+	
 	public BackendDataTable addDateColumn(String columnTitle, String value) {
 		columns.add(new ColumnDef(columnTitle, value, InputType.DATE_RANGE, new DateFormatter("dd.MM.yyyy HH:mm:ss"), new DateRangeCriterium("dd.MM.yyyy"), null));
 		return this;

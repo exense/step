@@ -34,9 +34,7 @@ public class VariablesManager {
 	private final ReportNodeCache nodeCache;
 		
 	private ConcurrentHashMap<String, Map<String, Variable>> register = new ConcurrentHashMap<>();
-	
-	private ConcurrentHashMap<String, Variable> reservedVariables = new ConcurrentHashMap<>();
-	
+		
 	public VariablesManager(ExecutionContext context) {
 		super();
 		this.nodeCache = context.getReportNodeCache();
@@ -46,9 +44,6 @@ public class VariablesManager {
 		Map<String, Variable> variableMap = getVariableMap(node.getId().toString(), false);
 		if(variableMap!=null) {
 			variableMap.remove(key);
-		}
-		if(reservedVariables.containsKey(key)) {
-			reservedVariables.remove(key);
 		}
 	}
 	
@@ -71,18 +66,10 @@ public class VariablesManager {
 	}
 	
 	public void putVariable(ReportNode targetNode,VariableType type, String key, Object value) {
-		if(reservedVariables.containsKey(key)) {
-			throw new RuntimeException("The variable '"+key+"' is a reserved variable that cannot be mutated.");
-		}
-		
 		Map<String, Variable> variableMap;
 		variableMap = getVariableMap(targetNode.getId().toString(), true);		
 		Variable variable = new Variable(value, type);
 		variableMap.put(key, variable);
-		
-		if(type == VariableType.RESERVED) {
-			reservedVariables.put(key, variable);
-		}
 	}
 	
 	public Object getVariable(String key) {
@@ -227,13 +214,5 @@ public class VariablesManager {
 	
 	public void releaseVariables(String nodeId) {
 		register.remove(nodeId);
-		Map<String, Variable> variables = getVariableMap(nodeId, false);
-		if(variables!=null) {
-			for(Entry<String,Variable> entry:variables.entrySet()) {
-				if(entry.getValue().getType()==VariableType.RESERVED) {
-					reservedVariables.remove(entry.getKey());
-				}
-			}
-		}
 	}
 }

@@ -87,6 +87,15 @@ public class OutputMessageBuilder {
 		return this;
 	}
 	
+	public OutputMessageBuilder appendError(String technicalError) {
+		if(error!=null) {
+			error += technicalError;			
+		} else {
+			error = technicalError;	
+		}
+		return this;
+	}
+	
 	public OutputMessageBuilder setError(String errorMessage, Throwable e) {
 		setError(errorMessage);
 		addAttachment(generateAttachmentForException(e));

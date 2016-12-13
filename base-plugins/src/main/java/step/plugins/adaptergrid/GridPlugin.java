@@ -46,8 +46,9 @@ public class GridPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		
 		Integer gridPort = Configuration.getInstance().getPropertyAsInteger("grid.port",8081);
+		Integer tokenTTL = Configuration.getInstance().getPropertyAsInteger("grid.ttl",60000);
 		
-		Grid grid = new Grid(gridPort);
+		Grid grid = new Grid(gridPort, tokenTTL);
 		grid.start();
 		
 		GridClient client = new GridClient(grid);

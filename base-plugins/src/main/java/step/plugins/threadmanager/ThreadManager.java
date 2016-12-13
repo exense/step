@@ -44,7 +44,7 @@ public class ThreadManager extends AbstractPlugin {
 	}
 	
 	private void registerClass(Class<?> clazz) {
-		matchingPatterns.add(Pattern.compile(clazz.getName().replaceAll("\\.", "\\.")+".*"));
+		matchingPatterns.add(Pattern.compile(clazz.getName().replace(".", "\\.")+".*"));
 	}
 	
 	private boolean matches(StackTraceElement[] stacktrace) {
@@ -69,9 +69,9 @@ public class ThreadManager extends AbstractPlugin {
 		context.getServiceRegistrationCallback().registerService(ThreadManagerServices.class);
 		context.put(THREAD_MANAGER_INSTANCE_KEY, this);
 		
-		registerPattern(Pattern.compile(".*\\.sleep$"));
-		registerClass(GridClient.class);
-		registerClass(QuotaManager.class);
+//		registerPattern(Pattern.compile(".*\\.sleep$"));
+//		registerClass(GridClient.class);
+//		registerClass(QuotaManager.class);
 	}
 
 	@SuppressWarnings("unchecked")

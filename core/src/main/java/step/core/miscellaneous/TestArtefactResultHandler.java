@@ -41,9 +41,8 @@ public class TestArtefactResultHandler {
 		if(generateAttachment && !(e instanceof ValidationException)) {			
 			ReportNodeAttachmentManager.attach(e, result);
 		}
-		result.addError(errorMsg!=null?errorMsg+":"+e.getMessage():e.getMessage());
+		result.setError(errorMsg!=null?errorMsg+":"+e.getMessage():e.getMessage(), 0, true);	
 		result.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
-		
 		return result;
 
 	}

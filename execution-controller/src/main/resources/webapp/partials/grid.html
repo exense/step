@@ -1,5 +1,16 @@
 <div ng-controller="GridCtrl">
 <tabset>
+	<tab heading="Agents" ng-controller="AgentListCtrl" active="$parent.tabState['agents']">
+		<div class="toolbar">
+			<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox ><span class="glyphicon glyphicon-refresh"/></button>
+		</div>
+		
+		<div class="panel-body">
+			<p>
+				<datatable tabledef="tabledef" handle="datatable" selectionmode="multiple" />
+			</p>
+		</div>
+	</tab>
 	<tab heading="Token Groups" ng-controller="AdapterListCtrl" active="$parent.tabState['adapters']">
 		<div class="toolbar">
 			<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox ><span class="glyphicon glyphicon-refresh"/></button>

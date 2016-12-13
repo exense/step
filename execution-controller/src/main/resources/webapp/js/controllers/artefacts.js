@@ -18,11 +18,13 @@
  *******************************************************************************/
 angular.module('artefactsControllers',['dataTable','step'])
 
-.controller('ArtefactListCtrl', [ '$scope', '$compile', '$http', 'stateStorage', '$interval', '$modal','$location', 
-    function($scope, $compile, $http, $stateStorage, $interval, $modal, $location) {
+.controller('ArtefactListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$modal', 'Dialogs', '$location', 'AuthService',
+    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $modal, Dialogs, $location, AuthService) {
       $stateStorage.push($scope, 'artefacts', {});	
 
       $scope.autorefresh = true;
+      
+      $scope.authService = AuthService;
       
       $scope.editArtefact = function(id) {
     	$scope.$apply(function() {
@@ -54,15 +56,38 @@ angular.module('artefactsControllers',['dataTable','step'])
         });
       }
       
+      function reload() {
+        $scope.table.Datatable.ajax.reload(null, false);
+      }
+      
       $scope.removeArtefact = function(id) {
-    	$http.delete("rest/controller/artefact/"+id).success(function() {
-    	  $scope.table.Datatable.ajax.reload(null, false);
-    	});
+        Dialogs.showDeleteWarning().then(function() {
+          $http.delete("rest/controller/artefact/"+id).success(function() {
+            reload();
+          });
+        })
+      }
+      
+      $scope.copyArtefact = function(id) {
+        $rootScope.clipboard = {object:"artefact",id:id};
+      }
+      
+      $scope.pasteArtefact = function() {
+        if($rootScope.clipboard && $rootScope.clipboard.object=="artefact") {
+          $http.post("rest/controller/artefact/"+$rootScope.clipboard.id+"/copy")
+          .success(function() {
+            reload();
+          });
+        }
       }
       
       $scope.table = {};
 
       $scope.tabledef = {}
+      
+      $scope.tabledef.actions = [{"label":"Paste","action":function() {$scope.pasteArtefact()}}];
+      
+      
       $scope.tabledef.columns = function(columns) {
         _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
           col.visible = false
@@ -75,19 +100,27 @@ angular.module('artefactsControllers',['dataTable','step'])
         _.each(_.where(columns,{'title':'Actions'}),function(col){
             col.title="Actions";
             col.searchmode="none";
-            col.width="120px";
+            col.width="160px";
             col.render = function ( data, type, row ) {
             	var html = '<div class="input-group">' +
 	            	'<div class="btn-group">' +
 	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().editArtefact(\''+row[0]+'\')">' +
 	            	'<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
 	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().executeArtefact(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().removeArtefact(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
-	            	'</button> ' +
-	            	'</div>' +
-	            	'</div>';
+	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>';
+            	
+            	if(AuthService.hasRight('plan-write')) {
+                html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().copyArtefact(\''+row[0]+'\')">' +
+                '<span class="glyphicon glyphicon glyphicon-copy" aria-hidden="true"></span>' +
+                '</button> ';
+              }
+            	
+            	if(AuthService.hasRight('plan-delete')) {
+            	  html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().removeArtefact(\''+row[0]+'\')">' +
+                '<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
+                '</button> ';
+            	}
+            	html+='</div></div>';
             	return html;
             }
            });

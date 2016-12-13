@@ -1,0 +1,16 @@
+,guest,tester,developer,admin
+plan-read,x,x,x,x
+plan-write,,x,x,x
+plan-delete,,,x,x
+plan-execute,,x,x,x
+kw-read,x,x,x,x
+kw-write,,,x,x
+kw-delete,,,x,x
+kw-execute,,x,x,x
+report-read,x,x,x,x
+user-write,,,,x
+user-read,,,,x
+task-read,x,x,x,x
+task-write,,x,x,x
+task-delete,,x,x,x
+admin,,,,x

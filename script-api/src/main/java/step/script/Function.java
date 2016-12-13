@@ -27,7 +27,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Function {
 
-	public String name="";
-
-	String name();
+	String name() default "";
 }

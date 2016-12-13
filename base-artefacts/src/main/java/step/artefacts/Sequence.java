@@ -21,8 +21,20 @@ package step.artefacts;
 import step.artefacts.handlers.SequenceHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.artefacts.DynamicAttribute;
 
 @Artefact(handler = SequenceHandler.class)
 public class Sequence extends AbstractArtefact {
+	
+	@DynamicAttribute
+	String continueOnError="false";
+
+	public String getContinueOnError() {
+		return continueOnError;
+	}
+
+	public void setContinueOnError(String continueOnError) {
+		this.continueOnError = continueOnError;
+	}
 	
 }
