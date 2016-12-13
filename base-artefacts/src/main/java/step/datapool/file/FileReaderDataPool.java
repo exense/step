@@ -71,7 +71,9 @@ public abstract class FileReaderDataPool extends DataSet {
 	@Override
 	public void close() {
 		try {
-			br.close();
+			if(br!=null) {
+				br.close();				
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Could not close reader properly for file " +  this.filePath + ". Error was:" + e.getMessage());

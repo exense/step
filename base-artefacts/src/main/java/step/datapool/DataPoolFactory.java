@@ -55,7 +55,11 @@ public class DataPoolFactory {
 					}
 				}
 			} else { // Nothing in Table, but something in Folder
-				result = new FileDataPoolImpl(forEach); 						// Folder based
+				if(forEach.getFolder()!=null && forEach.getFolder().trim().length()>0) {
+					result = new FileDataPoolImpl(forEach); 						// Folder based					
+				} else {
+					throw new RuntimeException("Either the attribute 'folder' or the attribute 'table' has to be specified.");
+				}
 			}
 		} else if (dataPoolConfiguration instanceof ForBlock) {
 			result = new IntSequenceDataPoolImpl((ForBlock)dataPoolConfiguration);
