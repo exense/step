@@ -419,3 +419,14 @@ angular.module('dataTable', [])
     templateUrl: 'partials/datatable.html'
   };
 }])
+
+// hack to suppress DataTable warning
+// see http://stackoverflow.com/questions/11941876/correctly-suppressing-warnings-in-datatables
+window.alert = (function() {
+    var nativeAlert = window.alert;
+    return function(message) {
+        message.indexOf("DataTables warning") === 0 ?
+            console.warn(message) :
+            nativeAlert(message);
+    }
+})();
