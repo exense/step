@@ -10,8 +10,8 @@ public class ReportNodeThroughputViewTest {
 
 	@Test
 	public void test() {
-		ReportNodeThroughput model = new ReportNodeThroughput();
 		ReportNodeThroughputView view = new ReportNodeThroughputView();
+		ReportNodeThroughput model = view.init();
 		view.setResolutions(new int[]{10,100});
 		for(int j=0;j<10;j++) {
 			for(int i=0;i<99;i++) {
