@@ -120,6 +120,7 @@ public class AccessServices extends AbstractServices {
 	@Path("/conf")
 	public AccessConfiguration getAccessConfiguration() {
 		AccessConfiguration conf = new AccessConfiguration();
+		conf.setDemo(isDemo());
 		conf.setAuthentication(useAuthentication());
 		conf.setRoles(accessManager.getRoles());
 		return conf;
@@ -127,6 +128,10 @@ public class AccessServices extends AbstractServices {
 	
 	public static boolean useAuthentication() {
 		return Configuration.getInstance().getPropertyAsBoolean("authentication", true);
+	}
+	
+	public static boolean isDemo() {
+		return Configuration.getInstance().getPropertyAsBoolean("demo", false);
 	}
 	
 	static Session ANONYMOUS_SESSION = new Session();

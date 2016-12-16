@@ -261,6 +261,10 @@ angular.module('step',['ngStorage'])
     username: '',
     password: ''
   };
+  if(AuthService.getConf().demo) {
+    $scope.credentials.password = 'init';
+    $scope.credentials.username = 'admin';
+  }
   $scope.login = function (credentials) {
     AuthService.login(credentials).then(function (user) {
     }, function () {
