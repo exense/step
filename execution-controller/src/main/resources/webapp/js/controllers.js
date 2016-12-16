@@ -442,20 +442,22 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           console.log(points, evt);
         };
         
-        /* $http.get("rest/controller/execution/" + eId + "/throughput?resolution=20")
+        $http.get('rest/views/ReportNodeThroughput/' + eId)
             .success(
                 function(data) {
                   $scope.data = [[]];
                   $scope.labels = [];
-                  $scope.series = ['throughput'];
-                  _.each(data.rows,function(value){$scope.labels.push($filter('date')(value.date, 'HH:mm:ss'));$scope.data[0].push(value.value)});
+                  $scope.series = ['Keywords/s'];
+                  var resolutionSeconds = data.resolution/1000;
+                  _.mapObject(data.intervals,function(entry,date){
+                    $scope.labels.push($filter('date')(date, 'HH:mm:ss'));$scope.data[0].push(entry.count/resolutionSeconds)});
                   $scope.options = {
                     axes : { x : { type : "date", key : "date", labelFunction : d3.time.format("%Y-%m-%d") }, y : { type : "linear" } },
                     series : [ { y : "value", label : "A time series", color : "#9467bd", axis : "y", type : "area", thickness : "2px",
                       id : "series_0" } ], tooltip : { mode : "scrubber", formatter : function(x, y, series) {
                       return x + ' : ' + y;
                     } }, stacks : [], lineMode : "linear", tension : 0.7, drawLegend : true, drawDots : true, columnsHGap : 5 };
-                }); */
+                });
         
         $http.get("rest/threadmanager/operations?eid=" + eId)
         .success(
