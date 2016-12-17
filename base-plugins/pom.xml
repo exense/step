@@ -44,6 +44,11 @@
 		</dependency>		
 		<dependency>
 			<groupId>step</groupId>
+			<artifactId>base-artefacts</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>step</groupId>
 			<artifactId>core</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
@@ -52,11 +57,6 @@
 		<dependency>
 			<groupId>step</groupId>
 			<artifactId>functions</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>grid</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

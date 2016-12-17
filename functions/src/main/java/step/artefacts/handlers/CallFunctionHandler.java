@@ -30,7 +30,6 @@ import javax.json.JsonValue.ValueType;
 import javax.json.stream.JsonParsingException;
 
 import step.artefacts.CallFunction;
-import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.common.managedoperations.OperationManager;

@@ -21,7 +21,6 @@ package step.artefacts.handlers;
 import java.util.Map;
 
 import step.artefacts.IfBlock;
-import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
 import step.artefacts.reports.IfBlockReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;

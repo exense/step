@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.artefacts.handlers.scheduler;
+package step.artefacts.handlers;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;

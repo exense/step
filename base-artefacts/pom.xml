@@ -35,21 +35,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>step</groupId>
-			<artifactId>functions</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>grid</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>base-plugins</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.1</version>

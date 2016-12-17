@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.artefacts.FunctionGroup;
-import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
