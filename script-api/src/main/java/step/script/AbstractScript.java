@@ -20,12 +20,17 @@ package step.script;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.Attachment;
 import step.grid.io.InputMessage;
 
 public class AbstractScript  {
+	
+	protected Logger logger = LoggerFactory.getLogger(AbstractScript.class);
 	
 	protected AgentTokenWrapper token;
 	

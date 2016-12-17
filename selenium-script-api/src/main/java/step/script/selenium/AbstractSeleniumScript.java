@@ -48,7 +48,11 @@ public class AbstractSeleniumScript extends AbstractScript {
 	protected void setDriver(WebDriver driver) {
 		Object driver_ = token.getSession().get(SELENIUM_DRIVER_ATTRIBUTE);
 		if(driver_!=null) {
-			((WebDriver)driver_).quit();
+			try {
+				((WebDriver)driver_).quit();				
+			} catch (Exception e) {
+				logger.error("Error while closing webdriver",e);
+			}
 		}
 		this.driver = driver;
 		token.getSession().put(SELENIUM_DRIVER_ATTRIBUTE, driver);
