@@ -24,6 +24,7 @@ import java.util.List;
 import step.core.accessors.Collection;
 import step.plugins.datatable.formatters.ArrayFormatter;
 import step.plugins.datatable.formatters.DateFormatter;
+import step.plugins.datatable.formatters.Formatter;
 import step.plugins.datatable.formatters.JsonFormatter;
 import step.plugins.datatable.formatters.RowAsJsonFormatter;
 import step.plugins.datatable.formatters.StringFormatter;
@@ -106,6 +107,11 @@ public class BackendDataTable {
 	
 	public BackendDataTable addRowAsJson(String columnTitle, String... searchAttributes) {
 		columns.add(new ColumnDef(columnTitle, null, InputType.TEXT, new RowAsJsonFormatter(), new MultiTextCriterium(searchAttributes), null));
+		return this;
+	}
+	
+	public BackendDataTable addCustomColumn(String columnTitle, Formatter formatter) {
+		columns.add(new ColumnDef(columnTitle, null, InputType.NONE, formatter, null, null));
 		return this;
 	}
 	

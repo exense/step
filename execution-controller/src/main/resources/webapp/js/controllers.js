@@ -594,6 +594,24 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$http','stateStor
                col.searchmode="select";
                col.render = function ( data, type, row ) {return '<span class="executionStatus status-' + data +'">'  +data+ '</span>';};
               });
+              _.each(_.where(columns,{'title':'Summary'}),function(col){
+                col.width="160px";
+                col.render = function ( data, type, row ) {
+                  var view = JSON.parse(data);
+                  if(view.count) {
+                    var distribution = view.distribution;
+                    return '<div style="width: 150px" class="progress" tooltip="PASSED: '+distribution.PASSED.count+', FAILED: '+distribution.FAILED.count+', TECHNICAL_ERROR: '+distribution.TECHNICAL_ERROR.count+'">'+
+                    '<div class="progress-bar status-PASSED" style="width:'+distribution.PASSED.count/view.count*100+'%;">'+
+                    distribution.PASSED.count+'</div>' +
+                    '<div class="progress-bar status-FAILED" style="width:'+distribution.FAILED.count/view.count*100+'%;">'+
+                    distribution.FAILED.count+'</div>' +
+                    '<div class="progress-bar status-TECHNICAL_ERROR" style="width:'+distribution.TECHNICAL_ERROR.count/view.count*100+'%;">'+
+                    distribution.TECHNICAL_ERROR.count+'</div>' +
+                    '</div>';
+                  } else {
+                    return '';
+                  }
+               }});
               return columns;
             };
             var refresh = function() {

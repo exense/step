@@ -69,6 +69,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.execution.model.ExecutionStatus;
+import step.plugins.datatable.formatters.custom.ExecutionSummaryFormatter;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
@@ -99,6 +100,7 @@ public class DataTableServices extends AbstractServices {
 			}
 		}
 		executions.addTextWithDropdownColumn("Status", "status", Arrays.asList(ExecutionStatus.values()).stream().map(Object::toString).collect(Collectors.toList()));
+		executions.addCustomColumn("Summary", new ExecutionSummaryFormatter(controller.getContext()));
 		
 		ColumnBuilder leafReportNodesColumns = new ColumnBuilder();
 		leafReportNodesColumns.addDateColumn("Begin", "executionTime").addColumn("Name","name").addColumn("Status","status").addColumn("Error", "error")
