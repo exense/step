@@ -1,27 +1,9 @@
-/*******************************************************************************
- * (C) Copyright 2016 Jerome Comte and Dorian Cransac
- *  
- * This file is part of STEP
- *  
- * STEP is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *  
- * STEP is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *  
- * You should have received a copy of the GNU Affero General Public License
- * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
- *******************************************************************************/
 (function () {
   'use strict';
 
   Chart.defaults.global.responsive = true;
-  Chart.defaults.global.multiTooltipTemplate = '<%if (datasetLabel){%><%=datasetLabel%>: <%}%><%= value %>';
-
+  Chart.defaults.global.legend.position = 'bottom';
+  
   Chart.defaults.global.colours = [
     '#97BBCD', // blue
     '#DCDCDC', // light grey
@@ -34,28 +16,19 @@
 
   angular.module('chart.js', [])
     .directive('chartBase', function () { return chart(); })
-    .directive('chartLine', function () { return chart('Line'); })
-    .directive('chartBar', function () { return chart('Bar'); })
-    .directive('chartRadar', function () { return chart('Radar'); })
-    .directive('chartDoughnut', function () { return chart('Doughnut'); })
-    .directive('chartPie', function () { return chart('Pie'); })
-    .directive('chartPolarArea', function () { return chart('PolarArea'); });
+    .directive('chartLine', function () { return chart('line'); })
+    .directive('chartBar', function () { return chart('bar'); })
 
   function chart (type) {
     return {
       restrict: 'CA',
       scope: {
-        data: '=',
-        labels: '=',
-        options: '=',
-        series: '=',
+        handle: '=',
         colours: '=?',
         getColour: '=?',
-        chartType: '=',
-        legend: '@',
         click: '='
       },
-      link: function (scope, elem/*, attrs */) {
+      link: function (scope, elem) {
         var chart, container = document.createElement('div');
         container.className = 'chart-container';
         elem.replaceWith(container);
@@ -66,20 +39,16 @@
             window.G_vmlCanvasManager.initElement(elem[0]);
           }
         }
-
-        // Order of setting "watch" matter
-
-        scope.$watch('data', function (newVal, oldVal) {
+        
+        scope.$watch('handle.data', function (newVal, oldVal) {
           if (! newVal || ! newVal.length || (Array.isArray(newVal[0]) && ! newVal[0].length)) return;
-          var chartType = type || scope.chartType;
-          if (! chartType) return;
 
           if (chart) {
-            if (canUpdateChart(newVal, oldVal)) return updateChart(chart, newVal, scope);
+            //if (canUpdateChart(newVal, oldVal)) return updateChart(chart, newVal, scope);
             chart.destroy();
           }
 
-          chart = createChart(chartType, scope, elem);
+          chart = createChart(type, scope, elem);
         }, true);
 
         scope.$watch('series', resetChart, true);
@@ -101,14 +70,12 @@
         function resetChart (newVal, oldVal) {
           if (isEmpty(newVal)) return;
           if (angular.equals(newVal, oldVal)) return;
-          var chartType = type || scope.chartType;
-          if (! chartType) return;
 
           // chart.update() doesn't work for series and labels
           // so we have to re-create the chart entirely
           if (chart) chart.destroy();
 
-          chart = createChart(chartType, scope, elem);
+          chart = createChart(type, scope, elem);
         }
       }
     };
@@ -128,14 +95,16 @@
   }
 
   function createChart (type, scope, elem) {
-    if (! scope.data || ! scope.data.length) return;
+    if (! scope.handle.data || ! scope.handle.data.length) return;
     scope.getColour = typeof scope.getColour === 'function' ? scope.getColour : getRandomColour;
     scope.colours = getColours(scope);
     var cvs = elem[0], ctx = cvs.getContext('2d');
-    var data = Array.isArray(scope.data[0]) ?
-      getDataSets(scope.labels, scope.data, scope.series || [], scope.colours) :
-      getData(scope.labels, scope.data, scope.colours);
-    var chart = new Chart(ctx)[type](data, scope.options || {});
+    var data = Array.isArray(scope.handle.data[0]) ?
+      getDataSets(scope.handle.labels, scope.handle.data, scope.handle.series || [], scope.colours) :
+      getData(scope.handle.labels, scope.handle.data, scope.colours);
+    var chart = new Chart(ctx,{type: type,
+                                data: data,
+                                options: scope.handle.options || {}});
     scope.$emit('create', chart);
 
     if (scope.click) {
@@ -149,13 +118,12 @@
         }
       };
     }
-    if (scope.legend && scope.legend !== 'false') setLegend(elem, chart);
     return chart;
   }
 
   function getColours (scope) {
     var colours = angular.copy(scope.colours) || angular.copy(Chart.defaults.global.colours);
-    while (colours.length < scope.data.length) {
+    while (colours.length < scope.handle.data.length) {
       colours.push(scope.getColour());
     }
     return colours.map(convertColour);
@@ -174,9 +142,9 @@
 
   function getColour (colour) {
     return {
-      fillColor: rgba(colour, 0.2),
-      strokeColor: rgba(colour, 1),
-      pointColor: rgba(colour, 1),
+      backgroundColor: rgba(colour, 0.2),
+      borderColor: rgba(colour, 1),
+      pointBorderColor: rgba(colour, 1),
       pointStrokeColor: '#fff',
       pointHighlightFill: '#fff',
       pointHighlightStroke: rgba(colour, 0.8)
@@ -208,6 +176,7 @@
         var dataSet = angular.copy(colours[i]);
         dataSet.label = series[i];
         dataSet.data = item;
+        dataSet.fill = false;
         return dataSet;
       })
     };
@@ -224,16 +193,8 @@
     });
   }
 
-  function setLegend (elem, chart) {
-    var $parent = elem.parent(),
-        $oldLegend = $parent.find('chart-legend'),
-        legend = '<chart-legend>' + chart.generateLegend() + '</chart-legend>';
-    if ($oldLegend.length) $oldLegend.replaceWith(legend);
-    else $parent.append(legend);
-  }
-
   function updateChart (chart, values, scope) {
-    if (Array.isArray(scope.data[0])) {
+    if (Array.isArray(scope.handle.data[0])) {
       chart.datasets.forEach(function (dataset, i) {
         (dataset.points || dataset.bars).forEach(function (dataItem, j) {
           dataItem.value = values[i][j];

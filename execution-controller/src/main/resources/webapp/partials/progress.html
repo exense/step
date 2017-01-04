@@ -37,6 +37,25 @@
 </div>
 
 <div class="panel panel-default">
+	<div class="panel-heading"><a ng-click="displayPerformance=!displayPerformance">Performance</a></div>
+  	<div class="panel-body" ng-show="displayPerformance">
+  		<div class="row">
+	  		<div class="col-xs-6">
+				<canvas id="performance-chart" class="chart chart-line" handle="performancechart"/>
+	  		</div>
+	  		<div class="col-xs-6">
+				<canvas id="errorate-chart" class="chart chart-line" handle="errorratechart" colours="['#F7464A']"/>
+	  		</div>  		
+  		</div>
+  		<div class="row">
+	  		<div class="col-xs-6">
+				<canvas id="responsetime-by-function-chart" class="chart chart-line" handle="responseTimeByFunctionChart"/>
+	  		</div>		
+  		</div>
+	</div>
+</div>
+
+<div class="panel panel-default">
 	<div class="panel-heading"><a ng-click="displayParameters=!displayParameters">Parameters</a></div>
   	<div class="panel-body" ng-show="displayParameters">
 		<datatable tabledef="configParamTable" handle="configParamTable" columnsearch="true" order="[[0, &quot;asc&quot;]]"/>
@@ -109,11 +128,8 @@
 <div ng-if="progress.count>1" >
 <div class="panel panel-default">
   <div class="panel-heading">Throughput</div>
-  <div class="panel-body" style="height: 300px; width: 100%">
-  	<canvas id="line" class="chart chart-line" data="data"
-	  labels="labels" legend="true" series="series"
-	  click="onClick">
-	</canvas> 
+  <div class="panel-body">
+  	<canvas id="throughput-chart" class="chart chart-line" handle="throughputchart" legend="true" click="onClick"/>
   </div>
 </div>
 </div>

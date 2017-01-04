@@ -6,9 +6,11 @@ import java.util.Map;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.plugins.views.AbstractView;
 import step.plugins.views.View;
 
-public class ReportNodeStatusDistributionView extends View<ReportNodeStatusDistribution> {	
+@View
+public class ReportNodeStatusDistributionView extends AbstractView<ReportNodeStatusDistribution> {	
 
 	@Override
 	public void afterReportNodeSkeletonCreation(ReportNodeStatusDistribution model, ReportNode node) {

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminControllers = angular.module('tecAdminControllers',['dataTable','chart.js','n3-line-chart','ui.bootstrap', 'step']);
+var tecAdminControllers = angular.module('tecAdminControllers',['dataTable','chart.js','n3-line-chart','ui.bootstrap', 'step', 'views']);
 
 function escapeHtml(str) {
   var div = document.createElement('div');
@@ -152,7 +152,7 @@ tecAdminControllers.controller('newTaskModalCtrl', function ($scope, $modalInsta
 });
     
 
-tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location',function($http,$timeout,$interval,$stateStorage,$filter,$location) {
+tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory) {
   return {
     restrict: 'E',
     scope: {
@@ -169,6 +169,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
       $scope.displayTestCasePanel = false;
       $scope.displayTestStepsPanel = true;
+      $scope.displayPerformance = true;
       
       $scope.autorefresh = true;
 
@@ -427,6 +428,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         });        
       }
       
+      $scope.throughputchart = {};
+      $scope.responseTimeByFunctionChart = {};
+      $scope.performancechart = {};
+      
       var refresh = function() {        
         $http.get('rest/views/statusDistributionForFunctionCalls/' + eId).success(function(data) {
           $scope.progress = data;
@@ -436,28 +441,13 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           $scope.stepsTable.Datatable.ajax.reload(null, false);
         }
         
-        Chart.defaults.global.animation = false;
+        viewFactory.getReportNodeStatisticCharts(eId).then(function(charts){
+          $scope.throughputchart = charts.throughputchart;
+          $scope.responseTimeByFunctionChart = charts.responseTimeByFunctionChart;
+          $scope.performancechart = charts.performancechart;
+        })
         
-        $scope.onClick = function (points, evt) {
-          console.log(points, evt);
-        };
-        
-        $http.get('rest/views/ReportNodeThroughput/' + eId)
-            .success(
-                function(data) {
-                  $scope.data = [[]];
-                  $scope.labels = [];
-                  $scope.series = ['Keywords/s'];
-                  var resolutionSeconds = data.resolution/1000;
-                  _.mapObject(data.intervals,function(entry,date){
-                    $scope.labels.push($filter('date')(date, 'HH:mm:ss'));$scope.data[0].push(entry.count/resolutionSeconds)});
-                  $scope.options = {
-                    axes : { x : { type : "date", key : "date", labelFunction : d3.time.format("%Y-%m-%d") }, y : { type : "linear" } },
-                    series : [ { y : "value", label : "A time series", color : "#9467bd", axis : "y", type : "area", thickness : "2px",
-                      id : "series_0" } ], tooltip : { mode : "scrubber", formatter : function(x, y, series) {
-                      return x + ' : ' + y;
-                    } }, stacks : [], lineMode : "linear", tension : 0.7, drawLegend : true, drawDots : true, columnsHGap : 5 };
-                });
+        viewFactory.getTimeBasedChart('ErrorRate',eId,'Errors/s').then(function(chart){$scope.errorratechart=chart})
         
         $http.get("rest/threadmanager/operations?eid=" + eId)
         .success(
