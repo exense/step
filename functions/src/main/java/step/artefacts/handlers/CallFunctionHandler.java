@@ -123,7 +123,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 						attachmentMeta = ReportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
 						node.addAttachment(attachmentMeta);					
 					} catch (AttachmentQuotaException e) {
-						logger.error("Error while converting attachment:" +a.getName(),e);
+						// attachment has been skipped. Nothing else to do here
 					}
 				}
 			}
