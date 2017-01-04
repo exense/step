@@ -154,7 +154,7 @@ public class ScriptHandler implements MessageHandler {
 	        File[] files = directory.listFiles(new FileFilter() {
 				@Override
 				public boolean accept(File file) {
-					return file.getName().startsWith(message.getFunction());
+					return Files.getNameWithoutExtension(file.getName()).equals(message.getFunction());
 				}
 	        });
 	        if(files.length==0) {
