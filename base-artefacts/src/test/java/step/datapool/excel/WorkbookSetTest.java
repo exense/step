@@ -19,6 +19,7 @@
 package step.datapool.excel;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -54,7 +55,11 @@ public class WorkbookSetTest {
 
 	private File getResourceFile(String filename) {
 		if(this.getClass().getClassLoader().getResource(filename)!=null) {
-			return new File(this.getClass().getClassLoader().getResource(filename).getFile());
+			try {
+				return new File(this.getClass().getClassLoader().getResource(filename).toURI().getPath());
+			} catch (URISyntaxException e) {
+				throw new RuntimeException(e);
+			}
 		} else {
 			return null;
 		}
