@@ -19,6 +19,7 @@
 package FileWatchService;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Assert;
@@ -30,10 +31,10 @@ import step.commons.conf.FileWatchService;
 public class FileWatchServiceTest {
 
 	@Test
-	public void testBasic() {
-		File file = new File(this.getClass().getClassLoader().getResource("FileWatchServiceTest.test").getFile());
+	public void testBasic() throws URISyntaxException {
+		File file = new File(this.getClass().getClassLoader().getResource("FileWatchServiceTest.test").toURI().getPath());
 		final AtomicInteger updatedCount = new AtomicInteger(0);
-		FileWatchService.getInstance().setInterval(1000);
+		FileWatchService.getInstance().setInterval(10);
 		FileWatchService.getInstance().register(file, new Runnable() {
 			@Override
 			public void run() {
@@ -43,7 +44,7 @@ public class FileWatchServiceTest {
 		for(int i=0;i<2;i++) {
 			file.setLastModified(System.currentTimeMillis());
 			try {
-				Thread.sleep(2000);
+				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -53,7 +54,7 @@ public class FileWatchServiceTest {
 		FileWatchService.getInstance().unregister(file);
 		file.setLastModified(System.currentTimeMillis());
 		try {
-			Thread.sleep(2000);
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
