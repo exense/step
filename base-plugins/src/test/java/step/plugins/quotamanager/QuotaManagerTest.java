@@ -33,6 +33,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.commons.helpers.FileHelper;
 import step.plugins.quotamanager.config.Quota;
 import step.plugins.quotamanager.config.QuotaManagerConfig;
 
@@ -296,8 +297,7 @@ public class QuotaManagerTest {
 		HashMap<String, Object> bindings = new HashMap<>();
 		bindings.put("key", "key1");
 		
-		URL url = this.getClass().getClassLoader().getResource("QuotaManagerConfig.xml");
-		QuotaManager manager = new QuotaManager(new File(url.getFile()));
+		QuotaManager manager = new QuotaManager(FileHelper.getClassLoaderResource(this.getClass(),"QuotaManagerConfig.xml"));
 		UUID id = manager.acquirePermit(bindings);
 		Assert.assertNotNull(id);
 		manager.releasePermit(id);

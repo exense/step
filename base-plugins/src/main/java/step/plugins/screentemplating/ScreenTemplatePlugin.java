@@ -19,7 +19,6 @@
 package step.plugins.screentemplating;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +31,7 @@ import step.commons.activation.Activator;
 import step.commons.conf.Configuration;
 import step.commons.conf.FileRepository;
 import step.commons.conf.FileRepository.FileRepositoryCallback;
+import step.commons.helpers.FileHelper;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
@@ -49,9 +49,9 @@ public class ScreenTemplatePlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) {
 		String config = Configuration.getInstance().getProperty("screentemplate.config");
 		if(config==null) {
-			URL url = this.getClass().getClassLoader().getResource("ScreenTemplates.js");
-			if(url!=null) {
-				config = url.getFile();
+			File file = FileHelper.getClassLoaderResource(this.getClass(), "ScreenTemplates.js");
+			if(file!=null) {
+				config = file.getAbsolutePath();
 			}
 		}
 		

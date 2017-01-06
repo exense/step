@@ -28,6 +28,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.commons.helpers.FileHelper;
 import step.datapool.excel.WorkbookSet.LinkedWorkbookFileResolver;
 
 
@@ -54,15 +55,7 @@ public class WorkbookSetTest {
 	}
 
 	private File getResourceFile(String filename) {
-		if(this.getClass().getClassLoader().getResource(filename)!=null) {
-			try {
-				return new File(this.getClass().getClassLoader().getResource(filename).toURI().getPath());
-			} catch (URISyntaxException e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			return null;
-		}
+		return FileHelper.getClassLoaderResource(this.getClass(), filename);
 	}
 	
 	@Test

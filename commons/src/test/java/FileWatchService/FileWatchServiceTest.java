@@ -19,20 +19,19 @@
 package FileWatchService;
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import junit.framework.Assert;
 
 import org.junit.Test;
 
+import junit.framework.Assert;
 import step.commons.conf.FileWatchService;
+import step.commons.helpers.FileHelper;
 
 public class FileWatchServiceTest {
 
 	@Test
-	public void testBasic() throws URISyntaxException {
-		File file = new File(this.getClass().getClassLoader().getResource("FileWatchServiceTest.test").toURI().getPath());
+	public void testBasic() {
+		File file = FileHelper.getClassLoaderResource(this.getClass(),"FileWatchServiceTest.test");
 		final AtomicInteger updatedCount = new AtomicInteger(0);
 		FileWatchService.getInstance().setInterval(10);
 		FileWatchService.getInstance().register(file, new Runnable() {

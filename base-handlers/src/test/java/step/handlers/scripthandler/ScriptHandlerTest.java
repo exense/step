@@ -33,6 +33,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.commons.helpers.FileHelper;
 import step.grid.agent.handler.FunctionTester;
 import step.grid.agent.handler.FunctionTester.Context;
 import step.grid.io.OutputMessage;
@@ -41,7 +42,7 @@ public class ScriptHandlerTest {
 
 	@Test 
 	public void test1() {
-		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		String scriptDir = getScriptDir();
 		
 		Map<String, String> properties = new HashMap<>();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
@@ -54,7 +55,7 @@ public class ScriptHandlerTest {
 
 	@Test 
 	public void testGroovy1() {
-		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		String scriptDir = getScriptDir();
 		
 		Map<String, String> properties = new HashMap<>();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
@@ -68,7 +69,7 @@ public class ScriptHandlerTest {
 
 	@Test 
 	public void testPython1() {
-		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		String scriptDir = getScriptDir();
 		
 		Map<String, String> properties = new HashMap<>();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
@@ -82,7 +83,7 @@ public class ScriptHandlerTest {
 	@Test 
 	public void testParallel() throws InterruptedException, ExecutionException, TimeoutException {
 		Map<String, String> properties = new HashMap<>();
-		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		String scriptDir = getScriptDir();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
 
 		final ScriptHandler handler = new ScriptHandler();
@@ -114,7 +115,7 @@ public class ScriptHandlerTest {
 	
 	@Test 
 	public void testWrongScriptEngine() {
-		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		String scriptDir = getScriptDir();
 		
 		Map<String, String> properties = new HashMap<>();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
@@ -129,7 +130,7 @@ public class ScriptHandlerTest {
 	
 	@Test 
 	public void testGroovy() {
-		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		String scriptDir = getScriptDir();
 		
 		Map<String, String> properties = new HashMap<>();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
@@ -141,7 +142,7 @@ public class ScriptHandlerTest {
 	
 	@Test 
 	public void testErrorHandler() {
-		String scriptDir = this.getClass().getClassLoader().getResource("scripts").getFile();
+		String scriptDir = getScriptDir();
 		
 		Map<String, String> properties = new HashMap<>();
 		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
@@ -154,5 +155,9 @@ public class ScriptHandlerTest {
 		} catch(Exception e) {
 			Assert.assertEquals("executed", System.getProperties().get("errorHandler"));
 		}
+	}
+	
+	private String getScriptDir() {
+		return FileHelper.getClassLoaderResource(this.getClass(),"scripts").getAbsolutePath();
 	}
 }
