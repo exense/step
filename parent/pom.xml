@@ -34,7 +34,7 @@
 		<module>../core</module>
 		<module>../commons</module>
 		<module>../base-plugins</module>
-		<module>../rtm-plugin</module>
+		<!-- <module>../rtm-plugin</module> -->
 		<module>../base-artefacts</module>
 		<module>../base-handlers</module>
 		<module>../execution-controller</module>
