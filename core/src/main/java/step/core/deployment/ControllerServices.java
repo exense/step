@@ -224,6 +224,7 @@ public class ControllerServices extends AbstractServices {
 	
 	@GET
 	@Path("/reportnode/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="report-read")
 	public ReportNode getReportNode(@PathParam("id") String reportNodeId) {
 		return getContext().getReportAccessor().get(new ObjectId(reportNodeId));
@@ -270,6 +271,23 @@ public class ControllerServices extends AbstractServices {
 		public void setArtefact(AbstractArtefact artefact) {
 			this.artefact = artefact;
 		}
+	}
+	
+	@GET
+	@Path("/reportnode/{id}/children")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
+	public List<ReportNode> getReportNodeChildren(@PathParam("id") String reportNodeId) {
+		int limit = 1000;
+		List<ReportNode> result = new ArrayList<>();
+		Iterator<ReportNode> it = getContext().getReportAccessor().getChildren(new ObjectId(reportNodeId));
+		while(it.hasNext()) {
+			result.add(it.next());
+			if(result.size()>limit) {
+				break;
+			}
+		}		
+		return result;
 	}
 
 	@GET

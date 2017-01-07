@@ -85,6 +85,19 @@ div.executionStatus,span.executionStatus {
 .status-TECHNICAL_ERROR {
 	background:black;
 }
+
+i.status-PASSED {
+	color:#5cb85c;
+}
+
+i.status-FAILED {
+	color:#d9534f;
+}
+
+i.status-TECHNICAL_ERROR {
+	color:black;
+}
+	  
 	  
 .selected {
 	background:#abb9d3;

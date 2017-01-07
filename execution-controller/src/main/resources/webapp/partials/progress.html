@@ -56,6 +56,13 @@
 </div>
 
 <div class="panel panel-default">
+	<div class="panel-heading"><a ng-click="displayReportTree=!displayReportTree">Report tree</a></div>
+  	<div class="panel-body" ng-show="displayReportTree">
+  		<report-tree nodeid="eid" handle="reportTreeHandle" />
+	</div>
+</div>
+
+<div class="panel panel-default">
 	<div class="panel-heading"><a ng-click="displayParameters=!displayParameters">Parameters</a></div>
   	<div class="panel-body" ng-show="displayParameters">
 		<datatable tabledef="configParamTable" handle="configParamTable" columnsearch="true" order="[[0, &quot;asc&quot;]]"/>

@@ -28,6 +28,7 @@ import org.bson.types.ObjectId;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.AbstractArtefact;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
@@ -56,6 +57,7 @@ public class ReportNode {
 	
 	protected Map<String, String> customAttributes;
 	
+	@JsonIgnore
 	protected AbstractArtefact artefactInstance;
 
 	public ReportNode() {

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminControllers = angular.module('tecAdminControllers',['dataTable','chart.js','n3-line-chart','ui.bootstrap', 'step', 'views']);
+var tecAdminControllers = angular.module('tecAdminControllers',['dataTable','chart.js','n3-line-chart','ui.bootstrap', 'step', 'views','reportTree']);
 
 function escapeHtml(str) {
   var div = document.createElement('div');
@@ -395,6 +395,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       $scope.onTestExecutionStarted = function() {
         $scope.closeTab();
       }
+      
+      $scope.reportTreeHandle = {};
     },
     link: function($scope, $element) {
       var eId = $scope.eid;
@@ -460,6 +462,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
               }
               $scope.currentOperationsTable.data = dataSet;
             });
+        
+        if($scope.reportTreeHandle.refresh) {
+          $scope.reportTreeHandle.refresh();
+        }
       };
 
       $scope.testCaseTable.onSelectionChange = function() {
