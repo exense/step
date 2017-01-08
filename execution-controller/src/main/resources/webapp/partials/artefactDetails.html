@@ -3,10 +3,10 @@
 		<div  class="form-group form-group-sm">
 			<span ng-repeat="key in getEditableArtefactProperties()">
 				<label>{{key}}</label>
-				<input ng-model="artefact[key]" class="form-control form-control-sm"></input>
+				<input ng-model="artefact[key]" class="form-control form-control-sm" ng-disabled="readonly"></input>
 			</span>
 		</div>
-		<div class="form-group">
+		<div class="form-group" ng-if="!readonly">
    			<div>
      			<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default" ng-click="save()">Save</button>
     		</div>

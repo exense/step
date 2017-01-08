@@ -252,6 +252,7 @@ angular.module('artefactEditor',['dataTable','step'])
     restrict: 'E',
     scope: {
       artefactid: '=',
+      readonly: '=',
       handle: '='
     },
     controller: function($scope,$location, AuthService) {

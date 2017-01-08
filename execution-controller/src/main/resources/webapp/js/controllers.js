@@ -162,14 +162,35 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       closeTab: '&closeTab',
       active: '&active'
     },
-    controller: function($scope,$location) {
+    controller: function($scope,$location,$anchorScroll) {
       var eId = $scope.eid;
       console.log('Execution Controller. ID:' + eId);
       $stateStorage.push($scope, eId,{});
 
-      $scope.displayTestCasePanel = false;
-      $scope.displayTestStepsPanel = true;
-      $scope.displayPerformance = true;
+      var panels = {
+          "testCases":{label:"Test cases",show:false, enabled:false},
+          "steps":{label:"Keyword calls",show:true, enabled:true},
+          "throughput":{label:"Keyword throughput",show:true, enabled:true},
+          "performance":{label:"Performance",show:true, enabled:true},
+          "reportTree":{label:"Report tree",show:false, enabled:true},
+          "executionDetails":{label:"Execution details",show:true, enabled:true},
+          "parameters":{label:"Execution parameters",show:false, enabled:true},
+          "currentOperations":{label:"Current operations",show:true, enabled:true}
+      }
+      
+      $scope.scrollTo = function(viewId) {
+        panels[viewId].show=true;
+        $location.hash($scope.getPanelId(viewId));
+        $anchorScroll();
+      }
+      
+      $scope.isShowPanel = function(viewId) {return panels[viewId].show};
+      $scope.isPanelEnabled = function(viewId) {return panels[viewId].enabled};
+      $scope.toggleShowPanel = function(viewId) {panels[viewId].show=!panels[viewId].show};
+      $scope.enablePanel = function(viewId, enabled) {panels[viewId].enabled=enabled};
+      $scope.getPanelId = function(viewId) {return eId+viewId};
+      $scope.getPanelTitle = function(viewId) {return panels[viewId].label};
+      $scope.panels = _.map(_.keys(panels),function(viewId){return {id:viewId,label:panels[viewId].label}});
       
       $scope.autorefresh = true;
 
@@ -408,6 +429,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       var refreshTestCaseTable = function() {        
         $http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode').success(function(data) {
           var dataSet = [];
+          if(data.length>0) {
+            $scope.enablePanel('testCases', true);
+          }
+          
           for (i = 0; i < data.length; i++) {
             dataSet[i] = [ data[i].artefactID, data[i].name, data[i].status];
           }
