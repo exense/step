@@ -30,35 +30,36 @@ import step.commons.helpers.FileHelper;
 public class FileWatchServiceTest {
 
 	@Test
-	public void testBasic() {
+	public void testBasic() throws InterruptedException {
 		File file = FileHelper.getClassLoaderResource(this.getClass(),"FileWatchServiceTest.test");
+		
+		Object lock = new Object();
+		
 		final AtomicInteger updatedCount = new AtomicInteger(0);
 		FileWatchService.getInstance().setInterval(10);
 		FileWatchService.getInstance().register(file, new Runnable() {
 			@Override
 			public void run() {
 				updatedCount.incrementAndGet();
+				synchronized (lock) {
+					lock.notify();
+				}
 			}
 		});
-		for(int i=0;i<2;i++) {
-			file.setLastModified(System.currentTimeMillis());
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		Assert.assertEquals(2,updatedCount.get());
+				
+		touchAndWait(file, lock, updatedCount, 1);
+		touchAndWait(file, lock, updatedCount, 2);
+
 		FileWatchService.getInstance().unregister(file);
-		file.setLastModified(System.currentTimeMillis());
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		touchAndWait(file, lock, updatedCount, 2);
+
+	}
+
+	private void touchAndWait(File file, Object lock, final AtomicInteger updatedCount, int expected) throws InterruptedException {
+		synchronized (lock) {
+			file.setLastModified(System.currentTimeMillis());
+			lock.wait(1000);
 		}
-		Assert.assertEquals(2,updatedCount.get());
-		//FileWatchService.getInstance().interrupt();
+		Assert.assertEquals(expected,updatedCount.get());
 	}
 }
