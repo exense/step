@@ -59,7 +59,7 @@ public class FileWatchServiceTest {
 
 	private void touchAndWait(File file, Object lock, final AtomicInteger updatedCount, int expected, long lastModified) throws InterruptedException {
 		synchronized (lock) {
-			file.setLastModified(System.currentTimeMillis());
+			file.setLastModified(lastModified);
 			lock.wait(1000);
 		}
 		Assert.assertEquals(expected,updatedCount.get());
