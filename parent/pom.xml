@@ -28,13 +28,20 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<repositories>
+		<repository>
+			<id>nexus</id>
+			<url>http://nexus.stepcloud.ch/nexus/content/repositories/public</url>
+		</repository>
+	</repositories>
+
 	<modules>
 		<module>../grid</module>
 		<module>../functions</module>
 		<module>../core</module>
 		<module>../commons</module>
 		<module>../base-plugins</module>
-		<!-- <module>../rtm-plugin</module> -->
+		<module>../rtm-plugin</module>
 		<module>../base-artefacts</module>
 		<module>../base-handlers</module>
 		<module>../execution-controller</module>
