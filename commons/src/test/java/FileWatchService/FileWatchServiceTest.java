@@ -46,16 +46,18 @@ public class FileWatchServiceTest {
 				}
 			}
 		});
+		
+		long lastModified = System.currentTimeMillis();
 				
-		touchAndWait(file, lock, updatedCount, 1);
-		touchAndWait(file, lock, updatedCount, 2);
+		touchAndWait(file, lock, updatedCount, 1, lastModified);
+		touchAndWait(file, lock, updatedCount, 2, lastModified+10000);
 
 		FileWatchService.getInstance().unregister(file);
-		touchAndWait(file, lock, updatedCount, 2);
+		touchAndWait(file, lock, updatedCount, 2, lastModified+20000);
 
 	}
 
-	private void touchAndWait(File file, Object lock, final AtomicInteger updatedCount, int expected) throws InterruptedException {
+	private void touchAndWait(File file, Object lock, final AtomicInteger updatedCount, int expected, long lastModified) throws InterruptedException {
 		synchronized (lock) {
 			file.setLastModified(System.currentTimeMillis());
 			lock.wait(1000);
