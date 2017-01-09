@@ -52,10 +52,10 @@ public abstract class AbstractGridTest {
 
 	@Before
 	public void init() throws Exception {
-		grid = new Grid(8081);
+		grid = new Grid(0);
 		grid.start();
-		
-		agent = new Agent(new AgentConf("http://localhost:8081", 8080, null, 100));
+				
+		agent = new Agent(new AgentConf("http://localhost:"+grid.getServerPort(), 0, null, 100));
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("att1", "val1");
 		agent.addTokens(nTokens, attributes, null, null);

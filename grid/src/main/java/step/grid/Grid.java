@@ -24,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -136,5 +137,9 @@ public class Grid {
 	
 	public Collection<AgentRef> getAgents() {
 		return agentRefs.values();
+	}
+	
+	public int getServerPort() {
+		return ((ServerConnector)server.getConnectors()[0]).getLocalPort();
 	}
 }
