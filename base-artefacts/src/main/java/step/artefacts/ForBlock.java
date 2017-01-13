@@ -21,8 +21,8 @@ package step.artefacts;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import step.artefacts.handlers.ForBlockHandler;
+import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.Artefact;
-import step.core.artefacts.DynamicAttribute;
 
 @Artefact(name = "For", handler = ForBlockHandler.class)
 public class ForBlock extends AbstractForBlock {

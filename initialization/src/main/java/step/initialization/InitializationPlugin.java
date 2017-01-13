@@ -36,6 +36,7 @@ import step.core.artefacts.ArtefactAccessor;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
+import step.functions.type.custom.CustomFunctionTypeConf;
 import step.plugins.adaptergrid.FunctionRepositoryImpl;
 
 @Plugin
@@ -212,7 +213,10 @@ public class InitializationPlugin extends AbstractPlugin {
 		kwAttributes.put("name", name);
 		
 		demoFunction.setAttributes(kwAttributes);
-		demoFunction.setHandlerChain(handlerChain);
+		// TODO replace by specific types
+		demoFunction.setType("custom");
+		demoFunction.setConfiguration(new CustomFunctionTypeConf(handlerChain));
+
 		return demoFunction;
 	}
 

@@ -28,6 +28,7 @@ import step.commons.conf.Configuration;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoDBAccessorHelper;
 import step.core.artefacts.ArtefactAccessor;
+import step.core.artefacts.ArtefactManager;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionLifecycleManager;
 import step.core.execution.model.ExecutionStatus;
@@ -74,6 +75,7 @@ public class Controller {
 		context.setMongoDatabase(MongoDBAccessorHelper.getInstance().getMongoDatabase(mongoClient));
 		context.setExecutionAccessor(new ExecutionAccessor(mongoClient));
 		context.setArtefactAccessor(new ArtefactAccessor(mongoClient));
+		context.setArtefactManager(new ArtefactManager(context.getArtefactAccessor()));
 		context.setReportAccessor(new ReportNodeAccessor(mongoClient));
 		context.setScheduleAccessor(new ExecutionTaskAccessor(mongoClient));
 		context.setUserAccessor(new UserAccessor(mongoClient));

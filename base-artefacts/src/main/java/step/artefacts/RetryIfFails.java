@@ -19,8 +19,8 @@
 package step.artefacts;
 
 import step.artefacts.handlers.RetryIfFailsHandler;
+import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.Artefact;
-import step.core.artefacts.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
 
 @Artefact(handler = RetryIfFailsHandler.class)

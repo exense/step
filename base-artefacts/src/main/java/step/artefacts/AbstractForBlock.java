@@ -18,7 +18,7 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.core.artefacts.DynamicAttribute;
+import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
 
 

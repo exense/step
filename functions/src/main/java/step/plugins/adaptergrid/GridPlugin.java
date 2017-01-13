@@ -58,7 +58,7 @@ public class GridPlugin extends AbstractPlugin {
 		
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
-		FunctionClient functionClient = new FunctionClient(client, functionRepository);
+		FunctionClient functionClient = new FunctionClient(context, client, functionRepository);
 		
 		context.put(GRID_KEY, grid);
 		context.put(GRIDCLIENT_KEY, client);

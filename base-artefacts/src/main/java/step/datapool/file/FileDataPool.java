@@ -18,7 +18,7 @@
  *******************************************************************************/
 package step.datapool.file;
 
-import step.core.artefacts.DynamicAttribute;
+import step.commons.dynamicbeans.DynamicAttribute;
 
 
 public class FileDataPool {

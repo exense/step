@@ -19,9 +19,20 @@
 package step.functions;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.reflections.Reflections;
+
+import step.core.GlobalContext;
+import step.expressions.DynamicBeanResolver;
+import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionType;
+import step.functions.type.FunctionTypeConf;
 import step.grid.AgentRef;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
@@ -37,10 +48,111 @@ public class FunctionClient {
 	
 	private final FunctionRepository functionRepository;
 	
-	public FunctionClient(GridClient gridClient, FunctionRepository functionRepository) {
+	private final GlobalContext context;
+	
+	private final Map<String, AbstractFunctionType<FunctionTypeConf>> functionTypes = new HashMap<>();
+	
+	public FunctionClient(GlobalContext context, GridClient gridClient, FunctionRepository functionRepository) {
 		super();
+		this.context = context;
 		this.gridClient = gridClient;
 		this.functionRepository = functionRepository;
+		
+		loadFunctionTypes();
+	}
+	
+	@SuppressWarnings({"unchecked" })
+	private void loadFunctionTypes() {
+		Set<Class<?>> functionTypeClasses = new Reflections("step").getTypesAnnotatedWith(FunctionType.class);
+		
+		for(Class<?> functionTypeClass:functionTypeClasses) {
+			AbstractFunctionType<FunctionTypeConf> functionType;
+			try {
+				functionType = (AbstractFunctionType<FunctionTypeConf>) functionTypeClass.newInstance();
+				functionType.setContext(context);
+				functionTypes.put(functionTypeClass.getAnnotation(FunctionType.class).name(), functionType);
+			} catch (InstantiationException | IllegalAccessException e) {
+				
+			}
+		}
+	}
+	
+	public static class FunctionTypeInfo {
+		
+		String name;
+		
+		String label;
+		
+		String editor;
+
+		public FunctionTypeInfo(String name) {
+			super();
+			this.name = name;
+		}
+		
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getLabel() {
+			return label;
+		}
+
+		public void setLabel(String label) {
+			this.label = label;
+		}
+
+		public String getEditor() {
+			return editor;
+		}
+
+		public void setEditor(String editor) {
+			this.editor = editor;
+		}
+	}
+	
+	public Set<FunctionTypeInfo> getFunctionTypeInfos() {
+		Set<FunctionTypeInfo> result = new HashSet<>();
+		functionTypes.forEach((k,v)->
+		{
+			FunctionTypeInfo info = new FunctionTypeInfo(k);
+			info.setLabel(v.getClass().getAnnotation(FunctionType.class).label());
+			result.add(info);
+		});
+		return result;
+	}
+	
+	public FunctionTypeConf newFunctionTypeConf(String functionType) {
+		AbstractFunctionType<FunctionTypeConf> type = getFunctionTypeByName(functionType);
+		return type.newFunctionTypeConf();
+	}
+
+	private AbstractFunctionType<FunctionTypeConf> getFunctionTypeByName(String functionType) {
+		AbstractFunctionType<FunctionTypeConf> type = functionTypes.get(functionType);
+		if(type==null) {
+			throw new RuntimeException("Unknown function type '"+functionType+"'");
+		} else {
+			return type;
+		}
+	}
+	
+	public void setupFunction(Function function) {
+		AbstractFunctionType<?> type = getFunctionTypeByName(function.getType());
+		type.setupFunction(function);
+	}
+	
+	public Function copyFunction(Function function) {
+		AbstractFunctionType<?> type = getFunctionTypeByName(function.getType());
+		return type.copyFunction(function);
+	}
+	
+	public String getFunctionEditorPath(Function function) {
+		AbstractFunctionType<?> type = getFunctionTypeByName(function.getType());
+		return type.getEditorPath(function);
 	}
 	
 	public FunctionTokenHandle getLocalFunctionToken() {
@@ -64,8 +176,8 @@ public class FunctionClient {
 			this.tokenHandle = tokenHandle;
 		}
 		
-		public Output call(Map<String, String> attributes, Input input) {
-			Function function = functionRepository.getFunctionByAttributes(attributes);
+		public Output call(Map<String, String> functionAttributes, Input input) {
+			Function function = functionRepository.getFunctionByAttributes(functionAttributes);
 			return callFunction(tokenHandle, function, input);
 		}
 		
@@ -104,16 +216,20 @@ public class FunctionClient {
 	}
 
 	private Output callFunction(TokenHandle tokenHandle, Function function, Input input) {
-		String handlerChain = function.getHandlerChain();
-
 		Output output = new Output();
 		output.setFunction(function);
 		try {
-			TokenHandle facade = tokenHandle.setHandler(handlerChain).addProperties(input.getProperties())
-					.addProperties(function.getHandlerProperties());
+			String functionTypeName = function.getType();
+			AbstractFunctionType<FunctionTypeConf> functionType = getFunctionTypeByName(functionTypeName);
+			FunctionTypeConf resolvedFunctionTypeConf = DynamicBeanResolver.resolveDynamicAttributes(function.getConfiguration(),Collections.<String, Object>unmodifiableMap(input.getProperties()));
 			
-			if(function.getCallTimeout()!=null) {
-				facade.setCallTimeout(function.getCallTimeout());
+			String handlerChain = functionType.getHandlerChain(resolvedFunctionTypeConf);
+			Map<String, String> handlerProperties = functionType.getHandlerProperties(resolvedFunctionTypeConf);
+			
+			TokenHandle facade = tokenHandle.setHandler(handlerChain).addProperties(input.getProperties()).addProperties(handlerProperties);
+			
+			if(resolvedFunctionTypeConf.getCallTimeout()!=null) {
+				facade.setCallTimeout(resolvedFunctionTypeConf.getCallTimeout());
 			}
 
 			OutputMessage outputMessage = facade.process(function.getAttributes().get("name"), input.getArgument());		

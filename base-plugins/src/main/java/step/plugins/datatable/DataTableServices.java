@@ -133,7 +133,7 @@ public class DataTableServices extends AbstractServices {
 				functionTable.addColumn(input.getLabel(), input.getId());
 			}
 		}
-		functionTable.addColumn("Type", "handlerChain");
+		functionTable.addColumn("Type", "type");
 		functionTable.addRowAsJson("Actions");
 		
 		BackendDataTable leafReportNodesOQL = new BackendDataTable(new Collection(database, "reports"));

@@ -224,6 +224,7 @@ angular.module('step',['ngStorage'])
       .then(function (res) {
         var session = res.data;
         setContext(session);
+        $rootScope.$broadcast('step.login.succeeded');
       });
   };
  
@@ -280,6 +281,13 @@ angular.module('step',['ngStorage'])
     var modalInstance = $modal.open({animation: false, templateUrl: 'partials/confirmationDialog.html',
       controller: 'DialogCtrl', 
       resolve: {message:function(){return 'Are you sure you want to delete this item?'}}});
+    return modalInstance.result;
+  }
+  
+  dialogs.showErrorMsg = function(msg) {
+    var modalInstance = $modal.open({animation: false, templateUrl: 'partials/messageDialog.html',
+      controller: 'DialogCtrl', 
+      resolve: {message:function(){return msg}}});
     return modalInstance.result;
   }
   

@@ -22,17 +22,17 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
+import step.functions.type.FunctionTypeConf;
+
 public class Function {
 	
 	ObjectId _id;
 	
 	Map<String, String> attributes;
 	
-	String handlerChain;
+	String type;
 	
-	Integer callTimeout;
-
-	Map<String, String> handlerProperties;
+	FunctionTypeConf configuration;
 
 	public ObjectId getId() {
 		return _id;
@@ -50,28 +50,20 @@ public class Function {
 		this.attributes = attributes;
 	}
 
-	public Map<String, String> getHandlerProperties() {
-		return handlerProperties;
+	public String getType() {
+		return type;
 	}
 
-	public void setHandlerProperties(Map<String, String> handlerProperties) {
-		this.handlerProperties = handlerProperties;
+	public void setType(String type) {
+		this.type = type;
 	}
 
-	public Integer getCallTimeout() {
-		return callTimeout;
+	public FunctionTypeConf getConfiguration() {
+		return configuration;
 	}
 
-	public void setCallTimeout(Integer callTimeout) {
-		this.callTimeout = callTimeout;
-	}
-
-	public String getHandlerChain() {
-		return handlerChain;
-	}
-
-	public void setHandlerChain(String handlerChain) {
-		this.handlerChain = handlerChain;
+	public void setConfiguration(FunctionTypeConf configuration) {
+		this.configuration = configuration;
 	}
 
 }

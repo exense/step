@@ -19,8 +19,8 @@
 package step.artefacts;
 
 import step.artefacts.handlers.ForBlockHandler;
+import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.Artefact;
-import step.core.artefacts.DynamicAttribute;
 
 @Artefact(name="ForEach", handler = ForBlockHandler.class)
 public class ForEachBlock extends AbstractForBlock {

@@ -22,6 +22,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.json.Json;
 import javax.ws.rs.Consumes;
@@ -46,9 +47,11 @@ import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaExcept
 import step.functions.Function;
 import step.functions.FunctionClient;
 import step.functions.FunctionClient.FunctionTokenHandle;
+import step.functions.FunctionClient.FunctionTypeInfo;
 import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
+import step.functions.type.FunctionTypeConf;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 
@@ -65,10 +68,16 @@ public class FunctionRepositoryServices extends AbstractServices {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/")
 	@Secured(right="kw-write")
-	public void save(Function function) {
-		getFunctionRepository().addFunction(function);
+	public Function save(Function function) {
+		FunctionRepository repo = getFunctionRepository();
+		if(function.getId()==null || repo.getFunctionById(function.getId().toString())==null) {
+			getFunctionClient().setupFunction(function);
+		}
+		repo.addFunction(function);
+		return function;
 	}
 	
 	public static class ExecutionOutput {
@@ -100,22 +109,12 @@ public class FunctionRepositoryServices extends AbstractServices {
 	
 	public static class ExecutionInput {
 		
-		boolean executeLocally;
-		
 		String argument;
 		
 		Map<String, String> properties;
 
 		public ExecutionInput() {
 			super();
-		}
-
-		public boolean isExecuteLocally() {
-			return executeLocally;
-		}
-
-		public void setExecuteLocally(boolean executeLocally) {
-			this.executeLocally = executeLocally;
 		}
 
 		public String getArgument() {
@@ -141,9 +140,11 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Secured(right="kw-execute")
 	public ExecutionOutput executeFunction(@PathParam("id") String functionId, ExecutionInput executionInput) {
 		ExecutionOutput result = new ExecutionOutput();
+		Function function = get(functionId);
+		
 		try {
 			FunctionTokenHandle token;
-			if(executionInput.isExecuteLocally()) {
+			if(function.getType().equals("composite")) {
 				token = getFunctionClient().getLocalFunctionToken();
 			} else {
 				token = getFunctionClient().getFunctionToken();
@@ -197,9 +198,8 @@ public class FunctionRepositoryServices extends AbstractServices {
 		FunctionRepository repo = getFunctionRepository();
 		Function source = repo.getFunctionById(id);
 		if(source!=null) {
-			source.setId(null);
-			source.getAttributes().put("name",source.getAttributes().get("name")+"_Copy");
-			repo.addFunction(source);
+			Function copy = getFunctionClient().copyFunction(source);
+			repo.addFunction(copy);
 		}
 	}
 	
@@ -228,5 +228,27 @@ public class FunctionRepositoryServices extends AbstractServices {
 		return getFunctionRepository().getFunctionById(functionId);
 	}
 	
+	@GET
+	@Path("/{id}/editor")
+	@Secured(right="kw-read")
+	public String getFunctionEditor(@PathParam("id") String functionId) {
+		Function function = getFunctionRepository().getFunctionById(functionId);
+		return getFunctionClient().getFunctionEditorPath(function);
+	}
 	
+	@GET
+	@Path("/types")
+	@Secured(right="kw-read")
+	public Set<FunctionTypeInfo> getFunctionTypeInfos() {
+		return getFunctionClient().getFunctionTypeInfos();
+	}	
+	
+	@GET
+	@Path("/types/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public FunctionTypeConf newFunctionTypeConf(@PathParam("id") String type) {
+		return getFunctionClient().newFunctionTypeConf(type);
+	}
 }

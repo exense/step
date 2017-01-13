@@ -18,13 +18,25 @@
  *******************************************************************************/
 angular.module('functionsControllers',['dataTable','step'])
 
+.run(function($http, $rootScope) {
+  function loadTypes() {
+    $http.get("rest/functions/types").success(function(data){
+      $rootScope.functionTypes = data;
+    });  
+  }
+  
+  loadTypes();
+  
+  $rootScope.$on('step.login.succeeded',function() {
+    loadTypes();    
+  })
+})
+
 .controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$modal', 'Dialogs', '$location','AuthService',
     function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $modal, Dialogs, $location, AuthService) {
       $stateStorage.push($scope, 'functions', {});	
 
       $scope.authService = AuthService;
-      
-      $scope.autorefresh = true;
 
       function openModal(function_) {
     	  var modalInstance = $modal.open({
@@ -34,12 +46,9 @@ angular.module('functionsControllers',['dataTable','step'])
           });
   
           modalInstance.result.then(function (functionParams) {
-              $http.post("rest/functions",functionParams).success(function() {
-              	if($scope.table) {
-             		$scope.table.Datatable.ajax.reload(null, false);
-          		}
-              });
-  
+            	if($scope.table) {
+            	  $scope.table.Datatable.ajax.reload(null, false);
+            	}
           }, function () {});
       }
       
@@ -66,9 +75,15 @@ angular.module('functionsControllers',['dataTable','step'])
         }
       }
       
-      $scope.editFlow = function(id) {
+      $scope.openFunctionEditor = function(functionid) {
         $scope.$apply(function() {
-          $location.path('/root/artefacteditor/' + id)
+          $http.get("rest/functions/"+functionid+"/editor").success(function(path){
+            if(path) {
+              $location.path(path);              
+            } else {
+              Dialogs.showErrorMsg("No editor configured for this function type");
+            }
+          })
         })
       }
       
@@ -76,7 +91,7 @@ angular.module('functionsControllers',['dataTable','step'])
         openModal();
       }
       
-      $scope.executeFunction = function(id, executeLocally) {
+      $scope.executeFunction = function(id) {
   	  var modalInstance = $modal.open({
             animation: $scope.animationsEnabled,
             templateUrl: 'executeFunctionModalContent.html',
@@ -84,9 +99,6 @@ angular.module('functionsControllers',['dataTable','step'])
             resolve: {
               functionId: function () {
                 return id;
-              },
-              executeLocally: function () {
-                return executeLocally;
               }
             }
           });
@@ -117,47 +129,42 @@ angular.module('functionsControllers',['dataTable','step'])
             return data
           };
         });
-        _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
-          col.render = function(data, type, row) {
-        	var function_ = JSON.parse(row[row.length-1]);
-        	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
-        	  if(function_.handlerProperties) {
-        	    if(AuthService.hasRight('kw-write')) { 
-        	      return '<a href="#/root/artefacteditor/' + function_.handlerProperties['artefactid'] + '">Composite</a>'        	      
-        	    } else {
-        	      return 'Composite';
-        	    }
-        	  } else {
-        		return 'Unknown';
-        	  }
-        	} else {
-        	  return 'Handler'        	  
-        	}
-          };
-        });
+//        _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
+//          col.render = function(data, type, row) {
+//        	var function_ = JSON.parse(row[row.length-1]);
+//        	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
+//        	  if(function_.handlerProperties) {
+//        	    if(AuthService.hasRight('kw-write')) { 
+//        	      return '<a href="#/root/artefacteditor/' + function_.configuration.artefactId + '">Composite</a>'        	      
+//        	    } else {
+//        	      return 'Composite';
+//        	    }
+//        	  } else {
+//        		return 'Unknown';
+//        	  }
+//        	} else {
+//        	  return 'Handler'        	  
+//        	}
+//          };
+//        });
         _.each(_.where(columns,{'title':'Actions'}),function(col){
             col.title="Actions";
             col.searchmode="none";
             col.width="200px";
             col.render = function ( data, type, row ) {
-              var function_ = JSON.parse(row[row.length-1]);
-              var isComposite = data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1;
             	var html = '<div class="input-group"><div class="btn-group">';
             	
             	if(AuthService.hasRight('kw-write')) {
               	html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
   	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>'+
               	  '</button> ';
-              	
-              	if(isComposite) {
-              	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFlow(\''+function_.handlerProperties['artefactid']+'\')">' +
-                  '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>'+
-                  '</button> ';
-              	}
+            	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().openFunctionEditor(\''+row[0]+'\')">' +
+                '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>'+
+                '</button> ';
             	}
             	
             	if(AuthService.hasRight('kw-execute')) {
-              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\','+isComposite+')">' +
+              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
   	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
   	            	'</button> ';
             	}
@@ -183,59 +190,50 @@ angular.module('functionsControllers',['dataTable','step'])
       };
     } ])
     
-.controller('newFunctionModalCtrl', function ($scope, $modalInstance, $http, $location, function_) {
+.controller('newFunctionModalCtrl', function ($rootScope, $scope, $modalInstance, $http, $location, function_) {
 
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
   
   $scope.getFunctionAttributes = function() {
-  	return _.keys($scope.function_.attributes); 
+  	return _.keys($scope.function_.attributes);
   }
   
-  $scope.type = function(value) {
-  	if(value) {
-  	  $scope.function_.handlerChain = (value=="Composite")?"class:step.core.tokenhandlers.ArtefactMessageHandler":"class:step.handlers.scripthandler.ScriptHandler";
-  	}
-  	return  ($scope.function_.handlerChain&&$scope.function_.handlerChain.indexOf("ArtefactMessageHandler")!=-1)?"Composite":"Handler";
-  }
+  $scope.functionTypes = $rootScope.functionTypes;
   
   if(newFunction) {
-  	$scope.function_= {"attributes":{}};
-  	$scope.type('Handler');
+  	$scope.function_= {"attributes":{},"type":"script"};
   	$http.get("rest/screens/functionTable").success(function(data){
   	  _.each(data,function(input) {
   	    eval('$scope.function_.'+input.id+"=''");
   	  })
   	});	
   } else {
-    $scope.function_=function_;	
+    $scope.function_=function_;
   } 
   
-  $scope.save = function (editAfterSave) {	
-	function close() {
-	  $modalInstance.close($scope.function_);
-	}
-	
-	if($scope.type()=='Composite') {
-  	  function closeAndEdit() {
-  		close();
-  		if(editAfterSave) {
-  		  $location.path('/root/artefacteditor/' + $scope.function_.handlerProperties['artefactid'])
-  		}
-  	  }
-	
-  	  if(newFunction || !($scope.function_.handlerProperties && $scope.function_.handlerProperties.artefactid)  ) {
-  		var newArtefact = {"_class":"Sequence"};
-  		$http.post("rest/controller/artefact",newArtefact).success(function(artefact){
-			$scope.function_.handlerProperties = {"artefactid":artefact.id}
-			closeAndEdit();
-		})		  
-  	  } else {
-  		closeAndEdit();
-	  }
-	} else {
-		close();
-	}
+  $scope.$watch('function_.type',function(functionType,oldFunctionType){
+    if(functionType!=oldFunctionType) {
+      $http.get("rest/functions/types/"+functionType).success(function(template){
+        $scope.function_.configuration = template;
+      }) 
+    }
+  });
+  
+  $scope.save = function (editAfterSave) {
+    $http.post("rest/functions",$scope.function_).success(function(function_) {
+      $modalInstance.close(function_);
+  	
+    	if(editAfterSave) {
+    	  $http.get("rest/functions/"+function_.id+"/editor").success(function(path){
+    	    if(path) {
+    	      $location.path(path);
+    	    } else {
+    	      Dialogs.showErrorMsg("No editor configured for this function type");
+    	    }
+        })     
+    	}
+    })
   };
 
   $scope.cancel = function () {
@@ -243,7 +241,7 @@ angular.module('functionsControllers',['dataTable','step'])
   };
 })
 
-.controller('executeFunctionModalCtrl', function ($scope, $modalInstance, $http, functionId, executeLocally) {
+.controller('executeFunctionModalCtrl', function ($scope, $modalInstance, $http, functionId) {
 
   $scope.argument = '';
 	$scope.running = false;
@@ -258,7 +256,7 @@ angular.module('functionsControllers',['dataTable','step'])
     $scope.running=true;
     var properties = {};
     _.each($scope.properties,function(prop){properties[prop.key]=prop.value});
-    $http.post("rest/functions/"+functionId+"/execute",{'executeLocally':executeLocally, 'properties':properties,'argument':$scope.argument}).success(function(data) {
+    $http.post("rest/functions/"+functionId+"/execute",{'properties':properties,'argument':$scope.argument}).success(function(data) {
 		$scope.output = data;
 		$scope.running=false;
 		if(data) {
