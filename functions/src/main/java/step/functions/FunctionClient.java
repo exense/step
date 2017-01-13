@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.functions;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -165,6 +166,10 @@ public class FunctionClient {
 	
 	public FunctionTokenHandle getFunctionToken() {
 		return new FunctionTokenHandle(gridClient.getToken());
+	}
+	
+	public String registerAgentFile(File file) {
+		return gridClient.registerFile(file);
 	}
 	
 	public class FunctionTokenHandle {

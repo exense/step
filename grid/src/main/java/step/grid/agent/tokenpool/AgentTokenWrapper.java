@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import step.grid.Token;
+import step.grid.agent.AgentTokenServices;
 import step.grid.tokenpool.Interest;
 
 public class AgentTokenWrapper {
@@ -29,7 +30,9 @@ public class AgentTokenWrapper {
 	Token token;
 	
 	TokenSession session;
-
+	
+	AgentTokenServices services;
+	
 	Map<String, String> properties;
 	
 	boolean inUse;
@@ -96,6 +99,14 @@ public class AgentTokenWrapper {
 
 	public boolean isInUse() {
 		return inUse;
+	}
+
+	public AgentTokenServices getServices() {
+		return services;
+	}
+
+	public void setServices(AgentTokenServices services) {
+		this.services = services;
 	}
 
 	@Override

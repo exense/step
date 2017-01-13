@@ -29,18 +29,17 @@ import step.grid.RegistrationMessage;
 public class RegistrationTask extends TimerTask {
 	
 	private static final Logger logger = LoggerFactory.getLogger(RegistrationTask.class);
-		
+	
 	private final Agent agent;
 	
 	private final RegistrationClient client;
 	
 	private boolean interrupted;
 
-	public RegistrationTask(Agent agent) {
+	public RegistrationTask(Agent agent, RegistrationClient client) {
 		super();
-		
 		this.agent = agent;
-		this.client = new RegistrationClient(agent.getGridHost());
+		this.client = client;
 	}
 
 	@Override

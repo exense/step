@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 import step.grid.RegistrationMessage;
+import step.grid.io.Attachment;
 import step.grid.io.ObjectMapperResolver;
 
 public class RegistrationClient {
@@ -42,6 +43,9 @@ public class RegistrationClient {
 	
 	private static final Logger logger = LoggerFactory.getLogger(RegistrationClient.class);
 
+	int connectionTimeout = 3000;
+	int callTimeout = 3000;
+	
 	public RegistrationClient(String registrationServer) {
 		super();
 		this.registrationServer = registrationServer;
@@ -51,10 +55,6 @@ public class RegistrationClient {
 	}
 	
 	public void sendRegistrationMessage(RegistrationMessage message) {
-		// TODO get from config?
-		int connectionTimeout = 3000;
-		int callTimeout = 3000;
-		
 		try {			
 			Response r = client.target(registrationServer + "/grid/register").request().property(ClientProperties.READ_TIMEOUT, callTimeout)
 					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).post(Entity.entity(message, MediaType.APPLICATION_JSON));
@@ -63,6 +63,19 @@ public class RegistrationClient {
 			
 		} catch (ProcessingException e) {
 			logger.error("An error occurred while registering tokens to " + registrationServer, e);
+		}
+	}
+	
+	public Attachment requestFile(String fileId) {
+		try {			
+			Response r = client.target(registrationServer + "/grid/file/"+fileId).request().property(ClientProperties.READ_TIMEOUT, callTimeout)
+					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).get();
+			
+			Attachment attachment = r.readEntity(Attachment.class);
+			return attachment;
+		} catch (ProcessingException e) {
+			logger.error("An error occurred while registering tokens to " + registrationServer, e);
+			throw e;
 		}
 	}
 

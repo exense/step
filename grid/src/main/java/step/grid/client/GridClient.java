@@ -19,6 +19,7 @@
 package step.grid.client;
 
 import java.io.Closeable;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -244,6 +245,10 @@ public class GridClient implements Closeable {
 		adapterGrid.returnToken(adapterToken);		
 	}
 	
+	public String registerFile(File file) {
+		return adapterGrid.registerFile(file);
+	}
+
 	@Override
 	public void close() {
 		client.close();

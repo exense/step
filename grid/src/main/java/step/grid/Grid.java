@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.grid;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -52,6 +53,8 @@ public class Grid {
 	private final Integer keepAliveTimeout;
 	
 	private Server server;
+	
+	private FileManager fileManager = new FileManager();
 	
 	public Grid(Integer port) {
 		super();
@@ -90,10 +93,12 @@ public class Grid {
 		resourceConfig.packages(GridServices.class.getPackage().getName());
 		resourceConfig.register(JacksonJaxbJsonProvider.class);
 		final Grid grid = this;
+		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override
 			protected void configure() {
 				bind(grid).to(Grid.class);
+				bind(fileManager).to(FileManager.class);
 			}
 		});
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);
@@ -129,6 +134,10 @@ public class Grid {
 
 	public void returnToken(TokenWrapper object) {
 		tokenPool.returnToken(object);
+	}
+	
+	public String registerFile(File file) {
+		return fileManager.registerFile(file);
 	}
 
 	public List<Token<TokenWrapper>> getTokens() {

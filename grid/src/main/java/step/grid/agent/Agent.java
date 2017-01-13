@@ -73,6 +73,8 @@ public class Agent {
 		
 	private RegistrationTask registrationTask;
 	
+	private AgentTokenServices agentTokenServices;
+	
 	public static void main(String[] args) throws Exception {
 		ArgumentParser arguments = new ArgumentParser(args);
 
@@ -123,6 +125,7 @@ public class Agent {
 			token.setAttributes(attributes);
 			token.setSelectionPatterns(createInterestMap(selectionPatterns));
 			token.setProperties(properties);
+			token.setServices(agentTokenServices);
 			tokenPool.offerToken(token);
 		}
 	}
@@ -138,7 +141,11 @@ public class Agent {
 		return result;
 	}
 
-	public void start() throws Exception {
+	public void start() throws Exception {		
+		final Agent agent = this;
+		
+		RegistrationClient registrationClient = new RegistrationClient(agent.getGridHost());
+		agentTokenServices = new AgentTokenServices(registrationClient, new File("."));
 		
 		if(agentConf.getTokenGroups()!=null) {
 			for(TokenGroupConf group:agentConf.getTokenGroups()) {
@@ -152,7 +159,6 @@ public class Agent {
 		resourceConfig.packages(AgentServices.class.getPackage().getName());
 		resourceConfig.register(JacksonJsonProvider.class);
 		resourceConfig.register(ObjectMapperResolver.class);
-		final Agent agent = this;
 		resourceConfig.register(new AbstractBinder() {	
 			@Override
 			protected void configure() {
@@ -173,9 +179,8 @@ public class Agent {
 		server.setHandler(contexts);
 		
 		timer = new Timer();
+		registrationTask = new RegistrationTask(this, registrationClient);
 		
-		registrationTask = new RegistrationTask(this);
-
 		server.start();
 		
 		if(agentConf.getAgentUrl()==null) {

@@ -192,7 +192,7 @@ angular.module('artefactEditor',['dataTable','step'])
     	
     	$http.get("rest/functions/"+id).success(function(function_) {
 
-    	  var tokenDefault = function_.handlerChain.indexOf('ArtefactMessageHandler')!=-1?"{\"route\":\"local\"}":"{\"route\":\"remote\"}";
+    	  var tokenDefault = function_.type=="composite"?"{\"route\":\"local\"}":"{\"route\":\"remote\"}";
     	  
     	  var newArtefact = {"function":JSON.stringify(function_.attributes),"token":tokenDefault,"_class":"CallFunction"};
     	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).success(function(artefact){
