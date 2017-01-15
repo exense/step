@@ -52,5 +52,9 @@ public abstract class AbstractPlugin implements PluginCallbacks {
 
 	@Override
 	public void unassociateThread(ExecutionContext context, Thread thread) {}
+	
+	public WebPlugin getWebPlugin() {
+		return null;
+	}
 
 }

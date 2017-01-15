@@ -21,6 +21,7 @@ package step.core.plugins;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -75,5 +76,16 @@ public class PluginManager implements InvocationHandler{
 			}
 		}
 		return null;
+	}
+	
+	public List<WebPlugin> getWebPlugins() {
+		List<WebPlugin> webPlugins = new ArrayList<>();
+		for(AbstractPlugin plugin:plugins) {
+			WebPlugin webPlugin = plugin.getWebPlugin();
+			if(webPlugin!=null) {
+				webPlugins.add(webPlugin);
+			}
+		}
+		return webPlugins;
 	}
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app="tecAdminApp">
+<html>
 
 <head>
 
@@ -51,6 +51,8 @@ window.console.log = window.console.log || function(){};
 <script src="js/lib/prefixfree.min.js"></script>
 <script src="js/lib/fileDownload.js"></script>
 <script src="js/lib/jstree.js"></script>
+
+<script src="js/bootstrap.js"></script>
 
 
 <!-- <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.5/css/jquery.dataTables.css"> -->
@@ -122,7 +124,7 @@ window.console.log = window.console.log || function(){};
 	        <div ng-if="isViewActive('reportBrowser')" ng-compiled-include="partials/reportBrowser.html"></div>
 	        <div ng-if="isViewActive('admin')" ng-compiled-include="partials/admin.html"></div>
 	        <div ng-if="isViewActive('myaccount')" ng-compiled-include="partials/myaccount.html"></div>
-	        
+	        <div ng-if="isViewActive('scripteditor')" ng-compiled-include="scripteditor/partials/scriptEditor.html"></div>
 		</div>
 	</div>
 	<div ng-if="isInitialized && !authService.isAuthenticated()" ng-compiled-include="partials/loginForm.html">

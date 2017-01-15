@@ -46,6 +46,7 @@ import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.deployment.AccessServices;
 import step.core.deployment.AdminServices;
+import step.core.deployment.ApplicationServices;
 import step.core.deployment.AuthenticationFilter;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.JacksonMapperProvider;
@@ -98,7 +99,6 @@ public class ControllerServer {
 		
 		setupConnectors();
 
-		
 		server.setHandler(handlers);
 		server.start();
 	}
@@ -165,6 +165,7 @@ public class ControllerServer {
 		resourceConfig.register(JacksonJaxbJsonProvider.class);
 		resourceConfig.register(JacksonMapperProvider.class);
 		
+		resourceConfig.registerClasses(ApplicationServices.class);
 		resourceConfig.registerClasses(ControllerServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
 		resourceConfig.registerClasses(AuthenticationFilter.class);
