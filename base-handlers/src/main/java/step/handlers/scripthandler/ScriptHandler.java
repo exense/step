@@ -20,7 +20,6 @@ package step.handlers.scripthandler;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -65,8 +64,9 @@ public class ScriptHandler implements MessageHandler {
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {        
         Map<String, String> properties = buildPropertyMap(token, message);
         
-        String scriptDirectory = getScriptDirectory(properties);
-        File scriptFile = searchScriptFile(message, scriptDirectory);        
+        String fileId = properties.get("fileid");
+        
+        File scriptFile = token.getServices().requestControllerFile(fileId);
         
         String engineName = getScriptEngineName(scriptFile);
         ScriptEngine engine = loadScriptEngine(engineName);	      
@@ -122,7 +122,11 @@ public class ScriptHandler implements MessageHandler {
 			Map<String, String> properties) {
 		Bindings binding = new SimpleBindings();
         binding.put("input", message.getArgument());
+        binding.put("inputJson", message.getArgument().toString());
+        
         binding.put("output", outputBuilder);
+        binding.put("context", outputBuilder);
+        
         binding.put("properties", properties);
         binding.put("session", token.getSession());
 		return binding;
@@ -134,38 +138,6 @@ public class ScriptHandler implements MessageHandler {
 			throw new RuntimeException("Unable to find script engine with name '"+engineName+"'");
 		}
 		return engine;
-	}
-
-	private String getScriptDirectory(Map<String, String> properties) {
-		String scriptDirectory;
-        if(properties.containsKey(SCRIPT_DIR)) {
-        	scriptDirectory = properties.get(SCRIPT_DIR);
-        } else {
-        	throw new RuntimeException("Property '"+SCRIPT_DIR+"' is undefined.");
-        }
-		return scriptDirectory;
-	}
-
-	private File searchScriptFile(InputMessage message, String scriptDirectory) {
-		File directory = new File(scriptDirectory);
-		if(!directory.exists()||!directory.isDirectory()) {
-			throw new RuntimeException("Invalid script directory '"+scriptDirectory+"' set by property '"+SCRIPT_DIR+"'");
-		} else {
-	        File[] files = directory.listFiles(new FileFilter() {
-				@Override
-				public boolean accept(File file) {
-					return Files.getNameWithoutExtension(file.getName()).equals(message.getFunction());
-				}
-	        });
-	        if(files.length==0) {
-	        	throw new RuntimeException("No script found for function '"+message.getFunction()+"'");
-	        } else if(files.length>1) {
-	        	throw new RuntimeException("More than one script found for function '"+message.getFunction()+"'");
-	        }
-	        
-	        File scriptFile = files[0];
-			return scriptFile;
-		}
 	}
 
 	private Map<String, String> buildPropertyMap(AgentTokenWrapper token, InputMessage message) {

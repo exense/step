@@ -13,30 +13,32 @@ import step.functions.type.FunctionType;
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctionTypeConf> {
 
 	@Override
-	public String getHandlerChain(CompositeFunctionTypeConf functionTypeConf) {
+	public String getHandlerChain(Function function) {
 		return "class:step.core.tokenhandlers.ArtefactMessageHandler";
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(CompositeFunctionTypeConf functionTypeConf) {
+	public Map<String, String> getHandlerProperties(Function function) {
 		Map<String, String> props = new HashMap<>();
-		props.put("artefactid", functionTypeConf.artefactId);
+		props.put("artefactid", getFunctionConf(function).artefactId);
 		return props;
 	}
 
 	@Override
 	public CompositeFunctionTypeConf newFunctionTypeConf() {
-		return new CompositeFunctionTypeConf();
+		CompositeFunctionTypeConf conf = new CompositeFunctionTypeConf();
+		conf.setCallTimeout(180000);
+		return conf;
 	}
 
 	@Override
 	public void setupFunction(Function function) {
+		super.setupFunction(function);
   		Sequence sequence = new Sequence();
   		context.getArtefactAccessor().save(sequence);
   		
   		((CompositeFunctionTypeConf)function.getConfiguration()).setArtefactId(sequence.getId().toString());
   		
-		super.setupFunction(function);
 	}
 
 	@Override

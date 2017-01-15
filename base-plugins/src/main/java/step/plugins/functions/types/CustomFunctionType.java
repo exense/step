@@ -2,6 +2,7 @@ package step.plugins.functions.types;
 
 import java.util.Map;
 
+import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
 
@@ -9,12 +10,12 @@ import step.functions.type.FunctionType;
 public class CustomFunctionType extends AbstractFunctionType<CustomFunctionTypeConf> {
 
 	@Override
-	public String getHandlerChain(CustomFunctionTypeConf functionTypeConf) {
-		return functionTypeConf.getHanlderChain();
+	public String getHandlerChain(Function function) {
+		return getFunctionConf(function).getHanlderChain();
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(CustomFunctionTypeConf functionTypeConf) {
+	public Map<String, String> getHandlerProperties(Function function) {
 		return null;
 	}
 

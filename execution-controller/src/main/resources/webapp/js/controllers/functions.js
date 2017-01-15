@@ -190,7 +190,7 @@ angular.module('functionsControllers',['dataTable','step'])
       };
     } ])
     
-.controller('newFunctionModalCtrl', function ($rootScope, $scope, $modalInstance, $http, $location, function_) {
+.controller('newFunctionModalCtrl', function ($rootScope, $scope, $modalInstance, $http, $location, function_,Dialogs) {
 
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
@@ -213,7 +213,7 @@ angular.module('functionsControllers',['dataTable','step'])
   } 
   
   $scope.$watch('function_.type',function(functionType,oldFunctionType){
-    if(functionType!=oldFunctionType) {
+    if(($scope.function_&&!$scope.function_configuration)||functionType!=oldFunctionType) {
       $http.get("rest/functions/types/"+functionType).success(function(template){
         $scope.function_.configuration = template;
       }) 

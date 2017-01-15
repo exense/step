@@ -16,10 +16,12 @@ public abstract class AbstractFunctionType<T extends FunctionTypeConf> {
 	public void setContext(GlobalContext context) {
 		this.context = context;
 	}
-
-	public abstract String getHandlerChain(T functionTypeConf);
 	
-	public abstract Map<String, String> getHandlerProperties(T functionTypeConf);
+	public void init() {}
+
+	public abstract String getHandlerChain(Function function);
+	
+	public abstract Map<String, String> getHandlerProperties(Function function);
 	
 	public abstract T newFunctionTypeConf();
 	
@@ -35,5 +37,10 @@ public abstract class AbstractFunctionType<T extends FunctionTypeConf> {
 	
 	public String getEditorPath(Function function) {
 		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected T getFunctionConf(Function function) {
+		return (T) function.getConfiguration();
 	}
 }

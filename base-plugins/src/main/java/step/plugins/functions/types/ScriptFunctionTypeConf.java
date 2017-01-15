@@ -3,14 +3,14 @@ package step.plugins.functions.types;
 import step.functions.type.FunctionTypeConf;
 
 public class ScriptFunctionTypeConf extends FunctionTypeConf {
-	
-	String scriptDir;
 
-	public String getScriptDir() {
-		return scriptDir;
+	private String scriptLanguage;
+
+	public String getScriptLanguage() {
+		return scriptLanguage;
 	}
 
-	public void setScriptDir(String scriptDir) {
-		this.scriptDir = scriptDir;
+	public void setScriptLanguage(String scriptLanguage) {
+		this.scriptLanguage = scriptLanguage;
 	}
 }

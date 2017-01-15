@@ -36,8 +36,8 @@ import step.core.artefacts.ArtefactAccessor;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
-import step.functions.type.custom.CustomFunctionTypeConf;
 import step.plugins.adaptergrid.FunctionRepositoryImpl;
+import step.plugins.functions.types.CustomFunctionTypeConf;
 
 @Plugin
 public class InitializationPlugin extends AbstractPlugin {

@@ -71,6 +71,7 @@ public class FunctionClient {
 			try {
 				functionType = (AbstractFunctionType<FunctionTypeConf>) functionTypeClass.newInstance();
 				functionType.setContext(context);
+				functionType.init();
 				functionTypes.put(functionTypeClass.getAnnotation(FunctionType.class).name(), functionType);
 			} catch (InstantiationException | IllegalAccessException e) {
 				
@@ -228,8 +229,8 @@ public class FunctionClient {
 			AbstractFunctionType<FunctionTypeConf> functionType = getFunctionTypeByName(functionTypeName);
 			FunctionTypeConf resolvedFunctionTypeConf = DynamicBeanResolver.resolveDynamicAttributes(function.getConfiguration(),Collections.<String, Object>unmodifiableMap(input.getProperties()));
 			
-			String handlerChain = functionType.getHandlerChain(resolvedFunctionTypeConf);
-			Map<String, String> handlerProperties = functionType.getHandlerProperties(resolvedFunctionTypeConf);
+			String handlerChain = functionType.getHandlerChain(function);
+			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
 			
 			TokenHandle facade = tokenHandle.setHandler(handlerChain).addProperties(input.getProperties()).addProperties(handlerProperties);
 			

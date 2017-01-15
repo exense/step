@@ -19,13 +19,16 @@
 package step.grid.agent.handler.context;
 
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.json.Json;
+import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
 
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
@@ -34,6 +37,8 @@ import step.grid.io.OutputMessage;
 public class OutputMessageBuilder {
 	
 	private JsonObjectBuilder payloadBuilder;
+	
+	private String payloadJson;
 	
 	private MeasurementsBuilder measureHelper;
 	
@@ -96,6 +101,14 @@ public class OutputMessageBuilder {
 		return this;
 	}
 	
+	public String getPayloadJson() {
+		return payloadJson;
+	}
+
+	public void setPayloadJson(String payloadJson) {
+		this.payloadJson = payloadJson;
+	}
+
 	public OutputMessageBuilder setError(String errorMessage, Throwable e) {
 		setError(errorMessage);
 		addAttachment(generateAttachmentForException(e));
@@ -144,7 +157,18 @@ public class OutputMessageBuilder {
 
 	public OutputMessage build() {
 		OutputMessage message = new OutputMessage();
-		message.setPayload(payloadBuilder.build());
+		JsonObject payload;
+		if(payloadJson==null) {
+			payload = payloadBuilder.build();			
+		} else {
+			JsonReader reader = Json.createReader(new StringReader(payloadJson));
+			try {
+				payload = reader.readObject();				
+			} finally {
+				reader.close();
+			}
+		}
+		message.setPayload(payload);
 		message.setMeasures(measureHelper.getMeasures());
 		message.setAttachments(attachments);
 		message.setError(error);
