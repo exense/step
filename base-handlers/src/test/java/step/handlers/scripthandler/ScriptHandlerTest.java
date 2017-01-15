@@ -42,26 +42,22 @@ public class ScriptHandlerTest {
 
 	@Test 
 	public void test1() {
-		String scriptDir = getScriptDir();
-		
-		Map<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
-		
-		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
-		OutputMessage out = context.run("test1", "{\"key1\":\"val1\"}");
+		Context context = FunctionTester.getContext(new ScriptHandler(), getProperties("test1.js"));
+		OutputMessage out = context.run("", "{\"key1\":\"val1\"}");
 		
 		Assert.assertEquals("val1",out.getPayload().getString("key1"));
 	}
 
+	private Map<String, String> getProperties(String filename) {
+		Map<String, String> properties = new HashMap<>();
+		properties.put(ScriptHandler.SCRIPT_FILE, getScriptDir() + "/" + filename);
+		return properties;
+	}
+
 	@Test 
 	public void testGroovy1() {
-		String scriptDir = getScriptDir();
-		
-		Map<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
-		
-		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
-		OutputMessage out = context.run("testGroovy1", "{\"key1\":\"val1\"}");
+		Context context = FunctionTester.getContext(new ScriptHandler(), getProperties("testGroovy1.groovy"));
+		OutputMessage out = context.run("", "{\"key1\":\"val1\"}");
 		
 		Assert.assertEquals("val1",out.getPayload().getString("key1"));
 	}
@@ -69,22 +65,14 @@ public class ScriptHandlerTest {
 
 	@Test 
 	public void testPython1() {
-		String scriptDir = getScriptDir();
-		
-		Map<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
-		
-		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
-		OutputMessage out = context.run("testPython", "{\"key1\":\"val1\"}");
+		Context context = FunctionTester.getContext(new ScriptHandler(), getProperties("testPython.py"));
+		OutputMessage out = context.run("", "{\"key1\":\"val1\"}");
 		
 		Assert.assertEquals("val1",out.getPayload().getString("key1"));
 	}
 	
 	@Test 
 	public void testParallel() throws InterruptedException, ExecutionException, TimeoutException {
-		Map<String, String> properties = new HashMap<>();
-		String scriptDir = getScriptDir();
-		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
 
 		final ScriptHandler handler = new ScriptHandler();
 		
@@ -99,7 +87,7 @@ public class ScriptHandlerTest {
 
 				@Override
 				public Boolean call() throws Exception {
-					Context context = FunctionTester.getContext(handler, properties);
+					Context context = FunctionTester.getContext(handler, getProperties("test1.js"));
 					OutputMessage out = context.run("test1", "{\"key1\":\"val1\"}");
 					
 					Assert.assertEquals("val1",out.getPayload().getString("key1"));
@@ -114,43 +102,21 @@ public class ScriptHandlerTest {
 	}
 	
 	@Test 
-	public void testWrongScriptEngine() {
-		String scriptDir = getScriptDir();
-		
-		Map<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
-		
-		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
-		try {
-			context.run("noextension", "{\"key1\":\"val1\"}");
-		} catch(Exception e) {
-			Assert.assertTrue(e.getMessage().contains("The file 'noextension' has no extension. Please add one of the following extensions:"));			
-		}		
-	}
-	
-	@Test 
 	public void testGroovy() {
-		String scriptDir = getScriptDir();
-		
-		Map<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
-		
-		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
-		OutputMessage out = context.run("testGroovyUTF8", "{\"key1\":\"val1\"}");
+		Context context = FunctionTester.getContext(new ScriptHandler(), getProperties("testGroovyUTF8.groovy"));
+		OutputMessage out = context.run("", "{\"key1\":\"val1\"}");
 		Assert.assertEquals("kéÿ1",out.getPayload().getString("key1"));
 	}
 	
 	@Test 
 	public void testErrorHandler() {
-		String scriptDir = getScriptDir();
-		
 		Map<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_DIR, scriptDir);
-		properties.put(ScriptHandler.ERROR_HANDLER_SCRIPT, scriptDir + "/errorHandler.js");
-		
+		properties.put(ScriptHandler.SCRIPT_FILE, getScriptDir() + "/errorScript.js");
+		properties.put(ScriptHandler.ERROR_HANDLER_FILE, getScriptDir() + "/errorHandler.js");
+
 		Context context = FunctionTester.getContext(new ScriptHandler(), properties);
 		try {
-			OutputMessage out = context.run("errorScript", "{\"key1\":\"val1\"}");
+			OutputMessage out = context.run("", "{\"key1\":\"val1\"}");
 			Assert.assertFalse(true);
 		} catch(Exception e) {
 			Assert.assertEquals("executed", System.getProperties().get("errorHandler"));

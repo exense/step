@@ -45,8 +45,10 @@ import step.grid.io.OutputMessage;
 
 public class ScriptHandler implements MessageHandler {
 
-	public static final String SCRIPT_DIR = "scripthandler.script.dir";
-	public static final String ERROR_HANDLER_SCRIPT = "scripthandler.script.errorhandler";
+	public static final String SCRIPT_FILE = "file";
+	public static final String SCRIPT_FILEID = "fileid";
+	public static final String ERROR_HANDLER_FILE = "errorhandler.file";
+	public static final String ERROR_HANDLER_FILEID = "errorhandler.fileid";
 	
 	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
 	
@@ -64,9 +66,7 @@ public class ScriptHandler implements MessageHandler {
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {        
         Map<String, String> properties = buildPropertyMap(token, message);
         
-        String fileId = properties.get("fileid");
-        
-        File scriptFile = token.getServices().requestControllerFile(fileId);
+        File scriptFile = getScriptFile(token, properties.get(SCRIPT_FILE), properties.get(SCRIPT_FILEID));
         
         String engineName = getScriptEngineName(scriptFile);
         ScriptEngine engine = loadScriptEngine(engineName);	      
@@ -77,11 +77,23 @@ public class ScriptHandler implements MessageHandler {
         try {
         	executeScript(scriptFile, binding, engine);        	
         } catch(Exception e) {        	
-        	executeErrorHandlerScript(properties, engine, binding);
+        	executeErrorHandlerScript(token, properties, engine, binding);
         	throw e;
         }
         
         return outputBuilder.build();
+	}
+
+	private File getScriptFile(AgentTokenWrapper token, String scriptFileProp, String scriptFileidProp) {
+		File scriptFile;
+        String file = scriptFileProp;
+        if(file!=null) {
+        	scriptFile = new File(file);
+        } else {
+        	String fileId = scriptFileidProp;
+        	scriptFile = token.getServices().requestControllerFile(fileId);
+        }
+		return scriptFile;
 	}
 
 	private String getScriptEngineName(File scriptFile) {
@@ -98,11 +110,11 @@ public class ScriptHandler implements MessageHandler {
         }
 	}
 
-	private void executeErrorHandlerScript(Map<String, String> properties, ScriptEngine engine, Bindings binding)
+	private void executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding)
 			throws FileNotFoundException, Exception, IOException {
-		if(properties.containsKey(ERROR_HANDLER_SCRIPT)) {
-			String errorScript = properties.get(ERROR_HANDLER_SCRIPT);
-			executeScript(new File(errorScript), binding, engine);
+		if(properties.containsKey(ERROR_HANDLER_FILE)) {
+			File errorScriptFile = getScriptFile(token, properties.get(ERROR_HANDLER_FILE), properties.get(ERROR_HANDLER_FILEID));
+			executeScript(errorScriptFile, binding, engine);
 		}
 	}
 
