@@ -14,6 +14,7 @@ import step.commons.conf.Configuration;
 import step.core.GlobalContext;
 import step.functions.Function;
 import step.functions.FunctionClient;
+import step.handlers.scripthandler.ScriptHandler;
 import step.plugins.adaptergrid.GridPlugin;
 
 public class ScriptFunctionTypeHelper {
@@ -45,13 +46,14 @@ public class ScriptFunctionTypeHelper {
 		String fileHandle = functionClient.registerAgentFile(scriptFile);
 
 		Map<String, String> props = new HashMap<>();
-		props.put("fileid", fileHandle);
-		props.put("file", scriptFile.getAbsolutePath());
+		props.put(ScriptHandler.REMOTE_FILE_ID, fileHandle);
+		props.put(ScriptHandler.REMOTE_FILE_VERSION, Long.toString(scriptFile.lastModified()));
+		//props.put(ScriptHandler.SCRIPT_FILE, scriptFile.getAbsolutePath());
 		
 		return props;
 	}
 
-	private File getScriptFile(Function function) {
+	public File getScriptFile(Function function) {
 		String filename = getScriptFilename(function);
 		
 		String scriptDir = Configuration.getInstance().getProperty("keywords.script.scriptdir");

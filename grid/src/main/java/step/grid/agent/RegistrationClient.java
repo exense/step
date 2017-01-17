@@ -32,10 +32,11 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 import step.grid.RegistrationMessage;
+import step.grid.filemanager.FileProvider;
 import step.grid.io.Attachment;
 import step.grid.io.ObjectMapperResolver;
 
-public class RegistrationClient {
+public class RegistrationClient implements FileProvider {
 	
 	private final String registrationServer;
 	
@@ -65,8 +66,13 @@ public class RegistrationClient {
 			logger.error("An error occurred while registering tokens to " + registrationServer, e);
 		}
 	}
-	
-	public Attachment requestFile(String fileId) {
+
+	public void close() {
+		client.close();
+	}
+
+	@Override
+	public Attachment getFile(String fileId) {
 		try {			
 			Response r = client.target(registrationServer + "/grid/file/"+fileId).request().property(ClientProperties.READ_TIMEOUT, callTimeout)
 					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).get();
@@ -77,9 +83,5 @@ public class RegistrationClient {
 			logger.error("An error occurred while registering tokens to " + registrationServer, e);
 			throw e;
 		}
-	}
-
-	public void close() {
-		client.close();
 	}
 }

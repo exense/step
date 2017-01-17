@@ -35,6 +35,8 @@ import org.glassfish.jersey.servlet.ServletContainer;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
+import step.grid.filemanager.FileManagerServer;
+import step.grid.filemanager.FileProvider;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.SimpleAffinityEvaluator;
 import step.grid.tokenpool.Token;
@@ -54,7 +56,7 @@ public class Grid {
 	
 	private Server server;
 	
-	private FileManager fileManager = new FileManager();
+	private FileManagerServer fileManager = new FileManagerServer();
 	
 	public Grid(Integer port) {
 		super();
@@ -98,7 +100,7 @@ public class Grid {
 			@Override
 			protected void configure() {
 				bind(grid).to(Grid.class);
-				bind(fileManager).to(FileManager.class);
+				bind(fileManager).to(FileProvider.class);
 			}
 		});
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);

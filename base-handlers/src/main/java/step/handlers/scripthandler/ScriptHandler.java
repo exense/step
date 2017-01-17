@@ -46,9 +46,12 @@ import step.grid.io.OutputMessage;
 public class ScriptHandler implements MessageHandler {
 
 	public static final String SCRIPT_FILE = "file";
-	public static final String SCRIPT_FILEID = "fileid";
+	public static final String REMOTE_FILE_ID = "remotefile.id";
+	public static final String REMOTE_FILE_VERSION = "remotefile.version";
+
 	public static final String ERROR_HANDLER_FILE = "errorhandler.file";
-	public static final String ERROR_HANDLER_FILEID = "errorhandler.fileid";
+	public static final String ERROR_HANDLER_REMOTE_FILE_ID = "errorhandler.remotefile.id";
+	public static final String ERROR_HANDLER_REMOTE_FILE_VERSION = "errorhandler.remotefile.version";
 	
 	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
 	
@@ -66,7 +69,7 @@ public class ScriptHandler implements MessageHandler {
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {        
         Map<String, String> properties = buildPropertyMap(token, message);
         
-        File scriptFile = getScriptFile(token, properties.get(SCRIPT_FILE), properties.get(SCRIPT_FILEID));
+        File scriptFile = getScriptFile(token, properties.get(SCRIPT_FILE), properties.get(REMOTE_FILE_ID), properties.get(REMOTE_FILE_VERSION));
         
         String engineName = getScriptEngineName(scriptFile);
         ScriptEngine engine = loadScriptEngine(engineName);	      
@@ -84,14 +87,13 @@ public class ScriptHandler implements MessageHandler {
         return outputBuilder.build();
 	}
 
-	private File getScriptFile(AgentTokenWrapper token, String scriptFileProp, String scriptFileidProp) {
+	private File getScriptFile(AgentTokenWrapper token, String scriptFileProp, String remoteFileId, String remoteFileVersionStr) {
 		File scriptFile;
         String file = scriptFileProp;
         if(file!=null) {
         	scriptFile = new File(file);
         } else {
-        	String fileId = scriptFileidProp;
-        	scriptFile = token.getServices().requestControllerFile(fileId);
+        	scriptFile = token.getServices().getFileManagerClient().requestFile(remoteFileId, Long.parseLong(remoteFileVersionStr));
         }
 		return scriptFile;
 	}
@@ -113,7 +115,7 @@ public class ScriptHandler implements MessageHandler {
 	private void executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding)
 			throws FileNotFoundException, Exception, IOException {
 		if(properties.containsKey(ERROR_HANDLER_FILE)) {
-			File errorScriptFile = getScriptFile(token, properties.get(ERROR_HANDLER_FILE), properties.get(ERROR_HANDLER_FILEID));
+			File errorScriptFile = getScriptFile(token, properties.get(ERROR_HANDLER_FILE), properties.get(ERROR_HANDLER_REMOTE_FILE_ID), properties.get(ERROR_HANDLER_REMOTE_FILE_VERSION));
 			executeScript(errorScriptFile, binding, engine);
 		}
 	}

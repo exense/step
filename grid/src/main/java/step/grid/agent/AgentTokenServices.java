@@ -1,38 +1,18 @@
 package step.grid.agent;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import step.grid.io.Attachment;
-import step.grid.io.AttachmentHelper;
+import step.grid.filemanager.FileManagerClient;
 
 public class AgentTokenServices {
 	
-	RegistrationClient gridClient;
+	FileManagerClient fileManagerClient;
 	
-	File dataFolder;
-	
-	public AgentTokenServices(RegistrationClient gridClient, File dataFolder) {
+	public AgentTokenServices(FileManagerClient fileManagerClient) {
 		super();
-		this.gridClient = gridClient;
-		this.dataFolder = dataFolder;
+		
+		this.fileManagerClient = fileManagerClient;
 	}
 
-	public File requestControllerFile(String fileId) {
-		Attachment attachment = gridClient.requestFile(fileId);
-		
-		File file = new File(dataFolder+"/"+attachment.getName());
-		
-		try {
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-			bos.write(AttachmentHelper.hexStringToByteArray(attachment.getHexContent()));
-			bos.close();
-		} catch (IOException ex) {
-
-		}
-		return file;	
+	public FileManagerClient getFileManagerClient() {
+		return fileManagerClient;
 	}
-
 }

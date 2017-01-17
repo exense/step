@@ -1,4 +1,4 @@
-package step.grid;
+package step.grid.filemanager;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 
-public class FileManager {
+public class FileManagerServer implements FileProvider {
 
 	Map<String, File> registry = new ConcurrentHashMap<>();
 	
@@ -28,15 +28,16 @@ public class FileManager {
 		return handle;
 	}
 	
-	public File getFile(String fileHandle) {
-		return registry.get(fileHandle);
-	}
-	
-	public Attachment getFileAsAttachment(String fileHandle) throws IOException {
-		File file = getFile(fileHandle);
-		byte[] bytes = Files.readAllBytes(file.toPath());
-		Attachment attachment = AttachmentHelper.generateAttachmentFromByteArray(bytes, file.getName());
-		return attachment;
+	public Attachment getFile(String fileHandle) {
+		File file = registry.get(fileHandle);;
+		byte[] bytes;
+		try {
+			bytes = Files.readAllBytes(file.toPath());
+			Attachment attachment = AttachmentHelper.generateAttachmentFromByteArray(bytes, file.getName());
+			return attachment;
+		} catch (IOException e) {
+			throw new RuntimeException("Error while reading file with handle "+fileHandle+" mapped to '"+file.getAbsolutePath()+"'", e);
+		}
 	}
 	
 }

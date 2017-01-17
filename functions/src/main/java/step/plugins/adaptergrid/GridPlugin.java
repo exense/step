@@ -40,8 +40,6 @@ public class GridPlugin extends AbstractPlugin {
 	
 	public static final String FUNCTIONCLIENT_KEY = "FunctionClient_Instance";
 	
-	public static final String KEYWORD_REPOSITORY_KEY = "KeywordRepository_Instance";
-	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		

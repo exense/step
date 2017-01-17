@@ -29,6 +29,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import step.grid.filemanager.FileProvider;
 import step.grid.io.Attachment;
 
 @Path("/grid")
@@ -38,7 +39,7 @@ public class GridServices {
 	Grid grid;
 	
 	@Inject
-	FileManager fileManager;
+	FileProvider fileManager;
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -51,6 +52,6 @@ public class GridServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/file/{id}")
 	public Attachment getFile(@PathParam("id")String fileId) throws IOException {
-		return fileManager.getFileAsAttachment(fileId);
+		return fileManager.getFile(fileId);
 	}
 }
