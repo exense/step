@@ -35,10 +35,6 @@ public abstract class AbstractFunctionType<T extends FunctionTypeConf> {
 		return function;
 	}
 	
-	public String getEditorPath(Function function) {
-		return null;
-	}
-	
 	@SuppressWarnings("unchecked")
 	protected T getFunctionConf(Function function) {
 		return (T) function.getConfiguration();

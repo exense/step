@@ -46,5 +46,4 @@ public class ScriptFunctionType extends AbstractFunctionType<ScriptFunctionTypeC
 			helper.createScriptFromTemplate(scriptFile, "custom_script.groovy");
 		}
 	}
-
 }

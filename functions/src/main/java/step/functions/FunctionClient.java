@@ -152,11 +152,6 @@ public class FunctionClient {
 		return type.copyFunction(function);
 	}
 	
-	public String getFunctionEditorPath(Function function) {
-		AbstractFunctionType<?> type = getFunctionTypeByName(function.getType());
-		return type.getEditorPath(function);
-	}
-	
 	public FunctionTokenHandle getLocalFunctionToken() {
 		return new FunctionTokenHandle(gridClient.getLocalToken());
 	}

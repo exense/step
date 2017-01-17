@@ -28,6 +28,7 @@ import step.core.accessors.MongoDBAccessorHelper;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.FunctionClient;
+import step.functions.editors.FunctionEditorRegistry;
 import step.grid.Grid;
 import step.grid.client.GridClient;
 
@@ -54,6 +55,9 @@ public class GridPlugin extends AbstractPlugin {
 		MongoClient mongoClient = context.getMongoClient();
 		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(mongoClient, "functions");	
 		
+		FunctionEditorRegistry editorRegistry = new FunctionEditorRegistry();
+		context.put(FunctionEditorRegistry.class.getName(), editorRegistry);
+
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
 		FunctionClient functionClient = new FunctionClient(context, client, functionRepository);
@@ -61,6 +65,7 @@ public class GridPlugin extends AbstractPlugin {
 		context.put(GRID_KEY, grid);
 		context.put(GRIDCLIENT_KEY, client);
 		context.put(FUNCTIONCLIENT_KEY, functionClient);
+		
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
 		context.getServiceRegistrationCallback().registerService(FunctionRepositoryServices.class);

@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -55,6 +56,13 @@ public class PluginManager implements InvocationHandler{
 			AbstractPlugin plugin = newPluginInstance((Class<AbstractPlugin>) pluginClass);
 			register(plugin);
 		}
+		
+		plugins.sort(new Comparator<AbstractPlugin>() {
+			@Override
+			public int compare(AbstractPlugin arg0, AbstractPlugin arg1) {
+				return Integer.compare(arg0.getClass().getAnnotation(Plugin.class).prio(),arg1.getClass().getAnnotation(Plugin.class).prio());
+			}
+		});
 	}
 
 	public void register(AbstractPlugin plugin) {

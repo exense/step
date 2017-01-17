@@ -6,12 +6,27 @@ import java.util.Map;
 import step.artefacts.Sequence;
 import step.core.artefacts.AbstractArtefact;
 import step.functions.Function;
+import step.functions.editors.FunctionEditor;
+import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
 
 @FunctionType(name="composite",label="Composite")
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctionTypeConf> {
 
+
+	@Override
+	public void init() {
+		super.init();
+		
+		context.get(FunctionEditorRegistry.class).register("composite", new FunctionEditor() {
+			@Override
+			public String getEditorPath(Function function) {
+				return "/root/artefacteditor/"+((CompositeFunctionTypeConf)function.getConfiguration()).getArtefactId();
+			}
+		});
+	}
+	
 	@Override
 	public String getHandlerChain(Function function) {
 		return "class:step.core.tokenhandlers.ArtefactMessageHandler";
@@ -51,10 +66,4 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 		conf.setArtefactId(artefactCopy.getId().toString());
 		return copy;
 	}
-
-	@Override
-	public String getEditorPath(Function function) {
-		return "/root/artefacteditor/"+((CompositeFunctionTypeConf)function.getConfiguration()).getArtefactId();
-	}
-
 }

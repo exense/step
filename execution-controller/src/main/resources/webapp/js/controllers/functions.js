@@ -242,38 +242,60 @@ angular.module('functionsControllers',['dataTable','step'])
 })
 
 .controller('executeFunctionModalCtrl', function ($scope, $modalInstance, $http, functionId) {
-
-  $scope.argument = '';
-	$scope.running = false;
   
-	$scope.properties = [];
-	
-	$scope.addProperty = function() {
-	  $scope.properties.push({key:"",value:""})
-	}
-	
+  $scope.functionId = functionId;
+	$scope.handle = {}
+  
   $scope.ok = function () {
-    $scope.running=true;
-    var properties = {};
-    _.each($scope.properties,function(prop){properties[prop.key]=prop.value});
-    $http.post("rest/functions/"+functionId+"/execute",{'properties':properties,'argument':$scope.argument}).success(function(data) {
-		$scope.output = data;
-		$scope.running=false;
-		if(data) {
-		  var output = data.output;
-		  if(output.result) {
-		    $scope.result = JSON.stringify(output.result)		    
-		  }
-		  $scope.attachments=data.attachments;
-		  $scope.error = output.error
-		}
-	}).error(function(error) {
-	  $scope.running=false;
-	  $scope.error=error;
-	});
+	  $scope.handle.execute();
   };
 
   $scope.cancel = function () {
     $modalInstance.dismiss('cancel');
   };
-});
+})
+
+.directive('functionExecutionPanel', function($http) {
+  return {
+    restrict: 'E',
+    scope: {
+      functionid: '=',
+      handle: '='
+    },
+    templateUrl: 'partials/functionExecutionPanel.html',
+    controller: function($scope,AuthService) {
+      $scope.argument = '';
+      $scope.running = false;
+      
+      $scope.properties = [];
+      
+      $scope.addProperty = function() {
+        $scope.properties.push({key:"",value:""})
+      }
+      
+      $scope.execute = function () {
+        $scope.running=true;
+        var properties = {};
+        _.each($scope.properties,function(prop){properties[prop.key]=prop.value});
+        $http.post("rest/functions/"+$scope.functionid+"/execute",{'properties':properties,'argument':$scope.argument}).success(function(data) {
+        $scope.output = data;
+        $scope.running=false;
+        if(data) {
+          var output = data.output;
+          if(output.result) {
+            $scope.result = JSON.stringify(output.result)       
+          }
+          $scope.attachments=data.attachments;
+          $scope.error = output.error
+        }
+      }).error(function(error) {
+        $scope.running=false;
+        $scope.error=error;
+      });
+      };
+      
+      if($scope.handle) {
+        $scope.handle.execute = $scope.execute;
+      }
+    }
+   }});

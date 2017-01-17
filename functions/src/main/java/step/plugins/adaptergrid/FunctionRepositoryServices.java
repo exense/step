@@ -51,6 +51,8 @@ import step.functions.FunctionClient.FunctionTypeInfo;
 import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
+import step.functions.editors.FunctionEditor;
+import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.FunctionTypeConf;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
@@ -233,7 +235,12 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Secured(right="kw-read")
 	public String getFunctionEditor(@PathParam("id") String functionId) {
 		Function function = getFunctionRepository().getFunctionById(functionId);
-		return getFunctionClient().getFunctionEditorPath(function);
+		FunctionEditor editor = getContext().get(FunctionEditorRegistry.class).getFunctionEditor(function.getType());
+		if(editor!=null) {
+			return editor.getEditorPath(function);
+		} else {
+			return null;
+		}
 	}
 	
 	@GET
