@@ -112,7 +112,7 @@ public class Agent {
 		
 		id = UUID.randomUUID().toString();
 		tokenPool = new AgentTokenPool(10000);
-		handlerPool = new TokenHandlerPool();
+		handlerPool = new TokenHandlerPool(agentConf);
 	}
 	
 	public String getId() {
@@ -149,6 +149,7 @@ public class Agent {
 		FileManagerClient fileManagerClient = new FileManagerClient(new File("."), registrationClient);
 		
 		agentTokenServices = new AgentTokenServices(fileManagerClient);
+		agentTokenServices.setAgentProperties(agentConf.getProperties());
 		
 		if(agentConf.getTokenGroups()!=null) {
 			for(TokenGroupConf group:agentConf.getTokenGroups()) {

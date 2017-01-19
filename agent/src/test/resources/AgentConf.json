@@ -7,5 +7,6 @@
 	"attributes":{"key":"val"},
 	"properties":{}}
 }
-]
+],
+"properties":{"plugins.jmeter.home":"../distribution/template-agent/ext/lib/jmeter"}
 }

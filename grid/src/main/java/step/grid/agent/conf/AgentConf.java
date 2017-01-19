@@ -19,6 +19,7 @@
 package step.grid.agent.conf;
 
 import java.util.List;
+import java.util.Map;
 
 public class AgentConf {
 	
@@ -31,6 +32,8 @@ public class AgentConf {
 	Integer registrationPeriod = 10000;
 
 	List<TokenGroupConf> tokenGroups;
+	
+	Map<String, String> properties;
 
 	public AgentConf() {
 		super();
@@ -89,5 +92,13 @@ public class AgentConf {
 
 	public void setRegistrationPeriod(Integer registrationPeriod) {
 		this.registrationPeriod = registrationPeriod;
+	}
+
+	public Map<String, String> getProperties() {
+		return properties;
+	}
+
+	public void setProperties(Map<String, String> properties) {
+		this.properties = properties;
 	} 
 }

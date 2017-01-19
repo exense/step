@@ -71,8 +71,12 @@ public class MeasurementsBuilder {
 	}
 	
 	public void addMeasure(String measureName, long aDurationMillis) {
+		addMeasure(measureName, aDurationMillis, null);
+	}
+	
+	public void addMeasure(String measureName, long aDurationMillis, Map<String, String> data) {
 		synchronized (closedMeasures) {
-			closedMeasures.add(new Measure(measureName, aDurationMillis, System.currentTimeMillis(), null));
+			closedMeasures.add(new Measure(measureName, aDurationMillis, System.currentTimeMillis(), data));
 		}
 	}
 	

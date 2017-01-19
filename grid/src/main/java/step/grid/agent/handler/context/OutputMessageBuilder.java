@@ -146,6 +146,10 @@ public class OutputMessageBuilder {
 	public void addMeasure(String measureName, long durationMillis) {
 		measureHelper.addMeasure(measureName, durationMillis);
 	}
+	
+	public void addMeasure(String measureName, long aDurationMillis, Map<String, String> data) {
+		measureHelper.addMeasure(measureName, aDurationMillis, data);
+	}
 
 	public void stopMeasure() {
 		measureHelper.stopMeasure();

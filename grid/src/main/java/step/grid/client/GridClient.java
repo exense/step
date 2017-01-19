@@ -100,7 +100,7 @@ public class GridClient implements Closeable {
 
 	private OutputMessage callLocalToken(InputMessage message) throws Exception {
 		OutputMessage output;
-		TokenHandlerPool p = new TokenHandlerPool();
+		TokenHandlerPool p = new TokenHandlerPool(null);
 		MessageHandler h = p.get(message.getHandler());
 		output = h.handle(null, message);
 		return output;

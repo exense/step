@@ -213,7 +213,7 @@ angular.module('functionsControllers',['dataTable','step'])
   } 
   
   $scope.$watch('function_.type',function(functionType,oldFunctionType){
-    if(($scope.function_&&!$scope.function_configuration)||functionType!=oldFunctionType) {
+    if(($scope.function_&&!$scope.function_.configuration)||functionType!=oldFunctionType) {
       $http.get("rest/functions/types/"+functionType).success(function(template){
         $scope.function_.configuration = template;
       }) 
