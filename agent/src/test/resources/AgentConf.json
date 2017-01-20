@@ -1,6 +1,7 @@
 {
 "gridHost":"http://localhost:8081", 
 "registrationPeriod":1000,
+"workingDir":"src/test/resources/work",
 "tokenGroups":[
 {"capacity":10, 
 "tokenConf":{

@@ -29,6 +29,8 @@ public class AgentConf {
 	
 	String agentUrl;
 	
+	String workingDir;
+	
 	Integer registrationPeriod = 10000;
 
 	List<TokenGroupConf> tokenGroups;
@@ -92,6 +94,14 @@ public class AgentConf {
 
 	public void setRegistrationPeriod(Integer registrationPeriod) {
 		this.registrationPeriod = registrationPeriod;
+	}
+
+	public String getWorkingDir() {
+		return workingDir;
+	}
+
+	public void setWorkingDir(String workingDir) {
+		this.workingDir = workingDir;
 	}
 
 	public Map<String, String> getProperties() {

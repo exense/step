@@ -19,7 +19,9 @@
 package step.grid.agent;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.Inet4Address;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -146,7 +148,8 @@ public class Agent {
 		final Agent agent = this;
 		
 		RegistrationClient registrationClient = new RegistrationClient(agent.getGridHost());
-		FileManagerClient fileManagerClient = new FileManagerClient(new File("."), registrationClient);
+		
+		FileManagerClient fileManagerClient = initFileManager(registrationClient);
 		
 		agentTokenServices = new AgentTokenServices(fileManagerClient);
 		agentTokenServices.setAgentProperties(agentConf.getProperties());
@@ -198,6 +201,24 @@ public class Agent {
 				tokenPool.evictSessions();
 			}
 		}, 15000, 10000);
+	}
+
+	private FileManagerClient initFileManager(RegistrationClient registrationClient) throws IOException {
+		String fileManagerDirPath;
+		String workingDir = agentConf.getWorkingDir();
+		if(workingDir!=null) {
+			fileManagerDirPath = workingDir;
+		} else {
+			fileManagerDirPath = ".";
+		}
+		fileManagerDirPath+="/filemanager";
+		File fileManagerDir = new File(fileManagerDirPath);
+		if(!fileManagerDir.exists()) {
+			Files.createDirectory(fileManagerDir.toPath());
+		}
+		
+		FileManagerClient fileManagerClient = new FileManagerClient(fileManagerDir, registrationClient);
+		return fileManagerClient;
 	}
 
 	protected String getAgentUrl() {
