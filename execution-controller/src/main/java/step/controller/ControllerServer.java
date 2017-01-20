@@ -49,6 +49,7 @@ import step.core.deployment.AdminServices;
 import step.core.deployment.ApplicationServices;
 import step.core.deployment.AuthenticationFilter;
 import step.core.deployment.ControllerServices;
+import step.core.deployment.ErrorFilter;
 import step.core.deployment.JacksonMapperProvider;
 import step.grid.agent.ArgumentParser;
 
@@ -169,6 +170,7 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ControllerServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
 		resourceConfig.registerClasses(AuthenticationFilter.class);
+		resourceConfig.registerClasses(ErrorFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	

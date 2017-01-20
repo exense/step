@@ -6,6 +6,7 @@ import java.util.Map;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
+import step.functions.type.SetupFunctionException;
 
 @FunctionType(name="selenium",label="Selenium")
 public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunctionTypeConf> {
@@ -37,7 +38,7 @@ public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunctionT
 	}
 
 	@Override
-	public void setupFunction(Function function) {
+	public void setupFunction(Function function) throws SetupFunctionException {
 		File scriptFile = helper.setupScriptFile(function);
 		helper.createScriptFromTemplate(scriptFile, "kw_selenium.js");
 	}

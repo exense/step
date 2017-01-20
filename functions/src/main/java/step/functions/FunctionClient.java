@@ -34,6 +34,7 @@ import step.expressions.DynamicBeanResolver;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
 import step.functions.type.FunctionTypeConf;
+import step.functions.type.SetupFunctionException;
 import step.grid.AgentRef;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
@@ -142,7 +143,7 @@ public class FunctionClient {
 		}
 	}
 	
-	public void setupFunction(Function function) {
+	public void setupFunction(Function function) throws SetupFunctionException {
 		AbstractFunctionType<?> type = getFunctionTypeByName(function.getType());
 		type.setupFunction(function);
 	}

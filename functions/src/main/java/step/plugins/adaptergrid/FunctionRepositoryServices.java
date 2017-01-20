@@ -54,6 +54,7 @@ import step.functions.Output;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.FunctionTypeConf;
+import step.functions.type.SetupFunctionException;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 
@@ -73,7 +74,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/")
 	@Secured(right="kw-write")
-	public Function save(Function function) {
+	public Function save(Function function) throws SetupFunctionException {
 		FunctionRepository repo = getFunctionRepository();
 		if(function.getId()==null || repo.getFunctionById(function.getId().toString())==null) {
 			getFunctionClient().setupFunction(function);

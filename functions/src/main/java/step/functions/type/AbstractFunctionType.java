@@ -25,7 +25,7 @@ public abstract class AbstractFunctionType<T extends FunctionTypeConf> {
 	
 	public abstract T newFunctionTypeConf();
 	
-	public void setupFunction(Function function) {
+	public void setupFunction(Function function) throws SetupFunctionException {
 		
 	}
 	

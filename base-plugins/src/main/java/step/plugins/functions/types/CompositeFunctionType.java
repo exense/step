@@ -10,6 +10,7 @@ import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
+import step.functions.type.SetupFunctionException;
 
 @FunctionType(name="composite",label="Composite")
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctionTypeConf> {
@@ -47,7 +48,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	}
 
 	@Override
-	public void setupFunction(Function function) {
+	public void setupFunction(Function function) throws SetupFunctionException {
 		super.setupFunction(function);
   		Sequence sequence = new Sequence();
   		context.getArtefactAccessor().save(sequence);

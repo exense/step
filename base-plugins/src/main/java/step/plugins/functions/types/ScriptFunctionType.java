@@ -6,6 +6,7 @@ import java.util.Map;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
+import step.functions.type.SetupFunctionException;
 
 @FunctionType(name="script",label="Custom Script")
 public class ScriptFunctionType extends AbstractFunctionType<ScriptFunctionTypeConf> {
@@ -37,7 +38,7 @@ public class ScriptFunctionType extends AbstractFunctionType<ScriptFunctionTypeC
 	}
 
 	@Override
-	public void setupFunction(Function function) {
+	public void setupFunction(Function function) throws SetupFunctionException {
 		File scriptFile = helper.setupScriptFile(function);
 		String language = helper.getScriptLanguage(function);
 		if(language.equals("javascript")) {

@@ -34,6 +34,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   $httpProvider.defaults.headers.get['Pragma'] = 'no-cache';
   $httpProvider.defaults.withCredentials = true;
   $httpProvider.interceptors.push('authInterceptor');
+  $httpProvider.interceptors.push('genericErrorInterceptor');
 }])
 
 .controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService) {
@@ -274,7 +275,7 @@ angular.module('step',['ngStorage'])
   };
 })
 
-.factory('Dialogs', function ($http, $rootScope, $modal) {
+.factory('Dialogs', function ($rootScope, $modal) {
   var dialogs = {};
   
   dialogs.showDeleteWarning = function() {
@@ -304,4 +305,15 @@ angular.module('step',['ngStorage'])
   $scope.cancel = function () {
     $modalInstance.dismiss('cancel');
   };  
+})
+
+.service('genericErrorInterceptor', function($q, $injector) {
+    var service = this;
+    service.responseError = function(response) {
+        if (response.status == 500) {
+          Dialogs = $injector.get('Dialogs');
+          Dialogs.showErrorMsg(response.data)
+        }
+        return $q.reject(response);
+    };
 })
