@@ -76,7 +76,7 @@ public class ScriptHandlerTest {
 
 		final ScriptHandler handler = new ScriptHandler();
 		
-		int nIt = 1000;
+		int nIt = 100;
 		int nThreads = 10;
 		ExecutorService e = Executors.newFixedThreadPool(nThreads);
 		

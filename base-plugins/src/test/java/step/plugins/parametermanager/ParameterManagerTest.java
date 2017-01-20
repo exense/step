@@ -101,9 +101,9 @@ public class ParameterManagerTest {
 			m.addParameter(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i));
 		}
 		
-		int iterations = 100;
+		int iterations = 25;
 		
-		int nThreads = 10;
+		int nThreads = 4;
 		ExecutorService e = Executors.newFixedThreadPool(10);
 		List<Future> futures = new ArrayList<>();
 		for(int j=0; j<nThreads;j++) {
