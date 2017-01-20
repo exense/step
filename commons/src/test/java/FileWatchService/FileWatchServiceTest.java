@@ -32,6 +32,8 @@ public class FileWatchServiceTest {
 	@Test
 	public void testBasic() throws InterruptedException {
 		File file = FileHelper.getClassLoaderResource(this.getClass(),"FileWatchServiceTest.test");
+		long lastModified = 0;
+		file.setLastModified(lastModified);
 		
 		Object lock = new Object();
 		
@@ -47,20 +49,19 @@ public class FileWatchServiceTest {
 			}
 		});
 		
-		long lastModified = System.currentTimeMillis();
 				
-		touchAndWait(file, lock, updatedCount, 1, lastModified);
-		touchAndWait(file, lock, updatedCount, 2, lastModified+10000);
+		touchAndWait(file, lock, updatedCount, 1, lastModified+10000);
+		touchAndWait(file, lock, updatedCount, 2, lastModified+20000);
 
 		FileWatchService.getInstance().unregister(file);
-		touchAndWait(file, lock, updatedCount, 2, lastModified+20000);
+		touchAndWait(file, lock, updatedCount, 2, lastModified+30000);
 
 	}
 
 	private void touchAndWait(File file, Object lock, final AtomicInteger updatedCount, int expected, long lastModified) throws InterruptedException {
 		synchronized (lock) {
 			file.setLastModified(lastModified);
-			lock.wait(10000);
+			lock.wait(100);
 		}
 		Assert.assertEquals(expected,updatedCount.get());
 	}
