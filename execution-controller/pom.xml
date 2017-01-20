@@ -22,7 +22,7 @@
 	<parent>
 		<groupId>step</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.2.1</version>
+		<version>3.3.0</version>
 		<relativePath>../parent</relativePath>
 	</parent>
 	
@@ -45,6 +45,11 @@
 		<dependency>
 			<groupId>step</groupId>
 			<artifactId>base-plugins</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>rtm-plugin</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
