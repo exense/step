@@ -10,6 +10,7 @@ public class ErrorFilter extends AbstractServices implements ExceptionMapper<Exc
 
 	@Override
 	public Response toResponse(Exception exception) {
+		exception.printStackTrace();
 		return Response.status(500).entity("Unexepected server error occurred: "+exception.getClass().getName()+":"+exception.getMessage()).type("text/plain").build();
 	}
 }

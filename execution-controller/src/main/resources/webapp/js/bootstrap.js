@@ -1,4 +1,4 @@
-$.get("rest/app/plugins").success(function(plugins) {
+$.get("rest/app/plugins",function(plugins) {
   var scripts = [];
   var angularModules = [];
   _.each(plugins,function(plugin) {

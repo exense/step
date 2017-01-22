@@ -126,7 +126,8 @@ angular.module('reportBrowserControllers', [ 'dataTable', 'step' ])
       
       
       $scope.stepsTable.detailRowRenderer = function(rowData, callback) {
-        $http.get('rest/controller/reportnode/'+rowData[0]+'/path').success(function(data) {
+        $http.get('rest/controller/reportnode/'+rowData[0]+'/path').then(function(response) {
+          var data = response.data;
           var currentNode = _.last(data);
           var html = '<ul class="list-unstyled node-details">';
           if(currentNode.reportNode && currentNode.reportNode.adapter) {html+='<li><strong>Adapter</strong> <span>'+currentNode.reportNode.adapter+'</span></li>'}

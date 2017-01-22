@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('artefactEditor',['dataTable','step'])
 
-.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $modal, $location, AuthService) {
+.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService) {
       stateStorage.push($scope, 'artefacteditor', {});
 
       $scope.artefactId = $scope.$state;
@@ -37,15 +37,16 @@ angular.module('artefactEditor',['dataTable','step'])
                              				'</button> '
                                    }} ];
       
-      $http({url:"rest/controller/artefact/"+$scope.artefactId, method:"GET"}).success(function(data){
-    	  $scope.artefact = data;
+      $http({url:"rest/controller/artefact/"+$scope.artefactId, method:"GET"}).then(function(response){
+    	  $scope.artefact = response.data;
       })
       
       $scope.saveAttributes = function() {
     	  $http.post("rest/controller/artefact/"+$scope.artefact.id+"/attributes", $scope.artefact.attributes);
       }
       
-      $http.get("rest/controller/artefact/types").success(function(data){ 
+      $http.get("rest/controller/artefact/types").then(function(response){ 
+        var data = response.data;
         var dataSet = [];
         for (i = 0; i < data.length; i++) {
           dataSet[i] = [ data[i], data[i], ''];
@@ -134,14 +135,15 @@ angular.module('artefactEditor',['dataTable','step'])
       
       $('#jstree_demo_div').on("move_node.jstree", function (e, data) {
         $http.post("rest/controller/artefact/"+data.node.id+"/move?from="+data.old_parent+"&to="+data.parent+"&pos="+data.position)
-        .success(function() {
+        .then(function() {
           load();
         })
       })
 
       function load(callback) {
     	
-    	$http({url:"rest/controller/artefact/"+artefactid+"/descendants", method:"GET"}).success(function(data){ 
+    	$http({url:"rest/controller/artefact/"+artefactid+"/descendants", method:"GET"}).then(function(response){ 
+    	    var data = response.data;
     	  	treeData = [];
         	function asJSTreeNode(currentNode) {
         	  var children = [];
@@ -190,13 +192,13 @@ angular.module('artefactEditor',['dataTable','step'])
       $scope.handle.addFunction = function(id) {
     	var selectedArtefact = tree.get_selected(true);
     	
-    	$http.get("rest/functions/"+id).success(function(function_) {
-
+    	$http.get("rest/functions/"+id).then(function(response) {
+    	  var function_ = response.data;
     	  var tokenDefault = function_.type=="composite"?"{\"route\":\"local\"}":"{\"route\":\"remote\"}";
     	  
     	  var newArtefact = {"function":JSON.stringify(function_.attributes),"token":tokenDefault,"_class":"CallFunction"};
-    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).success(function(artefact){
-    		  reloadAfterArtefactInsertion(artefact);
+    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
+    		  reloadAfterArtefactInsertion(response.data);
     	  })
     		
     	});
@@ -205,8 +207,9 @@ angular.module('artefactEditor',['dataTable','step'])
       $scope.handle.addControl = function(id) {
     	var selectedArtefact = tree.get_selected(true);
     	
-    	$http.get("rest/controller/artefact/types/"+id).success(function(artefact) {
-    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",artefact).success(function(){
+    	$http.get("rest/controller/artefact/types/"+id).then(function(response) {
+    	  var artefact = response.data;
+    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",artefact).then(function(){
     		  reloadAfterArtefactInsertion(artefact);
     	  })
     	});
@@ -221,7 +224,7 @@ angular.module('artefactEditor',['dataTable','step'])
         var selectedArtefact = tree.get_selected(true)[0];
         if($rootScope.clipboard && $rootScope.clipboard.object=="artefact") {
           $http.post("rest/controller/artefact/"+$rootScope.clipboard.id+"/copy?to="+selectedArtefact.id)
-          .success(function() {
+          .then(function() {
             load();
           });
         }
@@ -230,7 +233,7 @@ angular.module('artefactEditor',['dataTable','step'])
       $scope.remove = function() {
         var selectedArtefact = tree.get_selected(true)[0];
         var parentid = tree.get_parent(selectedArtefact);
-        $http.delete("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id).success(function() {
+        $http.delete("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id).then(function() {
           load();
         });
         }
@@ -238,7 +241,7 @@ angular.module('artefactEditor',['dataTable','step'])
       $scope.move = function(offset) {
     	var selectedArtefact = tree.get_selected(true)[0];
     	var parentid = tree.get_parent(selectedArtefact);
-    	$http.post("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id+"/move",offset).success(function() {
+    	$http.post("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id+"/move",offset).then(function() {
     	  load();
     	});
       }
@@ -263,12 +266,12 @@ angular.module('artefactEditor',['dataTable','step'])
         if($scope.artefactid) {
         	var artefactid = $scope.artefactid;
         	
-        	$http({url:"rest/controller/artefact/"+artefactid,method:"GET"}).success(function(artefact) {
-        	  $scope.artefact = artefact;
+        	$http({url:"rest/controller/artefact/"+artefactid,method:"GET"}).then(function(response) {
+        	  $scope.artefact = response.data;
         	})
         	
         	$scope.save = function() {
-        	  $http.post("rest/controller/artefact/"+artefactid, $scope.artefact).success(function() {
+        	  $http.post("rest/controller/artefact/"+artefactid, $scope.artefact).then(function() {
         		
         	  });
         	}

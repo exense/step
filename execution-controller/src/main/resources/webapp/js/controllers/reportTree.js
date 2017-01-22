@@ -42,7 +42,8 @@ angular.module('reportTree',['step'])
             },
             'data' : function (obj, cb) {
               var id = obj.id==='#'?nodeid:obj.id;
-              $http.get("rest/controller/reportnode/"+id+"/children").success(function(nodes){
+              $http.get("rest/controller/reportnode/"+id+"/children").then(function(response) {
+                var nodes = response.data;
                var children=_.map(nodes,function(node){
                  var cssClass = 'glyphicon-unchecked'
                  if(node._class=='step.artefacts.reports.CallFunctionReportNode') {
@@ -63,8 +64,8 @@ angular.module('reportTree',['step'])
         var selectedNodes = tree.get_selected(true);
         var selectedNodeId = selectedNodes?(selectedNodes.length>0?selectedNodes[0].id:null):null;
         if(selectedNodeId) {
-          $http.get("rest/controller/reportnode/"+selectedNodeId).success(function(node){
-            $scope.selectedNode = node;
+          $http.get("rest/controller/reportnode/"+selectedNodeId).then(function(response){
+            $scope.selectedNode = response.data;
           })
         }
         

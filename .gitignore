@@ -6,3 +6,5 @@ target/
 *.bak
 .classpath
 .project
+node_modules/
+bower_components/

@@ -20,30 +20,26 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
 
 .controller('GridCtrl', ['$scope', 'stateStorage',
     function($scope, $stateStorage) {
-      $stateStorage.push($scope, 'grid', {lasttab:'adapter'});
+      $stateStorage.push($scope, 'grid');
       
       $scope.autorefresh = true;
-      
-      $scope.tabState = {agents:false, adapters:true, tokens:false, quotamanager:false};
+
       if($scope.$state == null) { $scope.$state = 'adapters' };
       
-      $scope.$watch('$state',function() {
-        if($scope.$state!=null&&_.findWhere($scope.tabs, {id:$scope.$state})==null) {
-          _.each(_.keys($scope.tabState),function(key) {
-            $scope.tabState[key] = false;
-          })
-          $scope.tabState[$scope.$state] = true;
-        }
-      });
+      $scope.tabs = [
+          { id: 'agents'},
+          { id: 'adapters'},
+          { id: 'tokens'},
+          { id: 'quotamanager'}
+      ]
       
-      $scope.$watchCollection('tabState',function() {
-        _.each(_.keys($scope.tabState),function(key) {
-          if($scope.tabState[key]) {
-            $scope.$state =  key;
-          }
-        })
-      })
-  
+      $scope.activeTab = function() {
+        return _.findIndex($scope.tabs,function(tab){return tab.id==$scope.$state});
+      }
+      
+      $scope.onSelection = function(tabid) {
+        return $scope.$state=tabid;
+      }
 }])   
 
 .controller('AgentListCtrl', [
@@ -57,8 +53,9 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
       $scope.datatable = {}
       
       $scope.loadTable = function loadTable() {
-        $http.get("rest/grid/agent").success(
-          function(data) {
+        $http.get("rest/grid/agent").then(
+          function(response) {
+            var data = response.data;
             var dataSet = [];
             for (i = 0; i < data.length; i++) {
               dataSet[i] = [ data[i].agentId, data[i].agentUrl];
@@ -84,7 +81,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
         };
           
         $scope.interrupt = function(id) {
-          $http.put("rest/grid/agent/"+id+"/interrupt").success(function(data) {
+          $http.put("rest/grid/agent/"+id+"/interrupt").then(function() {
                 $scope.loadTable();
             });
         }
@@ -98,7 +95,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
         };
           
         $scope.resume = function(id) {
-          $http.put("rest/grid/agent/"+id+"/resume").success(function(data) {
+          $http.put("rest/grid/agent/"+id+"/resume").then(function() {
                 $scope.loadTable();
             });
         }
@@ -122,10 +119,10 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
   	  
   	  $scope.keySelectioModel = {};
   	  
-  	  $http.get("rest/grid/keys").success(
-          function(data) { 
+  	  $http.get("rest/grid/keys").then(
+          function(response) { 
             $scope.keys = ['url']; $scope.keySelectioModel['url']=true;
-            _.each(data,function(key){$scope.keys.push(key); $scope.keySelectioModel[key]=false});
+            _.each(response.data,function(key){$scope.keys.push(key); $scope.keySelectioModel[key]=false});
           })
       
   	  $scope.loadTable = function loadTable() {
@@ -135,8 +132,9 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
   	      queryParam+='groupby='+key+'&'
   	      }
   	    })
-  		$http.get("rest/grid/token/usage?"+queryParam).success(
-  			function(data) {
+  		$http.get("rest/grid/token/usage?"+queryParam).then(
+  			function(response) {
+  			  var data = response.data;
   			  var dataSet = [];
   			  for (i = 0; i < data.length; i++) {
   				dataSet[i] = [ helpers.formatAsKeyValueList(data[i].key), {usage:data[i].usage, capacity:data[i].capacity} ];
@@ -183,8 +181,9 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
 	  $scope.$state = 'tokens'
 	  
 	  $scope.loadTable = function loadTable() {
-		$http.get("rest/grid/token").success(
-			function(data) {
+		$http.get("rest/grid/token").then(
+			function(response) {
+			  var data = response.data;
 			  var dataSet = [];
 			  for (i = 0; i < data.length; i++) {
 				dataSet[i] = [ data[i].token.id, data[i].token.agentid,
@@ -219,9 +218,11 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
       $scope.$state = 'quotamanager'
       
       $scope.load = function loadTable() {
-        $http.get("rest/quotamanager/status").success(
-            function(data) {
-              $scope.statusText = data;
+        $http.get("rest/quotamanager/status").then(
+            function(response) {
+              $scope.statusText = response.data;
+            },function(error){
+              $scope.statusText = "";
             });
       };
       

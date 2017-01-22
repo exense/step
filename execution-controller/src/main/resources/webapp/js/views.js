@@ -45,8 +45,9 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
   
   dataFactory.getTimeBasedChart = function (viewId, eId, title) {
     return $q(function(resolve, reject) {
-      dataFactory.get(viewId, eId).success(
-        function(data) {
+      dataFactory.get(viewId, eId).then(
+        function(response) {
+          var data = response.data;
           var timeChart = defaultChart(title);
           timeChart.data.push([]);
           timeChart.series.push(title);
@@ -63,7 +64,8 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
   
   dataFactory.getReportNodeStatisticCharts = function (eId) {
     return $q(function(resolve, reject) {
-      dataFactory.get('ReportNodeStatistics', eId).success(function(data) {
+      dataFactory.get('ReportNodeStatistics', eId).then(function(response) {
+        var data = response.data;
         var charts = {};
         charts.throughputchart = defaultChart('Throughput (Keywords/s)');
         charts.throughputchart.data.push([]);

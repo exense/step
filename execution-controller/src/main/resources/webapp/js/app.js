@@ -16,7 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','artefactsControllers','artefactEditor','reportBrowserControllers','adminControllers','ngCookies'])
+var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','artefactsControllers','artefactEditor','reportBrowserControllers','adminControllers'])
+
+.config(['$locationProvider', function($locationProvider) {
+  $locationProvider.hashPrefix('');
+}])
 
 .config(['$httpProvider', function($httpProvider) {
   //initialize get if not there
@@ -41,7 +45,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   stateStorage.push($scope, 'root',{});
   
   $scope.isInitialized = false;
-  function finishInitialization() {$scope.isInitialized = true;}
+  function finishInitialization() {
+    $scope.isInitialized = true;}
   AuthService.init().then(function() {
     AuthService.getSession().then(finishInitialization,finishInitialization)
   })
@@ -74,7 +79,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
       compile: function(element, attrs){
         var templatePath = attrs.ngCompiledInclude;
         return function(scope, element){
-          $http.get(templatePath, { cache: $templateCache }).success(function(response) {
+          $http.get(templatePath, { cache: $templateCache }).then(function(response) {
             var contents = element.html(response).contents();
             $compile(contents)(scope);
           });
@@ -85,7 +90,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 ]);
 
 
-angular.module('step',['ngStorage'])
+angular.module('step',['ngStorage','ngCookies'])
 
 .service('helpers', function() {
   this.formatAsKeyValueList = function(obj) {
@@ -275,18 +280,18 @@ angular.module('step',['ngStorage'])
   };
 })
 
-.factory('Dialogs', function ($rootScope, $modal) {
+.factory('Dialogs', function ($rootScope, $uibModal) {
   var dialogs = {};
   
   dialogs.showDeleteWarning = function() {
-    var modalInstance = $modal.open({animation: false, templateUrl: 'partials/confirmationDialog.html',
+    var modalInstance = $uibModal.open({animation: false, templateUrl: 'partials/confirmationDialog.html',
       controller: 'DialogCtrl', 
       resolve: {message:function(){return 'Are you sure you want to delete this item?'}}});
     return modalInstance.result;
   }
   
   dialogs.showErrorMsg = function(msg) {
-    var modalInstance = $modal.open({animation: false, templateUrl: 'partials/messageDialog.html',
+    var modalInstance = $uibModal.open({animation: false, templateUrl: 'partials/messageDialog.html',
       controller: 'DialogCtrl', 
       resolve: {message:function(){return msg}}});
     return modalInstance.result;
@@ -295,15 +300,15 @@ angular.module('step',['ngStorage'])
   return dialogs;
 })
 
-.controller('DialogCtrl', function ($scope, $modalInstance, message) {
+.controller('DialogCtrl', function ($scope, $uibModalInstance, message) {
   $scope.message = message;
   
   $scope.ok = function() {
-    $modalInstance.close(); 
+    $uibModalInstance.close(); 
   }
   
   $scope.cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };  
 })
 

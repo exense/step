@@ -18,8 +18,8 @@
  *******************************************************************************/
 var schedulerController = angular.module('schedulerControllers',['dataTable']);
 
-schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$modal', 
-  function($scope, $http,$stateStorage, $modal) {
+schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$uibModal', 
+  function($scope, $http,$stateStorage, $uibModal) {
     $stateStorage.push($scope, 'scheduler', {});
     
 	$scope.datatable = {}
@@ -54,7 +54,8 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
                              {"label":"Remove","action":function() {$scope.deleteSelected(true)}}];
 	
 	$scope.loadTable = function loadTable() {	
-		$http.get("rest/controller/task").success(function(data) {
+		$http.get("rest/controller/task").then(function(response) {
+		  var data = response.data;
 			var dataSet = [];
 			for (i = 0; i < data.length; i++) {
 				dataSet[i] = [data[i]._id,
@@ -85,7 +86,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
   }
     
   $scope.enableTask = function(id) {
-  	$http.put("rest/controller/task/"+id).success(function(data) {
+  	$http.put("rest/controller/task/"+id).then(function() {
           $scope.loadTable();
       });
   }
@@ -99,8 +100,9 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	};
 	
 	$scope.editTask = function(id) {
-	  $http.get("rest/controller/task/"+id).success(function(task){
-      var modalInstance = $modal.open({
+	  $http.get("rest/controller/task/"+id).then(function(task){
+	    var task = response.task;
+      var modalInstance = $uibModal.open({
         animation: $scope.animationsEnabled,
         templateUrl: 'editSchedulerTaskModalContent.html',
         controller: 'editSchedulerTaskModalCtrl',
@@ -118,7 +120,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	}
 	
 	$scope.deleteTask = function(id, remove) {
-		$http.delete("rest/controller/task/"+id+"?remove="+remove).success(function(data) {
+		$http.delete("rest/controller/task/"+id+"?remove="+remove).then(function() {
 			$scope.loadTable();
 		});		
 	}
@@ -126,7 +128,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	$scope.loadTable($scope,$http);
   }]);
 
-schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $modalInstance, $http, $location, task) {
+schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $uibModalInstance, $http, $location, task) {
 	  
   $scope.task = task;
 
@@ -140,15 +142,15 @@ schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $
   }
   
   $scope.save = function () {  
-    $http.post("rest/controller/task",$scope.task).success(
-      function(data) {
-        $modalInstance.close(data);
-      }).error(function(error) {
+    $http.post("rest/controller/task",$scope.task).then(
+      function(response) {
+        $uibModalInstance.close(response.data);
+      },function(error) {
         $scope.error = "Invalid CRON expression or server error.";
       });
   };
 
   $scope.cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 });

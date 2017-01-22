@@ -20,8 +20,8 @@ angular.module('functionsControllers',['dataTable','step'])
 
 .run(function($http, $rootScope) {
   function loadTypes() {
-    $http.get("rest/functions/types").success(function(data){
-      $rootScope.functionTypes = data;
+    $http.get("rest/functions/types").then(function(response){
+      $rootScope.functionTypes = response.data;
     });  
   }
   
@@ -32,20 +32,20 @@ angular.module('functionsControllers',['dataTable','step'])
   })
 })
 
-.controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$modal', 'Dialogs', '$location','AuthService',
-    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $modal, Dialogs, $location, AuthService) {
+.controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', '$location','AuthService',
+    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, $location, AuthService) {
       $stateStorage.push($scope, 'functions', {});	
 
       $scope.authService = AuthService;
 
       function openModal(function_) {
-    	  var modalInstance = $modal.open({
+    	  var modalInstance = $uibModal.open({
             templateUrl: 'newFunctionModalContent.html',
             controller: 'newFunctionModalCtrl',
             resolve: {function_: function () {return function_;}}
           });
   
-          modalInstance.result.then(function (functionParams) {
+          modalInstance.result.then(function () {
             	if($scope.table) {
             	  $scope.table.Datatable.ajax.reload(null, false);
             	}
@@ -57,8 +57,8 @@ angular.module('functionsControllers',['dataTable','step'])
       }
 
       $scope.editFunction = function(id) {
-      	$http.get("rest/functions/"+id).success(function(function_) {
-      	  openModal(function_);
+      	$http.get("rest/functions/"+id).then(function(response) {
+      	  openModal(response.data);
       	});
       }
       
@@ -69,7 +69,7 @@ angular.module('functionsControllers',['dataTable','step'])
       $scope.pasteFunction = function() {
         if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
           $http.post("rest/functions/"+$rootScope.clipboard.id+"/copy")
-          .success(function() {
+          .then(function() {
             reload();
           });
         }
@@ -77,7 +77,8 @@ angular.module('functionsControllers',['dataTable','step'])
       
       $scope.openFunctionEditor = function(functionid) {
         $scope.$apply(function() {
-          $http.get("rest/functions/"+functionid+"/editor").success(function(path){
+          $http.get("rest/functions/"+functionid+"/editor").then(function(response){
+            var path = response.data
             if(path) {
               $location.path(path);              
             } else {
@@ -92,7 +93,7 @@ angular.module('functionsControllers',['dataTable','step'])
       }
       
       $scope.executeFunction = function(id) {
-  	  var modalInstance = $modal.open({
+  	  var modalInstance = $uibModal.open({
             animation: $scope.animationsEnabled,
             templateUrl: 'executeFunctionModalContent.html',
             controller: 'executeFunctionModalCtrl',
@@ -108,7 +109,7 @@ angular.module('functionsControllers',['dataTable','step'])
       
       $scope.deleteFunction = function(id) {
         Dialogs.showDeleteWarning().then(function() {
-          $http.delete("rest/functions/"+id).success(function() {
+          $http.delete("rest/functions/"+id).then(function() {
             if($scope.table) {
               reload();
           }
@@ -190,7 +191,7 @@ angular.module('functionsControllers',['dataTable','step'])
       };
     } ])
     
-.controller('newFunctionModalCtrl', function ($rootScope, $scope, $modalInstance, $http, $location, function_,Dialogs) {
+.controller('newFunctionModalCtrl', function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dialogs) {
 
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
@@ -203,8 +204,8 @@ angular.module('functionsControllers',['dataTable','step'])
   
   if(newFunction) {
   	$scope.function_= {"attributes":{},"type":"script"};
-  	$http.get("rest/screens/functionTable").success(function(data){
-  	  _.each(data,function(input) {
+  	$http.get("rest/screens/functionTable").then(function(response){
+  	  _.each(response.data,function(input) {
   	    eval('$scope.function_.'+input.id+"=''");
   	  })
   	});	
@@ -214,18 +215,19 @@ angular.module('functionsControllers',['dataTable','step'])
   
   $scope.$watch('function_.type',function(functionType,oldFunctionType){
     if(($scope.function_&&!$scope.function_.configuration)||functionType!=oldFunctionType) {
-      $http.get("rest/functions/types/"+functionType).success(function(template){
-        $scope.function_.configuration = template;
+      $http.get("rest/functions/types/"+functionType).then(function(response){
+        $scope.function_.configuration = response.data;
       }) 
     }
   });
   
   $scope.save = function (editAfterSave) {
-    $http.post("rest/functions",$scope.function_).success(function(function_) {
-      $modalInstance.close(function_);
+    $http.post("rest/functions",$scope.function_).then(function(response) {
+      $uibModalInstance.close(response.data);
   	
     	if(editAfterSave) {
-    	  $http.get("rest/functions/"+function_.id+"/editor").success(function(path){
+    	  $http.get("rest/functions/"+function_.id+"/editor").then(function(response){
+    	    var path = response.data;
     	    if(path) {
     	      $location.path(path);
     	    } else {
@@ -237,11 +239,11 @@ angular.module('functionsControllers',['dataTable','step'])
   };
 
   $scope.cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 })
 
-.controller('executeFunctionModalCtrl', function ($scope, $modalInstance, $http, functionId) {
+.controller('executeFunctionModalCtrl', function ($scope, $uibModalInstance, $http, functionId) {
   
   $scope.functionId = functionId;
 	$scope.handle = {}
@@ -251,7 +253,7 @@ angular.module('functionsControllers',['dataTable','step'])
   };
 
   $scope.cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 })
 
@@ -277,18 +279,19 @@ angular.module('functionsControllers',['dataTable','step'])
         $scope.running=true;
         var properties = {};
         _.each($scope.properties,function(prop){properties[prop.key]=prop.value});
-        $http.post("rest/functions/"+$scope.functionid+"/execute",{'properties':properties,'argument':$scope.argument}).success(function(data) {
-        $scope.output = data;
-        $scope.running=false;
-        if(data) {
-          var output = data.output;
-          if(output.result) {
-            $scope.result = JSON.stringify(output.result)       
+        $http.post("rest/functions/"+$scope.functionid+"/execute",{'properties':properties,'argument':$scope.argument}).then(function(response) {
+          var data = response.data;
+          $scope.output = data;
+          $scope.running=false;
+          if(data) {
+            var output = data.output;
+            if(output.result) {
+              $scope.result = JSON.stringify(output.result)       
+            }
+            $scope.attachments=data.attachments;
+            $scope.error = output.error
           }
-          $scope.attachments=data.attachments;
-          $scope.error = output.error
-        }
-      }).error(function(error) {
+      },function(error) {
         $scope.running=false;
         $scope.error=error;
       });

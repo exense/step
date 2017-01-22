@@ -10,7 +10,26 @@ window.console = window.console || {};
 window.console.log = window.console.log || function(){};
 </script>
 
-<script type="text/javascript" src="js/lib/jquery-1.10.2.min.js"></script>
+<!-- bower:js -->
+<script src="bower_components/jquery/dist/jquery.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+<script src="bower_components/chart.js/dist/Chart.js"></script>
+<script src="bower_components/angular/angular.js"></script>
+<script src="bower_components/tv4/tv4.js"></script>
+<script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
+<script src="bower_components/objectpath/lib/ObjectPath.js"></script>
+<script src="bower_components/angular-schema-form/dist/schema-form.js"></script>
+<script src="bower_components/angular-schema-form/dist/bootstrap-decorator.js"></script>
+<script src="bower_components/underscore/underscore.js"></script>
+<script src="bower_components/ngstorage/ngStorage.js"></script>
+<script src="bower_components/angular-cookies/angular-cookies.js"></script>
+<script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+<script src="bower_components/datatables.net/js/jquery.dataTables.js"></script>
+<script src="bower_components/datatables.net-bs/js/dataTables.bootstrap.js"></script>
+<script src="bower_components/jstree/dist/jstree.js"></script>
+<!-- endbower -->
+
+<!-- <script type="text/javascript" src="js/lib/jquery-1.10.2.min.js"></script>
 <script type="text/javascript" src="js/lib/jquery.dataTables-1.10.4.min.js"></script>
 <script type="text/javascript" src="js/lib/bootstrap-3.3.2.min.js"></script>
 <script type="text/javascript" src="js/lib/dataTables.bootstrap.js"></script>
@@ -24,8 +43,29 @@ window.console.log = window.console.log || function(){};
 <script type="text/javascript" src="js/lib/ngStorage.js"></script>
 <script type="text/javascript" src="js/lib/angular-ui-router.js"></script>
 
+<script src="js/lib/moment.js"></script>
+<script src="js/lib/d3.min.js"></script>
+<script src="js/lib/line-chart.js"></script>
+<script src="js/lib/Chart.js"></script>
+
+<script src="js/lib/line-chart.js"></script>
+<script src="js/lib/underscore-min.js"></script>
+<script src="js/lib/prefixfree.min.js"></script>
+<script src="js/lib/fileDownload.js"></script>
+<script src="js/lib/jstree.js"></script>
+
+
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.5/css/jquery.dataTables.css">
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="css/dataTables.bootstrap.css">
+<link rel="stylesheet" type="text/css" href="css/lib/style.css"> -->
+
+<script src="js/bootstrap.js"></script>
 <script src="js/common.js"></script>
 <script src="js/app.js"></script>
+<script src="js/views.js"></script>
+<script src="js/tables.js"></script>
+<script src="js/chart.js"></script>
 <script src="js/controllers.js"></script>
 <script src="js/controllers/scheduler.js"></script>
 <script src="js/controllers/grid.js"></script>
@@ -37,33 +77,15 @@ window.console.log = window.console.log || function(){};
 <script src="js/controllers/reportTree.js"></script>
 <script src="js/controllers/admin.js"></script>
 
-<script src="js/views.js"></script>
-<script src="js/tables.js"></script>
-
-<script src="js/lib/moment.js"></script>
-<script src="js/lib/d3.min.js"></script>
-<script src="js/lib/line-chart.js"></script>
-<script src="js/lib/Chart.js"></script>
-<script src="js/lib/angular-chart.js"></script>
-<link rel="stylesheet" type="text/css" href="js/lib/angular-chart.css">
-<script src="js/lib/line-chart.js"></script>
-<script src="js/lib/underscore-min.js"></script>
-<script src="js/lib/prefixfree.min.js"></script>
-<script src="js/lib/fileDownload.js"></script>
-<script src="js/lib/jstree.js"></script>
-
-<script src="js/bootstrap.js"></script>
-
-
-<!-- <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.5/css/jquery.dataTables.css"> -->
-<link rel="stylesheet" href="css/bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="css/dataTables.bootstrap.css">
+<!-- bower:css -->
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+<link rel="stylesheet" href="bower_components/datatables.net-bs/css/dataTables.bootstrap.css" />
+<link rel="stylesheet" href="bower_components/jstree/dist/themes/default/style.css" />
+<!-- endbower -->
 <link rel="stylesheet" type="text/css" href="css/step.css">
-<link rel="stylesheet" type="text/css" href="css/lib/style.css">
+<link rel="stylesheet" type="text/css" href="js/chart.css">
 
 
-<!-- <script src="js/angular-datatables.min.js"></script>
- -->
  <title>STEP</title>
 </head>
 
@@ -114,20 +136,20 @@ window.console.log = window.console.log || function(){};
 	
 		<div class="container-fluid">
 			<!-- <div ui-view></div> -->
-			<div ng-if="isViewActive('artefacts')" ng-compiled-include="partials/artefactList.html"></div>
-	        <div ng-if="isViewActive('grid')" ng-compiled-include="partials/grid.html"></div>
-	        <div ng-if="isViewActive('executions')" ng-compiled-include="partials/execution.html"></div>
-	        <div ng-if="isViewActive('scheduler')" ng-compiled-include="partials/scheduler.html"></div>
-	        <div ng-if="isViewActive('repository')" ng-compiled-include="partials/repository.html"></div>
-	        <div ng-if="isViewActive('functions')" ng-compiled-include="partials/functionList.html"></div>
-	        <div ng-if="isViewActive('artefacteditor')" ng-compiled-include="partials/artefactEditor.html"></div>
-	        <div ng-if="isViewActive('reportBrowser')" ng-compiled-include="partials/reportBrowser.html"></div>
-	        <div ng-if="isViewActive('admin')" ng-compiled-include="partials/admin.html"></div>
-	        <div ng-if="isViewActive('myaccount')" ng-compiled-include="partials/myaccount.html"></div>
-	        <div ng-if="isViewActive('scripteditor')" ng-compiled-include="scripteditor/partials/scriptEditor.html"></div>
+			<div ng-if="isViewActive('artefacts')" ng-include="'partials/artefactList.html'"></div>
+	        <div ng-if="isViewActive('grid')" ng-include="'partials/grid.html'"></div>
+	        <div ng-if="isViewActive('executions')" ng-include="'partials/execution.html'"></div>
+	        <div ng-if="isViewActive('scheduler')" ng-include="'partials/scheduler.html'"></div>
+	        <div ng-if="isViewActive('repository')" ng-include="'partials/repository.html'"></div>
+	        <div ng-if="isViewActive('functions')" ng-include="'partials/functionList.html'"></div>
+	        <div ng-if="isViewActive('artefacteditor')" ng-include="'partials/artefactEditor.html'"></div>
+	        <div ng-if="isViewActive('reportBrowser')" ng-include="'partials/reportBrowser.html'"></div>
+	        <div ng-if="isViewActive('admin')" ng-include="'partials/admin.html'"></div>
+	        <div ng-if="isViewActive('myaccount')" ng-include="'partials/myaccount.html'"></div>
+	        <div ng-if="isViewActive('scripteditor')" ng-include="'scripteditor/partials/scriptEditor.html'"></div>
 		</div>
 	</div>
-	<div ng-if="isInitialized && !authService.isAuthenticated()" ng-compiled-include="partials/loginForm.html">
+	<div ng-if="isInitialized && !authService.isAuthenticated()" ng-include="'partials/loginForm.html'">
 	</div>
 </div>
 

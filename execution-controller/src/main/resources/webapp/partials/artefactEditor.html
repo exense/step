@@ -37,22 +37,22 @@
 			<div class="panel panel-default">
 				<div class="panel-heading">Available components</div>
 				<div class="panel-body">
-						<tabset>
-							<tab heading="Controls" active="$parent.tabState['controls']">
+						<uib-tabset>
+							<uib-tab heading="Controls" active="$parent.tabState['controls']">
 								<div class="panel-body">
 									<div class="row">
 										<datatable tabledef="controlsTable" handle="controlsTable" columnsearch="true" order="[[1, &quot;asc&quot;]]"/>
 									</div>								
 								</div>	
-							</tab>
-							<tab heading="Keywords" active="$parent.tabState['functions']">
+							</uib-tab>
+							<uib-tab heading="Keywords" active="$parent.tabState['functions']">
 								<div class="row">
 									<div class="panel-body">	
 										<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
 									</div>		
 								</div>				
-							</tab>
-						</tabset>
+							</uib-tab>
+						</uib-tabset>
 					</div>
 				</div>
 			</div>
