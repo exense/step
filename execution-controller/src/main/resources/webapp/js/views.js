@@ -114,4 +114,24 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
   };
   
   return dataFactory;
-}]);
+}])
+
+.directive('throughputView', function($http,viewFactory) {
+  return {
+    restrict: 'E',
+    scope: {
+      eid: '=',
+      handle: '='
+    },
+    controller: function($scope) {
+      $scope.throughputchart = {};
+    },
+    link: function($scope, $element) { 
+      $scope.handle.refresh = function() {
+        viewFactory.getReportNodeStatisticCharts(eId).then(function(charts){
+          $scope.throughputchart = charts.throughputchart;
+        })
+      }
+    },
+    templateUrl: 'partials/execution/views/throughput.html'}
+})
