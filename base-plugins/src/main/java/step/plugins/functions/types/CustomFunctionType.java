@@ -6,7 +6,7 @@ import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
 
-@FunctionType(name="custom",label="Custom")
+@FunctionType(name="custom",label="Custom Handler")
 public class CustomFunctionType extends AbstractFunctionType<CustomFunctionTypeConf> {
 
 	@Override

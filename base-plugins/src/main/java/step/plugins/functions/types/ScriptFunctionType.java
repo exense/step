@@ -8,7 +8,7 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
 import step.functions.type.SetupFunctionException;
 
-@FunctionType(name="script",label="Custom Script")
+@FunctionType(name="script",label="Custom Script (JS, Groovy, etc)")
 public class ScriptFunctionType extends AbstractFunctionType<ScriptFunctionTypeConf> {
 	
 	ScriptFunctionTypeHelper helper;
