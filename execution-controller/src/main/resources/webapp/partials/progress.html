@@ -1,15 +1,14 @@
 <div class="toolbar">
 	<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox ><span class="glyphicon glyphicon-refresh"/></button>
 </div>
-<div class="row">
-	<div class="col-xs-12">
-		<ul class="nav nav-pills">
-			<li role="presentation" ng-repeat="panel in panels" ng-if="isPanelEnabled(panel.id)"><a ng-click="scrollTo(panel.id)">{{panel.label}}</a></li>
-		</ul>
-	</div>
-</div>
 
+<uib-tabset> 
+
+<uib-tab heading="Overview">
+
+<div class="panel-body">
 <div class="row">
+
 <div class="col-xs-9">
 
 <div ng-attr-id="{{getPanelId('testCases')}}" class="panel panel-default" ng-if="isPanelEnabled('testCases')">
@@ -43,31 +42,9 @@
 	</div>
 </div>
 
-<div ng-attr-id="{{getPanelId('performance')}}" class="panel panel-default">
-	<div class="panel-heading"><a ng-click="toggleShowPanel('performance')">{{getPanelTitle('performance')}}</a></div>
-  	<div class="panel-body" ng-show="isShowPanel('performance')">
-  		<div class="row">
-	  		<div class="col-xs-6">
-				<canvas id="performance-chart" class="chart chart-line" handle="performancechart"/>
-	  		</div>
-	  		<div class="col-xs-6">
-				<canvas id="errorate-chart" class="chart chart-line" handle="errorratechart" colours="['#F7464A']"/>
-	  		</div>  		
-  		</div>
-  		<div class="row">
-	  		<div class="col-xs-6">
-				<canvas id="responsetime-by-function-chart" class="chart chart-line" handle="responseTimeByFunctionChart"/>
-	  		</div>		
-  		</div>
-	</div>
-</div>
 
-<div ng-attr-id="{{getPanelId('reportTree')}}"  class="panel panel-default">
-	<div class="panel-heading"><a ng-click="toggleShowPanel('reportTree')">{{getPanelTitle('reportTree')}}</a></div>
-  	<div class="panel-body" ng-show="isShowPanel('reportTree')">
-  		<report-tree nodeid="eid" handle="reportTreeHandle" />
-	</div>
-</div>
+
+
 
 <div ng-attr-id="{{getPanelId('parameters')}}" class="panel panel-default">
 	<div class="panel-heading"><a ng-click="toggleShowPanel('parameters')">{{getPanelTitle('parameters')}}</a></div>
@@ -148,6 +125,42 @@
 </div>
 </div>
 </div>
-
-
 </div>
+</div>
+</uib-tab>
+
+<uib-tab heading="Report Tree">
+<div class="panel-body">
+<div ng-attr-id="{{getPanelId('reportTree')}}"  class="panel panel-default">
+	<div class="panel-heading"><a ng-click="toggleShowPanel('reportTree')">{{getPanelTitle('reportTree')}}</a></div>
+  	<div class="panel-body" ng-show="isShowPanel('reportTree')">
+  		<report-tree nodeid="eid" handle="reportTreeHandle" />
+	</div>
+</div>
+</div>
+</uib-tab>
+
+<uib-tab heading="Performance">
+<div class="panel-body">
+<div ng-attr-id="{{getPanelId('performance')}}" class="panel panel-default">
+	<div class="panel-heading"><a ng-click="toggleShowPanel('performance')">{{getPanelTitle('performance')}}</a></div>
+  	<div class="panel-body" ng-show="isShowPanel('performance')">
+  		<div class="row">
+	  		<div class="col-xs-6">
+				<canvas id="performance-chart" class="chart chart-line" handle="performancechart"/>
+	  		</div>
+	  		<div class="col-xs-6">
+				<canvas id="errorate-chart" class="chart chart-line" handle="errorratechart" colours="['#F7464A']"/>
+	  		</div>  		
+  		</div>
+  		<div class="row">
+	  		<div class="col-xs-6">
+				<canvas id="responsetime-by-function-chart" class="chart chart-line" handle="responseTimeByFunctionChart"/>
+	  		</div>		
+  		</div>
+	</div>
+</div>
+</div>
+</uib-tab>
+
+</uib-tabset>

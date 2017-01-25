@@ -173,7 +173,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           "steps":{label:"Keyword calls",show:true, enabled:true},
           "throughput":{label:"Keyword throughput",show:true, enabled:true},
           "performance":{label:"Performance",show:true, enabled:true},
-          "reportTree":{label:"Report tree",show:false, enabled:true},
+          "reportTree":{label:"Report tree",show:true, enabled:true},
           "executionDetails":{label:"Execution details",show:true, enabled:true},
           "parameters":{label:"Execution parameters",show:false, enabled:true},
           "currentOperations":{label:"Current operations",show:true, enabled:true}
