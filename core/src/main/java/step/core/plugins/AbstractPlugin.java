@@ -18,6 +18,9 @@
  *******************************************************************************/
 package step.core.plugins;
 
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.ResourceHandler;
+
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
@@ -55,6 +58,17 @@ public abstract class AbstractPlugin implements PluginCallbacks {
 	
 	public WebPlugin getWebPlugin() {
 		return null;
+	}
+	
+	protected void registerWebapp(GlobalContext context, String path) {
+		ResourceHandler bb = new ResourceHandler();
+		
+		bb.setResourceBase(this.getClass().getResource("webapp").getPath());
+		
+		ContextHandler ctx = new ContextHandler(path);
+		ctx.setHandler(bb);
+		
+		context.getServiceRegistrationCallback().registerHandler(ctx);
 	}
 
 }
