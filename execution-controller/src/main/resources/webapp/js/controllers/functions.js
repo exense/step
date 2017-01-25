@@ -223,6 +223,7 @@ angular.module('functionsControllers',['dataTable','step'])
   
   $scope.save = function (editAfterSave) {
     $http.post("rest/functions",$scope.function_).then(function(response) {
+      var function_ = response.data;
       $uibModalInstance.close(response.data);
   	
     	if(editAfterSave) {
