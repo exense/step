@@ -8,8 +8,7 @@ var driver = new FirefoxDriver()
 session.put("driver",new DriverWrapper(driver))
 
 // Use the following if you're reusing a driver
-
 // driver = session.get("driver").getWebDriver()
 
 // Example:
-// driver.navigate(driver.get(input.getString("url")))
+// driver.navigate().to(input.getString("url"))
