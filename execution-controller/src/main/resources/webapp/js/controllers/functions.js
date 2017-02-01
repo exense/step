@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('functionsControllers',['dataTable','step'])
+angular.module('functionsControllers',['dataTable','step','schemaForm'])
 
 .run(function($http, $rootScope) {
   function loadTypes() {
@@ -192,7 +192,7 @@ angular.module('functionsControllers',['dataTable','step'])
     } ])
     
 .controller('newFunctionModalCtrl', function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dialogs) {
-
+  
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
   
@@ -203,7 +203,7 @@ angular.module('functionsControllers',['dataTable','step'])
   $scope.functionTypes = $rootScope.functionTypes;
   
   if(newFunction) {
-  	$scope.function_= {"attributes":{},"type":"script"};
+  	$scope.function_= {"attributes":{},"type":"script","configuration":{}};
   	$http.get("rest/screens/functionTable").then(function(response){
   	  _.each(response.data,function(input) {
   	    eval('$scope.function_.'+input.id+"=''");
@@ -211,13 +211,25 @@ angular.module('functionsControllers',['dataTable','step'])
   	});	
   } else {
     $scope.function_=function_;
-  } 
+    updateConfigurationForm(function_.type)
+  }
+
+  function getFunctionType(typeName) {
+    return _.findWhere($scope.functionTypes, {"name":typeName}) 
+  }
+  
+  function updateConfigurationForm(functionType) {
+    var type = getFunctionType(functionType);
+    $scope.schema = type.configurationSchema;
+    $scope.form = type.configurationForm;
+  }
   
   $scope.$watch('function_.type',function(functionType,oldFunctionType){
-    if(($scope.function_&&!$scope.function_.configuration)||functionType!=oldFunctionType) {
+    if(($scope.function_&&_.isEmpty($scope.function_.configuration))||functionType!=oldFunctionType) {
+      updateConfigurationForm(functionType);
       $http.get("rest/functions/types/"+functionType).then(function(response){
         $scope.function_.configuration = response.data;
-      }) 
+      })
     }
   });
   

@@ -8,7 +8,7 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
 
 @FunctionType(name="grinder",label="Grinder")
-public class GrinderFunctionType extends AbstractFunctionType<GrinderFunctionTypeConf> {
+public class GrinderFunctionType extends AbstractFunctionType {
 
 	ScriptFunctionTypeHelper helper;
 	
@@ -29,13 +29,4 @@ public class GrinderFunctionType extends AbstractFunctionType<GrinderFunctionTyp
 	public Map<String, String> getHandlerProperties(Function function) {
 		return helper.getHandlerProperties(function);
 	}
-
-	@Override
-	public GrinderFunctionTypeConf newFunctionTypeConf() {
-		GrinderFunctionTypeConf conf = new GrinderFunctionTypeConf();		
-		conf.setCallTimeout(180000);
-		conf.setScriptLanguage("python");
-		return conf;
-	}
-
 }

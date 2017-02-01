@@ -22,7 +22,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.json.Json;
+
 import org.jongo.MongoCollection;
+import org.json.JSONObject;
 
 import step.artefacts.CallFunction;
 import step.artefacts.Check;
@@ -37,7 +40,6 @@ import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
 import step.plugins.adaptergrid.FunctionRepositoryImpl;
-import step.plugins.functions.types.CustomFunctionTypeConf;
 
 @Plugin
 public class InitializationPlugin extends AbstractPlugin {
@@ -215,7 +217,9 @@ public class InitializationPlugin extends AbstractPlugin {
 		demoFunction.setAttributes(kwAttributes);
 		// TODO replace by specific types
 		demoFunction.setType("custom");
-		demoFunction.setConfiguration(new CustomFunctionTypeConf(handlerChain));
+		JSONObject conf = new JSONObject();
+		conf.put("handlerChain", handlerChain);
+		demoFunction.setConfiguration(conf);
 
 		return demoFunction;
 	}

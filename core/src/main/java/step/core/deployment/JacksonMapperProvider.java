@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 
 public class JacksonMapperProvider implements ContextResolver<ObjectMapper> {
@@ -60,6 +61,7 @@ public class JacksonMapperProvider implements ContextResolver<ObjectMapper> {
                         .addSerializer(_id, _idSerializer()) //
                         .addDeserializer(_id, _idDeserializer()));
         mapper.registerModule(new JSR353Module());
+        mapper.registerModule(new JsonOrgModule());
         
         return mapper;
     }

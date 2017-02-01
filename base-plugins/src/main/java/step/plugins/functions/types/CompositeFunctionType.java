@@ -3,6 +3,8 @@ package step.plugins.functions.types;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.json.JSONObject;
+
 import step.artefacts.Sequence;
 import step.core.artefacts.AbstractArtefact;
 import step.functions.Function;
@@ -13,7 +15,7 @@ import step.functions.type.FunctionType;
 import step.functions.type.SetupFunctionException;
 
 @FunctionType(name="composite",label="Composite")
-public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctionTypeConf> {
+public class CompositeFunctionType extends AbstractFunctionType {
 
 
 	@Override
@@ -23,7 +25,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 		context.get(FunctionEditorRegistry.class).register("composite", new FunctionEditor() {
 			@Override
 			public String getEditorPath(Function function) {
-				return "/root/artefacteditor/"+((CompositeFunctionTypeConf)function.getConfiguration()).getArtefactId();
+				return "/root/artefacteditor/"+function.getConfiguration().getString("artefactId");
 			}
 		});
 	}
@@ -36,15 +38,8 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	@Override
 	public Map<String, String> getHandlerProperties(Function function) {
 		Map<String, String> props = new HashMap<>();
-		props.put("artefactid", getFunctionConf(function).artefactId);
+		props.put("artefactid", function.getConfiguration().getString("artefactId"));
 		return props;
-	}
-
-	@Override
-	public CompositeFunctionTypeConf newFunctionTypeConf() {
-		CompositeFunctionTypeConf conf = new CompositeFunctionTypeConf();
-		conf.setCallTimeout(180000);
-		return conf;
 	}
 
 	@Override
@@ -53,18 +48,25 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
   		Sequence sequence = new Sequence();
   		context.getArtefactAccessor().save(sequence);
   		
-  		((CompositeFunctionTypeConf)function.getConfiguration()).setArtefactId(sequence.getId().toString());
+  		JSONObject conf = buildConfiguration(sequence.getId().toString());
+  		function.setConfiguration(conf);
   		
+	}
+
+	private JSONObject buildConfiguration(String artefactId) {
+		JSONObject conf = new JSONObject();
+  		conf.put("artefactId", artefactId);
+		return conf;
 	}
 
 	@Override
 	public Function copyFunction(Function function) {
 		Function copy = super.copyFunction(function);
-		CompositeFunctionTypeConf conf = ((CompositeFunctionTypeConf)function.getConfiguration());
-		
-		String artefactId = conf.getArtefactId();
+
+		String artefactId = function.getConfiguration().getString("artefactId");
 		AbstractArtefact artefactCopy = context.getArtefactManager().copyArtefact(artefactId);
-		conf.setArtefactId(artefactCopy.getId().toString());
+		
+		copy.setConfiguration(buildConfiguration(artefactCopy.getId().toString()));
 		return copy;
 	}
 }

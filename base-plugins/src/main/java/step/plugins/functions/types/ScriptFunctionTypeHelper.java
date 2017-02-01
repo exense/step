@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.json.JSONObject;
+
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
 import step.functions.Function;
@@ -55,8 +57,12 @@ public class ScriptFunctionTypeHelper {
 	}
 
 	public File getScriptFile(Function function) {
+		String scriptFilePath = function.getConfiguration().getString("scriptFile");
+		return new File(scriptFilePath);
+	}
+	
+	protected File getDefaultScriptFile(Function function) {
 		String filename = getScriptFilename(function);
-		
 		String scriptDir = Configuration.getInstance().getProperty("keywords.script.scriptdir");
 		File file = new File(scriptDir+"/"+filename);
 		return file;
@@ -77,11 +83,20 @@ public class ScriptFunctionTypeHelper {
 	}
 
 	public String getScriptLanguage(Function function) {
-		return ((ScriptFunctionTypeConf)function.getConfiguration()).getScriptLanguage();
+		return function.getConfiguration().getString("scriptLanguage");
 	}
 	
 	public File setupScriptFile(Function function) throws SetupFunctionException {
-		File scriptFile = getScriptFile(function);
+		File scriptFile;
+		
+		JSONObject conf = function.getConfiguration();
+		if(conf.isNull("scriptFile") || conf.getString("scriptFile").trim().length()==0) {
+			scriptFile = getDefaultScriptFile(function);
+			conf.put("scriptFile", scriptFile.getAbsolutePath());
+		} else {
+			scriptFile = new File(conf.getString("scriptFile"));
+		}
+
 		if(!scriptFile.exists()) {
 			File folder = scriptFile.getParentFile();
 			if (!folder.exists()) {

@@ -14,26 +14,22 @@
 		
         <div class="modal-body">
 			<strong>{{description}}</strong>
-<form ng-submit="save(true)">
-	<div ng-repeat="key in getFunctionAttributes()" class="form-group">
-		<label>{{key}}</label>
-		<input ng-model="function_.attributes[key]" class="form-control form-control-sm" autofocus></input>
-	</div>
-	<div class="form-group">
-		<label>Type</label>
-		<select ng-model="function_.type" ng-options="option.name as option.label for option in functionTypes" class="form-control" />
-	</div>
-	<div class="panel panel-default" style="margin-top:20px">
-
-	<div class="panel-body" >
-		<div ng-repeat="(key,value) in function_.configuration" ng-if="['_class','id','artefactId'].indexOf(key)==-1" class="form-group">
-			<label>{{key}}</label>
-			<input ng-model="function_.configuration[key]" class="form-control" />
-		</div>	
-	</div>
-	</div>
-	<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
-</form>
+			<form ng-submit="save(true)">
+				<div ng-repeat="key in getFunctionAttributes()" class="form-group">
+					<label>{{key}}</label>
+					<input ng-model="function_.attributes[key]" class="form-control form-control-sm" autofocus></input>
+				</div>
+				<div class="form-group">
+					<label>Type</label>
+					<select ng-model="function_.type" ng-options="option.name as option.label for option in functionTypes" class="form-control" />
+				</div>
+				<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
+			</form>
+			<div class="panel panel-default" style="margin-top:20px">
+				<div class="panel-body">
+					<form sf-schema="schema" sf-form="form" sf-model="function_.configuration"></form>
+				</div>
+			</div>
         </div>
         <div class="modal-footer">
 			<button class="btn btn-primary" type="button" ng-click="save(true)">Save and edit</button>

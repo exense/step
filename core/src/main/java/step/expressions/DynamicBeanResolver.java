@@ -22,6 +22,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 
+import org.json.JSONObject;
+
 import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.execution.ExecutionContext;
 
@@ -40,6 +42,19 @@ public class DynamicBeanResolver {
 		ExpressionHandler expressionHandler = new ExpressionHandler();
 		resolveDynamicAttributes(result, expressionHandler, bindings);
 		return result;
+	}
+	
+	public static JSONObject resolveDynamicAttributes(JSONObject bean, Map<String, Object> bindings) {
+		ExpressionHandler expressionHandler = new ExpressionHandler();
+		bean.keys().forEachRemaining(k->{
+			Object v = bean.get(k);
+			if(v instanceof String) {
+				String newString = expressionHandler.evaluate((String)v, bindings);
+				bean.put(k, newString);
+			}
+		});
+		
+		return bean;
 	}
 	
 	private static void resolveDynamicAttributes(Object o, ExpressionHandler expressionHandler, Map<String, Object> bindings) {

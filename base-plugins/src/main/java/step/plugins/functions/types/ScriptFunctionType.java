@@ -3,13 +3,15 @@ package step.plugins.functions.types;
 import java.io.File;
 import java.util.Map;
 
+import org.json.JSONObject;
+
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
 import step.functions.type.SetupFunctionException;
 
 @FunctionType(name="script",label="Custom Script (JS, Groovy, etc)")
-public class ScriptFunctionType extends AbstractFunctionType<ScriptFunctionTypeConf> {
+public class ScriptFunctionType extends AbstractFunctionType {
 	
 	ScriptFunctionTypeHelper helper;
 	
@@ -30,14 +32,6 @@ public class ScriptFunctionType extends AbstractFunctionType<ScriptFunctionTypeC
 	}
 
 	@Override
-	public ScriptFunctionTypeConf newFunctionTypeConf() {
-		ScriptFunctionTypeConf conf = new ScriptFunctionTypeConf();
-		conf.setCallTimeout(180000);
-		conf.setScriptLanguage("javascript");
-		return conf;
-	}
-
-	@Override
 	public void setupFunction(Function function) throws SetupFunctionException {
 		File scriptFile = helper.setupScriptFile(function);
 		String language = helper.getScriptLanguage(function);
@@ -46,5 +40,12 @@ public class ScriptFunctionType extends AbstractFunctionType<ScriptFunctionTypeC
 		} else if(language.equals("groovy")) {
 			helper.createScriptFromTemplate(scriptFile, "custom_script.groovy");
 		}
+	}
+
+	@Override
+	public JSONObject newFunctionTypeConf() {
+		JSONObject conf = super.newFunctionTypeConf();
+		conf.put("scriptLanguage", "javascript");
+		return conf;
 	}
 }

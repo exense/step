@@ -20,9 +20,10 @@ package step.functions;
 
 import java.util.Map;
 
-import org.bson.types.ObjectId;
+import javax.json.JsonObject;
 
-import step.functions.type.FunctionTypeConf;
+import org.bson.types.ObjectId;
+import org.json.JSONObject;
 
 public class Function {
 	
@@ -32,7 +33,7 @@ public class Function {
 	
 	String type;
 	
-	FunctionTypeConf configuration;
+	JSONObject configuration;
 
 	public ObjectId getId() {
 		return _id;
@@ -58,11 +59,11 @@ public class Function {
 		this.type = type;
 	}
 
-	public FunctionTypeConf getConfiguration() {
+	public JSONObject getConfiguration() {
 		return configuration;
 	}
 
-	public void setConfiguration(FunctionTypeConf configuration) {
+	public void setConfiguration(JSONObject configuration) {
 		this.configuration = configuration;
 	}
 

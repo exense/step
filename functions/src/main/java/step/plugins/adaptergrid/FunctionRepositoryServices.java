@@ -34,6 +34,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.json.JSONObject;
+
 import step.attachments.AttachmentMeta;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
@@ -53,7 +55,6 @@ import step.functions.Input;
 import step.functions.Output;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
-import step.functions.type.FunctionTypeConf;
 import step.functions.type.SetupFunctionException;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
@@ -256,7 +257,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="kw-read")
-	public FunctionTypeConf newFunctionTypeConf(@PathParam("id") String type) {
+	public JSONObject newFunctionTypeConf(@PathParam("id") String type) {
 		return getFunctionClient().newFunctionTypeConf(type);
 	}
 }

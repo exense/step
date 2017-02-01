@@ -3,13 +3,15 @@ package step.plugins.functions.types;
 import java.io.File;
 import java.util.Map;
 
+import org.json.JSONObject;
+
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
 import step.functions.type.SetupFunctionException;
 
 @FunctionType(name="selenium",label="Selenium")
-public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunctionTypeConf> {
+public class SeleniumFunctionType extends AbstractFunctionType {
 
 	ScriptFunctionTypeHelper helper;
 	
@@ -30,17 +32,16 @@ public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunctionT
 	}
 
 	@Override
-	public SeleniumFunctionTypeConf newFunctionTypeConf() {
-		SeleniumFunctionTypeConf conf = new SeleniumFunctionTypeConf();		
-		conf.setCallTimeout(180000);
-		conf.setScriptLanguage("javascript");
-		return conf;
-	}
-
-	@Override
 	public void setupFunction(Function function) throws SetupFunctionException {
 		File scriptFile = helper.setupScriptFile(function);
 		helper.createScriptFromTemplate(scriptFile, "kw_selenium.js");
+	}
+	
+	@Override
+	public JSONObject newFunctionTypeConf() {
+		JSONObject conf = super.newFunctionTypeConf();
+		conf.put("scriptLanguage", "javascript");
+		return conf;
 	}
 
 }
