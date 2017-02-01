@@ -64,7 +64,7 @@ public class ExpressionHandler {
 			String expression = m.group(1);
 			Object result = evaluateGroovyExpression(expression, bindings);
 			if(result!=null) {
-				m.appendReplacement(sb, result.toString());				
+				m.appendReplacement(sb,  Matcher.quoteReplacement(result.toString()));				
 			} else {
 				m.appendReplacement(sb, "");
 			}
