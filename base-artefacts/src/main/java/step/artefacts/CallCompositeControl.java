@@ -19,16 +19,18 @@
 package step.artefacts;
 
 import step.artefacts.handlers.CallCompositeHandler;
-import step.artefacts.handlers.CaseHandler;
 import step.commons.dynamicbeans.DynamicAttribute;
-import step.core.artefacts.Artefact;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
 
 @Artefact(handler = CallCompositeHandler.class)
 public class CallCompositeControl extends AbstractArtefact {
 	
 	@DynamicAttribute
 	private String artefactId;
+	
+	@DynamicAttribute
+	private String inputJson;
 
 	public String getArtefactId() {
 		return artefactId;
@@ -36,5 +38,13 @@ public class CallCompositeControl extends AbstractArtefact {
 
 	public void setArtefactId(String artefactId) {
 		this.artefactId = artefactId;
+	}
+
+	public String getInputJson() {
+		return inputJson;
+	}
+
+	public void setInputJson(String inputJson) {
+		this.inputJson = inputJson;
 	}
 }

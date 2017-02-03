@@ -18,6 +18,11 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.io.StringReader;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+
 import step.artefacts.CallCompositeControl;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -27,17 +32,28 @@ public class CallCompositeHandler extends ArtefactHandler<CallCompositeControl, 
 
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode,	CallCompositeControl testArtefact) {
-		context.getVariablesManager().putVariable(parentNode, "#placeholder", testArtefact);
-
+		beforeDelegation(parentNode, testArtefact);
 		
 		AbstractArtefact a = context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
 		delegateCreateReportSkeleton(a, parentNode);
 	}
 
+	private void beforeDelegation(ReportNode parentNode, CallCompositeControl testArtefact) {
+		context.getVariablesManager().putVariable(parentNode, "#placeholder", testArtefact);
+
+		JsonObject compositeInput;
+		if(testArtefact.getInputJson()!=null) {
+			compositeInput = Json.createReader(new StringReader(testArtefact.getInputJson())).readObject();			
+		} else {
+			compositeInput = Json.createObjectBuilder().build();
+		}
+		context.getVariablesManager().putVariable(parentNode, "compositeInput", compositeInput);
+	}
+
 	@Override
 	protected void execute_(ReportNode node, CallCompositeControl testArtefact) {
-		context.getVariablesManager().putVariable(node, "#placeholder", testArtefact);
-		
+		beforeDelegation(node, testArtefact);
+
 		AbstractArtefact a = context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
 		delegateExecute(a, node);
 	}
