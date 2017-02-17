@@ -1,0 +1,39 @@
+<uib-tabset> 
+	<uib-tab heading="Table">
+		<div class="panel-body">
+			<div class="form-group form-group-sm">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Key</th>
+							<th>Value</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="entry in argumentAsTable">
+							<td><input ng-blur="save()" ng-change="updateJsonFromTable()" type="text" class="form-control form-control-sm"
+								ng-model="entry.key" /></td>
+							<td><input ng-blur="save()" ng-change="updateJsonFromTable()" type="text" class="form-control form-control-sm"
+								ng-model="entry.value" /></td>
+							<td><button class="btn btn-danger btn-xs" ng-click="removeRowFromTable(entry.key)" type="button"><i class="glyphicon glyphicon-remove"></i></button></td>	
+						</tr>
+						<tr>
+							<td><input type="text" class="form-control form-control-sm" ng-model="lastRow.key" /></td>
+							<td><input ng-blur="commitLastRow()" type="text" class="form-control form-control-sm" ng-model="lastRow.value" /></td>
+							<td></td>	
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<button ng-click="addRowToTable()" type="button" class="btn btn-sm btn-success pull-right">
+				<i class="glyphicon glyphicon-plus"></i> New
+			</button>
+		</div>
+	</uib-tab>
+	<uib-tab heading="Raw (JSON)">
+		<div class="panel-body">
+			<textarea ng-blur="onJsonFieldBlur()" ng-model="localModel.json" class="form-control form-control-sm" rows="5"></textarea>
+		</div>
+	</uib-tab>
+</uib-tabset>

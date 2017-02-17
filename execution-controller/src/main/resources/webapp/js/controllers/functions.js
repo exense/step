@@ -32,34 +32,60 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
   })
 })
 
-.controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', '$location','AuthService',
-    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, $location, AuthService) {
+.factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {
+  
+  function openModal(function_) {
+    var modalInstance = $uibModal.open({
+        templateUrl: 'partials/functions/functionConfigurationDialog.html',
+        controller: 'newFunctionModalCtrl',
+        resolve: {function_: function () {return function_;}}
+      });
+
+      modalInstance.result.then(function () {
+          if($scope.table) {
+            $scope.table.Datatable.ajax.reload(null, false);
+          }
+      }, function () {});
+  }
+  
+  var dialogs = {};
+  
+  dialogs.editFunction = function(id) {
+    $http.get("rest/functions/"+id).then(function(response) {
+      openModal(response.data);
+    });
+  }
+  
+  dialogs.addFunction = function() {
+    openModal();
+  }
+  
+  dialogs.openFunctionEditor = function(functionid) {
+    $http.get("rest/functions/"+functionid+"/editor").then(function(response){
+      var path = response.data
+      if(path) {
+        $location.path(path);              
+      } else {
+        Dialogs.showErrorMsg("No editor configured for this function type");
+      }
+    })
+  }
+  
+  return dialogs;
+})
+
+.controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', 'FunctionDialogs', '$location','AuthService',
+    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, FunctionDialogs, $location, AuthService) {
       $stateStorage.push($scope, 'functions', {});	
 
       $scope.authService = AuthService;
-
-      function openModal(function_) {
-    	  var modalInstance = $uibModal.open({
-            templateUrl: 'newFunctionModalContent.html',
-            controller: 'newFunctionModalCtrl',
-            resolve: {function_: function () {return function_;}}
-          });
-  
-          modalInstance.result.then(function () {
-            	if($scope.table) {
-            	  $scope.table.Datatable.ajax.reload(null, false);
-            	}
-          }, function () {});
-      }
       
       function reload() {
         $scope.table.Datatable.ajax.reload(null, false);
       }
 
       $scope.editFunction = function(id) {
-      	$http.get("rest/functions/"+id).then(function(response) {
-      	  openModal(response.data);
-      	});
+        FunctionDialogs.editFunction(id);
       }
       
       $scope.copyFunction = function(id) {
@@ -77,19 +103,12 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
       
       $scope.openFunctionEditor = function(functionid) {
         $scope.$apply(function() {
-          $http.get("rest/functions/"+functionid+"/editor").then(function(response){
-            var path = response.data
-            if(path) {
-              $location.path(path);              
-            } else {
-              Dialogs.showErrorMsg("No editor configured for this function type");
-            }
-          })
+          FunctionDialogs.openFunctionEditor(functionid);
         })
       }
       
       $scope.addFunction = function() {
-        openModal();
+        FunctionDialogs.addFunction();
       }
       
       $scope.executeFunction = function(id) {
@@ -282,6 +301,10 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
       $scope.argument = '';
       $scope.running = false;
       
+      $scope.setArgument = function(json) {
+        $scope.argument = json;
+      }
+      
       $scope.properties = [];
       
       $scope.addProperty = function() {
@@ -314,4 +337,40 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
         $scope.handle.execute = $scope.execute;
       }
     }
-   }});
+   }})
+   
+ .controller('selectFunctionModalCtrl', function ($scope, $uibModalInstance) {
+  
+  $scope.selectFunction = function(id) {
+    $uibModalInstance.close(id);
+  }
+  
+  $scope.table = {};
+
+  $scope.tabledef = {}      
+  
+  $scope.tabledef.columns = function(columns) {
+    _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
+      col.visible = false
+    });
+    _.each(_.where(columns,{'title':'Actions'}),function(col){
+        col.title="Actions";
+        col.searchmode="none";
+        col.width="160px";
+        col.render = function ( data, type, row ) {
+          var html = '<div class="input-group">' +
+            '<div class="btn-group">' +
+            '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().selectFunction(\''+row[0]+'\')">' +
+            '<span class="glyphicon glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>';
+          html+='</div></div>';
+          return html;
+        }
+       });
+    return columns;
+  };
+
+
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+})

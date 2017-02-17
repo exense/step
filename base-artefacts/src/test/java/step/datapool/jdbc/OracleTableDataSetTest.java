@@ -18,7 +18,8 @@
  *******************************************************************************/
 package step.datapool.jdbc;
 
-import step.artefacts.ForEachBlock;
+import org.json.JSONObject;
+
 import step.datapool.jdbc.SQLTableDataPool.SQLRowWrapper;
 
 public class OracleTableDataSetTest {
@@ -28,10 +29,10 @@ public class OracleTableDataSetTest {
 		String folder =  "jdbc:oracle:thin:@localhost:1521:xe,nairod,nairod,oracle.jdbc.driver.OracleDriver";
 		String query = "select rowid, fruit_name, fruit_id from MYFRUITS";  
 
-		ForEachBlock foreach = new ForEachBlock();
-		foreach.setFolder(folder);
-		foreach.setTable(query);
-		SQLTableDataPool ds = new SQLTableDataPool(foreach);
+		JSONObject b = new JSONObject().put("connectionString", folder)
+				.put("query",query);
+	
+		SQLTableDataPool ds = new SQLTableDataPool(b);
 		
 		new OracleTableDataSetTest().test1(ds);
 		//new OracleTableDataSetTest().test2(ds);

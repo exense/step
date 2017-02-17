@@ -12,22 +12,15 @@
 				<div class="panel-body">
 					<div ng-if="artefact.root" class="panel panel-default">
 						<div class="panel-body">
-							<form ng-submit="save(true)">
-								<div class="form-group" ng-repeat="(key, value) in artefact.attributes">
-									<label for="{{key}}">{{key}}</label> <input
-										class="form-control" id="{{key}}"
-										ng-model="artefact.attributes[key]" placeholder="{{input.label}}"
-										autofocus>
-								</div>
-								<div>
-					     			<button ng-if="authService.hasRight('plan-write')" type="submit" class="btn btn-default" ng-click="saveAttributes()">Save</button>
-					    		</div>
-								<input type="submit"
-									style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
-							</form>
+							<div class="form-group" ng-repeat="(key, value) in artefact.attributes">
+								<label for="{{key}}">{{key}}</label> <input
+									ng-blur="saveAttributes()"
+									class="form-control" id="{{key}}"
+									ng-model="artefact.attributes[key]" ng-disabled="!authService.hasRight('plan-write')" placeholder="{{input.label}}"
+									autofocus>
+							</div>
 						</div>
 					</div>
-					
 
 					<artefact handle="handle" artefactid="artefactId" />
 				</div>

@@ -22,6 +22,7 @@ import static junit.framework.Assert.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.json.JSONObject;
 import org.junit.Test;
 
 import step.artefacts.CheckArtefact;
@@ -41,9 +42,9 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 				ExecutionContext.getCurrentContext().getReport(), "var", "val1");
 			
 		ForBlock f = add(new ForBlock());
-		f.setStart("1");
-		f.setEnd("3");
-		f.setInc("2");
+		JSONObject conf = new JSONObject().put("start", 1).put("end", 3).put("inc", 2);
+		
+		f.setDataSource(conf);
 		f.setItem("item");
 		
 		AtomicInteger i = new AtomicInteger(1);
@@ -81,7 +82,9 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 			
 		ForBlock f = add(new ForBlock());
-		f.setEnd("10");
+		JSONObject conf = new JSONObject().put("end", 10);
+		
+		f.setDataSource(conf);
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
@@ -108,7 +111,9 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 			
 		ForBlock f = add(new ForBlock());
-		f.setEnd("10");
+		JSONObject conf = new JSONObject().put("end", 10);
+		
+		f.setDataSource(conf);
 		f.setMaxFailedLoops("2");
 		
 		AtomicInteger i = new AtomicInteger(1);

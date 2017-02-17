@@ -22,8 +22,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.Json;
-
 import org.jongo.MongoCollection;
 import org.json.JSONObject;
 
@@ -118,7 +116,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		CallFunction call1 = createCallFunctionWithCheck(artefacts,"Javascript_HttpGet","{\"url\":\"[[dataPool.url]]\"}","output.getString(\"data\").contains(\"[[dataPool.check]]\")");
 		
 		ForEachBlock forEach = new ForEachBlock();
-		forEach.setTable("../data/testdata/demo.csv");
+		forEach.setDataSource(new JSONObject().put("file", "../data/testdata/demo.csv"));
 		forEach.addChild(call1.getId());
 		artefacts.save(forEach);
 

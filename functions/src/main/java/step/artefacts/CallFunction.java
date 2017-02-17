@@ -31,6 +31,9 @@ public class CallFunction extends AbstractArtefact {
 	String function;
 	
 	@DynamicAttribute
+	String functionId;
+	
+	@DynamicAttribute
 	String argument;
 	
 	@DynamicAttribute
@@ -45,6 +48,14 @@ public class CallFunction extends AbstractArtefact {
 
 	public void setFunction(String function) {
 		this.function = function;
+	}
+
+	public String getFunctionId() {
+		return functionId;
+	}
+
+	public void setFunctionId(String functionId) {
+		this.functionId = functionId;
 	}
 
 	public String getArgument() {

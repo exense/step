@@ -28,10 +28,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.json.JsonObject;
 
+import org.json.JSONObject;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.artefacts.ForEachBlock;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolRow;
 import step.datapool.Utils;
@@ -39,12 +39,10 @@ import step.datapool.Utils;
 public class ExcelDataPoolTest {
 
 	@Test
-	public void testDefaultSheet() {
-		ForEachBlock artefact = new ForEachBlock();
+	public void testDefaultSheet() {		
+		JSONObject conf = getDataSourceConf(false, "ExcelDataPool.xlsx", null);
 		
-		artefact.setHeader(Boolean.FALSE.toString());
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPool.xlsx").getAbsolutePath());
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
 		
 		pool.reset();
 		Assert.assertEquals("DefaultValue", ((SimpleStringMap)pool.next().getValue()).get("A"));
@@ -58,13 +56,10 @@ public class ExcelDataPoolTest {
 		ExecutorService service = Executors.newFixedThreadPool(nThreads);
 		
 		ConcurrentHashMap<String, String> map = new ConcurrentHashMap<String, String>();
+				
+		JSONObject conf = getDataSourceConf(true, "ExcelDataPool.xlsx", "Parallel");
 		
-		ForEachBlock artefact = new ForEachBlock();
-		
-		artefact.setHeader(Boolean.TRUE.toString());
-		
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPool.xlsx").getAbsolutePath()+"::Parallel");
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
 		
 		pool.reset();
 
@@ -109,7 +104,7 @@ public class ExcelDataPoolTest {
 		
 		Assert.assertEquals(0, exceptions.size());
 
-		ExcelDataPoolImpl pool2 = new ExcelDataPoolImpl(artefact);
+		ExcelDataPoolImpl pool2 = new ExcelDataPoolImpl(conf);
 		
 		pool2.reset();
 		
@@ -120,14 +115,20 @@ public class ExcelDataPoolTest {
 		
 		pool2.close();
 	}
+
+	private JSONObject getDataSourceConf(boolean headers, String file, String worksheet) {
+		JSONObject conf = new JSONObject();
+		conf.put("headers", headers)
+				.put("file",ExcelFunctionsTest.getResourceFile(file).getAbsolutePath());
+		if(worksheet!=null) {
+			conf.put("worksheet", worksheet);
+		}
+		return conf;
+	}
 	
 	@Test
-	public void testWithoutHeaders() {
-		ForEachBlock artefact = new ForEachBlock();
-		
-		artefact.setHeader(Boolean.FALSE.toString());
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPool.xlsx").getAbsolutePath()+"::WithoutHeaders");
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
+	public void testWithoutHeaders() {		
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(false, "ExcelDataPool.xlsx", "WithoutHeaders"));
 		
 		pool.reset();
 		
@@ -141,12 +142,8 @@ public class ExcelDataPoolTest {
 	}
 	
 	@Test
-	public void testCrossSheet() {
-		ForEachBlock artefact = new ForEachBlock();
-		
-		artefact.setHeader(Boolean.FALSE.toString());
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPool.xlsx").getAbsolutePath()+"::WithoutHeaders");
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
+	public void testCrossSheet() {	
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(false, "ExcelDataPool.xlsx", "WithoutHeaders"));
 		
 		pool.reset();
 		
@@ -161,12 +158,8 @@ public class ExcelDataPoolTest {
 	
 	
 	@Test
-	public void testWithHeaders() {
-		ForEachBlock artefact = new ForEachBlock();
-		
-		artefact.setHeader(Boolean.TRUE.toString());
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPool.xlsx").getAbsolutePath()+"::WithHeaders");
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
+	public void testWithHeaders() {		
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "WithHeaders"));
 		
 		pool.reset();
 		
@@ -188,12 +181,8 @@ public class ExcelDataPoolTest {
 	
 	@Test
 	public void testWrite() {
-		ForEachBlock artefact = new ForEachBlock();
-		
-		artefact.setHeader(Boolean.TRUE.toString());
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPool.xlsx").getAbsolutePath()+"::Write");
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
-		
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "Write"));
+
 		pool.reset();
 		
 		String value = UUID.randomUUID().toString();
@@ -208,7 +197,7 @@ public class ExcelDataPoolTest {
 		
 		pool.close();
 
-		pool = new ExcelDataPoolImpl(artefact);
+		pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "Write"));
 		
 		pool.reset();
 		
@@ -225,12 +214,8 @@ public class ExcelDataPoolTest {
 	
 	@Test
 	public void testValueChanged() {
-		ForEachBlock artefact = new ForEachBlock();
-		
-		artefact.setHeader(Boolean.TRUE.toString());
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPoolValueChanged.xlsx").getAbsolutePath()+"::DefaultSheet");
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
-		
+		ExcelDataPoolImpl pool  = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPoolValueChanged.xlsx", "DefaultSheet"));
+
 		pool.reset();
 				
 		DataPoolRow r;
@@ -246,11 +231,7 @@ public class ExcelDataPoolTest {
 	
 	@Test
 	public void testNoSave() {
-		ForEachBlock artefact = new ForEachBlock();
-		
-		artefact.setHeader(Boolean.TRUE.toString());
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPoolImmutable.xlsx").getAbsolutePath()+"::Write");
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPoolImmutable.xlsx", "Write"));
 		
 		pool.reset();
 		
@@ -264,7 +245,7 @@ public class ExcelDataPoolTest {
 				
 		pool.close();
 		
-		pool = new ExcelDataPoolImpl(artefact);
+		pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPoolImmutable.xlsx", "Write"));
 		
 		pool.reset();
 				
@@ -278,11 +259,7 @@ public class ExcelDataPoolTest {
 	
 	@Test
 	public void testSKIP() {
-		ForEachBlock artefact = new ForEachBlock();
-		
-		artefact.setHeader(Boolean.FALSE.toString());
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPool.xlsx").getAbsolutePath()+"::SKIP");
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(false, "ExcelDataPool.xlsx", "SKIP"));
 		
 		pool.reset();
 		
@@ -296,11 +273,7 @@ public class ExcelDataPoolTest {
 	
 	@Test
 	public void testStop() {
-		ForEachBlock artefact = new ForEachBlock();
-		
-		artefact.setHeader(Boolean.FALSE.toString());
-		artefact.setTable(ExcelFunctionsTest.getResourceFile("ExcelDataPool.xlsx").getAbsolutePath()+"::Stop");
-		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(artefact);
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(false, "ExcelDataPool.xlsx", "Stop"));
 		
 		pool.reset();
 		

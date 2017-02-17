@@ -1,0 +1,24 @@
+<div class="form-group-sm">
+	<form>		
+		<div class="form-group">
+			<label>Start</label>
+			<input type="text" class="form-control" ng-blur="save()" ng-model="artefact.dataSource.start" /> 
+		</div>
+		<div class="form-group">
+			<label>End</label>
+			<input type="text" class="form-control" ng-blur="save()" ng-model="artefact.dataSource.end" /> 
+		</div>
+		<div class="form-group">
+			<label>Increment</label>
+			<input type="text" class="form-control" ng-blur="save()" ng-model="artefact.dataSource.inc" /> 
+		</div>
+		<div class="form-group">
+			<label>Number of threads</label>
+			<input ng-blur="save()" ng-model="artefact.threads" class="form-control"></input>
+		</div>
+		<div class="form-group">
+			<label>Name of the row variable</label>
+			<input ng-blur="save()" ng-model="artefact.item" class="form-control"></input>
+		</div>
+	</form>
+</div>

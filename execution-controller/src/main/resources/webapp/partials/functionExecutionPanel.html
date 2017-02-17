@@ -1,6 +1,6 @@
 <div class="form-group">
 	<label for="comment">Argument (JSON):</label>	
-	<textarea class="form-control" ng-model="argument" rows="5" id="comment"></textarea>
+	<json-editor model="argument" on-change="setArgument(json)" />
 </div>
 
 <div class="form-group">

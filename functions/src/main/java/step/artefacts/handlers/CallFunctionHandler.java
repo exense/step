@@ -89,17 +89,22 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			int callTimeoutDefault = context.getVariablesManager().getVariableAsInteger("keywords.calltimeout.default", 180000);
 			token.setDefaultCallTimeout(callTimeoutDefault);
 			
-			Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
+			Function function;
+			if(testArtefact.getFunctionId()!=null) {
+				function = functionClient.getFunctionRepository().getFunctionById(testArtefact.getFunctionId());
+			} else {
+				Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
+				function = functionClient.getFunctionRepository().getFunctionByAttributes(attributes);
+			}
 			
-			OperationManager.getInstance().enter("Keyword Call", new Object[]{attributes, token.getToken().getToken(), token.getAgentRef()});
+			OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken().getToken(), token.getAgentRef()});
 			Output output;
 			try {
-				output = token.call(attributes, input);
+				output = token.call(function.getId().toString(), input);
 			} finally {
 				OperationManager.getInstance().exit();
 			}
 			
-			Function function = output.getFunction();
 			node.setName(function.getAttributes().get("name"));
 			node.setFunctionId(function.getId().toString());
 			

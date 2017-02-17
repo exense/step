@@ -23,35 +23,32 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import step.artefacts.ForEachBlock;
+import org.json.JSONObject;
+
 import step.datapool.DataSet;
 
 
 public class FileDataPoolImpl extends DataSet {
 	
-	ForEachBlock configuration;
-	
-	Iterator<String> fileIterator;
-	
-	String currentFile;
-			
-	public FileDataPoolImpl(ForEachBlock configuration) {
-		super();
-		this.configuration = configuration;
+	public FileDataPoolImpl(JSONObject configuration) {
+		super(configuration);
 	}
-
+		
+	Iterator<File> fileIterator;
+	
+	File currentFile;
+	
 	@Override
 	public void reset_() {
-		File folder = new File(configuration.getFolder());
-		List<String> fileList = Arrays.asList(folder.list());
+		File folder = new File(configuration.getString("folder"));
+		List<File> fileList = Arrays.asList(folder.listFiles());
 		fileIterator = fileList.iterator();
 	}
 
 	@Override
 	public Object next_() {
 		if(fileIterator.hasNext()) {
-			currentFile = fileIterator.next();
-			return configuration.getFolder() + "/" + currentFile;
+			return fileIterator.next().getAbsolutePath();
 		} else {
 			return null;
 		}

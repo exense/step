@@ -4,29 +4,26 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
-import java.util.Vector;
 
-import step.artefacts.ForEachBlock;
+import org.json.JSONObject;
+
 import step.datapool.DataSet;
 
 public abstract class FileReaderDataPool extends DataSet {
 
-	ForEachBlock configuration;
+	public FileReaderDataPool(JSONObject configuration) {
+		super(configuration);
+	}
+
 	BufferedReader br;
 	String filePath;
 
 	int lineNr;
 
-	public FileReaderDataPool(ForEachBlock forEach){
-
-		this.configuration = forEach;
-	}
-
 	@Override
 	public void reset_() {
 
-		filePath = this.configuration.getTable();
+		filePath = this.configuration.getString("file");
 		if (filePath == null || filePath.length() < 1)
 			throw new RuntimeException("file path is incorrect.");
 	

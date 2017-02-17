@@ -71,6 +71,8 @@ public class DynamicBeanResolver {
 								String string = (String) object;
 								String newString = expressionHandler.evaluate(string, bindings);
 								field.set(o, newString);
+							} else if(object instanceof JSONObject) {
+								resolveDynamicAttributes((JSONObject)object, bindings);
 							} else {	
 								resolveDynamicAttributes(object, expressionHandler, bindings);
 							}

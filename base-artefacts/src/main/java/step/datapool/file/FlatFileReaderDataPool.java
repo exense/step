@@ -1,15 +1,15 @@
 package step.datapool.file;
 
 import java.util.HashMap;
-import java.util.Vector;
 
-import step.artefacts.ForEachBlock;
+import org.json.JSONObject;
+
 import step.core.variables.SimpleStringMap;
 
 public class FlatFileReaderDataPool extends FileReaderDataPool {
 
-	public FlatFileReaderDataPool(ForEachBlock forEach) {
-		super(forEach);
+	public FlatFileReaderDataPool(JSONObject configuration) {
+		super(configuration);
 	}
 
 	@Override

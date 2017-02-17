@@ -20,12 +20,21 @@ package step.datapool;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.json.JSONObject;
+
 
 
 public abstract class DataSet {
 	
 	protected AtomicInteger rowNum;
 	
+	protected final JSONObject configuration;
+	
+	public DataSet(JSONObject configuration) {
+		super();
+		this.configuration = configuration;
+	}
+
 	public final synchronized void reset() {
 		rowNum = new AtomicInteger();
 		reset_();

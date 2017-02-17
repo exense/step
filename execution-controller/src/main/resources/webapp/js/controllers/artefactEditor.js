@@ -20,8 +20,19 @@ angular.module('artefactEditor',['dataTable','step'])
 
 .controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService) {
       stateStorage.push($scope, 'artefacteditor', {});
-
-      $scope.artefactId = $scope.$state;
+      
+      $scope.$watch('$state',function() {
+        if($scope.$state!=null) {
+          loadArtefact($scope.$state);
+        }
+      });
+      
+      function loadArtefact(id) {
+        $scope.artefactId = id;
+        $http({url:"rest/controller/artefact/"+$scope.artefactId, method:"GET"}).then(function(response){
+          $scope.artefact = response.data;
+        })
+      }
       
       $scope.authService = AuthService;
             
@@ -36,10 +47,6 @@ angular.module('artefactEditor',['dataTable','step'])
                              				'<span class="glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>' +
                              				'</button> '
                                    }} ];
-      
-      $http({url:"rest/controller/artefact/"+$scope.artefactId, method:"GET"}).then(function(response){
-    	  $scope.artefact = response.data;
-      })
       
       $scope.saveAttributes = function() {
     	  $http.post("rest/controller/artefact/"+$scope.artefact.id+"/attributes", $scope.artefact.attributes);
@@ -102,7 +109,14 @@ angular.module('artefactEditor',['dataTable','step'])
     },
     controller: function($scope,$location,$rootScope, AuthService) {
       
-      var artefactid = $scope.artefactid;
+      $scope.$watch('artefactid',function() {
+        if($scope.artefactid!=null) {
+          load(function(root) {
+            tree.open_all();
+            tree.select_node(root.id);
+          });
+        }
+      });
       
       $scope.authService = AuthService;
       
@@ -142,7 +156,7 @@ angular.module('artefactEditor',['dataTable','step'])
 
       function load(callback) {
     	
-    	$http({url:"rest/controller/artefact/"+artefactid+"/descendants", method:"GET"}).then(function(response){ 
+    	$http({url:"rest/controller/artefact/"+$scope.artefactid+"/descendants", method:"GET"}).then(function(response){ 
     	    var data = response.data;
     	  	treeData = [];
         	function asJSTreeNode(currentNode) {
@@ -156,8 +170,13 @@ angular.module('artefactEditor',['dataTable','step'])
         	    try {
         	      label = JSON.parse(artefact['function']).name;
         	    } catch(e) {}
-        	  }        	  
-        	  return { "id" : artefact.id, "children" : children, "text" : label }
+        	  }
+        	  
+        	  var artefactIcon = {'Default':'glyphicon-unchecked', 'CallCompositeControl':'glyphicon glyphicon-new-window', 'CallFunction':'glyphicon-record' ,'For':'glyphicon glyphicon-th','ForEach':'glyphicon glyphicon-th'}
+        	  
+        	  var icon = artefact._class in artefactIcon ? artefactIcon[artefact._class]:artefactIcon['Default'];
+        	  
+        	  return { "id" : artefact.id, "children" : children, "text" : label, icon:"glyphicon "+icon }
         	}
         	
         	var root = asJSTreeNode(data);
@@ -175,12 +194,6 @@ angular.module('artefactEditor',['dataTable','step'])
         });
       }
       
-      load(function(root) {
-    	  
-    	  tree.open_all();
-    	  tree.select_node(root.id);
-      });
-      
       function reloadAfterArtefactInsertion(artefact) {
     	load(function() {
   			tree.deselect_all(true);
@@ -196,7 +209,7 @@ angular.module('artefactEditor',['dataTable','step'])
     	  var function_ = response.data;
     	  var tokenDefault = function_.type=="composite"?"{\"route\":\"local\"}":"{\"route\":\"remote\"}";
     	  
-    	  var newArtefact = {"function":JSON.stringify(function_.attributes),"token":tokenDefault,"_class":"CallFunction"};
+    	  var newArtefact = {"function":JSON.stringify(function_.attributes),"functionId":function_.id,"token":tokenDefault,"_class":"CallFunction"};
     	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
     		  reloadAfterArtefactInsertion(response.data);
     	  })
@@ -260,29 +273,182 @@ angular.module('artefactEditor',['dataTable','step'])
     },
     controller: function($scope,$location, AuthService) {
       
+      var customEditors = {
+          "Default":{template:"partials/artefacts/defaultArtefactForm.html"},
+          "ForEach":{template:"partials/artefacts/forEach.html"},
+          "For":{template:"partials/artefacts/for.html"},
+          "CallFunction":{template:"partials/artefacts/callFunction.html"},
+          "CallCompositeControl":{template:"partials/artefacts/callCompositeControl.html"}
+      }
+      
       $scope.authService = AuthService;
       
-      $scope.$watch('artefactid', function() {
-        if($scope.artefactid) {
-        	var artefactid = $scope.artefactid;
-        	
-        	$http({url:"rest/controller/artefact/"+artefactid,method:"GET"}).then(function(response) {
+      
+      
+      $scope.$watch('artefactid', function(artefactId) {
+        if(artefactId) {
+        	$http({url:"rest/controller/artefact/"+artefactId,method:"GET"}).then(function(response) {
         	  $scope.artefact = response.data;
+        	  $scope.editor = ($scope.artefact._class in customEditors)?customEditors[$scope.artefact._class]:customEditors['Default'];
         	})
-        	
-        	$scope.save = function() {
-        	  $http.post("rest/controller/artefact/"+artefactid, $scope.artefact).then(function() {
-        		
-        	  });
-        	}
+        }
+      })
+
+      $scope.save = function() {
+        if(!$scope.readonly) {
+          $http.post("rest/controller/artefact/"+$scope.artefact.id, $scope.artefact).then(function() {
+            
+          });
+        }
+      }      
+    },
+    template: '<div ng-include="editor.template"></div>'}
+})
+.controller('CallCompositeCtrl' , function($scope,$uibModal,$location,$http) {
+  $scope.$watch('artefact.artefactId', function(id) {
+    if(id!=null) {
+      $http({url:"rest/controller/artefact/"+id,method:"GET"}).then(function(response) {
+        $scope.targetArtefact = response.data;
+      })      
+    }
+  })
+  
+  $scope.gotoArtefact = function() {
+    $location.path('/root/artefacteditor/' + $scope.artefact.artefactId);
+  }
+  
+  $scope.selectArtefact = function() {
+    var modalInstance = $uibModal.open({
+      templateUrl: 'partials/selectArtefact.html',
+      controller: 'selectArtefactModalCtrl',
+      resolve: {}
+    });
+
+    modalInstance.result.then(function (id) {
+      $scope.artefact.artefactId = id;
+      $scope.save();
+    });
+  }
+  
+  $scope.setInput = function(json) {
+    $scope.artefact.inputJson = json;
+    $scope.save();
+  }
+  
+})
+.controller('CallFunctionCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {
+  $scope.$watch('artefact.functionId', function(id) {
+    if(id!=null) {
+      $http({url:"rest/functions/"+id,method:"GET"}).then(function(response) {
+        $scope.targetFunction = response.data;
+        $scope.artefact['function'] = JSON.stringify($scope.targetFunction.attributes);
+      })
+    }
+  })
+  
+  $scope.gotoFunction = function() {
+    FunctionDialogs.editFunction($scope.targetFunction.id);
+  }
+  
+  $scope.openFunctionEditor = function(functionid) {
+    FunctionDialogs.openFunctionEditor($scope.targetFunction.id);
+  }
+  
+  $scope.setArgument = function(json) {
+    $scope.artefact.argument = json;
+    $scope.save();
+  }
+  
+  $scope.selectFunction = function() {
+    var modalInstance = $uibModal.open({
+      templateUrl: 'partials/selectFunction.html',
+      controller: 'selectFunctionModalCtrl',
+      resolve: {}
+    });
+
+    modalInstance.result.then(function (id) {
+      $scope.artefact.functionId = id;
+      $scope.save();
+    });
+  }
+  
+})
+.controller('ForEachCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {  
+  $scope.dataSourceTypes = [{name:"excel",label:"Excel"},{name:"csv",label:"CSV"},{name:"sql",label:"SQL"},
+                            {name:"file",label:"Flat file"},{name:"folder",label:"Directory"}]
+})
+.controller('DefaultArtefactFormCtrl' , function($scope) {
+  $scope.getEditableArtefactProperties = function() {
+    return _.without(_.keys($scope.artefact),'id','_id','root','attributes','childrenIDs','createSkeleton','_class','attachments')
+  }
+})
+.directive('jsonEditor', function($http,$timeout,$interval,stateStorage,$filter,$location,Dialogs) {
+  return {
+    restrict: 'E',
+    scope: {
+      model: '=',
+      onChange: '&'
+    },
+    templateUrl: 'partials/jsonEditor.html',
+    controller: function($scope,$location,$rootScope, AuthService) {
+      $scope.localModel = {json:""}
+      $scope.argumentAsTable = [];
+      
+      $scope.$watch('model', function(json) {
+        if(json!=$scope.localModel.json) {
+          $scope.localModel.json = json;
+          $scope.updateEditors(false);          
         }
       })
       
-      $scope.getEditableArtefactProperties = function() {
-    	return _.without(_.keys($scope.artefact),'id','_id','root','attributes','childrenIDs','createSkeleton','_class','attachments')
+      $scope.save = function() {
+        $scope.onChange({json:$scope.localModel.json});
       }
-    	  
       
-    },
-    templateUrl: 'partials/artefactDetails.html'}
+      $scope.updateJsonFromTable = function() {
+        var json = {};
+        _.each($scope.argumentAsTable, function(entry) {
+          json[entry.key]=entry.value;
+        })
+        $scope.localModel.json = JSON.stringify(json);
+      }
+      
+      $scope.addRowToTable = function(row) {
+        $scope.argumentAsTable.push(row?row:{"key":"","value":""})
+      }
+      
+      $scope.removeRowFromTable = function(key) {
+        $scope.argumentAsTable = _.reject($scope.argumentAsTable, function(entry){ return entry.key==key});
+      }
+      
+      $scope.onJsonFieldBlur = function() {
+        if($scope.updateEditors(true)) {
+          $scope.save();
+        }
+      }
+      
+      $scope.updateEditors = function(validateJson) {
+        try {
+          $scope.argumentAsTable = _.map(JSON.parse($scope.localModel.json), function(val, key) {
+            return {"key":key,"value":val};
+          });
+          return true;
+        }
+        catch(err) {
+          if(validateJson) {
+            Dialogs.showErrorMsg("Invalid JSON: " + err)            
+          }
+          return false;
+        }
+      }
+      
+      $scope.lastRow = {key:"", value:""}
+
+      $scope.commitLastRow = function() {
+        var row = $scope.lastRow;
+        $scope.addRowToTable({"key":row.key, "value":row.value});
+        $scope.lastRow = {key:"", value:""}
+      }
+    }
+  }
 })

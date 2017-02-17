@@ -161,4 +161,40 @@ angular.module('artefactsControllers',['dataTable','step'])
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
-});
+})
+
+.controller('selectArtefactModalCtrl', function ($scope, $uibModalInstance) {
+  
+  $scope.selectArtefact = function(id) {
+    $uibModalInstance.close(id);
+  }
+  
+  $scope.table = {};
+
+  $scope.tabledef = {}      
+  
+  $scope.tabledef.columns = function(columns) {
+    _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
+      col.visible = false
+    });
+    _.each(_.where(columns,{'title':'Actions'}),function(col){
+        col.title="Actions";
+        col.searchmode="none";
+        col.width="160px";
+        col.render = function ( data, type, row ) {
+          var html = '<div class="input-group">' +
+            '<div class="btn-group">' +
+            '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().selectArtefact(\''+row[0]+'\')">' +
+            '<span class="glyphicon glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>';
+          html+='</div></div>';
+          return html;
+        }
+       });
+    return columns;
+  };
+
+
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+})
