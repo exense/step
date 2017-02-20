@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.core.deployment;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -386,6 +388,11 @@ public class ControllerServices extends AbstractServices {
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
 		Class<? extends AbstractArtefact> clazz = ArtefactRegistry.getInstance().getArtefactType(type);		
 		AbstractArtefact sample = clazz.newInstance();
+		for(Method m:clazz.getMethods()) {
+			if(m.getAnnotation(PostConstruct.class)!=null) {
+				m.invoke(sample);
+			}
+		}
 		getContext().getArtefactAccessor().save(sample);
 		return sample;
 	}

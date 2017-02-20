@@ -18,10 +18,13 @@
  *******************************************************************************/
 package step.artefacts;
 
+import javax.annotation.PostConstruct;
+
 import org.json.JSONObject;
 
 import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
+import step.datapool.DataPoolFactory;
 
 
 public class AbstractForBlock extends AbstractArtefact {
@@ -44,6 +47,11 @@ public class AbstractForBlock extends AbstractArtefact {
 	
 	@DynamicAttribute
 	private String threads = "1";
+	
+	@PostConstruct
+	public void init() {
+		dataSource = DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
+	}
 	
 	public String getDataSourceType() {
 		return dataSourceType;

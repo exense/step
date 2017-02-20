@@ -20,9 +20,6 @@ package step.datapool;
 
 import org.json.JSONObject;
 
-import step.artefacts.AbstractForBlock;
-import step.artefacts.ForBlock;
-import step.artefacts.ForEachBlock;
 import step.datapool.excel.ExcelDataPoolImpl;
 import step.datapool.file.CSVReaderDataPool;
 import step.datapool.file.FileDataPoolImpl;
@@ -32,33 +29,42 @@ import step.datapool.sequence.IntSequenceDataPoolImpl;
 
 public class DataPoolFactory {
 
-	public static DataSet getDataPool(AbstractForBlock forBlock) {
+	public static DataSet getDataPool(String dataSourceType, JSONObject dataPoolConfiguration) {
 		DataSet result = null;
 
-		JSONObject dataPoolConfiguration = forBlock.getDataSource();
-		if(forBlock instanceof ForEachBlock) {
-			String dataSourceType = forBlock.getDataSourceType();
-			if(dataSourceType.equals("excel")) {
-				result = new ExcelDataPoolImpl(dataPoolConfiguration);
-			} else if(dataSourceType.equals("csv")) {
-				result = new CSVReaderDataPool(dataPoolConfiguration); 
-			} else if(dataSourceType.equals("folder")) {
-				result = new FileDataPoolImpl(dataPoolConfiguration); 
-			} else if(dataSourceType.equals("sql")) {
-				result = new SQLTableDataPool(dataPoolConfiguration);
-			} else if(dataSourceType.equals("file")) {
-				result = new FlatFileReaderDataPool(dataPoolConfiguration);
-			} else if(dataSourceType.equals("sequence")) {
-				result = new IntSequenceDataPoolImpl(dataPoolConfiguration);
-			} else {
-				throw new RuntimeException("Unsupported data source type: "+dataSourceType);
-			}
-		} else if (forBlock instanceof ForBlock) {
+		if(dataSourceType.equals("excel")) {
+			result = new ExcelDataPoolImpl(dataPoolConfiguration);
+		} else if(dataSourceType.equals("csv")) {
+			result = new CSVReaderDataPool(dataPoolConfiguration); 
+		} else if(dataSourceType.equals("folder")) {
+			result = new FileDataPoolImpl(dataPoolConfiguration); 
+		} else if(dataSourceType.equals("sql")) {
+			result = new SQLTableDataPool(dataPoolConfiguration);
+		} else if(dataSourceType.equals("file")) {
+			result = new FlatFileReaderDataPool(dataPoolConfiguration);
+		} else if(dataSourceType.equals("sequence")) {
 			result = new IntSequenceDataPoolImpl(dataPoolConfiguration);
 		} else {
-			throw new RuntimeException("No data pool configured for the artefact type " + dataPoolConfiguration.getClass());
+			throw new RuntimeException("Unsupported data source type: "+dataSourceType);
 		}
 
 		return result;
+	}
+	
+	public static JSONObject getDefaultDataPoolConfiguration(String dataSourceType) {
+		JSONObject conf = new JSONObject();
+		if(dataSourceType!=null) {
+			if(dataSourceType.equals("excel")) {
+			} else if(dataSourceType.equals("csv")) {
+			} else if(dataSourceType.equals("folder")) {
+			} else if(dataSourceType.equals("sql")) {
+			} else if(dataSourceType.equals("file")) {
+			} else if(dataSourceType.equals("sequence")) {
+				conf.put("start", 1);
+				conf.put("end", 2);
+				conf.put("inc", 1);
+			}
+		}	
+		return conf;
 	}
 }
