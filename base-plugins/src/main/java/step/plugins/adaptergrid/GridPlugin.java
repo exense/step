@@ -51,6 +51,11 @@ public class GridPlugin extends AbstractPlugin {
 		grid.start();
 		
 		GridClient client = new GridClient(grid);
+		
+		Integer gridCallTimeout = Configuration.getInstance().getPropertyAsInteger("grid.calltimeout.default");
+		if(gridCallTimeout!=null) {
+			client.setCallTimeout(gridCallTimeout);
+		}
 
 		MongoClient mongoClient = context.getMongoClient();
 		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(mongoClient, "functions");	

@@ -59,6 +59,8 @@ public class GridClient {
 	
 	private long matchExistsTimeout = 60000;
 	
+	private int callTimeout = 180000;
+	
 	public GridClient() {
 		super();
 	}
@@ -73,6 +75,14 @@ public class GridClient {
 		client.register(JacksonJsonProvider.class);
 	}
 	
+	public int getCallTimeout() {
+		return callTimeout;
+	}
+
+	public void setCallTimeout(int callTimeout) {
+		this.callTimeout = callTimeout;
+	}
+
 	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties) throws Exception {
 		Token token = tokenWrapper.getToken();
 		
@@ -150,7 +160,6 @@ public class GridClient {
 	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) throws Exception {
 		// TODO get from config?
 		int connectionTimeout = 3000;
-		int callTimeout = 180000;
 		
 		String agentUrl = agentRef.getAgentUrl();
 		
