@@ -3,23 +3,23 @@ package step.datapool.file;
 import java.util.HashMap;
 import java.util.Vector;
 
-import step.artefacts.ForEachBlock;
+import org.json.JSONObject;
+
 import step.core.variables.SimpleStringMap;
-import step.datapool.file.FlatFileReaderDataPool.FlatLineRowWrapper;
 
 public class CSVReaderDataPool extends FileReaderDataPool {
-
+	
 	Vector<String> headers;
 	String delimiter;
 		
-	public CSVReaderDataPool(ForEachBlock forEach) {
-		super(forEach);
-		
-		String delim = forEach.getFolder();
-		if(delim == null || delim.trim().isEmpty())
-			this.delimiter = ",";
-		else
-			this.delimiter = delim;
+	public CSVReaderDataPool(JSONObject configuration) {
+		super(configuration);
+				
+		if(configuration.has("delimiter")) {
+			this.delimiter = configuration.getString("delimiter");
+		} else {
+			this.delimiter = ",";			
+		}
 	}
 
 	@Override

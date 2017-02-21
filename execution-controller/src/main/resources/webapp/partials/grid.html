@@ -1,50 +1,67 @@
 <div ng-controller="GridCtrl">
-<tabset>
-	<tab heading="Agents" ng-controller="AgentListCtrl" active="$parent.tabState['agents']">
-		<div class="toolbar">
-			<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox ><span class="glyphicon glyphicon-refresh"/></button>
-		</div>
+	<uib-tabset active="activeTab()"> 
+		<uib-tab heading="Agents" select="onSelection('agents')">
+			<div ng-controller="AgentListCtrl">
+				<div class="toolbar">
+					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox>
+						<span class="glyphicon glyphicon-refresh" />
+					</button>
+				</div>
 		
-		<div class="panel-body">
-			<p>
-				<datatable tabledef="tabledef" handle="datatable" selectionmode="multiple" />
-			</p>
-		</div>
-	</tab>
-	<tab heading="Token Groups" ng-controller="AdapterListCtrl" active="$parent.tabState['adapters']">
-		<div class="toolbar">
-			<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox ><span class="glyphicon glyphicon-refresh"/></button>
-		</div>
+				<div class="panel-body">
+					<p>
+						<datatable tabledef="tabledef" handle="datatable" selectionmode="multiple" />
+					</p>
+				</div>
+			</div>
+		</uib-tab> 
+		<uib-tab heading="Token Groups" select="onSelection('adapters')">
+			<div ng-controller="AdapterListCtrl">
+				<div class="toolbar">
+					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox>
+						<span class="glyphicon glyphicon-refresh" />
+					</button>
+				</div>
 		
-		<div class="panel-body">		
-			<p>
-				<form class="form-inline">
-					<label>Group by:</label>
-					<div class="checkbox" style="margin-left:10px" ng-repeat="key in keys">
-						<label> <input type="checkbox" ng-model="keySelectioModel[key]"> {{key}} </label>
-					</div>
-				</form>
-			</p>
-			<p>
-				<datatable tabledef="tabledef" selectionmode="none" />
-			</p>
-		</div>
-	</tab>
-    <tab heading="Token list" ng-controller="TokenListCtrl" active="$parent.tabState['tokens']">
-    	<div class="toolbar">
-			<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox ><span class="glyphicon glyphicon-refresh"/></button>
-		</div>
-		<div class="panel-body">
-			<datatable tabledef="tabledef" selectionmode="multiple" />
-		</div>
-	</tab>
-	<tab heading="Quota Manager" ng-controller="QuotaManagerCtrl" active="$parent.tabState['quotamanager']">
-		<div class="toolbar">
-			<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox ><span class="glyphicon glyphicon-refresh"/></button>
-		</div>
-		<div class="panel-body">
-			<textarea class="form-control" rows="10" ng-model="statusText"></textarea>
-		</div>
-	</tab>
-</tabset>
+				<div class="panel-body">
+					<p>
+					<form class="form-inline">
+						<label>Group by:</label>
+						<div class="checkbox" style="margin-left: 10px" ng-repeat="key in keys">
+							<label> <input type="checkbox" ng-model="keySelectioModel[key]"> {{key}}
+							</label>
+						</div>
+					</form>
+					</p>
+					<p>
+						<datatable tabledef="tabledef" selectionmode="none" />
+					</p>
+				</div>
+			</div>
+		</uib-tab> 
+		<uib-tab heading="Token list" select="onSelection('tokens')">
+			<div ng-controller="TokenListCtrl">
+				<div class="toolbar">
+					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox>
+						<span class="glyphicon glyphicon-refresh" />
+					</button>
+				</div>
+				<div class="panel-body">
+					<datatable tabledef="tabledef" selectionmode="multiple" />
+				</div>
+			</div>
+		</uib-tab> 
+		<uib-tab heading="Quota Manager" select="onSelection('quotamanager')">
+			<div ng-controller="QuotaManagerCtrl">
+				<div class="toolbar">
+					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" btn-checkbox>
+						<span class="glyphicon glyphicon-refresh" />
+					</button>
+				</div>
+				<div class="panel-body">
+					<textarea class="form-control" rows="10" ng-model="statusText"></textarea>
+				</div>
+			</div>
+		</uib-tab> 
+	</uib-tabset>
 </div>

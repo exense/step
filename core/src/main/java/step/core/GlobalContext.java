@@ -18,18 +18,19 @@
  *******************************************************************************/
 package step.core;
 
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
+
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
 import step.core.artefacts.ArtefactAccessor;
+import step.core.artefacts.ArtefactManager;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionLifecycleManager;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
-
-import com.mongodb.MongoClient;
-import com.mongodb.client.MongoDatabase;
 
 public class GlobalContext extends AbstractContext {
 	
@@ -44,6 +45,8 @@ public class GlobalContext extends AbstractContext {
 	private ExecutionAccessor executionAccessor;
 	
 	private ArtefactAccessor artefactAccessor;
+	
+	private ArtefactManager artefactManager;
 	
 	private ReportNodeAccessor reportAccessor;
 	
@@ -89,6 +92,14 @@ public class GlobalContext extends AbstractContext {
 
 	public void setArtefactAccessor(ArtefactAccessor artefactAccessor) {
 		this.artefactAccessor = artefactAccessor;
+	}
+
+	public ArtefactManager getArtefactManager() {
+		return artefactManager;
+	}
+
+	public void setArtefactManager(ArtefactManager artefactManager) {
+		this.artefactManager = artefactManager;
 	}
 
 	public ReportNodeAccessor getReportAccessor() {

@@ -18,12 +18,14 @@
  *******************************************************************************/
 package step.grid;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -33,6 +35,8 @@ import org.glassfish.jersey.servlet.ServletContainer;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
+import step.grid.filemanager.FileManagerServer;
+import step.grid.filemanager.FileProvider;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.SimpleAffinityEvaluator;
 import step.grid.tokenpool.Token;
@@ -51,6 +55,8 @@ public class Grid {
 	private final Integer keepAliveTimeout;
 	
 	private Server server;
+	
+	private FileManagerServer fileManager = new FileManagerServer();
 	
 	public Grid(Integer port) {
 		super();
@@ -89,10 +95,12 @@ public class Grid {
 		resourceConfig.packages(GridServices.class.getPackage().getName());
 		resourceConfig.register(JacksonJaxbJsonProvider.class);
 		final Grid grid = this;
+		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override
 			protected void configure() {
 				bind(grid).to(Grid.class);
+				bind(fileManager).to(FileProvider.class);
 			}
 		});
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);
@@ -129,6 +137,10 @@ public class Grid {
 	public void returnToken(TokenWrapper object) {
 		tokenPool.returnToken(object);
 	}
+	
+	public String registerFile(File file) {
+		return fileManager.registerFile(file);
+	}
 
 	public List<Token<TokenWrapper>> getTokens() {
 		return tokenPool.getTokens();
@@ -136,5 +148,9 @@ public class Grid {
 	
 	public Collection<AgentRef> getAgents() {
 		return agentRefs.values();
+	}
+	
+	public int getServerPort() {
+		return ((ServerConnector)server.getConnectors()[0]).getLocalPort();
 	}
 }

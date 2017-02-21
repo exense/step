@@ -18,13 +18,23 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.core.artefacts.DynamicAttribute;
+import javax.annotation.PostConstruct;
+
+import org.json.JSONObject;
+
+import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
+import step.datapool.DataPoolFactory;
 
 
 public class AbstractForBlock extends AbstractArtefact {
 	
 	private String item = "dataPool";
+	
+	private String dataSourceType;
+	
+	@DynamicAttribute
+	private JSONObject dataSource;
 	
 	@DynamicAttribute
 	private String maxFailedLoops;
@@ -38,6 +48,27 @@ public class AbstractForBlock extends AbstractArtefact {
 	@DynamicAttribute
 	private String threads = "1";
 	
+	@PostConstruct
+	public void init() {
+		dataSource = DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
+	}
+	
+	public String getDataSourceType() {
+		return dataSourceType;
+	}
+
+	public void setDataSourceType(String dataSourceType) {
+		this.dataSourceType = dataSourceType;
+	}
+
+	public JSONObject getDataSource() {
+		return dataSource;
+	}
+
+	public void setDataSource(JSONObject dataSource) {
+		this.dataSource = dataSource;
+	}
+
 	public void setItem(String item) {
 		this.item = item;
 	}

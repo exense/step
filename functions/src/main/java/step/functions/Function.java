@@ -20,7 +20,10 @@ package step.functions;
 
 import java.util.Map;
 
+import javax.json.JsonObject;
+
 import org.bson.types.ObjectId;
+import org.json.JSONObject;
 
 public class Function {
 	
@@ -28,11 +31,9 @@ public class Function {
 	
 	Map<String, String> attributes;
 	
-	String handlerChain;
+	String type;
 	
-	Integer callTimeout;
-
-	Map<String, String> handlerProperties;
+	JSONObject configuration;
 
 	public ObjectId getId() {
 		return _id;
@@ -50,28 +51,20 @@ public class Function {
 		this.attributes = attributes;
 	}
 
-	public Map<String, String> getHandlerProperties() {
-		return handlerProperties;
+	public String getType() {
+		return type;
 	}
 
-	public void setHandlerProperties(Map<String, String> handlerProperties) {
-		this.handlerProperties = handlerProperties;
+	public void setType(String type) {
+		this.type = type;
 	}
 
-	public Integer getCallTimeout() {
-		return callTimeout;
+	public JSONObject getConfiguration() {
+		return configuration;
 	}
 
-	public void setCallTimeout(Integer callTimeout) {
-		this.callTimeout = callTimeout;
-	}
-
-	public String getHandlerChain() {
-		return handlerChain;
-	}
-
-	public void setHandlerChain(String handlerChain) {
-		this.handlerChain = handlerChain;
+	public void setConfiguration(JSONObject configuration) {
+		this.configuration = configuration;
 	}
 
 }

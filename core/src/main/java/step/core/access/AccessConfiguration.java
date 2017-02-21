@@ -6,10 +6,20 @@ public class AccessConfiguration {
 	
 	boolean authentication;
 	
+	boolean demo;
+	
 	List<String> roles;
 
 	public AccessConfiguration() {
 		super();
+	}
+
+	public boolean isDemo() {
+		return demo;
+	}
+
+	public void setDemo(boolean demo) {
+		this.demo = demo;
 	}
 
 	public boolean isAuthentication() {

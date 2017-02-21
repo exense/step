@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -157,6 +159,16 @@ public class FileHelper {
 
 		}
 
+	}
+	
+	public static File getClassLoaderResource(Class<?> clazz, String resourceName) {
+		try {
+			URL url = clazz.getClassLoader().getResource(resourceName);
+			// workaround: doing toURI().getPath() to decode %20 in case of spaces in path
+			return url!=null?new File(url.toURI().getPath()):null;
+		} catch (URISyntaxException e) {
+			throw new RuntimeException("Error while parsing URI of resource "+resourceName,e);
+		}
 	}
 
 }

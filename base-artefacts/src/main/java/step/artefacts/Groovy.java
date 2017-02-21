@@ -19,9 +19,9 @@
 package step.artefacts;
 
 import step.artefacts.handlers.GroovyHandler;
+import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import step.core.artefacts.DynamicAttribute;
 
 @Artefact(handler = GroovyHandler.class, block=false)
 public class Groovy extends AbstractArtefact {

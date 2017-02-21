@@ -39,6 +39,7 @@ import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.TestArtefactResultHandler;
+import step.expressions.DynamicBeanResolver;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 	
@@ -118,7 +119,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		try {
 			@SuppressWarnings("unchecked")
-			ARTEFACT postEvaluationArtefact = (ARTEFACT) ArtefactAttributesHandler.evaluateAttributes(testArtefact);
+			ARTEFACT postEvaluationArtefact = (ARTEFACT) DynamicBeanResolver.resolveDynamicAttributes(testArtefact);
 			
 			ArtefactFilter filter = ExecutionContext.getCurrentContext().getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(testArtefact)) {
@@ -162,17 +163,20 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 		
 		REPORT_NODE node = beforeDelegation(Phase.EXECUTION, parentNode, testArtefact, newVariables);
+		ReportNodeAccessor reportNodeAccessor = context.getGlobalContext().getReportAccessor();
 		
 		long t1 = System.currentTimeMillis();
 		try {
 			@SuppressWarnings("unchecked")
-			ARTEFACT postEvaluationArtefact = (ARTEFACT) ArtefactAttributesHandler.evaluateAttributes(testArtefact);
+			ARTEFACT postEvaluationArtefact = (ARTEFACT) DynamicBeanResolver.resolveDynamicAttributes(testArtefact);
 			node.setArtefactInstance(postEvaluationArtefact);
 			
 			ArtefactFilter filter = ExecutionContext.getCurrentContext().getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(testArtefact)) {
 				node.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
+				reportNodeAccessor.save(node);
+				
 				execute_(node, postEvaluationArtefact);
 			}
 		} catch (Exception e) {
@@ -183,7 +187,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setDuration((int)duration);
 		node.setExecutionTime(System.currentTimeMillis());
 		
-		ReportNodeAccessor reportNodeAccessor = context.getGlobalContext().getReportAccessor();
 		reportNodeAccessor.save(node);
 		
 		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeExecution(node);

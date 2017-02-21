@@ -48,7 +48,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 		DataSet dataSet = null;
 		try {
-			dataSet = DataPoolFactory.getDataPool( testArtefact);
+			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource());
 			dataSet.reset();
 			DataPoolRow nextValue = null;
 			int count = 0;
@@ -86,7 +86,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		try {
 			List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 			
-			dataSet = DataPoolFactory.getDataPool( testArtefact);
+			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource());
 		
 			dataSet.reset();
 			

@@ -34,7 +34,14 @@ public class ProcessHandlerTest {
 	public void testt1() {
 		Map<String, String> properties = new HashMap<>();
 		Context context = FunctionTester.getContext(new ProcessHandler(), properties);
-		OutputMessage out = context.run("test1", "{\"cmd\":\"cmd.exe /r echo test\"}");
+		
+		String echoCmd;
+		if(System.getProperty("os.name").startsWith("Windows")) {
+			echoCmd = "{\"cmd\":\"cmd.exe /r echo test\"}";;
+		} else {
+			echoCmd = "{\"cmd\":\"echo test\"}";;
+		}
+		OutputMessage out = context.run("test1", echoCmd);
 		
 		Assert.assertEquals("test\n",out.getPayload().getString("stdout"));
 	}

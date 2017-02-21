@@ -19,7 +19,9 @@
 package step.grid.agent;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.Inet4Address;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +54,7 @@ import step.grid.agent.conf.TokenGroupConf;
 import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.filemanager.FileManagerClient;
 import step.grid.io.ObjectMapperResolver;
 import step.grid.tokenpool.Interest;
 
@@ -72,6 +75,8 @@ public class Agent {
 	private Timer timer;
 		
 	private RegistrationTask registrationTask;
+	
+	private AgentTokenServices agentTokenServices;
 	
 	public static void main(String[] args) throws Exception {
 		ArgumentParser arguments = new ArgumentParser(args);
@@ -109,7 +114,7 @@ public class Agent {
 		
 		id = UUID.randomUUID().toString();
 		tokenPool = new AgentTokenPool(10000);
-		handlerPool = new TokenHandlerPool();
+		handlerPool = new TokenHandlerPool(agentConf);
 	}
 	
 	public String getId() {
@@ -123,6 +128,7 @@ public class Agent {
 			token.setAttributes(attributes);
 			token.setSelectionPatterns(createInterestMap(selectionPatterns));
 			token.setProperties(properties);
+			token.setServices(agentTokenServices);
 			tokenPool.offerToken(token);
 		}
 	}
@@ -138,7 +144,15 @@ public class Agent {
 		return result;
 	}
 
-	public void start() throws Exception {
+	public void start() throws Exception {		
+		final Agent agent = this;
+		
+		RegistrationClient registrationClient = new RegistrationClient(agent.getGridHost());
+		
+		FileManagerClient fileManagerClient = initFileManager(registrationClient);
+		
+		agentTokenServices = new AgentTokenServices(fileManagerClient);
+		agentTokenServices.setAgentProperties(agentConf.getProperties());
 		
 		if(agentConf.getTokenGroups()!=null) {
 			for(TokenGroupConf group:agentConf.getTokenGroups()) {
@@ -152,7 +166,6 @@ public class Agent {
 		resourceConfig.packages(AgentServices.class.getPackage().getName());
 		resourceConfig.register(JacksonJsonProvider.class);
 		resourceConfig.register(ObjectMapperResolver.class);
-		final Agent agent = this;
 		resourceConfig.register(new AbstractBinder() {	
 			@Override
 			protected void configure() {
@@ -173,9 +186,8 @@ public class Agent {
 		server.setHandler(contexts);
 		
 		timer = new Timer();
+		registrationTask = new RegistrationTask(this, registrationClient);
 		
-		registrationTask = new RegistrationTask(this);
-
 		server.start();
 		
 		if(agentConf.getAgentUrl()==null) {
@@ -189,6 +201,24 @@ public class Agent {
 				tokenPool.evictSessions();
 			}
 		}, 15000, 10000);
+	}
+
+	private FileManagerClient initFileManager(RegistrationClient registrationClient) throws IOException {
+		String fileManagerDirPath;
+		String workingDir = agentConf.getWorkingDir();
+		if(workingDir!=null) {
+			fileManagerDirPath = workingDir;
+		} else {
+			fileManagerDirPath = ".";
+		}
+		fileManagerDirPath+="/filemanager";
+		File fileManagerDir = new File(fileManagerDirPath);
+		if(!fileManagerDir.exists()) {
+			Files.createDirectory(fileManagerDir.toPath());
+		}
+		
+		FileManagerClient fileManagerClient = new FileManagerClient(fileManagerDir, registrationClient);
+		return fileManagerClient;
 	}
 
 	protected String getAgentUrl() {

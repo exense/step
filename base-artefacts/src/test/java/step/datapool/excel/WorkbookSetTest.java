@@ -19,6 +19,7 @@
 package step.datapool.excel;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -27,6 +28,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.commons.helpers.FileHelper;
 import step.datapool.excel.WorkbookSet.LinkedWorkbookFileResolver;
 
 
@@ -53,11 +55,7 @@ public class WorkbookSetTest {
 	}
 
 	private File getResourceFile(String filename) {
-		if(this.getClass().getClassLoader().getResource(filename)!=null) {
-			return new File(this.getClass().getClassLoader().getResource(filename).getFile());
-		} else {
-			return null;
-		}
+		return FileHelper.getClassLoaderResource(this.getClass(), filename);
 	}
 	
 	@Test

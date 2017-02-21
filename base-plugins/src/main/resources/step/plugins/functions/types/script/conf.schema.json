@@ -1,0 +1,15 @@
+{
+	"type": "object",
+	"properties": {
+		"scriptFile": {
+			"type": "string"
+		},
+		"scriptLanguage": {
+			"type": "string",
+			"enum": [
+				"javascript",
+				"groovy"
+			]
+		}
+	}
+}

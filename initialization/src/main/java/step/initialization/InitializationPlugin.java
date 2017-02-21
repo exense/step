@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.jongo.MongoCollection;
+import org.json.JSONObject;
 
 import step.artefacts.CallFunction;
 import step.artefacts.Check;
@@ -115,7 +116,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		CallFunction call1 = createCallFunctionWithCheck(artefacts,"Javascript_HttpGet","{\"url\":\"[[dataPool.url]]\"}","output.getString(\"data\").contains(\"[[dataPool.check]]\")");
 		
 		ForEachBlock forEach = new ForEachBlock();
-		forEach.setTable("../data/testdata/demo.csv");
+		forEach.setDataSource(new JSONObject().put("file", "../data/testdata/demo.csv"));
 		forEach.addChild(call1.getId());
 		artefacts.save(forEach);
 
@@ -212,7 +213,12 @@ public class InitializationPlugin extends AbstractPlugin {
 		kwAttributes.put("name", name);
 		
 		demoFunction.setAttributes(kwAttributes);
-		demoFunction.setHandlerChain(handlerChain);
+		// TODO replace by specific types
+		demoFunction.setType("custom");
+		JSONObject conf = new JSONObject();
+		conf.put("handlerChain", handlerChain);
+		demoFunction.setConfiguration(conf);
+
 		return demoFunction;
 	}
 

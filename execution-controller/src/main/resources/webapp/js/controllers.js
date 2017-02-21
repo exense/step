@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminControllers = angular.module('tecAdminControllers',['dataTable','chart.js','n3-line-chart','ui.bootstrap', 'step']);
+var tecAdminControllers = angular.module('tecAdminControllers',['dataTable','chart.js','step', 'views','ui.bootstrap','reportTree']);
 
 function escapeHtml(str) {
   var div = document.createElement('div');
@@ -24,7 +24,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 };
 
-tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$modal','$timeout','AuthService',function($rootScope, $http, $location,$stateStorage,$modal,$timeout,AuthService) {
+tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','AuthService',function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,AuthService) {
   return {
     restrict: 'E',
     scope: {
@@ -50,7 +50,8 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
       function retrieveInputs() {        
         params =  _.clone($scope.model);
         params.user = $rootScope.context.userID;
-        $http({url:"rest/screens/executionParameters", method:"GET", params:params}).success(function(data){
+        $http({url:"rest/screens/executionParameters", method:"GET", params:params}).then(function(response){
+          var data = response.data;
             $scope.inputs=data;
             
             var oldModel = $scope.model;
@@ -90,9 +91,9 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
       $scope.execute = function(simulate) {
         var executionParams = buildExecutionParams(simulate);
         
-        $http.post("rest/controller/execution",executionParams).success(
-          function(data) {
-            var eId = data;
+        $http.post("rest/controller/execution",executionParams).then(
+          function(response) {
+            var eId = response.data;
             
             $location.$$search = {};
             $location.path('/root/executions/'+eId);
@@ -111,7 +112,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 
         var executionParams = buildExecutionParams(false);
         
-        var modalInstance = $modal.open({
+        var modalInstance = $uibModal.open({
           animation: $scope.animationsEnabled,
           templateUrl: 'newTaskModalContent.html',
           controller: 'newTaskModalCtrl',
@@ -123,8 +124,8 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
         });
 
         modalInstance.result.then(function (taskParams) {
-          $http.post("rest/controller/task",taskParams).success(
-            function(data) {
+          $http.post("rest/controller/task",taskParams).then(
+            function() {
               $location.path('/root/scheduler/');
             });
 
@@ -137,22 +138,22 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
   };
 }]);
 
-tecAdminControllers.controller('newTaskModalCtrl', function ($scope, $modalInstance, executionParams) {
+tecAdminControllers.controller('newTaskModalCtrl', function ($scope, $uibModalInstance, executionParams) {
 	
   $scope.name = executionParams.description;
   
   $scope.ok = function () {
     var taskParams = {'name': $scope.name, 'cronExpression':$scope.cron, 'executionsParameters':executionParams};
-    $modalInstance.close(taskParams);
+    $uibModalInstance.close(taskParams);
   };
 
   $scope.cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
 });
     
 
-tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location',function($http,$timeout,$interval,$stateStorage,$filter,$location) {
+tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory) {
   return {
     restrict: 'E',
     scope: {
@@ -162,13 +163,35 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       closeTab: '&closeTab',
       active: '&active'
     },
-    controller: function($scope,$location) {
+    controller: function($scope,$location,$anchorScroll) {
       var eId = $scope.eid;
       console.log('Execution Controller. ID:' + eId);
       $stateStorage.push($scope, eId,{});
 
-      $scope.displayTestCasePanel = false;
-      $scope.displayTestStepsPanel = true;
+      var panels = {
+          "testCases":{label:"Test cases",show:false, enabled:false},
+          "steps":{label:"Keyword calls",show:true, enabled:true},
+          "throughput":{label:"Keyword throughput",show:true, enabled:true},
+          "performance":{label:"Performance",show:true, enabled:true},
+          "reportTree":{label:"Report tree",show:true, enabled:true},
+          "executionDetails":{label:"Execution details",show:true, enabled:true},
+          "parameters":{label:"Execution parameters",show:false, enabled:true},
+          "currentOperations":{label:"Current operations",show:true, enabled:true}
+      }
+      
+      $scope.scrollTo = function(viewId) {
+        panels[viewId].show=true;
+        $location.hash($scope.getPanelId(viewId));
+        $anchorScroll();
+      }
+      
+      $scope.isShowPanel = function(viewId) {return panels[viewId].show};
+      $scope.isPanelEnabled = function(viewId) {return panels[viewId].enabled};
+      $scope.toggleShowPanel = function(viewId) {panels[viewId].show=!panels[viewId].show};
+      $scope.enablePanel = function(viewId, enabled) {panels[viewId].enabled=enabled};
+      $scope.getPanelId = function(viewId) {return eId+viewId};
+      $scope.getPanelTitle = function(viewId) {return panels[viewId].label};
+      $scope.panels = _.map(_.keys(panels),function(viewId){return {id:viewId,label:panels[viewId].label}});
       
       $scope.autorefresh = true;
 
@@ -303,7 +326,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       };
       
       $scope.stepsTable.detailRowRenderer = function(rowData, callback) {
-        $http.get('rest/controller/reportnode/'+rowData[0]+'/path').success(function(data) {
+        $http.get('rest/controller/reportnode/'+rowData[0]+'/path').then(function(response) {
+          var data = response.data;
           var currentNode = _.last(data);
           var html = '<ul class="list-unstyled node-details">';
           if(currentNode.reportNode && currentNode.reportNode.adapter) {html+='<li><strong>Adapter</strong> <span>'+currentNode.reportNode.adapter+'</span></li>'}
@@ -394,17 +418,24 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       $scope.onTestExecutionStarted = function() {
         $scope.closeTab();
       }
+      
+      $scope.reportTreeHandle = {};
     },
     link: function($scope, $element) {
       var eId = $scope.eid;
       
-      $http.get('rest/rtm/rtmlink/' + eId).success(function(data) {
-        $scope.rtmlink = data.link;
+      $http.get('rest/rtm/rtmlink/' + eId).then(function(response) {
+        $scope.rtmlink = response.data.link;
       })
       
       var refreshTestCaseTable = function() {        
-        $http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode').success(function(data) {
+        $http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode').then(function(response) {
+          var data = response.data;
           var dataSet = [];
+          if(data.length>0) {
+            $scope.enablePanel('testCases', true);
+          }
+          
           for (i = 0; i < data.length; i++) {
             dataSet[i] = [ data[i].artefactID, data[i].name, data[i].status];
           }
@@ -413,7 +444,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       }
       
       var refreshExecution = function() {
-        $http.get('rest/controller/execution/' + eId).success(function(data) {
+        $http.get('rest/controller/execution/' + eId).then(function(response) {
+          var data = response.data;
           $scope.execution = data;
           var dataSet = [];
           var parameters = data.parameters;
@@ -427,39 +459,31 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         });        
       }
       
+      $scope.throughputchart = {};
+      $scope.responseTimeByFunctionChart = {};
+      $scope.performancechart = {};
+      
       var refresh = function() {        
-        $http.get('rest/views/statusDistributionForFunctionCalls/' + eId).success(function(data) {
-          $scope.progress = data;
+        $http.get('rest/views/statusDistributionForFunctionCalls/' + eId).then(function(response) {
+          $scope.progress = response.data;
         });
         
         if($scope.stepsTable && $scope.stepsTable.Datatable) {
           $scope.stepsTable.Datatable.ajax.reload(null, false);
         }
         
-        Chart.defaults.global.animation = false;
+        viewFactory.getReportNodeStatisticCharts(eId).then(function(charts){
+          $scope.throughputchart = charts.throughputchart;
+          $scope.responseTimeByFunctionChart = charts.responseTimeByFunctionChart;
+          $scope.performancechart = charts.performancechart;
+        })
         
-        $scope.onClick = function (points, evt) {
-          console.log(points, evt);
-        };
-        
-        /* $http.get("rest/controller/execution/" + eId + "/throughput?resolution=20")
-            .success(
-                function(data) {
-                  $scope.data = [[]];
-                  $scope.labels = [];
-                  $scope.series = ['throughput'];
-                  _.each(data.rows,function(value){$scope.labels.push($filter('date')(value.date, 'HH:mm:ss'));$scope.data[0].push(value.value)});
-                  $scope.options = {
-                    axes : { x : { type : "date", key : "date", labelFunction : d3.time.format("%Y-%m-%d") }, y : { type : "linear" } },
-                    series : [ { y : "value", label : "A time series", color : "#9467bd", axis : "y", type : "area", thickness : "2px",
-                      id : "series_0" } ], tooltip : { mode : "scrubber", formatter : function(x, y, series) {
-                      return x + ' : ' + y;
-                    } }, stacks : [], lineMode : "linear", tension : 0.7, drawLegend : true, drawDots : true, columnsHGap : 5 };
-                }); */
+        viewFactory.getTimeBasedChart('ErrorRate',eId,'Errors/s').then(function(chart){$scope.errorratechart=chart})
         
         $http.get("rest/threadmanager/operations?eid=" + eId)
-        .success(
-            function(data) {
+        .then(
+            function(response) {
+              var data = response.data;
               var dataSet = [];
               for (i = 0; i < data.length; i++) {
                 if(data[i]) {
@@ -468,6 +492,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
               }
               $scope.currentOperationsTable.data = dataSet;
             });
+        
+        if($scope.reportTreeHandle.refresh) {
+          $scope.reportTreeHandle.refresh();
+        }
       };
 
       $scope.testCaseTable.onSelectionChange = function() {
@@ -592,6 +620,24 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$http','stateStor
                col.searchmode="select";
                col.render = function ( data, type, row ) {return '<span class="executionStatus status-' + data +'">'  +data+ '</span>';};
               });
+              _.each(_.where(columns,{'title':'Summary'}),function(col){
+                col.width="160px";
+                col.render = function ( data, type, row ) {
+                  var view = JSON.parse(data);
+                  if(view.count) {
+                    var distribution = view.distribution;
+                    return '<div style="width: 150px" class="progress" tooltip="PASSED: '+distribution.PASSED.count+', FAILED: '+distribution.FAILED.count+', TECHNICAL_ERROR: '+distribution.TECHNICAL_ERROR.count+'">'+
+                    '<div class="progress-bar status-PASSED" style="width:'+distribution.PASSED.count/view.count*100+'%;">'+
+                    distribution.PASSED.count+'</div>' +
+                    '<div class="progress-bar status-FAILED" style="width:'+distribution.FAILED.count/view.count*100+'%;">'+
+                    distribution.FAILED.count+'</div>' +
+                    '<div class="progress-bar status-TECHNICAL_ERROR" style="width:'+distribution.TECHNICAL_ERROR.count/view.count*100+'%;">'+
+                    distribution.TECHNICAL_ERROR.count+'</div>' +
+                    '</div>';
+                  } else {
+                    return '';
+                  }
+               }});
               return columns;
             };
             var refresh = function() {
@@ -618,7 +664,7 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$http','stateStor
                 var rows = $scope.datatable.getRows(true);
                 
                 for(i=0;i<rows.length;i++) {
-                    $http.get("rest/controller/execution/"+rows[i][0]+"/stop").success(function(data) {});          
+                    $http.get("rest/controller/execution/"+rows[i][0]+"/stop").then(function() {});          
                 }
             };
         } ]);

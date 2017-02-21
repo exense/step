@@ -19,42 +19,18 @@
 angular.module('adminControllers', [ 'dataTable', 'step' ])
 
 .controller('AdminCtrl', ['$scope', 'stateStorage',
-    function($scope, $stateStorage) {
-      $stateStorage.push($scope, 'admin', {lasttab:'users'});
-      
+    function($scope) {
       $scope.autorefresh = true;
-      
-      $scope.tabState = {adapters:false, tokens:false, quotamanager:false};
-      if($scope.$state == null) { $scope.$state = 'adapters' };
-      
-      $scope.$watch('$state',function() {
-        if($scope.$state!=null&&_.findWhere($scope.tabs, {id:$scope.$state})==null) {
-          _.each(_.keys($scope.tabState),function(key) {
-            $scope.tabState[key] = false;
-          })
-          $scope.tabState[$scope.$state] = true;
-        }
-      });
-      
-      $scope.$watchCollection('tabState',function() {
-        _.each(_.keys($scope.tabState),function(key) {
-          if($scope.tabState[key]) {
-            $scope.$state =  key;
-          }
-        })
-      })
-  
-}])   
+   }])   
 
 .controller('UserListCtrl',
-    function($scope, $interval, $http, helpers, $modal) {
-      $scope.$state = 'users';
-      
+    function($scope, $interval, $http, helpers, $uibModal) {
       $scope.datatable = {}
       
       $scope.loadTable = function loadTable() {
-        $http.get("rest/admin/users").success(
-          function(data) {
+        $http.get("rest/admin/users").then(
+          function(response) {
+            var data = response.data;
             var dataSet = [];
             for (i = 0; i < data.length; i++) {
               dataSet[i] = [ data[i].username, data[i].role];
@@ -91,13 +67,13 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
         };
           
         $scope.resetPwd = function(id) {
-          $http.post("rest/admin/user/"+id+"/resetpwd").success(function(data) {
+          $http.post("rest/admin/user/"+id+"/resetpwd").then(function() {
             $scope.loadTable();
           });
         }
         
         $scope.removeUser = function(username) {
-          $http.delete("rest/admin/user/"+username).success(function() {
+          $http.delete("rest/admin/user/"+username).then(function() {
             $scope.loadTable();
           });
         }
@@ -107,13 +83,14 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
         }
         
         $scope.editUser = function(username) {
-          $http.get("rest/admin/user/"+username).success(function(user) {
+          $http.get("rest/admin/user/"+username).then(function(response) {
+            var user = response.data;
             $scope.showEditUserPopup(user);
           });
         }
         
         $scope.showEditUserPopup = function(user) {
-          var modalInstance = $modal.open({
+          var modalInstance = $uibModal.open({
             animation: $scope.animationsEnabled,
             templateUrl: 'editUserModalContent.html',
             controller: 'editUserModalCtrl',
@@ -129,7 +106,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
 
       })
       
-.controller('editUserModalCtrl', function ($scope, $modalInstance, $http, $location, AuthService, user) {
+.controller('editUserModalCtrl', function ($scope, $uibModalInstance, $http, $location, AuthService, user) {
    $scope.roles = AuthService.getConf().roles;
    $scope.user = user;
    
@@ -138,32 +115,33 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
    }
    
    $scope.save = function() {
-     $http.post("rest/admin/user", user).success(function() {
-       $modalInstance.close();  
+     $http.post("rest/admin/user", user).then(function() {
+       $uibModalInstance.close();  
      });
    }
    
    $scope.cancel = function() {
-     $modalInstance.close();     
+     $uibModalInstance.close();     
    }
 })
 
 .controller('MyAccountCtrl',
-    function($scope, $rootScope, $interval, $http, helpers, $modal) {
+    function($scope, $rootScope, $interval, $http, helpers, $uibModal) {
       $scope.$state = 'myaccount';
       
       $scope.changePwd=function() {
-        $modal.open({animation: false,templateUrl: 'partials/changePasswordForm.html',
+        $uibModal.open({animation: false,templateUrl: 'partials/changePasswordForm.html',
           controller: 'ChangePasswordModalCtrl', resolve: {}});  
       }
       
       $scope.user = {};
-      $http.get("rest/admin/user/"+$rootScope.context.userID).success(function(user) {
+      $http.get("rest/admin/user/"+$rootScope.context.userID).then(function(response) {
+        var user = response.data;
         $scope.user=user;
       });
     })
 
-.controller('ChangePasswordModalCtrl', function ($scope, $rootScope, $modalInstance, $http, $location) {
+.controller('ChangePasswordModalCtrl', function ($scope, $rootScope, $uibModalInstance, $http, $location) {
   
   $scope.model = {newPwd:""};
   $scope.repeatPwd = ""
@@ -172,15 +150,15 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
     if($scope.repeatPwd!=$scope.model.newPwd) {
       $scope.error = "New password doesn't match"
     } else {
-      $http.post("rest/admin/myaccount/changepwd",$scope.model).success(function(user) {
-        $modalInstance.close();
-      }).error(function() {
+      $http.post("rest/admin/myaccount/changepwd",$scope.model).then(function() {
+        $uibModalInstance.close();
+      },function() {
         $scope.error = "Unable to change password. Please contact your administrator.";
       });      
     }
   };
 
   $scope.cancel = function () {
-    $modalInstance.close();
+    $uibModalInstance.close();
   };
 });

@@ -21,44 +21,48 @@ package FileWatchService;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
 
+import junit.framework.Assert;
 import step.commons.conf.FileWatchService;
+import step.commons.helpers.FileHelper;
 
 public class FileWatchServiceTest {
 
 	@Test
-	public void testBasic() {
-		File file = new File(this.getClass().getClassLoader().getResource("FileWatchServiceTest.test").getFile());
+	public void testBasic() throws InterruptedException {
+		File file = FileHelper.getClassLoaderResource(this.getClass(),"FileWatchServiceTest.test");
+		long lastModified = 0;
+		file.setLastModified(lastModified);
+		
+		Object lock = new Object();
+		
 		final AtomicInteger updatedCount = new AtomicInteger(0);
-		FileWatchService.getInstance().setInterval(1000);
+		FileWatchService.getInstance().setInterval(10);
 		FileWatchService.getInstance().register(file, new Runnable() {
 			@Override
 			public void run() {
 				updatedCount.incrementAndGet();
+				synchronized (lock) {
+					lock.notify();
+				}
 			}
 		});
-		for(int i=0;i<2;i++) {
-			file.setLastModified(System.currentTimeMillis());
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		Assert.assertEquals(2,updatedCount.get());
+		
+				
+		touchAndWait(file, lock, updatedCount, 1, lastModified+10000);
+		touchAndWait(file, lock, updatedCount, 2, lastModified+20000);
+
 		FileWatchService.getInstance().unregister(file);
-		file.setLastModified(System.currentTimeMillis());
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		touchAndWait(file, lock, updatedCount, 2, lastModified+30000);
+
+	}
+
+	private void touchAndWait(File file, Object lock, final AtomicInteger updatedCount, int expected, long lastModified) throws InterruptedException {
+		synchronized (lock) {
+			file.setLastModified(lastModified);
+			lock.wait(100);
 		}
-		Assert.assertEquals(2,updatedCount.get());
-		//FileWatchService.getInstance().interrupt();
+		Assert.assertEquals(expected,updatedCount.get());
 	}
 }

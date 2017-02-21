@@ -19,10 +19,12 @@
 package step.grid.client;
 
 import java.io.Closeable;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 
 import javax.json.JsonObject;
 import javax.ws.rs.ProcessingException;
@@ -93,13 +95,12 @@ public class GridClient implements Closeable {
 		} else {
 			output = callAgent(agent, token, message);						
 		}
-		token.getAttributes().put(SELECTION_CRITERION_THREAD, Long.toString(Thread.currentThread().getId()));
 		return output;
 	}
 
 	private OutputMessage callLocalToken(InputMessage message) throws Exception {
 		OutputMessage output;
-		TokenHandlerPool p = new TokenHandlerPool();
+		TokenHandlerPool p = new TokenHandlerPool(null);
 		MessageHandler h = p.get(message.getHandler());
 		output = h.handle(null, message);
 		return output;
@@ -216,6 +217,7 @@ public class GridClient implements Closeable {
 	private TokenWrapper getToken(final Identity tokenPretender) {
 		TokenWrapper adapterToken = null;
 		try {
+			addThreadIdInterest(tokenPretender);
 			adapterToken = adapterGrid.selectToken(tokenPretender, matchExistsTimeout, noMatchExistsTimeout);
 		} catch (TimeoutException e) {
 			String desc = "[attributes=" + tokenPretender.getAttributes() + ", selectionCriteria=" + tokenPretender.getInterests() + "]";
@@ -223,13 +225,30 @@ public class GridClient implements Closeable {
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
+		markTokenWithThreadId(adapterToken);
 		return adapterToken;
+	}
+
+	private void markTokenWithThreadId(TokenWrapper adapterToken) {
+		if(adapterToken.getAttributes()!=null) {
+			adapterToken.getAttributes().put(SELECTION_CRITERION_THREAD, Long.toString(Thread.currentThread().getId()));			
+		}
+	}
+
+	private void addThreadIdInterest(final Identity tokenPretender) {
+		if(tokenPretender.getInterests()!=null) {
+			tokenPretender.getInterests().put(SELECTION_CRITERION_THREAD, new Interest(Pattern.compile("^"+Long.toString(Thread.currentThread().getId())+"$"), false));				
+		}
 	}
 
 	private void returnAdapterTokenToRegister(TokenWrapper adapterToken) {
 		adapterGrid.returnToken(adapterToken);		
 	}
 	
+	public String registerFile(File file) {
+		return adapterGrid.registerFile(file);
+	}
+
 	@Override
 	public void close() {
 		client.close();

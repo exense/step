@@ -23,11 +23,11 @@ import java.util.Map;
 import step.artefacts.Case;
 import step.artefacts.Switch;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactAttributesHandler;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
+import step.expressions.DynamicBeanResolver;
 import step.expressions.ExpressionHandler;
 
 public class SwitchHandler extends ArtefactHandler<Switch, ReportNode> {
@@ -58,7 +58,7 @@ public class SwitchHandler extends ArtefactHandler<Switch, ReportNode> {
 				
 				for(AbstractArtefact child:getChildren(testArtefact)) {
 					if(child instanceof Case) {
-						Case c = (Case) ArtefactAttributesHandler.evaluateAttributes((Case) child);
+						Case c = (Case) DynamicBeanResolver.resolveDynamicAttributes((Case) child);
 						
 						if(evaluationResultStr.equals(c.getValue())) {
 							if(execution) {

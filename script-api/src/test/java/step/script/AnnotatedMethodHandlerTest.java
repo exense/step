@@ -40,6 +40,15 @@ public class AnnotatedMethodHandlerTest {
 	}
 	
 	@Test
+	public void testProperties2() throws Exception {
+		Map<String, String> properties = new HashMap<>();
+		properties.put("test", "test");
+		ScriptContext ctx = ScriptRunner.getExecutionContext();
+		OutputMessage out = ctx.run("testProperties", "{}", properties);
+		Assert.assertEquals("test", out.getPayload().getString("test"));
+	}
+	
+	@Test
 	public void test() throws Exception {
 		Map<String, String> properties = new HashMap<>();
 		ScriptContext ctx = ScriptRunner.getExecutionContext(properties);

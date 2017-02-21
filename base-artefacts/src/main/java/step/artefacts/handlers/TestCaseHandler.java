@@ -19,7 +19,6 @@
 package step.artefacts.handlers;
 
 import step.artefacts.TestCase;
-import step.artefacts.handlers.scheduler.SequentialArtefactScheduler;
 import step.artefacts.reports.TestCaseReportNode;
 import step.core.artefacts.handlers.ReportNodeAttributesManager;
 import step.core.artefacts.handlers.ArtefactHandler;

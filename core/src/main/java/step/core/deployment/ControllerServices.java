@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.core.deployment;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -224,6 +226,7 @@ public class ControllerServices extends AbstractServices {
 	
 	@GET
 	@Path("/reportnode/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="report-read")
 	public ReportNode getReportNode(@PathParam("id") String reportNodeId) {
 		return getContext().getReportAccessor().get(new ObjectId(reportNodeId));
@@ -270,6 +273,23 @@ public class ControllerServices extends AbstractServices {
 		public void setArtefact(AbstractArtefact artefact) {
 			this.artefact = artefact;
 		}
+	}
+	
+	@GET
+	@Path("/reportnode/{id}/children")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
+	public List<ReportNode> getReportNodeChildren(@PathParam("id") String reportNodeId) {
+		int limit = 1000;
+		List<ReportNode> result = new ArrayList<>();
+		Iterator<ReportNode> it = getContext().getReportAccessor().getChildren(new ObjectId(reportNodeId));
+		while(it.hasNext()) {
+			result.add(it.next());
+			if(result.size()>limit) {
+				break;
+			}
+		}		
+		return result;
 	}
 
 	@GET
@@ -368,6 +388,11 @@ public class ControllerServices extends AbstractServices {
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
 		Class<? extends AbstractArtefact> clazz = ArtefactRegistry.getInstance().getArtefactType(type);		
 		AbstractArtefact sample = clazz.newInstance();
+		for(Method m:clazz.getMethods()) {
+			if(m.getAnnotation(PostConstruct.class)!=null) {
+				m.invoke(sample);
+			}
+		}
 		getContext().getArtefactAccessor().save(sample);
 		return sample;
 	}
@@ -483,34 +508,7 @@ public class ControllerServices extends AbstractServices {
 	@Secured(right="plan-write")
 	public void copyArtefact(@PathParam("id") String id, 
 			@QueryParam("to") String targetParentId, @QueryParam("pos") int newPosition) {
-		ArtefactAccessor a = getContext().getArtefactAccessor();
-		ObjectId cloneId = copyRecursive(a, new ObjectId(id));
-		
-		if(targetParentId!=null) {
-			AbstractArtefact target = a.get(targetParentId);
-			target.addChild(cloneId);
-			a.save(target);
-		} else {
-			AbstractArtefact target = a.get(cloneId);
-			String name = target.getAttributes().get("name");
-			target.getAttributes().put("name", name+"_Copy");
-			a.save(target);
-		}
-	}
-	
-	private ObjectId copyRecursive(ArtefactAccessor a, ObjectId id) {
-		ObjectId cloneId = new ObjectId(); 
-		AbstractArtefact artefact = a.get(id);
-		artefact.setId(cloneId);	
-		if(artefact.getChildrenIDs()!=null) {
-			List<ObjectId> newChildren = new ArrayList<>();
-			for(ObjectId childId:artefact.getChildrenIDs()) {
-				newChildren.add(copyRecursive(a, childId));
-			}
-			artefact.setChildrenIDs(newChildren);
-		}
-		a.save(artefact);
-		return cloneId;
+		getContext().getArtefactManager().copyArtefact(id, targetParentId);
 	}
 	
 	@POST

@@ -20,7 +20,6 @@ package step.handlers.scripthandler;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,8 +45,13 @@ import step.grid.io.OutputMessage;
 
 public class ScriptHandler implements MessageHandler {
 
-	public static final String SCRIPT_DIR = "scripthandler.script.dir";
-	public static final String ERROR_HANDLER_SCRIPT = "scripthandler.script.errorhandler";
+	public static final String SCRIPT_FILE = "file";
+	public static final String REMOTE_FILE_ID = "remotefile.id";
+	public static final String REMOTE_FILE_VERSION = "remotefile.version";
+
+	public static final String ERROR_HANDLER_FILE = "errorhandler.file";
+	public static final String ERROR_HANDLER_REMOTE_FILE_ID = "errorhandler.remotefile.id";
+	public static final String ERROR_HANDLER_REMOTE_FILE_VERSION = "errorhandler.remotefile.version";
 	
 	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
 	
@@ -65,8 +69,7 @@ public class ScriptHandler implements MessageHandler {
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {        
         Map<String, String> properties = buildPropertyMap(token, message);
         
-        String scriptDirectory = getScriptDirectory(properties);
-        File scriptFile = searchScriptFile(message, scriptDirectory);        
+        File scriptFile = getScriptFile(token, properties.get(SCRIPT_FILE), properties.get(REMOTE_FILE_ID), properties.get(REMOTE_FILE_VERSION));
         
         String engineName = getScriptEngineName(scriptFile);
         ScriptEngine engine = loadScriptEngine(engineName);	      
@@ -77,11 +80,22 @@ public class ScriptHandler implements MessageHandler {
         try {
         	executeScript(scriptFile, binding, engine);        	
         } catch(Exception e) {        	
-        	executeErrorHandlerScript(properties, engine, binding);
+        	executeErrorHandlerScript(token, properties, engine, binding);
         	throw e;
         }
         
         return outputBuilder.build();
+	}
+
+	private File getScriptFile(AgentTokenWrapper token, String scriptFileProp, String remoteFileId, String remoteFileVersionStr) {
+		File scriptFile;
+        String file = scriptFileProp;
+        if(file!=null) {
+        	scriptFile = new File(file);
+        } else {
+        	scriptFile = token.getServices().getFileManagerClient().requestFile(remoteFileId, Long.parseLong(remoteFileVersionStr));
+        }
+		return scriptFile;
 	}
 
 	private String getScriptEngineName(File scriptFile) {
@@ -98,11 +112,11 @@ public class ScriptHandler implements MessageHandler {
         }
 	}
 
-	private void executeErrorHandlerScript(Map<String, String> properties, ScriptEngine engine, Bindings binding)
+	private void executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding)
 			throws FileNotFoundException, Exception, IOException {
-		if(properties.containsKey(ERROR_HANDLER_SCRIPT)) {
-			String errorScript = properties.get(ERROR_HANDLER_SCRIPT);
-			executeScript(new File(errorScript), binding, engine);
+		if(properties.containsKey(ERROR_HANDLER_FILE)) {
+			File errorScriptFile = getScriptFile(token, properties.get(ERROR_HANDLER_FILE), properties.get(ERROR_HANDLER_REMOTE_FILE_ID), properties.get(ERROR_HANDLER_REMOTE_FILE_VERSION));
+			executeScript(errorScriptFile, binding, engine);
 		}
 	}
 
@@ -122,7 +136,11 @@ public class ScriptHandler implements MessageHandler {
 			Map<String, String> properties) {
 		Bindings binding = new SimpleBindings();
         binding.put("input", message.getArgument());
+        binding.put("inputJson", message.getArgument().toString());
+        
         binding.put("output", outputBuilder);
+        binding.put("context", outputBuilder);
+        
         binding.put("properties", properties);
         binding.put("session", token.getSession());
 		return binding;
@@ -134,38 +152,6 @@ public class ScriptHandler implements MessageHandler {
 			throw new RuntimeException("Unable to find script engine with name '"+engineName+"'");
 		}
 		return engine;
-	}
-
-	private String getScriptDirectory(Map<String, String> properties) {
-		String scriptDirectory;
-        if(properties.containsKey(SCRIPT_DIR)) {
-        	scriptDirectory = properties.get(SCRIPT_DIR);
-        } else {
-        	throw new RuntimeException("Property '"+SCRIPT_DIR+"' is undefined.");
-        }
-		return scriptDirectory;
-	}
-
-	private File searchScriptFile(InputMessage message, String scriptDirectory) {
-		File directory = new File(scriptDirectory);
-		if(!directory.exists()||!directory.isDirectory()) {
-			throw new RuntimeException("Invalid script directory '"+scriptDirectory+"' set by property '"+SCRIPT_DIR+"'");
-		} else {
-	        File[] files = directory.listFiles(new FileFilter() {
-				@Override
-				public boolean accept(File file) {
-					return file.getName().startsWith(message.getFunction());
-				}
-	        });
-	        if(files.length==0) {
-	        	throw new RuntimeException("No script found for function '"+message.getFunction()+"'");
-	        } else if(files.length>1) {
-	        	throw new RuntimeException("More than one script found for function '"+message.getFunction()+"'");
-	        }
-	        
-	        File scriptFile = files[0];
-			return scriptFile;
-		}
 	}
 
 	private Map<String, String> buildPropertyMap(AgentTokenWrapper token, InputMessage message) {

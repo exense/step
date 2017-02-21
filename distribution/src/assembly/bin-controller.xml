@@ -39,6 +39,7 @@
 			<useAllReactorProjects>true</useAllReactorProjects>
 			<includes>
 				<include>step:tec</include>
+				<include>step:rtm-plugin</include>
 			</includes>
 			<binaries>
 				<outputDirectory>lib</outputDirectory>

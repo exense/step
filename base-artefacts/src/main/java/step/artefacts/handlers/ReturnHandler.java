@@ -18,16 +18,11 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
-import java.io.StringReader;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-
 import step.artefacts.Return;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.grid.io.OutputMessage;
+import step.grid.agent.handler.context.OutputMessageBuilder;
 
 public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 	
@@ -41,9 +36,8 @@ public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 		node.setStatus(ReportNodeStatus.PASSED);
 
 		Object o = context.getVariablesManager().getVariable("output");
-		if(o!=null && o instanceof OutputMessage) {
-			JsonObject payload = Json.createReader(new StringReader(testArtefact.getValue())).readObject();
-			((OutputMessage)o).setPayload(payload);
+		if(o!=null && o instanceof OutputMessageBuilder) {
+			((OutputMessageBuilder)o).setPayloadJson(testArtefact.getValue());
 		}
 	}
 

@@ -7,36 +7,6 @@
 	<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
 </div>
 
-<script type="text/ng-template" id="newFunctionModalContent.html">
-        <div class="modal-header">
-            <h3 class="modal-title">{{mode=='edit'?'Edit':'New'}} Keyword</h3>
-        </div>
-		
-        <div class="modal-body">
-			<strong>{{description}}</strong>
-<form ng-submit="save(type()!='Handler')">
-	<div ng-repeat="key in getFunctionAttributes()" class="form-group">
-		<label>{{key}}</label>
-		<input ng-model="function_.attributes[key]" class="form-control form-control-sm" autofocus></input>
-	</div>
-	<div class="form-group">
-		<label>Type</label>
-		<select ng-model="type" ng-model-options="{ getterSetter: true }" ng-options="option as option for option in ['Composite','Handler']" class="form-control" />
-	</div>
-	<div  ng-if="type()=='Handler'" class="form-group">
-		<label>Handler chain</label>
-		<input ng-model="function_.handlerChain" ng-options="" class="form-control" />
-	</div>	
-	<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
-</form>
-        </div>
-        <div class="modal-footer">
-			<button ng-if="type()!='Handler'" class="btn btn-primary" type="button" ng-click="save(true)">Save and edit</button>
-            <button class="btn btn-primary" type="button" ng-click="save(false)">Save</button>
-            <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
-        </div>
-</script>
-
 <script type="text/ng-template" id="executeFunctionModalContent.html">
         <div class="modal-header">
             <h3 class="modal-title">Execute Keyword</h3>
@@ -45,48 +15,8 @@
         <div class="modal-body">
 		<p>You can use this page to test your keyword atomically. If you aim at creating a plan using this keyword, go to <a ng-click="cancel()" href="#/root/artefacts">Plans</a></p>
 
-<div class="form-group">
-	<label for="comment">Argument (JSON):</label>	
-	<textarea class="form-control" ng-model="argument" rows="5" id="comment"></textarea>
-</div>
+		<function-execution-panel functionid="functionId" handle="handle"></function-execution-panel>
 
-<div class="form-group">
-	<label>Properties:</label>
-	<button class="btn btn-default btn-sm" ng-click="addProperty()"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
-	<ul class="list-unstyled">
-	<li ng-repeat="property in properties" style="margin-botton:5px">
-	<input class="form-control" ng-model="property.key" placeholder="Key">
-	<input class="form-control" ng-model="property.value" placeholder="Value">
-	</li>
-	</ul>	
-</div>
-
-<div ng-show="running" style="margin-top:10px;margin-botton:10px">
-<div class="progress progress-striped active" >
-  <div class="progress-bar"  role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-</div>
-</div>
-</div>
-
-<div ng-show="output!=null">
-<div class="form-group" >
-<label>Output:</label>	
-<textarea class="form-control" ng-model="result" rows="5"></textarea>
-</div>
-<div class="form-group" >
-<label>Error:</label>	
-<textarea class="form-control" ng-model="error" rows="5"></textarea>
-</div>
-
-<div ng-show="attachments!=null&&attachments.length>0" class="form-group">
-<label>Attachments:</label>
-<ul class="list-unstyled">
-<li role="presentation" ng-repeat="attachment in attachments">
-	<a role="menuitem" tabindex="-1" href="files?uuid={{attachment.id}}">{{attachment.name}}</a>
-</li>
-</ul>	
-</div>
-        </div>
         <div class="modal-footer">
             <button class="btn btn-primary" type="button" ng-click="ok()">Execute</button>
             <button class="btn btn-warning" type="button" ng-click="cancel()">Close</button>

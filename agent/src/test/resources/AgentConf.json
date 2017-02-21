@@ -1,11 +1,13 @@
 {
 "gridHost":"http://localhost:8081", 
 "registrationPeriod":1000,
+"workingDir":"src/test/resources/work",
 "tokenGroups":[
 {"capacity":10, 
 "tokenConf":{
 	"attributes":{"key":"val"},
 	"properties":{}}
 }
-]
+],
+"properties":{"plugins.jmeter.home":"../distribution/template-agent/ext/lib/jmeter"}
 }

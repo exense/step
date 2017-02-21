@@ -29,7 +29,8 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import step.artefacts.ForEachBlock;
+import org.json.JSONObject;
+
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataSet;
 
@@ -49,16 +50,16 @@ public class SQLTableDataPool extends DataSet {
 
 	private ArrayList<String> cols;
 
-	public SQLTableDataPool(ForEachBlock configuration){
-		super();
+	public SQLTableDataPool(JSONObject configuration){
+		super(configuration);
 
-		String[] split = configuration.getFolder().trim().split(",");
+		String[] split = configuration.getString("connectionString").trim().split(",");
 		this.jdbc_url = split[0];
 		this.db_user =  split[1];
 		this.db_pwd =  split[2];
 		this.driver_class =  split[3];
 
-		this.query = configuration.getTable();
+		this.query = configuration.getString("query");
 		this.table = parseQueryForTable(this.query);
 
 		try {

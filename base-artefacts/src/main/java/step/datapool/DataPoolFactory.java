@@ -18,9 +18,8 @@
  *******************************************************************************/
 package step.datapool;
 
-import step.artefacts.AbstractForBlock;
-import step.artefacts.ForBlock;
-import step.artefacts.ForEachBlock;
+import org.json.JSONObject;
+
 import step.datapool.excel.ExcelDataPoolImpl;
 import step.datapool.file.CSVReaderDataPool;
 import step.datapool.file.FileDataPoolImpl;
@@ -30,43 +29,42 @@ import step.datapool.sequence.IntSequenceDataPoolImpl;
 
 public class DataPoolFactory {
 
-	public static DataSet getDataPool(AbstractForBlock dataPoolConfiguration) {
+	public static DataSet getDataPool(String dataSourceType, JSONObject dataPoolConfiguration) {
 		DataSet result = null;
-		
-		if(dataPoolConfiguration instanceof ForEachBlock) {
-			ForEachBlock forEach = (ForEachBlock) dataPoolConfiguration;
 
-			if(forEach.getTable() != null && forEach.getTable().length() > 0){ // Something in Table
-				String filename = forEach.getTable().toLowerCase();
-				if(filename.endsWith(".csv"))
-					result = new CSVReaderDataPool(forEach);                    // CSV
-				else{
-					if(filename.endsWith(".xlsx")||filename.endsWith(".xls"))
-						result = new ExcelDataPoolImpl(forEach);                // Excel
-					else{
-						if(forEach.getFolder() != null && forEach.getFolder().length() > 0) { // Not CSV nor Excel, but has something in Folder
-							if(forEach.getFolder().startsWith("jdbc:"))
-								result = new SQLTableDataPool(forEach);         // SQL
-							else // Not CSV nor Excel, has something in Table but not JDBC -> there no such thing right now -> Error
-								throw new RuntimeException("Unsupported datapool for folder " + forEach.getFolder()+ "and table " + forEach.getTable() +".");
-						}
-						else // Not CSV nor Excel, has nothing in Folder -> default case (Flat Filer = any extension)
-							result = new FlatFileReaderDataPool(forEach);       // flat file
-					}
-				}
-			} else { // Nothing in Table, but something in Folder
-				if(forEach.getFolder()!=null && forEach.getFolder().trim().length()>0) {
-					result = new FileDataPoolImpl(forEach); 						// Folder based					
-				} else {
-					throw new RuntimeException("Either the attribute 'folder' or the attribute 'table' has to be specified.");
-				}
-			}
-		} else if (dataPoolConfiguration instanceof ForBlock) {
-			result = new IntSequenceDataPoolImpl((ForBlock)dataPoolConfiguration);
+		if(dataSourceType.equals("excel")) {
+			result = new ExcelDataPoolImpl(dataPoolConfiguration);
+		} else if(dataSourceType.equals("csv")) {
+			result = new CSVReaderDataPool(dataPoolConfiguration); 
+		} else if(dataSourceType.equals("folder")) {
+			result = new FileDataPoolImpl(dataPoolConfiguration); 
+		} else if(dataSourceType.equals("sql")) {
+			result = new SQLTableDataPool(dataPoolConfiguration);
+		} else if(dataSourceType.equals("file")) {
+			result = new FlatFileReaderDataPool(dataPoolConfiguration);
+		} else if(dataSourceType.equals("sequence")) {
+			result = new IntSequenceDataPoolImpl(dataPoolConfiguration);
 		} else {
-			throw new RuntimeException("No data pool configured for the artefact type " + dataPoolConfiguration.getClass());
+			throw new RuntimeException("Unsupported data source type: "+dataSourceType);
 		}
 
 		return result;
+	}
+	
+	public static JSONObject getDefaultDataPoolConfiguration(String dataSourceType) {
+		JSONObject conf = new JSONObject();
+		if(dataSourceType!=null) {
+			if(dataSourceType.equals("excel")) {
+			} else if(dataSourceType.equals("csv")) {
+			} else if(dataSourceType.equals("folder")) {
+			} else if(dataSourceType.equals("sql")) {
+			} else if(dataSourceType.equals("file")) {
+			} else if(dataSourceType.equals("sequence")) {
+				conf.put("start", 1);
+				conf.put("end", 2);
+				conf.put("inc", 1);
+			}
+		}	
+		return conf;
 	}
 }

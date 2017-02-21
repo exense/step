@@ -18,8 +18,8 @@
  *******************************************************************************/
 angular.module('artefactsControllers',['dataTable','step'])
 
-.controller('ArtefactListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$modal', 'Dialogs', '$location', 'AuthService',
-    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $modal, Dialogs, $location, AuthService) {
+.controller('ArtefactListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', '$location', 'AuthService',
+    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, $location, AuthService) {
       $stateStorage.push($scope, 'artefacts', {});	
 
       $scope.autorefresh = true;
@@ -39,9 +39,9 @@ angular.module('artefactsControllers',['dataTable','step'])
       }
       
       $scope.addArtefact = function() {
-    	$http.get("rest/controller/artefact/types").success(function(data){ 
-          $scope.artefactTypes = data;
-          var modalInstance = $modal.open({
+    	$http.get("rest/controller/artefact/types").then(function(response){ 
+          $scope.artefactTypes = response.data;
+          var modalInstance = $uibModal.open({
         	animation: $scope.animationsEnabled,
         	templateUrl: 'newArtefactModalContent.html',
         	controller: 'newArtefactModalCtrl',
@@ -62,7 +62,7 @@ angular.module('artefactsControllers',['dataTable','step'])
       
       $scope.removeArtefact = function(id) {
         Dialogs.showDeleteWarning().then(function() {
-          $http.delete("rest/controller/artefact/"+id).success(function() {
+          $http.delete("rest/controller/artefact/"+id).then(function() {
             reload();
           });
         })
@@ -75,7 +75,7 @@ angular.module('artefactsControllers',['dataTable','step'])
       $scope.pasteArtefact = function() {
         if($rootScope.clipboard && $rootScope.clipboard.object=="artefact") {
           $http.post("rest/controller/artefact/"+$rootScope.clipboard.id+"/copy")
-          .success(function() {
+          .then(function() {
             reload();
           });
         }
@@ -128,26 +128,28 @@ angular.module('artefactsControllers',['dataTable','step'])
       };
     } ])
     
-.controller('newArtefactModalCtrl', function ($scope, $modalInstance, $http, $location, artefactTypes) {
+.controller('newArtefactModalCtrl', function ($scope, $uibModalInstance, $http, $location, artefactTypes) {
   
   $scope.artefactTypes = artefactTypes;
   $scope.artefacttype = 'Sequence';
 	
   $scope.attributes= {};
   
-  $http.get("rest/screens/artefactTable").success(function(data){
-    $scope.inputs=data;
+  $http.get("rest/screens/artefactTable").then(function(response){
+    $scope.inputs=response.data;
   });	
   
   $scope.save = function (editAfterSave) {  
-	$http.get("rest/controller/artefact/types/"+$scope.artefacttype).success(function(artefact) {
+	$http.get("rest/controller/artefact/types/"+$scope.artefacttype).then(function(response) {
+	  var artefact = response.data
 		artefact.root = true;
 		artefact.attributes = {};
 		_.mapObject($scope.attributes,function(value,key) {
 			  eval('artefact.'+key+"='"+value+"'");
 		})
-		$http.post("rest/controller/artefact", artefact).success(function(artefact) {
-			$modalInstance.close(artefact);
+		$http.post("rest/controller/artefact", artefact).then(function(response) {
+		  var artefact = response.data;
+			$uibModalInstance.close(artefact);
 			
 			if(editAfterSave) {
 				$location.path('/root/artefacteditor/' + artefact.id)
@@ -157,6 +159,42 @@ angular.module('artefactsControllers',['dataTable','step'])
   };
 
   $scope.cancel = function () {
-    $modalInstance.dismiss('cancel');
+    $uibModalInstance.dismiss('cancel');
   };
-});
+})
+
+.controller('selectArtefactModalCtrl', function ($scope, $uibModalInstance) {
+  
+  $scope.selectArtefact = function(id) {
+    $uibModalInstance.close(id);
+  }
+  
+  $scope.table = {};
+
+  $scope.tabledef = {}      
+  
+  $scope.tabledef.columns = function(columns) {
+    _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
+      col.visible = false
+    });
+    _.each(_.where(columns,{'title':'Actions'}),function(col){
+        col.title="Actions";
+        col.searchmode="none";
+        col.width="160px";
+        col.render = function ( data, type, row ) {
+          var html = '<div class="input-group">' +
+            '<div class="btn-group">' +
+            '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().selectArtefact(\''+row[0]+'\')">' +
+            '<span class="glyphicon glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>';
+          html+='</div></div>';
+          return html;
+        }
+       });
+    return columns;
+  };
+
+
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+})

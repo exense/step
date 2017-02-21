@@ -16,7 +16,7 @@ public class ViewPlugin extends AbstractPlugin {
 
 	public static final String VIEW_PLUGIN_KEY = "ViewPlugin_Instance";
 	
-	private final ConcurrentHashMap<String, View<ViewModel>> register = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, AbstractView<ViewModel>> register = new ConcurrentHashMap<>();
 	
 	private ViewModelAccessor accessor;
 	
@@ -32,12 +32,12 @@ public class ViewPlugin extends AbstractPlugin {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void loadViews() {
-		Set<Class<? extends View>> viewClasses = new Reflections("step").getSubTypesOf(View.class);
+		Set<Class<?>> viewClasses = new Reflections("step").getTypesAnnotatedWith(View.class);
 		
-		for(Class<? extends View> viewClass:viewClasses) {
-			View view;
+		for(Class<?> viewClass:viewClasses) {
+			AbstractView view;
 			try {
-				view = viewClass.newInstance();
+				view = (AbstractView) viewClass.newInstance();
 				register(view.getViewId(), view);
 			} catch (InstantiationException | IllegalAccessException e) {
 				
@@ -45,12 +45,12 @@ public class ViewPlugin extends AbstractPlugin {
 		}
 	}
 	
-	public void register(String viewId, View<ViewModel> view) {
+	public void register(String viewId, AbstractView<ViewModel> view) {
 		register.put(viewId, view);
 	}
 	
 	public ViewModel query(String viewId, String executionId) {
-		View<?> view =	register.get(viewId);
+		AbstractView<?> view =	register.get(viewId);
 		if(view!=null) {
 			ViewModel model = view.getModel(executionId);
 			if(model==null) {
@@ -71,7 +71,7 @@ public class ViewPlugin extends AbstractPlugin {
 
 	@Override
 	public void executionStart(ExecutionContext context) {
-		for(View<ViewModel> view:register.values()) {
+		for(AbstractView<ViewModel> view:register.values()) {
 			ViewModel model = view.init();
 			model.setExecutionId(context.getExecutionId());
 			model.setViewId(view.getViewId());
@@ -81,7 +81,7 @@ public class ViewPlugin extends AbstractPlugin {
 
 	@Override
 	public void afterExecutionEnd(ExecutionContext context) {
-		for(View<?> view:register.values()) {
+		for(AbstractView<?> view:register.values()) {
 			ViewModel model = view.removeModel(context.getExecutionId());
 			accessor.save(model);
 		}
@@ -89,7 +89,7 @@ public class ViewPlugin extends AbstractPlugin {
 
 	@Override
 	public void afterReportNodeSkeletonCreation(ReportNode node) {
-		for(View<ViewModel> view:register.values()) {
+		for(AbstractView<ViewModel> view:register.values()) {
 			ViewModel model = view.getModel(node.getExecutionID());
 			synchronized (model) {
 				view.afterReportNodeSkeletonCreation(model, node);				
@@ -99,7 +99,7 @@ public class ViewPlugin extends AbstractPlugin {
 
 	@Override
 	public void afterReportNodeExecution(ReportNode node) {
-		for(View<ViewModel> view:register.values()) {
+		for(AbstractView<ViewModel> view:register.values()) {
 			ViewModel model = view.getModel(node.getExecutionID());
 			synchronized (model) {
 				view.afterReportNodeExecution(model, node);

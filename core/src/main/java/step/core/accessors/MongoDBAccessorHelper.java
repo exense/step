@@ -24,7 +24,10 @@ import java.util.List;
 import org.bson.Document;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
+import org.jongo.marshall.jackson.JacksonMapper;
 
+import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
@@ -83,7 +86,9 @@ public class MongoDBAccessorHelper {
 	public MongoCollection getMongoCollection(MongoClient client, String collectionName) {
 		DB db = client.getDB(this.db);
 		
-		Jongo jongo = new Jongo(db);
+		Jongo jongo = new Jongo(db,new JacksonMapper.Builder()
+			      .registerModule(new JSR353Module())
+			      .registerModule(new JsonOrgModule()).build());
 		MongoCollection collection = jongo.getCollection(collectionName);
 		
 		return collection;

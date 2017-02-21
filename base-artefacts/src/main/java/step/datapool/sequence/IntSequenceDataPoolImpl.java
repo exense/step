@@ -21,29 +21,31 @@ package step.datapool.sequence;
 import java.util.HashMap;
 import java.util.Map;
 
-import step.artefacts.ForBlock;
+import org.json.JSONObject;
+
 import step.datapool.DataSet;
 
 
 public class IntSequenceDataPoolImpl extends DataSet {
-	
-	ForBlock configuration;
 	
 	Map<String, String> params = new HashMap<>();
 	
 	int cursor;
 	
 	boolean init = true;
+	
+	int inc, end;
 			
-	public IntSequenceDataPoolImpl(ForBlock configuration) {
-		super();
-		this.configuration = configuration;
+	public IntSequenceDataPoolImpl(JSONObject configuration) {
+		super(configuration);
 	}
 
 	@Override
 	public void reset_() {
 		init=true;
-		cursor = configuration.getStartInt();
+		cursor = configuration.has("start")?configuration.getInt("start"):0;
+		inc = configuration.has("inc")?configuration.getInt("inc"):1;
+		end = configuration.getInt("end");
 	}
 
 	@Override
@@ -51,17 +53,17 @@ public class IntSequenceDataPoolImpl extends DataSet {
 		if(init) {
 			init=false;
 		} else {
-			cursor+=configuration.getIncInt();
+			cursor+=inc;
 		}
 		
-		if(configuration.getIncInt()>0) {
-			if(cursor<configuration.getEndInt()+1) {
+		if(inc>0) {
+			if(cursor<end+1) {
 				return cursor;
 			} else {
 				return null;
 			}
 		} else {
-			if(cursor>configuration.getEndInt()-1) {
+			if(cursor>end-1) {
 				return cursor;
 			} else {
 				return null;

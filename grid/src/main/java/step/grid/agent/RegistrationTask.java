@@ -29,25 +29,24 @@ import step.grid.RegistrationMessage;
 public class RegistrationTask extends TimerTask {
 	
 	private static final Logger logger = LoggerFactory.getLogger(RegistrationTask.class);
-		
+	
 	private final Agent agent;
 	
 	private final RegistrationClient client;
 	
 	private boolean interrupted;
 
-	public RegistrationTask(Agent agent) {
+	public RegistrationTask(Agent agent, RegistrationClient client) {
 		super();
-		
 		this.agent = agent;
-		this.client = new RegistrationClient(agent.getGridHost());
+		this.client = client;
 	}
 
 	@Override
 	public void run() {
 		if(!interrupted) {
 			try {		
-				RegistrationMessage message = new RegistrationMessage(new AgentRef(agent.getId(), agent.getAgentUrl()), agent.getAvailableTokens());
+				RegistrationMessage message = new RegistrationMessage(new AgentRef(agent.getId(), agent.getAgentUrl()), agent.getTokens());
 				logger.debug("Sending registration message "+message.toString());
 				client.sendRegistrationMessage(message);
 			} catch (Exception e) {

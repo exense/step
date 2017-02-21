@@ -36,12 +36,21 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.grid.agent.conf.AgentConf;
+
 public class TokenHandlerPool {
 
 	private static final Logger logger = LoggerFactory.getLogger(TokenHandlerPool.class);
 	
+	private final AgentConf conf;
+	
 	private Map<String, MessageHandler> pool = new HashMap<>();
 	
+	public TokenHandlerPool(AgentConf conf) {
+		super();
+		this.conf = conf;
+	}
+
 	public synchronized MessageHandler get(String handlerKey) throws Exception {
 		MessageHandler handler = pool.get(handlerKey); 
 		
@@ -101,29 +110,19 @@ public class TokenHandlerPool {
 			
 			if(factory.equals("class")) {
 				try {
-					Class<?> class_ = Class.forName(factoryKey);
+					Class<?> class_ = Class.forName(factoryKey, true, Thread.currentThread().getContextClassLoader());
 					handler = newInstance(class_);
 				} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 					throw e;
 				}
 			} else if (factory.equals("classuri")) {	
-				List<URL> urls = new ArrayList<>();
-				File f = new File(factoryKey);
-				if(f.isDirectory()) {
-					for(File file:f.listFiles()) {
-						if(file.getName().endsWith(".jar")) {
-							urls.add(file.toURI().toURL());
-						}
-					}
-				}
-				try {
-					urls.add(f.getCanonicalFile().toURI().toURL());
-				} catch (IOException e) {
-					logger.warn("Error while getting canonical file name of '"+f.getPath()+"'",e );
-				}
-								
-				ClassLoader cl = new URLClassLoader(urls.toArray(new URL[urls.size()]), Thread.currentThread().getContextClassLoader());
+				URL[] urls = classPathStringToURLs(factoryKey);			
+				ClassLoader cl = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
 				handler = new ClassLoaderMessageHandlerWrapper(cl);
+			} else if (factory.equals("isolatedClasspath")) {	
+				URL[] urls = classPathStringToURLs(factoryKey);			
+				ClassLoader cl = new IsolatingURLClassLoader(urls, Thread.currentThread().getContextClassLoader());
+				handler = new ClassLoaderMessageHandlerWrapper(cl);				
 			} else {
 				throw new RuntimeException("Unknown handler factory: "+factory);
 			}
@@ -131,7 +130,33 @@ public class TokenHandlerPool {
 		} else {
 			throw new RuntimeException("Invalid handler key: "+handlerKey);
 		}
+		
+		if(handler instanceof AgentConfigurationAware && conf!=null) {
+			((AgentConfigurationAware)handler).init(conf);
+		}
 		return handler;
+	}
+
+	private URL[] classPathStringToURLs(String factoryKey) throws MalformedURLException {
+		List<URL> urls = new ArrayList<>();
+		
+		String[] paths = factoryKey.split(";");
+		for(String path:paths) {
+			File f = new File(path);
+			if(f.isDirectory()) {
+				for(File file:f.listFiles()) {
+					if(file.getName().endsWith(".jar")) {
+						urls.add(file.toURI().toURL());
+					}
+				}
+			}
+			try {
+				urls.add(f.getCanonicalFile().toURI().toURL());
+			} catch (IOException e) {
+				logger.warn("Error while getting canonical file name of '"+f.getPath()+"'",e );
+			}
+		}
+		return urls.toArray(new URL[urls.size()]);
 	}
 
 	private MessageHandler newInstance(Class<?> class_)

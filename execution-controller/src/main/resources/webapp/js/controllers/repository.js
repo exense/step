@@ -43,13 +43,13 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
       $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':$location.search()};
       $scope.loading = true;
       $http.post("rest/controller/repository/artefact/info",$scope.repoRef).then(
-          function(data) {
+          function(response) {
             $scope.loading = false
-            $scope.artefactInfo = data.data;
+            $scope.artefactInfo = response.data;
           }, 
-          function errorCallback(data) { 
+          function errorCallback(response) { 
             $scope.loading = false
-            $scope.error = data.data;
+            $scope.error = response.data;
           });
       
       $scope.functions = {};
@@ -71,8 +71,9 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
       $scope.testCaseTable.defaultSelection = "all";
       
       $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':$location.search()};
-      $http.post("rest/controller/repository/report",$scope.repoRef).success(
-          function(data) {
+      $http.post("rest/controller/repository/report",$scope.repoRef).then(
+          function(response) {
+            var data = response.data;
             var dataSet = [];
             var runs = data.runs;
             for (i = 0; i < runs.length; i++) {

@@ -1,16 +1,18 @@
 <div ng-controller="AdminCtrl">
-	<tabset> <tab heading="Users" id="UserListCtrl" ng-controller="UserListCtrl" active="$parent.tabState['users']">
-	<div class="panel-body">
-		<p>
-		<div class="row">
-			<div class="panel-body pull-right">
-				<button type="button" ng-disabled="!authService.hasRight('user-write')"	class="btn btn-success" ng-click="addUser()">Add user</button>
+	<uib-tabset> 
+		<uib-tab heading="Users">
+			<div class="panel-body" id="UserListCtrl" ng-controller="UserListCtrl">
+				<p>
+				<div class="row">
+					<div class="panel-body pull-right">
+						<button type="button" ng-disabled="!authService.hasRight('user-write')"	class="btn btn-success" ng-click="addUser()">Add user</button>
+					</div>
+				</div>
+				<datatable tabledef="tabledef" handle="datatable" selectionmode="multiple" />
+				</p>
 			</div>
-		</div>
-		<datatable tabledef="tabledef" handle="datatable" selectionmode="multiple" />
-		</p>
-	</div>
-	</tab> </tabset>
+		</uib-tab> 
+	</uib-tabset>
 </div>
 
 <script type="text/ng-template" id="editUserModalContent.html">

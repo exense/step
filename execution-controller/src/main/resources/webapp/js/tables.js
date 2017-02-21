@@ -275,7 +275,8 @@ angular.module('dataTable', [])
         tableOptions.dom = 'lrtip';
         tableOptions.sProcessing = '';
         
-        tableInitializationPromises.push($http.get('rest/datatable/' + attr.serverside + '/columns').success(function(data) {
+        tableInitializationPromises.push($http.get('rest/datatable/' + attr.serverside + '/columns').then(function(response) {
+          var data = response.data;
           var columns = [];
           _.each(data, function(col) {
             var colDef = { "title" : col.title, "inputType" : col.inputType};
@@ -390,7 +391,8 @@ angular.module('dataTable', [])
         scope.Datatable.ajax.reload(null, false);
         
         (function poll() {
-          $http.get('rest/datatable/exports/' + scope.reportID).success(function (data) {
+          $http.get('rest/datatable/exports/' + scope.reportID).then(function (response) {
+            var data = response.data;
             if(data.ready) {
               var attachmentID = data.attachmentID;
               $.fileDownload('files?uuid='+attachmentID)
