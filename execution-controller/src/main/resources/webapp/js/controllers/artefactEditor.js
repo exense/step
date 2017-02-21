@@ -277,6 +277,7 @@ angular.module('artefactEditor',['dataTable','step'])
           "Default":{template:"partials/artefacts/defaultArtefactForm.html"},
           "ForEach":{template:"partials/artefacts/forEach.html"},
           "For":{template:"partials/artefacts/for.html"},
+          "Sequence":{template:"partials/artefacts/sequence.html"},
           "CallFunction":{template:"partials/artefacts/callFunction.html"},
           "CallCompositeControl":{template:"partials/artefacts/callCompositeControl.html"}
       }
@@ -415,10 +416,19 @@ angular.module('artefactEditor',['dataTable','step'])
       
       $scope.addRowToTable = function(row) {
         $scope.argumentAsTable.push(row?row:{"key":"","value":""})
+        $scope.updateJsonFromTable();
+        $scope.save();
       }
       
       $scope.removeRowFromTable = function(key) {
         $scope.argumentAsTable = _.reject($scope.argumentAsTable, function(entry){ return entry.key==key});
+        $scope.updateJsonFromTable();
+        $scope.save();
+      }
+      
+      $scope.onRowEdit = function() {
+        $scope.updateJsonFromTable();
+        $scope.save();
       }
       
       $scope.onJsonFieldBlur = function() {
