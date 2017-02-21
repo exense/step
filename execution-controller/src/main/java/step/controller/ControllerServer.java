@@ -38,8 +38,6 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
-
 import step.attachments.DownloadFileServlet;
 import step.commons.conf.Configuration;
 import step.core.Controller;
@@ -52,6 +50,7 @@ import step.core.deployment.ControllerServices;
 import step.core.deployment.ErrorFilter;
 import step.core.deployment.JacksonMapperProvider;
 import step.grid.agent.ArgumentParser;
+
 
 public class ControllerServer {
 
@@ -163,7 +162,6 @@ public class ControllerServer {
 			}
 		});
 		
-		resourceConfig.register(JacksonJaxbJsonProvider.class);
 		resourceConfig.register(JacksonMapperProvider.class);
 		
 		resourceConfig.registerClasses(ApplicationServices.class);
