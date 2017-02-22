@@ -29,6 +29,8 @@ public class CallCompositeControl extends AbstractArtefact {
 	@DynamicAttribute
 	private String artefactId;
 	
+	private String cachedArtefactName;
+	
 	@DynamicAttribute
 	private String inputJson;
 
@@ -38,6 +40,14 @@ public class CallCompositeControl extends AbstractArtefact {
 
 	public void setArtefactId(String artefactId) {
 		this.artefactId = artefactId;
+	}
+
+	public String getCachedArtefactName() {
+		return cachedArtefactName;
+	}
+
+	public void setCachedArtefactName(String cachedArtefactName) {
+		this.cachedArtefactName = cachedArtefactName;
 	}
 
 	public String getInputJson() {

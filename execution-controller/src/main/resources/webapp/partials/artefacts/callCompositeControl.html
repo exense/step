@@ -2,7 +2,7 @@
 	<div class="form-group">
 		<label for="comment">Composite control</label>
 		<div class="input-group">
-			<input ng-disabled="true" type="text" class="form-control" ng-model="targetArtefact.attributes.name" />
+			<input ng-disabled="true" type="text" class="form-control" ng-model="artefact.cachedArtefactName" />
 			<span class="input-group-btn">
 				<button ng-if="artefact.artefactId" class="btn btn-default" type="button" ng-click="gotoArtefact()"><span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 				<button class="btn btn-default" type="button" ng-click="selectArtefact()">Select</button>

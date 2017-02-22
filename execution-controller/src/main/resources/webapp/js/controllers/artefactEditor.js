@@ -154,6 +154,20 @@ angular.module('artefactEditor',['dataTable','step'])
         })
       })
 
+      function getNodeLabel(artefact) {
+        var label = artefact._class
+        if(artefact._class=='CallFunction'&&artefact['function']) {
+          try {
+            label = JSON.parse(artefact['function']).name;
+          } catch(e) {}
+        } else if(artefact._class=='CallCompositeControl') {
+          if(artefact.cachedArtefactName) {
+            label =  artefact.cachedArtefactName;             
+          }
+        }
+        return label;
+      }
+      
       function load(callback) {
     	
     	$http({url:"rest/controller/artefact/"+$scope.artefactid+"/descendants", method:"GET"}).then(function(response){ 
@@ -165,18 +179,12 @@ angular.module('artefactEditor',['dataTable','step'])
         		children.push(asJSTreeNode(child))
         	  }) 	  
         	  var artefact = currentNode.artefact;
-        	  var label = artefact._class
-        	  if(artefact._class=='CallFunction'&&artefact['function']) {
-        	    try {
-        	      label = JSON.parse(artefact['function']).name;
-        	    } catch(e) {}
-        	  }
-        	  
+
         	  var artefactIcon = {'Default':'glyphicon-unchecked', 'CallCompositeControl':'glyphicon glyphicon-new-window', 'CallFunction':'glyphicon-record' ,'For':'glyphicon glyphicon-th','ForEach':'glyphicon glyphicon-th'}
         	  
         	  var icon = artefact._class in artefactIcon ? artefactIcon[artefact._class]:artefactIcon['Default'];
         	  
-        	  return { "id" : artefact.id, "children" : children, "text" : label, icon:"glyphicon "+icon }
+        	  return { "id" : artefact.id, "children" : children, "text" : getNodeLabel(artefact), icon:"glyphicon "+icon }
         	}
         	
         	var root = asJSTreeNode(data);
@@ -259,6 +267,15 @@ angular.module('artefactEditor',['dataTable','step'])
     	});
       }
       
+      $scope.onSelectedArtefactSave = function(artefact) {
+        var currentNode = tree.get_selected(true)[0];
+        var currentLabel = tree.get_text(currentNode);
+        var newLabel = getNodeLabel(artefact);
+        if(newLabel!=currentLabel) {
+          tree.rename_node(currentNode,newLabel);
+        }
+      }
+      
     },
     templateUrl: 'partials/artefact.html'}
 })
@@ -268,6 +285,7 @@ angular.module('artefactEditor',['dataTable','step'])
     restrict: 'E',
     scope: {
       artefactid: '=',
+      onSave: '&',
       readonly: '=',
       handle: '='
     },
@@ -298,22 +316,16 @@ angular.module('artefactEditor',['dataTable','step'])
       $scope.save = function() {
         if(!$scope.readonly) {
           $http.post("rest/controller/artefact/"+$scope.artefact.id, $scope.artefact).then(function() {
-            
+            if($scope.onSave) {
+              $scope.onSave({artefact:$scope.artefact});
+            }
           });
         }
       }      
     },
     template: '<div ng-include="editor.template"></div>'}
 })
-.controller('CallCompositeCtrl' , function($scope,$uibModal,$location,$http) {
-  $scope.$watch('artefact.artefactId', function(id) {
-    if(id!=null) {
-      $http({url:"rest/controller/artefact/"+id,method:"GET"}).then(function(response) {
-        $scope.targetArtefact = response.data;
-      })      
-    }
-  })
-  
+.controller('CallCompositeCtrl' , function($scope,$uibModal,$location,$http) {  
   $scope.gotoArtefact = function() {
     $location.path('/root/artefacteditor/' + $scope.artefact.artefactId);
   }
@@ -325,8 +337,9 @@ angular.module('artefactEditor',['dataTable','step'])
       resolve: {}
     });
 
-    modalInstance.result.then(function (id) {
-      $scope.artefact.artefactId = id;
+    modalInstance.result.then(function (artefact) {
+      $scope.artefact.artefactId = artefact.id;
+      $scope.artefact.cachedArtefactName = artefact.attributes.name;
       $scope.save();
     });
   }

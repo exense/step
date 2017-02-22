@@ -163,10 +163,12 @@ angular.module('artefactsControllers',['dataTable','step'])
   };
 })
 
-.controller('selectArtefactModalCtrl', function ($scope, $uibModalInstance) {
+.controller('selectArtefactModalCtrl', function ($scope, $uibModalInstance, $http) {
   
   $scope.selectArtefact = function(id) {
-    $uibModalInstance.close(id);
+    $http({url:"rest/controller/artefact/"+id,method:"GET"}).then(function(response) {
+      $uibModalInstance.close(response.data);
+    }) 
   }
   
   $scope.table = {};
