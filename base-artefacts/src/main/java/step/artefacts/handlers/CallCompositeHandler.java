@@ -47,7 +47,8 @@ public class CallCompositeHandler extends ArtefactHandler<CallCompositeControl, 
 		beforeDelegation(node, testArtefact);
 
 		AbstractArtefact a = context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
-		delegateExecute(a, node);
+		ReportNode resultNode = delegateExecute(a, node);
+		node.setStatus(resultNode.getStatus());
 	}
 
 	@Override
