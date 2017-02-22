@@ -5,12 +5,14 @@
 			<input ng-disabled="true" type="text" class="form-control" ng-model="artefact.cachedArtefactName" />
 			<span class="input-group-btn">
 				<button ng-if="artefact.artefactId" class="btn btn-default" type="button" ng-click="gotoArtefact()"><span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
-				<button class="btn btn-default" type="button" ng-click="selectArtefact()">Select</button>
+				<button class="btn btn-default" type="button" ng-disabled="readonly" ng-click="selectArtefact()">Select</button>
 			</span>
 		</div>
 	</div>
-	<div class="form-group">
-		<label for="comment">Input (JSON)</label>
-		<json-editor model="artefact.inputJson" on-change="setInput(json)" />
-	</div>
+	<fieldset ng-disabled="readonly">
+		<div class="form-group">
+			<label for="comment">Input (JSON)</label>
+			<json-editor model="artefact.inputJson" on-change="setInput(json)" />
+		</div>
+	</fieldset>
 </div>

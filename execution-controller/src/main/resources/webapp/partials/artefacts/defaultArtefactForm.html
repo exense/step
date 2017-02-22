@@ -1,7 +1,9 @@
 <div ng-controller="DefaultArtefactFormCtrl" class="form-group form-group-sm">
-	<span ng-repeat="key in getEditableArtefactProperties()">
-		<label>{{key}}</label>
-		<input ng-blur="save()" ng-model="artefact[key]" class="form-control form-control-sm" ng-disabled="readonly"></input>
-	</span>
+	<fieldset ng-disabled="readonly">
+		<span ng-repeat="key in getEditableArtefactProperties()">
+			<label>{{key}}</label>
+			<input ng-blur="save()" ng-model="artefact[key]" class="form-control form-control-sm"></input>
+		</span>
+	</fieldset>
 </div>
 

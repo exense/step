@@ -10,12 +10,14 @@
 				<button ng-if="targetFunction" class="btn btn-default" type="button" ng-click="openFunctionEditor()">
 					<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>
 				</button>
-				<button class="btn btn-default" type="button" ng-click="selectFunction()">Select</button>
+				<button class="btn btn-default" type="button" ng-disabled="readonly" ng-click="selectFunction()">Select</button>
 			</span>
 		</div>
 	</div>
-	<div class="form-group">
-		<label for="comment">Input</label>
-		<json-editor model="artefact.argument" on-change="setArgument(json)" />
-	</div>
+	<fieldset ng-disabled="readonly">
+		<div class="form-group">
+			<label for="comment">Input</label>
+			<json-editor model="artefact.argument" on-change="setArgument(json)" />
+		</div>
+	</fieldset>
 </div>
