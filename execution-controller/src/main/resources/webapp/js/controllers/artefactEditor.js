@@ -268,11 +268,15 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
       }
       
       $scope.onSelectedArtefactSave = function(artefact) {
-        var currentNode = tree.get_selected(true)[0];
-        var currentLabel = tree.get_text(currentNode);
-        var newLabel = getNodeLabel(artefact);
-        if(newLabel!=currentLabel) {
-          tree.rename_node(currentNode,newLabel);
+        var currentNode = tree.get_node(artefact.id);
+        if(currentNode) {
+          var currentLabel = tree.get_text(currentNode);
+          var newLabel = getNodeLabel(artefact);
+          if(newLabel!=currentLabel) {
+            tree.rename_node(currentNode,newLabel);
+          }
+        } else {
+          console.error("Unable to find not with id: "+artefact.id);
         }
       }
       
