@@ -352,12 +352,19 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
   
 })
 .controller('CallFunctionCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {
+  function loadFunction(id, callback) {
+    $http({url:"rest/functions/"+id,method:"GET"}).then(function(response) {
+      $scope.targetFunction = response.data;
+      $scope.artefact['function'] = JSON.stringify($scope.targetFunction.attributes);
+      if(callback) {
+        callback();
+      }
+    })
+  }
+  
   $scope.$watch('artefact.functionId', function(id) {
     if(id!=null) {
-      $http({url:"rest/functions/"+id,method:"GET"}).then(function(response) {
-        $scope.targetFunction = response.data;
-        $scope.artefact['function'] = JSON.stringify($scope.targetFunction.attributes);
-      })
+      loadFunction(id);
     }
   })
   
@@ -383,7 +390,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
 
     modalInstance.result.then(function (id) {
       $scope.artefact.functionId = id;
-      $scope.save();
+      loadFunction(id, function() {$scope.save()});
     });
   }
   
