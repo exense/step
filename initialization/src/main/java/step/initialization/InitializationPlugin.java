@@ -166,7 +166,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		CallFunction call1 = new CallFunction();
 		call1.setFunction("{\"name\":\""+functionName+"\"}");
 		call1.setArgument(new DynamicValue<String>(args));
-		call1.setToken("{\"route\":\"remote\"}");
+		call1.setToken(new DynamicValue<String>("{\"route\":\"remote\"}"));
 		return call1;
 	}
 	
@@ -181,13 +181,13 @@ public class InitializationPlugin extends AbstractPlugin {
 		CallFunction call1 = new CallFunction();
 		call1.setFunction("{\"name\":\"Selenium_Start"+ browser +"\"}");
 		call1.setArgument(new DynamicValue<String>("{}"));
-		call1.setToken("{\"route\":\"remote\"}");
+		call1.setToken(new DynamicValue<String>("{\"route\":\"remote\"}"));
 		artefacts.save(call1);
 		
 		CallFunction call2 = new CallFunction();
 		call2.setFunction("{\"name\":\"Selenium_Navigate\"}");
 		call2.setArgument(new DynamicValue<String>("{\"url\":\"http://denkbar.io\"}"));
-		call2.setToken("{\"route\":\"remote\"}");
+		call2.setToken(new DynamicValue<String>("{\"route\":\"remote\"}"));
 		artefacts.save(call2);
 		
 		testCase.addChild(call1.getId());

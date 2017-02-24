@@ -137,7 +137,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			}
 			
 			if(testArtefact.getResultMap()!=null) {
-				Object var = context.getVariablesManager().getVariable(testArtefact.getResultMap());
+				Object var = context.getVariablesManager().getVariable(testArtefact.getResultMap().get());
 				if(var instanceof Map) {
 					JsonObject result = output.getResult();
 					for(String key:result.keySet()) {
@@ -161,16 +161,16 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	private FunctionTokenHandle selectToken(CallFunction testArtefact, FunctionClient functionClient) {
 		FunctionTokenHandle tokenHandle;
-		String token = testArtefact.getToken();
+		String token = testArtefact.getToken().get();
 		if(token!=null) {
 			JsonObject selectionCriteriaJson = Json.createReader(new StringReader(token)).readObject();
 			
-			if(selectionCriteriaJson.getString("route").equals("local")) {
+			
+			if(!testArtefact.getRemote().get()) {
 				tokenHandle = functionClient.getLocalFunctionToken();
 			} else {
 				Map<String, Interest> selectionCriteria = new HashMap<>();
-				selectionCriteriaJson.keySet().stream().filter(e->!e.equals("route"))
-					.forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
+				selectionCriteriaJson.keySet().stream().forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
 				
 				OperationManager.getInstance().enter("Token selection", selectionCriteria);
 				try {

@@ -215,9 +215,9 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     	
     	$http.get("rest/functions/"+id).then(function(response) {
     	  var function_ = response.data;
-    	  var tokenDefault = function_.type=="composite"?"{\"route\":\"local\"}":"{\"route\":\"remote\"}";
+    	  var remote = !(function_.type=="composite")
     	  
-    	  var newArtefact = {"function":JSON.stringify(function_.attributes),"functionId":function_.id,"token":tokenDefault,"_class":"CallFunction"};
+    	  var newArtefact = {"function":JSON.stringify(function_.attributes),"functionId":function_.id,"remote":{"value":remote},"_class":"CallFunction"};
     	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
     		  reloadAfterArtefactInsertion(response.data);
     	  })
@@ -352,6 +352,9 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
   
 })
 .controller('CallFunctionCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {
+  
+  showTokenSelectionParameters = false;
+  
   function loadFunction(id, callback) {
     $http({url:"rest/functions/"+id,method:"GET"}).then(function(response) {
       $scope.targetFunction = response.data;

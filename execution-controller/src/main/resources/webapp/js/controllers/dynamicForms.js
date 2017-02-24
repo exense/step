@@ -16,9 +16,35 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('dynamicForms',['step'])
+var dynamicForms = angular.module('dynamicForms',['step'])
 
-.directive('dynamicCheckbox', function() {
+function initDynamicFormsCtrl($scope) {
+  $scope.isDynamic = function() {
+    if($scope.dynamicValue) {
+      if($scope.dynamicValue.value==undefined) {
+        if($scope.dynamicValue.expression==undefined) {
+          return false;          
+        } else {
+          return true;  
+        }
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  $scope.useConstantValue = function() {
+    delete $scope.dynamicValue.expression;
+    $scope.dynamicValue.value = '';
+  }
+  $scope.useDynamicExpression = function() {
+    delete $scope.dynamicValue.value;
+    $scope.dynamicValue.expression = '';
+  }
+} 
+
+dynamicForms.directive('dynamicCheckbox', function() {
   return {
     restrict: 'E',
     scope: {
@@ -27,15 +53,7 @@ angular.module('dynamicForms',['step'])
       onSave: '&'
     },
     controller: function($scope) {
-      $scope.isDynamic = function() {
-        return $scope.dynamicValue&&$scope.dynamicValue.value==undefined;
-      }
-      $scope.useConstantValue = function() {
-        $scope.dynamicValue.value = '';
-      }
-      $scope.useDynamicExpression = function() {
-        delete $scope.dynamicValue.value;
-      }
+      initDynamicFormsCtrl($scope);
     },
     templateUrl: 'partials/dynamicforms/checkbox.html'}
 })
@@ -48,15 +66,7 @@ angular.module('dynamicForms',['step'])
       onSave: '&'
     },
     controller: function($scope) {
-      $scope.isDynamic = function() {
-        return $scope.dynamicValue&&$scope.dynamicValue.value==undefined;
-      }
-      $scope.useConstantValue = function() {
-        $scope.dynamicValue.value = '';
-      }
-      $scope.useDynamicExpression = function() {
-        delete $scope.dynamicValue.value;
-      }
+      initDynamicFormsCtrl($scope);
     },
     templateUrl: 'partials/dynamicforms/textfield.html'}
 })
@@ -69,17 +79,7 @@ angular.module('dynamicForms',['step'])
       onSave: '&'
     },
     controller: function($scope) {
-      $scope.isDynamic = function() {
-        return $scope.dynamicValue&&$scope.dynamicValue.value==undefined;
-      }
-      $scope.useConstantValue = function() {
-        $scope.dynamicValue.value = '';
-        $scope.onSave();
-      }
-      $scope.useDynamicExpression = function() {
-        delete $scope.dynamicValue.value;
-        $scope.onSave();
-      }
+      initDynamicFormsCtrl($scope);
       $scope.save = function(json) {
         $scope.dynamicValue.value = json;
         $scope.onSave();
@@ -94,13 +94,5 @@ angular.module('dynamicForms',['step'])
     templateUrl: 'partials/dynamicforms/expressionInput.html'}
 })
 .controller('dynamicValueCtrl',function($scope) {
-  $scope.isDynamic = function() {
-    return $scope.dynamicValue&&$scope.dynamicValue.value==undefined;
-  }
-  $scope.useConstantValue = function() {
-    $scope.dynamicValue.value = '';
-  }
-  $scope.useDynamicExpression = function() {
-    delete $scope.dynamicValue.value;
-  }
+  initDynamicFormsCtrl($scope);
 })
