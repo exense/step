@@ -76,6 +76,7 @@
 						<div ng-attr-id="{{getPanelId('performance')}}" class="panel panel-default">
 							<div class="panel-heading">
 								<a ng-click="toggleShowPanel('performance')">{{getPanelTitle('performance')}}</a>
+								<button class="btn btn-default btn-xs pull-right" type="button" ng-click="openRtm()">Interactive analytics <span class="glyphicon glyphicon-new-window" ></span></button>
 							</div>
 							<div class="panel-body" ng-show="isShowPanel('performance')">
 								<div class="row">
@@ -124,7 +125,6 @@
 						<li><strong>Origin</strong> <span>Repository={{execution.executionParameters.artefact.repositoryID}}</span> <span
 							ng-repeat="(key, value) in execution.executionParameters.artefact.repositoryParameters"> {{key}}={{value}}
 						</span></li>
-						<li><strong>Measurements</strong> <a target="blank" ng-href="{{rtmlink}}">Analyze in RTM</a></li>
 					</ul>
 				</div>
 			</div>

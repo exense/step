@@ -151,9 +151,8 @@ tecAdminControllers.controller('newTaskModalCtrl', function ($scope, $uibModalIn
     $uibModalInstance.dismiss('cancel');
   };
 });
-    
 
-tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory) {
+tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window) {
   return {
     restrict: 'E',
     scope: {
@@ -420,6 +419,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       }
       
       $scope.reportTreeHandle = {};
+
+      $scope.openRtm = function() {
+        $window.open($scope.rtmlink, '_blank');
+      }
     },
     link: function($scope, $element) {
       var eId = $scope.eid;
