@@ -33,7 +33,7 @@ public class SequenceHandler extends ArtefactHandler<Sequence, ReportNode> {
 	@Override
 	public void execute_(ReportNode node, Sequence testArtefact) {
 		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
-		scheduler.execute_(node, testArtefact, Boolean.parseBoolean(testArtefact.getContinueOnError()));
+		scheduler.execute_(node, testArtefact, testArtefact.getContinueOnError().get());
 	}
 
 	@Override

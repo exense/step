@@ -1,0 +1,8 @@
+<div ng-if="!isDynamic()"class="form-group">
+	<label>
+		<input type="checkbox" ng-change="onSave()" ng-model="dynamicValue.value"> 
+		<span class="ng-binding">{{label}}</span>
+	</label>
+	<button class="btn btn-default btn-xs pull-right" type="button" title="Use a function to set this attribute" ng-click="useDynamicExpression()"><span class="glyphicon glyphicon-flash" ></span></button>
+</div>
+<expression-input />

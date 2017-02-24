@@ -118,7 +118,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		REPORT_NODE node = beforeDelegation(Phase.SKELETON_CREATION, parentNode, testArtefact, newVariables);
 		
 		try {
-			@SuppressWarnings("unchecked")
+			context.getGlobalContext().getDynamicBeanResolver().evaluate(testArtefact, context.getVariablesManager().getAllVariables());
 			ARTEFACT postEvaluationArtefact = (ARTEFACT) DynamicBeanResolver.resolveDynamicAttributes(testArtefact);
 			
 			ArtefactFilter filter = ExecutionContext.getCurrentContext().getExecutionParameters().getArtefactFilter();
@@ -167,7 +167,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		long t1 = System.currentTimeMillis();
 		try {
-			@SuppressWarnings("unchecked")
+			context.getGlobalContext().getDynamicBeanResolver().evaluate(testArtefact, context.getVariablesManager().getAllVariables());
 			ARTEFACT postEvaluationArtefact = (ARTEFACT) DynamicBeanResolver.resolveDynamicAttributes(testArtefact);
 			node.setArtefactInstance(postEvaluationArtefact);
 			

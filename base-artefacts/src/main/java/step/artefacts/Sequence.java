@@ -19,21 +19,20 @@
 package step.artefacts;
 
 import step.artefacts.handlers.SequenceHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = SequenceHandler.class)
 public class Sequence extends AbstractArtefact {
 	
-	@DynamicAttribute
-	String continueOnError="false";
+	DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);
 
-	public String getContinueOnError() {
+	public DynamicValue<Boolean> getContinueOnError() {
 		return continueOnError;
 	}
 
-	public void setContinueOnError(String continueOnError) {
+	public void setContinueOnError(DynamicValue<Boolean> continueOnError) {
 		this.continueOnError = continueOnError;
 	}
 	

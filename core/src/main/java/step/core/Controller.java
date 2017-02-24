@@ -30,6 +30,8 @@ import step.core.accessors.MongoDBAccessorHelper;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactManager;
 import step.core.artefacts.reports.ReportNodeAccessor;
+import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.ExecutionLifecycleManager;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.Execution;
@@ -38,6 +40,7 @@ import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
+import step.expressions.ExpressionHandler;
 
 import com.mongodb.MongoClient;
 
@@ -81,6 +84,7 @@ public class Controller {
 		context.setUserAccessor(new UserAccessor(mongoClient));
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		context.setExecutionLifecycleManager(new ExecutionLifecycleManager(context));
+		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
 		
 		createOrUpdateIndexes();
 	}

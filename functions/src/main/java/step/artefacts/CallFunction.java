@@ -23,6 +23,7 @@ import step.artefacts.reports.CallFunctionReportNode;
 import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = CallFunctionHandler.class, report = CallFunctionReportNode.class)
 public class CallFunction extends AbstractArtefact {
@@ -33,8 +34,7 @@ public class CallFunction extends AbstractArtefact {
 	@DynamicAttribute
 	String functionId;
 	
-	@DynamicAttribute
-	String argument;
+	DynamicValue<String> argument = new DynamicValue<>("{}");
 	
 	@DynamicAttribute
 	String token;
@@ -58,11 +58,11 @@ public class CallFunction extends AbstractArtefact {
 		this.functionId = functionId;
 	}
 
-	public String getArgument() {
+	public DynamicValue<String> getArgument() {
 		return argument;
 	}
 
-	public void setArgument(String argument) {
+	public void setArgument(DynamicValue<String> argument) {
 		this.argument = argument;
 	}
 

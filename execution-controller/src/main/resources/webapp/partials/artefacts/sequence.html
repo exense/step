@@ -1,12 +1,7 @@
 <div class="form-group-sm">
 <fieldset ng-disabled="readonly">
 	<form>
-		<div class="form-group">
-			<label>
-				<input type="checkbox" ng-change="save()" ng-model="artefact.continueOnError"> 
-				<span class="ng-binding">Continue sequence execution on error</span>
-			</label>
-		</div>
+		<dynamic-checkbox label="'Continue sequence execution on error'" on-save="save()" dynamic-value="artefact.continueOnError" />
 	</form>
 </fieldset>
 </div>

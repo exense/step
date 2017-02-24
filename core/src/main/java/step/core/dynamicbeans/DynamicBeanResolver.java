@@ -16,33 +16,39 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.artefacts;
+package step.core.dynamicbeans;
 
-import step.artefacts.handlers.SetHandler;
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
-import step.core.dynamicbeans.DynamicValue;
+import java.lang.reflect.Field;
+import java.util.Map;
 
-@Artefact(handler = SetHandler.class, block=false)
-public class Set extends AbstractArtefact {
-
-	private DynamicValue<String> key = new DynamicValue<>("");
+public class DynamicBeanResolver {
 	
-	private DynamicValue<String> value = new DynamicValue<>("");
+	DynamicValueResolver valueResolver;
 
-	public DynamicValue<String> getKey() {
-		return key;
+	public DynamicBeanResolver(DynamicValueResolver valueResolver) {
+		super();
+		this.valueResolver = valueResolver;
 	}
 
-	public void setKey(DynamicValue<String> key) {
-		this.key = key;
-	}
-
-	public DynamicValue<String> getValue() {
-		return value;
-	}
-
-	public void setValue(DynamicValue<String> value) {
-		this.value = value;
+	public void evaluate(Object o, Map<String, Object> bindings) {
+		if(o!=null) {
+			Class<?> clazz = o.getClass();
+			do {
+				for(Field field:clazz.getDeclaredFields()) {
+					if(field.getType().equals(DynamicValue.class)) {
+						DynamicValue<?> dynamicValue;
+						try {
+							field.setAccessible(true);
+							dynamicValue = (DynamicValue<?>) field.get(o);
+							valueResolver.evaluate(dynamicValue, bindings);
+							evaluate(dynamicValue.get(), bindings);
+						} catch (IllegalArgumentException | IllegalAccessException e) {
+							
+						}
+					}
+				}
+				clazz = clazz.getSuperclass();
+			} while (clazz != Object.class);
+		}
 	}
 }

@@ -25,6 +25,7 @@ import org.junit.Test;
 import step.artefacts.Sequence;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicValue;
 
 public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -110,7 +111,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		Sequence block = add(new Sequence());
-		block.setContinueOnError("true");
+		block.setContinueOnError(new DynamicValue<>(true));
 		addAsChildOf(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR), block);
 		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
 
@@ -126,7 +127,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		Sequence block = add(new Sequence());
-		block.setContinueOnError("true");
+		block.setContinueOnError(new DynamicValue<>(true));
 		addAsChildOf(newTestArtefact(ReportNodeStatus.FAILED), block);
 		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
 
@@ -142,7 +143,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		Sequence block = add(new Sequence());
-		block.setContinueOnError("false");
+		block.setContinueOnError(new DynamicValue<>(false));
 		addAsChildOf(newTestArtefact(ReportNodeStatus.FAILED), block);
 		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
 

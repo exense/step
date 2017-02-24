@@ -26,6 +26,7 @@ import step.core.access.UserAccessor;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactManager;
 import step.core.artefacts.reports.ReportNodeAccessor;
+import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ExecutionLifecycleManager;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.PluginManager;
@@ -57,6 +58,8 @@ public class GlobalContext extends AbstractContext {
 	private ExecutionLifecycleManager executionLifecycleManager;
 	
 	private ServiceRegistrationCallback serviceRegistrationCallback;
+	
+	private DynamicBeanResolver dynamicBeanResolver;
 
 	public GlobalContext() {
 		super();
@@ -159,6 +162,14 @@ public class GlobalContext extends AbstractContext {
 	public void setServiceRegistrationCallback(
 			ServiceRegistrationCallback serviceRegistrationCallback) {
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
+	}
+	
+	public DynamicBeanResolver getDynamicBeanResolver() {
+		return dynamicBeanResolver;
+	}
+
+	public void setDynamicBeanResolver(DynamicBeanResolver dynamicBeanResolver) {
+		this.dynamicBeanResolver = dynamicBeanResolver;
 	}
 	
 }

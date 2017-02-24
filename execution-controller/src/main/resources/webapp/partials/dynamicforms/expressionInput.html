@@ -1,0 +1,11 @@
+<div class="form-group form-group-sm" ng-if="isDynamic()">
+	<label>
+		<span class="ng-binding">{{label}}</span>
+	</label>
+	<div class="input-group">
+		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.expression" />
+		<span class="input-group-btn">
+			<button class="btn btn-default btn-sm active" type="button" ng-click="useConstantValue()"><span class="glyphicon glyphicon-flash"></span></button>
+		</span>
+	</div>
+</div>

@@ -1,0 +1,6 @@
+<div ng-if="!isDynamic()" class="form-group">
+	<label for="comment">{{label}}</label>
+	<button class="btn btn-default btn-xs pull-right" type="button" title="Use a function to set this attribute" ng-click="useDynamicExpression()"><span class="glyphicon glyphicon-flash" ></span></button>
+	<json-editor model="dynamicValue.value" on-change="save(json)" />
+</div>
+<expression-input />

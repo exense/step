@@ -30,6 +30,7 @@ import step.artefacts.Sequence;
 import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicValue;
 
 public class GroovyHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -40,8 +41,8 @@ public class GroovyHandlerTest extends AbstractArtefactHandlerTest {
 		Sequence s = add(new Sequence());
 		
 		Set set1 = new Set();
-		set1.setKey("var1");
-		set1.setExpression("[:]");
+		set1.setKey(new DynamicValue<String>("var1"));
+		set1.setValue(new DynamicValue<>("[:]",""));
 		addAsChildOf(set1,s);
 
 		

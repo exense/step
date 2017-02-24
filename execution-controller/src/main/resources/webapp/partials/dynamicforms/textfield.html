@@ -1,0 +1,10 @@
+<div ng-if="!isDynamic()"class="form-group">
+	<label>{{label}}</label>
+	<div class="input-group">
+		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.value" />
+		<span class="input-group-btn">
+			<button class="btn btn-default btn-sm" type="button" title="Use function" ng-click="useDynamicExpression()"><span class="glyphicon glyphicon-flash"></span></button>
+		</span>
+	</div>
+</div>
+<expression-input />

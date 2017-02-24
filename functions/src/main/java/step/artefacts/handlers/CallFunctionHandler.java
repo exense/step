@@ -67,7 +67,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) {
-		String argumentStr = testArtefact.getArgument();
+		String argumentStr = testArtefact.getArgument().get();
 		node.setInput(argumentStr);
 		
 		Input input = buildInput(argumentStr);

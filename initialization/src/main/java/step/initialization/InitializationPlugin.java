@@ -34,6 +34,7 @@ import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoDBAccessorHelper;
 import step.core.artefacts.ArtefactAccessor;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
@@ -164,7 +165,7 @@ public class InitializationPlugin extends AbstractPlugin {
 	private CallFunction createCallFunction(String functionName, String args) {
 		CallFunction call1 = new CallFunction();
 		call1.setFunction("{\"name\":\""+functionName+"\"}");
-		call1.setArgument(args);
+		call1.setArgument(new DynamicValue<String>(args));
 		call1.setToken("{\"route\":\"remote\"}");
 		return call1;
 	}
@@ -179,13 +180,13 @@ public class InitializationPlugin extends AbstractPlugin {
 		
 		CallFunction call1 = new CallFunction();
 		call1.setFunction("{\"name\":\"Selenium_Start"+ browser +"\"}");
-		call1.setArgument("{}");
+		call1.setArgument(new DynamicValue<String>("{}"));
 		call1.setToken("{\"route\":\"remote\"}");
 		artefacts.save(call1);
 		
 		CallFunction call2 = new CallFunction();
 		call2.setFunction("{\"name\":\"Selenium_Navigate\"}");
-		call2.setArgument("{\"url\":\"http://denkbar.io\"}");
+		call2.setArgument(new DynamicValue<String>("{\"url\":\"http://denkbar.io\"}"));
 		call2.setToken("{\"route\":\"remote\"}");
 		artefacts.save(call2);
 		

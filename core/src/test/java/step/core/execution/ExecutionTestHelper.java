@@ -20,18 +20,20 @@ package step.core.execution;
 
 import org.mockito.Mockito;
 
+import com.mongodb.MongoClient;
+
 import step.core.GlobalContext;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
-import step.core.execution.model.ExecutionAccessor;
+import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
-
-import com.mongodb.MongoClient;
+import step.expressions.ExpressionHandler;
 
 public class ExecutionTestHelper {
 
@@ -68,6 +70,8 @@ public class ExecutionTestHelper {
 	public static GlobalContext createGlobalContext() {
 		GlobalContext context = new GlobalContext();
 
+		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
+		
 		PluginManager pluginManager = new PluginManager();
 		context.setPluginManager(pluginManager);
 		

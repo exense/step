@@ -25,6 +25,7 @@ import org.junit.Test;
 import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.variables.VariablesManager;
 
@@ -35,8 +36,8 @@ public class SetVarHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		Set set = add(new Set());
-		set.setKey("var");
-		set.setExpression("'val1'");
+		set.setKey(new DynamicValue<String>("var"));
+		set.setValue(new DynamicValue<String>("val1"));
 
 		execute(set);
 		
