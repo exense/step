@@ -2,6 +2,8 @@ package step.core.dynamicbeans;
 
 public class DynamicValue<T> {
 	
+	boolean dynamic;
+	
 	T value;
 	
 	EvaluationResult evalutationResult;
@@ -17,10 +19,12 @@ public class DynamicValue<T> {
 	public DynamicValue(T value) {
 		super();
 		this.value = value;
+		this.dynamic = false;
 	}
 
 	public DynamicValue(String expression, String expressionType) {
 		super();
+		this.dynamic = true;
 		this.expression = expression;
 		this.expressionType = expressionType;
 	}
@@ -37,6 +41,14 @@ public class DynamicValue<T> {
 				throw new RuntimeException("Expression hasn't been evaluated.");
 			}
 		}
+	}
+
+	public boolean isDynamic() {
+		return dynamic;
+	}
+
+	public void setDynamic(boolean dynamic) {
+		this.dynamic = dynamic;
 	}
 
 	public T getValue() {

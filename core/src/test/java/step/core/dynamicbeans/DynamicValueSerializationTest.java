@@ -27,7 +27,7 @@ public class DynamicValueSerializationTest {
 	public void testDynamic() throws JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = new ObjectMapper();
 		
-		TestBean bean = mapper.readValue("{\"testString\":{\"expression\":\"'test'\"},\"testRecursive\":{\"value\":{\"testString\":{\"expression\":\"'test2'\"}}}}", TestBean.class);
+		TestBean bean = mapper.readValue("{\"testString\":{\"dynamic\":true,\"expression\":\"'test'\"},\"testRecursive\":{\"value\":{\"testString\":{\"dynamic\":true,\"expression\":\"'test2'\"}}}}", TestBean.class);
 		
 		DynamicBeanResolver r = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
 		r.evaluate(bean, null);

@@ -21,26 +21,22 @@ var dynamicForms = angular.module('dynamicForms',['step'])
 function initDynamicFormsCtrl($scope) {
   $scope.isDynamic = function() {
     if($scope.dynamicValue) {
-      if($scope.dynamicValue.value==undefined) {
-        if($scope.dynamicValue.expression==undefined) {
-          return false;          
-        } else {
-          return true;  
-        }
-      } else {
-        return false;
-      }
+      return $scope.dynamicValue.dynamic;
     } else {
       return false;
     }
   }
   $scope.useConstantValue = function() {
     delete $scope.dynamicValue.expression;
+    $scope.dynamicValue.dynamic = false;
     $scope.dynamicValue.value = '';
+    $scope.save();
   }
   $scope.useDynamicExpression = function() {
     delete $scope.dynamicValue.value;
+    $scope.dynamicValue.dynamic = true;
     $scope.dynamicValue.expression = '';
+    $scope.save();
   }
 } 
 
