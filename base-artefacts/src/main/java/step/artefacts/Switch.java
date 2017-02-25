@@ -21,17 +21,18 @@ package step.artefacts;
 import step.artefacts.handlers.SwitchHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = SwitchHandler.class)
 public class Switch extends AbstractArtefact {
 	
-	private String expression;
+	private DynamicValue<String> expression = new DynamicValue<>("", "");
 
-	public String getExpression() {
+	public DynamicValue<String> getExpression() {
 		return expression;
 	}
 
-	public void setExpression(String expression) {
+	public void setExpression(DynamicValue<String> expression) {
 		this.expression = expression;
 	}
 }

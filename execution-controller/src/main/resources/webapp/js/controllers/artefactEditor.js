@@ -302,6 +302,8 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
           "Sequence":{template:"partials/artefacts/sequence.html"},
           "CallFunction":{template:"partials/artefacts/callFunction.html"},
           "Set":{template:"partials/artefacts/set.html"},
+          "Case":{template:"partials/artefacts/case.html"},
+          "Switch":{template:"partials/artefacts/switch.html"},
           "CallCompositeControl":{template:"partials/artefacts/callCompositeControl.html"}
       }
       

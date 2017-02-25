@@ -28,6 +28,7 @@ import step.artefacts.Switch;
 import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 
 public class SwitchHandlerTest extends AbstractArtefactHandlerTest {
@@ -42,17 +43,17 @@ public class SwitchHandlerTest extends AbstractArtefactHandlerTest {
 		ExecutionContext.getCurrentContext().getVariablesManager().getVariable("var");
 		
 		Switch select = new Switch();
-		select.setExpression("'val1'");
+		select.setExpression(new DynamicValue<>("'val1'", ""));
 		add(select);
 		
 		Case c1 = new Case();
-		c1.setValue("val1");
+		c1.setValue(new DynamicValue<String>("val1"));
 		addAsChildOf(c1, select);
 		
 		Set set1 = addAsChildOf(new Set(), c1);
 		
 		Case c2 = new Case();
-		c2.setValue("val2");
+		c2.setValue(new DynamicValue<String>("val2"));
 		addAsChildOf(c1, select);
 		
 		Set set2 = addAsChildOf(new Set(), c1);

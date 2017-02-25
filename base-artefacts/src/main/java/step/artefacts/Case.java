@@ -19,22 +19,20 @@
 package step.artefacts;
 
 import step.artefacts.handlers.CaseHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
-import step.core.artefacts.Artefact;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = CaseHandler.class)
 public class Case extends AbstractArtefact {
 	
-	@DynamicAttribute
-	private String value;
+	private DynamicValue<String> value = new DynamicValue<String>("");
 
-	public String getValue() {
+	public DynamicValue<String> getValue() {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(DynamicValue<String> value) {
 		this.value = value;
 	}
-
 }
