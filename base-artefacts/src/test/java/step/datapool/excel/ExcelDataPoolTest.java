@@ -28,10 +28,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.json.JsonObject;
 
-import org.json.JSONObject;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolRow;
 import step.datapool.Utils;
@@ -40,7 +40,7 @@ public class ExcelDataPoolTest {
 
 	@Test
 	public void testDefaultSheet() {		
-		JSONObject conf = getDataSourceConf(false, "ExcelDataPool.xlsx", null);
+		ExcelDataPool conf = getDataSourceConf(false, "ExcelDataPool.xlsx", null);
 		
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
 		
@@ -57,7 +57,7 @@ public class ExcelDataPoolTest {
 		
 		ConcurrentHashMap<String, String> map = new ConcurrentHashMap<String, String>();
 				
-		JSONObject conf = getDataSourceConf(true, "ExcelDataPool.xlsx", "Parallel");
+		ExcelDataPool conf = getDataSourceConf(true, "ExcelDataPool.xlsx", "Parallel");
 		
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
 		
@@ -116,13 +116,11 @@ public class ExcelDataPoolTest {
 		pool2.close();
 	}
 
-	private JSONObject getDataSourceConf(boolean headers, String file, String worksheet) {
-		JSONObject conf = new JSONObject();
-		conf.put("headers", headers)
-				.put("file",ExcelFunctionsTest.getResourceFile(file).getAbsolutePath());
-		if(worksheet!=null) {
-			conf.put("worksheet", worksheet);
-		}
+	private ExcelDataPool getDataSourceConf(boolean headers, String file, String worksheet) {
+		ExcelDataPool conf = new ExcelDataPool();
+		conf.setFile(new DynamicValue<String>(ExcelFunctionsTest.getResourceFile(file).getAbsolutePath()));
+		conf.setHeaders(new DynamicValue<Boolean>(headers));
+		conf.setWorksheet(new DynamicValue<String>(worksheet));
 		return conf;
 	}
 	

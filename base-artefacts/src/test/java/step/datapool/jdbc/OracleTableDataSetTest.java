@@ -20,6 +20,7 @@ package step.datapool.jdbc;
 
 import org.json.JSONObject;
 
+import step.core.dynamicbeans.DynamicValue;
 import step.datapool.jdbc.SQLTableDataPool.SQLRowWrapper;
 
 public class OracleTableDataSetTest {
@@ -31,8 +32,13 @@ public class OracleTableDataSetTest {
 
 		JSONObject b = new JSONObject().put("connectionString", folder)
 				.put("query",query);
-	
-		SQLTableDataPool ds = new SQLTableDataPool(b);
+		
+		SQLTableDataPoolConfiguration conf = new SQLTableDataPoolConfiguration();
+		conf.setConnectionString(new DynamicValue<String>(folder));
+		conf.setQuery(new DynamicValue<String>(query));
+
+		
+		SQLTableDataPool ds = new SQLTableDataPool(conf);
 		
 		new OracleTableDataSetTest().test1(ds);
 		//new OracleTableDataSetTest().test2(ds);

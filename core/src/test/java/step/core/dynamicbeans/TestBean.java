@@ -9,6 +9,8 @@ public class TestBean {
 	DynamicValue<Integer> testInteger = new DynamicValue<>("10", "js");
 	
 	DynamicValue<TestBean2> testRecursive = new DynamicValue<>("new step.core.dynamicbeans.TestBean2()", "js");
+	
+	TestBean2 testRecursive2 = new TestBean2();
 
 	public DynamicValue<String> getTestString() {
 		return testString;
@@ -24,6 +26,14 @@ public class TestBean {
 
 	public DynamicValue<TestBean2> getTestRecursive() {
 		return testRecursive;
+	}
+
+	public TestBean2 getTestRecursive2() {
+		return testRecursive2;
+	}
+
+	public void setTestRecursive2(TestBean2 testRecursive2) {
+		this.testRecursive2 = testRecursive2;
 	}
 	
 }

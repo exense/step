@@ -18,41 +18,23 @@
  *******************************************************************************/
 package step.datapool.file;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
-import step.datapool.DataSet;
+import step.core.dynamicbeans.DynamicValue;
+import step.datapool.DataPoolConfiguration;
 
 
-public class FileDataPoolImpl extends DataSet<DirectoryDataPool> {
+public class DirectoryDataPool extends DataPoolConfiguration {
 	
-	public FileDataPoolImpl(DirectoryDataPool configuration) {
-		super(configuration);
-	}
-		
-	Iterator<File> fileIterator;
-	
-	File currentFile;
-	
-	@Override
-	public void reset_() {
-		File folder = new File(configuration.getFolder().get());
-		List<File> fileList = Arrays.asList(folder.listFiles());
-		fileIterator = fileList.iterator();
+	DynamicValue<String> folder = new DynamicValue<String>("");
+
+	public DirectoryDataPool() {
+		super();
 	}
 
-	@Override
-	public Object next_() {
-		if(fileIterator.hasNext()) {
-			return fileIterator.next().getAbsolutePath();
-		} else {
-			return null;
-		}
+	public DynamicValue<String> getFolder() {
+		return folder;
 	}
 
-	@Override
-	public void close() {
+	public void setFolder(DynamicValue<String> folder) {
+		this.folder = folder;
 	}
 }

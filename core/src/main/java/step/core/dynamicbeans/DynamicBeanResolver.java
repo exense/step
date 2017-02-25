@@ -18,10 +18,16 @@
  *******************************************************************************/
 package step.core.dynamicbeans;
 
-import java.lang.reflect.Field;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DynamicBeanResolver {
+	
+	private static Logger logger = LoggerFactory.getLogger(DynamicBeanResolver.class);
 	
 	DynamicValueResolver valueResolver;
 
@@ -33,22 +39,24 @@ public class DynamicBeanResolver {
 	public void evaluate(Object o, Map<String, Object> bindings) {
 		if(o!=null) {
 			Class<?> clazz = o.getClass();
-			do {
-				for(Field field:clazz.getDeclaredFields()) {
-					if(field.getType().equals(DynamicValue.class)) {
-						DynamicValue<?> dynamicValue;
-						try {
-							field.setAccessible(true);
-							dynamicValue = (DynamicValue<?>) field.get(o);
-							valueResolver.evaluate(dynamicValue, bindings);
-							evaluate(dynamicValue.get(), bindings);
-						} catch (IllegalArgumentException | IllegalAccessException e) {
-							
-						}
+			try {
+				for(PropertyDescriptor descriptor:Introspector.getBeanInfo(clazz, Object.class).getPropertyDescriptors()) {
+					Object value = descriptor.getReadMethod().invoke(o);
+					if(value!=null) {
+						if(value instanceof DynamicValue) {
+							DynamicValue<?> dynamicValue = (DynamicValue<?>) value;
+							if(dynamicValue!=null) {
+								valueResolver.evaluate(dynamicValue, bindings);
+								evaluate(dynamicValue.get(), bindings);								
+							}
+						} else {
+							evaluate(value, bindings);
+						}			
 					}
 				}
-				clazz = clazz.getSuperclass();
-			} while (clazz != Object.class);
+			} catch (Exception e) {
+				logger.warn("Error while evaluating object: "+o.toString(), e);
+			}			
 		}
 	}
 }

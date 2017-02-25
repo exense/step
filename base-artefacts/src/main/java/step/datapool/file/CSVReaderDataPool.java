@@ -3,8 +3,6 @@ package step.datapool.file;
 import java.util.HashMap;
 import java.util.Vector;
 
-import org.json.JSONObject;
-
 import step.core.variables.SimpleStringMap;
 
 public class CSVReaderDataPool extends FileReaderDataPool {
@@ -12,14 +10,9 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 	Vector<String> headers;
 	String delimiter;
 		
-	public CSVReaderDataPool(JSONObject configuration) {
+	public CSVReaderDataPool(CSVDataPool configuration) {
 		super(configuration);
-				
-		if(configuration.has("delimiter")) {
-			this.delimiter = configuration.getString("delimiter");
-		} else {
-			this.delimiter = ",";			
-		}
+		this.delimiter = configuration.getDelimiter().get();
 	}
 
 	@Override

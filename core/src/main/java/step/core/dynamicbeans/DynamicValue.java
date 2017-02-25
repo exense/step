@@ -31,7 +31,7 @@ public class DynamicValue<T> {
 
 	@SuppressWarnings("unchecked")
 	public T get() {
-		if(value!=null) {
+		if(!isDynamic()) {
 			return value;
 		} else {
 			if(evalutationResult!=null) {

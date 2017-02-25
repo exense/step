@@ -20,33 +20,23 @@ package step.artefacts;
 
 import javax.annotation.PostConstruct;
 
-import org.json.JSONObject;
-
-import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.DynamicValue;
+import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
 
 
 public class AbstractForBlock extends AbstractArtefact {
 	
-	private String item = "dataPool";
+	private DynamicValue<String> item = new DynamicValue<String>("row");
 	
 	private String dataSourceType;
 	
-	@DynamicAttribute
-	private JSONObject dataSource;
+	private DataPoolConfiguration dataSource;
 	
-	@DynamicAttribute
-	private String maxFailedLoops;
+	private DynamicValue<Integer> maxFailedLoops = new DynamicValue<Integer>(null);
 	
-	@DynamicAttribute
-	private String maxLoops;
-	
-	@DynamicAttribute
-	private String parallel = "false";
-	
-	@DynamicAttribute
-	private String threads = "1";
+	private DynamicValue<Integer> threads = new DynamicValue<Integer>(1);
 	
 	@PostConstruct
 	public void init() {
@@ -60,52 +50,36 @@ public class AbstractForBlock extends AbstractArtefact {
 	public void setDataSourceType(String dataSourceType) {
 		this.dataSourceType = dataSourceType;
 	}
-
-	public JSONObject getDataSource() {
+	
+	public DataPoolConfiguration getDataSource() {
 		return dataSource;
 	}
 
-	public void setDataSource(JSONObject dataSource) {
+	public void setDataSource(DataPoolConfiguration dataSource) {
 		this.dataSource = dataSource;
 	}
 
-	public void setItem(String item) {
-		this.item = item;
+	public DynamicValue<Integer> getThreads() {
+		return threads;
 	}
 
-	public void setMaxFailedLoops(String maxFailedLoops) {
-		this.maxFailedLoops = maxFailedLoops;
-	}
-
-	public void setMaxLoops(String maxLoops) {
-		this.maxLoops = maxLoops;
-	}
-
-	public void setParallel(String parallel) {
-		this.parallel = parallel;
-	}
-
-	public void setThreads(String threads) {
+	public void setThreads(DynamicValue<Integer> threads) {
 		this.threads = threads;
 	}
 
-	public String getItem() {
-		return item;
-	}
-
-	public String getMaxFailedLoops() {
+	public DynamicValue<Integer> getMaxFailedLoops() {
 		return maxFailedLoops;
 	}
 
-	public String getMaxLoops() {
-		return maxLoops;
+	public void setMaxFailedLoops(DynamicValue<Integer> maxFailedLoops) {
+		this.maxFailedLoops = maxFailedLoops;
 	}
 
-	public String getParallel() {
-		return parallel;
+	public DynamicValue<String> getItem() {
+		return item;
 	}
 
-	public String getThreads() {
-		return threads;
+	public void setItem(DynamicValue<String> item) {
+		this.item = item;
 	}
 }

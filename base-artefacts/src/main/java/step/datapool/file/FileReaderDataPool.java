@@ -5,13 +5,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
-import org.json.JSONObject;
-
 import step.datapool.DataSet;
 
-public abstract class FileReaderDataPool extends DataSet {
+public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 
-	public FileReaderDataPool(JSONObject configuration) {
+	public FileReaderDataPool(FileDataPool configuration) {
 		super(configuration);
 	}
 
@@ -23,7 +21,7 @@ public abstract class FileReaderDataPool extends DataSet {
 	@Override
 	public void reset_() {
 
-		filePath = this.configuration.getString("file");
+		filePath = this.configuration.getFile().get();
 		if (filePath == null || filePath.length() < 1)
 			throw new RuntimeException("file path is incorrect.");
 	

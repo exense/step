@@ -46,21 +46,18 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 	@Override
 	public void createReportSkeleton_(ForBlockReportNode node, AbstractForBlock testArtefact) {		
 		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
-		DataSet dataSet = null;
+		DataSet<?> dataSet = null;
 		try {
 			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource());
 			dataSet.reset();
 			DataPoolRow nextValue = null;
-			int count = 0;
-			while((nextValue=dataSet.next())!=null && count<asInteger(testArtefact.getMaxLoops(),Integer.MAX_VALUE)) {				
+			while((nextValue=dataSet.next())!=null) {				
 				if(context.isInterrupted()) {
 					break;
 				}
-				
-				count++;
 	
 				HashMap<String, Object> newVariable = new HashMap<>();
-				newVariable.put(testArtefact.getItem(), nextValue.getValue());
+				newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 				
 				ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
 				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+nextValue.getRowNum());
@@ -82,7 +79,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 	@Override
 	public void execute_(ForBlockReportNode node, AbstractForBlock testArtefact) {
 				
-		DataSet dataSet = null;
+		DataSet<?> dataSet = null;
 		try {
 			List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 			
@@ -95,16 +92,11 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 			AtomicInteger failedLoopsCounter = new AtomicInteger();
 			AtomicInteger loopsCounter = new AtomicInteger();
 			IterationRunnable iterationRunnable = new IterationRunnable(testArtefact, selectedChildren, node, dataSet, failedLoopsCounter, loopsCounter);
-			if(testArtefact.getParallel()!=null && asBoolean(testArtefact.getParallel(),null)) {
-				int threads;
-				if(testArtefact.getThreads()!=null) {
-					threads = asInteger(testArtefact.getThreads(),null);
-				} else {
-					threads = ExecutionContext.getCurrentContext().getVariablesManager().getVariableAsInteger("tec.handlers.for.threads.default");
-				}
-				
-				ExecutorService executor = Executors.newFixedThreadPool(threads);
-				for(int i=0;i<threads;i++) {
+			
+			Integer numberOfThreads = testArtefact.getThreads().get();
+			if(numberOfThreads>1) {
+				ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
+				for(int i=0;i<numberOfThreads;i++) {
 					executor.submit(iterationRunnable);
 				}
 				
@@ -136,14 +128,14 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 	
 	private class IterationRunnable implements Runnable {
 		
-		private final DataSet dataSet;
+		private final DataSet<?> dataSet;
 		private final AtomicInteger failedLoops;
-		private final AtomicInteger loopsCounter;
 		private final ReportNode node;
 		private final AbstractForBlock testArtefact;
+		private final AtomicInteger loopsCounter;
 		private final List<AbstractArtefact> selectedChildren;
 
-		public IterationRunnable(AbstractForBlock testArtefact, List<AbstractArtefact> selectedChildren, ReportNode node, DataSet dataSet, AtomicInteger failedLoops, AtomicInteger loopsCounter) {
+		public IterationRunnable(AbstractForBlock testArtefact, List<AbstractArtefact> selectedChildren, ReportNode node, DataSet<?> dataSet, AtomicInteger failedLoops, AtomicInteger loopsCounter) {
 			super();
 			this.testArtefact = testArtefact;
 			this.node = node;
@@ -159,14 +151,16 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 			
 			try {
 				DataPoolRow nextValue = null;
-				while((nextValue=dataSet.next())!=null) {			
+				while((nextValue=dataSet.next())!=null) {	
 					boolean forInterrupted = Boolean.parseBoolean((String)context.getVariablesManager().getVariable(node, BREAK_VARIABLE, false));
-					if(forInterrupted || context.isInterrupted() || failedLoops.get()>=asInteger(testArtefact.getMaxFailedLoops(), Integer.MAX_VALUE)|| loopsCounter.incrementAndGet()>=asInteger(testArtefact.getMaxLoops(),Integer.MAX_VALUE)) {
+					Integer maxFailedLoops = testArtefact.getMaxFailedLoops().get();
+					if(forInterrupted || context.isInterrupted() || (maxFailedLoops!=null&&failedLoops.get()>=maxFailedLoops)) {
 						break;
 					}
+					loopsCounter.incrementAndGet();
 	
 					HashMap<String, Object> newVariable = new HashMap<>();
-					newVariable.put(testArtefact.getItem(), nextValue.getValue());
+					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 					
 					ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
 					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+nextValue.getRowNum());

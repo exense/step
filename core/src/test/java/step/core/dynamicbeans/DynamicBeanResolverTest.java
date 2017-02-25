@@ -15,5 +15,6 @@ public class DynamicBeanResolverTest {
 		resolver.evaluate(bean, null);
 		Assert.assertEquals("test", bean.getTestString().get());
 		Assert.assertEquals("test", bean.getTestRecursive().get().getTestString().get());
+		Assert.assertEquals("test", bean.getTestRecursive2().getTestString().get());
 	}
 }

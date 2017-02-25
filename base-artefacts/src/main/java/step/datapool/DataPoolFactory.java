@@ -18,32 +18,36 @@
  *******************************************************************************/
 package step.datapool;
 
-import org.json.JSONObject;
-
+import step.datapool.excel.ExcelDataPool;
 import step.datapool.excel.ExcelDataPoolImpl;
+import step.datapool.file.CSVDataPool;
 import step.datapool.file.CSVReaderDataPool;
+import step.datapool.file.DirectoryDataPool;
+import step.datapool.file.FileDataPool;
 import step.datapool.file.FileDataPoolImpl;
 import step.datapool.file.FlatFileReaderDataPool;
 import step.datapool.jdbc.SQLTableDataPool;
+import step.datapool.jdbc.SQLTableDataPoolConfiguration;
+import step.datapool.sequence.IntSequenceDataPool;
 import step.datapool.sequence.IntSequenceDataPoolImpl;
 
 public class DataPoolFactory {
 
-	public static DataSet getDataPool(String dataSourceType, JSONObject dataPoolConfiguration) {
-		DataSet result = null;
+	public static DataSet<?> getDataPool(String dataSourceType, DataPoolConfiguration dataPoolConfiguration) {
+		DataSet<?> result = null;
 
 		if(dataSourceType.equals("excel")) {
-			result = new ExcelDataPoolImpl(dataPoolConfiguration);
+			result = new ExcelDataPoolImpl((ExcelDataPool) dataPoolConfiguration);
 		} else if(dataSourceType.equals("csv")) {
-			result = new CSVReaderDataPool(dataPoolConfiguration); 
+			result = new CSVReaderDataPool((CSVDataPool) dataPoolConfiguration); 
 		} else if(dataSourceType.equals("folder")) {
-			result = new FileDataPoolImpl(dataPoolConfiguration); 
+			result = new FileDataPoolImpl((DirectoryDataPool) dataPoolConfiguration); 
 		} else if(dataSourceType.equals("sql")) {
-			result = new SQLTableDataPool(dataPoolConfiguration);
+			result = new SQLTableDataPool((SQLTableDataPoolConfiguration) dataPoolConfiguration);
 		} else if(dataSourceType.equals("file")) {
-			result = new FlatFileReaderDataPool(dataPoolConfiguration);
+			result = new FlatFileReaderDataPool((FileDataPool) dataPoolConfiguration);
 		} else if(dataSourceType.equals("sequence")) {
-			result = new IntSequenceDataPoolImpl(dataPoolConfiguration);
+			result = new IntSequenceDataPoolImpl((IntSequenceDataPool) dataPoolConfiguration);
 		} else {
 			throw new RuntimeException("Unsupported data source type: "+dataSourceType);
 		}
@@ -51,20 +55,27 @@ public class DataPoolFactory {
 		return result;
 	}
 	
-	public static JSONObject getDefaultDataPoolConfiguration(String dataSourceType) {
-		JSONObject conf = new JSONObject();
-		if(dataSourceType!=null) {
+	public static DataPoolConfiguration getDefaultDataPoolConfiguration(String dataSourceType) {
+		DataPoolConfiguration conf = null;
+
+		if(dataSourceType!=null) {		
 			if(dataSourceType.equals("excel")) {
+				conf = new ExcelDataPool();
 			} else if(dataSourceType.equals("csv")) {
+				conf = new CSVDataPool();
 			} else if(dataSourceType.equals("folder")) {
+				conf = new DirectoryDataPool();
 			} else if(dataSourceType.equals("sql")) {
+				conf = new SQLTableDataPoolConfiguration();
 			} else if(dataSourceType.equals("file")) {
+				conf = new FileDataPool();
 			} else if(dataSourceType.equals("sequence")) {
-				conf.put("start", 1);
-				conf.put("end", 2);
-				conf.put("inc", 1);
+				conf = new IntSequenceDataPool();
+			} else {
+				throw new RuntimeException("Unsupported data source type: "+dataSourceType);
 			}
-		}	
+		}
+		
 		return conf;
 	}
 }

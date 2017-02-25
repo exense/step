@@ -37,6 +37,7 @@ import step.core.artefacts.ArtefactAccessor;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
+import step.datapool.file.CSVDataPool;
 import step.functions.Function;
 import step.plugins.adaptergrid.FunctionRepositoryImpl;
 
@@ -117,7 +118,10 @@ public class InitializationPlugin extends AbstractPlugin {
 		CallFunction call1 = createCallFunctionWithCheck(artefacts,"Javascript_HttpGet","{\"url\":\"[[dataPool.url]]\"}","output.getString(\"data\").contains(\"[[dataPool.check]]\")");
 		
 		ForEachBlock forEach = new ForEachBlock();
-		forEach.setDataSource(new JSONObject().put("file", "../data/testdata/demo.csv"));
+		CSVDataPool conf = new CSVDataPool();
+		conf.setFile(new DynamicValue<String>("../data/testdata/demo.csv"));
+		forEach.setDataSource(conf);
+		forEach.setDataSourceType("csv");
 		forEach.addChild(call1.getId());
 		artefacts.save(forEach);
 

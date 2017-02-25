@@ -18,28 +18,42 @@
  *******************************************************************************/
 package step.datapool.sequence;
 
-import step.commons.dynamicbeans.DynamicAttribute;
+import step.core.dynamicbeans.DynamicValue;
+import step.datapool.DataPoolConfiguration;
 
-public class IntSequenceDataPool {
+public class IntSequenceDataPool extends DataPoolConfiguration {
 	
-	@DynamicAttribute
-	String start;
+	DynamicValue<Integer> start = new DynamicValue<Integer>(1);
 	
-	@DynamicAttribute
-	String end;
+	DynamicValue<Integer> end = new DynamicValue<Integer>(2);
 	
-	@DynamicAttribute
-	String inc;
+	DynamicValue<Integer> inc = new DynamicValue<Integer>(1);
 
-	public Integer getStart() {
-		return start!=null&&start.length()>0?Integer.parseInt(start):0;
+	public IntSequenceDataPool() {
+		super();
 	}
 
-	public Integer getEnd() {
-		return end!=null&&end.length()>0?Integer.parseInt(end):null;
+	public DynamicValue<Integer> getStart() {
+		return start;
 	}
 
-	public Integer getInc() {
-		return inc!=null&&inc.length()>0?Integer.parseInt(inc):1;
+	public void setStart(DynamicValue<Integer> start) {
+		this.start = start;
+	}
+
+	public DynamicValue<Integer> getEnd() {
+		return end;
+	}
+
+	public void setEnd(DynamicValue<Integer> end) {
+		this.end = end;
+	}
+
+	public DynamicValue<Integer> getInc() {
+		return inc;
+	}
+
+	public void setInc(DynamicValue<Integer> inc) {
+		this.inc = inc;
 	}
 }

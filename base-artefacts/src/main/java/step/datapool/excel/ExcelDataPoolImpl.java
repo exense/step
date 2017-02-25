@@ -32,7 +32,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellReference;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +39,7 @@ import step.core.miscellaneous.ValidationException;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataSet;
 
-public class ExcelDataPoolImpl extends DataSet {
+public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 	
 	private static Logger logger = LoggerFactory.getLogger(ExcelDataPoolImpl.class);
 	
@@ -56,7 +55,7 @@ public class ExcelDataPoolImpl extends DataSet {
 	
 	static Pattern crossSheetPattern = Pattern.compile("^(.+?)::(.+?)$");
 			
-	public ExcelDataPoolImpl(JSONObject configuration) {
+	public ExcelDataPoolImpl(ExcelDataPool configuration) {
 		super(configuration);
 		this.lock = new Object();
 	}
@@ -64,8 +63,8 @@ public class ExcelDataPoolImpl extends DataSet {
 	@Override
 	public void reset_() {
 		synchronized (lock) {			
-			String bookName = configuration.getString("file");
-			String sheetName = configuration.has("worksheet")?configuration.getString("worksheet"):null;
+			String bookName = configuration.getFile().get();
+			String sheetName = configuration.getWorksheet().get();
 			
 			
 			logger.debug("book: " + bookName + " sheet: " + sheetName);
@@ -85,7 +84,7 @@ public class ExcelDataPoolImpl extends DataSet {
 				}
 			}
 			
-			if(configuration.getBoolean("headers")) {
+			if(configuration.getHeaders().get()) {
 				cursor = 0;
 			} else {
 				cursor = -1;
@@ -94,7 +93,7 @@ public class ExcelDataPoolImpl extends DataSet {
 	}
 	
 	private int mapHeaderToCellNum(Sheet sheet, String header) {
-		if(configuration.getBoolean("headers")) {
+		if(configuration.getHeaders().get()) {
 			Row row = sheet.getRow(0);
 			for(Cell cell:row) {
 				String key = ExcelFunctions.getCellValueAsString(cell, workbookSet.getMainFormulaEvaluator());
@@ -163,8 +162,10 @@ public class ExcelDataPoolImpl extends DataSet {
 
 	@Override
 	public void close() {
-		synchronized (lock) {			
-			workbookSet.close();
+		synchronized (lock) {	
+			if(workbookSet!=null) {
+				workbookSet.close();				
+			}
 		}
 
 		sheet = null;

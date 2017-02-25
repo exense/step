@@ -21,12 +21,10 @@ package step.datapool.sequence;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.JSONObject;
-
 import step.datapool.DataSet;
 
 
-public class IntSequenceDataPoolImpl extends DataSet {
+public class IntSequenceDataPoolImpl extends DataSet<IntSequenceDataPool> {
 	
 	Map<String, String> params = new HashMap<>();
 	
@@ -36,16 +34,16 @@ public class IntSequenceDataPoolImpl extends DataSet {
 	
 	int inc, end;
 			
-	public IntSequenceDataPoolImpl(JSONObject configuration) {
+	public IntSequenceDataPoolImpl(IntSequenceDataPool configuration) {
 		super(configuration);
 	}
 
 	@Override
 	public void reset_() {
 		init=true;
-		cursor = configuration.has("start")?configuration.getInt("start"):0;
-		inc = configuration.has("inc")?configuration.getInt("inc"):1;
-		end = configuration.getInt("end");
+		cursor = configuration.getStart().get();
+		inc = configuration.getInc().get();
+		end = configuration.getEnd().get();
 	}
 
 	@Override

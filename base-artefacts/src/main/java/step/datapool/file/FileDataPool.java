@@ -18,15 +18,23 @@
  *******************************************************************************/
 package step.datapool.file;
 
-import step.commons.dynamicbeans.DynamicAttribute;
+import step.core.dynamicbeans.DynamicValue;
+import step.datapool.DataPoolConfiguration;
 
 
-public class FileDataPool {
+public class FileDataPool extends DataPoolConfiguration {
 	
-	@DynamicAttribute
-	String folder;
+	DynamicValue<String> file = new DynamicValue<String>("");
 
-	public String getFolder() {
-		return folder;
+	public FileDataPool() {
+		super();
+	}
+
+	public DynamicValue<String> getFile() {
+		return file;
+	}
+
+	public void setFile(DynamicValue<String> file) {
+		this.file = file;
 	}
 }

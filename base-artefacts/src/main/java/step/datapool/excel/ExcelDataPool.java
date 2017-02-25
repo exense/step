@@ -18,22 +18,39 @@
  *******************************************************************************/
 package step.datapool.excel;
 
-import step.commons.dynamicbeans.DynamicAttribute;
+import step.core.dynamicbeans.DynamicValue;
+import step.datapool.DataPoolConfiguration;
 
 
-public class ExcelDataPool {
+public class ExcelDataPool extends DataPoolConfiguration {
 
-	@DynamicAttribute
-	String header;
+	DynamicValue<String> file = new DynamicValue<>();
 	
-	@DynamicAttribute
-	String workbookPath;
+	DynamicValue<String> worksheet = new DynamicValue<>();
+	
+	DynamicValue<Boolean> headers = new DynamicValue<>(true);
 
-	public Boolean getHeader() {
-		return header!=null&&header.length()>0?Boolean.valueOf(header):null;
+	public DynamicValue<String> getFile() {
+		return file;
 	}
 
-	public String getWorkbookPath() {
-		return workbookPath;
+	public void setFile(DynamicValue<String> file) {
+		this.file = file;
+	}
+
+	public DynamicValue<Boolean> getHeaders() {
+		return headers;
+	}
+
+	public void setHeaders(DynamicValue<Boolean> headers) {
+		this.headers = headers;
+	}
+
+	public DynamicValue<String> getWorksheet() {
+		return worksheet;
+	}
+
+	public void setWorksheet(DynamicValue<String> worksheet) {
+		this.worksheet = worksheet;
 	}
 }

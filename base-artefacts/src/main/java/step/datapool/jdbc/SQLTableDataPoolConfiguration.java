@@ -16,43 +16,35 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.datapool.file;
+package step.datapool.jdbc;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
-import step.datapool.DataSet;
+import step.core.dynamicbeans.DynamicValue;
+import step.datapool.DataPoolConfiguration;
 
 
-public class FileDataPoolImpl extends DataSet<DirectoryDataPool> {
+public class SQLTableDataPoolConfiguration extends DataPoolConfiguration {
 	
-	public FileDataPoolImpl(DirectoryDataPool configuration) {
-		super(configuration);
-	}
-		
-	Iterator<File> fileIterator;
+	DynamicValue<String> connectionString = new DynamicValue<String>("");
 	
-	File currentFile;
-	
-	@Override
-	public void reset_() {
-		File folder = new File(configuration.getFolder().get());
-		List<File> fileList = Arrays.asList(folder.listFiles());
-		fileIterator = fileList.iterator();
+	DynamicValue<String> query = new DynamicValue<String>("");
+
+	public SQLTableDataPoolConfiguration() {
+		super();
 	}
 
-	@Override
-	public Object next_() {
-		if(fileIterator.hasNext()) {
-			return fileIterator.next().getAbsolutePath();
-		} else {
-			return null;
-		}
+	public DynamicValue<String> getConnectionString() {
+		return connectionString;
 	}
 
-	@Override
-	public void close() {
+	public void setConnectionString(DynamicValue<String> connectionString) {
+		this.connectionString = connectionString;
+	}
+
+	public DynamicValue<String> getQuery() {
+		return query;
+	}
+
+	public void setQuery(DynamicValue<String> query) {
+		this.query = query;
 	}
 }

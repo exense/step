@@ -2,13 +2,11 @@ package step.datapool.file;
 
 import java.util.HashMap;
 
-import org.json.JSONObject;
-
 import step.core.variables.SimpleStringMap;
 
 public class FlatFileReaderDataPool extends FileReaderDataPool {
 
-	public FlatFileReaderDataPool(JSONObject configuration) {
+	public FlatFileReaderDataPool(FileDataPool configuration) {
 		super(configuration);
 	}
 

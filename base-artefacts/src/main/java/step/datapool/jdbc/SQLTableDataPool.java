@@ -29,12 +29,10 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.json.JSONObject;
-
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataSet;
 
-public class SQLTableDataPool extends DataSet {
+public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	private Connection conn;
 	private Statement smt;
@@ -50,16 +48,16 @@ public class SQLTableDataPool extends DataSet {
 
 	private ArrayList<String> cols;
 
-	public SQLTableDataPool(JSONObject configuration){
+	public SQLTableDataPool(SQLTableDataPoolConfiguration configuration){
 		super(configuration);
 
-		String[] split = configuration.getString("connectionString").trim().split(",");
+		String[] split = configuration.getConnectionString().get().trim().split(",");
 		this.jdbc_url = split[0];
 		this.db_user =  split[1];
 		this.db_pwd =  split[2];
 		this.driver_class =  split[3];
 
-		this.query = configuration.getString("query");
+		this.query = configuration.getQuery().get();
 		this.table = parseQueryForTable(this.query);
 
 		try {

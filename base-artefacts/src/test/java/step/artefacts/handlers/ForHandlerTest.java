@@ -22,7 +22,6 @@ import static junit.framework.Assert.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.json.JSONObject;
 import org.junit.Test;
 
 import step.artefacts.CheckArtefact;
@@ -30,7 +29,9 @@ import step.artefacts.ForBlock;
 import step.artefacts.reports.ForBlockReportNode;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
+import step.datapool.sequence.IntSequenceDataPool;
 
 public class ForHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -42,10 +43,13 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 				ExecutionContext.getCurrentContext().getReport(), "var", "val1");
 			
 		ForBlock f = add(new ForBlock());
-		JSONObject conf = new JSONObject().put("start", 1).put("end", 3).put("inc", 2);
+		
+		IntSequenceDataPool conf = new IntSequenceDataPool();
+		conf.setEnd(new DynamicValue<Integer>(3));;
+		conf.setInc(new DynamicValue<Integer>(2));;
 		
 		f.setDataSource(conf);
-		f.setItem("item");
+		f.setItem(new DynamicValue<String>("item"));
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
@@ -82,7 +86,8 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 			
 		ForBlock f = add(new ForBlock());
-		JSONObject conf = new JSONObject().put("end", 10);
+		IntSequenceDataPool conf = new IntSequenceDataPool();
+		conf.setEnd(new DynamicValue<Integer>(10));;
 		
 		f.setDataSource(conf);
 		
@@ -111,10 +116,12 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 			
 		ForBlock f = add(new ForBlock());
-		JSONObject conf = new JSONObject().put("end", 10);
+		
+		IntSequenceDataPool conf = new IntSequenceDataPool();
+		conf.setEnd(new DynamicValue<Integer>(10));;
 		
 		f.setDataSource(conf);
-		f.setMaxFailedLoops("2");
+		f.setMaxFailedLoops(new DynamicValue<Integer>(2));
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
