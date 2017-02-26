@@ -51,7 +51,7 @@ public class GroovyHandlerTest extends AbstractArtefactHandlerTest {
 		addAsChildOf(g, s);
 		
 		Check c = new Check();
-		c.setExpression("var1['test']=='test'");
+		c.setExpression(new DynamicValue<>("var1['test']=='test'",""));
 		addAsChildOf(c	, s);
 
 		execute(s);

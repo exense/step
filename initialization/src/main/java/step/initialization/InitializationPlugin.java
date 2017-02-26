@@ -157,7 +157,7 @@ public class InitializationPlugin extends AbstractPlugin {
 
 		if(check!=null) {
 			Check check1 = new Check();
-			check1.setExpression(check);
+			check1.setExpression(new DynamicValue<>(check, ""));
 			artefacts.save(check1);
 			call1.addChild(check1.getId());
 		}

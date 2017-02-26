@@ -19,23 +19,20 @@
 package step.artefacts;
 
 import step.artefacts.handlers.CheckHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = CheckHandler.class, block=false)
 public class Check extends AbstractArtefact {
 
-	@DynamicAttribute
-	private String expression;
+	private DynamicValue<Boolean> expression = new DynamicValue<>("", "");
 
-	public String getExpression() {
+	public DynamicValue<Boolean> getExpression() {
 		return expression;
 	}
 
-	public void setExpression(String expression) {
+	public void setExpression(DynamicValue<Boolean> expression) {
 		this.expression = expression;
 	}
-	
-	
 }
