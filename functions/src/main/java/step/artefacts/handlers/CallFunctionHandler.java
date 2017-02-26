@@ -136,7 +136,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setMeasures(output.getMeasures());
 			}
 			
-			if(testArtefact.getResultMap()!=null) {
+			if(testArtefact.getResultMap()!=null&&testArtefact.getResultMap().get()!=null) {
 				Object var = context.getVariablesManager().getVariable(testArtefact.getResultMap().get());
 				if(var instanceof Map) {
 					JsonObject result = output.getResult();

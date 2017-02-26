@@ -21,26 +21,27 @@ package step.artefacts;
 import step.artefacts.handlers.IfBlockHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(name = "If", handler = IfBlockHandler.class)
 public class IfBlock extends AbstractArtefact {
 
-	private String condition;
+	private DynamicValue<Boolean> condition = new DynamicValue<>("", "");
 
 	public IfBlock() {
 		super();
 	}
-
-	public IfBlock(String condition) {
+	
+	public IfBlock(String conditionExpr) {
 		super();
-		this.condition = condition;
+		condition = new DynamicValue<>(conditionExpr, "");
 	}
 
-	public String getCondition() {
+	public DynamicValue<Boolean> getCondition() {
 		return condition;
 	}
 
-	public void setCondition(String condition) {
+	public void setCondition(DynamicValue<Boolean> condition) {
 		this.condition = condition;
 	}
 }

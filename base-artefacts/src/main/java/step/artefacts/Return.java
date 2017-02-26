@@ -19,21 +19,20 @@
 package step.artefacts;
 
 import step.artefacts.handlers.ReturnHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = ReturnHandler.class, block=false)
 public class Return extends AbstractArtefact {
 
-	@DynamicAttribute
-	private String value;
+	private DynamicValue<String> output = new DynamicValue<>();
 
-	public String getValue() {
-		return value;
+	public DynamicValue<String> getOutput() {
+		return output;
 	}
 
-	public void setValue(String value) {
-		this.value = value;
+	public void setOutput(DynamicValue<String> output) {
+		this.output = output;
 	}
 }

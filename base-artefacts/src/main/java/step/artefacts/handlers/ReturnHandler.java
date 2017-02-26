@@ -37,7 +37,7 @@ public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 
 		Object o = context.getVariablesManager().getVariable("output");
 		if(o!=null && o instanceof OutputMessageBuilder) {
-			((OutputMessageBuilder)o).setPayloadJson(testArtefact.getValue());
+			((OutputMessageBuilder)o).setPayloadJson(testArtefact.getOutput().get());
 		}
 	}
 

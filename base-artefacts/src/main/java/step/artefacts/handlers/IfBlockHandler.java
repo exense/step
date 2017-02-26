@@ -18,15 +18,12 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.Map;
-
 import step.artefacts.IfBlock;
 import step.artefacts.reports.IfBlockReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.miscellaneous.TestArtefactResultHandler;
-import step.expressions.ExpressionHandler;
 
 public class IfBlockHandler extends ArtefactHandler<IfBlock, IfBlockReportNode> {
 
@@ -41,25 +38,18 @@ public class IfBlockHandler extends ArtefactHandler<IfBlock, IfBlockReportNode> 
 	}
 
 	private void evaluateExpressionAndDelegate(IfBlockReportNode node, IfBlock testArtefact, boolean execution) {
-		ExpressionHandler expressionHandler = new ExpressionHandler();
-		Map<String, Object> bindings = context.getVariablesManager().getAllVariables();
 		try {
-			Object checkResult = expressionHandler.evaluateGroovyExpression(testArtefact.getCondition(), bindings);
-			
-			if(checkResult!=null && checkResult instanceof Boolean) {
-				if((boolean)checkResult) {
-					SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
-					if(execution) {
-						scheduler.execute_(node, testArtefact);
-					} else {
-						scheduler.createReportSkeleton_(node, testArtefact);
-					}
+			if(testArtefact.getCondition().get()) {
+				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+				if(execution) {
+					scheduler.execute_(node, testArtefact);
 				} else {
-					node.setStatus(ReportNodeStatus.PASSED);	
-				} 
+					scheduler.createReportSkeleton_(node, testArtefact);
+				}
 			} else {
-				throw new Exception("The expression '"+testArtefact.getCondition()+"' returned '"+checkResult +"' instead of a boolean");
-			}
+				node.setStatus(ReportNodeStatus.PASSED);	
+			} 
+			
 		} catch (Exception e) {
 			TestArtefactResultHandler.failWithException(node, e);
 		}
