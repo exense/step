@@ -29,6 +29,7 @@ import step.artefacts.RetryIfFails;
 import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 
 public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
@@ -38,7 +39,7 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		RetryIfFails block = add(new RetryIfFails());
-		block.setMaxRetries("2");
+		block.setMaxRetries(new DynamicValue<Integer>(2));
 		
 		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
 			@Override
@@ -60,8 +61,8 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		RetryIfFails block = add(new RetryIfFails());
-		block.setMaxRetries("2");
-		block.setGracePeriod("1000");
+		block.setMaxRetries(new DynamicValue<Integer>(2));
+		block.setGracePeriod(new DynamicValue<Integer>(1000));
 		
 		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
 			@Override

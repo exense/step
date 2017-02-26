@@ -38,7 +38,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 	protected void execute_(ReportNode node, RetryIfFails testArtefact) {
 		boolean success = false;
 		
-		for(int count = 1; count<=testArtefact.getMaxRetries();count++) {
+		for(int count = 1; count<=testArtefact.getMaxRetries().get();count++) {
 			ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
 			Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+count, true);
 			
@@ -53,7 +53,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 			}
 			
 			try {
-				Thread.sleep(testArtefact.getGracePeriod());
+				Thread.sleep(testArtefact.getGracePeriod().get());
 			} catch (InterruptedException e) {}
 		}
 		

@@ -10,9 +10,6 @@
 		</div>
 	</div>
 	<fieldset ng-disabled="readonly">
-		<div class="form-group">
-			<label for="comment">Input (JSON)</label>
-			<json-editor model="artefact.inputJson" on-change="setInput(json)" />
-		</div>
+		<dynamic-json-editor label="'Input'" dynamic-value="artefact.input" on-save="save()" />
 	</fieldset>
 </div>

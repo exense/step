@@ -19,21 +19,20 @@
 package step.artefacts;
 
 import step.artefacts.handlers.SleepHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = SleepHandler.class, block=false)
 public class Sleep extends AbstractArtefact {
 
-	@DynamicAttribute
-	private String ms;
+	private DynamicValue<Long> duration = new DynamicValue<>(0L);
 
-	public String getMs() {
-		return ms;
+	public DynamicValue<Long> getDuration() {
+		return duration;
 	}
 
-	public void setMs(String ms) {
-		this.ms = ms;
+	public void setDuration(DynamicValue<Long> duration) {
+		this.duration = duration;
 	}
 }

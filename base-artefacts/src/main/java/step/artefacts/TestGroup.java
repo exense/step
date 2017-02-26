@@ -19,66 +19,62 @@
 package step.artefacts;
 
 import step.artefacts.handlers.TestGroupHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
-import step.core.artefacts.Artefact;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = TestGroupHandler.class)
 public class TestGroup extends AbstractArtefact {
 	
-	@DynamicAttribute
-	private String rampup = null;
+	DynamicValue<Integer> users = new DynamicValue<Integer>(1);
+
+	DynamicValue<Integer> iterations = new DynamicValue<Integer>(1);
 	
-	@DynamicAttribute
-	private String pacing = null;
+	DynamicValue<Integer> rampup = new DynamicValue<Integer>(null);
 	
-	@DynamicAttribute
-	private String users = "1";
-	
-	@DynamicAttribute
-	private String iterations = "1";
+	DynamicValue<Integer> pacing = new DynamicValue<Integer>(null);
 
-	@DynamicAttribute
-	private String startOffset = "0";
+	DynamicValue<Integer> startOffset = new DynamicValue<Integer>(0);
 
-	public String getRampup() {
-		return rampup;
-	}
-
-	public void setRampup(String rampup) {
-		this.rampup = rampup;
-	}
-
-	public String getPacing() {
-		return pacing;
-	}
-
-	public void setPacing(String pacing) {
-		this.pacing = pacing;
-	}
-
-	public String getUsers() {
+	public DynamicValue<Integer> getUsers() {
 		return users;
 	}
 
-	public void setUsers(String users) {
+	public void setUsers(DynamicValue<Integer> users) {
 		this.users = users;
 	}
 
-	public String getIterations() {
+	public DynamicValue<Integer> getIterations() {
 		return iterations;
 	}
 
-	public void setIterations(String iterations) {
+	public void setIterations(DynamicValue<Integer> iterations) {
 		this.iterations = iterations;
 	}
 
-	public String getStartOffset() {
+	public DynamicValue<Integer> getRampup() {
+		return rampup;
+	}
+
+	public void setRampup(DynamicValue<Integer> rampup) {
+		this.rampup = rampup;
+	}
+
+	public DynamicValue<Integer> getPacing() {
+		return pacing;
+	}
+
+	public void setPacing(DynamicValue<Integer> pacing) {
+		this.pacing = pacing;
+	}
+
+	public DynamicValue<Integer> getStartOffset() {
 		return startOffset;
 	}
 
-	public void setStartOffset(String startOffset) {
+	public void setStartOffset(DynamicValue<Integer> startOffset) {
 		this.startOffset = startOffset;
 	}
+	
 
 }

@@ -18,24 +18,20 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.GroovyHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
+import step.artefacts.handlers.ScriptHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 
-@Artefact(handler = GroovyHandler.class, block=false)
-public class Groovy extends AbstractArtefact {
+@Artefact(handler = ScriptHandler.class, block=false)
+public class Script extends AbstractArtefact {
 
-	@DynamicAttribute
-	private String expression;
+	private String script;
 
-	public String getExpression() {
-		return expression;
+	public String getScript() {
+		return script;
 	}
 
-	public void setExpression(String expression) {
-		this.expression = expression;
+	public void setScript(String script) {
+		this.script = script;
 	}
-	
-	
 }

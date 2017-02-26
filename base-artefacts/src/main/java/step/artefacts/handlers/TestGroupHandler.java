@@ -39,21 +39,21 @@ public class TestGroupHandler extends ArtefactHandler<TestGroup, ReportNode> {
 
 	@Override
 	public void execute_(final ReportNode node, final TestGroup testArtefact) {		
-		final Integer numberOfUsers = asInteger(testArtefact.getUsers());
+		final Integer numberOfUsers = testArtefact.getUsers().get();
 		if(numberOfUsers==null||numberOfUsers<=0) {
 			throw new RuntimeException("Invalid argument: 'users' has to be higher than 0.");
 		}
 		
-		final int numberOfIterations = asInteger(testArtefact.getIterations());
+		final int numberOfIterations = testArtefact.getIterations().get();
 		final int pacing;
-		if(testArtefact.getPacing()!=null&&testArtefact.getPacing().trim().length()>0) {
-			pacing = asInteger(testArtefact.getPacing());
+		if(testArtefact.getPacing().get()!=null) {
+			pacing = testArtefact.getPacing().get();
 		} else {
 			pacing = 0;
 		}
 		final long rampup;
-		if(testArtefact.getRampup()!=null&&testArtefact.getRampup().trim().length()>0) {
-			rampup =asInteger( testArtefact.getRampup());
+		if(testArtefact.getRampup().get()!=null) {
+			rampup = testArtefact.getRampup().get();
 		} else {
 			rampup = pacing;
 		}
@@ -62,7 +62,7 @@ public class TestGroupHandler extends ArtefactHandler<TestGroup, ReportNode> {
 		try {
 			for(int j=0;j<numberOfUsers;j++) {
 				final int groupID = j;
-				final long localStartOffset = asInteger(testArtefact.getStartOffset())+(long)((1.0*groupID)/numberOfUsers*rampup);
+				final long localStartOffset = testArtefact.getStartOffset().get()+(long)((1.0*groupID)/numberOfUsers*rampup);
 				executor.submit(new Runnable() {
 					public void run() {
 						ExecutionContext.setCurrentContext(context);
@@ -89,7 +89,7 @@ public class TestGroupHandler extends ArtefactHandler<TestGroup, ReportNode> {
 								if(pacing!=0) {
 									long endTime = System.currentTimeMillis();
 									long duration = endTime-startTime;
-									long pacingWait = asInteger(testArtefact.getPacing())-duration;
+									long pacingWait = pacing-duration;
 									if(pacingWait>0) {
 										Thread.sleep(pacingWait);
 									} else {

@@ -25,14 +25,14 @@ import java.util.List;
 import org.junit.Test;
 
 import step.artefacts.Check;
-import step.artefacts.Groovy;
+import step.artefacts.Script;
 import step.artefacts.Sequence;
 import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 
-public class GroovyHandlerTest extends AbstractArtefactHandlerTest {
+public class ScriptHandlerTest extends AbstractArtefactHandlerTest {
 	
 	@Test
 	public void test() {
@@ -46,8 +46,8 @@ public class GroovyHandlerTest extends AbstractArtefactHandlerTest {
 		addAsChildOf(set1,s);
 
 		
-		Groovy g = new Groovy();
-		g.setExpression("var1['test']='test'");
+		Script g = new Script();
+		g.setScript("var1['test']='test'");
 		addAsChildOf(g, s);
 		
 		Check c = new Check();

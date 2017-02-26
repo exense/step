@@ -305,8 +305,12 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
           "If":{template:"partials/artefacts/if.html"},
           "CallFunction":{template:"partials/artefacts/callFunction.html"},
           "Set":{template:"partials/artefacts/set.html"},
+          "Sleep":{template:"partials/artefacts/sleep.html"},
+          "Script":{template:"partials/artefacts/script.html"},
+          "TestGroup":{template:"partials/artefacts/testGroup.html"},
           "Case":{template:"partials/artefacts/case.html"},
           "Switch":{template:"partials/artefacts/switch.html"},
+          "RetryIfFails":{template:"partials/artefacts/retryIfFails.html"},
           "Check":{template:"partials/artefacts/check.html"},
           "CallCompositeControl":{template:"partials/artefacts/callCompositeControl.html"}
       }
@@ -354,12 +358,6 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
       $scope.save();
     });
   }
-  
-  $scope.setInput = function(json) {
-    $scope.artefact.inputJson = json;
-    $scope.save();
-  }
-  
 })
 .controller('CallFunctionCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {
   

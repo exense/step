@@ -19,32 +19,30 @@
 package step.artefacts;
 
 import step.artefacts.handlers.RetryIfFailsHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
-import step.core.artefacts.Artefact;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = RetryIfFailsHandler.class)
 public class RetryIfFails extends AbstractArtefact {
 	
-	@DynamicAttribute
-	String maxRetries;
+	DynamicValue<Integer> maxRetries = new DynamicValue<Integer>(1);
 	
-	@DynamicAttribute
-	String gracePeriod;
-	
-	public Integer getMaxRetries() {
-		return maxRetries!=null&&maxRetries.length()>0?Integer.parseInt(maxRetries):2;
+	DynamicValue<Integer> gracePeriod = new DynamicValue<Integer>(1000);
+
+	public DynamicValue<Integer> getMaxRetries() {
+		return maxRetries;
 	}
-	
-	public void setMaxRetries(String maxRetries) {
+
+	public void setMaxRetries(DynamicValue<Integer> maxRetries) {
 		this.maxRetries = maxRetries;
 	}
 
-	public Integer getGracePeriod() {
-		return gracePeriod!=null&&gracePeriod.length()>0?Integer.parseInt(gracePeriod):0;
+	public DynamicValue<Integer> getGracePeriod() {
+		return gracePeriod;
 	}
-	
-	public void setGracePeriod(String gracePeriod) {
+
+	public void setGracePeriod(DynamicValue<Integer> gracePeriod) {
 		this.gracePeriod = gracePeriod;
 	}
 

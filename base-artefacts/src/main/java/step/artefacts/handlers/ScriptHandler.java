@@ -20,31 +20,31 @@ package step.artefacts.handlers;
 
 import java.util.Map;
 
-import step.artefacts.Groovy;
+import step.artefacts.Script;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.expressions.ExpressionHandler;
 
-public class GroovyHandler extends ArtefactHandler<Groovy, ReportNode> {
+public class ScriptHandler extends ArtefactHandler<Script, ReportNode> {
 	
 	@Override
-	protected void createReportSkeleton_(ReportNode parentNode, Groovy testArtefact) {
+	protected void createReportSkeleton_(ReportNode parentNode, Script testArtefact) {
 
 	}
 
 	@Override
-	protected void execute_(ReportNode node, Groovy testArtefact) {
+	protected void execute_(ReportNode node, Script testArtefact) {
 		ExpressionHandler expressionHandler = new ExpressionHandler();
 		Map<String, Object> bindings = ExecutionContext.getCurrentContext().getVariablesManager().getAllVariables();
 		
-		expressionHandler.evaluateGroovyExpression(testArtefact.getExpression(), bindings);
+		expressionHandler.evaluateGroovyExpression(testArtefact.getScript(), bindings);
 		node.setStatus(ReportNodeStatus.PASSED);
 	}
 
 	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, Groovy testArtefact) {
+	public ReportNode createReportNode_(ReportNode parentNode, Script testArtefact) {
 		return new ReportNode();
 	}
 }

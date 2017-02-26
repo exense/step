@@ -38,7 +38,7 @@ public class CallCompositeHandler extends ArtefactHandler<CallCompositeControl, 
 	private void beforeDelegation(ReportNode parentNode, CallCompositeControl testArtefact) {
 		context.getVariablesManager().putVariable(parentNode, "#placeholder", testArtefact);
 
-		JSONObject compositeInput = new JSONObject((testArtefact.getInputJson()!=null)?testArtefact.getInputJson():"{}");
+		JSONObject compositeInput = new JSONObject((testArtefact.getInput().get()!=null)?testArtefact.getInput().get():"{}");
 		context.getVariablesManager().putVariable(parentNode, "compositeInput", compositeInput);
 	}
 
