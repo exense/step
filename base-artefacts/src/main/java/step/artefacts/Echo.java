@@ -19,22 +19,20 @@
 package step.artefacts;
 
 import step.artefacts.handlers.EchoHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = EchoHandler.class, block=false)
 public class Echo extends AbstractArtefact {
 
-	@DynamicAttribute
-	private String text;
+	private DynamicValue<String> text = new DynamicValue<>();
 
-	public String getText() {
+	public DynamicValue<String> getText() {
 		return text;
 	}
 
-	public void setText(String text) {
+	public void setText(DynamicValue<String> text) {
 		this.text = text;
 	}
-
 }

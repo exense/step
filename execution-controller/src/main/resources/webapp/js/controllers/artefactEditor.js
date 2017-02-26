@@ -300,6 +300,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
           "ForEach":{template:"partials/artefacts/forEach.html"},
           "For":{template:"partials/artefacts/for.html"},
           "Sequence":{template:"partials/artefacts/sequence.html"},
+          "Echo":{template:"partials/artefacts/echo.html"},
           "CallFunction":{template:"partials/artefacts/callFunction.html"},
           "Set":{template:"partials/artefacts/set.html"},
           "Case":{template:"partials/artefacts/case.html"},
