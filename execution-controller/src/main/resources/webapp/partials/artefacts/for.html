@@ -1,26 +1,11 @@
 <div class="form-group-sm">
 <fieldset ng-disabled="readonly">
 	<form>		
-		<div class="form-group">
-			<label>Start</label>
-			<input type="text" class="form-control" ng-blur="save()" ng-model="artefact.dataSource.start" /> 
-		</div>
-		<div class="form-group">
-			<label>End</label>
-			<input type="text" class="form-control" ng-blur="save()" ng-model="artefact.dataSource.end" /> 
-		</div>
-		<div class="form-group">
-			<label>Increment</label>
-			<input type="text" class="form-control" ng-blur="save()" ng-model="artefact.dataSource.inc" /> 
-		</div>
-		<div class="form-group">
-			<label>Number of threads</label>
-			<input ng-blur="save()" ng-model="artefact.threads" class="form-control"></input>
-		</div>
-		<div class="form-group">
-			<label>Name of the row variable</label>
-			<input ng-blur="save()" ng-model="artefact.item" class="form-control"></input>
-		</div>
+		<dynamic-textfield label="'Start'" on-save="save()" dynamic-value="artefact.dataSource.start" />
+		<dynamic-textfield label="'End'" on-save="save()" dynamic-value="artefact.dataSource.end" />
+		<dynamic-textfield label="'Increment'" on-save="save()" dynamic-value="artefact.dataSource.inc" />
+		<dynamic-textfield label="'Number of threads'" on-save="save()" dynamic-value="artefact.threads" />
+		<dynamic-textfield label="'Row handle'" on-save="save()" dynamic-value="artefact.item" />
 	</form>
 </fieldset>
 </div>
