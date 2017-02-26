@@ -18,11 +18,9 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.CaseHandler;
 import step.artefacts.handlers.PlaceholderHandler;
-import step.commons.dynamicbeans.DynamicAttribute;
-import step.core.artefacts.Artefact;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
 
 @Artefact(handler = PlaceholderHandler.class)
 public class Placeholder extends AbstractArtefact {

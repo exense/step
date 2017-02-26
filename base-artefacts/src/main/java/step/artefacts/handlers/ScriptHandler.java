@@ -36,7 +36,7 @@ public class ScriptHandler extends ArtefactHandler<Script, ReportNode> {
 
 	@Override
 	protected void execute_(ReportNode node, Script testArtefact) {
-		ExpressionHandler expressionHandler = new ExpressionHandler();
+		ExpressionHandler expressionHandler = context.getGlobalContext().getExpressionHandler();
 		Map<String, Object> bindings = ExecutionContext.getCurrentContext().getVariablesManager().getAllVariables();
 		
 		expressionHandler.evaluateGroovyExpression(testArtefact.getScript(), bindings);

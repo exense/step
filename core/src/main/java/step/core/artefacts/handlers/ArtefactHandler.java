@@ -39,7 +39,6 @@ import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.TestArtefactResultHandler;
-import step.expressions.DynamicBeanResolver;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 	
@@ -119,13 +118,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		try {
 			context.getGlobalContext().getDynamicBeanResolver().evaluate(testArtefact, context.getVariablesManager().getAllVariables());
-			ARTEFACT postEvaluationArtefact = (ARTEFACT) DynamicBeanResolver.resolveDynamicAttributes(testArtefact);
 			
 			ArtefactFilter filter = ExecutionContext.getCurrentContext().getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(testArtefact)) {
 				node.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
-				createReportSkeleton_(node, postEvaluationArtefact);
+				createReportSkeleton_(node, testArtefact);
 			}
 		} catch (Exception e) {
 			getListOfArtefactsNotInitialized().add(testArtefact.getId().toString());
@@ -168,8 +166,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		long t1 = System.currentTimeMillis();
 		try {
 			context.getGlobalContext().getDynamicBeanResolver().evaluate(testArtefact, context.getVariablesManager().getAllVariables());
-			ARTEFACT postEvaluationArtefact = (ARTEFACT) DynamicBeanResolver.resolveDynamicAttributes(testArtefact);
-			node.setArtefactInstance(postEvaluationArtefact);
+			node.setArtefactInstance(testArtefact);
 			
 			ArtefactFilter filter = ExecutionContext.getCurrentContext().getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(testArtefact)) {
@@ -177,7 +174,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			} else {
 				reportNodeAccessor.save(node);
 				
-				execute_(node, postEvaluationArtefact);
+				execute_(node, testArtefact);
 			}
 		} catch (Exception e) {
 			TestArtefactResultHandler.failWithException(node, e);

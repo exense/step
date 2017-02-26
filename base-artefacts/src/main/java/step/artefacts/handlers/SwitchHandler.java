@@ -24,7 +24,6 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.expressions.DynamicBeanResolver;
 
 public class SwitchHandler extends ArtefactHandler<Switch, ReportNode> {
 
@@ -46,7 +45,8 @@ public class SwitchHandler extends ArtefactHandler<Switch, ReportNode> {
 						
 		for(AbstractArtefact child:getChildren(testArtefact)) {
 			if(child instanceof Case) {
-				Case c = (Case) DynamicBeanResolver.resolveDynamicAttributes((Case) child);
+				Case c = (Case) child;
+				context.getGlobalContext().getDynamicBeanResolver().evaluate(c, context.getVariablesManager().getAllVariables());
 				
 				if(evaluationResultStr.equals(c.getValue().get())) {
 					if(execution) {

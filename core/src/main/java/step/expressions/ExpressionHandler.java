@@ -20,8 +20,6 @@ package step.expressions;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -38,7 +36,7 @@ public class ExpressionHandler {
 		
 	private static Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
 	
-	private static final GroovyClassLoader groovyLoader = new GroovyClassLoader();
+	private final GroovyClassLoader groovyLoader = new GroovyClassLoader();
 		
 	private final CompilerConfiguration groovyCompilerConfiguration;
 	
@@ -55,24 +53,6 @@ public class ExpressionHandler {
 		}
 	}
 	
-	static Pattern expressionPattern = Pattern.compile("\\[\\[(.+?)\\]\\]");
-	
-	public String evaluate(String original, Map<String, Object> bindings) {
-		StringBuffer sb = new StringBuffer();
-		Matcher m = expressionPattern.matcher(original);
-		while(m.find()) {
-			String expression = m.group(1);
-			Object result = evaluateGroovyExpression(expression, bindings);
-			if(result!=null) {
-				m.appendReplacement(sb,  Matcher.quoteReplacement(result.toString()));				
-			} else {
-				m.appendReplacement(sb, "");
-			}
-		}
-		m.appendTail(sb);
-		return sb.toString();
-	}
-
 	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings) {
 		Object result;
 		try {			

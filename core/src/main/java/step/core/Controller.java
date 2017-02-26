@@ -84,7 +84,8 @@ public class Controller {
 		context.setUserAccessor(new UserAccessor(mongoClient));
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		context.setExecutionLifecycleManager(new ExecutionLifecycleManager(context));
-		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
+		context.setExpressionHandler(new ExpressionHandler());
+		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		
 		createOrUpdateIndexes();
 	}

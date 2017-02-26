@@ -32,6 +32,7 @@ import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
+import step.expressions.ExpressionHandler;
 
 public class GlobalContext extends AbstractContext {
 	
@@ -58,6 +59,8 @@ public class GlobalContext extends AbstractContext {
 	private ExecutionLifecycleManager executionLifecycleManager;
 	
 	private ServiceRegistrationCallback serviceRegistrationCallback;
+	
+	private ExpressionHandler expressionHandler;
 	
 	private DynamicBeanResolver dynamicBeanResolver;
 
@@ -164,6 +167,14 @@ public class GlobalContext extends AbstractContext {
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
 	}
 	
+	public ExpressionHandler getExpressionHandler() {
+		return expressionHandler;
+	}
+
+	public void setExpressionHandler(ExpressionHandler expressionHandler) {
+		this.expressionHandler = expressionHandler;
+	}
+
 	public DynamicBeanResolver getDynamicBeanResolver() {
 		return dynamicBeanResolver;
 	}

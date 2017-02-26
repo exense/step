@@ -20,7 +20,6 @@ package step.functions;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,7 +33,6 @@ import org.json.JSONObject;
 import org.reflections.Reflections;
 
 import step.core.GlobalContext;
-import step.expressions.DynamicBeanResolver;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionType;
 import step.functions.type.SetupFunctionException;
@@ -247,15 +245,15 @@ public class FunctionClient {
 		try {
 			String functionTypeName = function.getType();
 			AbstractFunctionType functionType = getFunctionTypeByName(functionTypeName);
-			JSONObject resolvedFunctionTypeConf = DynamicBeanResolver.resolveDynamicAttributes(function.getConfiguration(),Collections.<String, Object>unmodifiableMap(input.getProperties()));
+			//JSONObject resolvedFunctionTypeConf = DynamicBeanResolver.resolveDynamicAttributes(function.getConfiguration(),Collections.<String, Object>unmodifiableMap(input.getProperties()));
 			
 			String handlerChain = functionType.getHandlerChain(function);
 			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
 			
 			TokenHandle facade = tokenHandle.setHandler(handlerChain).addProperties(input.getProperties()).addProperties(handlerProperties);
 			
-			if(resolvedFunctionTypeConf.has("callTimeout")) {
-				facade.setCallTimeout(resolvedFunctionTypeConf.getInt("callTimeout"));
+			if(function.getConfiguration().has("callTimeout")) {
+				facade.setCallTimeout(function.getConfiguration().getInt("callTimeout"));
 			}
 
 			OutputMessage outputMessage = facade.process(function.getAttributes().get("name"), input.getArgument());		
