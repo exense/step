@@ -511,24 +511,29 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         refreshTestCaseTable();
       }
 
-      var refreshTimer = $interval(function(){
-        if($scope.autorefresh) {
-          refreshExecution();
-          if($scope.active()) {
-            refresh();
-            refreshTestCaseTable();
-          } 
-        }}, 5000);
+      var interval = 100;
+      $scope.scheduleNextRefresh = function() {
+        $timeout(function(){
+          if($scope.autorefresh) {
+            refreshExecution();
+            if($scope.active()) {
+              refresh();
+              refreshTestCaseTable();
+            }
+          }
+          interval = Math.min(interval * 2,5000);
+          if(!$scope.$$destroyed&&$scope.execution.status!='ENDED') {
+            $scope.scheduleNextRefresh();            
+          }
+        }, interval);
+      }
+      $scope.scheduleNextRefresh();
       
       refreshAll();
-      
-      $element.on('$destroy', function() {
-        $interval.cancel(refreshTimer);
-      });
-      
+
       $scope.$watch('autorefresh',function(newSatus, oldStatus) {
         // if the timer has already been canceled and autorefresh has been clicked => refresh
-        if(newSatus&&refreshTimer.$$state.status==2) {
+        if(newSatus) {
           refreshAll();
         }
       })
@@ -536,11 +541,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       $scope.$watch('execution.status',function(newSatus, oldStatus) {
         $scope.updateTabStatus()(eId,newSatus);
         if(newSatus=='ENDED') {
-          $interval.cancel(refreshTimer);
           if(oldStatus&&$scope.autorefresh) {
             refreshAll();
           }
-          $scope.autorefresh = false;
         }
       });
     },
