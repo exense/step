@@ -70,7 +70,8 @@ public class ExecutionTestHelper {
 	public static GlobalContext createGlobalContext() {
 		GlobalContext context = new GlobalContext();
 
-		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
+		context.setExpressionHandler(new ExpressionHandler());
+		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		
 		PluginManager pluginManager = new PluginManager();
 		context.setPluginManager(pluginManager);
