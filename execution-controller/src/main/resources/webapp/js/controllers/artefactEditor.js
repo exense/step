@@ -122,6 +122,26 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
       $scope.execute = function() {
     	$location.path('/root/repository').search({repositoryId:'local',artefactid:$scope.artefactId});
       }
+      
+      $scope.executeWithDefaultParams = function() {
+        var executionParams = {userID:AuthService.getContext().userID};
+        executionParams.description = $scope.description;
+        executionParams.mode = 'RUN';
+        executionParams.artefact = {repositoryID:'local',repositoryParameters:{artefactid:$scope.artefact.id}};
+        executionParams.exports = [];
+        $http.post("rest/controller/execution",executionParams).then(
+            function(response) {
+              var eId = response.data;
+              
+              $location.$$search = {};
+              $location.path('/root/executions/'+eId);
+
+              $timeout(function() {
+                $scope.onExecute();
+              });
+              
+            });
+      }
 })
 
 .directive('artefact', function($http,$timeout,$interval,stateStorage,$filter,$location) {

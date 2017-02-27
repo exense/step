@@ -210,6 +210,10 @@ angular.module('step',['ngStorage','ngCookies'])
     $rootScope.context = {'userID':session.username, 'rights':session.profile.rights, 'role':session.profile.role};
   }
   
+  authService.getContext = function() {
+    return $rootScope.context;
+  }
+  
   authService.init = function() {
     return $http.get('rest/access/conf')
       .then(function(res) {

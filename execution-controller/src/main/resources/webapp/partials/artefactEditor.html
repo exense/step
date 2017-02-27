@@ -5,7 +5,8 @@
 				<div class="panel-heading">{{artefact._class}}{{artefact.root?(' - '+artefact.attributes.name):''}}
 					<div class="input-group pull-right">
 						<div class="btn-group">
-							<button type="submit" class="btn btn-default btn-xs" ng-click="execute()"><span class="glyphicon glyphicon glyphicon-play" aria-hidden="true"></span></button>
+							<button type="submit" class="btn btn-default btn-xs" title="Select parameters for plan execution" ng-click="execute()"><span class="glyphicon glyphicon-play-circle" aria-hidden="true"></span></button>
+							<button type="submit" class="btn btn-default btn-xs" title="Execute plan with default parameters" ng-click="executeWithDefaultParams()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
 				  		</div>
 				  	</div>
 				 </div>
@@ -45,7 +46,7 @@
 									</div>		
 								</div>				
 							</uib-tab>
-							<uib-tab heading="Other artefacts" active="$parent.tabState['artefacts']">
+							<uib-tab heading="Other plans" active="$parent.tabState['artefacts']">
 								<div class="row">
 									<div class="panel-body">	
 										<datatable handle="artefactTable" tabledef="artefactTable" columnsearch="true" serverside="artefacts" order="[[1, &quot;desc&quot;]]" />
