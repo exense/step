@@ -41,23 +41,23 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
         resolve: {function_: function () {return function_;}}
       });
 
-      modalInstance.result.then(function () {
-          if($scope.table) {
-            $scope.table.Datatable.ajax.reload(null, false);
-          }
-      }, function () {});
+      return modalInstance.result;
   }
   
   var dialogs = {};
   
-  dialogs.editFunction = function(id) {
+  dialogs.editFunction = function(id, callback) {
     $http.get("rest/functions/"+id).then(function(response) {
-      openModal(response.data);
+      openModal(response.data).then(function() {
+        if(callback){callback()};
+      })
     });
   }
   
-  dialogs.addFunction = function() {
-    openModal();
+  dialogs.addFunction = function(callback) {
+    openModal().then(function() {
+      if(callback){callback()};
+    })
   }
   
   dialogs.openFunctionEditor = function(functionid) {
@@ -85,7 +85,7 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
       }
 
       $scope.editFunction = function(id) {
-        FunctionDialogs.editFunction(id);
+        FunctionDialogs.editFunction(id, function() {reload()});
       }
       
       $scope.copyFunction = function(id) {
@@ -108,7 +108,7 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
       }
       
       $scope.addFunction = function() {
-        FunctionDialogs.addFunction();
+        FunctionDialogs.addFunction(function() {reload()});
       }
       
       $scope.executeFunction = function(id) {
