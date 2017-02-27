@@ -36,7 +36,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
       
       $scope.authService = AuthService;
             
-      $scope.tabState = {'controls':true,'functions':false};
+      $scope.tabState = {'controls':true,'functions':false,'artefacts':false};
       
       $scope.controlsTable = {};
       $scope.controlsTable.columns = [ { "title" : "ID", "visible" : false },
@@ -87,12 +87,36 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
         return columns;
       };
       
+      $scope.artefactTable = {};
+      $scope.artefactTable.columns = function(columns) {
+        _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
+          col.visible = false
+        });
+        _.each(_.where(columns, { 'title' : 'Name' }), function(col) {
+
+        });
+        _.each(_.where(columns,{'title':'Actions'}),function(col){
+          col.render = function(data, type, row) {
+            return '<button type="button" class="btn btn-default  btn-xs" aria-label="Left Align"' + 
+              'onclick="angular.element(\'#ArtefactEditorCtrl\').scope().addArtefact(\''+row[0]+'\')">' +
+        '<span class="glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>' +
+        '</button> '
+          };  
+        });
+        return columns;
+      };
+      
+      
       $scope.addFunction = function(id) {
     	$scope.handle.addFunction(id);
       }
       
       $scope.addControl = function(id) {
     	$scope.handle.addControl(id);
+      }
+      
+      $scope.addArtefact = function(id) {
+        $scope.handle.addArtefact(id);
       }
       
       $scope.execute = function() {
@@ -234,6 +258,17 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     		  reloadAfterArtefactInsertion(artefact);
     	  })
     	});
+      }
+      
+      $scope.handle.addArtefact = function(id) {
+        var selectedArtefact = tree.get_selected(true);
+        $http.get("rest/controller/artefact/"+id).then(function(response) {
+          var artefact = response.data;         
+          var newArtefact = {"artefactId":id,"cachedArtefactName":artefact.attributes.name,"_class":"CallCompositeControl"};
+          $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
+            reloadAfterArtefactInsertion(response.data);
+          })
+        });
       }
       
       $scope.copy = function() {

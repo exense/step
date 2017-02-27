@@ -41,7 +41,14 @@
 							<uib-tab heading="Keywords" active="$parent.tabState['functions']">
 								<div class="row">
 									<div class="panel-body">	
-										<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
+										<datatable handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
+									</div>		
+								</div>				
+							</uib-tab>
+							<uib-tab heading="Other artefacts" active="$parent.tabState['artefacts']">
+								<div class="row">
+									<div class="panel-body">	
+										<datatable handle="artefactTable" tabledef="artefactTable" columnsearch="true" serverside="artefacts" order="[[1, &quot;desc&quot;]]" />
 									</div>		
 								</div>				
 							</uib-tab>
