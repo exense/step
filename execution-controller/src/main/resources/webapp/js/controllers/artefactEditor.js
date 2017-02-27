@@ -204,7 +204,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
           try {
             label = JSON.parse(artefact['function']).name;
           } catch(e) {}
-        } else if(artefact._class=='CallCompositeControl') {
+        } else if(artefact._class=='CallPlan') {
           if(artefact.cachedArtefactName) {
             label =  artefact.cachedArtefactName;             
           }
@@ -224,7 +224,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
         	  }) 	  
         	  var artefact = currentNode.artefact;
 
-        	  var artefactIcon = {'Default':'glyphicon-unchecked', 'CallCompositeControl':'glyphicon glyphicon-new-window', 'CallFunction':'glyphicon-record' ,'For':'glyphicon glyphicon-th','ForEach':'glyphicon glyphicon-th'}
+        	  var artefactIcon = {'Default':'glyphicon-unchecked', 'CallPlan':'glyphicon glyphicon-new-window', 'CallFunction':'glyphicon-record' ,'For':'glyphicon glyphicon-th','ForEach':'glyphicon glyphicon-th'}
         	  
         	  var icon = artefact._class in artefactIcon ? artefactIcon[artefact._class]:artefactIcon['Default'];
         	  
@@ -284,7 +284,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
         var selectedArtefact = tree.get_selected(true);
         $http.get("rest/controller/artefact/"+id).then(function(response) {
           var artefact = response.data;         
-          var newArtefact = {"artefactId":id,"cachedArtefactName":artefact.attributes.name,"_class":"CallCompositeControl"};
+          var newArtefact = {"artefactId":id,"cachedArtefactName":artefact.attributes.name,"_class":"CallPlan"};
           $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
             reloadAfterArtefactInsertion(response.data);
           })
@@ -367,7 +367,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
           "Switch":{template:"partials/artefacts/switch.html"},
           "RetryIfFails":{template:"partials/artefacts/retryIfFails.html"},
           "Check":{template:"partials/artefacts/check.html"},
-          "CallCompositeControl":{template:"partials/artefacts/callCompositeControl.html"}
+          "CallPlan":{template:"partials/artefacts/callPlan.html"}
       }
       
       $scope.authService = AuthService;
@@ -395,7 +395,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     },
     template: '<div ng-include="editor.template"></div>'}
 })
-.controller('CallCompositeCtrl' , function($scope,$uibModal,$location,$http) {  
+.controller('CallPlanCtrl' , function($scope,$uibModal,$location,$http) {  
   $scope.gotoArtefact = function() {
     $location.path('/root/artefacteditor/' + $scope.artefact.artefactId);
   }

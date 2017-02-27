@@ -18,13 +18,13 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.CallCompositeHandler;
+import step.artefacts.handlers.CallPlanHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = CallCompositeHandler.class)
-public class CallCompositeControl extends AbstractArtefact {
+@Artefact(handler = CallPlanHandler.class)
+public class CallPlan extends AbstractArtefact {
 	
 	private String artefactId;
 	

@@ -20,22 +20,22 @@ package step.artefacts.handlers;
 
 import org.json.JSONObject;
 
-import step.artefacts.CallCompositeControl;
+import step.artefacts.CallPlan;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 
-public class CallCompositeHandler extends ArtefactHandler<CallCompositeControl, ReportNode> {
+public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
 	@Override
-	protected void createReportSkeleton_(ReportNode parentNode,	CallCompositeControl testArtefact) {
+	protected void createReportSkeleton_(ReportNode parentNode,	CallPlan testArtefact) {
 		beforeDelegation(parentNode, testArtefact);
 		
 		AbstractArtefact a = context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
 		delegateCreateReportSkeleton(a, parentNode);
 	}
 
-	private void beforeDelegation(ReportNode parentNode, CallCompositeControl testArtefact) {
+	private void beforeDelegation(ReportNode parentNode, CallPlan testArtefact) {
 		context.getVariablesManager().putVariable(parentNode, "#placeholder", testArtefact);
 
 		JSONObject compositeInput = new JSONObject((testArtefact.getInput().get()!=null)?testArtefact.getInput().get():"{}");
@@ -43,7 +43,7 @@ public class CallCompositeHandler extends ArtefactHandler<CallCompositeControl, 
 	}
 
 	@Override
-	protected void execute_(ReportNode node, CallCompositeControl testArtefact) {
+	protected void execute_(ReportNode node, CallPlan testArtefact) {
 		beforeDelegation(node, testArtefact);
 
 		AbstractArtefact a = context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
@@ -52,7 +52,7 @@ public class CallCompositeHandler extends ArtefactHandler<CallCompositeControl, 
 	}
 
 	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, CallCompositeControl testArtefact) {
+	public ReportNode createReportNode_(ReportNode parentNode, CallPlan testArtefact) {
 		return new ReportNode();
 	}
 
