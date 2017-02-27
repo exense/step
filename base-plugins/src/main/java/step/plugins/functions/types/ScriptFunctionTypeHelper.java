@@ -2,6 +2,7 @@ package step.plugins.functions.types;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
@@ -128,6 +129,20 @@ public class ScriptFunctionTypeHelper {
 				}				
 			} else {
 				throw new SetupFunctionException("Unable to apply template. The file '"+templateScript.getAbsolutePath()+"' doesn't exist");
+			}
+		}		
+	}
+	
+	public void createScriptFromTemplateStream(File scriptFile, InputStream templateScript) throws SetupFunctionException {
+		if(scriptFile.exists()) {
+			if(templateScript!=null) {
+				try {
+					Files.copy(templateScript, scriptFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				} catch (IOException e) {
+					throw new SetupFunctionException("Unable to copy template from stream to '"+scriptFile.getAbsolutePath()+"'", e);
+				}				
+			} else {
+				throw new SetupFunctionException("Unable to apply template. The stream is null");
 			}
 		}		
 	}
