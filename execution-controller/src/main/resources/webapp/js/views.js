@@ -71,7 +71,7 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
         charts.throughputchart.data.push([]);
         charts.throughputchart.series.push('Keywords/s');
         
-        charts.responseTimeByFunctionChart = defaultChart('Reponse times (s)');
+        charts.responseTimeByFunctionChart = defaultChart('Reponse times (ms)');
         charts.responseTimeByFunctionChart.options.legend.display = true;
         
         charts.performancechart = defaultChart('Throughput (Keywords/s)');
