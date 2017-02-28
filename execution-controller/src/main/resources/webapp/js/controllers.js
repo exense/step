@@ -329,7 +329,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           var data = response.data;
           var currentNode = _.last(data);
           var html = '<ul class="list-unstyled node-details">';
-          if(currentNode.reportNode && currentNode.reportNode.adapter) {html+='<li><strong>Adapter</strong> <span>'+currentNode.reportNode.adapter+'</span></li>'}
+          if(currentNode.reportNode && currentNode.reportNode.agentUrl) {html+='<li><strong>Agent</strong> <span>'+currentNode.reportNode.agentUrl+'</span></li>'}
+          if(currentNode.reportNode && currentNode.reportNode.tokenId) {html+='<li><strong>Token ID</strong> <span>'+currentNode.reportNode.tokenId+'</span></li>'}
+
           if(currentNode.reportNode){html+='<li><strong>Duration (ms)</strong> <span>'+currentNode.reportNode.duration+'</span></li>'}
           html+='<li><strong>Stacktrace</strong><div><table class="stacktrace">';
           _.each(data.slice(2), function(entry){

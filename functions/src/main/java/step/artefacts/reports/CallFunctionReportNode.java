@@ -27,7 +27,9 @@ public class CallFunctionReportNode extends ReportNode {
 
 	protected String functionId;
 	
-	protected String adapter;
+	protected String agentUrl;
+	
+	protected String tokenId;
 	
 	protected String input;
 	
@@ -39,12 +41,20 @@ public class CallFunctionReportNode extends ReportNode {
 		super();
 	}
 
-	public String getAdapter() {
-		return adapter;
+	public String getAgentUrl() {
+		return agentUrl;
 	}
 
-	public void setAdapter(String adapter) {
-		this.adapter = adapter;
+	public void setAgentUrl(String agentUrl) {
+		this.agentUrl = agentUrl;
+	}
+
+	public String getTokenId() {
+		return tokenId;
+	}
+
+	public void setTokenId(String tokenId) {
+		this.tokenId = tokenId;
 	}
 
 	public String getInput() {

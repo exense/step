@@ -83,7 +83,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		}
 				
 		try {
-			node.setAdapter(token.toString());
+			node.setAgentUrl(token.getAgentRef().getAgentUrl());
+			node.setTokenId(token.getToken().getID());
 			token.setCurrentOwner(node);
 			
 			int callTimeoutDefault = context.getVariablesManager().getVariableAsInteger("keywords.calltimeout.default", 180000);
