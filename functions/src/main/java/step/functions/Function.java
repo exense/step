@@ -21,17 +21,20 @@ package step.functions;
 import java.util.Map;
 
 import org.bson.types.ObjectId;
-import org.json.JSONObject;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+
+import step.core.dynamicbeans.DynamicValue;
+
+@JsonTypeInfo(use=Id.CLASS,property="type")
 public class Function {
 	
 	ObjectId _id;
 	
 	Map<String, String> attributes;
-	
-	String type;
-	
-	JSONObject configuration;
+
+	DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
 
 	public ObjectId getId() {
 		return _id;
@@ -48,21 +51,12 @@ public class Function {
 	public void setAttributes(Map<String, String> attributes) {
 		this.attributes = attributes;
 	}
-
-	public String getType() {
-		return type;
+	
+	public DynamicValue<Integer> getCallTimeout() {
+		return callTimeout;
 	}
 
-	public void setType(String type) {
-		this.type = type;
+	public void setCallTimeout(DynamicValue<Integer> callTimeout) {
+		this.callTimeout = callTimeout;
 	}
-
-	public JSONObject getConfiguration() {
-		return configuration;
-	}
-
-	public void setConfiguration(JSONObject configuration) {
-		this.configuration = configuration;
-	}
-
 }

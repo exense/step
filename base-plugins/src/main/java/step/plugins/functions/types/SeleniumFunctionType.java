@@ -3,15 +3,10 @@ package step.plugins.functions.types;
 import java.io.File;
 import java.util.Map;
 
-import org.json.JSONObject;
-
-import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
-import step.functions.type.FunctionType;
 import step.functions.type.SetupFunctionException;
 
-@FunctionType(name="selenium",label="Selenium")
-public class SeleniumFunctionType extends AbstractFunctionType {
+public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunction> {
 
 	ScriptFunctionTypeHelper helper;
 	
@@ -22,26 +17,25 @@ public class SeleniumFunctionType extends AbstractFunctionType {
 	}
 	
 	@Override
-	public String getHandlerChain(Function function) {
+	public String getHandlerChain(SeleniumFunction function) {
 		return "class:step.handlers.scripthandler.ScriptHandler";
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(Function function) {
+	public Map<String, String> getHandlerProperties(SeleniumFunction function) {
 		return helper.getHandlerProperties(function);
 	}
 
 	@Override
-	public void setupFunction(Function function) throws SetupFunctionException {
+	public void setupFunction(SeleniumFunction function) throws SetupFunctionException {
 		File scriptFile = helper.setupScriptFile(function);
 		helper.createScriptFromTemplate(scriptFile, "kw_selenium.js");
 	}
 	
 	@Override
-	public JSONObject newFunctionTypeConf() {
-		JSONObject conf = super.newFunctionTypeConf();
-		conf.put("scriptLanguage", "javascript");
-		return conf;
+	public SeleniumFunction newFunction() {
+		SeleniumFunction function = new SeleniumFunction();
+		function.getScriptLanguage().setValue("javascript");
+		return function;
 	}
-
 }

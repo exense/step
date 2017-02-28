@@ -18,18 +18,38 @@
  *******************************************************************************/
 angular.module('functionsControllers',['dataTable','step','schemaForm'])
 
-.run(function($http, $rootScope) {
-  function loadTypes() {
-    $http.get("rest/functions/types").then(function(response){
-      $rootScope.functionTypes = response.data;
-    });  
+.factory('FunctionTypeRegistry', function() {
+  
+  var registry = {};
+  
+  var api = {};
+  
+  api.register = function(typeName,label,form) {
+    registry[typeName] = {"label":label,"form":form};
   }
   
-  loadTypes();
+  api.getForm = function(typeName) {
+    return registry[typeName].form;
+  }
   
-  $rootScope.$on('step.login.succeeded',function() {
-    loadTypes();    
-  })
+  api.getLabel = function(typeName) {
+    return registry[typeName].label;
+  }
+  
+  api.getTypes = function() {
+    return _.keys(registry);
+  }
+  
+  return api;
+})
+
+.run(function(FunctionTypeRegistry) {
+  FunctionTypeRegistry.register('step.plugins.functions.types.SeleniumFunction','Selenium','partials/functions/forms/selenium.html');
+  FunctionTypeRegistry.register('step.plugins.functions.types.GrinderFunction','Grinder','partials/functions/forms/grinder.html');
+  FunctionTypeRegistry.register('step.plugins.functions.types.ScriptFunction','Custom Script (JS, Groovy, etc)','partials/functions/forms/script.html');
+  FunctionTypeRegistry.register('step.plugins.functions.types.CompositeFunction','Composite','partials/functions/forms/composite.html');
+  FunctionTypeRegistry.register('step.plugins.functions.types.CustomFunction','Custom (Java)','partials/functions/forms/custom.html');
+
 })
 
 .factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {
@@ -74,8 +94,8 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
   return dialogs;
 })
 
-.controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', 'FunctionDialogs', '$location','AuthService',
-    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, FunctionDialogs, $location, AuthService) {
+.controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', 'FunctionDialogs', '$location','AuthService','FunctionTypeRegistry',
+    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, FunctionDialogs, $location, AuthService, FunctionTypeRegistry) {
       $stateStorage.push($scope, 'functions', {});	
 
       $scope.authService = AuthService;
@@ -149,24 +169,11 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
             return data
           };
         });
-//        _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
-//          col.render = function(data, type, row) {
-//        	var function_ = JSON.parse(row[row.length-1]);
-//        	if(data.indexOf('class:step.core.tokenhandlers.ArtefactMessageHandler')!=-1) {
-//        	  if(function_.handlerProperties) {
-//        	    if(AuthService.hasRight('kw-write')) { 
-//        	      return '<a href="#/root/artefacteditor/' + function_.configuration.artefactId + '">Composite</a>'        	      
-//        	    } else {
-//        	      return 'Composite';
-//        	    }
-//        	  } else {
-//        		return 'Unknown';
-//        	  }
-//        	} else {
-//        	  return 'Handler'        	  
-//        	}
-//          };
-//        });
+        _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
+          col.render = function(data, type, row) {
+            return FunctionTypeRegistry.getLabel(data);
+          };
+        });
         _.each(_.where(columns,{'title':'Actions'}),function(col){
             col.title="Actions";
             col.searchmode="none";
@@ -210,47 +217,30 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
       };
     } ])
     
-.controller('newFunctionModalCtrl', function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dialogs) {
+.controller('newFunctionModalCtrl', function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dialogs,FunctionTypeRegistry) {
+  $scope.functionTypeRegistry = FunctionTypeRegistry;
   
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
   
-  $scope.getFunctionAttributes = function() {
-  	return _.keys($scope.function_.attributes);
+  $scope.loadInitialFunction = function() {
+    $http.get("rest/functions/types/"+$scope.function_.type).then(function(response){
+      var initialFunction = response.data;
+      if($scope.function_) {
+        if($scope.function_.attributes) {
+          initialFunction.attributes = $scope.function_.attributes;
+        }
+      }
+      $scope.function_ = initialFunction;
+    })  
   }
-  
-  $scope.functionTypes = $rootScope.functionTypes;
   
   if(newFunction) {
-  	$scope.function_= {"attributes":{},"type":"script","configuration":{}};
-  	$http.get("rest/screens/functionTable").then(function(response){
-  	  _.each(response.data,function(input) {
-  	    eval('$scope.function_.'+input.id+"=''");
-  	  })
-  	});	
+    $scope.function_ = {type:'step.plugins.functions.types.SeleniumFunction'}
+    $scope.loadInitialFunction();
   } else {
-    $scope.function_=function_;
-    updateConfigurationForm(function_.type)
+    $scope.function_ = function_;
   }
-
-  function getFunctionType(typeName) {
-    return _.findWhere($scope.functionTypes, {"name":typeName}) 
-  }
-  
-  function updateConfigurationForm(functionType) {
-    var type = getFunctionType(functionType);
-    $scope.schema = type.configurationSchema;
-    $scope.form = type.configurationForm;
-  }
-  
-  $scope.$watch('function_.type',function(functionType,oldFunctionType){
-    if(($scope.function_&&_.isEmpty($scope.function_.configuration))||functionType!=oldFunctionType) {
-      updateConfigurationForm(functionType);
-      $http.get("rest/functions/types/"+functionType).then(function(response){
-        $scope.function_.configuration = response.data;
-      })
-    }
-  });
   
   $scope.save = function (editAfterSave) {
     $http.post("rest/functions",$scope.function_).then(function(response) {
@@ -373,4 +363,22 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
+})
+.controller('CompositeFunctionFormCtrl' , function($scope,$uibModal,$location,$http) {  
+  $scope.gotoArtefact = function() {
+    $scope.save(false);
+    $location.path('/root/artefacteditor/' + $scope.function_.artefactId);
+  }
+  
+  $scope.selectArtefact = function() {
+    var modalInstance = $uibModal.open({
+      templateUrl: 'partials/selectArtefact.html',
+      controller: 'selectArtefactModalCtrl',
+      resolve: {}
+    });
+
+    modalInstance.result.then(function (artefact) {
+      $scope.function_.artefactId = artefact.id;
+    });
+  }
 })

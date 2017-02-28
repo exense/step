@@ -3,15 +3,10 @@ package step.plugins.functions.types;
 import java.io.File;
 import java.util.Map;
 
-import org.json.JSONObject;
-
-import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
-import step.functions.type.FunctionType;
 import step.functions.type.SetupFunctionException;
 
-@FunctionType(name="script",label="Custom Script (JS, Groovy, etc)")
-public class ScriptFunctionType extends AbstractFunctionType {
+public class ScriptFunctionType extends AbstractFunctionType<ScriptFunction> {
 	
 	ScriptFunctionTypeHelper helper;
 	
@@ -22,17 +17,17 @@ public class ScriptFunctionType extends AbstractFunctionType {
 	}
 
 	@Override
-	public String getHandlerChain(Function function) {
+	public String getHandlerChain(ScriptFunction function) {
 		return "class:step.handlers.scripthandler.ScriptHandler";
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(Function function) {
+	public Map<String, String> getHandlerProperties(ScriptFunction function) {
 		return helper.getHandlerProperties(function);
 	}
 
 	@Override
-	public void setupFunction(Function function) throws SetupFunctionException {
+	public void setupFunction(ScriptFunction function) throws SetupFunctionException {
 		File scriptFile = helper.setupScriptFile(function);
 		String language = helper.getScriptLanguage(function);
 		if(language.equals("javascript")) {
@@ -43,9 +38,9 @@ public class ScriptFunctionType extends AbstractFunctionType {
 	}
 
 	@Override
-	public JSONObject newFunctionTypeConf() {
-		JSONObject conf = super.newFunctionTypeConf();
-		conf.put("scriptLanguage", "javascript");
-		return conf;
+	public ScriptFunction newFunction() {
+		ScriptFunction function = new ScriptFunction();
+		function.getScriptLanguage().setValue("javascript");
+		return function;
 	}
 }

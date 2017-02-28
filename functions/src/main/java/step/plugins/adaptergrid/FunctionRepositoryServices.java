@@ -20,9 +20,9 @@ package step.plugins.adaptergrid;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.json.Json;
 import javax.ws.rs.Consumes;
@@ -33,8 +33,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-
-import org.json.JSONObject;
 
 import step.attachments.AttachmentMeta;
 import step.core.GlobalContext;
@@ -49,7 +47,6 @@ import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaExcept
 import step.functions.Function;
 import step.functions.FunctionClient;
 import step.functions.FunctionClient.FunctionTokenHandle;
-import step.functions.FunctionClient.FunctionTypeInfo;
 import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
@@ -148,7 +145,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 		
 		try {
 			FunctionTokenHandle token;
-			if(function.getType().equals("composite")) {
+			if(function.getClass().getSimpleName().equals("CompositeFunction")) {
 				token = getFunctionClient().getLocalFunctionToken();
 			} else {
 				token = getFunctionClient().getFunctionToken();
@@ -237,7 +234,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Secured(right="kw-read")
 	public String getFunctionEditor(@PathParam("id") String functionId) {
 		Function function = getFunctionRepository().getFunctionById(functionId);
-		FunctionEditor editor = getContext().get(FunctionEditorRegistry.class).getFunctionEditor(function.getType());
+		FunctionEditor<Function> editor = getContext().get(FunctionEditorRegistry.class).getFunctionEditor(function);
 		if(editor!=null) {
 			return editor.getEditorPath(function);
 		} else {
@@ -246,18 +243,14 @@ public class FunctionRepositoryServices extends AbstractServices {
 	}
 	
 	@GET
-	@Path("/types")
-	@Secured(right="kw-read")
-	public Set<FunctionTypeInfo> getFunctionTypeInfos() {
-		return getFunctionClient().getFunctionTypeInfos();
-	}	
-	
-	@GET
 	@Path("/types/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="kw-read")
-	public JSONObject newFunctionTypeConf(@PathParam("id") String type) {
-		return getFunctionClient().newFunctionTypeConf(type);
+	public Function newFunctionTypeConf(@PathParam("id") String type) {
+		Function newFunction = getFunctionClient().newFunction(type);
+		newFunction.setAttributes(new HashMap<>());
+		newFunction.getAttributes().put("name", "");
+		return newFunction;
 	}
 }

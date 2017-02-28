@@ -5,23 +5,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import step.functions.Function;
+
 public class FunctionEditorRegistry {
 
-	Map<String, List<FunctionEditor>> registry = new ConcurrentHashMap<>();
+	Map<Class<? extends Function>, List<FunctionEditor<?>>> registry = new ConcurrentHashMap<>();
 	
-	public synchronized void register(String functionType, FunctionEditor functionEditor) {
-		List<FunctionEditor> editors = registry.get(functionType);
+	public synchronized <T extends Function> void register(Class<T> functionClass, FunctionEditor<T> functionEditor) {
+		List<FunctionEditor<?>> editors = registry.get(functionClass);
 		if(editors==null) {
 			editors = new ArrayList<>();
-			registry.put(functionType, editors);
+			registry.put(functionClass, editors);
 		}
 		editors.add(functionEditor);
 	}
 	
-	public FunctionEditor getFunctionEditor(String functionType) {
-		List<FunctionEditor> editors = registry.get(functionType);
+	@SuppressWarnings("unchecked")
+	public <T extends Function> FunctionEditor<T> getFunctionEditor(T function) {
+		List<FunctionEditor<?>> editors = registry.get(function.getClass());
 		if(editors!=null) {
-			return editors.get(0);
+			return (FunctionEditor<T>) editors.get(0);
 		} else {
 			return null;
 		}

@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.jongo.MongoCollection;
-import org.json.JSONObject;
 
 import step.artefacts.CallFunction;
 import step.artefacts.Check;
@@ -40,6 +39,7 @@ import step.core.plugins.Plugin;
 import step.datapool.file.CSVDataPool;
 import step.functions.Function;
 import step.plugins.adaptergrid.FunctionRepositoryImpl;
+import step.plugins.functions.types.CustomFunction;
 
 @Plugin
 public class InitializationPlugin extends AbstractPlugin {
@@ -212,17 +212,14 @@ public class InitializationPlugin extends AbstractPlugin {
 	}
 
 	private Function createFunction(String name, String handlerChain) {
-		Function demoFunction = new Function();
+		// TODO replace by specific types
+		CustomFunction demoFunction = new CustomFunction();
 		
 		Map<String, String> kwAttributes = new HashMap<>();
 		kwAttributes.put("name", name);
 		
 		demoFunction.setAttributes(kwAttributes);
-		// TODO replace by specific types
-		demoFunction.setType("custom");
-		JSONObject conf = new JSONObject();
-		conf.put("handlerChain", handlerChain);
-		demoFunction.setConfiguration(conf);
+		demoFunction.getHandlerChain().setValue(handlerChain);
 
 		return demoFunction;
 	}

@@ -20,21 +20,13 @@ package step.functions;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-
-import org.json.JSONObject;
-import org.reflections.Reflections;
 
 import step.core.GlobalContext;
 import step.functions.type.AbstractFunctionType;
-import step.functions.type.FunctionType;
 import step.functions.type.SetupFunctionException;
 import step.grid.AgentRef;
 import step.grid.TokenWrapper;
@@ -53,111 +45,24 @@ public class FunctionClient {
 	
 	private final GlobalContext context;
 	
-	private final Map<String, AbstractFunctionType> functionTypes = new HashMap<>();
+	private final Map<String, AbstractFunctionType<Function>> functionTypes = new HashMap<>();
 	
 	public FunctionClient(GlobalContext context, GridClient gridClient, FunctionRepository functionRepository) {
 		super();
 		this.context = context;
 		this.gridClient = gridClient;
 		this.functionRepository = functionRepository;
-		
-		loadFunctionTypes();
 	}
 	
-	private void loadFunctionTypes() {
-		Set<Class<?>> functionTypeClasses = new Reflections("step").getTypesAnnotatedWith(FunctionType.class);
-		
-		for(Class<?> functionTypeClass:functionTypeClasses) {
-			AbstractFunctionType functionType;
-			try {
-				functionType = (AbstractFunctionType) functionTypeClass.newInstance();
-				functionType.setContext(context);
-				functionType.init();
-				functionTypes.put(functionTypeClass.getAnnotation(FunctionType.class).name(), functionType);
-			} catch (InstantiationException | IllegalAccessException e) {
-				
-			}
-		}
+	@SuppressWarnings("unchecked")
+	public void registerFunctionType(AbstractFunctionType<? extends Function> functionType) {
+		functionType.setContext(context);
+		functionType.init();
+		functionTypes.put(functionType.newFunction().getClass().getName(), (AbstractFunctionType<Function>) functionType);
 	}
 	
-	public static class FunctionTypeInfo {
-		
-		String name;
-		
-		String label;
-		
-		String editor;
-		
-		JsonObject configurationSchema;
-		
-		JsonArray configurationForm;
-
-		public FunctionTypeInfo(String name) {
-			super();
-			this.name = name;
-		}
-		
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public String getLabel() {
-			return label;
-		}
-
-		public void setLabel(String label) {
-			this.label = label;
-		}
-
-		public String getEditor() {
-			return editor;
-		}
-
-		public void setEditor(String editor) {
-			this.editor = editor;
-		}
-
-		public JsonObject getConfigurationSchema() {
-			return configurationSchema;
-		}
-
-		public void setConfigurationSchema(JsonObject configurationSchema) {
-			this.configurationSchema = configurationSchema;
-		}
-
-		public JsonArray getConfigurationForm() {
-			return configurationForm;
-		}
-
-		public void setConfigurationForm(JsonArray configurationForm) {
-			this.configurationForm = configurationForm;
-		}
-	}
-	
-	public Set<FunctionTypeInfo> getFunctionTypeInfos() {
-		Set<FunctionTypeInfo> result = new HashSet<>();
-		functionTypes.forEach((k,v)->
-		{
-			FunctionTypeInfo info = new FunctionTypeInfo(k);
-			info.setLabel(v.getClass().getAnnotation(FunctionType.class).label());
-			info.setConfigurationForm(v.getConfigurationForm());
-			info.setConfigurationSchema(v.getConfigurationSchema());
-			result.add(info);
-		});
-		return result;
-	}
-	
-	public JSONObject newFunctionTypeConf(String functionType) {
-		AbstractFunctionType type = getFunctionTypeByName(functionType);
-		return type.newFunctionTypeConf();
-	}
-
-	private AbstractFunctionType getFunctionTypeByName(String functionType) {
-		AbstractFunctionType type = functionTypes.get(functionType);
+	private AbstractFunctionType<Function> getFunctionTypeByType(String functionType) {
+		AbstractFunctionType<Function> type = (AbstractFunctionType<Function>) functionTypes.get(functionType);
 		if(type==null) {
 			throw new RuntimeException("Unknown function type '"+functionType+"'");
 		} else {
@@ -165,13 +70,17 @@ public class FunctionClient {
 		}
 	}
 	
+	private AbstractFunctionType<Function> getFunctionTypeByFunction(Function function) {
+		return getFunctionTypeByType(function.getClass().getName());
+	}
+	
 	public void setupFunction(Function function) throws SetupFunctionException {
-		AbstractFunctionType type = getFunctionTypeByName(function.getType());
+		AbstractFunctionType<Function> type = getFunctionTypeByFunction(function);
 		type.setupFunction(function);
 	}
 	
 	public Function copyFunction(Function function) {
-		AbstractFunctionType type = getFunctionTypeByName(function.getType());
+		AbstractFunctionType<Function> type = getFunctionTypeByFunction(function);
 		return type.copyFunction(function);
 	}
 	
@@ -243,18 +152,15 @@ public class FunctionClient {
 		Output output = new Output();
 		output.setFunction(function);
 		try {
-			String functionTypeName = function.getType();
-			AbstractFunctionType functionType = getFunctionTypeByName(functionTypeName);
-			//JSONObject resolvedFunctionTypeConf = DynamicBeanResolver.resolveDynamicAttributes(function.getConfiguration(),Collections.<String, Object>unmodifiableMap(input.getProperties()));
+			AbstractFunctionType<Function> functionType = getFunctionTypeByFunction(function);
+			context.getDynamicBeanResolver().evaluate(function, Collections.<String, Object>unmodifiableMap(input.getProperties()));
 			
 			String handlerChain = functionType.getHandlerChain(function);
 			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
 			
 			TokenHandle facade = tokenHandle.setHandler(handlerChain).addProperties(input.getProperties()).addProperties(handlerProperties);
 			
-			if(function.getConfiguration().has("callTimeout")) {
-				facade.setCallTimeout(function.getConfiguration().getInt("callTimeout"));
-			}
+			facade.setCallTimeout(function.getCallTimeout().get());
 
 			OutputMessage outputMessage = facade.process(function.getAttributes().get("name"), input.getArgument());		
 			output.setResult(outputMessage.getPayload());
@@ -277,6 +183,10 @@ public class FunctionClient {
 
 	public FunctionRepository getFunctionRepository() {
 		return functionRepository;
+	}
+	
+	public Function newFunction(String type) {
+		return getFunctionTypeByType(type).newFunction();
 	}
 	
 }

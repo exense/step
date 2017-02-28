@@ -11,11 +11,8 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.json.JSONObject;
-
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
-import step.functions.Function;
 import step.functions.FunctionClient;
 import step.functions.type.SetupFunctionException;
 import step.handlers.scripthandler.ScriptHandler;
@@ -43,7 +40,7 @@ public class ScriptFunctionTypeHelper {
 		this.context = context;
 	}
 
-	public Map<String, String> getHandlerProperties(Function function) {
+	public Map<String, String> getHandlerProperties(ScriptFunction function) {
 		File scriptFile = getScriptFile(function);
 		
 		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
@@ -57,19 +54,19 @@ public class ScriptFunctionTypeHelper {
 		return props;
 	}
 
-	public File getScriptFile(Function function) {
-		String scriptFilePath = function.getConfiguration().getString("scriptFile");
+	public File getScriptFile(ScriptFunction function) {
+		String scriptFilePath = function.getScriptFile().get();
 		return new File(scriptFilePath);
 	}
 	
-	protected File getDefaultScriptFile(Function function) {
+	protected File getDefaultScriptFile(ScriptFunction function) {
 		String filename = getScriptFilename(function);
 		String scriptDir = Configuration.getInstance().getProperty("keywords.script.scriptdir");
 		File file = new File(scriptDir+"/"+filename);
 		return file;
 	}
 
-	private String getScriptFilename(Function function) {
+	private String getScriptFilename(ScriptFunction function) {
 		TreeSet<String> sortedKeys = new TreeSet<>(function.getAttributes().keySet());
 		StringBuilder filename = new StringBuilder();
 		Iterator<String> it = sortedKeys.iterator();
@@ -83,19 +80,19 @@ public class ScriptFunctionTypeHelper {
 		return filename.toString();
 	}
 
-	public String getScriptLanguage(Function function) {
-		return function.getConfiguration().getString("scriptLanguage");
+	public String getScriptLanguage(ScriptFunction conf) {
+		return conf.getScriptLanguage().get();
 	}
 	
-	public File setupScriptFile(Function function) throws SetupFunctionException {
+	public File setupScriptFile(ScriptFunction function) throws SetupFunctionException {
 		File scriptFile;
 		
-		JSONObject conf = function.getConfiguration();
-		if(conf.isNull("scriptFile") || conf.getString("scriptFile").trim().length()==0) {
+		String scriptFilename = function.getScriptFile().get();
+		if(scriptFilename==null || scriptFilename.trim().length()==0) {
 			scriptFile = getDefaultScriptFile(function);
-			conf.put("scriptFile", scriptFile.getAbsolutePath());
+			function.getScriptFile().setValue(scriptFile.getAbsolutePath());
 		} else {
-			scriptFile = new File(conf.getString("scriptFile"));
+			scriptFile = new File(scriptFilename);
 		}
 
 		if(!scriptFile.exists()) {

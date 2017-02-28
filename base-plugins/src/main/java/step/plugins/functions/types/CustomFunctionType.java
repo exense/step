@@ -2,20 +2,22 @@ package step.plugins.functions.types;
 
 import java.util.Map;
 
-import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
-import step.functions.type.FunctionType;
 
-@FunctionType(name="custom",label="Custom Handler")
-public class CustomFunctionType extends AbstractFunctionType {
+public class CustomFunctionType extends AbstractFunctionType<CustomFunction> {
 
 	@Override
-	public String getHandlerChain(Function function) {
-		return function.getConfiguration().getString("handlerChain");
+	public String getHandlerChain(CustomFunction function) {
+		return function.getHandlerChain().get();
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(Function function) {
+	public Map<String, String> getHandlerProperties(CustomFunction function) {
 		return null;
+	}
+
+	@Override
+	public CustomFunction newFunction() {
+		return new CustomFunction();
 	}
 }
