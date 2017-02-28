@@ -26,15 +26,15 @@ public class FIleManagerTest {
 		
 		String id = server.registerFile(testFile);
 
-		final Attachment a = server.getFile(id);
+		final Attachment a = server.getFileAsAttachment(id);
 		Assert.assertNotNull(a);
 		Assert.assertArrayEquals(content, AttachmentHelper.hexStringToByteArray(a.getHexContent())); 
 
 		AtomicInteger remoteCallCounts = new AtomicInteger(0);
 		
-		FileManagerClient client = new FileManagerClient(new File("."), new FileProvider() {
+		FileManagerClient client = new FileManagerClientImpl(new File("."), new FileProvider() {
 			@Override
-			public Attachment getFile(String fileId) {
+			public Attachment getFileAsAttachment(String fileId) {
 				remoteCallCounts.incrementAndGet();
 				return a;
 			}

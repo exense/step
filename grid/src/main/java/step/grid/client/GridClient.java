@@ -44,8 +44,11 @@ import step.grid.AgentRef;
 import step.grid.Grid;
 import step.grid.Token;
 import step.grid.TokenWrapper;
+import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.handler.TokenHandlerPool;
+import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.filemanager.FileManagerClient;
 import step.grid.io.InputMessage;
 import step.grid.io.ObjectMapperResolver;
 import step.grid.io.OutputMessage;
@@ -91,18 +94,27 @@ public class GridClient implements Closeable {
 		
 		OutputMessage output;
 		if(token.isLocal()) {
-			output = callLocalToken(message);
+			output = callLocalToken(token, message);
 		} else {
 			output = callAgent(agent, token, message);						
 		}
 		return output;
 	}
 
-	private OutputMessage callLocalToken(InputMessage message) throws Exception {
+	private OutputMessage callLocalToken(Token token, InputMessage message) throws Exception {
 		OutputMessage output;
 		TokenHandlerPool p = new TokenHandlerPool(null);
 		MessageHandler h = p.get(message.getHandler());
-		output = h.handle(null, message);
+		
+		AgentTokenWrapper agentTokenWrapper = new AgentTokenWrapper(token);
+		FileManagerClient fileManagerClient = new FileManagerClient() {
+			@Override
+			public File requestFile(String uid, long lastModified) {
+				return adapterGrid.getRegisteredFile(uid);
+			}
+		};
+		agentTokenWrapper.setServices(new AgentTokenServices(fileManagerClient));
+		output = h.handle(agentTokenWrapper, message);
 		return output;
 	}
 

@@ -49,6 +49,11 @@ public class AgentTokenWrapper {
 		token.setId(uid);
 	}
 
+	public AgentTokenWrapper(Token token) {
+		super();
+		this.token = token;
+	}
+
 	public TokenSession getSession() {
 		return session;
 	}

@@ -142,6 +142,10 @@ public class Grid {
 		return fileManager.registerFile(file);
 	}
 
+	public File getRegisteredFile(String fileHandle) {
+		return fileManager.getFile(fileHandle);
+	}
+
 	public List<Token<TokenWrapper>> getTokens() {
 		return tokenPool.getTokens();
 	}

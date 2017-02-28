@@ -52,6 +52,6 @@ public class GridServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/file/{id}")
 	public Attachment getFile(@PathParam("id")String fileId) throws IOException {
-		return fileManager.getFile(fileId);
+		return fileManager.getFileAsAttachment(fileId);
 	}
 }

@@ -55,6 +55,7 @@ import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.filemanager.FileManagerClient;
+import step.grid.filemanager.FileManagerClientImpl;
 import step.grid.io.ObjectMapperResolver;
 import step.grid.tokenpool.Interest;
 
@@ -217,7 +218,7 @@ public class Agent {
 			Files.createDirectory(fileManagerDir.toPath());
 		}
 		
-		FileManagerClient fileManagerClient = new FileManagerClient(fileManagerDir, registrationClient);
+		FileManagerClient fileManagerClient = new FileManagerClientImpl(fileManagerDir, registrationClient);
 		return fileManagerClient;
 	}
 

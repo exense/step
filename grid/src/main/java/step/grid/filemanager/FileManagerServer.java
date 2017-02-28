@@ -28,8 +28,8 @@ public class FileManagerServer implements FileProvider {
 		return handle;
 	}
 	
-	public Attachment getFile(String fileHandle) {
-		File file = registry.get(fileHandle);;
+	public Attachment getFileAsAttachment(String fileHandle) {
+		File file = getFile(fileHandle);
 		byte[] bytes;
 		try {
 			bytes = Files.readAllBytes(file.toPath());
@@ -38,6 +38,10 @@ public class FileManagerServer implements FileProvider {
 		} catch (IOException e) {
 			throw new RuntimeException("Error while reading file with handle "+fileHandle+" mapped to '"+file.getAbsolutePath()+"'", e);
 		}
+	}
+
+	public File getFile(String fileHandle) {
+		return registry.get(fileHandle);
 	}
 	
 }

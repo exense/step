@@ -72,7 +72,7 @@ public class RegistrationClient implements FileProvider {
 	}
 
 	@Override
-	public Attachment getFile(String fileId) {
+	public Attachment getFileAsAttachment(String fileId) {
 		try {			
 			Response r = client.target(registrationServer + "/grid/file/"+fileId).request().property(ClientProperties.READ_TIMEOUT, callTimeout)
 					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).get();
