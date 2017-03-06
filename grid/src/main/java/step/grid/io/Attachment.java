@@ -25,6 +25,8 @@ public class Attachment {
 	String description;
 	
 	String hexContent;
+	
+	Boolean isDirectory;
 
 	public Attachment() {
 		super();
@@ -52,5 +54,13 @@ public class Attachment {
 
 	public void setHexContent(String hexContent) {
 		this.hexContent = hexContent;
+	}
+
+	public Boolean getIsDirectory() {
+		return isDirectory;
+	}
+
+	public void setIsDirectory(Boolean isDirectory) {
+		this.isDirectory = isDirectory;
 	}
 }

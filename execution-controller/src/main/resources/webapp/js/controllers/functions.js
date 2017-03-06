@@ -33,7 +33,7 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
   }
   
   api.getLabel = function(typeName) {
-    return registry[typeName].label;
+    return registry[typeName]?registry[typeName].label:"Unknown";
   }
   
   api.getTypes = function() {
@@ -44,7 +44,6 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
 })
 
 .run(function(FunctionTypeRegistry) {
-  FunctionTypeRegistry.register('step.plugins.functions.types.SeleniumFunction','Selenium','partials/functions/forms/selenium.html');
   FunctionTypeRegistry.register('step.plugins.functions.types.GrinderFunction','Grinder','partials/functions/forms/grinder.html');
   FunctionTypeRegistry.register('step.plugins.functions.types.ScriptFunction','Custom Script (JS, Groovy, etc)','partials/functions/forms/script.html');
   FunctionTypeRegistry.register('step.plugins.functions.types.CompositeFunction','Composite','partials/functions/forms/composite.html');
@@ -236,7 +235,7 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
   }
   
   if(newFunction) {
-    $scope.function_ = {type:'step.plugins.functions.types.SeleniumFunction'}
+    $scope.function_ = {type:'step.plugins.functions.types.ScriptFunction'}
     $scope.loadInitialFunction();
   } else {
     $scope.function_ = function_;

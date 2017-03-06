@@ -12,6 +12,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import step.commons.conf.Configuration;
+import step.commons.helpers.FileHelper;
 import step.core.GlobalContext;
 import step.functions.FunctionClient;
 import step.functions.type.SetupFunctionException;
@@ -48,7 +49,8 @@ public class ScriptFunctionTypeHelper {
 
 		Map<String, String> props = new HashMap<>();
 		props.put(ScriptHandler.REMOTE_FILE_ID, fileHandle);
-		props.put(ScriptHandler.REMOTE_FILE_VERSION, Long.toString(scriptFile.lastModified()));
+		props.put(ScriptHandler.REMOTE_FILE_VERSION, Long.toString(FileHelper.getLastModificationDateRecursive(scriptFile)));					
+
 		//props.put(ScriptHandler.SCRIPT_FILE, scriptFile.getAbsolutePath());
 		
 		return props;

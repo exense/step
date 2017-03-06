@@ -1,10 +1,11 @@
-package step.plugins.functions.types;
+package step.plugins.selenium;
 
 import java.io.File;
 import java.util.Map;
 
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
+import step.plugins.functions.types.ScriptFunctionTypeHelper;
 
 public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunction> {
 
@@ -18,12 +19,19 @@ public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunction>
 	
 	@Override
 	public String getHandlerChain(SeleniumFunction function) {
-		return "class:step.handlers.scripthandler.ScriptHandler";
+		return "class:step.plugins.selenium.SeleniumHandler";
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(SeleniumFunction function) {
-		return helper.getHandlerProperties(function);
+	public Map<String, String> getHandlerProperties(SeleniumFunction function) {		
+		Map<String,String> handlerProperties = helper.getHandlerProperties(function);
+		
+		handlerProperties.put("selenium.version", function.getSeleniumVersion());
+		handlerProperties.put("selenium.scriptlanguage", function.getScriptLanguage().get());
+		handlerProperties.put("selenium.script.jar", function.getJarFile().get());
+
+		
+		return handlerProperties;
 	}
 
 	@Override

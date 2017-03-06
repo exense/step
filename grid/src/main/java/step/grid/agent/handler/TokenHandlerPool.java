@@ -64,7 +64,7 @@ public class TokenHandlerPool {
 
 	private static final String DELIMITER = "\\|";
 	
-	private MessageHandler createHandler(String handlerChain) throws Exception {
+	public MessageHandler createHandler(String handlerChain) throws Exception {
 		Iterator<String> handlerKeys = Arrays.asList(handlerChain.split(DELIMITER)).iterator();
 
 		MessageHandler rootHandler = createHandlerRecursive(null, handlerKeys);
@@ -143,13 +143,7 @@ public class TokenHandlerPool {
 		String[] paths = factoryKey.split(";");
 		for(String path:paths) {
 			File f = new File(path);
-			if(f.isDirectory()) {
-				for(File file:f.listFiles()) {
-					if(file.getName().endsWith(".jar")) {
-						urls.add(file.toURI().toURL());
-					}
-				}
-			}
+			addJarsToUrls(urls, f);
 			try {
 				urls.add(f.getCanonicalFile().toURI().toURL());
 			} catch (IOException e) {
@@ -157,6 +151,20 @@ public class TokenHandlerPool {
 			}
 		}
 		return urls.toArray(new URL[urls.size()]);
+	}
+
+	public static void addJarsToUrls(List<URL> urls, File f) throws MalformedURLException {
+		if(f.isDirectory()) {
+			for(File file:f.listFiles()) {
+				if(file.isDirectory()) {
+					addJarsToUrls(urls, file);
+				} else {
+					if(file.getName().endsWith(".jar")) {
+						urls.add(file.toURI().toURL());
+					}					
+				}
+			}
+		}
 	}
 
 	private MessageHandler newInstance(Class<?> class_)

@@ -14,7 +14,6 @@ public class BaseFunctionTypesPlugin extends AbstractPlugin {
 		super.executionControllerStart(context);
 		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
 		
-		functionClient.registerFunctionType(new SeleniumFunctionType());
 		functionClient.registerFunctionType(new GrinderFunctionType());
 		functionClient.registerFunctionType(new CustomFunctionType());
 		functionClient.registerFunctionType(new ScriptFunctionType());

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import step.commons.helpers.FileHelper;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 
@@ -70,16 +71,27 @@ public class FileManagerClientImpl implements FileManagerClient {
 	private File requestControllerFile(String fileId) {
 		Attachment attachment = fileProvider.getFileAsAttachment(fileId);
 		
-		File file = new File(dataFolder+"/"+attachment.getName());
-		file.deleteOnExit();
+		byte[] bytes = AttachmentHelper.hexStringToByteArray(attachment.getHexContent());
 		
-		try {
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-			bos.write(AttachmentHelper.hexStringToByteArray(attachment.getHexContent()));
-			bos.close();
-		} catch (IOException ex) {
-
+		File container = new File(dataFolder+"/"+fileId);
+		if(container.exists()) {
+			container.delete();
 		}
-		return file;	
+		container.mkdirs();
+		container.deleteOnExit();		
+		
+		File file = new File(container+"/"+attachment.getName());
+		if(attachment.getIsDirectory()) {
+			FileHelper.extractFolder(bytes, file);
+		} else {
+			try {
+				BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
+				bos.write(bytes);
+				bos.close();
+			} catch (IOException ex) {
+				
+			}						
+		}
+		return file.getAbsoluteFile();	
 	}
 }

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.script;
+package step.handlers.javahandler;
 
 import java.io.StringReader;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class ScriptRunner {
 		}
 		
 		public OutputMessage run(String function, JsonObject argument, Map<String, String> properties) {
-			AnnotatedMethodHandler handler = new AnnotatedMethodHandler(true);
+			SimpleJavaHandler handler = new SimpleJavaHandler();
 			
 			InputMessage input = new InputMessage();
 			input.setFunction(function);

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import step.commons.helpers.FileHelper;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 
@@ -30,13 +31,26 @@ public class FileManagerServer implements FileProvider {
 	
 	public Attachment getFileAsAttachment(String fileHandle) {
 		File file = getFile(fileHandle);
+		return generateAttachment(fileHandle, file);
+	}
+
+	protected Attachment generateAttachment(String fileHandle, File transferFile) {
 		byte[] bytes;
+		boolean isDirectory;
 		try {
-			bytes = Files.readAllBytes(file.toPath());
-			Attachment attachment = AttachmentHelper.generateAttachmentFromByteArray(bytes, file.getName());
+			if(transferFile.isDirectory()) {
+				bytes = FileHelper.zipDirectory(transferFile);
+				isDirectory = true;
+			} else {
+				bytes = Files.readAllBytes(transferFile.toPath());	
+				isDirectory = false;
+			}
+			Attachment attachment = AttachmentHelper.generateAttachmentFromByteArray(bytes, transferFile.getName());
+			attachment.setIsDirectory(isDirectory);
+			
 			return attachment;
 		} catch (IOException e) {
-			throw new RuntimeException("Error while reading file with handle "+fileHandle+" mapped to '"+file.getAbsolutePath()+"'", e);
+			throw new RuntimeException("Error while reading file with handle "+fileHandle+" mapped to '"+transferFile.getAbsolutePath()+"'", e);
 		}
 	}
 

@@ -32,7 +32,7 @@ public abstract class MessageHandlerDelegate implements MessageHandler {
 		this.delegate = delegate;
 	}
 
-	<T extends Object> T runInContext(Callable<T> runnable) throws Exception {
+	public <T extends Object> T runInContext(Callable<T> runnable) throws Exception {
 		return runnable.call();	
 	}
 }

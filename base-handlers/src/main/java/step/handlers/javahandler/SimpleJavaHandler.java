@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.script;
+package step.handlers.javahandler;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,28 +35,19 @@ import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
-public class AnnotatedMethodHandler implements MessageHandler {
-
-	boolean alwaysThrowExceptions;
+public class SimpleJavaHandler implements MessageHandler {
 	
 	Reflections reflections;
 	
-	public AnnotatedMethodHandler() {
-		this(false);
-	}
-
-	public AnnotatedMethodHandler(boolean alwaysThrowExceptions) {
+	public SimpleJavaHandler() {
 		super();
-		this.alwaysThrowExceptions = alwaysThrowExceptions;
-		reflections = new Reflections(new ConfigurationBuilder()
-	            .setUrls(ClasspathHelper.forPackage("", Thread.currentThread().getContextClassLoader()))
-	            .setScanners(new MethodAnnotationsScanner()));
+		reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forClassLoader(Thread.currentThread().getContextClassLoader())).setScanners(new MethodAnnotationsScanner()));
 	}
 
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {		
-		Set<Method> jobSubTypes = reflections.getMethodsAnnotatedWith(Function.class);
-		for(Method m:jobSubTypes) {
+	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
+		Set<Method> methods = reflections.getMethodsAnnotatedWith(Function.class);
+		for(Method m:methods) {
 			String annotatedFunctionName = m.getAnnotation(Function.class).name();
 			if(((annotatedFunctionName==null || annotatedFunctionName.length()==0)&&m.getName().equals(message.getFunction()))||
 					m.getAnnotation(Function.class).name().equals(message.getFunction())) {
@@ -64,6 +55,7 @@ public class AnnotatedMethodHandler implements MessageHandler {
 			}
 		}
 		throw new Exception("Unable to find method annoted by '"+Function.class.getName()+"' with name=='"+message.getFunction()+"'");
+		
 	}
 
 	private OutputMessage invokeMethod(Method m, AgentTokenWrapper token, InputMessage message)
@@ -76,32 +68,20 @@ public class AnnotatedMethodHandler implements MessageHandler {
 		AbstractScript script = null;
 		if(instance instanceof AbstractScript) {
 			script = (AbstractScript) instance;
-			script.beforeCall(token, message);
+			script.setSession(token.getSession());
+			script.setInput(message.getArgument());
+			script.setProperties(properties);
+			OutputMessageBuilder output = new OutputMessageBuilder();
+			script.setOutputBuilder(output);
 			try {
-				AnnotatedMethodInvoker.invoke(instance, m, message.getArgument().toString(), properties);
-			} catch(Exception e) {
-				boolean errorHandled = script.onError(token, message, e);
-				if(!alwaysThrowExceptions && errorHandled) {
-					// Nothing to be done here as the exception has already be handled by the script
-				} else {
-					throw e;
-				}
+				m.invoke(instance);
 			} finally {
-				if(script!=null) {
-					script.afterCall(token, message);							
-				}
+				// TODO error handling
 			}
 			
-			OutputMessageBuilder outputBuilder = script.outputBuilder;
-			return outputBuilder.build();
+			return output.build();
 		} else {
-			if(m.getReturnType() == OutputMessage.class) {
-				Object result = AnnotatedMethodInvoker.invoke(instance, m, message.getArgument().toString(), properties);
-				return result!=null?(OutputMessage) result:null;
-			} else {
-				throw new RuntimeException("The method '"+m.getName()+"' from class '"+clazz.getName()+
-						"' neither extend "+AbstractScript.class.getName()+" nor returns an "+OutputMessage.class.getName());				
-			}
+			throw new RuntimeException("The class '"+clazz.getName()+"' doesn't extend '"+AbstractScript.class.getName()+"'");
 		}
 	}
 

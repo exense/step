@@ -18,6 +18,9 @@
  *******************************************************************************/
 package step.commons.helpers;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -25,6 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class FileHelper {
@@ -42,11 +46,93 @@ public class FileHelper {
 		}
 		folder.delete();
 	}
+	
+	public static final long getLastModificationDateRecursive(File file) {
+		if(file.isDirectory()) {
+			long lastModificationDate = file.lastModified();
+			for(File f:file.listFiles()) {
+				long lastChange = getLastModificationDateRecursive(f);
+				if(lastChange>lastModificationDate) {
+					lastModificationDate = lastChange;
+				}
+			}
+			return lastModificationDate;
+		} else {
+			return file.lastModified();
+		}
+	}
 
 	public static final void zipDirectory(File directory, File zip) throws IOException {
 		ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zip));
 		zip(directory, directory, zos);
 		zos.close();
+	}
+	
+	
+	public static void extractFolder(byte[] bytes, File target) 
+	{
+		ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(bytes));
+	    try
+	    {
+	        int BUFFER = 2048;
+
+	        target.mkdir();
+
+	        ZipEntry entry;
+	        // Process each entry
+	        while ((entry=zip.getNextEntry())!=null)
+	        {
+	            String currentEntry = entry.getName();
+
+	            File destFile = new File(target.getAbsolutePath(), currentEntry);
+	            File destinationParent = destFile.getParentFile();
+
+	            destinationParent.mkdirs();
+
+	            if (!entry.isDirectory())
+	            {
+
+	                int currentByte;
+	                // establish buffer for writing file
+	                byte data[] = new byte[BUFFER];
+
+	                // write the current file to disk
+	                FileOutputStream fos = new FileOutputStream(destFile);
+	                BufferedOutputStream dest = new BufferedOutputStream(fos,
+	                BUFFER);
+
+	                // read and write until last byte is encountered
+	                while ((currentByte = zip.read(data, 0, BUFFER)) != -1) {
+	                    dest.write(data, 0, currentByte);
+	                }
+	                dest.flush();
+	                dest.close();
+	            }
+
+
+	        }
+	    }
+	    catch (Exception e) 
+	    {
+	        
+	    }
+	    finally {
+	    	try {
+				zip.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	    }
+
+	}
+	
+	public static final byte[] zipDirectory(File directory) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ZipOutputStream zos = new ZipOutputStream(out);
+		zip(directory, directory, zos);
+		zos.close();
+		return out.toByteArray();
 	}
 
 	private static final void zip(File directory, File base, ZipOutputStream zos) throws IOException {

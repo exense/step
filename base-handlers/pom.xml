@@ -32,12 +32,12 @@
 	<dependencies>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>script-api</artifactId>
+			<artifactId>commons</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>commons</artifactId>
+			<artifactId>grid</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
