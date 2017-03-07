@@ -63,7 +63,11 @@ public class RegistrationClient implements FileProvider {
 			r.readEntity(String.class);
 			
 		} catch (ProcessingException e) {
-			logger.error("An error occurred while registering tokens to " + registrationServer, e);
+			if(e.getCause() instanceof java.net.ConnectException) {
+				logger.error("Unable to reach " + registrationServer + " for agent registration (java.net.ConnectException: "+e.getCause().getMessage()+")");				
+			} else {
+				logger.error("while registering tokens to " + registrationServer, e);				
+			}
 		}
 	}
 

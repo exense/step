@@ -51,6 +51,7 @@ public class ScriptFunctionTypeHelper {
 		props.put(ScriptHandler.REMOTE_FILE_ID, fileHandle);
 		props.put(ScriptHandler.REMOTE_FILE_VERSION, Long.toString(FileHelper.getLastModificationDateRecursive(scriptFile)));					
 
+		props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());
 		//props.put(ScriptHandler.SCRIPT_FILE, scriptFile.getAbsolutePath());
 		
 		return props;

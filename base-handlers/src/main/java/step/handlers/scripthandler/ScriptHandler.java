@@ -45,6 +45,8 @@ import step.grid.io.OutputMessage;
 
 public class ScriptHandler implements MessageHandler {
 
+	public static final String SCRIPT_LANGUAGE = "scriptlanguage";
+	
 	public static final String SCRIPT_FILE = "file";
 	public static final String REMOTE_FILE_ID = "remotefile.id";
 	public static final String REMOTE_FILE_VERSION = "remotefile.version";

@@ -31,14 +31,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+import step.handlers.scripthandler.ScriptHandler;
 
 public class JavaHandler implements MessageHandler {
+	
+	private static final Logger logger = LoggerFactory.getLogger(JavaHandler.class);
 	
 	private Map<String, JavaExecutionContext> executionContexts = new ConcurrentHashMap<>();
 	
@@ -51,9 +56,6 @@ public class JavaHandler implements MessageHandler {
 		Reflections reflections;
 	}
 	
-	public static final String REMOTE_FILE_ID = "remotefile.id";
-	public static final String REMOTE_FILE_VERSION = "remotefile.version";
-	
 	public JavaHandler() {
 		super();
 	}
@@ -61,12 +63,20 @@ public class JavaHandler implements MessageHandler {
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
 		
-		String transferFileId = message.getProperties().get(REMOTE_FILE_ID);
-		long transferFileVersion = Long.parseLong(message.getProperties().get(REMOTE_FILE_VERSION));
+		String transferFileId = message.getProperties().get(ScriptHandler.REMOTE_FILE_ID);
+		long transferFileVersion = Long.parseLong(message.getProperties().get(ScriptHandler.REMOTE_FILE_VERSION));
+		
+		if(logger.isDebugEnabled()) {
+			logger.debug("Getting java context for transfer file with id '"+transferFileId+"' and version '"+transferFileVersion+"'");
+		}
 		
 		JavaExecutionContext context = executionContexts.get(transferFileId);
 		
 		if(context==null) {
+			if(logger.isDebugEnabled()) {
+				logger.debug("Creating new java context for transfer file with id '"+transferFileId+"'");
+			}
+			
 			context = new JavaExecutionContext();
 			JavaExecutionContext currentValue = executionContexts.putIfAbsent(transferFileId, context);
 			if(currentValue!=null) {
@@ -76,7 +86,12 @@ public class JavaHandler implements MessageHandler {
 			
 		synchronized (context) {
 			if(context.fileVersion==null || context.fileVersion<transferFileVersion) {			
-				File transferFile = token.getServices().getFileManagerClient().requestFile(message.getProperties().get(REMOTE_FILE_ID), Long.parseLong(message.getProperties().get(REMOTE_FILE_VERSION)));
+				if(logger.isDebugEnabled()) {
+					logger.debug("Requesting transfer file with id '"+transferFileId+"' and version '"+transferFileVersion+"'");
+				}
+				
+				File transferFile = token.getServices().getFileManagerClient().requestFile(transferFileId, transferFileVersion);
+				
 				URL scriptUrl = transferFile.toURI().toURL();
 				context.fileVersion = transferFileVersion;
 				
@@ -85,6 +100,10 @@ public class JavaHandler implements MessageHandler {
 						new ConfigurationBuilder().setUrls(scriptUrl).addClassLoader(classLoader).setScanners(new MethodAnnotationsScanner()));
 				context.classLoader = classLoader;
 				context.reflections = reflections;
+				
+				if(logger.isDebugEnabled()) {
+					logger.debug("Created java context for fileid '"+transferFileId+"'. URLs: "+scriptUrl.toString());
+				}
 			}			
 		}
 		
@@ -105,7 +124,15 @@ public class JavaHandler implements MessageHandler {
 		Class<?> clazz = m.getDeclaringClass();
 		Object instance = clazz.newInstance();
 
+		if(logger.isDebugEnabled()) {
+			logger.debug("Invoking method " + m.getName() + " from class "+clazz.getName()+" loaded by "+clazz.getClassLoader().toString());
+		}
+		
 		Map<String, String> properties = buildPropertyMap(token, message);
+		
+		if(logger.isDebugEnabled()) {
+			logger.debug("Using property map: "+properties.toString());
+		}
 		
 		AbstractScript script = null;
 		if(instance instanceof AbstractScript) {

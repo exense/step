@@ -2,6 +2,8 @@ package step.grid.filemanager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
@@ -49,5 +51,29 @@ public class FIleManagerTest {
 		
 		byte[] bytes = Files.toByteArray(clientFile);
 		Assert.assertArrayEquals(content, bytes); 
+	}
+	
+	@Test
+	public void testParallel() throws IOException {
+		AtomicInteger remoteCallCounts = new AtomicInteger(0);
+		
+		final FileManagerClient client = new FileManagerClientImpl(new File("."), new FileProvider() {
+			@Override
+			public Attachment getFileAsAttachment(String fileId) {
+				remoteCallCounts.incrementAndGet();
+				Attachment a = new Attachment();
+				a.setName("test");
+				a.setHexContent("H");
+				a.setIsDirectory(false);
+				return a;
+			}
+		});
+		
+		ExecutorService e = Executors.newFixedThreadPool(5);
+		for(int i=0;i<1000;i++) {
+			e.submit(()->{client.requestFile("id", 1);});
+		}
+		
+		Assert.assertEquals(1, remoteCallCounts.get());
 	}
 }

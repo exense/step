@@ -4,10 +4,14 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.grid.agent.conf.AgentConf;
 import step.grid.agent.handler.AgentConfigurationAware;
@@ -22,8 +26,8 @@ import step.handlers.javahandler.JavaHandler;
 import step.handlers.scripthandler.ScriptHandler;
 
 public class SeleniumHandler implements MessageHandler, AgentConfigurationAware {
-
-	AgentConf conf;
+	
+	private static final Logger logger = LoggerFactory.getLogger(SeleniumHandler.class);
 	
 	Map<String, SeleniumScriptExecutionContext> contexts = new ConcurrentHashMap<>();
 	
@@ -58,6 +62,8 @@ public class SeleniumHandler implements MessageHandler, AgentConfigurationAware 
 	protected void loadSeleniumClassLoader(AgentConf configuration, String version) {
 		String seleniumLibsPropKey = "plugins.selenium."+version+".libs";
 		String seleniumLibs = configuration.getProperties().get(seleniumLibsPropKey);
+		
+		logger.info("Loading selenium libs from: "+seleniumLibs);
 				
 		if(seleniumLibs==null) {
 			throw new RuntimeException("Agent property '"+seleniumLibsPropKey+"' is not defined. Please define it in your AgentConf.js");
@@ -67,6 +73,8 @@ public class SeleniumHandler implements MessageHandler, AgentConfigurationAware 
 				try {
 					List<URL> urls = new ArrayList<>();
 					TokenHandlerPool.addJarsToUrls(urls, seleniumLibsFile);
+					
+					logger.debug("Creating isolating classloader with following URLs: "+Arrays.toString(urls.toArray()));
 					IsolatingURLClassLoader seleniumClassLoader = new IsolatingURLClassLoader(urls.toArray(new URL[urls.size()]), Thread.currentThread().getContextClassLoader());
 					contexts.put(version, new SeleniumScriptExecutionContext(seleniumClassLoader));
 				} catch (MalformedURLException e) {
@@ -85,8 +93,12 @@ public class SeleniumHandler implements MessageHandler, AgentConfigurationAware 
 		SeleniumScriptExecutionContext context = contexts.get(version);
 		ClassLoader seleniumClassloader = context.seleniumClassLoader;
 		
-		String scriptLanguage = message.getProperties().get("selenium.scriptlanguage");
+		String scriptLanguage = message.getProperties().get(ScriptHandler.SCRIPT_LANGUAGE);
 		MessageHandler targetHandler = scriptLanguage.equals("java")?context.javaHandler:context.scriptHandler;
+		
+		if(logger.isDebugEnabled()) {
+			logger.debug("Handling selenium message using selenium version '"+version+"', classloader: '"+seleniumClassloader.toString()+"' script language: "+scriptLanguage);
+		}
 		
 		ClassLoaderMessageHandlerWrapper classLoaderWrapper = new ClassLoaderMessageHandlerWrapper(seleniumClassloader);
 		return classLoaderWrapper.runInContext(new Callable<OutputMessage>() {

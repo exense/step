@@ -27,9 +27,6 @@ public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunction>
 		Map<String,String> handlerProperties = helper.getHandlerProperties(function);
 		
 		handlerProperties.put("selenium.version", function.getSeleniumVersion());
-		handlerProperties.put("selenium.scriptlanguage", function.getScriptLanguage().get());
-		handlerProperties.put("selenium.script.jar", function.getJarFile().get());
-
 		
 		return handlerProperties;
 	}
