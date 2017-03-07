@@ -18,9 +18,11 @@
  *******************************************************************************/
 package step.core.dynamicbeans;
 
+import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,8 @@ public class DynamicBeanResolver {
 	private static Logger logger = LoggerFactory.getLogger(DynamicBeanResolver.class);
 	
 	DynamicValueResolver valueResolver;
+	
+	Map<Class<?>,BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 
 	public DynamicBeanResolver(DynamicValueResolver valueResolver) {
 		super();
@@ -39,8 +43,15 @@ public class DynamicBeanResolver {
 	public void evaluate(Object o, Map<String, Object> bindings) {
 		if(o!=null) {
 			Class<?> clazz = o.getClass();
+			
 			try {
-				for(PropertyDescriptor descriptor:Introspector.getBeanInfo(clazz, Object.class).getPropertyDescriptors()) {
+				BeanInfo beanInfo = beanInfoCache.get(clazz);
+				if(beanInfo==null) {
+					beanInfo = Introspector.getBeanInfo(clazz, Object.class);
+					beanInfoCache.put(clazz, beanInfo);
+				}
+				
+				for(PropertyDescriptor descriptor:beanInfo.getPropertyDescriptors()) {
 					Object value = descriptor.getReadMethod().invoke(o);
 					if(value!=null) {
 						if(value instanceof DynamicValue) {

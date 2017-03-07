@@ -54,6 +54,8 @@ public class ExecutionContext extends AbstractContext  {
 				
 	private final ReportNodeCache reportNodeCache;
 	
+	private final ArtefactCache artefactCache;
+	
 	private final ReportNodeTree reportNodeTree;
 	
 	private List<ReportExport> reportExports;
@@ -64,6 +66,7 @@ public class ExecutionContext extends AbstractContext  {
 		this.executionId = executionId;
 				
 		reportNodeCache = new ReportNodeCache();
+		artefactCache = new ArtefactCache();
 		reportNodeTree = new ReportNodeTree(this);
 				
 		variablesManager = new VariablesManager(this);
@@ -179,5 +182,9 @@ public class ExecutionContext extends AbstractContext  {
 
 	public ReportNodeTree getReportNodeTree() {
 		return reportNodeTree;
+	}
+
+	public ArtefactCache getArtefactCache() {
+		return artefactCache;
 	}
 }

@@ -37,6 +37,7 @@ import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.ArtefactCache;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.TestArtefactResultHandler;
 
@@ -220,7 +221,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private REPORT_NODE createReportNode(ReportNode parentNode, ARTEFACT testArtefact) {
 		REPORT_NODE node = createReportNode_(parentNode, testArtefact);
 		node._id = new ObjectId();
-		node.setName(testArtefact.getAttributes()!=null?testArtefact.getAttributes().get("name"):ArtefactRegistry.getArtefactName(testArtefact.getClass()));
+		node.setName(testArtefact.getReportNodeName());
 		node.setParentID(parentNode.getId());
 		node.setArtefactID(testArtefact.getId());
 		node.setExecutionID(context.getExecutionId().toString());
@@ -231,11 +232,16 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public abstract REPORT_NODE createReportNode_(ReportNode parentNode, ARTEFACT testArtefact);	
 	
 	public static List<AbstractArtefact> getChildren(AbstractArtefact artefact) { 
+		ArtefactCache artefactCache = ExecutionContext.getCurrentContext().getArtefactCache();
 		ArtefactAccessor accessor = ExecutionContext.getCurrentContext().getGlobalContext().getArtefactAccessor();
 		List<AbstractArtefact> result = new ArrayList<>();
 		if(artefact.getChildrenIDs()!=null) {
 			for(ObjectId childrenID:artefact.getChildrenIDs()) {
-				AbstractArtefact child = accessor.get(childrenID);
+				AbstractArtefact child = artefactCache.get(childrenID.toString());
+				if(child==null) {
+					child = accessor.get(childrenID);
+					artefactCache.put(child);
+				}
 				result.add(child);
 			}
 		}

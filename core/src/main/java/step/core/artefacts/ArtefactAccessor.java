@@ -18,15 +18,16 @@
  *******************************************************************************/
 package step.core.artefacts;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 
-import step.core.accessors.MongoDBAccessorHelper;
-
 import com.mongodb.MongoClient;
+
+import step.core.accessors.MongoDBAccessorHelper;
 
 
 
@@ -55,6 +56,9 @@ public class ArtefactAccessor {
 					artefact.addChild(childId);
 				}
 			}
+			HashMap<String, String> attributes = new HashMap<>();
+			attributes.put("name", name);
+			artefact.setAttributes(attributes);
 			return artefact;
 		} catch (InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
