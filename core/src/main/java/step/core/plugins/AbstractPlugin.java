@@ -63,7 +63,7 @@ public abstract class AbstractPlugin implements PluginCallbacks {
 	protected void registerWebapp(GlobalContext context, String path) {
 		ResourceHandler bb = new ResourceHandler();
 		
-		bb.setResourceBase(this.getClass().getResource("webapp").getPath());
+		bb.setResourceBase(this.getClass().getResource("webapp").toExternalForm());
 		
 		ContextHandler ctx = new ContextHandler(path);
 		ctx.setHandler(bb);

@@ -59,8 +59,8 @@ public class FileHelperTest {
 		try {
 			FileHelper.extractFolder(bytes, target);
 			
-			Assert.assertTrue(new File(target.getAbsoluteFile()+"/file1.txt").exists());
-			Assert.assertTrue(new File(target.getAbsoluteFile()+"/subFolder/file2.txt").exists());
+			Assert.assertTrue(new File(target.getAbsoluteFile()+"/testUnzip/file1.txt").exists());
+			Assert.assertTrue(new File(target.getAbsoluteFile()+"/testUnzip/subFolder/file2.txt").exists());
 		} finally {
 			target.delete();			
 		}

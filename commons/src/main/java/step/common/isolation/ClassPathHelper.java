@@ -27,7 +27,7 @@ public class ClassPathHelper {
 			addFilesToUrls(urls, folder, new FileFilter() {
 				@Override
 				public boolean accept(File pathname) {
-					return pathname.getName().endsWith(".jar");
+					return pathname.isDirectory()||pathname.getName().endsWith(".jar");
 				}
 			});
 		} catch (IOException e) {

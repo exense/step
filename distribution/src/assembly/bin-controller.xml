@@ -40,6 +40,7 @@
 			<includes>
 				<include>step:tec</include>
 				<include>step:rtm-plugin</include>
+				<include>step:selenium-plugin</include>
 			</includes>
 			<binaries>
 				<outputDirectory>lib</outputDirectory>

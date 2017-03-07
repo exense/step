@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
@@ -54,7 +55,7 @@ public class FIleManagerTest {
 	}
 	
 	@Test
-	public void testParallel() throws IOException {
+	public void testParallel() throws IOException, InterruptedException {
 		AtomicInteger remoteCallCounts = new AtomicInteger(0);
 		
 		final FileManagerClient client = new FileManagerClientImpl(new File("."), new FileProvider() {
@@ -63,7 +64,7 @@ public class FIleManagerTest {
 				remoteCallCounts.incrementAndGet();
 				Attachment a = new Attachment();
 				a.setName("test");
-				a.setHexContent("H");
+				a.setHexContent("HHH");
 				a.setIsDirectory(false);
 				return a;
 			}
@@ -71,9 +72,17 @@ public class FIleManagerTest {
 		
 		ExecutorService e = Executors.newFixedThreadPool(5);
 		for(int i=0;i<1000;i++) {
-			e.submit(()->{client.requestFile("id", 1);});
+			e.submit(()->{
+				try {
+					client.requestFile("id", 1);
+				} catch(Exception e1) {
+					e1.printStackTrace();
+				};});
 		}
 		
+		e.shutdown();
+		e.awaitTermination(10, TimeUnit.SECONDS);
 		Assert.assertEquals(1, remoteCallCounts.get());
+		
 	}
 }

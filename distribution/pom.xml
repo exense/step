@@ -58,48 +58,6 @@
 							</descriptors>
 						</configuration>
 					</execution>
-					<execution>
-						<id>distro-assembly-dev</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-						<configuration>
-							<finalName>step-dev-${project.version}</finalName>
-							<appendAssemblyId>false</appendAssemblyId>
-							<descriptors>
-								<descriptor>src/assembly/bin-dev.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
-					<execution>
-						<id>distro-assembly-selenium-dev</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-						<configuration>
-							<finalName>step-selenium-dev-${project.version}</finalName>
-							<appendAssemblyId>false</appendAssemblyId>
-							<descriptors>
-								<descriptor>src/assembly/bin-selenium-dev.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
-										<execution>
-						<id>distro-assembly-selenium-dev-nodep</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-						<configuration>
-							<finalName>step-selenium-dev-nodep-${project.version}</finalName>
-							<appendAssemblyId>false</appendAssemblyId>
-							<descriptors>
-								<descriptor>src/assembly/bin-selenium-dev-nodep.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
 				</executions>
 			</plugin>
 			<plugin>

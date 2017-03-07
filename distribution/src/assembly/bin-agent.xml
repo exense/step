@@ -39,6 +39,7 @@
 			<useAllReactorProjects>true</useAllReactorProjects>
 			<includes>
 				<include>step:agent</include>
+				<include>step:selenium-plugin</include>
 			</includes>
 			<binaries>
 				<outputDirectory>lib</outputDirectory>

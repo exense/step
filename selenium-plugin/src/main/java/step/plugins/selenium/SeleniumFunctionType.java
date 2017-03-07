@@ -33,8 +33,10 @@ public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunction>
 
 	@Override
 	public void setupFunction(SeleniumFunction function) throws SetupFunctionException {
-		File scriptFile = helper.setupScriptFile(function);
-		helper.createScriptFromTemplate(scriptFile, "kw_selenium.js");
+		if(function.getScriptLanguage().get().equals("javascript")) {
+			File scriptFile = helper.setupScriptFile(function);
+			helper.createScriptFromTemplate(scriptFile, "kw_selenium.js");			
+		}
 	}
 	
 	@Override
