@@ -103,16 +103,7 @@ public class AgentTest extends AbstractGridTest {
 		OutputMessage outputMessage = client.getToken(null, interests).processAndRelease("testFunction", o);
 		Assert.assertEquals(outputMessage.getPayload(), o);;
 	}
-	
-	@Test
-	public void testHandlerChain() throws Exception {		
-		final String uri = "class:step.grid.agent.TestTokenHandlerDelegator|class:step.grid.agent.TestTokenHandler";
-		JsonObject o = newDummyJson();
-		OutputMessage outputMessage = client.getToken().setHandler(uri).processAndRelease("function1",  o);
-		Assert.assertEquals(o, outputMessage.getPayload());
-		Assert.assertEquals("Test error", outputMessage.getError());
-	}
-	
+
 	@Test
 	public void testLocalToken() throws Exception {
 		JsonObject o = newDummyJson();

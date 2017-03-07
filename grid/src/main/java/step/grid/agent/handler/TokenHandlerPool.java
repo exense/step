@@ -18,37 +18,28 @@
  *******************************************************************************/
 package step.grid.agent.handler;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.grid.agent.conf.AgentConf;
+import step.grid.agent.AgentTokenServices;
 
 public class TokenHandlerPool {
 
 	private static final Logger logger = LoggerFactory.getLogger(TokenHandlerPool.class);
 	
-	private final AgentConf conf;
+	private final AgentTokenServices tokenServices;
 	
 	private Map<String, MessageHandler> pool = new HashMap<>();
 	
-	public TokenHandlerPool(AgentConf conf) {
+	public TokenHandlerPool(AgentTokenServices tokenServices) {
 		super();
-		this.conf = conf;
+		this.tokenServices = tokenServices;
 	}
 
 	public synchronized MessageHandler get(String handlerKey) throws Exception {
@@ -62,45 +53,7 @@ public class TokenHandlerPool {
 		return handler;			
 	}
 
-	private static final String DELIMITER = "\\|";
-	
-	public MessageHandler createHandler(String handlerChain) throws Exception {
-		Iterator<String> handlerKeys = Arrays.asList(handlerChain.split(DELIMITER)).iterator();
-
-		MessageHandler rootHandler = createHandlerRecursive(null, handlerKeys);
-		
-		return rootHandler;
-	}
-
-	private MessageHandler createHandlerRecursive(final MessageHandlerDelegate parent, Iterator<String> handlerKeys) throws Exception {
-		final String handlerKey = handlerKeys.next();
-		
-		MessageHandler handler;
-		if(parent!=null) {
-			handler = parent.runInContext(new Callable<MessageHandler>() {
-				@Override
-				public MessageHandler call() throws Exception {
-					return createHandler_(handlerKey, parent);
-				}	
-			});
-		} else {
-			handler = createHandler_(handlerKey, parent);
-		}
-		
-		if(handlerKeys.hasNext()) {
-			if(handler instanceof MessageHandlerDelegate) {
-				MessageHandlerDelegate delegator = (MessageHandlerDelegate)handler;
-				MessageHandler next = createHandlerRecursive(delegator, handlerKeys);
-				delegator.setDelegate(next);
-			} else {
-				throw new RuntimeException("The handler '"+handlerKey+"' should implement the interface MessageHandlerDelegate if used in an handler chain.");
-			}
-		}
-		
-		return handler;
-	}
-
-	private MessageHandler createHandler_(String handlerKey, MessageHandlerDelegate previous) throws ReflectiveOperationException, MalformedURLException,
+	private MessageHandler createHandler(String handlerKey) throws ReflectiveOperationException, MalformedURLException,
 			ClassNotFoundException, InstantiationException, IllegalAccessException {
 		MessageHandler handler;
 		Matcher m = HANDLER_KEY_PATTERN.matcher(handlerKey);
@@ -115,14 +68,6 @@ public class TokenHandlerPool {
 				} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 					throw e;
 				}
-			} else if (factory.equals("classuri")) {	
-				URL[] urls = classPathStringToURLs(factoryKey);			
-				ClassLoader cl = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
-				handler = new ClassLoaderMessageHandlerWrapper(cl);
-			} else if (factory.equals("isolatedClasspath")) {	
-				URL[] urls = classPathStringToURLs(factoryKey);			
-				ClassLoader cl = new IsolatingURLClassLoader(urls, Thread.currentThread().getContextClassLoader());
-				handler = new ClassLoaderMessageHandlerWrapper(cl);				
 			} else {
 				throw new RuntimeException("Unknown handler factory: "+factory);
 			}
@@ -131,40 +76,10 @@ public class TokenHandlerPool {
 			throw new RuntimeException("Invalid handler key: "+handlerKey);
 		}
 		
-		if(handler instanceof AgentConfigurationAware && conf!=null) {
-			((AgentConfigurationAware)handler).init(conf);
-		}
+		if (handler instanceof AgentContextAware && tokenServices!=null) {
+			((AgentContextAware)handler).init(tokenServices);
+		} 
 		return handler;
-	}
-
-	private URL[] classPathStringToURLs(String factoryKey) throws MalformedURLException {
-		List<URL> urls = new ArrayList<>();
-		
-		String[] paths = factoryKey.split(";");
-		for(String path:paths) {
-			File f = new File(path);
-			addJarsToUrls(urls, f);
-			try {
-				urls.add(f.getCanonicalFile().toURI().toURL());
-			} catch (IOException e) {
-				logger.warn("Error while getting canonical file name of '"+f.getPath()+"'",e );
-			}
-		}
-		return urls.toArray(new URL[urls.size()]);
-	}
-
-	public static void addJarsToUrls(List<URL> urls, File f) throws MalformedURLException {
-		if(f.isDirectory()) {
-			for(File file:f.listFiles()) {
-				if(file.isDirectory()) {
-					addJarsToUrls(urls, file);
-				} else {
-					if(file.getName().endsWith(".jar")) {
-						urls.add(file.toURI().toURL());
-					}					
-				}
-			}
-		}
 	}
 
 	private MessageHandler newInstance(Class<?> class_)

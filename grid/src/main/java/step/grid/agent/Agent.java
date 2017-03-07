@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
+import step.common.isolation.ContextManager;
 import step.grid.Token;
 import step.grid.agent.conf.AgentConf;
 import step.grid.agent.conf.AgentConfParser;
@@ -115,7 +116,6 @@ public class Agent {
 		
 		id = UUID.randomUUID().toString();
 		tokenPool = new AgentTokenPool(10000);
-		handlerPool = new TokenHandlerPool(agentConf);
 	}
 	
 	public String getId() {
@@ -152,8 +152,13 @@ public class Agent {
 		
 		FileManagerClient fileManagerClient = initFileManager(registrationClient);
 		
+		ContextManager contextManager = new ContextManager();
+		
 		agentTokenServices = new AgentTokenServices(fileManagerClient);
 		agentTokenServices.setAgentProperties(agentConf.getProperties());
+		agentTokenServices.setContextManager(contextManager);
+		
+		handlerPool = new TokenHandlerPool(agentTokenServices);
 		
 		if(agentConf.getTokenGroups()!=null) {
 			for(TokenGroupConf group:agentConf.getTokenGroups()) {
