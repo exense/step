@@ -19,6 +19,10 @@ public class FileManagerServer implements FileProvider {
 	Map<File, String> reverseRegistry = new HashMap<>();
 	
 	public synchronized String registerFile(File file) {
+		if(!file.exists()||!file.canRead()) {
+			throw new RuntimeException("Unable to find or read file "+file.getAbsolutePath());
+		}
+		
 		String handle = reverseRegistry.get(file);
 		if(handle==null) {
 			String newHandle = UUID.randomUUID().toString();
