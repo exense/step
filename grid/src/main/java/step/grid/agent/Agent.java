@@ -220,7 +220,7 @@ public class Agent {
 		fileManagerDirPath+="/filemanager";
 		File fileManagerDir = new File(fileManagerDirPath);
 		if(!fileManagerDir.exists()) {
-			Files.createDirectory(fileManagerDir.toPath());
+			Files.createDirectories(fileManagerDir.toPath());
 		}
 		
 		FileManagerClient fileManagerClient = new FileManagerClientImpl(fileManagerDir, registrationClient);
