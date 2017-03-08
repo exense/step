@@ -524,7 +524,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
             }
           }
           interval = Math.min(interval * 2,5000);
-          if(!$scope.$$destroyed&&$scope.execution.status!='ENDED') {
+          if(!$scope.$$destroyed&&($scope.execution==null||$scope.execution.status!='ENDED')) {
             $scope.scheduleNextRefresh();            
           }
         }, interval);
