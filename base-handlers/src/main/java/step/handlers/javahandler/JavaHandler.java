@@ -135,23 +135,23 @@ public class JavaHandler implements MessageHandler {
 		}
 		
 		AbstractScript script = null;
+		OutputMessageBuilder output = new OutputMessageBuilder();
 		if(instance instanceof AbstractScript) {
 			script = (AbstractScript) instance;
 			script.setSession(token.getSession());
 			script.setInput(message.getArgument());
 			script.setProperties(properties);
-			OutputMessageBuilder output = new OutputMessageBuilder();
 			script.setOutputBuilder(output);
-			try {
-				m.invoke(instance);
-			} finally {
-				// TODO error handling
-			}
 			
-			return output.build();
 		} else {
-			throw new RuntimeException("The class '"+clazz.getName()+"' doesn't extend '"+AbstractScript.class.getName()+"'");
+			output.add("Info:", "The class '"+clazz.getName()+"' doesn't extend '"+AbstractScript.class.getName()+"'. Extend this class to get input parameters from STEP and return output.");
 		}
+		try {
+			m.invoke(instance);
+		} finally {
+			// TODO error handling
+		}
+		return output.build();
 	}
 
 	private Map<String, String> buildPropertyMap(AgentTokenWrapper token, InputMessage message) {

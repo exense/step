@@ -1,9 +1,9 @@
 package step.plugins.selenium;
 
 import step.core.dynamicbeans.DynamicValue;
-import step.plugins.functions.types.ScriptFunction;
+import step.plugins.functions.types.GeneralScriptFunction;
 
-public class SeleniumFunction extends ScriptFunction {
+public class SeleniumFunction extends GeneralScriptFunction {
 
 	String seleniumVersion = "2.x";
 	

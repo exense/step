@@ -15,8 +15,7 @@ public class BaseFunctionTypesPlugin extends AbstractPlugin {
 		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
 		
 		functionClient.registerFunctionType(new GrinderFunctionType());
-		functionClient.registerFunctionType(new CustomFunctionType());
-		functionClient.registerFunctionType(new ScriptFunctionType());
+		functionClient.registerFunctionType(new GeneralScriptFunctionType());
 		functionClient.registerFunctionType(new CompositeFunctionType());
 	}
 

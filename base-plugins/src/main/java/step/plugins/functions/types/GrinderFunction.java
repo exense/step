@@ -1,5 +1,5 @@
 package step.plugins.functions.types;
 
-public class GrinderFunction extends ScriptFunction {
+public class GrinderFunction extends GeneralScriptFunction {
 
 }

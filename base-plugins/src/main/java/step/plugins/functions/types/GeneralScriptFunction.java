@@ -1,8 +1,9 @@
 package step.plugins.functions.types;
 
 import step.core.dynamicbeans.DynamicValue;
+import step.functions.Function;
 
-public class ScriptFunctionTypeConfiguration {
+public class GeneralScriptFunction extends Function {
 
 	DynamicValue<String> scriptFile = new DynamicValue<>("");
 	
@@ -24,5 +25,4 @@ public class ScriptFunctionTypeConfiguration {
 	public void setScriptLanguage(DynamicValue<String> scriptLanguage) {
 		this.scriptLanguage = scriptLanguage;
 	}
-
 }

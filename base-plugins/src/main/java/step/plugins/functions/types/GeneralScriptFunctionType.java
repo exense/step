@@ -5,8 +5,9 @@ import java.util.Map;
 
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
+import step.handlers.GeneralScriptHandler;
 
-public class ScriptFunctionType extends AbstractFunctionType<ScriptFunction> {
+public class GeneralScriptFunctionType extends AbstractFunctionType<GeneralScriptFunction> {
 	
 	ScriptFunctionTypeHelper helper;
 	
@@ -17,17 +18,17 @@ public class ScriptFunctionType extends AbstractFunctionType<ScriptFunction> {
 	}
 
 	@Override
-	public String getHandlerChain(ScriptFunction function) {
-		return "class:step.handlers.scripthandler.ScriptHandler";
+	public String getHandlerChain(GeneralScriptFunction function) {
+		return "class:"+GeneralScriptHandler.class.getName();
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(ScriptFunction function) {
+	public Map<String, String> getHandlerProperties(GeneralScriptFunction function) {
 		return helper.getHandlerProperties(function);
 	}
 
 	@Override
-	public void setupFunction(ScriptFunction function) throws SetupFunctionException {
+	public void setupFunction(GeneralScriptFunction function) throws SetupFunctionException {
 		File scriptFile = helper.setupScriptFile(function);
 		String language = helper.getScriptLanguage(function);
 		if(language.equals("javascript")) {
@@ -38,8 +39,8 @@ public class ScriptFunctionType extends AbstractFunctionType<ScriptFunction> {
 	}
 
 	@Override
-	public ScriptFunction newFunction() {
-		ScriptFunction function = new ScriptFunction();
+	public GeneralScriptFunction newFunction() {
+		GeneralScriptFunction function = new GeneralScriptFunction();
 		function.getScriptLanguage().setValue("javascript");
 		return function;
 	}

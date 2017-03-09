@@ -41,7 +41,7 @@ public class ScriptFunctionTypeHelper {
 		this.context = context;
 	}
 
-	public Map<String, String> getHandlerProperties(ScriptFunction function) {
+	public Map<String, String> getHandlerProperties(GeneralScriptFunction function) {
 		File scriptFile = getScriptFile(function);
 		
 		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
@@ -57,19 +57,19 @@ public class ScriptFunctionTypeHelper {
 		return props;
 	}
 
-	public File getScriptFile(ScriptFunction function) {
+	public File getScriptFile(GeneralScriptFunction function) {
 		String scriptFilePath = function.getScriptFile().get();
 		return new File(scriptFilePath);
 	}
 	
-	protected File getDefaultScriptFile(ScriptFunction function) {
+	protected File getDefaultScriptFile(GeneralScriptFunction function) {
 		String filename = getScriptFilename(function);
 		String scriptDir = Configuration.getInstance().getProperty("keywords.script.scriptdir");
 		File file = new File(scriptDir+"/"+filename);
 		return file;
 	}
 
-	private String getScriptFilename(ScriptFunction function) {
+	private String getScriptFilename(GeneralScriptFunction function) {
 		TreeSet<String> sortedKeys = new TreeSet<>(function.getAttributes().keySet());
 		StringBuilder filename = new StringBuilder();
 		Iterator<String> it = sortedKeys.iterator();
@@ -83,11 +83,11 @@ public class ScriptFunctionTypeHelper {
 		return filename.toString();
 	}
 
-	public String getScriptLanguage(ScriptFunction conf) {
+	public String getScriptLanguage(GeneralScriptFunction conf) {
 		return conf.getScriptLanguage().get();
 	}
 	
-	public File setupScriptFile(ScriptFunction function) throws SetupFunctionException {
+	public File setupScriptFile(GeneralScriptFunction function) throws SetupFunctionException {
 		File scriptFile;
 		
 		String scriptFilename = function.getScriptFile().get();
