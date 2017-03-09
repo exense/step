@@ -171,8 +171,6 @@ table.stacktrace td {
 }
 
 footer {
-	position: fixed;
-	bottom: 6px;
 	width: 100%;
 }
 .wrapper {
