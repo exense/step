@@ -17,8 +17,14 @@ public class DynamicValueResolver {
 		if(dynamicValue.isDynamic()) {
 			// TODO support different expression types
 			String exprType = dynamicValue.expressionType;
-			Object evaluationResult = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings);
-			dynamicValue.evalutationResult = new EvaluationResult(evaluationResult);
+			EvaluationResult result = new EvaluationResult();
+			try {
+				Object evaluationResult = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings);
+				result.setResultValue(evaluationResult);			
+			} catch (Exception e) {
+				result.setEvaluationException(e);
+			}
+			dynamicValue.evalutationResult = result;
 		}
 	}
 

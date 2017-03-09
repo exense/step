@@ -352,6 +352,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
       
       var customEditors = {
           "Default":{template:"partials/artefacts/defaultArtefactForm.html"},
+          "DataSet":{template:"partials/artefacts/dataSet.html"},
           "ForEach":{template:"partials/artefacts/forEach.html"},
           "For":{template:"partials/artefacts/for.html"},
           "Sequence":{template:"partials/artefacts/sequence.html"},
@@ -461,7 +462,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
   }
   
 })
-.controller('ForEachCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {  
+.controller('DataSourceCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {  
   $scope.dataSourceTypes = [{name:"excel",label:"Excel"},{name:"csv",label:"CSV"},{name:"sql",label:"SQL"},
                             {name:"file",label:"Flat file"},{name:"folder",label:"Directory"}]
   

@@ -27,6 +27,7 @@ import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactManager;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.execution.EventManager;
 import step.core.execution.ExecutionLifecycleManager;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.PluginManager;
@@ -63,6 +64,8 @@ public class GlobalContext extends AbstractContext {
 	private ExpressionHandler expressionHandler;
 	
 	private DynamicBeanResolver dynamicBeanResolver;
+	
+	private EventManager eventManager;
 
 	public GlobalContext() {
 		super();
@@ -181,6 +184,14 @@ public class GlobalContext extends AbstractContext {
 
 	public void setDynamicBeanResolver(DynamicBeanResolver dynamicBeanResolver) {
 		this.dynamicBeanResolver = dynamicBeanResolver;
+	}
+
+	public EventManager getEventManager() {
+		return eventManager;
+	}
+
+	public void setEventManager(EventManager eventManager) {
+		this.eventManager = eventManager;
 	}
 	
 }

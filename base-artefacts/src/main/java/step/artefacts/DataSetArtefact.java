@@ -16,44 +16,43 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.datapool;
+package step.artefacts;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import step.artefacts.handlers.DataSetHandler;
+import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
+import step.datapool.DataPoolConfiguration;
 
+@Artefact(name="DataSet", handler = DataSetHandler.class)
+public class DataSetArtefact extends AbstractForBlock {
 
-
-public abstract class DataSet<T> {
+	private DynamicValue<String> item = new DynamicValue<String>("dataSet");
 	
-	protected AtomicInteger rowNum;
+	private String dataSourceType;
 	
-	protected final T configuration;
-	
-	public DataSet(T configuration) {
-		super();
-		this.configuration = configuration;
+	private DataPoolConfiguration dataSource;
+
+	public DynamicValue<String> getItem() {
+		return item;
 	}
 
-	public final synchronized void reset() {
-		rowNum = new AtomicInteger();
-		reset_();
+	public void setItem(DynamicValue<String> item) {
+		this.item = item;
 	}
-	
-	public final void resetRowNumOnly() {
-		rowNum.set(0);
+
+	public String getDataSourceType() {
+		return dataSourceType;
 	}
-	
-	public abstract void reset_();
-	
-	public final synchronized DataPoolRow next() {
-		int currentRowNum = rowNum.incrementAndGet();
-		Object nextValue = next_();
-		return nextValue!=null?new DataPoolRow(currentRowNum,nextValue):null;
+
+	public void setDataSourceType(String dataSourceType) {
+		this.dataSourceType = dataSourceType;
 	}
-	
-	public abstract Object next_();
-	
-	public void save() {};
-	
-	public abstract void close();
-	
+
+	public DataPoolConfiguration getDataSource() {
+		return dataSource;
+	}
+
+	public void setDataSource(DataPoolConfiguration dataSource) {
+		this.dataSource = dataSource;
+	}
 }

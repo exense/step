@@ -33,7 +33,6 @@ import step.attachments.AttachmentManager;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactFilter;
-import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -112,6 +111,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		context.getVariablesManager().releaseVariables(node.getId().toString());
 		
 		context.getVariablesManager().putVariable(parentNode, "report", node);
+		
+		context.getGlobalContext().getEventManager().notifyReportNodeDestroyed(node);
 	}
 	
 	public void createReportSkeleton(ReportNode parentNode, ARTEFACT testArtefact,  Map<String, Object> newVariables) {

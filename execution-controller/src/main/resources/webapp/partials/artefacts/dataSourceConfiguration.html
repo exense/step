@@ -1,0 +1,36 @@
+<div ng-controller="DataSourceCtrl">
+	<div class="form-group">
+		<label>Source type</label> 
+		<select ng-model="artefact.dataSourceType" ng-change="save()" ng-options="option.name as option.label for option in dataSourceTypes" class="form-control" />	
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='excel'">
+		<!-- <div class="input-group input-group-sm">
+			<input type="text" class="form-control" ng-model="artefact.dataSource.file" ng-blur="save()" /> 
+			<span class="input-group-btn">
+				<button class="btn btn-default" type="button" ng-click="selectSource()">Select</button>
+			</span>
+		</div> -->
+		<dynamic-textfield label="'Excel file'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+		<dynamic-textfield label="'Worksheet'" on-save="save()" dynamic-value="artefact.dataSource.worksheet" />
+		<dynamic-checkbox label="'Headers'" on-save="save()" dynamic-value="artefact.dataSource.headers" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='csv'">
+		<dynamic-textfield label="'CSV file'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+		<dynamic-textfield label="'Delimiter'" on-save="save()" dynamic-value="artefact.dataSource.delimiter" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='sql'">
+		<dynamic-textfield label="'Connection string'" on-save="save()" dynamic-value="artefact.dataSource.connectionString" />
+		<dynamic-textfield label="'Query'" on-save="save()" dynamic-value="artefact.dataSource.query" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='file'">
+		<dynamic-textfield label="'Flat file'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='folder'">
+		<dynamic-textfield label="'Directory'" on-save="save()" dynamic-value="artefact.dataSource.folder" />
+	</div>
+</div>

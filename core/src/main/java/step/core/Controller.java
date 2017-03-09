@@ -32,6 +32,7 @@ import step.core.artefacts.ArtefactManager;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
+import step.core.execution.EventManager;
 import step.core.execution.ExecutionLifecycleManager;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.Execution;
@@ -86,6 +87,7 @@ public class Controller {
 		context.setExecutionLifecycleManager(new ExecutionLifecycleManager(context));
 		context.setExpressionHandler(new ExpressionHandler());
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
+		context.setEventManager(new EventManager());
 		
 		createOrUpdateIndexes();
 	}

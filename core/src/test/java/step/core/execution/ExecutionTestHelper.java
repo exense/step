@@ -88,6 +88,8 @@ public class ExecutionTestHelper {
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		context.setExecutionLifecycleManager(new ExecutionLifecycleManager(context));
 		
+		context.setEventManager(new EventManager());
+		
 		return context;
 	}
 }

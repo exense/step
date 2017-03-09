@@ -35,8 +35,12 @@ public class DynamicValue<T> {
 			return value;
 		} else {
 			if(evalutationResult!=null) {
-				Object result = evalutationResult.getResultValue();
-				return (T) result;
+				if(evalutationResult.evaluationException!=null) {
+					throw new RuntimeException("Error while evaluating expression '"+expression+"'", evalutationResult.evaluationException);
+				} else {
+					Object result = evalutationResult.getResultValue();
+					return (T) result;					
+				}
 			} else {
 				throw new RuntimeException("Expression hasn't been evaluated.");
 			}
