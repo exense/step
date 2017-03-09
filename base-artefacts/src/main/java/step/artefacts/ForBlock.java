@@ -20,6 +20,7 @@ package step.artefacts;
 
 import step.artefacts.handlers.ForBlockHandler;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(name = "For", handler = ForBlockHandler.class)
 public class ForBlock extends AbstractForBlock {
@@ -27,6 +28,8 @@ public class ForBlock extends AbstractForBlock {
 	public ForBlock() {
 		super();
 		this.setDataSourceType("sequence");
+		this.setItem(new DynamicValue<String>("counter"));
+		this.setThreads(new DynamicValue<Integer>(1));
 	}
 		
 }
