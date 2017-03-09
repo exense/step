@@ -363,7 +363,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
           "Set":{template:"partials/artefacts/set.html"},
           "Sleep":{template:"partials/artefacts/sleep.html"},
           "Script":{template:"partials/artefacts/script.html"},
-          "TestGroup":{template:"partials/artefacts/testGroup.html"},
+          "ThreadGroup":{template:"partials/artefacts/threadGroup.html"},
           "Case":{template:"partials/artefacts/case.html"},
           "Switch":{template:"partials/artefacts/switch.html"},
           "RetryIfFails":{template:"partials/artefacts/retryIfFails.html"},

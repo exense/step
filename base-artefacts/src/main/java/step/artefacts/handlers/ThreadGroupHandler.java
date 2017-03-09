@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import step.artefacts.Sequence;
-import step.artefacts.TestGroup;
+import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -32,13 +32,13 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.TestArtefactResultHandler;
 
-public class TestGroupHandler extends ArtefactHandler<TestGroup, ReportNode> {
+public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 	
-	public void createReportSkeleton_(ReportNode node, TestGroup testArtefact) {		
+	public void createReportSkeleton_(ReportNode node, ThreadGroup testArtefact) {		
 	}
 
 	@Override
-	public void execute_(final ReportNode node, final TestGroup testArtefact) {		
+	public void execute_(final ReportNode node, final ThreadGroup testArtefact) {		
 		final Integer numberOfUsers = testArtefact.getUsers().get();
 		if(numberOfUsers==null||numberOfUsers<=0) {
 			throw new RuntimeException("Invalid argument: 'users' has to be higher than 0.");
@@ -121,7 +121,7 @@ public class TestGroupHandler extends ArtefactHandler<TestGroup, ReportNode> {
 	}
 
 	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, TestGroup testArtefact) {
+	public ReportNode createReportNode_(ReportNode parentNode, ThreadGroup testArtefact) {
 		return new ReportNode();
 	}
 	

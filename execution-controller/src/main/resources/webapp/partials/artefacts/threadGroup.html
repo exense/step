@@ -1,0 +1,18 @@
+<div class="form-group-sm">
+<fieldset ng-disabled="readonly">
+	<form>		
+		<dynamic-textfield label="'Number of threads'" on-save="save()" dynamic-value="artefact.users" />
+		<dynamic-textfield label="'Number of iterations per thread'" on-save="save()" dynamic-value="artefact.iterations" />
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="showLoadDistribution = !showLoadDistribution">Load distribution parameters</a>
+			</div>
+			<div class="panel-body" ng-show="showLoadDistribution">
+				<dynamic-textfield label="'Pacing (ms)'" on-save="save()" dynamic-value="artefact.pacing" />
+				<dynamic-textfield label="'Rampup (ms)'" on-save="save()" dynamic-value="artefact.rampup" />
+				<dynamic-textfield label="'Start offset (ms)'" on-save="save()" dynamic-value="artefact.startOffset" />
+			</div>
+		</div>
+	</form>
+</fieldset>
+</div>
