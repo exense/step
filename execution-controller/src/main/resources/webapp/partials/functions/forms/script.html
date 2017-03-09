@@ -4,9 +4,9 @@
 		<select ng-model="function_.scriptLanguage.value" ng-options="option for option in ['java','javascript','groovy']" class="form-control" />
 	</div>
 	<div ng-if="function_.scriptLanguage.value=='java'">
-		<dynamic-textfield label="'Jar file or class folder'" dynamic-value="function_.scriptFile" />
+		<dynamic-textfield label="'Jar file or class folder'" tooltip="'Specify a file accessible to the controller. This file will be transferred automatically to the agents.'" dynamic-value="function_.scriptFile" />	
 	</div>
 	<div ng-if="function_.scriptLanguage.value!='java'">
-		<dynamic-textfield label="'Script file'" dynamic-value="function_.scriptFile" />
+		<dynamic-textfield label="'Script file'" tooltip="'Leave empty if you wan\'t step to generate it for you otherwise specify a file accessible to the controller. This file will be transferred automatically to the agents.'" dynamic-value="function_.scriptFile" />
 	</div>
 </div>

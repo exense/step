@@ -1,5 +1,6 @@
 <div ng-if="!isDynamic()"class="form-group form-group-sm">
 	<label>{{label}}</label>
+	<span ng-if="tooltip" class="glyphicon glyphicon-question-sign" uib-tooltip="{{tooltip}}"></span>	
 	<div class="input-group">
 		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.value" />
 		<span class="input-group-btn">

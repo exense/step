@@ -59,6 +59,7 @@ dynamicForms.directive('dynamicCheckbox', function() {
     scope: {
       dynamicValue: '=',
       label: '=',
+      tooltip: '=',
       onSave: '&'
     },
     controller: function($scope) {
