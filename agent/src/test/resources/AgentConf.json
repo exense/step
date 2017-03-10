@@ -1,7 +1,7 @@
 {
 "gridHost":"http://localhost:8081", 
 "registrationPeriod":1000,
-"workingDir":"src/test/resources/work",
+"workingDir":"src/test/work",
 "tokenGroups":[
 {"capacity":10, 
 "tokenConf":{
@@ -9,5 +9,7 @@
 	"properties":{}}
 }
 ],
-"properties":{"plugins.jmeter.home":"../distribution/template-agent/ext/lib/jmeter"}
+"properties":{"plugins.jmeter.home":"../distribution/template-agent/ext/lib/jmeter", 
+"plugins.selenium.libs.2.x":"../distribution/template-agent/ext/lib/selenium/selenium-2.53.1",
+"plugins.selenium.libs.3.x":"../distribution/template-agent/ext/lib/selenium/selenium-java-3.2.0"}
 }
