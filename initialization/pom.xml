@@ -45,6 +45,11 @@
 			<artifactId>base-artefacts</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>selenium-plugin</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>

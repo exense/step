@@ -6,24 +6,23 @@ import java.util.Map;
 import org.junit.Test;
 
 import step.grid.io.OutputMessage;
-import step.script.AbstractScript;
-import step.script.Arg;
-import step.script.Function;
-import step.script.ScriptRunner;
-import step.script.ScriptRunner.ScriptContext;
+import step.handlers.javahandler.AbstractScript;
+import step.handlers.javahandler.Function;
+import step.handlers.javahandler.ScriptRunner;
+import step.handlers.javahandler.ScriptRunner.ScriptContext;
 
 public class Java_Clock_Example extends AbstractScript {
 
 	@Function
-	public void Demo_Java_Clock(@Arg("prettyString")String prettyString) throws Exception {
+	public void Demo_Java_Clock() throws Exception {
 
 		Date date;
-		startMeasure("Demo_Java_Clock_subMeasurement");
+		output.startMeasure("Demo_Java_Clock_subMeasurement");
 		date = new Date();
-		stopMeasure();
+		output.stopMeasure();
 
-		outputBuilder.add("prettyMessage", prettyString + date.toString());
-		outputBuilder.add("timestamp", date.getTime());
+		output.add("prettyMessage", input.getString("prettyString") + date.toString());
+		output.add("timestamp", date.getTime());
 	}
 	
 	@Test
