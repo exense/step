@@ -2,7 +2,9 @@ package step.functions.editors;
 
 import step.functions.Function;
 
-public abstract class FunctionEditor<T extends Function> {
+public abstract class FunctionEditor {
 
-	public abstract String getEditorPath(T function);
+	public abstract String getEditorPath(Function function);
+	
+	public abstract boolean isValidForFunction(Function function);
 }

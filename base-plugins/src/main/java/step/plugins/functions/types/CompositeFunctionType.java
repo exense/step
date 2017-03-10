@@ -5,6 +5,7 @@ import java.util.Map;
 
 import step.artefacts.Sequence;
 import step.core.artefacts.AbstractArtefact;
+import step.functions.Function;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.AbstractFunctionType;
@@ -17,10 +18,15 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	public void init() {
 		super.init();
 		
-		context.get(FunctionEditorRegistry.class).register(CompositeFunction.class, new FunctionEditor<CompositeFunction>() {
+		context.get(FunctionEditorRegistry.class).register(new FunctionEditor() {
 			@Override
-			public String getEditorPath(CompositeFunction function) {
-				return "/root/artefacteditor/"+function.getArtefactId();
+			public String getEditorPath(Function function) {
+				return "/root/artefacteditor/"+((CompositeFunction)function).getArtefactId();
+			}
+
+			@Override
+			public boolean isValidForFunction(Function function) {
+				return function instanceof CompositeFunction;
 			}
 		});
 	}

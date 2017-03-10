@@ -234,7 +234,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Secured(right="kw-read")
 	public String getFunctionEditor(@PathParam("id") String functionId) {
 		Function function = getFunctionRepository().getFunctionById(functionId);
-		FunctionEditor<Function> editor = getContext().get(FunctionEditorRegistry.class).getFunctionEditor(function);
+		FunctionEditor editor = getContext().get(FunctionEditorRegistry.class).getFunctionEditor(function);
 		if(editor!=null) {
 			return editor.getEditorPath(function);
 		} else {

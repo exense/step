@@ -29,12 +29,16 @@ public class GeneralScriptFunctionType extends AbstractFunctionType<GeneralScrip
 
 	@Override
 	public void setupFunction(GeneralScriptFunction function) throws SetupFunctionException {
-		File scriptFile = helper.setupScriptFile(function);
 		String language = helper.getScriptLanguage(function);
-		if(language.equals("javascript")) {
-			helper.createScriptFromTemplate(scriptFile, "custom_script.js");
-		} else if(language.equals("groovy")) {
-			helper.createScriptFromTemplate(scriptFile, "custom_script.groovy");
+		if(language.equals("java")) {
+			// No specific setup for java at the moment
+		} else {
+			File scriptFile = helper.setupScriptFile(function);
+			if(language.equals("javascript")) {
+				helper.createScriptFromTemplate(scriptFile, "custom_script.js");
+			} else if(language.equals("groovy")) {
+				helper.createScriptFromTemplate(scriptFile, "custom_script.groovy");
+			}			
 		}
 	}
 
