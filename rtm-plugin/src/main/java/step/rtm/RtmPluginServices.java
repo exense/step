@@ -42,7 +42,7 @@ public class RtmPluginServices {
 				    + "{ \"postControllerView\":"
 				        + " [ { \"filters\":"
 				                + " [  { \"type\":\"text\","
-				                      + "\"key\":\"eid\","
+				                      + "\"key\":\"eId\","
 				                      + "\"value\":\""+eid+"\",\"regex\":false"
 		                        + " }  ]"
 		                + " } ],"
