@@ -48,6 +48,7 @@
 		<module>../agent</module>
 		<module>../initialization</module>
 		<module>../selenium-plugin</module>
+		<module>../jmeter-plugin</module>
 		<module>../distribution</module>
 	</modules>
 
