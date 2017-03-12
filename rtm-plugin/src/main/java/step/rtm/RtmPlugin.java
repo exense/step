@@ -2,6 +2,7 @@ package step.rtm;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -9,7 +10,6 @@ import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.rtm.commons.Configuration;
-import org.rtm.commons.Measurement;
 import org.rtm.commons.MeasurementAccessor;
 
 import step.artefacts.reports.CallFunctionReportNode;
@@ -19,6 +19,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.grid.io.Measure;
+import step.rtm.RtmPluginServices;
 
 @Plugin
 public class RtmPlugin extends AbstractPlugin {
@@ -73,31 +74,31 @@ public class RtmPlugin extends AbstractPlugin {
 	public void afterReportNodeExecution(ReportNode node) {		
 		if(node instanceof CallFunctionReportNode) {
 			CallFunctionReportNode stepReport = (CallFunctionReportNode) node;
-			List<Measurement> measurements = new ArrayList<>();
+			List<Object> measurements = new ArrayList<>();
 			
-			Measurement measurement;
+			Map<String, Object> measurement;
 			if(measureReportNodes) {
-				measurement = new Measurement();
-				measurement.setTextAttribute("eid", stepReport.getExecutionID());
-				measurement.setTextAttribute("name", stepReport.getName());
-				measurement.setNumericalAttribute("value", (long)stepReport.getDuration());
-				measurement.setNumericalAttribute("begin", stepReport.getExecutionTime());
-				measurement.setTextAttribute("rnid", stepReport.getId().toString());
-				measurement.setTextAttribute("rnstatus", stepReport.getStatus().toString());
+				measurement = new HashMap<>();
+				measurement.put("eId", stepReport.getExecutionID());
+				measurement.put("name", stepReport.getName());
+				measurement.put("value", (long)stepReport.getDuration());
+				measurement.put("begin", stepReport.getExecutionTime());
+				measurement.put("rnId", stepReport.getId().toString());
+				measurement.put("rnStatus", stepReport.getStatus().toString());
 				measurements.add(measurement);
 				
 			}
 
 			if(stepReport.getMeasures()!=null) {
 				for(Measure measure:stepReport.getMeasures()) {
-					measurement = new Measurement();
-					measurement.setTextAttribute("eid", stepReport.getExecutionID());
-					measurement.setTextAttribute("name", measure.getName());
-					measurement.setNumericalAttribute("value", measure.getDuration());
-					measurement.setNumericalAttribute("begin", measure.getBegin());
-					measurement.setTextAttribute("rnid", stepReport.getId().toString());
-					measurement.setTextAttribute("rnstatus", stepReport.getStatus().toString());
-					measurement.setTextAttribute("type", "custom");
+					measurement = new HashMap<>();
+					measurement.put("eId", stepReport.getExecutionID());
+					measurement.put("name", measure.getName());
+					measurement.put("value", measure.getDuration());
+					measurement.put("begin", measure.getBegin());
+					measurement.put("rnId", stepReport.getId().toString());
+					measurement.put("rnStatus", stepReport.getStatus().toString());
+					measurement.put("type", "custom");
 
 					if(measure.getData() != null){
 						for(Map.Entry<String,String> entry : measure.getData().entrySet()){
@@ -106,12 +107,12 @@ public class RtmPlugin extends AbstractPlugin {
 							if((key != null) && (val != null)){
 								if(	StringUtils.isNumeric(val)){
 									try{
-										measurement.setNumericalAttribute(key, Long.parseLong(val));
+										measurement.put(key, Long.parseLong(val));
 									}catch (NumberFormatException e){
-										measurement.setTextAttribute(key, "unparsable_numeric_" + val);
+										measurement.put(key, "unparsable_numeric_" + val);
 									}
 								}else{
-									measurement.setTextAttribute(key, val);
+									measurement.put(key, val);
 								}
 							}
 						}
@@ -121,7 +122,7 @@ public class RtmPlugin extends AbstractPlugin {
 				}
 			}
 
-			accessor.saveMeasurementsBulk(measurements);
+			accessor.saveManyMeasurements(measurements);;
 		}
 	}
 
