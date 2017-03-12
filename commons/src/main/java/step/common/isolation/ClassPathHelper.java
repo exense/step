@@ -2,6 +2,7 @@ package step.common.isolation;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -20,20 +21,24 @@ public class ClassPathHelper {
 		return urls;
 	}
 	
-	public static List<URL> forAllJarsInFolder(File folder) {
+	public static List<URL> forAllJarsInFolderUsingFilter(File folder, FilenameFilter addtitionalFilter) {
 		List<URL> urls = new ArrayList<>();
 		
 		try {
 			addFilesToUrls(urls, folder, new FileFilter() {
 				@Override
 				public boolean accept(File pathname) {
-					return pathname.isDirectory()||pathname.getName().endsWith(".jar");
+					return pathname.isDirectory()||(pathname.getName().endsWith(".jar")&&(addtitionalFilter==null||addtitionalFilter.accept(folder, pathname.getName())));
 				}
 			});
 		} catch (IOException e) {
 			throw new RuntimeException("Error getting url list for directory "+folder.getAbsolutePath());
 		}
 		return urls;
+	}
+	
+	public static List<URL> forAllJarsInFolder(File folder) {
+		return forAllJarsInFolderUsingFilter(folder, null);
 	}
 	
 	public static List<URL> forClassPathString(String classPathString) throws MalformedURLException, IOException {
