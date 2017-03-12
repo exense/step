@@ -36,7 +36,7 @@ public class RtmPluginServices {
 	}	
 	
 	private String getAggregateViewByEid(String eid) throws UnsupportedEncodingException {
-		String quickfix = System.getProperty("rtmDefaultGranularity","120000");
+		String quickfix = System.getProperty("rtmDefaultGranularity","auto");
 		return "rtm/#Aggregate/select/"+URLEncoder.encode(
 				"{ \"guiParams\":"
 				    + "{ \"postControllerView\":"
