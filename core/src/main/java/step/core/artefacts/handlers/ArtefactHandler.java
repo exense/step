@@ -174,7 +174,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			if(filter!=null&&!filter.isSelected(testArtefact)) {
 				node.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
-				reportNodeAccessor.save(node);
+				boolean persistBefore = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistbefore",true);
+				if(persistBefore) {
+					reportNodeAccessor.save(node);					
+				}
 				
 				execute_(node, testArtefact);
 			}
@@ -186,7 +189,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setDuration((int)duration);
 		node.setExecutionTime(System.currentTimeMillis());
 		
-		reportNodeAccessor.save(node);
+		boolean persistAfter = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
+		if(persistAfter) {
+			reportNodeAccessor.save(node);					
+		}
 		
 		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeExecution(node);
 		
