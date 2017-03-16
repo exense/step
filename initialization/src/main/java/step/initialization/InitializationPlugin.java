@@ -38,6 +38,7 @@ import step.core.plugins.Plugin;
 import step.functions.Function;
 import step.plugins.adaptergrid.FunctionRepositoryImpl;
 import step.plugins.functions.types.GeneralScriptFunction;
+import step.plugins.jmeter.JMeterFunction;
 import step.plugins.selenium.SeleniumFunction;
 
 @Plugin
@@ -93,6 +94,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		Function googleSearch = addSeleniumFunction(functionRepository, "Google_Search", "java", "../data/scripts/demo-selenium-keyword/target/classes" );
 		Function googleSearchMock = addSeleniumFunction(functionRepository, "Google_Search_Mock", "javascript", "../data/scripts/Google_Search_Mock.js" );
 		
+		Function jmeterDemoFunction = addJMeterFunction(functionRepository, "Demo_Keyword_JMeter", "../data/scripts/Demo_JMeter.jmx");
 	}
 //
 //	private void createDemoForEachPlan(ArtefactAccessor artefacts, String planName)  {
@@ -199,6 +201,16 @@ public class InitializationPlugin extends AbstractPlugin {
 		function.getScriptLanguage().setValue(scriptLanguage);
 		function.getScriptFile().setValue(scriptFile);
 		function.setSeleniumVersion("2.x");
+		functionRepository.addFunction(function);
+		return function;
+	}
+	
+	private Function addJMeterFunction(FunctionRepositoryImpl functionRepository, String name, String jmeterFile) {
+		JMeterFunction function = new JMeterFunction();
+		Map<String, String> kwAttributes = new HashMap<>();
+		kwAttributes.put("name", name);
+		function.setAttributes(kwAttributes);
+		function.getJmeterTestplan().setValue(jmeterFile);
 		functionRepository.addFunction(function);
 		return function;
 	}

@@ -50,6 +50,11 @@
 			<artifactId>selenium-plugin</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>jmeter-plugin</artifactId>
+			<version>${project.version}</version>
+		</dependency>		
 	</dependencies>
 
 	<build>
