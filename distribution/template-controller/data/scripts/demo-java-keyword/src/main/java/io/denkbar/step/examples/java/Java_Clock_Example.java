@@ -14,14 +14,15 @@ import step.handlers.javahandler.ScriptRunner.ScriptContext;
 public class Java_Clock_Example extends AbstractScript {
 
 	@Function
-	public void Demo_Java_Clock() throws Exception {
+	public void Demo_Keyword_Java() throws Exception {
 
 		Date date;
 		output.startMeasure("Demo_Java_Clock_subMeasurement");
 		date = new Date();
 		output.stopMeasure();
 
-		output.add("prettyMessage", input.getString("prettyString") + date.toString());
+		String label = input.containsKey("label")?input.getString("label"):"Date:";
+		output.add("date", label + date.toString());
 		output.add("timestamp", date.getTime());
 	}
 	
@@ -30,7 +31,7 @@ public class Java_Clock_Example extends AbstractScript {
 	    Map<String, String> properties = new HashMap<>();
 	    ScriptContext ctx = ScriptRunner.getExecutionContext(properties);
 	    
-	    OutputMessage result = ctx.run("Demo_Java_Clock","{ \"prettyString\" : \"Current time is : \" }");
+	    OutputMessage result = ctx.run("Demo_Keyword_Java","{ \"label\" : \"Current time is : \" }");
     
 	    System.out.println(result.getPayload());
 	    
