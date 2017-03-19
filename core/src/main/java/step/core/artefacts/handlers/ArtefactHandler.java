@@ -91,6 +91,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		handleAttachments(testArtefact, node);
 		
+		context.getVariablesManager().putVariable(parentNode, "currentArtefact", testArtefact);
 		context.getVariablesManager().putVariable(parentNode, "currentReport", node);
 		
 		addCustomReportNodeAttributes(node);
