@@ -67,15 +67,17 @@ public class RepositoryObjectManager {
 		ReportExport export = new ReportExport();
 
 		String respositoryId = report.getRepositoryID();
-		Repository repository = getRepository(respositoryId);
-		
-		try {
-			repository.exportExecution(report.getRepositoryParameters(), executionID);	
-			export.setStatus(ReportExportStatus.SUCCESSFUL);
-		} catch (Exception e) {
-			export.setStatus(ReportExportStatus.FAILED);
-			export.setError(e.getMessage() + ". See application logs for more details.");
-			logger.error("Error while exporting test " + executionID + " to " + respositoryId,e);
+		if(!report.getRepositoryID().equals(LOCAL)) {
+			Repository repository = getRepository(respositoryId);
+			
+			try {
+				repository.exportExecution(report.getRepositoryParameters(), executionID);	
+				export.setStatus(ReportExportStatus.SUCCESSFUL);
+			} catch (Exception e) {
+				export.setStatus(ReportExportStatus.FAILED);
+				export.setError(e.getMessage() + ". See application logs for more details.");
+				logger.error("Error while exporting test " + executionID + " to " + respositoryId,e);
+			}			
 		}
 		return export;
 	}

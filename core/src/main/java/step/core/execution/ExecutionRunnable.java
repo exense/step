@@ -18,7 +18,6 @@
  *******************************************************************************/
 package step.core.execution;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,14 +28,11 @@ import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.ReportExport;
+import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
-import step.core.variables.UndefinedVariableException;
-
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ExecutionRunnable implements Runnable {
 	
@@ -76,10 +72,9 @@ public class ExecutionRunnable implements Runnable {
 
 			logger.debug("Test execution ended. Reporting result.... Execution ID: " + context.getExecutionId());
 
-			
 			if(!context.isSimulation()) {
 				updateStatus(ExecutionStatus.EXPORTING);
-				List<ReportExport> exports = exportTestExecutionReport();	
+				List<ReportExport> exports = exportExecution(context.getExecutionId());	
 				context.setReportExports(exports);				
 				logger.info("Test execution ended and reported. Execution ID: " + context.getExecutionId());
 			} else {
@@ -129,38 +124,19 @@ public class ExecutionRunnable implements Runnable {
 		return artefactID;
 	}
 	
-	private final static String EXPORTS_PARAM = "tec.execution.exports";
-	
-	@SuppressWarnings("unchecked")
-	private List<ReportExport> exportTestExecutionReport() {
-		List<ReportExport> exports = new ArrayList<>();
+	private List<ReportExport> exportExecution(String executionId) {		
+		Execution execution = context.getGlobalContext().getExecutionAccessor().get(executionId);
 		
-		try {
-			String exportsParam = context.getVariablesManager().getVariableAsString(EXPORTS_PARAM);
-			ObjectMapper m = new ObjectMapper();
-			m.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-			JavaType type = m.getTypeFactory().constructCollectionType(List.class, RepositoryObjectReference.class);
-	
-			List<RepositoryObjectReference> exportRefs = new ArrayList<>();
+		if(execution!=null) {
+			RepositoryObjectManager repositoryObjectManager = context.getGlobalContext().getRepositoryObjectManager();
+			ReportExport report = repositoryObjectManager.exportTestExecutionReport(execution.getExecutionParameters().getArtefact(), executionId);
+			List<ReportExport> exports = new ArrayList<>();
+			exports.add(report);
 			
-			try {
-				exportRefs.addAll((List<RepositoryObjectReference>) m.readValue(exportsParam, type));
-			} catch (IOException e) {
-				logger.error("Error occurred while parsing parameter as JSON " + EXPORTS_PARAM, e);
-			}
-			
-			exportRefs.addAll(context.getExecutionParameters().getExports());
-			
-			logger.info("Exporting test to repositories: " + exportRefs.toString());
-			
-			for(RepositoryObjectReference reportPointer:exportRefs) {
-				ReportExport report = context.getGlobalContext().getRepositoryObjectManager().exportTestExecutionReport(reportPointer, context.getExecutionId());
-				exports.add(report);
-			}
-		} catch (UndefinedVariableException e) {
-			logger.info("No repository defined for export.");
+			return exports;			
+		} else {
+			throw new RuntimeException("Unable to find execution with id "+executionId);
 		}
-		return exports;
 		
 	}
 
