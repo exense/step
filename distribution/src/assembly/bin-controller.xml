@@ -42,6 +42,7 @@
 				<include>step:rtm-plugin</include>
 				<include>step:selenium-plugin</include>
 				<include>step:jmeter-plugin</include>
+				<include>step:script-editor-plugin</include>
 			</includes>
 			<binaries>
 				<outputDirectory>lib</outputDirectory>
