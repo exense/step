@@ -18,10 +18,12 @@
  *******************************************************************************/
 package step.core.repositories;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestSetStatusOverview {
+@SuppressWarnings("serial")
+public class TestSetStatusOverview implements Serializable {
 
 	String testsetName;
 	

@@ -22,6 +22,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 
 import step.attachments.AttachmentManager;
+import step.commons.conf.Configuration;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
 import step.core.artefacts.ArtefactAccessor;
@@ -37,6 +38,8 @@ import step.core.scheduler.ExecutionTaskAccessor;
 import step.expressions.ExpressionHandler;
 
 public class GlobalContext extends AbstractContext {
+	
+	private Configuration configuration; 
 	
 	private PluginManager pluginManager;
 	
@@ -72,6 +75,14 @@ public class GlobalContext extends AbstractContext {
 
 	public GlobalContext() {
 		super();
+	}
+
+	public Configuration getConfiguration() {
+		return configuration;
+	}
+
+	public void setConfiguration(Configuration configuration) {
+		this.configuration = configuration;
 	}
 
 	public MongoClient getMongoClient() {

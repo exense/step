@@ -18,9 +18,12 @@
  *******************************************************************************/
 package step.core.repositories;
 
+import java.io.Serializable;
+
 import step.core.artefacts.reports.ReportNodeStatus;
 
-public class TestRunStatus {
+@SuppressWarnings("serial")
+public class TestRunStatus implements Serializable {
 	
 	String testplanName;
 	

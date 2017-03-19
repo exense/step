@@ -56,7 +56,6 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.ReportExport;
 import step.core.repositories.ArtefactInfo;
-import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
 import step.core.scheduler.ExecutiontTaskParameters;
@@ -323,8 +322,8 @@ public class ControllerServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="report-read")
-	public TestSetStatusOverview getReport(RepositoryObjectReference report) {
-		return RepositoryObjectManager.getReport(report);
+	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
+		return getContext().getRepositoryObjectManager().getReport(report);
 	}
 	
 	@GET

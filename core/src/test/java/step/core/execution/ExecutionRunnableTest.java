@@ -42,7 +42,7 @@ import step.core.repositories.RepositoryObjectReference;
 public class ExecutionRunnableTest {
 
 	@Test 
-	public void test() {
+	public void test() throws Exception {
 		GlobalContext globalContext = ExecutionTestHelper.createGlobalContext();
 		globalContext.getPluginManager().register(new AbstractPlugin() {
 

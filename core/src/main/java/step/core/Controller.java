@@ -24,6 +24,8 @@ import org.eclipse.jetty.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mongodb.MongoClient;
+
 import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.access.UserAccessor;
@@ -35,16 +37,14 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.EventManager;
 import step.core.execution.ExecutionLifecycleManager;
-import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.expressions.ExpressionHandler;
-
-import com.mongodb.MongoClient;
 
 public class Controller {
 	
@@ -78,6 +78,7 @@ public class Controller {
 		Configuration configuration = Configuration.getInstance();
 		
 		MongoClient mongoClient = MongoDBAccessorHelper.getClient();
+		context.setConfiguration(configuration);
 		context.setMongoClient(mongoClient);
 		context.setMongoDatabase(MongoDBAccessorHelper.getInstance().getMongoDatabase(mongoClient));
 		context.setExecutionAccessor(new ExecutionAccessor(mongoClient));
@@ -114,9 +115,6 @@ public class Controller {
 	private void destroyContext() {
 		if(context.getMongoClient()!=null) {
 			context.getMongoClient().close();
-		}
-		if(context.getRepositoryObjectManager()!=null) {
-			context.getRepositoryObjectManager().close();
 		}
 	}
 	

@@ -81,6 +81,8 @@ public class ExecutionTestHelper {
 		MongoClient client = Mockito.mock(MongoClient.class);
 		context.setMongoClient(client);
 		
+		context.setConfiguration(Configuration.getInstance());
+		
 		context.setExecutionAccessor(new InMemoryExecutionAccessor());
 		context.setArtefactAccessor(new InMemoryArtefactAccessor());
 		context.setReportAccessor(new InMemoryReportNodeAccessor());

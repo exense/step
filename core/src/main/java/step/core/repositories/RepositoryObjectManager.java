@@ -18,20 +18,13 @@
  *******************************************************************************/
 package step.core.repositories;
 
-import java.util.Map.Entry;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-
-import step.commons.conf.Configuration;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.execution.model.ReportExport;
@@ -43,7 +36,7 @@ public class RepositoryObjectManager {
 	
 	public static final String CLIENT_KEY = "RepositoryObjectManager_Client";
 	
-	private Client client = ClientBuilder.newClient();
+	private Map<String, Repository> repositories = new ConcurrentHashMap<>();
 	
 	private ArtefactAccessor artefactAccessor;
 	
@@ -51,55 +44,46 @@ public class RepositoryObjectManager {
 		super();
 		this.artefactAccessor = artefactAccessor;
 	}
-
-	public void close() {
-		client.close();
+	
+	public void registerRepository(String id, Repository repository) {
+		repositories.put(id, repository);
 	}
 
-	public String importArtefact(RepositoryObjectReference artefact)  {
-		String server = Configuration.getInstance().getProperty("tec.specification."+artefact.getRepositoryID() +".server");
-		try {
-			WebTarget target = client.target(server+"/import");
-			for(Entry<String, String> e:artefact.getRepositoryParameters().entrySet()) {
-				target = target.queryParam(e.getKey(), e.getValue());
-			}
-			return target.request(MediaType.APPLICATION_JSON).get(String.class);
-		} catch (Exception e) {
-			logger.error("An error occurred while importing testartefact.", e);
-			throw new RuntimeException("An error occurred while importing testartefact.", e);
+	public String importArtefact(RepositoryObjectReference artefact) throws Exception  {
+		String respositoryId = artefact.getRepositoryID();
+		Repository repository = getRepository(respositoryId);
+		return repository.importArtefact(artefact.getRepositoryParameters());
+	}
+
+	private Repository getRepository(String respositoryId) {
+		Repository repository = repositories.get(respositoryId);
+		if(repository==null) {
+			throw new RuntimeException("Unknown repository '"+respositoryId+"'");
 		}
+		return repository;
 	}
 	
 	public ReportExport exportTestExecutionReport(RepositoryObjectReference report, String executionID) {	
-		String server = Configuration.getInstance().getProperty("tec.reporting." + report.getRepositoryID() + ".servers")+"/report";
-		
 		ReportExport export = new ReportExport();
+
+		String respositoryId = report.getRepositoryID();
+		Repository repository = getRepository(respositoryId);
 		
-		export.setURL(server);
 		try {
-			WebTarget target = client.target(server);
-			if(report.getRepositoryParameters()!=null) {
-				for(Entry<String, String> e:report.getRepositoryParameters().entrySet()) {
-					target = target.queryParam(e.getKey(), e.getValue());
-				}
-			}
-			target = target.queryParam("executionID", executionID);
-			target.request(MediaType.APPLICATION_JSON).get();
+			repository.exportExecution(report.getRepositoryParameters(), executionID);	
 			export.setStatus(ReportExportStatus.SUCCESSFUL);
 		} catch (Exception e) {
 			export.setStatus(ReportExportStatus.FAILED);
 			export.setError(e.getMessage() + ". See application logs for more details.");
-			logger.error("Error while exporting test " + executionID + " to " + server,e);
+			logger.error("Error while exporting test " + executionID + " to " + respositoryId,e);
 		}
-
-		
 		return export;
 	}
 	
 	private static final String LOCAL = "local";
 	private static final String ARTEFACT_ID = "artefactid";
 	
-	public ArtefactInfo getArtefactInfo(RepositoryObjectReference ref) {
+	public ArtefactInfo getArtefactInfo(RepositoryObjectReference ref) throws Exception {
 		if(ref.getRepositoryID().equals(LOCAL)) {
 			String artefactid = ref.getRepositoryParameters().get(ARTEFACT_ID);
 			AbstractArtefact artefact = artefactAccessor.get(new ObjectId(artefactid));
@@ -108,44 +92,17 @@ public class RepositoryObjectManager {
 			info.setName(artefact.getAttributes()!=null?artefact.getAttributes().get("name"):null);
 			return info;
 		} else {
-			return RepositoryObjectManager.executeRequest(ref, "/artefact/info", ArtefactInfo.class);
-		}
-	}
-
-	public static <T extends Object> T executeRequest(RepositoryObjectReference ref, String service, Class<T> resultClass) {
-		String server = Configuration.getInstance().getProperty("tec.reporting." + ref.getRepositoryID() + ".servers");
-		
-		Client client = ClientBuilder.newClient();
-		client.register(JacksonJsonProvider.class);
-		try {
-			WebTarget target = client.target(server+service);
-			for(Entry<String, String> e:ref.getRepositoryParameters().entrySet()) {
-				target = target.queryParam(e.getKey(), e.getValue());
-			}
-			return target.request(MediaType.APPLICATION_JSON).get(resultClass);
-		} finally {
-			client.close();
+			String respositoryId = ref.getRepositoryID();
+			Repository repository = getRepository(respositoryId);
+			return repository.getArtefactInfo(ref.getRepositoryParameters());
 		}
 	}
 	
 	
-	public static TestSetStatusOverview getReport(RepositoryObjectReference report) {
-		String server = Configuration.getInstance().getProperty("tec.reporting." + report.getRepositoryID() + ".servers");
-		
-//		ClientConfig clientConfig = new DefaultClientConfig();
-//		clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING,
-//				Boolean.TRUE);
-		Client client = ClientBuilder.newClient();
-		client.register(JacksonJsonProvider.class);
-		try {
-			WebTarget target = client.target(server+"/report/lastrun");
-			for(Entry<String, String> e:report.getRepositoryParameters().entrySet()) {
-				target = target.queryParam(e.getKey(), e.getValue());
-			}
-			return target.request(MediaType.APPLICATION_JSON).get(TestSetStatusOverview.class);
-		} finally {
-			client.close();
-		}
+	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
+		String respositoryId = report.getRepositoryID();
+		Repository repository = getRepository(respositoryId);
+		return repository.getTestSetStatusOverview(report.getRepositoryParameters());
 	}
 	
 }

@@ -18,7 +18,10 @@
  *******************************************************************************/
 package step.core.repositories;
 
-public class ArtefactInfo {
+import java.io.Serializable;
+
+@SuppressWarnings("serial")
+public class ArtefactInfo implements Serializable {
 
 	String name;
 	
