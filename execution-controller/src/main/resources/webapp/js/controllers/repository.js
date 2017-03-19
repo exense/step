@@ -82,11 +82,13 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
             $scope.testCaseTable.data = dataSet;
           });
       $scope.functions.getIncludedTestcases = function() {
+        var includedTestCases = {"by":"name"};
         var result = [];
         if($scope.testCaseTable.getRows!=null) {
           _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[0])});
         }
-        return result;
+        includedTestCases.list = result;
+        return includedTestCases;
       }
     }
 ])

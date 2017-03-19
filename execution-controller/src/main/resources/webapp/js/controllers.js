@@ -82,7 +82,15 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
         executionParams.exports = [];
         var includedTestcases = $scope.includedTestcases();
         if(includedTestcases) {
-          executionParams.artefactFilter = {"class":"step.artefacts.filters.TestCaseIdFilter","includedIds":includedTestcases};
+          if(includedTestcases.by=="id") {
+            executionParams.artefactFilter = {"class":"step.artefacts.filters.TestCaseIdFilter","includedIds":includedTestcases.list};            
+          } else if(includedTestcases.by=="name") {
+            executionParams.artefactFilter = {"class":"step.artefacts.filters.TestCaseFilter","includedNames":includedTestcases.list};            
+          } else {
+            throw "Unsupported clause "+includedTestcases.by;
+          }
+        } else {
+          throw "Call back includedTestcases() returned null";
         }
         executionParams.customParameters = $scope.model;
         return executionParams;
@@ -409,11 +417,13 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         }}];
       
       $scope.getIncludedTestcases = function() {
+        var includedTestCases = {"by":$scope.execution.executionParameters.artefact.repositoryID=="local"?"id":"name"};
         var result = [];
         if($scope.testCaseTable.getRows!=null) {
-          _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[0])});
+          _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[includedTestCases.by=="id"?0:1])});
         }
-        return result;
+        includedTestCases.list = result;
+        return includedTestCases;
       }
       
       $scope.onTestExecutionStarted = function() {
