@@ -49,6 +49,7 @@
 		<module>../initialization</module>
 		<module>../selenium-plugin</module>
 		<module>../jmeter-plugin</module>
+		<module>../script-editor-plugin</module>
 		<module>../distribution</module>
 	</modules>
 
