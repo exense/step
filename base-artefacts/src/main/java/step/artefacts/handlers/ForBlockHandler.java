@@ -34,7 +34,6 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
-import step.core.miscellaneous.TestArtefactResultHandler;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
@@ -68,7 +67,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 				delegateCreateReportSkeleton(iterationTestCase, node, newVariable);
 			}
 		} catch(Exception e) {
-			TestArtefactResultHandler.failWithException(node, e);
+			failWithException(node, e);
 		} finally {
 			if(dataSet!=null) {
 				dataSet.close();
@@ -114,7 +113,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 				node.setStatus(ReportNodeStatus.PASSED);
 			}
 		} catch(Exception e) {
-			TestArtefactResultHandler.failWithException(node, e);
+			failWithException(node, e);
 		} finally {
 			if(dataSet!=null) {
 				try {
@@ -175,7 +174,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					}
 				}
 			} catch(Exception e) {
-				TestArtefactResultHandler.failWithException(node, e);
+				failWithException(node, e);
 			}
 		}
 	}

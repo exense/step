@@ -20,6 +20,7 @@ package step.core.artefacts.handlers;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,13 +39,16 @@ import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ArtefactCache;
 import step.core.execution.ExecutionContext;
-import step.core.miscellaneous.TestArtefactResultHandler;
+import step.core.miscellaneous.ReportNodeAttachmentManager;
+import step.core.miscellaneous.ValidationException;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 	
 	protected static Logger logger = LoggerFactory.getLogger(ArtefactHandler.class);
 	
 	protected ExecutionContext context;
+	
+	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
 	public static String FILE_VARIABLE_PREFIX = "file:";
 	public static String CONTINUE_EXECUTION = "tec.continueonerror";
@@ -55,6 +59,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		super();
 		
 		context = ExecutionContext.getCurrentContext();
+		
+		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context.getGlobalContext().getAttachmentManager());
 	}
 	
 	private enum Phase {
@@ -120,7 +126,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		REPORT_NODE node = beforeDelegation(Phase.SKELETON_CREATION, parentNode, testArtefact, newVariables);
 		
 		try {
-			context.getGlobalContext().getDynamicBeanResolver().evaluate(testArtefact, context.getVariablesManager().getAllVariables());
+			context.getGlobalContext().getDynamicBeanResolver().evaluate(testArtefact, getBindings());
 			
 			ArtefactFilter filter = ExecutionContext.getCurrentContext().getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(testArtefact)) {
@@ -130,7 +136,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		} catch (Exception e) {
 			getListOfArtefactsNotInitialized().add(testArtefact.getId().toString());
-			TestArtefactResultHandler.failWithException(node, e, false);
+			failWithException(node, e, false);
 		}
 		
 		if(testArtefact.isCreateSkeleton()) {
@@ -141,6 +147,13 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeSkeletonCreation(node);
 		
 		afterDelegation(node, parentNode, testArtefact);
+	}
+
+	private Map<String, Object> getBindings() {
+		Map<String, Object> bindings = new HashMap<>();
+		bindings.putAll(context.getVariablesManager().getAllVariables());
+		bindings.put("attachmentManager", context.getGlobalContext().getAttachmentManager());
+		return bindings;
 	}
 	
 	protected abstract void createReportSkeleton_(REPORT_NODE parentNode, ARTEFACT testArtefact);
@@ -168,7 +181,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		long t1 = System.currentTimeMillis();
 		try {
-			context.getGlobalContext().getDynamicBeanResolver().evaluate(testArtefact, context.getVariablesManager().getAllVariables());
+			context.getGlobalContext().getDynamicBeanResolver().evaluate(testArtefact, getBindings());
 			node.setArtefactInstance(testArtefact);
 			
 			ArtefactFilter filter = ExecutionContext.getCurrentContext().getExecutionParameters().getArtefactFilter();
@@ -183,7 +196,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				execute_(node, testArtefact);
 			}
 		} catch (Exception e) {
-			TestArtefactResultHandler.failWithException(node, e);
+			failWithException(node, e);
 		}
 		long duration = System.currentTimeMillis() - t1;
 		
@@ -260,7 +273,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		List<ObjectId> attachments = artefact.getAttachments();
 		if(attachments!=null) {
 			for(ObjectId attachmentId:attachments) {
-				File file = AttachmentManager.getFileById(attachmentId);
+				AttachmentManager attachmentManager = context.getGlobalContext().getAttachmentManager();
+				File file = attachmentManager.getFileById(attachmentId);
 				context.getVariablesManager().putVariable(report, FILE_VARIABLE_PREFIX+file.getName(), file);
 			}
 		}
@@ -281,5 +295,22 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected void fail(ReportNode node, String error) {
 		node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 		node.setError(error, 0, true);
+	}
+	
+	protected void failWithException(ReportNode result, Throwable e) {
+		failWithException(result, e, true);
+	}
+	
+	protected void failWithException(ReportNode result, Throwable e, boolean generateAttachment) {
+		failWithException(result, null, e, generateAttachment);
+
+	}
+	
+	protected void failWithException(ReportNode result, String errorMsg, Throwable e, boolean generateAttachment) {
+		if(generateAttachment && !(e instanceof ValidationException)) {			
+			reportNodeAttachmentManager.attach(e, result);
+		}
+		result.setError(errorMsg!=null?errorMsg+":"+e.getMessage():e.getMessage(), 0, true);	
+		result.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 	}
 }

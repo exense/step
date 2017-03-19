@@ -34,15 +34,19 @@ import javax.servlet.http.HttpServletResponse;
 import org.bson.types.ObjectId;
 
 import step.attachments.AttachmentManager;
+import step.commons.conf.Configuration;
 
 public class DownloadFileServlet extends HttpServlet {
 	
 	private static final long serialVersionUID = 8922992243834734217L;
 
+	private AttachmentManager attachmentManager = new AttachmentManager(Configuration.getInstance());
+	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String uuid = (String) request.getParameter("uuid");
 		String deleteAfterDownload = (String) request.getParameter("deleteAfterDownload");
-		File downloadFile = AttachmentManager.getFileById(new ObjectId(uuid));
+		
+		File downloadFile = attachmentManager.getFileById(new ObjectId(uuid));
 				
 		FileInputStream inStream = new FileInputStream(downloadFile);
 

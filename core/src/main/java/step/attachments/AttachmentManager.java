@@ -26,9 +26,17 @@ import step.commons.conf.Configuration;
 
 public class AttachmentManager {
 	
-	private static String filerPath = Configuration.getInstance().getProperty("attachmentsdir","attachments");
+	protected Configuration configuration;
 	
-	public static AttachmentContainer createAttachmentContainer() {
+	protected String filerPath;
+	
+	public AttachmentManager(Configuration configuration) {
+		super();
+		this.configuration = configuration;
+		this.filerPath = configuration.getProperty("attachmentsdir","attachments");
+	}
+	
+	public AttachmentContainer createAttachmentContainer() {
 		AttachmentMeta meta = new AttachmentMeta();
 		
 		AttachmentMetaAccessor accessor = new AttachmentMetaAccessor();
@@ -44,11 +52,11 @@ public class AttachmentManager {
 		return container;
 	}
 	
-	private static File getContainerFileById(ObjectId id) {
+	private File getContainerFileById(ObjectId id) {
 		return new File(filerPath + "/" + id.toString());
 	}
 	
-	public static File getFileById(ObjectId id) {
+	public File getFileById(ObjectId id) {
 		File folder = getContainerFileById(id);
 		String[] list = folder.list();
 		if(list!=null && list.length>0) {

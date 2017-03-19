@@ -7,12 +7,42 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import org.bson.Document;
+import org.jongo.Jongo;
+import org.jongo.marshall.jackson.JacksonMapper;
 
+import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
+import com.mongodb.DB;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.IndexOptions;
 
 public class AbstractAccessor {
 
+	protected MongoClientSession mongoClientSession;
+	
+	public AbstractAccessor() {
+		super();
+	}
+
+	public AbstractAccessor(MongoClientSession mongoClientSession) {
+		super();
+		this.mongoClientSession = mongoClientSession;
+	}
+
+	protected org.jongo.MongoCollection getJongoCollection(String collectionName) {
+		DB db = mongoClientSession.getDB();
+		
+		Jongo jongo = new Jongo(db,new JacksonMapper.Builder()
+			      .registerModule(new JSR353Module())
+			      .registerModule(new JsonOrgModule()).build());
+		org.jongo.MongoCollection collection = jongo.getCollection(collectionName);
+		return collection;
+	}
+	
+	protected MongoCollection<Document> getMongoCollection(String collectionName) {
+		return mongoClientSession.getMongoDatabase().getCollection(collectionName);
+	}
+	
 	public static void createOrUpdateIndex(MongoCollection<Document> collection, String attribute) {
 		Document index = getIndex(collection, attribute);
 		if(index==null) {

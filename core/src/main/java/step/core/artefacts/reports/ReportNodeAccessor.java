@@ -36,6 +36,7 @@ import com.mongodb.MongoClient;
 import step.commons.datatable.DataTable;
 import step.commons.datatable.TableRow;
 import step.core.accessors.AbstractAccessor;
+import step.core.accessors.MongoClientSession;
 import step.core.accessors.MongoDBAccessorHelper;
 
 
@@ -49,10 +50,17 @@ public class ReportNodeAccessor extends AbstractAccessor {
 		super();
 	}
 
+	@Deprecated
 	public ReportNodeAccessor(MongoClient client) {
 		super();
 		reports = MongoDBAccessorHelper.getCollection(client, "reports");
 		reports_ = MongoDBAccessorHelper.getMongoCollection_(client, "reports");
+	}
+	
+	public ReportNodeAccessor(MongoClientSession clientSession) {
+		super(clientSession);
+		reports = getJongoCollection("reports");
+		reports_ = getMongoCollection("reports");
 	}
 	
 	public void createIndexesIfNeeded(Long ttl) {

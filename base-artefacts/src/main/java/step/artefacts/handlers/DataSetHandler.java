@@ -23,7 +23,6 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ReportNodeEventListener;
-import step.core.miscellaneous.TestArtefactResultHandler;
 import step.core.variables.VariableType;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
@@ -80,7 +79,7 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 			
 			node.setStatus(ReportNodeStatus.PASSED);
 		} catch(Exception e) {
-			TestArtefactResultHandler.failWithException(node, e);
+			failWithException(node, e);
 		}
 	}
 	

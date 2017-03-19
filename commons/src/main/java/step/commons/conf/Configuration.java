@@ -136,4 +136,8 @@ public class Configuration {
 		}
 	}
 
+	public File getPropertyFile() {
+		return propertyFile;
+	}
+
 }

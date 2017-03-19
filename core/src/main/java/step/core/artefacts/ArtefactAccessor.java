@@ -27,21 +27,30 @@ import org.jongo.MongoCollection;
 
 import com.mongodb.MongoClient;
 
+import step.core.accessors.AbstractAccessor;
+import step.core.accessors.MongoClientSession;
 import step.core.accessors.MongoDBAccessorHelper;
 
 
 
-public class ArtefactAccessor {
+public class ArtefactAccessor extends AbstractAccessor {
 			
 	private MongoCollection artefacts;
 		
+	@Deprecated
 	public ArtefactAccessor() {
 		super();
 	}
 
+	@Deprecated
 	public ArtefactAccessor(MongoClient client) {
 		super();
 		artefacts = MongoDBAccessorHelper.getCollection(client, "artefacts");
+	}
+	
+	public ArtefactAccessor(MongoClientSession clientSession) {
+		super(clientSession);
+		artefacts = getJongoCollection("artefacts");
 	}
 	
 	public <T extends AbstractArtefact> T  createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {

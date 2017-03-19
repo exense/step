@@ -23,7 +23,6 @@ import step.artefacts.reports.IfBlockReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.miscellaneous.TestArtefactResultHandler;
 
 public class IfBlockHandler extends ArtefactHandler<IfBlock, IfBlockReportNode> {
 
@@ -51,7 +50,7 @@ public class IfBlockHandler extends ArtefactHandler<IfBlock, IfBlockReportNode> 
 			} 
 			
 		} catch (Exception e) {
-			TestArtefactResultHandler.failWithException(node, e);
+			failWithException(node, e);
 		}
 	}
 

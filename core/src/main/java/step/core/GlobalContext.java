@@ -21,6 +21,7 @@ package step.core;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 
+import step.attachments.AttachmentManager;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
 import step.core.artefacts.ArtefactAccessor;
@@ -66,6 +67,8 @@ public class GlobalContext extends AbstractContext {
 	private DynamicBeanResolver dynamicBeanResolver;
 	
 	private EventManager eventManager;
+	
+	private AttachmentManager attachmentManager;
 
 	public GlobalContext() {
 		super();
@@ -192,6 +195,14 @@ public class GlobalContext extends AbstractContext {
 
 	public void setEventManager(EventManager eventManager) {
 		this.eventManager = eventManager;
+	}
+
+	public AttachmentManager getAttachmentManager() {
+		return attachmentManager;
+	}
+
+	public void setAttachmentManager(AttachmentManager attachmentManager) {
+		this.attachmentManager = attachmentManager;
 	}
 	
 }

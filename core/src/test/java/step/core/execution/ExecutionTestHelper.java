@@ -22,6 +22,8 @@ import org.mockito.Mockito;
 
 import com.mongodb.MongoClient;
 
+import step.attachments.AttachmentManager;
+import step.commons.conf.Configuration;
 import step.core.GlobalContext;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
@@ -89,6 +91,8 @@ public class ExecutionTestHelper {
 		context.setExecutionLifecycleManager(new ExecutionLifecycleManager(context));
 		
 		context.setEventManager(new EventManager());
+		context.setAttachmentManager(new AttachmentManager(Configuration.getInstance()));
+
 		
 		return context;
 	}

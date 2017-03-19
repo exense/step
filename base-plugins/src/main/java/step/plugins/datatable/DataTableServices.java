@@ -338,7 +338,8 @@ public class DataTableServices extends AbstractServices {
 	private static final String CSV_DELIMITER = ";";
 	
 	private void export(String id, BackendDataTable table, Bson query, SearchOrder order) {
-		AttachmentContainer container = AttachmentManager.createAttachmentContainer();
+		AttachmentManager attachmentManager = getContext().getAttachmentManager();
+		AttachmentContainer container = attachmentManager.createAttachmentContainer();
 		ReportStatus status = reports.get(id);
 		status.setAttachmentID(container.getMeta().getId().toString());
 		

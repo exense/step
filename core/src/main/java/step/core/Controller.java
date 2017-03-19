@@ -24,6 +24,7 @@ import org.eclipse.jetty.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoDBAccessorHelper;
@@ -74,6 +75,8 @@ public class Controller {
 		context = new GlobalContext();
 		context.setPluginManager(pluginManager);
 		
+		Configuration configuration = Configuration.getInstance();
+		
 		MongoClient mongoClient = MongoDBAccessorHelper.getClient();
 		context.setMongoClient(mongoClient);
 		context.setMongoDatabase(MongoDBAccessorHelper.getInstance().getMongoDatabase(mongoClient));
@@ -88,6 +91,7 @@ public class Controller {
 		context.setExpressionHandler(new ExpressionHandler());
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		context.setEventManager(new EventManager());
+		context.setAttachmentManager(new AttachmentManager(configuration));
 		
 		createOrUpdateIndexes();
 	}

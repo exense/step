@@ -23,10 +23,9 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
-import step.core.miscellaneous.TestArtefactResultHandler;
 import step.core.variables.UndefinedVariableException;
 
-public class SequentialArtefactScheduler {
+public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefact, ReportNode>{
 
 	public SequentialArtefactScheduler() {
 		super();
@@ -84,7 +83,7 @@ public class SequentialArtefactScheduler {
 				}
 			}
 		} catch (Exception e) {
-			TestArtefactResultHandler.failWithException(node, e);
+			failWithException(node, e);
 		} finally {
 			Object forcedStatus = context.getVariablesManager().getVariable("tec.forceparentstatus");
 			if(forcedStatus!=null) {
@@ -97,6 +96,11 @@ public class SequentialArtefactScheduler {
 				}
 			}
 		}
+	}
+
+	@Override
+	public ReportNode createReportNode_(ReportNode parentNode, AbstractArtefact testArtefact) {
+		return null;
 	}
 
 }

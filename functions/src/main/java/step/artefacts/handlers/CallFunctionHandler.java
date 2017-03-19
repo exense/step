@@ -55,9 +55,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	
 	protected final FunctionClient functionClient;
 	
+	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
+	
 	public CallFunctionHandler() {
 		super();
 		functionClient = (FunctionClient) context.getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
+		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context.getGlobalContext().getAttachmentManager());
 	}
 
 	@Override
@@ -126,7 +129,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				for(Attachment a:output.getAttachments()) {
 					AttachmentMeta attachmentMeta;
 					try {
-						attachmentMeta = ReportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+						attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
 						node.addAttachment(attachmentMeta);					
 					} catch (AttachmentQuotaException e) {
 						// attachment has been skipped. Nothing else to do here

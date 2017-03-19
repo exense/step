@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.json.Json;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -59,12 +60,19 @@ import step.grid.io.AttachmentHelper;
 @Path("/functions")
 public class FunctionRepositoryServices extends AbstractServices {
 
+	ReportNodeAttachmentManager reportNodeAttachmentManager;
+	
 	private FunctionClient getFunctionClient() {
 		return (FunctionClient) getContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
 	}
 	
 	private FunctionRepository getFunctionRepository() {
 		return getFunctionClient().getFunctionRepository();
+	}
+	
+	@PostConstruct
+	public void init() {
+		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().getAttachmentManager());
 	}
 
 	@POST
@@ -172,7 +180,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 					for(Attachment a:output.getAttachments()) {
 						AttachmentMeta attachmentMeta;
 						try {
-							attachmentMeta = ReportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+							attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
 							attachmentMetas.add(attachmentMeta);
 						} catch (AttachmentQuotaException e) {
 							

@@ -28,6 +28,7 @@ import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 
 import step.core.accessors.AbstractAccessor;
+import step.core.accessors.MongoClientSession;
 import step.core.accessors.MongoDBAccessorHelper;
 
 import com.mongodb.MongoClient;
@@ -37,15 +38,23 @@ public class ExecutionAccessor extends AbstractAccessor {
 	MongoCollection executions;
 	
 	com.mongodb.client.MongoCollection<Document> executions_;
+
+	@Deprecated
+	public ExecutionAccessor() {
+		super();
+	}
 	
+	@Deprecated
 	public ExecutionAccessor(MongoClient client) {
 		super();
 		executions = MongoDBAccessorHelper.getCollection(client, "executions");
 		executions_ = MongoDBAccessorHelper.getMongoCollection_(client, "executions");
 	}
 	
-	public ExecutionAccessor() {
-		super();
+	public ExecutionAccessor(MongoClientSession clientSession) {
+		super(clientSession);
+		executions = getJongoCollection("executions");
+		executions_ = getMongoCollection("executions");
 	}
 	
 	public void createIndexesIfNeeded(Long ttl) {

@@ -46,7 +46,14 @@ public class ReportNodeAttachmentManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ReportNodeAttachmentManager.class);
 	
-	private static boolean checkAndUpateAttachmentQuota() {
+	private AttachmentManager attachmentManager;
+	
+	public ReportNodeAttachmentManager(AttachmentManager attachmentManager) {
+		super();
+		this.attachmentManager = attachmentManager;
+	}
+
+	private boolean checkAndUpateAttachmentQuota() {
 		ExecutionContext context = ExecutionContext.getCurrentContext();
 		synchronized (context) {
 			VariablesManager varManager = context.getVariablesManager();
@@ -90,17 +97,17 @@ public class ReportNodeAttachmentManager {
 		return w.toString().getBytes();
 	}
 	
-	public static AttachmentMeta createAttachment(Throwable e) throws AttachmentQuotaException {
+	public AttachmentMeta createAttachment(Throwable e) throws AttachmentQuotaException {
 		return createAttachment(exceptionToAttachment(e), "exception.log");
 	}
 	
-	public static void attach(Throwable e, ReportNode node) {
+	public void attach(Throwable e, ReportNode node) {
 		attach(exceptionToAttachment(e), "exception.log", node);
 	}
 	
-	public static AttachmentMeta createAttachment(byte[] content, String filename) throws AttachmentQuotaException {
+	public AttachmentMeta createAttachment(byte[] content, String filename) throws AttachmentQuotaException {
 		if(checkAndUpateAttachmentQuota()) {
-			AttachmentContainer container = AttachmentManager.createAttachmentContainer();
+			AttachmentContainer container = attachmentManager.createAttachmentContainer();
 			try {
 				BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(new File(container.getContainer().getAbsoluteFile()+"/"+filename)));
 				bos.write(content);
@@ -119,7 +126,7 @@ public class ReportNodeAttachmentManager {
 		}
 	}
 	
-	public static void attach(byte[] content, String filename, ReportNode reportNode ) {
+	public void attach(byte[] content, String filename, ReportNode reportNode ) {
 		try {
 			AttachmentMeta attachment = createAttachment(content, filename);
 			reportNode.addAttachment(attachment);

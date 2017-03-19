@@ -30,7 +30,6 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
-import step.core.miscellaneous.TestArtefactResultHandler;
 
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 	
@@ -101,7 +100,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 							}
 						} catch (Exception e) {
 							if(iterationReportNode!=null) {
-								TestArtefactResultHandler.failWithException(iterationReportNode, e);
+								failWithException(iterationReportNode, e);
 							}
 						}
 					}
@@ -112,7 +111,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
 			node.setStatus(ReportNodeStatus.PASSED);
 		} catch (InterruptedException e) {
-			TestArtefactResultHandler.failWithException(node, e);
+			failWithException(node, e);
 		} finally {
 			executor.shutdownNow();
 		}
