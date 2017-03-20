@@ -27,6 +27,8 @@ import step.core.dynamicbeans.DynamicValue;
 public class Sequence extends AbstractArtefact {
 	
 	DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);
+	
+	DynamicValue<Long> pacing = new DynamicValue<Long>();
 
 	public DynamicValue<Boolean> getContinueOnError() {
 		return continueOnError;
@@ -34,6 +36,14 @@ public class Sequence extends AbstractArtefact {
 
 	public void setContinueOnError(DynamicValue<Boolean> continueOnError) {
 		this.continueOnError = continueOnError;
+	}
+
+	public DynamicValue<Long> getPacing() {
+		return pacing;
+	}
+
+	public void setPacing(DynamicValue<Long> pacing) {
+		this.pacing = pacing;
 	}
 	
 }

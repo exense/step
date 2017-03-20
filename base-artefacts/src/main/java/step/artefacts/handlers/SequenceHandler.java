@@ -32,8 +32,24 @@ public class SequenceHandler extends ArtefactHandler<Sequence, ReportNode> {
 	
 	@Override
 	public void execute_(ReportNode node, Sequence testArtefact) {
+		Long pacing = testArtefact.getPacing().get();
+		long startTime = pacing!=null?System.currentTimeMillis():0;
+		
 		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
 		scheduler.execute_(node, testArtefact, testArtefact.getContinueOnError().get());
+
+		if(pacing!=null) {
+			long endTime = System.currentTimeMillis();
+			long duration = endTime-startTime;
+			long pacingWait = pacing-duration;
+			if(pacingWait>0) {
+				try {
+					Thread.sleep(pacingWait);
+				} catch (InterruptedException e) {}
+			} else {
+				// TODO warning if the pacing exceeded
+			}
+		}
 	}
 
 	@Override
