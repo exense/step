@@ -92,8 +92,10 @@ public class ParameterManagerPlugin extends AbstractPlugin {
 		
 	private void putVariables(ExecutionContext context, ReportNode rootNode, Map<String, ? extends Object> parameters, VariableType type) {
 		VariablesManager varMan = context.getVariablesManager();
-		for(String key:parameters.keySet()) {
-			varMan.putVariable(rootNode, type, key, parameters.get(key));
+		if(parameters!=null) {
+			for(String key:parameters.keySet()) {
+				varMan.putVariable(rootNode, type, key, parameters.get(key));
+			}			
 		}
 	}
 
