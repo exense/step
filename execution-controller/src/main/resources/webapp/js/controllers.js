@@ -89,8 +89,6 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
           } else {
             throw "Unsupported clause "+includedTestcases.by;
           }
-        } else {
-          throw "Call back includedTestcases() returned null";
         }
         executionParams.customParameters = $scope.model;
         return executionParams;
