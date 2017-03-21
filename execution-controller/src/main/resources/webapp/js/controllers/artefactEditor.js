@@ -259,7 +259,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     	
     	$http.get("rest/functions/"+id).then(function(response) {
     	  var function_ = response.data;
-    	  var remote = !(function_.type=="composite")
+    	  var remote = !(function_.type=="step.plugins.functions.types.CompositeFunction")
     	  
     	  var newArtefact = {"function":JSON.stringify(function_.attributes),"functionId":function_.id,"remote":{"value":remote},"_class":"CallFunction"};
     	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
