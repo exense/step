@@ -27,6 +27,7 @@ import step.core.variables.VariableType;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
+import step.datapool.DataSetHandle;
 
 public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode> {
 		
@@ -40,7 +41,7 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 		initDataSetAndAddItToContext(node, testArtefact);
 	}
 	
-	public static class DataSetWrapper {
+	public static class DataSetWrapper implements DataSetHandle {
 		
 		DataSet<?> dataSet;
 
@@ -59,6 +60,10 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 			} 
 			return row!=null?row.getValue():null;
 		}
+		
+		public final void addRow(Object row) {
+			dataSet.addRow(row);
+		}
 	}
 	
 	private void initDataSetAndAddItToContext(ReportNode node, DataSetArtefact testArtefact) {
@@ -73,6 +78,7 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 			context.getGlobalContext().getEventManager().addReportNodeEventListener(parentNode, new ReportNodeEventListener() {
 				@Override
 				public void onDestroy() {
+					dataSet.save();
 					dataSet.close();
 				}
 			});

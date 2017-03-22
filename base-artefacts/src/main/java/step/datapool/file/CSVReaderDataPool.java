@@ -67,4 +67,9 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 	public void doFirst_() {
 		this.headers = getHeaders(readOneLine());
 	}
+
+	@Override
+	public void addRow(Object row) {
+		throw new RuntimeException("Not implemented");
+	}
 }

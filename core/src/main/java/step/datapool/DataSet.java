@@ -52,6 +52,8 @@ public abstract class DataSet<T> {
 	
 	public abstract Object next_();
 	
+	public abstract void addRow(Object row);
+	
 	public void save() {};
 	
 	public abstract void close();

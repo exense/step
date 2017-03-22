@@ -209,5 +209,10 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 		public String toString(){return rowData.toString();}
 	}
+	
+	@Override
+	public void addRow(Object row) {
+		throw new RuntimeException("Not implemented");
+	}
 
 }

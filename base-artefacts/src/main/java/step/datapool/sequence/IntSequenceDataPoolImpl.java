@@ -72,4 +72,9 @@ public class IntSequenceDataPoolImpl extends DataSet<IntSequenceDataPool> {
 	@Override
 	public void close() {
 	}
+	
+	@Override
+	public void addRow(Object row) {
+		throw new RuntimeException("Not implemented");
+	}
 }

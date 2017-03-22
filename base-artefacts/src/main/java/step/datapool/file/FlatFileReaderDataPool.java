@@ -45,5 +45,9 @@ public class FlatFileReaderDataPool extends FileReaderDataPool {
 
 	@Override
 	public void doFirst_() {}
-
+	
+	@Override
+	public void addRow(Object row) {
+		throw new RuntimeException("Not implemented");
+	}
 }

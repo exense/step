@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.json.JsonValue.ValueType;
@@ -39,6 +40,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
+import step.datapool.DataSetHandle;
 import step.functions.Function;
 import step.functions.FunctionClient;
 import step.functions.FunctionClient.FunctionTokenHandle;
@@ -67,7 +69,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {}
 
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) {
 		String argumentStr = testArtefact.getArgument().get();
@@ -140,20 +141,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setMeasures(output.getMeasures());
 			}
 			
-			if(testArtefact.getResultMap()!=null&&testArtefact.getResultMap().get()!=null) {
-				Object var = context.getVariablesManager().getVariable(testArtefact.getResultMap().get());
-				if(var instanceof Map) {
-					JsonObject result = output.getResult();
-					for(String key:result.keySet()) {
-						JsonValue value = result.get(key);
-						if(value.getValueType() == ValueType.STRING) {
-							((Map<String, String>) var).put(key, result.getString(key));
-						}
-					}
-				} else {
-					throw new RuntimeException("The variable '"+testArtefact.getResultMap()+"' is not a Map");
-				}
-			}
+			String drainOutputValue = testArtefact.getResultMap().get();
+			drainOutput(drainOutputValue, output);
 		} finally {
 			if(releaseTokenAfterExecution) {				
 				token.release();
@@ -163,6 +152,50 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	private void drainOutput(String drainOutputValue, Output output) {
+		if(drainOutputValue!=null) {
+			JsonObject resultJson = output.getResult();
+			if(resultJson!=null) {
+				Object var = context.getVariablesManager().getVariable(drainOutputValue);
+				if(var instanceof Map) {
+					Map<String, String> resultMap = jsonToMap(resultJson);
+					((Map<String, String>)var).putAll(resultMap);
+				} else if(var instanceof DataSetHandle) {
+					DataSetHandle dataSetHandle = (DataSetHandle) var;
+					Map<String, String> resultMap = jsonToMap(resultJson);
+					if(resultJson.containsKey("@list")) {
+						JsonArray array = resultJson.getJsonArray("@list");
+						array.forEach(value-> {
+							if(value.getValueType().equals(ValueType.OBJECT)) {
+								Map<String, String> rowAsMap = jsonToMap((JsonObject) value);
+								dataSetHandle.addRow(rowAsMap);
+							}
+						});
+					}
+					if(!resultMap.isEmpty()) {
+						dataSetHandle.addRow(resultMap);						
+					}
+				} else {
+					throw new RuntimeException("The variable '"+drainOutputValue+"' is neither a Map nor a DataSet handle");
+				}					
+			}
+		}
+	}
+
+	private Map<String, String> jsonToMap(JsonObject jsonOutput) {
+		Map<String, String> resultMap = new HashMap<>();
+		for(String key:jsonOutput.keySet()) {
+			JsonValue value = jsonOutput.get(key);
+			if(value.getValueType() == ValueType.STRING) {
+				resultMap.put(key, jsonOutput.getString(key));
+			} else if (!value.getValueType().equals(ValueType.OBJECT)&&!value.getValueType().equals(ValueType.ARRAY)) {
+				resultMap.put(key, jsonOutput.getString(key).toString());
+			}
+		}
+		return resultMap;
+	}
+	
 	private FunctionTokenHandle selectToken(CallFunction testArtefact, FunctionClient functionClient) {
 		FunctionTokenHandle tokenHandle;
 		String token = testArtefact.getToken().get();

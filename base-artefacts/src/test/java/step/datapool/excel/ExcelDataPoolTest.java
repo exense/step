@@ -19,6 +19,7 @@
 package step.datapool.excel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -281,5 +282,96 @@ public class ExcelDataPoolTest {
 		Assert.assertEquals(3,i);
 		
 		pool.close();
+	}
+	
+	@Test
+	public void testAddRow() {
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "AddRow"));
+		pool.reset();
+		String uid = UUID.randomUUID().toString();
+		
+		HashMap<String, String> row = new HashMap<>();
+		row.put("Col1", uid);
+		row.put("Col2", uid);
+		// test the autocreation of headers:
+		row.put("Col"+uid, uid);
+		pool.addRow(row);
+		
+		pool.save();
+		
+		pool.close();
+		
+		pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "AddRow"));
+		pool.reset();
+		
+		try {
+			boolean containsNewRow = false;
+			boolean containsNewColumn = false;
+
+			DataPoolRow next;
+			while((next = pool.next())!=null) {
+				SimpleStringMap map = (SimpleStringMap) next.getValue();
+				if(map.get("Col1").equals(uid)) {
+					containsNewRow = true;
+				}
+				if(map.get("Col"+uid).equals(uid)) {
+					containsNewColumn = true;
+				}
+			}
+			
+			Assert.assertTrue(containsNewRow);
+			Assert.assertTrue(containsNewColumn);
+		} finally {
+			pool.close();			
+		}
+	}
+	
+	@Test
+	public void testAddRowToNewExcel() {
+		String uid = UUID.randomUUID().toString();
+		ExcelDataPool conf = new ExcelDataPool();
+		conf.setFile(new DynamicValue<String>(ExcelFunctionsTest.getResourceFile(".").getAbsolutePath()+"/testNewExcel"+uid+".xlsx"));
+		conf.setHeaders(new DynamicValue<Boolean>(true));
+		conf.setWorksheet(new DynamicValue<String>("Test"));
+		conf.setForWrite(new DynamicValue<Boolean>(true));
+		
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
+		pool.reset();
+		
+		HashMap<String, String> row = new HashMap<>();
+		row.put("Col1", uid);
+		row.put("Col2", uid);
+		// test the autocreation of headers:
+		row.put("Col"+uid, uid);
+		pool.addRow(row);
+		
+		pool.save();
+		
+		pool.close();
+		
+		pool = new ExcelDataPoolImpl(conf);
+		pool.reset();
+		
+		try {
+			boolean containsNewRow = false;
+			boolean containsNewColumn = false;
+
+			DataPoolRow next;
+			while((next = pool.next())!=null) {
+				SimpleStringMap map = (SimpleStringMap) next.getValue();
+				if(map.get("Col1").equals(uid)) {
+					containsNewRow = true;
+				}
+				if(map.get("Col"+uid).equals(uid)) {
+					containsNewColumn = true;
+				}
+			}
+			
+			Assert.assertTrue(containsNewRow);
+			Assert.assertTrue(containsNewColumn);
+		} finally {
+			pool.close();			
+		}
+		
 	}
 }

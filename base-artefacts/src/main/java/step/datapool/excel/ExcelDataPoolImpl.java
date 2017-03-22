@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,6 +51,8 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 	Sheet sheet;
 	
 	int cursor;
+	
+	boolean forWrite;
 		
 	volatile boolean updated = false;
 	
@@ -71,16 +74,29 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 			
 			File workBookFile = ExcelFileLookup.lookup(bookName);
 			
-			workbookSet = new WorkbookSet(workBookFile, ExcelFunctions.getMaxExcelSize(), false, true);
+			forWrite = configuration.getForWrite().get();
+			workbookSet = new WorkbookSet(workBookFile, ExcelFunctions.getMaxExcelSize(), forWrite, true);
 
 			Workbook workbook = workbookSet.getMainWorkbook();
 			
 			if (sheetName==null){
-				sheet = workbook.getSheetAt(0);
+				if(workbook.getNumberOfSheets()>0) {
+					sheet = workbook.getSheetAt(0);					
+				} else {
+					if(forWrite) {
+						sheet = workbook.createSheet();
+					} else {
+						throw new ValidationException("The workbook " + workBookFile.getName() + " contains no sheet");						
+					}
+				}
 			} else {
 				sheet = workbook.getSheet(sheetName);
 				if (sheet == null){
-					throw new ValidationException("The sheet " + sheetName + " doesn't exist in the workbook " + workBookFile.getName());
+					if(forWrite) {
+						sheet = workbook.createSheet(sheetName);
+					} else {
+						throw new ValidationException("The sheet " + sheetName + " doesn't exist in the workbook " + workBookFile.getName());						
+					}
 				}
 			}
 			
@@ -92,18 +108,42 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 		}
 	}
 	
-	private int mapHeaderToCellNum(Sheet sheet, String header) {
+	private int mapHeaderToCellNum(Sheet sheet, String header, boolean createHeaderIfNotExisting) {
 		if(configuration.getHeaders().get()) {
 			Row row = sheet.getRow(0);
-			for(Cell cell:row) {
-				String key = ExcelFunctions.getCellValueAsString(cell, workbookSet.getMainFormulaEvaluator());
-				if(key!=null && key.equals(header)) {
-					return cell.getColumnIndex();
+			if(row!=null) {
+				for(Cell cell:row) {
+					String key = ExcelFunctions.getCellValueAsString(cell, workbookSet.getMainFormulaEvaluator());
+					if(key!=null && key.equals(header)) {
+						return cell.getColumnIndex();
+					}
+				}				
+			} else {
+				if(createHeaderIfNotExisting) {
+					sheet.createRow(0);
+				} else {
+					throw new ValidationException("The sheet " + sheet.getSheetName() + " contains no headers");				
 				}
 			}
-			throw new ValidationException("The column " + header + " doesn't exist in sheet " + sheet.getSheetName());
+			if(createHeaderIfNotExisting) {
+				return addHeader(sheet, header);
+			} else {
+				throw new ValidationException("The column " + header + " doesn't exist in sheet " + sheet.getSheetName());				
+			}
 		} else {
 			return CellReference.convertColStringToIndex(header);
+		}
+	}
+	
+	private int addHeader(Sheet sheet, String header) {
+		if(configuration.getHeaders().get()) {
+			Row row = sheet.getRow(0);
+			Cell cell = row.createCell(Math.max(0, row.getLastCellNum()));
+			cell.setCellValue(header);
+			updated = true;
+			return cell.getColumnIndex();
+		} else {
+			throw new RuntimeException("Unable to create header for excel configured not to use headers.");							
 		}
 	}
 	
@@ -191,11 +231,11 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 			colName = name;
 		}
 				
-		int cellNum = mapHeaderToCellNum(sheet, colName);
 		Row row = sheet.getRow(cursor);
 		if(row==null) {
 			row = sheet.createRow(cursor);
 		}
+		int cellNum = mapHeaderToCellNum(sheet, colName, false);
 		Cell cell = row.getCell(cellNum, Row.CREATE_NULL_AS_BLANK);
 		
 		return cell;
@@ -235,6 +275,24 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 					}
 				return value;
 			}	
+		}
+	}
+
+	@Override
+	public void addRow(Object rowInput_) {
+		if(rowInput_ instanceof Map) {
+			Row row = sheet.createRow(sheet.getLastRowNum()+1);
+			Map<?,?> rowInput = (Map<?,?>) rowInput_;
+			for(Object keyObject:rowInput.keySet()) {
+				if(keyObject instanceof String) {
+					int cellNum = mapHeaderToCellNum(sheet, (String)keyObject, true);
+					Cell cell = row.createCell(cellNum);
+					cell.setCellValue(rowInput.get(keyObject).toString());
+					updated = true;
+				}
+			}
+		} else {
+			throw new RuntimeException("Add row not implemented for object of type '"+rowInput_.getClass());
 		}
 	}
 

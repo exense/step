@@ -55,4 +55,9 @@ public class FileDataPoolImpl extends DataSet<DirectoryDataPool> {
 	@Override
 	public void close() {
 	}
+	
+	@Override
+	public void addRow(Object row) {
+		throw new RuntimeException("Not implemented");
+	}
 }
