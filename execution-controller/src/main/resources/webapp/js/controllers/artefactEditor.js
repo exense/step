@@ -512,7 +512,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
       }
       
       $scope.addRowToTable = function(row) {
-        $scope.argumentAsTable.push(row?row:{"key":"","value":""})
+        $scope.argumentAsTable.push(row)
         $scope.updateJsonFromTable();
         $scope.save();
       }
@@ -537,7 +537,12 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
       $scope.updateEditors = function(validateJson) {
         try {
           $scope.argumentAsTable = _.map(JSON.parse($scope.localModel.json), function(val, key) {
-            return {"key":key,"value":val};
+            if(_.isObject(val) && _.has(val,'dynamic')) {
+              return {"key":key,"value":val};              
+            } else {
+            	// support the static json format without dynamic expressions
+              return {"key":key,"value":{"value":val,dynamic:false}};              
+            }
           });
           return true;
         }
@@ -549,12 +554,17 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
         }
       }
       
-      $scope.lastRow = {key:"", value:""}
+      function initLastRow() {
+      	// init last row as a static value
+        $scope.lastRow = {key:"", value:{value:"",dynamic:false}}        
+      }
+      
+      initLastRow();
 
       $scope.commitLastRow = function() {
         var row = $scope.lastRow;
         $scope.addRowToTable({"key":row.key, "value":row.value});
-        $scope.lastRow = {key:"", value:""}
+        initLastRow();
       }
     }
   }

@@ -30,13 +30,13 @@ function initDynamicFormsCtrl($scope) {
     delete $scope.dynamicValue.expression;
     $scope.dynamicValue.dynamic = false;
     $scope.dynamicValue.value = '';
-    $scope.save();
+    $scope.onSave();
   }
   $scope.useDynamicExpression = function() {
     delete $scope.dynamicValue.value;
     $scope.dynamicValue.dynamic = true;
     $scope.dynamicValue.expression = '';
-    $scope.save();
+    $scope.onSave();
   }
 } 
 

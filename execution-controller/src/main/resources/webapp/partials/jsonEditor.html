@@ -14,13 +14,16 @@
 						<tr ng-repeat="entry in argumentAsTable">
 							<td><input ng-blur="onRowEdit()" type="text" class="form-control form-control-sm"
 								ng-model="entry.key" /></td>
-							<td><input ng-blur="onRowEdit()" type="text" class="form-control form-control-sm"
-								ng-model="entry.value" /></td>
+							<td>
+								<dynamic-textfield dynamic-value="entry.value" on-save="onRowEdit()" />
+							</td>
 							<td><button class="btn btn-danger btn-xs" ng-click="removeRowFromTable(entry.key)" type="button"><i class="glyphicon glyphicon-remove"></i></button></td>	
 						</tr>
 						<tr>
 							<td><input type="text" class="form-control form-control-sm" ng-model="lastRow.key" /></td>
-							<td><input ng-blur="commitLastRow()" type="text" class="form-control form-control-sm" ng-model="lastRow.value" /></td>
+							<td>
+								<dynamic-textfield dynamic-value="lastRow.value" on-save="commitLastRow()" />
+							</td>
 							<td></td>	
 						</tr>
 					</tbody>
