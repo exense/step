@@ -34,7 +34,7 @@ import step.datapool.DataSet;
 
 public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
-	private Connection conn;
+	private Connection conn1;
 	private Statement smt;
 	private ResultSet rs;
 
@@ -45,6 +45,8 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	private String query;
 	private String table;
+	private String primary_key;
+	private ThreadLocal pkValueHolder = new ThreadLocal();
 
 	private ArrayList<String> cols;
 
@@ -59,6 +61,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 		this.query = configuration.getQuery().get();
 		this.table = parseQueryForTable(this.query);
+		this.primary_key = parseQueryForPrimaryKey(this.query);
 
 		try {
 			Class.forName(driver_class);
@@ -72,16 +75,35 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		Pattern p = Pattern.compile("(^|\\s)select.+?from (.+?)(\\s|$)");
 		Matcher m = p.matcher(query.toLowerCase());
 		if((!m.find()) || (m.groupCount() <3))
-			throw new RuntimeException("Could not parse query for table name :" + query);
+			throw new RuntimeException("Could not parse query :" + query);
 		else
 			return m.group(2);
+	}
+	
+	private static String parseQueryForPrimaryKey(String query) {
+		Pattern p = Pattern.compile("(^|\\s)select(.+?)from .+?(\\s|$)");
+		Matcher m = p.matcher(query.toLowerCase());
+		
+		String fields = null;
+		
+		if((!m.find()) || (m.groupCount() <3))
+			throw new RuntimeException("Could not parse primary key :" + query);
+		else
+			fields = m.group(2);
+		
+		if(fields.contains(","))
+			return fields.split(",")[0];
+		else
+			return fields;
 	}
 
 	public void connect(){
 
 		try {
-			conn = DriverManager.getConnection(jdbc_url, db_user, db_pwd);
-		} catch (SQLException e) {
+			conn1 = DriverManager.getConnection(jdbc_url, db_user, db_pwd);
+			//conn1.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+			conn1.setAutoCommit(false);
+			} catch (SQLException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Could not connect to the following datapool db :" + jdbc_url + " with user \'" + db_user + "\'");
 		}
@@ -89,17 +111,17 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	}
 	
 	public void checkAndreconnect(){
-		boolean isValidConn = false;
+		boolean isValidConn1 = false;
 
-		if(conn != null){
+		if(conn1 != null){
 			try {
-				isValidConn = conn.isValid(3);
+				isValidConn1 = conn1.isValid(3);
 			}catch (SQLException e) {
 				e.printStackTrace();
 				throw new RuntimeException("Only trown if timeoutvalue < 0 which obviously can't happen here.");
 			}
 		}
-		if(!isValidConn)
+		if(!isValidConn1)
 			connect();
 	}
 
@@ -109,7 +131,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		checkAndreconnect();
 
 		try {
-			smt = conn.createStatement();
+			smt = conn1.createStatement();
 			rs = smt.executeQuery(query);
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -146,6 +168,8 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				for (String colName:cols) {
 					Object val = rs.getObject(colName);
 					row.put(colName,val);
+					if(colName.trim().toLowerCase().equals(this.primary_key.trim().toLowerCase()))
+						this.pkValueHolder.set(val);
 				}
 				return new SQLRowWrapper(rs.getRow(), row);
 			}
@@ -165,7 +189,8 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	public void close() {
 
 		try {
-			conn.close();
+			conn1.commit();
+			conn1.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -175,7 +200,6 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	public class SQLRowWrapper extends SimpleStringMap {
 
-		private final int rowNum;
 		private HashMap<String,Object> rowData;
 
 		public SQLRowWrapper(int rowNum, HashMap<String,Object> row) throws Exception {
@@ -183,22 +207,27 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 			if(rowNum < 1)
 				throw new Exception("Invalid row number:" + rowNum);
-			this.rowNum = rowNum;
 			this.rowData = row; 
 		}
 
 		@Override
 		public String put(String key, String value){
-			String sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE rownum = " + this.rowNum;
+			String sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = " + pkValueHolder.get();
 			System.out.println(sql);
 			try {
-				Statement update = conn.createStatement();
-				ResultSet upd_rs = update.executeQuery(sql);
+				Statement update = conn1.createStatement();
+				update.setQueryTimeout(2);
+				int upd_rs = update.executeUpdate(sql);
 			} catch (SQLException e) {
 				e.printStackTrace();
-				throw new RuntimeException("Could not execute update on row:" + this.rowNum + ", with key=" + key + " and value=" + value);
+				throw new RuntimeException("Could not execute update with pk :" + primary_key + " = "+pkValueHolder.get()+", with key=" + key + " and value=" + value);
 			}
-			
+			try {
+				conn1.commit();
+			} catch (SQLException e) {
+				e.printStackTrace();
+				throw new RuntimeException("Commit failed");
+			}
 			return value;
 		}
 
