@@ -170,14 +170,17 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				} else if(var instanceof DataSetHandle) {
 					DataSetHandle dataSetHandle = (DataSetHandle) var;
 					Map<String, String> resultMap = jsonToMap(resultJson);
-					if(resultJson.containsKey("@list")) {
-						JsonArray array = resultJson.getJsonArray("@list");
-						array.forEach(value-> {
-							if(value.getValueType().equals(ValueType.OBJECT)) {
-								Map<String, String> rowAsMap = jsonToMap((JsonObject) value);
-								dataSetHandle.addRow(rowAsMap);
-							}
-						});
+					for(String key:resultJson.keySet()) {
+						JsonValue jsonValue = resultJson.get(key);
+						if(jsonValue instanceof JsonArray) {
+							JsonArray array = (JsonArray) jsonValue;
+							array.forEach(value-> {
+								if(value.getValueType().equals(ValueType.OBJECT)) {
+									Map<String, String> rowAsMap = jsonToMap((JsonObject) value);
+									dataSetHandle.addRow(rowAsMap);
+								}
+							});
+						}
 					}
 					if(!resultMap.isEmpty()) {
 						dataSetHandle.addRow(resultMap);						
