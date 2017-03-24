@@ -212,8 +212,14 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 		@Override
 		public String put(String key, String value){
-			String sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = " + pkValueHolder.get();
-			System.out.println(sql);
+			String sql = null;
+			Object currValue = pkValueHolder.get();
+			if(currValue instanceof String)
+				sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = '" + currValue + "'";
+			else
+				sql= "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = " + currValue;
+			
+			//System.out.println(sql);
 			try {
 				Statement update = conn1.createStatement();
 				update.setQueryTimeout(2);
