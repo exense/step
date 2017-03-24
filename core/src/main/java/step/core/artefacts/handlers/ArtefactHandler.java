@@ -149,7 +149,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		afterDelegation(node, parentNode, testArtefact);
 	}
 
-	private Map<String, Object> getBindings() {
+	protected Map<String, Object> getBindings() {
 		Map<String, Object> bindings = new HashMap<>();
 		bindings.putAll(context.getVariablesManager().getAllVariables());
 		bindings.put("attachmentManager", context.getGlobalContext().getAttachmentManager());

@@ -37,6 +37,8 @@ import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
@@ -59,10 +61,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
+	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
+	
 	public CallFunctionHandler() {
 		super();
 		functionClient = (FunctionClient) context.getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context.getGlobalContext().getAttachmentManager());
+		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
 	}
 
 	@Override
@@ -75,7 +80,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		node.setInput(argumentStr);
 		
 		Input input = buildInput(argumentStr);
-				
+		node.setInput(input.getArgument().toString());
+		
 		boolean releaseTokenAfterExecution = true;
 		FunctionTokenHandle token;
 		Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
@@ -250,12 +256,14 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage());
 		}
 		
+		JsonObject argumentAfterResolving = dynamicJsonObjectResolver.evaluate(argument, getBindings());
+		
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
 		properties.put("parentreportid", ExecutionContext.getCurrentReportNode().getId().toString());
 		
 		Input input = new Input();
-		input.setArgument(argument);
+		input.setArgument(argumentAfterResolving);
 		input.setProperties(properties);
 		return input;
 	}
