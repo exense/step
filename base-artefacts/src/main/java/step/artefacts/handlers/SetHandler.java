@@ -30,12 +30,16 @@ public class SetHandler extends ArtefactHandler<Set, ReportNode> {
 	
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode, Set testArtefact) {
-
+		executeSet(parentNode, testArtefact);
 	}
 
 	@Override
 	protected void execute_(ReportNode node, Set testArtefact) {
 		node.setStatus(ReportNodeStatus.PASSED);
+		executeSet(node, testArtefact);
+	}
+
+	private void executeSet(ReportNode node, Set testArtefact) {
 		if(testArtefact.getKey()!=null) {
 			Object result;			
 			if(testArtefact.getValue()!=null) {
