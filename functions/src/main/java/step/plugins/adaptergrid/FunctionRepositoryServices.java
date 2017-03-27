@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.json.Json;
+import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -40,6 +41,8 @@ import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
@@ -161,13 +164,19 @@ public class FunctionRepositoryServices extends AbstractServices {
 			try {
 				ExecutionContext.setCurrentContext(createContext(getContext()));
 				Input input = new Input();		
+				
+				JsonObject inputBeforeEvalution;
 				String argument = executionInput.getArgument();
 				if(argument!=null&&argument.length()>0) {
-					input.setArgument(Json.createReader(new StringReader(argument)).readObject());				
+					inputBeforeEvalution = Json.createReader(new StringReader(argument)).readObject();				
 				} else {
-					input.setArgument(Json.createObjectBuilder().build());
+					inputBeforeEvalution = Json.createObjectBuilder().build();
 				}
 				
+				DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+				JsonObject inputAfterEvaluation = dynamicJsonObjectResolver.evaluate(inputBeforeEvalution, new HashMap<>());
+				
+				input.setArgument(inputAfterEvaluation);
 				input.setProperties(executionInput.getProperties());
 				
 
