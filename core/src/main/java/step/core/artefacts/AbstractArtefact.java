@@ -37,6 +37,8 @@ public abstract class AbstractArtefact {
 	public ObjectId _id;
 	
 	protected Map<String, String> attributes;
+	
+	protected String description;
 		
 	protected List<ObjectId> childrenIDs;
 	
@@ -69,6 +71,14 @@ public abstract class AbstractArtefact {
 		this.attributes = attributes;
 	}
 	
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
 	// Caching name as it might be called very frequently during skeleton creation
 	private String cachedReportNodeName;
 	
