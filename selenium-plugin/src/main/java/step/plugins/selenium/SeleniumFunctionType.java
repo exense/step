@@ -19,14 +19,14 @@ public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunction>
 	
 	@Override
 	public String getHandlerChain(SeleniumFunction function) {
-		return "class:step.plugins.selenium.SeleniumHandler";
+		return "class:"+SeleniumHandler.class.getName();
 	}
 
 	@Override
 	public Map<String, String> getHandlerProperties(SeleniumFunction function) {		
 		Map<String,String> handlerProperties = helper.getHandlerProperties(function);
 		
-		handlerProperties.put("selenium.version", function.getSeleniumVersion());
+		handlerProperties.put(SeleniumHandler.SELENIUM_VERSION, function.getSeleniumVersion());
 		
 		return handlerProperties;
 	}

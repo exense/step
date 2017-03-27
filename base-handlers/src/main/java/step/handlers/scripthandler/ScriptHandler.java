@@ -45,15 +45,15 @@ import step.grid.io.OutputMessage;
 
 public class ScriptHandler implements MessageHandler {
 
-	public static final String SCRIPT_LANGUAGE = "scriptlanguage";
+	public static final String SCRIPT_LANGUAGE = "$scriptlanguage";
 	
-	public static final String SCRIPT_FILE = "file";
-	public static final String REMOTE_FILE_ID = "remotefile.id";
-	public static final String REMOTE_FILE_VERSION = "remotefile.version";
+	public static final String SCRIPT_FILE = "$file";
+	public static final String REMOTE_FILE_ID = "$remotefile.id";
+	public static final String REMOTE_FILE_VERSION = "$remotefile.version";
 
-	public static final String ERROR_HANDLER_FILE = "errorhandler.file";
-	public static final String ERROR_HANDLER_REMOTE_FILE_ID = "errorhandler.remotefile.id";
-	public static final String ERROR_HANDLER_REMOTE_FILE_VERSION = "errorhandler.remotefile.version";
+	public static final String ERROR_HANDLER_FILE = "$errorhandler.file";
+	public static final String ERROR_HANDLER_REMOTE_FILE_ID = "$errorhandler.remotefile.id";
+	public static final String ERROR_HANDLER_REMOTE_FILE_VERSION = "$errorhandler.remotefile.version";
 	
 	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
 	

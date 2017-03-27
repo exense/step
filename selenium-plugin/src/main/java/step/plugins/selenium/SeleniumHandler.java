@@ -19,6 +19,8 @@ import step.handlers.GeneralScriptHandler;
 
 public class SeleniumHandler implements MessageHandler, AgentContextAware {
 	
+	protected static final String SELENIUM_VERSION = "$selenium.version";
+
 	private static final Logger logger = LoggerFactory.getLogger(SeleniumHandler.class);
 	
 	protected ContextManager contextManager;
@@ -54,7 +56,7 @@ public class SeleniumHandler implements MessageHandler, AgentContextAware {
 	
 	@Override
 	public OutputMessage handle(final AgentTokenWrapper token, final InputMessage message) throws Exception {
-		String version = message.getProperties().get("selenium.version");
+		String version = message.getProperties().get(SELENIUM_VERSION);
 		if(logger.isDebugEnabled()) {
 			logger.debug("Handling selenium message using selenium version '"+version);
 		}

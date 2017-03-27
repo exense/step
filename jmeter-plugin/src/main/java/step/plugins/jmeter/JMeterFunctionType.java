@@ -24,8 +24,8 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
 		String fileHandle = functionClient.registerAgentFile(testPlanFile);
 		
-		props.put("jmeter.testplan.file.id", fileHandle);
-		props.put("jmeter.testplan.file.version", Long.toString(testPlanFile.lastModified()));
+		props.put(JMeterLocalHandler.JMETER_TESTPLAN_FILE_ID, fileHandle);
+		props.put(JMeterLocalHandler.JMETER_TESTPLAN_FILE_VERSION, Long.toString(testPlanFile.lastModified()));
 		
 		return props;
 	}

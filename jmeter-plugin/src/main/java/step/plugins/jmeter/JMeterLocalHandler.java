@@ -22,6 +22,9 @@ import step.grid.io.OutputMessage;
 
 public class JMeterLocalHandler implements MessageHandler, AgentContextAware {
 
+	public static final String JMETER_TESTPLAN_FILE_VERSION = "$jmeter.testplan.file.version";
+	public static final String JMETER_TESTPLAN_FILE_ID = "$jmeter.testplan.file.id";
+	
 	String jmeterHome;
 	
 	public JMeterLocalHandler() {
@@ -97,8 +100,8 @@ public class JMeterLocalHandler implements MessageHandler, AgentContextAware {
 	}
 
 	private File retrieveTestPlanFile(AgentTokenWrapper token, InputMessage message) {
-		String testplanFileId = message.getProperties().get("jmeter.testplan.file.id");
-		String testplanFileVersion = message.getProperties().get("jmeter.testplan.file.version");
+		String testplanFileId = message.getProperties().get(JMETER_TESTPLAN_FILE_ID);
+		String testplanFileVersion = message.getProperties().get(JMETER_TESTPLAN_FILE_VERSION);
 
 		File testPlanFile = token.getServices().getFileManagerClient().requestFile(testplanFileId,
 				Long.parseLong(testplanFileVersion));

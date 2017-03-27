@@ -35,14 +35,18 @@ import step.grid.io.OutputMessage;
 
 public class ArtefactMessageHandler implements MessageHandler {
 
+	public static final String ARTEFACTID = "$artefactid";
+		
+	public static final String PARENTREPORTID = "$parentreportid";
+
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message)
 			throws Exception {
 		ExecutionContext executionContext = ExecutionContext.getCurrentContext();
 		GlobalContext globalContext = executionContext.getGlobalContext();
 		
-		String artefactId = message.getProperties().get("artefactid");
-		String parentReportId = message.getProperties().get("parentreportid");
+		String artefactId = message.getProperties().get(ARTEFACTID);
+		String parentReportId = message.getProperties().get(PARENTREPORTID);
 		
 		ReportNode parentNode;
 		parentNode = new ReportNode();

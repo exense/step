@@ -5,6 +5,7 @@ import java.util.Map;
 
 import step.artefacts.Sequence;
 import step.core.artefacts.AbstractArtefact;
+import step.core.tokenhandlers.ArtefactMessageHandler;
 import step.functions.Function;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
@@ -12,7 +13,6 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
 
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
-
 
 	@Override
 	public void init() {
@@ -39,7 +39,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	@Override
 	public Map<String, String> getHandlerProperties(CompositeFunction function) {
 		Map<String, String> props = new HashMap<>();
-		props.put("artefactid", function.getArtefactId());
+		props.put(ArtefactMessageHandler.ARTEFACTID, function.getArtefactId());
 		return props;
 	}
 

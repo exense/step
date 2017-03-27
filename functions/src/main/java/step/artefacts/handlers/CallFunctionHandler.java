@@ -42,6 +42,7 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
+import step.core.tokenhandlers.ArtefactMessageHandler;
 import step.datapool.DataSetHandle;
 import step.functions.Function;
 import step.functions.FunctionClient;
@@ -263,7 +264,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
-		properties.put("parentreportid", ExecutionContext.getCurrentReportNode().getId().toString());
+		properties.put(ArtefactMessageHandler.PARENTREPORTID, ExecutionContext.getCurrentReportNode().getId().toString());
 		
 		Input input = new Input();
 		input.setArgument(argumentAfterResolving);
