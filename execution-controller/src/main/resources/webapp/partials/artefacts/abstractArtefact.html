@@ -1,0 +1,15 @@
+<div ng-include="editor.template"></div>
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<a ng-click="showAttributes = !showAttributes">Step</a>
+	</div>
+	<div class="panel-body" ng-show="showAttributes">
+		<div class="form-group form-group-sm">
+			<label>Name</label> <input type="text" class="form-control" ng-blur="save()" ng-model="artefact.attributes.name" />
+		</div>
+		<div class="form-group">
+			<label>Description</label>
+			<textarea ng-blur="save()" ng-model="artefact.description" class="form-control" rows="5"></textarea>
+		</div>
+	</div>
+</div>

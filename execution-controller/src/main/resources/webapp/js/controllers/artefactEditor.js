@@ -200,14 +200,20 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
 
       function getNodeLabel(artefact) {
         var label = artefact._class
-        if(artefact._class=='CallFunction'&&artefact['function']) {
-          try {
-            label = JSON.parse(artefact['function']).name;
-          } catch(e) {}
-        } else if(artefact._class=='CallPlan') {
-          if(artefact.cachedArtefactName) {
-            label =  artefact.cachedArtefactName;             
-          }
+        if(artefact.attributes && artefact.attributes.name) {
+          label = artefact.attributes.name
+        } else {
+          if(artefact._class=='CallFunction'&&artefact['function']) {
+            try {
+              label = JSON.parse(artefact['function']).name;
+            } catch(e) {}
+          } else if(artefact._class=='CallPlan') {
+            if(artefact.cachedArtefactName) {
+              label =  artefact.cachedArtefactName;             
+            }
+          } else {
+            label= artefact._class;
+          }          
         }
         return label;
       }
@@ -394,7 +400,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
         }
       }      
     },
-    template: '<div ng-include="editor.template"></div>'}
+    templateUrl: 'partials/artefacts/abstractArtefact.html'}
 })
 .controller('CallPlanCtrl' , function($scope,$uibModal,$location,$http) {  
   $scope.gotoArtefact = function() {
