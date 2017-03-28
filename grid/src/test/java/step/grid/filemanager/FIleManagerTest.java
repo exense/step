@@ -52,6 +52,8 @@ public class FIleManagerTest {
 		
 		byte[] bytes = Files.toByteArray(clientFile);
 		Assert.assertArrayEquals(content, bytes); 
+		
+		clientFile.delete();
 	}
 	
 	@Test
@@ -74,7 +76,8 @@ public class FIleManagerTest {
 		for(int i=0;i<1000;i++) {
 			e.submit(()->{
 				try {
-					client.requestFile("id", 1);
+					File file = client.requestFile("id", 1);
+					file.delete();
 				} catch(Exception e1) {
 					e1.printStackTrace();
 				};});
