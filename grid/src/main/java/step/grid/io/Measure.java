@@ -29,13 +29,13 @@ public class Measure {
 	
 	private long begin;
 	
-	private Map<String, String> data;
+	private Map<String, Object> data;
 
 	public Measure() {
 		super();
 	}
 
-	public Measure(String name, long duration, long begin, Map<String, String> data) {
+	public Measure(String name, long duration, long begin, Map<String, Object> data) {
 		super();
 		this.name = name;
 		this.duration = duration;
@@ -67,11 +67,11 @@ public class Measure {
 		this.name = name;
 	}
 
-	public Map<String, String> getData() {
+	public Map<String, Object> getData() {
 		return data;
 	}
 
-	public void setData(Map<String, String> data) {
+	public void setData(Map<String, Object> data) {
 		this.data = data;
 	}
 }

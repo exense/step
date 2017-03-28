@@ -139,7 +139,7 @@ public class OutputMessageBuilder {
 		measureHelper.startMeasure(id, begin);
 	}
 
-	public void stopMeasure(long end, Map<String, String> data) {
+	public void stopMeasure(long end, Map<String, Object> data) {
 		measureHelper.stopMeasure(end, data);
 	}
 
@@ -147,7 +147,7 @@ public class OutputMessageBuilder {
 		measureHelper.addMeasure(measureName, durationMillis);
 	}
 	
-	public void addMeasure(String measureName, long aDurationMillis, Map<String, String> data) {
+	public void addMeasure(String measureName, long aDurationMillis, Map<String, Object> data) {
 		measureHelper.addMeasure(measureName, aDurationMillis, data);
 	}
 
@@ -155,7 +155,7 @@ public class OutputMessageBuilder {
 		measureHelper.stopMeasure();
 	}
 
-	public void stopMeasure(Map<String, String> data) {
+	public void stopMeasure(Map<String, Object> data) {
 		measureHelper.stopMeasure(data);
 	}
 

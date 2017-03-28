@@ -45,7 +45,7 @@ public class MeasurementsBuilder {
 		}
 	}
 	
-	public void stopMeasure(long end, Map<String, String> data) {
+	public void stopMeasure(long end, Map<String, Object> data) {
 		Measure tr;
 		synchronized (stack) {
 			tr = stack.pop();
@@ -62,7 +62,7 @@ public class MeasurementsBuilder {
 		}		
 	}
 	
-	public void stopMeasure(Map<String, String> data) {
+	public void stopMeasure(Map<String, Object> data) {
 		stopMeasure(System.currentTimeMillis(), data);
 	}
 	
@@ -74,7 +74,7 @@ public class MeasurementsBuilder {
 		addMeasure(measureName, aDurationMillis, null);
 	}
 	
-	public void addMeasure(String measureName, long aDurationMillis, Map<String, String> data) {
+	public void addMeasure(String measureName, long aDurationMillis, Map<String, Object> data) {
 		synchronized (closedMeasures) {
 			closedMeasures.add(new Measure(measureName, aDurationMillis, System.currentTimeMillis(), data));
 		}

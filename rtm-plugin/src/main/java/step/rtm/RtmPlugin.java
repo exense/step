@@ -101,21 +101,7 @@ public class RtmPlugin extends AbstractPlugin {
 					measurement.put("type", "custom");
 
 					if(measure.getData() != null){
-						for(Map.Entry<String,String> entry : measure.getData().entrySet()){
-							String key = entry.getKey();
-							String val = entry.getValue();
-							if((key != null) && (val != null)){
-								if(	StringUtils.isNumeric(val)){
-									try{
-										measurement.put(key, Long.parseLong(val));
-									}catch (NumberFormatException e){
-										measurement.put(key, "unparsable_numeric_" + val);
-									}
-								}else{
-									measurement.put(key, val);
-								}
-							}
-						}
+						measurement.putAll(measure.getData());
 					}
 
 					measurements.add(measurement);
