@@ -55,7 +55,10 @@ public abstract class DataSet<T> {
 	public abstract void addRow(Object row);
 	
 	public void save() {};
-	
+
 	public abstract void close();
+	
+	public abstract void init();
+	
 	
 }
