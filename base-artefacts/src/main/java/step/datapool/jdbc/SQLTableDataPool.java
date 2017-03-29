@@ -114,7 +114,10 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	@Override
 	public void reset() {
-
+		executeQuery();
+	}
+	
+	public void executeQuery(){
 		try {
 			smt = conn1.createStatement();
 			if(rs != null && !rs.isClosed())
@@ -139,7 +142,6 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 			e.printStackTrace();
 			throw new RuntimeException("Could not retrieve result set data from query :" + query);
 		}
-
 	}
 
 	@Override
@@ -183,8 +185,10 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		}
 
 		@Override
+		//public synchronized String put(String key, String value){
 		public String put(String key, String value){
 			String sql = null;
+			Statement update = null;
 			Object currValue = pkValueHolder.get();
 			if(currValue instanceof String)
 				sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = '" + currValue + "'";
@@ -192,12 +196,19 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				sql= "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = " + currValue;
 			
 			try {
-				Statement update = conn1.createStatement();
+				update = conn1.createStatement();
 				update.setQueryTimeout(2);
 				/*int upd_rs = */update.executeUpdate(sql);
 			} catch (SQLException e) {
 				e.printStackTrace();
 				throw new RuntimeException("Could not execute update with pk :" + primary_key + " = "+pkValueHolder.get()+", with key=" + key + " and value=" + value);
+			}finally{
+				try {
+					if(!update.isClosed())
+						update.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			}
 			try {
 				conn1.commit();
@@ -246,7 +257,8 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	@Override
 	public void init() {
-		connect();		
+		connect();
+		executeQuery();
 	}
 	
 }

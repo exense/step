@@ -19,9 +19,13 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 	public Object postProcess(String line) {
 		
 		HashMap<String, Object> map = new HashMap<String, Object>();
+		try{
 		Vector<String> csv = splitCSV(line); 
 		for(int i = 0; i< csv.size(); i++){
 			map.put(headers.get(i), csv.get(i));
+		}
+		}catch(ArrayIndexOutOfBoundsException e){
+			throw new RuntimeException(e.getMessage() + " : headers=" + headers + "; row=" + line + "; delimiter=" + delimiter);
 		}
 
 		return new CSVRowWrapper(super.lineNr, map);

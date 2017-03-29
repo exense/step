@@ -24,7 +24,12 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		filePath = this.configuration.getFile().get();
 		if (filePath == null || filePath.length() < 1)
 			throw new RuntimeException("file path is incorrect.");
+		initReader();
+		
+		doFirst_();
+	}
 	
+	private void initReader(){
 		FileReader in = null;
 		try {
 			in = new FileReader(filePath);
@@ -34,13 +39,17 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		}
 		br = new BufferedReader(in);
 		this.lineNr = 1;
-		
-		doFirst_();
 	}
 
 	@Override
 	public void reset() {
-		throw new RuntimeException("Reset method not implemented for this DataSet type");
+		try {
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		initReader();
 	}
 
 	public abstract void doFirst_();
