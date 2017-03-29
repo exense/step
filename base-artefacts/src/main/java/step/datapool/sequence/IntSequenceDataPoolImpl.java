@@ -39,11 +39,16 @@ public class IntSequenceDataPoolImpl extends DataSet<IntSequenceDataPool> {
 	}
 
 	@Override
-	public void reset_() {
+	public void init() {
 		init=true;
 		cursor = configuration.getStart().get();
 		inc = configuration.getInc().get();
 		end = configuration.getEnd().get();
+	}
+	
+	@Override
+	public void reset() {
+		throw new RuntimeException("Reset method not implemented for this DataSet type");
 	}
 
 	@Override
