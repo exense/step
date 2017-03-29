@@ -101,7 +101,17 @@ public class RtmPlugin extends AbstractPlugin {
 					measurement.put("type", "custom");
 
 					if(measure.getData() != null){
-						measurement.putAll(measure.getData());
+						for(Map.Entry<String,Object> entry : measure.getData().entrySet()){
+							String key = entry.getKey();
+							Object val = entry.getValue();
+							if((key != null) && (val != null)){
+								if(	(val instanceof Long) || (val instanceof String)){
+										measurement.put(key, val);
+								}else{
+									// ignore improper types
+								}
+							}
+						}
 					}
 
 					measurements.add(measurement);

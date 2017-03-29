@@ -42,8 +42,8 @@ public class SampleListenerImpl extends AbstractTestElement implements SampleLis
 		outputBuilder.addMeasure(result.getSampleLabel(), result.getTime(), getDataMapForSample(result));
 	}
 
-	private Map<String, String> getDataMapForSample(SampleResult sample) {
-		Map<String, String> data = new HashMap<>();
+	private Map<String, Object> getDataMapForSample(SampleResult sample) {
+		Map<String, Object> data = new HashMap<>();
 		if(sample instanceof HTTPSampleResult) {
 			HTTPSampleResult httpSampleResult = (HTTPSampleResult) sample;
 			data.put("url", httpSampleResult.getUrlAsString());
