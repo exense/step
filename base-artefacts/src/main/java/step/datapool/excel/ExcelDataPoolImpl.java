@@ -276,6 +276,26 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 				return value;
 			}	
 		}
+		
+		@Override
+		public int size() {
+			int tableWidth = getHeaders().size();
+			int nonNullCells = 0;
+			for(int i = 0; i < tableWidth; i++){
+				Cell cell = sheet.getRow(cursor).getCell(i);
+				if(cell != null){
+					String value = ExcelFunctions.getCellValueAsString(cell, workbookSet.getMainFormulaEvaluator());
+					if((value != null) && (!value.isEmpty()))
+						nonNullCells++;
+				}
+			}
+			return nonNullCells;
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return (size() < 1) ? true: false;
+		}
 	}
 
 	@Override

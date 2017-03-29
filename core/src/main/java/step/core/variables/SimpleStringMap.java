@@ -25,14 +25,10 @@ import java.util.Set;
 public abstract class SimpleStringMap implements Map<String, String> {
 
 	@Override
-	public int size() {
-		throw new RuntimeException("Not implemented");
-	}
+	public abstract int size();
 
 	@Override
-	public boolean isEmpty() {
-		throw new RuntimeException("Not implemented");
-	}
+	public abstract boolean isEmpty();
 
 	@Override
 	public boolean containsKey(Object key) {

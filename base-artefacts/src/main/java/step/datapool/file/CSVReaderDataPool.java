@@ -49,6 +49,16 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 			return (String) rowData.get(key);
 		}
 
+		@Override
+		public int size() {
+			return rowData.size();
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return rowData.isEmpty();
+		}
+
 	}
 
 	public Vector<String> getHeaders(String readOneLine) {

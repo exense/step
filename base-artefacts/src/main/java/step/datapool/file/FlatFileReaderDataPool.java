@@ -41,6 +41,16 @@ public class FlatFileReaderDataPool extends FileReaderDataPool {
 			return (String) rowData.get("default");
 		}
 
+		@Override
+		public int size() {
+			return rowData.size();
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return rowData.isEmpty();
+		}
+
 	}
 
 	@Override

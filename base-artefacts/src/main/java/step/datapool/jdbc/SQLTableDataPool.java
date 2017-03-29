@@ -32,11 +32,12 @@ import java.util.regex.Pattern;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataSet;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	private Connection conn1;
 	private Statement smt;
-	private ResultSet rs;
+	private ResultSet rs = null;
 
 	private String jdbc_url;
 	private String db_user;
@@ -46,7 +47,8 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	private String query;
 	private String table;
 	private String primary_key;
-	private ThreadLocal pkValueHolder = new ThreadLocal();
+
+	private static ThreadLocal pkValueHolder = new ThreadLocal();
 
 	private ArrayList<String> cols;
 
@@ -109,29 +111,14 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		}
 
 	}
-	
-	public void checkAndreconnect(){
-		boolean isValidConn1 = false;
-
-		if(conn1 != null){
-			try {
-				isValidConn1 = conn1.isValid(3);
-			}catch (SQLException e) {
-				e.printStackTrace();
-				throw new RuntimeException("Only trown if timeoutvalue < 0 which obviously can't happen here.");
-			}
-		}
-		if(!isValidConn1)
-			connect();
-	}
 
 	@Override
 	public void reset_() {
 
-		checkAndreconnect();
-
 		try {
 			smt = conn1.createStatement();
+			if(rs != null && !rs.isClosed())
+				rs.close();
 			rs = smt.executeQuery(query);
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -158,8 +145,6 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	@Override
 	public Object next_(){
 
-		checkAndreconnect();
-
 		HashMap<String,Object> row = null;
 		
 		try {
@@ -169,7 +154,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 					Object val = rs.getObject(colName);
 					row.put(colName,val);
 					if(colName.trim().toLowerCase().equals(this.primary_key.trim().toLowerCase()))
-						this.pkValueHolder.set(val);
+						pkValueHolder.set(val);
 				}
 				return new SQLRowWrapper(rs.getRow(), row);
 			}
@@ -184,19 +169,6 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 			}
 		}
 	}
-
-	@Override
-	public void close() {
-
-		try {
-			conn1.commit();
-			conn1.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-	}
-
 
 	public class SQLRowWrapper extends SimpleStringMap {
 
@@ -219,11 +191,10 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 			else
 				sql= "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = " + currValue;
 			
-			//System.out.println(sql);
 			try {
 				Statement update = conn1.createStatement();
 				update.setQueryTimeout(2);
-				int upd_rs = update.executeUpdate(sql);
+				/*int upd_rs = */update.executeUpdate(sql);
 			} catch (SQLException e) {
 				e.printStackTrace();
 				throw new RuntimeException("Could not execute update with pk :" + primary_key + " = "+pkValueHolder.get()+", with key=" + key + " and value=" + value);
@@ -243,6 +214,16 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		}
 
 		public String toString(){return rowData.toString();}
+
+		@Override
+		public int size() {
+			return rowData.size();
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return rowData.isEmpty();
+		}
 	}
 	
 	@Override
@@ -250,4 +231,22 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		throw new RuntimeException("Not implemented");
 	}
 
+	@Override
+	public void close() {
+		try {
+			conn1.commit();
+			if(rs != null && !rs.isClosed())
+				rs.close();
+			conn1.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+	}
+
+	@Override
+	public void init() {
+		connect();		
+	}
+	
 }
