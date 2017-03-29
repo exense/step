@@ -113,7 +113,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	}
 
 	@Override
-	public void reset_() {
+	public void reset() {
 
 		try {
 			smt = conn1.createStatement();
