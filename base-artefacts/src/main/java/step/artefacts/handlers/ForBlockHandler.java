@@ -48,18 +48,21 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		DataSet<?> dataSet = null;
 		try {
 			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource());
-			dataSet.reset();
+			dataSet.init();
 			DataPoolRow nextValue = null;
+			int rowCount = 0;
 			while((nextValue=dataSet.next())!=null) {				
 				if(context.isInterrupted()) {
 					break;
 				}
 	
+				rowCount++;
+				
 				HashMap<String, Object> newVariable = new HashMap<>();
 				newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 				
 				ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
-				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+nextValue.getRowNum());
+				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+rowCount);
 				for(AbstractArtefact child:selectedChildren) {
 					iterationTestCase.addChild(child.getId());
 				}
@@ -84,7 +87,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 			
 			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource());
 		
-			dataSet.reset();
+			dataSet.init();
 			
 			context.getVariablesManager().putVariable(node, BREAK_VARIABLE, "false");
 			
@@ -162,7 +165,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 					
 					ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
-					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+nextValue.getRowNum());
+					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+loopsCounter.get());
 					for(AbstractArtefact child:selectedChildren) {
 						iterationTestCase.addChild(child.getId());
 					}

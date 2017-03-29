@@ -18,13 +18,7 @@
  *******************************************************************************/
 package step.datapool;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-
-
 public abstract class DataSet<T> {
-	
-	protected AtomicInteger rowNum;
 	
 	protected final T configuration;
 	
@@ -33,21 +27,15 @@ public abstract class DataSet<T> {
 		this.configuration = configuration;
 	}
 
-	public final synchronized void reset() {
-		rowNum = new AtomicInteger();
-		reset_();
-	}
+	public abstract void init();
+
+	public abstract void reset();
 	
-	public final void resetRowNumOnly() {
-		rowNum.set(0);
-	}
-	
-	public abstract void reset_();
+	public abstract void close();
 	
 	public final synchronized DataPoolRow next() {
-		int currentRowNum = rowNum.incrementAndGet();
 		Object nextValue = next_();
-		return nextValue!=null?new DataPoolRow(currentRowNum,nextValue):null;
+		return nextValue!=null?new DataPoolRow(nextValue):null;
 	}
 	
 	public abstract Object next_();
@@ -55,10 +43,4 @@ public abstract class DataSet<T> {
 	public abstract void addRow(Object row);
 	
 	public void save() {};
-
-	public abstract void close();
-	
-	public abstract void init();
-	
-	
 }

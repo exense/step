@@ -44,8 +44,6 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 	
 	private static Logger logger = LoggerFactory.getLogger(ExcelDataPoolImpl.class);
 	
-	private Object lock;
-	
 	WorkbookSet workbookSet;
 		
 	Sheet sheet;
@@ -60,51 +58,57 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 			
 	public ExcelDataPoolImpl(ExcelDataPool configuration) {
 		super(configuration);
-		this.lock = new Object();
 	}
 
 	@Override
-	public void reset_() {
-		synchronized (lock) {			
-			String bookName = configuration.getFile().get();
-			String sheetName = configuration.getWorksheet().get();
-			
-			
-			logger.debug("book: " + bookName + " sheet: " + sheetName);
-			
-			File workBookFile = ExcelFileLookup.lookup(bookName);
-			
-			forWrite = configuration.getForWrite().get();
-			workbookSet = new WorkbookSet(workBookFile, ExcelFunctions.getMaxExcelSize(), forWrite, true);
+	public void init() {		
+		String bookName = configuration.getFile().get();
+		String sheetName = configuration.getWorksheet().get();
+		
+		
+		logger.debug("book: " + bookName + " sheet: " + sheetName);
+		
+		File workBookFile = ExcelFileLookup.lookup(bookName);
+		
+		forWrite = configuration.getForWrite().get();
+		workbookSet = new WorkbookSet(workBookFile, ExcelFunctions.getMaxExcelSize(), forWrite, true);
 
-			Workbook workbook = workbookSet.getMainWorkbook();
-			
-			if (sheetName==null){
-				if(workbook.getNumberOfSheets()>0) {
-					sheet = workbook.getSheetAt(0);					
+		Workbook workbook = workbookSet.getMainWorkbook();
+		
+		if (sheetName==null){
+			if(workbook.getNumberOfSheets()>0) {
+				sheet = workbook.getSheetAt(0);					
+			} else {
+				if(forWrite) {
+					sheet = workbook.createSheet();
 				} else {
-					if(forWrite) {
-						sheet = workbook.createSheet();
-					} else {
-						throw new ValidationException("The workbook " + workBookFile.getName() + " contains no sheet");						
-					}
-				}
-			} else {
-				sheet = workbook.getSheet(sheetName);
-				if (sheet == null){
-					if(forWrite) {
-						sheet = workbook.createSheet(sheetName);
-					} else {
-						throw new ValidationException("The sheet " + sheetName + " doesn't exist in the workbook " + workBookFile.getName());						
-					}
+					throw new ValidationException("The workbook " + workBookFile.getName() + " contains no sheet");						
 				}
 			}
-			
-			if(configuration.getHeaders().get()) {
-				cursor = 0;
-			} else {
-				cursor = -1;
+		} else {
+			sheet = workbook.getSheet(sheetName);
+			if (sheet == null){
+				if(forWrite) {
+					sheet = workbook.createSheet(sheetName);
+				} else {
+					throw new ValidationException("The sheet " + sheetName + " doesn't exist in the workbook " + workBookFile.getName());						
+				}
 			}
+		}
+		
+		resetCursor();
+	}
+	
+	@Override
+	public void reset() {
+		resetCursor();
+	}
+
+	private void resetCursor() {
+		if(configuration.getHeaders().get()) {
+			cursor = 0;
+		} else {
+			cursor = -1;
 		}
 	}
 	
@@ -160,52 +164,46 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 	private static final String SKIP_STRING = "@SKIP"; 
 
 	@Override
-	public Object next_() {		
-		synchronized (lock) {			
-			for(;;) {
-				cursor++;
-				if(cursor <= sheet.getLastRowNum()){
-					Cell cell = (sheet.getRow(cursor)).getCell(0);
-					if (cell != null){
-						String value = ExcelFunctions.getCellValueAsString(cell, workbookSet.getMainFormulaEvaluator());
-						if (value != null && !value.isEmpty()){
-							if (value.equals(SKIP_STRING)) {
-								continue;
-							} else {
-								return new RowWrapper(cursor);
-							}
+	public Object next_() {					
+		for(;;) {
+			cursor++;
+			if(cursor <= sheet.getLastRowNum()){
+				Cell cell = (sheet.getRow(cursor)).getCell(0);
+				if (cell != null){
+					String value = ExcelFunctions.getCellValueAsString(cell, workbookSet.getMainFormulaEvaluator());
+					if (value != null && !value.isEmpty()){
+						if (value.equals(SKIP_STRING)) {
+							continue;
 						} else {
-							return null;
+							return new RowWrapper(cursor);
 						}
 					} else {
 						return null;
 					}
 				} else {
-					return null;			
+					return null;
 				}
+			} else {
+				return null;			
 			}
 		}
 	}
 
 	@Override
 	public void save() {
-		synchronized (lock) {
-			if(updated) {
-				try {
-					workbookSet.save();
-				} catch (IOException e) {
-					throw new RuntimeException("Error writing file " + workbookSet.getMainWorkbookFile().getAbsolutePath(), e);
-				}
+		if(updated) {
+			try {
+				workbookSet.save();
+			} catch (IOException e) {
+				throw new RuntimeException("Error writing file " + workbookSet.getMainWorkbookFile().getAbsolutePath(), e);
 			}
 		}
 	}
 
 	@Override
-	public void close() {
-		synchronized (lock) {	
-			if(workbookSet!=null) {
-				workbookSet.close();				
-			}
+	public void close() {	
+		if(workbookSet!=null) {
+			workbookSet.close();				
 		}
 
 		sheet = null;
@@ -258,7 +256,7 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 
 		@Override
 		public String get(String key) {
-			synchronized(lock) {
+			synchronized(workbookSet) {
 				Cell cell = getCellByID(cursor, key);
 				return ExcelFunctions.getCellValueAsString(cell, workbookSet.getMainFormulaEvaluator());
 			}
@@ -266,7 +264,7 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 
 		@Override
 		public String put(String key, String value) {
-			synchronized(lock) {
+			synchronized(workbookSet) {
 				Cell cell = getCellByID(cursor, key);
 				if(cell!=null) {
 					updated = true;
@@ -315,5 +313,4 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 			throw new RuntimeException("Add row not implemented for object of type '"+rowInput_.getClass());
 		}
 	}
-
 }

@@ -19,7 +19,7 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 	int lineNr;
 
 	@Override
-	public void reset_() {
+	public void init() {
 
 		filePath = this.configuration.getFile().get();
 		if (filePath == null || filePath.length() < 1)
@@ -36,6 +36,11 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		this.lineNr = 1;
 		
 		doFirst_();
+	}
+
+	@Override
+	public void reset() {
+		throw new RuntimeException("Reset method not implemented for this DataSet type");
 	}
 
 	public abstract void doFirst_();

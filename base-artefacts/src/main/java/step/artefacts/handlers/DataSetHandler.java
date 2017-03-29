@@ -51,14 +51,15 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 		}
 
 		public final Object next() {
-			DataPoolRow row = dataSet.next();
-			if(row==null) {
-				//TODO replace the following logic by a pluggable iteration startegie (Random, etc)
-				dataSet.close();
-				dataSet.reset();
-				row = dataSet.next();
-			} 
-			return row!=null?row.getValue():null;
+			synchronized (dataSet) {
+				DataPoolRow row = dataSet.next();
+				if(row==null) {
+					//TODO replace the following logic by a pluggable iteration startegie (Random, etc)
+					dataSet.reset();
+					row = dataSet.next();
+				}				
+				return row!=null?row.getValue():null;
+			}
 		}
 		
 		public final void addRow(Object row) {
@@ -70,7 +71,7 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 		final DataSet<?> dataSet;
 		try {
 			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource());
-			dataSet.reset();
+			dataSet.init();
 			ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
 			
 			context.getVariablesManager().putVariable(parentNode, VariableType.NORMAL, testArtefact.getItem().get(), new DataSetWrapper(dataSet));
@@ -78,8 +79,11 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 			context.getGlobalContext().getEventManager().addReportNodeEventListener(parentNode, new ReportNodeEventListener() {
 				@Override
 				public void onDestroy() {
-					dataSet.save();
-					dataSet.close();
+					try {
+						dataSet.save();
+					} finally {
+						dataSet.close();						
+					}
 				}
 			});
 			
