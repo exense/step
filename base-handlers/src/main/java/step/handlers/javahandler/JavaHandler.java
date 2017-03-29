@@ -128,7 +128,7 @@ public class JavaHandler implements MessageHandler {
 			logger.debug("Invoking method " + m.getName() + " from class "+clazz.getName()+" loaded by "+clazz.getClassLoader().toString());
 		}
 		
-		Map<String, Object> properties = buildPropertyMap(token, message);
+		Map<String, String> properties = buildPropertyMap(token, message);
 		
 		if(logger.isDebugEnabled()) {
 			logger.debug("Using property map: "+properties.toString());
@@ -154,8 +154,8 @@ public class JavaHandler implements MessageHandler {
 		return output.build();
 	}
 
-	private Map<String, Object> buildPropertyMap(AgentTokenWrapper token, InputMessage message) {
-		Map<String, Object> properties = new HashMap<>();
+	private Map<String, String> buildPropertyMap(AgentTokenWrapper token, InputMessage message) {
+		Map<String, String> properties = new HashMap<>();
 		if(message.getProperties()!=null) {
 			properties.putAll(message.getProperties());
 		}

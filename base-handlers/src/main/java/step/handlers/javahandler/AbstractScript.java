@@ -41,7 +41,7 @@ public class AbstractScript  {
 //	
 //	protected Map<String, String> controllerProperties;
 	
-	protected Map<String, Object> properties;
+	protected Map<String, String> properties;
 	
 	protected TokenSession session;
 	
@@ -69,11 +69,11 @@ public class AbstractScript  {
 		this.output = outputBuilder;
 	}
 
-	public Map<String, Object> getProperties() {
+	public Map<String, String> getProperties() {
 		return properties;
 	}
 
-	public void setProperties(Map<String, Object> properties) {
+	public void setProperties(Map<String, String> properties) {
 		this.properties = properties;
 	}
 
