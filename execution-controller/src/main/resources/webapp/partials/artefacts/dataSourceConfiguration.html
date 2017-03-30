@@ -1,7 +1,7 @@
 <div ng-controller="DataSourceCtrl">
 	<div class="form-group">
 		<label>Source type</label> 
-		<select ng-model="artefact.dataSourceType" ng-change="save()" ng-options="option.name as option.label for option in dataSourceTypes" class="form-control" />	
+		<select ng-change="loadInitialDataSourceConfiguration()"  ng-model="artefact.dataSourceType" ng-change="save()" ng-options="option.name as option.label for option in dataSourceTypes" class="form-control" />	
 	</div>
 	
 	<div ng-if="artefact.dataSourceType=='excel'">

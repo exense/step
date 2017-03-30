@@ -472,14 +472,12 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
   $scope.dataSourceTypes = [{name:"excel",label:"Excel"},{name:"csv",label:"CSV"},{name:"sql",label:"SQL"},
                             {name:"file",label:"Flat file"},{name:"folder",label:"Directory"}]
   
-  $scope.$watch('artefact.dataSourceType',function(type,oldType){
-    if(type&&(($scope.artefact&&_.isEmpty($scope.artefact.dataSource))||type!=oldType)) {
-      //updateConfigurationForm(type);
-      $http.get("rest/datapool/types/"+type).then(function(response){
-        $scope.artefact.dataSource = response.data;
-      })
-    }
-  });
+  $scope.loadInitialDataSourceConfiguration = function() {
+    $http.get("rest/datapool/types/"+$scope.artefact.dataSourceType).then(function(response){
+      $scope.artefact.dataSource = response.data;
+      $scope.save();
+    })
+  }
 })
 .controller('DefaultArtefactFormCtrl' , function($scope) {
   $scope.getEditableArtefactProperties = function() {
