@@ -43,7 +43,7 @@ public class ScriptEditorPlugin extends AbstractPlugin {
 		WebPlugin webPlugin = new WebPlugin();
 		webPlugin.getAngularModules().add("scriptEditor");
 		webPlugin.getScripts().add("scripteditor/js/controllers/scriptEditor.js");
-		webPlugin.getScripts().add("scripteditor/js/lib/ace.js");
+		webPlugin.getScripts().add("scripteditor/bower_components/ace-builds/src-min-noconflict/ace.js");
 		return webPlugin;
 	}
 
