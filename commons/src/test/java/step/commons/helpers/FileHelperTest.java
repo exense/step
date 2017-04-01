@@ -32,22 +32,22 @@ public class FileHelperTest {
 		f4.deleteOnExit();
 		f4.createNewFile();
 		
-		dir.setLastModified(1);
-		subDir1.setLastModified(1);
-		f1.setLastModified(2);
-		f2.setLastModified(3);
-		f4.setLastModified(2);
-
+		dir.setLastModified(10000);
+		subDir1.setLastModified(10000);
+		f1.setLastModified(20000);
+		f2.setLastModified(30000);
+		f4.setLastModified(20000);
+		
 		long lastModif = FileHelper.getLastModificationDateRecursive(dir);
-		Assert.assertEquals(3, lastModif);
+		Assert.assertEquals(30000, lastModif);
 		
-		f4.setLastModified(4);
+		f4.setLastModified(40000);
 		lastModif = FileHelper.getLastModificationDateRecursive(dir);
-		Assert.assertEquals(4, lastModif);
+		Assert.assertEquals(40000, lastModif);
 		
-		subDir1.setLastModified(5);
+		subDir1.setLastModified(50000);
 		lastModif = FileHelper.getLastModificationDateRecursive(dir);
-		Assert.assertEquals(5, lastModif);
+		Assert.assertEquals(50000, lastModif);
 		
 	}
 	
