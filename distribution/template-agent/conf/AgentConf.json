@@ -12,5 +12,5 @@
 "properties":{
 	"plugins.jmeter.home":"../ext/lib/jmeter",
 	"plugins.selenium.libs.2.x":"../ext/lib/selenium/selenium-2.53.1",
-	"plugins.selenium.libs.3.x":"../ext/lib/selenium/selenium-java-3.2.0"}
+	"plugins.selenium.libs.3.x":"../ext/lib/selenium/selenium-java-3.0.1"}
 }
