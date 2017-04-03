@@ -19,55 +19,80 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>base-handlers</artifactId>
+	<artifactId>base-plugins</artifactId>
 	<packaging>jar</packaging>
 
 	<parent>
 		<groupId>step</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.3.2</version>
+		<version>3.3.1</version>
 		<relativePath>../parent</relativePath>
 	</parent>
+	
+	<url>${homepage.url}</url>
 	
 	<dependencies>
 		<dependency>
 			<groupId>step</groupId>
+			<artifactId>core</artifactId>
+			<version>${project.version}</version>
+		</dependency>		
+		<dependency>
+			<groupId>step</groupId>
 			<artifactId>commons</artifactId>
+			<version>${project.version}</version>
+		</dependency>		
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>base-artefacts</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>grid</artifactId>
+			<artifactId>base-handlers</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
-			<scope>test</scope>
+			<groupId>step</groupId>
+			<artifactId>core</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>			
 		</dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
-			<scope>test</scope>
+			<groupId>step</groupId>
+			<artifactId>functions</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
-			<artifactId>groovy-all</artifactId>
-			<version>2.2.1</version>
-			<scope>test</scope>
-		</dependency>
+      		<groupId>junit</groupId>
+      		<artifactId>junit</artifactId>
+      		<version>4.8.1</version>
+      		<scope>test</scope>
+    	</dependency>
 		<dependency>
-		    <groupId>org.python</groupId>
-		    <artifactId>jython</artifactId>
-		    <version>2.5.4-rc1</version>
-			<scope>test</scope>		    
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.9.5</version>
+			<scope>test</scope>
+		</dependency> 
+    	<dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>1.4.5</version>
 		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
-		</plugins>	
-	</build>	
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<artifactId>base-plugins</artifactId>
+					<skip>false</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

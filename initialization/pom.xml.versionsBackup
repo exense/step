@@ -19,51 +19,42 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>base-handlers</artifactId>
+	<artifactId>initialization</artifactId>
 	<packaging>jar</packaging>
 
 	<parent>
 		<groupId>step</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.3.2</version>
+		<version>3.3.1</version>
 		<relativePath>../parent</relativePath>
 	</parent>
 	
 	<dependencies>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>commons</artifactId>
+			<artifactId>core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>grid</artifactId>
+			<artifactId>base-plugins</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
-			<scope>test</scope>
+			<groupId>step</groupId>
+			<artifactId>base-artefacts</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
-			<scope>test</scope>
+			<groupId>step</groupId>
+			<artifactId>selenium-plugin</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
-			<artifactId>groovy-all</artifactId>
-			<version>2.2.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-		    <groupId>org.python</groupId>
-		    <artifactId>jython</artifactId>
-		    <version>2.5.4-rc1</version>
-			<scope>test</scope>		    
-		</dependency>
+			<groupId>step</groupId>
+			<artifactId>jmeter-plugin</artifactId>
+			<version>${project.version}</version>
+		</dependency>		
 	</dependencies>
 
 	<build>
