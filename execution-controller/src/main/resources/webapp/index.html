@@ -136,18 +136,7 @@ window.console.log = window.console.log || function(){};
 		</nav>
 	
 		<div class="container-fluid">
-			<!-- <div ui-view></div> -->
-			<div ng-if="isViewActive('artefacts')" ng-include="'partials/artefactList.html'"></div>
-	        <div ng-if="isViewActive('grid')" ng-include="'partials/grid.html'"></div>
-	        <div ng-if="isViewActive('executions')" ng-include="'partials/execution.html'"></div>
-	        <div ng-if="isViewActive('scheduler')" ng-include="'partials/scheduler.html'"></div>
-	        <div ng-if="isViewActive('repository')" ng-include="'partials/repository.html'"></div>
-	        <div ng-if="isViewActive('functions')" ng-include="'partials/functionList.html'"></div>
-	        <div ng-if="isViewActive('artefacteditor')" ng-include="'partials/artefactEditor.html'"></div>
-	        <div ng-if="isViewActive('reportBrowser')" ng-include="'partials/reportBrowser.html'"></div>
-	        <div ng-if="isViewActive('admin')" ng-include="'partials/admin.html'"></div>
-	        <div ng-if="isViewActive('myaccount')" ng-include="'partials/myaccount.html'"></div>
-	        <div ng-if="isViewActive('scripteditor')" ng-include="'scripteditor/partials/scriptEditor.html'"></div>
+			<div ng-include="getViewTemplate()"></div>
 		</div>
 	</div>
 	<div ng-if="isInitialized && !authService.isAuthenticated()" ng-include="'partials/loginForm.html'">

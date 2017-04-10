@@ -18,6 +18,10 @@
  *******************************************************************************/
 angular.module('scriptEditor',['step'])
 
+.run(function(FunctionTypeRegistry, ViewRegistry) {
+  ViewRegistry.registerView('scripteditor','scripteditor/partials/scriptEditor.html');
+})
+
 .controller('ScriptEditorCtrl', function($scope, $http, stateStorage, AuthService) {
       stateStorage.push($scope, 'scripteditor', {});
 

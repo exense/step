@@ -41,7 +41,42 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   $httpProvider.interceptors.push('genericErrorInterceptor');
 }])
 
-.controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService) {
+.factory('ViewRegistry', function() {
+  
+  var api = {};
+  
+  var customViews = {};
+  
+  api.getViewTemplate = function (view) {
+    var customView = customViews[view];
+    if(customView) {
+      return customView;
+    } else {
+      throw "Undefined view: "+view
+    }
+  }
+  
+  api.registerView = function(viewId,template) {
+    customViews[viewId] = template;
+  }
+  
+  return api;
+})
+
+.run(function(ViewRegistry) {
+  ViewRegistry.registerView('artefacts','partials/artefactList.html');
+  ViewRegistry.registerView('grid','partials/grid.html');
+  ViewRegistry.registerView('executions','partials/execution.html');
+  ViewRegistry.registerView('scheduler','partials/scheduler.html');
+  ViewRegistry.registerView('repository','partials/repository.html');
+  ViewRegistry.registerView('functions','partials/functionList.html');
+  ViewRegistry.registerView('artefacteditor','partials/artefactEditor.html');
+  ViewRegistry.registerView('reportBrowser','partials/reportBrowser.html');
+  ViewRegistry.registerView('admin','partials/admin.html');
+  ViewRegistry.registerView('myaccount','partials/myaccount.html');
+})
+
+.controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, ViewRegistry) {
   stateStorage.push($scope, 'root',{});
   
   $scope.isInitialized = false;
@@ -58,6 +93,10 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   
   $scope.isViewActive = function (view) {
     return ($scope.$state === view);
+  };
+
+  $scope.getViewTemplate = function () {
+    return ViewRegistry.getViewTemplate($scope.$state);
   };
   
   $scope.authService = AuthService;
