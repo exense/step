@@ -32,7 +32,8 @@ public class ArtefactCache {
 	}
 	
 	public AbstractArtefact get(String nodeId) {
-		return cache.get(nodeId);
+		// Disabling cache as it is causing concurrency issues with artefacts using DynamicValue
+		return null;//cache.get(nodeId);
 	}
 	
 	public void put(AbstractArtefact node) {

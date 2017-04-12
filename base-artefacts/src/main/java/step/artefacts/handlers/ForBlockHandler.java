@@ -159,13 +159,13 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					if(forInterrupted || context.isInterrupted() || (maxFailedLoops!=null&&failedLoops.get()>=maxFailedLoops)) {
 						break;
 					}
-					loopsCounter.incrementAndGet();
+					int i = loopsCounter.incrementAndGet();
 	
 					HashMap<String, Object> newVariable = new HashMap<>();
 					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 					
 					ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
-					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+loopsCounter.get());
+					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+i);
 					for(AbstractArtefact child:selectedChildren) {
 						iterationTestCase.addChild(child.getId());
 					}
