@@ -35,8 +35,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 
-import com.google.common.io.Files;
-
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
@@ -55,16 +53,13 @@ public class ScriptHandler implements MessageHandler {
 	public static final String ERROR_HANDLER_REMOTE_FILE_ID = "$errorhandler.remotefile.id";
 	public static final String ERROR_HANDLER_REMOTE_FILE_VERSION = "$errorhandler.remotefile.version";
 	
-	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
+	public static final Map<String, String> scriptLangugaeMap = new ConcurrentHashMap<>();
 	
 	protected ScriptEngineManager manager = new ScriptEngineManager();
 		
 	public ScriptHandler() {
-		fileExtensionMap.put("groovy", "groovy");
-		fileExtensionMap.put("gy", "groovy");
-		fileExtensionMap.put("py", "python");
-		fileExtensionMap.put("jy", "python");
-		fileExtensionMap.put("js", "nashorn");
+		scriptLangugaeMap.put("groovy", "groovy");
+		scriptLangugaeMap.put("javascript", "nashorn");
 	}
 	
 	@Override
@@ -73,7 +68,8 @@ public class ScriptHandler implements MessageHandler {
         
         File scriptFile = getScriptFile(token, properties.get(SCRIPT_FILE), properties.get(REMOTE_FILE_ID), properties.get(REMOTE_FILE_VERSION));
         
-        String engineName = getScriptEngineName(scriptFile);
+        String scriptLanguage = properties.get(SCRIPT_LANGUAGE);        
+        String engineName = scriptLangugaeMap.get(scriptLanguage);
         ScriptEngine engine = loadScriptEngine(engineName);	      
 
         OutputMessageBuilder outputBuilder = new OutputMessageBuilder();
@@ -98,20 +94,6 @@ public class ScriptHandler implements MessageHandler {
         	scriptFile = token.getServices().getFileManagerClient().requestFile(remoteFileId, Long.parseLong(remoteFileVersionStr));
         }
 		return scriptFile;
-	}
-
-	private String getScriptEngineName(File scriptFile) {
-		String extension = Files.getFileExtension(scriptFile.getName());
-        if(extension.length()>0) {
-        	String enginName = fileExtensionMap.get(extension);
-        	if(enginName==null) {
-        		throw new RuntimeException("No script engine found for extension '"+extension+"' of file '"+scriptFile.getName()+"'");
-        	} else {
-        		return enginName;
-        	}
-        } else {
-    		throw new RuntimeException("The file '"+scriptFile.getName()+"' has no extension. Please add one of the following extensions: "+fileExtensionMap.keySet());
-        }
 	}
 
 	private void executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding)
