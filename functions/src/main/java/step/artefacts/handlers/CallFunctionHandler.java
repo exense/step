@@ -161,7 +161,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	@SuppressWarnings("unchecked")
 	private void drainOutput(String drainOutputValue, Output output) {
-		if(drainOutputValue!=null) {
+		if(drainOutputValue!=null&&drainOutputValue.trim().length()>0) {
 			JsonObject resultJson = output.getResult();
 			if(resultJson!=null) {
 				Object var = context.getVariablesManager().getVariable(drainOutputValue);
