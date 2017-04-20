@@ -67,7 +67,9 @@ public class GridReportBuilder {
 		Set<String> result = new HashSet<>();
 		for(step.grid.tokenpool.Token<TokenWrapper> token:grid.getTokens()) {
 			result.addAll(token.getObject().getAttributes().keySet());
-			result.addAll(token.getObject().getInterests().keySet());
+			if(token.getObject().getInterests()!=null) {
+				result.addAll(token.getObject().getInterests().keySet());				
+			}
 		}
 		return result;
 	}
