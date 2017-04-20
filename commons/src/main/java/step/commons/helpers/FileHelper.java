@@ -27,9 +27,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 public class FileHelper {
 
@@ -47,7 +53,26 @@ public class FileHelper {
 		folder.delete();
 	}
 	
+	static LoadingCache<File, Long> cache = CacheBuilder.newBuilder()
+				.concurrencyLevel(4)
+				.weakKeys()
+				.maximumSize(10000)
+				.expireAfterWrite(1, TimeUnit.SECONDS)
+				.build(new CacheLoader<File, Long>() {
+					public Long load(File file) {
+						return computeLastModificationDateRecursive(file);
+					}
+				});
+	
 	public static final long getLastModificationDateRecursive(File file) {
+		try {
+			return cache.get(file);
+		} catch (ExecutionException e) {
+			throw new RuntimeException("Error while getting last modification date for file '"+file.getAbsolutePath()+"' from cache",e);
+		}
+	}
+	
+	protected static final long computeLastModificationDateRecursive(File file) {
 		if(file.isDirectory()) {
 			long lastModificationDate = file.lastModified();
 			for(File f:file.listFiles()) {

@@ -4,6 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -11,7 +15,7 @@ import org.junit.Test;
 public class FileHelperTest {
 
 	@Test
-	public void testGetLastModificationDateRecursive() throws IOException {
+	public void testComputeLastModificationDateRecursive() throws IOException {
 		File dir = new File("FileHelperTestFolder/");
 		dir.mkdir();
 		dir.deleteOnExit();
@@ -38,17 +42,63 @@ public class FileHelperTest {
 		f2.setLastModified(30000);
 		f4.setLastModified(20000);
 		
-		long lastModif = FileHelper.getLastModificationDateRecursive(dir);
+		long lastModif = FileHelper.computeLastModificationDateRecursive(dir);
 		Assert.assertEquals(30000, lastModif);
 		
 		f4.setLastModified(40000);
-		lastModif = FileHelper.getLastModificationDateRecursive(dir);
+		lastModif = FileHelper.computeLastModificationDateRecursive(dir);
 		Assert.assertEquals(40000, lastModif);
 		
 		subDir1.setLastModified(50000);
-		lastModif = FileHelper.getLastModificationDateRecursive(dir);
+		lastModif = FileHelper.computeLastModificationDateRecursive(dir);
 		Assert.assertEquals(50000, lastModif);
 		
+	}
+	
+	@Test
+	public void testGetLastModificationDateFromCache() throws IOException, InterruptedException {
+		File dir = new File("FileHelperTestFolder2/");
+		dir.mkdir();
+		dir.deleteOnExit();
+		
+		File f1 = new File(dir.getAbsolutePath()+"/f1");
+		f1.deleteOnExit();
+		f1.createNewFile();
+		
+		dir.setLastModified(10000);
+		f1.setLastModified(20000);
+		callInParallel(dir,20000);
+
+		dir.setLastModified(30000);
+		Thread.sleep(2000);
+		callInParallel(dir,30000);
+	}
+
+	private void callInParallel(File dir, long lastmodif) throws InterruptedException {
+		final AtomicBoolean exception = new AtomicBoolean(false);
+
+		ExecutorService service = Executors.newFixedThreadPool(10);
+		for(int i=0;i<10;i++) {
+			service.submit(new Runnable() {
+				@Override
+				public void run() {
+					for(int j=0;j<1000;j++) {
+						try {
+							long lastModif = FileHelper.getLastModificationDateRecursive(dir);
+							System.out.println(lastModif);
+							Assert.assertEquals(lastmodif, lastModif);						
+						} catch (Throwable e) {
+							e.printStackTrace();
+							exception.set(true);
+						}						
+					}
+				}
+			});
+		}
+		
+		service.shutdown();
+		service.awaitTermination(10, TimeUnit.SECONDS);
+		Assert.assertFalse(exception.get());
 	}
 	
 	@Test
