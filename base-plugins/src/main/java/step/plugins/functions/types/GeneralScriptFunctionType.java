@@ -1,6 +1,5 @@
 package step.plugins.functions.types;
 
-import java.io.File;
 import java.util.Map;
 
 import step.functions.type.AbstractFunctionType;
@@ -33,12 +32,13 @@ public class GeneralScriptFunctionType extends AbstractFunctionType<GeneralScrip
 		if(language.equals("java")) {
 			// No specific setup for java at the moment
 		} else {
-			File scriptFile = helper.setupScriptFile(function);
+			String template = null;
 			if(language.equals("javascript")) {
-				helper.createScriptFromTemplate(scriptFile, "custom_script.js");
+				template = "custom_script.js";
 			} else if(language.equals("groovy")) {
-				helper.createScriptFromTemplate(scriptFile, "custom_script.groovy");
+				template = "custom_script.groovy";
 			}			
+			helper.setupScriptFile(function, template);
 		}
 	}
 

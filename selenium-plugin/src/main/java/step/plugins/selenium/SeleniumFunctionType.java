@@ -1,6 +1,5 @@
 package step.plugins.selenium;
 
-import java.io.File;
 import java.util.Map;
 
 import step.functions.type.AbstractFunctionType;
@@ -34,8 +33,7 @@ public class SeleniumFunctionType extends AbstractFunctionType<SeleniumFunction>
 	@Override
 	public void setupFunction(SeleniumFunction function) throws SetupFunctionException {
 		if(function.getScriptLanguage().get().equals("javascript")) {
-			File scriptFile = helper.setupScriptFile(function);
-			helper.createScriptFromTemplate(scriptFile, "kw_selenium.js");			
+			helper.setupScriptFile(function,"kw_selenium.js");
 		}
 	}
 	

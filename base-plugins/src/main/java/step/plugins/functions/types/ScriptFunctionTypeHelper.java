@@ -1,6 +1,8 @@
 package step.plugins.functions.types;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -87,7 +89,16 @@ public class ScriptFunctionTypeHelper {
 		return conf.getScriptLanguage().get();
 	}
 	
-	public File setupScriptFile(GeneralScriptFunction function) throws SetupFunctionException {
+	public File setupScriptFile(GeneralScriptFunction function, String templateFilename) throws SetupFunctionException {
+		File templateScript = new File(Configuration.getInstance().getProperty("controller.dir")+"/data/templates/"+templateFilename);
+		try {
+			return setupScriptFile(function,new FileInputStream(templateScript));
+		} catch (FileNotFoundException e) {
+			throw new SetupFunctionException("Unable to apply template. The file '"+templateScript.getAbsolutePath()+"' doesn't exist");
+		}
+	}
+	
+	public File setupScriptFile(GeneralScriptFunction function, InputStream templateStream) throws SetupFunctionException {
 		File scriptFile;
 		
 		String scriptFilename = function.getScriptFile().get();
@@ -112,38 +123,24 @@ public class ScriptFunctionTypeHelper {
 			} catch (IOException e) {
 				throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get("name"), e);
 			}
-		} else {
 			
+			if(templateStream!=null) {
+				applyTemplate(scriptFile, templateStream);				
+			}
 		}
+		
 		return scriptFile;
 	}
 	
-	public void createScriptFromTemplate(File scriptFile, String templateFilename) throws SetupFunctionException {
-		if(scriptFile.exists()) {
-			File templateScript = new File(Configuration.getInstance().getProperty("controller.dir")+"/data/templates/"+templateFilename);
-			if(templateScript.exists()) {
-				try {
-					Files.copy(templateScript.toPath(), scriptFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-				} catch (IOException e) {
-					throw new SetupFunctionException("Unable to copy template '"+templateScript.getAbsolutePath()+"' to '"+scriptFile.getAbsolutePath()+"'", e);
-				}				
-			} else {
-				throw new SetupFunctionException("Unable to apply template. The file '"+templateScript.getAbsolutePath()+"' doesn't exist");
-			}
-		}		
-	}
-	
-	public void createScriptFromTemplateStream(File scriptFile, InputStream templateScript) throws SetupFunctionException {
-		if(scriptFile.exists()) {
-			if(templateScript!=null) {
-				try {
-					Files.copy(templateScript, scriptFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-				} catch (IOException e) {
-					throw new SetupFunctionException("Unable to copy template from stream to '"+scriptFile.getAbsolutePath()+"'", e);
-				}				
-			} else {
-				throw new SetupFunctionException("Unable to apply template. The stream is null");
-			}
-		}		
+	private void applyTemplate(File scriptFile, InputStream templateScript) throws SetupFunctionException {
+		if(templateScript!=null) {
+			try {
+				Files.copy(templateScript, scriptFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				throw new SetupFunctionException("Unable to copy template from stream to '"+scriptFile.getAbsolutePath()+"'", e);
+			}				
+		} else {
+			throw new SetupFunctionException("Unable to apply template. The stream is null");
+		}
 	}
 }
