@@ -85,7 +85,6 @@ public class FileHelperTest {
 					for(int j=0;j<1000;j++) {
 						try {
 							long lastModif = FileHelper.getLastModificationDateRecursive(dir);
-							System.out.println(lastModif);
 							Assert.assertEquals(lastmodif, lastModif);						
 						} catch (Throwable e) {
 							e.printStackTrace();
