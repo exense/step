@@ -31,12 +31,7 @@
 		</dependency>
 		<dependency>
 		    <groupId>org.codehaus.groovy</groupId>
-		    <artifactId>groovy-jsr223</artifactId>
-		    <version>2.4.7</version>
-		</dependency>
-		<dependency>
-		    <groupId>org.codehaus.groovy</groupId>
-		    <artifactId>groovy-json</artifactId>
+		    <artifactId>groovy-all</artifactId>
 		    <version>2.4.7</version>
 		</dependency>
 	</dependencies>
