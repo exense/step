@@ -51,6 +51,7 @@
 		<module>../jmeter-plugin</module>
 		<module>../script-editor-plugin</module>
 		<module>../distribution</module>
+		<module>../script-dev</module>
 	</modules>
 
 	<dependencies>

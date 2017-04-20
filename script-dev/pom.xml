@@ -21,7 +21,7 @@
 	
 	<artifactId>script-dev</artifactId>
 	<groupId>step</groupId>
-	<version>3.3.2</version>
+	<version>3.3.3</version>
 	<packaging>pom</packaging>
 
 	<modules>
@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>step</groupId>
 			<artifactId>base-handlers</artifactId>
-			<version>3.3.2</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
