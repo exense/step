@@ -75,7 +75,7 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 
 		Workbook workbook = workbookSet.getMainWorkbook();
 		
-		if (sheetName==null){
+		if (sheetName==null || sheetName.isEmpty()){
 			if(workbook.getNumberOfSheets()>0) {
 				sheet = workbook.getSheetAt(0);					
 			} else {
