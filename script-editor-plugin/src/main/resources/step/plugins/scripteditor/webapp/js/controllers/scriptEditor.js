@@ -47,7 +47,6 @@ angular.module('scriptEditor',['step'])
       }
       
       $scope.execute = function() {
-        $scope.functionExecutionPanelHandle.execute();
         $scope.save().then(function() {
           $scope.functionExecutionPanelHandle.execute();
         })
