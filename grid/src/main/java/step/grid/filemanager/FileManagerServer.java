@@ -3,10 +3,9 @@ package step.grid.filemanager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import step.commons.helpers.FileHelper;
 import step.grid.io.Attachment;
@@ -14,22 +13,23 @@ import step.grid.io.AttachmentHelper;
 
 public class FileManagerServer implements FileProvider {
 
-	Map<String, File> registry = new ConcurrentHashMap<>();
+	ConcurrentHashMap<String, File> registry = new ConcurrentHashMap<>();
 	
-	Map<File, String> reverseRegistry = new HashMap<>();
+	ConcurrentHashMap<File, String> reverseRegistry = new ConcurrentHashMap<>();
 	
-	public synchronized String registerFile(File file) {
-		if(!file.exists()||!file.canRead()) {
-			throw new RuntimeException("Unable to find or read file "+file.getAbsolutePath());
-		}
-		
-		String handle = reverseRegistry.get(file);
-		if(handle==null) {
-			String newHandle = UUID.randomUUID().toString();
-			registry.put(newHandle, file);
-			reverseRegistry.put(file, newHandle);
-			handle = newHandle;
-		}
+	public String registerFile(File file) {
+		String handle = reverseRegistry.computeIfAbsent(file, new Function<File, String>() {
+			@Override
+			public String apply(File t) {
+				if(!file.exists()||!file.canRead()) {
+					throw new RuntimeException("Unable to find or read file "+file.getAbsolutePath());
+				}
+				
+				String handle = UUID.randomUUID().toString();
+				registry.put(handle, file);
+				return handle;
+			}
+		});
 		return handle;
 	}
 	
