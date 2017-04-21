@@ -37,6 +37,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
+import step.commons.conf.Configuration;
+
 public class FileHelper {
 
 	public static void deleteFolder(File folder) {
@@ -54,13 +56,12 @@ public class FileHelper {
 	}
 	
 	static LoadingCache<File, Long> cache = CacheBuilder.newBuilder()
-				.concurrencyLevel(4)
-				.weakKeys()
-				.maximumSize(10000)
-				.expireAfterWrite(1, TimeUnit.SECONDS)
+				.concurrencyLevel(Configuration.getInstance().getPropertyAsInteger("filehelper.cache.concurrencylevel", 4))
+				.maximumSize(Configuration.getInstance().getPropertyAsInteger("filehelper.cache.maximumsize", 1000))
+				.expireAfterWrite(Configuration.getInstance().getPropertyAsInteger("filehelper.cache.expireafter.seconds", 1), TimeUnit.SECONDS)
 				.build(new CacheLoader<File, Long>() {
 					public Long load(File file) {
-						return computeLastModificationDateRecursive(file);
+						return computeLastModification(file);
 					}
 				});
 	
@@ -70,6 +71,10 @@ public class FileHelper {
 		} catch (ExecutionException e) {
 			throw new RuntimeException("Error while getting last modification date for file '"+file.getAbsolutePath()+"' from cache",e);
 		}
+	}
+	
+	protected static final long computeLastModification(File file) {
+		return computeLastModificationDateRecursive(file);
 	}
 	
 	protected static final long computeLastModificationDateRecursive(File file) {
