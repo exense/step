@@ -23,11 +23,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.json.JsonValue.ValueType;
+import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonParsingException;
 
 import step.artefacts.CallFunction;
@@ -59,10 +59,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	public static final String STEP_NODE_KEY = "currentStep";
 	
 	protected final FunctionClient functionClient;
-	
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
-	
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
+	
+	private static JsonProvider jprov = JsonProvider.provider();
 	
 	public CallFunctionHandler() {
 		super();
@@ -210,7 +210,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		FunctionTokenHandle tokenHandle;
 		String token = testArtefact.getToken().get();
 		if(token!=null) {
-			JsonObject selectionCriteriaJson = Json.createReader(new StringReader(token)).readObject();
+			JsonObject selectionCriteriaJson = jprov.createReader(new StringReader(token)).readObject();
 			
 			
 			if(!testArtefact.getRemote().get()) {
@@ -241,7 +241,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	private Map<String, String> buildFunctionAttributesMap(String functionAttributesStr) {
-		JsonObject attributesJson = Json.createReader(new StringReader(functionAttributesStr)).readObject();
+		JsonObject attributesJson = jprov.createReader(new StringReader(functionAttributesStr)).readObject();
 		
 		Map<String, String> attributes = new HashMap<>();
 		attributesJson.forEach((key,value)->attributes.put(key, attributesJson.getString(key)));
@@ -252,9 +252,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		JsonObject argument;
 		try {
 			if(argumentStr!=null&&argumentStr.trim().length()>0) {
-				argument = Json.createReader(new StringReader(argumentStr)).readObject();
+				argument = jprov.createReader(new StringReader(argumentStr)).readObject();
 			} else {
-				argument = Json.createObjectBuilder().build();
+				argument = jprov.createObjectBuilder().build();
 			}
 		} catch(JsonParsingException e) {
 			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage());

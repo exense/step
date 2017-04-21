@@ -29,6 +29,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
+import javax.json.spi.JsonProvider;
 
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
@@ -45,11 +46,13 @@ public class OutputMessageBuilder {
 	private String error;
 	
 	private List<Attachment> attachments;
+	
+	private static JsonProvider jprov = JsonProvider.provider();
 
 	public OutputMessageBuilder() {
 		super();
 		
-		payloadBuilder = Json.createObjectBuilder();
+		payloadBuilder = jprov.createObjectBuilder();
 
 		measureHelper = new MeasurementsBuilder();
 	}
