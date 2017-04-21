@@ -76,7 +76,7 @@ public class FileHelper {
 		if(file.isDirectory()) {
 			long lastModificationDate = file.lastModified();
 			for(File f:file.listFiles()) {
-				long lastChange = getLastModificationDateRecursive(f);
+				long lastChange = computeLastModificationDateRecursive(f);
 				if(lastChange>lastModificationDate) {
 					lastModificationDate = lastChange;
 				}
