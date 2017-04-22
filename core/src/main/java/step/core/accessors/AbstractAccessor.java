@@ -52,14 +52,14 @@ public class AbstractAccessor {
 
 	public static void createOrUpdateCompoundIndex(MongoCollection<Document> collection, String... attribute) {
 		Document index = getIndex(collection, attribute);
-
+		
 		if(index==null) {
-			Map<String, Object> compound = new TreeMap<String, Object>();
+			Document newIndex = new Document();
 			
 			for(String s : attribute)
-				compound.put(s, 1);
+				newIndex.append(s, 1);
 
-			collection.createIndex(new Document(compound));
+			collection.createIndex(newIndex);
 		}
 	}
 
