@@ -180,6 +180,11 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		ReportNodeAccessor reportNodeAccessor = context.getGlobalContext().getReportAccessor();
 		
 		long t1 = System.currentTimeMillis();
+		
+		boolean persistBefore = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistbefore",true);		
+		boolean persistAfter = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
+		boolean persistOnlyNonPassed = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistonlynonpassed",true);
+		
 		try {
 			context.getGlobalContext().getDynamicBeanResolver().evaluate(testArtefact, getBindings());
 			node.setArtefactInstance(testArtefact);
@@ -188,7 +193,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			if(filter!=null&&!filter.isSelected(testArtefact)) {
 				node.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
-				boolean persistBefore = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistbefore",true);
 				if(persistBefore) {
 					reportNodeAccessor.save(node);					
 				}
@@ -203,10 +207,16 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setDuration((int)duration);
 		node.setExecutionTime(System.currentTimeMillis());
 		
-		boolean persistAfter = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
 		if(persistAfter) {
-			reportNodeAccessor.save(node);					
+				if(!persistOnlyNonPassed){
+					reportNodeAccessor.save(node);
+				}else{
+					if(!node.getStatus().equals(ReportNodeStatus.PASSED)){
+						reportNodeAccessor.save(node);
+					}
+				}
 		}
+		
 		
 		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeExecution(node);
 		

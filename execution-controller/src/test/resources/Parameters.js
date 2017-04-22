@@ -6,5 +6,8 @@
 ["selenium.webdriver.gecko.driver","../ext/bin/geckodriver/geckodriver",""],
 ["selenium.webdriver.phantomjs.driver","../ext/bin/phantomjs/phantomjs",""],
 ["scripthandler.script.dir","../data/scripts",""],
+["tec.execution.reportnodes.persistbefore","true",""],
+["tec.execution.reportnodes.persistafter","true",""],
+["tec.execution.reportnodes.persistonlynonpassed","false",""],
 ["keywords.calltimeout.default",180000,""]
 ]
