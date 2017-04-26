@@ -44,15 +44,17 @@ public class RegistrationClient implements FileProvider {
 	
 	private static final Logger logger = LoggerFactory.getLogger(RegistrationClient.class);
 
-	int connectionTimeout = 3000;
-	int callTimeout = 3000;
+	int connectionTimeout;
+	int callTimeout;
 	
-	public RegistrationClient(String registrationServer) {
+	public RegistrationClient(String registrationServer, int connectionTimeout, int callTimeout) {
 		super();
 		this.registrationServer = registrationServer;
 		this.client = ClientBuilder.newClient();
 		this.client.register(ObjectMapperResolver.class);
 		this.client.register(JacksonJsonProvider.class);
+		this.callTimeout = callTimeout;
+		this.connectionTimeout = connectionTimeout;
 	}
 	
 	public void sendRegistrationMessage(RegistrationMessage message) {
