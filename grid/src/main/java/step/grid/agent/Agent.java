@@ -148,7 +148,9 @@ public class Agent {
 	public void start() throws Exception {		
 		final Agent agent = this;
 		
-		RegistrationClient registrationClient = new RegistrationClient(agent.getGridHost());
+		AgentConf agentConf = agent.agentConf;
+		
+		RegistrationClient registrationClient = new RegistrationClient(agent.getGridHost(), agentConf.getGridConnectTimeout(), agentConf.getGridReadTimeout());
 		
 		FileManagerClient fileManagerClient = initFileManager(registrationClient);
 		

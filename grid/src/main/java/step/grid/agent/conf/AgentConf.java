@@ -32,6 +32,10 @@ public class AgentConf {
 	String workingDir;
 	
 	Integer registrationPeriod = 10000;
+	
+	Integer gridReadTimeout = 3000;
+	
+	Integer gridConnectTimeout = 3000;
 
 	List<TokenGroupConf> tokenGroups;
 	
@@ -102,6 +106,22 @@ public class AgentConf {
 
 	public void setWorkingDir(String workingDir) {
 		this.workingDir = workingDir;
+	}
+
+	public Integer getGridReadTimeout() {
+		return gridReadTimeout;
+	}
+
+	public void setGridReadTimeout(Integer gridReadTimeout) {
+		this.gridReadTimeout = gridReadTimeout;
+	}
+
+	public Integer getGridConnectTimeout() {
+		return gridConnectTimeout;
+	}
+
+	public void setGridConnectTimeout(Integer gridConnectTimeout) {
+		this.gridConnectTimeout = gridConnectTimeout;
 	}
 
 	public Map<String, String> getProperties() {
