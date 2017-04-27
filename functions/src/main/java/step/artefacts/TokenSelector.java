@@ -18,51 +18,31 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.CallFunctionHandler;
-import step.artefacts.reports.CallFunctionReportNode;
+import step.artefacts.handlers.FunctionGroupHandler;
+import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = CallFunctionHandler.class, report = CallFunctionReportNode.class)
-public class CallFunction extends TokenSelector {
+@Artefact(handler = FunctionGroupHandler.class)
+public class TokenSelector extends AbstractArtefact {
+
+	DynamicValue<Boolean> remote = new DynamicValue<Boolean>(true);
 	
-	String function;
-	
-	String functionId;
-	
-	DynamicValue<String> argument = new DynamicValue<>("{}");
-	
-	DynamicValue<String> resultMap = new DynamicValue<String>();
-	
-	public String getFunction() {
-		return function;
+	DynamicValue<String> token = new DynamicValue<>("{}");
+
+	public DynamicValue<Boolean> getRemote() {
+		return remote;
 	}
 
-	public void setFunction(String function) {
-		this.function = function;
+	public void setRemote(DynamicValue<Boolean> remote) {
+		this.remote = remote;
 	}
 
-	public String getFunctionId() {
-		return functionId;
+	public DynamicValue<String> getToken() {
+		return token;
 	}
 
-	public void setFunctionId(String functionId) {
-		this.functionId = functionId;
-	}
-
-	public DynamicValue<String> getArgument() {
-		return argument;
-	}
-
-	public void setArgument(DynamicValue<String> argument) {
-		this.argument = argument;
-	}
-
-	public DynamicValue<String> getResultMap() {
-		return resultMap;
-	}
-
-	public void setResultMap(DynamicValue<String> resultMap) {
-		this.resultMap = resultMap;
+	public void setToken(DynamicValue<String> token) {
+		this.token = token;
 	}
 }

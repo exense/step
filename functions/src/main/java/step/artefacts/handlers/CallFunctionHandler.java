@@ -21,7 +21,6 @@ package step.artefacts.handlers;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -51,7 +50,6 @@ import step.functions.Input;
 import step.functions.Output;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
-import step.grid.tokenpool.Interest;
 import step.plugins.adaptergrid.GridPlugin;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
@@ -64,11 +62,14 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	
 	private static JsonProvider jprov = JsonProvider.provider();
 	
+	private TokenSelectorHelper tokenSelectorHelper;
+	
 	public CallFunctionHandler() {
 		super();
 		functionClient = (FunctionClient) context.getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context.getGlobalContext().getAttachmentManager());
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
+		this.tokenSelectorHelper = new TokenSelectorHelper(functionClient, dynamicJsonObjectResolver);
 	}
 
 	@Override
@@ -90,7 +91,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			token = (FunctionTokenHandle) o;
 			releaseTokenAfterExecution = false;
 		} else {
-			token = selectToken(testArtefact, functionClient);
+			token = tokenSelectorHelper.selectToken(testArtefact, functionClient, getBindings());
 		}
 				
 		try {
@@ -204,32 +205,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			}
 		}
 		return resultMap;
-	}
-	
-	private FunctionTokenHandle selectToken(CallFunction testArtefact, FunctionClient functionClient) {
-		FunctionTokenHandle tokenHandle;
-		String token = testArtefact.getToken().get();
-		if(token!=null) {
-			JsonObject selectionCriteriaJson = jprov.createReader(new StringReader(token)).readObject();
-			
-			
-			if(!testArtefact.getRemote().get()) {
-				tokenHandle = functionClient.getLocalFunctionToken();
-			} else {
-				Map<String, Interest> selectionCriteria = new HashMap<>();
-				selectionCriteriaJson.keySet().stream().forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
-				
-				OperationManager.getInstance().enter("Token selection", selectionCriteria);
-				try {
-					tokenHandle = functionClient.getFunctionToken(null, selectionCriteria);
-				} finally {
-					OperationManager.getInstance().exit();					
-				}
-			}
-		} else {
-			throw new RuntimeException("Token field hasn't been specified");
-		}
-		return tokenHandle;
 	}
 
 	private void callChildrenArtefacts(CallFunctionReportNode node, CallFunction testArtefact) {
