@@ -21,6 +21,7 @@ package step.core.deployment;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ import org.bson.types.ObjectId;
 import step.commons.datatable.DataTable;
 import step.commons.datatable.TableRow;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
@@ -392,8 +394,17 @@ public class ControllerServices extends AbstractServices {
 				m.invoke(sample);
 			}
 		}
+		
+		sample.setAttributes(new HashMap<>());
+		sample.getAttributes().put("name", getDefaultArtefactName(clazz));
+		
 		getContext().getArtefactAccessor().save(sample);
 		return sample;
+	}
+	
+	private String getDefaultArtefactName(Class<? extends AbstractArtefact> artefactClass) {
+		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
+		return annotation.name().length() > 0 ? annotation.name() : artefactClass.getSimpleName();
 	}
 	
 	public class ArtefactTree {

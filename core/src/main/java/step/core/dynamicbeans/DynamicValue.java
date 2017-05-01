@@ -46,6 +46,16 @@ public class DynamicValue<T> {
 			}
 		}
 	}
+	
+	public DynamicValue<T> cloneValue() {
+		DynamicValue<T> clone = new DynamicValue<>();
+		clone.dynamic = dynamic;
+		clone.evalutationResult = null;
+		clone.expression = expression;
+		clone.expressionType = expressionType;
+		clone.value = value;
+		return clone;
+	}
 
 	public boolean isDynamic() {
 		return dynamic;

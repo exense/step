@@ -25,7 +25,6 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
@@ -77,26 +76,6 @@ public abstract class AbstractArtefact {
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	// Caching name as it might be called very frequently during skeleton creation
-	private String cachedReportNodeName;
-	
-	@JsonIgnore
-	public String getReportNodeName() {
-		if(cachedReportNodeName==null) {
-			if(attributes!=null) {
-				cachedReportNodeName = attributes.get("name");
-			} else {
-				cachedReportNodeName = getDefaultReportNodeName();
-			}
-		}
-		return cachedReportNodeName;
-	}
-	
-	private String getDefaultReportNodeName() {
-		Artefact annotation = this.getClass().getAnnotation(Artefact.class);
-		return annotation.name().length()>0?annotation.name():getClass().getSimpleName();
 	}
 
 	public void addChild(ObjectId artefactID) {

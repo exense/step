@@ -80,6 +80,10 @@ public class ArtefactAccessor extends AbstractAccessor {
 		return artefact;
 	}
 	
+	public Iterator<AbstractArtefact> getAll() {
+		return artefacts.find().as(AbstractArtefact.class);
+	}
+	
 	public void remove(ObjectId artefactID) {
 		artefacts.remove(artefactID);
 	}

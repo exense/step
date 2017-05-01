@@ -199,21 +199,9 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
       })
 
       function getNodeLabel(artefact) {
-        var label = artefact._class
+        var label = "Unnamed";
         if(artefact.attributes && artefact.attributes.name) {
           label = artefact.attributes.name
-        } else {
-          if(artefact._class=='CallFunction'&&artefact['function']) {
-            try {
-              label = JSON.parse(artefact['function']).name;
-            } catch(e) {}
-          } else if(artefact._class=='CallPlan') {
-            if(artefact.cachedArtefactName) {
-              label =  artefact.cachedArtefactName;             
-            }
-          } else {
-            label= artefact._class;
-          }          
         }
         return label;
       }
@@ -267,7 +255,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     	  var function_ = response.data;
     	  var remote = !(function_.type=="step.plugins.functions.types.CompositeFunction")
     	  
-    	  var newArtefact = {"function":JSON.stringify(function_.attributes),"functionId":function_.id,"remote":{"value":remote},"_class":"CallFunction"};
+    	  var newArtefact = {attributes:{name:function_.attributes.name},"function":JSON.stringify(function_.attributes),"functionId":function_.id,"remote":{"value":remote},"_class":"CallFunction"};
     	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
     		  reloadAfterArtefactInsertion(response.data);
     	  })
@@ -290,7 +278,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
         var selectedArtefact = tree.get_selected(true);
         $http.get("rest/controller/artefact/"+id).then(function(response) {
           var artefact = response.data;         
-          var newArtefact = {"artefactId":id,"cachedArtefactName":artefact.attributes.name,"_class":"CallPlan"};
+          var newArtefact = {"attributes":{"name":artefact.attributes.name},"artefactId":id,"_class":"CallPlan"};
           $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
             reloadAfterArtefactInsertion(response.data);
           })
@@ -417,7 +405,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
 
     modalInstance.result.then(function (artefact) {
       $scope.artefact.artefactId = artefact.id;
-      $scope.artefact.cachedArtefactName = artefact.attributes.name;
+      $scope.artefact.attributes.name = artefact.attributes.name;
       $scope.save();
     });
   }

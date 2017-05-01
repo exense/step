@@ -20,17 +20,21 @@ package step.initialization;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.jongo.MongoCollection;
 
 import step.artefacts.CallFunction;
+import step.artefacts.CallPlan;
 import step.artefacts.Check;
 import step.artefacts.TestCase;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoDBAccessorHelper;
+import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plugins.AbstractPlugin;
@@ -57,6 +61,8 @@ public class InitializationPlugin extends AbstractPlugin {
 			//setupExecuteProcessFunction(context);
 		}
 		
+		setArtefactNameIfEmpty(context);
+		
 		insertLogEntry(controllerLogs);
 		
 		super.executionControllerStart(context);
@@ -69,7 +75,50 @@ public class InitializationPlugin extends AbstractPlugin {
 		user.setPassword(UserAccessor.encryptPwd("init"));
 		context.getUserAccessor().save(user);
 	}
-
+	
+	// This function ensures that all the artefacts have their name saved properly in the attribute map. 
+	// This will only be needed for the migration from 3.3.x or lower to 3.4.x or higher
+	private void setArtefactNameIfEmpty(GlobalContext context) {
+		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
+		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
+		
+		ArtefactAccessor a = context.getArtefactAccessor();
+		
+		AbstractArtefact artefact;
+		Iterator<AbstractArtefact> it = a.getAll();
+		while(it.hasNext()) {
+			artefact = it.next();
+			Map<String,String> attributes = artefact.getAttributes();
+			if(attributes==null) {
+				attributes = new HashMap<>();
+				artefact.setAttributes(attributes);
+			}
+			
+			if(!attributes.containsKey("name")) {
+				String name = null;
+				if(artefact instanceof CallFunction) {
+					CallFunction calllFunction = (CallFunction) artefact;
+					Function function = functionRepository.getFunctionById(calllFunction.getFunctionId());
+					if(function!=null && function.getAttributes()!=null && function.getAttributes().containsKey("name")) {
+						name = function.getAttributes().get("name");
+					}
+				} else if(artefact instanceof CallPlan) {
+					CallPlan callPlan = (CallPlan) artefact;
+					AbstractArtefact calledArtefact = a.get(callPlan.getArtefactId());
+					if(calledArtefact != null && calledArtefact.getAttributes()!=null && calledArtefact.getAttributes().containsKey("name")) {
+						name = calledArtefact.getAttributes().get("name");
+					}
+				}
+				if(name == null) {
+					Artefact annotation = artefact.getClass().getAnnotation(Artefact.class);
+					name =  annotation.name().length() > 0 ? annotation.name() : getClass().getSimpleName();
+				}
+				attributes.put("name", name);
+				a.save(artefact);
+			}
+		}
+	}
+	
 	private void insertLogEntry(MongoCollection controllerLogs) {
 		ControllerLog logEntry = new ControllerLog();
 		logEntry.setStart(new Date());

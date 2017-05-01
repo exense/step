@@ -118,7 +118,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				OperationManager.getInstance().exit();
 			}
 			
-			node.setName(function.getAttributes().get("name"));
 			node.setFunctionId(function.getId().toString());
 			
 			String errorMsg = output.getError();
