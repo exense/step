@@ -36,7 +36,6 @@ public class RtmPluginServices {
 	}	
 	
 	private String getAggregateViewByEid(String eid) throws UnsupportedEncodingException {
-		String quickfix = System.getProperty("rtmDefaultGranularity","auto");
 		return "rtm/#Aggregate/select/"+URLEncoder.encode(
 				"{ \"guiParams\":"
 				    + "{ \"postControllerView\":"
@@ -53,13 +52,16 @@ public class RtmPluginServices {
             			+ " },"
         			+ "\"aggregateSPView\":"
         				+ " { \"sessionId\":\"defaultSid\","
-        				+    "\"granularity\":\""+quickfix+"\","
-        				+    "\"groupby\":\"name\" },"
+        				+    "\"granularity\":\"auto\","
+        				+    "\"groupby\":\"name\"," 
+        				+    "\"cpu\": \"1\","
+        				+    "\"partition\": \"16\","
+        				+    "\"timeout\": \"600\"},"
     				+ "\"aggregateGraphView\":"
-        				+ " { \"chartMetricChoice\":\"avg\"},"
+        				+ " { \"chartMetricChoice\":\"AVG\"},"
     				+ "\"aggregateTableView\":"
     					+ " { \"checkedAggTableMetrics\":"
-    						+ " [ \"begin\", \"avg\", \"cnt\"]"
+    						+ " [ \"begin\", \"AVG\", \"CNT\"]"
     						+ ",\"isSwitchedOn\":\"false\" }"
 					+ "}"
 				+ "}"
