@@ -35,12 +35,13 @@ public class RtmPlugin extends AbstractPlugin {
 		Properties rtmProperties = Configuration.getInstance().getUnderlyingPropertyObject();
 		step.commons.conf.Configuration stepProperties = step.commons.conf.Configuration.getInstance(); 
 
+		if(stepProperties.getPropertyAsBoolean("plugins.rtm.useLocalDB", true) == true){
 		cloneProperty(rtmProperties, stepProperties, "db.host");
 		cloneProperty(rtmProperties, stepProperties, "db.port");
 		cloneProperty(rtmProperties, stepProperties, "db.database");
 		cloneProperty(rtmProperties, stepProperties, "db.username");
 		cloneProperty(rtmProperties, stepProperties, "db.password");
-		
+		}
 		measureReportNodes = stepProperties.getPropertyAsBoolean("plugins.rtm.measurereportnodes", true);
 		
 		AbstractAccessor.createOrUpdateCompoundIndex(context.getMongoDatabase().getCollection("measurements"),"eId", "begin");
