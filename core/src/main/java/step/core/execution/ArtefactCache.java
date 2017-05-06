@@ -28,16 +28,18 @@ public class ArtefactCache {
 	private ConcurrentHashMap<String,AbstractArtefact> cache = new ConcurrentHashMap<>();
 	
 	public void remove(ReportNode node) {
-		cache.remove(node.getId().toString());
+		// Disabling cache as it is causing concurrency issues with artefacts using DynamicValue and memory issues due to the ExecutionContext leak
+		// cache.remove(node.getId().toString());
 	}
 	
 	public AbstractArtefact get(String nodeId) {
-		// Disabling cache as it is causing concurrency issues with artefacts using DynamicValue
+		// Disabling cache as it is causing concurrency issues with artefacts using DynamicValue and memory issues due to the ExecutionContext leak
 		return null;//cache.get(nodeId);
 	}
 	
 	public void put(AbstractArtefact node) {
-		cache.put(node.getId().toString(), node);
+		// Disabling cache as it is causing concurrency issues with artefacts using DynamicValue and memory issues due to the ExecutionContext leak
+		// cache.put(node.getId().toString(), node);
 	}
 
 
