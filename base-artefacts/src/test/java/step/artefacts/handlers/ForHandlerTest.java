@@ -39,8 +39,8 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 	public void testSuccess() {
 		setupContext();
 		
-		ExecutionContext.getCurrentContext().getVariablesManager().putVariable(
-				ExecutionContext.getCurrentContext().getReport(), "var", "val1");
+		context.getVariablesManager().putVariable(
+				context.getReport(), "var", "val1");
 			
 		ForBlock f = add(new ForBlock());
 		
@@ -57,7 +57,7 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 			@Override
 			public void run() {
 				ExecutionContext.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
-				assertEquals(i.get(),(int)ExecutionContext.getCurrentContext().getVariablesManager().getVariableAsInteger("item"));
+				assertEquals(i.get(),(int)context.getVariablesManager().getVariableAsInteger("item"));
 				i.addAndGet(2);
 			}
 		}), f);
@@ -97,7 +97,7 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 			@Override
 			public void run() {
 				if(i.get()==2) {
-					ExecutionContext.getCurrentContext().getVariablesManager().updateVariable("break", "true");
+					context.getVariablesManager().updateVariable("break", "true");
 				}
 				i.addAndGet(1);
 			}

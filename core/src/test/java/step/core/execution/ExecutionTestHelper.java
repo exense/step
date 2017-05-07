@@ -39,13 +39,14 @@ import step.expressions.ExpressionHandler;
 
 public class ExecutionTestHelper {
 
-	public static void setupContext() {
+	public static ExecutionContext setupContext() {
 		ExecutionContext c = createContext();
 		
 		c.getVariablesManager().putVariable(c.getReport(), ReportNodeAttachmentManager.QUOTA_VARNAME, 100);
 		c.getVariablesManager().putVariable(c.getReport(), ArtefactHandler.CONTINUE_EXECUTION, "false");
 		
 		ExecutionContext.setCurrentContext(c);
+		return c;
 		
 	}
 	

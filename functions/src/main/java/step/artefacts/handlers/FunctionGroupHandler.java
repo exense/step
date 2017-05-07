@@ -23,6 +23,7 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.execution.ExecutionContext;
 import step.functions.FunctionClient;
 import step.functions.FunctionClient.FunctionTokenHandle;
 import step.plugins.adaptergrid.GridPlugin;
@@ -36,13 +37,19 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	
 	public FunctionGroupHandler() {
 		super();
+	}
+
+	@Override
+	public void init(ExecutionContext context) {
+		super.init(context);
 		functionClient = (FunctionClient) context.getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
 		tokenSelectorHelper = new TokenSelectorHelper(functionClient,  new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler())));
+
 	}
 
 	@Override
 	protected void createReportSkeleton_(ReportNode node, FunctionGroup testArtefact) {
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.createReportSkeleton_(node, testArtefact);
 	}
 
@@ -51,7 +58,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		FunctionTokenHandle token = tokenSelectorHelper.selectToken(testArtefact, functionClient, getBindings());
 		context.getVariablesManager().putVariable(node, TOKEN_PARAM_KEY, token);
 		try {
-			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.execute_(node, testArtefact);
 		} finally {
 			token.release();

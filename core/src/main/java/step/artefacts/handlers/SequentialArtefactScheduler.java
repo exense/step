@@ -27,13 +27,16 @@ import step.core.variables.UndefinedVariableException;
 
 public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefact, ReportNode>{
 
-	public SequentialArtefactScheduler() {
+	ExecutionContext context;
+	
+	public SequentialArtefactScheduler(ExecutionContext context) {
 		super();
+		this.context = context;
 	}
 
 	public void createReportSkeleton_(ReportNode node, AbstractArtefact testArtefact) {		
-		for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact)) {
-			ArtefactHandler.delegateCreateReportSkeleton(child, node);
+		for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact, context)) {
+			ArtefactHandler.delegateCreateReportSkeleton(context, child, node);
 		}
 	}
 	
@@ -42,14 +45,13 @@ public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefac
 	}
 	
 	public void execute_(ReportNode node, AbstractArtefact testArtefact, Boolean continueOnError) {
-		ExecutionContext context = ExecutionContext.getCurrentContext();
 		ReportNodeStatus parentResultStatus = node.getStatus(); 
 		try {			
-			for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact)) {
+			for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact, context)) {
 				if(context.isInterrupted()) {
 					break;
 				}
-				ReportNode resultNode = ArtefactHandler.delegateExecute(child, node);
+				ReportNode resultNode = ArtefactHandler.delegateExecute(context, child, node);
 				
 				if(parentResultStatus==null || resultNode.getStatus().ordinal()<parentResultStatus.ordinal()) {
 					parentResultStatus = resultNode.getStatus();

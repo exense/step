@@ -26,7 +26,7 @@ public class SequenceHandler extends ArtefactHandler<Sequence, ReportNode> {
 	
 	@Override
 	public void createReportSkeleton_(ReportNode node, Sequence testArtefact) {
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.createReportSkeleton_(node, testArtefact);
 	}
 	
@@ -35,7 +35,7 @@ public class SequenceHandler extends ArtefactHandler<Sequence, ReportNode> {
 		Long pacing = testArtefact.getPacing().get();
 		long startTime = pacing!=null?System.currentTimeMillis():0;
 		
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.execute_(node, testArtefact, testArtefact.getContinueOnError().get());
 
 		if(pacing!=null) {

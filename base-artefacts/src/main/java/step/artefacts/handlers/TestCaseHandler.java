@@ -20,8 +20,8 @@ package step.artefacts.handlers;
 
 import step.artefacts.TestCase;
 import step.artefacts.reports.TestCaseReportNode;
-import step.core.artefacts.handlers.ReportNodeAttributesManager;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.ReportNodeAttributesManager;
 import step.core.artefacts.reports.ReportNode;
 
 public class TestCaseHandler extends ArtefactHandler<TestCase, ReportNode> {
@@ -29,19 +29,20 @@ public class TestCaseHandler extends ArtefactHandler<TestCase, ReportNode> {
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestCase testArtefact) {
 		addTestCaseNameToCustomAttributes(testArtefact);
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.createReportSkeleton_(node, testArtefact);
 	}
 	
 	@Override
 	public void execute_(ReportNode node, TestCase testArtefact) {
 		addTestCaseNameToCustomAttributes(testArtefact);
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.execute_(node, testArtefact);
 	}
 	
 	private void addTestCaseNameToCustomAttributes(TestCase testArtefact) {
-		ReportNodeAttributesManager.addCustomAttribute("TestCase", testArtefact.getId().toString());
+		ReportNodeAttributesManager reportNodeAttributesManager = new ReportNodeAttributesManager(context);
+		reportNodeAttributesManager.addCustomAttribute("TestCase", testArtefact.getId().toString());
 	}
 
 	@Override

@@ -47,7 +47,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 		DataSet<?> dataSet = null;
 		try {
-			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource());
+			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource(), context);
 			dataSet.init();
 			DataPoolRow nextValue = null;
 			int rowCount = 0;
@@ -67,7 +67,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					iterationTestCase.addChild(child.getId());
 				}
 				
-				delegateCreateReportSkeleton(iterationTestCase, node, newVariable);
+				delegateCreateReportSkeleton(context, iterationTestCase, node, newVariable);
 			}
 		} catch(Exception e) {
 			failWithException(node, e);
@@ -85,7 +85,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		try {
 			List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 			
-			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource());
+			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource(), context);
 		
 			dataSet.init();
 			
@@ -170,7 +170,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 						iterationTestCase.addChild(child.getId());
 					}
 					
-					ReportNode iterationReportNode = delegateExecute(iterationTestCase, node, newVariable);
+					ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
 					
 					if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
 						failedLoops.incrementAndGet();

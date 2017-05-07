@@ -28,19 +28,19 @@ public class PlaceholderHandler extends ArtefactHandler<Placeholder, ReportNode>
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode,
 			Placeholder testArtefact) {
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.createReportSkeleton_(parentNode, testArtefact);
 	}
 
 	@Override
 	protected void execute_(ReportNode node, Placeholder testArtefact) {
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.execute_(node, testArtefact);
 		
 		Object o = context.getVariablesManager().getVariable(node, "#placeholder", true);
 		if(o!=null) {
 			AbstractArtefact a = (AbstractArtefact) o;
-			SequentialArtefactScheduler s = new SequentialArtefactScheduler();
+			SequentialArtefactScheduler s = new SequentialArtefactScheduler(context);
 			s.execute_(node, a);
 		}
 	}

@@ -27,13 +27,13 @@ public class CaseHandler extends ArtefactHandler<Case, ReportNode> {
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode,
 			Case testArtefact) {
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.createReportSkeleton_(parentNode, testArtefact);
 	}
 
 	@Override
 	protected void execute_(ReportNode node, Case testArtefact) {
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.execute_(node, testArtefact);
 	}
 

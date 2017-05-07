@@ -26,23 +26,35 @@ import step.core.execution.ExecutionContext;
 
 public class ExcelFileLookup {
 
-	public static File lookup(String workbookPath) {
+	ExecutionContext context;
+	
+	public ExcelFileLookup(ExecutionContext context) {
+		super();
+		this.context = context;
+	}
+
+	public File lookup(String workbookPath) {
 		File workBookFile;
 		if(workbookPath.contains("/")||workbookPath.contains("\\")) {
 			workBookFile = new File(workbookPath);
-		} else {			
-			Object o = null;
-			if(workbookPath.isEmpty()) {
-				Pattern excelFilenamePattern = Pattern.compile("^.*\\.xls(x)?$");
-				o = ExecutionContext.getCurrentContext().getVariablesManager().getFirstVariableMatching(excelFilenamePattern);
+		} else {		
+			if(context!=null) {
+				Object o = null;
+				if(workbookPath.isEmpty()) {
+					Pattern excelFilenamePattern = Pattern.compile("^.*\\.xls(x)?$");
+					o = context.getVariablesManager().getFirstVariableMatching(excelFilenamePattern);
+				} else {
+					o = context.getVariablesManager().getVariable(ArtefactHandler.FILE_VARIABLE_PREFIX + workbookPath);
+				}
+				
+				if(o!=null && o instanceof File) {
+					workBookFile = (File) o;
+				} else {
+					throw new RuntimeException("The workbook '" + workbookPath + "' couldn't be found.");
+				}
+				
 			} else {
-				o = ExecutionContext.getCurrentContext().getVariablesManager().getVariable(ArtefactHandler.FILE_VARIABLE_PREFIX + workbookPath);
-			}
-			
-			if(o!=null && o instanceof File) {
-				workBookFile = (File) o;
-			} else {
-				throw new RuntimeException("The workbook '" + workbookPath + "' couldn't be found.");
+				throw new RuntimeException("Unable to lookup workbook '" + workbookPath + "' because the context is null. This should never happen");
 			}
 		}
 		return workBookFile;

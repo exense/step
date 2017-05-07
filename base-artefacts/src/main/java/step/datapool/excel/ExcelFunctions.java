@@ -60,7 +60,8 @@ public class ExcelFunctions {
 	 * @return				Zelleninhalt als String
 	 */
 	public static String getCell(String workbookPath, String sheetName, String cellIndex) {
-		File workBookFile = ExcelFileLookup.lookup(workbookPath);
+		ExcelFileLookup excelFileLookup = new ExcelFileLookup(null);
+		File workBookFile = excelFileLookup.lookup(workbookPath);
 		return getCell(workBookFile, sheetName, cellIndex);
 	}
 		

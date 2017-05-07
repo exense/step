@@ -53,10 +53,10 @@ public class TestSetHandlerTest extends AbstractArtefactHandlerTest {
 	private void execute(HashSet<Long> threadIdSet, String tecExecutionThreads, String childNamePattern) {
 		setupContext();
 		
-		ExecutionContext.getCurrentContext().getVariablesManager().putVariable(
-				ExecutionContext.getCurrentContext().getReport(), "tec.execution.threads", tecExecutionThreads);
+		context.getVariablesManager().putVariable(
+				context.getReport(), "tec.execution.threads", tecExecutionThreads);
 		
-		ExecutionContext.getCurrentContext().getVariablesManager().getVariable("var");
+		context.getVariablesManager().getVariable("var");
 		
 		TestSet set = new TestSet();
 		add(set);		

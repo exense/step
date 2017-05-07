@@ -26,7 +26,6 @@ import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ExecutionContext;
 import step.core.variables.VariablesManager;
 
 public class SetVarHandlerTest extends AbstractArtefactHandlerTest {
@@ -41,7 +40,7 @@ public class SetVarHandlerTest extends AbstractArtefactHandlerTest {
 
 		execute(set);
 		
-		VariablesManager v = ExecutionContext.getCurrentContext().getVariablesManager();
+		VariablesManager v = context.getVariablesManager();
 		
 		assertEquals("val1",v.getVariable("var"));
 

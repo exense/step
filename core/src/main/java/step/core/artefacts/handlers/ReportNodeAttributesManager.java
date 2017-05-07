@@ -26,16 +26,23 @@ import step.core.variables.VariablesManager;
 
 public class ReportNodeAttributesManager {
 
+	private ExecutionContext context;
+	
+	public ReportNodeAttributesManager(ExecutionContext context) {
+		super();
+		this.context = context;
+	}
+
 	private static String CUSTOM_ATTRIBUTES_PREFIX = "#customAttributes#";
 	
-	public static void addCustomAttribute(String key, String value) {
-		VariablesManager varMan = ExecutionContext.getCurrentContext().getVariablesManager();
+	public void addCustomAttribute(String key, String value) {
+		VariablesManager varMan = context.getVariablesManager();
 		varMan.putVariable(ExecutionContext.getCurrentReportNode(), CUSTOM_ATTRIBUTES_PREFIX+key, value);
 	}
 	
-	public static Map<String, String> getCustomAttributes() {
+	public Map<String, String> getCustomAttributes() {
 		Map<String,String> result = new HashMap<>();
-		VariablesManager varMan = ExecutionContext.getCurrentContext().getVariablesManager();
+		VariablesManager varMan = context.getVariablesManager();
 		Map<String, Object> allVars = varMan.getAllVariables();
 		for(String varName:allVars.keySet()) {
 			if(varName.startsWith(CUSTOM_ATTRIBUTES_PREFIX)) {

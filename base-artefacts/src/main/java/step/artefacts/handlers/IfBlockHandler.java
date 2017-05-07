@@ -39,7 +39,7 @@ public class IfBlockHandler extends ArtefactHandler<IfBlock, IfBlockReportNode> 
 	private void evaluateExpressionAndDelegate(IfBlockReportNode node, IfBlock testArtefact, boolean execution) {
 		try {
 			if(testArtefact.getCondition().get()) {
-				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 				if(execution) {
 					scheduler.execute_(node, testArtefact);
 				} else {

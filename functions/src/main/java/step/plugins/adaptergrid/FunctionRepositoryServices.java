@@ -47,7 +47,6 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
-import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
 import step.functions.Function;
 import step.functions.FunctionClient;
 import step.functions.FunctionClient.FunctionTokenHandle;
@@ -188,12 +187,8 @@ public class FunctionRepositoryServices extends AbstractServices {
 				if(output.getAttachments()!=null) {
 					for(Attachment a:output.getAttachments()) {
 						AttachmentMeta attachmentMeta;
-						try {
-							attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
-							attachmentMetas.add(attachmentMeta);
-						} catch (AttachmentQuotaException e) {
-							
-						}
+						attachmentMeta = reportNodeAttachmentManager.createAttachmentWithoutQuotaCheck(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+						attachmentMetas.add(attachmentMeta);
 					}
 				}
 			} finally {

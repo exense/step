@@ -23,6 +23,7 @@ import java.util.HashMap;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
+import step.core.execution.ExecutionContext;
 
 public class ArtefactHandlerRegistry {
 	
@@ -30,7 +31,7 @@ public class ArtefactHandlerRegistry {
 	
 	private final HashMap<Class<?>, Class<?>> register = new HashMap<>();
 
-	public ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(Class<AbstractArtefact> artefactClass) {
+	public ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(Class<AbstractArtefact> artefactClass, ExecutionContext context) {
 		Artefact artefact = artefactClass.getAnnotation(Artefact.class);
 		if(artefact!=null) {
 			@SuppressWarnings("unchecked")
@@ -43,6 +44,7 @@ public class ArtefactHandlerRegistry {
 					throw new RuntimeException("Unable to instanciate artefact handler for the artefact class " + artefactClass, e);
 				}
 				
+				artefactHandler.init(context);
 				return artefactHandler;
 			} else {
 				throw new RuntimeException("No artefact handler found for the artefact class " + artefactClass);			

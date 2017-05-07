@@ -31,9 +31,7 @@ import step.core.execution.model.ReportExport;
 import step.core.variables.VariablesManager;
 
 public class ExecutionContext extends AbstractContext  {
-	
-	private static ThreadLocal<ExecutionContext> contextRegistry = new ThreadLocal<>();
-	
+		
 	private static ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
 	
 	private GlobalContext globalContext;
@@ -95,15 +93,6 @@ public class ExecutionContext extends AbstractContext  {
 	public void setExecutionTaskID(String executionTaskID) {
 		this.executionTaskID = executionTaskID;
 	}
-
-	public static ExecutionContext getCurrentContext() {
-		ExecutionContext context = contextRegistry.get();
-		if(context==null) {
-			throw new RuntimeException("ExecutionContext is null! Ensure that the thread has been linked to the ExecutionContext " +
-					"by calling 'ExecutionContext.setCurrentContext(context)'");
-		}
-		return context;
-	}
 	
 	public ReportNodeCache getReportNodeCache() {
 		return reportNodeCache;
@@ -123,7 +112,6 @@ public class ExecutionContext extends AbstractContext  {
 	}
 	
 	public static void setCurrentContext(ExecutionContext context) {
-		contextRegistry.set(context);
 		context.getGlobalContext().getPluginManager().getProxy().associateThread(context, Thread.currentThread());
 	}
 

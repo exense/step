@@ -70,7 +70,7 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 	private void initDataSetAndAddItToContext(ReportNode node, DataSetArtefact testArtefact) {
 		final DataSet<?> dataSet;
 		try {
-			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource());
+			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource(), context);
 			dataSet.init();
 			ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
 			

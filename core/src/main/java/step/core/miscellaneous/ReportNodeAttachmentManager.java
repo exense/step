@@ -37,7 +37,7 @@ import step.core.variables.UndefinedVariableException;
 import step.core.variables.VariablesManager;
 
 
-
+// TODO refactor this class to remove the ExecutionContext dependency 
 public class ReportNodeAttachmentManager {
 
 	public static String QUOTA_COUNT_VARNAME = "tec.quota.attachments.count";
@@ -48,13 +48,22 @@ public class ReportNodeAttachmentManager {
 	
 	private AttachmentManager attachmentManager;
 	
+	private ExecutionContext context;
+	
+	public ReportNodeAttachmentManager(ExecutionContext context) {
+		super();
+		this.context = context;
+		this.attachmentManager = context.getGlobalContext().getAttachmentManager();
+	}
+
+	// Warning: only use this constructor if you know that you will only use the method createAttachmentWithoutQuotaCheck. 
+	// The other methods need an ExecutionContext to check the quota usage
 	public ReportNodeAttachmentManager(AttachmentManager attachmentManager) {
 		super();
 		this.attachmentManager = attachmentManager;
 	}
 
 	private boolean checkAndUpateAttachmentQuota() {
-		ExecutionContext context = ExecutionContext.getCurrentContext();
 		synchronized (context) {
 			VariablesManager varManager = context.getVariablesManager();
 			
@@ -75,7 +84,7 @@ public class ReportNodeAttachmentManager {
 			}
 			
 			if(quota==count) {
-				logger.info(ExecutionContext.getCurrentContext().getExecutionId().toString() + ". Maximum number of attachment (" +quota+") reached. Next attachments will be skipped.");
+				logger.info(context.getExecutionId().toString() + ". Maximum number of attachment (" +quota+") reached. Next attachments will be skipped.");
 			}
 			
 			return quota>=count;
@@ -107,23 +116,27 @@ public class ReportNodeAttachmentManager {
 	
 	public AttachmentMeta createAttachment(byte[] content, String filename) throws AttachmentQuotaException {
 		if(checkAndUpateAttachmentQuota()) {
-			AttachmentContainer container = attachmentManager.createAttachmentContainer();
-			try {
-				BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(new File(container.getContainer().getAbsoluteFile()+"/"+filename)));
-				bos.write(content);
-				bos.close();
-			} catch (IOException ex) {
-				logger.error("Unable to write exception.log", ex);
-			}
-			
-			AttachmentMeta attachment = container.getMeta();
-			attachment.setName(filename);
-			return attachment;
+			return createAttachmentWithoutQuotaCheck(content, filename);
 		} else {
-			logger.debug(ExecutionContext.getCurrentContext().getExecutionId().toString() + ". Skipping attachment \"" + filename + "\"");
+			logger.debug(context.getExecutionId().toString() + ". Skipping attachment \"" + filename + "\"");
 			throw new AttachmentQuotaException("The attachment " + filename + " has been skipped because the test " +
 					"generated more than the maximum number of attachments permitted.");
 		}
+	}
+
+	public AttachmentMeta createAttachmentWithoutQuotaCheck(byte[] content, String filename) {
+		AttachmentContainer container = attachmentManager.createAttachmentContainer();
+		try {
+			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(new File(container.getContainer().getAbsoluteFile()+"/"+filename)));
+			bos.write(content);
+			bos.close();
+		} catch (IOException ex) {
+			logger.error("Unable to write exception.log", ex);
+		}
+		
+		AttachmentMeta attachment = container.getMeta();
+		attachment.setName(filename);
+		return attachment;
 	}
 	
 	public void attach(byte[] content, String filename, ReportNode reportNode ) {
@@ -131,7 +144,7 @@ public class ReportNodeAttachmentManager {
 			AttachmentMeta attachment = createAttachment(content, filename);
 			reportNode.addAttachment(attachment);
 		} catch (AttachmentQuotaException e) {
-			logger.debug(ExecutionContext.getCurrentContext().getExecutionId().toString() + ". Skipping attachment \"" + filename + "\"");
+			logger.debug(context.getExecutionId().toString() + ". Skipping attachment \"" + filename + "\"");
 			reportNode.addError("The attachment " + filename + " has been skipped because the test "
 					+ "generated more than the maximum number of attachments permitted.");
 		}

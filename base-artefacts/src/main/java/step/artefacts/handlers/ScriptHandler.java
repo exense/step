@@ -24,7 +24,6 @@ import step.artefacts.Script;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ExecutionContext;
 import step.expressions.ExpressionHandler;
 
 public class ScriptHandler extends ArtefactHandler<Script, ReportNode> {
@@ -37,7 +36,7 @@ public class ScriptHandler extends ArtefactHandler<Script, ReportNode> {
 	@Override
 	protected void execute_(ReportNode node, Script testArtefact) {
 		ExpressionHandler expressionHandler = context.getGlobalContext().getExpressionHandler();
-		Map<String, Object> bindings = ExecutionContext.getCurrentContext().getVariablesManager().getAllVariables();
+		Map<String, Object> bindings = context.getVariablesManager().getAllVariables();
 		
 		expressionHandler.evaluateGroovyExpression(testArtefact.getScript(), bindings);
 		node.setStatus(ReportNodeStatus.PASSED);

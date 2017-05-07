@@ -16,10 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.core.tokenhandlers;
+package step.plugins.functions.types.composite;
 
 import org.bson.types.ObjectId;
 
+import step.artefacts.handlers.CallFunctionHandler;
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -35,18 +36,14 @@ import step.grid.io.OutputMessage;
 
 public class ArtefactMessageHandler implements MessageHandler {
 
-	public static final String ARTEFACTID = "$artefactid";
-		
-	public static final String PARENTREPORTID = "$parentreportid";
-
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message)
 			throws Exception {
-		ExecutionContext executionContext = ExecutionContext.getCurrentContext();
+		ExecutionContext executionContext = (ExecutionContext) token.getToken().getAttachedObject(CallFunctionHandler.EXECUTION_CONTEXT_KEY);
 		GlobalContext globalContext = executionContext.getGlobalContext();
 		
-		String artefactId = message.getProperties().get(ARTEFACTID);
-		String parentReportId = message.getProperties().get(PARENTREPORTID);
+		String artefactId = message.getProperties().get(CallFunctionHandler.ARTEFACTID);
+		String parentReportId = message.getProperties().get(CallFunctionHandler.PARENTREPORTID);
 		
 		ReportNode parentNode;
 		parentNode = new ReportNode();
@@ -68,7 +65,7 @@ public class ArtefactMessageHandler implements MessageHandler {
 		executionContext.getVariablesManager().putVariable(parentNode, VariableType.IMMUTABLE, "output", output);
 		
 		try {
-			ReportNode node = ArtefactHandler.delegateExecute(artefact,parentNode);
+			ReportNode node = ArtefactHandler.delegateExecute(executionContext, artefact,parentNode);
 			if(node.getStatus()== ReportNodeStatus.TECHNICAL_ERROR || node.getStatus()== ReportNodeStatus.FAILED) {
 				output.setError("Error in composite execution. Composite status: " + node.getStatus() + 
 						(node.getError()!=null?". Error message: "+node.getError().getMsg():""));						

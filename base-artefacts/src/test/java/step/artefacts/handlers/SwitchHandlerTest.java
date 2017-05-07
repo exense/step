@@ -24,12 +24,11 @@ import org.junit.Test;
 
 import step.artefacts.Case;
 import step.artefacts.IfBlock;
-import step.artefacts.Switch;
 import step.artefacts.Set;
+import step.artefacts.Switch;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ExecutionContext;
 
 public class SwitchHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -37,10 +36,10 @@ public class SwitchHandlerTest extends AbstractArtefactHandlerTest {
 	public void testTrue() {
 		setupContext();
 		
-		ExecutionContext.getCurrentContext().getVariablesManager().putVariable(
-				ExecutionContext.getCurrentContext().getReport(), "var", "val1");
+		context.getVariablesManager().putVariable(
+				context.getReport(), "var", "val1");
 		
-		ExecutionContext.getCurrentContext().getVariablesManager().getVariable("var");
+		context.getVariablesManager().getVariable("var");
 		
 		Switch select = new Switch();
 		select.setExpression(new DynamicValue<>("'val1'", ""));

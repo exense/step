@@ -36,8 +36,10 @@ import step.core.execution.ExecutionTestHelper;
 
 public class AbstractArtefactHandlerTest {
 	
+	ExecutionContext context;
+	
 	protected void setupContext() {
-		ExecutionTestHelper.setupContext();
+		context = ExecutionTestHelper.setupContext();
 	}
 	
 	protected <T extends AbstractArtefact> T add(T artefact) {
@@ -46,7 +48,7 @@ public class AbstractArtefactHandlerTest {
 	}
 
 	private ArtefactAccessor getArtefactAccessor() {
-		return ExecutionContext.getCurrentContext().getGlobalContext().getArtefactAccessor();
+		return context.getGlobalContext().getArtefactAccessor();
 	}
 	
 	protected <T extends AbstractArtefact> T addAsChildOf(T artefact, AbstractArtefact parent) {
@@ -55,15 +57,15 @@ public class AbstractArtefactHandlerTest {
 	}
 	
 	protected void createSkeleton(AbstractArtefact artefact) {
-		ArtefactHandler.delegateCreateReportSkeleton(artefact,ExecutionContext.getCurrentContext().getReport());
+		ArtefactHandler.delegateCreateReportSkeleton(context, artefact,context.getReport());
 	}
 	
 	protected void execute(AbstractArtefact artefact) {
-		ArtefactHandler.delegateExecute(artefact,ExecutionContext.getCurrentContext().getReport());
+		ArtefactHandler.delegateExecute(context, artefact,context.getReport());
 	}
 	
 	protected ReportNode getFirstReportNode() {
-		return getReportNodeAccessor().getChildren(ExecutionContext.getCurrentContext().getReportNodeTree().getRoot().getId()).next();
+		return getReportNodeAccessor().getChildren(context.getReportNodeTree().getRoot().getId()).next();
 	}
 	
 	protected List<ReportNode> getChildren(ReportNode node) {
@@ -71,7 +73,7 @@ public class AbstractArtefactHandlerTest {
 	}
 
 	private ReportNodeAccessor getReportNodeAccessor() {
-		return ExecutionContext.getCurrentContext().getGlobalContext().getReportAccessor();
+		return context.getGlobalContext().getReportAccessor();
 	}
 	
 	protected CheckArtefact newTestArtefact(final ReportNodeStatus status) {

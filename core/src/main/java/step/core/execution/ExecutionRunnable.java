@@ -67,8 +67,8 @@ public class ExecutionRunnable implements Runnable {
 			logger.info("Starting test execution. Execution ID: " + context.getExecutionId());
 			updateStatus(ExecutionStatus.RUNNING);
 						
-			ArtefactHandler.delegateCreateReportSkeleton(artefact, rootReportNode);
-			ArtefactHandler.delegateExecute(artefact, rootReportNode);
+			ArtefactHandler.delegateCreateReportSkeleton(context, artefact, rootReportNode);
+			ArtefactHandler.delegateExecute(context, artefact, rootReportNode);
 
 			logger.debug("Test execution ended. Reporting result.... Execution ID: " + context.getExecutionId());
 

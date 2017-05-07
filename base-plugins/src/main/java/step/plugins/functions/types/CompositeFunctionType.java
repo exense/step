@@ -4,13 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import step.artefacts.Sequence;
+import step.artefacts.handlers.CallFunctionHandler;
 import step.core.artefacts.AbstractArtefact;
-import step.core.tokenhandlers.ArtefactMessageHandler;
 import step.functions.Function;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
+import step.plugins.functions.types.composite.ArtefactMessageHandler;
 
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
 
@@ -33,13 +34,13 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	
 	@Override
 	public String getHandlerChain(CompositeFunction function) {
-		return "class:step.core.tokenhandlers.ArtefactMessageHandler";
+		return "class:" + ArtefactMessageHandler.class.getName();
 	}
 
 	@Override
 	public Map<String, String> getHandlerProperties(CompositeFunction function) {
 		Map<String, String> props = new HashMap<>();
-		props.put(ArtefactMessageHandler.ARTEFACTID, function.getArtefactId());
+		props.put(CallFunctionHandler.ARTEFACTID, function.getArtefactId());
 		return props;
 	}
 

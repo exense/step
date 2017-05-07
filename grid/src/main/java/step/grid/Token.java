@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.grid;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -35,6 +36,8 @@ public class Token {
 	Map<String, String> attributes;
 	
 	Map<String, Interest> selectionPatterns;
+	
+	Map<String, Object> contextObjects;
 
 	public Token() {
 		super();
@@ -75,5 +78,17 @@ public class Token {
 
 	public void setSelectionPatterns(Map<String, Interest> selectionPatterns) {
 		this.selectionPatterns = selectionPatterns;
+	}
+	
+	
+	public Object getAttachedObject(Object key) {
+		return contextObjects!=null?contextObjects.get(key):null;
+	}
+
+	public synchronized Object attachObject(String key, Object value) {
+		if(contextObjects==null) {
+			contextObjects = new HashMap<>();
+		}
+		return contextObjects.put(key, value);
 	}
 }

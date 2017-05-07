@@ -50,17 +50,21 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
+	protected ReportNodeAttributesManager reportNodeAttributesManager;
+	
 	public static String FILE_VARIABLE_PREFIX = "file:";
 	public static String CONTINUE_EXECUTION = "tec.continueonerror";
 	public static String CONTINUE_EXECUTION_ONCE = "tec.continueonerror.once";
 
 	
 	public ArtefactHandler() {
-		super();
-		
-		context = ExecutionContext.getCurrentContext();
-		
-		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context.getGlobalContext().getAttachmentManager());
+		super();		
+	}
+	
+	public void init(ExecutionContext context) {
+		this.context = context;
+		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
+		reportNodeAttributesManager = new ReportNodeAttributesManager(context);
 	}
 	
 	private enum Phase {
@@ -106,7 +110,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 
 	private void addCustomReportNodeAttributes(REPORT_NODE node) {
-		for(Entry<String,String> entry:((Map<String,String>)ReportNodeAttributesManager.getCustomAttributes()).entrySet()) {
+		for(Entry<String,String> entry:((Map<String,String>)reportNodeAttributesManager.getCustomAttributes()).entrySet()) {
 			node.addCustomAttribute(entry.getKey(), entry.getValue());
 		}
 	}
@@ -130,7 +134,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		try {
 			context.getGlobalContext().getDynamicBeanResolver().evaluate(clonedArtefact, getBindings());
 			
-			ArtefactFilter filter = ExecutionContext.getCurrentContext().getExecutionParameters().getArtefactFilter();
+			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(clonedArtefact)) {
 				node.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
@@ -193,7 +197,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			context.getGlobalContext().getDynamicBeanResolver().evaluate(clonedArtefact, getBindings());
 			node.setArtefactInstance(clonedArtefact);
 			
-			ArtefactFilter filter = ExecutionContext.getCurrentContext().getExecutionParameters().getArtefactFilter();
+			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(clonedArtefact)) {
 				node.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
@@ -232,24 +236,32 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected abstract void execute_(REPORT_NODE node, ARTEFACT testArtefact);
 
 	@SuppressWarnings("unchecked")
-	public static void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
+	public static void delegateCreateReportSkeleton(ExecutionContext context, AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
 		ArtefactHandler<AbstractArtefact, ReportNode> testArtefactHandler = ArtefactHandlerRegistry.getInstance()
-				.getArtefactHandler((Class<AbstractArtefact>) artefact.getClass());
+				.getArtefactHandler((Class<AbstractArtefact>) artefact.getClass(), context);
 		testArtefactHandler.createReportSkeleton(parentNode, artefact, newVariables);
 	}
 	
-	public static void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
-		delegateCreateReportSkeleton(artefact, parentNode, null);
+	public static void delegateCreateReportSkeleton(ExecutionContext context, AbstractArtefact artefact, ReportNode parentNode) {
+		delegateCreateReportSkeleton(context, artefact, parentNode, null);
 	}
 	
-	public static ReportNode delegateExecute(AbstractArtefact artefact, ReportNode parentNode) {
-		return delegateExecute(artefact, parentNode, null);
+	public void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
+		delegateCreateReportSkeleton(context, artefact, parentNode, null);
+	}
+	
+	public static ReportNode delegateExecute(ExecutionContext context, AbstractArtefact artefact, ReportNode parentNode) {
+		return delegateExecute(context, artefact, parentNode, null);
+	}
+	
+	public ReportNode delegateExecute(AbstractArtefact artefact, ReportNode parentNode) {
+		return delegateExecute(context, artefact, parentNode, null);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static ReportNode delegateExecute(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
+	public static ReportNode delegateExecute(ExecutionContext context, AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
 		ArtefactHandler<AbstractArtefact, ReportNode> testArtefactHandler = ArtefactHandlerRegistry.getInstance()
-				.getArtefactHandler((Class<AbstractArtefact>) artefact.getClass());
+				.getArtefactHandler((Class<AbstractArtefact>) artefact.getClass(), context);
 		return testArtefactHandler.execute(parentNode, artefact, newVariables);
 	}
 	
@@ -277,9 +289,13 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	public abstract REPORT_NODE createReportNode_(ReportNode parentNode, ARTEFACT testArtefact);	
 	
-	public static List<AbstractArtefact> getChildren(AbstractArtefact artefact) { 
-		ArtefactCache artefactCache = ExecutionContext.getCurrentContext().getArtefactCache();
-		ArtefactAccessor accessor = ExecutionContext.getCurrentContext().getGlobalContext().getArtefactAccessor();
+	public List<AbstractArtefact> getChildren(AbstractArtefact artefact) { 
+		return getChildren(artefact, context);
+	}
+	
+	public static List<AbstractArtefact> getChildren(AbstractArtefact artefact, ExecutionContext context) { 
+		ArtefactCache artefactCache = context.getArtefactCache();
+		ArtefactAccessor accessor = context.getGlobalContext().getArtefactAccessor();
 		List<AbstractArtefact> result = new ArrayList<>();
 		if(artefact.getChildrenIDs()!=null) {
 			for(ObjectId childrenID:artefact.getChildrenIDs()) {

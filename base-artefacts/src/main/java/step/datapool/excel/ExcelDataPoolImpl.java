@@ -36,14 +36,18 @@ import org.apache.poi.ss.util.CellReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionContextAware;
 import step.core.miscellaneous.ValidationException;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataSet;
 
-public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
+public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> implements ExecutionContextAware {
 	
 	private static Logger logger = LoggerFactory.getLogger(ExcelDataPoolImpl.class);
 	
+	private ExecutionContext context;
+		
 	WorkbookSet workbookSet;
 		
 	Sheet sheet;
@@ -68,7 +72,8 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 		
 		logger.debug("book: " + bookName + " sheet: " + sheetName);
 		
-		File workBookFile = ExcelFileLookup.lookup(bookName);
+		ExcelFileLookup excelFileLookup = new ExcelFileLookup(context);
+		File workBookFile = excelFileLookup.lookup(bookName);
 		
 		forWrite = configuration.getForWrite().get();
 		workbookSet = new WorkbookSet(workBookFile, ExcelFunctions.getMaxExcelSize(), forWrite, true);
@@ -312,5 +317,10 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 		} else {
 			throw new RuntimeException("Add row not implemented for object of type '"+rowInput_.getClass());
 		}
+	}
+
+	@Override
+	public void setContext(ExecutionContext executionContext) {
+		this.context = executionContext;
 	}
 }

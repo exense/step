@@ -47,7 +47,7 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 		beforeDelegation(node, testArtefact);
 
 		AbstractArtefact a = context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
-		ReportNode resultNode = delegateExecute(a, node);
+		ReportNode resultNode = delegateExecute(context, a, node);
 		node.setStatus(resultNode.getStatus());
 	}
 

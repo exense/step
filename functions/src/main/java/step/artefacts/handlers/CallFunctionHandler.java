@@ -41,13 +41,13 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
-import step.core.tokenhandlers.ArtefactMessageHandler;
 import step.datapool.DataSetHandle;
 import step.functions.Function;
 import step.functions.FunctionClient;
 import step.functions.FunctionClient.FunctionTokenHandle;
 import step.functions.Input;
 import step.functions.Output;
+import step.grid.Token;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.plugins.adaptergrid.GridPlugin;
@@ -56,7 +56,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	public static final String STEP_NODE_KEY = "currentStep";
 	
-	protected final FunctionClient functionClient;
+	protected FunctionClient functionClient;
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
@@ -64,10 +64,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	
 	private TokenSelectorHelper tokenSelectorHelper;
 	
-	public CallFunctionHandler() {
-		super();
+	@Override
+	public void init(ExecutionContext context) {
+		super.init(context);
 		functionClient = (FunctionClient) context.getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
-		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context.getGlobalContext().getAttachmentManager());
+		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
 		this.tokenSelectorHelper = new TokenSelectorHelper(functionClient, dynamicJsonObjectResolver);
 	}
@@ -75,7 +76,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	@Override
 	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {}
 
-
+	public static final String EXECUTION_CONTEXT_KEY = "$executionContext";
+	
 	@Override
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) {
 		String argumentStr = testArtefact.getArgument().get();
@@ -92,6 +94,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			releaseTokenAfterExecution = false;
 		} else {
 			token = tokenSelectorHelper.selectToken(testArtefact, functionClient, getBindings());
+		}
+		
+		Token gridToken = token.getToken().getToken();
+		if(gridToken.isLocal()) {
+			gridToken.attachObject(EXECUTION_CONTEXT_KEY, context);
 		}
 				
 		try {
@@ -209,7 +216,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	private void callChildrenArtefacts(CallFunctionReportNode node, CallFunction testArtefact) {
 		if(testArtefact.getChildrenIDs()!=null&&testArtefact.getChildrenIDs().size()>0) {
 			context.getVariablesManager().putVariable(node, "callReport", node);
-			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler();
+			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.execute_(node, testArtefact);				
 		}
 	}
@@ -222,6 +229,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		return attributes;
 	}
 
+	public static final String ARTEFACTID = "$artefactid";
+	
+	public static final String PARENTREPORTID = "$parentreportid";
+	
 	private Input buildInput(String argumentStr) {
 		JsonObject argument;
 		try {
@@ -238,7 +249,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
-		properties.put(ArtefactMessageHandler.PARENTREPORTID, ExecutionContext.getCurrentReportNode().getId().toString());
+		properties.put(PARENTREPORTID, ExecutionContext.getCurrentReportNode().getId().toString());
 		
 		Input input = new Input();
 		input.setArgument(argumentAfterResolving);
