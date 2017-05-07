@@ -27,6 +27,12 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+	<distributionManagement>
+		<repository>
+			<id>nexus</id>
+			<url>http://nexus.stepcloud.ch/nexus/content/repositories/releases</url>
+		</repository>
+	</distributionManagement>
 
 	<repositories>
 		<repository>
