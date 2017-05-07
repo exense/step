@@ -1,7 +1,7 @@
 {
 "gridHost":"http://localhost:8081",
 "registrationPeriod":1000,
-"gridReadTimeout":10000,
+"gridReadTimeout":20000,
 "workingDir":"../work",
 "tokenGroups":[
 {"capacity":10, 
