@@ -98,15 +98,19 @@ public class InitializationPlugin extends AbstractPlugin {
 				String name = null;
 				if(artefact instanceof CallFunction) {
 					CallFunction calllFunction = (CallFunction) artefact;
-					Function function = functionRepository.getFunctionById(calllFunction.getFunctionId());
-					if(function!=null && function.getAttributes()!=null && function.getAttributes().containsKey("name")) {
-						name = function.getAttributes().get("name");
+					if(calllFunction.getFunctionId()!=null) {
+						Function function = functionRepository.getFunctionById(calllFunction.getFunctionId());
+						if(function!=null && function.getAttributes()!=null && function.getAttributes().containsKey("name")) {
+							name = function.getAttributes().get("name");
+						}						
 					}
 				} else if(artefact instanceof CallPlan) {
 					CallPlan callPlan = (CallPlan) artefact;
-					AbstractArtefact calledArtefact = a.get(callPlan.getArtefactId());
-					if(calledArtefact != null && calledArtefact.getAttributes()!=null && calledArtefact.getAttributes().containsKey("name")) {
-						name = calledArtefact.getAttributes().get("name");
+					if(callPlan.getArtefactId()!=null) {
+						AbstractArtefact calledArtefact = a.get(callPlan.getArtefactId());
+						if(calledArtefact != null && calledArtefact.getAttributes()!=null && calledArtefact.getAttributes().containsKey("name")) {
+							name = calledArtefact.getAttributes().get("name");
+						}						
 					}
 				}
 				if(name == null) {
