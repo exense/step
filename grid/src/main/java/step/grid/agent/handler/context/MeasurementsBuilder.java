@@ -45,8 +45,8 @@ public class MeasurementsBuilder {
 		}
 	}
 	
-	public void stopMeasure(long end, Map<String, Object> data) {
-		Measure tr;
+	private Measure stopMeasure(long end, Map<String, Object> data) {
+		Measure tr = null;
 		synchronized (stack) {
 			tr = stack.pop();
 		}
@@ -59,15 +59,17 @@ public class MeasurementsBuilder {
 			}
 		} else {
 			throw new RuntimeException("No measure has been started. Please ensure to first call startMeasure before calling stopMeasure.");
-		}		
+		}
+		
+		return tr;
 	}
 	
-	public void stopMeasure(Map<String, Object> data) {
-		stopMeasure(System.currentTimeMillis(), data);
+	public Measure stopMeasure(Map<String, Object> data) {
+		return stopMeasure(System.currentTimeMillis(), data);
 	}
 	
-	public void stopMeasure() {
-		stopMeasure(null);
+	public Measure stopMeasure() {
+		return stopMeasure(null);
 	}
 	
 	public void addMeasure(String measureName, long aDurationMillis) {

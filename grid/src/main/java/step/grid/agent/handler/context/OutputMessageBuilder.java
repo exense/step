@@ -33,6 +33,7 @@ import javax.json.spi.JsonProvider;
 
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
+import step.grid.io.Measure;
 import step.grid.io.OutputMessage;
 
 public class OutputMessageBuilder {
@@ -48,6 +49,8 @@ public class OutputMessageBuilder {
 	private List<Attachment> attachments;
 	
 	private static JsonProvider jprov = JsonProvider.provider();
+	
+	private Measure lastMeasureHandle = null;
 
 	public OutputMessageBuilder() {
 		super();
@@ -142,10 +145,6 @@ public class OutputMessageBuilder {
 		measureHelper.startMeasure(id, begin);
 	}
 
-	public void stopMeasure(long end, Map<String, Object> data) {
-		measureHelper.stopMeasure(end, data);
-	}
-
 	public void addMeasure(String measureName, long durationMillis) {
 		measureHelper.addMeasure(measureName, durationMillis);
 	}
@@ -160,6 +159,15 @@ public class OutputMessageBuilder {
 
 	public void stopMeasure(Map<String, Object> data) {
 		measureHelper.stopMeasure(data);
+	}
+	
+	public void stopMeasureForAdditionalData() {
+		this.lastMeasureHandle = measureHelper.stopMeasure();
+	}
+	
+	public void setLastMeasureAdditionalData(Map<String, Object> data) {
+		this.lastMeasureHandle.setData(data);
+		this.lastMeasureHandle = null;
 	}
 
 	public OutputMessage build() {
