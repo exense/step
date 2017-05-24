@@ -36,23 +36,25 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
   	function($rootScope, $scope, $http, $location, $stateStorage) {
   	  $stateStorage.push($scope, 'repository', {});
   	    	  
-	  if($location.search().user) {
-	    $rootScope.context.userID = $location.search().user;  	      
-	  }
+  	  if($location.search().user) {
+  	    $rootScope.context.userID = $location.search().user;  	      
+  	  }
       
-      $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':$location.search()};
-      $scope.loading = true;
-      $http.post("rest/controller/repository/artefact/info",$scope.repoRef).then(
-          function(response) {
-            $scope.loading = false
-            $scope.artefactInfo = response.data;
-          }, 
-          function errorCallback(response) { 
-            $scope.loading = false
-            $scope.error = response.data;
-          });
-      
-      $scope.functions = {};
+  	  if($location.search().repositoryId) {
+  	    $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':$location.search()};
+  	    $scope.loading = true;
+  	    $http.post("rest/controller/repository/artefact/info",$scope.repoRef).then(
+  	        function(response) {
+  	          $scope.loading = false
+  	          $scope.artefactInfo = response.data;
+  	        }, 
+  	        function errorCallback(response) { 
+  	          $scope.loading = false
+  	          $scope.error = response.data;
+  	        });
+  	    
+  	    $scope.functions = {};  	    
+  	  }
   	 }
   	])
   	  
