@@ -29,6 +29,8 @@ import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import com.google.common.base.Predicate;
+
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
@@ -38,6 +40,19 @@ import step.grid.io.OutputMessage;
 public class SimpleJavaHandler implements MessageHandler {
 	
 	Reflections reflections;
+	
+	public SimpleJavaHandler(Class<?> clazz) {
+		super();
+		
+		final String className = clazz.getCanonicalName();
+	    final Predicate<String> filter = new Predicate<String>() {
+	        public boolean apply(String arg0) {
+	            return arg0.startsWith(className);
+	        }
+	    };
+		
+		reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forClass(clazz)).filterInputsBy(filter).setScanners(new MethodAnnotationsScanner()));
+	}
 	
 	public SimpleJavaHandler() {
 		super();
