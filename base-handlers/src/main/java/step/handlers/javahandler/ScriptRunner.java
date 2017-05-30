@@ -61,9 +61,30 @@ public class ScriptRunner {
 			return run(function, argument, new HashMap<String, String>());
 		}
 		
+		public OutputMessage run(Class<?> functionClass, String function, String argument) {
+			return run(functionClass, function, read(argument), new HashMap<String, String>());
+		}
+		
+		public OutputMessage run(Class<?> functionClass, String function, JsonObject argument) throws Exception {
+			return run(functionClass, function, argument, new HashMap<String, String>());
+		}
+		
+		public OutputMessage run(Class<?> functionClass, String function, String argument, Map<String, String> properties) throws Exception {
+			return run(functionClass, function, read(argument), properties);
+		}
+		
+		public OutputMessage run(Class<?> functionClass, String function, JsonObject argument, Map<String, String> properties) {
+			SimpleJavaHandler handler = new SimpleJavaHandler(functionClass);
+			return execute(function, argument, properties, handler);
+		}
+		
 		public OutputMessage run(String function, JsonObject argument, Map<String, String> properties) {
 			SimpleJavaHandler handler = new SimpleJavaHandler();
-			
+			return execute(function, argument, properties, handler);
+		}
+
+		private OutputMessage execute(String function, JsonObject argument, Map<String, String> properties,
+				SimpleJavaHandler handler) {
 			InputMessage input = new InputMessage();
 			input.setFunction(function);
 			input.setArgument(argument);			

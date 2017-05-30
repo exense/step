@@ -3,6 +3,7 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -55,7 +56,8 @@ public class SeleniumKeywordExample extends AbstractScript {
 	@Test
 	public void test() {
 	    ScriptContext ctx = ScriptRunner.getExecutionContext();
-	    OutputMessage result = ctx.run("Google_Search","{ \"search\" : \"denkbar step\" }");
+	    OutputMessage result = ctx.run(SeleniumKeywordExample.class,"Google_Search","{ \"search\" : \"denkbar step\" }");
+	    Assert.assertNull(result.getError());
 	    result.getPayload();
 	}
 
