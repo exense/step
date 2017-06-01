@@ -24,8 +24,8 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		filePath = this.configuration.getFile().get();
 		if (filePath == null || filePath.length() < 1)
 			throw new RuntimeException("file path is incorrect.");
+
 		initReader();
-		
 		doFirst_();
 	}
 	
@@ -50,6 +50,7 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		}
 		
 		initReader();
+		doFirst_();
 	}
 
 	public abstract void doFirst_();
