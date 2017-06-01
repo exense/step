@@ -191,7 +191,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		boolean persistBefore = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistbefore",true);		
 		boolean persistAfter = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
-		boolean persistOnlyNonPassed = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistonlynonpassed",true);
+		boolean persistOnlyNonPassed = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistonlynonpassed",false);
 		
 		try {
 			context.getGlobalContext().getDynamicBeanResolver().evaluate(clonedArtefact, getBindings());

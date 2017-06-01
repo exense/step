@@ -62,10 +62,9 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 				newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 				
 				ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
-				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+rowCount);
-				for(AbstractArtefact child:selectedChildren) {
+				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+rowCount);
+				for(AbstractArtefact child:selectedChildren)
 					iterationTestCase.addChild(child.getId());
-				}
 				
 				delegateCreateReportSkeleton(context, iterationTestCase, node, newVariable);
 			}
