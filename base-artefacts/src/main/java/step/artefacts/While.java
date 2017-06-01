@@ -30,7 +30,6 @@ public class While extends AbstractArtefact {
 	DynamicValue<Long> pacing = new DynamicValue<Long>();
 	DynamicValue<Long> timeout = new DynamicValue<Long>();
 	DynamicValue<Integer> maxIterations = new DynamicValue<Integer>();
-	DynamicValue<Integer> maxFailedLoops = new DynamicValue<Integer>();
 	
 	public While() {
 		super();
@@ -42,7 +41,6 @@ public class While extends AbstractArtefact {
 		setPacing(new DynamicValue<>(0L));
 		setTimeout(new DynamicValue<>(0L));
 		setMaxIterations(new DynamicValue<>(0));
-		setMaxFailedLoops(new DynamicValue<>(0));
 	}
 
 	public DynamicValue<Boolean> getCondition() {
@@ -77,11 +75,4 @@ public class While extends AbstractArtefact {
 		this.maxIterations = maxIterations;
 	}
 	
-	public DynamicValue<Integer> getMaxFailedLoops() {
-		return this.maxFailedLoops;
-	}
-
-	public void setMaxFailedLoops(DynamicValue<Integer> maxFailedLoops) {
-		this.maxFailedLoops = maxFailedLoops;
-	}
 }

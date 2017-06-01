@@ -29,6 +29,7 @@ import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicValue;
 
 public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
@@ -51,8 +52,6 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 		int maxIterations = maxIterationsValue==null?0:maxIterationsValue;
 		int currIterationsCount = 0;
 
-		Integer maxFailedLoopsValue = testArtefact.getMaxFailedLoops().get();
-		int maxFailedLoops = maxFailedLoopsValue==null?0:maxFailedLoopsValue;
 		int failedLoops = 0;
 		
 		Long pacingValue = testArtefact.getPacing().get();
@@ -63,29 +62,22 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 		try {
 			while(testArtefact.getCondition().get() 								// expression is true
 					&& 		  (timeout == 0 || System.currentTimeMillis() < maxTime)// infinite Timeout or timeout not reached
-					&&  (maxIterations == 0 || currIterationsCount < maxIterations) // maxIterations infinite or not reached
-					&& (maxFailedLoops == 0 || failedLoops < maxFailedLoops)) { 	// maxFailedLoops infinite or not reached
+					&&  (maxIterations == 0 || currIterationsCount < maxIterations)){ // maxIterations infinite or not reached
 
 				ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
 				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+currIterationsCount);
+				iterationTestCase.setPacing(new DynamicValue<Long>(pacing));
 				for(AbstractArtefact child:selectedChildren)
 					iterationTestCase.addChild(child.getId());
 
 				if(execution){
-					long iterationStartTime = System.currentTimeMillis();
-					long maxPacingTime = iterationStartTime + pacing;
-					
 					ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, new HashMap<>());
 
 					if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
 						failedLoops++;
 					}
-					
-					long now = System.currentTimeMillis();
-					if(now < maxPacingTime)
-						Thread.sleep(maxPacingTime - now);
 				}else{
-					ArtefactHandler.delegateCreateReportSkeleton(context, testArtefact, node);
+					ArtefactHandler.delegateCreateReportSkeleton(context, iterationTestCase, node);
 				}
 				
 				currIterationsCount++;
