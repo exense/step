@@ -254,10 +254,32 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     	$http.get("rest/functions/"+id).then(function(response) {
     	  var function_ = response.data;
     	  var remote = !(function_.type=="step.plugins.functions.types.CompositeFunction")
+
+    	  var targetObject = {};
     	  
-    	  var newArtefact = {attributes:{name:function_.attributes.name},"function":JSON.stringify(function_.attributes),"functionId":function_.id,"remote":{"value":remote},"_class":"CallFunction"};
-    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
-    		  reloadAfterArtefactInsertion(response.data);
+        if(function_.schema && function_.schema.required){
+          var valueShell = {"value" : "<init>", "dynamic" : false};
+        
+          _.each(function_.schema.required, function(element) {
+            targetObject[element] = valueShell;
+          });
+        }
+        
+        var newArtefact = {
+    	      "attributes":{name:function_.attributes.name},
+    	      "function":JSON.stringify(function_.attributes),
+    	      "functionId":function_.id,"remote":{"value":remote},
+    	      "_class":"CallFunction",
+    	      "argument": {  
+              "dynamic":false,
+              "value": JSON.stringify(targetObject),
+              "expression":null,
+              "expressionType":null
+           }
+    	    };
+
+        $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
+    	    reloadAfterArtefactInsertion(response.data);
     	  })
     		
     	});
