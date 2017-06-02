@@ -47,6 +47,7 @@ import step.functions.FunctionClient;
 import step.functions.FunctionClient.FunctionTokenHandle;
 import step.functions.Input;
 import step.functions.Output;
+import step.functions.validation.JsonSchemaValidator;
 import step.grid.Token;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
@@ -115,6 +116,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			} else {
 				Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
 				function = functionClient.getFunctionRepository().getFunctionByAttributes(attributes);
+			}
+			
+			if(context.getGlobalContext().getConfiguration().getPropertyAsBoolean("enforceSchemas", false)){
+				JsonSchemaValidator.validate(function.getSchema().toString(), input.getArgument().toString());
 			}
 			
 			OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken().getToken(), token.getAgentRef()});

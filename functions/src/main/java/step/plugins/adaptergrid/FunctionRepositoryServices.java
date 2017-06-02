@@ -263,6 +263,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 		Function newFunction = getFunctionClient().newFunction(type);
 		newFunction.setAttributes(new HashMap<>());
 		newFunction.getAttributes().put("name", "");
+		newFunction.setSchema(Json.createObjectBuilder().build());
 		return newFunction;
 	}
 }

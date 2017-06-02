@@ -20,6 +20,8 @@ package step.functions;
 
 import java.util.Map;
 
+import javax.json.JsonObject;
+
 import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -31,10 +33,9 @@ import step.core.dynamicbeans.DynamicValue;
 public class Function {
 	
 	ObjectId _id;
-	
 	Map<String, String> attributes;
-
 	DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
+	JsonObject schema;
 
 	public ObjectId getId() {
 		return _id;
@@ -58,5 +59,13 @@ public class Function {
 
 	public void setCallTimeout(DynamicValue<Integer> callTimeout) {
 		this.callTimeout = callTimeout;
+	}
+	
+	public JsonObject getSchema() {
+		return schema;
+	}
+
+	public void setSchema(JsonObject schema) {
+		this.schema = schema;
 	}
 }

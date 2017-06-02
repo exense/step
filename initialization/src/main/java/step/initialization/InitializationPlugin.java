@@ -18,10 +18,14 @@
  *******************************************************************************/
 package step.initialization;
 
+import java.io.StringReader;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import javax.json.Json;
+import javax.json.JsonObject;
 
 import org.jongo.MongoCollection;
 
@@ -140,8 +144,15 @@ public class InitializationPlugin extends AbstractPlugin {
 	private void setupDemo(GlobalContext context) {
 		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
-				
-		Function javaFunction = addScriptFunction(functionRepository, "Demo_Keyword_Java", "java", "../data/scripts/demo-java-keyword/target/classes");
+		
+		JsonObject schema = null;
+		if(context.getConfiguration().getPropertyAsBoolean("enforceSchemas", false)){
+			StringReader sr = new StringReader("{\"properties\":{\"label\":{\"type\":\"string\"}},\"required\":[\"label\"]}");
+			schema = Json.createReader(sr).readObject();
+			sr.close();
+		}
+		Function javaFunction = addScriptFunction(functionRepository, "Demo_Keyword_Java", "java", "../data/scripts/demo-java-keyword/target/classes", schema);
+		
 		Function javascriptFunction = addScriptFunction(functionRepository, "Demo_Keyword_Javascript", "javascript", "../data/scripts/Demo_Keyword_Javascript.js");
 		
 		Function googleSearch = addSeleniumFunction(functionRepository, "Google_Search", "java", "../data/scripts/demo-selenium-keyword/target/classes" );
@@ -234,14 +245,21 @@ public class InitializationPlugin extends AbstractPlugin {
 		artefacts.save(testCase);
 	}
 	
-
 	private Function addScriptFunction(FunctionRepositoryImpl functionRepository, String name, String scriptLanguage, String scriptFile) {
+		return addScriptFunction(functionRepository, name, scriptLanguage, scriptFile, null);
+	}
+	private Function addScriptFunction(FunctionRepositoryImpl functionRepository, String name, String scriptLanguage, String scriptFile, JsonObject schema) {
 		GeneralScriptFunction function = new GeneralScriptFunction();
 		Map<String, String> kwAttributes = new HashMap<>();
 		kwAttributes.put("name", name);
 		function.setAttributes(kwAttributes);
 		function.getScriptLanguage().setValue(scriptLanguage);
 		function.getScriptFile().setValue(scriptFile);
+		if(schema != null){
+			function.setSchema(schema);
+		}else{
+			function.setSchema(Json.createObjectBuilder().build());
+		}
 		functionRepository.addFunction(function);
 		return function;
 	}

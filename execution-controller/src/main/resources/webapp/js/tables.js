@@ -302,8 +302,6 @@ angular.module('dataTable', [])
           query = query + '?' + attr.params;
         }
         tableOptions.ajax = {'url':query,'type':'POST',beforeSend:function(a,b) {
-          console.log(a);
-          console.log(b);
           b.data = b.data + "&" + attr.params;
           
           if(scope.tabledef.params) {

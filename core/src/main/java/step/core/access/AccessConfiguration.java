@@ -1,6 +1,8 @@
 package step.core.access;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AccessConfiguration {
 	
@@ -9,9 +11,12 @@ public class AccessConfiguration {
 	boolean demo;
 	
 	List<String> roles;
+	
+	Map<String,String> miscParams;
 
 	public AccessConfiguration() {
 		super();
+		this.miscParams = new HashMap<>();
 	}
 
 	public boolean isDemo() {
@@ -38,4 +43,11 @@ public class AccessConfiguration {
 		this.roles = roles;
 	}
 
+	public Map<String, String> getMiscParams() {
+		return miscParams;
+	}
+
+	public void setMiscParams(Map<String, String> miscParams) {
+		this.miscParams = miscParams;
+	}
 }

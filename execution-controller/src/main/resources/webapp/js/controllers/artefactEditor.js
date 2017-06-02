@@ -353,6 +353,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
           "Return":{template:"partials/artefacts/return.html"},
           "Echo":{template:"partials/artefacts/echo.html"},
           "If":{template:"partials/artefacts/if.html"},
+          "While":{template:"partials/artefacts/while.html"},
           "CallFunction":{template:"partials/artefacts/callFunction.html"},
           "FunctionGroup":{template:"partials/artefacts/functionGroup.html"},
           "Set":{template:"partials/artefacts/set.html"},

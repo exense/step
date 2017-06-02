@@ -21,6 +21,7 @@ package step.core.dynamicbeans;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -52,17 +53,20 @@ public class DynamicBeanResolver {
 				}
 				
 				for(PropertyDescriptor descriptor:beanInfo.getPropertyDescriptors()) {
-					Object value = descriptor.getReadMethod().invoke(o);
-					if(value!=null) {
-						if(value instanceof DynamicValue) {
-							DynamicValue<?> dynamicValue = (DynamicValue<?>) value;
-							if(dynamicValue!=null) {
-								valueResolver.evaluate(dynamicValue, bindings);
-								evaluate(dynamicValue.get(), bindings);								
-							}
-						} else {
-							evaluate(value, bindings);
-						}			
+					Method method = descriptor.getReadMethod();
+					if(method != null){
+						Object value = method.invoke(o);
+						if(value!=null) {
+							if(value instanceof DynamicValue) {
+								DynamicValue<?> dynamicValue = (DynamicValue<?>) value;
+								if(dynamicValue!=null) {
+									valueResolver.evaluate(dynamicValue, bindings);
+									evaluate(dynamicValue.get(), bindings);								
+								}
+							} else {
+								evaluate(value, bindings);
+							}			
+						}
 					}
 				}
 			} catch (Exception e) {
