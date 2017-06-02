@@ -125,7 +125,7 @@ public class AccessServices extends AbstractServices {
 		conf.setRoles(accessManager.getRoles());
 		
 		// conf should cover more than just AccessConfiguration but we'll store the info here for right now
-		conf.getMiscParams().put("enforceSchemas", getContext().getConfiguration().getProperty("enforceSchemas"));
+		conf.getMiscParams().put("enforceSchemas", getContext().getConfiguration().getProperty("enforceSchemas", "false"));
 		return conf;
 	}
 	
