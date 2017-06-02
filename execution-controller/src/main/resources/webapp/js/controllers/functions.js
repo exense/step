@@ -227,6 +227,9 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
         if($scope.function_.attributes) {
           initialFunction.attributes = $scope.function_.attributes;
         }
+        if($scope.function_.schema) {
+          initialFunction.schema = $scope.function_.schema;
+        }
       }
       $scope.function_ = initialFunction;
     })  
@@ -239,23 +242,35 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
     $scope.function_ = function_;
   }
   
+  $scope.schemaStr = JSON.stringify($scope.function_.schema);
+  
   $scope.save = function (editAfterSave) {
-    $http.post("rest/functions",$scope.function_).then(function(response) {
-      var function_ = response.data;
-      $uibModalInstance.close(response.data);
+
+	var schemaJson;
+	try {
+  	schemaJson = JSON.parse($scope.schemaStr);
+  	$scope.function_.schema = schemaJson;
   	
-    	if(editAfterSave) {
-    	  $http.get("rest/functions/"+function_.id+"/editor").then(function(response){
-    	    var path = response.data;
-    	    if(path) {
-    	      $location.path(path);
-    	    } else {
-    	      Dialogs.showErrorMsg("No editor configured for this function type");
-    	    }
-        })     
-    	}
-    })
-  };
+  	$http.post("rest/functions",$scope.function_).then(function(response) {
+  	  var function_ = response.data;
+  	  $uibModalInstance.close(response.data);
+
+  	  if(editAfterSave) {
+  	    $http.get("rest/functions/"+function_.id+"/editor").then(function(response){
+  	      var path = response.data;
+  	      if(path) {
+  	        $location.path(path);
+  	      } else {
+  	        Dialogs.showErrorMsg("No editor configured for this function type");
+  	      }
+  	    })     
+  	  }
+  	})
+
+  	}catch(e){
+  		Dialogs.showErrorMsg("incorrect schema format (must be Json) : " + e);
+  	} 		
+   };
 
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
