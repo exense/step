@@ -232,6 +232,7 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
         }
       }
       $scope.function_ = initialFunction;
+      $scope.schemaStr = JSON.stringify($scope.function_.schema);
     })  
   }
   
@@ -240,10 +241,9 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
     $scope.loadInitialFunction();
   } else {
     $scope.function_ = function_;
+    $scope.schemaStr = JSON.stringify($scope.function_.schema);
   }
-  
-  $scope.schemaStr = JSON.stringify($scope.function_.schema);
-  
+
   $scope.save = function (editAfterSave) {
 
 	var schemaJson;
