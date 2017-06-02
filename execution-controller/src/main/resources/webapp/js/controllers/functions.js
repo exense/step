@@ -212,13 +212,16 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
            });
         return columns;
       };
-    } ])
-    
-.controller('newFunctionModalCtrl', function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dialogs,FunctionTypeRegistry) {
+    }])
+
+.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'Dialogs', 'AuthService','FunctionTypeRegistry',
+function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dialogs, AuthService, FunctionTypeRegistry) {
   $scope.functionTypeRegistry = FunctionTypeRegistry;
   
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
+  
+  $scope.isSchemaEnforced = AuthService.getConf().miscParams.enforceSchemas;
   
   $scope.loadInitialFunction = function() {
     $http.get("rest/functions/types/"+$scope.function_.type).then(function(response){
@@ -275,7 +278,7 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
-})
+}])
 
 .controller('executeFunctionModalCtrl', function ($scope, $uibModalInstance, $http, functionId) {
   

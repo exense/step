@@ -13,9 +13,9 @@
 			<select ng-change="loadInitialFunction()" ng-model="function_.type" ng-options="option as functionTypeRegistry.getLabel(option) for option in functionTypeRegistry.getTypes()" class="form-control" />
 		</div>
 		<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
-		<div class="form-group">
+		<div ng-show="isSchemaEnforced === 'true';" class="form-group">
 			<label>Schema</label> 
-			<input ng-model="schemaStr" class="form-control form-control-sm"></input>
+			<textarea ng-model="schemaStr" class="form-control form-control-sm"></textarea>
 		</div>
 	</form>
 	<div class="panel panel-default" style="margin-top: 20px">
