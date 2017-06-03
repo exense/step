@@ -253,34 +253,38 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     	
     	$http.get("rest/functions/"+id).then(function(response) {
     	  var function_ = response.data;
-    	  var remote = !(function_.type=="step.plugins.functions.types.CompositeFunction")
+        var remote = !(function_.type=="step.plugins.functions.types.CompositeFunction");
 
-    	  var newArtefact = {
+        var newArtefact = {
           "attributes":{name:function_.attributes.name},
           "function":JSON.stringify(function_.attributes),
           "functionId":function_.id,"remote":{"value":remote},
           "_class":"CallFunction"
          };
 
-    	  if(AuthService.getConf().miscParams.enforceSchemas === 'true'){
-    	    var targetObject = {};
+        if(AuthService.getConf().miscParams.enforceSchemas === 'true'){
+          var targetObject = {};
 
-    	    if(function_.schema && function_.schema.required){
-    	      var valueShell = {"value" : "<init>", "dynamic" : false};
+          if(function_.schema && function_.schema.required){
+            _.each(Object.keys(function_.schema.properties), function(prop) {
+              var value = "typeNotFound";
+              if(function_.schema.properties[prop].type){
+                value = function_.schema.properties[prop].type;
+                var propValue = {"value" : "<" + value + ">", "dynamic" : false};
+                targetObject[prop] = propValue;
+              }
+            });
 
-    	      _.each(function_.schema.required, function(element) {
-    	        targetObject[element] = valueShell;
-    	      });
-    	    }
+            newArtefact.argument = {  
+                "dynamic":false,
+                "value": JSON.stringify(targetObject),
+                "expression":null,
+                "expressionType":null
+            }
+          }
+        }
 
-    	    newArtefact.argument = {  
-    	        "dynamic":false,
-    	        "value": JSON.stringify(targetObject),
-    	        "expression":null,
-    	        "expressionType":null
-    	    }
-    	  }
-    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
+        $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
     	    reloadAfterArtefactInsertion(response.data);
     	  })
     		
