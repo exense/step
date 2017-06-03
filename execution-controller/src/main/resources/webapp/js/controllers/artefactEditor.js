@@ -255,30 +255,32 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     	  var function_ = response.data;
     	  var remote = !(function_.type=="step.plugins.functions.types.CompositeFunction")
 
-    	  var targetObject = {};
-    	  
-        if(function_.schema && function_.schema.required){
-          var valueShell = {"value" : "<init>", "dynamic" : false};
-        
-          _.each(function_.schema.required, function(element) {
-            targetObject[element] = valueShell;
-          });
-        }
-        
-        var newArtefact = {
-    	      "attributes":{name:function_.attributes.name},
-    	      "function":JSON.stringify(function_.attributes),
-    	      "functionId":function_.id,"remote":{"value":remote},
-    	      "_class":"CallFunction",
-    	      "argument": {  
-              "dynamic":false,
-              "value": JSON.stringify(targetObject),
-              "expression":null,
-              "expressionType":null
-           }
-    	    };
+    	  var newArtefact = {
+          "attributes":{name:function_.attributes.name},
+          "function":JSON.stringify(function_.attributes),
+          "functionId":function_.id,"remote":{"value":remote},
+          "_class":"CallFunction"
+         };
 
-        $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
+    	  if(AuthService.getConf().miscParams.enforceSchemas === 'true'){
+    	    var targetObject = {};
+
+    	    if(function_.schema && function_.schema.required){
+    	      var valueShell = {"value" : "<init>", "dynamic" : false};
+
+    	      _.each(function_.schema.required, function(element) {
+    	        targetObject[element] = valueShell;
+    	      });
+    	    }
+
+    	    newArtefact.argument = {  
+    	        "dynamic":false,
+    	        "value": JSON.stringify(targetObject),
+    	        "expression":null,
+    	        "expressionType":null
+    	    }
+    	  }
+    	  $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
     	    reloadAfterArtefactInsertion(response.data);
     	  })
     		
