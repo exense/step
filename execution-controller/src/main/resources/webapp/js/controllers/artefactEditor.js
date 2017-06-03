@@ -275,6 +275,11 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
               }
             });
 
+            _.each(function_.schema.required, function(prop) {
+              if(targetObject[prop])
+                targetObject[prop].value += " (REQ)";
+            });
+            
             newArtefact.argument = {  
                 "dynamic":false,
                 "value": JSON.stringify(targetObject),
