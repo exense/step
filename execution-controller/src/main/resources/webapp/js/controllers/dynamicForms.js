@@ -27,15 +27,16 @@ function initDynamicFormsCtrl($scope) {
     }
   }
   $scope.useConstantValue = function() {
-    delete $scope.dynamicValue.expression;
     $scope.dynamicValue.dynamic = false;
-    $scope.dynamicValue.value = '';
+    $scope.dynamicValue.value = $scope.dynamicValue.expression;
+    delete $scope.dynamicValue.expression;
     $scope.onSave();
   }
+  
   $scope.useDynamicExpression = function() {
-    delete $scope.dynamicValue.value;
     $scope.dynamicValue.dynamic = true;
-    $scope.dynamicValue.expression = '';
+    $scope.dynamicValue.expression = $scope.dynamicValue.value;
+    delete $scope.dynamicValue.value;
     $scope.onSave();
   }
 } 
