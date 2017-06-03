@@ -267,17 +267,24 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
 
           if(function_.schema && function_.schema.required){
             _.each(Object.keys(function_.schema.properties), function(prop) {
-              var value = "typeNotFound";
+              var value = "notype";
               if(function_.schema.properties[prop].type){
+                var propValue = {};
                 value = function_.schema.properties[prop].type;
-                var propValue = {"value" : "<" + value + ">", "dynamic" : false};
+                if(value === 'number' || value === 'integer')
+                  propValue = {"expression" : "<" + value + ">", "dynamic" : true};
+                else
+                  propValue = {"value" : "<" + value + ">", "dynamic" : false};
+                
                 targetObject[prop] = propValue;
               }
             });
 
             _.each(function_.schema.required, function(prop) {
-              if(targetObject[prop])
+              if(targetObject[prop].value)
                 targetObject[prop].value += " (REQ)";
+              if(targetObject[prop].expression)
+                targetObject[prop].expression += " (REQ)";
             });
             
             newArtefact.argument = {  
