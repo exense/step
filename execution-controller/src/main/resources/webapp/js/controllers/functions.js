@@ -221,7 +221,7 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
   
-  $scope.isSchemaEnforced = AuthService.getConf().miscParams.enforceSchemas;
+  $scope.isSchemaEnforced = AuthService.getConf().miscParams.enforceschemas;
   
   $scope.loadInitialFunction = function() {
     $http.get("rest/functions/types/"+$scope.function_.type).then(function(response){

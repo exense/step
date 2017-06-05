@@ -262,7 +262,7 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
           "_class":"CallFunction"
          };
 
-        if(AuthService.getConf().miscParams.enforceSchemas === 'true'){
+        if(AuthService.getConf().miscParams.enforceschemas === 'true'){
           var targetObject = {};
 
           if(function_.schema && function_.schema.required){
@@ -279,11 +279,11 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
                 targetObject[prop] = propValue;
               }
             });
-
+            
             _.each(function_.schema.required, function(prop) {
-              if(targetObject[prop].value)
+              if(targetObject[prop] && targetObject[prop].value)
                 targetObject[prop].value += " (REQ)";
-              if(targetObject[prop].expression)
+              if(targetObject[prop] && targetObject[prop].expression)
                 targetObject[prop].expression += " (REQ)";
             });
             

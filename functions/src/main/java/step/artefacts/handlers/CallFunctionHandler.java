@@ -118,7 +118,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				function = functionClient.getFunctionRepository().getFunctionByAttributes(attributes);
 			}
 			
-			if(context.getGlobalContext().getConfiguration().getPropertyAsBoolean("enforceSchemas", false)){
+			if(context.getGlobalContext().getConfiguration().getPropertyAsBoolean("enforceschemas", false)){
 				JsonSchemaValidator.validate(function.getSchema().toString(), input.getArgument().toString());
 			}
 			

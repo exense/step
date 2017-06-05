@@ -146,7 +146,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
 		JsonObject schema = null;
-		if(context.getConfiguration().getPropertyAsBoolean("enforceSchemas", false)){
+		if(context.getConfiguration().getPropertyAsBoolean("enforceschemas", false)){
 			StringReader sr = new StringReader("{\"properties\":{\"label\":{\"type\":\"string\"}},\"required\":[\"label\"]}");
 			schema = Json.createReader(sr).readObject();
 			sr.close();
