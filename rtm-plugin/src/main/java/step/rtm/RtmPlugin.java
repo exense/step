@@ -107,9 +107,13 @@ public class RtmPlugin extends AbstractPlugin {
 							Object val = entry.getValue();
 							if((key != null) && (val != null)){
 								if(	(val instanceof Long) || (val instanceof String)){
-										measurement.put(key, val);
+									measurement.put(key, val);
 								}else{
-									// ignore improper types
+									if(	(val instanceof Number)){
+										measurement.put(key, ((Integer) val).longValue());
+									}else{
+										// ignore improper types
+									}
 								}
 							}
 						}
