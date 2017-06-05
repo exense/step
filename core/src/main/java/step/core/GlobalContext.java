@@ -30,7 +30,6 @@ import step.core.artefacts.ArtefactManager;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.EventManager;
-import step.core.execution.ExecutionLifecycleManager;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
@@ -60,8 +59,6 @@ public class GlobalContext extends AbstractContext {
 	private ExecutionTaskAccessor scheduleAccessor;
 	
 	private UserAccessor userAccessor;
-	
-	private ExecutionLifecycleManager executionLifecycleManager;
 	
 	private ServiceRegistrationCallback serviceRegistrationCallback;
 	
@@ -164,15 +161,6 @@ public class GlobalContext extends AbstractContext {
 	public void setRepositoryObjectManager(
 			RepositoryObjectManager repositoryObjectManager) {
 		this.repositoryObjectManager = repositoryObjectManager;
-	}
-
-	public ExecutionLifecycleManager getExecutionLifecycleManager() {
-		return executionLifecycleManager;
-	}
-
-	public void setExecutionLifecycleManager(
-			ExecutionLifecycleManager executionLifecycleManager) {
-		this.executionLifecycleManager = executionLifecycleManager;
 	}
 	
 	public ServiceRegistrationCallback getServiceRegistrationCallback() {

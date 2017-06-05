@@ -29,6 +29,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.execution.model.ReportExport;
 import step.core.execution.model.ReportExportStatus;
+import step.core.repositories.Repository.ImportResult;
 
 public class RepositoryObjectManager {
 
@@ -49,7 +50,7 @@ public class RepositoryObjectManager {
 		repositories.put(id, repository);
 	}
 
-	public String importArtefact(RepositoryObjectReference artefact) throws Exception  {
+	public ImportResult importArtefact(RepositoryObjectReference artefact) throws Exception  {
 		String respositoryId = artefact.getRepositoryID();
 		Repository repository = getRepository(respositoryId);
 		return repository.importArtefact(artefact.getRepositoryParameters());

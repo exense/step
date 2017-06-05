@@ -21,16 +21,24 @@ package step.core.execution;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
+import step.core.repositories.Repository.ImportResult;
 
-public class ExecutionStatusManager {
+public class ExecutionManager {
 	
-	protected static void updateParameters(ExecutionContext context) {
-		ExecutionAccessor accessor = context.getGlobalContext().getExecutionAccessor();
-		Execution execution = accessor.get(context.getExecutionId());
+	private final ExecutionAccessor accessor;
+	
+	public ExecutionManager(GlobalContext globalContext) {
+		super();
+		accessor = globalContext.getExecutionAccessor();
+	}
+
+	protected void updateParameters(ExecutionContext context) {
+		Execution execution = getExecution(context);
 		
 		HashMap<String, String> params = new HashMap<>();
 		for(Entry<String, Object> entry:context.getVariablesManager().getAllVariables().entrySet()) {
@@ -38,12 +46,11 @@ public class ExecutionStatusManager {
 		}
 		execution.setParameters(params);
 		
-		accessor.save(execution);
+		saveExecution(execution);
 	}
 	
-	protected static void persistStatus(ExecutionContext context) {
-		ExecutionAccessor accessor = context.getGlobalContext().getExecutionAccessor();
-		Execution execution = accessor.get(context.getExecutionId());
+	protected void persistStatus(ExecutionContext context) {
+		Execution execution = getExecution(context);
 		if(context.getStatus()==ExecutionStatus.ENDED) {
 			execution.setEndTime(System.currentTimeMillis());
 		}
@@ -56,12 +63,26 @@ public class ExecutionStatusManager {
 				execution.setDescription(artefact.getAttributes()!=null?artefact.getAttributes().get("name"):null);
 			}
 		}
-		accessor.save(execution);
+		saveExecution(execution);
 	}
 	
-	protected static void updateStatus(ExecutionContext context, ExecutionStatus status) {
+	protected void persistImportResult(ExecutionContext context, ImportResult importResult) {
+		Execution execution = getExecution(context);
+		execution.setImportResult(importResult);
+		saveExecution(execution);
+	}
+	
+	protected void updateStatus(ExecutionContext context, ExecutionStatus status) {
 		context.updateStatus(status);
 		persistStatus(context);
 	}
 	
+	private void saveExecution(Execution execution) {
+		accessor.save(execution);
+	}
+
+	private Execution getExecution(ExecutionContext context) {
+		Execution execution = accessor.get(context.getExecutionId());
+		return execution;
+	}
 }

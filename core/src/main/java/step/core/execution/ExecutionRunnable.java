@@ -31,6 +31,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.ReportExport;
+import step.core.repositories.Repository.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 
@@ -39,10 +40,13 @@ public class ExecutionRunnable implements Runnable {
 	private  final static Logger logger = LoggerFactory.getLogger(ExecutionRunnable.class);
 
 	final ExecutionContext context;
+	
+	final ExecutionLifecycleManager executionLifecycleManager;
 						
 	public ExecutionRunnable(ExecutionContext context) {
 		super();
 		this.context = context;
+		this.executionLifecycleManager = new ExecutionLifecycleManager(context);
 	}
 
 	public ExecutionContext getContext() {
@@ -56,36 +60,43 @@ public class ExecutionRunnable implements Runnable {
 
 			ReportNode rootReportNode = createAndPersistRootReportNode();
 
-			context.getGlobalContext().getExecutionLifecycleManager().executionStarted(this);
+			executionLifecycleManager.executionStarted();
 			
 			updateStatus(ExecutionStatus.IMPORTING);
-			String artefactID = importArtefact();
-						
-			AbstractArtefact artefact = context.getGlobalContext().getArtefactAccessor().get(artefactID);
-			context.setArtefact(artefact);
+			ImportResult importResult = importArtefact();
 			
-			logger.info("Starting test execution. Execution ID: " + context.getExecutionId());
-			updateStatus(ExecutionStatus.RUNNING);
-						
-			ArtefactHandler.delegateCreateReportSkeleton(context, artefact, rootReportNode);
-			ArtefactHandler.delegateExecute(context, artefact, rootReportNode);
-
-			logger.debug("Test execution ended. Reporting result.... Execution ID: " + context.getExecutionId());
-
-			if(!context.isSimulation()) {
-				updateStatus(ExecutionStatus.EXPORTING);
-				List<ReportExport> exports = exportExecution(context.getExecutionId());	
-				context.setReportExports(exports);				
-				logger.info("Test execution ended and reported. Execution ID: " + context.getExecutionId());
+			executionLifecycleManager.afterImport(importResult);
+			
+			if(importResult.isSuccessful()) {
+				AbstractArtefact artefact = context.getGlobalContext().getArtefactAccessor().get(importResult.getArtefactId());
+				context.setArtefact(artefact);
+				
+				logger.info("Starting test execution. Execution ID: " + context.getExecutionId());
+				updateStatus(ExecutionStatus.RUNNING);
+				
+				ArtefactHandler.delegateCreateReportSkeleton(context, artefact, rootReportNode);
+				ArtefactHandler.delegateExecute(context, artefact, rootReportNode);
+				
+				logger.debug("Test execution ended. Reporting result.... Execution ID: " + context.getExecutionId());
+				
+				if(!context.isSimulation()) {
+					updateStatus(ExecutionStatus.EXPORTING);
+					List<ReportExport> exports = exportExecution(context.getExecutionId());	
+					context.setReportExports(exports);				
+					logger.info("Test execution ended and reported. Execution ID: " + context.getExecutionId());
+				} else {
+					logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + context.getExecutionId());
+				}				
 			} else {
-				logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + context.getExecutionId());
+				updateStatus(ExecutionStatus.ENDED);
 			}
+						
 			
 		} catch (Throwable e) {
 			logger.error("An error occurred while running test. Execution ID: " + context.getExecutionId(), e);
 		} finally {
 			updateStatus(ExecutionStatus.ENDED);
-			context.getGlobalContext().getExecutionLifecycleManager().executionEnded(this);
+			executionLifecycleManager.executionEnded();
 		}
 	}
 
@@ -101,27 +112,29 @@ public class ExecutionRunnable implements Runnable {
 	}
 	
 	private void updateStatus(ExecutionStatus newStatus) {
-		context.getGlobalContext().getExecutionLifecycleManager().updateStatus(this, newStatus);
+		executionLifecycleManager.updateStatus(newStatus);
 	}
 	
-	private String importArtefact() throws Exception {
-		String artefactID;
+	private ImportResult importArtefact() throws Exception {
+		ImportResult importResult;
 		if(context.getExecutionParameters().getArtefact()!=null) {
 			RepositoryObjectReference artefactPointer = context.getExecutionParameters().getArtefact();
 			if(artefactPointer!=null) {
 				if("local".equals(artefactPointer.getRepositoryID())) {
-					artefactID = artefactPointer.getRepositoryParameters().get("artefactid");
+					importResult = new ImportResult();
+					importResult.setArtefactId(artefactPointer.getRepositoryParameters().get("artefactid"));
+					importResult.setSuccessful(true);
 				} else {
-					artefactID = context.getGlobalContext().getRepositoryObjectManager().importArtefact(artefactPointer);					
+					importResult = context.getGlobalContext().getRepositoryObjectManager().importArtefact(artefactPointer);					
 				}
 			} else {
 				throw new Exception("context.artefactID is null and no ArtefactPointer has been specified. This shouldn't happen.");
 			}
 		} else {
 			// TODO
-			artefactID = null;
+			importResult = null;
 		}
-		return artefactID;
+		return importResult;
 	}
 	
 	private List<ReportExport> exportExecution(String executionId) {		
@@ -138,6 +151,10 @@ public class ExecutionRunnable implements Runnable {
 			throw new RuntimeException("Unable to find execution with id "+executionId);
 		}
 		
+	}
+	
+	public ExecutionLifecycleManager getExecutionLifecycleManager() {
+		return executionLifecycleManager;
 	}
 
 	@Override

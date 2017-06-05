@@ -221,7 +221,7 @@ public class ControllerServices extends AbstractServices {
 	public void abort(@PathParam("id") String executionID) {
 		ExecutionRunnable task = getExecutionRunnable(executionID);
 		if(task!=null) {
-			getContext().getExecutionLifecycleManager().abort(task);
+			task.getExecutionLifecycleManager().abort();
 		}
 	}
 	

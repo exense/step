@@ -36,7 +36,6 @@ import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.EventManager;
-import step.core.execution.ExecutionLifecycleManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
@@ -88,7 +87,6 @@ public class Controller {
 		context.setScheduleAccessor(new ExecutionTaskAccessor(mongoClient));
 		context.setUserAccessor(new UserAccessor(mongoClient));
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
-		context.setExecutionLifecycleManager(new ExecutionLifecycleManager(context));
 		context.setExpressionHandler(new ExpressionHandler());
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		context.setEventManager(new EventManager());

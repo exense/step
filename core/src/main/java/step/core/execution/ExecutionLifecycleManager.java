@@ -23,36 +23,50 @@ import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
 import step.core.execution.model.ExecutionStatus;
+import step.core.plugins.PluginManager;
+import step.core.repositories.Repository.ImportResult;
 
 public class ExecutionLifecycleManager {
-
-	private final GlobalContext context;
+	
+	private final ExecutionContext context;
+	
+	private final ExecutionManager executionManager;
+	
+	private final PluginManager pluginManager;
 	
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionLifecycleManager.class);
 	
-	public ExecutionLifecycleManager(GlobalContext context) {
+	public ExecutionLifecycleManager(ExecutionContext context) {
 		super();
 		this.context = context;
+		
+		GlobalContext globalContext = context.getGlobalContext();
+		this.executionManager = new ExecutionManager(globalContext);
+		this.pluginManager = globalContext.getPluginManager();
 	}
 
-	public void abort(ExecutionRunnable task) {
-		if(task!=null && task.getContext().getStatus()!=ExecutionStatus.ENDED) {
-			ExecutionStatusManager.updateStatus(task.getContext(), ExecutionStatus.ABORTING);
+	public void abort() {
+		if(context.getStatus()!=ExecutionStatus.ENDED) {
+			executionManager.updateStatus(context, ExecutionStatus.ABORTING);
 		}
-		context.getPluginManager().getProxy().beforeExecutionEnd(task.getContext());
+		pluginManager.getProxy().beforeExecutionEnd(context);
 	}
 	
-	public void executionStarted(ExecutionRunnable task) {
-		context.getPluginManager().getProxy().executionStart(task.getContext());
-		ExecutionStatusManager.updateParameters(task.getContext());
+	public void afterImport(ImportResult importResult) {
+		executionManager.persistImportResult(context, importResult);
 	}
 	
-	public void executionEnded(ExecutionRunnable task) {
-		context.getPluginManager().getProxy().afterExecutionEnd(task.getContext());
+	public void executionStarted() {
+		pluginManager.getProxy().executionStart(context);
+		executionManager.updateParameters(context);
 	}
 	
-	public void updateStatus(ExecutionRunnable runnable, ExecutionStatus newStatus) {
-		ExecutionStatusManager.updateStatus(runnable.getContext(),newStatus);
+	public void executionEnded() {
+		pluginManager.getProxy().afterExecutionEnd(context);
+	}
+	
+	public void updateStatus(ExecutionStatus newStatus) {
+		executionManager.updateStatus(context,newStatus);
 	}
 	
 }

@@ -26,6 +26,8 @@ import org.jongo.marshall.jackson.oid.ObjectId;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import step.core.repositories.Repository.ImportResult;
+
 
 
 public class Execution  {
@@ -42,6 +44,8 @@ public class Execution  {
 	ExecutionStatus status;
 	
 	String artefactID;
+	
+	ImportResult importResult;
 	
 	List<ReportExport> reportExports;
 			
@@ -103,6 +107,14 @@ public class Execution  {
 
 	public void setArtefactID(String artefactID) {
 		this.artefactID = artefactID;
+	}
+
+	public ImportResult getImportResult() {
+		return importResult;
+	}
+
+	public void setImportResult(ImportResult importResult) {
+		this.importResult = importResult;
 	}
 
 	public List<ReportExport> getReportExports() {

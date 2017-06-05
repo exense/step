@@ -5,6 +5,16 @@
 </div>
 
 <div class="panel-body">
+	<div class="row" ng-if="execution.importResult && !execution.importResult.successful">
+		<div class="alert alert-danger" role="alert">
+			<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+			Error while importing plan:
+			<ul>
+				<li ng-repeat="error in execution.importResult.errors">{{error}}</li>
+			</ul>
+		</div>
+	</div>
+
 	<div class="row">
 		<div class="col-xs-9">
 			<uib-tabset> 

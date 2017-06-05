@@ -36,6 +36,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.AbstractPlugin;
+import step.core.repositories.Repository.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 
@@ -62,7 +63,10 @@ public class ExecutionRunnableTest {
 		globalContext.getArtefactAccessor().save(artefact);
 
 		RepositoryObjectManager repo = Mockito.mock(RepositoryObjectManager.class);		
-		Mockito.when(repo.importArtefact(Mockito.anyObject())).thenReturn(artefact.getId().toString());
+		ImportResult result = new ImportResult();
+		result.setSuccessful(true);
+		result.setArtefactId(artefact.getId().toString());
+		Mockito.when(repo.importArtefact(Mockito.anyObject())).thenReturn(result);
 		globalContext.setRepositoryObjectManager(repo);
 		
 		ExecutionRunnableFactory f = new ExecutionRunnableFactory(globalContext);
