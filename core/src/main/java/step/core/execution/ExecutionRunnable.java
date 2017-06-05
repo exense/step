@@ -125,7 +125,15 @@ public class ExecutionRunnable implements Runnable {
 					importResult.setArtefactId(artefactPointer.getRepositoryParameters().get("artefactid"));
 					importResult.setSuccessful(true);
 				} else {
-					importResult = context.getGlobalContext().getRepositoryObjectManager().importArtefact(artefactPointer);					
+					try {
+						importResult = context.getGlobalContext().getRepositoryObjectManager().importArtefact(artefactPointer);											
+					} catch (Exception e) {
+						importResult = new ImportResult();
+						String error = "Unexpected error while importing plan: "+e.getMessage();
+						List<String> errors = new ArrayList<>();
+						errors.add(error);
+						importResult.setErrors(errors);
+					}
 				}
 			} else {
 				throw new Exception("context.artefactID is null and no ArtefactPointer has been specified. This shouldn't happen.");
