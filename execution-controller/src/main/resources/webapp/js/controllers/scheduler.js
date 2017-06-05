@@ -100,8 +100,8 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	};
 	
 	$scope.editTask = function(id) {
-	  $http.get("rest/controller/task/"+id).then(function(task){
-	    var task = response.task;
+	  $http.get("rest/controller/task/"+id).then(function(response){
+	    var task = response.data;
       var modalInstance = $uibModal.open({
         animation: $scope.animationsEnabled,
         templateUrl: 'editSchedulerTaskModalContent.html',
