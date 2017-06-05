@@ -111,7 +111,7 @@ public class FileHelperTest {
 			Assert.assertTrue(new File(target.getAbsoluteFile()+"/testUnzip/file1.txt").exists());
 			Assert.assertTrue(new File(target.getAbsoluteFile()+"/testUnzip/subFolder/file2.txt").exists());
 		} finally {
-			FileHelper.deleteFolder(target);
+			FileHelper.deleteFolderOnExit(target);
 		}
 
 	}

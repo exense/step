@@ -41,18 +41,18 @@ import step.commons.conf.Configuration;
 
 public class FileHelper {
 
-	public static void deleteFolder(File folder) {
+	public static void deleteFolderOnExit(File folder) {
 		File[] files = folder.listFiles();
-		if (files != null) { // some JVMs return null for empty dirs
+		if (files != null) {
 			for (File f : files) {
 				if (f.isDirectory()) {
-					deleteFolder(f);
+					deleteFolderOnExit(f);
 				} else {
-					f.delete();
+					f.deleteOnExit();
 				}
 			}
 		}
-		folder.delete();
+		folder.deleteOnExit();
 	}
 	
 	static LoadingCache<File, Long> cache = CacheBuilder.newBuilder()

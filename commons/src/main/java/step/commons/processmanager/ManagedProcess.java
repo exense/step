@@ -157,7 +157,7 @@ public class ManagedProcess {
 				process.waitFor();
 			} catch (InterruptedException e) {}
 		}
-		FileHelper.deleteFolder(executionDirectory);
+		FileHelper.deleteFolderOnExit(executionDirectory);
 	}
 	
 	public class ManagedProcessException extends Exception {
