@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import step.artefacts.Sequence;
 import step.artefacts.While;
@@ -29,7 +30,10 @@ import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValueResolver;
+import step.expressions.ExpressionHandler;
 
 public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
@@ -59,10 +63,17 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
 		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 
+		DynamicValueResolver resolver = new DynamicValueResolver(new ExpressionHandler());
+		
+		Map<String, Object> bindings = getBindings();
+		String expression = testArtefact.getCondition().getExpression();
+		DynamicValue<Boolean> condition = new DynamicValue<>(expression, ""); 
+		resolver.evaluate(condition, bindings);
+		
 		try {
-			while(testArtefact.getCondition().get() 								// expression is true
-					&& 		  (timeout == 0 || System.currentTimeMillis() < maxTime)// infinite Timeout or timeout not reached
-					&&  (maxIterations == 0 || currIterationsCount < maxIterations)){ // maxIterations infinite or not reached
+			while(condition.get() 														// expression is true
+					&& 		  (timeout == 0 || System.currentTimeMillis() < maxTime)	// infinite Timeout or timeout not reached
+					&&  (maxIterations == 0 || currIterationsCount < maxIterations)){	// maxIterations infinite or not reached
 
 				ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
 				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+currIterationsCount);
@@ -81,6 +92,9 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 				}
 				
 				currIterationsCount++;
+				condition = new DynamicValue<>(expression, "");
+				bindings = getBindings();
+				resolver.evaluate(condition, bindings);
 			}
 			
 			node.setErrorCount(failedLoops);
