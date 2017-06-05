@@ -69,13 +69,18 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 		String expression = testArtefact.getCondition().getExpression();
 		DynamicValue<Boolean> condition = new DynamicValue<>(expression, ""); 
 		resolver.evaluate(condition, bindings);
+
+		ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
 		
 		try {
 			while(condition.get() 														// expression is true
 					&& 		  (timeout == 0 || System.currentTimeMillis() < maxTime)	// infinite Timeout or timeout not reached
 					&&  (maxIterations == 0 || currIterationsCount < maxIterations)){	// maxIterations infinite or not reached
 
-				ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
+				if(context.isInterrupted()) {
+					break;
+				}
+				
 				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+currIterationsCount);
 				iterationTestCase.setPacing(new DynamicValue<Long>(pacing));
 				for(AbstractArtefact child:selectedChildren)
