@@ -1,7 +1,7 @@
 <div class="wrapper">
 	<form name="loginForm" ng-controller="LoginController" ng-submit="login(credentials)" class="form-signin">
 		<div style="margin: 0 auto 20px; width: 200px;">
-			<img alt="" style="max-width: 200px; margin: 0 auto;" src="images/logo_step_line_black.png">
+			<img alt="" style="max-width: 200px; margin: 0 auto;" ng-src="{{logo}}">
 		</div>
 		<div class="alert alert-danger" ng-if="error">{{error}}</div>
 		<div class="form-group">

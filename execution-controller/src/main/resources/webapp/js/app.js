@@ -81,7 +81,9 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   
   $scope.isInitialized = false;
   function finishInitialization() {
-    $scope.isInitialized = true;}
+    $scope.isInitialized = true;
+    $scope.logo = AuthService.getConf().miscParams.logomain?AuthService.getConf().miscParams.logomain:"images/logo_step_line_black.png";
+  }
   AuthService.init().then(function() {
     AuthService.getSession().then(finishInitialization,finishInitialization)
   })
@@ -321,6 +323,8 @@ angular.module('step',['ngStorage','ngCookies'])
       $scope.error = "Invalid username/password";
     });
   };
+  $scope.logo = AuthService.getConf().miscParams.logologinpage?AuthService.getConf().miscParams.logologinpage:"images/logo_step_line_black.png";
+  
 })
 
 .factory('Dialogs', function ($rootScope, $uibModal) {

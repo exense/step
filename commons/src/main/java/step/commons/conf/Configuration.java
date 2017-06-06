@@ -127,6 +127,10 @@ public class Configuration {
 		return getPropertyAsBoolean(name, false);
 	}
 	
+	public boolean hasProperty(String name) {
+		return properties.containsKey(name);
+	}
+	
 	public boolean getPropertyAsBoolean(String name, boolean defaultValue) {
 		String prop = properties.getProperty(name);
 		if(prop!=null) {
