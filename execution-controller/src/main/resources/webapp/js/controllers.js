@@ -217,7 +217,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           'step.artefacts.reports.CallFunctionReportNode' : {
             renderer: function (reportNode) {
               var html = "";
-              if(reportNode.name)
+              if(reportNode.functionAttributes)
+                html += '<div>' + reportNode.functionAttributes.name + '</div>';
+              // for retrocompatibility with versions<=3.4.0. Can be removed later
+              else if(reportNode.name)
                 html += '<div><small>' + reportNode.name + '</small></div>';
               if(reportNode.input)
                 html += '<div>Input: <small><em>' + escapeHtml(reportNode.input) + '</em></small></div>';
@@ -335,23 +338,23 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           var data = response.data;
           var currentNode = _.last(data);
           var html = '<ul class="list-unstyled node-details">';
-          if(currentNode.reportNode && currentNode.reportNode.agentUrl) {html+='<li><strong>Agent</strong> <span>'+currentNode.reportNode.agentUrl+'</span></li>'}
-          if(currentNode.reportNode && currentNode.reportNode.tokenId) {html+='<li><strong>Token ID</strong> <span>'+currentNode.reportNode.tokenId+'</span></li>'}
+          if(currentNode.reportNode && currentNode.reportNode.agentUrl) {html+='<li>Agent: <span>'+currentNode.reportNode.agentUrl+'</span></li>'}
+          if(currentNode.reportNode && currentNode.reportNode.tokenId) {html+='<li>Token ID: <span>'+currentNode.reportNode.tokenId+'</span></li>'}
 
-          if(currentNode.reportNode){html+='<li><strong>Duration (ms)</strong> <span>'+currentNode.reportNode.duration+'</span></li>'}
-          html+='<li><strong>Stacktrace</strong><div><table class="stacktrace">';
-          _.each(data.slice(2), function(entry){
-            var node = entry.reportNode;
-            var artefact = entry.artefact; 
-            html+='<tr><td>'+(artefact?_.last(artefact._class.split('.')):'')+'</td><td>'+node.name+'</td><td>';
-            var artefactInstance = node.artefactInstance?node.artefactInstance:artefact; 
-            
-            _.mapObject(artefactInstance, function(value,key){
-              if(['_class','id','_id','name','childrenIDs','customAttributes','attachments','createSkeleton','input','output','expectedOutput'].indexOf(key)==-1) {
-                if(value) {html+=key+'='+value+' '}
-              }})
-            html+='</td></tr>'
-          })
+          if(currentNode.reportNode){html+='<li>Duration (ms): <span>'+currentNode.reportNode.duration+'</span></li>'}
+//          html+='<li><strong>Stacktrace</strong><div><table class="stacktrace">';
+//          _.each(data.slice(2), function(entry){
+//            var node = entry.reportNode;
+//            var artefact = entry.artefact; 
+//            html+='<tr><td>'+(artefact?_.last(artefact._class.split('.')):'')+'</td><td>'+node.name+'</td><td>';
+//            var artefactInstance = node.artefactInstance?node.artefactInstance:artefact; 
+//            
+//            _.mapObject(artefactInstance, function(value,key){
+//              if(['_class','id','_id','name','childrenIDs','customAttributes','attachments','createSkeleton','input','output','expectedOutput'].indexOf(key)==-1) {
+//                if(value) {html+=key+'='+value+' '}
+//              }})
+//            html+='</td></tr>'
+//          })
           html+='</table></div></li></ul>'
           callback(html);
         })

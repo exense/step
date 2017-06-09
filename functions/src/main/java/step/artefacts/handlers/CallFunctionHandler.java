@@ -87,6 +87,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		Input input = buildInput(argumentStr);
 		node.setInput(input.getArgument().toString());
 		
+		Function function = getFunction(testArtefact);
+		node.setFunctionId(function.getId().toString());
+		node.setFunctionAttributes(function.getAttributes());
+		
+		validateInput(input, function);
+
+		// Get token
 		boolean releaseTokenAfterExecution = true;
 		FunctionTokenHandle token;
 		Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
@@ -110,18 +117,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			int callTimeoutDefault = context.getVariablesManager().getVariableAsInteger("keywords.calltimeout.default", 180000);
 			token.setDefaultCallTimeout(callTimeoutDefault);
 			
-			Function function;
-			if(testArtefact.getFunctionId()!=null) {
-				function = functionClient.getFunctionRepository().getFunctionById(testArtefact.getFunctionId());
-			} else {
-				Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
-				function = functionClient.getFunctionRepository().getFunctionByAttributes(attributes);
-			}
-			
-			if(context.getGlobalContext().getConfiguration().getPropertyAsBoolean("enforceschemas", false)){
-				JsonSchemaValidator.validate(function.getSchema().toString(), input.getArgument().toString());
-			}
-			
 			OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken().getToken(), token.getAgentRef()});
 			Output output;
 			try {
@@ -129,8 +124,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			} finally {
 				OperationManager.getInstance().exit();
 			}
-			
-			node.setFunctionId(function.getId().toString());
 			
 			String errorMsg = output.getError();
 			if(errorMsg!=null) {
@@ -169,6 +162,23 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 			callChildrenArtefacts(node, testArtefact);
 		}
+	}
+
+	private void validateInput(Input input, Function function) {
+		if(context.getGlobalContext().getConfiguration().getPropertyAsBoolean("enforceschemas", false)){
+			JsonSchemaValidator.validate(function.getSchema().toString(), input.getArgument().toString());
+		}
+	}
+
+	private Function getFunction(CallFunction testArtefact) {
+		Function function;
+		if(testArtefact.getFunctionId()!=null) {
+			function = functionClient.getFunctionRepository().getFunctionById(testArtefact.getFunctionId());
+		} else {
+			Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
+			function = functionClient.getFunctionRepository().getFunctionByAttributes(attributes);
+		}
+		return function;
 	}
 
 	@SuppressWarnings("unchecked")

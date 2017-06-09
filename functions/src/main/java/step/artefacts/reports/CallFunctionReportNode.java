@@ -19,6 +19,7 @@
 package step.artefacts.reports;
 
 import java.util.List;
+import java.util.Map;
 
 import step.core.artefacts.reports.ReportNode;
 import step.grid.io.Measure;
@@ -27,6 +28,8 @@ public class CallFunctionReportNode extends ReportNode {
 
 	protected String functionId;
 	
+	protected Map<String, String> functionAttributes;
+
 	protected String agentUrl;
 	
 	protected String tokenId;
@@ -79,6 +82,14 @@ public class CallFunctionReportNode extends ReportNode {
 
 	public void setFunctionId(String functionId) {
 		this.functionId = functionId;
+	}
+
+	public Map<String, String> getFunctionAttributes() {
+		return functionAttributes;
+	}
+
+	public void setFunctionAttributes(Map<String, String> functionAttributes) {
+		this.functionAttributes = functionAttributes;
 	}
 
 	public List<Measure> getMeasures() {
