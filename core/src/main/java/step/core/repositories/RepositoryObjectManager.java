@@ -87,17 +87,22 @@ public class RepositoryObjectManager {
 	private static final String ARTEFACT_ID = "artefactid";
 	
 	public ArtefactInfo getArtefactInfo(RepositoryObjectReference ref) throws Exception {
-		if(ref.getRepositoryID().equals(LOCAL)) {
-			String artefactid = ref.getRepositoryParameters().get(ARTEFACT_ID);
-			AbstractArtefact artefact = artefactAccessor.get(new ObjectId(artefactid));
-			
-			ArtefactInfo info = new ArtefactInfo();
-			info.setName(artefact.getAttributes()!=null?artefact.getAttributes().get("name"):null);
-			return info;
-		} else {
-			String respositoryId = ref.getRepositoryID();
-			Repository repository = getRepository(respositoryId);
-			return repository.getArtefactInfo(ref.getRepositoryParameters());
+		try {
+			if(ref.getRepositoryID().equals(LOCAL)) {
+				String artefactid = ref.getRepositoryParameters().get(ARTEFACT_ID);
+				AbstractArtefact artefact = artefactAccessor.get(new ObjectId(artefactid));
+				
+				ArtefactInfo info = new ArtefactInfo();
+				info.setName(artefact.getAttributes()!=null?artefact.getAttributes().get("name"):null);
+				return info;
+			} else {
+				String respositoryId = ref.getRepositoryID();
+				Repository repository = getRepository(respositoryId);
+				return repository.getArtefactInfo(ref.getRepositoryParameters());
+			}
+		} catch (Exception e) {
+			logger.error("Error while getting artefact infos for " + ref,e);
+			throw e;
 		}
 	}
 	
