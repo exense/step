@@ -26,12 +26,10 @@ import step.core.execution.ExecutionContext;
 import step.core.variables.UndefinedVariableException;
 
 public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefact, ReportNode>{
-
-	ExecutionContext context;
 	
 	public SequentialArtefactScheduler(ExecutionContext context) {
 		super();
-		this.context = context;
+		init(context);
 	}
 
 	public void createReportSkeleton_(ReportNode node, AbstractArtefact testArtefact) {		
