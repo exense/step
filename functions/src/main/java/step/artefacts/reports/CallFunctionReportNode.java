@@ -21,6 +21,10 @@ package step.artefacts.reports;
 import java.util.List;
 import java.util.Map;
 
+import javax.json.JsonObject;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import step.core.artefacts.reports.ReportNode;
 import step.grid.io.Measure;
 
@@ -37,6 +41,9 @@ public class CallFunctionReportNode extends ReportNode {
 	protected String input;
 	
 	protected String output;
+	
+	@JsonIgnore
+	protected JsonObject outputObject;
 	
 	private List<Measure> measures;
 
@@ -74,6 +81,14 @@ public class CallFunctionReportNode extends ReportNode {
 
 	public void setOutput(String output) {
 		this.output = output;
+	}
+
+	public JsonObject getOutputObject() {
+		return outputObject;
+	}
+
+	public void setOutputObject(JsonObject outputObject) {
+		this.outputObject = outputObject;
 	}
 
 	public String getFunctionId() {
