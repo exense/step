@@ -81,7 +81,7 @@ public class RtmPlugin extends AbstractPlugin {
 			if(measureReportNodes) {
 				measurement = new HashMap<>();
 				measurement.put("eId", stepReport.getExecutionID());
-				measurement.put("name", stepReport.getName());
+				measurement.put("name", stepReport.getFunctionAttributes().get("name"));
 				measurement.put("value", (long)stepReport.getDuration());
 				measurement.put("begin", stepReport.getExecutionTime());
 				measurement.put("rnId", stepReport.getId().toString());

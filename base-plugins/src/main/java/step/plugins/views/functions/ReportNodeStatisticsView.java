@@ -20,7 +20,7 @@ public class ReportNodeStatisticsView extends AbstractTimeBasedView<ReportNodeSt
 			e.count = 1;
 			e.sum = node.getDuration();
 			Statistics stats = new Statistics(1, node.getDuration());
-			e.byFunctionName.put(((CallFunctionReportNode)node).getName(), stats);
+			e.byFunctionName.put(((CallFunctionReportNode)node).getFunctionAttributes().get("name"), stats);
 			addPoint(model, node.getExecutionTime(), e);
 		}
 	}
