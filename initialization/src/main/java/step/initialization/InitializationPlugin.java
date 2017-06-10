@@ -104,8 +104,8 @@ public class InitializationPlugin extends AbstractPlugin {
 					CallFunction calllFunction = (CallFunction) artefact;
 					if(calllFunction.getFunctionId()!=null) {
 						Function function = functionRepository.getFunctionById(calllFunction.getFunctionId());
-						if(function!=null && function.getAttributes()!=null && function.getAttributes().containsKey("name")) {
-							name = function.getAttributes().get("name");
+						if(function!=null && function.getAttributes()!=null && function.getAttributes().containsKey(Function.NAME)) {
+							name = function.getAttributes().get(Function.NAME);
 						}						
 					}
 				} else if(artefact instanceof CallPlan) {
@@ -251,7 +251,7 @@ public class InitializationPlugin extends AbstractPlugin {
 	private Function addScriptFunction(FunctionRepositoryImpl functionRepository, String name, String scriptLanguage, String scriptFile, JsonObject schema) {
 		GeneralScriptFunction function = new GeneralScriptFunction();
 		Map<String, String> kwAttributes = new HashMap<>();
-		kwAttributes.put("name", name);
+		kwAttributes.put(Function.NAME, name);
 		function.setAttributes(kwAttributes);
 		function.getScriptLanguage().setValue(scriptLanguage);
 		function.getScriptFile().setValue(scriptFile);
@@ -267,7 +267,7 @@ public class InitializationPlugin extends AbstractPlugin {
 	private Function addSeleniumFunction(FunctionRepositoryImpl functionRepository, String name, String scriptLanguage, String scriptFile) {
 		SeleniumFunction function = new SeleniumFunction();
 		Map<String, String> kwAttributes = new HashMap<>();
-		kwAttributes.put("name", name);
+		kwAttributes.put(Function.NAME, name);
 		function.setAttributes(kwAttributes);
 		function.getScriptLanguage().setValue(scriptLanguage);
 		function.getScriptFile().setValue(scriptFile);
@@ -279,7 +279,7 @@ public class InitializationPlugin extends AbstractPlugin {
 	private Function addJMeterFunction(FunctionRepositoryImpl functionRepository, String name, String jmeterFile) {
 		JMeterFunction function = new JMeterFunction();
 		Map<String, String> kwAttributes = new HashMap<>();
-		kwAttributes.put("name", name);
+		kwAttributes.put(Function.NAME, name);
 		function.setAttributes(kwAttributes);
 		function.getJmeterTestplan().setValue(jmeterFile);
 		functionRepository.addFunction(function);

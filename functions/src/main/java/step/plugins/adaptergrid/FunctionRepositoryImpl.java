@@ -43,7 +43,7 @@ public class FunctionRepositoryImpl implements FunctionRepository {
 
 	@Override
 	public Function getFunctionByAttributes(Map<String, String> attributes) {		
-		String query = "{attributes.name:'"+attributes.get("name")+"'}";
+		String query = "{attributes.name:'"+attributes.get(Function.NAME)+"'}";
 		
 		Iterator<Function> it = functions.find(query).as(Function.class).iterator();
 		if(it.hasNext()) {

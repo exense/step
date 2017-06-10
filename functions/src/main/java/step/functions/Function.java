@@ -36,6 +36,8 @@ public class Function {
 	Map<String, String> attributes;
 	DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
 	JsonObject schema;
+	
+	public static final String NAME = "name";
 
 	public ObjectId getId() {
 		return _id;

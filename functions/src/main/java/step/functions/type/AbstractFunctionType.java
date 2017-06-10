@@ -31,7 +31,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	public T copyFunction(T function) {
 		function.setId(null);
-		function.getAttributes().put("name",function.getAttributes().get("name")+"_Copy");
+		function.getAttributes().put(Function.NAME,function.getAttributes().get(Function.NAME)+"_Copy");
 		return function;
 	}
 }

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.rtm.commons.Configuration;
 import org.rtm.commons.MeasurementAccessor;
@@ -18,8 +17,8 @@ import step.core.accessors.AbstractAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
+import step.functions.Function;
 import step.grid.io.Measure;
-import step.rtm.RtmPluginServices;
 
 @Plugin
 public class RtmPlugin extends AbstractPlugin {
@@ -81,7 +80,7 @@ public class RtmPlugin extends AbstractPlugin {
 			if(measureReportNodes) {
 				measurement = new HashMap<>();
 				measurement.put("eId", stepReport.getExecutionID());
-				measurement.put("name", stepReport.getFunctionAttributes().get("name"));
+				measurement.put("name", stepReport.getFunctionAttributes().get(Function.NAME));
 				measurement.put("value", (long)stepReport.getDuration());
 				measurement.put("begin", stepReport.getExecutionTime());
 				measurement.put("rnId", stepReport.getId().toString());

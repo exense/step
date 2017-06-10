@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import step.commons.conf.Configuration;
 import step.commons.helpers.FileHelper;
 import step.core.GlobalContext;
+import step.functions.Function;
 import step.functions.FunctionClient;
 import step.functions.type.SetupFunctionException;
 import step.handlers.scripthandler.ScriptHandler;
@@ -115,13 +116,13 @@ public class ScriptFunctionTypeHelper {
 				try {
 					Files.createDirectory(folder.toPath());
 				} catch (IOException e) {
-					throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get("name"), e);
+					throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get(Function.NAME), e);
 				}
 			}
 			try {
 				scriptFile.createNewFile();
 			} catch (IOException e) {
-				throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get("name"), e);
+				throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get(Function.NAME), e);
 			}
 			
 			if(templateStream!=null) {

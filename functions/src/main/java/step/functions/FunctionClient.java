@@ -162,7 +162,7 @@ public class FunctionClient {
 			
 			facade.setCallTimeout(function.getCallTimeout().get());
 
-			OutputMessage outputMessage = facade.process(function.getAttributes().get("name"), input.getArgument());		
+			OutputMessage outputMessage = facade.process(function.getAttributes().get(Function.NAME), input.getArgument());		
 			output.setResult(outputMessage.getPayload());
 			output.setError(outputMessage.getError());
 			output.setAttachments(outputMessage.getAttachments());
