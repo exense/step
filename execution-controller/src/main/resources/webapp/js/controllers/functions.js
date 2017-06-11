@@ -223,6 +223,10 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
   
   $scope.isSchemaEnforced = AuthService.getConf().miscParams.enforceschemas;
   
+  $http.get("rest/screens/functionTable").then(function(response){
+    $scope.inputs=response.data;
+  }); 
+  
   $scope.loadInitialFunction = function() {
     $http.get("rest/functions/types/"+$scope.function_.type).then(function(response){
       var initialFunction = response.data;

@@ -6,9 +6,11 @@
   {"id":"executionParameters.customParameters.profile","label":"Profile"}
 ],
 "functionTable":[
-  {"id":"attributes.name","label":"Name","type":"TEXT"}
+  {"id":"app","label":"Application","options":["App1","App2"]},
+  {"id":"name","label":"Name","type":"TEXT"}
 ],
 "artefactTable":[
-  {"id":"attributes.name","label":"Name","type":"TEXT"}
+  {"id":"attributes.name","label":"Name","type":"TEXT"},
+  {"id":"attributes.app","label":"Application","type":"TEXT"}
 ]
 }

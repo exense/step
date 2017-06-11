@@ -6,7 +6,7 @@
   {"id":"executionParameters.customParameters.profile","label":"Profile"}
 ],
 "functionTable":[
-  {"id":"attributes.name","label":"Name","type":"TEXT"}
+  {"id":"name","label":"Name","type":"TEXT"}
 ],
 "artefactTable":[
   {"id":"attributes.name","label":"Name","type":"TEXT"}

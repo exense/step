@@ -5,9 +5,16 @@
 <div class="modal-body">
 	<strong>{{description}}</strong>
 	<form ng-submit="save(true)">
-		<div ng-repeat="(key,value) in function_.attributes" class="form-group">
-			<label>{{key}}</label> <input ng-model="function_.attributes[key]" class="form-control form-control-sm" autofocus></input>
+		<span ng-repeat-start="input in inputs" ng-if="0" />
+		<div ng-if="input.type=='TEXT'" class="form-group">
+			<label for="{{input.id}}">{{input.label}}</label> <input class="form-control" id="{{input.id}}"
+				ng-model="function_.attributes[input.id]" placeholder="{{input.label}}" autofocus>
 		</div>
+		<div ng-if="input.type=='DROPDOWN'" class="form-group">
+			<label>{{input.label}}</label> <select ng-model="function_.attributes[input.id]"
+				ng-options="option.value as option.value for option in input.options" class="form-control" />
+		</div>
+		<span ng-repeat-end ng-if="0" />
 		<div class="form-group">
 			<label>Type</label> 
 			<select ng-change="loadInitialFunction()" ng-model="function_.type" ng-options="option as functionTypeRegistry.getLabel(option) for option in functionTypeRegistry.getTypes()" class="form-control" />

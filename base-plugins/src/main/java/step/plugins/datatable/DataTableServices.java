@@ -130,7 +130,7 @@ public class DataTableServices extends AbstractServices {
 		functionTable.addColumn("ID", "_id");
 		if(screenTemplates!=null) {
 			for(Input input:screenTemplates.getInputsForScreen("functionTable", null)) {
-				functionTable.addColumn(input.getLabel(), input.getId());
+				functionTable.addColumn(input.getLabel(), "attributes."+input.getId());
 			}
 		}
 		functionTable.addColumn("Type", "type");
