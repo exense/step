@@ -20,6 +20,7 @@ package step.artefacts;
 
 import step.artefacts.handlers.DataSetHandler;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.ContainsDynamicValues;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
 
@@ -48,6 +49,7 @@ public class DataSetArtefact extends AbstractForBlock {
 		this.dataSourceType = dataSourceType;
 	}
 
+	@ContainsDynamicValues
 	public DataPoolConfiguration getDataSource() {
 		return dataSource;
 	}

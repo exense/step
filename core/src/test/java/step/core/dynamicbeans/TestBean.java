@@ -30,6 +30,7 @@ public class TestBean {
 		return testRecursive;
 	}
 
+	@ContainsDynamicValues
 	public TestBean2 getTestRecursive2() {
 		return testRecursive2;
 	}

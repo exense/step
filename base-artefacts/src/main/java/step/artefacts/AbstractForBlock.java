@@ -21,6 +21,7 @@ package step.artefacts;
 import javax.annotation.PostConstruct;
 
 import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.ContainsDynamicValues;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
@@ -51,6 +52,7 @@ public class AbstractForBlock extends AbstractArtefact {
 		this.dataSourceType = dataSourceType;
 	}
 	
+	@ContainsDynamicValues
 	public DataPoolConfiguration getDataSource() {
 		return dataSource;
 	}
