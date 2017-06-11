@@ -1,10 +1,11 @@
 package step.plugins.views.functions;
 
+import java.util.HashMap;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import step.artefacts.reports.CallFunctionReportNode;
-import step.core.artefacts.reports.ReportNode;
 
 public class ReportNodeStatisticsViewTest {
 
@@ -15,8 +16,10 @@ public class ReportNodeStatisticsViewTest {
 		AbstractTimeBasedModel<ReportNodeStatisticsEntry> model = view.init();
 		for(int j=0;j<10;j++) {
 			for(int i=0;i<99;i++) {
-				ReportNode node = new CallFunctionReportNode();
-				node.setName("Function"+i%2);
+				CallFunctionReportNode node = new CallFunctionReportNode();
+				HashMap<String,String> functionAttributes = new HashMap<>();
+				functionAttributes.put("name", "Function"+i%2);
+				node.setFunctionAttributes(functionAttributes);
 				node.setExecutionTime(j*100+i);
 				node.setDuration(i%2+1);
 				view.afterReportNodeExecution(model, node);
