@@ -148,6 +148,11 @@ public class JavaHandler implements MessageHandler {
 		}
 		try {
 			m.invoke(instance);
+		} catch(Exception e) {
+			boolean throwException = script.onError(e);
+			if(throwException) {
+				throw e;
+			}
 		} finally {
 			// TODO error handling
 		}

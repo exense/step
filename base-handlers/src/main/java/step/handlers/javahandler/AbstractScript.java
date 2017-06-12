@@ -77,4 +77,12 @@ public class AbstractScript  {
 		this.properties = properties;
 	}
 
+	/**
+	 * @param e
+	 * @return true if the exception passed as argument has to be rethrown.
+	 */
+	public boolean onError(Exception e) {
+		return true;
+	}
+
 }

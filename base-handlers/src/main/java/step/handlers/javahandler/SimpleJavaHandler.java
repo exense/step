@@ -88,12 +88,18 @@ public class SimpleJavaHandler implements MessageHandler {
 			script.setProperties(properties);
 			OutputMessageBuilder output = new OutputMessageBuilder();
 			script.setOutputBuilder(output);
+			
 			try {
 				m.invoke(instance);
+			} catch(Exception e) {
+				boolean throwException = script.onError(e);
+				if(throwException) {
+					throw e;
+				}
 			} finally {
-				// TODO error handling
+				
 			}
-			
+
 			return output.build();
 		} else {
 			throw new RuntimeException("The class '"+clazz.getName()+"' doesn't extend '"+AbstractScript.class.getName()+"'");
