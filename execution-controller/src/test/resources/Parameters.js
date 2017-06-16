@@ -9,5 +9,7 @@
 ["tec.execution.reportnodes.persistbefore","true",""],
 ["tec.execution.reportnodes.persistafter","true",""],
 ["tec.execution.reportnodes.persistonlynonpassed","false",""],
-["keywords.calltimeout.default",180000,""]
+["keywords.calltimeout.default",180000,""],
+["version","1.3","env=='TEST'"],
+["version","1.2","env=='PROD'"]
 ]
