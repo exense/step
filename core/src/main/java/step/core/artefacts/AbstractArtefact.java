@@ -27,6 +27,8 @@ import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 
 @JsonTypeInfo(use=Id.CUSTOM,property="_class")
@@ -41,7 +43,9 @@ public abstract class AbstractArtefact {
 		
 	protected List<ObjectId> childrenIDs;
 	
-	protected Map<String, String> customAttributes;
+	@JsonSerialize(using = MapSerializer.class)
+	@JsonDeserialize(using = MapDeserializer.class) 
+	protected Map<String, Object> customAttributes;
 	
 	protected List<ObjectId> attachments;
 	
@@ -120,7 +124,7 @@ public abstract class AbstractArtefact {
 		this.root = root;
 	}
 
-	public String getCustomAttribute(String key) {
+	public Object getCustomAttribute(String key) {
 		if(customAttributes!=null) {
 			return customAttributes.get(key);
 		} else {
@@ -128,7 +132,7 @@ public abstract class AbstractArtefact {
 		}
 	}
 
-	public synchronized void addCustomAttribute(String key, String value) {
+	public synchronized void addCustomAttribute(String key, Object value) {
 		if(customAttributes==null) {
 			customAttributes = new HashMap<>();
 		}
