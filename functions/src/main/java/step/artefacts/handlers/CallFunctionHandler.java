@@ -237,7 +237,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		if(testArtefact.getChildrenIDs()!=null&&testArtefact.getChildrenIDs().size()>0) {
 			context.getVariablesManager().putVariable(node, "callReport", node);
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-			scheduler.execute_(node, testArtefact);				
+			scheduler.execute_(node, testArtefact, true);				
 		}
 	}
 
