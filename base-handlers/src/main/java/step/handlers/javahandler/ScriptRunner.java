@@ -96,6 +96,10 @@ public class ScriptRunner {
 				throw new RuntimeException(e);
 			}
 		}
+		
+		public void close() {
+			token.getSession().close();
+		}
 	}
 	
 	public static ScriptContext getExecutionContext() {
