@@ -35,6 +35,8 @@ public class ScriptRunner {
 	public static class ScriptContext {
 		
 		AgentTokenWrapper token;
+		
+		SimpleJavaHandler handler;
 
 		public ScriptContext(Map<String, String> properties) {
 			super();
@@ -43,6 +45,7 @@ public class ScriptRunner {
 				token.setProperties(properties);
 			}
 			token.setSession(new TokenSession());
+			handler = new SimpleJavaHandler();
 		} 
 		
 		public OutputMessage run(String function, String argument, Map<String, String> properties) throws Exception {
@@ -74,17 +77,14 @@ public class ScriptRunner {
 		}
 		
 		public OutputMessage run(Class<?> functionClass, String function, JsonObject argument, Map<String, String> properties) {
-			SimpleJavaHandler handler = new SimpleJavaHandler(functionClass);
-			return execute(function, argument, properties, handler);
+			return execute(function, argument, properties);
 		}
 		
 		public OutputMessage run(String function, JsonObject argument, Map<String, String> properties) {
-			SimpleJavaHandler handler = new SimpleJavaHandler();
-			return execute(function, argument, properties, handler);
+			return execute(function, argument, properties);
 		}
 
-		private OutputMessage execute(String function, JsonObject argument, Map<String, String> properties,
-				SimpleJavaHandler handler) {
+		private OutputMessage execute(String function, JsonObject argument, Map<String, String> properties) {
 			InputMessage input = new InputMessage();
 			input.setFunction(function);
 			input.setArgument(argument);			
