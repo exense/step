@@ -18,14 +18,33 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.io.StringReader;
+
+import javax.json.JsonObject;
+import javax.json.spi.JsonProvider;
+import javax.json.stream.JsonParsingException;
+
 import step.artefacts.Return;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.execution.ExecutionContext;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 
 public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 	
+	private static JsonProvider jprov = JsonProvider.provider();
+	
+	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
+
+	@Override
+	public void init(ExecutionContext context) {
+		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
+		super.init(context);
+	}
+
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode, Return testArtefact) {
 
@@ -37,8 +56,27 @@ public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 
 		Object o = context.getVariablesManager().getVariable("output");
 		if(o!=null && o instanceof OutputMessageBuilder) {
-			((OutputMessageBuilder)o).setPayloadJson(testArtefact.getOutput().get());
+			JsonObject outputJsonAfterResolving = resolveOutputJson(testArtefact);
+			((OutputMessageBuilder)o).setPayloadJson(outputJsonAfterResolving.toString());
 		}
+	}
+
+	private JsonObject resolveOutputJson(Return testArtefact) {
+		String outputJson = testArtefact.getOutput().get();
+		
+		JsonObject outputJsonObject;
+		try {
+			if(outputJson!=null&&outputJson.trim().length()>0) {
+				outputJsonObject = jprov.createReader(new StringReader(outputJson)).readObject();
+			} else {
+				outputJsonObject = jprov.createObjectBuilder().build();
+			}
+		} catch(JsonParsingException e) {
+			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage());
+		}
+		
+		JsonObject outputJsonAfterResolving = dynamicJsonObjectResolver.evaluate(outputJsonObject, getBindings());
+		return outputJsonAfterResolving;
 	}
 
 	@Override
