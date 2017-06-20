@@ -96,12 +96,16 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		// Get token
 		boolean releaseTokenAfterExecution = true;
 		FunctionTokenHandle token;
-		Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
-		if(o!=null && o instanceof FunctionTokenHandle) {
-			token = (FunctionTokenHandle) o;
-			releaseTokenAfterExecution = false;
+		if(function.requiresLocalExecution()) {
+			token = tokenSelectorHelper.selectLocalToken();
 		} else {
-			token = tokenSelectorHelper.selectToken(testArtefact, functionClient, getBindings());
+			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
+			if(o!=null && o instanceof FunctionTokenHandle) {
+				token = (FunctionTokenHandle) o;
+				releaseTokenAfterExecution = false;
+			} else {
+				token = tokenSelectorHelper.selectToken(testArtefact, functionClient, getBindings());
+			}
 		}
 		
 		Token gridToken = token.getToken().getToken();

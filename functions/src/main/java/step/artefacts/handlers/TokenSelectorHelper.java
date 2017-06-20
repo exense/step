@@ -56,7 +56,7 @@ public class TokenSelectorHelper {
 			JsonObject selectionCriteriaJson = dynamicJsonObjectResolver.evaluate(selectionCriteriaBeforeEvaluation, bindings);
 			
 			if(!testArtefact.getRemote().get()) {
-				tokenHandle = functionClient.getLocalFunctionToken();
+				tokenHandle = selectLocalToken();
 			} else {
 				Map<String, Interest> selectionCriteria = new HashMap<>();
 				selectionCriteriaJson.keySet().stream().forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
@@ -71,6 +71,11 @@ public class TokenSelectorHelper {
 		} else {
 			throw new RuntimeException("Token field hasn't been specified");
 		}
+		return tokenHandle;
+	}
+	
+	protected FunctionTokenHandle selectLocalToken() {
+		FunctionTokenHandle tokenHandle = functionClient.getLocalFunctionToken();
 		return tokenHandle;
 	}
 }

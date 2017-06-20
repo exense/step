@@ -13,4 +13,10 @@ public class CompositeFunction extends Function {
 	public void setArtefactId(String artefactId) {
 		this.artefactId = artefactId;
 	}
+
+	@Override
+	public boolean requiresLocalExecution() {
+		return true;
+	}
+	
 }

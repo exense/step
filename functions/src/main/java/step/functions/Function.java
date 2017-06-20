@@ -70,4 +70,8 @@ public class Function {
 	public void setSchema(JsonObject schema) {
 		this.schema = schema;
 	}
+	
+	public boolean requiresLocalExecution() {
+		return false;
+	}
 }
