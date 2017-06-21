@@ -257,7 +257,6 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
 
         var newArtefact = {
           "attributes":{name:function_.attributes.name},
-          "function":JSON.stringify(function_.attributes),
           "functionId":function_.id,"remote":{"value":remote},
           "_class":"CallFunction"
          };
@@ -458,7 +457,6 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
   function loadFunction(id, callback) {
     $http({url:"rest/functions/"+id,method:"GET"}).then(function(response) {
       $scope.targetFunction = response.data;
-      $scope.artefact['function'] = JSON.stringify($scope.targetFunction.attributes);
       if(callback) {
         callback();
       }

@@ -184,7 +184,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		if(testArtefact.getFunctionId()!=null) {
 			function = functionClient.getFunctionRepository().getFunctionById(testArtefact.getFunctionId());
 		} else {
-			Map<String, String> attributes = buildFunctionAttributesMap(testArtefact.getFunction());
+			Map<String, String> attributes = buildFunctionSelectionQuery(testArtefact.getFunction().get());
 			function = functionClient.getFunctionRepository().getFunctionByAttributes(attributes);
 		}
 		return function;
@@ -245,40 +245,43 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		}
 	}
 
-	private Map<String, String> buildFunctionAttributesMap(String functionAttributesStr) {
-		JsonObject attributesJson = jprov.createReader(new StringReader(functionAttributesStr)).readObject();
-		
-		Map<String, String> attributes = new HashMap<>();
-		attributesJson.forEach((key,value)->attributes.put(key, attributesJson.getString(key)));
-		return attributes;
-	}
 
 	public static final String ARTEFACTID = "$artefactid";
 	
 	public static final String PARENTREPORTID = "$parentreportid";
 	
+	private Map<String, String> buildFunctionSelectionQuery(String functionStr) {
+		JsonObject queryJson = parseAndResolveJson(functionStr);
+		Map<String, String> attributes = new HashMap<>();
+		queryJson.forEach((key,value)->attributes.put(key, queryJson.getString(key)));
+		return attributes;
+	}
+	
 	private Input buildInput(String argumentStr) {
-		JsonObject argument;
-		try {
-			if(argumentStr!=null&&argumentStr.trim().length()>0) {
-				argument = jprov.createReader(new StringReader(argumentStr)).readObject();
-			} else {
-				argument = jprov.createObjectBuilder().build();
-			}
-		} catch(JsonParsingException e) {
-			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage());
-		}
-		
-		JsonObject argumentAfterResolving = dynamicJsonObjectResolver.evaluate(argument, getBindings());
+		JsonObject argument = parseAndResolveJson(argumentStr);
 		
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
 		properties.put(PARENTREPORTID, ExecutionContext.getCurrentReportNode().getId().toString());
 		
 		Input input = new Input();
-		input.setArgument(argumentAfterResolving);
+		input.setArgument(argument);
 		input.setProperties(properties);
 		return input;
+	}
+
+	private JsonObject parseAndResolveJson(String functionStr) {
+		JsonObject query;
+		try {
+			if(functionStr!=null&&functionStr.trim().length()>0) {
+				query = jprov.createReader(new StringReader(functionStr)).readObject();
+			} else {
+				query = jprov.createObjectBuilder().build();
+			}
+		} catch(JsonParsingException e) {
+			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage());
+		}
+		return dynamicJsonObjectResolver.evaluate(query, getBindings());
 	}
 
 

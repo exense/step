@@ -1,5 +1,5 @@
 <div ng-controller="CallFunctionCtrl">
-	<div class="form-group">
+	<div class="form-group" ng-if="artefact.functionId" >
 		<label for="comment">Keyword</label>
 		<div class="input-group">
 			<input ng-disabled="true" type="text" class="form-control" ng-model="targetFunction.attributes.name" /> <span
@@ -14,6 +14,8 @@
 			</span>
 		</div>
 	</div>
+	<dynamic-json-editor ng-if="!artefact.functionId" label="'Keyword'" dynamic-value="artefact.function" on-save="save()" />
+	
 	<fieldset ng-disabled="readonly">
 		<dynamic-json-editor label="'Input'" dynamic-value="artefact.argument" on-save="save()" />
 		<dynamic-textfield label="'Map output to'" dynamic-value="artefact.resultMap" on-save="save()" />

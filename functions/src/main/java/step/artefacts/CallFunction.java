@@ -25,20 +25,20 @@ import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = CallFunctionHandler.class, report = CallFunctionReportNode.class)
 public class CallFunction extends TokenSelector {
-	
-	String function;
-	
+		
 	String functionId;
+	
+	DynamicValue<String> function = new DynamicValue<>("{}");
 	
 	DynamicValue<String> argument = new DynamicValue<>("{}");
 	
 	DynamicValue<String> resultMap = new DynamicValue<String>();
-	
-	public String getFunction() {
+
+	public DynamicValue<String> getFunction() {
 		return function;
 	}
 
-	public void setFunction(String function) {
+	public void setFunction(DynamicValue<String> function) {
 		this.function = function;
 	}
 

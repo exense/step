@@ -229,12 +229,12 @@ public class InitializationPlugin extends AbstractPlugin {
 		testCase.setAttributes(tcAttributes);
 		
 		CallFunction call1 = new CallFunction();
-		call1.setFunction("{\"name\":\"Selenium_Start"+ browser +"\"}");
+		call1.getFunction().setValue("{\"name\":\"Selenium_Start"+ browser +"\"}");
 		call1.setArgument(new DynamicValue<String>("{}"));
 		artefacts.save(call1);
 		
 		CallFunction call2 = new CallFunction();
-		call2.setFunction("{\"name\":\"Selenium_Navigate\"}");
+		call2.getFunction().setValue("{\"name\":\"Selenium_Navigate\"}");
 		call2.setArgument(new DynamicValue<String>("{\"url\":\"http://denkbar.io\"}"));
 		artefacts.save(call2);
 		
