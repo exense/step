@@ -54,16 +54,18 @@ public class DynamicBeanResolver {
 				
 				for(PropertyDescriptor descriptor:beanInfo.getPropertyDescriptors()) {
 					Method method = descriptor.getReadMethod();
-					if(method.getReturnType().equals(DynamicValue.class)) {
-						Object value = method.invoke(o);
-						if(value!=null) {
-							DynamicValue<?> dynamicValue = (DynamicValue<?>) value;
-							valueResolver.evaluate(dynamicValue, bindings);
-							evaluate(dynamicValue.get(), bindings);
-						}
-					} else if(method.isAnnotationPresent(ContainsDynamicValues.class)) {
-						Object value = method.invoke(o);
-						evaluate(value, bindings);
+					if(method!=null) {
+						if(method.getReturnType().equals(DynamicValue.class)) {
+							Object value = method.invoke(o);
+							if(value!=null) {
+								DynamicValue<?> dynamicValue = (DynamicValue<?>) value;
+								valueResolver.evaluate(dynamicValue, bindings);
+								evaluate(dynamicValue.get(), bindings);
+							}
+						} else if(method.isAnnotationPresent(ContainsDynamicValues.class)) {
+							Object value = method.invoke(o);
+							evaluate(value, bindings);
+						}						
 					}
 				}
 			} catch (Exception e) {
