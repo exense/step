@@ -36,7 +36,7 @@ import step.core.execution.ExecutionTestHelper;
 
 public class AbstractArtefactHandlerTest {
 	
-	ExecutionContext context;
+	protected ExecutionContext context;
 	
 	protected void setupContext() {
 		context = ExecutionTestHelper.setupContext();

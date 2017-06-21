@@ -42,7 +42,7 @@ import step.grid.tokenpool.SimpleAffinityEvaluator;
 import step.grid.tokenpool.Token;
 import step.grid.tokenpool.TokenPool;
 
-public class Grid {
+public class Grid implements TokenProvider, GridFileService {
 
 	public static final String LOCAL_AGENT = "local";
 
@@ -129,23 +129,28 @@ public class Grid {
 		}	
 	}
 	
+	@Override
 	public TokenWrapper selectToken(Identity pretender, long matchTimeout, long noMatchTimeout)
 			throws TimeoutException, InterruptedException {
 		return tokenPool.selectToken(pretender, matchTimeout, noMatchTimeout);
 	}
 
+	@Override
 	public void returnToken(TokenWrapper object) {
 		tokenPool.returnToken(object);
 	}
 	
+	@Override
 	public String registerFile(File file) {
 		return fileManager.registerFile(file);
 	}
 
+	@Override
 	public File getRegisteredFile(String fileHandle) {
 		return fileManager.getFile(fileHandle);
 	}
 
+	@Override
 	public List<Token<TokenWrapper>> getTokens() {
 		return tokenPool.getTokens();
 	}

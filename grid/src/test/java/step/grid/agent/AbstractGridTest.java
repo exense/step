@@ -61,7 +61,7 @@ public abstract class AbstractGridTest {
 		agent.addTokens(nTokens, attributes, null, null);
 		agent.start();
 
-		client = new GridClient(grid);
+		client = new GridClient(grid, grid);
 	}
 	
 	protected void addToken(int count, Map<String, String> attributes) {

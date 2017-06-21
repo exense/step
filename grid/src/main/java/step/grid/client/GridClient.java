@@ -42,7 +42,9 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 import step.grid.AgentRef;
 import step.grid.Grid;
+import step.grid.GridFileService;
 import step.grid.Token;
+import step.grid.TokenProvider;
 import step.grid.TokenWrapper;
 import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.MessageHandler;
@@ -61,7 +63,9 @@ public class GridClient implements Closeable {
 	
 	public static final String SELECTION_CRITERION_THREAD = "#THREADID#";
 	
-	private final Grid adapterGrid;
+	private final GridFileService fileService;
+	
+	private final TokenProvider tokenProvider;
 	
 	private Client client;
 	
@@ -69,10 +73,11 @@ public class GridClient implements Closeable {
 	
 	private long matchExistsTimeout = 60000;
 
-	public GridClient(Grid adapterGrid) {
+	public GridClient(TokenProvider tokenProvider, GridFileService fileService) {
 		super();
 		
-		this.adapterGrid = adapterGrid;
+		this.tokenProvider = tokenProvider;
+		this.fileService = fileService;
 		
 		client = ClientBuilder.newClient();
 		client.register(ObjectMapperResolver.class);
@@ -100,17 +105,18 @@ public class GridClient implements Closeable {
 		}
 		return output;
 	}
+	
+	TokenHandlerPool localHandlerPool = new TokenHandlerPool(null);
 
 	private OutputMessage callLocalToken(Token token, InputMessage message) throws Exception {
 		OutputMessage output;
-		TokenHandlerPool p = new TokenHandlerPool(null);
-		MessageHandler h = p.get(message.getHandler());
+		MessageHandler h = localHandlerPool.get(message.getHandler());
 		
 		AgentTokenWrapper agentTokenWrapper = new AgentTokenWrapper(token);
 		FileManagerClient fileManagerClient = new FileManagerClient() {
 			@Override
 			public File requestFile(String uid, long lastModified) {
-				return adapterGrid.getRegisteredFile(uid);
+				return fileService.getRegisteredFile(uid);
 			}
 		};
 		agentTokenWrapper.setServices(new AgentTokenServices(fileManagerClient));
@@ -230,7 +236,7 @@ public class GridClient implements Closeable {
 		TokenWrapper adapterToken = null;
 		try {
 			addThreadIdInterest(tokenPretender);
-			adapterToken = adapterGrid.selectToken(tokenPretender, matchExistsTimeout, noMatchExistsTimeout);
+			adapterToken = tokenProvider.selectToken(tokenPretender, matchExistsTimeout, noMatchExistsTimeout);
 		} catch (TimeoutException e) {
 			String desc = "[attributes=" + tokenPretender.getAttributes() + ", selectionCriteria=" + tokenPretender.getInterests() + "]";
 			throw new RuntimeException("Not able to find any available adapter matching " + desc);
@@ -254,11 +260,11 @@ public class GridClient implements Closeable {
 	}
 
 	private void returnAdapterTokenToRegister(TokenWrapper adapterToken) {
-		adapterGrid.returnToken(adapterToken);		
+		tokenProvider.returnToken(adapterToken);		
 	}
 	
 	public String registerFile(File file) {
-		return adapterGrid.registerFile(file);
+		return fileService.registerFile(file);
 	}
 
 	@Override

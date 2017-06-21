@@ -50,7 +50,7 @@ public class GridPlugin extends AbstractPlugin {
 		Grid grid = new Grid(gridPort, tokenTTL);
 		grid.start();
 		
-		GridClient client = new GridClient(grid);
+		GridClient client = new GridClient(grid, grid);
 
 		MongoClient mongoClient = context.getMongoClient();
 		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(mongoClient, "functions");	
