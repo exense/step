@@ -21,6 +21,9 @@ package step.plugins.adaptergrid;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.json.JsonObjectBuilder;
+import javax.json.spi.JsonProvider;
+
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
 
@@ -30,6 +33,8 @@ import step.functions.FunctionRepository;
 public class FunctionRepositoryImpl implements FunctionRepository {
 
 	private MongoCollection functions;
+	
+	private static JsonProvider jsonProvider = JsonProvider.provider();
 		
 	public FunctionRepositoryImpl(MongoCollection functions) {
 		super();
@@ -43,7 +48,12 @@ public class FunctionRepositoryImpl implements FunctionRepository {
 
 	@Override
 	public Function getFunctionByAttributes(Map<String, String> attributes) {		
-		String query = "{attributes.name:'"+attributes.get(Function.NAME)+"'}";
+		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
+		for(String key:attributes.keySet()) {
+			builder.add("attributes."+key, attributes.get(key));
+		}
+
+		String query = builder.build().toString();
 		
 		Iterator<Function> it = functions.find(query).as(Function.class).iterator();
 		if(it.hasNext()) {
