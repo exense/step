@@ -43,21 +43,24 @@ import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
 import step.datapool.DataSetHandle;
 import step.functions.Function;
-import step.functions.FunctionClient;
-import step.functions.FunctionClient.FunctionTokenHandle;
+import step.functions.FunctionExecutionService;
+import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
 import step.functions.validation.JsonSchemaValidator;
 import step.grid.Token;
+import step.grid.TokenWrapper;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
-import step.plugins.adaptergrid.GridPlugin;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
 	public static final String STEP_NODE_KEY = "currentStep";
 	
-	protected FunctionClient functionClient;
+	protected FunctionExecutionService functionExecutionService;
+	
+	protected FunctionRepository functionRepository;
+	
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
@@ -68,10 +71,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		functionClient = (FunctionClient) context.getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
+		functionExecutionService = context.getGlobalContext().get(FunctionExecutionService.class);
+		functionRepository = context.getGlobalContext().get(FunctionRepository.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
-		this.tokenSelectorHelper = new TokenSelectorHelper(functionClient, dynamicJsonObjectResolver);
+		this.tokenSelectorHelper = new TokenSelectorHelper(functionExecutionService, dynamicJsonObjectResolver);
 	}
 
 	@Override
@@ -95,36 +99,33 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 		// Get token
 		boolean releaseTokenAfterExecution = true;
-		FunctionTokenHandle token;
+		TokenWrapper token;
 		if(function.requiresLocalExecution()) {
 			token = tokenSelectorHelper.selectLocalToken();
 		} else {
 			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
-			if(o!=null && o instanceof FunctionTokenHandle) {
-				token = (FunctionTokenHandle) o;
+			if(o!=null && o instanceof TokenWrapper) {
+				token = (TokenWrapper) o;
 				releaseTokenAfterExecution = false;
 			} else {
-				token = tokenSelectorHelper.selectToken(testArtefact, functionClient, getBindings());
+				token = tokenSelectorHelper.selectToken(testArtefact, functionExecutionService, getBindings());
 			}
 		}
 		
-		Token gridToken = token.getToken().getToken();
+		Token gridToken = token.getToken();
 		if(gridToken.isLocal()) {
 			gridToken.attachObject(EXECUTION_CONTEXT_KEY, context);
 		}
 				
 		try {
-			node.setAgentUrl(token.getAgentRef().getAgentUrl());
-			node.setTokenId(token.getToken().getID());
+			node.setAgentUrl(token.getAgent().getAgentUrl());
+			node.setTokenId(token.getID());
 			token.setCurrentOwner(node);
 			
-			int callTimeoutDefault = context.getVariablesManager().getVariableAsInteger("keywords.calltimeout.default", 180000);
-			token.setDefaultCallTimeout(callTimeoutDefault);
-			
-			OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken().getToken(), token.getAgentRef()});
+			OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()});
 			Output output;
 			try {
-				output = token.call(function.getId().toString(), input);
+				output = functionExecutionService.callFunction(token, function.getId().toString(), input);
 			} finally {
 				OperationManager.getInstance().exit();
 			}
@@ -166,7 +167,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			drainOutput(drainOutputValue, output);
 		} finally {
 			if(releaseTokenAfterExecution) {				
-				token.release();
+				functionExecutionService.returnTokenHandle(token);
 			}
 
 			callChildrenArtefacts(node, testArtefact);
@@ -182,10 +183,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	private Function getFunction(CallFunction testArtefact) {
 		Function function;
 		if(testArtefact.getFunctionId()!=null) {
-			function = functionClient.getFunctionRepository().getFunctionById(testArtefact.getFunctionId());
+			function = functionRepository.getFunctionById(testArtefact.getFunctionId());
 		} else {
 			Map<String, String> attributes = buildFunctionSelectionQuery(testArtefact.getFunction().get());
-			function = functionClient.getFunctionRepository().getFunctionByAttributes(attributes);
+			function = functionRepository.getFunctionByAttributes(attributes);
 		}
 		return function;
 	}

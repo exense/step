@@ -49,13 +49,14 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.functions.Function;
 import step.functions.FunctionClient;
-import step.functions.FunctionClient.FunctionTokenHandle;
+import step.functions.FunctionExecutionService;
 import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.SetupFunctionException;
+import step.grid.TokenWrapper;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 
@@ -153,12 +154,13 @@ public class FunctionRepositoryServices extends AbstractServices {
 		ExecutionOutput result = new ExecutionOutput();
 		Function function = get(functionId);
 		
+		FunctionExecutionService client = getFunctionClient();
 		try {
-			FunctionTokenHandle token;
+			TokenWrapper token;
 			if(function.getClass().getSimpleName().equals("CompositeFunction")) {
-				token = getFunctionClient().getLocalFunctionToken();
+				token = getFunctionClient().getLocalTokenHandle();
 			} else {
-				token = getFunctionClient().getFunctionToken();
+				token = getFunctionClient().getTokenHandle();
 			}
 			try {
 				ExecutionContext.setCurrentContext(createContext(getContext()));
@@ -179,7 +181,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 				input.setProperties(executionInput.getProperties());
 				
 
-				Output output = token.call(functionId, input);
+				Output output = client.callFunction(token, functionId, input);
 				result.setOutput(output);
 				
 				List<AttachmentMeta> attachmentMetas = new ArrayList<>();
@@ -192,7 +194,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 					}
 				}
 			} finally {
-				token.release();
+				client.returnTokenHandle(token);
 			}
 		} catch(Exception e) {
 			Output output = new Output();
@@ -234,6 +236,13 @@ public class FunctionRepositoryServices extends AbstractServices {
 		getFunctionRepository().deleteFunction(functionId);
 	}
 	
+	@POST
+	@Path("/search")
+	@Secured(right="kw-read")
+	public Function get(Map<String,String> attributes) {
+		return getFunctionRepository().getFunctionByAttributes(attributes);
+	}
+	
 	@GET
 	@Path("/{id}")
 	@Secured(right="kw-read")
@@ -265,5 +274,78 @@ public class FunctionRepositoryServices extends AbstractServices {
 		newFunction.getAttributes().put(Function.NAME, "");
 		newFunction.setSchema(Json.createObjectBuilder().build());
 		return newFunction;
+	}
+
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/executor/tokens/select")
+	@Secured(right="kw-execute")
+	public TokenWrapper getTokenHandle(Map<String, String> attributes) {
+		return getFunctionClient().getTokenHandle(attributes, null);
+	}
+
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/executor/tokens/return")
+	@Secured(right="kw-execute")
+	public void returnTokenHandle(TokenWrapper token) {
+		getFunctionClient().returnTokenHandle(token);
+	}
+	
+	public static class CallFunctionInput {
+		
+		String functionId;
+		Map<String, String> functionAttributes;
+		TokenWrapper tokenHandle;
+		Input input;
+		
+		public CallFunctionInput() {
+			super();
+		}
+
+		public String getFunctionId() {
+			return functionId;
+		}
+
+		public void setFunctionId(String functionId) {
+			this.functionId = functionId;
+		}
+
+		public TokenWrapper getTokenHandle() {
+			return tokenHandle;
+		}
+
+		public void setTokenHandle(TokenWrapper tokenHandle) {
+			this.tokenHandle = tokenHandle;
+		}
+
+		public Map<String, String> getFunctionAttributes() {
+			return functionAttributes;
+		}
+
+		public void setFunctionAttributes(Map<String, String> functionAttributes) {
+			this.functionAttributes = functionAttributes;
+		}
+
+		public Input getInput() {
+			return input;
+		}
+
+		public void setInput(Input input) {
+			this.input = input;
+		}
+		
+	}
+
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/executor/execute")
+	@Secured(right="kw-execute")
+	public Output callFunction(CallFunctionInput input) {
+		if(input.functionId!=null) {
+			return getFunctionClient().callFunction(input.tokenHandle, input.functionId, input.input);			
+		} else {
+			return getFunctionClient().callFunction(input.tokenHandle, input.functionAttributes, input.input);			
+		}
 	}
 }

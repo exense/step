@@ -29,26 +29,26 @@ import javax.json.spi.JsonProvider;
 import step.artefacts.TokenSelector;
 import step.common.managedoperations.OperationManager;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
-import step.functions.FunctionClient;
-import step.functions.FunctionClient.FunctionTokenHandle;
+import step.functions.FunctionExecutionService;
+import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
 
 public class TokenSelectorHelper {
 	
-	protected final FunctionClient functionClient;
+	protected final FunctionExecutionService functionExecutionService;
 
 	private static JsonProvider jprov = JsonProvider.provider();
 	
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
-	public TokenSelectorHelper(FunctionClient functionClient, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
+	public TokenSelectorHelper(FunctionExecutionService functionClient, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
 		super();
-		this.functionClient = functionClient;
+		this.functionExecutionService = functionClient;
 		this.dynamicJsonObjectResolver = dynamicJsonObjectResolver;
 	}
 	
-	protected FunctionTokenHandle selectToken(TokenSelector testArtefact, FunctionClient functionClient, Map<String, Object> bindings) {
-		FunctionTokenHandle tokenHandle;
+	protected TokenWrapper selectToken(TokenSelector testArtefact, FunctionExecutionService functionExecutionService, Map<String, Object> bindings) {
+		TokenWrapper tokenHandle;
 		String token = testArtefact.getToken().get();
 		if(token!=null) {
 			JsonObject selectionCriteriaBeforeEvaluation = jprov.createReader(new StringReader(token)).readObject();
@@ -63,7 +63,7 @@ public class TokenSelectorHelper {
 				
 				OperationManager.getInstance().enter("Token selection", selectionCriteria);
 				try {
-					tokenHandle = functionClient.getFunctionToken(null, selectionCriteria);
+					tokenHandle = functionExecutionService.getTokenHandle(null, selectionCriteria);
 				} finally {
 					OperationManager.getInstance().exit();					
 				}
@@ -74,8 +74,12 @@ public class TokenSelectorHelper {
 		return tokenHandle;
 	}
 	
-	protected FunctionTokenHandle selectLocalToken() {
-		FunctionTokenHandle tokenHandle = functionClient.getLocalFunctionToken();
+	protected TokenWrapper selectLocalToken() {
+		TokenWrapper tokenHandle = functionExecutionService.getLocalTokenHandle();
 		return tokenHandle;
+	}
+	
+	protected void returnToken(TokenWrapper token) {
+		functionExecutionService.returnTokenHandle(token);
 	}
 }

@@ -28,6 +28,8 @@ import step.core.accessors.MongoDBAccessorHelper;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.FunctionClient;
+import step.functions.FunctionExecutionService;
+import step.functions.FunctionRepository;
 import step.functions.editors.FunctionEditorRegistry;
 import step.grid.Grid;
 import step.grid.client.GridClient;
@@ -66,6 +68,8 @@ public class GridPlugin extends AbstractPlugin {
 		context.put(GRIDCLIENT_KEY, client);
 		context.put(FUNCTIONCLIENT_KEY, functionClient);
 		
+		context.put(FunctionExecutionService.class.getName(), functionClient);
+		context.put(FunctionRepository.class.getName(), functionRepository);
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
 		context.getServiceRegistrationCallback().registerService(FunctionRepositoryServices.class);

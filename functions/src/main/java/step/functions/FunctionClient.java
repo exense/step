@@ -28,16 +28,14 @@ import java.util.Map;
 import step.core.GlobalContext;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
-import step.grid.AgentRef;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
-import step.grid.client.GridClient.TokenHandle;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
-public class FunctionClient {
+public class FunctionClient implements FunctionExecutionService {
 
 	private final GridClient gridClient;
 	
@@ -54,6 +52,73 @@ public class FunctionClient {
 		this.functionRepository = functionRepository;
 	}
 	
+	@Override
+	public TokenWrapper getLocalTokenHandle() {
+		return gridClient.getLocalTokenHandle();
+	}
+	
+	@Override
+	public TokenWrapper getTokenHandle() {
+		return gridClient.getTokenHandle();
+	}
+
+	@Override
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) {
+		return gridClient.getTokenHandle(attributes, interests);
+	}
+
+	@Override
+	public void returnTokenHandle(TokenWrapper adapterToken) {
+		adapterToken.setCurrentOwner(null);
+		gridClient.returnTokenHandle(adapterToken);
+	}
+	
+	@Override
+	public Output callFunction(TokenWrapper tokenHandle, Map<String,String> functionAttributes, Input input) {	
+		Function function = functionRepository.getFunctionByAttributes(functionAttributes);
+		return callFunction(tokenHandle, function.getId().toString(), input);
+	}
+	
+	@Override
+	public Output callFunction(TokenWrapper tokenHandle, String functionId, Input input) {	
+		Function function = functionRepository.getFunctionById(functionId);
+		
+		Output output = new Output();
+		output.setFunction(function);
+		try {
+			AbstractFunctionType<Function> functionType = getFunctionTypeByFunction(function);
+			context.getDynamicBeanResolver().evaluate(function, Collections.<String, Object>unmodifiableMap(input.getProperties()));
+			
+			String handlerChain = functionType.getHandlerChain(function);
+			
+			Map<String, String> properties = new HashMap<>();
+			properties.putAll(input.getProperties());
+			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
+			if(handlerProperties!=null) {
+				properties.putAll(functionType.getHandlerProperties(function));				
+			}
+			
+			int callTimeout = function.getCallTimeout().get();
+			OutputMessage outputMessage = gridClient.call(tokenHandle, function.getAttributes().get(Function.NAME), input.getArgument(), handlerChain, properties, callTimeout);
+			
+			output.setResult(outputMessage.getPayload());
+			output.setError(outputMessage.getError());
+			output.setAttachments(outputMessage.getAttachments());
+			output.setMeasures(outputMessage.getMeasures());
+			return output;
+		} catch (Exception e) {
+			output.setError("Unexpected error while calling function: " + e.getClass().getName() + " " + e.getMessage());
+			Attachment attachment = AttachmentHelper.generateAttachmentForException(e);
+			List<Attachment> attachments = output.getAttachments();
+			if(attachments==null) {
+				attachments = new ArrayList<>();
+				output.setAttachments(attachments);
+			}
+			attachments.add(attachment);
+		}
+		return output;
+	}
+
 	@SuppressWarnings("unchecked")
 	public void registerFunctionType(AbstractFunctionType<? extends Function> functionType) {
 		functionType.setContext(context);
@@ -84,101 +149,8 @@ public class FunctionClient {
 		return type.copyFunction(function);
 	}
 	
-	public FunctionTokenHandle getLocalFunctionToken() {
-		return new FunctionTokenHandle(gridClient.getLocalToken());
-	}
-
-	public FunctionTokenHandle getFunctionToken(Map<String, String> attributes, Map<String, Interest> interest) {
-		return new FunctionTokenHandle(gridClient.getToken(attributes, interest));
-	}
-	
-	public FunctionTokenHandle getFunctionToken() {
-		return new FunctionTokenHandle(gridClient.getToken());
-	}
-	
 	public String registerAgentFile(File file) {
 		return gridClient.registerFile(file);
-	}
-	
-	public class FunctionTokenHandle {
-		
-		TokenHandle tokenHandle;
-
-		private FunctionTokenHandle(TokenHandle tokenHandle) {
-			super();
-			this.tokenHandle = tokenHandle;
-		}
-		
-		public Output call(Map<String, String> functionAttributes, Input input) {
-			Function function = functionRepository.getFunctionByAttributes(functionAttributes);
-			return callFunction(tokenHandle, function, input);
-		}
-		
-		public Output call(String functionId, Input input) {
-			Function function = functionRepository.getFunctionById(functionId);
-			return callFunction(tokenHandle, function, input);
-		}
-		
-		public void release() {
-			tokenHandle.release();		
-			tokenHandle.setCurrentOwner(null);
-		}
-		
-		public void setCurrentOwner(Object owner) {
-			tokenHandle.setCurrentOwner(owner);
-		}
-
-		public TokenHandle setDefaultCallTimeout(int callTimeout) {
-			return tokenHandle.setCallTimeout(callTimeout);
-		}
-
-		@Override
-		public String toString() {
-			return tokenHandle.getToken().getID();
-		}
-
-		public AgentRef getAgentRef() {
-			return tokenHandle.getToken().getAgent();
-		}
-		
-		public TokenWrapper getToken() {
-			return tokenHandle.getToken();
-		}
-		
-		
-	}
-
-	private Output callFunction(TokenHandle tokenHandle, Function function, Input input) {
-		Output output = new Output();
-		output.setFunction(function);
-		try {
-			AbstractFunctionType<Function> functionType = getFunctionTypeByFunction(function);
-			context.getDynamicBeanResolver().evaluate(function, Collections.<String, Object>unmodifiableMap(input.getProperties()));
-			
-			String handlerChain = functionType.getHandlerChain(function);
-			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
-			
-			TokenHandle facade = tokenHandle.setHandler(handlerChain).addProperties(input.getProperties()).addProperties(handlerProperties);
-			
-			facade.setCallTimeout(function.getCallTimeout().get());
-
-			OutputMessage outputMessage = facade.process(function.getAttributes().get(Function.NAME), input.getArgument());		
-			output.setResult(outputMessage.getPayload());
-			output.setError(outputMessage.getError());
-			output.setAttachments(outputMessage.getAttachments());
-			output.setMeasures(outputMessage.getMeasures());
-			return output;
-		} catch (Exception e) {
-			output.setError("Unexpected error while calling function: " + e.getClass().getName() + " " + e.getMessage());
-			Attachment attachment = AttachmentHelper.generateAttachmentForException(e);
-			List<Attachment> attachments = output.getAttachments();
-			if(attachments==null) {
-				attachments = new ArrayList<>();
-				output.setAttachments(attachments);
-			}
-			attachments.add(attachment);
-		}
-		return output;
 	}
 
 	public FunctionRepository getFunctionRepository() {

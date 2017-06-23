@@ -84,7 +84,35 @@ public class GridClient implements Closeable {
 		client.register(JacksonJsonProvider.class);
 	}
 	
-	private OutputMessage processInput(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties, int callTimeout) throws Exception {
+	public TokenWrapper getLocalTokenHandle() {
+		Token localToken = new Token();
+		localToken.setId(UUID.randomUUID().toString());
+		localToken.setAgentid(Grid.LOCAL_AGENT);		
+		localToken.setAttributes(new HashMap<String, String>());
+		localToken.setSelectionPatterns(new HashMap<String, Interest>());
+		TokenWrapper tokenWrapper = new TokenWrapper(localToken, new AgentRef(Grid.LOCAL_AGENT, "localhost"));
+		return tokenWrapper;
+	}
+	
+	public TokenWrapper getTokenHandle() {
+		TokenPretender tokenPretender = new TokenPretender(null, null);
+		TokenWrapper tokenWrapper = getToken(tokenPretender);
+		return tokenWrapper;
+	}
+	
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) {
+		TokenPretender tokenPretender = new TokenPretender(attributes, interests);
+		TokenWrapper tokenWrapper = getToken(tokenPretender);
+		return tokenWrapper;
+	}
+	
+	public void returnTokenHandle(TokenWrapper adapterToken) {
+		if(!adapterToken.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
+			tokenProvider.returnToken(adapterToken);		
+		}
+	}
+	
+	public OutputMessage call(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties, int callTimeout) throws Exception {
 		Token token = tokenWrapper.getToken();
 		
 		AgentRef agent = tokenWrapper.getAgent();
@@ -124,87 +152,6 @@ public class GridClient implements Closeable {
 		return output;
 	}
 
-	public TokenHandle getLocalToken() {
-		Token localToken = new Token();
-		localToken.setId(UUID.randomUUID().toString());
-		localToken.setAgentid(Grid.LOCAL_AGENT);		
-		localToken.setAttributes(new HashMap<String, String>());
-		localToken.setSelectionPatterns(new HashMap<String, Interest>());
-		TokenWrapper tokenWrapper = new TokenWrapper(localToken, new AgentRef(Grid.LOCAL_AGENT, "localhost"));
-		return new TokenHandle(tokenWrapper);
-	}
-	
-	public TokenHandle getToken() {
-		TokenPretender tokenPretender = new TokenPretender(null, null);
-		TokenWrapper tokenWrapper = getToken(tokenPretender);
-		return new TokenHandle(tokenWrapper);
-	}
-	
-	public TokenHandle getToken(Map<String, String> attributes, Map<String, Interest> interests) {
-		TokenPretender tokenPretender = new TokenPretender(attributes, interests);
-		TokenWrapper tokenWrapper = getToken(tokenPretender);
-		return new TokenHandle(tokenWrapper);
-	}
-	
-	public class TokenHandle {
-		
-		TokenWrapper token;
-		
-		String handler = null;
-		
-		Map<String,String> properties = new HashMap<>();
-		
-		int callTimeout = 180000;
-		
-		private TokenHandle(TokenWrapper token) {
-			super();
-			this.token = token;
-		}
-
-		public TokenHandle setCallTimeout(int callTimeout) {
-			this.callTimeout = callTimeout;
-			return this;
-		}
-
-		public TokenHandle setHandler(String handler) {
-			this.handler = handler;
-			return this;
-		}
-		
-		public TokenHandle addProperties(Map<String, String> properties) {
-			if(properties!=null) {
-				this.properties.putAll(properties);
-			}
-			return this;
-		}
-
-		public void setCurrentOwner(Object currentOwner) {
-			token.setCurrentOwner(currentOwner);
-		}
-
-		public OutputMessage process(String function, JsonObject argument) throws Exception {
-			return processInput(token, function, argument, handler, properties, callTimeout);
-		}
-		
-		public OutputMessage processAndRelease(String function, JsonObject argument) throws Exception {
-			try {
-				return processInput(token, function, argument, handler, properties, callTimeout);
-			} finally {
-				release();
-			}
-		}
-		
-		public TokenWrapper getToken() {
-			return token;
-		}
-		
-		public void release() {
-			if(!token.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
-				returnAdapterTokenToRegister(token);				
-			}
-		}
-	}
-	
 	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) throws Exception {
 		// TODO get from config?
 		int connectionTimeout = 3000;
@@ -259,10 +206,6 @@ public class GridClient implements Closeable {
 		}
 	}
 
-	private void returnAdapterTokenToRegister(TokenWrapper adapterToken) {
-		tokenProvider.returnToken(adapterToken);		
-	}
-	
 	public String registerFile(File file) {
 		return fileService.registerFile(file);
 	}

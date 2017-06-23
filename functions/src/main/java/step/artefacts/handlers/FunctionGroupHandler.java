@@ -24,15 +24,14 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
-import step.functions.FunctionClient;
-import step.functions.FunctionClient.FunctionTokenHandle;
-import step.plugins.adaptergrid.GridPlugin;
+import step.functions.FunctionExecutionService;
+import step.grid.TokenWrapper;
 
 public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportNode> {
 	
 	public static final String TOKEN_PARAM_KEY = "##token##";
 
-	private FunctionClient functionClient;
+	private FunctionExecutionService functionExecutionService;
 	private TokenSelectorHelper tokenSelectorHelper;
 	
 	public FunctionGroupHandler() {
@@ -42,8 +41,8 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		functionClient = (FunctionClient) context.getGlobalContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
-		tokenSelectorHelper = new TokenSelectorHelper(functionClient,  new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler())));
+		functionExecutionService = context.getGlobalContext().get(FunctionExecutionService.class);
+		tokenSelectorHelper = new TokenSelectorHelper(functionExecutionService,  new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler())));
 
 	}
 
@@ -55,13 +54,13 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 
 	@Override
 	protected void execute_(ReportNode node, FunctionGroup testArtefact) {		
-		FunctionTokenHandle token = tokenSelectorHelper.selectToken(testArtefact, functionClient, getBindings());
+		TokenWrapper token = tokenSelectorHelper.selectToken(testArtefact, functionExecutionService, getBindings());
 		context.getVariablesManager().putVariable(node, TOKEN_PARAM_KEY, token);
 		try {
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.execute_(node, testArtefact);
 		} finally {
-			token.release();
+			tokenSelectorHelper.returnToken(token);
 		}	
 	}
 

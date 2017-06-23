@@ -32,6 +32,10 @@ public abstract class AbstractContext {
 		return attributes.put(key, value);
 	}
 	
+	public <T> Object put(Class<T> class_, T value) {
+		return attributes.put(class_.getName(), value);
+	}
+	
 	@SuppressWarnings("unchecked")
 	public <T>T get(Class<T> class_) {
 		return (T) attributes.get(class_.getName());

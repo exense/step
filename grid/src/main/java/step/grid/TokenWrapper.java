@@ -20,17 +20,23 @@ package step.grid;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;
 
 public class TokenWrapper implements Identity {
 	
-	private final Token token;
+	private Token token;
 	
-	private final AgentRef agent;
+	private AgentRef agent;
 	
 	private Object currentOwner;
 	
+	public TokenWrapper() {
+		super();
+	}
+
 	public TokenWrapper(Token token, AgentRef agent) {
 		super();
 		this.token = token;	
@@ -47,6 +53,7 @@ public class TokenWrapper implements Identity {
 		return token.getSelectionPatterns();
 	}
 
+	@JsonIgnore
 	@Override
 	public String getID() {
 		return token.getId();
@@ -66,6 +73,14 @@ public class TokenWrapper implements Identity {
 
 	public void setCurrentOwner(Object currentOwner) {
 		this.currentOwner = currentOwner;
+	}
+
+	public void setToken(Token token) {
+		this.token = token;
+	}
+
+	public void setAgent(AgentRef agent) {
+		this.agent = agent;
 	}
 
 	@Override
