@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.core.execution;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -55,6 +56,10 @@ public class InMemoryArtefactAccessor extends ArtefactAccessor {
 	@Override
 	public void save(List<? extends AbstractArtefact> artefacts) {
 		artefacts.stream().forEach(artefact->save(artefact));
+	}
+	
+	public Collection<? extends AbstractArtefact> getCollection() {
+		return map.values();
 	}
 
 }
