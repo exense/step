@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.core.execution;
+package step.core.artefacts.reports;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -26,40 +26,45 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
+public class InMemoryReportNodeAccessor extends ReportNodeAccessor {
 
-public class InMemoryArtefactAccessor extends ArtefactAccessor {
-
-	Map<ObjectId, AbstractArtefact> map = new HashMap<>();
+	Map<ObjectId, ReportNode> map = new HashMap<>();
 
 	@Override
-	public AbstractArtefact get(ObjectId artefactID) {
-		return map.get(artefactID);
+	public void save(ReportNode node) {
+		map.put(node.getId(), node);
 	}
 
 	@Override
-	public AbstractArtefact get(String artefactID) {
-		return get(new ObjectId(artefactID));
+	public ReportNode get(ObjectId nodeId) {
+		return map.get(nodeId);
 	}
 
 	@Override
-	public Iterator<AbstractArtefact> getChildren(AbstractArtefact parent) {
-		return parent.getChildrenIDs().stream().map(id->get(id)).iterator();
+	public Iterator<ReportNode> getChildren(ObjectId parentID) {
+		return map.values().stream().filter(node->parentID.equals(node.getParentID())).iterator();
 	}
 
 	@Override
-	public AbstractArtefact save(AbstractArtefact artefact) {
-		return map.put(artefact.getId(), artefact);
+	public ReportNode getReportNodeByParentIDAndArtefactID(ObjectId parentID, ObjectId artefactID) {
+		for(ReportNode node:map.values()) {
+			if(parentID.equals(node.getParentID())&&artefactID.equals(node.getArtefactID())) {
+				return node;
+			}
+		}
+		return null;
+
 	}
 
 	@Override
-	public void save(List<? extends AbstractArtefact> artefacts) {
-		artefacts.stream().forEach(artefact->save(artefact));
-	}
-	
-	public Collection<? extends AbstractArtefact> getCollection() {
-		return map.values();
+	public Iterator<ReportNode> getReportNodesByExecutionIDAndArtefactID(String executionID, String artefactID) {
+		List<ReportNode> nodes = new ArrayList<>();
+		for(ReportNode node:map.values()) {
+			if(executionID.equals(node.getExecutionID())&&node.getArtefactID()!=null&&artefactID.equals(node.getArtefactID().toString())) {
+				nodes.add(node);
+			}
+		}
+		return nodes.iterator();
 	}
 
 }

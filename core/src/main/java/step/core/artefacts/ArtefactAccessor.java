@@ -21,6 +21,10 @@ package step.core.artefacts;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import javax.json.JsonObjectBuilder;
+import javax.json.spi.JsonProvider;
 
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
@@ -78,6 +82,18 @@ public class ArtefactAccessor extends AbstractAccessor {
 	public AbstractArtefact get(ObjectId artefactID) {
 		AbstractArtefact artefact = artefacts.findOne(artefactID).as(AbstractArtefact.class);
 		return artefact;
+	}
+	
+	private static final JsonProvider jsonProvider = JsonProvider.provider();
+	
+	public AbstractArtefact findByAttributes(Map<String, String> attributes) {
+		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
+		for(String key:attributes.keySet()) {
+			builder.add("attributes."+key, attributes.get(key));
+		}
+
+		String query = builder.build().toString();
+		return artefacts.findOne(query).as(AbstractArtefact.class);
 	}
 	
 	public Iterator<AbstractArtefact> getAll() {

@@ -338,6 +338,16 @@ public class ControllerServices extends AbstractServices {
 	}
 	
 	@POST
+	@Path("/artefact/search")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
+	public AbstractArtefact searchArtefactByAttributes(Map<String, String> attributes) {
+		return getContext().getArtefactAccessor().findByAttributes(attributes);
+	}
+
+	
+	@POST
 	@Path("/artefact/{id}/attributes")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -356,6 +366,15 @@ public class ControllerServices extends AbstractServices {
 	@Secured(right="plan-write")
 	public AbstractArtefact saveArtefact(AbstractArtefact artefact) {
 		return getContext().getArtefactAccessor().save(artefact);
+	}
+	
+	@POST
+	@Path("/artefacts")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
+	public void saveArtefact(List<AbstractArtefact> artefact) {
+		getContext().getArtefactAccessor().save(artefact);
 	}
 	
 	

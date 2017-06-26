@@ -8,8 +8,8 @@ import step.artefacts.ForBlock;
 import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.InMemoryArtefactAccessor;
 import step.datapool.excel.ExcelDataPool;
 import step.datapool.sequence.IntSequenceDataPool;
 
