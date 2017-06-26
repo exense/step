@@ -52,7 +52,14 @@ public class SetHandler extends ArtefactHandler<Set, ReportNode> {
 			try {
 				varMan.updateVariable(testArtefact.getKey().get(), result);
 			} catch(UndefinedVariableException|ImmutableVariableException e) {
-				ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
+				ReportNode referenceNode;
+				ReportNode callFunctionReport = (ReportNode) context.getVariablesManager().getVariable("callReport");
+				if(callFunctionReport==null) {
+					referenceNode = node;
+				} else {
+					referenceNode = callFunctionReport;
+				}
+				ReportNode parentNode = context.getReportNodeCache().get(referenceNode.getParentID().toString());
 				varMan.putVariable(parentNode, testArtefact.getKey().get(), result);
 			}
 		}
