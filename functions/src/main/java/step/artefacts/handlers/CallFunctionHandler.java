@@ -84,12 +84,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		String argumentStr = testArtefact.getArgument().get();
 		node.setInput(argumentStr);
 		
-		Input input = buildInput(argumentStr);
-		node.setInput(input.getArgument().toString());
-		
 		Function function = getFunction(testArtefact);
 		node.setFunctionId(function.getId().toString());
 		node.setFunctionAttributes(function.getAttributes());
+
+		Input input = buildInput(argumentStr);
+		node.setInput(input.getArgument().toString());
 		
 		validateInput(input, function);
 
