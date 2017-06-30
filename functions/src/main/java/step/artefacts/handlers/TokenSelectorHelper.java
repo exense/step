@@ -61,9 +61,12 @@ public class TokenSelectorHelper {
 				Map<String, Interest> selectionCriteria = new HashMap<>();
 				selectionCriteriaJson.keySet().stream().forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
 				
+				Map<String, String> pretenderAttributes = new HashMap<>();
+				bindings.forEach((key,value)->{pretenderAttributes.put(key, value.toString());});
+				
 				OperationManager.getInstance().enter("Token selection", selectionCriteria);
 				try {
-					tokenHandle = functionExecutionService.getTokenHandle(null, selectionCriteria);
+					tokenHandle = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria);
 				} finally {
 					OperationManager.getInstance().exit();					
 				}
