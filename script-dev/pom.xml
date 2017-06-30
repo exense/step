@@ -21,7 +21,7 @@
 	
 	<artifactId>script-dev</artifactId>
 	<groupId>step</groupId>
-	<version>3.4.1</version>
+	<version>3.5.0</version>
 	<packaging>pom</packaging>
 
 	<modules>
