@@ -157,8 +157,11 @@ public class GridClient implements Closeable {
 		call(agentRef, token, "/reserve", builder->builder.get());
 	}
 	
+	private static final int READ_TIMEOUT_OFFSET = 3000;
+	
 	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) throws AgentCommunicationException {
 		return (OutputMessage) call(agentRef, token, "/process", builder->{
+			builder.property(ClientProperties.READ_TIMEOUT, READ_TIMEOUT_OFFSET+message.getCallTimeout());
 			Entity<InputMessage> entity = Entity.entity(message, MediaType.APPLICATION_JSON);
 			return builder.post(entity);
 		}, response-> {
@@ -176,14 +179,18 @@ public class GridClient implements Closeable {
 	
 	private Object call(AgentRef agentRef, Token token, String cmd, Function<Builder, Response> f, Function<Response, Object> mapper) throws AgentCommunicationException {
 		String agentUrl = agentRef.getAgentUrl();
-		int connectionTimeout = 3000;
-		int callTimeoutOffset = 3000;
+		int connectionTimeout = READ_TIMEOUT_OFFSET;
+		int callTimeoutOffset = READ_TIMEOUT_OFFSET;
 		Builder builder =  client.target(agentUrl + "/token/" + token.getId() + cmd).request()
 				.property(ClientProperties.READ_TIMEOUT, callTimeoutOffset).property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout);
 		
 		Response response = null;
 		try {
-			response = f.apply(builder);
+			try {
+				response = f.apply(builder);				
+			} catch(Exception e) {
+				throw new AgentCommunicationException(agentRef, token, cmd, e);
+			}
 			if(!(response.getStatus()==204||response.getStatus()==200)) {
 				String error = response.readEntity(String.class);
 				throw new AgentCommunicationException(agentRef, token, cmd, error);
@@ -219,6 +226,14 @@ public class GridClient implements Closeable {
 			this.token = token;
 			this.cmd = cmd;
 			this.errorMessage = errorMessage;
+		}
+		
+		public AgentCommunicationException(AgentRef agentRef, Token token, String cmd, Exception e) {
+			super(e);
+			this.errorMessage = e.getMessage();
+			this.agentRef = agentRef;
+			this.token = token;
+			this.cmd = cmd;
 		}
 
 		@Override

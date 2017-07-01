@@ -91,4 +91,9 @@ public class Token {
 		}
 		return contextObjects.put(key, value);
 	}
+
+	@Override
+	public String toString() {
+		return "Token [id=" + id + "]";
+	}
 }
