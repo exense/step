@@ -57,6 +57,7 @@ import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
+import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 
@@ -280,7 +281,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/select")
 	@Secured(right="kw-execute")
-	public TokenWrapper getTokenHandle(Map<String, String> attributes) {
+	public TokenWrapper getTokenHandle(Map<String, String> attributes) throws AgentCommunicationException {
 		return getFunctionClient().getTokenHandle(attributes, null);
 	}
 
@@ -288,7 +289,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/return")
 	@Secured(right="kw-execute")
-	public void returnTokenHandle(TokenWrapper token) {
+	public void returnTokenHandle(TokenWrapper token) throws AgentCommunicationException {
 		getFunctionClient().returnTokenHandle(token);
 	}
 	

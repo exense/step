@@ -29,16 +29,15 @@ public class AgentTokenWrapper {
 	
 	Token token;
 	
-	TokenSession session;
+	final TokenSession session = new TokenSession();
+	
+	TokenReservationSession tokenReservationSession;
 	
 	AgentTokenServices services;
 	
 	Map<String, String> properties;
 	
-	boolean inUse;
-	
-	long lastTouch;
-	
+	volatile boolean inUse = false;
 
 	public AgentTokenWrapper() {
 		super();
@@ -56,10 +55,6 @@ public class AgentTokenWrapper {
 
 	public TokenSession getSession() {
 		return session;
-	}
-
-	public void setSession(TokenSession session) {
-		this.session = session;
 	}
 
 	public Token getToken() {
@@ -90,20 +85,16 @@ public class AgentTokenWrapper {
 		this.properties = properties;
 	}
 
-	public long getLastTouch() {
-		return lastTouch;
-	}
-
-	public void setLastTouch(long lastTouch) {
-		this.lastTouch = lastTouch;
-	}
-
 	public String getUid() {
 		return token.getId();
 	}
 
 	public boolean isInUse() {
 		return inUse;
+	}
+	
+	public void setInUse(boolean inUse) {
+		this.inUse = inUse;
 	}
 
 	public AgentTokenServices getServices() {
@@ -112,6 +103,14 @@ public class AgentTokenWrapper {
 
 	public void setServices(AgentTokenServices services) {
 		this.services = services;
+	}
+
+	public TokenReservationSession getTokenReservationSession() {
+		return tokenReservationSession;
+	}
+
+	public void setTokenReservationSession(TokenReservationSession tokenReservationContext) {
+		this.tokenReservationSession = tokenReservationContext;
 	}
 
 	@Override

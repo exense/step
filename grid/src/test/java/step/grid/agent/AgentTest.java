@@ -47,6 +47,20 @@ public class AgentTest extends AbstractGridTest {
 	}
 	
 	@Test
+	public void testNoReservation() throws Exception {
+		Map<String, Interest> interests = new HashMap<>();
+		interests.put("att1", new Interest(Pattern.compile("val.*"), true));
+		
+		JsonObject o = newDummyJson();
+		
+		TokenWrapper token = client.getTokenHandle(null, interests);
+		client.returnTokenHandle(token);
+		
+		OutputMessage outputMessage = client.call(token, "testFunction", o, "class:step.grid.agent.TestTokenHandler", null, 1000);
+		Assert.assertTrue(outputMessage.getError().contains("hasn't been reserved for execution. Please first call /reserve before execution"));
+	}
+	
+	@Test
 	public void testTimeout() throws Exception {		
 		JsonObject o = Json.createObjectBuilder().add("delay", 4000).build();
 		
@@ -54,7 +68,7 @@ public class AgentTest extends AbstractGridTest {
 		OutputMessage outputMessage = client.call(token, "testFunction", o, "class:step.grid.agent.TestTokenHandler", null, 10);
 		
 		Assert.assertEquals("Timeout while processing request. Request execution interrupted successfully.",outputMessage.getError());
-		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace.log"));
+		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace_before_interruption.log"));
 		
 		
 		// check if the token has been returned to the pool. In this case the second call should return the same error
@@ -64,20 +78,20 @@ public class AgentTest extends AbstractGridTest {
 	
 	@Test
 	public void testTimeoutNoTokenReturn() throws Exception {		
-		JsonObject o = Json.createObjectBuilder().add("delay", 4000).add("delayAfterInterruption", 150).build();
+		JsonObject o = Json.createObjectBuilder().add("delay", 500).add("notInterruptable", true).build();
 		
 		TokenWrapper token = client.getTokenHandle();
 		OutputMessage outputMessage = client.call(token, "testFunction", o, "class:step.grid.agent.TestTokenHandler", null, 10);
 		
-		Assert.assertEquals("Timeout while processing request. WARNING: Request execution couldn't be interrupted and the token couldn't be returned to the pool. Subsequent calls to that token may fail!",outputMessage.getError());
-		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace.log"));
+		Assert.assertEquals("Timeout while processing request. WARNING: Request execution couldn't be interrupted. Subsequent calls to that token may fail!",outputMessage.getError());
+		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace_before_interruption.log"));
 
 		
 		// check if the token has been returned to the pool. In this case the second call should return the same error
 		outputMessage = client.call(token, "testFunction", o, "class:step.grid.agent.TestTokenHandler", null, 10);
 		Assert.assertTrue(outputMessage.getError().contains("already in use"));
 		
-		Thread.sleep(150);
+		Thread.sleep(1000);
 		o = newDummyJson();
 		
 		// After "delayAfterInterruption" the token should have been returned to the pool

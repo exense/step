@@ -24,13 +24,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import javax.json.JsonObject;
-import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -44,7 +45,7 @@ import step.grid.AgentRef;
 import step.grid.Grid;
 import step.grid.GridFileService;
 import step.grid.Token;
-import step.grid.TokenProvider;
+import step.grid.TokenRegistry;
 import step.grid.TokenWrapper;
 import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.MessageHandler;
@@ -65,7 +66,7 @@ public class GridClient implements Closeable {
 	
 	private final GridFileService fileService;
 	
-	private final TokenProvider tokenProvider;
+	private final TokenRegistry tokenRegistry;
 	
 	private Client client;
 	
@@ -73,10 +74,10 @@ public class GridClient implements Closeable {
 	
 	private long matchExistsTimeout = 60000;
 
-	public GridClient(TokenProvider tokenProvider, GridFileService fileService) {
+	public GridClient(TokenRegistry tokenRegistry, GridFileService fileService) {
 		super();
 		
-		this.tokenProvider = tokenProvider;
+		this.tokenRegistry = tokenRegistry;
 		this.fileService = fileService;
 		
 		client = ClientBuilder.newClient();
@@ -94,22 +95,23 @@ public class GridClient implements Closeable {
 		return tokenWrapper;
 	}
 	
-	public TokenWrapper getTokenHandle() {
-		TokenPretender tokenPretender = new TokenPretender(null, null);
-		TokenWrapper tokenWrapper = getToken(tokenPretender);
-		return tokenWrapper;
+	public TokenWrapper getTokenHandle() throws AgentCommunicationException {
+		return getTokenHandle(null, null);
 	}
 	
-	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) {
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) throws AgentCommunicationException {
 		TokenPretender tokenPretender = new TokenPretender(attributes, interests);
 		TokenWrapper tokenWrapper = getToken(tokenPretender);
+		
+		reserveToken(tokenWrapper.getAgent(), tokenWrapper.getToken());
 		return tokenWrapper;
 	}
 	
-	public void returnTokenHandle(TokenWrapper adapterToken) {
-		if(!adapterToken.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
-			tokenProvider.returnToken(adapterToken);		
+	public void returnTokenHandle(TokenWrapper tokenWrapper) throws AgentCommunicationException {
+		if(!tokenWrapper.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
+			tokenRegistry.returnToken(tokenWrapper);		
 		}
+		returnToken(tokenWrapper.getAgent(),tokenWrapper.getToken());
 	}
 	
 	public OutputMessage call(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties, int callTimeout) throws Exception {
@@ -120,7 +122,6 @@ public class GridClient implements Closeable {
 		InputMessage message = new InputMessage();
 		message.setArgument(argument);
 		message.setFunction(function);
-		message.setTokenId(token.getId());
 		message.setHandler(handler);
 		message.setProperties(properties);
 		message.setCallTimeout(callTimeout);
@@ -152,38 +153,85 @@ public class GridClient implements Closeable {
 		return output;
 	}
 
-	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) throws Exception {
-		// TODO get from config?
+	private void reserveToken(AgentRef agentRef, Token token) throws AgentCommunicationException {
+		call(agentRef, token, "/reserve", builder->builder.get());
+	}
+	
+	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) throws AgentCommunicationException {
+		return (OutputMessage) call(agentRef, token, "/process", builder->{
+			Entity<InputMessage> entity = Entity.entity(message, MediaType.APPLICATION_JSON);
+			return builder.post(entity);
+		}, response-> {
+			return response.readEntity(OutputMessage.class);
+		});
+	}
+	
+	private void returnToken(AgentRef agentRef, Token token) throws AgentCommunicationException {
+		call(agentRef, token, "/release", builder->builder.get());
+	}
+	
+	private void call(AgentRef agentRef, Token token, String cmd, Function<Builder, Response> f) throws AgentCommunicationException {
+		call(agentRef, token, cmd, f, null);
+	}
+	
+	private Object call(AgentRef agentRef, Token token, String cmd, Function<Builder, Response> f, Function<Response, Object> mapper) throws AgentCommunicationException {
+		String agentUrl = agentRef.getAgentUrl();
 		int connectionTimeout = 3000;
 		int callTimeoutOffset = 3000;
+		Builder builder =  client.target(agentUrl + "/token/" + token.getId() + cmd).request()
+				.property(ClientProperties.READ_TIMEOUT, callTimeoutOffset).property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout);
 		
-		String agentUrl = agentRef.getAgentUrl();
-		
-		try {			
-			Entity<InputMessage> entity = Entity.entity(message, MediaType.APPLICATION_JSON);
-			Response response = client.target(agentUrl + "/process").request().property(ClientProperties.READ_TIMEOUT, message.getCallTimeout()+callTimeoutOffset)
-					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).post(entity);
-			try {
-				if(response.getStatus()==200) {
-					OutputMessage output = response.readEntity(OutputMessage.class);
-					return output;				
+		Response response = null;
+		try {
+			response = f.apply(builder);
+			if(!(response.getStatus()==204||response.getStatus()==200)) {
+				String error = response.readEntity(String.class);
+				throw new AgentCommunicationException(agentRef, token, cmd, error);
+			} else {
+				if(mapper!=null) {
+					return mapper.apply(response);
 				} else {
-					String error = response.readEntity(String.class);
-					throw new Exception("Error while calling agent with ref " + agentRef.toString()+ ". HTTP Response: "+error);
+					return null;
 				}
-			} finally {
-				response.close();
 			}
-		} catch (ProcessingException e) {
-			throw e;
+		} finally {
+			if(response!=null) {
+				response.close();				
+			}
 		}
 	}
 	
+	public static class AgentCommunicationException extends Exception {
+	
+		private static final long serialVersionUID = 4337204149079143691L;
+
+		AgentRef agentRef;
+		
+		Token token;
+		
+		String cmd;
+		
+		String errorMessage;
+
+		public AgentCommunicationException(AgentRef agentRef, Token token, String cmd, String errorMessage) {
+			super();
+			this.agentRef = agentRef;
+			this.token = token;
+			this.cmd = cmd;
+			this.errorMessage = errorMessage;
+		}
+
+		@Override
+		public String getMessage() {
+			return "Error while calling agent "+agentRef+" to execute "+cmd+" on token "+token+": "+errorMessage;
+		}
+	}
+
 	private TokenWrapper getToken(final Identity tokenPretender) {
 		TokenWrapper adapterToken = null;
 		try {
 			addThreadIdInterest(tokenPretender);
-			adapterToken = tokenProvider.selectToken(tokenPretender, matchExistsTimeout, noMatchExistsTimeout);
+			adapterToken = tokenRegistry.selectToken(tokenPretender, matchExistsTimeout, noMatchExistsTimeout);
 		} catch (TimeoutException e) {
 			String desc = "[attributes=" + tokenPretender.getAttributes() + ", selectionCriteria=" + tokenPretender.getInterests() + "]";
 			throw new RuntimeException("Not able to find any available adapter matching " + desc);

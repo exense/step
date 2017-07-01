@@ -233,7 +233,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return node;
 	}
 	
-	protected abstract void execute_(REPORT_NODE node, ARTEFACT testArtefact);
+	protected abstract void execute_(REPORT_NODE node, ARTEFACT testArtefact) throws Exception;
 
 	@SuppressWarnings("unchecked")
 	public static void delegateCreateReportSkeleton(ExecutionContext context, AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {

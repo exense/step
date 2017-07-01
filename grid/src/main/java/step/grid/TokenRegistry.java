@@ -6,7 +6,7 @@ import java.util.concurrent.TimeoutException;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Token;
 
-public interface TokenProvider {
+public interface TokenRegistry {
 
 	TokenWrapper selectToken(Identity pretender, long matchTimeout, long noMatchTimeout)
 			throws TimeoutException, InterruptedException;

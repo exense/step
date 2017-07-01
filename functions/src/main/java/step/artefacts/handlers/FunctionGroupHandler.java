@@ -53,7 +53,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	}
 
 	@Override
-	protected void execute_(ReportNode node, FunctionGroup testArtefact) {		
+	protected void execute_(ReportNode node, FunctionGroup testArtefact) throws Exception {		
 		TokenWrapper token = tokenSelectorHelper.selectToken(testArtefact, functionExecutionService, getBindings());
 		context.getVariablesManager().putVariable(node, TOKEN_PARAM_KEY, token);
 		try {

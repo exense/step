@@ -42,7 +42,7 @@ import step.grid.tokenpool.SimpleAffinityEvaluator;
 import step.grid.tokenpool.Token;
 import step.grid.tokenpool.TokenPool;
 
-public class Grid implements TokenProvider, GridFileService {
+public class Grid implements TokenRegistry, GridFileService {
 
 	public static final String LOCAL_AGENT = "local";
 

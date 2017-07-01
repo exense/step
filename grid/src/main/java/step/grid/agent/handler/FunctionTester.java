@@ -26,7 +26,6 @@ import javax.json.Json;
 import javax.json.JsonObject;
 
 import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.agent.tokenpool.TokenSession;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
@@ -45,7 +44,6 @@ public class FunctionTester {
 			if(properties!=null) {
 				token.setProperties(properties);
 			}
-			token.setSession(new TokenSession());
 		} 
 		
 		public OutputMessage run(String function, String argument, Map<String, String> properties) throws Exception {

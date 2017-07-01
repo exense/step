@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -115,7 +114,7 @@ public class Agent {
 		this.agentConf = agentConf;
 		
 		id = UUID.randomUUID().toString();
-		tokenPool = new AgentTokenPool(10000);
+		tokenPool = new AgentTokenPool();
 	}
 	
 	public String getId() {
@@ -203,12 +202,6 @@ public class Agent {
 		}
 		
 		timer.schedule(registrationTask, 0, agentConf.getRegistrationPeriod());
-		timer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				tokenPool.evictSessions();
-			}
-		}, 15000, 10000);
 	}
 
 	private FileManagerClient initFileManager(RegistrationClient registrationClient) throws IOException {

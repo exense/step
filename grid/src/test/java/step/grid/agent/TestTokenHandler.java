@@ -33,19 +33,24 @@ public class TestTokenHandler implements MessageHandler {
 		if(message.getArgument().containsKey("delay")) {
 			Integer delay = message.getArgument().getInt("delay");
 			
-			try {
-				Thread.sleep(delay.longValue());
-			} catch (InterruptedException e) {
-				if(message.getArgument().containsKey("delayAfterInterruption")) {
-					Integer d =  message.getArgument().getInt("delayAfterInterruption");
-					try {
-						Thread.sleep(d.longValue());
-					} catch (InterruptedException e1) {}				
-				}
-			}			
+			long t1 = System.currentTimeMillis();
+			
+			boolean reSleepOnInterruption = message.getArgument().getBoolean("notInterruptable", false);
+			sleep(t1, delay, reSleepOnInterruption);			
 		}
 		
 		return output;
+	}
+
+	private void sleep(long t1, Integer delay, boolean reSleepOnInterruption) {
+		long t = System.currentTimeMillis();
+		try {
+			Thread.sleep(t1+delay.longValue()-t);
+		} catch (InterruptedException e) {
+			if(reSleepOnInterruption && t<t1+delay) {
+				sleep(t1, delay, true);				
+			}
+		}
 	}
 
 }

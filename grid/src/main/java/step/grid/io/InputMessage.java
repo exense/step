@@ -23,8 +23,6 @@ import java.util.Map;
 import javax.json.JsonObject;
 
 public class InputMessage {
-	
-	private String tokenId;
 
 	private String function;
 	
@@ -38,14 +36,6 @@ public class InputMessage {
 
 	public InputMessage() {
 		super();
-	}
-
-	public String getTokenId() {
-		return tokenId;
-	}
-
-	public void setTokenId(String tokenId) {
-		this.tokenId = tokenId;
 	}
 
 	public String getFunction() {

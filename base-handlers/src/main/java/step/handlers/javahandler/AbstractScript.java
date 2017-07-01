@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.grid.agent.handler.context.OutputMessageBuilder;
+import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 
 public class AbstractScript  {
@@ -43,14 +44,24 @@ public class AbstractScript  {
 	
 	protected Map<String, String> properties;
 	
-	protected TokenSession session;
+	protected TokenReservationSession session;
 	
-	public TokenSession getSession() {
+	protected TokenSession tokenSession;
+	
+	public TokenReservationSession getSession() {
 		return session;
 	}
 
-	public void setSession(TokenSession session) {
+	public void setSession(TokenReservationSession session) {
 		this.session = session;
+	}
+
+	public TokenSession getTokenSession() {
+		return tokenSession;
+	}
+
+	public void setTokenSession(TokenSession tokenSession) {
+		this.tokenSession = tokenSession;
 	}
 
 	public JsonObject getInput() {

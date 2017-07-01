@@ -83,7 +83,8 @@ public class SimpleJavaHandler implements MessageHandler {
 		AbstractScript script = null;
 		if(instance instanceof AbstractScript) {
 			script = (AbstractScript) instance;
-			script.setSession(token.getSession());
+			script.setTokenSession(token.getSession());
+			script.setSession(token.getTokenReservationSession());
 			script.setInput(message.getArgument());
 			script.setProperties(properties);
 			OutputMessageBuilder output = new OutputMessageBuilder();

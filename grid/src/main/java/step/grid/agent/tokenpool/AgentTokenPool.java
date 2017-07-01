@@ -32,11 +32,8 @@ public class AgentTokenPool {
 	
 	private final Map<String, AgentTokenWrapper> pool = new HashMap<>();
 	
-	private long evictionTimeMs; 
-
-	public AgentTokenPool(long evictionTimeMs) {
+	public AgentTokenPool() {
 		super();
-		this.evictionTimeMs = evictionTimeMs;
 	}
 
 	public synchronized List<AgentTokenWrapper> getTokens() {
@@ -47,63 +44,65 @@ public class AgentTokenPool {
 	
 	public synchronized void offerToken(AgentTokenWrapper token) {
 		logger.debug("offerToken: " + token.toString());
-		token.inUse = false;
-		token.lastTouch = System.currentTimeMillis();
-		token.session = new TokenSession();
 		pool.put(token.getUid(), token);
 	}
 	
-	public synchronized AgentTokenWrapper getToken(String tokenId) throws TokenInUseException {
+	public synchronized AgentTokenWrapper getTokenForExecution(String tokenId) throws TokenNotReservedException, InvalidTokenIdException {
 		AgentTokenWrapper token = pool.get(tokenId);
 		if(token!=null) {
-			if(token.inUse) {
-				throw new TokenInUseException(token);
-			} else {
-				token.inUse = true;
+			if(token.tokenReservationSession==null) {
+				throw new TokenNotReservedException();
 			}
-			logger.debug("getToken: " + token.toString());
+		} else {
+			throw new InvalidTokenIdException();
 		}
 		return token;
-		
 	}
 	
-	public synchronized void returnToken(String tokenId) {
+	private AgentTokenWrapper getToken(String tokenId) {
 		AgentTokenWrapper token = pool.get(tokenId);
-		token.inUse = false;
-		token.lastTouch = System.currentTimeMillis();
-		logger.debug("returnToken: " + token.toString());
+		return token;
 	}
 	
-	public synchronized List<AgentTokenWrapper> evictSessions() {
-		List<AgentTokenWrapper> evictedTokenss = new ArrayList<>();
-		long currentTime = System.currentTimeMillis();
-		for(AgentTokenWrapper token:pool.values()) {
-			if(token.getSession()!=null && !token.inUse && token.lastTouch+evictionTimeMs<currentTime) {
-				logger.debug("Evicting session. Token: " + token.toString());
-				evictedTokenss.add(token);
-				
-				// TODO evict session
+	public void reserveToken(String tokenId) throws InvalidTokenIdException {
+		AgentTokenWrapper token = getToken(tokenId);
+		if(token!=null) {
+			TokenReservationSession previousTokenReservationSession = token.getTokenReservationSession();
+			if(previousTokenReservationSession!=null) {
+				logger.warn("Trying to reserve token '"+tokenId+"' which is already reserved. Closing previous session.");
+				previousTokenReservationSession.close();
 			}
+			
+			TokenReservationSession tokenReservationContext = new TokenReservationSession();
+			token.setTokenReservationSession(tokenReservationContext);
+		} else {
+			throw new InvalidTokenIdException();
 		}
-		return evictedTokenss;
 	}
 	
-	public class TokenInUseException extends Exception {
-
-		private static final long serialVersionUID = 7146003476845362228L;
+	public void releaseToken(String tokenId) throws InvalidTokenIdException {
+		AgentTokenWrapper token = getToken(tokenId);
+		if(token!=null) {
+			TokenReservationSession tokenReservationSession = token.getTokenReservationSession();
+			token.setTokenReservationSession(null);
+			if(tokenReservationSession!=null) {
+				tokenReservationSession.close();
+			} else {
+				// token has already been released or has never been reserved. Nothing to do.
+				logger.warn("Trying to release token '"+tokenId+"' which is not reserved");
+			}
+		} else {
+			throw new InvalidTokenIdException();
+		}
+	}
+	
+	@SuppressWarnings("serial")
+	public static class TokenNotReservedException extends Exception {
 		
-		private AgentTokenWrapper token;
-
-		public TokenInUseException(AgentTokenWrapper token) {
-			super();
-			this.token = token;
-		}
-
-		public AgentTokenWrapper getToken() {
-			return token;
-		}
 	}
 	
-	
-
+	@SuppressWarnings("serial")
+	public static class InvalidTokenIdException extends Exception {
+		
+	}
 }

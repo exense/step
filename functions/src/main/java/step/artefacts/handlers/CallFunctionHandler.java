@@ -84,7 +84,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	public static final String EXECUTION_CONTEXT_KEY = "$executionContext";
 	
 	@Override
-	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) {
+	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) throws Exception {
 		String argumentStr = testArtefact.getArgument().get();
 		node.setInput(argumentStr);
 		

@@ -31,6 +31,7 @@ import step.common.managedoperations.OperationManager;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.functions.FunctionExecutionService;
 import step.grid.TokenWrapper;
+import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.tokenpool.Interest;
 
 public class TokenSelectorHelper {
@@ -47,7 +48,7 @@ public class TokenSelectorHelper {
 		this.dynamicJsonObjectResolver = dynamicJsonObjectResolver;
 	}
 	
-	protected TokenWrapper selectToken(TokenSelector testArtefact, FunctionExecutionService functionExecutionService, Map<String, Object> bindings) {
+	protected TokenWrapper selectToken(TokenSelector testArtefact, FunctionExecutionService functionExecutionService, Map<String, Object> bindings) throws AgentCommunicationException {
 		TokenWrapper tokenHandle;
 		String token = testArtefact.getToken().get();
 		if(token!=null) {
@@ -82,7 +83,7 @@ public class TokenSelectorHelper {
 		return tokenHandle;
 	}
 	
-	protected void returnToken(TokenWrapper token) {
+	protected void returnToken(TokenWrapper token) throws AgentCommunicationException {
 		functionExecutionService.returnTokenHandle(token);
 	}
 }

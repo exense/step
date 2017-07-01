@@ -126,7 +126,8 @@ public class ScriptHandler implements MessageHandler {
         binding.put("context", outputBuilder);
         
         binding.put("properties", properties);
-        binding.put("session", token.getSession());
+        binding.put("session", token.getTokenReservationSession());
+        binding.put("tokenSession", token.getSession());
 		return binding;
 	}
 

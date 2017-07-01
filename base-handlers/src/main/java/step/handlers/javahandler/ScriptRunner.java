@@ -26,7 +26,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 
 import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.agent.tokenpool.TokenSession;
+import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
@@ -44,7 +44,7 @@ public class ScriptRunner {
 			if(properties!=null) {
 				token.setProperties(properties);
 			}
-			token.setSession(new TokenSession());
+			token.setTokenReservationSession(new TokenReservationSession());
 			handler = new SimpleJavaHandler();
 		} 
 		
@@ -99,6 +99,7 @@ public class ScriptRunner {
 		
 		public void close() {
 			token.getSession().close();
+			token.getTokenReservationSession().close();
 		}
 	}
 	

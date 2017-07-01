@@ -3,17 +3,18 @@ package step.functions;
 import java.util.Map;
 
 import step.grid.TokenWrapper;
+import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.tokenpool.Interest;
 
 public interface FunctionExecutionService {
 
 	TokenWrapper getLocalTokenHandle();
 
-	TokenWrapper getTokenHandle();
+	TokenWrapper getTokenHandle() throws AgentCommunicationException;
 
-	TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests);
+	TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) throws AgentCommunicationException;
 
-	void returnTokenHandle(TokenWrapper adapterToken);
+	void returnTokenHandle(TokenWrapper adapterToken) throws AgentCommunicationException;
 
 	Output callFunction(TokenWrapper tokenHandle, Map<String, String> functionAttributes, Input input);
 

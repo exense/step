@@ -30,6 +30,7 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
+import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.io.OutputMessage;
@@ -58,17 +59,17 @@ public class FunctionClient implements FunctionExecutionService {
 	}
 	
 	@Override
-	public TokenWrapper getTokenHandle() {
+	public TokenWrapper getTokenHandle() throws AgentCommunicationException {
 		return gridClient.getTokenHandle();
 	}
 
 	@Override
-	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) {
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) throws AgentCommunicationException {
 		return gridClient.getTokenHandle(attributes, interests);
 	}
 
 	@Override
-	public void returnTokenHandle(TokenWrapper adapterToken) {
+	public void returnTokenHandle(TokenWrapper adapterToken) throws AgentCommunicationException {
 		adapterToken.setCurrentOwner(null);
 		gridClient.returnTokenHandle(adapterToken);
 	}
