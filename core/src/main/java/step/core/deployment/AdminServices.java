@@ -34,14 +34,15 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import step.core.access.Preferences;
 import step.core.access.User;
-import step.core.scheduler.ExecutiontTaskParameters;
 
 @Singleton
 @Path("admin")
 public class AdminServices extends AbstractServices {
 
 	@POST
+	@Secured(right="user-write")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/user")
 	public void save(User user) {
@@ -52,19 +53,22 @@ public class AdminServices extends AbstractServices {
 	}
 
 	@DELETE
+	@Secured(right="user-write")
 	@Path("/user/{id}")
 	public void remove(@PathParam("id") String username) {
 		getContext().getUserAccessor().remove(username);
 	}
 	
 	@GET
+	@Secured(right="user-read")
 	@Path("/user/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public User getExecutionTask(@PathParam("id") String username) {
+	public User getUser(@PathParam("id") String username) {
 		return getContext().getUserAccessor().getByUsername(username);
 	}
 	
 	@GET
+	@Secured(right="user-read")
 	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<User> getUserList() {
@@ -113,7 +117,43 @@ public class AdminServices extends AbstractServices {
 		}
 	}
 	
+	@GET
+	@Secured
+	@Path("/myaccount/preferences")
+	public Preferences getPreferences(@Context ContainerRequestContext crc) {
+		Session session = (Session) crc.getProperty("session");
+		if(session!=null) {
+			User user = getContext().getUserAccessor().getByUsername(session.username);
+			if(user!=null) {
+				return user.getPreferences();			
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
 	@POST
+	@Secured
+	@Path("/myaccount/preferences/{id}")
+	public void putPreference(@Context ContainerRequestContext crc, @PathParam("id") String preferenceName, Object value) {
+		Session session = (Session) crc.getProperty("session");
+		if(session!=null) {
+			User user = getContext().getUserAccessor().getByUsername(session.username);
+			if(user!=null) {
+				if(user.getPreferences()==null) {
+					Preferences prefs = new Preferences();
+					user.setPreferences(prefs);
+				}
+				user.getPreferences().put(preferenceName, value);
+				getContext().getUserAccessor().save(user);			
+			}			
+		}
+	}
+	
+	@POST
+	@Secured(right="user-write")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/user/{id}/resetpwd")
 	public void resetPassword(@PathParam("id") String username) {

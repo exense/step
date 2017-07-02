@@ -243,12 +243,13 @@ angular.module('step',['ngStorage','ngCookies'])
   };
 }])
 
-.factory('AuthService', function ($http, $rootScope) {
+.factory('AuthService', function ($http, $rootScope, Preferences) {
   var authService = {};
   var serviceContext = {};
 
   function setContext(session) {
     $rootScope.context = {'userID':session.username, 'rights':session.profile.rights, 'role':session.profile.role};
+    Preferences.load();
   }
   
   authService.getContext = function() {
@@ -296,6 +297,35 @@ angular.module('step',['ngStorage','ngCookies'])
   }
   
   return authService;
+})
+
+.factory('Preferences', function ($http) {
+  var service = {};
+  
+  var preferences;
+  
+  service.load = function() {
+    $http.get('rest/admin/myaccount/preferences').then(function(res) {
+      preferences = res.data?res.data.preferences:null;
+    })
+  }
+  
+  service.get = function(key, defaultValue) {
+    var value = preferences?preferences[key]:null;
+    return value?value:defaultValue;
+  }
+  
+  service.put = function(key, value) {
+    $http.post('rest/admin/myaccount/preferences/'+key, value)
+    .then(function (res) {
+      if(!preferences) {
+        preferences = {};
+      }
+      preferences[key]=value;
+    });
+  }
+  
+  return service;
 })
 
 .service('authInterceptor', function($q, $rootScope) {

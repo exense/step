@@ -11,6 +11,8 @@ public class User {
 	private String password;
 	
 	private String role;
+	
+	private Preferences preferences;
 
 	public User() {
 		super();
@@ -46,5 +48,13 @@ public class User {
 
 	public void setRole(String role) {
 		this.role = role;
+	}
+
+	public Preferences getPreferences() {
+		return preferences;
+	}
+
+	public void setPreferences(Preferences preferences) {
+		this.preferences = preferences;
 	}
 }
