@@ -23,11 +23,17 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 
+import org.bson.Document;
 import org.jongo.MongoCollection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.mongodb.Block;
 
 import step.artefacts.CallFunction;
 import step.artefacts.CallPlan;
@@ -52,6 +58,8 @@ import step.plugins.selenium.SeleniumFunction;
 @Plugin
 public class InitializationPlugin extends AbstractPlugin {
 
+	private static final Logger logger = LoggerFactory.getLogger(InitializationPlugin.class);
+	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		MongoCollection controllerLogs = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "controllerlogs");
@@ -65,6 +73,8 @@ public class InitializationPlugin extends AbstractPlugin {
 			//setupExecuteProcessFunction(context);
 		}
 		
+		migrateCallFunction(context);
+
 		setArtefactNameIfEmpty(context);
 		
 		insertLogEntry(controllerLogs);
@@ -78,6 +88,41 @@ public class InitializationPlugin extends AbstractPlugin {
 		user.setRole("default");
 		user.setPassword(UserAccessor.encryptPwd("init"));
 		context.getUserAccessor().save(user);
+	}
+	
+	// This function migrates the artefact of type 'CallFunction' that have the attribute 'function' declared as string instead of DynamicValue
+	// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
+	private void migrateCallFunction(GlobalContext context) {
+		logger.info("Searching for artefacts of type 'CallFunction' to be migrated...");
+		com.mongodb.client.MongoCollection<Document> artefacts = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "artefacts");
+		
+		AtomicInteger i = new AtomicInteger();
+		Document filterCallFunction = new Document("_class", "CallFunction");
+		artefacts.find(filterCallFunction).forEach(new Block<Document>() {
+
+			@Override
+			public void apply(Document t) {
+				if(t.containsKey("function")) {
+					try {
+						i.incrementAndGet();
+						String function = t.getString("function");
+						Document d = new Document();
+						d.append("dynamic", false);
+						d.append("value", function);
+						t.replace("function", d);
+						
+						Document filter = new Document("_id", t.get("_id"));
+						
+						artefacts.replaceOne(filter, t);
+						logger.info("Migrating "+function+" to "+d.toJson());
+					} catch(ClassCastException e) {
+						// ignore
+					}
+				}
+			}
+		});
+		
+		logger.info("Migrated "+i.get()+" artefacts of type 'CallFunction'");
 	}
 	
 	// This function ensures that all the artefacts have their name saved properly in the attribute map. 
