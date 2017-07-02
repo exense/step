@@ -3,6 +3,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import step.grid.io.OutputMessage;
@@ -26,6 +27,19 @@ public class Java_Clock_Example extends AbstractScript {
 		output.add("timestamp", date.getTime());
 	}
 	
+	@Function
+	public void Demo_Keyword_Java_1() throws Exception {
+		session.put("object1", new Object());
+	}
+	
+	@Function
+	public void Demo_Keyword_Java_2() throws Exception {
+		Object object = session.get("object1");
+		if(object==null) {
+			output.setError("Unable to find object1 in session. Please call the Demo_Keyword_Java_1 first");
+		}
+	}
+	
 	@Test
 	public void Demo_Java_Clock_Test() {
 	    Map<String, String> properties = new HashMap<>();
@@ -35,6 +49,18 @@ public class Java_Clock_Example extends AbstractScript {
     
 	    System.out.println(result.getPayload());
 	    
+	}
+	
+	@Test
+	public void Demo_Keyword_Sequence() {
+	    Map<String, String> properties = new HashMap<>();
+	    ScriptContext ctx = ScriptRunner.getExecutionContext(properties);
+	    
+	    OutputMessage result;
+	    result = ctx.run("Demo_Keyword_Java_1","{}");
+	    result = ctx.run("Demo_Keyword_Java_2","{}");
+	    
+	    Assert.assertNull(result.getError());	    
 	}
 
 }
