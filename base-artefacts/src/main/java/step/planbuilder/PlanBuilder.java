@@ -31,13 +31,11 @@ public class PlanBuilder {
 	}
 	
 	public PlanBuilder add(AbstractArtefact artefact) {
-		localAccessor.save(artefact);
-		if(root!=null) {
-			addToCurrentParent(artefact);
-		} else {
-			root = sequence();
-			stack.push(root);
+		if(root==null) {
+			startBlock(sequence());
 		}
+		localAccessor.save(artefact);
+		addToCurrentParent(artefact);
 		return this;
 	}
 	
