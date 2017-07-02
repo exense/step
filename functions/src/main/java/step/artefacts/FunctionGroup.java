@@ -21,7 +21,7 @@ package step.artefacts;
 import step.artefacts.handlers.FunctionGroupHandler;
 import step.core.artefacts.Artefact;
 
-@Artefact(handler = FunctionGroupHandler.class)
+@Artefact(handler = FunctionGroupHandler.class, name="Session")
 public class FunctionGroup extends TokenSelector {
 
 }
