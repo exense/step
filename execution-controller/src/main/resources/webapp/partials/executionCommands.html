@@ -9,13 +9,13 @@
 <div class="btn-toolbar" role="toolbar" aria-label="...">
 	<div class="input-group" style="width:200px">
 		<div class="btn-group">
-			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="execute(true)">
+			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="execute(true)" uib-tooltip="Simulate execution">
 				<span class="glyphicon glyphicon glyphicon-ok" aria-hidden="true"></span>
 			</button> 
 			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="execute(false)">
 				<span class="glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>
 			</button>  
-			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="schedule()">
+			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="schedule()" uib-tooltip="Schedule">
 				<span class="glyphicon glyphicon glyphicon-time" aria-hidden="true"></span>
 			</button>
 		</div>

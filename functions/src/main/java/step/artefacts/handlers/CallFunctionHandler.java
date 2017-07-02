@@ -97,80 +97,89 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 		validateInput(input, function);
 
-		// Get token
-		boolean releaseTokenAfterExecution = true;
-		TokenWrapper token;
-		if(function.requiresLocalExecution()) {
-			token = tokenSelectorHelper.selectLocalToken();
-		} else {
-			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
-			if(o!=null && o instanceof TokenWrapper) {
-				token = (TokenWrapper) o;
-				releaseTokenAfterExecution = false;
+		if(!context.isSimulation()) {
+			// Get token
+			boolean releaseTokenAfterExecution = true;
+			TokenWrapper token;
+			if(function.requiresLocalExecution()) {
+				token = tokenSelectorHelper.selectLocalToken();
 			} else {
-				token = tokenSelectorHelper.selectToken(testArtefact, functionExecutionService, getBindings(), false);
+				Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
+				if(o!=null && o instanceof TokenWrapper) {
+					token = (TokenWrapper) o;
+					releaseTokenAfterExecution = false;
+				} else {
+					token = tokenSelectorHelper.selectToken(testArtefact, functionExecutionService, getBindings(), false);
+				}
 			}
-		}
-		
-		Token gridToken = token.getToken();
-		if(gridToken.isLocal()) {
-			gridToken.attachObject(EXECUTION_CONTEXT_KEY, context);
-		}
-				
-		try {
+			
+			Token gridToken = token.getToken();
+			if(gridToken.isLocal()) {
+				gridToken.attachObject(EXECUTION_CONTEXT_KEY, context);
+			}
+					
 			node.setAgentUrl(token.getAgent().getAgentUrl());
 			node.setTokenId(token.getID());
 			token.setCurrentOwner(node);
-			
-			OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()});
-			Output output;
-			try {
-				output = functionExecutionService.callFunction(token, function.getId().toString(), input);
-			} finally {
-				OperationManager.getInstance().exit();
-			}
-			
-			String errorMsg = output.getError();
-			if(errorMsg!=null) {
-				node.setError(errorMsg, 0, true);
-				node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
-			} else {
-				node.setStatus(ReportNodeStatus.PASSED);
-			}
 
-			if(output.getResult() != null) {
-				context.getVariablesManager().putVariable(node, "output", output.getResult());
-				node.setOutput(output.getResult().toString());
-				node.setOutputObject(output.getResult());
-				ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
-				if(parentNode!=null) {
-					context.getVariablesManager().putVariable(parentNode, "previous", output.getResult());					
+			try {
+				
+				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()});
+				Output output;
+				try {
+					output = functionExecutionService.callFunction(token, function.getId().toString(), input);
+				} finally {
+					OperationManager.getInstance().exit();
 				}
-			}
-			
-			if(output.getAttachments()!=null) {
-				for(Attachment a:output.getAttachments()) {
-					AttachmentMeta attachmentMeta;
-					try {
-						attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
-						node.addAttachment(attachmentMeta);					
-					} catch (AttachmentQuotaException e) {
-						// attachment has been skipped. Nothing else to do here
+				
+				String errorMsg = output.getError();
+				if(errorMsg!=null) {
+					node.setError(errorMsg, 0, true);
+					node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+				} else {
+					node.setStatus(ReportNodeStatus.PASSED);
+				}
+	
+				if(output.getResult() != null) {
+					context.getVariablesManager().putVariable(node, "output", output.getResult());
+					node.setOutput(output.getResult().toString());
+					node.setOutputObject(output.getResult());
+					ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
+					if(parentNode!=null) {
+						context.getVariablesManager().putVariable(parentNode, "previous", output.getResult());					
 					}
 				}
+				
+				if(output.getAttachments()!=null) {
+					for(Attachment a:output.getAttachments()) {
+						AttachmentMeta attachmentMeta;
+						try {
+							attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+							node.addAttachment(attachmentMeta);					
+						} catch (AttachmentQuotaException e) {
+							// attachment has been skipped. Nothing else to do here
+						}
+					}
+				}
+				if(output.getMeasures()!=null) {
+					node.setMeasures(output.getMeasures());
+				}
+				
+				String drainOutputValue = testArtefact.getResultMap().get();
+				drainOutput(drainOutputValue, output);
+			} finally {
+				if(releaseTokenAfterExecution) {				
+					functionExecutionService.returnTokenHandle(token);
+				}
+	
+				callChildrenArtefacts(node, testArtefact);
 			}
-			if(output.getMeasures()!=null) {
-				node.setMeasures(output.getMeasures());
-			}
-			
-			String drainOutputValue = testArtefact.getResultMap().get();
-			drainOutput(drainOutputValue, output);
-		} finally {
-			if(releaseTokenAfterExecution) {				
-				functionExecutionService.returnTokenHandle(token);
-			}
-
-			callChildrenArtefacts(node, testArtefact);
+		} else {
+			Output output = new Output();
+			output.setResult(jprov.createObjectBuilder().build());
+			node.setOutputObject(output.getResult());
+			node.setOutput(output.getResult().toString());
+			node.setStatus(ReportNodeStatus.PASSED);
 		}
 	}
 
