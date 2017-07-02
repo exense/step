@@ -44,7 +44,6 @@ import step.grid.Token;
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.tokenpool.AgentTokenPool;
 import step.grid.agent.tokenpool.AgentTokenPool.InvalidTokenIdException;
-import step.grid.agent.tokenpool.AgentTokenPool.TokenNotReservedException;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
@@ -133,8 +132,6 @@ public class AgentServices {
 			}
 		} catch(InvalidTokenIdException e) {
 			return newErrorOutput("No token found with id '" + tokenId + "'");
-		} catch(TokenNotReservedException e) {
-			return newErrorOutput("Token " + tokenId + " hasn't been reserved for execution. Please first call /reserve before execution");
 		} catch (Exception e) {
 			return handleUnexpectedError(message, e);
 		}
@@ -162,7 +159,7 @@ public class AgentServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/token/{id}/reserve")
 	public void reserveToken(@PathParam("id") String tokenId) throws InvalidTokenIdException {
-		tokenPool.reserveToken(tokenId);
+		tokenPool.createTokenReservationSession(tokenId);
 	}
 	
 	
@@ -170,7 +167,7 @@ public class AgentServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/token/{id}/release")
 	public void releaseToken(@PathParam("id") String tokenId) throws InvalidTokenIdException {
-		tokenPool.releaseToken(tokenId);
+		tokenPool.closeTokenReservationSession(tokenId);
 	}
 	
 

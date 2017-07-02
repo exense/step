@@ -95,15 +95,14 @@ public class GridClient implements Closeable {
 		return tokenWrapper;
 	}
 	
-	public TokenWrapper getTokenHandle() throws AgentCommunicationException {
-		return getTokenHandle(null, null);
-	}
-	
-	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) throws AgentCommunicationException {
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession) throws AgentCommunicationException {
 		TokenPretender tokenPretender = new TokenPretender(attributes, interests);
 		TokenWrapper tokenWrapper = getToken(tokenPretender);
 		
-		reserveToken(tokenWrapper.getAgent(), tokenWrapper.getToken());
+		if(createSession) {
+			tokenWrapper.setHasSession(true);
+			reserveToken(tokenWrapper.getAgent(), tokenWrapper.getToken());			
+		}
 		return tokenWrapper;
 	}
 	
@@ -111,7 +110,10 @@ public class GridClient implements Closeable {
 		if(!tokenWrapper.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
 			tokenRegistry.returnToken(tokenWrapper);		
 		}
-		returnToken(tokenWrapper.getAgent(),tokenWrapper.getToken());
+		
+		if(tokenWrapper.hasSession()) {
+			returnToken(tokenWrapper.getAgent(),tokenWrapper.getToken());			
+		}
 	}
 	
 	public OutputMessage call(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties, int callTimeout) throws Exception {

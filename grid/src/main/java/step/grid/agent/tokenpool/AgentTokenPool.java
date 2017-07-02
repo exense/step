@@ -47,11 +47,25 @@ public class AgentTokenPool {
 		pool.put(token.getUid(), token);
 	}
 	
-	public synchronized AgentTokenWrapper getTokenForExecution(String tokenId) throws TokenNotReservedException, InvalidTokenIdException {
+	public synchronized AgentTokenWrapper getTokenForExecution(String tokenId) throws InvalidTokenIdException {
 		AgentTokenWrapper token = pool.get(tokenId);
 		if(token!=null) {
 			if(token.tokenReservationSession==null) {
-				throw new TokenNotReservedException();
+				token.tokenReservationSession = new TokenReservationSession() {
+					@Override
+					public Object get(String arg0) {
+						throw unusableSessionException();
+					}
+
+					@Override
+					public Object put(String arg0, Object arg1) {
+						throw unusableSessionException();
+					}
+
+					private RuntimeException unusableSessionException() {
+						return new RuntimeException("Session not available. Please group your keywords to use the session object.");
+					}
+				};
 			}
 		} else {
 			throw new InvalidTokenIdException();
@@ -64,7 +78,7 @@ public class AgentTokenPool {
 		return token;
 	}
 	
-	public void reserveToken(String tokenId) throws InvalidTokenIdException {
+	public void createTokenReservationSession(String tokenId) throws InvalidTokenIdException {
 		AgentTokenWrapper token = getToken(tokenId);
 		if(token!=null) {
 			TokenReservationSession previousTokenReservationSession = token.getTokenReservationSession();
@@ -80,7 +94,7 @@ public class AgentTokenPool {
 		}
 	}
 	
-	public void releaseToken(String tokenId) throws InvalidTokenIdException {
+	public void closeTokenReservationSession(String tokenId) throws InvalidTokenIdException {
 		AgentTokenWrapper token = getToken(tokenId);
 		if(token!=null) {
 			TokenReservationSession tokenReservationSession = token.getTokenReservationSession();
@@ -94,11 +108,6 @@ public class AgentTokenPool {
 		} else {
 			throw new InvalidTokenIdException();
 		}
-	}
-	
-	@SuppressWarnings("serial")
-	public static class TokenNotReservedException extends Exception {
-		
 	}
 	
 	@SuppressWarnings("serial")

@@ -17,10 +17,28 @@ public class AbstractSession implements Closeable {
 		super();
 	}
 
-	public Object get(Object arg0) {
+	public Object get(String arg0) {
 		return sessionObjects.get(arg0);
 	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T get(Class<T> objectClass) {
+		Object object = get(objectClass.getName());
+		if(object!=null) {
+			if(objectClass.isAssignableFrom(object.getClass())) {
+				return (T) object;
+			} else {
+				throw new RuntimeException("The object found is not an instance of "+objectClass.getName());
+			}
+		} else {
+			return null;
+		}
+	}
 
+	public void put(Object object) {
+		put(object.getClass().getName(), object);
+	}
+	
 	public Object put(String arg0, Object arg1) {
 		Object previous = get(arg0);
 		closeIfCloseable(arg0, previous);

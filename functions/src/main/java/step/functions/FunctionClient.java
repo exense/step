@@ -57,15 +57,10 @@ public class FunctionClient implements FunctionExecutionService {
 	public TokenWrapper getLocalTokenHandle() {
 		return gridClient.getLocalTokenHandle();
 	}
-	
-	@Override
-	public TokenWrapper getTokenHandle() throws AgentCommunicationException {
-		return gridClient.getTokenHandle();
-	}
 
 	@Override
-	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) throws AgentCommunicationException {
-		return gridClient.getTokenHandle(attributes, interests);
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession) throws AgentCommunicationException {
+		return gridClient.getTokenHandle(attributes, interests, createSession);
 	}
 
 	@Override

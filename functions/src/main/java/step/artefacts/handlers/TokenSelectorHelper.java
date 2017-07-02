@@ -48,7 +48,7 @@ public class TokenSelectorHelper {
 		this.dynamicJsonObjectResolver = dynamicJsonObjectResolver;
 	}
 	
-	protected TokenWrapper selectToken(TokenSelector testArtefact, FunctionExecutionService functionExecutionService, Map<String, Object> bindings) throws AgentCommunicationException {
+	protected TokenWrapper selectToken(TokenSelector testArtefact, FunctionExecutionService functionExecutionService, Map<String, Object> bindings, boolean createSession) throws AgentCommunicationException {
 		TokenWrapper tokenHandle;
 		String token = testArtefact.getToken().get();
 		if(token!=null) {
@@ -67,7 +67,7 @@ public class TokenSelectorHelper {
 				
 				OperationManager.getInstance().enter("Token selection", selectionCriteria);
 				try {
-					tokenHandle = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria);
+					tokenHandle = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria, createSession);
 				} finally {
 					OperationManager.getInstance().exit();					
 				}

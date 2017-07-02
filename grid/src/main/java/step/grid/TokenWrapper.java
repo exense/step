@@ -33,6 +33,8 @@ public class TokenWrapper implements Identity {
 	
 	private Object currentOwner;
 	
+	private boolean hasSession = false;
+	
 	public TokenWrapper() {
 		super();
 	}
@@ -81,6 +83,14 @@ public class TokenWrapper implements Identity {
 
 	public void setAgent(AgentRef agent) {
 		this.agent = agent;
+	}
+
+	public boolean hasSession() {
+		return hasSession;
+	}
+
+	public void setHasSession(boolean hasSession) {
+		this.hasSession = hasSession;
 	}
 
 	@Override

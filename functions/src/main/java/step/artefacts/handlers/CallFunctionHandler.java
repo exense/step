@@ -108,7 +108,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				token = (TokenWrapper) o;
 				releaseTokenAfterExecution = false;
 			} else {
-				token = tokenSelectorHelper.selectToken(testArtefact, functionExecutionService, getBindings());
+				token = tokenSelectorHelper.selectToken(testArtefact, functionExecutionService, getBindings(), false);
 			}
 		}
 		

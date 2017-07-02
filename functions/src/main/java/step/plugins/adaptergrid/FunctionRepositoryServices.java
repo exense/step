@@ -60,6 +60,7 @@ import step.grid.TokenWrapper;
 import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
+import step.grid.tokenpool.Interest;
 
 @Path("/functions")
 public class FunctionRepositoryServices extends AbstractServices {
@@ -161,7 +162,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 			if(function.getClass().getSimpleName().equals("CompositeFunction")) {
 				token = getFunctionClient().getLocalTokenHandle();
 			} else {
-				token = getFunctionClient().getTokenHandle();
+				token = getFunctionClient().getTokenHandle(null, null, false);
 			}
 			try {
 				ExecutionContext.setCurrentContext(createContext(getContext()));
@@ -277,12 +278,44 @@ public class FunctionRepositoryServices extends AbstractServices {
 		return newFunction;
 	}
 
+	public static class GetTokenHandleParameter {
+		
+		Map<String, String> attributes;
+		Map<String, Interest> interests;
+		boolean createSession;
+
+		public Map<String, String> getAttributes() {
+			return attributes;
+		}
+		
+		public void setAttributes(Map<String, String> attributes) {
+			this.attributes = attributes;
+		}
+		
+		public Map<String, Interest> getInterests() {
+			return interests;
+		}
+		
+		public void setInterests(Map<String, Interest> interests) {
+			this.interests = interests;
+		}
+		
+		public boolean isCreateSession() {
+			return createSession;
+		}
+		
+		public void setCreateSession(boolean createSession) {
+			this.createSession = createSession;
+		}
+	}
+	
+	
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/select")
 	@Secured(right="kw-execute")
-	public TokenWrapper getTokenHandle(Map<String, String> attributes) throws AgentCommunicationException {
-		return getFunctionClient().getTokenHandle(attributes, null);
+	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter) throws AgentCommunicationException {
+		return getFunctionClient().getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession);
 	}
 
 	@POST

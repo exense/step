@@ -10,10 +10,8 @@ public interface FunctionExecutionService {
 
 	TokenWrapper getLocalTokenHandle();
 
-	TokenWrapper getTokenHandle() throws AgentCommunicationException;
-
-	TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests) throws AgentCommunicationException;
-
+	TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession) throws AgentCommunicationException;
+	
 	void returnTokenHandle(TokenWrapper adapterToken) throws AgentCommunicationException;
 
 	Output callFunction(TokenWrapper tokenHandle, Map<String, String> functionAttributes, Input input);
