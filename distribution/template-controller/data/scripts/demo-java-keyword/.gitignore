@@ -1,3 +1,3 @@
 !*.class
-!target/
-target/classes/META-INF/*
+!/target/
+/target/classes/META-INF/*
