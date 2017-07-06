@@ -4,6 +4,7 @@
 			<div ng-include="'partials/artefacts/dataSourceConfiguration.html'"></div>
 			<dynamic-checkbox label="'For write'" on-save="save()" dynamic-value="artefact.dataSource.forWrite" />
 			<dynamic-textfield label="'Iterator handle'" on-save="save()" dynamic-value="artefact.item" />
+			<dynamic-checkbox label="'Reset at end'" on-save="save()" dynamic-value="artefact.resetAtEnd" />
 		</form>
 	</fieldset>
 </div>

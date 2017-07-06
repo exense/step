@@ -44,10 +44,13 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 	public static class DataSetWrapper implements DataSetHandle {
 		
 		DataSet<?> dataSet;
+		
+		DataSetArtefact artefact;
 
-		public DataSetWrapper(DataSet<?> dataSet) {
+		public DataSetWrapper(DataSetArtefact artefact, DataSet<?> dataSet) {
 			super();
 			this.dataSet = dataSet;
+			this.artefact = artefact;
 		}
 
 		public final Object next() {
@@ -55,8 +58,10 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 				DataPoolRow row = dataSet.next();
 				if(row==null) {
 					//TODO replace the following logic by a pluggable iteration startegie (Random, etc)
-					dataSet.reset();
-					row = dataSet.next();
+					if(artefact.getResetAtEnd().get()) {
+						dataSet.reset();						
+						row = dataSet.next();
+					}
 				}				
 				return row!=null?row.getValue():null;
 			}
@@ -74,7 +79,7 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 			dataSet.init();
 			ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
 			
-			context.getVariablesManager().putVariable(parentNode, VariableType.NORMAL, testArtefact.getItem().get(), new DataSetWrapper(dataSet));
+			context.getVariablesManager().putVariable(parentNode, VariableType.NORMAL, testArtefact.getItem().get(), new DataSetWrapper(testArtefact, dataSet));
 			
 			context.getGlobalContext().getEventManager().addReportNodeEventListener(parentNode, new ReportNodeEventListener() {
 				@Override
