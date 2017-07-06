@@ -29,6 +29,8 @@ public class DataSetArtefact extends AbstractForBlock {
 
 	private DynamicValue<String> item = new DynamicValue<String>("dataSet");
 	
+	private DynamicValue<Boolean> resetAtEnd = new DynamicValue<Boolean>(true);
+	
 	private String dataSourceType;
 	
 	private DataPoolConfiguration dataSource;
@@ -57,4 +59,11 @@ public class DataSetArtefact extends AbstractForBlock {
 	public void setDataSource(DataPoolConfiguration dataSource) {
 		this.dataSource = dataSource;
 	}
+	public DynamicValue<Boolean> getResetAtEnd() {
+		return resetAtEnd;
+	}
+
+	public void setResetAtEnd(DynamicValue<Boolean> resetAtEnd) {
+		this.resetAtEnd = resetAtEnd;
+	};
 }
