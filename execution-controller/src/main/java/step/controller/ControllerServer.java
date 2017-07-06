@@ -50,6 +50,7 @@ import step.core.deployment.ControllerServices;
 import step.core.deployment.ErrorFilter;
 import step.core.deployment.JacksonMapperProvider;
 import step.grid.agent.ArgumentParser;
+import step.plugins.interactive.InteractiveServices;
 
 
 public class ControllerServer {
@@ -166,6 +167,7 @@ public class ControllerServer {
 		
 		resourceConfig.registerClasses(ApplicationServices.class);
 		resourceConfig.registerClasses(ControllerServices.class);
+		resourceConfig.registerClasses(InteractiveServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
 		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);

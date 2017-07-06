@@ -142,6 +142,37 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
               
             });
       }
+            
+      $scope.interactiveSession = {};
+      
+      $scope.isInteractiveSessionActive = function() {
+        return $scope.interactiveSession.id != null;
+      }
+      
+      $scope.startInteractive = function() {
+        $http.post("rest/interactive/start").then(function(response){
+          var interactiveSessionId = response.data;
+          $scope.interactiveSession.id = interactiveSessionId;
+        })
+      }
+      
+      $scope.resetInteractive = function() {
+        $scope.stopInteractive();
+        $scope.startInteractive();
+            
+      }
+      
+      $scope.stopInteractive = function() {
+        $http.post("rest/interactive/"+$scope.interactiveSession.id+"/stop").then()
+        $scope.interactiveSession.id = null;    
+      }
+      
+      $scope.$on('$destroy', function() {
+        if($scope.interactiveSession.id) {
+          $scope.stopInteractive();
+        }
+      });
+      
 })
 
 .directive('artefact', function($http,$timeout,$interval,stateStorage,$filter,$location) {
@@ -149,7 +180,8 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     restrict: 'E',
     scope: {
       artefactid: '=',
-      handle: '='
+      handle: '=',
+      interactiveSessionHandle: '='
     },
     controller: function($scope,$location,$rootScope, AuthService) {
       
@@ -353,6 +385,18 @@ angular.module('artefactEditor',['dataTable','step','dynamicForms'])
     	$http.post("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id+"/move",offset).then(function() {
     	  load();
     	});
+      }
+      
+      $scope.isInteractiveSessionActive = function() {
+      	return $scope.interactiveSessionHandle.id!=null;
+      }
+      
+      $scope.execute = function() {
+        var selectedArtefact = tree.get_selected(true)[0];
+        var sessionId = $scope.interactiveSessionHandle.id;
+        $http.post("rest/interactive/"+sessionId+"/execute/"+selectedArtefact.id).then(function() {
+          load();
+        });
       }
       
       $scope.onSelectedArtefactSave = function(artefact) {

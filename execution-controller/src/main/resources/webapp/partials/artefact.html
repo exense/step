@@ -14,6 +14,9 @@
 			  		<div class="btn-group">
 			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="remove()">Delete</button>
 		    		</div>
+		    		<div ng-if="isInteractiveSessionActive()" class="btn-group">
+			    		<button type="submit" ng-disabled="!authService.hasRight('interactive')" class="btn btn-default btn-sm" ng-click="execute()" uib-tooltip="Executes the selected node in the interactive session">Execute</button>
+		    		</div>
 		  		</div>
 		  		<div id="jstree_demo_div"></div>
 			</div>
