@@ -90,9 +90,9 @@ public class SeleniumKeywordExample extends AbstractScript {
 	@Test
 	public void test() {
 	    OutputMessage result;
-	    result = ctx.run(SeleniumKeywordExample.class,"Open Chrome","{ \"search\" : \"denkbar step\" }");
-	    result = ctx.run(SeleniumKeywordExample.class,"Search in google","{ \"search\" : \"denkbar step\" }");
-	    result = ctx.run(SeleniumKeywordExample.class,"Search in google","{ \"search\" : \"denkbar djigger\" }");
+	    result = ctx.run("Open Chrome","{ \"search\" : \"denkbar step\" }");
+	    result = ctx.run("Search in google","{ \"search\" : \"denkbar step\" }");
+	    result = ctx.run("Search in google","{ \"search\" : \"denkbar djigger\" }");
 	    Assert.assertNull(result.getError());
 	    result.getPayload();
 	}

@@ -39,13 +39,22 @@ public class ScriptRunner {
 		SimpleJavaHandler handler;
 
 		public ScriptContext(Map<String, String> properties) {
+			this(null, properties);
+		} 
+		
+		// TODO handle class array
+		public ScriptContext(Class<?> functionClass, Map<String, String> properties) {
 			super();
 			token = new AgentTokenWrapper();
 			if(properties!=null) {
 				token.setProperties(properties);
 			}
 			token.setTokenReservationSession(new TokenReservationSession());
-			handler = new SimpleJavaHandler();
+			if(functionClass!=null) {
+				handler = new SimpleJavaHandler(functionClass);				
+			} else {
+				handler = new SimpleJavaHandler();	
+			}
 		} 
 		
 		public OutputMessage run(String function, String argument, Map<String, String> properties) throws Exception {
@@ -62,22 +71,6 @@ public class ScriptRunner {
 		
 		public OutputMessage run(String function, JsonObject argument) throws Exception {
 			return run(function, argument, new HashMap<String, String>());
-		}
-		
-		public OutputMessage run(Class<?> functionClass, String function, String argument) {
-			return run(functionClass, function, read(argument), new HashMap<String, String>());
-		}
-		
-		public OutputMessage run(Class<?> functionClass, String function, JsonObject argument) throws Exception {
-			return run(functionClass, function, argument, new HashMap<String, String>());
-		}
-		
-		public OutputMessage run(Class<?> functionClass, String function, String argument, Map<String, String> properties) throws Exception {
-			return run(functionClass, function, read(argument), properties);
-		}
-		
-		public OutputMessage run(Class<?> functionClass, String function, JsonObject argument, Map<String, String> properties) {
-			return execute(function, argument, properties);
 		}
 		
 		public OutputMessage run(String function, JsonObject argument, Map<String, String> properties) {
@@ -109,6 +102,10 @@ public class ScriptRunner {
 	
 	public static ScriptContext getExecutionContext(Map<String, String> properties) {
 		return new ScriptContext(properties);
+	}
+	
+	public static ScriptContext getExecutionContext(Class<?> functionClass, Map<String, String> properties) {
+		return new ScriptContext(functionClass, properties);
 	}
 	
 }
