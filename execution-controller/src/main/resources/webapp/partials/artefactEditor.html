@@ -37,25 +37,32 @@
 			<div class="panel panel-default">
 				<div class="panel-heading">Available components</div>
 				<div class="panel-body">
-						<uib-tabset>
-							<uib-tab heading="Controls" active="$parent.tabState['controls']">
+						<uib-tabset  active="componentTabs.selectedTab">
+							<uib-tab heading="Controls">
 								<div class="panel-body">
 									<div class="row">
 										<datatable tabledef="controlsTable" handle="controlsTable" columnsearch="true" order="[[1, &quot;asc&quot;]]"/>
 									</div>								
 								</div>	
 							</uib-tab>
-							<uib-tab heading="Keywords" active="$parent.tabState['functions']">
+							<uib-tab heading="Keywords">
 								<div class="row">
 									<div class="panel-body">	
 										<datatable handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
 									</div>		
 								</div>				
 							</uib-tab>
-							<uib-tab heading="Other plans" active="$parent.tabState['artefacts']">
+							<uib-tab heading="Other plans">
 								<div class="row">
 									<div class="panel-body">	
 										<datatable handle="artefactTable" tabledef="artefactTable" columnsearch="true" serverside="artefacts" order="[[1, &quot;desc&quot;]]" />
+									</div>		
+								</div>				
+							</uib-tab>
+							<uib-tab heading="Console" ng-if="isInteractiveSessionActive()">
+								<div class="row">
+									<div class="panel-body">
+										<datatable serverside="reports" tabledef="stepsTable" handle="stepsTable" selectionmode="single" columnsearch="true" order="[[1, &quot;desc&quot;]]" />
 									</div>		
 								</div>				
 							</uib-tab>

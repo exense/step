@@ -1,5 +1,7 @@
 package step.core.execution;
 
+import org.bson.types.ObjectId;
+
 import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
@@ -27,7 +29,7 @@ public class ContextBuilder {
 
 	public static ExecutionContext createContext(GlobalContext g) {
 		ReportNode root = new ReportNode();
-		ExecutionContext c = new ExecutionContext("");
+		ExecutionContext c = new ExecutionContext(new ObjectId().toString());
 		c.setGlobalContext(g);
 		c.getReportNodeCache().put(root);
 		c.setReport(root);

@@ -19,7 +19,6 @@
 package step.plugins.interactive;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Singleton;
@@ -66,7 +65,7 @@ public class InteractiveServices extends AbstractServices {
 		ExecutionContext  executionContext = ContextBuilder.createContext(getContext());;
 		session.c = executionContext;
 		session.root = new ReportNode();
-		String id = UUID.randomUUID().toString();
+		String id = executionContext.getExecutionId();
 		
 		FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);
 		TokenWrapper wrapper = functionExecutionService.getTokenHandle(null, null, true);
