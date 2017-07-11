@@ -19,6 +19,8 @@
 package step.plugins.interactive;
 
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Singleton;
@@ -29,6 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 
 import step.artefacts.handlers.FunctionGroupHandler;
+import step.commons.conf.Configuration;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -45,7 +48,9 @@ import step.grid.client.GridClient.AgentCommunicationException;
 @Path("interactive")
 public class InteractiveServices extends AbstractServices {
 
-	Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
+	private Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
+	
+	private Timer sessionExpirationTimer; 
 	
 	private static class InteractiveSession {
 		
@@ -54,8 +59,35 @@ public class InteractiveServices extends AbstractServices {
 		ReportNode root;
 		
 		TokenWrapper wrapper;
+		
+		long lasttouch;
 	}
 	
+	
+	public InteractiveServices() {
+		super();
+		
+		sessionExpirationTimer = new Timer("Session expiration timer");
+		sessionExpirationTimer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				final int sessionTimeout = Configuration.getInstance().getPropertyAsInteger("ui.artefacteditor.interactive.sessiontimeout.minutes", 10)*60000;
+				long time = System.currentTimeMillis();
+				
+				sessions.forEach((sessionId,session)->{
+					if((session.lasttouch+sessionTimeout)<time) {
+						try {
+							closeSession(session);
+						} catch (AgentCommunicationException e) {
+							
+						}
+						sessions.remove(sessionId);
+					}
+				});
+			}
+		}, 60000, 60000);
+	}
+
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/start")
@@ -64,6 +96,7 @@ public class InteractiveServices extends AbstractServices {
 		InteractiveSession session = new InteractiveSession();
 		ExecutionContext  executionContext = ContextBuilder.createContext(getContext());;
 		session.c = executionContext;
+		session.lasttouch = System.currentTimeMillis();
 		session.root = new ReportNode();
 		String id = executionContext.getExecutionId();
 		
@@ -85,7 +118,13 @@ public class InteractiveServices extends AbstractServices {
 	@Path("/{id}/stop")
 	@Secured(right="interactive")
 	public void stop(@PathParam("id") String sessionId) throws AgentCommunicationException {
-		InteractiveSession session = sessions.get(sessionId);
+		InteractiveSession session = getAndTouchSession(sessionId);
+		if(session!=null) {
+			closeSession(session);			
+		}
+	}
+
+	private void closeSession(InteractiveSession session) throws AgentCommunicationException {
 		FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);
 		functionExecutionService.returnTokenHandle(session.wrapper);
 	}
@@ -95,15 +134,28 @@ public class InteractiveServices extends AbstractServices {
 	@Path("/{id}/execute/{artefactid}")
 	@Secured(right="interactive")
 	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("artefactid") String artefactId) {
+		InteractiveSession session = getAndTouchSession(sessionId);
+		if(session!=null) {
+			ArtefactAccessor a = getContext().getArtefactAccessor();
+			AbstractArtefact artefact = a.get(artefactId);
+			
+			ReportNode report = new ReportNode();
+			
+			ArtefactHandler.delegateCreateReportSkeleton(session.c, artefact, session.root);
+			ArtefactHandler.delegateExecute(session.c, artefact, session.root);
+			
+			return report;			
+		} else {
+			 throw new RuntimeException("Session doesn't exist or expired.");
+		}
+		
+	}
+
+	private InteractiveSession getAndTouchSession(String sessionId) {
 		InteractiveSession session = sessions.get(sessionId);
-		
-		ArtefactAccessor a = getContext().getArtefactAccessor();
-		AbstractArtefact artefact = a.get(artefactId);
-		
-		ReportNode report = new ReportNode();
-		
-		ArtefactHandler.delegateExecute(session.c, artefact, session.root);
-		
-		return report;
+		if(session!=null) {
+			session.lasttouch = System.currentTimeMillis();			
+		}
+		return session;
 	}
 }
