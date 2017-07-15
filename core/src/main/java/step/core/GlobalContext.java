@@ -25,6 +25,7 @@ import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
+import step.core.accessors.MongoClientSession;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactManager;
 import step.core.artefacts.reports.ReportNodeAccessor;
@@ -45,6 +46,8 @@ public class GlobalContext extends AbstractContext {
 	private RepositoryObjectManager repositoryObjectManager;
 	
 	private MongoClient mongoClient;
+	
+	private MongoClientSession mongoClientSession;
 	
 	private MongoDatabase mongoDatabase;
 	
@@ -82,6 +85,15 @@ public class GlobalContext extends AbstractContext {
 		this.configuration = configuration;
 	}
 
+	public MongoClientSession getMongoClientSession() {
+		return mongoClientSession;
+	}
+
+	public void setMongoClientSession(MongoClientSession mongoClientSession) {
+		this.mongoClientSession = mongoClientSession;
+	}
+
+	@Deprecated
 	public MongoClient getMongoClient() {
 		return mongoClient;
 	}
@@ -90,6 +102,7 @@ public class GlobalContext extends AbstractContext {
 		this.mongoClient = mongoClient;
 	}
 
+	@Deprecated
 	public MongoDatabase getMongoDatabase() {
 		return mongoDatabase;
 	}

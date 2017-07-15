@@ -29,6 +29,7 @@ import com.mongodb.MongoClient;
 import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.access.UserAccessor;
+import step.core.accessors.MongoClientSession;
 import step.core.accessors.MongoDBAccessorHelper;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactManager;
@@ -76,9 +77,12 @@ public class Controller {
 		
 		Configuration configuration = Configuration.getInstance();
 		
+		MongoClientSession mongoClientSession = new MongoClientSession(configuration);
+		
 		MongoClient mongoClient = MongoDBAccessorHelper.getClient();
 		context.setConfiguration(configuration);
 		context.setMongoClient(mongoClient);
+		context.setMongoClientSession(mongoClientSession);
 		context.setMongoDatabase(MongoDBAccessorHelper.getInstance().getMongoDatabase(mongoClient));
 		context.setExecutionAccessor(new ExecutionAccessor(mongoClient));
 		context.setArtefactAccessor(new ArtefactAccessor(mongoClient));
