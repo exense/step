@@ -40,6 +40,7 @@ public class AbstractCRUDAccessor<T extends AbstractDBObject> extends AbstractAc
 		
 	public AbstractCRUDAccessor(MongoClientSession clientSession, String collectionName, Class<T> entityClass) {
 		super(clientSession);
+		this.entityClass = entityClass;
 		collection = getJongoCollection(collectionName);
 	}
 	
