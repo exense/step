@@ -25,6 +25,8 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.commons.helpers.FileHelper;
+
 public class FileWatchService extends Thread {
 	
 	private static final Logger logger = LoggerFactory.getLogger(FileWatchService.class);
@@ -63,9 +65,10 @@ public class FileWatchService extends Thread {
 				
 				synchronized (subscriptions) {
 					for(Entry<File, Subscription> entry:subscriptions.entrySet()) {
-						if(entry.getKey().lastModified()>entry.getValue().lastupdate) {
+						long lastModificationDate = FileHelper.getLastModificationDateRecursive(entry.getKey());
+						if(lastModificationDate>entry.getValue().lastupdate) {
 							logger.info("Reloading file: " + entry.getKey().getAbsolutePath());
-							entry.getValue().lastupdate = entry.getKey().lastModified();
+							entry.getValue().lastupdate = lastModificationDate;
 							try {
 								entry.getValue().callback.run();
 							} catch (Exception e) {
