@@ -27,6 +27,7 @@ public class DataTablePlugin extends AbstractPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) {
+		context.put(DataTableRegistry.class, new DataTableRegistry());
 		context.getServiceRegistrationCallback().registerService(DataTableServices.class);
 	}
 

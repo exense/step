@@ -78,8 +78,8 @@ import step.plugins.screentemplating.ScreenTemplatePlugin;
 public class DataTableServices extends AbstractServices {
 	
 	private static final Logger logger = LoggerFactory.getLogger(DataTableServices.class);
-		
-	Map<String, BackendDataTable> tables = new HashMap<>();	
+	
+	protected DataTableRegistry dataTableRegistry;
 	
 	Map<String, ReportStatus> reports = new ConcurrentHashMap<>();
 	
@@ -88,6 +88,8 @@ public class DataTableServices extends AbstractServices {
 	@PostConstruct
 	public void init() {
 		MongoDatabase database = getContext().getMongoDatabase();
+		
+		dataTableRegistry = getContext().get(DataTableRegistry.class);
 		
 		BackendDataTable executions = new BackendDataTable(new Collection(database, "executions"));
 		executions.addColumn("ID", "_id").addColumn("Description", "description").addDateColumn("Start time", "startTime")
@@ -141,11 +143,11 @@ public class DataTableServices extends AbstractServices {
 		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
 		.setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
 
-		tables.put("executions", executions);
-		tables.put("reports", leafReportNodes);
-		tables.put("reportsByOQL", leafReportNodesOQL);
-		tables.put("artefacts", artefactTable);
-		tables.put("functions", functionTable);		
+		dataTableRegistry.addTable("executions", executions);
+		dataTableRegistry.addTable("reports", leafReportNodes);
+		dataTableRegistry.addTable("reportsByOQL", leafReportNodesOQL);
+		dataTableRegistry.addTable("artefacts", artefactTable);
+		dataTableRegistry.addTable("functions", functionTable);		
 
 	}
 	
@@ -162,7 +164,7 @@ public class DataTableServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
 	public List<ColumnDef> getTableColumnDefs(@PathParam("id") String collectionID) {
-		BackendDataTable table = tables.get(collectionID);
+		BackendDataTable table = dataTableRegistry.getTable(collectionID);
 		return table.getColumns();
 	}
 	
@@ -184,7 +186,7 @@ public class DataTableServices extends AbstractServices {
 	}
 	
 	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params) throws Exception {		
-		BackendDataTable table = tables.get(collectionID);
+		BackendDataTable table = dataTableRegistry.getTable(collectionID);
 		
 		List<Bson> queryFragments = new ArrayList<>();
 		for(String key:params.keySet()) {
