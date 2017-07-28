@@ -68,6 +68,10 @@ public class ManagedProcess {
 	}
 	
 	public ManagedProcess(List<String> commands, String name) throws ManagedProcessException {
+		this(null, commands, name);
+	}
+	
+	public ManagedProcess(File executionDirectory, List<String> commands, String name) throws ManagedProcessException {
 		super();
 
 		String logdir = Configuration.getInstance().getProperty("managedprocesses.logdir");
@@ -77,12 +81,15 @@ public class ManagedProcess {
 		this.id = name+"_"+uuid;
 		builder = new ProcessBuilder(commands);
 		
-		executionDirectory = new File(logFolder+"/" + id);
-		if(!executionDirectory.exists()) {
-			if(!executionDirectory.mkdir()) {
-				throw new InvalidParameterException("Unable to create log folder for process " + id + ". Please ensure that the folder specified by the parameter adapters.log in the configuration repository exists and is writable.");
-			}
+		if(executionDirectory==null) {
+			executionDirectory = new File(logFolder+"/" + id);
+			if(!executionDirectory.exists()) {
+				if(!executionDirectory.mkdir()) {
+					throw new InvalidParameterException("Unable to create log folder for process " + id + ". Please ensure that the folder specified by the parameter adapters.log in the configuration repository exists and is writable.");
+				}
+			}	
 		}
+		this.executionDirectory = executionDirectory;
 	}
 	
 	public static File getLogFolder() {
