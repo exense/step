@@ -42,8 +42,8 @@ public class FileWatchServiceTest {
 		FileWatchService.getInstance().register(file, new Runnable() {
 			@Override
 			public void run() {
-				updatedCount.incrementAndGet();
 				synchronized (lock) {
+					updatedCount.incrementAndGet();
 					lock.notify();
 				}
 			}
@@ -63,6 +63,7 @@ public class FileWatchServiceTest {
 			file.setLastModified(lastModified);
 			lock.wait(100);
 		}
+		Thread.sleep(1000);
 		Assert.assertEquals(expected,updatedCount.get());
 	}
 }
