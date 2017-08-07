@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -39,9 +40,9 @@ public class SeleniumKeywordExample extends AbstractScript {
 		}	
 	}
 	
-	@Function(name="Open Chrome")
+	@Function(name="Open_Chrome")
 	public void openChrome() throws Exception {
-		File chromedriverExe = new File(properties.get("chromedriver"));
+		File chromedriverExe = new File(properties.getOrDefault("chromedriver","C:/Users/jcomte/Programs/chromedriver_win32_2.27/chromedriver.exe"));
 		if(chromedriverExe.exists()) {
 			System.setProperty("webdriver.chrome.driver", chromedriverExe.getAbsolutePath());
 			final WebDriver driver = new ChromeDriver();
@@ -52,7 +53,7 @@ public class SeleniumKeywordExample extends AbstractScript {
 		}
 	}
 	
-	@Function(name="Search in google")
+	@Function(name="Google_Search")
 	public void Google_Search() throws Exception {
 		if(input.containsKey("search")) {
 			final WebDriver driver = session.get(DriverWrapper.class).driver;
@@ -62,10 +63,8 @@ public class SeleniumKeywordExample extends AbstractScript {
 			WebElement searchInput = driver.findElement(By.id("lst-ib"));
 			
 			String searchString = input.getString("search");
-			searchInput.sendKeys(searchString);			
+			searchInput.sendKeys(searchString+Keys.ENTER);			
 			
-			WebElement searchButton = driver.findElement(By.xpath("//button[@name='btnG']"));
-			searchButton.click();
 			
 			WebElement resultCountDiv = driver.findElement(By.xpath("//div/nobr"));
 			
