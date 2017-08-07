@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.commons.processmanager;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.security.InvalidParameterException;
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory;
 import step.commons.conf.Configuration;
 import step.commons.helpers.FileHelper;
 
-public class ManagedProcess {
+public class ManagedProcess implements Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(ManagedProcess.class);
 	
@@ -106,6 +107,10 @@ public class ManagedProcess {
 
 	public File getExecutionDirectory() {
 		return executionDirectory;
+	}
+
+	public void setExecutionDirectory(File executionDirectory) {
+		this.executionDirectory = executionDirectory;
 	}
 
 	private static List<String> tokenize(String command) {
@@ -179,6 +184,11 @@ public class ManagedProcess {
 			super(message);
 		}
 		
+	}
+
+	@Override
+	public void close() throws IOException {
+		destroy();
 	}
 
 }
