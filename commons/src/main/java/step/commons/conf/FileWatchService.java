@@ -97,9 +97,13 @@ public class FileWatchService extends Thread {
 	}
 	
 	public void register(File file, Runnable callback) {
+		register(file, callback, false);
+	}
+	
+	public void register(File file, Runnable callback, boolean callOnRegistration) {
 		synchronized (subscriptions) {
 			logger.debug("Registering file " + file);
-			subscriptions.put(file, new Subscription(file.lastModified(), callback));
+			subscriptions.put(file, new Subscription(callOnRegistration?0:FileHelper.getLastModificationDateRecursive(file), callback));
 		}
 	}
 	
