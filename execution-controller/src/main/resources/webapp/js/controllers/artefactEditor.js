@@ -262,7 +262,7 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
         	  }) 	  
         	  var artefact = currentNode.artefact;
 
-        	  var artefactIcon = {'Default':'glyphicon-unchecked', 'CallPlan':'glyphicon glyphicon-new-window', 'CallFunction':'glyphicon-record' ,'For':'glyphicon glyphicon-th','ForEach':'glyphicon glyphicon-th'}
+        	  var artefactIcon = {'Default':'glyphicon-unchecked', 'CallPlan':'glyphicon glyphicon-new-window', 'CallKeyword':'glyphicon-record' ,'For':'glyphicon glyphicon-th','ForEach':'glyphicon glyphicon-th'}
         	  
         	  var icon = artefact._class in artefactIcon ? artefactIcon[artefact._class]:artefactIcon['Default'];
         	  
@@ -302,7 +302,7 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
         var newArtefact = {
           "attributes":{name:function_.attributes.name},
           "functionId":function_.id,"remote":{"value":remote},
-          "_class":"CallFunction"
+          "_class":"CallKeyword"
          };
 
         if(AuthService.getConf().miscParams.enforceschemas === 'true'){
@@ -446,8 +446,8 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
           "Echo":{template:"partials/artefacts/echo.html"},
           "If":{template:"partials/artefacts/if.html"},
           "While":{template:"partials/artefacts/while.html"},
-          "CallFunction":{template:"partials/artefacts/callFunction.html"},
-          "FunctionGroup":{template:"partials/artefacts/functionGroup.html"},
+          "CallKeyword":{template:"partials/artefacts/callFunction.html"},
+          "Session":{template:"partials/artefacts/functionGroup.html"},
           "Set":{template:"partials/artefacts/set.html"},
           "Sleep":{template:"partials/artefacts/sleep.html"},
           "Script":{template:"partials/artefacts/script.html"},

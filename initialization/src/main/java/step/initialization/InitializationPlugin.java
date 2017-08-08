@@ -74,7 +74,11 @@ public class InitializationPlugin extends AbstractPlugin {
 		}
 		
 		migrateCallFunction(context);
-
+		
+		// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
+		renameArtefactType(context, "FunctionGroup", "Session");
+		renameArtefactType(context, "CallFunction", "CallKeyword");
+		
 		setArtefactNameIfEmpty(context);
 		
 		insertLogEntry(controllerLogs);
@@ -124,6 +128,35 @@ public class InitializationPlugin extends AbstractPlugin {
 		
 		logger.info("Migrated "+i.get()+" artefacts of type 'CallFunction'");
 	}
+
+	private void renameArtefactType(GlobalContext context, String classFrom, String classTo) {
+		logger.info("Searching for artefacts of type '"+classFrom+"' to be migrated...");
+		com.mongodb.client.MongoCollection<Document> artefacts = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "artefacts");
+		
+		AtomicInteger i = new AtomicInteger();
+		Document filterCallFunction = new Document("_class", classFrom);
+		artefacts.find(filterCallFunction).forEach(new Block<Document>() {
+
+			@Override
+			public void apply(Document t) {
+				try {
+					i.incrementAndGet();
+					t.put("_class", classTo);
+					
+					Document filter = new Document("_id", t.get("_id"));
+					
+					artefacts.replaceOne(filter, t);
+					logger.info("Migrating "+classFrom+ " to "+t.toJson());
+				} catch(ClassCastException e) {
+					// ignore
+				}
+			}
+		});
+		
+		logger.info("Migrated "+i.get()+" artefacts of type '"+classFrom+"'");
+	}
+	
+	
 	
 	// This function ensures that all the artefacts have their name saved properly in the attribute map. 
 	// This will only be needed for the migration from 3.3.x or lower to 3.4.x or higher
