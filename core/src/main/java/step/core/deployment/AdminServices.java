@@ -153,6 +153,20 @@ public class AdminServices extends AbstractServices {
 	}
 	
 	@POST
+	@Secured
+	@Path("/myaccount/preferences")
+	public void putPreference(@Context ContainerRequestContext crc, Preferences preferences) {
+		Session session = (Session) crc.getProperty("session");
+		if(session!=null) {
+			User user = getContext().getUserAccessor().getByUsername(session.username);
+			if(user!=null) {
+				user.setPreferences(preferences);
+				getContext().getUserAccessor().save(user);			
+			}			
+		}
+	}
+	
+	@POST
 	@Secured(right="user-write")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/user/{id}/resetpwd")

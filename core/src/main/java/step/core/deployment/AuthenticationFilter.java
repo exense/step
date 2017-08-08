@@ -54,6 +54,8 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 			} else {
 				requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 			}
+		} else {
+			requestContext.setProperty("session", AccessServices.ANONYMOUS_SESSION);
 		}
 	}
 
