@@ -42,7 +42,7 @@ public class SeleniumKeywordExample extends AbstractScript {
 	
 	@Function(name="Open_Chrome")
 	public void openChrome() throws Exception {
-		File chromedriverExe = new File(properties.getOrDefault("chromedriver","C:/Users/jcomte/Programs/chromedriver_win32_2.27/chromedriver.exe"));
+		File chromedriverExe = new File(properties.get("chromedriver"));
 		if(chromedriverExe.exists()) {
 			System.setProperty("webdriver.chrome.driver", chromedriverExe.getAbsolutePath());
 			final WebDriver driver = new ChromeDriver();
@@ -89,9 +89,9 @@ public class SeleniumKeywordExample extends AbstractScript {
 	@Test
 	public void test() {
 	    OutputMessage result;
-	    result = ctx.run("Open Chrome","{ \"search\" : \"denkbar step\" }");
-	    result = ctx.run("Search in google","{ \"search\" : \"denkbar step\" }");
-	    result = ctx.run("Search in google","{ \"search\" : \"denkbar djigger\" }");
+	    result = ctx.run("Open_Chrome","{ \"search\" : \"denkbar step\" }");
+	    result = ctx.run("Google_Search","{ \"search\" : \"denkbar step\" }");
+	    result = ctx.run("Google_Search","{ \"search\" : \"denkbar djigger\" }");
 	    Assert.assertNull(result.getError());
 	    result.getPayload();
 	}
