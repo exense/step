@@ -89,7 +89,7 @@ angular.module('dataTable', [])
   };
 }])
 
-.directive('datatable', ['$compile','$http','$timeout','$q',function($compile,$http,$timeout,$q) {
+.directive('datatable', ['$compile','$http','$timeout','$q','Preferences',function($compile,$http,$timeout,$q,Preferences) {
   return {
     restrict:'E',
     scope: {
@@ -102,6 +102,7 @@ angular.module('dataTable', [])
       var tableElement = angular.element(element).find('table');
       
       var tableOptions = {"data" : []};
+      tableOptions.pageLength = Preferences.get("tables_itemsperpage",10);
       
       var tableInitializationPromises = [];
 
