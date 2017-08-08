@@ -8,13 +8,13 @@ import org.junit.Test;
 
 import step.grid.io.OutputMessage;
 import step.handlers.javahandler.AbstractScript;
-import step.handlers.javahandler.Function;
+import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.ScriptRunner;
 import step.handlers.javahandler.ScriptRunner.ScriptContext;
 
 public class Java_Clock_Example extends AbstractScript {
 
-	@Function
+	@Keyword
 	public void Demo_Keyword_Java() throws Exception {
 
 		Date date;
@@ -27,12 +27,12 @@ public class Java_Clock_Example extends AbstractScript {
 		output.add("timestamp", date.getTime());
 	}
 	
-	@Function
+	@Keyword
 	public void Demo_Keyword_Java_1() throws Exception {
 		session.put("object1", new Object());
 	}
 	
-	@Function
+	@Keyword
 	public void Demo_Keyword_Java_2() throws Exception {
 		Object object = session.get("object1");
 		if(object==null) {

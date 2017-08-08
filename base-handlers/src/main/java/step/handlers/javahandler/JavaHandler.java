@@ -107,15 +107,15 @@ public class JavaHandler implements MessageHandler {
 			}			
 		}
 		
-		Set<Method> methods = context.reflections.getMethodsAnnotatedWith(Function.class);
+		Set<Method> methods = context.reflections.getMethodsAnnotatedWith(Keyword.class);
 		for(Method m:methods) {
-			String annotatedFunctionName = m.getAnnotation(Function.class).name();
+			String annotatedFunctionName = m.getAnnotation(Keyword.class).name();
 			if(((annotatedFunctionName==null || annotatedFunctionName.length()==0)&&m.getName().equals(message.getFunction()))||
-					m.getAnnotation(Function.class).name().equals(message.getFunction())) {
+					m.getAnnotation(Keyword.class).name().equals(message.getFunction())) {
 				return invokeMethod(m, token, message);
 			}
 		}
-		throw new Exception("Unable to find method annoted by '"+Function.class.getName()+"' with name=='"+message.getFunction()+"'");
+		throw new Exception("Unable to find method annoted by '"+Keyword.class.getName()+"' with name=='"+message.getFunction()+"'");
 		
 	}
 

@@ -19,7 +19,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 import step.grid.io.OutputMessage;
 import step.handlers.javahandler.AbstractScript;
-import step.handlers.javahandler.Function;
+import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.ScriptRunner;
 import step.handlers.javahandler.ScriptRunner.ScriptContext;
 
@@ -40,7 +40,7 @@ public class SeleniumKeywordExample extends AbstractScript {
 		}	
 	}
 	
-	@Function(name="Open_Chrome")
+	@Keyword(name="Open_Chrome")
 	public void openChrome() throws Exception {
 		File chromedriverExe = new File(properties.get("chromedriver"));
 		if(chromedriverExe.exists()) {
@@ -53,7 +53,7 @@ public class SeleniumKeywordExample extends AbstractScript {
 		}
 	}
 	
-	@Function(name="Google_Search")
+	@Keyword(name="Google_Search")
 	public void Google_Search() throws Exception {
 		if(input.containsKey("search")) {
 			final WebDriver driver = session.get(DriverWrapper.class).driver;
