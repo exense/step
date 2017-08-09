@@ -176,9 +176,7 @@ public class VariablesManager {
 				for(String variableName:variableMap.keySet()) {
 					if(!result.containsKey(variableName)) {
 						Object value = variableMap.get(variableName).getValue();
-						if(value!=null) {
-							result.put(variableName, value);
-						}
+						result.put(variableName, value);
 					}
 				}
 			}
