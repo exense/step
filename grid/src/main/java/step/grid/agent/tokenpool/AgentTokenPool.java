@@ -63,7 +63,8 @@ public class AgentTokenPool {
 					}
 
 					private RuntimeException unusableSessionException() {
-						return new RuntimeException("Session not available. Please group your keywords to use the session object.");
+						// TODO use error codes instead of error messages
+						return new RuntimeException("Session object unreachable. Wrap your keywords with a Session node in your test plan in order to make the session object available.");
 					}
 				};
 			}
