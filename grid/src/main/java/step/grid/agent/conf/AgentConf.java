@@ -27,6 +27,8 @@ public class AgentConf {
 	
 	Integer agentPort;
 	
+	String agentHost;
+	
 	String agentUrl;
 	
 	String workingDir;
@@ -51,6 +53,12 @@ public class AgentConf {
 		this.agentPort = agentPort;
 		this.agentUrl = agentUrl;
 	}
+	
+	public AgentConf(String gridHost, String agentHost) {
+		super();
+		this.gridHost = gridHost;
+		this.agentHost = agentHost;
+	}
 
 	public AgentConf(String gridHost, Integer agentPort, String agentUrl, Integer registrationPeriod) {
 		super();
@@ -74,6 +82,14 @@ public class AgentConf {
 
 	public void setAgentPort(Integer agentPort) {
 		this.agentPort = agentPort;
+	}
+	
+	public String getAgentHost() {
+		return agentHost;
+	}
+	
+	public void setAgentHost(String agentHost) {
+		this.agentHost = agentHost;
 	}
 
 	public String getAgentUrl() {

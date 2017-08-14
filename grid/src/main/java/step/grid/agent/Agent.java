@@ -99,6 +99,10 @@ public class Agent {
 				agentConf.setAgentPort(0);
 			}
 			
+			if(arguments.hasOption("agentHost")) {
+				agentConf.setAgentHost(arguments.getOption("agentHost"));
+			}
+			
 			if(arguments.hasOption("agentUrl")) {
 				agentConf.setAgentUrl(arguments.getOption("agentUrl"));
 			}
@@ -199,7 +203,12 @@ public class Agent {
 		server.start();
 		
 		if(agentConf.getAgentUrl()==null) {
-			agentConf.setAgentUrl("http://" + Inet4Address.getLocalHost().getCanonicalHostName() + ":" + ((ServerConnector)server.getConnectors()[0]).getLocalPort());
+			if(agentConf.getAgentHost()==null) {
+				agentConf.setAgentUrl("http://" + Inet4Address.getLocalHost().getCanonicalHostName() + ":" + ((ServerConnector)server.getConnectors()[0]).getLocalPort());
+			} else {
+				agentConf.setAgentUrl("http://" + agentConf.getAgentHost() + ":" + ((ServerConnector)server.getConnectors()[0]).getLocalPort());
+			}
+			
 		}
 		
 		timer.schedule(registrationTask, 0, agentConf.getRegistrationPeriod());
