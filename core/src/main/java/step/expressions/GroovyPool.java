@@ -27,34 +27,25 @@ import step.commons.conf.Configuration;
 public class GroovyPool {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GroovyPool.class);
-	
-	private static GroovyPool INSTANCE = new GroovyPool();
-	
+		
 	private GenericKeyedObjectPool<GroovyPoolKey, GroovyPoolEntry> pool;
 
-	public static GroovyPool getINSTANCE() {
-		return INSTANCE;
-	}
-
-	private GroovyPool() {
+	public GroovyPool(String scriptBaseClass) {
 		super();
 		
+		Configuration conf = Configuration.getInstance();
 		try {
-			pool = new GenericKeyedObjectPool<>(new GroovyPoolFactory());
+			pool = new GenericKeyedObjectPool<>(new GroovyPoolFactory(scriptBaseClass));
 			pool.setTestOnBorrow(true);
-			pool.setMaxTotal(Configuration.getInstance().getPropertyAsInteger("tec.expressions.pool.maxtotal",1000));
+			pool.setMaxTotal(conf.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000));
 			pool.setMaxActive(-1);
-			pool.setMaxIdle(Configuration.getInstance().getPropertyAsInteger("tec.expressions.pool.maxidle",-1));
+			pool.setMaxIdle(conf.getPropertyAsInteger("tec.expressions.pool.maxidle",-1));
 			pool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
 			pool.setTimeBetweenEvictionRunsMillis(30000);
 			pool.setMinEvictableIdleTimeMillis(-1);
 		} catch(Exception e) {
 			logger.error("An error occurred while starting GroovyPool.", e);
 		}
-	}
-
-	public static void setINSTANCE(GroovyPool iNSTANCE) {
-		INSTANCE = iNSTANCE;
 	}
 
 	public GroovyPoolEntry borrowShell(String script) throws Exception {
@@ -67,8 +58,6 @@ public class GroovyPool {
 			logger.error("An error occurred while borrowing script: " + script, e);
 			throw e;
 		}
-		
-		
 	}
 	
 	public void returnShell(GroovyPoolEntry entry) {
@@ -79,30 +68,4 @@ public class GroovyPool {
 			e.printStackTrace();
 		}
 	}
-	
-//	public static void main(String[] args) {
-//		long t1 = System.currentTimeMillis();
-//		GroovyPoolEntry entry;
-//		for(int i=0;i<1000;i++) {
-//		try {
-//			entry = GroovyPool.getINSTANCE().borrowShell("Meldung == 'erfolgreich'");
-//			
-//			try {
-//				Script script = entry.getScript();
-//				Binding b = new Binding();
-//				b.setVariable("Meldung", "erfolgreich");
-//				script.setBinding(b);
-//				Object result = script.run();
-////				System.out.println(result);		
-//			} finally {
-//				GroovyPool.getINSTANCE().returnShell(entry);
-//			}
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		}
-//		System.out.println((long)(System.currentTimeMillis()-t1));
-//	}
-	
 }

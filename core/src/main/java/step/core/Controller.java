@@ -87,7 +87,7 @@ public class Controller {
 		context.setScheduleAccessor(new ExecutionTaskAccessor(mongoClient));
 		context.setUserAccessor(new UserAccessor(mongoClient));
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
-		context.setExpressionHandler(new ExpressionHandler());
+		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass")));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		context.setEventManager(new EventManager());
 		context.setAttachmentManager(new AttachmentManager(configuration));

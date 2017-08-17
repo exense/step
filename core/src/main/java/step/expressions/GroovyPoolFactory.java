@@ -32,9 +32,11 @@ public class GroovyPoolFactory implements KeyedPoolableObjectFactory<GroovyPoolK
 	
 	private CompilerConfiguration groovyCompilerConfiguration = new CompilerConfiguration();
 	
-	public GroovyPoolFactory() {
+	public GroovyPoolFactory(String scriptBaseClass) {
 		super();
-		//groovyCompilerConfiguration.setScriptBaseClass("step.expressions.GroovyFunctions");	
+		if(scriptBaseClass!=null) {
+			groovyCompilerConfiguration.setScriptBaseClass(scriptBaseClass);				
+		}
 	}
 
 	@Override

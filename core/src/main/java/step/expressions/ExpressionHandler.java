@@ -22,13 +22,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.codehaus.groovy.control.CompilationFailedException;
-import org.codehaus.groovy.control.CompilerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import groovy.lang.Binding;
-import groovy.lang.GroovyClassLoader;
-import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import step.commons.conf.Configuration;
 
@@ -36,21 +33,15 @@ public class ExpressionHandler {
 		
 	private static Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
 	
-	private final GroovyClassLoader groovyLoader = new GroovyClassLoader();
+	private final GroovyPool groovyPool;
 		
-	private final CompilerConfiguration groovyCompilerConfiguration;
-	
 	public ExpressionHandler() {
-		this("step.expressions.GroovyFunctions");
+		this(null);
 	}
 	
-	public ExpressionHandler(String baseScriptBase ) {
+	public ExpressionHandler(String scriptBaseClass) {
 		super();
-		
-		groovyCompilerConfiguration = new CompilerConfiguration();
-		if(baseScriptBase!=null) {
-			groovyCompilerConfiguration.setScriptBaseClass(baseScriptBase);
-		}
+		groovyPool = new GroovyPool(scriptBaseClass);
 	}
 	
 	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings) {
@@ -69,22 +60,17 @@ public class ExpressionHandler {
 
 			long t1 = System.currentTimeMillis();	
 			try {
-				if(Configuration.getInstance().getPropertyAsBoolean("tec.expressions.usecache",true)) {
-					GroovyPoolEntry entry = GroovyPool.getINSTANCE().borrowShell(expression);
-					try {
-						Script script = entry.getScript();
-						script.setBinding(binding);
-						result = script.run();
-					} finally {
-						if(entry!=null && entry.getScript()!=null) {
-							// Release bindings to avoid references to be kept by the pool
-							entry.getScript().setBinding(new Binding());							
-						}
-						GroovyPool.getINSTANCE().returnShell(entry);
+				GroovyPoolEntry entry = groovyPool.borrowShell(expression);
+				try {
+					Script script = entry.getScript();
+					script.setBinding(binding);
+					result = script.run();
+				} finally {
+					if(entry!=null && entry.getScript()!=null) {
+						// Release bindings to avoid references to be kept by the pool
+						entry.getScript().setBinding(new Binding());							
 					}
-				} else {
-					GroovyShell shell = new GroovyShell(groovyLoader, binding, groovyCompilerConfiguration);
-					result = shell.evaluate(expression);
+					groovyPool.returnShell(entry);
 				}
 			} catch (Exception e) {
 				logger.error("An error occurred while evaluation groovy expression " + expression, e);

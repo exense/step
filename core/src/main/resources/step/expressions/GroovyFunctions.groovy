@@ -1,11 +1,8 @@
 package step.expressions
 
-import org.apache.poi.ss.usermodel.DateUtil;
 import groovy.time.TimeCategory;
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat;
-import step.core.interprete.functions.*;
-import step.datapool.excel.ExcelFunctions;
 
 abstract class GroovyFunctions extends Script {
 
@@ -163,17 +160,6 @@ abstract class GroovyFunctions extends Script {
 	
 	def IsNotEmpty(String str){
 		return !IsEmpty(str);
-	}
-	/* Aus Gruenden der Kompatibilitaet zur Spez */
-	def Excel(String workbookPath, String sheetName, String cellIndex) {
-		return ReadExcel(workbookPath, sheetName, cellIndex);
-	}
-	def ReadExcel(String workbookPath, String sheetName, String cellIndex) {
-		return ExcelFunctions.getCell(workbookPath, sheetName, cellIndex);
-	}
-	def Boolean WriteExcel(String workbookPath, String sheetName, String cellIndex, String value, String style = "") {
-		ExcelFunctions.putCell(workbookPath, sheetName, cellIndex, value, style);
-		return true;
 	}
 	
 	/**
