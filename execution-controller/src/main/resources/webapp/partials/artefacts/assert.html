@@ -1,0 +1,9 @@
+<div class="form-group-sm" ng-controller="AssertCtrl">
+<fieldset ng-disabled="readonly">
+	<form>		
+		<dynamic-textfield label="'Actual'" on-save="save()" dynamic-value="artefact.actual" />
+		<select ng-model="artefact.operator" ng-change="save()" ng-options="option.name as option.label for option in operatorTypes" class="form-control" />
+		<dynamic-textfield label="'Expected'" on-save="save()" dynamic-value="artefact.expected" />
+	</form>
+</fieldset>
+</div>

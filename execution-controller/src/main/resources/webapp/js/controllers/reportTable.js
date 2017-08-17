@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('reportTable',['step'])
+angular.module('reportTable',['step','reportNodes'])
 
-.factory('reportTableFactory', ['$http', function($http) {
+.factory('reportTableFactory', ['$http', '$compile', function($http, $compile) {
   var tableFactory = {};
 
-  tableFactory.get = function (filterFactory) {
+  tableFactory.get = function (filterFactory, $scope) {
     var reportNodeRenderer = {
         'step.artefacts.reports.CallFunctionReportNode' : {
           renderer: function (reportNode) {
@@ -130,17 +130,23 @@ angular.module('reportTable',['step'])
     stepsTable.params = filterFactory;
     
     stepsTable.detailRowRenderer = function(rowData, callback) {
-      $http.get('rest/controller/reportnode/'+rowData[0]+'/path').then(function(response) {
-        var data = response.data;
-        var currentNode = _.last(data);
-        var html = '<ul class="list-unstyled node-details">';
-        if(currentNode.reportNode && currentNode.reportNode.agentUrl) {html+='<li>Agent: <span>'+currentNode.reportNode.agentUrl+'</span></li>'}
-        if(currentNode.reportNode && currentNode.reportNode.tokenId) {html+='<li>Token ID: <span>'+currentNode.reportNode.tokenId+'</span></li>'}
-
-        if(currentNode.reportNode){html+='<li>Duration (ms): <span>'+currentNode.reportNode.duration+'</span></li>'}
-        html+='</table></div></li></ul>'
-        callback(html);
+      $http.get('rest/controller/reportnode/'+$scope.node.id).then(function(response) {
+        var rowScope = $scope.$new(true, $scope);
+        rowScope.template = 'partials/reportnodes/reportNode.html';
+        rowScope.node = response.data;
+        callback($compile("<div ng-include='template'></div>")(rowScope));
       })
+//      $http.get('rest/controller/reportnode/'+rowData[0]+'/path').then(function(response) {
+//        var data = response.data;
+//        var currentNode = _.last(data);
+//        var html = '<ul class="list-unstyled node-details">';
+//        if(currentNode.reportNode && currentNode.reportNode.agentUrl) {html+='<li>Agent: <span>'+currentNode.reportNode.agentUrl+'</span></li>'}
+//        if(currentNode.reportNode && currentNode.reportNode.tokenId) {html+='<li>Token ID: <span>'+currentNode.reportNode.tokenId+'</span></li>'}
+//
+//        if(currentNode.reportNode){html+='<li>Duration (ms): <span>'+currentNode.reportNode.duration+'</span></li>'}
+//        html+='</table></div></li></ul>'
+//        callback(html);
+//      })
     }
     
     return stepsTable;

@@ -1,0 +1,11 @@
+<div ng-controller="ReportNodeCtrl" class="panel panel-default">
+	<div class="panel-heading">
+		{{node.name}}
+		<div class="executionStatus status-{{node.status}} pull-right">{{node.status}}</div>
+	</div>
+	<div ng-repeat="child in children">
+		<div ng-if="child._class=='step.artefacts.reports.AssertReportNode'">
+			{{child.message}} <div class="executionStatus status-{{node.status}} pull-right">{{child.status}}</div>
+		</div>
+	</div>
+</div>
