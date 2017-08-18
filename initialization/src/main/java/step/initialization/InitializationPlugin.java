@@ -197,7 +197,7 @@ public class InitializationPlugin extends AbstractPlugin {
 				}
 				if(name == null) {
 					Artefact annotation = artefact.getClass().getAnnotation(Artefact.class);
-					name =  annotation.name().length() > 0 ? annotation.name() : getClass().getSimpleName();
+					name =  annotation.name().length() > 0 ? annotation.name() : artefact.getClass().getSimpleName();
 				}
 				attributes.put("name", name);
 				a.save(artefact);
