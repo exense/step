@@ -76,7 +76,7 @@ public class Interest {
 
 	@Override
 	public String toString() {
-		return "SelectionCriterion [pattern=" + selectionPattern + ", must=" + must + "]";
+		return selectionPattern+(must?"":" (optional)");
 	}
 
 }

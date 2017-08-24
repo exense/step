@@ -36,6 +36,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import step.artefacts.handlers.CallFunctionHandler;
 import step.attachments.AttachmentMeta;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
@@ -55,6 +56,7 @@ import step.functions.Input;
 import step.functions.Output;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
+import step.functions.routing.FunctionRouter;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient.AgentCommunicationException;
@@ -154,18 +156,17 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Secured(right="kw-execute")
 	public ExecutionOutput executeFunction(@PathParam("id") String functionId, ExecutionInput executionInput) {
 		ExecutionOutput result = new ExecutionOutput();
+		Output output;
 		Function function = get(functionId);
 		
 		FunctionExecutionService client = getFunctionClient();
 		try {
-			TokenWrapper token;
-			if(function.getClass().getSimpleName().equals("CompositeFunction")) {
-				token = getFunctionClient().getLocalTokenHandle();
-			} else {
-				token = getFunctionClient().getTokenHandle(null, null, false);
-			}
+			FunctionRouter functionRouter = getContext().get(FunctionRouter.class);
+			TokenWrapper token = functionRouter.selectToken(function, null, null);
 			try {
-				ExecutionContext.setCurrentContext(createContext(getContext()));
+				ExecutionContext executionContext = createContext(getContext());
+				token.getToken().attachObject(CallFunctionHandler.EXECUTION_CONTEXT_KEY, executionContext);
+				ExecutionContext.setCurrentContext(executionContext);
 				Input input = new Input();		
 				
 				JsonObject inputBeforeEvalution;
@@ -182,27 +183,24 @@ public class FunctionRepositoryServices extends AbstractServices {
 				input.setArgument(inputAfterEvaluation);
 				input.setProperties(executionInput.getProperties());
 				
-
-				Output output = client.callFunction(token, functionId, input);
-				result.setOutput(output);
-				
-				List<AttachmentMeta> attachmentMetas = new ArrayList<>();
-				result.setAttachments(attachmentMetas);
-				if(output.getAttachments()!=null) {
-					for(Attachment a:output.getAttachments()) {
-						AttachmentMeta attachmentMeta;
-						attachmentMeta = reportNodeAttachmentManager.createAttachmentWithoutQuotaCheck(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
-						attachmentMetas.add(attachmentMeta);
-					}
-				}
+				output = client.callFunction(token, functionId, input);				
 			} finally {
 				client.returnTokenHandle(token);
 			}
 		} catch(Exception e) {
-			Output output = new Output();
-			output.setError(e.getMessage());
-			result.setOutput(output);
+			output = new Output();
+			FunctionClient.attachExceptionToOutput(output, e);
 		}
+		List<AttachmentMeta> attachmentMetas = new ArrayList<>();
+		result.setAttachments(attachmentMetas);
+		if(output.getAttachments()!=null) {
+			for(Attachment a:output.getAttachments()) {
+				AttachmentMeta attachmentMeta;
+				attachmentMeta = reportNodeAttachmentManager.createAttachmentWithoutQuotaCheck(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+				attachmentMetas.add(attachmentMeta);
+			}
+		}
+		result.setOutput(output);
 		return result;
 	}
 	

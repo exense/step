@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 import step.common.isolation.ContextManager;
+import step.grid.Grid;
 import step.grid.Token;
 import step.grid.agent.conf.AgentConf;
 import step.grid.agent.conf.AgentConfParser;
@@ -129,7 +130,10 @@ public class Agent {
 		for(int i=0;i<count;i++) {
 			AgentTokenWrapper token = new AgentTokenWrapper();
 			token.getToken().setAgentid(id);
-			token.setAttributes(attributes);
+			Map<String, String> allAttributes = new HashMap<>();
+			allAttributes.putAll(attributes);
+			allAttributes.put(Grid.AGENT_TYPE_KEY, "default");
+			token.setAttributes(allAttributes);
 			token.setSelectionPatterns(createInterestMap(selectionPatterns));
 			token.setProperties(properties);
 			token.setServices(agentTokenServices);

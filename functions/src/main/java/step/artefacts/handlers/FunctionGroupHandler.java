@@ -18,6 +18,8 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.util.Map;
+
 import step.artefacts.FunctionGroup;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
@@ -26,10 +28,11 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.functions.FunctionExecutionService;
 import step.grid.TokenWrapper;
+import step.grid.tokenpool.Interest;
 
 public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportNode> {
 	
-	public static final String TOKEN_PARAM_KEY = "##token##";
+	public static final String FUNCTION_GROUP_CONTEXT_KEY = "##functionGroupContext##";
 
 	private FunctionExecutionService functionExecutionService;
 	private TokenSelectorHelper tokenSelectorHelper;
@@ -42,7 +45,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	public void init(ExecutionContext context) {
 		super.init(context);
 		functionExecutionService = context.getGlobalContext().get(FunctionExecutionService.class);
-		tokenSelectorHelper = new TokenSelectorHelper(functionExecutionService,  new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler())));
+		tokenSelectorHelper = new TokenSelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler())));
 
 	}
 
@@ -52,15 +55,43 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		scheduler.createReportSkeleton_(node, testArtefact);
 	}
 
+	public static class FunctionGroupContext {
+		
+		TokenWrapper token;
+		
+		final Map<String, Interest> additionalSelectionCriteria;
+
+		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria) {
+			super();
+			this.additionalSelectionCriteria = additionalSelectionCriteria;
+		}
+
+		public TokenWrapper getToken() {
+			return token;
+		}
+
+		public void setToken(TokenWrapper token) {
+			this.token = token;
+		}
+
+		public Map<String, Interest> getAdditionalSelectionCriteria() {
+			return additionalSelectionCriteria;
+		}
+		
+	}
+	
 	@Override
 	protected void execute_(ReportNode node, FunctionGroup testArtefact) throws Exception {		
-		TokenWrapper token = tokenSelectorHelper.selectToken(testArtefact, functionExecutionService, getBindings(), true);
-		context.getVariablesManager().putVariable(node, TOKEN_PARAM_KEY, token);
+		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getAdditionalSelectionCriteria(testArtefact, getBindings());
+		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria);
+		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, handle);
 		try {
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.execute_(node, testArtefact);
 		} finally {
-			tokenSelectorHelper.returnToken(token);
+			if(handle.getToken()!=null) {
+				functionExecutionService.returnTokenHandle(handle.getToken());
+			}
 		}	
 	}
 

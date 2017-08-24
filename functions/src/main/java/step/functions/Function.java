@@ -36,7 +36,16 @@ public class Function {
 	Map<String, String> attributes;
 	DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
 	JsonObject schema;
+	Map<String, String> tokenSelectionCriteria;
 	
+	public Map<String, String> getTokenSelectionCriteria() {
+		return tokenSelectionCriteria;
+	}
+
+	public void setTokenSelectionCriteria(Map<String, String> tokenSelectionCriteria) {
+		this.tokenSelectionCriteria = tokenSelectionCriteria;
+	}
+
 	public static final String NAME = "name";
 
 	public ObjectId getId() {

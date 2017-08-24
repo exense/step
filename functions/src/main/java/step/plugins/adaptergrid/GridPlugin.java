@@ -31,6 +31,7 @@ import step.functions.FunctionClient;
 import step.functions.FunctionExecutionService;
 import step.functions.FunctionRepository;
 import step.functions.editors.FunctionEditorRegistry;
+import step.functions.routing.FunctionRouter;
 import step.grid.Grid;
 import step.grid.client.GridClient;
 
@@ -67,9 +68,10 @@ public class GridPlugin extends AbstractPlugin {
 		context.put(GRID_KEY, grid);
 		context.put(GRIDCLIENT_KEY, client);
 		context.put(FUNCTIONCLIENT_KEY, functionClient);
-		
+				
 		context.put(FunctionExecutionService.class.getName(), functionClient);
 		context.put(FunctionRepository.class.getName(), functionRepository);
+		context.put(FunctionRouter.class.getName(), new FunctionRouter(functionClient));
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
 		context.getServiceRegistrationCallback().registerService(FunctionRepositoryServices.class);

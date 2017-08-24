@@ -30,6 +30,7 @@ import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonParsingException;
 
 import step.artefacts.CallFunction;
+import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.common.managedoperations.OperationManager;
@@ -47,11 +48,13 @@ import step.functions.FunctionExecutionService;
 import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
+import step.functions.routing.FunctionRouter;
 import step.functions.validation.JsonSchemaValidator;
 import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
+import step.grid.tokenpool.Interest;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -68,14 +71,17 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	
 	private TokenSelectorHelper tokenSelectorHelper;
 	
+	private FunctionRouter functionRouter;
+	
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
 		functionExecutionService = context.getGlobalContext().get(FunctionExecutionService.class);
 		functionRepository = context.getGlobalContext().get(FunctionRepository.class);
+		functionRouter = context.getGlobalContext().get(FunctionRouter.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
-		this.tokenSelectorHelper = new TokenSelectorHelper(functionExecutionService, dynamicJsonObjectResolver);
+		this.tokenSelectorHelper = new TokenSelectorHelper(dynamicJsonObjectResolver);
 	}
 
 	@Override
@@ -98,21 +104,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		validateInput(input, function);
 
 		if(!context.isSimulation()) {
-			// Get token
-			boolean releaseTokenAfterExecution = true;
-			TokenWrapper token;
-			if(function.requiresLocalExecution()) {
-				token = tokenSelectorHelper.selectLocalToken();
-			} else {
-				Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.TOKEN_PARAM_KEY);
-				if(o!=null && o instanceof TokenWrapper) {
-					token = (TokenWrapper) o;
-					releaseTokenAfterExecution = false;
-				} else {
-					token = tokenSelectorHelper.selectToken(testArtefact, functionExecutionService, getBindings(), false);
-				}
-			}
+			Map<String, Interest> addtionalSelectionCriteria = tokenSelectorHelper.getAdditionalSelectionCriteria(testArtefact, getBindings());
+		
+			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
+			TokenWrapper token = functionRouter.selectToken(function, (FunctionGroupContext)o, addtionalSelectionCriteria);
 			
+			boolean releaseTokenAfterExecution = (o==null);
+
 			Token gridToken = token.getToken();
 			if(gridToken.isLocal()) {
 				gridToken.attachObject(EXECUTION_CONTEXT_KEY, context);

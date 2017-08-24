@@ -250,8 +250,13 @@ public class GridClient implements Closeable {
 			addThreadIdInterest(tokenPretender);
 			adapterToken = tokenRegistry.selectToken(tokenPretender, matchExistsTimeout, noMatchExistsTimeout);
 		} catch (TimeoutException e) {
-			String desc = "[attributes=" + tokenPretender.getAttributes() + ", selectionCriteria=" + tokenPretender.getInterests() + "]";
-			throw new RuntimeException("Not able to find any available adapter matching " + desc);
+			StringBuilder interestList = new StringBuilder();
+			if(tokenPretender.getInterests()!=null) {
+				tokenPretender.getInterests().forEach((k,v)->{interestList.append(k+"="+v+" and ");});				
+			}
+			
+			String desc = " selection criteria " + interestList.toString() + " accepting attributes " + tokenPretender.getAttributes();
+			throw new RuntimeException("Not able to find any agent token matching " + desc);
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}

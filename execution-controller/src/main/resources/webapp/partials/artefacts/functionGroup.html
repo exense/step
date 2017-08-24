@@ -2,10 +2,9 @@
 	<fieldset ng-disabled="readonly">
 		<div class="panel panel-default">
 			<div class="panel-heading">
-				<a ng-click="showTokenSelectionParameters = !showTokenSelectionParameters">Token selection parameters</a>
+				<a ng-click="showTokenSelectionParameters = !showTokenSelectionParameters">Keyword routing</a>
 			</div>
 			<div class="panel-body" ng-show="showTokenSelectionParameters">
-				<dynamic-checkbox label="'Run on agent'" dynamic-value="artefact.remote" on-save="save()" />
 				<dynamic-json-editor label="'Agent token selectors'" dynamic-value="artefact.token" on-save="save()" />
 			</div>
 		</div>

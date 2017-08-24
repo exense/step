@@ -45,6 +45,8 @@ import step.grid.tokenpool.TokenPool;
 public class Grid implements TokenRegistry, GridFileService {
 
 	public static final String LOCAL_AGENT = "local";
+	
+	public static final String AGENT_TYPE_KEY = "$agenttype";
 
 	private ExpiringMap<String, AgentRef> agentRefs;
 	

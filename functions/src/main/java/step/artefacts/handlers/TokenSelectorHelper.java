@@ -27,63 +27,30 @@ import javax.json.JsonObject;
 import javax.json.spi.JsonProvider;
 
 import step.artefacts.TokenSelector;
-import step.common.managedoperations.OperationManager;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
-import step.functions.FunctionExecutionService;
-import step.grid.TokenWrapper;
-import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.tokenpool.Interest;
 
 public class TokenSelectorHelper {
 	
-	protected final FunctionExecutionService functionExecutionService;
-
 	private static JsonProvider jprov = JsonProvider.provider();
 	
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
-	public TokenSelectorHelper(FunctionExecutionService functionClient, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
+	public TokenSelectorHelper(DynamicJsonObjectResolver dynamicJsonObjectResolver) {
 		super();
-		this.functionExecutionService = functionClient;
 		this.dynamicJsonObjectResolver = dynamicJsonObjectResolver;
 	}
 	
-	protected TokenWrapper selectToken(TokenSelector testArtefact, FunctionExecutionService functionExecutionService, Map<String, Object> bindings, boolean createSession) throws AgentCommunicationException {
-		TokenWrapper tokenHandle;
+	protected Map<String, Interest> getAdditionalSelectionCriteria(TokenSelector testArtefact, Map<String, Object> bindings) {
 		String token = testArtefact.getToken().get();
 		if(token!=null) {
-			JsonObject selectionCriteriaBeforeEvaluation = jprov.createReader(new StringReader(token)).readObject();
-			
+			JsonObject selectionCriteriaBeforeEvaluation = jprov.createReader(new StringReader(token)).readObject();			
 			JsonObject selectionCriteriaJson = dynamicJsonObjectResolver.evaluate(selectionCriteriaBeforeEvaluation, bindings);
-			
-			if(!testArtefact.getRemote().get()) {
-				tokenHandle = selectLocalToken();
-			} else {
-				Map<String, Interest> selectionCriteria = new HashMap<>();
-				selectionCriteriaJson.keySet().stream().forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
-				
-				Map<String, String> pretenderAttributes = new HashMap<>();
-				bindings.forEach((key,value)->{pretenderAttributes.put(key, value.toString());});
-				
-				OperationManager.getInstance().enter("Token selection", selectionCriteria);
-				try {
-					tokenHandle = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria, createSession);
-				} finally {
-					OperationManager.getInstance().exit();					
-				}
-			}
+			Map<String, Interest> selectionCriteria = new HashMap<>();
+			selectionCriteriaJson.keySet().stream().forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));
+			return selectionCriteria;
 		} else {
 			throw new RuntimeException("Token field hasn't been specified");
 		}
-		return tokenHandle;
-	}
-	
-	protected TokenWrapper selectLocalToken() {
-		TokenWrapper tokenHandle = functionExecutionService.getLocalTokenHandle();
-		return tokenHandle;
-	}
-	
-	protected void returnToken(TokenWrapper token) throws AgentCommunicationException {
-		functionExecutionService.returnTokenHandle(token);
 	}
 }

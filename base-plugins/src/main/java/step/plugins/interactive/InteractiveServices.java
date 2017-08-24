@@ -31,6 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 
 import step.artefacts.handlers.FunctionGroupHandler;
+import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.commons.conf.Configuration;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
@@ -58,7 +59,7 @@ public class InteractiveServices extends AbstractServices {
 		
 		ReportNode root;
 		
-		TokenWrapper wrapper;
+		FunctionGroupContext functionGroupContext;
 		
 		long lasttouch;
 	}
@@ -98,17 +99,15 @@ public class InteractiveServices extends AbstractServices {
 		session.c = executionContext;
 		session.lasttouch = System.currentTimeMillis();
 		session.root = new ReportNode();
+		session.functionGroupContext = new FunctionGroupContext(null);
 		String id = executionContext.getExecutionId();
-		
-		FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);
-		TokenWrapper wrapper = functionExecutionService.getTokenHandle(null, null, true);
-		session.wrapper = wrapper;
 		
 		executionContext.getReportNodeCache().put(session.root);
 		executionContext.setReport(session.root);
 		ExecutionContext.setCurrentReportNode(session.root);
-		session.c.getVariablesManager().putVariable(session.root, FunctionGroupHandler.TOKEN_PARAM_KEY, wrapper);
-		
+		session.c.getVariablesManager().putVariable(session.root, FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY, 
+				session.functionGroupContext);
+
 		sessions.put(id, session);
 		return id;
 	}
@@ -125,8 +124,11 @@ public class InteractiveServices extends AbstractServices {
 	}
 
 	private void closeSession(InteractiveSession session) throws AgentCommunicationException {
-		FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);
-		functionExecutionService.returnTokenHandle(session.wrapper);
+		TokenWrapper token = session.functionGroupContext.getToken();
+		if(token!=null) {
+			FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);
+			functionExecutionService.returnTokenHandle(token);
+		}
 	}
 	
 	@POST

@@ -103,16 +103,20 @@ public class FunctionClient implements FunctionExecutionService {
 			output.setMeasures(outputMessage.getMeasures());
 			return output;
 		} catch (Exception e) {
-			output.setError("Unexpected error while calling function: " + e.getClass().getName() + " " + e.getMessage());
-			Attachment attachment = AttachmentHelper.generateAttachmentForException(e);
-			List<Attachment> attachments = output.getAttachments();
-			if(attachments==null) {
-				attachments = new ArrayList<>();
-				output.setAttachments(attachments);
-			}
-			attachments.add(attachment);
+			attachExceptionToOutput(output, e);
 		}
 		return output;
+	}
+
+	public static void attachExceptionToOutput(Output output, Exception e) {
+		output.setError("Unexpected error while calling function: " + e.getClass().getName() + " " + e.getMessage());
+		Attachment attachment = AttachmentHelper.generateAttachmentForException(e);
+		List<Attachment> attachments = output.getAttachments();
+		if(attachments==null) {
+			attachments = new ArrayList<>();
+			output.setAttachments(attachments);
+		}
+		attachments.add(attachment);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -131,7 +135,7 @@ public class FunctionClient implements FunctionExecutionService {
 		}
 	}
 	
-	private AbstractFunctionType<Function> getFunctionTypeByFunction(Function function) {
+	public AbstractFunctionType<Function> getFunctionTypeByFunction(Function function) {
 		return getFunctionTypeByType(function.getClass().getName());
 	}
 	
