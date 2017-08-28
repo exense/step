@@ -24,6 +24,52 @@ function escapeHtml(str) {
   return div.innerHTML;
 };
 
+tecAdminControllers.directive('executionParameters', ['$rootScope','$http','AuthService',
+                                                    function($rootScope, $http,AuthService) {
+  return {
+    restrict: 'E',
+    scope: {
+      initialSelection: '=',
+      onChange: '&'
+    },
+    templateUrl: 'partials/executionParametersForm.html',
+    link: function($scope, $element, $attr,  $tabsCtrl) {      
+      $scope.model = {};
+      
+      $scope.$watchCollection('model',function(){
+        retrieveInputs();
+        $scope.onChange({model:$scope.model});
+      })
+      
+      var initialSelection = $scope.initialSelection;
+      
+      function retrieveInputs() {        
+        params =  _.clone($scope.model);
+        $http({url:"rest/screens/executionParameters", method:"GET", params:params}).then(function(response){
+          var data = response.data;
+            $scope.inputs=data;
+            var oldModel = $scope.model;
+            var newModel = {};
+            _.each($scope.inputs, function(input) {
+              if(oldModel[input.id] != null) {
+                newModel[input.id] = oldModel[input.id];                
+              } else {
+                if(input.options && input.options.length>0) {
+                  newModel[input.id] = (initialSelection&&initialSelection[input.id])?initialSelection[input.id]:input.options[0].value;
+                } else {
+                  newModel[input.id] = '';
+                }
+              }
+            });
+            
+            $scope.model = newModel;
+        });
+        
+      }
+    }
+  };
+}]);
+
 tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','AuthService',
                                                     function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,AuthService) {
   return {
