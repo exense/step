@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.plugins.interactive;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,6 +31,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 
+import step.artefacts.CallFunction;
+import step.artefacts.FunctionGroup;
 import step.artefacts.handlers.FunctionGroupHandler;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.commons.conf.Configuration;
@@ -41,9 +44,15 @@ import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
+import step.core.plans.LocalPlanRepository;
+import step.core.plans.Plan;
+import step.functions.Function;
 import step.functions.FunctionExecutionService;
+import step.functions.FunctionRepository;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient.AgentCommunicationException;
+import step.planbuilder.FunctionPlanBuilder;
+import step.planbuilder.PlanBuilder;
 
 @Singleton
 @Path("interactive")
@@ -151,6 +160,64 @@ public class InteractiveServices extends AbstractServices {
 			 throw new RuntimeException("Session doesn't exist or expired.");
 		}
 		
+	}
+	
+	public static class FunctionTestingSession {
+		
+		private String rootArtefactId;
+		private String callFunctionId;
+		
+		public FunctionTestingSession() {
+			super();
+		}
+
+		public String getRootArtefactId() {
+			return rootArtefactId;
+		}
+
+		public void setRootArtefactId(String rootArtefactId) {
+			this.rootArtefactId = rootArtefactId;
+		}
+
+		public String getCallFunctionId() {
+			return callFunctionId;
+		}
+
+		public void setCallFunctionId(String callFunctionId) {
+			this.callFunctionId = callFunctionId;
+		}
+		
+	}
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/functiontest/{keywordid}/start")
+	@Secured(right="interactive")
+	public FunctionTestingSession startFunctionTestingSession(@PathParam("keywordid") String keywordid) throws AgentCommunicationException {
+		
+		CallFunction callFunction = FunctionPlanBuilder.keywordById(keywordid,"{}");
+		
+		// TODO do this centrally. Currently the same logic is implemented in the UI
+		FunctionRepository functionRepository = getContext().get(FunctionRepository.class);
+		Function function = functionRepository.getFunctionById(keywordid);
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put("name", function.getAttributes().get(Function.NAME));
+		callFunction.setAttributes(attributes);
+		FunctionGroup functionGroup = new FunctionGroup();
+		attributes = new HashMap<>();
+		attributes.put("name", "Session");
+		functionGroup.setAttributes(attributes);
+		
+		Plan plan = PlanBuilder.create()
+				.startBlock(functionGroup)
+				.add(callFunction)
+				.endBlock()
+				.build();
+		LocalPlanRepository repo = new LocalPlanRepository(getContext().getArtefactAccessor());
+		repo.save(plan);
+		FunctionTestingSession result = new FunctionTestingSession();
+		result.setRootArtefactId(plan.getRoot().getId().toString());
+		result.setCallFunctionId(callFunction.getId().toString());
+		return result;
 	}
 
 	private InteractiveSession getAndTouchSession(String sessionId) {

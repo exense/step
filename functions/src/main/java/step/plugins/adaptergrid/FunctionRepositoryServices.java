@@ -18,15 +18,11 @@
  *******************************************************************************/
 package step.plugins.adaptergrid;
 
-import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.json.Json;
-import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -36,32 +32,24 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import step.artefacts.handlers.CallFunctionHandler;
-import step.attachments.AttachmentMeta;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.dynamicbeans.DynamicJsonObjectResolver;
-import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.functions.Function;
 import step.functions.FunctionClient;
-import step.functions.FunctionExecutionService;
 import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
-import step.functions.routing.FunctionRouter;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient.AgentCommunicationException;
-import step.grid.io.Attachment;
-import step.grid.io.AttachmentHelper;
 import step.grid.tokenpool.Interest;
 
 @Path("/functions")
@@ -94,114 +82,6 @@ public class FunctionRepositoryServices extends AbstractServices {
 		}
 		repo.addFunction(function);
 		return function;
-	}
-	
-	public static class ExecutionOutput {
-		
-		Output output;
-		
-		List<AttachmentMeta> attachments;
-
-		public ExecutionOutput() {
-			super();
-		}
-
-		public Output getOutput() {
-			return output;
-		}
-
-		public void setOutput(Output output) {
-			this.output = output;
-		}
-
-		public List<AttachmentMeta> getAttachments() {
-			return attachments;
-		}
-
-		public void setAttachments(List<AttachmentMeta> attachments) {
-			this.attachments = attachments;
-		}
-	}
-	
-	public static class ExecutionInput {
-		
-		String argument;
-		
-		Map<String, String> properties;
-
-		public ExecutionInput() {
-			super();
-		}
-
-		public String getArgument() {
-			return argument;
-		}
-
-		public void setArgument(String argument) {
-			this.argument = argument;
-		}
-
-		public Map<String, String> getProperties() {
-			return properties;
-		}
-
-		public void setProperties(Map<String, String> properties) {
-			this.properties = properties;
-		}
-	}
-	
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Path("/{id}/execute")
-	@Secured(right="kw-execute")
-	public ExecutionOutput executeFunction(@PathParam("id") String functionId, ExecutionInput executionInput) {
-		ExecutionOutput result = new ExecutionOutput();
-		Output output;
-		Function function = get(functionId);
-		
-		FunctionExecutionService client = getFunctionClient();
-		try {
-			FunctionRouter functionRouter = getContext().get(FunctionRouter.class);
-			TokenWrapper token = functionRouter.selectToken(function, null, null);
-			try {
-				ExecutionContext executionContext = createContext(getContext());
-				token.getToken().attachObject(CallFunctionHandler.EXECUTION_CONTEXT_KEY, executionContext);
-				ExecutionContext.setCurrentContext(executionContext);
-				Input input = new Input();		
-				
-				JsonObject inputBeforeEvalution;
-				String argument = executionInput.getArgument();
-				if(argument!=null&&argument.length()>0) {
-					inputBeforeEvalution = Json.createReader(new StringReader(argument)).readObject();				
-				} else {
-					inputBeforeEvalution = Json.createObjectBuilder().build();
-				}
-				
-				DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
-				JsonObject inputAfterEvaluation = dynamicJsonObjectResolver.evaluate(inputBeforeEvalution, new HashMap<>());
-				
-				input.setArgument(inputAfterEvaluation);
-				input.setProperties(executionInput.getProperties());
-				
-				output = client.callFunction(token, functionId, input);				
-			} finally {
-				client.returnTokenHandle(token);
-			}
-		} catch(Exception e) {
-			output = new Output();
-			FunctionClient.attachExceptionToOutput(output, e);
-		}
-		List<AttachmentMeta> attachmentMetas = new ArrayList<>();
-		result.setAttachments(attachmentMetas);
-		if(output.getAttachments()!=null) {
-			for(Attachment a:output.getAttachments()) {
-				AttachmentMeta attachmentMeta;
-				attachmentMeta = reportNodeAttachmentManager.createAttachmentWithoutQuotaCheck(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
-				attachmentMetas.add(attachmentMeta);
-			}
-		}
-		result.setOutput(output);
-		return result;
 	}
 	
 	@POST

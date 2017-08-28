@@ -55,6 +55,13 @@ public class FunctionPlanBuilder {
 		return call;
 	}
 	
+	public static CallFunction keywordById(String keywordId, String input) {
+		CallFunction call = new CallFunction();
+		call.setArgument(new DynamicValue<String>(input));
+		call.setFunctionId(keywordId);
+		return call;
+	}
+	
 	public static CallFunction keyword(String keywordName) {
 		return keyword(keywordName, "{}");
 	}

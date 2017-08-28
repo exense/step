@@ -1,4 +1,4 @@
-package step.planbuilder;
+package step.core.plans;
 
 import java.util.Collection;
 

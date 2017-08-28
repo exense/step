@@ -129,18 +129,14 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
       }
       
       $scope.executeFunction = function(id) {
-  	  var modalInstance = $uibModal.open({
-            animation: $scope.animationsEnabled,
-            templateUrl: 'executeFunctionModalContent.html',
-            controller: 'executeFunctionModalCtrl',
-            resolve: {
-              functionId: function () {
-                return id;
-              }
-            }
-          });
-
-          modalInstance.result.then(function (argument) {}, function () {});
+        $http.post("rest/interactive/functiontest/"+id+"/start").then(function(response) {
+          var result = response.data;
+          $rootScope.artefactEditorInitialState = {
+              interactive : true,
+              selectedNode : result.callFunctionId
+          }
+          $location.path('/root/artefacteditor/' + result.rootArtefactId);
+        });
       }
       
       $scope.deleteFunction = function(id) {
@@ -283,72 +279,8 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
     $uibModalInstance.dismiss('cancel');
   };
 }])
-
-.controller('executeFunctionModalCtrl', function ($scope, $uibModalInstance, $http, functionId) {
-  
-  $scope.functionId = functionId;
-	$scope.handle = {}
-  
-  $scope.ok = function () {
-	  $scope.handle.execute();
-  };
-
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss('cancel');
-  };
-})
-
-.directive('functionExecutionPanel', function($http) {
-  return {
-    restrict: 'E',
-    scope: {
-      functionid: '=',
-      handle: '='
-    },
-    templateUrl: 'partials/functionExecutionPanel.html',
-    controller: function($scope,AuthService) {
-      $scope.argument = '';
-      $scope.running = false;
-      
-      $scope.setArgument = function(json) {
-        $scope.argument = json;
-      }
-      
-      $scope.properties = [];
-      
-      $scope.addProperty = function() {
-        $scope.properties.push({key:"",value:""})
-      }
-      
-      $scope.execute = function () {
-        $scope.running=true;
-        var properties = {};
-        _.each($scope.properties,function(prop){properties[prop.key]=prop.value});
-        $http.post("rest/functions/"+$scope.functionid+"/execute",{'properties':properties,'argument':$scope.argument}).then(function(response) {
-          var data = response.data;
-          $scope.output = data;
-          $scope.running=false;
-          if(data) {
-            var output = data.output;
-            if(output.result) {
-              $scope.result = JSON.stringify(output.result)       
-            }
-            $scope.attachments=data.attachments;
-            $scope.error = output.error
-          }
-      },function(error) {
-        $scope.running=false;
-        $scope.error=error;
-      });
-      };
-      
-      if($scope.handle) {
-        $scope.handle.execute = $scope.execute;
-      }
-    }
-   }})
    
- .controller('selectFunctionModalCtrl', function ($scope, $uibModalInstance) {
+.controller('selectFunctionModalCtrl', function ($scope, $uibModalInstance) {
   
   $scope.selectFunction = function(id) {
     $uibModalInstance.close(id);

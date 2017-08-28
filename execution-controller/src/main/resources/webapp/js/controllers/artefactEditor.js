@@ -150,6 +150,9 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
             $http.post("rest/interactive/"+sessionId+"/execute/"+artefact.id).then(function() {
               $scope.stepsTable.Datatable.ajax.reload(null, false);
             });
+          },
+          start: function() {
+            $scope.startInteractive();
           }
       };
          
@@ -201,10 +204,26 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
         if($scope.artefactid!=null) {
           load(function(root) {
             tree.open_all();
-            tree.select_node(root.id);
+            setupInitialState();
           });
         }
       });
+      
+      function setupInitialState() {
+        var initialState = $rootScope.artefactEditorInitialState;
+        if(initialState) {
+          if(initialState.selectedNode) {
+            tree.deselect_all(true);
+            tree.select_node(initialState.selectedNode);            
+          }
+          if(initialState.interactive) {
+            $scope.interactiveSessionHandle.start();
+          }
+          delete $rootScope.artefactEditorInitialState;
+        } else {
+          tree.select_node(root.id);
+        }
+      }
       
       $scope.authService = AuthService;
       
