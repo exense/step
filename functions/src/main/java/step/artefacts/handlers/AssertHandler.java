@@ -44,7 +44,9 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		}
 		if(callFunctionReport.getStatus()==ReportNodeStatus.PASSED) {			
 			JsonObject outputJson = callFunctionReport.getOutputObject();
-			String var = outputJson.getString(artefact.getActual().get());
+			String key = artefact.getActual().get();
+			String var = outputJson.getString(key);
+			String expectedValue = artefact.getExpected().get();
 			
 			boolean passed = false;
 			String message = null;
@@ -52,15 +54,28 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 			if(operator == AssertOperator.EQUALS) {
 				if(artefact.getExpected().get().equals(var)) {
 					passed = true;
-				} else {
-					message = "Expected : '"+artefact.getExpected().get()+"' but was '"+var+"'";
 				}
+				message = "Expected : '"+artefact.getExpected().get()+"' "+(passed?"and":"but")+ " '"+var+"'";
 			} else if(operator == AssertOperator.CONTAINS) {
 				if(var.contains(artefact.getExpected().get())) {
 					passed = true;
-				} else {
-					message = "Expected : '"+artefact.getExpected().get()+"' but was '"+var+"'";
 				}
+				message = "'"+key + "' expected to contain '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+var+"'";
+			} else if(operator == AssertOperator.BEGINS_WITH) {
+				if(var.startsWith(artefact.getExpected().get())) {
+					passed = true;
+				}
+				message = "'"+key + "' expected to start with '"+expectedValue+ "' "+(passed?"and":"but")+ " '"+var+"'";
+			} else if(operator == AssertOperator.ENDS_WITH) {
+				if(var.endsWith(artefact.getExpected().get())) {
+					passed = true;
+				}
+				message = "'"+key + "' expected to end with '"+expectedValue+ "' "+(passed?"and":"but")+ " '"+var+"'";
+			} else if(operator == AssertOperator.MATCHES) {
+				if(var.matches(artefact.getExpected().get())) {
+					passed = true;
+				}
+				message = "'"+key + "' expected to match regular expression '"+expectedValue+ "' "+(passed?"and":"but")+ " '"+var+"'";
 			}
 			
 			node.setMessage(message);

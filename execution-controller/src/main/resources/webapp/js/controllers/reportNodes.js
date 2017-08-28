@@ -20,7 +20,7 @@ angular.module('reportNodes',['step'])
 
 .controller('ReportNodeCtrl' , function($scope,$http) {  
   $scope.children = [];
-  $http.get('rest/controller/reportnode/'+$scope.node+"/children").then(function(response) {
+  $http.get('rest/controller/reportnode/'+$scope.node.id+"/children").then(function(response) {
     $scope.children = response.data;
   })
 })
