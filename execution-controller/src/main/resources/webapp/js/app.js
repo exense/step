@@ -177,51 +177,62 @@ angular.module('step',['ngStorage','ngCookies'])
   });
   
   this.push = function($scope, ctrlID, defaults) {
+    if($scope.hasOwnProperty('$$statepath')) {
+      $scope.$$statepath.pop();
+      $scope.$$statepath.push(ctrlID);
 
-    console.log('new scope pushed. id:'+$scope.$id+' ctrlID: ' + ctrlID);
-    $scope.$state = null;
-    
-    var currentScope = $scope;
-    while(currentScope.$$statepath==null) {
-      currentScope = currentScope.$parent;
-    }
-    var parentStatepath = currentScope.$$statepath;
-    $scope.$$statepath=parentStatepath.slice();
-    $scope.$$statepath.push(ctrlID);
-    
-    var path = $location.path().substr(1).split("/");
-    if(_.isEqual(path.slice(0,$scope.$$statepath.length),$scope.$$statepath)) {
-      console.log('new scope pushed. id:'+$scope.$id+'. Path matched. Setting $state. path '+  path.slice($scope.$$statepath.length, $scope.$$statepath.length+1)[0]);
-      $scope.$state = path.slice($scope.$$statepath.length, $scope.$$statepath.length+1)[0];
-    }
-    
-    $scope.$on('$locationChangeStart',function() {
       var path = $location.path().substr(1).split("/");
       if(_.isEqual(path.slice(0,$scope.$$statepath.length),$scope.$$statepath)) {
-        console.log('scope '+$scope.$id+' remains selected after path change. new path '+path.slice(0,$scope.$$statepath.length).toString()+ ' scope path:'+$scope.$$statepath.toString());
+        console.log('existing scope pushed. id:'+$scope.$id+'. Path matched. Setting $state. path '+  path.slice($scope.$$statepath.length, $scope.$$statepath.length+1)[0]);
         $scope.$state = path.slice($scope.$$statepath.length, $scope.$$statepath.length+1)[0];
-      } else {
-        console.log('scope '+$scope.$id+' unselected but not destroyed. setting state to null');
-        $scope.$state = null;
       }
-    });
-    
-    $scope.$watch('$state',function(newStatus, oldStatus) {
-      if(newStatus!=null) {
-        var newPath = $scope.$$statepath.slice();
-        newPath.push(newStatus);
-        console.log('changing current path  to '+ newPath);
-        $rootScope.currentPath = newPath; 
-        if(!$rootScope.locationChangeBlocked) {
-          $location.path(newPath.join('/'));
+
+    } else {
+      console.log('new scope pushed. id:'+$scope.$id+' ctrlID: ' + ctrlID);
+      $scope.$state = null;
+      
+      var currentScope = $scope;
+      while(currentScope.$$statepath==null) {
+        currentScope = currentScope.$parent;
+      }
+      var parentStatepath = currentScope.$$statepath;
+      $scope.$$statepath=parentStatepath.slice();
+      $scope.$$statepath.push(ctrlID);
+      
+      var path = $location.path().substr(1).split("/");
+      if(_.isEqual(path.slice(0,$scope.$$statepath.length),$scope.$$statepath)) {
+        console.log('new scope pushed. id:'+$scope.$id+'. Path matched. Setting $state. path '+  path.slice($scope.$$statepath.length, $scope.$$statepath.length+1)[0]);
+        $scope.$state = path.slice($scope.$$statepath.length, $scope.$$statepath.length+1)[0];
+      }
+      
+      $scope.$on('$locationChangeStart',function() {
+        var path = $location.path().substr(1).split("/");
+        if(_.isEqual(path.slice(0,$scope.$$statepath.length),$scope.$$statepath)) {
+          console.log('scope '+$scope.$id+' remains selected after path change. new path '+path.slice(0,$scope.$$statepath.length).toString()+ ' scope path:'+$scope.$$statepath.toString());
+          $scope.$state = path.slice($scope.$$statepath.length, $scope.$$statepath.length+1)[0];
+        } else {
+          console.log('scope '+$scope.$id+' unselected but not destroyed. setting state to null');
+          $scope.$state = null;
         }
-//        $timeout(function() {
-//        }) 
+      });
+      
+      $scope.$watch('$state',function(newStatus, oldStatus) {
+        if(newStatus!=null) {
+          var newPath = $scope.$$statepath.slice();
+          newPath.push(newStatus);
+          console.log('changing current path  to '+ newPath);
+          $rootScope.currentPath = newPath; 
+          if(!$rootScope.locationChangeBlocked) {
+            $location.path(newPath.join('/'));
+          }
+  //        $timeout(function() {
+  //        }) 
+        }
+      })
+      
+      if(this.get($scope)==null) {
+        this.store($scope,defaults)
       }
-    })
-    
-    if(this.get($scope)==null) {
-      this.store($scope,defaults)
     }
   
     //$location.path($scope.$$statepath.join('/'));
