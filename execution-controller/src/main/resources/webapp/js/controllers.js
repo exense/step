@@ -273,7 +273,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         }
         
         return filter;   
-      });
+      },$scope);
       
       var operationRenderer = {
           'Keyword Call' : {

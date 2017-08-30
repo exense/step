@@ -186,7 +186,7 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
 
       $scope.stepsTable = reportTableFactory.get(function() {
         return {'eid':$scope.interactiveSession.id};     
-      });
+      }, $scope);
       
 })
 
@@ -475,7 +475,8 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
           "Switch":{template:"partials/artefacts/switch.html"},
           "RetryIfFails":{template:"partials/artefacts/retryIfFails.html"},
           "Check":{template:"partials/artefacts/check.html"},
-          "CallPlan":{template:"partials/artefacts/callPlan.html"}
+          "CallPlan":{template:"partials/artefacts/callPlan.html"},
+          "Assert":{template:"partials/artefacts/assert.html"}
       }
       
       $scope.authService = AuthService;
@@ -583,6 +584,12 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
   $scope.getEditableArtefactProperties = function() {
     return _.without(_.keys($scope.artefact),'id','_id','root','attributes','childrenIDs','createSkeleton','_class','attachments')
   }
+})
+.controller('AssertCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {  
+  $scope.operatorTypes = [{name:"EQUALS",label:"equals"},{name:"BEGINS_WITH",label:"begins with"},{name:"CONTAINS",label:"contains"},
+                            {name:"ENDS_WITH",label:"ends with"},{name:"MATCHES",label:"matches"}]
+  
+
 })
 .directive('jsonEditor', function($http,$timeout,$interval,stateStorage,$filter,$location,Dialogs) {
   return {

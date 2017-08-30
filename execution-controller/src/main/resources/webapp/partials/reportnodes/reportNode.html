@@ -1,0 +1,14 @@
+<div ng-controller="ReportNodeCtrl">
+	<ul class="list-unstyled">
+		<li>
+			<ul  class="list-group">
+				<li class="list-group-item" ng-repeat="child in children" ng-if="child._class=='step.artefacts.reports.AssertReportNode'">
+					{{child.name}}: {{child.message}} <div style="width:60px;" class="text-center executionStatus status-{{child.status}} pull-right">{{child.status}}</div>
+				</li>
+			</ul>		
+		</li>
+		<li ng-if="node.agentUrl">Agent: <span>{{node.agentUrl}}</span></li>
+		<li ng-if="node.tokenId">Token ID: <span>{{node.tokenId}}</span></li>
+		<li ng-if="node.tokenId">Duration (ms): <span>{{node.duration}}</span></li>
+	</ul>
+</div>
