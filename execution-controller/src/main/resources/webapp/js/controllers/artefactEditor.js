@@ -204,12 +204,12 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
         if($scope.artefactid!=null) {
           load(function(root) {
             tree.open_all();
-            setupInitialState();
+            setupInitialState(root);
           });
         }
       });
       
-      function setupInitialState() {
+      function setupInitialState(root) {
         var initialState = $rootScope.artefactEditorInitialState;
         if(initialState) {
           if(initialState.selectedNode) {
