@@ -38,6 +38,10 @@ public class ArtefactCache {
 	public void put(AbstractArtefact node) {
 		cache.put(node.getId().toString(), node);
 	}
+	
+	public void clear() {
+		cache.clear();
+	}
 
 
 }

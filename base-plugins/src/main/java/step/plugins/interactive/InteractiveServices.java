@@ -152,6 +152,8 @@ public class InteractiveServices extends AbstractServices {
 			
 			ReportNode report = new ReportNode();
 			
+			session.c.getArtefactCache().clear();
+			
 			ArtefactHandler.delegateCreateReportSkeleton(session.c, artefact, session.root);
 			ArtefactHandler.delegateExecute(session.c, artefact, session.root);
 			
