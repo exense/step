@@ -99,6 +99,7 @@ public class ExecutionScheduler {
 	}
 
 	public boolean addExecutionTask(ExecutiontTaskParameters task) {
+		executor.validate(task);
 		task.setActive(true);
 		save(task);
 		return executor.schedule(task);

@@ -101,6 +101,10 @@ public class Executor {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	public void validate(ExecutiontTaskParameters task) {
+		CronScheduleBuilder.cronSchedule(task.getCronExpression());
+	}
 
 	public boolean schedule(ExecutiontTaskParameters task) {
 		JobKey key = new JobKey(task.getId());
