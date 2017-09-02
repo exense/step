@@ -338,20 +338,17 @@ angular.module('dataTable', [])
       }
       
       scope.selectionModel = new SelectionModel(function(){return scope.tabledef.data});
-
-      var allSelector = function() {return true;};
-      var noneSelector = function() {return false;}
       
       if(scope.tabledef.defaultSelection) {
         if(_.isFunction(scope.tabledef.defaultSelection)) {
-          scope.selectionModel.defaultSelector = scope.tabledef.defaultSelection;
+          scope.selectionModel.setDefaultSelector(scope.tabledef.defaultSelection);
         } else if (scope.tabledef.defaultSelection=='all') {
-          scope.selectionModel.defaultSelector = allSelector;
+          scope.selectionModel.setDefaultSelection(true);
         } else {
-          scope.selectionModel.defaultSelector = noneSelector;
+          scope.selectionModel.setDefaultSelection(false);
         }
       } else {
-        scope.selectionModel.defaultSelector = noneSelector;
+        scope.selectionModel.setDefaultSelection(false);
       }
       
       function getFilteredData() {
@@ -374,7 +371,7 @@ angular.module('dataTable', [])
 
       scope.setSelectionOnFilteredRows = function(value) {
         if(!isTableFiltered()) {
-          scope.selectionModel.defaultSelector = value?allSelector:noneSelector;
+          scope.selectionModel.setDefaultSelection(value);
           scope.selectionModel.setSelectionAll(value);
         } else {
           scope.selectionModel.setSelectionAll(false);
@@ -407,8 +404,10 @@ angular.module('dataTable', [])
 
       if(scope.handle) {
         scope.handle.getRows = scope.selectionModel.getDataRowsBySelection.bind(scope.selectionModel);
+        scope.handle.getSelectionMode = scope.selectionModel.getSelectionMode.bind(scope.selectionModel);
         scope.handle.getSelection = scope.selectionModel.getSelection.bind(scope.selectionModel);
         scope.handle.setSelection = scope.selectionModel.setSelection.bind(scope.selectionModel);
+        scope.handle.resetSelection = scope.selectionModel.resetSelection.bind(scope.selectionModel);
         scope.handle.export = scope.export;
       }
       

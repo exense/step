@@ -20,9 +20,26 @@ SelectionModel = function(dataFunction) {
 
   var me = this;
   
+  // 'custom','none', 'all'
+  this.currentSelectionMode;
+  
   this.selectionModel = {};
   
   this.defaultSelector = function() {return true};
+  
+  this.setDefaultSelection = function(selected) {
+    me.setSelectionAll(selected);
+  }
+  
+  this.setDefaultSelector = function(defaultSelector) {
+    me.currentSelectionMode = 'custom';
+    me.defaultSelector = defaultSelector;
+    me.resetSelection(); 
+  }
+  
+  this.resetSelection = function() {
+    me.selectionModel = {}; 
+  }
   
   this.getModel = function(id) {
     var entry =  this.selectionModel[id];
@@ -35,16 +52,23 @@ SelectionModel = function(dataFunction) {
   }
   
   this.setSelection = function(id, selected) {
+    me.currentSelectionMode = 'custom';
     me.getModel(id).selected = selected;
   }
   
   this.setSelectionAll = function(value) {
     _.each(dataFunction(),function(dataRow){
       me.setSelection(dataRow[0],value);
-    })};
+    })
+    me.currentSelectionMode = value?'all':'none';    
+  };
   
   this.isSelected = function(id) {
     return me.getModel(id).selected;
+  }
+  
+  this.getSelectionMode = function() {
+    return me.currentSelectionMode;
   }
   
   this.toggleSelection = function(id) {

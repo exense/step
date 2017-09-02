@@ -84,13 +84,20 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
             $scope.testCaseTable.data = dataSet;
           });
       $scope.functions.getIncludedTestcases = function() {
-        var includedTestCases = {"by":"name"};
-        var result = [];
-        if($scope.testCaseTable.getRows!=null) {
-          _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[0])});
+        var selectionMode = $scope.testCaseTable.getSelectionMode();
+        if(selectionMode=='all') {
+          return null;
+        } else if (selectionMode=='custom' || selectionMode=='none') {
+          var includedTestCases = {"by":"name"};
+          var result = [];
+          if($scope.testCaseTable.getRows!=null) {
+            _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[0])});
+          }
+          includedTestCases.list = result;
+          return includedTestCases;          
+        } else {
+          throw "Unsupported selection mode: "+selectionMode;
         }
-        includedTestCases.list = result;
-        return includedTestCases;
       }
     }
 ])

@@ -257,8 +257,22 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                                      return '<div class="text-center reportNodeStatus status-' + data +'">'  +data+ '</div>';
                                    }} ];
       $scope.testCaseTable.defaultSelection = function(value) {
-        return value[2]!='SKIPPED';
-      };
+        var execution = $scope.execution;
+        if(execution) {
+          var artefactFilter = execution.executionParameters.artefactFilter;
+          if(artefactFilter) {
+            if(artefactFilter.class=='step.artefacts.filters.TestCaseFilter') {
+              return _.contains(artefactFilter.includedNames,value[1]);
+            } else if(artefactFilter.class=='step.artefacts.filters.TestCaseIdFilter') {
+              return _.contains(artefactFilter.includedIds,value[0]);
+            }
+          } else {
+            return true;
+          }
+        } else {
+          return true;
+        }
+      }
       
       $scope.stepsTable = $scope.stepsTable = reportTableFactory.get(function() {
         var filter = {'eid':eId};
@@ -333,13 +347,20 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         }}];
       
       $scope.getIncludedTestcases = function() {
-        var includedTestCases = {"by":$scope.execution.executionParameters.artefact.repositoryID=="local"?"id":"name"};
-        var result = [];
-        if($scope.testCaseTable.getRows!=null) {
-          _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[includedTestCases.by=="id"?0:1])});
+        var selectionMode = $scope.testCaseTable.getSelectionMode?$scope.testCaseTable.getSelectionMode():'all';
+        if(selectionMode=='all') {
+          return null;
+        } else if (selectionMode=='custom' || selectionMode=='none') {
+          var includedTestCases = {"by":$scope.execution.executionParameters.artefact.repositoryID=="local"?"id":"name"};
+          var result = [];
+          if($scope.testCaseTable.getRows!=null) {
+            _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[includedTestCases.by=="id"?0:1])});
+          }
+          includedTestCases.list = result;
+          return includedTestCases;
+        } else {
+          throw "Unsupported selection mode: "+selectionMode;
         }
-        includedTestCases.list = result;
-        return includedTestCases;
       }
       
       $scope.onTestExecutionStarted = function() {
@@ -377,6 +398,11 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       var refreshExecution = function() {
         $http.get('rest/controller/execution/' + eId).then(function(response) {
           var data = response.data;
+          if($scope.execution==null) {
+            if($scope.testCaseTable.resetSelection) {
+              $scope.testCaseTable.resetSelection();
+            }
+          }
           $scope.execution = data;
           var dataSet = [];
           var parameters = data.parameters;
