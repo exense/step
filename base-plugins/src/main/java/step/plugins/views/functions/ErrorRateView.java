@@ -16,7 +16,7 @@ public class ErrorRateView extends AbstractTimeBasedView<ErrorRateEntry> {
 		if(node.getError()!=null) {
 			ErrorRateEntry e = new ErrorRateEntry();
 			e.count = 1;
-			e.countByErrorMsg.put(node.getError().getMsg(), 1);
+			e.countByErrorMsg.put(node.getError().getMsg()==null?"":node.getError().getMsg(), 1);
 			addPoint(model, node.getExecutionTime(), e);
 		}
 	}
