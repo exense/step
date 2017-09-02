@@ -20,6 +20,9 @@ package step.artefacts.handlers;
 
 import javax.json.JsonObject;
 
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
+
 import step.artefacts.Assert;
 import step.artefacts.Assert.AssertOperator;
 import step.artefacts.reports.AssertReportNode;
@@ -45,49 +48,64 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		if(callFunctionReport.getStatus()==ReportNodeStatus.PASSED) {			
 			JsonObject outputJson = callFunctionReport.getOutputObject();
 			String key = artefact.getActual().get();
+			
 			boolean passed = false;
 			String message = null;
-			if(outputJson.containsKey(key)) {				
-				String var = outputJson.getString(key);
+			
+			String actual = null;
+			boolean actualResolved = false;
+			if(key.startsWith("$")) {
+				try {
+					Object result = JsonPath.parse(outputJson.toString()).read(key);
+					if(result instanceof String) {
+						actual = (String) result;
+						actualResolved = true;
+					} else {
+						passed = false;
+						message = "The json path '"+key+"' return an object of type "+result.getClass()+" which is not supported.";
+					}					
+				} catch(PathNotFoundException e) {
+					passed = false;
+					message = e.getMessage();
+				}
+ 			} else {
+				if(outputJson.containsKey(key)) {	
+					actual = outputJson.getString(key);				
+					actualResolved = true;
+				} else {
+					passed = false;
+					message = "Unable to execute assertion. The keyword output doesn't contain the attribute '"+key+"'";
+				}
+			}
+			
+			if(actualResolved) {				
 				String expectedValue = artefact.getExpected().get();
+
+				boolean negate = artefact.isNegate();
+				String not = negate?" not ":" ";
 				
 				AssertOperator operator = artefact.getOperator();
 				if(operator == AssertOperator.EQUALS) {
-					if(artefact.getExpected().get().equals(var)) {
-						passed = true;
-					}
-					message = "Expected : '"+artefact.getExpected().get()+"' "+(passed?"and":"but")+ " was '"+var+"'";
+					passed = artefact.isNegate()^expectedValue.equals(actual);
+					message = "'"+key + "' expected" + not + "to be equal to '"+artefact.getExpected().get()+"' "+(passed?"and":"but")+ " was '"+actual+"'";
 				} else if(operator == AssertOperator.CONTAINS) {
-					if(var.contains(artefact.getExpected().get())) {
-						passed = true;
-					}
-					message = "'"+key + "' expected to contain '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+var+"'";
+					passed = negate^actual.contains(expectedValue);
+					message = "'"+key + "' expected" + not + "to contain '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
 				} else if(operator == AssertOperator.BEGINS_WITH) {
-					if(var.startsWith(artefact.getExpected().get())) {
-						passed = true;
-					}
-					message = "'"+key + "' expected to start with '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+var+"'";
+					passed = negate^actual.startsWith(expectedValue);
+					message = "'"+key + "' expected" + not + "to begin with '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
 				} else if(operator == AssertOperator.ENDS_WITH) {
-					if(var.endsWith(artefact.getExpected().get())) {
-						passed = true;
-					}
-					message = "'"+key + "' expected to end with '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+var+"'";
+					passed = negate^actual.endsWith(expectedValue);
+					message = "'"+key + "' expected" + not + "to end with '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
 				} else if(operator == AssertOperator.MATCHES) {
-					if(var.matches(artefact.getExpected().get())) {
-						passed = true;
-					}
-					message = "'"+key + "' expected to match regular expression '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+var+"'";
+					passed = negate^actual.matches(expectedValue);
+					message = "'"+key + "' expected" + not + "to match regular expression '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
+				} else {
+					throw new RuntimeException("Unsupported operator "+operator);
 				}
-			} else {
-				passed = false;
-				message = "Unable to execute assertion. The keyword output doesn't contain the attribute '"+key+"'";
 			}
-			node.setMessage(message);
-			if(passed) {
-				node.setStatus(ReportNodeStatus.PASSED);
-			} else {
-				node.setStatus(ReportNodeStatus.FAILED);
-			}
+			node.setMessage(message);			
+			node.setStatus(passed?ReportNodeStatus.PASSED:ReportNodeStatus.FAILED);
 		}
 	}
 

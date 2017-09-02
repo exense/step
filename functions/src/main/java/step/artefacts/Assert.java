@@ -30,6 +30,8 @@ public class Assert extends AbstractArtefact {
 	
 	private AssertOperator operator;
 	
+	private boolean negate = false;
+	
 	private DynamicValue<String> expected = new DynamicValue<>("");
 
 	public Assert() {
@@ -58,6 +60,14 @@ public class Assert extends AbstractArtefact {
 
 	public void setExpected(DynamicValue<String> expected) {
 		this.expected = expected;
+	}
+
+	public boolean isNegate() {
+		return negate;
+	}
+
+	public void setNegate(boolean negate) {
+		this.negate = negate;
 	}
 
 	public static enum AssertOperator {

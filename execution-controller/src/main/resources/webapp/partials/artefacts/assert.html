@@ -1,7 +1,7 @@
 <div class="form-group-sm" ng-controller="AssertCtrl">
 <fieldset ng-disabled="readonly">
 	<form>		
-		<dynamic-textfield label="'Output value'" on-save="save()" dynamic-value="artefact.actual" />
+		<dynamic-textfield label="'Output attribute'" on-save="save()" dynamic-value="artefact.actual" tooltip="'You can either use flat attributes of the output object or json path expressions.'"/>
 		<div class="form-group form-group-sm">
 			<label>Operator</label>
 			<select ng-model="artefact.operator" ng-change="save()" ng-options="option.name as option.label for option in operatorTypes" class="form-control" />
