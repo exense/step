@@ -227,6 +227,7 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
     $http.get("rest/functions/types/"+$scope.function_.type).then(function(response){
       var initialFunction = response.data;
       if($scope.function_) {
+        initialFunction.id = $scope.function_.id;
         if($scope.function_.attributes) {
           initialFunction.attributes = $scope.function_.attributes;
         }
