@@ -38,6 +38,8 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
             
       $scope.componentTabs = {selectedTab:0};
       
+      $scope.executionParameters = {};
+      
       $scope.controlsTable = {};
       $scope.controlsTable.columns = [ { "title" : "ID", "visible" : false },
                                    {"title" : "Name"},
@@ -119,35 +121,14 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
         $scope.handle.addArtefact(id);
       }
       
-      $scope.execute = function() {
-    	$location.path('/root/repository').search({repositoryId:'local',artefactid:$scope.artefactId});
-      }
-      
-      $scope.executeWithDefaultParams = function() {
-        var executionParams = {userID:AuthService.getContext().userID};
-        executionParams.description = $scope.description;
-        executionParams.mode = 'RUN';
-        executionParams.artefact = {repositoryID:'local',repositoryParameters:{artefactid:$scope.artefact.id}};
-        executionParams.exports = [];
-        $http.post("rest/controller/execution",executionParams).then(
-            function(response) {
-              var eId = response.data;
-              
-              $location.$$search = {};
-              $location.path('/root/executions/'+eId);
-
-              $timeout(function() {
-                $scope.onExecute();
-              });
-              
-            });
-      }
-            
+      $scope.artefactRef = function() {return {repositoryID:'local',repositoryParameters:{artefactid:$scope.artefactId}}};
+                  
       $scope.interactiveSession = {
           execute: function(artefact) {
+            var parameters = {executionParameters:$scope.executionParameters}
             var sessionId = $scope.interactiveSession.id;
             $scope.componentTabs.selectedTab = 3;
-            $http.post("rest/interactive/"+sessionId+"/execute/"+artefact.id).then(function() {
+            $http.post("rest/interactive/"+sessionId+"/execute/"+artefact.id, parameters).then(function() {
               $scope.stepsTable.Datatable.ajax.reload(null, false);
             });
           },

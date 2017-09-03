@@ -4,16 +4,15 @@
 		<div class="col-xs-8">
 			<div class="panel panel-default">
 				<div class="panel-heading">{{artefact._class}}{{artefact.root?(' - '+artefact.attributes.name):''}}
-					<div class="input-group pull-right">
+					<div class="pull-right">
 						<div class="btn-group" style="margin-right:5px;">
 							<button ng-disabled="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="startInteractive()">Start interactive session</button>
 							<button ng-if="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="resetInteractive()">Reset</button>
 							<button ng-if="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="stopInteractive()">Stop</button>						
+							<button uib-popover-template="'executionParametersPopover.html'" popover-placement="bottom" type="button" class="btn btn-default btn-xs">Execution parameters</button>					
 						</div>
-						
 						<div class="btn-group">
-							<button type="submit" class="btn btn-default btn-xs" title="Select parameters for plan execution" ng-click="execute()"><span class="glyphicon glyphicon-play-circle" aria-hidden="true"></span></button>
-							<button type="submit" class="btn btn-default btn-xs" title="Execute plan with default parameters" ng-click="executeWithDefaultParams()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
+							<button uib-popover-template="'executionCommandsPopover.html'" popover-placement="bottom" type="submit" class="btn btn-default btn-xs" title="Select parameters for plan execution" ng-click="execute()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
 				  		</div>
 				  	</div>
 				 </div>
@@ -29,7 +28,6 @@
 							</div>
 						</div>
 					</div>
-
 					<artefact handle="handle" artefactid="artefactId" interactive-session-handle="interactiveSession" />
 				</div>
 			</div>	
@@ -74,3 +72,9 @@
 		</div>
 	</div>
 </div>
+<script type="text/ng-template" id="executionParametersPopover.html">
+<execution-parameters model="executionParameters" />
+</script>
+<script type="text/ng-template" id="executionCommandsPopover.html">
+<execution-commands description="artefact.attributes.name" artefact="artefactRef()" />
+</script>

@@ -110,7 +110,7 @@
 		</div>
 		<div class="col-xs-3">
 			<div class="panel panel-default">
-				<div class="panel-body">
+				<div class="panel-body" ng-if="execution">
 					<execution-commands description="execution.description" artefact="execution.executionParameters.artefact"
 						included-testcases="getIncludedTestcases()" on-execute="onTestExecutionStarted()" execution="execution" />
 				</div>

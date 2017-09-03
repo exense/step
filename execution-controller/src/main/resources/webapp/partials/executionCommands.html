@@ -1,11 +1,4 @@
-<form>
-	<span ng-repeat-start="input in inputs" ng-if="0" />
-		<div  ng-if="input.type=='DROPDOWN'" class="form-group form-group-sm">
-			<label>{{input.label}}</label>
-			<select ng-model="model[input.id]" ng-options="option.value as option.value for option in input.options" class="form-control" />
-		</div>
-	<span ng-repeat-end ng-if="0" />	
-</form>
+<execution-parameters model="executionParameters" />
 <div class="btn-toolbar" role="toolbar" aria-label="...">
 	<div class="input-group" style="width:200px">
 		<div class="btn-group">
@@ -21,7 +14,7 @@
 		</div>
 	</div>
 
-	<div  class="btn-group">
+	<div ng-if="execution && execution.status!='ENDED'" class="btn-group">
 		<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="">
 			<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
 		</button>

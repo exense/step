@@ -44,8 +44,10 @@ import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionContextBindings;
 import step.core.plans.LocalPlanRepository;
 import step.core.plans.Plan;
+import step.core.variables.VariableType;
 import step.functions.Function;
 import step.functions.FunctionExecutionService;
 import step.functions.FunctionRepository;
@@ -53,6 +55,8 @@ import step.grid.TokenWrapper;
 import step.grid.client.GridClient.AgentCommunicationException;
 import step.planbuilder.FunctionPlanBuilder;
 import step.planbuilder.PlanBuilder;
+import step.plugins.parametermanager.ParameterManager;
+import step.plugins.parametermanager.ParameterManagerPlugin;
 
 @Singleton
 @Path("interactive")
@@ -140,24 +144,45 @@ public class InteractiveServices extends AbstractServices {
 		}
 	}
 	
+	public static class ExecutionParameters {
+		
+		Map<String, String> executionParameters;
+
+		public ExecutionParameters() {
+			super();
+		}
+
+		public Map<String, String> getExecutionParameters() {
+			return executionParameters;
+		}
+
+		public void setExecutionParameters(Map<String, String> executionParameters) {
+			this.executionParameters = executionParameters;
+		}
+	}
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}/execute/{artefactid}")
 	@Secured(right="interactive")
-	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("artefactid") String artefactId) {
+	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("artefactid") String artefactId, ExecutionParameters executionParameters) {
 		InteractiveSession session = getAndTouchSession(sessionId);
 		if(session!=null) {
 			ArtefactAccessor a = getContext().getArtefactAccessor();
 			AbstractArtefact artefact = a.get(artefactId);
-			
-			ReportNode report = new ReportNode();
-			
+
 			session.c.getArtefactCache().clear();
+
+			ParameterManager parameterManager = (ParameterManager) getContext().get(ParameterManagerPlugin.KEY);
+			ExecutionContext.setCurrentReportNode(session.root);
+			ParameterManagerPlugin.putVariables(session.c, session.root, executionParameters.getExecutionParameters(), VariableType.IMMUTABLE);
+			Map<String, String> parameters = parameterManager.getAllParameters(ExecutionContextBindings.get(session.c));
+			ParameterManagerPlugin.putVariables(session.c, session.root, parameters, VariableType.IMMUTABLE);	
 			
 			ArtefactHandler.delegateCreateReportSkeleton(session.c, artefact, session.root);
 			ArtefactHandler.delegateExecute(session.c, artefact, session.root);
-			
-			return report;			
+
+			return null;			
 		} else {
 			 throw new RuntimeException("Session doesn't exist or expired.");
 		}

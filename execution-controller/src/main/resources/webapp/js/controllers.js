@@ -29,20 +29,18 @@ tecAdminControllers.directive('executionParameters', ['$rootScope','$http','Auth
   return {
     restrict: 'E',
     scope: {
-      initialSelection: '=',
-      onChange: '&'
+      model: '='
     },
     templateUrl: 'partials/executionParametersForm.html',
     link: function($scope, $element, $attr,  $tabsCtrl) {      
-      $scope.model = {};
-      
+      if(!$scope.model) {
+        $scope.model = {};
+      }
+
       $scope.$watchCollection('model',function(){
         retrieveInputs();
-        $scope.onChange({model:$scope.model});
       })
-      
-      var initialSelection = $scope.initialSelection;
-      
+            
       function retrieveInputs() {        
         params =  _.clone($scope.model);
         $http({url:"rest/screens/executionParameters", method:"GET", params:params}).then(function(response){
@@ -55,14 +53,19 @@ tecAdminControllers.directive('executionParameters', ['$rootScope','$http','Auth
                 newModel[input.id] = oldModel[input.id];                
               } else {
                 if(input.options && input.options.length>0) {
-                  newModel[input.id] = (initialSelection&&initialSelection[input.id])?initialSelection[input.id]:input.options[0].value;
+                  newModel[input.id] = input.options[0].value;
                 } else {
                   newModel[input.id] = '';
                 }
               }
             });
             
-            $scope.model = newModel;
+            for (const prop of Object.keys($scope.model)) {
+              delete $scope.model[prop];
+            }
+            for (const prop of Object.keys(newModel)) {
+              $scope.model[prop] = newModel[prop];
+            }
         });
         
       }
@@ -83,46 +86,13 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
     },
     templateUrl: 'partials/executionCommands.html',
     link: function($scope, $element, $attr,  $tabsCtrl) {      
-      console.log('Controller executionCommands scope:' + $scope.$id);
-      //$stateStorage.push($scope, 'execCmd',{});
-
       $scope.model = {};
       
       $scope.authService = AuthService;
-      
-      $scope.$watchCollection('model',function(){
-        retrieveInputs();
-      })
-      
-      function retrieveInputs() {        
-        params =  _.clone($scope.model);
-        params.user = $rootScope.context.userID;
-        $http({url:"rest/screens/executionParameters", method:"GET", params:params}).then(function(response){
-          var data = response.data;
-            $scope.inputs=data;
-            
-            var oldModel = $scope.model;
-            var newModel = {};
-            var customParameters = ($scope.execution&&$scope.execution.executionParameters)?$scope.execution.executionParameters.customParameters:null;
-            _.each($scope.inputs, function(input) {
-              if(oldModel[input.id] != null) {
-                newModel[input.id] = oldModel[input.id];                
-              } else {
-                if(input.options && input.options.length>0) {
-                  newModel[input.id] = (customParameters&&customParameters[input.id])?customParameters[input.id]:input.options[0].value;
-                } else {
-                  newModel[input.id] = '';
-                }
-              }
-            });
-            
-            $scope.model = newModel;
-        });
-        
-      }
+      $scope.executionParameters = $scope.execution?$scope.execution.executionParameters.customParameters:{};
             
       function buildExecutionParams(simulate) {
-        var executionParams = {userID:$rootScope.context.userID, profileID:$scope.profileID};
+        var executionParams = {userID:$rootScope.context.userID};
         executionParams.description = $scope.description;
         executionParams.mode = simulate?'SIMULATION':'RUN';
         executionParams.artefact = $scope.artefact();
@@ -137,7 +107,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
             throw "Unsupported clause "+includedTestcases.by;
           }
         }
-        executionParams.customParameters = $scope.model;
+        executionParams.customParameters = $scope.executionParameters;
         return executionParams;
       }
       
