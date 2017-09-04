@@ -24,27 +24,62 @@ function escapeHtml(str) {
   return div.innerHTML;
 };
 
-tecAdminControllers.directive('executionParameters', ['$rootScope','$http','AuthService',
-                                                    function($rootScope, $http,AuthService) {
+tecAdminControllers.factory('executionServices', function($http,$q,$filter) {
+  var urlBase = 'rest/views';
+  var factory = {};
+
+  factory.getExecutionParameterInputs = function (previousParams) {
+    return $q(function(resolve, reject) {
+      $http({url:"rest/screens/executionParameters", method:"GET", params:previousParams}).then(function(response){
+        var data = response.data;
+        resolve(data);
+      })
+    })
+  };
+  
+  factory.getDefaultExecutionParameters = function () {
+    return $q(function(resolve, reject) {
+      factory.getExecutionParameterInputs().then(function(inputs){
+        var result = {};
+        _.each(inputs, function(input) {
+          if(input.options && input.options.length>0) {
+            result[input.id] = input.options[0].value;
+          } else {
+            result[input.id] = '';
+          }
+        })
+        resolve(result);
+      })
+    })
+  };
+  
+  return factory
+})
+
+tecAdminControllers.directive('executionParameters', function($rootScope, $http, executionServices) {
   return {
     restrict: 'E',
     scope: {
       model: '='
     },
     templateUrl: 'partials/executionParametersForm.html',
-    link: function($scope, $element, $attr,  $tabsCtrl) {      
+    controller: function($scope) {
       if(!$scope.model) {
-        $scope.model = {};
+        $scope.model = {};        
       }
-
-      $scope.$watchCollection('model',function(){
-        retrieveInputs();
+      $scope.$watch('model',function(newModel, oldModel) {
+        if(newModel) {
+          $scope.model=newModel;
+        }
       })
-            
+      
+      $scope.updateForm = function() {
+        retrieveInputs();
+      }
+      
       function retrieveInputs() {        
         params =  _.clone($scope.model);
-        $http({url:"rest/screens/executionParameters", method:"GET", params:params}).then(function(response){
-          var data = response.data;
+        executionServices.getExecutionParameterInputs(params).then(function(data){
             $scope.inputs=data;
             var oldModel = $scope.model;
             var newModel = {};
@@ -69,9 +104,11 @@ tecAdminControllers.directive('executionParameters', ['$rootScope','$http','Auth
         });
         
       }
+      
+      retrieveInputs();
     }
   };
-}]);
+});
 
 tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','AuthService',
                                                     function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,AuthService) {

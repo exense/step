@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'])
 
-.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService, reportTableFactory) {
+.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService, reportTableFactory, executionServices) {
       stateStorage.push($scope, 'artefacteditor', {});
       
       $scope.$watch('$state',function() {
@@ -39,6 +39,9 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
       $scope.componentTabs = {selectedTab:0};
       
       $scope.executionParameters = {};
+      executionServices.getDefaultExecutionParameters().then(function(data){
+        $scope.executionParameters = data;
+      })
       
       $scope.controlsTable = {};
       $scope.controlsTable.columns = [ { "title" : "ID", "visible" : false },

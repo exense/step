@@ -1,5 +1,5 @@
-<div ng-repeat="input in inputs" class="form-group form-group-xs">
+<div ng-repeat="input in inputs" class="form-group form-group-sm">
 	<label>{{input.label}}</label>
-	<select ng-if="input.type=='DROPDOWN'"  ng-model="model[input.id]" ng-options="option.value as option.value for option in input.options" class="form-control" />
-	<select ng-if="input.type=='TEXT'"  ng-model="model[input.id]" class="form-control" />
+	<select ng-if="input.type=='DROPDOWN'" ng-change="updateForm()" ng-model="model[input.id]" ng-options="option.value as option.value for option in input.options" class="form-control" />
+	<input ng-if="input.type=='TEXT'" type="text" ng-blur="updateForm()" ng-model="model[input.id]" class="form-control" />
 </div>
