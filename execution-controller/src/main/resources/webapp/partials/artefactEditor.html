@@ -1,6 +1,6 @@
 <div id="ArtefactEditorCtrl" ng-controller="ArtefactEditorCtrl" class="container-fluid">
 	<div class="row">
-		<div ng-if="isInteractiveSessionActive()" class="alert alert-info" role="alert">Welcome to the interactive mode. In this mode you can select plan elements and run them directly by clicking the 'Execute' button</div>
+		<div ng-if="isInteractiveSessionActive()" class="alert alert-info" role="alert">Welcome to the interactive mode. In this mode you can select tree nodes and run them directly by clicking the button 'Run interactively'</div>
 		<div class="col-xs-8">
 			<div class="panel panel-default">
 				<div class="panel-heading">{{artefact._class}}{{artefact.root?(' - '+artefact.attributes.name):''}}

@@ -95,12 +95,12 @@ tecAdminControllers.directive('executionParameters', function($rootScope, $http,
               }
             });
             
-            for (const prop of Object.keys($scope.model)) {
+            _.each(_.keys($scope.model), function(prop) {
               delete $scope.model[prop];
-            }
-            for (const prop of Object.keys(newModel)) {
+            })
+            _.each(_.keys(newModel), function(prop) {
               $scope.model[prop] = newModel[prop];
-            }
+            })
         });
         
       }
