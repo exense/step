@@ -18,15 +18,32 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
-import org.json.JSONObject;
+import java.io.StringReader;
+
+import javax.json.JsonObject;
+import javax.json.spi.JsonProvider;
 
 import step.artefacts.CallPlan;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.execution.ExecutionContext;
 
 public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
+	private static JsonProvider jprov = JsonProvider.provider();
+
+	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
+	
+	@Override
+	public void init(ExecutionContext context) {
+		super.init(context);
+		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
+	}
+
+	
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode,	CallPlan testArtefact) {
 		beforeDelegation(parentNode, testArtefact);
@@ -38,8 +55,10 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	private void beforeDelegation(ReportNode parentNode, CallPlan testArtefact) {
 		context.getVariablesManager().putVariable(parentNode, "#placeholder", testArtefact);
 
-		JSONObject compositeInput = new JSONObject((testArtefact.getInput().get()!=null)?testArtefact.getInput().get():"{}");
-		context.getVariablesManager().putVariable(parentNode, "compositeInput", compositeInput);
+		String inputJson = (testArtefact.getInput().get()!=null)?testArtefact.getInput().get():"{}";
+		JsonObject input = jprov.createReader(new StringReader(inputJson)).readObject();
+		JsonObject resolvedInput = dynamicJsonObjectResolver.evaluate(input, getBindings());		
+		context.getVariablesManager().putVariable(parentNode, "input", resolvedInput);
 	}
 
 	@Override
