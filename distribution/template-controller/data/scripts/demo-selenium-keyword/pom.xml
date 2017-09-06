@@ -3,7 +3,6 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.denkbar.step.examples</groupId>
 	<version>0.0.1-SNAPSHOT</version>
-
 	<artifactId>demo-selenium-keyword</artifactId>
 	
 	<repositories>

@@ -7,11 +7,11 @@
 {"capacity":10, 
 "tokenConf":{
 	"attributes":{},
-	"properties":{}}
+	"properties":{"chromedriver":"../ext/bin/chromedriver/chromedriver.exe"}}
 }
 ],
 "properties":{
 	"plugins.jmeter.home":"../ext/lib/jmeter",
 	"plugins.selenium.libs.2.x":"../ext/lib/selenium/selenium-2.53.1",
-	"plugins.selenium.libs.3.x":"../ext/lib/selenium/selenium-java-3.0.1"}
+	"plugins.selenium.libs.3.x":"../ext/lib/selenium/selenium-java-3.5.3"}
 }

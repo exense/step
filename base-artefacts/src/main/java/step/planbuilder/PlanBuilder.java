@@ -44,9 +44,9 @@ public class PlanBuilder {
 		if(root!=null) {
 			addToCurrentParent(a);
 		} else {
-			localAccessor.save(a);
 			root = a;
 		}
+		localAccessor.save(a);
 		stack.push(a);
 		return this;
 	}

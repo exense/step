@@ -52,10 +52,14 @@ public class SeleniumKeywordExample extends AbstractScript {
 			output.setError("Unable to find chromedriver.exe in '"+chromedriverExe.getParent() +"'.");
 		}
 	}
-	
+		
 	@Keyword(name="Google_Search")
 	public void Google_Search() throws Exception {
 		if(input.containsKey("search")) {
+			if(session.get(DriverWrapper.class) == null) {
+				output.setError("Please first execute keyword \"Open_Chome\" in order to have a driver available for this keyword");
+				return;
+			}
 			final WebDriver driver = session.get(DriverWrapper.class).driver;
 			
 			driver.get("http://www.google.com");
@@ -78,7 +82,7 @@ public class SeleniumKeywordExample extends AbstractScript {
 	}
 	
 	ScriptContext ctx;
-	
+		
 	@Before
 	public void setUp() {
 		Map<String, String> properties = new HashMap<>();

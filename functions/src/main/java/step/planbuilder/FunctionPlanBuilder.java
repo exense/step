@@ -4,10 +4,16 @@ import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 
 import step.artefacts.CallFunction;
+import step.artefacts.FunctionGroup;
 import step.core.dynamicbeans.DynamicValue;
 
 public class FunctionPlanBuilder {
-
+	
+	public static FunctionGroup session() {
+		FunctionGroup call = new FunctionGroup();
+		return call;
+	}
+	
 	public static CallFunction keywordWithDynamicInput(String keywordName, String input) {
 		CallFunction call = new CallFunction();
 		call.setArgument(new DynamicValue<String>(input,""));
