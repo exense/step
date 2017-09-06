@@ -56,6 +56,15 @@ public abstract class AbstractArtefact {
 	public AbstractArtefact() {
 		super();
 		_id = new ObjectId();
+		
+		Map<String, String> defaultAttributes = new HashMap<>();
+		defaultAttributes.put("name", getDefaultArtefactName(this.getClass()));
+		attributes = defaultAttributes;
+	}
+	
+	private String getDefaultArtefactName(Class<? extends AbstractArtefact> artefactClass) {
+		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
+		return annotation.name().length() > 0 ? annotation.name() : artefactClass.getSimpleName();
 	}
 
 	public ObjectId getId() {

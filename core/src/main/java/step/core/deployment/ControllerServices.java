@@ -414,16 +414,8 @@ public class ControllerServices extends AbstractServices {
 			}
 		}
 		
-		sample.setAttributes(new HashMap<>());
-		sample.getAttributes().put("name", getDefaultArtefactName(clazz));
-		
 		getContext().getArtefactAccessor().save(sample);
 		return sample;
-	}
-	
-	private String getDefaultArtefactName(Class<? extends AbstractArtefact> artefactClass) {
-		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
-		return annotation.name().length() > 0 ? annotation.name() : artefactClass.getSimpleName();
 	}
 	
 	public class ArtefactTree {
