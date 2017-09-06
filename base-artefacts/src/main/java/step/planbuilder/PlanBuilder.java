@@ -43,8 +43,8 @@ public class PlanBuilder {
 	public PlanBuilder startBlock(AbstractArtefact a) {
 		if(root!=null) {
 			addToCurrentParent(a);
-		} else {
 			localAccessor.save(a);
+		} else {
 			root = a;
 		}
 		stack.push(a);
