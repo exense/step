@@ -18,6 +18,10 @@
  *******************************************************************************/
 package step.initialization;
 
+import static step.planbuilder.FunctionPlanBuilder.keyword;
+import static step.planbuilder.FunctionPlanBuilder.keywordWithKeyValues;
+import static step.planbuilder.FunctionPlanBuilder.session;
+
 import java.io.StringReader;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,9 +51,13 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.plans.LocalPlanRepository;
+import step.core.plans.Plan;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
+import step.planbuilder.FunctionPlanBuilder;
+import step.planbuilder.PlanBuilder;
 import step.plugins.adaptergrid.FunctionRepositoryImpl;
 import step.plugins.functions.types.GeneralScriptFunction;
 import step.plugins.jmeter.JMeterFunction;
@@ -82,6 +90,8 @@ public class InitializationPlugin extends AbstractPlugin {
 		setArtefactNameIfEmpty(context);
 		
 		insertLogEntry(controllerLogs);
+		
+		createSeleniumDemoPlan(context.getArtefactAccessor(), "Chrome");
 		
 		super.executionControllerStart(context);
 	}
@@ -233,7 +243,10 @@ public class InitializationPlugin extends AbstractPlugin {
 		
 		Function javascriptFunction = addScriptFunction(functionRepository, "Demo_Keyword_Javascript", "javascript", "../data/scripts/Demo_Keyword_Javascript.js");
 		
+		Function openChrome = addSeleniumFunction(functionRepository, "Open_Chrome", "java", "../data/scripts/demo-selenium-keyword/target/classes" );
+		
 		Function googleSearch = addSeleniumFunction(functionRepository, "Google_Search", "java", "../data/scripts/demo-selenium-keyword/target/classes" );
+		
 		Function googleSearchMock = addSeleniumFunction(functionRepository, "Google_Search_Mock", "javascript", "../data/scripts/Google_Search_Mock.js" );
 		
 		Function jmeterDemoFunction = addJMeterFunction(functionRepository, "Demo_Keyword_JMeter", "../data/scripts/Demo_JMeter.jmx");
@@ -305,22 +318,17 @@ public class InitializationPlugin extends AbstractPlugin {
 		
 		tcAttributes.put("name", "Demo_Selenium_" + browser);
 		testCase.setAttributes(tcAttributes);
-		
-		CallFunction call1 = new CallFunction();
-		call1.getFunction().setValue("{\"name\":\"Selenium_Start"+ browser +"\"}");
-		call1.setArgument(new DynamicValue<String>("{}"));
-		artefacts.save(call1);
-		
-		CallFunction call2 = new CallFunction();
-		call2.getFunction().setValue("{\"name\":\"Selenium_Navigate\"}");
-		call2.setArgument(new DynamicValue<String>("{\"url\":\"http://denkbar.io\"}"));
-		artefacts.save(call2);
-		
-		testCase.addChild(call1.getId());
-		testCase.addChild(call2.getId());
-		
-		testCase.setRoot(true);
-		artefacts.save(testCase);
+				
+		Plan plan = PlanBuilder.create()
+				.startBlock(testCase)
+					.startBlock(session())
+						.add(keyword("Open_Chrome"))
+						.add(keywordWithKeyValues("Google_Search", "search", "denkbar"))
+						.endBlock()
+				.endBlock()
+				.build();
+		LocalPlanRepository repo = new LocalPlanRepository(artefacts);
+		repo.save(plan);
 	}
 	
 	private Function addScriptFunction(FunctionRepositoryImpl functionRepository, String name, String scriptLanguage, String scriptFile) {
@@ -349,7 +357,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		function.setAttributes(kwAttributes);
 		function.getScriptLanguage().setValue(scriptLanguage);
 		function.getScriptFile().setValue(scriptFile);
-		function.setSeleniumVersion("2.x");
+		function.setSeleniumVersion("3.x");
 		functionRepository.addFunction(function);
 		return function;
 	}
