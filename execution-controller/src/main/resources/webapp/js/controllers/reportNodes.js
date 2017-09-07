@@ -24,3 +24,7 @@ angular.module('reportNodes',['step'])
     $scope.children = response.data;
   })
 })
+
+.controller('ReportNodeShortCtrl' , function($scope,$http) {  
+
+})

@@ -66,6 +66,7 @@ angular.module('reportTree',['step'])
         if(selectedNodeId) {
           $http.get("rest/controller/reportnode/"+selectedNodeId).then(function(response){
             $scope.selectedNode = response.data;
+            $scope.node = $scope.selectedNode;
           })
         }
         

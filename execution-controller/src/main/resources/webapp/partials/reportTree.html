@@ -11,28 +11,8 @@
 		<div class="panel panel-default">
 			<div class="panel-heading">{{selectedNode.name}}<div class="executionStatus status-{{selectedNode.status}} pull-right">{{selectedNode.status}}</div></div>
 			<div class="panel-body">
-				<ul class="list-unstyled">
-					<li>
-						<strong>Execution Time</strong>
-						<span>{{ selectedNode.executionTime | date:'dd.MM.yyyy HH:mm:ss'}}</span>
-					</li>
-					<li>
-						<strong>Duration (ms)</strong>
-						<span>{{selectedNode.duration}}</span>
-					</li>
-					<li ng-if="selectedNode.error")>
-						<strong>Error</strong>
-						<span>{{selectedNode.error.msg}}</span>
-					</li>
-					<li ng-if="selectedNode.attachments.length>0")>
-						<strong>Attachments</strong>
-						<span><ul class="list-unstyled"><li ng-repeat="attachment in selectedNode.attachments"><a role="menuitem" tabindex="-1" href="files?uuid={{attachment.id}}">{{attachment.name}}</a></li></ul></span>
-					</li>
-					<li ng-repeat="key in getDisplaiableProperties(selectedNode)">
-						<strong>{{key}}</strong>
-						<span>{{selectedNode[key]}}</span>
-					</li>
-				</ul>
+				<div ng-include="'partials/reportnodes/reportNode.html'"></div>
+				
 				<div class="panel panel-default">
 					<div class="panel-heading">Artefact</div>
 					<div class="panel-body">

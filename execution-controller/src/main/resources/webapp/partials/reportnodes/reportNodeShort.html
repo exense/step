@@ -1,0 +1,12 @@
+<div ng-controller="ReportNodeShortCtrl">
+	<div>{{node.name}}</div>
+	<div ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
+		<div ng-if="node.input">Input: <small><em>{{node.input}}</em></small></div>
+		<div ng-if="node.output">Output: <small><em>{{node.output}}</em></small></div>
+	</div>
+	<div ng-if="node._class=='step.artefacts.reports.EchoReportNode'">
+		<div ng-if="node.echo">Echo: <small><em>{{node.echo}}</em></small></div>
+	</div>
+	<div ng-if="node.error">Error: <small><em>{{node.error.msg}}
+		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small></div>
+</div>

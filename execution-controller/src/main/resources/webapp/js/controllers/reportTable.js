@@ -22,72 +22,21 @@ angular.module('reportTable',['step','reportNodes'])
   var tableFactory = {};
 
   tableFactory.get = function (filterFactory, $scope) {
-    var reportNodeRenderer = {
-        'step.artefacts.reports.CallFunctionReportNode' : {
-          renderer: function (reportNode) {
-            var html = "";
-            if(reportNode.functionAttributes)
-              html += '<div>' + reportNode.functionAttributes.name + '</div>';
-            // for retrocompatibility with versions<=3.4.0. Can be removed later
-            else if(reportNode.name)
-              html += '<div><small>' + reportNode.name + '</small></div>';
-            if(reportNode.input)
-              html += '<div>Input: <small><em>' + escapeHtml(reportNode.input) + '</em></small></div>';
-            if(reportNode.output)
-              html += '<div>Output: <small><em>' + escapeHtml(reportNode.output) + '</em></small></div>';
-            if(reportNode.error) {
-              html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error.msg);
-              if(reportNode.attachments && reportNode.attachments.length>0) {
-                html += '. Check the attachments for more details.';
-              }
-              html += '</em></small></div>';
-            }
-            return html},
-          icon: '' },
-          'step.artefacts.reports.EchoReportNode' : {
-            renderer: function (reportNode) {
-              var html = "";
-              if(reportNode.name)
-                html += '<div><small>' + reportNode.name + '</small></div>';
-              if(reportNode.echo)
-                html += '<div>Echo: <small><em>' + escapeHtml(reportNode.echo) + '</em></small></div>';
-              return html},
-            icon: '' },            
-        'default' : {
-          renderer: function (reportNode) {
-            var html = "";
-            if(reportNode.name)
-              html += '<div><small>' + reportNode.name + '</small></div>';
-            if(reportNode.error) {
-              html += '<div><label>Error:</label> <small><em>' + escapeHtml(reportNode.error.msg);
-              if(reportNode.attachments && reportNode.attachments.length>0) {
-                html += '. Check the attachments for more details.';
-              }
-              html += '</em></small></div>';
-            }
-            return html},
-          icon: '' },
-        };
     
     var stepsTable = {};
     stepsTable.columns = function(columns) {
       _.each(_.where(columns,{'title':'ID'}),function(col){col.visible=false});
       _.each(_.where(columns,{'title':'Begin'}),function(col){col.sClass = 'rowDetailsToggle';col.width="80px"});
       _.each(_.where(columns,{'title':'Step'}),function(col){
-        //col.width="50%";
         col.sClass = 'rowDetailsToggle';
-        col.render = function ( data, type, row ) {
-          var reportNode = JSON.parse(data);
-          var renderer = reportNodeRenderer[reportNode._class];
-          if(!renderer) {
-            renderer = reportNodeRenderer['default'];
+        col.createdCell =  function (td, cellData, rowData, row, col) {
+            var rowScope = $scope.$new(true, $scope);
+            rowScope.template = 'partials/reportnodes/reportNodeShort.html';
+            rowScope.node = JSON.parse(cellData);
+            var content = $compile("<div ng-include='template'></div>")(rowScope);
+            $(td).empty();
+            $(td).append(content);
           }
-          //return JSON.stringify(data)
-          return renderer.renderer(reportNode);
-          };
-      });
-      _.each(_.where(columns,{'title':'Error'}),function(col){
-        col.render = function ( data, type, row ) {return '<div><small>'  + escapeHtml(data).replace(/\./g, '.<wbr>') + '</small></div>'};
       });
       _.each(_.where(columns,{'title':'Status'}),function(col){
        col.searchmode="select";
