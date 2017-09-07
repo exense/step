@@ -79,7 +79,8 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 			}
 			
 			if(actualResolved) {				
-				String expectedValue = artefact.getExpected().get();
+				Object expectedValueObject = artefact.getExpected().get();
+				String expectedValue = expectedValueObject!=null?expectedValueObject.toString():null;
 
 				boolean negate = artefact.isNegate();
 				String not = negate?" not ":" ";
