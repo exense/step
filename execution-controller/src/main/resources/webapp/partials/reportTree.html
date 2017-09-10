@@ -9,17 +9,8 @@
 	</div>
 	<div ng-if="selectedNode" class="col-xs-6">
 		<div class="panel panel-default">
-			<div class="panel-heading">{{selectedNode.name}}<div class="executionStatus status-{{selectedNode.status}} pull-right">{{selectedNode.status}}</div></div>
 			<div class="panel-body">
 				<div ng-include="'partials/reportnodes/reportNode.html'"></div>
-				
-				<div class="panel panel-default">
-					<div class="panel-heading">Artefact</div>
-					<div class="panel-body">
-						
-						<artefact-details artefactid="selectedNode.artefactID" readonly="false" />
-					</div>
-				</div>
 			</div>
 		</div>
 	</div>

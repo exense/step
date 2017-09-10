@@ -1,39 +1,18 @@
 <div ng-controller="ReportNodeCtrl">
-	<ul class="list-unstyled">
-		<li>
-			<ul  class="list-group">
-				<li class="list-group-item" ng-repeat="child in children" ng-if="child._class=='step.artefacts.reports.AssertReportNode'">
-					{{child.name}}: {{child.message}} <div style="width:60px;" class="text-center executionStatus status-{{child.status}} pull-right">{{child.status}}</div>
-				</li>
-			</ul>		
-		</li>
-		<li ng-if="node.agentUrl">Agent: <span>{{node.agentUrl}}</span></li>
-		<li ng-if="node.tokenId">Token ID: <span>{{node.tokenId}}</span></li>
-		<li ng-if="node.tokenId">Duration (ms): <span>{{node.duration}}</span></li>
-	</ul>
+	<div class="form-group">{{artefact._class}} - {{node.name}} <div class="executionStatus status-{{node.status}} pull-right">{{node.status}}</div></div>
+	<div ng-include="reportNodeType.template"></div>
+	
+	<div ng-if="node.error">Error: <small><em>{{node.error.msg}}
+		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>
+		<span class="pull-right"><attachments node="node" /></span>	
+	</div>
+	
+	<div>Start: {{ selectedNode.executionTime | date:'dd.MM.yyyy HH:mm:ss'}}</div>
+	<div>Duration (ms): {{selectedNode.duration}}</div>
+	<div class="panel panel-default">
+		<div class="panel-heading"><a ng-click="showArtefact = !showArtefact">Plan node</a></div>
+		<div class="panel-body" ng-show="showArtefact">			
+			<artefact-details artefactid="node.artefactID" readonly="false" />
+		</div>
+	</div>
 </div>
-
-<!-- 
-<ul class="list-unstyled">
-					<li>
-						<strong>Execution Time</strong>
-						<span>{{ selectedNode.executionTime | date:'dd.MM.yyyy HH:mm:ss'}}</span>
-					</li>
-					<li>
-						<strong>Duration (ms)</strong>
-						<span>{{selectedNode.duration}}</span>
-					</li>
-					<li ng-if="selectedNode.error")>
-						<strong>Error</strong>
-						<span>{{selectedNode.error.msg}}</span>
-					</li>
-					<li ng-if="selectedNode.attachments.length>0")>
-						<strong>Attachments</strong>
-						<span><ul class="list-unstyled"><li ng-repeat="attachment in selectedNode.attachments"><a role="menuitem" tabindex="-1" href="files?uuid={{attachment.id}}">{{attachment.name}}</a></li></ul></span>
-					</li>
-					<li ng-repeat="key in getDisplaiableProperties(selectedNode)">
-						<strong>{{key}}</strong>
-						<span>{{selectedNode[key]}}</span>
-					</li>
-				</ul>
- -->

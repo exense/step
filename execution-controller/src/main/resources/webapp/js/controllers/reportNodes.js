@@ -19,12 +19,46 @@
 angular.module('reportNodes',['step'])
 
 .controller('ReportNodeCtrl' , function($scope,$http) {  
+  
+  var reportNodeTypes = {
+      "step.artefacts.reports.CallFunctionReportNode":{template:"partials/reportnodes/callFunctionReportNode.html"},
+      "step.artefacts.reports.EchoReportNode":{template:"partials/reportnodes/echo.html"}
+  }
+  
   $scope.children = [];
-  $http.get('rest/controller/reportnode/'+$scope.node.id+"/children").then(function(response) {
-    $scope.children = response.data;
+  $scope.$watch('node',function(node, oldStatus) {
+    if(node) {
+      $scope.reportNodeType = (node._class in reportNodeTypes)?reportNodeTypes[node._class]:reportNodeTypes['Default'];
+      $http.get('rest/controller/reportnode/'+node.id+"/children").then(function(response) {
+        $scope.children = response.data;
+      })
+      $http.get('rest/controller/artefact/'+node.artefactID).then(function(response) {
+        $scope.artefact = response.data;
+      })
+    }
   })
 })
 
 .controller('ReportNodeShortCtrl' , function($scope,$http) {  
 
 })
+
+.directive('attachments', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      node: '='
+    },
+    templateUrl: 'partials/reportnodes/attachments.html',
+    controller: function($scope) {
+      $scope.$watch("node",function(node) {
+        if(node.attachments) {
+          $scope.attachments = [];
+          _.each(node.attachments, function(attachment) {
+            $scope.attachments.push({id:attachment._id?attachment._id.$oid:attachment.id,name:attachment.name});
+          })
+        }
+      })
+    }
+  };
+});
