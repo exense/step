@@ -15,7 +15,7 @@
 		</div>
 	</div>
 
-	<div class="row">
+	<div class="row" ng-if="execution">
 		<div class="col-xs-9">
 			<uib-tabset> 
 				<uib-tab heading="Execution steps">
@@ -23,6 +23,26 @@
 						<div ng-attr-id="{{getPanelId('testCases')}}" class="panel panel-default" ng-if="isPanelEnabled('testCases')">
 							<div class="panel-heading">
 								<a ng-click="toggleShowPanel('testCases')">{{getPanelTitle('testCases')}}</a>
+								<div style="width: 200px" class="progress pull-right"
+									uib-tooltip="PASSED: {{testcasesProgress.distribution.PASSED.count}}, FAILED: {{testcasesProgress.distribution.FAILED.count}}, TECHNICAL_ERROR: {{testcasesProgress.distribution.TECHNICAL_ERROR.count}} ">
+									<div class="progress-bar status-PASSED"
+										ng-attr-style="width:{{testcasesProgress.distribution.PASSED.count/testcasesProgress.count*100}}%;">
+										{{testcasesProgress.distribution.PASSED.count}}</div>
+									<div class="progress-bar status-FAILED"
+										ng-attr-style="width:{{testcasesProgress.distribution.FAILED.count/testcasesProgress.count*100}}%;">
+										{{testcasesProgress.distribution.FAILED.count}}</div>
+									<div class="progress-bar status-TECHNICAL_ERROR"
+										ng-attr-style="width:{{testcasesProgress.distribution.TECHNICAL_ERROR.count/testcasesProgress.count*100}}%;">
+										{{testcasesProgress.distribution.TECHNICAL_ERROR.count}}</div>
+								</div>
+								<div ng-if="execution.status != 'ENDED' && testcasesProgress.countForecast>0"
+									uib-tooltip="Progress: {{testcasesProgress.count}}/{{testcasesProgress.countForecast}}" style="margin-right: 20px; width: 200px"
+									class="progress pull-right">
+									<div class="progress-bar" role="progressbar" aria-valuenow="{{testcasesProgress.count}}" aria-valuemin="0"
+										aria-valuemax="{{testcasesProgress.countForecast}}"
+										ng-attr-style="min-width: 2em; width: {{testcasesProgress.count/testcasesProgress.countForecast*100}}%;">
+										{{testcasesProgress.count}}/{{testcasesProgress.countForecast}}</div>
+								</div>
 							</div>
 							<div class="panel-body" ng-show="isShowPanel('testCases')">
 								<datatable tabledef="testCaseTable" handle="testCaseTable" selectionmode="multiple" columnsearch="true"
@@ -34,7 +54,7 @@
 							<div class="panel-heading">
 								<a ng-click="toggleShowPanel('steps')">{{getPanelTitle('steps')}}</a>
 								<div style="width: 200px" class="progress pull-right"
-									tooltip="PASSED: {{progress.distribution.PASSED.count}}, FAILED: {{progress.distribution.FAILED.count}}, TECHNICAL_ERROR: {{progress.distribution.TECHNICAL_ERROR.count}} ">
+									uib-tooltip="PASSED: {{progress.distribution.PASSED.count}}, FAILED: {{progress.distribution.FAILED.count}}, TECHNICAL_ERROR: {{progress.distribution.TECHNICAL_ERROR.count}} ">
 									<div class="progress-bar status-PASSED"
 										ng-attr-style="width:{{progress.distribution.PASSED.count/progress.count*100}}%;">
 										{{progress.distribution.PASSED.count}}</div>
@@ -46,7 +66,7 @@
 										{{progress.distribution.TECHNICAL_ERROR.count}}</div>
 								</div>
 								<div ng-if="execution.status != 'ENDED' && progress.countForecast>0"
-									tooltip="Progress: {{progress.count}}/{{progress.countForecast}}" style="margin-right: 20px; width: 200px"
+									uib-tooltip="Progress: {{progress.count}}/{{progress.countForecast}}" style="margin-right: 20px; width: 200px"
 									class="progress pull-right">
 									<div class="progress-bar" role="progressbar" aria-valuenow="{{progress.count}}" aria-valuemin="0"
 										aria-valuemax="{{progress.countForecast}}"

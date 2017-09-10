@@ -245,6 +245,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       }
       
       $scope.isShowPanel = function(viewId) {return panels[viewId].show};
+      $scope.setShowPanel = function(viewId,show) {panels[viewId].show=show};
       $scope.isPanelEnabled = function(viewId) {return panels[viewId].enabled};
       $scope.toggleShowPanel = function(viewId) {panels[viewId].show=!panels[viewId].show};
       $scope.enablePanel = function(viewId, enabled) {panels[viewId].enabled=enabled};
@@ -392,6 +393,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           var data = response.data;
           var dataSet = [];
           if(data.length>0) {
+            if(!$scope.isPanelEnabled('testCases')) {              
+              $scope.setShowPanel('steps', false);
+              $scope.setShowPanel('testCases', true);
+            }
             $scope.enablePanel('testCases', true);
           }
           
@@ -430,6 +435,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       var refresh = function() {        
         $http.get('rest/views/statusDistributionForFunctionCalls/' + eId).then(function(response) {
           $scope.progress = response.data;
+        });
+        
+        $http.get('rest/views/statusDistributionForTestcases/' + eId).then(function(response) {
+          $scope.testcasesProgress = response.data;
         });
         
         if($scope.stepsTable && $scope.stepsTable.Datatable) {
