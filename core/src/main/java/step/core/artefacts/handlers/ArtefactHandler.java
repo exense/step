@@ -213,7 +213,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		long duration = System.currentTimeMillis() - t1;
 		
 		node.setDuration((int)duration);
-		node.setExecutionTime(System.currentTimeMillis());
+		node.setExecutionTime(System.currentTimeMillis()-duration);
 		
 		if(persistAfter) {
 				if(!persistOnlyNonPassed){
