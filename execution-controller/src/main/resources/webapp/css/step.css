@@ -86,6 +86,10 @@ div.executionStatus,span.executionStatus {
 	background:black;
 }
 
+.status-INTERRUPTED {
+	background:#f9c038;
+}
+
 i.status-PASSED {
 	color:#5cb85c;
 }
@@ -94,8 +98,20 @@ i.status-FAILED {
 	color:#d9534f;
 }
 
+i.status-SKIPPED {
+	color:#A0A0A0;
+}
+
+i.status-NORUN {
+	color:#A0A0A0;
+}
+
 i.status-TECHNICAL_ERROR {
 	color:black;
+}
+
+i.status-INTERRUPTED {
+	color:#f9c038;
 }
 	  
 	  
