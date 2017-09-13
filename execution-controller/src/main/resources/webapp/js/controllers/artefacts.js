@@ -16,8 +16,66 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('artefactsControllers',['dataTable','step'])
+angular.module('artefacts',['step'])
 
+.factory('artefactTypes', function() {
+  
+  var registry = {};
+  
+  var api = {};
+  
+  function getType(typeName) {
+    return registry[typeName]?registry[typeName]:registry['Default']
+  }
+  
+  api.register = function(typeName,typeInfo) {
+    registry[typeName] = typeInfo;
+  }
+  
+  api.getEditor = function(typeName) {
+    return getType(typeName).form;
+  }
+
+  api.getIcon = function(typeName) {
+    return getType(typeName).icon;
+  }
+  
+  api.getLabel = function(typeName) {
+    return getType(typeName).label;
+  }
+  
+  api.getTypes = function() {
+    return _.keys(registry);
+  }
+  
+  return api;
+})
+
+.run(function(artefactTypes) {
+  artefactTypes.register('CallPlan',{icon:'glyphicon-new-window', form:'partials/artefacts/callPlan.html'});
+  artefactTypes.register('CallKeyword',{icon:'glyphicon-record', form:'partials/artefacts/callFunction.html'});
+  artefactTypes.register('For',{icon:'glyphicon-th', form:'partials/artefacts/for.html'});
+  artefactTypes.register('ForEach',{icon:'glyphicon-th', form:'partials/artefacts/forEach.html'});
+  artefactTypes.register('While',{icon:'glyphicon-th', form:'partials/artefacts/while.html'});
+  artefactTypes.register('DataSet',{icon:'glyphicon-th', form:'partials/artefacts/dataSet.html'});
+  artefactTypes.register('Sequence',{icon:'glyphicon-unchecked', form:'partials/artefacts/sequence.html'});
+  artefactTypes.register('Return',{icon:'glyphicon-unchecked', form:'partials/artefacts/return.html'});
+  artefactTypes.register('Echo',{icon:'glyphicon-unchecked', form:'partials/artefacts/echo.html'});
+  artefactTypes.register('If',{icon:'glyphicon-unchecked', form:'partials/artefacts/if.html'});
+  artefactTypes.register('Session',{icon:'glyphicon-unchecked', form:'partials/artefacts/functionGroup.html'});
+  artefactTypes.register('Set',{icon:'glyphicon-unchecked', form:'partials/artefacts/set.html'});
+  artefactTypes.register('Sleep',{icon:'glyphicon-unchecked', form:'partials/artefacts/sleep.html'});
+  artefactTypes.register('Script',{icon:'glyphicon-unchecked', form:'partials/artefacts/script.html'});
+  artefactTypes.register('ThreadGroup',{icon:'glyphicon-unchecked', form:'partials/artefacts/threadGroup.html'});
+  artefactTypes.register('Switch',{icon:'glyphicon-unchecked', form:'partials/artefacts/switch.html'});
+  artefactTypes.register('Case',{icon:'glyphicon-unchecked', form:'partials/artefacts/case.html'});
+  artefactTypes.register('RetryIfFails',{icon:'glyphicon-th', form:'partials/artefacts/retryIfFails.html'});
+  artefactTypes.register('Check',{icon:'glyphicon-unchecked', form:'partials/artefacts/check.html'});
+  artefactTypes.register('Assert',{icon:'glyphicon-unchecked', form:'partials/artefacts/assert.html'});
+
+});
+
+angular.module('artefactsControllers',['dataTable','step'])
 .controller('ArtefactListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', '$location', 'AuthService',
     function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, $location, AuthService) {
       $stateStorage.push($scope, 'artefacts', {});	

@@ -22,7 +22,6 @@ angular.module('reportTable',['step','reportNodes'])
   var tableFactory = {};
 
   tableFactory.get = function (filterFactory, $scope) {
-    
     var stepsTable = {};
     stepsTable.columns = function(columns) {
       _.each(_.where(columns,{'title':'ID'}),function(col){col.visible=false});
@@ -30,31 +29,24 @@ angular.module('reportTable',['step','reportNodes'])
       _.each(_.where(columns,{'title':'Step'}),function(col){
         col.sClass = 'rowDetailsToggle';
         col.createdCell =  function (td, cellData, rowData, row, col) {
-            var rowScope = $scope.$new(true, $scope);
-            rowScope.template = 'partials/reportnodes/reportNodeShort.html';
-            rowScope.node = JSON.parse(cellData);
-            var content = $compile("<div ng-include='template'></div>")(rowScope);
-            $(td).empty();
-            $(td).append(content);
-          }
-      });
-      _.each(_.where(columns,{'title':'Status'}),function(col){
-       col.searchmode="select";
-       col.width="80px";
-       col.render = function ( data, type, row ) {return '<div class="text-center small reportNodeStatus status-' + data +'">'  +data+ '</div>'};
-      });
-      _.each(_.where(columns,{'title':'Attachments'}),function(col){
-        col.title="";
-        col.width="15px";
-        col.searchmode="none";
-        col.createdCell =  function (td, cellData, rowData, row, col) {
           var rowScope = $scope.$new(true, $scope);
-          rowScope.node = JSON.parse(rowData[2]);
-          var content = $compile("<attachments node='node'/>")(rowScope);
+          rowScope.node = JSON.parse(cellData);
+          var content = $compile("<reportnode-short node='node' />")(rowScope);
           $(td).empty();
           $(td).append(content);
-        }
-       });
+        };
+      });
+      _.each(_.where(columns,{'title':'Status'}),function(col){
+        col.searchmode="select";
+        col.width="80px";
+        col.createdCell =  function (td, cellData, rowData, row, col) {
+          var rowScope = $scope.$new(true, $scope);
+          rowScope.status = cellData;
+          var content = $compile("<reportnode-status status='status' />")(rowScope);
+          $(td).empty();
+          $(td).append(content);
+        };
+      });
       return columns;
     };
     
@@ -63,14 +55,12 @@ angular.module('reportTable',['step','reportNodes'])
     stepsTable.detailRowRenderer = function(rowData, callback) {
       $http.get('rest/controller/reportnode/'+rowData[0]).then(function(response) {
         var rowScope = $scope.$new(true, $scope);
-        rowScope.template = 'partials/reportnodes/reportNode.html';
         rowScope.node = response.data;
-        callback($compile("<div ng-include='template'></div>")(rowScope));
+        callback($compile("<reportnode node='node' />")(rowScope));
       })
     }
     
     return stepsTable;
-    
   };
   
   return tableFactory;

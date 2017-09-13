@@ -1,11 +1,14 @@
 package step.core.dynamicbeans;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class DynamicValue<T> {
 	
 	boolean dynamic;
 	
 	T value;
 	
+	@JsonIgnore
 	EvaluationResult evalutationResult;
 	
 	String expression;

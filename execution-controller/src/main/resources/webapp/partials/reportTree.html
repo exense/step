@@ -10,7 +10,8 @@
 	<div ng-if="selectedNode" class="col-xs-6">
 		<div class="panel panel-default">
 			<div class="panel-body">
-				<div ng-include="'partials/reportnodes/reportNode.html'"></div>
+				<reportnode-short node='selectedNode' />
+				<reportnode node="selectedNode"></div>
 			</div>
 		</div>
 	</div>

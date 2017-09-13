@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('reportTree',['step'])
+angular.module('reportTree',['step','artefacts'])
 
 .directive('reportTree', function($http,$timeout,$interval,stateStorage,$filter,$location) {
   return {
@@ -28,7 +28,7 @@ angular.module('reportTree',['step'])
     controller: function($scope) {
       
     },
-    link: function($scope, $element) {
+    link: function($scope, $element, artefactTypes) {
       var nodeid = $scope.nodeid;
       
       var treeDiv = angular.element($element[0]).find('#jstree_div');
@@ -45,11 +45,8 @@ angular.module('reportTree',['step'])
               $http.get("rest/controller/reportnode/"+id+"/children").then(function(response) {
                 var nodes = response.data;
                var children=_.map(nodes,function(node){
-                 var cssClass = 'glyphicon-unchecked'
-                 if(node._class=='step.artefacts.reports.CallFunctionReportNode') {
-                   cssClass = "glyphicon glyphicon-record";
-                 }
-                  return {id:node.id, text:node.name, children:true, icon:"glyphicon "+cssClass+" status-"+node.status};
+                 var cssClass = artefactTypes.getIcon(node.resolvedArtefact._class)
+               return {id:node.id, text:node.name, children:true, icon:"glyphicon "+cssClass+" status-"+node.status};
                 })
                 cb.call(this,children);               
               })
@@ -66,7 +63,6 @@ angular.module('reportTree',['step'])
         if(selectedNodeId) {
           $http.get("rest/controller/reportnode/"+selectedNodeId).then(function(response){
             $scope.selectedNode = response.data;
-            $scope.node = $scope.selectedNode;
           })
         }
         

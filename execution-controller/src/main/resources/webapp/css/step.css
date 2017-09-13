@@ -47,8 +47,8 @@ div.executionStatus,span.executionStatus {
 }
 
 .status-RUNNING {
-	background:#5cb85c;
-	color:#5cb85c;
+	background:#337ab7;
+	color:#337ab7;
 }
 
 .status-ABORTING {
@@ -112,6 +112,10 @@ i.status-TECHNICAL_ERROR {
 
 i.status-INTERRUPTED {
 	color:#f9c038;
+}
+
+i.status-RUNNING {
+	color:#337ab7;
 }
 	  
 	  

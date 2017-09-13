@@ -1,22 +1,8 @@
 <div>
-	Keyword: <span ng-repeat="(key, value) in node.functionAttributes">{{key}}={{value}}</span>
+	<table class="table">
+		<tr ng-repeat="child in children" ng-if="child._class=='step.artefacts.reports.AssertReportNode'"><td><reportnode-short node ="child" /></td><td><reportnode-status status="child.status" /></td></tr>
+	</table>
 </div>
-<div ng-if="node.input">
-	Input: <small><em>{{node.input}}</em></small>
-</div>
-<div ng-if="node.output">
-	Output: <small><em>{{node.output}}</em></small>
-</div>
-<ul class="list-unstyled">
-	<li>
-		<ul class="list-group">
-			<li class="list-group-item" ng-repeat="child in children"
-				ng-if="child._class=='step.artefacts.reports.AssertReportNode'">{{child.name}}: {{child.message}}
-				<div style="width: 60px;" class="text-center executionStatus status-{{child.status}} pull-right">{{child.status}}</div>
-			</li>
-		</ul>
-	</li>
-	<li ng-if="node.agentUrl">Agent: <span>{{node.agentUrl}}</span></li>
-	<li ng-if="node.tokenId">Token ID: <span>{{node.tokenId}}</span></li>
-	<li ng-if="node.tokenId">Duration (ms): <span>{{node.duration}}</span></li>
-</ul>
+<div ng-if="node.agentUrl">Agent: <span>{{node.agentUrl}}</span></div>
+<div ng-if="node.tokenId">Token ID: <span>{{node.tokenId}}</span></div>
+<div ng-if="node.tokenId">Duration (ms): <span>{{node.duration}}</span></div>

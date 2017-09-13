@@ -16,31 +16,49 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('reportNodes',['step'])
+angular.module('reportNodes',['step','artefacts'])
 
-.controller('ReportNodeCtrl' , function($scope,$http) {  
-  
-  var reportNodeTypes = {
-      "step.artefacts.reports.CallFunctionReportNode":{template:"partials/reportnodes/callFunctionReportNode.html"},
-      "step.artefacts.reports.EchoReportNode":{template:"partials/reportnodes/echo.html"}
-  }
-  
-  $scope.children = [];
-  $scope.$watch('node',function(node, oldStatus) {
-    if(node) {
-      $scope.reportNodeType = (node._class in reportNodeTypes)?reportNodeTypes[node._class]:reportNodeTypes['Default'];
-      $http.get('rest/controller/reportnode/'+node.id+"/children").then(function(response) {
-        $scope.children = response.data;
-      })
-      $http.get('rest/controller/artefact/'+node.artefactID).then(function(response) {
-        $scope.artefact = response.data;
+.directive('reportnode', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      node: '='
+    },
+    templateUrl: 'partials/reportnodes/reportNode.html',
+    controller: function($scope, $http) {
+      var reportNodeTypes = {
+          "step.artefacts.reports.CallFunctionReportNode":{template:"partials/reportnodes/callFunctionReportNode.html"},
+          "step.artefacts.reports.EchoReportNode":{template:"partials/reportnodes/echo.html"},
+          "step.artefacts.reports.AssertReportNode":{template:"partials/reportnodes/assert.html"}
+      }
+      
+      $scope.children = [];
+      $scope.$watch('node',function(node, oldStatus) {
+        if(node) {
+          $scope.reportNodeType = (node._class in reportNodeTypes)?reportNodeTypes[node._class]:reportNodeTypes['Default'];
+          $http.get('rest/controller/reportnode/'+node.id+"/children").then(function(response) {
+            $scope.children = response.data;
+          })
+          $http.get('rest/controller/artefact/'+node.artefactID).then(function(response) {
+            $scope.artefact = response.data;
+          })
+        }
       })
     }
-  })
+  };
 })
 
-.controller('ReportNodeShortCtrl' , function($scope,$http) {  
-
+.directive('reportnodeShort', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      node: '='
+    },
+    templateUrl: 'partials/reportnodes/reportNodeShort.html',
+    controller: function($scope,artefactTypes) {
+      $scope.artefactTypes = artefactTypes;
+    }
+  };
 })
 
 .directive('attachments', function() {
@@ -61,4 +79,16 @@ angular.module('reportNodes',['step'])
       })
     }
   };
-});
+})
+
+.directive('reportnodeStatus', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      status: '='
+    },
+    templateUrl: 'partials/reportnodes/reportNodeStatus.html',
+    controller: function($scope) {
+    }
+  };
+})
