@@ -88,7 +88,7 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 				AssertOperator operator = artefact.getOperator();
 				if(operator == AssertOperator.EQUALS) {
 					passed = artefact.isNegate()^expectedValue.equals(actual);
-					message = "'"+key + "' expected" + not + "to be equal to '"+artefact.getExpected().get()+"' "+(passed?"and":"but")+ " was '"+actual+"'";
+					message = "'"+key + "' expected" + not + "to be equal to '"+expectedValue+"' "+(passed?"and":"but")+ " was '"+actual+"'";
 				} else if(operator == AssertOperator.CONTAINS) {
 					passed = negate^actual.contains(expectedValue);
 					message = "'"+key + "' expected" + not + "to contain '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
