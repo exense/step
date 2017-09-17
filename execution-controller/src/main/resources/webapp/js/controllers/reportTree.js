@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('reportTree',['step','artefacts'])
 
-.directive('reportTree', function($http,$timeout,$interval,stateStorage,$filter,$location) {
+.directive('reportTree', function($http,$timeout,$interval,stateStorage,$filter,$location,artefactTypes) {
   return {
     restrict: 'E',
     scope: {
@@ -28,7 +28,7 @@ angular.module('reportTree',['step','artefacts'])
     controller: function($scope) {
       
     },
-    link: function($scope, $element, artefactTypes) {
+    link: function($scope, $element) {
       var nodeid = $scope.nodeid;
       
       var treeDiv = angular.element($element[0]).find('#jstree_div');

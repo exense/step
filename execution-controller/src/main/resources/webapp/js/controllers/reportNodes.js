@@ -57,6 +57,13 @@ angular.module('reportNodes',['step','artefacts'])
     templateUrl: 'partials/reportnodes/reportNodeShort.html',
     controller: function($scope,artefactTypes) {
       $scope.artefactTypes = artefactTypes;
+      $scope.concatenate = function(map) {
+        var result = "";
+        _.each(_.keys(map).sort(),function(key){
+          result+=map[key]+".";
+        });
+        return result.substring(0,result.length-1);
+      };
     }
   };
 })

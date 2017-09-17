@@ -52,26 +52,27 @@ angular.module('artefacts',['step'])
 })
 
 .run(function(artefactTypes) {
+  artefactTypes.register('TestCase',{icon:'glyphicon-list-alt', form:'partials/artefacts/testCase.html'});
   artefactTypes.register('CallPlan',{icon:'glyphicon-new-window', form:'partials/artefacts/callPlan.html'});
   artefactTypes.register('CallKeyword',{icon:'glyphicon-record', form:'partials/artefacts/callFunction.html'});
   artefactTypes.register('For',{icon:'glyphicon-th', form:'partials/artefacts/for.html'});
   artefactTypes.register('ForEach',{icon:'glyphicon-th', form:'partials/artefacts/forEach.html'});
-  artefactTypes.register('While',{icon:'glyphicon-th', form:'partials/artefacts/while.html'});
-  artefactTypes.register('DataSet',{icon:'glyphicon-th', form:'partials/artefacts/dataSet.html'});
-  artefactTypes.register('Sequence',{icon:'glyphicon-unchecked', form:'partials/artefacts/sequence.html'});
-  artefactTypes.register('Return',{icon:'glyphicon-unchecked', form:'partials/artefacts/return.html'});
-  artefactTypes.register('Echo',{icon:'glyphicon-unchecked', form:'partials/artefacts/echo.html'});
+  artefactTypes.register('While',{icon:'glyphicon-repeat', form:'partials/artefacts/while.html'});
+  artefactTypes.register('DataSet',{icon:'glyphicon-th-large', form:'partials/artefacts/dataSet.html'});
+  artefactTypes.register('Sequence',{icon:'glyphicon-align-justify', form:'partials/artefacts/sequence.html'});
+  artefactTypes.register('Return',{icon:'glyphicon-share-alt', form:'partials/artefacts/return.html'});
+  artefactTypes.register('Echo',{icon:'glyphicon-zoom-in', form:'partials/artefacts/echo.html'});
   artefactTypes.register('If',{icon:'glyphicon-unchecked', form:'partials/artefacts/if.html'});
-  artefactTypes.register('Session',{icon:'glyphicon-unchecked', form:'partials/artefacts/functionGroup.html'});
-  artefactTypes.register('Set',{icon:'glyphicon-unchecked', form:'partials/artefacts/set.html'});
-  artefactTypes.register('Sleep',{icon:'glyphicon-unchecked', form:'partials/artefacts/sleep.html'});
-  artefactTypes.register('Script',{icon:'glyphicon-unchecked', form:'partials/artefacts/script.html'});
-  artefactTypes.register('ThreadGroup',{icon:'glyphicon-unchecked', form:'partials/artefacts/threadGroup.html'});
+  artefactTypes.register('Session',{icon:'glyphicon-magnet', form:'partials/artefacts/functionGroup.html'});
+  artefactTypes.register('Set',{icon:'glyphicon-save', form:'partials/artefacts/set.html'});
+  artefactTypes.register('Sleep',{icon:'glyphicon-hourglass', form:'partials/artefacts/sleep.html'});
+  artefactTypes.register('Script',{icon:'glyphicon-align-left', form:'partials/artefacts/script.html'});
+  artefactTypes.register('ThreadGroup',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html'});
   artefactTypes.register('Switch',{icon:'glyphicon-unchecked', form:'partials/artefacts/switch.html'});
   artefactTypes.register('Case',{icon:'glyphicon-unchecked', form:'partials/artefacts/case.html'});
   artefactTypes.register('RetryIfFails',{icon:'glyphicon-th', form:'partials/artefacts/retryIfFails.html'});
-  artefactTypes.register('Check',{icon:'glyphicon-unchecked', form:'partials/artefacts/check.html'});
-  artefactTypes.register('Assert',{icon:'glyphicon-unchecked', form:'partials/artefacts/assert.html'});
+  artefactTypes.register('Check',{icon:'glyphicon-ok', form:'partials/artefacts/check.html'});
+  artefactTypes.register('Assert',{icon:'glyphicon-ok', form:'partials/artefacts/assert.html'});
 
 });
 

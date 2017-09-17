@@ -219,3 +219,8 @@ ul.attribute-list li p {
 ul.attribute-list li {
     margin-bottom: 20px;
 }
+
+hr {
+	margin-bottom: 5px;
+	margin-top: 5px;
+}
