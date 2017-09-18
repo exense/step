@@ -30,6 +30,11 @@ public class CallPlan extends AbstractArtefact {
 		
 	DynamicValue<String> input = new DynamicValue<>("{}");
 
+	public CallPlan() {
+		super();
+		setCreateSkeleton(true);
+	}
+
 	public String getArtefactId() {
 		return artefactId;
 	}
