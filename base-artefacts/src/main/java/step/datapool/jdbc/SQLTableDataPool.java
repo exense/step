@@ -32,7 +32,6 @@ import java.util.regex.Pattern;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataSet;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
 public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	private Connection conn1;
@@ -47,8 +46,6 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	private String query;
 	private String table;
 	private String primary_key;
-
-	private static ThreadLocal pkValueHolder = new ThreadLocal();
 
 	private ArrayList<String> cols;
 
@@ -152,13 +149,14 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		try {
 			if(rs.next()){
 				row = new HashMap<String,Object>();
+				Object pkValue = null;
 				for (String colName:cols) {
 					Object val = rs.getObject(colName);
 					row.put(colName,val);
 					if(colName.trim().toLowerCase().equals(this.primary_key.trim().toLowerCase()))
-						pkValueHolder.set(val);
+						pkValue = val;
 				}
-				return new SQLRowWrapper(rs.getRow(), row);
+				return new SQLRowWrapper(rs.getRow(), row, pkValue);
 			}
 			else
 				return null;
@@ -174,11 +172,13 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	public class SQLRowWrapper extends SimpleStringMap {
 
+		private final Object pkValue;
+		
 		private HashMap<String,Object> rowData;
 
-		public SQLRowWrapper(int rowNum, HashMap<String,Object> row) throws Exception {
+		public SQLRowWrapper(int rowNum, HashMap<String,Object> row, Object pkValue) throws Exception {
 			super();
-
+			this.pkValue = pkValue;
 			if(rowNum < 1)
 				throw new Exception("Invalid row number:" + rowNum);
 			this.rowData = row; 
@@ -189,11 +189,14 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		public String put(String key, String value){
 			String sql = null;
 			Statement update = null;
-			Object currValue = pkValueHolder.get();
-			if(currValue instanceof String)
-				sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = '" + currValue + "'";
-			else
-				sql= "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = " + currValue;
+			if(pkValue!=null) {
+				if(pkValue instanceof String)
+					sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = '" + pkValue + "'";
+				else
+					sql= "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = " + pkValue;				
+			} else {
+				throw new RuntimeException("The value of the primary key :" + primary_key + " is null. Unable to update key=" + key + " and value=" + value);
+			}
 			
 			try {
 				update = conn1.createStatement();
@@ -201,7 +204,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				/*int upd_rs = */update.executeUpdate(sql);
 			} catch (SQLException e) {
 				e.printStackTrace();
-				throw new RuntimeException("Could not execute update with pk :" + primary_key + " = "+pkValueHolder.get()+", with key=" + key + " and value=" + value);
+				throw new RuntimeException("Could not execute update with pk :" + primary_key + " = "+pkValue+", with key=" + key + " and value=" + value);
 			}finally{
 				try {
 					if(!update.isClosed())
