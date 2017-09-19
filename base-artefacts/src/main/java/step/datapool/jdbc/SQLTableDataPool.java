@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -144,11 +145,11 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	@Override
 	public Object next_(){
 
-		HashMap<String,Object> row = null;
+		ConcurrentHashMap<String,Object> row = null;
 		
 		try {
 			if(rs.next()){
-				row = new HashMap<String,Object>();
+				row = new ConcurrentHashMap<String,Object>();
 				Object pkValue = null;
 				for (String colName:cols) {
 					Object val = rs.getObject(colName);
@@ -174,9 +175,9 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 		private final Object pkValue;
 		
-		private HashMap<String,Object> rowData;
+		private ConcurrentHashMap<String,Object> rowData;
 
-		public SQLRowWrapper(int rowNum, HashMap<String,Object> row, Object pkValue) throws Exception {
+		public SQLRowWrapper(int rowNum, ConcurrentHashMap<String,Object> row, Object pkValue) throws Exception {
 			super();
 			this.pkValue = pkValue;
 			if(rowNum < 1)
@@ -219,6 +220,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				e.printStackTrace();
 				throw new RuntimeException("Commit failed");
 			}
+			rowData.put(key,value);
 			return value;
 		}
 
