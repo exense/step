@@ -79,13 +79,18 @@ public class AgentTokenPool {
 		return token;
 	}
 	
-	public void createTokenReservationSession(String tokenId) throws InvalidTokenIdException {
+	public synchronized void createTokenReservationSession(String tokenId) throws InvalidTokenIdException {
 		AgentTokenWrapper token = getToken(tokenId);
 		if(token!=null) {
 			TokenReservationSession previousTokenReservationSession = token.getTokenReservationSession();
 			if(previousTokenReservationSession!=null) {
 				logger.warn("Trying to reserve token '"+tokenId+"' which is already reserved. Closing previous session.");
-				previousTokenReservationSession.close();
+				try {
+					previousTokenReservationSession.close();
+				} catch (Exception e) {
+					logger.warn("Error while closing token session for token "+tokenId+
+							". This may cause a resource leak. Creating new session anyway.", e);
+				}
 			}
 			
 			TokenReservationSession tokenReservationContext = new TokenReservationSession();
@@ -95,13 +100,18 @@ public class AgentTokenPool {
 		}
 	}
 	
-	public void closeTokenReservationSession(String tokenId) throws InvalidTokenIdException {
+	public synchronized void closeTokenReservationSession(String tokenId) throws InvalidTokenIdException {
 		AgentTokenWrapper token = getToken(tokenId);
 		if(token!=null) {
 			TokenReservationSession tokenReservationSession = token.getTokenReservationSession();
 			token.setTokenReservationSession(null);
 			if(tokenReservationSession!=null) {
-				tokenReservationSession.close();
+				try {
+					tokenReservationSession.close();					
+				} catch (Exception e) {
+					logger.warn("Error while closing token session for token "+tokenId+
+							". This may cause a resource leak. Still returning token to the pool.", e);
+				}
 			} else {
 				// token has already been released or has never been reserved. Nothing to do.
 				logger.warn("Trying to release token '"+tokenId+"' which is not reserved");

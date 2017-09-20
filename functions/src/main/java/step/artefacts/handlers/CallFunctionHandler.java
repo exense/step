@@ -107,20 +107,18 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			Map<String, Interest> addtionalSelectionCriteria = tokenSelectorHelper.getAdditionalSelectionCriteria(testArtefact, getBindings());
 		
 			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-			TokenWrapper token = functionRouter.selectToken(function, (FunctionGroupContext)o, addtionalSelectionCriteria);
-			
 			boolean releaseTokenAfterExecution = (o==null);
 
-			Token gridToken = token.getToken();
-			if(gridToken.isLocal()) {
-				gridToken.attachObject(EXECUTION_CONTEXT_KEY, context);
-			}
-					
-			node.setAgentUrl(token.getAgent().getAgentUrl());
-			node.setTokenId(token.getID());
-			token.setCurrentOwner(node);
-
+			TokenWrapper token = functionRouter.selectToken(function, (FunctionGroupContext)o, addtionalSelectionCriteria);
 			try {
+				Token gridToken = token.getToken();
+				if(gridToken.isLocal()) {
+					gridToken.attachObject(EXECUTION_CONTEXT_KEY, context);
+				}
+				
+				node.setAgentUrl(token.getAgent().getAgentUrl());
+				node.setTokenId(token.getID());
+				token.setCurrentOwner(node);
 				
 				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()});
 				Output output;

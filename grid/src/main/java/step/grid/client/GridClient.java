@@ -100,8 +100,15 @@ public class GridClient implements Closeable {
 		TokenWrapper tokenWrapper = getToken(tokenPretender);
 		
 		if(createSession) {
-			tokenWrapper.setHasSession(true);
-			reserveToken(tokenWrapper.getAgent(), tokenWrapper.getToken());			
+			try {
+				reserveSession(tokenWrapper.getAgent(), tokenWrapper.getToken());			
+				tokenWrapper.setHasSession(true);				
+			} catch(AgentCommunicationException e) {
+				logger.warn("Error while reserving session for token "+tokenWrapper.getID() +". Returning token to pool. "
+						+ "Subsequent call to this token may fail or leaks may appear on the agent side.", e);
+				returnTokenHandle(tokenWrapper);
+				throw e;
+			}
 		}
 		return tokenWrapper;
 	}
@@ -112,7 +119,8 @@ public class GridClient implements Closeable {
 		}
 		
 		if(tokenWrapper.hasSession()) {
-			returnToken(tokenWrapper.getAgent(),tokenWrapper.getToken());			
+			//tokenWrapper.setHasSession(false);
+			releaseSession(tokenWrapper.getAgent(),tokenWrapper.getToken());			
 		}
 	}
 	
@@ -155,7 +163,7 @@ public class GridClient implements Closeable {
 		return output;
 	}
 
-	private void reserveToken(AgentRef agentRef, Token token) throws AgentCommunicationException {
+	private void reserveSession(AgentRef agentRef, Token token) throws AgentCommunicationException {
 		call(agentRef, token, "/reserve", builder->builder.get());
 	}
 	
@@ -171,7 +179,7 @@ public class GridClient implements Closeable {
 		});
 	}
 	
-	private void returnToken(AgentRef agentRef, Token token) throws AgentCommunicationException {
+	private void releaseSession(AgentRef agentRef, Token token) throws AgentCommunicationException {
 		call(agentRef, token, "/release", builder->builder.get());
 	}
 	
