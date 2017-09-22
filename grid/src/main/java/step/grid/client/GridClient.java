@@ -190,7 +190,8 @@ public class GridClient implements Closeable {
 	private Object call(AgentRef agentRef, Token token, String cmd, Function<Builder, Response> f, Function<Response, Object> mapper) throws AgentCommunicationException {
 		String agentUrl = agentRef.getAgentUrl();
 		int connectionTimeout = READ_TIMEOUT_OFFSET;
-		int callTimeoutOffset = READ_TIMEOUT_OFFSET;
+		// TODO make this configurable
+		int callTimeoutOffset = 10000;
 		Builder builder =  client.target(agentUrl + "/token/" + token.getId() + cmd).request()
 				.property(ClientProperties.READ_TIMEOUT, callTimeoutOffset).property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout);
 		
