@@ -73,4 +73,51 @@ public class DynamicBeanResolver {
 			}			
 		}
 	}
+	
+	public <T> T cloneDynamicValues(T o) {
+		if(o!=null) {
+			try {
+				Class<? extends Object> clazz = o.getClass();
+				@SuppressWarnings("unchecked")
+				T out = (T) clazz.newInstance();
+				
+				BeanInfo beanInfo = beanInfoCache.get(clazz);
+				if(beanInfo==null) {
+					beanInfo = Introspector.getBeanInfo(clazz, Object.class);
+					beanInfoCache.put(clazz, beanInfo);
+				}
+				
+				for(PropertyDescriptor descriptor:beanInfo.getPropertyDescriptors()) {
+					Method method = descriptor.getReadMethod();
+					if(method!=null) {
+						Object newValue;
+						Object oldValue = method.invoke(o);
+						if(oldValue!=null) {
+							if(oldValue instanceof DynamicValue) {
+								DynamicValue<?> dynamicValue = (DynamicValue<?>) oldValue;
+								newValue = dynamicValue.cloneValue();
+							} else if(method.isAnnotationPresent(ContainsDynamicValues.class)) {
+								newValue = cloneDynamicValues(oldValue);
+							} else {
+								newValue = oldValue;
+							}
+						} else {
+							newValue = null;
+						}
+						Method writeMethod = descriptor.getWriteMethod();
+						if(writeMethod!=null) {
+							descriptor.getWriteMethod().invoke(out, newValue);							
+						} else {
+							throw new RuntimeException("Unable to clone object "+o.toString()+". No setter found for "+descriptor);
+						}
+					}
+				}
+				return out;
+			} catch (Exception e) {
+				throw new RuntimeException("Error while cloning object "+o.toString(),e);
+			} 
+		} else {
+			return null;
+		}
+	}
 }

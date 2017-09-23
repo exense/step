@@ -7,4 +7,8 @@ public class TestBean2 {
 	public DynamicValue<String> getTestString() {
 		return testString;
 	}
+
+	public void setTestString(DynamicValue<String> testString) {
+		this.testString = testString;
+	}
 }

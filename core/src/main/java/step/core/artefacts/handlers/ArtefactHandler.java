@@ -37,6 +37,7 @@ import step.core.artefacts.ArtefactFilter;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ArtefactCache;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
@@ -291,6 +292,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	public static List<AbstractArtefact> getChildren(AbstractArtefact artefact, ExecutionContext context) { 
 		ArtefactCache artefactCache = context.getArtefactCache();
+		DynamicBeanResolver dynamicBeanResolver = context.getGlobalContext().getDynamicBeanResolver();
 		ArtefactAccessor accessor = context.getGlobalContext().getArtefactAccessor();
 		List<AbstractArtefact> result = new ArrayList<>();
 		if(artefact.getChildrenIDs()!=null) {
@@ -300,7 +302,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 					child = accessor.get(childrenID);
 					artefactCache.put(child);
 				}
-				result.add(ArtefactCloner.clone(child));
+				result.add(dynamicBeanResolver.cloneDynamicValues(child));
 			}
 		}
 		return result;

@@ -30,6 +30,22 @@ public class TestBean {
 		return testRecursive;
 	}
 
+	public void setTestString(DynamicValue<String> testString) {
+		this.testString = testString;
+	}
+
+	public void setTestBoolean(DynamicValue<Boolean> testBoolean) {
+		this.testBoolean = testBoolean;
+	}
+
+	public void setTestInteger(DynamicValue<Integer> testInteger) {
+		this.testInteger = testInteger;
+	}
+
+	public void setTestRecursive(DynamicValue<TestBean2> testRecursive) {
+		this.testRecursive = testRecursive;
+	}
+
 	@ContainsDynamicValues
 	public TestBean2 getTestRecursive2() {
 		return testRecursive2;
