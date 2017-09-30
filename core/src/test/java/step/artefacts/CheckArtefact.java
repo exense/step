@@ -38,5 +38,9 @@ public class CheckArtefact extends AbstractArtefact {
 	public Runnable getExecutionRunnable() {
 		return executionRunnable;
 	}
+
+	public void setExecutionRunnable(Runnable executionRunnable) {
+		this.executionRunnable = executionRunnable;
+	}
 	
 }
