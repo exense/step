@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms','export'])
 
-.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService, reportTableFactory, executionServices, ExportServices) {
+.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService, reportTableFactory, executionServices, ExportService) {
       stateStorage.push($scope, 'artefacteditor', {});
       
       $scope.$watch('$state',function() {
@@ -173,7 +173,7 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
       }, $scope);
       
       $scope.exportArtefact = function() {
-        ExportServices.get("rest/export/artefact/"+$scope.artefact.id);
+        ExportService.get("rest/export/artefact/"+$scope.artefact.id);
       }
       
 })
