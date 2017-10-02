@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 
@@ -57,6 +58,12 @@ public class InMemoryArtefactAccessor extends ArtefactAccessor {
 	
 	public Collection<? extends AbstractArtefact> getCollection() {
 		return map.values();
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Iterator<AbstractArtefact> getRootArtefacts() {
+		return (Iterator<AbstractArtefact>) getCollection().stream().filter(a->a.isRoot()).collect(Collectors.toList()).iterator();
 	}
 
 }

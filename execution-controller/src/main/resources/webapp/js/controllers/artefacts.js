@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('artefactsControllers',['dataTable','step'])
+angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export'])
 
-.controller('ArtefactListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', '$location', 'AuthService',
-    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, $location, AuthService) {
+.controller('ArtefactListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', '$location', 'AuthService', 'ExportService',
+    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, $location, AuthService, ExportService) {
       $stateStorage.push($scope, 'artefacts', {});	
 
       $scope.autorefresh = true;
@@ -81,11 +81,29 @@ angular.module('artefactsControllers',['dataTable','step'])
         }
       }
       
+      $scope.importArtefact = function() {
+        var modalInstance = $uibModal.open({
+          templateUrl: 'partials/artefactImportDialog.html',
+          controller: 'importArtefactModalCtrl',
+          resolve: {}
+        });
+
+        modalInstance.result.then(function (artefact) {
+          $scope.function_.artefactId = artefact.id;
+        });
+      }
+      
+      $scope.exportArtefacts = function() {
+        ExportService.get("rest/export/artefacts")
+      }
+      
       $scope.table = {};
 
       $scope.tabledef = {}
       
-      $scope.tabledef.actions = [{"label":"Paste","action":function() {$scope.pasteArtefact()}}];
+      $scope.tabledef.actions = [{"label":"Paste","action":function() {$scope.pasteArtefact()}},
+                                 {"label":"Import","action":function() {$scope.importArtefact()}},
+                                 {"label":"Export","action":function() {$scope.exportArtefacts()}}];
       
       
       $scope.tabledef.columns = function(columns) {
@@ -196,6 +214,38 @@ angular.module('artefactsControllers',['dataTable','step'])
   };
 
 
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+})
+
+.controller('importArtefactModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs) {
+  
+  var attachmentId; 
+  
+  $scope.upload = function (file) {
+    Upload.upload({
+        url: 'rest/upload',
+        data: {file: file}
+    }).then(function (resp) {
+      attachmentId = resp.data.attachmentId; 
+    }, function (resp) {
+        console.log('Error status: ' + resp.status);
+    }, function (evt) {
+        $scope.progress = parseInt(100.0 * evt.loaded / evt.total);
+    });
+  };
+  
+  $scope.save = function() {
+    if(attachmentId) {
+      $http({url:"rest/import/container/"+attachmentId+"/artefact",method:"POST"}).then(function(response) {
+        $uibModalInstance.close(response.data);
+      })      
+    } else {
+      Dialogs.showErrorMsg("Upload not completed.");
+    }
+  }
+  
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };

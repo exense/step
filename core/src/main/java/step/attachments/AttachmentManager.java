@@ -23,6 +23,7 @@ import java.io.File;
 import org.bson.types.ObjectId;
 
 import step.commons.conf.Configuration;
+import step.commons.helpers.FileHelper;
 
 public class AttachmentManager {
 	
@@ -56,6 +57,11 @@ public class AttachmentManager {
 		return new File(filerPath + "/" + id.toString());
 	}
 	
+	public File getFileById(String id) {
+		return getFileById(new ObjectId(id));
+	}
+	
+	@Deprecated
 	public File getFileById(ObjectId id) {
 		File folder = getContainerFileById(id);
 		String[] list = folder.list();
@@ -65,5 +71,10 @@ public class AttachmentManager {
 		} else {
 			return null;
 		}	
+	}
+	
+	public void deleteContainer(String id) {
+		File folder = getContainerFileById(new ObjectId(id));
+		FileHelper.deleteFolder(folder);
 	}
 }

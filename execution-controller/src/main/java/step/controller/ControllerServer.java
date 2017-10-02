@@ -35,6 +35,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
@@ -49,6 +50,9 @@ import step.core.deployment.AuthenticationFilter;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.ErrorFilter;
 import step.core.deployment.JacksonMapperProvider;
+import step.core.deployment.UploadServices;
+import step.core.export.ExportServices;
+import step.core.export.ImportServices;
 import step.grid.agent.ArgumentParser;
 import step.plugins.interactive.InteractiveServices;
 
@@ -164,6 +168,7 @@ public class ControllerServer {
 		});
 		
 		resourceConfig.register(JacksonMapperProvider.class);
+		resourceConfig.register(MultiPartFeature.class);
 		
 		resourceConfig.registerClasses(ApplicationServices.class);
 		resourceConfig.registerClasses(ControllerServices.class);
@@ -172,6 +177,8 @@ public class ControllerServer {
 		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
+		resourceConfig.registerClasses(ExportServices.class, ImportServices.class);
+		resourceConfig.registerClasses(UploadServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override

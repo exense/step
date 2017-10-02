@@ -46,7 +46,7 @@ public class DownloadFileServlet extends HttpServlet {
 		String uuid = (String) request.getParameter("uuid");
 		String deleteAfterDownload = (String) request.getParameter("deleteAfterDownload");
 		
-		File downloadFile = attachmentManager.getFileById(new ObjectId(uuid));
+		File downloadFile = attachmentManager.getFileById(uuid);
 				
 		FileInputStream inStream = new FileInputStream(downloadFile);
 
@@ -75,7 +75,7 @@ public class DownloadFileServlet extends HttpServlet {
 		outStream.close();
 		
 		if(deleteAfterDownload!=null && deleteAfterDownload.equals("true")) {
-			//TODO: implement attachment deletion
+			attachmentManager.deleteContainer(uuid);
 		}
 	}
 	

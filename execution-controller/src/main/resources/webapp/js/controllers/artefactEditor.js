@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'])
+angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms','export'])
 
-.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService, reportTableFactory, executionServices) {
+.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService, reportTableFactory, executionServices, ExportServices) {
       stateStorage.push($scope, 'artefacteditor', {});
       
       $scope.$watch('$state',function() {
@@ -171,6 +171,10 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
       $scope.stepsTable = reportTableFactory.get(function() {
         return {'eid':$scope.interactiveSession.id};     
       }, $scope);
+      
+      $scope.exportArtefact = function() {
+        ExportServices.get("rest/export/artefact/"+$scope.artefact.id);
+      }
       
 })
 

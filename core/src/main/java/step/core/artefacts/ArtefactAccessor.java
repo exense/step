@@ -96,6 +96,12 @@ public class ArtefactAccessor extends AbstractAccessor {
 		return artefacts.findOne(query).as(AbstractArtefact.class);
 	}
 	
+	public Iterator<AbstractArtefact> getRootArtefacts() {
+		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
+		builder.add("root", true);
+		return artefacts.find(builder.build().toString()).as(AbstractArtefact.class);
+	}
+	
 	public Iterator<AbstractArtefact> getAll() {
 		return artefacts.find().as(AbstractArtefact.class);
 	}

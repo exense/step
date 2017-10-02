@@ -5,6 +5,7 @@
 			<div class="panel panel-default">
 				<div class="panel-heading">{{artefact._class}}{{artefact.root?(' - '+artefact.attributes.name):''}}
 					<div class="pull-right">
+						<button type="submit" class="btn btn-default btn-xs" ng-click="exportArtefact()">Export</button>
 						<div class="btn-group" style="margin-right:5px;">
 							<button ng-disabled="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="startInteractive()">Start interactive session</button>
 							<button ng-if="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="resetInteractive()">Reset</button>
