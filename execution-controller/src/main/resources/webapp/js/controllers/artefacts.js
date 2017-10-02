@@ -101,11 +101,6 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
 
       $scope.tabledef = {}
       
-      $scope.tabledef.actions = [{"label":"Paste","action":function() {$scope.pasteArtefact()}},
-                                 {"label":"Import","action":function() {$scope.importArtefact()}},
-                                 {"label":"Export","action":function() {$scope.exportArtefacts()}}];
-      
-      
       $scope.tabledef.columns = function(columns) {
         _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
           col.visible = false

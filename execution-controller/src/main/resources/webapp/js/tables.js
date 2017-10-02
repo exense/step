@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('dataTable', [])
+angular.module('dataTable', ['export'])
 
 .directive('dateinput', ['$http',function($http) {
   return {
@@ -89,7 +89,7 @@ angular.module('dataTable', [])
   };
 }])
 
-.directive('datatable', ['$compile','$http','$timeout','$q','Preferences',function($compile,$http,$timeout,$q,Preferences) {
+.directive('datatable', ['$compile','$http','$timeout','$q','Preferences','ExportService',function($compile,$http,$timeout,$q,Preferences,ExportService) {
   return {
     restrict:'E',
     scope: {
@@ -98,7 +98,10 @@ angular.module('dataTable', [])
       handle: '=',
       initialselection: '='
     },
-    link: function(scope, element, attr, tabsCtrl) {       
+    transclude: {
+      'actions': '?tableActions'
+    },
+    link: function(scope, element, attr, tabsCtrl, linker) {       
       var tableElement = angular.element(element).find('table');
       
       var tableOptions = {"data" : []};
@@ -140,28 +143,21 @@ angular.module('dataTable', [])
         });
         
         var nCol = tableElement.find('thead tr[role="row"] th').length;
-        var cmdRow = tableElement.find('thead').prepend('<tr class="tableactions"><th colspan="'+nCol+'"></div><div id="selectionButtons" class="btn-group btn-group-xs pull-right"></div><div id="commandButtons" class="btn-group btn-group-xs pull-right" style="margin-right:10px"></th></tr>');
-        var selectionButtons = cmdRow.find('#selectionButtons');
-        var commandButtons = cmdRow.find('#commandButtons');
-
-        if(scope.handle) {
-          scope.handle.buttonRow = commandButtons;
+        
+        var tableActions = linker(null,null,'actions');
+        
+        var cmdDiv;
+        if(element.find('div.dataTables_filter').length>0) {
+          cmdDiv = element.find('div.dataTables_filter');
+          cmdDiv.parent().removeClass('col-sm-6').addClass('col-sm-9');
+          element.find('div.dataTables_length').parent().removeClass('col-sm-6').addClass('col-sm-3');
+        } else {
+          cmdDiv = element.find('div.dataTables_length');          
         }
         
-        if(scope.tabledef.actions) {
-          _.each(scope.tabledef.actions, function(action){
-            $('<button type="button" class="btn btn-default" aria-label="Left Align">'+action.label+'</button>').appendTo(commandButtons).click(function(){
-              action.action();
-            });
-          })
-        }
-        
-        
-        if(tableOptions.serverSide) {
-          $('<button type="button" class="btn btn-default" aria-label="Left Align">Export as CSV</button>').appendTo(selectionButtons).click(function(){
-            scope.export()
-          });
-        }
+        var selectionButtons = angular.element('<div class="btn-group btn-group-menu"></div>').appendTo(cmdDiv);  
+        angular.element('<div class="pull-right"></div>').append(tableActions).appendTo(cmdDiv);
+        var commandButtons = angular.element('<div class="btn-group btn-group-menu pull-right"></div>').appendTo(cmdDiv);
         
         if(attr.selectionmode=='multiple') {
           
@@ -171,13 +167,13 @@ angular.module('dataTable', [])
             scope.$digest();
           });
           
-          $('<button type="button" class="btn btn-default" aria-label="Left Align">Unselect all</button>').appendTo(selectionButtons).click(function(){
+          $('<button type="button" class="btn btn-default">Unselect all</button>').appendTo(selectionButtons).click(function(){
             scope.setSelectionOnFilteredRows(false);
             scope.sendSelectionChangeEvent();
             scope.refreshInputs();
           });
           
-          $('<button type="button" class="btn btn-default" aria-label="Left Align">Select all</button>').appendTo(selectionButtons).click(function(){
+          $('<button type="button" class="btn btn-default">Select all</button>').appendTo(selectionButtons).click(function(){
             scope.setSelectionOnFilteredRows(true);
             scope.sendSelectionChangeEvent();
             scope.refreshInputs();
@@ -381,25 +377,12 @@ angular.module('dataTable', [])
         }
       };
     
-      scope.export = function() {
+      scope.exportAsCSV = function() {
         scope.reportID = Math.random().toString(36).substr(2,9);
         scope.reportRequested = true;
-        scope.Datatable.ajax.reload(null, false);
-        
-        (function poll() {
-          $http.get('rest/datatable/exports/' + scope.reportID).then(function (response) {
-            var data = response.data;
-            if(data.ready) {
-              var attachmentID = data.attachmentID;
-              $.fileDownload('files?uuid='+attachmentID)
-              .done(function () { alert('File download a success!'); })
-              .fail(function () { alert('File download failed!'); });
-            } else {
-              $timeout(poll, 1000);              
-            }
-          });
-        })();
-        
+        scope.Datatable.ajax.reload(function() {
+          ExportService.pollUrl('rest/datatable/exports/' + scope.reportID);          
+        }, false);
       }
 
       if(scope.handle) {

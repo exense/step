@@ -25,6 +25,10 @@ public class ExportTaskManager {
 	
 	public ExportStatus createExportTask(ExportRunnable runnable) {
 		String exportId = UUID.randomUUID().toString();
+		return createExportTask(exportId, runnable);
+	}
+	
+	public ExportStatus createExportTask(String exportId, ExportRunnable runnable) {
 		ExportStatus status = new ExportStatus(exportId);
 		exportStatusMap.put(exportId, status);
 		AttachmentContainer container = attachmentManager.createAttachmentContainer();

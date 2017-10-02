@@ -18,9 +18,11 @@
  *******************************************************************************/
 var schedulerController = angular.module('schedulerControllers',['dataTable']);
 
-schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$uibModal', 
-  function($scope, $http,$stateStorage, $uibModal) {
+schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$uibModal', 'AuthService', 
+  function($scope, $http,$stateStorage, $uibModal,AuthService) {
     $stateStorage.push($scope, 'scheduler', {});
+    
+    $scope.authService = AuthService;
     
 	$scope.datatable = {}
 
@@ -48,10 +50,6 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	                   {"title" : "Description"},
 	                   {"title" : "Actions", "render" : actionColRender},
 	                   {"title" : "Status", "render" : statusColRender}];
-	
-	$scope.tabledef.actions = [{"label":"Enable","action":function() {$scope.enableSelected()}},
-                             {"label":"Disable","action":function() {$scope.deleteSelected(false)}},
-                             {"label":"Remove","action":function() {$scope.deleteSelected(true)}}];
 	
 	$scope.loadTable = function loadTable() {	
 		$http.get("rest/controller/task").then(function(response) {

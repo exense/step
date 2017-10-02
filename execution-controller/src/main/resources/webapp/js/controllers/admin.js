@@ -53,9 +53,6 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
               return html;
             }}];
 
-        $scope.tabledef.actions = [{"label":"Reset passwords","action":function() {$scope.forAllSelected('resetPwd')}},
-                                   {"label":"Remove","action":function() {$scope.forAllSelected('removeUser')}}];
-        
         $scope.loadTable();
         
         $scope.forAllSelected = function(fctName) {

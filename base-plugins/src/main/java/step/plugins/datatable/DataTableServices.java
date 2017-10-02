@@ -24,11 +24,8 @@ import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -60,8 +57,6 @@ import org.slf4j.LoggerFactory;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
-import step.attachments.AttachmentContainer;
-import step.attachments.AttachmentManager;
 import step.core.accessors.Collection;
 import step.core.accessors.CollectionFind;
 import step.core.accessors.SearchOrder;
@@ -69,6 +64,9 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.execution.model.ExecutionStatus;
+import step.core.export.ExportTaskManager;
+import step.core.export.ExportTaskManager.ExportRunnable;
+import step.core.export.ExportTaskManager.ExportStatus;
 import step.plugins.datatable.formatters.custom.ExecutionSummaryFormatter;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
@@ -81,12 +79,14 @@ public class DataTableServices extends AbstractServices {
 	
 	protected DataTableRegistry dataTableRegistry;
 	
-	Map<String, ReportStatus> reports = new ConcurrentHashMap<>();
+	protected ExportTaskManager exportTaskManager;
 	
 	ExecutorService reportExecutor = Executors.newFixedThreadPool(2);
 	
 	@PostConstruct
 	public void init() {
+		exportTaskManager = new ExportTaskManager(getContext().getAttachmentManager());
+		
 		MongoDatabase database = getContext().getMongoDatabase();
 		
 		dataTableRegistry = getContext().get(DataTableRegistry.class);
@@ -237,14 +237,7 @@ public class DataTableServices extends AbstractServices {
 		
 		if(params.containsKey("export")) {
 			String reportID = params.getFirst("export");
-			ReportStatus status = new ReportStatus();
-			reports.put(reportID, status);
-			reportExecutor.execute(new Runnable() {			
-				@Override
-				public void run() {
-					export(reportID, table, query, order);					
-				}
-			});
+			exportTaskManager.createExportTask(reportID, new ExportTask(table, query, order));
 		}
 		
 		CollectionFind<Document> find = table.getCollection().find(query, order, skip, limit);
@@ -266,7 +259,7 @@ public class DataTableServices extends AbstractServices {
 		return response;
 	}
 
-	private String[] formatRow(List<ColumnDef> columns, Document row) {
+	private static String[] formatRow(List<ColumnDef> columns, Document row) {
 		int columnID = 0;
 		String[] rowFormatted = new String[columns.size()];
 		for(ColumnDef column:columns) {
@@ -288,107 +281,72 @@ public class DataTableServices extends AbstractServices {
 		return rowFormatted;
 	}
 	
-	public class ReportStatus {
-		
-		String attachmentID;
-		
-		volatile boolean ready = false;
-				
-		volatile float progress = 0;
-
-		public ReportStatus() {
-			super();
-		}
-
-		public String getAttachmentID() {
-			return attachmentID;
-		}
-
-		public void setAttachmentID(String attachmentID) {
-			this.attachmentID = attachmentID;
-		}
-
-		public boolean isReady() {
-			return ready;
-		}
-
-		public void setReady(boolean ready) {
-			this.ready = ready;
-		}
-
-		public float getProgress() {
-			return progress;
-		}
-
-		public void setProgress(float progress) {
-			this.progress = progress;
-		}
-	}
-	
 	@GET
 	@Path("/exports/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public ReportStatus getExport(@PathParam("id") String reportID) throws Exception {
-		ReportStatus report = reports.get(reportID);
-		if(report.ready) {
-			reports.remove(reportID);
-		}
-		return report;
+	public ExportStatus getExport(@PathParam("id") String reportID) throws Exception {
+		return exportTaskManager.getExportStatus(reportID);
 	}
 	
 	private static final String CSV_DELIMITER = ";";
 	
-	private void export(String id, BackendDataTable table, Bson query, SearchOrder order) {
-		AttachmentManager attachmentManager = getContext().getAttachmentManager();
-		AttachmentContainer container = attachmentManager.createAttachmentContainer();
-		ReportStatus status = reports.get(id);
-		status.setAttachmentID(container.getMeta().getId().toString());
+	public static class ExportTask extends ExportRunnable {
 		
-		try {
-			CollectionFind<Document> find = table.getCollection().find(query, order, null, null);		
+		protected BackendDataTable table;
+		protected Bson query;
+		protected SearchOrder order;
+		
+		public ExportTask(BackendDataTable table, Bson query, SearchOrder order) {
+			super();
+			this.table = table;
+			this.query = query;
+			this.order = order;
+		}
 
-			PrintWriter writer = new PrintWriter(new File(container.getContainer().getAbsoluteFile()+"/export.csv"),"UTF-8");
-			
+		protected void runExport() throws Exception {			
 			try {
-				List<ColumnDef> columns = table.getExportColumns()!=null?table.getExportColumns():table.getColumns();
+				CollectionFind<Document> find = table.getCollection().find(query, order, null, null);		
+	
+				PrintWriter writer = new PrintWriter(new File(getContainer()+"/export.csv"),"UTF-8");
 				
-				for(ColumnDef colDef:columns) {
-					// Workaround for Excel bug. "SYLK: File format is not valid" 
-					String title = colDef.title.replaceAll("^ID", "id");
-					writer.print(title);
-					writer.print(CSV_DELIMITER);
-				}
-				writer.println();
-				
-				find.getRecordsFiltered();
-				
-				Iterator<Document> it = find.getIterator();
-				
-				int count = 0;
-				while(it.hasNext()) {
-					count++;
-					Document object = it.next();
-					String[] formattedRow = formatRow(columns, object);
-					for(String val:formattedRow) {
-						if(val.contains(CSV_DELIMITER)||val.contains("\n")||val.contains("\"")) {
-							val = "\"" + val.replaceAll("\"", "\"\"") + "\"";
-						}
-						writer.print(val);
+				try {
+					List<ColumnDef> columns = table.getExportColumns()!=null?table.getExportColumns():table.getColumns();
+					
+					for(ColumnDef colDef:columns) {
+						// Workaround for Excel bug. "SYLK: File format is not valid" 
+						String title = colDef.title.replaceAll("^ID", "id");
+						writer.print(title);
 						writer.print(CSV_DELIMITER);
 					}
 					writer.println();
-					status.progress = (float) (1.0 * count / find.getRecordsFiltered());
+					
+					find.getRecordsFiltered();
+					
+					Iterator<Document> it = find.getIterator();
+					
+					int count = 0;
+					while(it.hasNext()) {
+						count++;
+						Document object = it.next();
+						String[] formattedRow = DataTableServices.formatRow(columns, object);
+						for(String val:formattedRow) {
+							if(val.contains(CSV_DELIMITER)||val.contains("\n")||val.contains("\"")) {
+								val = "\"" + val.replaceAll("\"", "\"\"") + "\"";
+							}
+							writer.print(val);
+							writer.print(CSV_DELIMITER);
+						}
+						writer.println();
+						//status.progress = (float) (1.0 * count / find.getRecordsFiltered());
+					}
+				} finally {
+					writer.close();
 				}
-			} finally {
-				writer.close();
+				
+			} catch (Exception e) {
+				logger.error("An error occurred while generating report", e);
 			}
-			
-		} catch (Exception e) {
-			logger.error("An error occurred while generating report", e);
-		} finally {
-			status.setProgress(1);
-			status.setReady(true);
 		}
 	}
 	
@@ -406,7 +364,7 @@ public class DataTableServices extends AbstractServices {
 		}
 	}
 	
-	private String format(Object value, Document row, ColumnDef column) {
+	private static String format(Object value, Document row, ColumnDef column) {
 		return column.format.format(value, row);
 	}
 }

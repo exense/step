@@ -152,7 +152,6 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
       $scope.table = {};
 
       $scope.tabledef = {}
-      $scope.tabledef.actions = [{"label":"Paste","action":function() {$scope.pasteFunction()}}];
       $scope.tabledef.columns = function(columns) {
         _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
           col.visible = false

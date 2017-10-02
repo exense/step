@@ -67,9 +67,9 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
         $scope.tabledef = {};
         $scope.tabledef.columns = [ { "title" : "ID", "visible" : false}, { "title" : "Url" } ];
 
-        $scope.tabledef.actions = [{"label":"Interrupt","action":function() {$scope.interruptSelected()}},
-                                   {"label":"Resume","action":function() {$scope.resumeSelected()}}];
-        
+//        $scope.tabledef.actions = [{"label":"Interrupt","action":function() {$scope.interruptSelected()}},
+//                                   {"label":"Resume","action":function() {$scope.resumeSelected()}}];
+//        
         $scope.loadTable();
         
         $scope.interruptSelected = function() {

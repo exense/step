@@ -3,7 +3,23 @@
 		Scheduler tasks
 	</div>
 	<div class="panel-body">
-		<datatable handle="datatable" tabledef="tabledef" selectionmode="multiple" columns="columns" columnsearch="true" />
+		<datatable handle="datatable" tabledef="tabledef" selectionmode="multiple" columns="columns" columnsearch="true">
+			<table-actions>
+				<div class="btn-group btn-group-menu">
+					<button type="button" ng-disabled="!authService.hasRight('task-write')" class="btn btn-primary" ng-click="enableSelected()" uib-tooltip="Enable selected tasks">
+						On
+					</button>
+					<button type="button" ng-disabled="!authService.hasRight('task-write')" class="btn btn-primary" ng-click="deleteSelected(false)" uib-tooltip="Disable selected tasks">
+						Off
+					</button>
+				</div>
+				<div class="btn-group btn-group-menu">
+					<button type="button" ng-disabled="!authService.hasRight('task-delete')" class="btn btn-default" ng-click="deleteSelected(true)" uib-tooltip="Remove selected tasks">
+						<span class="glyphicon glyphicon-trash"></span>
+					</button>
+				</div>
+			</table-actions>
+		</datatable>
 	</div>
 </div>
 

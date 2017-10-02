@@ -2,14 +2,21 @@
 	<uib-tabset> 
 		<uib-tab heading="Users">
 			<div class="panel-body" id="UserListCtrl" ng-controller="UserListCtrl">
-				<p>
-				<div class="row">
-					<div class="panel-body pull-right">
-						<button type="button" ng-disabled="!authService.hasRight('user-write')"	class="btn btn-success" ng-click="addUser()">Add user</button>
-					</div>
-				</div>
-				<datatable tabledef="tabledef" handle="datatable" selectionmode="multiple" />
-				</p>
+				<datatable tabledef="tabledef" handle="datatable" selectionmode="multiple" >
+					<table-actions>
+						<div class="btn-group btn-group-menu">
+							<button type="button" ng-disabled="!authService.hasRight('user-write')"	class="btn btn-default" ng-click="forAllSelected('resetPwd')">Reset passwords</button>
+						</div>
+						<div class="btn-group btn-group-menu">
+							<button type="button" ng-disabled="!authService.hasRight('user-write')" class="btn btn-default" ng-click="forAllSelected('removeUser')" uib-tooltip="Remove selected users">
+								<span class="glyphicon glyphicon-trash"></span>
+							</button>
+						</div>
+						<div class="btn-group btn-group-menu">
+							<button type="button" ng-disabled="!authService.hasRight('user-write')"	class="btn btn-success" ng-click="addUser()">Add user</button>
+						</div>
+					</table-actions>
+				</datatable>
 			</div>
 		</uib-tab> 
 	</uib-tabset>

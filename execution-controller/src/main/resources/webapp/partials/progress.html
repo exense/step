@@ -56,7 +56,15 @@
 							</div>
 							<div class="panel-body" ng-show="isShowPanel('steps')">
 								<datatable serverside="reports" tabledef="stepsTable" handle="stepsTable" params="eid={{eid}}"
-									selectionmode="single" columnsearch="true" order="[[1, &quot;desc&quot;]]" />
+									selectionmode="single" columnsearch="true" order="[[1, &quot;desc&quot;]]">
+									<table-actions>
+										<div class="btn-group btn-group-menu">
+											<button type="button" class="btn btn-default" ng-click="$parent.exportAsCSV()" uib-tooltip="Export as CSV">
+												<span class="glyphicon glyphicon-export"></span>
+											</button>
+										</div>									
+									</table-actions>
+								</datatable>
 							</div>
 						</div>
 						<div ng-attr-id="{{getPanelId('parameters')}}" class="panel panel-default">
