@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
+import step.attachments.FileResolver;
 import step.datapool.DataSet;
 
 public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
@@ -21,10 +22,13 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 	@Override
 	public void init() {
 
-		filePath = this.configuration.getFile().get();
-		if (filePath == null || filePath.length() < 1)
+		String file = this.configuration.getFile().get();
+		if (file == null || file.length() < 1)
 			throw new RuntimeException("file path is incorrect.");
-
+		
+		FileResolver fileResolver = new FileResolver(context.getGlobalContext().getAttachmentManager());
+		filePath = fileResolver.resolve(file).getAbsolutePath();
+		
 		initReader();
 		doFirst_();
 	}

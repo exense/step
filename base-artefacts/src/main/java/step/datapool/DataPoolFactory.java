@@ -19,7 +19,6 @@
 package step.datapool;
 
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionContextAware;
 import step.datapool.excel.ExcelDataPool;
 import step.datapool.excel.ExcelDataPoolImpl;
 import step.datapool.file.CSVDataPool;
@@ -53,10 +52,8 @@ public class DataPoolFactory {
 		} else {
 			throw new RuntimeException("Unsupported data source type: "+dataSourceType);
 		}
-
-		if(result instanceof ExecutionContextAware) {
-			((ExecutionContextAware)result).setContext(executionContext);
-		}
+		
+		result.setContext(executionContext);
 		
 		return result;
 	}

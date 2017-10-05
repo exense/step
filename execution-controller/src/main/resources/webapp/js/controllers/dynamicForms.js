@@ -122,7 +122,7 @@ dynamicForms.directive('dynamicCheckbox', function() {
         }
       };
       $scope.isAttachment = function() {
-        return $scope.dynamicValue.value.startsWith('attachment:');
+        return $scope.dynamicValue && (typeof $scope.dynamicValue.value) == 'string' && $scope.dynamicValue.value.startsWith('attachment:');
       }
       $scope.getAttachmentId = function() {
         return $scope.dynamicValue.value.replace("attachment:","");

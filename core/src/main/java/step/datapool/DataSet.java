@@ -18,9 +18,13 @@
  *******************************************************************************/
 package step.datapool;
 
+import step.core.execution.ExecutionContext;
+
 public abstract class DataSet<T> {
 	
 	protected final T configuration;
+	
+	protected ExecutionContext context;
 	
 	public DataSet(T configuration) {
 		super();
@@ -42,5 +46,9 @@ public abstract class DataSet<T> {
 	
 	public abstract void addRow(Object row);
 	
-	public void save() {};
+	public void save() {}
+
+	protected void setContext(ExecutionContext context) {
+		this.context = context;
+	};
 }

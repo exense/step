@@ -17,7 +17,7 @@
 	</div>
 	
 	<div ng-if="artefact.dataSourceType=='csv'">
-		<dynamic-textfield label="'CSV file'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+		<file-input label="'CSV file'" on-save="save()" dynamic-value="artefact.dataSource.file" />
 		<dynamic-textfield label="'Delimiter'" on-save="save()" dynamic-value="artefact.dataSource.delimiter" />
 	</div>
 	
@@ -27,7 +27,7 @@
 	</div>
 	
 	<div ng-if="artefact.dataSourceType=='file'">
-		<dynamic-textfield label="'Flat file'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+		<file-input label="'Flat file'" on-save="save()" dynamic-value="artefact.dataSource.file" />
 	</div>
 	
 	<div ng-if="artefact.dataSourceType=='folder'">
