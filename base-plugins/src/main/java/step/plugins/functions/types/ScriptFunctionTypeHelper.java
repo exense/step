@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
 import step.commons.helpers.FileHelper;
 import step.core.GlobalContext;
@@ -62,7 +63,8 @@ public class ScriptFunctionTypeHelper {
 
 	public File getScriptFile(GeneralScriptFunction function) {
 		String scriptFilePath = function.getScriptFile().get();
-		return new File(scriptFilePath);
+		FileResolver fileResolver = new FileResolver(context.getAttachmentManager());
+		return fileResolver.resolve(scriptFilePath);
 	}
 	
 	protected File getDefaultScriptFile(GeneralScriptFunction function) {
