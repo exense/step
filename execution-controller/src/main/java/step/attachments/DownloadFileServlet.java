@@ -31,9 +31,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.bson.types.ObjectId;
-
-import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 
 public class DownloadFileServlet extends HttpServlet {

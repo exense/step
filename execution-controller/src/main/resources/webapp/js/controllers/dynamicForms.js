@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var dynamicForms = angular.module('dynamicForms',['step'])
+var dynamicForms = angular.module('dynamicForms',['step','ngFileUpload'])
 
 function initDynamicFormsCtrl($scope) {
   $scope.isDynamic = function() {
@@ -93,4 +93,55 @@ dynamicForms.directive('dynamicCheckbox', function() {
 })
 .controller('dynamicValueCtrl',function($scope) {
   initDynamicFormsCtrl($scope);
+})
+.directive('fileInput', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      dynamicValue: '=',
+      label: '=',
+      tooltip: '=',
+      onSave: '&'
+    },
+    controller: function($scope,$http,Upload) {
+      initDynamicFormsCtrl($scope);
+      $scope.upload = function (file) {
+        if(file) {
+          Upload.upload({
+            url: 'rest/files',
+            data: {file: file}
+          }).then(function (resp) {
+            attachmentId = resp.data.attachmentId; 
+            $scope.dynamicValue.value = "attachment:"+attachmentId;
+            $scope.onSave();
+          }, function (resp) {
+            console.log('Error status: ' + resp.status);
+          }, function (evt) {
+            $scope.progress = parseInt(100.0 * evt.loaded / evt.total);
+          });          
+        }
+      };
+      $scope.isAttachment = function() {
+        return $scope.dynamicValue.value.startsWith('attachment:');
+      }
+      $scope.getAttachmentId = function() {
+        return $scope.dynamicValue.value.replace("attachment:","");
+      }
+      
+      $scope.attachmentFilename = "";
+      $scope.$watch('dynamicValue.value',function(newValue) {
+        if(newValue && $scope.isAttachment()) {
+          $http.get("rest/files/"+$scope.getAttachmentId()+"/name").then(
+            function(response) {
+              $scope.attachmentFilename = response.data;
+            });
+        }
+      })
+      
+      $scope.clear = function() {
+        $http.delete("rest/files/"+$scope.getAttachmentId());
+        $scope.dynamicValue.value = '';
+      }
+    },
+    templateUrl: 'partials/dynamicforms/fileInput.html'}
 })

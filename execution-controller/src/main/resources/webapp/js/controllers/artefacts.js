@@ -220,7 +220,7 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
   
   $scope.upload = function (file) {
     Upload.upload({
-        url: 'rest/upload',
+        url: 'rest/files',
         data: {file: file}
     }).then(function (resp) {
       attachmentId = resp.data.attachmentId; 
