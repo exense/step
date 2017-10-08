@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','artefactsControllers','artefactEditor','reportBrowserControllers','adminControllers'])
+var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','parametersControllers','artefactsControllers','artefactEditor','reportBrowserControllers','adminControllers'])
 
 .config(['$locationProvider', function($locationProvider) {
   $locationProvider.hashPrefix('');
@@ -65,6 +65,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 
 .run(function(ViewRegistry) {
   ViewRegistry.registerView('artefacts','partials/artefactList.html');
+  ViewRegistry.registerView('parameters','partials/parameters/parameterList.html');
   ViewRegistry.registerView('grid','partials/grid.html');
   ViewRegistry.registerView('executions','partials/execution.html');
   ViewRegistry.registerView('scheduler','partials/scheduler.html');

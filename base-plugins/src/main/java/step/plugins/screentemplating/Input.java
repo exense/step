@@ -20,12 +20,12 @@ package step.plugins.screentemplating;
 
 import java.util.List;
 
-import step.commons.activation.ActivableObject;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Input extends ActivableObject {
+import step.commons.activation.AbstractActivableObject;
+
+public class Input extends AbstractActivableObject {
 
 	InputType type;
 	

@@ -10,6 +10,11 @@ public class AbstractDBObject {
 	
 	protected Map<String, String> attributes;
 	
+	public AbstractDBObject() {
+		super();
+		_id = new ObjectId();
+	}
+
 	public ObjectId getId() {
 		return _id;
 	}

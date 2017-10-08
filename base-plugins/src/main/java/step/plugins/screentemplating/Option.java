@@ -18,9 +18,9 @@
  *******************************************************************************/
 package step.plugins.screentemplating;
 
-import step.commons.activation.ActivableObject;
+import step.commons.activation.AbstractActivableObject;
 
-public class Option extends ActivableObject {
+public class Option extends AbstractActivableObject {
 	
 	String value;
 

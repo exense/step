@@ -47,7 +47,7 @@ public class Activator {
 		if(expression!=null && expression.compiledScript==null) {
 			String scriptEngine = expression.scriptEngine!=null?expression.scriptEngine:DEFAULT_SCRIPT_ENGINE;
 
-			if(expression.script!=null) {
+			if(expression.script!=null && expression.script.trim().length()>0) {
 				ScriptEngineManager manager = new ScriptEngineManager();
 		        ScriptEngine engine = manager.getEngineByName(scriptEngine);
 

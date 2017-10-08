@@ -173,7 +173,7 @@ public class InteractiveServices extends AbstractServices {
 
 			session.c.getArtefactCache().clear();
 
-			ParameterManager parameterManager = (ParameterManager) getContext().get(ParameterManagerPlugin.KEY);
+			ParameterManager parameterManager = getContext().get(ParameterManager.class);
 			ExecutionContext.setCurrentReportNode(session.root);
 			ParameterManagerPlugin.putVariables(session.c, session.root, executionParameters.getExecutionParameters(), VariableType.IMMUTABLE);
 			Map<String, String> parameters = parameterManager.getAllParameters(ExecutionContextBindings.get(session.c));

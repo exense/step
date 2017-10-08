@@ -28,37 +28,37 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
 import step.commons.activation.Activator;
+import step.core.accessors.CRUDAccessor;
 
 public class ParameterManager {
 	
-	Map<String, List<Parameter>> parameterMap = new HashMap<String, List<Parameter>>();
+	CRUDAccessor<Parameter> parameterAccessor;
 	
-	public void clearParameters() {
-		parameterMap.clear();
+	public ParameterManager(CRUDAccessor<Parameter> parameterAccessor) {
+		super();
+		this.parameterAccessor = parameterAccessor;
 	}
-	
-	public void addParameters(List<Parameter> parameters) throws ScriptException {
-		for(Parameter parameter:parameters) {
-			addParameter(parameter);
-		}
-	}
-	
-	public void addParameter(Parameter parameter) throws ScriptException {
-		Activator.compileActivationExpression(parameter);
-		
-		List<Parameter> parameters = parameterMap.get(parameter.key);
-		if(parameters==null) {
-			parameters = new ArrayList<>();
-			parameterMap.put(parameter.key, parameters);
-		}
-		
-		parameters.add(parameter);
-	}
-	
+
 	public Map<String, String> getAllParameters(Map<String, Object> contextBindings) {
 		Map<String, String> result = new HashMap<>();
-		
 		Bindings bindings = contextBindings!=null?new SimpleBindings(contextBindings):null;
+
+		Map<String, List<Parameter>> parameterMap = new HashMap<String, List<Parameter>>();
+		parameterAccessor.getAll().forEachRemaining(p->{
+			List<Parameter> parameters = parameterMap.get(p.key);
+			if(parameters==null) {
+				parameters = new ArrayList<>();
+				parameterMap.put(p.key, parameters);
+			}
+			parameters.add(p);
+			try {
+				Activator.compileActivationExpression(p);
+			} catch (ScriptException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
+		
 		
 		for(String key:parameterMap.keySet()) {
 			List<Parameter> parameters = parameterMap.get(key);

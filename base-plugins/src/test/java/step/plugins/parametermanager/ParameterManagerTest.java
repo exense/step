@@ -35,28 +35,29 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import step.commons.activation.Expression;
-import step.plugins.parametermanager.Parameter;
-import step.plugins.parametermanager.ParameterManager;
+import step.core.accessors.InMemoryAccessor;
 
 public class ParameterManagerTest {
 
 	@Test
 	public void test1() throws ScriptException {
-		ParameterManager m = new ParameterManager();
+		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+		ParameterManager m = new ParameterManager(accessor);
 		
-		m.addParameter(new Parameter(new Expression("user=='pomme'"), "key1", "pommier"));
-		m.addParameter(new Parameter(new Expression("user=='abricot'"), "key1", "abricotier"));
-		m.addParameter(new Parameter(new Expression("user=='poire'"), "key1", "poirier"));
+		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier"));
+		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier"));
+		accessor.save(new Parameter(new Expression("user=='abricot'"), "key1", "abricotier"));
+		accessor.save(new Parameter(new Expression("user=='poire'"), "key1", "poirier"));
 		
-		m.addParameter(new Parameter(null, "key2", "defaultValue"));
-		m.addParameter(new Parameter(null, "key2", "defaultValue2"));
-		m.addParameter(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue2"));
+		accessor.save(new Parameter(null, "key2", "defaultValue"));
+		accessor.save(new Parameter(null, "key2", "defaultValue2"));
+		accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue2"));
 
-		m.addParameter(new Parameter(null, "key3", "value1"));
-		m.addParameter(new Parameter(new Expression("user=='poire'"), "key3", "value2"));
+		accessor.save(new Parameter(null, "key3", "value1"));
+		accessor.save(new Parameter(new Expression("user=='poire'"), "key3", "value2"));
 		Parameter p = new Parameter(new Expression("user=='poire'"), "key3", "value3");
 		p.setPriority(10);
-		m.addParameter(p);
+		accessor.save(p);
 		
 		Map<String, Object> bindings = new HashMap<String, Object>();
 		bindings.put("user", "poire");
@@ -69,11 +70,12 @@ public class ParameterManagerTest {
 	
 	@Test
 	public void testPerf() throws ScriptException {
-		ParameterManager m = new ParameterManager();
+		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+		ParameterManager m = new ParameterManager(accessor);
 		
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {
-			m.addParameter(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i));
+			accessor.save(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i));
 		}
 		
 		Map<String, Object> bindings = new HashMap<String, Object>();
@@ -94,11 +96,12 @@ public class ParameterManagerTest {
 	
 	@Test
 	public void testParallel() throws ScriptException, InterruptedException, ExecutionException {
-		ParameterManager m = new ParameterManager();
+		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+		ParameterManager m = new ParameterManager(accessor);
 		
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {
-			m.addParameter(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i));
+			accessor.save(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i));
 		}
 		
 		int iterations = 25;

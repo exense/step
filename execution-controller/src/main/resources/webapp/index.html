@@ -67,6 +67,7 @@ window.console.log = window.console.log || function(){};
 <script src="js/common.js"></script>
 <script src="js/app.js"></script>
 <script src="js/views.js"></script>
+<script src="js/ntables.js"></script>
 <script src="js/tables.js"></script>
 <script src="js/chart.js"></script>
 <script src="js/export.js"></script>
@@ -75,6 +76,7 @@ window.console.log = window.console.log || function(){};
 <script src="js/controllers/grid.js"></script>
 <script src="js/controllers/artefacts.js"></script>
 <script src="js/controllers/functions.js"></script> 
+<script src="js/controllers/parameters.js"></script>
 <script src="js/controllers/repository.js"></script>
 <script src="js/controllers/artefactEditor.js"></script>
 <script src="js/controllers/reportNodes.js"></script>
@@ -118,6 +120,8 @@ window.console.log = window.console.log || function(){};
 						<ul class="nav navbar-nav">
 							<li ng-class="{ active: isViewActive('artefacts') }"><a ui-sref="grid" ng-click="setView('artefacts')">Plans</a></li>
 							<li ng-class="{ active: isViewActive('functions') }"><a ui-sref="grid" ng-click="setView('functions')">Keywords</a></li>
+							<li ng-class="{ active: isViewActive('parameters') }"><a ui-sref="parameters"
+								ng-click="setView('parameters')">Parameters</a></li>
 							<li ng-class="{ active: isViewActive('executions') }"><a ui-sref="execution"
 								ng-click="setView('executions')">Executions</a></li>
 							<li ng-class="{ active: isViewActive('reportBrowser') }"><a ui-sref="reportBrowser"

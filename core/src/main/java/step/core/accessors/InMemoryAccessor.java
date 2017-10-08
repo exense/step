@@ -60,14 +60,12 @@ public class InMemoryAccessor<T extends AbstractDBObject> implements CRUDAccesso
 
 	@Override
 	public Iterator<T> getAll() {
-		// TODO Auto-generated method stub
-		return null;
+		return map.values().iterator();
 	}
 
 	@Override
 	public void remove(ObjectId id) {
-		// TODO Auto-generated method stub
-		
+		map.remove(id);
 	}
 
 }
