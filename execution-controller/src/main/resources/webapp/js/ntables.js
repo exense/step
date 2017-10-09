@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('tables', ['export'])
+angular.module('tables', ['export','dataTable'])
 .directive('stTable', function($compile, $http, Preferences) {
   return {
     restrict : 'E',
@@ -42,7 +42,9 @@ angular.module('tables', ['export'])
       var columns = linker(null, null, 'columns');
       var dtColumns = [];
       columns.find("column").each(function() {
-        var header = angular.element(this).find("header").first().text();
+        var header = '<div>'+angular.element(this).find("header").first().html()+'</div>';
+        var secondHeaderSearch = angular.element(this).find("second-header");
+        var secondHeader = '<div>'+(secondHeaderSearch.length>0?secondHeaderSearch.first().html():"")+'</div>';
         var cell = angular.element(this).find("cell").first().html();
         var name = angular.element(this).attr("name");
         
@@ -59,6 +61,19 @@ angular.module('tables', ['export'])
           angular.element(td).append(content);
           rowScope.$digest();
         };
+        
+        function createHeaderRenderer(headerHtml) {
+          return function(element, handle) {
+            var headerScope = scope.$new(false, scope.$parent);
+            headerScope.search = function(expression){handle.search(name,expression)};
+            var content = $compile(headerHtml)(headerScope);
+            element.empty();
+            element.append(content);
+          }
+        }
+        colDef.headerRenderer = createHeaderRenderer(header);
+        colDef.secondHeaderRenderer = createHeaderRenderer(secondHeader);
+        
         dtColumns.push(colDef);
       })
       tableOptions.columns = dtColumns;
@@ -70,7 +85,7 @@ angular.module('tables', ['export'])
         'type' : 'POST'
       }
       
-      var table = tableElement.dataTable(tableOptions);
+      var table = tableElement.DataTable(tableOptions);
       
       // Table actions
       var tableActions = linker(null, null, 'actions');
@@ -86,9 +101,32 @@ angular.module('tables', ['export'])
 
       if(scope.handle) {
         scope.handle.reload = function() {
-          table.api().ajax.reload(null, false);
+          table.ajax.reload(null, false);
+        }
+        scope.handle.search = function(columnName, searchExpression) {
+          var column = table.column(columnName+':name');
+          column.search(searchExpression,true,false).draw();
         }
       }
+      
+      // render first header
+      table.columns().indexes().flatten().each(function(i) {
+        table.settings()[0].aoColumns[i].headerRenderer(angular.element(table.column(i).header()),scope.handle);
+      })
+      
+      // render second header
+      tableElement.find('thead').append('<tr class="searchheader"/>');
+      $('th',tableElement.find('thead tr[role="row"]').eq(0)).css({ 'border-bottom': '0' }).each( function (colIdx) {
+          tableElement.find('thead tr.searchheader').append('<th style="border-top:0" />' );
+      });
+      table.columns().indexes().flatten().each(function(i) {
+        var thIdx = $('th',tableElement.find('thead tr[role="row"]')).index(table.column(i).header());
+        if(thIdx>=0) {
+          var secondHeader = $('th',tableElement.find('thead tr.searchheader')).eq(thIdx);
+          table.settings()[0].aoColumns[i].secondHeaderRenderer(secondHeader,scope.handle);
+        }
+      });
+
     },
     templateUrl : 'partials/datatable.html'
   };
