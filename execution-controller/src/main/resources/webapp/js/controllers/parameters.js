@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('parametersControllers',['tables','step'])
 
-.controller('ParameterListCtrl', function($scope, $http, stateStorage, Dialogs, ParameterDialogs, AuthService) {
+.controller('ParameterListCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, ParameterDialogs, AuthService) {
     stateStorage.push($scope, 'parameters', {});	
     $scope.authService = AuthService;
     
@@ -30,7 +30,7 @@ angular.module('parametersControllers',['tables','step'])
       ParameterDialogs.editParameter(null, function() {reload()});
     }
 
-    $scope.editFunction = function(id) {
+    $scope.editParameter = function(id) {
       ParameterDialogs.editParameter(id, function() {reload()});
     }
     
