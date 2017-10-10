@@ -39,7 +39,7 @@ angular.module('tables', ['export','dataTable'])
 
 
       // Table columns
-      var columns = linker(null, null, 'columns');
+      var columns = linker(function() {}, null, 'columns');
       var dtColumns = [];
       columns.find("column").each(function() {
         var header = '<div>'+angular.element(this).find("header").first().html()+'</div>';
@@ -88,7 +88,7 @@ angular.module('tables', ['export','dataTable'])
       var table = tableElement.DataTable(tableOptions);
       
       // Table actions
-      var tableActions = linker(null, null, 'actions');
+      var tableActions = linker(function() {}, null, 'actions');
       var cmdDiv;
       if (element.find('div.dataTables_filter').length > 0) {
         cmdDiv = element.find('div.dataTables_filter');

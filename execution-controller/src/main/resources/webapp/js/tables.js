@@ -144,7 +144,7 @@ angular.module('dataTable', ['export'])
         
         var nCol = tableElement.find('thead tr[role="row"] th').length;
         
-        var tableActions = linker(null,null,'actions');
+        var tableActions = linker(function() {},null,'actions');
         
         var cmdDiv;
         if(element.find('div.dataTables_filter').length>0) {
