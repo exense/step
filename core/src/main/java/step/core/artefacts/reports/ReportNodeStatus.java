@@ -30,6 +30,8 @@ public enum ReportNodeStatus {
 	
 	SKIPPED,
 	
-	NORUN;
+	NORUN,
+	
+	RUNNING;
 	
 }

@@ -59,6 +59,8 @@ public class ReportNode {
 	
 	@JsonIgnore
 	protected AbstractArtefact artefactInstance;
+	
+	protected AbstractArtefact resolvedArtefact;
 
 	public ReportNode() {
 		super();
@@ -141,6 +143,14 @@ public class ReportNode {
 		this.error = error;
 	}
 	
+	public AbstractArtefact getResolvedArtefact() {
+		return resolvedArtefact;
+	}
+
+	public void setResolvedArtefact(AbstractArtefact resolvedArtefact) {
+		this.resolvedArtefact = resolvedArtefact;
+	}
+
 	public void setError(String errorMessage, int errorCode, boolean isRoot) {
 		Error errorObject = new Error();
 		errorObject.setMsg(errorMessage);

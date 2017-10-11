@@ -185,6 +185,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		ReportNodeAccessor reportNodeAccessor = context.getGlobalContext().getReportAccessor();
 		
 		long t1 = System.currentTimeMillis();
+		node.setExecutionTime(t1);
+		node.setStatus(ReportNodeStatus.RUNNING);
 		
 		boolean persistBefore = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistbefore",true);		
 		boolean persistAfter = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
@@ -193,6 +195,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		try {
 			context.getGlobalContext().getDynamicBeanResolver().evaluate(artefact, getBindings());
 			node.setArtefactInstance(artefact);
+			node.setResolvedArtefact(artefact);
 			
 			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(artefact)) {
@@ -210,8 +213,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		long duration = System.currentTimeMillis() - t1;
 		
 		node.setDuration((int)duration);
-		node.setExecutionTime(System.currentTimeMillis());
-		
+
 		if(persistAfter) {
 				if(!persistOnlyNonPassed){
 					reportNodeAccessor.save(node);

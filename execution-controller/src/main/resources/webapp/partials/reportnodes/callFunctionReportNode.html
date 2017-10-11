@@ -1,0 +1,7 @@
+<div ng-if="children && children.length>0">
+	<table class="table">
+		<tr ng-repeat="child in children" ng-if="child._class=='step.artefacts.reports.AssertReportNode'"><td><reportnode-short node ="child" /></td><td><reportnode-status status="child.status" /></td></tr>
+	</table>
+</div>
+<div ng-if="node.agentUrl">Agent: <span>{{node.agentUrl}}</span></div>
+<div ng-if="node.tokenId">Token ID: <span>{{node.tokenId}}</span></div>

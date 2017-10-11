@@ -47,8 +47,8 @@ div.executionStatus,span.executionStatus {
 }
 
 .status-RUNNING {
-	background:#5cb85c;
-	color:#5cb85c;
+	background:#337ab7;
+	color:#337ab7;
 }
 
 .status-ABORTING {
@@ -86,6 +86,10 @@ div.executionStatus,span.executionStatus {
 	background:black;
 }
 
+.status-INTERRUPTED {
+	background:#f9c038;
+}
+
 i.status-PASSED {
 	color:#5cb85c;
 }
@@ -94,8 +98,24 @@ i.status-FAILED {
 	color:#d9534f;
 }
 
+i.status-SKIPPED {
+	color:#A0A0A0;
+}
+
+i.status-NORUN {
+	color:#A0A0A0;
+}
+
 i.status-TECHNICAL_ERROR {
 	color:black;
+}
+
+i.status-INTERRUPTED {
+	color:#f9c038;
+}
+
+i.status-RUNNING {
+	color:#337ab7;
 }
 	  
 	  
@@ -198,6 +218,11 @@ ul.attribute-list li p {
 
 ul.attribute-list li {
     margin-bottom: 20px;
+}
+
+hr {
+	margin-bottom: 5px;
+	margin-top: 5px;
 }
 
 .btn-group-menu {

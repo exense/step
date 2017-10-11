@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('reportTree',['step'])
+angular.module('reportTree',['step','artefacts'])
 
-.directive('reportTree', function($http,$timeout,$interval,stateStorage,$filter,$location) {
+.directive('reportTree', function($http,$timeout,$interval,stateStorage,$filter,$location,artefactTypes) {
   return {
     restrict: 'E',
     scope: {
@@ -45,11 +45,8 @@ angular.module('reportTree',['step'])
               $http.get("rest/controller/reportnode/"+id+"/children").then(function(response) {
                 var nodes = response.data;
                var children=_.map(nodes,function(node){
-                 var cssClass = 'glyphicon-unchecked'
-                 if(node._class=='step.artefacts.reports.CallFunctionReportNode') {
-                   cssClass = "glyphicon glyphicon-record";
-                 }
-                  return {id:node.id, text:node.name, children:true, icon:"glyphicon "+cssClass+" status-"+node.status};
+                 var cssClass = artefactTypes.getIcon(node.resolvedArtefact._class)
+               return {id:node.id, text:node.name, children:true, icon:"glyphicon "+cssClass+" status-"+node.status};
                 })
                 cb.call(this,children);               
               })

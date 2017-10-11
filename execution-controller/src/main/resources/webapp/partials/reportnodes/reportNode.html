@@ -1,14 +1,13 @@
-<div ng-controller="ReportNodeCtrl">
-	<ul class="list-unstyled">
-		<li>
-			<ul  class="list-group">
-				<li class="list-group-item" ng-repeat="child in children" ng-if="child._class=='step.artefacts.reports.AssertReportNode'">
-					{{child.name}}: {{child.message}} <div style="width:60px;" class="text-center executionStatus status-{{child.status}} pull-right">{{child.status}}</div>
-				</li>
-			</ul>		
-		</li>
-		<li ng-if="node.agentUrl">Agent: <span>{{node.agentUrl}}</span></li>
-		<li ng-if="node.tokenId">Token ID: <span>{{node.tokenId}}</span></li>
-		<li ng-if="node.tokenId">Duration (ms): <span>{{node.duration}}</span></li>
-	</ul>
+<div>
+	<!-- <div class="form-group">{{artefact._class}} - {{node.name}} <reportnode-status status="node.status" /></div> -->
+	<div ng-include="reportNodeType.template"></div>
+	
+	<div>Start: {{ node.executionTime | date:'dd.MM.yyyy HH:mm:ss'}}</div>
+	<div>Duration (ms): {{node.duration}}</div>
+	<div class="panel panel-default">
+		<div class="panel-heading"><a ng-click="showArtefact = !showArtefact">Plan node</a></div>
+		<div class="panel-body" ng-if="showArtefact">			
+			<artefact-details artefactid="node.artefactID" readonly="false" />
+		</div>
+	</div>
 </div>

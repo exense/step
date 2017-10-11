@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms','export'])
+angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','dynamicForms','export'])
 
 .controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService, reportTableFactory, executionServices, ExportService) {
       stateStorage.push($scope, 'artefacteditor', {});
@@ -178,7 +178,7 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
       
 })
 
-.directive('artefact', function($http,$timeout,$interval,stateStorage,$filter,$location) {
+.directive('artefact', function(artefactTypes, $http,$timeout,$interval,stateStorage,$filter,$location) {
   return {
     restrict: 'E',
     scope: {
@@ -269,9 +269,7 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
         	  }) 	  
         	  var artefact = currentNode.artefact;
 
-        	  var artefactIcon = {'Default':'glyphicon-unchecked', 'CallPlan':'glyphicon glyphicon-new-window', 'CallKeyword':'glyphicon-record' ,'For':'glyphicon glyphicon-th','ForEach':'glyphicon glyphicon-th'}
-        	  
-        	  var icon = artefact._class in artefactIcon ? artefactIcon[artefact._class]:artefactIcon['Default'];
+        	  var icon = artefactTypes.getIcon(artefact._class);
         	  
         	  return { "id" : artefact.id, "children" : children, "text" : getNodeLabel(artefact), icon:"glyphicon "+icon }
         	}
@@ -441,41 +439,15 @@ angular.module('artefactEditor',['dataTable','step','reportTable','dynamicForms'
       readonly: '=',
       handle: '='
     },
-    controller: function($scope,$location, AuthService) {
-      
-      var customEditors = {
-          "Default":{template:"partials/artefacts/defaultArtefactForm.html"},
-          "DataSet":{template:"partials/artefacts/dataSet.html"},
-          "ForEach":{template:"partials/artefacts/forEach.html"},
-          "For":{template:"partials/artefacts/for.html"},
-          "Sequence":{template:"partials/artefacts/sequence.html"},
-          "Return":{template:"partials/artefacts/return.html"},
-          "Echo":{template:"partials/artefacts/echo.html"},
-          "If":{template:"partials/artefacts/if.html"},
-          "While":{template:"partials/artefacts/while.html"},
-          "CallKeyword":{template:"partials/artefacts/callFunction.html"},
-          "Session":{template:"partials/artefacts/functionGroup.html"},
-          "Set":{template:"partials/artefacts/set.html"},
-          "Sleep":{template:"partials/artefacts/sleep.html"},
-          "Script":{template:"partials/artefacts/script.html"},
-          "ThreadGroup":{template:"partials/artefacts/threadGroup.html"},
-          "Case":{template:"partials/artefacts/case.html"},
-          "Switch":{template:"partials/artefacts/switch.html"},
-          "RetryIfFails":{template:"partials/artefacts/retryIfFails.html"},
-          "Check":{template:"partials/artefacts/check.html"},
-          "CallPlan":{template:"partials/artefacts/callPlan.html"},
-          "Assert":{template:"partials/artefacts/assert.html"}
-      }
+    controller: function($scope,$location,artefactTypes,AuthService) {
       
       $scope.authService = AuthService;
-      
-      
       
       $scope.$watch('artefactid', function(artefactId) {
         if(artefactId) {
         	$http({url:"rest/controller/artefact/"+artefactId,method:"GET"}).then(function(response) {
         	  $scope.artefact = response.data;
-        	  $scope.editor = ($scope.artefact._class in customEditors)?customEditors[$scope.artefact._class]:customEditors['Default'];
+        	  $scope.editor = artefactTypes.getEditor($scope.artefact._class);
         	})
         }
       })

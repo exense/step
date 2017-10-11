@@ -1,6 +1,8 @@
 package step.datapool.file;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
 import step.core.variables.SimpleStringMap;
@@ -62,6 +64,12 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 		public boolean isEmpty() {
 			return rowData.isEmpty();
 		}
+		
+		@Override
+		public Set<String> keySet() {
+			return new HashSet<>(headers);
+		}
+
 
 	}
 

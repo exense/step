@@ -1,0 +1,23 @@
+<div>
+	
+	<div><i style="display:inline-block" uib-tooltip="{{node.resolvedArtefact._class}}" class="glyphicon {{artefactTypes.getIcon(node.resolvedArtefact._class) + ' executionStatus status-'+node.status}}" />{{node.name}}</div>
+	<hr />
+	<div ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
+		<div>Keyword: {{concatenate(node.functionAttributes)}}</span></div>
+		<div ng-if="node.input">Input: <small><em>{{node.input}}</em></small></div>
+		<div ng-if="node.output">Output: <small><em>{{node.output}}</em></small></div>
+	</div>
+	<div ng-if="node._class=='step.artefacts.reports.EchoReportNode'">
+		<div ng-if="node.echo">Echo: <small><em>{{node.echo}}</em></small></div>
+	</div>
+	<div ng-if="node._class=='step.artefacts.reports.AssertReportNode'">
+		<div ng-if="node.message"><small><em>{{node.message}}}}</em></small></div>
+	</div>
+	<div ng-if="node.resolvedArtefact._class=='Set' && node.resolvedArtefact.key.value">
+		<div>{{node.resolvedArtefact.key.value}} = {{node.resolvedArtefact.value.value}}</div>
+	</div>
+	<div ng-if="node.error">Error: <small><em>{{node.error.msg}}
+		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>
+		<span class="pull-right"><attachments node="node" /></span>	
+	</div>
+</div>
