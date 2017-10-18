@@ -208,7 +208,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		execute(a);
 		
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
-		assertEquals(child.getStatus(), ReportNodeStatus.NORUN);
+		assertEquals(ReportNodeStatus.NORUN, child.getStatus());
 	}
 	
 	@Test

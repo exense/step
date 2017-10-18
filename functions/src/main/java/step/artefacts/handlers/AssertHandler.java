@@ -107,6 +107,8 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 			}
 			node.setMessage(message);			
 			node.setStatus(passed?ReportNodeStatus.PASSED:ReportNodeStatus.FAILED);
+		} else {
+			node.setStatus(ReportNodeStatus.NORUN);
 		}
 	}
 
