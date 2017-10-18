@@ -25,7 +25,11 @@ angular.module('artefacts',['step'])
   var api = {};
   
   function getType(typeName) {
-    return registry[typeName]?registry[typeName]:registry['Default']
+    if(registry[typeName]) {
+      return registry[typeName];
+    } else {
+      throw "Unknown artefact type "+typeName;
+    }
   }
   
   api.register = function(typeName,typeInfo) {
@@ -52,7 +56,9 @@ angular.module('artefacts',['step'])
 })
 
 .run(function(artefactTypes) {
+  artefactTypes.register('TestSet',{icon:'glyphicon-folder-close', form:'partials/artefacts/testSet.html'});
   artefactTypes.register('TestCase',{icon:'glyphicon-list-alt', form:'partials/artefacts/testCase.html'});
+  artefactTypes.register('TestScenario',{icon:'glyphicon-equalizer', form:'partials/artefacts/testScenario.html'});
   artefactTypes.register('CallPlan',{icon:'glyphicon-new-window', form:'partials/artefacts/callPlan.html'});
   artefactTypes.register('CallKeyword',{icon:'glyphicon-record', form:'partials/artefacts/callFunction.html'});
   artefactTypes.register('For',{icon:'glyphicon-th', form:'partials/artefacts/for.html'});

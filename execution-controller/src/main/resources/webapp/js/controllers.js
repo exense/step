@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminControllers = angular.module('tecAdminControllers',['dataTable','chart.js','step', 'views','ui.bootstrap','reportTree','reportTable']);
+var tecAdminControllers = angular.module('tecAdminControllers',['components','dataTable','chart.js','step', 'views','ui.bootstrap','reportTree','reportTable']);
 
 function escapeHtml(str) {
   var div = document.createElement('div');
@@ -578,8 +578,8 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
   });
 }]);
 
-tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$http','stateStorage','$interval',
-        function($scope, $http,$stateStorage, $interval) {
+tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http','stateStorage','$interval',
+        function($scope, $compile, $http,$stateStorage, $interval) {
             $stateStorage.push($scope, 'list',{});
             
             $scope.autorefresh = true;
@@ -598,22 +598,14 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$http','stateStor
               });
               _.each(_.where(columns,{'title':'Summary'}),function(col){
                 col.width="160px";
-                col.render = function ( data, type, row ) {
-                  var view = JSON.parse(data);
-                  if(view.count) {
-                    var distribution = view.distribution;
-                    return '<div style="width: 150px" class="progress" tooltip="PASSED: '+distribution.PASSED.count+', FAILED: '+distribution.FAILED.count+', TECHNICAL_ERROR: '+distribution.TECHNICAL_ERROR.count+'">'+
-                    '<div class="progress-bar status-PASSED" style="width:'+distribution.PASSED.count/view.count*100+'%;">'+
-                    distribution.PASSED.count+'</div>' +
-                    '<div class="progress-bar status-FAILED" style="width:'+distribution.FAILED.count/view.count*100+'%;">'+
-                    distribution.FAILED.count+'</div>' +
-                    '<div class="progress-bar status-TECHNICAL_ERROR" style="width:'+distribution.TECHNICAL_ERROR.count/view.count*100+'%;">'+
-                    distribution.TECHNICAL_ERROR.count+'</div>' +
-                    '</div>';
-                  } else {
-                    return '';
-                  }
-               }});
+                col.createdCell =  function (td, cellData, rowData, row, col) {
+                  var rowScope = $scope.$new(true, $scope);
+                  rowScope.distribution = JSON.parse(cellData);
+                  var content = $compile("<div style=\"width:160px;\"><status-distribution progress='distribution' /></div>")(rowScope);
+                  angular.element(td).empty();
+                  angular.element(td).append(content);
+                };
+              });
               return columns;
             };
             var refresh = function() {
