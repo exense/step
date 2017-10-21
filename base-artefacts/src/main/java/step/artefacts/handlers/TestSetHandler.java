@@ -32,11 +32,14 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionManager;
 
 public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	
 	@Override
-	public void createReportSkeleton_(ReportNode node, TestSet testSet) {
+	public void createReportSkeleton_(ReportNode node, TestSet testSet) {	
+		ExecutionManager executionManager = new ExecutionManager(context.getGlobalContext());
+		executionManager.updateExecutionType(context, "TestSet");
 		runParallel(node, testSet, false);
 	}
 

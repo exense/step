@@ -40,6 +40,8 @@ public class Execution  {
 	Long endTime;
 	
 	String description;
+	
+	String executionType;
 			
 	ExecutionStatus status;
 	
@@ -131,6 +133,14 @@ public class Execution  {
 
 	public void setExecutionTaskID(String executionTaskID) {
 		this.executionTaskID = executionTaskID;
+	}
+
+	public String getExecutionType() {
+		return executionType;
+	}
+
+	public void setExecutionType(String executionType) {
+		this.executionType = executionType;
 	}
 
 	public Map<String, String> getParameters() {

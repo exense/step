@@ -36,7 +36,9 @@ public class ReportNodeStatusDistributionView extends AbstractView<ReportNodeSta
 		for(ReportNodeStatus status:ReportNodeStatus.values()) {
 			progress.put(status, new ReportNodeStatusDistribution.Entry(status));
 		}
-		return new ReportNodeStatusDistribution(progress);
+		ReportNodeStatusDistribution distribution = new ReportNodeStatusDistribution(progress);
+		distribution.setLabel("Keyword calls: ");
+		return distribution;
 	}
 
 	@Override

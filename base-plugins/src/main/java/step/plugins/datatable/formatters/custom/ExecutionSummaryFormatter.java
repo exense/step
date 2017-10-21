@@ -1,46 +1,51 @@
 package step.plugins.datatable.formatters.custom;
 
 import org.bson.Document;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
+import step.core.execution.type.ExecutionType;
+import step.core.execution.type.ExecutionTypeManager;
 import step.plugins.datatable.formatters.Formatter;
-import step.plugins.views.ViewPlugin;
-import step.plugins.views.functions.ReportNodeStatusDistribution;
 
 public class ExecutionSummaryFormatter implements Formatter {
+				
+	ExecutionTypeManager executionTypeManager;
 	
-	ObjectMapper mapper = new ObjectMapper();
-		
-	ViewPlugin viewPlugin;
+	private static final Logger logger = LoggerFactory.getLogger(ExecutionSummaryFormatter.class);
 
 	public ExecutionSummaryFormatter(GlobalContext context) {
 		super();
-		this.viewPlugin = (ViewPlugin) context.get(ViewPlugin.VIEW_PLUGIN_KEY);
-		
+		executionTypeManager = context.get(ExecutionTypeManager.class);
 	}
 
 	@Override
 	public String format(Object value, Document row) {
 		String eid = row.get("_id").toString();
-		ReportNodeStatusDistribution distribution = (ReportNodeStatusDistribution) viewPlugin.query("statusDistributionForFunctionCalls", eid);
-		if(distribution!=null) {
-			try {
-				return mapper.writeValueAsString(distribution);
-			} catch (JsonProcessingException e1) {
-				throw new RuntimeException("Error while writing distribution",e1);
-			}			
-		} else {
-			return "{}";
-		}
+		
+		String executionTypeName = row.containsKey("executionType")?row.get("executionType").toString():null;
+		ExecutionType executionType = executionTypeManager.get(executionTypeName);
+		try {
+			if(executionType!=null) {
+				String result = executionType.getExecutionSummary(eid);
+				if(result!=null) {
+					return result;				
+				} else {
+					logger.warn("Execution summary not available for execution "+eid);
+				}				
+			} else {
+				logger.warn("Execution type "+executionTypeName+ " not available");
+			}
+		} catch (Exception e) {
+			logger.error("Error while getting execution summary for execution "+eid, e);
+		}			
+		return "{}";
 	}
 
 	@Override
 	public Object parse(String formattedValue) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("Not implemented");
 	}
 
 }

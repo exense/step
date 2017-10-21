@@ -12,6 +12,8 @@ public class ReportNodeStatusDistribution extends ViewModel {
 	long countForecast = 0;
 	
 	long count = 0;
+	
+	String label;
 
 	public long getCountForecast() {
 		return countForecast;
@@ -36,6 +38,14 @@ public class ReportNodeStatusDistribution extends ViewModel {
 
 	public void setDistribution(Map<ReportNodeStatus, Entry> progress) {
 		this.distribution = progress;
+	}
+
+	public String getLabel() {
+		return label;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
 	}
 
 	public static class Entry {

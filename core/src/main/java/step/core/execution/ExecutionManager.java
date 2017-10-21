@@ -85,4 +85,10 @@ public class ExecutionManager {
 		Execution execution = accessor.get(context.getExecutionId());
 		return execution;
 	}
+	
+	public void updateExecutionType(ExecutionContext context, String newType) {
+		Execution execution = getExecution(context);
+		execution.setExecutionType(newType);
+		saveExecution(execution);
+	}
 }

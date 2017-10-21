@@ -1,5 +1,5 @@
 <div style="width: 160px;" class="progress"
-	uib-tooltip="PASSED: {{progress.distribution.PASSED.count}}, FAILED: {{progress.distribution.FAILED.count}}, TECHNICAL_ERROR: {{progress.distribution.TECHNICAL_ERROR.count}} ">
+	uib-tooltip="{{progress.label}} PASSED: {{progress.distribution.PASSED.count}}, FAILED: {{progress.distribution.FAILED.count}}, TECHNICAL_ERROR: {{progress.distribution.TECHNICAL_ERROR.count}} ">
 	<div class="progress-bar status-PASSED"
 		ng-attr-style="width:{{progress.distribution.PASSED.count/progress.count*100}}%;">
 		{{progress.distribution.PASSED.count}}</div>

@@ -38,7 +38,9 @@ public class TestcaseStatusDistributionView extends AbstractView<ReportNodeStatu
 		for(ReportNodeStatus status:ReportNodeStatus.values()) {
 			progress.put(status, new ReportNodeStatusDistribution.Entry(status));
 		}
-		return new ReportNodeStatusDistribution(progress);
+		ReportNodeStatusDistribution distribution = new ReportNodeStatusDistribution(progress);
+		distribution.setLabel("Test cases: ");
+		return distribution;
 	}
 
 	@Override
