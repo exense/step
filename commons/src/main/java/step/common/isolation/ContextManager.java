@@ -34,6 +34,10 @@ public class ContextManager {
 		return currentContexts.get().contextObject;
 	}
 	
+	public boolean hasContext(String contextKey) {
+		return contexts.containsKey(contextKey);
+	}
+	
 	public void loadContext(String contextKey, List<URL> urls, boolean isolatedContext) throws Exception {
 		loadContext(contextKey, urls, isolatedContext, null);
 	}

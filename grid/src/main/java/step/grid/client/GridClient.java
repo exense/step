@@ -157,6 +157,11 @@ public class GridClient implements Closeable {
 			public File requestFile(String uid, long lastModified) {
 				return fileService.getRegisteredFile(uid);
 			}
+
+			@Override
+			public FileVersion requestFileVersion(String uid, long lastModified) {
+				throw new RuntimeException("Not implemented");
+			}
 		};
 		agentTokenWrapper.setServices(new AgentTokenServices(fileManagerClient));
 		output = h.handle(agentTokenWrapper, message);

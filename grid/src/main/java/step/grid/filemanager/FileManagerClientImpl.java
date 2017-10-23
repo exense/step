@@ -45,8 +45,15 @@ public class FileManagerClientImpl implements FileManagerClient {
 		}
 	}	
 	
-	@Override
 	public File requestFile(String uid, long lastModified) {
+		return requestFileVersion(uid, lastModified).getFile();
+	}
+	
+	@Override
+	public FileVersion requestFileVersion(String uid, long lastModified) {
+		FileVersion response = new FileVersion();
+		response.setFileId(uid);
+		
 		if(logger.isDebugEnabled()) {
 			logger.debug("Got file request for file id: "+uid+" and version "+Long.toString(lastModified));
 		}
@@ -62,25 +69,33 @@ public class FileManagerClientImpl implements FileManagerClient {
 			}
 		}
 		
+		boolean fileModication;
+		
 		synchronized (fileInfo) {
 			if(fileInfo.file==null) {
 				if(logger.isDebugEnabled()) {
 					logger.debug("Cache miss for file id: "+uid+" and version "+Long.toString(lastModified)+". Requesting file from server");
 				}
 				requestFileAndUpdateCache(fileInfo, uid, lastModified);
+				fileModication = true;
 			} else if(lastModified>fileInfo.lastModified) {
 				if(logger.isDebugEnabled()) {
 					logger.debug("File version mismatch for file id: "+uid+" and version "+Long.toString(lastModified)+". Requesting file from server");
 				}
 				requestFileAndUpdateCache(fileInfo, uid, lastModified);
+				fileModication = true;
 			} else {
 				// local file is up to date
 				if(logger.isDebugEnabled()) {
 					logger.debug("Served file request from cache. file id: "+uid+" and version "+Long.toString(lastModified)+". Requesting file from server");
 				}
+				fileModication = false;
 			}			
 		}
-		return fileInfo.file;
+		
+		response.setModified(fileModication);
+		response.setFile(fileInfo.file);
+		return response;
 	}
 
 	private void requestFileAndUpdateCache(FileInfo fileInfo, String uid, long lastModified) {
