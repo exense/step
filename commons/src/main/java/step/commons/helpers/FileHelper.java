@@ -33,6 +33,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -40,6 +43,8 @@ import com.google.common.cache.LoadingCache;
 import step.commons.conf.Configuration;
 
 public class FileHelper {
+	
+	private static final Logger logger = LoggerFactory.getLogger(FileHelper.class);
 
 	public static void deleteFolder(File folder) {
 		File[] files = folder.listFiles();
@@ -158,7 +163,7 @@ public class FileHelper {
 	    }
 	    catch (Exception e) 
 	    {
-	        
+	    	logger.error("Error while extracting folder "+target.getAbsolutePath(), e);
 	    }
 	    finally {
 	    	try {

@@ -1,12 +1,13 @@
 package step.grid.filemanager;
 
 import java.io.File;
+import java.io.IOException;
 
 public interface FileManagerClient {
 
 	File requestFile(String uid, long lastModified);
 	
-	FileVersion requestFileVersion(String uid, long lastModified);
+	FileVersion requestFileVersion(String uid, long lastModified) throws IOException;
 	
 	static class FileVersion {
 		

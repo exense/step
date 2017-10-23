@@ -18,6 +18,9 @@
  *******************************************************************************/
 package step.grid.agent;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -30,10 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.google.common.io.ByteStreams;
 
 import step.grid.RegistrationMessage;
 import step.grid.filemanager.FileProvider;
-import step.grid.io.Attachment;
 import step.grid.io.ObjectMapperResolver;
 
 public class RegistrationClient implements FileProvider {
@@ -78,15 +81,16 @@ public class RegistrationClient implements FileProvider {
 	}
 
 	@Override
-	public Attachment getFileAsAttachment(String fileId) {
-		try {			
-			Response r = client.target(registrationServer + "/grid/file/"+fileId).request().property(ClientProperties.READ_TIMEOUT, callTimeout)
+	public TransportableFile getTransportableFile(String fileId) throws IOException {
+		try {
+			Response response = client.target(registrationServer + "/grid/file/"+fileId).request().property(ClientProperties.READ_TIMEOUT, callTimeout)
 					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).get();
-			
-			Attachment attachment = r.readEntity(Attachment.class);
-			return attachment;
-		} catch (ProcessingException e) {
-			logger.error("An error occurred while registering tokens to " + registrationServer, e);
+			InputStream in = (InputStream) response.getEntity();
+			byte[] bytes;
+			bytes = ByteStreams.toByteArray(in);
+			boolean isDirectory = response.getHeaderString("content-disposition").contains("dir");
+			return new TransportableFile(isDirectory, bytes);
+		} catch (IOException e) {
 			throw e;
 		}
 	}

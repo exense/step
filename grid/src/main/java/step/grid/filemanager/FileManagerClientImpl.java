@@ -11,8 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.commons.helpers.FileHelper;
-import step.grid.io.Attachment;
-import step.grid.io.AttachmentHelper;
+import step.grid.filemanager.FileProvider.TransportableFile;
 
 public class FileManagerClientImpl implements FileManagerClient {
 	
@@ -46,11 +45,15 @@ public class FileManagerClientImpl implements FileManagerClient {
 	}	
 	
 	public File requestFile(String uid, long lastModified) {
-		return requestFileVersion(uid, lastModified).getFile();
+		try {
+			return requestFileVersion(uid, lastModified).getFile();
+		} catch (IOException e) {
+			throw new RuntimeException("Error while requesting file "+uid,e);
+		}
 	}
 	
 	@Override
-	public FileVersion requestFileVersion(String uid, long lastModified) {
+	public FileVersion requestFileVersion(String uid, long lastModified) throws IOException {
 		FileVersion response = new FileVersion();
 		response.setFileId(uid);
 		
@@ -98,7 +101,7 @@ public class FileManagerClientImpl implements FileManagerClient {
 		return response;
 	}
 
-	private void requestFileAndUpdateCache(FileInfo fileInfo, String uid, long lastModified) {
+	private void requestFileAndUpdateCache(FileInfo fileInfo, String uid, long lastModified) throws IOException {
 		File file = requestControllerFile(uid);
 		updateFileInfo(fileInfo, file, lastModified);
 	}
@@ -108,16 +111,15 @@ public class FileManagerClientImpl implements FileManagerClient {
 		fileInfo.lastModified = lastModified;
 	}
 	
-	private File requestControllerFile(String fileId) {
+	private File requestControllerFile(String fileId) throws IOException {
 		long t1 = System.currentTimeMillis();
-		Attachment attachment = fileProvider.getFileAsAttachment(fileId);
+		TransportableFile transportableFile = fileProvider.getTransportableFile(fileId);
 		if(logger.isDebugEnabled()) {
 			logger.debug("Got file "+ fileId +" from server in "+(System.currentTimeMillis()-t1)+"ms.");
 		}
 		
 		long t2 = System.currentTimeMillis();
-		byte[] bytes = AttachmentHelper.hexStringToByteArray(attachment.getHexContent());
-		
+		byte[] bytes = transportableFile.getBytes();
 		File container = new File(dataFolder+"/"+fileId);
 		if(container.exists()) {
 			container.delete();
@@ -125,8 +127,8 @@ public class FileManagerClientImpl implements FileManagerClient {
 		container.mkdirs();
 		container.deleteOnExit();		
 		
-		File file = new File(container+"/"+attachment.getName());
-		if(attachment.getIsDirectory()) {
+		File file = new File(container+"/"+fileId);
+		if(transportableFile.isDirectory()) {
 			FileHelper.extractFolder(bytes, file);
 		} else {
 			try {

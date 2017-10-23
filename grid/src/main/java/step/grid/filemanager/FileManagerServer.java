@@ -8,8 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import step.commons.helpers.FileHelper;
-import step.grid.io.Attachment;
-import step.grid.io.AttachmentHelper;
 
 public class FileManagerServer implements FileProvider {
 
@@ -33,12 +31,9 @@ public class FileManagerServer implements FileProvider {
 		return handle;
 	}
 	
-	public Attachment getFileAsAttachment(String fileHandle) {
-		File file = getFile(fileHandle);
-		return generateAttachment(fileHandle, file);
-	}
-
-	protected Attachment generateAttachment(String fileHandle, File transferFile) {
+	@Override
+	public TransportableFile getTransportableFile(String fileHandle) {
+		File transferFile = getFile(fileHandle);
 		byte[] bytes;
 		boolean isDirectory;
 		try {
@@ -48,16 +43,13 @@ public class FileManagerServer implements FileProvider {
 			} else {
 				bytes = Files.readAllBytes(transferFile.toPath());	
 				isDirectory = false;
-			}
-			Attachment attachment = AttachmentHelper.generateAttachmentFromByteArray(bytes, transferFile.getName());
-			attachment.setIsDirectory(isDirectory);
-			
-			return attachment;
+			}			
+			return new TransportableFile(isDirectory, bytes);
 		} catch (IOException e) {
 			throw new RuntimeException("Error while reading file with handle "+fileHandle+" mapped to '"+transferFile.getAbsolutePath()+"'", e);
 		}
 	}
-
+	
 	public File getFile(String fileHandle) {
 		return registry.get(fileHandle);
 	}

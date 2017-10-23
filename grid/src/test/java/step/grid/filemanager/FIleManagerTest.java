@@ -12,8 +12,7 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
-import step.grid.io.Attachment;
-import step.grid.io.AttachmentHelper;
+import step.grid.filemanager.FileProvider.TransportableFile;
 
 public class FIleManagerTest {
 
@@ -29,15 +28,15 @@ public class FIleManagerTest {
 		
 		String id = server.registerFile(testFile);
 
-		final Attachment a = server.getFileAsAttachment(id);
+		final TransportableFile a = server.getTransportableFile(id);
 		Assert.assertNotNull(a);
-		Assert.assertArrayEquals(content, AttachmentHelper.hexStringToByteArray(a.getHexContent())); 
+		Assert.assertArrayEquals(content, a.bytes); 
 
 		AtomicInteger remoteCallCounts = new AtomicInteger(0);
 		
 		FileManagerClient client = new FileManagerClientImpl(new File("."), new FileProvider() {
 			@Override
-			public Attachment getFileAsAttachment(String fileId) {
+			public TransportableFile getTransportableFile(String fileHandle) throws IOException {
 				remoteCallCounts.incrementAndGet();
 				return a;
 			}
@@ -62,13 +61,9 @@ public class FIleManagerTest {
 		
 		final FileManagerClient client = new FileManagerClientImpl(new File("."), new FileProvider() {
 			@Override
-			public Attachment getFileAsAttachment(String fileId) {
+			public TransportableFile getTransportableFile(String fileHandle) throws IOException {
 				remoteCallCounts.incrementAndGet();
-				Attachment a = new Attachment();
-				a.setName("test");
-				a.setHexContent("HHH");
-				a.setIsDirectory(false);
-				return a;
+				return new TransportableFile(false, new byte[]{11});
 			}
 		});
 		

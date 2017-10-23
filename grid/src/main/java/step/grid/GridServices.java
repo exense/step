@@ -26,11 +26,12 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 import step.grid.filemanager.FileProvider;
-import step.grid.io.Attachment;
+import step.grid.filemanager.FileProvider.TransportableFile;
 
 @Path("/grid")
 public class GridServices {
@@ -49,9 +50,18 @@ public class GridServices {
 	}
 	
 	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/file/{id}")
-	public Attachment getFile(@PathParam("id")String fileId) throws IOException {
-		return fileManager.getFileAsAttachment(fileId);
+    @Path("/file/{id}")
+	public Response getFile(@PathParam("id") String id) throws IOException {
+		TransportableFile file = fileManager.getTransportableFile(id);
+
+		StreamingOutput fileStream = new StreamingOutput() {
+			@Override
+			public void write(java.io.OutputStream output) throws IOException {
+				output.write(file.getBytes());
+				output.flush();
+			}
+		};
+		return Response.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
+				.header("content-disposition", "attachment; filename = ; type = "+(file.isDirectory()?"dir":"file")).build();
 	}
 }
