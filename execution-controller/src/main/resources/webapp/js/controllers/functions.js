@@ -44,7 +44,6 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
 })
 
 .run(function(FunctionTypeRegistry) {
-  FunctionTypeRegistry.register('step.plugins.functions.types.GeneralScriptFunction','Script (Java, JS, Groovy, etc)','partials/functions/forms/script.html');
   FunctionTypeRegistry.register('step.plugins.functions.types.CompositeFunction','Composite','partials/functions/forms/composite.html');
   FunctionTypeRegistry.register('step.plugins.functions.types.GrinderFunction','Grinder','partials/functions/forms/grinder.html');
 })

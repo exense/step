@@ -1,6 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>selenium-plugin</artifactId>
+	<packaging>pom</packaging>
+	
 	<parent>
 		<groupId>step</groupId>
 		<artifactId>parent</artifactId>
@@ -8,21 +10,10 @@
 		<relativePath>../parent</relativePath>
 	</parent>
 	
+	<modules>
+		<module>selenium-plugin-def</module>
+	</modules>
+	
 	<dependencies>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>core</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>functions</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>base-plugins</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 	</dependencies>
 </project>

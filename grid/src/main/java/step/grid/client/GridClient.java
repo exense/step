@@ -48,12 +48,12 @@ import step.grid.Token;
 import step.grid.TokenRegistry;
 import step.grid.TokenWrapper;
 import step.grid.agent.AgentTokenServices;
+import step.grid.agent.ObjectMapperResolver;
 import step.grid.agent.handler.MessageHandler;
-import step.grid.agent.handler.TokenHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.filemanager.FileManagerClient;
+import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.InputMessage;
-import step.grid.io.ObjectMapperResolver;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;
@@ -124,7 +124,7 @@ public class GridClient implements Closeable {
 		}
 	}
 	
-	public OutputMessage call(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, Map<String,String> properties, int callTimeout) throws Exception {
+	public OutputMessage call(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler, FileVersionId handlerPackage, Map<String,String> properties, int callTimeout) throws Exception {
 		Token token = tokenWrapper.getToken();
 		
 		AgentRef agent = tokenWrapper.getAgent();
@@ -133,6 +133,7 @@ public class GridClient implements Closeable {
 		message.setArgument(argument);
 		message.setFunction(function);
 		message.setHandler(handler);
+		message.setHandlerPackage(handlerPackage);
 		message.setProperties(properties);
 		message.setCallTimeout(callTimeout);
 		
@@ -144,12 +145,11 @@ public class GridClient implements Closeable {
 		}
 		return output;
 	}
-	
-	TokenHandlerPool localHandlerPool = new TokenHandlerPool(null);
 
 	private OutputMessage callLocalToken(Token token, InputMessage message) throws Exception {
 		OutputMessage output;
-		MessageHandler h = localHandlerPool.get(message.getHandler());
+		
+		MessageHandler h = (MessageHandler) Class.forName(message.getHandler()).newInstance();
 		
 		AgentTokenWrapper agentTokenWrapper = new AgentTokenWrapper(token);
 		FileManagerClient fileManagerClient = new FileManagerClient() {

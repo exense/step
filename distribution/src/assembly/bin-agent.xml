@@ -39,8 +39,6 @@
 			<useAllReactorProjects>true</useAllReactorProjects>
 			<includes>
 				<include>step:agent</include>
-				<include>step:selenium-plugin</include>
-				<include>step:jmeter-plugin</include>
 			</includes>
 			<binaries>
 				<outputDirectory>lib</outputDirectory>

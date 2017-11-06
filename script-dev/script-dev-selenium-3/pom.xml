@@ -22,6 +22,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>step</groupId>
+			<artifactId>script-dev-java</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.seleniumhq.selenium</groupId>
 			<artifactId>selenium-api</artifactId>
 			<version>3.0.1</version>

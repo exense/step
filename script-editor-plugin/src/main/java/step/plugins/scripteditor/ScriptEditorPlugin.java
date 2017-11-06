@@ -7,7 +7,7 @@ import step.core.plugins.WebPlugin;
 import step.functions.Function;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
-import step.plugins.functions.types.GeneralScriptFunction;
+import step.plugins.java.GeneralScriptFunction;
 
 @Plugin(prio=10)
 public class ScriptEditorPlugin extends AbstractPlugin {

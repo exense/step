@@ -30,6 +30,7 @@
 	</parent>
 
 	<modules>
+		<module>script-dev-java</module>
 		<module>script-dev-selenium-2</module>
 		<module>script-dev-selenium-3</module>
 	</modules>
@@ -44,7 +45,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>base-handlers</artifactId>
+			<artifactId>grid</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

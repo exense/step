@@ -31,8 +31,6 @@ import step.core.GlobalContext;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
-import step.grid.client.GridClient;
-import step.plugins.quotamanager.QuotaManager;
 
 @Plugin
 public class ThreadManager extends AbstractPlugin {

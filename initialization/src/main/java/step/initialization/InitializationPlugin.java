@@ -56,10 +56,9 @@ import step.core.plans.Plan;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
-import step.planbuilder.FunctionPlanBuilder;
 import step.planbuilder.PlanBuilder;
 import step.plugins.adaptergrid.FunctionRepositoryImpl;
-import step.plugins.functions.types.GeneralScriptFunction;
+import step.plugins.java.GeneralScriptFunction;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.selenium.SeleniumFunction;
 

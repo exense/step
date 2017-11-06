@@ -47,7 +47,12 @@
 		</dependency>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>selenium-plugin</artifactId>
+			<artifactId>java-plugin-def</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>selenium-plugin-def</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

@@ -49,10 +49,20 @@
 		</dependency>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>rtm-plugin</artifactId>
+			<artifactId>java-plugin-def</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>step</groupId>
+			<artifactId>selenium-plugin-def</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>rtm-plugin</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+ 		<dependency>
 			<groupId>step</groupId>
 			<artifactId>initialization</artifactId>
 			<version>${project.version}</version>

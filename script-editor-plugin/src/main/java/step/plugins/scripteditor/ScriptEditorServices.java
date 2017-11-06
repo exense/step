@@ -17,8 +17,8 @@ import step.functions.FunctionClient;
 import step.functions.FunctionRepository;
 import step.grid.Grid;
 import step.plugins.adaptergrid.GridPlugin;
-import step.plugins.functions.types.GeneralScriptFunction;
-import step.plugins.functions.types.ScriptFunctionTypeHelper;
+import step.plugins.java.AbstractScriptFunctionType;
+import step.plugins.java.GeneralScriptFunction;
 
 @Singleton
 @Path("/scripteditor")
@@ -59,10 +59,8 @@ public class ScriptEditorServices extends AbstractServices {
 	private File getScriptFile(String functionid) {
 		FunctionClient functionClient = (FunctionClient) getContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
 		FunctionRepository functionRepository = functionClient.getFunctionRepository();
-		
 		GeneralScriptFunction function = (GeneralScriptFunction) functionRepository.getFunctionById(functionid);
-		ScriptFunctionTypeHelper helper = new ScriptFunctionTypeHelper(getContext());
-		File scriptFile = helper.getScriptFile(function);
-		return scriptFile;
+		
+		return ((AbstractScriptFunctionType)functionClient.getFunctionTypeByFunction(function)).getScriptFile(function);
 	}
 }

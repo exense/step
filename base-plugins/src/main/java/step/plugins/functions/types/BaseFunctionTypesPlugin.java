@@ -12,10 +12,7 @@ public class BaseFunctionTypesPlugin extends AbstractPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		super.executionControllerStart(context);
-		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
-		
-		functionClient.registerFunctionType(new GrinderFunctionType());
-		functionClient.registerFunctionType(new GeneralScriptFunctionType());
+		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);		
 		functionClient.registerFunctionType(new CompositeFunctionType());
 	}
 

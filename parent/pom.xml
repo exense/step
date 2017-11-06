@@ -43,6 +43,8 @@
 	</distributionManagement>
 
 	<modules>
+		<module>../grid-api</module>
+		<module>../grid-agent</module>
 		<module>../grid</module>
 		<module>../functions</module>
 		<module>../core</module>
@@ -50,10 +52,10 @@
 		<module>../base-plugins</module>
 		<module>../rtm-plugin</module>
 		<module>../base-artefacts</module>
-		<module>../base-handlers</module>
 		<module>../execution-controller</module>
 		<module>../agent</module>
 		<module>../initialization</module>
+		<module>../java-plugin</module>
 		<module>../selenium-plugin</module>
 		<module>../jmeter-plugin</module>
 		<module>../script-editor-plugin</module>

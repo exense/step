@@ -31,6 +31,7 @@ import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
 import step.grid.client.GridClient.AgentCommunicationException;
+import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.io.OutputMessage;
@@ -86,16 +87,17 @@ public class FunctionClient implements FunctionExecutionService {
 			context.getDynamicBeanResolver().evaluate(function, Collections.<String, Object>unmodifiableMap(input.getProperties()));
 			
 			String handlerChain = functionType.getHandlerChain(function);
+			FileVersionId handlerPackage = functionType.getHandlerPackage(function);
 			
 			Map<String, String> properties = new HashMap<>();
 			properties.putAll(input.getProperties());
 			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
 			if(handlerProperties!=null) {
-				properties.putAll(functionType.getHandlerProperties(function));				
+				properties.putAll(handlerProperties);				
 			}
 			
 			int callTimeout = function.getCallTimeout().get();
-			OutputMessage outputMessage = gridClient.call(tokenHandle, function.getAttributes().get(Function.NAME), input.getArgument(), handlerChain, properties, callTimeout);
+			OutputMessage outputMessage = gridClient.call(tokenHandle, function.getAttributes().get(Function.NAME), input.getArgument(), handlerChain, handlerPackage, properties, callTimeout);
 			
 			output.setResult(outputMessage.getPayload());
 			output.setError(outputMessage.getError());

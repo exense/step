@@ -63,7 +63,7 @@ public class FIleManagerTest {
 			@Override
 			public TransportableFile getTransportableFile(String fileHandle) throws IOException {
 				remoteCallCounts.incrementAndGet();
-				return new TransportableFile(false, new byte[]{11});
+				return new TransportableFile("", false, new byte[]{11});
 			}
 		});
 		

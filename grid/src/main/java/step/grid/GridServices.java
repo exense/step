@@ -30,6 +30,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+import step.grid.agent.RegistrationMessage;
 import step.grid.filemanager.FileProvider;
 import step.grid.filemanager.FileProvider.TransportableFile;
 
@@ -62,6 +63,6 @@ public class GridServices {
 			}
 		};
 		return Response.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-				.header("content-disposition", "attachment; filename = ; type = "+(file.isDirectory()?"dir":"file")).build();
+				.header("content-disposition", "attachment; filename = "+file.getName()+"; type = "+(file.isDirectory()?"dir":"file")).build();
 	}
 }

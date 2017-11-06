@@ -35,6 +35,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
+import step.grid.agent.RegistrationMessage;
 import step.grid.filemanager.FileManagerServer;
 import step.grid.filemanager.FileProvider;
 import step.grid.tokenpool.Identity;
@@ -45,8 +46,6 @@ import step.grid.tokenpool.TokenPool;
 public class Grid implements TokenRegistry, GridFileService {
 
 	public static final String LOCAL_AGENT = "local";
-	
-	public static final String AGENT_TYPE_KEY = "$agenttype";
 
 	private ExpiringMap<String, AgentRef> agentRefs;
 	

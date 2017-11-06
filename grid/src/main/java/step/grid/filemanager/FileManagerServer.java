@@ -44,7 +44,7 @@ public class FileManagerServer implements FileProvider {
 				bytes = Files.readAllBytes(transferFile.toPath());	
 				isDirectory = false;
 			}			
-			return new TransportableFile(isDirectory, bytes);
+			return new TransportableFile(transferFile.getName(), isDirectory, bytes);
 		} catch (IOException e) {
 			throw new RuntimeException("Error while reading file with handle "+fileHandle+" mapped to '"+transferFile.getAbsolutePath()+"'", e);
 		}

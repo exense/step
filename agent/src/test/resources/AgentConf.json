@@ -7,10 +7,13 @@
 {"capacity":10,
 "tokenConf":{
 	"attributes":{"key":"val"},
-	"properties":{}}
+	"properties":{
+		"chromedriver":"C:/Tools/selenium/chromedriver_win32_2.27/chromedriver.exe"
+	}}
 }
 ],
 "properties":{"plugins.jmeter.home":"../distribution/template-agent/ext/lib/jmeter",
 "plugins.selenium.libs.2.x":"../distribution/template-agent/ext/lib/selenium/selenium-2.53.1",
-"plugins.selenium.libs.3.x":"../distribution/template-agent/ext/lib/selenium/selenium-java-3.0.1"}
+"plugins.selenium.libs.3.x":"../distribution/template-agent/ext/lib/selenium/selenium-java-3.0.1",
+"chromedriver":"C:/Tools/selenium/chromedriver_win32_2.27/chromedriver.exe"}
 }
