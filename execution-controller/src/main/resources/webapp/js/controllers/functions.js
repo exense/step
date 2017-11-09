@@ -239,7 +239,7 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
   }
   
   if(newFunction) {
-    $scope.function_ = {type:'step.plugins.functions.types.GeneralScriptFunction'}
+    $scope.function_ = {type:'step.plugins.java.GeneralScriptFunction'}
     $scope.loadInitialFunction();
   } else {
     $scope.function_ = function_;

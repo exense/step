@@ -45,13 +45,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>grid</artifactId>
+			<artifactId>grid-api</artifactId>
 			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
 		</dependency>
 	</dependencies>
 

@@ -7,12 +7,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import step.grid.io.OutputMessage;
-import step.handlers.javahandler.AbstractScript;
+import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
-import step.handlers.javahandler.ScriptRunner;
-import step.handlers.javahandler.ScriptRunner.ScriptContext;
+import step.handlers.javahandler.KeywordRunner;
+import step.handlers.javahandler.KeywordRunner.ExecutionContext;
 
-public class Java_Clock_Example extends AbstractScript {
+public class Java_Clock_Example extends AbstractKeyword {
 
 	@Keyword
 	public void Demo_Keyword_Java() throws Exception {
@@ -43,7 +43,7 @@ public class Java_Clock_Example extends AbstractScript {
 	@Test
 	public void Demo_Java_Clock_Test() {
 	    Map<String, String> properties = new HashMap<>();
-	    ScriptContext ctx = ScriptRunner.getExecutionContext(properties);
+	    ExecutionContext ctx = KeywordRunner.getExecutionContext(properties);
 	    
 	    OutputMessage result = ctx.run("Demo_Keyword_Java","{ \"label\" : \"Current time is : \" }");
     
@@ -54,7 +54,7 @@ public class Java_Clock_Example extends AbstractScript {
 	@Test
 	public void Demo_Keyword_Sequence() {
 	    Map<String, String> properties = new HashMap<>();
-	    ScriptContext ctx = ScriptRunner.getExecutionContext(properties);
+	    ExecutionContext ctx = KeywordRunner.getExecutionContext(properties);
 	    
 	    OutputMessage result;
 	    result = ctx.run("Demo_Keyword_Java_1","{}");

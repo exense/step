@@ -40,6 +40,11 @@
 			<artifactId>script-dev-java</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>commons</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.reflections</groupId>

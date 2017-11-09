@@ -50,11 +50,13 @@ import step.grid.TokenWrapper;
 import step.grid.agent.AgentTokenServices;
 import step.grid.agent.ObjectMapperResolver;
 import step.grid.agent.handler.MessageHandler;
+import step.grid.agent.handler.MessageHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+import step.grid.isolation.ApplicationContextBuilder;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;
 
@@ -83,6 +85,38 @@ public class GridClient implements Closeable {
 		client = ClientBuilder.newClient();
 		client.register(ObjectMapperResolver.class);
 		client.register(JacksonJsonProvider.class);
+		
+		initLocalAgentServices();
+		initLocalMessageHandlerPool();
+	}
+	
+	protected AgentTokenServices localAgentTokenServices;
+	
+	protected MessageHandlerPool localMessageHandlerPool;
+	
+	private void initLocalAgentServices() {
+		FileManagerClient fileManagerClient = new FileManagerClient() {
+			@Override
+			public File requestFile(String uid, long lastModified) {
+				return fileService.getRegisteredFile(uid);
+			}
+
+			@Override
+			public FileVersion requestFileVersion(String uid, long lastModified) {
+				FileVersion fileVersion = new FileVersion();
+				fileVersion.setFile(requestFile(uid, lastModified));
+				fileVersion.setFileId(uid);
+				fileVersion.setVersion(lastModified);
+				return fileVersion;
+			}
+		};
+		
+		localAgentTokenServices = new AgentTokenServices(fileManagerClient);
+		localAgentTokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
+	}
+	
+	private void initLocalMessageHandlerPool() {
+		localMessageHandlerPool = new MessageHandlerPool(localAgentTokenServices);
 	}
 	
 	public TokenWrapper getLocalTokenHandle() {
@@ -148,22 +182,10 @@ public class GridClient implements Closeable {
 
 	private OutputMessage callLocalToken(Token token, InputMessage message) throws Exception {
 		OutputMessage output;
-		
-		MessageHandler h = (MessageHandler) Class.forName(message.getHandler()).newInstance();
-		
 		AgentTokenWrapper agentTokenWrapper = new AgentTokenWrapper(token);
-		FileManagerClient fileManagerClient = new FileManagerClient() {
-			@Override
-			public File requestFile(String uid, long lastModified) {
-				return fileService.getRegisteredFile(uid);
-			}
-
-			@Override
-			public FileVersion requestFileVersion(String uid, long lastModified) {
-				throw new RuntimeException("Not implemented");
-			}
-		};
-		agentTokenWrapper.setServices(new AgentTokenServices(fileManagerClient));
+		agentTokenWrapper.setServices(localAgentTokenServices);
+		
+		MessageHandler h = localMessageHandlerPool.get(message.getHandler());
 		output = h.handle(agentTokenWrapper, message);
 		return output;
 	}

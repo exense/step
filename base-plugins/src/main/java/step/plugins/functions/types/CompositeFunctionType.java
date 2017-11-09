@@ -34,7 +34,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	
 	@Override
 	public String getHandlerChain(CompositeFunction function) {
-		return "class:" + ArtefactMessageHandler.class.getName();
+		return ArtefactMessageHandler.class.getName();
 	}
 
 	@Override

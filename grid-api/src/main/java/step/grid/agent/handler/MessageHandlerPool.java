@@ -40,22 +40,26 @@ public class MessageHandlerPool {
 		this.tokenServices = tokenServices;
 	}
 
-	public synchronized MessageHandler get(String handlerClassname) throws Exception {
+	public MessageHandler get(String handlerClassname) throws Exception {
+		return get(handlerClassname, Thread.currentThread().getContextClassLoader());			
+	}
+	
+	public synchronized MessageHandler get(String handlerClassname, ClassLoader classLoader) throws Exception {
 		MessageHandler handler = pool.get(handlerClassname); 
 		
 		if(handler==null) {
-			handler = createHandler(handlerClassname);
+			handler = createHandler(handlerClassname, classLoader);
 			pool.put(handlerClassname, handler);
 		}
 		
 		return handler;			
 	}
 
-	private MessageHandler createHandler(String handlerClassname) throws ReflectiveOperationException, MalformedURLException,
+	private MessageHandler createHandler(String handlerClassname, ClassLoader classLoader) throws ReflectiveOperationException, MalformedURLException,
 			ClassNotFoundException, InstantiationException, IllegalAccessException {
 		MessageHandler handler;
 		try {
-			Class<?> class_ = Class.forName(handlerClassname, true, Thread.currentThread().getContextClassLoader());
+			Class<?> class_ = Class.forName(handlerClassname, true, classLoader);
 			handler = newInstance(class_);
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 			throw e;

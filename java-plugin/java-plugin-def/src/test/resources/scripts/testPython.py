@@ -1,0 +1,1 @@
+output.add("key1",input.getString("key1"))

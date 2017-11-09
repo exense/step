@@ -18,12 +18,12 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 import step.grid.io.OutputMessage;
-import step.handlers.javahandler.AbstractScript;
+import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
-import step.handlers.javahandler.ScriptRunner;
-import step.handlers.javahandler.ScriptRunner.ScriptContext;
+import step.handlers.javahandler.KeywordRunner;
+import step.handlers.javahandler.KeywordRunner.ExecutionContext;
 
-public class SeleniumKeywordExample extends AbstractScript {
+public class SeleniumKeywordExample extends AbstractKeyword {
 	
 	public class DriverWrapper implements Closeable {
 
@@ -81,13 +81,13 @@ public class SeleniumKeywordExample extends AbstractScript {
 		}
 	}
 	
-	ScriptContext ctx;
+	ExecutionContext ctx;
 		
 	@Before
 	public void setUp() {
 		Map<String, String> properties = new HashMap<>();
 		properties.put("chromedriver", "../ext/bin/chromedriver/chromedriver.exe");
-		ctx = ScriptRunner.getExecutionContext(properties);
+		ctx = KeywordRunner.getExecutionContext(properties, SeleniumKeywordExample.class);
 	}
 	
 	@Test

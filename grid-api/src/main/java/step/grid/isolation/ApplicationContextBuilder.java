@@ -58,10 +58,11 @@ public class ApplicationContextBuilder {
 	public ApplicationContextBuilder() {
 		rootContext = new ApplicationContext();
 		rootContext.classLoader = InputMessage.class.getClassLoader();
+		resetContext();
 	}
 	
 	public void resetContext() {
-		currentContexts.set(null);
+		currentContexts.set(rootContext);
 	}
 	
 	public void pushContextIfAbsent(String contextKey, RemoteClassPath remoteClassPath) {
