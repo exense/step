@@ -54,12 +54,12 @@
 			<groupId>step</groupId>
 			<artifactId>selenium-plugin-def</artifactId>
 			<version>${project.version}</version>
-		</dependency>
+		</dependency>	
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>jmeter-plugin</artifactId>
+			<artifactId>jmeter-plugin-def</artifactId>
 			<version>${project.version}</version>
-		</dependency>		
+		</dependency>	
 	</dependencies>
 
 	<build>

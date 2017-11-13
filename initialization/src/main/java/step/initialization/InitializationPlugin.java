@@ -81,6 +81,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		}
 		
 		migrateCallFunction(context);
+		migrateGeneralScriptFunctions(context);
 		
 		// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
 		renameArtefactType(context, "FunctionGroup", "Session");
@@ -137,6 +138,27 @@ public class InitializationPlugin extends AbstractPlugin {
 		
 		logger.info("Migrated "+i.get()+" artefacts of type 'CallFunction'");
 	}
+	
+	private void migrateGeneralScriptFunctions(GlobalContext context) {
+		logger.info("Searching for functions of type 'step.plugins.functions.types.GeneralScriptFunction' to be migrated...");
+		com.mongodb.client.MongoCollection<Document> functions = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "functions");
+		
+		AtomicInteger i = new AtomicInteger();
+		Document filterCallFunction = new Document("type", "step.plugins.functions.types.GeneralScriptFunction");
+		functions.find(filterCallFunction).forEach(new Block<Document>() {
+
+			@Override
+			public void apply(Document t) {
+				t.replace("type", "step.plugins.java.GeneralScriptFunction");
+				Document filter = new Document("_id", t.get("_id"));
+				functions.replaceOne(filter, t);
+				i.incrementAndGet();
+			}
+		});
+		
+		logger.info("Migrated "+i.get()+" functions of type 'step.plugins.functions.types.GeneralScriptFunction'");
+	}
+	
 
 	private void renameArtefactType(GlobalContext context, String classFrom, String classTo) {
 		logger.info("Searching for artefacts of type '"+classFrom+"' to be migrated...");

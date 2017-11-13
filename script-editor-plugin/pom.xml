@@ -21,7 +21,7 @@
 		</dependency>
 		<dependency>
 			<groupId>step</groupId>
-			<artifactId>base-plugins</artifactId>
+			<artifactId>java-plugin-def</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 	</dependencies>

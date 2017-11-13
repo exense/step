@@ -2,17 +2,13 @@ package step.grid.isolation;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.grid.bootstrap.RemoteClassPathBuilder.RemoteClassPath;
 import step.grid.io.InputMessage;
 
 public class ApplicationContextBuilder {
@@ -65,61 +61,35 @@ public class ApplicationContextBuilder {
 		currentContexts.set(rootContext);
 	}
 	
-	public void pushContextIfAbsent(String contextKey, RemoteClassPath remoteClassPath) {
-		synchronized (this) {
+	public void pushContext(ApplicationContextFactory descriptor) {
+		synchronized(this) {
 			ApplicationContext parentContext = currentContexts.get();
 			if(parentContext==null) {
 				parentContext = rootContext;
 			}
-
+			
+			String contextKey = descriptor.getId();
 			ApplicationContext context;
 			if(!parentContext.childContexts.containsKey(contextKey)) {
-				context = createNewApplicationContext(contextKey, parentContext, remoteClassPath);
+				context = new ApplicationContext();
+				buildClassLoader(descriptor, context, parentContext);
+				parentContext.childContexts.put(contextKey, context);
 			} else {
-				ApplicationContext currentContext = parentContext.childContexts.get(contextKey);					
-				if(remoteClassPath.isForceReload()) {
-					try {
-						currentContext.close();
-					} catch (IOException e) {
-						logger.warn("Error while closing context", e);
-					}
-					context = createNewApplicationContext(contextKey, parentContext, remoteClassPath);
+				context = parentContext.childContexts.get(contextKey);	
+				if(descriptor.requiresReload()) {
+					buildClassLoader(descriptor, context, parentContext);
+					context.contextObjects.clear();
 				} else {
-					context = currentContext;
+					
 				}
 			}
 			currentContexts.set(context);
-		}	
-	}
-	
-	public void pushContextIfAbsent(String contextKey, Supplier<RemoteClassPath> remoteClassPathSupplier) {
-		synchronized (this) {
-			ApplicationContext parentContext = currentContexts.get();
-			if(parentContext==null) {
-				parentContext = rootContext;
-			}
-
-			ApplicationContext context;
-			if(!parentContext.childContexts.containsKey(contextKey)) {
-				RemoteClassPath remoteClassPath = remoteClassPathSupplier.get();
-				context = createNewApplicationContext(contextKey, parentContext, remoteClassPath);
-			} else {
-				context = parentContext.childContexts.get(contextKey);
-			}
-			currentContexts.set(context);
-		}	
+		}
 	}
 
-	private ApplicationContext createNewApplicationContext(String contextKey, ApplicationContext parentContext,
-			RemoteClassPath remoteClassPath) {
-		ApplicationContext context;
-		context = new ApplicationContext();
-		URL[] urlArray = remoteClassPath.getUrls().toArray(new URL[remoteClassPath.getUrls().size()]);
-		@SuppressWarnings("resource")
-		ClassLoader classLoader = new URLClassLoader(urlArray, parentContext.classLoader);
+	private void buildClassLoader(ApplicationContextFactory descriptor, ApplicationContext context,	ApplicationContext parentContext) {
+		ClassLoader classLoader = descriptor.buildClassLoader(parentContext.classLoader);
 		context.classLoader = classLoader;
-		parentContext.childContexts.put(contextKey, context);
-		return context;
 	}
 	
 	public ApplicationContext getCurrentContext() {

@@ -59,7 +59,7 @@ public class MessageHandlerPool {
 			ClassNotFoundException, InstantiationException, IllegalAccessException {
 		MessageHandler handler;
 		try {
-			Class<?> class_ = Class.forName(handlerClassname, true, classLoader);
+			Class<?> class_ = classLoader.loadClass(handlerClassname);
 			handler = newInstance(class_);
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 			throw e;

@@ -54,7 +54,17 @@
 		</dependency>
 		<dependency>
 			<groupId>step</groupId>
+			<artifactId>script-editor-plugin</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>step</groupId>
 			<artifactId>selenium-plugin-def</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>step</groupId>
+			<artifactId>jmeter-plugin-def</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

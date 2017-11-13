@@ -28,6 +28,48 @@ public class FileManagerClientImpl implements FileManagerClient {
 		logger.info("Starting file manager client using data folder: "+dataFolder.getAbsolutePath());
 		this.dataFolder = dataFolder;
 		this.fileProvider = fileProvider;
+		
+		loadCache();
+	}
+	
+	private void loadCache() {
+		logger.info("Loading file manager client cache from data folder: "+dataFolder.getAbsolutePath());
+		for(File file:dataFolder.listFiles()) {
+			try {
+				if(file.isDirectory()) {
+					for(File container:file.listFiles()) {
+						String fileId = file.getName();
+						String versionStr = container.getName();
+						if(container.isDirectory()) {
+							File[] containerFiles = container.listFiles();
+							if(containerFiles.length==1) {
+								FileInfo fileInfo = cache.get(fileId);
+								if(fileInfo == null) {
+									fileInfo = new FileInfo(fileId);
+								}
+								
+								long version = Long.parseLong(versionStr);
+								if(fileInfo.lastModified<version) {
+									fileInfo.lastModified = version;
+									fileInfo.file = containerFiles[0];
+									cache.put(fileId, fileInfo);
+									logger.debug("Adding file to cache. file id: "+fileId+" and version "+Long.toString(version));
+								}
+							} else {
+								throw new RuntimeException("The container "+container.getAbsolutePath()+" contains more than one file!");
+							}
+						} else {
+							throw new RuntimeException("The file "+container.getAbsolutePath()+" is not a directory!");
+						}
+					}
+				} else {
+					throw new RuntimeException("The file "+file.getAbsolutePath()+" is not a directory!");
+				}
+			} catch(Exception e) {
+				logger.error("Error while loading file manager client cache for file "+file.getAbsolutePath(), e);
+			}
+		}
+		
 	}
 
 	static class FileInfo {
@@ -76,21 +118,17 @@ public class FileManagerClientImpl implements FileManagerClient {
 		
 		synchronized (fileInfo) {
 			if(fileInfo.file==null) {
-				if(logger.isDebugEnabled()) {
-					logger.debug("Cache miss for file id: "+uid+" and version "+Long.toString(lastModified)+". Requesting file from server");
-				}
+				logger.info("Cache miss for file id: "+uid+" and version "+Long.toString(lastModified)+". Requesting file from server");
 				requestFileAndUpdateCache(fileInfo, uid, lastModified);
 				fileModication = true;
 			} else if(lastModified>fileInfo.lastModified) {
-				if(logger.isDebugEnabled()) {
-					logger.debug("File version mismatch for file id: "+uid+" and version "+Long.toString(lastModified)+". Requesting file from server");
-				}
+				logger.info("File version mismatch for file id: "+uid+" and version "+Long.toString(lastModified)+". Requesting file from server");
 				requestFileAndUpdateCache(fileInfo, uid, lastModified);
 				fileModication = true;
 			} else {
 				// local file is up to date
 				if(logger.isDebugEnabled()) {
-					logger.debug("Served file request from cache. file id: "+uid+" and version "+Long.toString(lastModified)+". Requesting file from server");
+					logger.debug("Served file request from cache. file id: "+uid+" and version "+Long.toString(lastModified));
 				}
 				fileModication = false;
 			}			

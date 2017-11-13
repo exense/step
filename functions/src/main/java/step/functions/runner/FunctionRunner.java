@@ -24,6 +24,8 @@ public class FunctionRunner {
 
 	public static class Context {
 				
+		GlobalContext globalContext;
+		
 		AgentTokenWrapper token;
 		
 		FunctionClient functionClient;
@@ -59,7 +61,7 @@ public class FunctionRunner {
 			if(properties!=null) {
 				token.setProperties(properties);
 			}
-			GlobalContext globalContext = ContextBuilder.createGlobalContext();
+			globalContext = ContextBuilder.createGlobalContext();
 			Grid grid = new Grid(0);
 			GridClient client = new GridClient(grid, grid);
 			functionClient = new FunctionClient(globalContext, client, functionRepository);
@@ -88,6 +90,10 @@ public class FunctionRunner {
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
+		}
+
+		public GlobalContext getGlobalContext() {
+			return globalContext;
 		}
 	}
 	
