@@ -67,31 +67,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>appassembler-maven-plugin</artifactId>
-				<version>1.2.2</version>
-				<configuration>
-					<programs>
-						<program>
-							<mainClass>step.grid.agent.Agent</mainClass>
-							<name>Agent</name>
-						</program>
-					</programs>
-					<assembleDirectory>${project.build.directory}/Agent</assembleDirectory>
-					<repositoryName>lib</repositoryName>
-					<repositoryLayout>flat</repositoryLayout>
-				</configuration>
-				<executions>
-					<execution>
-						<id>assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>assemble</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 </project>

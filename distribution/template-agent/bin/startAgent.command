@@ -9,4 +9,4 @@ cd $ABSPATH
 
 JAVA_OPTS=-Dlogback.configurationFile=./logback.xml
 
-${JAVA_PATH}java ${JAVA_OPTS} -cp ${ABSPATH}/../lib/*: step.grid.agent.Agent -config=${ABSPATH}/../conf/AgentConf.json
+${JAVA_PATH}java ${JAVA_OPTS} -cp ${ABSPATH}/../lib/*: step.grid.agent.AgentRunner -config=${ABSPATH}/../conf/AgentConf.json
