@@ -1,5 +1,6 @@
 package step.plugins.selenium;
 
+import java.io.File;
 import java.util.Map;
 
 import step.core.dynamicbeans.DynamicValue;
@@ -11,7 +12,18 @@ public class SeleniumFunctionType extends AbstractScriptFunctionType<SeleniumFun
 	@Override
 	public Map<String, String> getHandlerProperties(SeleniumFunction function) {
 		String seleniumVersion = function.getSeleniumVersion();
-		String seleniumLibPath = getContext().getConfiguration().getProperty("plugins.selenium.libs."+seleniumVersion);
+		
+		String propertyName = "plugins.selenium.libs."+seleniumVersion;
+		String seleniumLibPath = getContext().getConfiguration().getProperty(propertyName);
+		if(seleniumLibPath==null) {
+			throw new RuntimeException("Property '"+propertyName+"' in step.properties isn't set. Please set it to path of the installation folder of selenium");
+		}
+		
+		File seleniumLibFile = new File(seleniumLibPath);
+		if(!seleniumLibFile.exists()) {
+			throw new RuntimeException("The path to the selenium installation doesn't exist: "+seleniumLibFile.getAbsolutePath());
+		}
+		
 		function.setLibrariesFile(new DynamicValue<String>(seleniumLibPath));
 		return super.getHandlerProperties(function);
 	}
