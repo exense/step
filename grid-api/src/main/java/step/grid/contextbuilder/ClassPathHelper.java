@@ -1,4 +1,4 @@
-package step.grid.isolation;
+package step.grid.contextbuilder;
 
 import java.io.File;
 import java.io.FileFilter;

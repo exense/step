@@ -16,11 +16,11 @@ import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.filemanager.FileManagerClient.FileVersion;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
-import step.grid.isolation.ApplicationContextBuilder.ApplicationContext;
 
 public class JMeterLocalHandler extends AbstractMessageHandler {
 

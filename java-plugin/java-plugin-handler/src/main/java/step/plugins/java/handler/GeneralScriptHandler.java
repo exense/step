@@ -4,13 +4,13 @@ import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.MessageHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.contextbuilder.ApplicationContextBuilder;
+import step.grid.contextbuilder.LocalResourceApplicationContextFactory;
+import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
-import step.grid.isolation.ApplicationContextBuilder;
-import step.grid.isolation.LocalResourceApplicationContextFactory;
-import step.grid.isolation.RemoteApplicationContextFactory;
 import step.plugins.js223.handler.ScriptHandler;
 
 public class GeneralScriptHandler extends AbstractMessageHandler {

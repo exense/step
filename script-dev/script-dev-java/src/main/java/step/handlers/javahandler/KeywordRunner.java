@@ -33,9 +33,9 @@ import org.slf4j.LoggerFactory;
 import step.grid.agent.AgentTokenServices;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
+import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
-import step.grid.isolation.ApplicationContextBuilder;
 
 public class KeywordRunner {
 	

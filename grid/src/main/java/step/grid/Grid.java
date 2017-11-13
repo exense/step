@@ -42,6 +42,7 @@ import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.SimpleAffinityEvaluator;
 import step.grid.tokenpool.Token;
 import step.grid.tokenpool.TokenPool;
+import step.grid.tokenpool.TokenRegistry;
 
 public class Grid implements TokenRegistry, GridFileService {
 

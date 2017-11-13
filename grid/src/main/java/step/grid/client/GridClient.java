@@ -45,20 +45,20 @@ import step.grid.AgentRef;
 import step.grid.Grid;
 import step.grid.GridFileService;
 import step.grid.Token;
-import step.grid.TokenRegistry;
 import step.grid.TokenWrapper;
 import step.grid.agent.AgentTokenServices;
 import step.grid.agent.ObjectMapperResolver;
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.handler.MessageHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
-import step.grid.isolation.ApplicationContextBuilder;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;
+import step.grid.tokenpool.TokenRegistry;
 
 public class GridClient implements Closeable {
 	

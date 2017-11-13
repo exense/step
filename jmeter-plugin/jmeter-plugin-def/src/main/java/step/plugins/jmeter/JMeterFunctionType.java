@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import step.functions.type.AbstractFunctionType;
-import step.grid.bootstrap.ResourceJarExtractor;
+import step.grid.bootstrap.ResourceExtractor;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 
 public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
@@ -15,7 +15,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	@Override
 	public void init() {
 		super.init();
-		handlerJar = ResourceJarExtractor.extractJar(getClass().getClassLoader(), "jmeter-plugin-handler.jar");
+		handlerJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "jmeter-plugin-handler.jar");
 	}
 
 	@Override

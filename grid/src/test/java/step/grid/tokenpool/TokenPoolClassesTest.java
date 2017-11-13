@@ -17,27 +17,22 @@
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
 package step.grid.tokenpool;
+import java.util.regex.Pattern;
+
+import org.junit.Test;
+
+import junit.framework.Assert;
+import step.grid.tokenpool.Interest;
 
 
-public class Token<T extends Identity> {
+public class TokenPoolClassesTest {
 
-	final T object;
-	
-	volatile boolean available;
-	
-	volatile boolean invalidated;
-	
-	volatile long lastTouch;
-	
-	public Token(T object) {
-		this.object = object;
-	}
-
-	public T getObject() {
-		return object;
-	}
-	
-	public boolean isFree() {
-		return available && !invalidated;
+	@Test
+	public void testSelectionCriterionEquality() {
+		Interest i1 = new Interest(Pattern.compile("QFT.*"), true);
+		Interest i2 = new Interest(Pattern.compile("QFT.*"), true);
+		
+		Assert.assertEquals(i1, i2);;
+		Assert.assertEquals(i1.hashCode(), i2.hashCode());;
 	}
 }

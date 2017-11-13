@@ -1,4 +1,4 @@
-package step.grid.isolation;
+package step.grid.contextbuilder;
 
 public abstract class ApplicationContextFactory {
 	

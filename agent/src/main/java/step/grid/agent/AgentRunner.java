@@ -22,12 +22,12 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-import step.grid.bootstrap.ResourceJarExtractor;
+import step.grid.bootstrap.ResourceExtractor;
 
 public class AgentRunner {
 	
 	public static void main(String[] args) throws Exception {
-		File gridJar = ResourceJarExtractor.extractJar(AgentRunner.class.getClassLoader(), "grid-agent.jar");
+		File gridJar = ResourceExtractor.extractResource(AgentRunner.class.getClassLoader(), "grid-agent.jar");
 		URLClassLoader cl = new URLClassLoader(new URL[]{gridJar.toURI().toURL()}, AgentRunner.class.getClassLoader());
 		Thread.currentThread().setContextClassLoader(cl);
 		cl.loadClass("step.grid.agent.Agent").getConstructor(args.getClass()).newInstance((Object)args);

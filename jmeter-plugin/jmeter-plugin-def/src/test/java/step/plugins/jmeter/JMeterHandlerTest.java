@@ -31,7 +31,7 @@ import step.functions.Function;
 import step.functions.Output;
 import step.functions.runner.FunctionRunner;
 import step.functions.runner.FunctionRunner.Context;
-import step.grid.bootstrap.ResourceJarExtractor;
+import step.grid.bootstrap.ResourceExtractor;
 
 public class JMeterHandlerTest {
 
@@ -48,7 +48,7 @@ public class JMeterHandlerTest {
 	}
 	
 	private JMeterFunction buildTestFunction() {
-		File file = ResourceJarExtractor.extractResource(this.getClass().getClassLoader(), "scripts/Demo_JMeter.jmx");
+		File file = ResourceExtractor.extractResource(this.getClass().getClassLoader(), "scripts/Demo_JMeter.jmx");
 		JMeterFunction f = new JMeterFunction();
 		
 		f.setJmeterTestplan(new DynamicValue<String>(file.getAbsolutePath()));

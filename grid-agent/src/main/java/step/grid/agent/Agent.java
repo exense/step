@@ -52,10 +52,9 @@ import step.grid.agent.conf.TokenConf;
 import step.grid.agent.conf.TokenGroupConf;
 import step.grid.agent.tokenpool.AgentTokenPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerClientImpl;
-import step.grid.isolation.ApplicationContextBuilder;
-import step.grid.isolation.ContextManager;
 import step.grid.tokenpool.Interest;
 
 public class Agent {
@@ -163,12 +162,9 @@ public class Agent {
 		RegistrationClient registrationClient = new RegistrationClient(agent.getGridHost(), agentConf.getGridConnectTimeout(), agentConf.getGridReadTimeout());
 		
 		FileManagerClient fileManagerClient = initFileManager(registrationClient);
-		
-		ContextManager contextManager = new ContextManager();
-		
+				
 		agentTokenServices = new AgentTokenServices(fileManagerClient);
 		agentTokenServices.setAgentProperties(agentConf.getProperties());
-		agentTokenServices.setContextManager(contextManager);
 		agentTokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
 				
 		if(agentConf.getTokenGroups()!=null) {

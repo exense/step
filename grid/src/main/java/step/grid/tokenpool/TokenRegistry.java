@@ -1,10 +1,10 @@
-package step.grid;
+package step.grid.tokenpool;
 
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import step.grid.tokenpool.Identity;
-import step.grid.tokenpool.Token;
+import step.grid.TokenWrapper;
+
 
 public interface TokenRegistry {
 
@@ -13,6 +13,6 @@ public interface TokenRegistry {
 
 	void returnToken(TokenWrapper object);
 
-	List<Token<TokenWrapper>> getTokens();
+	List<step.grid.tokenpool.Token<TokenWrapper>> getTokens();
 
 }

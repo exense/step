@@ -2,16 +2,13 @@ package step.grid.agent;
 
 import java.util.Map;
 
+import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.filemanager.FileManagerClient;
-import step.grid.isolation.ApplicationContextBuilder;
-import step.grid.isolation.ContextManager;
 
 public class AgentTokenServices {
 	
 	FileManagerClient fileManagerClient;
-	
-	ContextManager contextManager;
-	
+		
 	Map<String,String> agentProperties;
 	
 	ApplicationContextBuilder applicationContextBuilder;
@@ -32,14 +29,6 @@ public class AgentTokenServices {
 
 	public void setAgentProperties(Map<String, String> agentProperties) {
 		this.agentProperties = agentProperties;
-	}
-
-	public ContextManager getContextManager() {
-		return contextManager;
-	}
-
-	public void setContextManager(ContextManager contextManager) {
-		this.contextManager = contextManager;
 	}
 
 	public ApplicationContextBuilder getApplicationContextBuilder() {

@@ -9,18 +9,14 @@ import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.filemanager.FileManagerClient.FileVersion;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.InputMessage;
-import step.grid.isolation.ContextManager;
 
 public abstract class AbstractMessageHandler implements MessageHandler, AgentContextAware {
 	
 	protected AgentTokenServices agentTokenServices;
 	
-	protected ContextManager contextManager;
-	
 	@Override
 	public void init(AgentTokenServices agentTokenServices) {
 		this.agentTokenServices = agentTokenServices;
-		this.contextManager = agentTokenServices.getContextManager();
 	}
 	
 	protected FileVersion retrieveFileVersion(String properyName, Map<String,String> properties) throws IOException {

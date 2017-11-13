@@ -18,7 +18,7 @@ import step.commons.conf.Configuration;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
-import step.grid.bootstrap.ResourceJarExtractor;
+import step.grid.bootstrap.ResourceExtractor;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.plugins.java.handler.GeneralScriptHandler;
 import step.plugins.js223.handler.ScriptHandler;
@@ -30,7 +30,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	@Override
 	public void init() {
 		super.init();
-		daemonJar = ResourceJarExtractor.extractJar(getClass().getClassLoader(), "java-plugin-handler.jar");
+		daemonJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "java-plugin-handler.jar");
 	}
 	
 	public Map<String, String> getHandlerProperties(T function) {

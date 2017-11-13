@@ -29,9 +29,9 @@ import org.slf4j.LoggerFactory;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
-import step.grid.isolation.ApplicationContextBuilder.ApplicationContext;
 
 public class KeywordHandler extends AbstractMessageHandler {
 	
