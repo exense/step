@@ -260,13 +260,13 @@ public class InitializationPlugin extends AbstractPlugin {
 			schema = Json.createReader(sr).readObject();
 			sr.close();
 		}
-		Function javaFunction = addScriptFunction(functionRepository, "Demo_Keyword_Java", "java", "../data/scripts/demo-java-keyword/target/classes", schema);
+		Function javaFunction = addScriptFunction(functionRepository, "Demo_Keyword_Java", "java", "../data/scripts/demo-java-keyword.jar", schema);
 		
 		Function javascriptFunction = addScriptFunction(functionRepository, "Demo_Keyword_Javascript", "javascript", "../data/scripts/Demo_Keyword_Javascript.js");
 		
-		Function openChrome = addSeleniumFunction(functionRepository, "Open_Chrome", "java", "../data/scripts/demo-selenium-keyword/target/classes" );
+		Function openChrome = addSeleniumFunction(functionRepository, "Open_Chrome", "java", "../data/scripts/demo-selenium-keyword.jar" );
 		
-		Function googleSearch = addSeleniumFunction(functionRepository, "Google_Search", "java", "../data/scripts/demo-selenium-keyword/target/classes" );
+		Function googleSearch = addSeleniumFunction(functionRepository, "Google_Search", "java", "../data/scripts/demo-selenium-keyword.jar" );
 		
 		Function googleSearchMock = addSeleniumFunction(functionRepository, "Google_Search_Mock", "javascript", "../data/scripts/Google_Search_Mock.js" );
 		
