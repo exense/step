@@ -41,7 +41,7 @@ public class ProcessHandlerTest {
 		if(System.getProperty("os.name").startsWith("Windows")) {
 			echoCmd = "cmd.exe /r echo test";;
 		} else {
-			echoCmd = "echo testt";
+			echoCmd = "echo test";
 		}
 		
 		InputMessage message = new InputMessage();
