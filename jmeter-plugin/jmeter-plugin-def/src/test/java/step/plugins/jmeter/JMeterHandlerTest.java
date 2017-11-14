@@ -25,6 +25,8 @@ import java.util.Map;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
@@ -34,13 +36,20 @@ import step.functions.runner.FunctionRunner.Context;
 import step.grid.bootstrap.ResourceExtractor;
 
 public class JMeterHandlerTest {
-
+	
+	private static final Logger logger = LoggerFactory.getLogger(JMeterHandlerTest.class);
+	
 	@Test 
 	public void test1() {
-		JMeterFunction f = buildTestFunction();
-		Output output = run(f, "{}");
-		Assert.assertNull(output.getError());
-		Assert.assertNotNull(output.getResult().get("samples"));
+		File jmeterHomer = new File("../../distribution/template-controller/ext/jmeter");
+		if(jmeterHomer.exists()) {
+			JMeterFunction f = buildTestFunction();
+			Output output = run(f, "{}");
+			Assert.assertNull(output.getError());
+			Assert.assertNotNull(output.getResult().get("samples"));
+		} else {
+			logger.warn("Skipping JMeterHandler test as no JMeter installation could been found");
+		}
 	}
 	private Output run(JMeterFunction f, String inputJson) {
 		Context ctx = FunctionRunner.getContext(new JMeterFunctionType());
