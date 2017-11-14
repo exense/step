@@ -39,6 +39,7 @@ public class JMeterHandlerTest {
 	public void test1() {
 		JMeterFunction f = buildTestFunction();
 		Output output = run(f, "{}");
+		Assert.assertNull(output.getError());
 		Assert.assertNotNull(output.getResult().get("samples"));
 	}
 	private Output run(JMeterFunction f, String inputJson) {

@@ -25,6 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.core.GlobalContext;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
@@ -46,6 +49,8 @@ public class FunctionClient implements FunctionExecutionService {
 	private final GlobalContext context;
 	
 	private final Map<String, AbstractFunctionType<Function>> functionTypes = new HashMap<>();
+	
+	private static final Logger logger = LoggerFactory.getLogger(FunctionClient.class);
 	
 	public FunctionClient(GlobalContext context, GridClient gridClient, FunctionRepository functionRepository) {
 		super();
@@ -105,6 +110,9 @@ public class FunctionClient implements FunctionExecutionService {
 			output.setMeasures(outputMessage.getMeasures());
 			return output;
 		} catch (Exception e) {
+			if(logger.isDebugEnabled()) {
+				logger.error("Error while calling function with id "+functionId, e);
+			}
 			attachExceptionToOutput(output, e);
 		}
 		return output;
