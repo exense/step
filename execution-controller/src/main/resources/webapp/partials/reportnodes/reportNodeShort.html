@@ -1,6 +1,9 @@
 <div>
 	
-	<div><i style="display:inline-block" uib-tooltip="{{node.resolvedArtefact._class}}" class="glyphicon {{artefactTypes.getIcon(node.resolvedArtefact._class) + ' executionStatus status-'+node.status}}" />{{node.name}}</div>
+	<div>
+		<i style="display:inline-block" uib-tooltip="{{node.resolvedArtefact._class}}" class="glyphicon {{artefactTypes.getIcon(node.resolvedArtefact._class) + ' executionStatus status-'+node.status}}" />{{node.name}}
+		<span class="pull-right"><attachments node="node" /></span>
+	</div>
 	<hr />
 	<div ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
 		<div>Keyword: {{concatenate(node.functionAttributes)}}</span></div>
@@ -17,7 +20,6 @@
 		<div>{{node.resolvedArtefact.key.value}} = {{node.resolvedArtefact.value.value}}</div>
 	</div>
 	<div ng-if="node.error">Error: <small><em>{{node.error.msg}}
-		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>
-		<span class="pull-right"><attachments node="node" /></span>	
+		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>	
 	</div>
 </div>
