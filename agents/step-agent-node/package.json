@@ -8,7 +8,11 @@
     "start": "nodemon server.js"
   },
   "author": "Jérôme Comte",
-  "license": "GNU AFFERO GPLV3",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:denkbar/step.git"
+  },
   "devDependencies": {
     "nodemon": "^1.12.1"
   },
@@ -18,5 +22,8 @@
     "selenium-webdriver": "^3.6.0",
     "underscore": "^1.8.3",
     "uuid": "^3.1.0"
+  },
+  "bin": {
+    "step-agent-node": "./bin/step-agent-node"
   }
 }
