@@ -1,0 +1,22 @@
+{
+  "name": "step-agent-node",
+  "version": "1.0.0",
+  "description": "The official STEP Agent implementation for Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "author": "Jérôme Comte",
+  "license": "GNU AFFERO GPLV3",
+  "devDependencies": {
+    "nodemon": "^1.12.1"
+  },
+  "dependencies": {
+    "express": "^4.16.2",
+    "request": "^2.83.0",
+    "selenium-webdriver": "^3.6.0",
+    "underscore": "^1.8.3",
+    "uuid": "^3.1.0"
+  }
+}
