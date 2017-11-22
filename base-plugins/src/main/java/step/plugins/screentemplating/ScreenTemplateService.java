@@ -27,27 +27,38 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
 import step.core.deployment.AbstractServices;
+import step.core.deployment.Secured;
+import step.core.deployment.Session;
 
 @Singleton
 @Path("screens")
 public class ScreenTemplateService extends AbstractServices {
 	
 	@GET
+	@Secured
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<Input> getInputsForScreen(@PathParam("id") String screenId, @Context UriInfo uriInfo) {
-		Map<String, Object> contextBindings = getContextBindings(uriInfo);
+	public List<Input> getInputsForScreen(@PathParam("id") String screenId, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) {		
+		Map<String, Object> contextBindings = getContextBindings(uriInfo, crc);
 		ScreenTemplatePlugin plugin = (ScreenTemplatePlugin) getContext().get(ScreenTemplatePlugin.SCREEN_TEMPLATE_KEY);
 		return plugin.getInputsForScreen(screenId, contextBindings);
 	}
 
-	private Map<String, Object> getContextBindings(UriInfo uriInfo) {
+	private Map<String, Object> getContextBindings(UriInfo uriInfo, ContainerRequestContext crc) {
 		Map<String, Object> contextBindings = new HashMap<>();
+		
+		Session session = (Session) crc.getProperty("session");
+		if(session!=null) {
+			contextBindings.put("user", session.getUsername());
+			contextBindings.put("role", session.getProfile().getRole());
+		}
+		
 		for(String key:uriInfo.getQueryParameters().keySet()) {
 			contextBindings.put(key, uriInfo.getQueryParameters().getFirst(key));
 		}
