@@ -9,7 +9,7 @@ console.log("Creating agent context and tokens");
 const uuidv1 = require('uuid/v1');
 const _ = require("underscore");
 var agent = {id:uuidv1()}
-var agentContext = {tokens:[], tokenSessions:[]};
+var agentContext = {tokens:[], tokenSessions:[], properties:agentConf.properties};
 _.each(agentConf.tokenGroups, function(tokenGroup) {
 	var tokenConf = tokenGroup.tokenConf;
 	var attributes = tokenConf.attributes;
@@ -36,15 +36,18 @@ routes(app, agentContext);
 
 app.listen(port);
 
+var os = require("os");
+var agentServicesUrl = agentConf.agentUrl || "http://"+os.hostname()+":"+port;
+console.log("Registering agent as "+agentServicesUrl);
+
 
 console.log("Creating registration timer");
 const request = require('request');
-var os = require("os");
 setInterval(function () {
     request({uri:agentConf.gridHost+'/grid/register', 
 			 method: 'POST', 
 			 json: true, 
-			 body: {"agentRef":{"agentId":"test", "agentUrl":"http://"+os.hostname()+":"+port}, "tokens":agentContext.tokens} 
+			 body: {"agentRef":{"agentId":"test", "agentUrl":agentServicesUrl}, "tokens":agentContext.tokens} 
 			}, function(err, res, body) {
 				if(err) {
 					console.log(err);

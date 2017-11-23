@@ -25,6 +25,7 @@ module.exports = function Controller(agentContext) {
 				res.json(outputBuilder);
 			},
 			fail: function(e) {
+				console.log(e);
 				if(e instanceof Error) {
 					outputBuilder.error = e.message;
 				} else {
@@ -38,9 +39,29 @@ module.exports = function Controller(agentContext) {
 		};
 		
 		try {
-			var keywordLibScript = '../../keywords/keywords.js';
-			var keywords = require(keywordLibScript);
-			var keywordFunction = keywords[keywordName];
+			var keywordFunction;
+			var keywordLibScripts = ['../../keywords/keywords.js'];
+			
+			var keywords = agentContext.properties['keywords'];
+			if(keywords) {
+				var keywordsSplit = keywords.split(';');
+				for(i=0;i<keywordsSplit.length;i++) {
+					keywordLibScripts.push(process.cwd()+"/"+keywordsSplit[i]);
+				}
+			}
+			
+			for(i=0;i<keywordLibScripts.length;i++) {
+				var keywordLibScript = keywordLibScripts[i];
+				console.log("Searching keyword "+keywordName+" in "+keywordLibScript);
+				
+				var keywords = require(keywordLibScript);
+				
+				keywordFunction = keywords[keywordName];
+				if(keywordFunction) {
+					break;
+				}
+			}
+
 			if(keywordFunction) {
 				var session = agentContext.tokenSessions[req.params.tokenId];
 				keywordFunction(argument, output, session).catch(function(e){
