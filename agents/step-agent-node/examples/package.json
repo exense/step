@@ -1,0 +1,14 @@
+{
+  "name": "step-keyword-library-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "Jérôme Comte",
+  "license": "ISC",
+  "dependencies": {
+    "step-agent-node": "file:C:/Users/jcomte/git/step/agents/step-agent-node/step-agent-node-1.0.0.tgz"
+  }
+}
