@@ -1,7 +1,15 @@
-var agentConfFile = "conf/agentConf.json";
+const minimist = require('minimist');
+let args = minimist(process.argv.slice(2), {  
+    default: {
+        f: "agentConf.json"
+    },
+});
+console.log("Using arguments "+args);
+
+var agentConfFile = args.f;
 console.log("Reading agent configuration "+agentConfFile);
 var fs = require("fs");
-var content = fs.readFileSync("conf/agentConf.json");
+var content = fs.readFileSync(agentConfFile);
 var agentConf = JSON.parse(content);
 
 
@@ -42,17 +50,18 @@ console.log("Registering agent as "+agentServicesUrl);
 
 
 console.log("Creating registration timer");
+var registrationPeriod = agentConf.registrationPeriod || 5000;
 const request = require('request');
 setInterval(function () {
     request({uri:agentConf.gridHost+'/grid/register', 
 			 method: 'POST', 
 			 json: true, 
-			 body: {"agentRef":{"agentId":"test", "agentUrl":agentServicesUrl}, "tokens":agentContext.tokens} 
+			 body: {"agentRef":{"agentId":agent.id, "agentUrl":agentServicesUrl}, "tokens":agentContext.tokens} 
 			}, function(err, res, body) {
 				if(err) {
 					console.log(err);
 				} 
 			});
-}, 2000);
+}, registrationPeriod);
 
 console.log('Agent successfully started on: ' + port);
