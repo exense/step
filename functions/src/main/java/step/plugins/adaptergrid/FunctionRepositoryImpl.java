@@ -65,7 +65,7 @@ public class FunctionRepositoryImpl implements FunctionRepository {
 			
 			return function;
 		} else {
-			throw new RuntimeException("Unable to find function with attributes "+attributes.toString());
+			throw new RuntimeException("Unable to find keyword "+attributes.toString());
 		}
 	}
 
