@@ -78,6 +78,7 @@ public class InitializationPlugin extends AbstractPlugin {
 			setupUsers(context);
 			setupDemo(context);
 			//setupExecuteProcessFunction(context);
+			createSeleniumDemoPlan(context.getArtefactAccessor(), "Chrome");
 		}
 		
 		migrateCallFunction(context);
@@ -90,9 +91,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		setArtefactNameIfEmpty(context);
 		
 		insertLogEntry(controllerLogs);
-		
-		createSeleniumDemoPlan(context.getArtefactAccessor(), "Chrome");
-		
+				
 		super.executionControllerStart(context);
 	}
 
