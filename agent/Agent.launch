@@ -18,5 +18,4 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-config=src\test\resources\AgentConf.json"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="agent"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-javaagent:C:\Users\jcomte\Downloads\djigger-1.7.1\agent\javaagent.jar"/>
 </launchConfiguration>

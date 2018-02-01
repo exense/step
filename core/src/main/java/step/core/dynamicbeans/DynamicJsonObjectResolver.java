@@ -63,7 +63,10 @@ public class DynamicJsonObjectResolver {
 				} else if(result instanceof String) {
 					builder.add(key,(String)result);
 				} else {
-					builder.add(key,(String)result.toString());
+					if(result != null)
+						builder.add(key,(String)result.toString());
+					else
+						builder.add(key, ""); // a more restrictive try-catch of the NPE + throw "Value null for key={key}" might be more useful
 				}
 			}
 		}
