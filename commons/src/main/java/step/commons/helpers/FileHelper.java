@@ -56,6 +56,7 @@ public class FileHelper {
 	}
 	
 	public static void deleteFolderOnExit(File folder) {
+		folder.deleteOnExit();
 		File[] files = folder.listFiles();
 		if (files != null) {
 			for (File f : files) {
@@ -66,7 +67,6 @@ public class FileHelper {
 				}
 			}
 		}
-		folder.deleteOnExit();
 	}
 	
 	static LoadingCache<File, Long> cache = CacheBuilder.newBuilder()
