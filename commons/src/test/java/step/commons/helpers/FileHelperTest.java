@@ -15,6 +15,23 @@ import org.junit.Test;
 public class FileHelperTest {
 
 	@Test
+	public void testDeleteOnExitReucrsive() throws IOException {
+		File dir = new File("./FileHelperTestFolder/");
+		dir.mkdir();
+		
+		File f1 = new File(dir.getAbsolutePath()+"/f1");
+		f1.createNewFile();
+		
+		File f2 = new File(dir.getAbsolutePath()+"/f2");
+		f2.createNewFile();
+		
+		File subDir1 = new File(dir.getAbsolutePath()+"/subFolder1");
+		subDir1.mkdir();
+		
+		FileHelper.deleteFolderOnExit(dir);
+	}
+	
+	@Test
 	public void testComputeLastModificationDateRecursive() throws IOException {
 		File dir = new File("FileHelperTestFolder/");
 		dir.mkdir();
