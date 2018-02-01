@@ -1,5 +1,8 @@
 package step.core.dynamicbeans;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,6 +16,32 @@ public class DynamicValueResolverTest {
 		DynamicValue<String> v1 = new DynamicValue<>("'test'", "");
 		DynamicValueResolver resolver = new DynamicValueResolver(new ExpressionHandler());
 		resolver.evaluate(v1, null);
+		Assert.assertEquals("test", v1.get());
+	}
+	
+	@Test
+	public void testString2() {
+		DynamicValue<String> v1 = new DynamicValue<>("\"test\"", "");
+		DynamicValueResolver resolver = new DynamicValueResolver(new ExpressionHandler());
+		resolver.evaluate(v1, null);
+		Assert.assertEquals("test", v1.get());
+	}
+	
+	@Test
+	public void testGString() {
+		DynamicValue<String> v1 = new DynamicValue<>("\"te${'s'}t\"", "");
+		DynamicValueResolver resolver = new DynamicValueResolver(new ExpressionHandler());
+		resolver.evaluate(v1, null);
+		Assert.assertEquals("test", v1.get());
+	}
+	
+	@Test
+	public void testGStringVariables() {
+		DynamicValue<String> v1 = new DynamicValue<>("\"t${var}t\"", "");
+		DynamicValueResolver resolver = new DynamicValueResolver(new ExpressionHandler());
+		Map<String, Object> bindings = new HashMap<>();
+		bindings.put("var", "es");
+		resolver.evaluate(v1, bindings);
 		Assert.assertEquals("test", v1.get());
 	}
 	
