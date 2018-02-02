@@ -159,6 +159,16 @@ public class FunctionClient implements FunctionExecutionService {
 		return type.copyFunction(function);
 	}
 	
+	public Function updateFunction(Function function) {
+		AbstractFunctionType<Function> type = getFunctionTypeByFunction(function);
+		return type.updateFunction(function);
+	}
+	
+	public void deleteFunction(Function function) {
+		AbstractFunctionType<Function> type = getFunctionTypeByFunction(function);
+		type.deleteFunction(function);
+	}
+	
 	public String registerAgentFile(File file) {
 		return gridClient.registerFile(file);
 	}

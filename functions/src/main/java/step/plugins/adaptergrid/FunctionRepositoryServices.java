@@ -79,6 +79,8 @@ public class FunctionRepositoryServices extends AbstractServices {
 		FunctionRepository repo = getFunctionRepository();
 		if(function.getId()==null || repo.getFunctionById(function.getId().toString())==null) {
 			getFunctionClient().setupFunction(function);
+		} else {
+			getFunctionClient().updateFunction(function);
 		}
 		repo.addFunction(function);
 		return function;
@@ -113,6 +115,10 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Path("/{id}")
 	@Secured(right="kw-delete")
 	public void delete(@PathParam("id") String functionId) {
+		FunctionRepository repo = getFunctionRepository();
+		Function function = repo.getFunctionById(functionId);
+		getFunctionClient().deleteFunction(function);
+		
 		getFunctionRepository().deleteFunction(functionId);
 	}
 	
