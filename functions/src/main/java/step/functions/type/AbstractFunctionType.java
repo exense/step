@@ -50,11 +50,11 @@ public abstract class AbstractFunctionType<T extends Function> {
 		
 	}
 	
-	public T updateFunction(T function) {
+	public T updateFunction(T function) throws FunctionTypeException {
 		return function;
 	}
 	
-	public T copyFunction(T function) {
+	public T copyFunction(T function) throws FunctionTypeException {
 		function.setId(null);
 		function.getAttributes().put(Function.NAME,function.getAttributes().get(Function.NAME)+"_Copy");
 		return function;
@@ -87,7 +87,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 		return registerFile(new File(filepath));
 	}
 	
-	public void deleteFunction(T function) {
+	public void deleteFunction(T function) throws FunctionTypeException {
 
 	}
 }

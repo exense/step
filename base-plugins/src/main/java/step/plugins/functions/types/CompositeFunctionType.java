@@ -10,6 +10,7 @@ import step.functions.Function;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.plugins.functions.types.composite.ArtefactMessageHandler;
 
@@ -54,7 +55,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	}
 
 	@Override
-	public CompositeFunction copyFunction(CompositeFunction function) {
+	public CompositeFunction copyFunction(CompositeFunction function) throws FunctionTypeException {
 		CompositeFunction copy = super.copyFunction(function);
 
 		String artefactId = function.getArtefactId();

@@ -47,6 +47,7 @@ import step.functions.Input;
 import step.functions.Output;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
+import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient.AgentCommunicationException;
@@ -75,7 +76,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/")
 	@Secured(right="kw-write")
-	public Function save(Function function) throws SetupFunctionException {
+	public Function save(Function function) throws SetupFunctionException, FunctionTypeException {
 		FunctionRepository repo = getFunctionRepository();
 		if(function.getId()==null || repo.getFunctionById(function.getId().toString())==null) {
 			getFunctionClient().setupFunction(function);
@@ -91,7 +92,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="kw-write")
-	public void copyFunction(@PathParam("id") String id) {		
+	public void copyFunction(@PathParam("id") String id) throws FunctionTypeException {		
 		FunctionRepository repo = getFunctionRepository();
 		Function source = repo.getFunctionById(id);
 		if(source!=null) {
@@ -114,11 +115,10 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@DELETE
 	@Path("/{id}")
 	@Secured(right="kw-delete")
-	public void delete(@PathParam("id") String functionId) {
+	public void delete(@PathParam("id") String functionId) throws FunctionTypeException {
 		FunctionRepository repo = getFunctionRepository();
 		Function function = repo.getFunctionById(functionId);
 		getFunctionClient().deleteFunction(function);
-		
 		getFunctionRepository().deleteFunction(functionId);
 	}
 	
