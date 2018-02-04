@@ -27,6 +27,7 @@ import java.util.Map;
 
 import step.core.GlobalContext;
 import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
@@ -144,17 +145,17 @@ public class FunctionClient implements FunctionExecutionService {
 		type.setupFunction(function);
 	}
 	
-	public Function copyFunction(Function function) {
+	public Function copyFunction(Function function) throws FunctionTypeException {
 		AbstractFunctionType<Function> type = getFunctionTypeByFunction(function);
 		return type.copyFunction(function);
 	}
 	
-	public Function updateFunction(Function function) {
+	public Function updateFunction(Function function) throws FunctionTypeException {
 		AbstractFunctionType<Function> type = getFunctionTypeByFunction(function);
 		return type.updateFunction(function);
 	}
 	
-	public void deleteFunction(Function function) {
+	public void deleteFunction(Function function) throws FunctionTypeException {
 		AbstractFunctionType<Function> type = getFunctionTypeByFunction(function);
 		type.deleteFunction(function);
 	}
