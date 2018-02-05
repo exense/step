@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import step.core.GlobalContext;
 import step.functions.Function;
+import step.functions.Input;
 import step.grid.Grid;
 import step.grid.tokenpool.Interest;
 
@@ -32,6 +33,10 @@ public abstract class AbstractFunctionType<T extends Function> {
 	public abstract String getHandlerChain(T function);
 	
 	public abstract Map<String, String> getHandlerProperties(T function);
+	
+	public void beforeFunctionCall(T function, Input input, Map<String, String> properties) {
+		
+	}
 	
 	public abstract T newFunction();
 	
