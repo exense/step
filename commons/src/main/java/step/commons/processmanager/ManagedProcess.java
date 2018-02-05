@@ -169,7 +169,7 @@ public class ManagedProcess implements Closeable {
 				process.waitFor();
 			} catch (InterruptedException e) {}
 		}
-		FileHelper.deleteFolderOnExit(executionDirectory);
+		FileHelper.deleteFolder(executionDirectory);
 	}
 	
 	public class ManagedProcessException extends Exception {
