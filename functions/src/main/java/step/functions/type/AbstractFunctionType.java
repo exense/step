@@ -10,6 +10,7 @@ import step.commons.helpers.FileHelper;
 import step.core.GlobalContext;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
+import step.functions.Input;
 import step.functions.FunctionClient;
 import step.grid.agent.Agent;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
@@ -43,6 +44,10 @@ public abstract class AbstractFunctionType<T extends Function> {
 	};
 	
 	public abstract Map<String, String> getHandlerProperties(T function);
+	
+	public void beforeFunctionCall(T function, Input input, Map<String, String> properties) {
+		
+	}
 	
 	public abstract T newFunction();
 	

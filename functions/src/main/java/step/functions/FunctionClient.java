@@ -102,6 +102,8 @@ public class FunctionClient implements FunctionExecutionService {
 				properties.putAll(handlerProperties);				
 			}
 			
+			functionType.beforeFunctionCall(function, input, properties);
+			
 			int callTimeout = function.getCallTimeout().get();
 			OutputMessage outputMessage = gridClient.call(tokenHandle, function.getAttributes().get(Function.NAME), input.getArgument(), handlerChain, handlerPackage, properties, callTimeout);
 			
