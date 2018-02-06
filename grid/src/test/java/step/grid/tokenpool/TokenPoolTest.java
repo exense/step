@@ -24,6 +24,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -485,7 +486,7 @@ public class TokenPoolTest {
 		});
 		
 		for(Future<Boolean> f:futures) {
-			f.get();			
+			f.get(10, TimeUnit.SECONDS);			
 		}
 		
 		long duration = (System.currentTimeMillis()-t1);
