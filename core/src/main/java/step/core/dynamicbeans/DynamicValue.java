@@ -91,4 +91,8 @@ public class DynamicValue<T> {
 	public void setExpressionType(String expressionType) {
 		this.expressionType = expressionType;
 	}
+	
+	public String toString() {
+		return get().toString();
+	}
 }
