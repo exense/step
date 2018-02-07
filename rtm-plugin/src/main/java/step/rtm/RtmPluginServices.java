@@ -37,34 +37,51 @@ public class RtmPluginServices {
 	
 	private String getAggregateViewByEid(String eid) throws UnsupportedEncodingException {
 		return "rtm/#Aggregate/select/"+URLEncoder.encode(
-				"{ \"guiParams\":"
-				    + "{ \"postControllerView\":"
-				        + " [ { \"filters\":"
-				                + " [  { \"type\":\"text\","
-				                      + "\"key\":\"eId\","
-				                      + "\"value\":\""+eid+"\",\"regex\":false"
-		                        + " }  ]"
-		                + " } ],"
-	                + "\"measurementListView\":"
-	                	+ " { \"nextFactor\":0,"
-	                	+    "\"tableMetricChoice\":"
-	                			+ "[\"begin\",\"name\",\"value\"]"
-            			+ " },"
-        			+ "\"aggregateSPView\":"
-        				+ " { \"sessionId\":\"defaultSid\","
-        				+    "\"granularity\":\"auto\","
-        				+    "\"groupby\":\"name\"," 
-        				+    "\"cpu\": \"1\","
-        				+    "\"partition\": \"16\","
-        				+    "\"timeout\": \"600\"},"
-    				+ "\"aggregateGraphView\":"
-        				+ " { \"chartMetricChoice\":\"AVG\"},"
-    				+ "\"aggregateTableView\":"
-    					+ " { \"checkedAggTableMetrics\":"
-    						+ " [ \"begin\", \"AVG\", \"CNT\"]"
-    						+ ",\"isSwitchedOn\":\"false\" }"
-					+ "}"
-				+ "}"
+				"{"+
+						  "\"guiParams\": {"+
+						    "\"postControllerView\": {"+
+						      "\"selectors1\": ["+
+						        "{"+
+						          "\"filters\": ["+
+						            "{"+
+						              "\"type\": \"text\","+
+						              "\"key\": \"eId\","+
+						              "\"value\": \""+eid+"\","+
+						              "\"regex\": \"\""+
+						            "}"+
+						          "]"+
+						        "}"+
+						      "]"+
+						    "},"+
+						    "\"measurementListView\": {"+
+						      "\"nextFactor\": \"0\","+
+						      "\"tableMetricChoice\": ["+
+						        "\"begin\","+
+						        "\"name\","+
+						        "\"value\""+
+						      "]"+
+						    "},"+
+						    "\"aggregateSPView\": {"+
+						      "\"sessionId\": \"defaultSid\","+
+						      "\"granularity\": \"auto\","+
+						      "\"groupby\": \"name\","+
+						      "\"cpu\": \"1\","+
+						      "\"partition\": \"8\","+
+						      "\"timeout\": \"600\""+
+						    "},"+
+						    "\"aggregateGraphView\": {"+
+						      "\"chartMetricChoice\": \"AVG\""+
+						    "},"+
+						    "\"aggregateTableView\": {"+
+						      "\"checkedAggTableMetrics\": ["+
+						        "\"begin\","+
+						        "\"CNT\","+
+						        "\"AVG\""+
+						      "],"+
+						      "\"isSwitchedOn\": \"false\""+
+						    "}"+
+						  "}"+
+						"}"
 				, "UTF-8").replace("+", "%20");
 	}
 }
