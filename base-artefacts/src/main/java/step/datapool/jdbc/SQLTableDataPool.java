@@ -25,7 +25,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,22 +45,21 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	private String query;
 	private String table;
-	private String primary_key;
+	private String writePKey;
 
 	private ArrayList<String> cols;
 
 	public SQLTableDataPool(SQLTableDataPoolConfiguration configuration){
 		super(configuration);
 
-		String[] split = configuration.getConnectionString().get().trim().split(",");
-		this.jdbc_url = split[0];
-		this.db_user =  split[1];
-		this.db_pwd =  split[2];
-		this.driver_class =  split[3];
-
+		this.jdbc_url = configuration.getConnectionString().get();
+		this.db_user =  configuration.getUser().get();
+		this.db_pwd =  configuration.getPassword().get();
+		this.driver_class =  configuration.getDriverClass().get();
+		this.writePKey = configuration.getWritePKey().get();
+		
 		this.query = configuration.getQuery().get();
 		this.table = parseQueryForTable(this.query);
-		this.primary_key = parseQueryForPrimaryKey(this.query);
 
 		try {
 			Class.forName(driver_class);
@@ -78,23 +76,6 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 			throw new RuntimeException("Could not parse query :" + query);
 		else
 			return m.group(2);
-	}
-	
-	private static String parseQueryForPrimaryKey(String query) {
-		Pattern p = Pattern.compile("(^|\\s)select(.+?)from .+?(\\s|$)");
-		Matcher m = p.matcher(query.toLowerCase());
-		
-		String fields = null;
-		
-		if((!m.find()) || (m.groupCount() <3))
-			throw new RuntimeException("Could not parse primary key :" + query);
-		else
-			fields = m.group(2);
-		
-		if(fields.contains(","))
-			return fields.split(",")[0];
-		else
-			return fields;
 	}
 
 	public void connect(){
@@ -154,7 +135,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				for (String colName:cols) {
 					Object val = rs.getObject(colName);
 					row.put(colName,val);
-					if(colName.trim().toLowerCase().equals(this.primary_key.trim().toLowerCase()))
+					if(colName.trim().toLowerCase().equals(this.writePKey.trim().toLowerCase()))
 						pkValue = val;
 				}
 				return new SQLRowWrapper(rs.getRow(), row, pkValue);
@@ -192,11 +173,11 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 			Statement update = null;
 			if(pkValue!=null) {
 				if(pkValue instanceof String)
-					sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = '" + pkValue + "'";
+					sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ writePKey + " = '" + pkValue + "'";
 				else
-					sql= "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ primary_key + " = " + pkValue;				
+					sql= "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ writePKey + " = " + pkValue;				
 			} else {
-				throw new RuntimeException("The value of the primary key :" + primary_key + " is null. Unable to update key=" + key + " and value=" + value);
+				throw new RuntimeException("The value of the primary key :" + writePKey + " is null. Unable to update key=" + key + " and value=" + value);
 			}
 			
 			try {
@@ -205,7 +186,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				/*int upd_rs = */update.executeUpdate(sql);
 			} catch (SQLException e) {
 				e.printStackTrace();
-				throw new RuntimeException("Could not execute update with pk :" + primary_key + " = "+pkValue+", with key=" + key + " and value=" + value);
+				throw new RuntimeException("Could not execute update with pk :" + writePKey + " = "+pkValue+", with key=" + key + " and value=" + value);
 			}finally{
 				try {
 					if(!update.isClosed())

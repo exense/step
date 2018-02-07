@@ -25,11 +25,46 @@ import step.datapool.DataPoolConfiguration;
 public class SQLTableDataPoolConfiguration extends DataPoolConfiguration {
 	
 	DynamicValue<String> connectionString = new DynamicValue<String>("");
-	
 	DynamicValue<String> query = new DynamicValue<String>("");
+	DynamicValue<String> user = new DynamicValue<String>("");
+	DynamicValue<String> password = new DynamicValue<String>("");
+	DynamicValue<String> writePKey = new DynamicValue<String>("");
+	DynamicValue<String> driverClass = new DynamicValue<String>("");
 
 	public SQLTableDataPoolConfiguration() {
 		super();
+	}
+	
+	public DynamicValue<String> getDriverClass() {
+		return driverClass;
+	}
+
+	public void setDriverClass(DynamicValue<String> driverClass) {
+		this.driverClass = driverClass;
+	}
+
+	public DynamicValue<String> getUser() {
+		return user;
+	}
+
+	public void setUser(DynamicValue<String> user) {
+		this.user = user;
+	}
+
+	public DynamicValue<String> getPassword() {
+		return password;
+	}
+
+	public void setPassword(DynamicValue<String> pwd) {
+		this.password = pwd;
+	}
+
+	public DynamicValue<String> getWritePKey() {
+		return writePKey;
+	}
+
+	public void setWritePKey(DynamicValue<String> writePKey) {
+		this.writePKey = writePKey;
 	}
 
 	public DynamicValue<String> getConnectionString() {
