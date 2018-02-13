@@ -22,6 +22,10 @@ public class FileManagerClientImpl implements FileManagerClient {
 	private FileProvider fileProvider;
 
 	private Map<String, FileInfo> cache = new ConcurrentHashMap<>();
+	
+	public String getDataFolderPath() {
+		return dataFolder.getAbsolutePath();
+	}
 
 	public FileManagerClientImpl(File dataFolder, FileProvider fileProvider) {
 		super();

@@ -9,6 +9,8 @@ public interface FileManagerClient {
 	
 	FileVersion requestFileVersion(String uid, long lastModified) throws IOException;
 	
+	String getDataFolderPath();
+	
 	public static class FileVersionId {
 		
 		String fileId;
