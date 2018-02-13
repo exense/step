@@ -28,6 +28,8 @@ public class Parameter extends AbstractDBObject implements ActivableObject {
 	
 	String value;
 	
+	String description;
+	
 	Expression activationExpression;
 	
 	Integer priority;
@@ -36,10 +38,11 @@ public class Parameter extends AbstractDBObject implements ActivableObject {
 		super();
 	}
 
-	public Parameter(Expression activationExpression, String key, String value) {
+	public Parameter(Expression activationExpression, String key, String value, String description) {
 		super();
 		this.key = key;
 		this.value = value;
+		this.description = description;
 		this.activationExpression = activationExpression;
 	}
 
@@ -75,5 +78,13 @@ public class Parameter extends AbstractDBObject implements ActivableObject {
 	
 	public void setPriority(Integer priority) {
 		this.priority = priority;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 }

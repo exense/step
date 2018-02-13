@@ -44,18 +44,18 @@ public class ParameterManagerTest {
 		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
 		ParameterManager m = new ParameterManager(accessor);
 		
-		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier"));
-		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier"));
-		accessor.save(new Parameter(new Expression("user=='abricot'"), "key1", "abricotier"));
-		accessor.save(new Parameter(new Expression("user=='poire'"), "key1", "poirier"));
+		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
+		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
+		accessor.save(new Parameter(new Expression("user=='abricot'"), "key1", "abricotier", "desc"));
+		accessor.save(new Parameter(new Expression("user=='poire'"), "key1", "poirier", "desc"));
 		
-		accessor.save(new Parameter(null, "key2", "defaultValue"));
-		accessor.save(new Parameter(null, "key2", "defaultValue2"));
-		accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue2"));
+		accessor.save(new Parameter(null, "key2", "defaultValue", "desc"));
+		accessor.save(new Parameter(null, "key2", "defaultValue2", "desc"));
+		accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue2", "desc"));
 
-		accessor.save(new Parameter(null, "key3", "value1"));
-		accessor.save(new Parameter(new Expression("user=='poire'"), "key3", "value2"));
-		Parameter p = new Parameter(new Expression("user=='poire'"), "key3", "value3");
+		accessor.save(new Parameter(null, "key3", "value1", "desc"));
+		accessor.save(new Parameter(new Expression("user=='poire'"), "key3", "value2", "desc"));
+		Parameter p = new Parameter(new Expression("user=='poire'"), "key3", "value3", "desc");
 		p.setPriority(10);
 		accessor.save(p);
 		
@@ -75,7 +75,7 @@ public class ParameterManagerTest {
 		
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {
-			accessor.save(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i));
+			accessor.save(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i, "desc"));
 		}
 		
 		Map<String, Object> bindings = new HashMap<String, Object>();
@@ -101,7 +101,7 @@ public class ParameterManagerTest {
 		
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {
-			accessor.save(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i));
+			accessor.save(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i, "desc"));
 		}
 		
 		int iterations = 25;
