@@ -15,8 +15,10 @@ import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.MessageHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
+import step.grid.contextbuilder.RemoteApplicationContextFactory;
+import step.grid.filemanager.FileManagerClient;
+import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 import step.handlers.javahandler.Keyword;
@@ -38,7 +40,12 @@ public class JavaJarHandler extends AbstractMessageHandler {
 	
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, final InputMessage message) throws Exception {
-		RemoteApplicationContextFactory scriptJarContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId(ScriptHandler.SCRIPT_FILE, message.getProperties()));
+		FileManagerClient fmClient = token.getServices().getFileManagerClient();
+		FileVersionId currentkeywordVersion = getFileVersionId(ScriptHandler.SCRIPT_FILE, message.getProperties());
+		
+		message.getProperties().put("keywordRootPath", fmClient.getDataFolderPath() + "\\"+ currentkeywordVersion.getFileId() + "\\" + currentkeywordVersion.getVersion());
+		
+		RemoteApplicationContextFactory scriptJarContext = new RemoteApplicationContextFactory(fmClient, currentkeywordVersion);
 		appContextBuilder.pushContext(scriptJarContext);
 		
 		ApplicationContext context = agentTokenServices.getApplicationContextBuilder().getCurrentContext();
@@ -52,7 +59,7 @@ public class JavaJarHandler extends AbstractMessageHandler {
 		
 		return messageHandlerPool.get(KeywordHandler.class.getName(), appContextBuilder.getCurrentContext().getClassLoader()).handle(token, message);	
 	}
-
+	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {
 		URL url = cl.getURLs()[0];
 		try {

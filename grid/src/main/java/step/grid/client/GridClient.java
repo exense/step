@@ -109,6 +109,12 @@ public class GridClient implements Closeable {
 				fileVersion.setVersion(lastModified);
 				return fileVersion;
 			}
+
+			@Override
+			public String getDataFolderPath() {
+				// TODO Auto-generated method stub
+				return null;
+			}
 		};
 		
 		localAgentTokenServices = new AgentTokenServices(fileManagerClient);

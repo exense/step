@@ -52,7 +52,7 @@ public class ParameterServices extends AbstractServices {
 	@Path("/")
 	@Secured(right="param-write")
 	public Parameter newParameter() {
-		return  new Parameter(new Expression(""), "", "");
+		return  new Parameter(new Expression(""), "", "", "");
 	}
 	
 	@POST
