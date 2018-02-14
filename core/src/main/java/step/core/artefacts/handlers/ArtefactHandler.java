@@ -81,10 +81,19 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		if(executionPhase==Phase.EXECUTION && testArtefact.isCreateSkeleton()) {
 			ReportNodeAccessor reportNodeAccessor = context.getGlobalContext().getReportAccessor();
+			
+			// search for the report node that has been created during skeleton phase
 			node = (REPORT_NODE) reportNodeAccessor.getReportNodeByParentIDAndArtefactID(parentNode.getId(), testArtefact.getId());
 			if(node == null) {
-				throw new RuntimeException("Unable to find report node during execution phase. "
-						+ "The report node should have been created during skeleton creation phase as the artefact has createSkeleton flag enabled. AbstractArtefact="+testArtefact.toString()+ ". ParentNode:"+ parentNode.toString());
+				// the report node created during the createSkeleton phase couldn't be found.
+				// the reason might be that at least one report node in the path to the current report node hasn't been persisted
+				// if one node gets persisted or not depends on the ArtefactType: AbstractArtefact.isCreateSkeleton()
+				// It his therefore depending on the Plan if all the nodes of the path are persisted.
+				// We use to throw an exception in that case but it seems to be a better option to just ignore this
+				// and create the node again instead of throwing an error
+				node = createReportNode(parentNode, testArtefact);
+				//throw new RuntimeException("Unable to find report node during execution phase. "
+				//		+ "The report node should have been created during skeleton creation phase as the artefact has createSkeleton flag enabled. AbstractArtefact="+testArtefact.toString()+ ". ParentNode:"+ parentNode.toString());
 			}
 		} else {
 			node = createReportNode(parentNode, testArtefact);			
