@@ -57,7 +57,7 @@ public class ExcelDataPoolTest {
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
 		
 		pool.init();
-		Assert.assertEquals("Keys=Key1 Values=Value1 Result=", ((SimpleStringMap)pool.next().getValue()).toString());
+		Assert.assertTrue(((SimpleStringMap)pool.next().getValue()).toString().startsWith("Keys=Key1 Values=Value1 Result="));
 		pool.close();
 	}
 	
