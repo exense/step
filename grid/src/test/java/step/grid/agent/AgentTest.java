@@ -63,7 +63,7 @@ public class AgentTest extends AbstractGridTest {
 		JsonObject o = Json.createObjectBuilder().add("delay", 4000).build();
 		
 		TokenWrapper token = client.getTokenHandle(null, null, true);
-		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 10);
+		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 100);
 		
 		Assert.assertEquals("Timeout while processing request. Request execution interrupted successfully.",outputMessage.getError());
 		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace_before_interruption.log"));
@@ -79,7 +79,7 @@ public class AgentTest extends AbstractGridTest {
 		JsonObject o = Json.createObjectBuilder().add("delay", 500).add("notInterruptable", true).build();
 		
 		TokenWrapper token = client.getTokenHandle(null, null, true);
-		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 10);
+		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 100);
 		
 		Assert.assertEquals("Timeout while processing request. WARNING: Request execution couldn't be interrupted. Subsequent calls to that token may fail!",outputMessage.getError());
 		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace_before_interruption.log"));
