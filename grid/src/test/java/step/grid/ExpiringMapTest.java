@@ -20,8 +20,8 @@ public class ExpiringMapTest {
 		Assert.assertEquals("test", m.get("test"));
 		
 		for(int i=0;i<100;i++) {
-			m.touch("test");
 			Thread.sleep(1);
+			m.touch("test");
 		}
 		
 		Assert.assertEquals("test", m.get("test"));

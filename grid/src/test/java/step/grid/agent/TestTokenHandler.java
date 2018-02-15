@@ -26,29 +26,34 @@ import step.grid.io.OutputMessage;
 public class TestTokenHandler implements MessageHandler {
 
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) {
+	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws InterruptedException {
 		OutputMessage output = new OutputMessage();
 		output.setPayload(message.getArgument());
 		
 		if(message.getArgument().containsKey("delay")) {
 			Integer delay = message.getArgument().getInt("delay");
-			
-			long t1 = System.currentTimeMillis();
-			
-			boolean reSleepOnInterruption = message.getArgument().getBoolean("notInterruptable", false);
-			sleep(t1, delay, reSleepOnInterruption);			
+						
+			boolean notInterruptable = message.getArgument().getBoolean("notInterruptable", false);
+			if(notInterruptable) {
+				sleepWithoutInterruptionUntil(System.currentTimeMillis()+delay);
+			} else {
+				sleep(delay);			
+			}
 		}
 		
 		return output;
 	}
 
-	private void sleep(long t1, Integer delay, boolean reSleepOnInterruption) {
-		long t = System.currentTimeMillis();
+	private void sleep(Integer delay) throws InterruptedException {
+		Thread.sleep(delay.longValue());
+	}
+	
+	private void sleepWithoutInterruptionUntil(long until) {
 		try {
-			Thread.sleep(t1+delay.longValue()-t);
+			Thread.sleep(Math.max(0, until-System.currentTimeMillis()));
 		} catch (InterruptedException e) {
-			if(reSleepOnInterruption && t<t1+delay) {
-				sleep(t1, delay, true);				
+			if(System.currentTimeMillis()<until) {
+				sleepWithoutInterruptionUntil(until);				
 			}
 		}
 	}
