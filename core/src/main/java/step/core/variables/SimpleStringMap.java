@@ -19,10 +19,13 @@
 package step.core.variables;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class SimpleStringMap implements Map<String, String> {
+public abstract class SimpleStringMap extends HashMap<String, String> {
+
+	private static final long serialVersionUID = 6184003091989341263L;
 
 	@Override
 	public abstract int size();
@@ -47,8 +50,7 @@ public abstract class SimpleStringMap implements Map<String, String> {
 	
 	public abstract String get(String key);
 
-	@Override
-	public abstract String put(String key, String value);
+	public abstract String put_(String key, String value);
 
 	@Override
 	public String remove(Object key) {
@@ -56,9 +58,9 @@ public abstract class SimpleStringMap implements Map<String, String> {
 	}
 
 	@Override
-	public void putAll(Map<? extends String, ? extends String> m) {
+	public void putAll(Map<? extends String,? extends String> m) {
 		for(String key:m.keySet()) {
-			put(key, m.get(key));
+			put_(key, m.get(key));
 		}
 	}
 
@@ -79,7 +81,12 @@ public abstract class SimpleStringMap implements Map<String, String> {
 
 	@Override
 	public Set<java.util.Map.Entry<String, String>> entrySet() {
-		throw new RuntimeException("Not implemented");
+		return super.entrySet();
 	}
-
+	
+	@Override
+	public String toString() {
+		return super.toString();
+	}
+	
 }

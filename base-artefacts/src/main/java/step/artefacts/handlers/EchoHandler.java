@@ -33,7 +33,14 @@ public class EchoHandler extends ArtefactHandler<Echo, EchoReportNode> {
 
 	@Override
 	protected void execute_(EchoReportNode node, Echo testArtefact) {
-		node.setEcho(testArtefact.getText().get());
+		String printResult;
+		Object dynamicResult = testArtefact.getText().get();
+		try {
+			printResult = (String) dynamicResult;
+		}catch(ClassCastException e) {
+			printResult = dynamicResult.toString();
+		}
+		node.setEcho(printResult);
 		node.setStatus(ReportNodeStatus.PASSED);		
 	}
 

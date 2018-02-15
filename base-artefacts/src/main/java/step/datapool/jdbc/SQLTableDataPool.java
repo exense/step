@@ -168,7 +168,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 		@Override
 		//public synchronized String put(String key, String value){
-		public String put(String key, String value){
+		public String put_(String key, String value){
 			String sql = null;
 			Statement update = null;
 			if(pkValue!=null) {

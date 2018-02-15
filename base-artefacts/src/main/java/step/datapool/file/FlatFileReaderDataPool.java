@@ -1,7 +1,5 @@
 package step.datapool.file;
 
-import java.util.HashMap;
-
 import step.core.variables.SimpleStringMap;
 
 public class FlatFileReaderDataPool extends FileReaderDataPool {
@@ -12,43 +10,41 @@ public class FlatFileReaderDataPool extends FileReaderDataPool {
 
 	@Override
 	public Object postProcess(String line) {
-		HashMap<String, Object> map = new HashMap<String, Object>();
-		map.put("default", line);
-
-		return new FlatLineRowWrapper(super.lineNr, map);
+		return new FlatLineRowWrapper(super.lineNr, line);
 	}
 
+	@SuppressWarnings("serial")
 	public class FlatLineRowWrapper extends SimpleStringMap {
 
-		private HashMap<String,Object> rowData;
-
-		public FlatLineRowWrapper(int rowNum, HashMap<String,Object> row) {
+		public FlatLineRowWrapper(int rowNum, String line) {
 			super();
 
 			if(rowNum < 1)
 				throw new RuntimeException("Invalid row number:" + rowNum);
-			this.rowData = row; 
-		}
-
-		@Override
-		public String put(String key, String value){
-			throw new RuntimeException("Put into a FlatFileReader row is currently not supported.");
+			
+			// we only really have one key and value in a "flat file" type of logic
+			put("default", line); 
 		}
 
 		@Override
 		public String get(String key) {
-
-			return (String) rowData.get("default");
+			// get our only value, i.e the whole file
+			return get("default");
 		}
 
 		@Override
 		public int size() {
-			return rowData.size();
+			return size();
 		}
 
 		@Override
 		public boolean isEmpty() {
-			return rowData.isEmpty();
+			return isEmpty();
+		}
+
+		@Override
+		public String put_(String key, String value) {
+			return put(key,value);
 		}
 
 	}

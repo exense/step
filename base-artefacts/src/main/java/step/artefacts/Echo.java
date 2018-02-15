@@ -26,13 +26,13 @@ import step.core.dynamicbeans.DynamicValue;
 @Artefact(handler = EchoHandler.class, block=false)
 public class Echo extends AbstractArtefact {
 
-	private DynamicValue<String> text = new DynamicValue<>();
+	private DynamicValue<Object> text = new DynamicValue<>();
 
-	public DynamicValue<String> getText() {
+	public DynamicValue<Object> getText() {
 		return text;
 	}
 
-	public void setText(DynamicValue<String> text) {
+	public void setText(DynamicValue<Object> text) {
 		this.text = text;
 	}
 }

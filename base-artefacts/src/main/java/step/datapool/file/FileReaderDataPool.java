@@ -80,7 +80,7 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		return line;
 	}
 
-	public  abstract Object postProcess(String line);
+	public abstract Object postProcess(String line);
 
 	@Override
 	public void close() {

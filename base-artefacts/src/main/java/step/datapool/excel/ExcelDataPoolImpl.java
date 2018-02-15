@@ -265,7 +265,7 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 		}
 
 		@Override
-		public String put(String key, String value) {
+		public String put_(String key, String value) {
 			synchronized(workbookSet) {
 				Cell cell = getCellByID(cursor, key);
 				if(cell!=null) {
