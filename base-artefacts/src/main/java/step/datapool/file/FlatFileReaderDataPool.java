@@ -1,5 +1,8 @@
 package step.datapool.file;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import step.core.variables.SimpleStringMap;
 
 public class FlatFileReaderDataPool extends FileReaderDataPool {
@@ -10,43 +13,44 @@ public class FlatFileReaderDataPool extends FileReaderDataPool {
 
 	@Override
 	public Object postProcess(String line) {
-		return new FlatLineRowWrapper(super.lineNr, line);
+		return new FlatLineRowWrapper(line);
 	}
 
-	@SuppressWarnings("serial")
 	public class FlatLineRowWrapper extends SimpleStringMap {
 
-		public FlatLineRowWrapper(int rowNum, String line) {
+		String line;
+		
+		public FlatLineRowWrapper(String line) {
 			super();
-
-			if(rowNum < 1)
-				throw new RuntimeException("Invalid row number:" + rowNum);
-			
-			// we only really have one key and value in a "flat file" type of logic
-			put("default", line); 
+			this.line = line;
 		}
 
 		@Override
 		public String get(String key) {
-			// get our only value, i.e the whole file
-			return get("default");
+			return line;
 		}
 
 		@Override
 		public int size() {
-			return size();
+			return 1;
 		}
 
 		@Override
 		public boolean isEmpty() {
-			return isEmpty();
+			return false;
 		}
 
 		@Override
-		public String put_(String key, String value) {
-			return put(key,value);
+		public String put(String key, String value) {
+			throw new RuntimeException("Put not supported on flat file data pool");
 		}
 
+		@Override
+		public Set<String> keySet() {
+			Set<String> keySet = new HashSet<>();
+			keySet.add("row");
+			return keySet;
+		}
 	}
 
 	@Override

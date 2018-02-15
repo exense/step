@@ -25,6 +25,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -168,7 +169,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 		@Override
 		//public synchronized String put(String key, String value){
-		public String put_(String key, String value){
+		public String put(String key, String value){
 			String sql = null;
 			Statement update = null;
 			if(pkValue!=null) {
@@ -220,6 +221,11 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		@Override
 		public boolean isEmpty() {
 			return rowData.isEmpty();
+		}
+
+		@Override
+		public Set<String> keySet() {
+			return rowData.keySet();
 		}
 	}
 	
