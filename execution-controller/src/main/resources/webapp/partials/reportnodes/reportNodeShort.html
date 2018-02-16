@@ -1,12 +1,13 @@
 <div>
 	
 	<div>
-		<i style="display:inline-block" uib-tooltip="{{node.resolvedArtefact._class}}" class="glyphicon {{artefactTypes.getIcon(node.resolvedArtefact._class) + ' executionStatus status-'+node.status}}" />{{node.name}}
+		<i style="display:inline-block" uib-tooltip="{{node.resolvedArtefact._class}}" class="glyphicon {{artefactTypes.getIcon(node.resolvedArtefact._class) + ' executionStatus status-'+node.status}}" />
+		{{node._class=='step.artefacts.reports.CallFunctionReportNode'?concatenate(node.functionAttributes):artefactTypes.getLabel(node.resolvedArtefact._class)}}
+		<span style="margin-left:10px;" class="text-muted small">{{node.name}}</span>
 		<span class="pull-right"><attachments node="node" /></span>
 	</div>
 	<hr />
 	<div ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
-		<div>Keyword: {{concatenate(node.functionAttributes)}}</span></div>
 		<div ng-if="node.input">Input: <small><em>{{node.input}}</em></small></div>
 		<div ng-if="node.output">Output: <small><em>{{node.output}}</em></small></div>
 	</div>

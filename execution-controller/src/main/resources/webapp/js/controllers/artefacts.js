@@ -33,6 +33,9 @@ angular.module('artefacts',['step'])
   }
   
   api.register = function(typeName,typeInfo) {
+    if(!typeInfo.label) {
+      typeInfo.label = typeName;
+    }
     registry[typeName] = typeInfo;
   }
   
