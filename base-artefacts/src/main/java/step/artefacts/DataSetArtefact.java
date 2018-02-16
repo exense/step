@@ -29,7 +29,7 @@ public class DataSetArtefact extends AbstractForBlock {
 
 	private DynamicValue<String> item = new DynamicValue<String>("dataSet");
 	
-	private DynamicValue<Boolean> resetAtEnd = new DynamicValue<Boolean>(true);
+	private DynamicValue<Boolean> resetAtEnd = new DynamicValue<Boolean>(false);
 	
 	private String dataSourceType;
 	
