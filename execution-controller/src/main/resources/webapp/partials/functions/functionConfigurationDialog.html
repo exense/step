@@ -24,6 +24,7 @@
 			<label>Schema</label> 
 			<textarea ng-model="schemaStr" class="form-control form-control-sm"></textarea>
 		</div>
+		<dynamic-textfield label="'Call timeout (ms)'" dynamic-value="function_.callTimeout" />
 	</form>
 	<div class="panel panel-default" style="margin-top: 20px">
 		<div class="panel-body" ng-include="functionTypeRegistry.getForm(function_.type)" ></div>
