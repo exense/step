@@ -108,8 +108,21 @@ public class DataTableServices extends AbstractServices {
 		leafReportNodesColumns.addDateColumn("Begin", "executionTime").addColumn("Name","name").addColumn("Status","status").addColumn("Error", "error")
 		.addColumn("Input","input").addColumn("Output","output").addColumn("Duration","duration").addColumn("Adapter", "adapter");
 
+		// Report table
+		
+		List<String> reportSearchAttributes = new ArrayList<>();
+		if(screenTemplates!=null) {
+			for(Input input:screenTemplates.getInputsForScreen("functionTable", null)) {
+				reportSearchAttributes.add("functionAttributes."+input.getId());
+			}
+		}
+		reportSearchAttributes.add("input");
+		reportSearchAttributes.add("output");
+		reportSearchAttributes.add("error.msg");
+		reportSearchAttributes.add("name");
+		
 		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports"));
-		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
+		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step",reportSearchAttributes)
 		.addTextWithDropdownColumnOptimized("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
 		.setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
 		
@@ -139,7 +152,7 @@ public class DataTableServices extends AbstractServices {
 		functionTable.addRowAsJson("Actions");
 		
 		BackendDataTable leafReportNodesOQL = new BackendDataTable(new Collection(database, "reports"));
-		leafReportNodesOQL.addColumn("ID", "_id").addColumn("Execution", "executionID").addTimeColumn("Begin", "executionTime").addRowAsJson("Step","input","output","error","name")
+		leafReportNodesOQL.addColumn("ID", "_id").addColumn("Execution", "executionID").addTimeColumn("Begin", "executionTime").addRowAsJson("Step",reportSearchAttributes)
 		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
 		.setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
 
