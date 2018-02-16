@@ -173,28 +173,28 @@ angular.module('functionsControllers',['dataTable','step','schemaForm'])
             	var html = '<div class="input-group"><div class="btn-group">';
             	
             	if(AuthService.hasRight('kw-write')) {
-              	html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
+              	html+='<button type="button" class="btn btn-default" aria-label="Left Align" title="Configure keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
   	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>'+
               	  '</button> ';
-            	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().openFunctionEditor(\''+row[0]+'\')">' +
+            	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" title="Edit keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().openFunctionEditor(\''+row[0]+'\')">' +
                 '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>'+
                 '</button> ';
             	}
             	
             	if(AuthService.hasRight('kw-execute')) {
-              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
+              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" title="Execute keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
   	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
   	            	'</button> ';
             	}
             	
               if(AuthService.hasRight('kw-write')) {
-                html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().copyFunction(\''+row[0]+'\')">' +
+                html+='<button type="button" class="btn btn-default" aria-label="Left Align" title="Copy keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().copyFunction(\''+row[0]+'\')">' +
                 '<span class="glyphicon glyphicon glyphicon-copy" aria-hidden="true"></span>' +
                 '</button> ';
               }
             	
             	if(AuthService.hasRight('kw-delete')) {
-              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#FunctionListCtrl\').scope().deleteFunction(\''+row[0]+'\')">' +
+              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" title="Delete keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().deleteFunction(\''+row[0]+'\')">' +
   	            	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
   	            	'</button> ';
             	}

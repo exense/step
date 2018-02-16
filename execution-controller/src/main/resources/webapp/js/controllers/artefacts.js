@@ -187,19 +187,19 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
             col.render = function ( data, type, row ) {
             	var html = '<div class="input-group">' +
 	            	'<div class="btn-group">' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().editArtefact(\''+row[0]+'\')">' +
+	            	'<button type="button" class="btn btn-default" aria-label="Left Align" title="Edit plan" onclick="angular.element(\'#ArtefactListCtrl\').scope().editArtefact(\''+row[0]+'\')">' +
 	            	'<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().executeArtefact(\''+row[0]+'\')">' +
+	            	'<button type="button" class="btn btn-default" aria-label="Left Align" title="Execute plan" onclick="angular.element(\'#ArtefactListCtrl\').scope().executeArtefact(\''+row[0]+'\')">' +
 	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>';
             	
             	if(AuthService.hasRight('plan-write')) {
-                html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().copyArtefact(\''+row[0]+'\')">' +
+                html+='<button type="button" class="btn btn-default" aria-label="Left Align" title="Copy plan"  onclick="angular.element(\'#ArtefactListCtrl\').scope().copyArtefact(\''+row[0]+'\')">' +
                 '<span class="glyphicon glyphicon glyphicon-copy" aria-hidden="true"></span>' +
                 '</button> ';
               }
             	
             	if(AuthService.hasRight('plan-delete')) {
-            	  html+='<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().removeArtefact(\''+row[0]+'\')">' +
+            	  html+='<button type="button" class="btn btn-default" aria-label="Left Align" title="Delete plan" onclick="angular.element(\'#ArtefactListCtrl\').scope().removeArtefact(\''+row[0]+'\')">' +
                 '<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
                 '</button> ';
             	}
