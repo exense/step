@@ -447,7 +447,10 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
         if(artefactId) {
         	$http({url:"rest/controller/artefact/"+artefactId,method:"GET"}).then(function(response) {
         	  $scope.artefact = response.data;
-        	  $scope.editor = artefactTypes.getEditor($scope.artefact._class);
+        	  var classname = $scope.artefact._class;
+        	  $scope.icon = artefactTypes.getIcon(classname);
+        	  $scope.label = artefactTypes.getLabel(classname);
+        	  $scope.editor = artefactTypes.getEditor(classname);
         	})
         }
       })
