@@ -117,7 +117,12 @@ i.status-INTERRUPTED {
 i.status-RUNNING {
 	color:#337ab7;
 }
-	  
+
+button.btn-run {
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #2d6ca2;
+}	  
 	  
 .selected {
 	background:#abb9d3;
