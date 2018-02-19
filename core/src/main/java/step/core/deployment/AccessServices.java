@@ -86,7 +86,7 @@ public class AccessServices extends AbstractServices {
 	
 	private void initAccessManager() throws Exception {
 		String accessManagerClass = Configuration.getInstance().getProperty("ui.accessmanager",null);
-		if(accessManager==null) {
+		if(accessManagerClass==null) {
 			accessManager = new DefaultAccessManager();
 		} else {
 			try {
