@@ -51,6 +51,17 @@ public class ExcelDataPoolTest {
 	}
 	
 	@Test
+	public void testToString() {		
+		ExcelDataPool conf = getDataSourceConf(true, "ExcelDataPool.xlsx", "Parallel");
+		
+		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
+		
+		pool.init();
+		Assert.assertTrue(((SimpleStringMap)pool.next().getValue()).toString().startsWith("Keys=Key1 Values=Value1 Result="));
+		pool.close();
+	}
+	
+	@Test
 	public void testReset() {		
 		ExcelDataPool conf = getDataSourceConf(false, "ExcelDataPool.xlsx", null);
 		
