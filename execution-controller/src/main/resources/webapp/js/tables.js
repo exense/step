@@ -376,6 +376,18 @@ angular.module('dataTable', ['export'])
           })
         }
       };
+      
+      scope.setSelectionForAllRowsAndRefresh = function(selection) {
+        scope.setSelectionOnFilteredRows(selection);
+        scope.sendSelectionChangeEvent();
+        scope.refreshInputs();    
+      }
+      
+      scope.setSelectionAndRefresh = function(id, selection) {
+        scope.selectionModel.setSelection(id,selection);
+        scope.sendSelectionChangeEvent();
+        scope.refreshInputs();    
+      }
     
       scope.exportAsCSV = function() {
         scope.reportID = Math.random().toString(36).substr(2,9);
@@ -390,6 +402,18 @@ angular.module('dataTable', ['export'])
         scope.handle.getSelectionMode = scope.selectionModel.getSelectionMode.bind(scope.selectionModel);
         scope.handle.getSelection = scope.selectionModel.getSelection.bind(scope.selectionModel);
         scope.handle.setSelection = scope.selectionModel.setSelection.bind(scope.selectionModel);
+        scope.handle.select = function(id) {
+          scope.setSelectionAndRefresh(id, true);
+        }
+        scope.handle.deselect = function(id) {
+          scope.setSelectionAndRefresh(id, false);
+        }
+        scope.handle.selectAll = function() {
+          scope.setSelectionForAllRowsAndRefresh(true);
+        }
+        scope.handle.deselectAll = function() {
+          scope.setSelectionForAllRowsAndRefresh(false);
+        }
         scope.handle.resetSelection = scope.selectionModel.resetSelection.bind(scope.selectionModel);
         scope.handle.export = scope.export;
       }

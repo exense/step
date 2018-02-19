@@ -222,7 +222,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       closeTab: '&closeTab',
       active: '&active'
     },
-    controller: function($scope,$location,$anchorScroll) {
+    controller: function($scope,$location,$anchorScroll,$compile) {
       var eId = $scope.eid;
       console.log('Execution Controller. ID:' + eId);
       $stateStorage.push($scope, eId,{});
@@ -260,10 +260,24 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       
       $scope.testCaseTable = {};
       $scope.testCaseTable.columns = [ { "title" : "ID", "visible" : false },
-                                   {"title" : "Name"},
+                                   {"title" : "Name",
+                                    "createdCell" : function (td, cellData, rowData, row, col) {
+                                      var rowScope = $scope.$new(false, $scope);
+                                      rowScope.id = rowData[0];
+                                      var content = $compile('<a href uib-tooltip="Drilldown" ng-click="drillDownTestcase(id)">'+cellData+'</a>')(rowScope);
+                                      $(td).empty();
+                                      $(td).append(content);
+                                     }
+                                   },
                                    { "title" : "Status", "width":"80px", "searchmode":"select","render": function ( data, type, row ) {
                                      return '<div class="text-center reportNodeStatus status-' + data +'">'  +data+ '</div>';
                                    }} ];
+      $scope.drillDownTestcase = function(id) {
+        $scope.testCaseTable.deselectAll();
+        $scope.testCaseTable.select(id);
+        $scope.enablePanel("steps",true);
+        $scope.scrollTo("steps");
+      }
       $scope.testCaseTable.defaultSelection = function(value) {
         var execution = $scope.execution;
         if(execution) {
