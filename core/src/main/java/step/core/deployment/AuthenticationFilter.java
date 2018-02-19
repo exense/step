@@ -15,6 +15,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
 import org.glassfish.jersey.server.ExtendedUriInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.core.access.Profile;
 
@@ -22,6 +24,8 @@ import step.core.access.Profile;
 @Provider
 @Priority(Priorities.AUTHENTICATION)
 public class AuthenticationFilter extends AbstractServices implements ContainerRequestFilter, ClientResponseFilter {
+	
+	private static Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 	
 	@Inject
 	private ExtendedUriInfo extendendUriInfo;
@@ -45,10 +49,11 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 						boolean hasRight = profile.getRights().contains(right);
 						
 						if(!hasRight) {
-							requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+							requestContext.abortWith(Response.status(Response.Status.FORBIDDEN).build());
 						}
 					}
 				} catch (Exception e) {
+					logger.error("An exception was thrown while checking user rights.", e);
 					requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 				}
 			} else {

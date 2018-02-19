@@ -346,6 +346,11 @@ angular.module('step',['ngStorage','ngCookies'])
         if (response.status == 401){
           $rootScope.context = {'userID':'anonymous'};
         }
+        if (response.status == 403){
+        	// Fail silently for security reasons
+        	// or implement something like:
+        	//TODO: Dialogs.showErrorMsg("You are not authorized to perform this action.");
+          }
         return $q.reject(response);
     };
 })
