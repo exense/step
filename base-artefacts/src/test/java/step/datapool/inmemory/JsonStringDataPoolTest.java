@@ -19,15 +19,20 @@
 
 package step.datapool.inmemory;
 
+import java.util.Map;
+
+import org.junit.Assert;
 import org.junit.Test;
 
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolFactory;
+import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
 
 public class JsonStringDataPoolTest{
 
 
+	@SuppressWarnings("rawtypes")
 	@Test
 	public void testJsonDataPool() {
 		
@@ -39,10 +44,10 @@ public class JsonStringDataPoolTest{
 
 		pool.init();
 		pool.next();
-		System.out.println(pool.next());
+		DataPoolRow row = pool.next();
 		pool.close();
 		
-		//Assert.assertEquals(nbIncrementsWanted, value.intValue());
+		Assert.assertEquals("vb2", ((Map)row.getValue()).get("b"));
 	}
 	
 	
