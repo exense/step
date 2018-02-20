@@ -27,6 +27,8 @@ import step.datapool.file.DirectoryDataPool;
 import step.datapool.file.FileDataPool;
 import step.datapool.file.FileDataPoolImpl;
 import step.datapool.file.FlatFileReaderDataPool;
+import step.datapool.inmemory.JsonStringDataPoolConfiguration;
+import step.datapool.inmemory.JsonStringDataPoolImpl;
 import step.datapool.jdbc.SQLTableDataPool;
 import step.datapool.jdbc.SQLTableDataPoolConfiguration;
 import step.datapool.sequence.IntSequenceDataPool;
@@ -49,6 +51,8 @@ public class DataPoolFactory {
 			result = new FlatFileReaderDataPool((FileDataPool) dataPoolConfiguration);
 		} else if(dataSourceType.equals("sequence")) {
 			result = new IntSequenceDataPoolImpl((IntSequenceDataPool) dataPoolConfiguration);
+		} else if(dataSourceType.equals("json")) {
+			result = new JsonStringDataPoolImpl((JsonStringDataPoolConfiguration) dataPoolConfiguration);
 		} else {
 			throw new RuntimeException("Unsupported data source type: "+dataSourceType);
 		}
