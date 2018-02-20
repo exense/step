@@ -25,9 +25,10 @@ import step.datapool.jdbc.SQLTableDataPool.SQLRowWrapper;
 
 public class OracleTableDataSetTest {
 
+	//TODO: JUnit + Mock SQL backend 
 	public static void main(String... args){
 
-		String folder =  "jdbc:oracle:thin:@localhost:1521:xe,nairod,nairod,oracle.jdbc.driver.OracleDriver";
+		String folder =  "jdbc:oracle:thin:@localhost:1521:xe,test,test,oracle.jdbc.driver.OracleDriver";
 		String query = "select rowid, fruit_name, fruit_id from MYFRUITS";  
 
 		JSONObject b = new JSONObject().put("connectionString", folder)
