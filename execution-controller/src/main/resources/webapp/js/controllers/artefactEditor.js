@@ -534,7 +534,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
 })
 .controller('DataSourceCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {  
   $scope.dataSourceTypes = [{name:"excel",label:"Excel"},{name:"csv",label:"CSV"},{name:"sql",label:"SQL"},
-                            {name:"file",label:"Flat file"},{name:"folder",label:"Directory"}]
+                            {name:"file",label:"Flat file"},{name:"folder",label:"Directory"},{name:"sequence",label:"Integer sequence"}]
   
   $scope.loadInitialDataSourceConfiguration = function() {
     $http.get("rest/datapool/types/"+$scope.artefact.dataSourceType).then(function(response){
