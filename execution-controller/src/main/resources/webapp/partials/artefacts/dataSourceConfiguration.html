@@ -30,10 +30,14 @@
 		<dynamic-textfield label="'Primary write key'" on-save="save()" dynamic-value="artefact.dataSource.writePKey" />
 	</div>
 	
-		<div ng-if="artefact.dataSourceType=='sequence'">
+	<div ng-if="artefact.dataSourceType=='sequence'">
 		<dynamic-textfield label="'Start'" on-save="save()" dynamic-value="artefact.dataSource.start" />
 		<dynamic-textfield label="'End'" on-save="save()" dynamic-value="artefact.dataSource.end" />
 		<dynamic-textfield label="'Inc'" on-save="save()" dynamic-value="artefact.dataSource.inc" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='json'">
+		<dynamic-textfield label="'Json string'" on-save="save()" dynamic-value="artefact.dataSource.json" />
 	</div>
 	
 	<div ng-if="artefact.dataSourceType=='file'">

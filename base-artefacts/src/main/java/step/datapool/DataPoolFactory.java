@@ -78,6 +78,8 @@ public class DataPoolFactory {
 				conf = new FileDataPool();
 			} else if(dataSourceType.equals("sequence")) {
 				conf = new IntSequenceDataPool();
+			} else if(dataSourceType.equals("json")) {
+				conf = new JsonStringDataPoolConfiguration();
 			} else {
 				throw new RuntimeException("Unsupported data source type: "+dataSourceType);
 			}

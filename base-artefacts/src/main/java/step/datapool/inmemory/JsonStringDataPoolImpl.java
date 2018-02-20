@@ -66,6 +66,8 @@ public class JsonStringDataPoolImpl extends DataSet<JsonStringDataPoolConfigurat
 			for(String s : set)
 			{
 				List values = (List)map.get(s);
+				if(cursor >= values.size())
+					return null;
 				row.put(s, (String) values.get(cursor));
 			}
 		} catch (Exception e) {
