@@ -24,8 +24,8 @@ import org.junit.Test;
 import junit.framework.Assert;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolFactory;
+import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
-import step.datapool.sequence.IntSequenceDataPool;
 
 public class IntSequenceDataPoolTest {
 
@@ -33,11 +33,13 @@ public class IntSequenceDataPoolTest {
 	public void testCSVReaderDataPool() {
 		
 		int nbIncrementsWanted = 3;
+		int maxIntWanted = 10;
 		
 		IntSequenceDataPool poolConf = new IntSequenceDataPool();
 		poolConf.setStart(new DynamicValue<Integer>(1));
-		poolConf.setEnd(new DynamicValue<Integer>(10));
+		poolConf.setEnd(new DynamicValue<Integer>(maxIntWanted));
 		poolConf.setInc(new DynamicValue<Integer>(1));
+		
 
 		DataSet<?> pool = DataPoolFactory.getDataPool("sequence", poolConf, null);
 
@@ -46,6 +48,26 @@ public class IntSequenceDataPoolTest {
 		pool.close();
 		
 		Assert.assertEquals(nbIncrementsWanted, value.intValue());
+	}
+	
+	@Test
+	public void testCSVReaderDataPoolReset() {
+		
+		int nbIncrementsWanted = 12;
+		int maxIntWanted = 10;
+		
+		IntSequenceDataPool poolConf = new IntSequenceDataPool();
+		poolConf.setStart(new DynamicValue<Integer>(1));
+		poolConf.setEnd(new DynamicValue<Integer>(maxIntWanted));
+		poolConf.setInc(new DynamicValue<Integer>(1));
+
+		DataSet<?> pool = DataPoolFactory.getDataPool("sequence", poolConf, null);
+
+		pool.init();
+		Integer value = incrementNtimes(pool, nbIncrementsWanted);
+		pool.close();
+		
+		Assert.assertEquals(nbIncrementsWanted - maxIntWanted, value.intValue());
 	}
 
 	private Integer incrementNtimes(DataSet<?> pool, int n) {
@@ -56,7 +78,12 @@ public class IntSequenceDataPoolTest {
 	}
 
 	private Integer increment(DataSet<?> pool) {
-		return (Integer)pool.next().getValue();
+		DataPoolRow nextRow = pool.next();
+		if(nextRow == null) {
+			pool.reset();
+			nextRow = pool.next();
+		}
+		return (Integer)nextRow.getValue();
 	}
 
 }

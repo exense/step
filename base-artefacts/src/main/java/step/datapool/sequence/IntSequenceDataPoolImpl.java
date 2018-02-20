@@ -48,7 +48,7 @@ public class IntSequenceDataPoolImpl extends DataSet<IntSequenceDataPool> {
 	
 	@Override
 	public void reset() {
-		throw new RuntimeException("Reset method not implemented for this DataSet type");
+		init();
 	}
 
 	@Override
