@@ -33,7 +33,10 @@ public class EchoHandler extends ArtefactHandler<Echo, EchoReportNode> {
 
 	@Override
 	protected void execute_(EchoReportNode node, Echo testArtefact) {
-		node.setEcho(testArtefact.getText().get().toString());
+		if(testArtefact.getText() != null && testArtefact.getText().get() != null)
+			node.setEcho(testArtefact.getText().get().toString());
+		else
+			node.setEcho("null value"); //node.setEcho(null);
 		node.setStatus(ReportNodeStatus.PASSED);		
 	}
 
