@@ -139,7 +139,7 @@ public class ReportNodeAccessor extends AbstractAccessor {
 //		return filterIt;
 //	}
 	
-	public Iterator<ReportNode> getLeafReportNodesByExecutionIDAndCustomAttribute(String executionID, List<Map<String, String>> customAttributes) {
+	public Iterator<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID, List<Map<String, String>> customAttributes) {
 		assert executionID != null;
 		
 		StringBuilder query = new StringBuilder();
@@ -162,9 +162,9 @@ public class ReportNodeAccessor extends AbstractAccessor {
 					query.append(",");
 				}
 			}
-			query.append("]},");
+			query.append("]}]}");
 		}
-		query.append("{$or: [ { _class: 'step.artefacts.reports.CallFunctionReportNode' }, { status: 'TECHNICAL_ERROR'} ]}]}");
+		//query.append("{$or: [ { _class: 'step.artefacts.reports.CallFunctionReportNode' }, { status: 'TECHNICAL_ERROR'} ]}]}");
 		
 		return reports.find(query.toString(), executionID).sort("{executionTime: 1}").as(ReportNode.class).iterator();
 	}
