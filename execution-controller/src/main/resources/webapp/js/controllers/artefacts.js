@@ -43,6 +43,10 @@ angular.module('artefacts',['step'])
     return getType(typeName).form;
   }
 
+  api.getDefaultIcon = function(typeName) {
+    return 'glyphicon-unchecked';
+  }
+  
   api.getIcon = function(typeName) {
     return getType(typeName).icon;
   }

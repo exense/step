@@ -45,7 +45,8 @@ angular.module('reportTree',['step','artefacts'])
               $http.get("rest/controller/reportnode/"+id+"/children").then(function(response) {
                 var nodes = response.data;
                var children=_.map(nodes,function(node){
-                 var cssClass = artefactTypes.getIcon(node.resolvedArtefact._class)
+                 // node.resolvedArtefact has been introduced with 3.6.0. We're checking it here for retrocompatibility. Remove this check has soon as possible
+                 var cssClass = node.resolvedArtefact?artefactTypes.getIcon(node.resolvedArtefact._class):artefactTypes.getDefaultIcon();
                return {id:node.id, text:node.name, children:true, icon:"glyphicon "+cssClass+" status-"+node.status};
                 })
                 cb.call(this,children);               
