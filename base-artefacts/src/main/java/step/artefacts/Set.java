@@ -19,11 +19,12 @@
 package step.artefacts;
 
 import step.artefacts.handlers.SetHandler;
+import step.artefacts.reports.SetReportNode;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = SetHandler.class, block=false)
+@Artefact(handler = SetHandler.class, report = SetReportNode.class, block=false)
 public class Set extends AbstractArtefact {
 
 	private DynamicValue<String> key = new DynamicValue<>("");

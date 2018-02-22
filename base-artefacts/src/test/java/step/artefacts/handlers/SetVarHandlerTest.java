@@ -23,6 +23,7 @@ import static junit.framework.Assert.assertEquals;
 import org.junit.Test;
 
 import step.artefacts.Set;
+import step.artefacts.reports.SetReportNode;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
@@ -45,6 +46,58 @@ public class SetVarHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals("val1",v.getVariable("var"));
 
 		ReportNode child = getFirstReportNode();
+		assertEquals(SetReportNode.class, child.getClass());
+		SetReportNode setReport = (SetReportNode) child;
+		assertEquals("val1",setReport.getValue());
+		assertEquals("var",setReport.getKey());
+		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
+	}
+	
+	@Test
+	public void testObject() {
+		setupContext();
+		
+		Set set = add(new Set());
+		set.setKey(new DynamicValue<String>("var"));
+		set.setValue(new DynamicValue<String>("2",""));
+
+		execute(set);
+		
+		VariablesManager v = context.getVariablesManager();
+		
+		assertEquals(2,v.getVariable("var"));
+
+		ReportNode child = getFirstReportNode();
+		
+		assertEquals(SetReportNode.class, child.getClass());
+		SetReportNode setReport = (SetReportNode) child;
+		assertEquals("2",setReport.getValue());
+		assertEquals("var",setReport.getKey());
+		
+		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
+	}
+	
+	@Test
+	public void testNull() {
+		setupContext();
+		
+		Set set = add(new Set());
+		set.setKey(new DynamicValue<String>("var"));
+		set.setValue(new DynamicValue<String>("null",""));
+
+		execute(set);
+		
+		VariablesManager v = context.getVariablesManager();
+		
+		assertEquals(null,v.getVariable("var"));
+
+		ReportNode child = getFirstReportNode();
+		
+		assertEquals(SetReportNode.class, child.getClass());
+		SetReportNode setReport = (SetReportNode) child;
+		assertEquals("null",setReport.getValue());
+		assertEquals("var",setReport.getKey());
+		
 		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
 	}
 }

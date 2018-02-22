@@ -19,6 +19,7 @@
 package step.artefacts.handlers;
 
 import step.artefacts.Set;
+import step.artefacts.reports.SetReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -26,20 +27,20 @@ import step.core.variables.ImmutableVariableException;
 import step.core.variables.UndefinedVariableException;
 import step.core.variables.VariablesManager;
 
-public class SetHandler extends ArtefactHandler<Set, ReportNode> {
+public class SetHandler extends ArtefactHandler<Set, SetReportNode> {
 	
 	@Override
-	protected void createReportSkeleton_(ReportNode parentNode, Set testArtefact) {
+	protected void createReportSkeleton_(SetReportNode parentNode, Set testArtefact) {
 		executeSet(parentNode, testArtefact);
 	}
 
 	@Override
-	protected void execute_(ReportNode node, Set testArtefact) {
+	protected void execute_(SetReportNode node, Set testArtefact) {
 		node.setStatus(ReportNodeStatus.PASSED);
 		executeSet(node, testArtefact);
 	}
 
-	private void executeSet(ReportNode node, Set testArtefact) {
+	private void executeSet(SetReportNode node, Set testArtefact) {
 		if(testArtefact.getKey()!=null) {
 			Object result;			
 			if(testArtefact.getValue()!=null) {
@@ -48,9 +49,10 @@ public class SetHandler extends ArtefactHandler<Set, ReportNode> {
 				result = null;
 			}				
 			
+			String key = testArtefact.getKey().get();
 			VariablesManager varMan = context.getVariablesManager();
 			try {
-				varMan.updateVariable(testArtefact.getKey().get(), result);
+				varMan.updateVariable(key, result);
 			} catch(UndefinedVariableException|ImmutableVariableException e) {
 				ReportNode referenceNode;
 				ReportNode callFunctionReport = (ReportNode) context.getVariablesManager().getVariable("callReport");
@@ -60,13 +62,15 @@ public class SetHandler extends ArtefactHandler<Set, ReportNode> {
 					referenceNode = callFunctionReport;
 				}
 				ReportNode parentNode = context.getReportNodeCache().get(referenceNode.getParentID().toString());
-				varMan.putVariable(parentNode, testArtefact.getKey().get(), result);
+				varMan.putVariable(parentNode, key, result);
 			}
+			node.setKey(key);
+			node.setValue(result!=null?result.toString():"null");
 		}
 	}
 
 	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, Set testArtefact) {
-		return new ReportNode();
+	public SetReportNode createReportNode_(ReportNode parentNode, Set testArtefact) {
+		return new SetReportNode();
 	}
 }
