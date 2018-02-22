@@ -184,7 +184,7 @@ public class AccessServices extends AbstractServices {
     
     public Session validateAndTouchToken(String token) throws TokenValidationException {
     	Session session = sessions.get(token);
-    	if(sessions != null)
+    	if(session != null)
     		session.touch();
     	else
     		throw new TokenValidationException("Session with token '" + token + "' is invalid");
