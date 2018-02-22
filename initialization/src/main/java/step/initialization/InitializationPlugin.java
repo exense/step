@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mongodb.Block;
+import com.mongodb.client.result.UpdateResult;
 
 import step.artefacts.CallFunction;
 import step.artefacts.CallPlan;
@@ -82,6 +83,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		}
 		
 		migrateCallFunction(context);
+		migrateGeneralScriptFunction(context);
 		migrateGeneralScriptFunctions(context);
 		
 		// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
@@ -101,6 +103,19 @@ public class InitializationPlugin extends AbstractPlugin {
 		user.setRole("admin");
 		user.setPassword(UserAccessor.encryptPwd("init"));
 		context.getUserAccessor().save(user);
+	}
+	
+	// This function migrates the artefact of type 'CallFunction' that have the attribute 'function' declared as string instead of DynamicValue
+	// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
+	private void migrateGeneralScriptFunction(GlobalContext context) {
+		logger.info("Searching for keywords of type 'Script' to be migrated...");
+		com.mongodb.client.MongoCollection<Document> functions = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "functions");
+		
+		Document filter = new Document("type", "step.plugins.functions.types.GeneralScriptFunction");
+		Document replacement = new Document("$set", new Document("type", "step.plugins.java.GeneralScriptFunction"));
+		UpdateResult result = functions.updateMany(filter, replacement);
+		
+		logger.info("Migrated "+result.getModifiedCount()+" artefacts of type 'step.plugins.functions.types.GeneralScriptFunction'");
 	}
 	
 	// This function migrates the artefact of type 'CallFunction' that have the attribute 'function' declared as string instead of DynamicValue
