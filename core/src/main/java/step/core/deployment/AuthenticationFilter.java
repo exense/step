@@ -52,6 +52,10 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 							requestContext.abortWith(Response.status(Response.Status.FORBIDDEN).build());
 						}
 					}
+				} catch (TokenValidationException e) {
+					//only a warning, due to refresh calls in clients after expiration -> TODO: stop refresh after X attempts on client side?
+					logger.warn("Incorrect session token or the token could not be validated.", e);
+					requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 				} catch (Exception e) {
 					logger.error("An exception was thrown while checking user rights.", e);
 					requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
@@ -64,17 +68,12 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 		}
 	}
 
-	private Session validateToken(String token) throws Exception {
+	private Session validateToken(String token) throws TokenValidationException {
 		AccessServices authenticationService = (AccessServices) controller.getContext().get(AccessServices.AUTHENTICATION_SERVICE);
 		if (authenticationService != null) {
-			Session session = authenticationService.validateAndTouchToken(token);
-			if (session != null) {
-				return session;
-			} else {
-				throw new Exception("Session with token '" + token + "' is invalid");
-			}
+			return authenticationService.validateAndTouchToken(token);
 		} else {
-			throw new Exception("authenticationService is null");
+			throw new TokenValidationException("authenticationService is null");
 		}
 	}
 

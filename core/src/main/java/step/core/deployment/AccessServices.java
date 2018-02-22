@@ -182,9 +182,13 @@ public class AccessServices extends AbstractServices {
     	return session;
     }
     
-    public Session validateAndTouchToken(String token) {
+    public Session validateAndTouchToken(String token) throws TokenValidationException {
     	Session session = sessions.get(token);
-    	session.touch();
+    	if(sessions != null)
+    		session.touch();
+    	else
+    		throw new TokenValidationException("Session with token '" + token + "' is invalid");
+
     	return session;
     }
 }
