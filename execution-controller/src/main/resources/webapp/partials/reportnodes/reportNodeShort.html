@@ -5,6 +5,7 @@
 		<!-- node.resolvedArtefact has been introduced with 3.6.0. We're checking it here for retrocompatibility. Remove this check has soon as possible -->
 		{{node._class=='step.artefacts.reports.CallFunctionReportNode'?concatenate(node.functionAttributes):(node.resolvedArtefact?artefactTypes.getLabel(node.resolvedArtefact._class):node.name)}}
 		<span style="margin-left:10px;" class="text-muted small">{{node.name}}</span>
+		<span ng-if="includeStatus" class="pull-right" style="margin-bottom:10px;margin-left:10px;" ><reportnode-status status="node.status" /></span> 
 		<span class="pull-right"><attachments node="node" /></span>
 	</div>
 	<hr />

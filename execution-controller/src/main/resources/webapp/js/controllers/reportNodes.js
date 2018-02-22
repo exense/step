@@ -52,7 +52,8 @@ angular.module('reportNodes',['step','artefacts'])
   return {
     restrict: 'E',
     scope: {
-      node: '='
+      node: '=',
+      includeStatus: '='
     },
     templateUrl: 'partials/reportnodes/reportNodeShort.html',
     controller: function($scope,artefactTypes) {
