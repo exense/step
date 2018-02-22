@@ -407,7 +407,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           var data = response.data;
           var dataSet = [];
           if(data.length>0) {
-            if(!$scope.isPanelEnabled('testCases')) {              
+            if(data.length>1&&!$scope.isPanelEnabled('testCases')) {              
               $scope.setShowPanel('steps', false);
               $scope.setShowPanel('testCases', true);
             }
