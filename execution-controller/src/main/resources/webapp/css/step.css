@@ -56,16 +56,6 @@ div.executionStatus,span.executionStatus {
 	color:#d9534f;
 }
 
-.reportNodeStatus { 
-	  	background:gray;
-	  	color: white;
-	    padding: 4px;
-		border-radius: 4px;
-		font-size: 75%;
-	    /* width:15px; */
-/* 	    font-size:0; */
-	  }
-
 .status-SKIPPED {
 	background:#A0A0A0;
 }
@@ -117,6 +107,15 @@ i.status-INTERRUPTED {
 i.status-RUNNING {
 	color:#337ab7;
 }
+
+.reportNodeStatus { 
+	  	color: white;
+	    padding: 4px;
+		border-radius: 4px;
+		font-size: 75%;
+	    /* width:15px; */
+/* 	    font-size:0; */
+	  }
 
 button.btn-run {
     color: #fff;
