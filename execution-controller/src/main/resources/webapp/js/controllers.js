@@ -267,6 +267,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                                       var content = $compile('<a href uib-tooltip="Drilldown" ng-click="drillDownTestcase(id)">'+cellData+'</a>')(rowScope);
                                       $(td).empty();
                                       $(td).append(content);
+                                      rowScope.$apply();
                                      }
                                    },
                                    { "title" : "Status", "width":"80px", "searchmode":"select","render": function ( data, type, row ) {
@@ -616,8 +617,8 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
                   var rowScope = $scope.$new(true, $scope);
                   rowScope.distribution = JSON.parse(cellData);
                   var content = $compile("<div style=\"width:160px;\"><status-distribution progress='distribution' /></div>")(rowScope);
-                  angular.element(td).empty();
-                  angular.element(td).append(content);
+                  angular.element(td).html(content);  
+                  rowScope.$apply();
                 };
               });
               return columns;

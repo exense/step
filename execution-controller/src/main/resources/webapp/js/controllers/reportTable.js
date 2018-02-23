@@ -34,6 +34,7 @@ angular.module('reportTable',['step','reportNodes'])
           var content = $compile("<reportnode-short node='node' />")(rowScope);
           $(td).empty();
           $(td).append(content);
+          rowScope.$apply();
         };
       });
       _.each(_.where(columns,{'title':'Status'}),function(col){
@@ -45,6 +46,7 @@ angular.module('reportTable',['step','reportNodes'])
           var content = $compile("<reportnode-status status='status' />")(rowScope);
           $(td).empty();
           $(td).append(content);
+          rowScope.$apply();
         };
       });
       return columns;
