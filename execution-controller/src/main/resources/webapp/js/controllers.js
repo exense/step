@@ -267,7 +267,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                                       var content = $compile('<a href uib-tooltip="Drilldown" ng-click="drillDownTestcase(id)">'+cellData+'</a>')(rowScope);
                                       $(td).empty();
                                       $(td).append(content);
-                                      rowScope.$apply();
+                                      // no need to call the $apply here as we already in an angular "thread" in the case of 
+                                      // in memory tables like the testcases. The following is required for serverside tables
+                                      //rowScope.$apply();
                                      }
                                    },
                                    { "title" : "Status", "width":"80px", "searchmode":"select","render": function ( data, type, row ) {
