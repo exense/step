@@ -30,6 +30,7 @@ angular.module('reportTable',['step','reportNodes'])
         col.sClass = 'rowDetailsToggle';
         col.createdCell =  function (td, cellData, rowData, row, col) {
           var rowScope = $scope.$new(true, $scope);
+          stepsTable.trackScope(rowScope);
           rowScope.node = JSON.parse(cellData);
           var content = $compile("<reportnode-short node='node' />")(rowScope);
           $(td).empty();
@@ -42,6 +43,7 @@ angular.module('reportTable',['step','reportNodes'])
         col.width="80px";
         col.createdCell =  function (td, cellData, rowData, row, col) {
           var rowScope = $scope.$new(true, $scope);
+          stepsTable.trackScope(rowScope);
           rowScope.status = cellData;
           var content = $compile("<reportnode-status status='status' />")(rowScope);
           $(td).empty();

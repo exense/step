@@ -263,6 +263,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
                                    {"title" : "Name",
                                     "createdCell" : function (td, cellData, rowData, row, col) {
                                       var rowScope = $scope.$new(false, $scope);
+                                      $scope.testCaseTable.trackScope(rowScope);
                                       rowScope.id = rowData[0];
                                       var content = $compile('<a href uib-tooltip="Drilldown" ng-click="drillDownTestcase(id)">'+cellData+'</a>')(rowScope);
                                       $(td).empty();
@@ -617,6 +618,7 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
                 col.width="160px";
                 col.createdCell =  function (td, cellData, rowData, row, col) {
                   var rowScope = $scope.$new(true, $scope);
+                  $scope.table.trackScope(rowScope);
                   rowScope.distribution = JSON.parse(cellData);
                   var content = $compile("<div style=\"width:160px;\"><status-distribution progress='distribution' /></div>")(rowScope);
                   angular.element(td).html(content);  

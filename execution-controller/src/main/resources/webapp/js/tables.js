@@ -109,6 +109,11 @@ angular.module('dataTable', ['export'])
       
       var tableInitializationPromises = [];
 
+      scope.scopesTracker = new ScopeTracker();
+      scope.$on('$destroy', function() {
+        scope.scopesTracker.destroy();
+      });
+      
       var init = function(tableOptions) {
         if(attr.selectionmode=='multiple') {
           tableOptions.columns.push({'title':'','data': null,'width':'15px','render': function(data, type, row) {return '<input id="selectionInput-'+row[0]+'" type="checkbox" />'}})
@@ -260,6 +265,7 @@ angular.module('dataTable', ['export'])
       
       tableOptions.fnDrawCallback = function () {
           scope.refreshInputs();
+          scope.scopesTracker.newCycle();
       };
       
       if(attr.order) {
@@ -416,6 +422,9 @@ angular.module('dataTable', ['export'])
         }
         scope.handle.resetSelection = scope.selectionModel.resetSelection.bind(scope.selectionModel);
         scope.handle.export = scope.export;
+        scope.handle.trackScope = function(s) {
+          scope.scopesTracker.track(s);
+        }
       }
       
       $q.all(tableInitializationPromises).then(function(){

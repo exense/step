@@ -88,3 +88,64 @@ SelectionModel = function(dataFunction) {
   };
 }
 
+function ObjectTracker(destroyer) {
+  var me = this;
+  
+  me.objectRegistry = {};
+  me.currentCycleId;
+  
+  this.newCycle = function() {
+    me.currentCycleId = new Date().getTime();
+  };
+  
+  this.destroyObjectsFromPreviousCycle = function() {
+    if(_.size(me.objectRegistry)>1) {
+      var newObjectRegistry = {};
+      _.mapObject(me.objectRegistry, function(value, key) {
+        if(key!=me.currentCycleId) {
+          _.each(value, function(o) {
+            destroyer(o);
+          })
+        } else {
+          newObjectRegistry[me.currentCycleId] = value;
+        }
+      })
+      me.objectRegistry = newObjectRegistry;                
+    }
+  }
+  
+  this.track = function(o) {
+    me.destroyObjectsFromPreviousCycle();
+    var objectList = me.objectRegistry[me.currentCycleId];
+    if(!objectList) {
+      objectList = [];
+      me.objectRegistry[me.currentCycleId] = objectList;
+    }
+    objectList.push(o);
+  }
+  
+  this.destroy = function() {
+    _.mapObject(me.objectRegistry, function(value, key) {
+        _.each(value, function(o) {
+          destroyer(o);
+        })
+    })
+  }
+  
+  this.newCycle();
+}
+
+// When a scope is created manually using the scope.$new method
+// it has to be destroyed manually using scope.$destroy
+// In some cases it is impossible to find a good hook where to call the $destroy method.
+// This is for instance the case in Datatables where we call scope.$new in the
+// createdCell hook but where we have no hook for cell deletion
+// 
+// The ScopeTracker i.e ObjectTracker works like a simple garbage collector with cycles
+// All the objects registered (tracked) during one cycle are deleted in the follwoing cycle
+// It is the responsibility of the application to increment the cycles using the newCycle() method.
+function ScopeTracker(destroyer) {
+  return new ObjectTracker(function(scope) {
+    scope.$destroy();
+  });
+}
