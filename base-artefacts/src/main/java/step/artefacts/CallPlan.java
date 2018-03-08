@@ -27,6 +27,8 @@ import step.core.dynamicbeans.DynamicValue;
 public class CallPlan extends AbstractArtefact {
 	
 	private String artefactId;
+	
+	private DynamicValue<String> selectionAttributes = new DynamicValue<>("{}");
 		
 	DynamicValue<String> input = new DynamicValue<>("{}");
 	
@@ -41,6 +43,14 @@ public class CallPlan extends AbstractArtefact {
 
 	public void setArtefactId(String artefactId) {
 		this.artefactId = artefactId;
+	}
+
+	public DynamicValue<String> getSelectionAttributes() {
+		return selectionAttributes;
+	}
+
+	public void setSelectionAttributes(DynamicValue<String> selectionAttributes) {
+		this.selectionAttributes = selectionAttributes;
 	}
 
 	public DynamicValue<String> getInput() {

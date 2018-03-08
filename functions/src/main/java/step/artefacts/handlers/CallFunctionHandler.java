@@ -69,6 +69,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	
 	private static JsonProvider jprov = JsonProvider.provider();
 	
+	private SelectorHelper selectorHelper;
+	
 	private TokenSelectorHelper tokenSelectorHelper;
 	
 	private FunctionRouter functionRouter;
@@ -82,6 +84,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
 		this.tokenSelectorHelper = new TokenSelectorHelper(dynamicJsonObjectResolver);
+		this.selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 	}
 
 	@Override
@@ -190,7 +193,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		if(testArtefact.getFunctionId()!=null) {
 			function = functionRepository.getFunctionById(testArtefact.getFunctionId());
 		} else {
-			Map<String, String> attributes = buildFunctionSelectionQuery(testArtefact.getFunction().get());
+			String selectionAttributesJson = testArtefact.getFunction().get();
+			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, getBindings());
 			function = functionRepository.getFunctionByAttributes(attributes);
 		}
 		return function;
@@ -255,13 +259,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	public static final String ARTEFACTID = "$artefactid";
 	
 	public static final String PARENTREPORTID = "$parentreportid";
-	
-	private Map<String, String> buildFunctionSelectionQuery(String functionStr) {
-		JsonObject queryJson = parseAndResolveJson(functionStr);
-		Map<String, String> attributes = new HashMap<>();
-		queryJson.forEach((key,value)->attributes.put(key, queryJson.getString(key)));
-		return attributes;
-	}
 	
 	private Input buildInput(String argumentStr) {
 		JsonObject argument = parseAndResolveJson(argumentStr);
