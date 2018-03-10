@@ -41,7 +41,7 @@ public class TokenSelectorHelper {
 		this.dynamicJsonObjectResolver = dynamicJsonObjectResolver;
 	}
 	
-	protected Map<String, Interest> getAdditionalSelectionCriteria(TokenSelector testArtefact, Map<String, Object> bindings) {
+	public Map<String, Interest> getTokenSelectionCriteria(TokenSelector testArtefact, Map<String, Object> bindings) {
 		String token = testArtefact.getToken().get();
 		if(token!=null) {
 			JsonObject selectionCriteriaBeforeEvaluation = jprov.createReader(new StringReader(token)).readObject();			

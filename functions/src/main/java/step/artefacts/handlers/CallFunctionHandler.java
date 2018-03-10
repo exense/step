@@ -54,7 +54,6 @@ import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
-import step.grid.tokenpool.Interest;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -68,10 +67,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
 	private static JsonProvider jprov = JsonProvider.provider();
-	
+			
 	private SelectorHelper selectorHelper;
-	
-	private TokenSelectorHelper tokenSelectorHelper;
 	
 	private FunctionRouter functionRouter;
 	
@@ -83,7 +80,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		functionRouter = context.getGlobalContext().get(FunctionRouter.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
-		this.tokenSelectorHelper = new TokenSelectorHelper(dynamicJsonObjectResolver);
 		this.selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 	}
 
@@ -106,13 +102,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 		validateInput(input, function);
 
-		if(!context.isSimulation()) {
-			Map<String, Interest> addtionalSelectionCriteria = tokenSelectorHelper.getAdditionalSelectionCriteria(testArtefact, getBindings());
-		
+		if(!context.isSimulation()) {		
 			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
 			boolean releaseTokenAfterExecution = (o==null);
-
-			TokenWrapper token = functionRouter.selectToken(function, (FunctionGroupContext)o, addtionalSelectionCriteria);
+			
+			TokenWrapper token = functionRouter.selectToken(testArtefact, function, (FunctionGroupContext)o, getBindings());
 			try {
 				Token gridToken = token.getToken();
 				if(gridToken.isLocal()) {
