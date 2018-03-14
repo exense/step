@@ -46,7 +46,7 @@ import step.core.Controller.ServiceRegistrationCallback;
 import step.core.deployment.AccessServices;
 import step.core.deployment.AdminServices;
 import step.core.deployment.ApplicationServices;
-import step.core.deployment.AuthenticationFilter;
+import step.core.deployment.DefaultAuthenticationFilter;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.ErrorFilter;
 import step.core.deployment.JacksonMapperProvider;
@@ -174,11 +174,14 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ControllerServices.class);
 		resourceConfig.registerClasses(InteractiveServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
-		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
 		resourceConfig.registerClasses(ExportServices.class, ImportServices.class);
 		resourceConfig.registerClasses(FileServices.class);
+		
+		String authFilter = (String)resourceConfig.getConfiguration().getProperties().getOrDefault("authentication.filterClass", "step.core.deployment.DummyAuthenticationFilter");
+		System.out.println("authFilter="+authFilter);
+		resourceConfig.registerClasses(Class.forName(authFilter));
 		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override

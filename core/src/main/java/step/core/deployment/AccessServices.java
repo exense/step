@@ -15,7 +15,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.NewCookie;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
@@ -24,27 +24,24 @@ import org.slf4j.LoggerFactory;
 import step.commons.conf.Configuration;
 import step.core.access.AccessConfiguration;
 import step.core.access.AccessManager;
-import step.core.access.Authenticator;
-import step.core.access.Credentials;
 import step.core.access.DefaultAccessManager;
-import step.core.access.DefaultAuthenticator;
 import step.core.access.Profile;
 
 @Singleton
 @Path("/access")
-public class AccessServices extends AbstractServices {
+public class AccessServices extends AbstractServices{
 	
 	private static Logger logger = LoggerFactory.getLogger(AccessServices.class);
-	
-	public static final String AUTHENTICATION_SERVICE = "AuthenticationService";
 		
 	private ConcurrentHashMap<String, Session> sessions;
 	
 	private Timer sessionExpirationTimer; 
 	
-	private Authenticator authenticator;
-	
 	private AccessManager accessManager;
+	
+	private HttpLoginProvider httpLoginProvider;
+	
+	public static final String AUTHENTICATION_SERVICE = "AuthenticationService";
 	
 	public AccessServices() {
 		super();
@@ -55,7 +52,7 @@ public class AccessServices extends AbstractServices {
 	private void init() throws Exception {
 		controller.getContext().put(AUTHENTICATION_SERVICE, this);
 		
-		initAuthenticator();
+		initLoginProvider();
 		initAccessManager();
 		
 		sessionExpirationTimer = new Timer("Session expiration timer");
@@ -69,21 +66,22 @@ public class AccessServices extends AbstractServices {
 		}, 60000, 60000);
 	}
 
-	private void initAuthenticator() throws Exception {
-		String authenticatorClass = Configuration.getInstance().getProperty("ui.authenticator",null);
-		if(authenticatorClass==null) {
-			authenticator = new DefaultAuthenticator();
-		} else {
-			try {
-				authenticator = (Authenticator) this.getClass().getClassLoader().loadClass(authenticatorClass).newInstance();
-			} catch (Exception e) {
-				logger.error("Error while initializing authenticator '"+authenticatorClass+"'",e);
-				throw e;
-			}
+	private void initLoginProvider() {
+		String loginProviderClass = controller.getContext().getConfiguration().getProperty("auth.httpLoginProviderClass", "step.core.deployment.DefaultLoginProvider");
+		
+		Class<?> c;
+		
+		try {
+			c = Class.forName(loginProviderClass);
+			httpLoginProvider = (HttpLoginProvider)c.getConstructor().newInstance();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		authenticator.init(getContext());
+		
+		httpLoginProvider.init(controller.getContext(), this);
 	}
-	
+
 	private void initAccessManager() throws Exception {
 		String accessManagerClass = Configuration.getInstance().getProperty("ui.accessmanager",null);
 		if(accessManagerClass==null) {
@@ -103,17 +101,8 @@ public class AccessServices extends AbstractServices {
 	@Path("/login")
     @Produces("application/json")
     @Consumes("application/json")
-    public Response authenticateUser(Credentials credentials) {
-        boolean authenticated = authenticator.authenticate(credentials);
-        if(authenticated) {
-        	Session session = issueToken(credentials.getUsername());
-        	NewCookie cookie = new NewCookie("sessionid", session.getToken(), "/", null, 1, null, -1, null, false, false);
-        	Profile profile = getProfile(credentials.getUsername());
-        	session.setProfile(profile);
-        	return Response.ok(session).cookie(cookie).build();            	
-        } else {
-        	return Response.status(Response.Status.UNAUTHORIZED).build();            	
-        }    
+    public Response authenticateUser(String request, @Context HttpHeaders headers) {
+		return httpLoginProvider.doLogin(request, headers);
     }
 	
 	@GET
@@ -164,8 +153,9 @@ public class AccessServices extends AbstractServices {
 			return ANONYMOUS_SESSION;
 		}
 	}
+	
 
-	private Profile getProfile(String username) {
+	public Profile getProfile(String username) {
 		Profile profile = new Profile();
 		List<String> rights = accessManager.getRights(username);
 		profile.setRights(rights);
@@ -173,7 +163,7 @@ public class AccessServices extends AbstractServices {
 		return profile;
 	}
 
-    private Session issueToken(String username) {
+    public Session issueToken(String username) {
     	String token = UUID.randomUUID().toString();
     	Session session = new Session();
     	session.setToken(token);
@@ -191,4 +181,5 @@ public class AccessServices extends AbstractServices {
 
     	return session;
     }
+
 }

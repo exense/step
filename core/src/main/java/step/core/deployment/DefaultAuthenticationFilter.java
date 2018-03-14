@@ -23,9 +23,9 @@ import step.core.access.Profile;
 @Secured
 @Provider
 @Priority(Priorities.AUTHENTICATION)
-public class AuthenticationFilter extends AbstractServices implements ContainerRequestFilter, ClientResponseFilter {
+public class DefaultAuthenticationFilter extends AbstractServices implements ContainerRequestFilter, ClientResponseFilter {
 	
-	private static Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+	private static Logger logger = LoggerFactory.getLogger(DefaultAuthenticationFilter.class);
 	
 	@Inject
 	private ExtendedUriInfo extendendUriInfo;
