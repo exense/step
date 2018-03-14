@@ -47,9 +47,7 @@ public class DefaultLoginProvider implements HttpLoginProvider{
 	@Override
 	public Response doLogin(String request, HttpHeaders headers) {
 		
-        System.out.println("request=" + request);
-        
-		ObjectMapper om = new ObjectMapper();
+        ObjectMapper om = new ObjectMapper();
 		Credentials credentials = null;
 		
 		try {

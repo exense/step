@@ -179,7 +179,7 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ExportServices.class, ImportServices.class);
 		resourceConfig.registerClasses(FileServices.class);
 		
-		String authFilter = (String)resourceConfig.getConfiguration().getProperties().getOrDefault("authentication.filterClass", "step.core.deployment.DummyAuthenticationFilter");
+		String authFilter = (String)resourceConfig.getConfiguration().getProperties().getOrDefault("authentication.filterClass", "step.core.deployment.DefaultAuthenticationFilter");
 		System.out.println("authFilter="+authFilter);
 		resourceConfig.registerClasses(Class.forName(authFilter));
 		
