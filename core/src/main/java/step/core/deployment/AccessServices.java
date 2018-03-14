@@ -133,6 +133,13 @@ public class AccessServices extends AbstractServices{
 		return Configuration.getInstance().getPropertyAsBoolean("demo", false);
 	}
 	
+	@GET
+	@Secured
+	@Path("/session")
+	public Session getSession(@Context ContainerRequestContext crc, String request, @Context HttpHeaders headers) {
+		return httpLoginProvider.getSession(crc, request, headers);
+	}
+	
 	static Session ANONYMOUS_SESSION = new Session();
 	{
 		ANONYMOUS_SESSION.setUsername("admin");
@@ -141,20 +148,6 @@ public class AccessServices extends AbstractServices{
 		ANONYMOUS_SESSION.setProfile(profile);
 	}
 	
-	@GET
-	@Secured
-	@Path("/session")
-	public Session getSession(@Context ContainerRequestContext crc) {
-		boolean useAuthentication = Configuration.getInstance().getPropertyAsBoolean("authentication", true);
-		if(useAuthentication) {
-			Session session = (Session) crc.getProperty("session");
-			return session;			
-		} else {
-			return ANONYMOUS_SESSION;
-		}
-	}
-	
-
 	public Profile getProfile(String username) {
 		Profile profile = new Profile();
 		List<String> rights = accessManager.getRights(username);

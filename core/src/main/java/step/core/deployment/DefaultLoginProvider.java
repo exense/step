@@ -1,5 +1,6 @@
 package step.core.deployment;
 
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
@@ -68,6 +69,16 @@ public class DefaultLoginProvider implements HttpLoginProvider{
         }    
         
 	}
-
+	
+	@Override
+	public Session getSession(ContainerRequestContext crc, String request, HttpHeaders headers) {
+		boolean useAuthentication = Configuration.getInstance().getPropertyAsBoolean("authentication", true);
+		if(useAuthentication) {
+			Session session = (Session) crc.getProperty("session");
+			return session;			
+		} else {
+			return AccessServices.ANONYMOUS_SESSION;
+		}
+	}
 
 }
