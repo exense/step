@@ -117,7 +117,7 @@ public class KeywordRunner {
 	}
 	
 	public static ExecutionContext getExecutionContext(Class<?>... functionClass) {
-		return new ExecutionContext(Arrays.asList(functionClass), new HashMap<>());
+		return getExecutionContext(new HashMap<>(), functionClass);
 	}
 	
 	public static ExecutionContext getExecutionContext(Map<String, String> properties, Class<?>... keywordClass) {
