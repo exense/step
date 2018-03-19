@@ -52,7 +52,9 @@ public class ParameterServices extends AbstractServices {
 	@Path("/")
 	@Secured(right="param-write")
 	public Parameter newParameter() {
-		return  new Parameter(new Expression(""), "", "", "");
+		Parameter parameter =  new Parameter(new Expression(""), "", "", "");
+		parameter.setPriority(1);
+		return parameter;
 	}
 	
 	@POST
@@ -60,8 +62,37 @@ public class ParameterServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/")
 	@Secured(right="param-write")
-	public Parameter save(Parameter parameter) {
-		return parameterAccessor.save(parameter);
+	public Parameter save(Parameter newParameter) {
+		Parameter oldParameter;
+		if(newParameter.getId()!=null) {
+			oldParameter = parameterAccessor.get(newParameter.getId());
+		} else {
+			oldParameter = null;
+		}
+		
+		if(oldParameter == null){
+			// new parameter. setting initial value of protected value.
+			// values that contains password are protected
+			newParameter.setProtectedValue(isPassword(newParameter));
+		} else {
+			// the parameter has been updated but the value hasn't been changed
+			if(newParameter.getValue().equals(PROTECTED_VALUE)) {
+				newParameter.setValue(oldParameter.getValue());
+			}
+			
+			if(isProtected(oldParameter)) {
+				// protected value should not be changed
+				newParameter.setProtectedValue(true);
+			} else {
+				newParameter.setProtectedValue(isPassword(newParameter));
+			}
+		}
+
+		return parameterAccessor.save(newParameter);
+	}
+
+	protected boolean isProtected(Parameter oldParameter) {
+		return oldParameter.getProtectedValue()!=null && oldParameter.getProtectedValue();
 	}
 	
 	@POST
@@ -82,10 +113,27 @@ public class ParameterServices extends AbstractServices {
 		parameterAccessor.remove(new ObjectId(id));
 	}
 	
+	public static final String PROTECTED_VALUE = "******";
+	
+
+	public static boolean isPassword(Parameter parameter) {
+		return parameter!=null && isPassword(parameter.getKey());
+	}
+	
+	public static boolean isPassword(String key) {
+		return key!=null && (key.contains("pwd")||key.contains("password"));
+	}
+	
 	@GET
 	@Path("/{id}")
 	@Secured(right="param-read")
 	public Parameter get(@PathParam("id") String id) {
-		return parameterAccessor.get(new ObjectId(id));
+		Parameter parameter = parameterAccessor.get(new ObjectId(id));
+		if(parameter!=null) {
+			if(isProtected(parameter)) {
+				parameter.setValue(PROTECTED_VALUE);				
+			}
+		}
+		return parameter;
 	}
 }

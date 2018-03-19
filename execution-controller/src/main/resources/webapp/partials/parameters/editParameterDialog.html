@@ -6,6 +6,7 @@
 	<form ng-submit="save()">
 		<div class="form-group">
 			<label>Key</label> 
+			<span class="glyphicon glyphicon-question-sign" uib-tooltip="Keys containing 'pwd' or 'password' will be automatically protected"></span>
 			<input class="form-control"	ng-model="parameter.key" autofocus>
 		</div>
 		<div class="form-group">
@@ -19,6 +20,11 @@
 		<div class="form-group">
 			<label>Description</label> 
 			<input class="form-control"	ng-model="parameter.description">
+		</div>
+		<div class="form-group">
+			<label>Priority</label>
+			<span class="glyphicon glyphicon-question-sign" uib-tooltip="Optional. The priority defines the order in which the key-value pairs are trying to be matched when evaluating the activation expressions."></span> 
+			<input class="form-control"	ng-model="parameter.priority">
 		</div>
 		<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
 	</form>

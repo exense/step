@@ -52,6 +52,7 @@ import com.mongodb.client.model.Filters;
 
 import step.core.accessors.Collection;
 import step.core.accessors.CollectionFind;
+import step.core.accessors.CollectionRegistry;
 import step.core.accessors.SearchOrder;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
@@ -62,6 +63,8 @@ import step.core.export.ExportTaskManager;
 public class TableService extends AbstractServices {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TableService.class);
+	
+	protected CollectionRegistry collectionRegistry;
 	
 	protected DataTableRegistry dataTableRegistry;
 	
@@ -74,7 +77,7 @@ public class TableService extends AbstractServices {
 	@PostConstruct
 	public void init() {
 		database = getContext().getMongoDatabase();
-
+		collectionRegistry = getContext().get(CollectionRegistry.class);
 	}
 	
 	@PreDestroy
@@ -103,8 +106,11 @@ public class TableService extends AbstractServices {
 	}
 	
 	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params) throws Exception {		
-
-		Collection collection = new Collection(database, collectionID);
+		Collection collection = collectionRegistry.get(collectionID);
+		if(collection==null) {
+			// no custom collection. use default collection
+			collection = new Collection(database, collectionID);
+		}
 		
 		Map<Integer, String> columnNames = getColumnNamesMap(params);
 		
