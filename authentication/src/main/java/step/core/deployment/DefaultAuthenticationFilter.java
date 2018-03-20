@@ -27,11 +27,17 @@ public class DefaultAuthenticationFilter extends AbstractServices implements Con
 	
 	private static Logger logger = LoggerFactory.getLogger(DefaultAuthenticationFilter.class);
 	
+	public DefaultAuthenticationFilter() {
+		System.out.println("hello");
+	}
+	
 	@Inject
 	private ExtendedUriInfo extendendUriInfo;
 
-	@Override
+	//@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
+		
+		System.out.println("Default auth filter invoked.");
 		boolean useAuthentication = AccessServices.useAuthentication();
 		if(useAuthentication) {
 			Cookie sessionCookie = requestContext.getCookies().get("sessionid");
@@ -77,7 +83,7 @@ public class DefaultAuthenticationFilter extends AbstractServices implements Con
 		}
 	}
 
-	@Override
+	//@Override
 	public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext) throws IOException {
 		
 	}

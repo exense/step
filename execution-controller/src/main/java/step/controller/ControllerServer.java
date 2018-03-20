@@ -179,10 +179,11 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ExportServices.class, ImportServices.class);
 		resourceConfig.registerClasses(FileServices.class);
 		
-		String authFilter = (String)resourceConfig.getConfiguration().getProperties().getOrDefault("authentication.filterClass", "step.core.deployment.DefaultAuthenticationFilter");
-		System.out.println("authFilter="+authFilter);
-		resourceConfig.registerClasses(Class.forName(authFilter));
-		
+		// All filters are applied automatically by jetty
+		//String authFilter = (String)resourceConfig.getConfiguration().getProperties().getOrDefault("authentication.filterClass", "step.core.deployment.DefaultAuthenticationFilter");
+		//System.out.println("authFilter="+authFilter);
+		//resourceConfig.registerClasses(Class.forName(authFilter));
+
 		resourceConfig.register(new AbstractBinder() {	
 			@Override
 			protected void configure() {

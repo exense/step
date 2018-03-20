@@ -47,6 +47,7 @@
 		<module>../grid-agent</module>
 		<module>../grid</module>
 		<module>../functions</module>
+		<module>../authentication</module>
 		<module>../core</module>
 		<module>../commons</module>
 		<module>../base-plugins</module>

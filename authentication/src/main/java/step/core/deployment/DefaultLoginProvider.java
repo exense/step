@@ -25,7 +25,7 @@ public class DefaultLoginProvider implements HttpLoginProvider{
 	
 	private AccessServices accessServicesSingleton;
 
-	@Override
+	//@Override
 	public void init(GlobalContext context, AccessServices accessServicesSingleton) {
 		initAuthenticator(context);
 		this.accessServicesSingleton = accessServicesSingleton;
@@ -45,7 +45,7 @@ public class DefaultLoginProvider implements HttpLoginProvider{
 		authenticator.init(context);
 	}
 	
-	@Override
+	//@Override
 	public Response doLogin(String request, HttpHeaders headers) {
 		
         ObjectMapper om = new ObjectMapper();
@@ -70,7 +70,7 @@ public class DefaultLoginProvider implements HttpLoginProvider{
         
 	}
 	
-	@Override
+	//@Override
 	public Session getSession(ContainerRequestContext crc, String request, HttpHeaders headers) {
 		boolean useAuthentication = Configuration.getInstance().getPropertyAsBoolean("authentication", true);
 		if(useAuthentication) {
