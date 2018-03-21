@@ -147,7 +147,8 @@ public class AccessServices extends AbstractServices{
 	@Secured
 	@Path("/session")
 	public Session getSession(@Context ContainerRequestContext crc, String request, @Context HttpHeaders headers) {
-		return httpLoginProvider.getSession(crc, request, headers);
+		Session session = (Session) crc.getProperty("session");
+		return session;
 	}
 	
 	static Session ANONYMOUS_SESSION = new Session();

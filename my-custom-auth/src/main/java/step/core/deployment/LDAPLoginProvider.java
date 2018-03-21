@@ -3,8 +3,8 @@ package step.core.deployment;
 import java.util.Arrays;
 
 import javax.naming.NamingException;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
@@ -74,8 +74,9 @@ public class LDAPLoginProvider implements HttpLoginProvider{
 				session.setUsername(credentials.getUsername());
 				
 				this.accessServicesSingleton.putStepSession(credentials.getUsername(), session);
-				
-				return Response.ok(session).build();
+				NewCookie cookie = new NewCookie("sessionid", session.getToken(), "/", null, 1, null, -1, null, false, false);
+	        	session.setProfile(p);
+	        	return Response.ok(session).cookie(cookie).build();    
 			}
 			else
 				return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -83,10 +84,6 @@ public class LDAPLoginProvider implements HttpLoginProvider{
 			logger.debug("Error while authenticating user: " + e);
 			return Response.status(Response.Status.UNAUTHORIZED).build();
 		}
-	}
-
-	public Session getSession(ContainerRequestContext crc, String request, HttpHeaders headers) {
-		return null;
 	}
 
 	public Object getLoginInformation(Object filterInfo) {

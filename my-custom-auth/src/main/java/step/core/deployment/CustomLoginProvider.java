@@ -1,6 +1,5 @@
 package step.core.deployment;
 
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
@@ -78,16 +77,6 @@ public class CustomLoginProvider implements HttpLoginProvider{
 
 	boolean isAuthenticated() {
 		return true;
-	}
-
-
-	//@Override
-	public Session getSession(ContainerRequestContext crc, String request, HttpHeaders headers) {
-		
-		// Required to prevent relogging when opening new tabs with the same session
-		
-		Session session = (Session) crc.getProperty("session");
-		return session;			
 	}
 
 	public Object getLoginInformation(Object filterInfo) {
