@@ -81,11 +81,11 @@ public class CustomLoginProvider implements HttpLoginProvider{
 	}
 
 
-	//TODO: when/why is this called?
 	//@Override
 	public Session getSession(ContainerRequestContext crc, String request, HttpHeaders headers) {
 		
-		// Maintain a local mapping between saml tokens and step sessions?
+		// Required to prevent relogging when opening new tabs with the same session
+		
 		Session session = (Session) crc.getProperty("session");
 		return session;			
 	}
