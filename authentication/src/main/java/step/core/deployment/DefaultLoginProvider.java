@@ -92,7 +92,7 @@ public class DefaultLoginProvider implements HttpLoginProvider{
     	Session session = new Session();
     	session.setToken(token);
     	session.setUsername(username);
-    	accessServicesSingleton.putSession(token, session);
+    	accessServicesSingleton.putStepSession(token, session);
     	return session;
     }
 

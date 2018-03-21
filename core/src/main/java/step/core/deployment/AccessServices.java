@@ -47,8 +47,12 @@ public class AccessServices extends AbstractServices{
 		sessions = new ConcurrentHashMap<>();
 	}
 	
-	public void putSession(String key, Session session) {
+	public void putStepSession(String key, Session session) {
 		this.sessions.put(key, session);
+	}
+	
+	public Session getStepSession(String key) {
+		return this.sessions.get(key);
 	}
 	
 	@PostConstruct
