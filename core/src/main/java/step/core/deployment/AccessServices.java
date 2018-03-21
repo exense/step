@@ -3,7 +3,6 @@ package step.core.deployment;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
@@ -48,12 +47,16 @@ public class AccessServices extends AbstractServices{
 		sessions = new ConcurrentHashMap<>();
 	}
 	
+	public void putSession(String key, Session session) {
+		this.sessions.put(key, session);
+	}
+	
 	@PostConstruct
 	private void init() throws Exception {
 		controller.getContext().put(AUTHENTICATION_SERVICE, this);
-		
-		initLoginProvider();
+
 		initAccessManager();
+		initLoginProvider();
 		
 		sessionExpirationTimer = new Timer("Session expiration timer");
 		sessionExpirationTimer.schedule(new TimerTask() {
@@ -75,11 +78,10 @@ public class AccessServices extends AbstractServices{
 			c = Class.forName(loginProviderClass);
 			httpLoginProvider = (HttpLoginProvider)c.getConstructor().newInstance();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		httpLoginProvider.init(controller.getContext(), this);
+		httpLoginProvider.init(controller.getContext(), this, accessManager);
 	}
 
 	private void initAccessManager() throws Exception {
@@ -156,15 +158,6 @@ public class AccessServices extends AbstractServices{
 		return profile;
 	}
 
-    public Session issueToken(String username) {
-    	String token = UUID.randomUUID().toString();
-    	Session session = new Session();
-    	session.setToken(token);
-    	session.setUsername(username);
-    	sessions.put(token, session);
-    	return session;
-    }
-    
     public Session validateAndTouchToken(String token) throws TokenValidationException {
     	Session session = sessions.get(token);
     	if(session != null)

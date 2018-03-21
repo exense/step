@@ -1,5 +1,7 @@
 package step.core.deployment;
 
+import java.util.UUID;
+
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.NewCookie;
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
+import step.core.access.AccessManager;
 import step.core.access.Authenticator;
 import step.core.access.Credentials;
 import step.core.access.DefaultAuthenticator;
@@ -24,11 +27,14 @@ public class DefaultLoginProvider implements HttpLoginProvider{
 	private Authenticator authenticator;
 	
 	private AccessServices accessServicesSingleton;
+	
+	private AccessManager accessManager;
 
 	//@Override
-	public void init(GlobalContext context, AccessServices accessServicesSingleton) {
+	public void init(GlobalContext context, AccessServices accessServicesSingleton, AccessManager accessManager) {
 		initAuthenticator(context);
 		this.accessServicesSingleton = accessServicesSingleton;
+		this.accessManager = accessManager;
 	}
 	
 	private void initAuthenticator(GlobalContext context){
@@ -59,7 +65,7 @@ public class DefaultLoginProvider implements HttpLoginProvider{
 		
 		boolean authenticated = authenticator.authenticate(credentials);
         if(authenticated) {
-        	Session session = accessServicesSingleton.issueToken(credentials.getUsername());
+        	Session session = issueToken(credentials.getUsername());
         	NewCookie cookie = new NewCookie("sessionid", session.getToken(), "/", null, 1, null, -1, null, false, false);
         	Profile profile = accessServicesSingleton.getProfile(credentials.getUsername());
         	session.setProfile(profile);
@@ -80,5 +86,15 @@ public class DefaultLoginProvider implements HttpLoginProvider{
 			return AccessServices.ANONYMOUS_SESSION;
 		}
 	}
+	
+    public Session issueToken(String username) {
+    	String token = UUID.randomUUID().toString();
+    	Session session = new Session();
+    	session.setToken(token);
+    	session.setUsername(username);
+    	accessServicesSingleton.putSession(token, session);
+    	return session;
+    }
+    
 
 }

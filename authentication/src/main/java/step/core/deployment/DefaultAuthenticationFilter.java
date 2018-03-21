@@ -37,7 +37,6 @@ public class DefaultAuthenticationFilter extends AbstractServices implements Con
 	//@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 		
-		System.out.println("Default auth filter invoked.");
 		boolean useAuthentication = AccessServices.useAuthentication();
 		if(useAuthentication) {
 			Cookie sessionCookie = requestContext.getCookies().get("sessionid");

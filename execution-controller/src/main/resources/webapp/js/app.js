@@ -293,7 +293,7 @@ angular.module('step',['ngStorage','ngCookies'])
   };
  
   authService.isAuthenticated = function () {
-    return $rootScope.context.userID && $rootScope.context.userID!='anonymous';
+	  return $rootScope.context && $rootScope.context.userID && $rootScope.context.userID!='anonymous';
   };
  
   authService.hasRight = function (right) {
