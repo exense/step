@@ -107,6 +107,10 @@ public class AccessServices extends AbstractServices{
 		return httpLoginProvider.doLogin(request, headers);
     }
 	
+    public Object getLoginInformation(Object filterInfo) {
+		return httpLoginProvider.getLoginInformation(filterInfo);
+    }
+	
 	@GET
 	@Path("/conf")
 	public AccessConfiguration getAccessConfiguration() {

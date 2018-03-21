@@ -12,5 +12,6 @@ public interface HttpLoginProvider {
 	public void init(GlobalContext context, AccessServices accessServices, AccessManager accessManager);
 	public Response doLogin(String request, HttpHeaders headers);
 	Session getSession(ContainerRequestContext crc, String request, HttpHeaders headers);
+	public Object getLoginInformation(Object filterInfo);
 	    
 }
