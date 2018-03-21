@@ -52,7 +52,7 @@ public class CustomLoginProvider implements HttpLoginProvider{
 		session.setUsername(username);
 
 		// TODO: use exposed AccessManager here
-		//Profiles can be customized via the AccessManager interface 
+		//Profiles and rights can be customized via the AccessManager interface (and mapped to the IdP as well)
 		Profile p = new Profile();
 		p.setRights(this.accessManager.getRights(username));
 		p.setRole(this.accessManager.getRole(username));

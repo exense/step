@@ -95,6 +95,11 @@ public class DefaultLoginProvider implements HttpLoginProvider{
     	accessServicesSingleton.putSession(token, session);
     	return session;
     }
+
+	@Override
+	public Object getLoginInformation(Object filterInfo) {
+		throw new RuntimeException("Not implemented (unused)");
+	}
     
 
 }
