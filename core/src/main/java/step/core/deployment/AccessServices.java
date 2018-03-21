@@ -74,7 +74,7 @@ public class AccessServices extends AbstractServices{
 	}
 
 	private void initLoginProvider() {
-		String loginProviderClass = controller.getContext().getConfiguration().getProperty("auth.httpLoginProviderClass", "step.core.deployment.DefaultLoginProvider");
+		String loginProviderClass = controller.getContext().getConfiguration().getProperty("authentication.httpLoginProviderClass", "step.core.deployment.DefaultLoginProvider");
 		
 		Class<?> c;
 		

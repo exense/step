@@ -80,7 +80,7 @@ public class LDAPLoginProvider implements HttpLoginProvider{
 			else
 				return Response.status(Response.Status.UNAUTHORIZED).build();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.debug("Error while authenticating user: " + e);
 			return Response.status(Response.Status.UNAUTHORIZED).build();
 		}
 	}
