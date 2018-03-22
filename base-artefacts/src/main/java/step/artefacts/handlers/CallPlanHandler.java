@@ -19,12 +19,14 @@
 package step.artefacts.handlers;
 
 import java.io.StringReader;
+import java.util.Map;
 
 import javax.json.JsonObject;
 import javax.json.spi.JsonProvider;
 
 import step.artefacts.CallPlan;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -47,8 +49,7 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode,	CallPlan testArtefact) {
 		beforeDelegation(parentNode, testArtefact);
-		
-		AbstractArtefact a = context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
+		AbstractArtefact a = selectArtefact(testArtefact);
 		delegateCreateReportSkeleton(a, parentNode);
 	}
 
@@ -60,14 +61,35 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 		JsonObject resolvedInput = dynamicJsonObjectResolver.evaluate(input, getBindings());		
 		context.getVariablesManager().putVariable(parentNode, "input", resolvedInput);
 	}
+	
+	
+	
 
 	@Override
 	protected void execute_(ReportNode node, CallPlan testArtefact) {
 		beforeDelegation(node, testArtefact);
 
-		AbstractArtefact a = context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
+		AbstractArtefact a = selectArtefact(testArtefact);
+		
 		ReportNode resultNode = delegateExecute(context, a, node);
 		node.setStatus(resultNode.getStatus());
+	}
+
+	protected AbstractArtefact selectArtefact(CallPlan testArtefact) {
+		AbstractArtefact a;
+		ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
+		if(testArtefact.getArtefactId()!=null) {
+			a =  context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
+		} else {
+			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
+			SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(testArtefact.getSelectionAttributes().get(), getBindings());
+			a = artefactAccessor.findRootArtefactByAttributes(selectionAttributes);
+			if(a==null) {
+				throw new RuntimeException("Unable to find plan with attributes: "+selectionAttributes.toString());
+			}
+		}
+		return a;
 	}
 
 	@Override

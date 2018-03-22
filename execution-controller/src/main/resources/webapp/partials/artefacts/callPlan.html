@@ -1,14 +1,15 @@
 <div ng-controller="CallPlanCtrl">
-	<div class="form-group">
+	<div class="form-group" ng-if="artefact.artefactId">
 		<label for="comment">Plan</label>
 		<div class="input-group">
-			<input ng-disabled="true" type="text" class="form-control" ng-model="artefact.cachedArtefactName" />
+			<input ng-disabled="true" type="text" class="form-control" ng-model="artefactName" />
 			<span class="input-group-btn">
 				<button ng-if="artefact.artefactId" class="btn btn-default" type="button" ng-click="gotoArtefact()"><span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 				<button class="btn btn-default" type="button" ng-disabled="readonly" ng-click="selectArtefact()">Select</button>
 			</span>
 		</div>
 	</div>
+	<dynamic-json-editor ng-if="!artefact.artefactId" label="'Plan attributes'" dynamic-value="artefact.selectionAttributes" on-save="save()" />
 	<fieldset ng-disabled="readonly">
 		<dynamic-json-editor label="'Input'" dynamic-value="artefact.input" on-save="save()" />
 	</fieldset>

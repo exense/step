@@ -82,7 +82,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	
 	@Override
 	protected void execute_(ReportNode node, FunctionGroup testArtefact) throws Exception {		
-		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getAdditionalSelectionCriteria(testArtefact, getBindings());
+		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(testArtefact, getBindings());
 		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria);
 		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, handle);
 		try {

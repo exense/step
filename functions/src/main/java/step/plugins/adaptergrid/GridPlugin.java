@@ -25,6 +25,8 @@ import com.mongodb.MongoClient;
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
 import step.core.accessors.MongoDBAccessorHelper;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.FunctionClient;
@@ -71,7 +73,9 @@ public class GridPlugin extends AbstractPlugin {
 				
 		context.put(FunctionExecutionService.class.getName(), functionClient);
 		context.put(FunctionRepository.class.getName(), functionRepository);
-		context.put(FunctionRouter.class.getName(), new FunctionRouter(functionClient));
+		
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+		context.put(FunctionRouter.class.getName(), new FunctionRouter(functionClient, dynamicJsonObjectResolver));
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
 		context.getServiceRegistrationCallback().registerService(FunctionRepositoryServices.class);

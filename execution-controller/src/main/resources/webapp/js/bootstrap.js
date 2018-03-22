@@ -5,31 +5,31 @@ $.get("rest/app/plugins",function(plugins) {
     angularModules = angularModules.concat(plugin.angularModules);
     scripts = scripts.concat(plugin.scripts);   
   })
-  
-  $.getScripts(scripts).done(function() {
+
+  var deferred = new $.Deferred(), pipe = deferred;
+
+  $.each(scripts, function(i, val) {
+    pipe = pipe.pipe(function() {
+      return loadScript(val);
+    });
+  });
+
+  pipe.pipe(function() {
     _.each(angularModules, function(module) {
       angular.module('tecAdminApp').requires.push(module);      
     })
     angular.bootstrap(document,['tecAdminApp'])
   })
   
+  deferred.resolve();
 })
-
-$.getScripts = function(arr) {
-  var _arr = $.map(arr, function(scr) {
-    return loadScript(scr);
-  });
-
-  _arr.push($.Deferred(function(deferred) {
-    $(deferred.resolve);
-  }));
-
-  return $.when.apply($, _arr);
-}
 
 function loadScript(filename){
     var d = $.Deferred()
-    var callback = function() {d.resolve()};
+    var callback = function() {
+      console.log('Loaded plugin script ' + filename);
+      d.resolve()
+    };
     var script=document.createElement('script')
     script.setAttribute("type","text/javascript")
     script.setAttribute("src", filename)

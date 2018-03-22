@@ -34,6 +34,8 @@ public class Parameter extends AbstractDBObject implements ActivableObject {
 	
 	Integer priority;
 	
+	Boolean protectedValue;
+	
 	public Parameter() {
 		super();
 	}
@@ -86,5 +88,13 @@ public class Parameter extends AbstractDBObject implements ActivableObject {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public Boolean getProtectedValue() {
+		return protectedValue;
+	}
+
+	public void setProtectedValue(Boolean protectedValue) {
+		this.protectedValue = protectedValue;
 	}
 }

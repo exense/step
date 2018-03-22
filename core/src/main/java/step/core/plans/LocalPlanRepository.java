@@ -21,7 +21,7 @@ public class LocalPlanRepository implements PlanRepository {
 	
 	@Override
 	public Plan load(Map<String, String> attributes) {
-		AbstractArtefact root = artefactAccessor.findByAttributes(attributes);
+		AbstractArtefact root = artefactAccessor.findRootArtefactByAttributes(attributes);
 		
 		List<AbstractArtefact> artefacts = new ArrayList<>();
 		loadChildren(artefacts, root);

@@ -43,7 +43,7 @@ public class Java_Clock_Example extends AbstractKeyword {
 	@Test
 	public void Demo_Java_Clock_Test() {
 	    Map<String, String> properties = new HashMap<>();
-	    ExecutionContext ctx = KeywordRunner.getExecutionContext(properties);
+	    ExecutionContext ctx = KeywordRunner.getExecutionContext(properties, Java_Clock_Example.class);
 	    
 	    OutputMessage result = ctx.run("Demo_Keyword_Java","{ \"label\" : \"Current time is : \" }");
     
@@ -54,7 +54,7 @@ public class Java_Clock_Example extends AbstractKeyword {
 	@Test
 	public void Demo_Keyword_Sequence() {
 	    Map<String, String> properties = new HashMap<>();
-	    ExecutionContext ctx = KeywordRunner.getExecutionContext(properties);
+	    ExecutionContext ctx = KeywordRunner.getExecutionContext(properties, Java_Clock_Example.class);
 	    
 	    OutputMessage result;
 	    result = ctx.run("Demo_Keyword_Java_1","{}");

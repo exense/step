@@ -472,6 +472,14 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
     $location.path('/root/artefacteditor/' + $scope.artefact.artefactId);
   }
   
+  $scope.$watch('artefact.artefactId', function(artefactId) {
+    if(artefactId) {
+      $http({url:"rest/controller/artefact/"+artefactId,method:"GET"}).then(function(response) {
+        $scope.artefactName = response.data.attributes.name;
+      })
+    }
+  })
+  
   $scope.selectArtefact = function() {
     var modalInstance = $uibModal.open({
       templateUrl: 'partials/selectArtefact.html',

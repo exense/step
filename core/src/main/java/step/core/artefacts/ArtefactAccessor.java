@@ -87,9 +87,20 @@ public class ArtefactAccessor extends AbstractAccessor {
 	private static final JsonProvider jsonProvider = JsonProvider.provider();
 	
 	public AbstractArtefact findByAttributes(Map<String, String> attributes) {
+		return findByAttributes(attributes, false);
+	}
+	
+	public AbstractArtefact findRootArtefactByAttributes(Map<String, String> attributes) {
+		return findByAttributes(attributes, true);
+	}
+	
+	protected AbstractArtefact findByAttributes(Map<String, String> attributes, boolean rootOnly) {
 		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
 		for(String key:attributes.keySet()) {
 			builder.add("attributes."+key, attributes.get(key));
+		}
+		if(rootOnly) {
+			builder.add("root", true);			
 		}
 
 		String query = builder.build().toString();

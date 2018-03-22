@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
+import step.core.accessors.CollectionRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
@@ -42,6 +43,8 @@ public class ParameterManagerPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) {
 		AbstractCRUDAccessor<Parameter> parameterAccessor = new AbstractCRUDAccessor<>(context.getMongoClientSession(), "parameters", Parameter.class);
 		context.put("ParameterAccessor", parameterAccessor);
+		
+		context.get(CollectionRegistry.class).register("parameters", new ParameterCollection(context.getMongoDatabase()));
 		
 		ParameterManager parameterManager = new ParameterManager(parameterAccessor);
 		context.put(ParameterManager.class, parameterManager);

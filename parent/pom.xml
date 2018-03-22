@@ -55,6 +55,7 @@
 		<module>../execution-controller</module>
 		<module>../agent</module>
 		<module>../initialization</module>
+		<module>../node-plugin</module>
 		<module>../java-plugin</module>
 		<module>../selenium-plugin</module>
 		<module>../jmeter-plugin</module>

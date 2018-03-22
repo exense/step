@@ -5,6 +5,7 @@ import org.bson.types.ObjectId;
 import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
+import step.core.accessors.CollectionRegistry;
 import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;
@@ -52,6 +53,7 @@ public class ContextBuilder {
 		
 		context.setConfiguration(Configuration.getInstance());
 		
+		context.put(CollectionRegistry.class, new CollectionRegistry());
 		context.setExecutionAccessor(new InMemoryExecutionAccessor());
 		context.setArtefactAccessor(new InMemoryArtefactAccessor());
 		context.setReportAccessor(new InMemoryReportNodeAccessor());
