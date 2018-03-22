@@ -28,7 +28,6 @@ public class DefaultAuthenticationFilter extends AbstractServices implements Con
 	private static Logger logger = LoggerFactory.getLogger(DefaultAuthenticationFilter.class);
 	
 	public DefaultAuthenticationFilter() {
-		System.out.println("hello");
 	}
 	
 	@Inject
