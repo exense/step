@@ -46,6 +46,11 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>step</groupId>
+			<artifactId>base-artefacts</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>bson</artifactId>
 			<version>3.2.2</version>
