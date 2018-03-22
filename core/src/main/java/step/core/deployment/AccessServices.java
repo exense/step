@@ -78,7 +78,7 @@ public class AccessServices extends AbstractServices{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+		logger.debug("Using " + loginProviderClass + " as an authenticator.");
 		httpAuthenticator.init(controller.getContext());
 	}
 

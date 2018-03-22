@@ -66,7 +66,7 @@ public class LDAPClient {
     	SearchResult result = findAccountByAccountName(username);
 		String uid = (String) result.getAttributes().get("uid").get();
 		byte[] ldapPassword = (byte[]) result.getAttributes().get("userPassword").get();
-		System.out.println("Attempting to log user with uid=" + uid);
+		logger.debug("Attempting to log user with uid=" + uid);
 
 		String ldapMD5Pwd = new String(ldapPassword, Charset.forName("UTF-8"));
 		String cypherHeader = "{" + this.cypher + "}";
@@ -78,7 +78,7 @@ public class LDAPClient {
 		String digestedSent = new String(digested, Charset.forName("UTF-8"));
 		
 		boolean authed = decodedLdapPassword.equals(digestedSent);
-		System.out.println("sucess="+authed);
+		logger.debug("sucess="+authed);
 		return authed;
     }
 
