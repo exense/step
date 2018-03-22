@@ -17,7 +17,7 @@
 		<dependency>
 			<groupId>step</groupId>
 			<artifactId>script-dev-java</artifactId>
-			<version>3.6.0</version>
+			<version>3.6.1</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

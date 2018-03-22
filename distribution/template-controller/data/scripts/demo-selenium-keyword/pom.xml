@@ -16,7 +16,7 @@
 		<dependency>
 			<groupId>step</groupId>
 			<artifactId>script-dev-selenium-3</artifactId>
-			<version>3.6.0</version>
+			<version>3.6.1</version>
 			<type>pom</type>
 		</dependency>
 		<dependency>

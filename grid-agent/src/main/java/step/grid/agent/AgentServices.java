@@ -40,6 +40,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.grid.Token;
 import step.grid.agent.tokenpool.AgentTokenPool;
 import step.grid.agent.tokenpool.AgentTokenPool.InvalidTokenIdException;
@@ -53,21 +56,23 @@ import step.grid.io.OutputMessage;
 @Singleton
 @Path("/")
 public class AgentServices {
-	
+
+	private static final Logger logger = LoggerFactory.getLogger(AgentServices.class);
+
 	@Inject
 	Agent agent;
-	
+
 	final ExecutorService executor;
-	
+
 	AgentTokenPool tokenPool;
-	
+
 	BootstrapManager bootstrapManager;
-		
+
 	public AgentServices() {
 		super();	
 		executor = Executors.newCachedThreadPool();
 	}
-	
+
 	@PostConstruct
 	public void init() {
 		tokenPool = agent.getTokenPool();
@@ -77,8 +82,8 @@ public class AgentServices {
 	class ExecutionContext {
 		protected Thread t;
 	}
-	
-	
+
+
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -87,48 +92,52 @@ public class AgentServices {
 		try {
 			final AgentTokenWrapper tokenWrapper = tokenPool.getTokenForExecution(tokenId);
 			if(tokenWrapper!=null) {
-				if(!tokenWrapper.isInUse()) {
-					final ExecutionContext context = new ExecutionContext();
-					tokenWrapper.setInUse(true);
-					Future<OutputMessage> future = executor.submit(new Callable<OutputMessage>() {
-						@Override
-						public OutputMessage call() throws Exception {
-							try {
-								context.t = Thread.currentThread();
-								agent.getAgentTokenServices().getApplicationContextBuilder().resetContext();
-								return bootstrapManager.runBootstraped(tokenWrapper, message);
-							} catch (Exception e) {
-								return handleUnexpectedError(message, e);
-							} finally {			
-								tokenWrapper.setInUse(false);
-							}
+				// Now allowing token reuse
+				//if(!tokenWrapper.isInUse()) {
+				if(tokenWrapper.isInUse())
+					logger.warn("Token with id=" + tokenWrapper.getUid() + " was already in use.");
+				
+				final ExecutionContext context = new ExecutionContext();
+				tokenWrapper.setInUse(true);
+				Future<OutputMessage> future = executor.submit(new Callable<OutputMessage>() {
+					@Override
+					public OutputMessage call() throws Exception {
+						try {
+							context.t = Thread.currentThread();
+							agent.getAgentTokenServices().getApplicationContextBuilder().resetContext();
+							return bootstrapManager.runBootstraped(tokenWrapper, message);
+						} catch (Exception e) {
+							return handleUnexpectedError(message, e);
+						} finally {			
+							tokenWrapper.setInUse(false);
 						}
-					});
-					
-					try {
-						OutputMessage output = future.get(message.getCallTimeout(), TimeUnit.MILLISECONDS);
-						return output;
-					} catch(TimeoutException e) {
-						List<Attachment> attachments = new ArrayList<>();
-						
-						int i=0;
-						boolean interruptionSucceeded = false;
-						while(!interruptionSucceeded && i++<10) {
-							interruptionSucceeded = tryInterruption(tokenWrapper, context, attachments);
-						}
-						
-						future.cancel(true);
-						
-						if(!interruptionSucceeded) {
-							return newErrorOutput("Timeout while processing request. WARNING: Request execution couldn't be interrupted. "
-									+ "Subsequent calls to that token may fail!", attachments.toArray(new Attachment[0]));		
-						} else {
-							return newErrorOutput("Timeout while processing request. Request execution interrupted successfully.", attachments.toArray(new Attachment[0]));			
-						}	
 					}
-				} else {
-					return newErrorOutput("Token " + tokenId + " already in use. The reason might be that a previous request timed out and couldn't be interrupted.");					
+				});
+
+				try {
+					OutputMessage output = future.get(message.getCallTimeout(), TimeUnit.MILLISECONDS);
+					return output;
+				} catch(TimeoutException e) {
+					List<Attachment> attachments = new ArrayList<>();
+
+					int i=0;
+					boolean interruptionSucceeded = false;
+					while(!interruptionSucceeded && i++<10) {
+						interruptionSucceeded = tryInterruption(tokenWrapper, context, attachments);
+					}
+
+					future.cancel(true);
+
+					if(!interruptionSucceeded) {
+						return newErrorOutput("Timeout while processing request. WARNING: Request execution couldn't be interrupted. "
+								+ "Subsequent calls to that token may fail!", attachments.toArray(new Attachment[0]));		
+					} else {
+						return newErrorOutput("Timeout while processing request. Request execution interrupted successfully.", attachments.toArray(new Attachment[0]));			
+					}	
 				}
+				//} else {
+				//	return newErrorOutput("Token " + tokenId + " already in use. The reason might be that a previous request timed out and couldn't be interrupted.");					
+				//}
 			} else {
 				return newErrorOutput("No token found with id "+tokenId);
 			}
@@ -156,22 +165,22 @@ public class AgentServices {
 			return true;
 		}
 	}
-	
+
 	@GET
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/token/{id}/reserve")
 	public void reserveToken(@PathParam("id") String tokenId) throws InvalidTokenIdException {
 		tokenPool.createTokenReservationSession(tokenId);
 	}
-	
-	
+
+
 	@GET
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/token/{id}/release")
 	public void releaseToken(@PathParam("id") String tokenId) throws InvalidTokenIdException {
 		tokenPool.closeTokenReservationSession(tokenId);
 	}
-	
+
 
 	protected OutputMessage handleUnexpectedError(InputMessage inputMessage, Exception e) {
 		StringBuilder message = new StringBuilder();
@@ -186,7 +195,7 @@ public class AgentServices {
 		output.addAttachment(generateAttachmentForException(e));
 		return output;
 	}
-	
+
 	protected OutputMessage newErrorOutput(String error, Attachment...attachments) {
 		OutputMessage output = new OutputMessage();
 		output.setError(error);
@@ -197,7 +206,7 @@ public class AgentServices {
 		}
 		return output;
 	}
-	
+
 	protected Attachment generateAttachmentForException(Throwable e) {
 		Attachment attachment = new Attachment();	
 		attachment.setName("exception.log");
@@ -206,7 +215,7 @@ public class AgentServices {
 		attachment.setHexContent(AttachmentHelper.getHex(w.toString().getBytes()));
 		return attachment;
 	}
-	
+
 	protected Attachment generateAttachmentForStacktrace(String attachmentName, StackTraceElement[] e) {
 		Attachment attachment = new Attachment();	
 		StringWriter str = new StringWriter();
@@ -217,7 +226,7 @@ public class AgentServices {
 		attachment.setHexContent(AttachmentHelper.getHex(str.toString().getBytes()));
 		return attachment;
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/token/list")
