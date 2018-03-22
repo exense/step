@@ -87,7 +87,8 @@ public class AgentTest extends AbstractGridTest {
 		
 		// check if the token has been returned to the pool. In this case the second call should return the same error
 		outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 10);
-		Assert.assertTrue(outputMessage.getError().contains("already in use"));
+		// we are now allowing for "stuck" tokens to be reused, which means we're potentially letting threads leak on the agent.
+		//Assert.assertTrue(outputMessage.getError().contains("already in use"));
 		
 		Thread.sleep(1000);
 		o = newDummyJson();
