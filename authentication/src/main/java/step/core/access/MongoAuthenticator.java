@@ -1,14 +1,19 @@
 package step.core.access;
 
+import javax.ws.rs.core.HttpHeaders;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.GlobalContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class DefaultAuthenticator implements Authenticator {
+import step.core.GlobalContext;
+import step.core.deployment.HttpAuthenticator;
+
+public class MongoAuthenticator implements HttpAuthenticator {
 	
-	private static Logger logger = LoggerFactory.getLogger(DefaultAuthenticator.class);
+	private static Logger logger = LoggerFactory.getLogger(MongoAuthenticator.class);
 	
 	private UserAccessor users;
 
@@ -18,7 +23,8 @@ public class DefaultAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public boolean authenticate(Credentials credentials) {
+	public boolean authenticate(String request, HttpHeaders headers) {
+		Credentials credentials = extractCredentials(request, headers);
 		String username = credentials.getUsername();
 		String password = credentials.getPassword();
     	User user = users.getByUsername(username);
@@ -40,4 +46,23 @@ public class DefaultAuthenticator implements Authenticator {
     		return false;
     	} 	
 	}
+	
+	@Override
+	public String extractUsername(String request, HttpHeaders headers){
+		return extractCredentials(request, headers).getUsername();
+	}
+	
+	private Credentials extractCredentials(String request, HttpHeaders headers){
+		ObjectMapper om = new ObjectMapper();
+		Credentials credentials = null;
+		
+		try {
+			credentials = om.readValue(request, Credentials.class);
+		} catch (Exception e) {
+			logger.error("Could not read user credentials", e);
+		}
+		return credentials;
+	}
+	
+	
 }

@@ -1,4 +1,4 @@
-package step.core.deployment;
+package step.core.access;
 
 import java.nio.charset.Charset;
 import java.security.MessageDigest;

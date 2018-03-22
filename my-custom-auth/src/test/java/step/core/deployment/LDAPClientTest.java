@@ -10,6 +10,7 @@ import javax.naming.directory.SearchResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.access.Credentials;
+import step.core.access.LDAPClient;
 
 public class LDAPClientTest {
 
