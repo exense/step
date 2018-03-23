@@ -43,6 +43,7 @@
 				<include>step:selenium-plugin</include>
 				<include>step:jmeter-plugin</include>
 				<include>step:script-editor-plugin</include>
+				<include>step:node-plugin</include>
 			</includes>
 			<binaries>
 				<outputDirectory>lib</outputDirectory>
