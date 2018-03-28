@@ -42,6 +42,7 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
+import step.core.variables.VariablesManager;
 import step.datapool.DataSetHandle;
 import step.functions.Function;
 import step.functions.FunctionExecutionService;
@@ -241,9 +242,15 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		return resultMap;
 	}
 
-	private void callChildrenArtefacts(CallFunctionReportNode node, CallFunction testArtefact) {
+	protected void callChildrenArtefacts(CallFunctionReportNode node, CallFunction testArtefact) {
 		if(testArtefact.getChildrenIDs()!=null&&testArtefact.getChildrenIDs().size()>0) {
-			context.getVariablesManager().putVariable(node, "callReport", node);
+			VariablesManager variableManager = context.getVariablesManager();
+			variableManager.putVariable(node, "callReport", node);
+			
+			node.getOutputObject().forEach((k,v)->{
+				variableManager.putVariable(node, k, v.toString());
+			});
+			
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.execute_(node, testArtefact, true);				
 		}
