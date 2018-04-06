@@ -48,6 +48,7 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		if(callFunctionReport.getStatus()==ReportNodeStatus.PASSED) {			
 			JsonObject outputJson = callFunctionReport.getOutputObject();
 			String key = artefact.getActual().get();
+			node.setKey(key);
 			
 			boolean passed = false;
 			String message = null;
@@ -78,32 +79,42 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 				}
 			}
 			
-			if(actualResolved) {				
+			if(actualResolved) {
+				node.setActual(actual);
+				
 				Object expectedValueObject = artefact.getExpected().get();
 				String expectedValue = expectedValueObject!=null?expectedValueObject.toString():null;
+				node.setExpected(expectedValue);
 
 				boolean negate = artefact.isNegate();
 				String not = negate?" not ":" ";
 				
+				String description = "";
 				AssertOperator operator = artefact.getOperator();
 				if(operator == AssertOperator.EQUALS) {
 					passed = artefact.isNegate()^expectedValue.equals(actual);
 					message = "'"+key + "' expected" + not + "to be equal to '"+expectedValue+"' "+(passed?"and":"but")+ " was '"+actual+"'";
+					description = key + (negate?" !":" ") + "= '" +  expectedValue + "'" ;
 				} else if(operator == AssertOperator.CONTAINS) {
 					passed = negate^actual.contains(expectedValue);
 					message = "'"+key + "' expected" + not + "to contain '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
+					description = key + not + "contains '" +  expectedValue + "'" ;
 				} else if(operator == AssertOperator.BEGINS_WITH) {
 					passed = negate^actual.startsWith(expectedValue);
 					message = "'"+key + "' expected" + not + "to begin with '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
+					description = key + not + "begins with '" +  expectedValue + "'" ;
 				} else if(operator == AssertOperator.ENDS_WITH) {
 					passed = negate^actual.endsWith(expectedValue);
 					message = "'"+key + "' expected" + not + "to end with '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
+					description = key + not + "ends with '" +  expectedValue + "'" ;
 				} else if(operator == AssertOperator.MATCHES) {
 					passed = negate^actual.matches(expectedValue);
 					message = "'"+key + "' expected" + not + "to match regular expression '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
+					description = key + not + "matches '" +  expectedValue + "'" ;
 				} else {
 					throw new RuntimeException("Unsupported operator "+operator);
 				}
+				node.setDescription(description);
 			}
 			node.setMessage(message);			
 			node.setStatus(passed?ReportNodeStatus.PASSED:ReportNodeStatus.FAILED);

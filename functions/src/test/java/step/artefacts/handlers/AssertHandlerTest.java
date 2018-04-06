@@ -18,7 +18,7 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
-import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.*;
 
 import java.io.StringReader;
 
@@ -50,6 +50,11 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
 		assertEquals("'key1' expected to be equal to 'value1' and was 'value1'", child.getMessage());
+		assertEquals("value1", child.getExpected());
+		assertEquals("value1", child.getActual());
+		assertEquals("key1 = 'value1'", child.getDescription());
+
+		
 	}
 	
 	@Test
@@ -67,6 +72,9 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		assertEquals("'key1' expected not to be equal to 'value1' but was 'value1'", child.getMessage());
+		assertEquals("value1", child.getExpected());
+		assertEquals("value1", child.getActual());
+		assertEquals("key1 != 'value1'", child.getDescription());
 	}
 	
 	@Test
@@ -83,6 +91,9 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
 		assertEquals("'key1' expected to contain 'val' and was 'value1'", child.getMessage());
+		assertEquals("val", child.getExpected());
+		assertEquals("value1", child.getActual());
+		assertEquals("key1 contains 'val'", child.getDescription());
 	}
 
 	@Test
@@ -100,6 +111,9 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
 		assertEquals("'key1' expected not to contain '2' and was 'value1'", child.getMessage());
+		assertEquals("2", child.getExpected());
+		assertEquals("value1", child.getActual());
+		assertEquals("key1 not contains '2'", child.getDescription());
 	}
 	
 	@Test
@@ -198,6 +212,9 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		assertEquals("Unable to execute assertion. The keyword output doesn't contain the attribute 'notExistingKey'", child.getMessage());
+		assertNull(child.getExpected());
+		assertNull(child.getActual());
+		assertNull(child.getDescription());
 	}
 	
 	@Test
@@ -209,6 +226,9 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
 		assertEquals(ReportNodeStatus.NORUN, child.getStatus());
+		assertNull(child.getExpected());
+		assertNull(child.getActual());
+		assertNull(child.getDescription());
 	}
 	
 	@Test
@@ -225,6 +245,10 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
 		assertEquals(ReportNodeStatus.PASSED, child.getStatus());
 		assertEquals("'$.key2.key21' expected to be equal to 'val21' and was 'val21'", child.getMessage());
+		
+		assertEquals("val21", child.getExpected());
+		assertEquals("val21", child.getActual());
+		assertEquals("$.key2.key21 = 'val21'", child.getDescription());
 	}
 	
 	@Test
