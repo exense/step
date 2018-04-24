@@ -64,10 +64,24 @@ public class WorkbookSet implements AutoCloseable{
 				if(linkedFilename.startsWith("file:///")) {
 					return new File(linkedFilename.substring(8));
 				} else {
-					return null;
+					return resolveRelativePath(mainWorkbookFile, linkedFilename);
 				}
 			}
 		}, createIfNotExists, forUpdate);
+	}
+	
+	private static File resolveRelativePath(File mainWorkbookFile, String linkedFilename) {
+		File parent = mainWorkbookFile.getParentFile();
+		if(parent != null) {
+			File absoluteLinkedFile = new File(parent + "/" + linkedFilename);
+			if(absoluteLinkedFile.exists()) {
+				return absoluteLinkedFile;
+			} else {
+				return resolveRelativePath(parent, linkedFilename);
+			}
+		} else {
+			return null;
+		}
 	}
 	
 	public void save() throws IOException {
