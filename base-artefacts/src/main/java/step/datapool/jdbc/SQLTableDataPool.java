@@ -30,10 +30,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataSet;
 
 public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
+
+	protected static Logger logger = LoggerFactory.getLogger(SQLTableDataPool.class);
 
 	private Connection conn1;
 	private Statement smt;
@@ -58,15 +63,15 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		this.db_pwd =  configuration.getPassword().get();
 		this.driver_class =  configuration.getDriverClass().get();
 		this.writePKey = configuration.getWritePKey().get();
-		
+
 		this.query = configuration.getQuery().get();
 		this.table = parseQueryForTable(this.query);
 
 		try {
 			Class.forName(driver_class);
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			throw new RuntimeException("Could not load jdbc driver for class:" + driver_class);
+			logger.error("Could not load jdbc driver for class:" + driver_class, e);
+			throw new RuntimeException("Could not load jdbc driver for class:" + driver_class +", Underlying exception message:" + e.getMessage());
 		}
 	}
 
@@ -85,9 +90,9 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 			conn1 = DriverManager.getConnection(jdbc_url, db_user, db_pwd);
 			//conn1.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 			conn1.setAutoCommit(false);
-			} catch (SQLException e) {
-			e.printStackTrace();
-			throw new RuntimeException("Could not connect to the following datapool db :" + jdbc_url + " with user \'" + db_user + "\'");
+		} catch (SQLException e) {
+			logger.error("Could not connect to the following datapool db :" + jdbc_url + " with user \'" + db_user + "\'", e);
+			throw new RuntimeException("Could not connect to the following datapool db :" + jdbc_url + " with user \'" + db_user + "\', Underlying exception message:" + e.getMessage());
 		}
 
 	}
@@ -96,7 +101,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	public void reset() {
 		executeQuery();
 	}
-	
+
 	public void executeQuery(){
 		try {
 			smt = conn1.createStatement();
@@ -104,8 +109,8 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				rs.close();
 			rs = smt.executeQuery(query);
 		} catch (SQLException e) {
-			e.printStackTrace();
-			throw new RuntimeException("Could not execute query :" + query);
+			logger.error("Could not execute query :" + query, e);
+			throw new RuntimeException("Could not execute query :" + query+ ", Underlying exception message:" + e.getMessage());
 		}
 		try {
 			//get metadata
@@ -119,8 +124,8 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				cols.add(meta.getColumnName(index));
 
 		} catch (SQLException e) {
-			e.printStackTrace();
-			throw new RuntimeException("Could not retrieve result set data from query :" + query);
+			logger.error("Could not retrieve result set data from query :" + query, e);
+			throw new RuntimeException("Could not retrieve result set data from query :" + query+ ", Underlying exception message:" + e.getMessage());
 		}
 	}
 
@@ -128,27 +133,35 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	public Object next_(){
 
 		ConcurrentHashMap<String,Object> row = null;
-		
+
 		try {
 			if(rs.next()){
 				row = new ConcurrentHashMap<String,Object>();
 				Object pkValue = null;
 				for (String colName:cols) {
-					Object val = rs.getObject(colName);
-					row.put(colName,val);
-					if(colName.trim().toLowerCase().equals(this.writePKey.trim().toLowerCase()))
-						pkValue = val;
+					if(colName != null) {
+						Object val = rs.getObject(colName);
+						// Turn null values to empty strings for convenience
+						if(val == null)
+							val = "";
+						row.put(colName,val);
+						if(colName.trim().toLowerCase().equals(this.writePKey.trim().toLowerCase()))
+							pkValue = val;
+					}else {
+						logger.error("Null column name.");
+						throw new RuntimeException("Null column name.");
+					}
 				}
 				return new SQLRowWrapper(rs.getRow(), row, pkValue);
 			}
 			else
 				return null;
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("An exception occured while iterating on the dataset.", e);
 			try {
-				throw new RuntimeException("Could not retrieve the next row." + rs.getRow());
+				throw new RuntimeException("Could not retrieve the next row: rowId=" + rs.getRow() + ", Underlying exception message: " + e.getMessage());
 			} catch (SQLException e1) {
-				throw new RuntimeException("Could not retrieve the next row.");
+				throw new RuntimeException("Could not retrieve the next row."+ ", Underlying exception message 1 : " + e.getMessage()+ ", Underlying exception message 2: " + e1.getMessage());
 			}
 		}
 	}
@@ -156,7 +169,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	public class SQLRowWrapper extends SimpleStringMap {
 
 		private final Object pkValue;
-		
+
 		private ConcurrentHashMap<String,Object> rowData;
 
 		public SQLRowWrapper(int rowNum, ConcurrentHashMap<String,Object> row, Object pkValue) throws Exception {
@@ -178,29 +191,31 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				else
 					sql= "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ writePKey + " = " + pkValue;				
 			} else {
+				logger.error("The value of the primary key :" + writePKey + " is null. Unable to update key=" + key + " and value=" + value);
 				throw new RuntimeException("The value of the primary key :" + writePKey + " is null. Unable to update key=" + key + " and value=" + value);
 			}
-			
+
 			try {
 				update = conn1.createStatement();
 				update.setQueryTimeout(2);
 				/*int upd_rs = */update.executeUpdate(sql);
 			} catch (SQLException e) {
-				e.printStackTrace();
-				throw new RuntimeException("Could not execute update with pk :" + writePKey + " = "+pkValue+", with key=" + key + " and value=" + value);
+				logger.error("Could not execute update with pk :" + writePKey + " = "+pkValue+", with key=" + key + " and value=" + value, e);
+				throw new RuntimeException("Could not execute update with pk :" + writePKey + " = "+pkValue+", with key=" + key + " and value=" + value + ", Underlying exception message: " + e.getMessage());
 			}finally{
 				try {
 					if(!update.isClosed())
 						update.close();
 				} catch (SQLException e) {
-					e.printStackTrace();
+					logger.error("Could not close update connection", e);
+					throw new RuntimeException("Could not close update connection" + ", Underlying exception message: " + e.getMessage());
 				}
 			}
 			try {
 				conn1.commit();
 			} catch (SQLException e) {
-				e.printStackTrace();
-				throw new RuntimeException("Commit failed");
+				logger.error("Could not commit. ", e);
+				throw new RuntimeException("Commit failed"+ ", Underlying exception message: " + e.getMessage());
 			}
 			rowData.put(key,value);
 			return value;
@@ -228,7 +243,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 			return rowData.keySet();
 		}
 	}
-	
+
 	@Override
 	public void addRow(Object row) {
 		throw new RuntimeException("Not implemented");
@@ -242,9 +257,10 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 				rs.close();
 			conn1.close();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.error("Could not close close dataset properly", e);
+			throw new RuntimeException("Could not close close dataset properly" + ", Underlying exception message: " + e.getMessage());
 		}
-		
+
 	}
 
 	@Override
@@ -252,5 +268,5 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		connect();
 		executeQuery();
 	}
-	
+
 }
