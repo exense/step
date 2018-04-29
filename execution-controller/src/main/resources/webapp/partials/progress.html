@@ -17,7 +17,7 @@
 
 	<div class="row" ng-if="execution">
 		<div class="col-xs-9">
-			<uib-tabset> 
+			<uib-tabset active="tabs.selectedTab"> 
 				<uib-tab heading="Execution steps">
 					<div class="panel-body">
 						<div ng-attr-id="{{getPanelId('testCases')}}" class="panel panel-default" ng-if="isPanelEnabled('testCases')">
