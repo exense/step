@@ -18,12 +18,9 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.FunctionGroupHandler;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = FunctionGroupHandler.class)
 public class TokenSelector extends AbstractArtefact {
 
 	DynamicValue<Boolean> remote = new DynamicValue<Boolean>(true);
