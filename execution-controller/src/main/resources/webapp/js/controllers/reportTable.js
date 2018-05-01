@@ -21,7 +21,7 @@ angular.module('reportTable',['step','reportNodes'])
 .factory('reportTableFactory', ['$http', '$compile', function($http, $compile) {
   var tableFactory = {};
 
-  tableFactory.get = function (filterFactory, $scope) {
+  tableFactory.get = function (filterFactory, $scope, executionViewServices) {
     var stepsTable = {};
     stepsTable.columns = function(columns) {
       _.each(_.where(columns,{'title':'ID'}),function(col){col.visible=false});
@@ -32,7 +32,9 @@ angular.module('reportTable',['step','reportNodes'])
           var rowScope = $scope.$new(true, $scope);
           stepsTable.trackScope(rowScope);
           rowScope.node = JSON.parse(cellData);
-          var content = $compile("<reportnode-short node='node' />")(rowScope);
+          rowScope.executionViewServices = executionViewServices;
+          
+          var content = $compile("<reportnode-short node='node' execution-view-services='executionViewServices' />")(rowScope);
           $(td).empty();
           $(td).append(content);
           rowScope.$apply();
@@ -55,14 +57,6 @@ angular.module('reportTable',['step','reportNodes'])
     };
     
     stepsTable.params = filterFactory;
-    
-    stepsTable.detailRowRenderer = function(rowData, callback) {
-      $http.get('rest/controller/reportnode/'+rowData[0]).then(function(response) {
-        var rowScope = $scope.$new(true, $scope);
-        rowScope.node = response.data;
-        callback($compile("<reportnode node='node' />")(rowScope));
-      })
-    }
     
     return stepsTable;
   };

@@ -67,8 +67,9 @@ angular.module('reportTree',['step','artefacts'])
           })
         }
         
-        
-        $scope.$apply();
+        if(!$scope.$$phase) {
+          $scope.$apply();
+        }
       })
       
       $scope.getDisplaiableProperties = function(node) {
@@ -77,6 +78,30 @@ angular.module('reportTree',['step','artefacts'])
       
       $scope.handle.refresh = function() {
         tree.refresh();
+      }
+      
+      function expandPath(path, callback) {
+        tree.open_node(path[0].reportNode.id, function() {
+          path.shift();
+          if(path.length>0) { 
+            $scope.handle.expandPath(path, callback);            
+          } else {
+            if(callback) {
+              callback();
+            }
+          }
+        });
+      }
+      
+      function selectNode(id) {
+        tree.deselect_all();
+        tree.select_node(id);
+      }
+      
+      $scope.handle.expandPath = function(path) {
+        expandPath(path.slice(0), function() {
+          selectNode(path[path.length-1].reportNode.id);
+        })
       }
     },
     templateUrl: 'partials/reportTree.html'}

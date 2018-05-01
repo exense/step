@@ -53,10 +53,13 @@ angular.module('reportNodes',['step','artefacts'])
     restrict: 'E',
     scope: {
       node: '=',
+      executionViewServices: '=',
       includeStatus: '='
     },
     templateUrl: 'partials/reportnodes/reportNodeShort.html',
-    controller: function($scope,artefactTypes) {
+    controller: function($scope,$http,artefactTypes) {
+      $scope.isShowDetails = false;
+      
       $scope.artefactTypes = artefactTypes;
       $scope.concatenate = function(map) {
         var result = "";
@@ -65,6 +68,17 @@ angular.module('reportNodes',['step','artefacts'])
         });
         return result.substring(0,result.length-1);
       };
+      
+      $scope.toggleDetails = function() {
+        $scope.isShowDetails = !$scope.isShowDetails;
+        if($scope.isShowDetails) {
+          var id = $scope.node._id.$oid?$scope.node._id.$oid:$scope.node.id;
+          $http.get('rest/controller/reportnode/'+id).then(function(response) {
+            $scope.reportNode = response.data;
+            $scope.isShowDetails = true;
+          })
+        }
+      }
     }
   };
 })

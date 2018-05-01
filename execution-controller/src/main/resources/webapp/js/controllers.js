@@ -227,6 +227,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       console.log('Execution Controller. ID:' + eId);
       $stateStorage.push($scope, eId,{});
 
+      $scope.tabs = {selectedTab:0};
+      
       var panels = {
           "testCases":{label:"Test cases",show:false, enabled:false},
           "steps":{label:"Keyword calls",show:true, enabled:true},
@@ -300,7 +302,18 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         }
       }
       
-      $scope.stepsTable = $scope.stepsTable = reportTableFactory.get(function() {
+      var executionViewServices = {
+      	showNodeInTree : function(nodeId) {
+      	  $http.get('/rest/controller/reportnode/'+nodeId+'/path').then(function(response) {
+      	    $scope.tabs.selectedTab = 1;
+      	    var path = response.data;
+      	    path.shift();
+      	    $scope.reportTreeHandle.expandPath(path);
+      	  })
+        }
+      }
+      
+      $scope.stepsTable = reportTableFactory.get(function() {
         var filter = {'eid':eId};
         if($scope.testCaseTable.getSelection) {
           var testCaseSelection = $scope.testCaseTable.getSelection();
@@ -313,7 +326,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         }
         
         return filter;   
-      },$scope);
+      },$scope, executionViewServices);
       
       var operationRenderer = {
           'Keyword Call' : {

@@ -7,6 +7,16 @@
 		<span style="margin-left:10px;" class="text-muted small">{{node.name}}</span>
 		<span ng-if="includeStatus" class="pull-right" style="margin-bottom:10px;margin-left:10px;" ><reportnode-status status="node.status" /></span> 
 		<span class="pull-right"><attachments node="node" /></span>
+		<span class="pull-right" style="margin-right:5px">
+			<div class="btn-group btn-group-menu">
+				<button type="button" class="btn btn-default btn-xs" uib-tooltip="Show this node in the tree view" ng-click="executionViewServices.showNodeInTree(node._id.$oid)">
+					<span class="glyphicon glyphicon-search" />
+				</button>
+				<button type="button" class="btn btn-default btn-xs" uib-tooltip="Show/hide details" ng-click="toggleDetails()">
+					<span class="glyphicon glyphicon-option-horizontal" />
+				</button>
+			</div>
+		</span>
 	</div>
 	<hr />
 	<div ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
@@ -24,5 +34,8 @@
 	</div>
 	<div ng-if="node.error">Error: <small><em>{{node.error.msg}}
 		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>	
+	</div>
+	<div uib-collapse="!isShowDetails">
+		<reportnode node='reportNode' />
 	</div>
 </div>
