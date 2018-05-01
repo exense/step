@@ -56,7 +56,8 @@ public class ScreenTemplateService extends AbstractServices {
 		Session session = (Session) crc.getProperty("session");
 		if(session!=null) {
 			contextBindings.put("user", session.getUsername());
-			contextBindings.put("role", session.getProfile().getRole());
+			if(session.getProfile()!= null)
+				contextBindings.put("role", session.getProfile().getRole());
 		}
 		
 		for(String key:uriInfo.getQueryParameters().keySet()) {
