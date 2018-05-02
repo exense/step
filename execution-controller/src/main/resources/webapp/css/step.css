@@ -243,3 +243,13 @@ hr {
 div.progress {
 	margin-bottom: 0px;
 }
+
+.icon-tree {
+    background: url(../images/tree.png);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 12px;
+    height: 18px;
+    display: block;
+}

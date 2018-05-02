@@ -310,6 +310,23 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       	    path.shift();
       	    $scope.reportTreeHandle.expandPath(path);
       	  })
+        },
+        showTestCase : function(nodeId) {
+          $http.get('/rest/controller/reportnode/'+nodeId+'/path').then(function(response) {
+            var path = response.data;
+            _.each(path, function(node) {
+              if(node.artefact && node.artefact._class == 'TestCase') {
+                $scope.testCaseTable.deselectAll();
+                $scope.testCaseTable.select(node.artefact.id);
+                $scope.enablePanel("testCases",true);
+              }
+            }); 
+            $scope.tabs.selectedTab = 0;
+            $scope.scrollTo('testCases');
+          })
+        },
+        getExecution : function() {
+          return $scope.execution;
         }
       }
       
