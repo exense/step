@@ -71,6 +71,7 @@ angular.module('artefacts',['step'])
   artefactTypes.register('For',{icon:'glyphicon-th', form:'partials/artefacts/for.html'});
   artefactTypes.register('ForEach',{icon:'glyphicon-th', form:'partials/artefacts/forEach.html'});
   artefactTypes.register('While',{icon:'glyphicon-repeat', form:'partials/artefacts/while.html'});
+  artefactTypes.register('WaitAndPoll',{icon:'glyphicon-repeat', form:'partials/artefacts/waitAndPoll.html'});
   artefactTypes.register('DataSet',{icon:'glyphicon-th-large', form:'partials/artefacts/dataSet.html'});
   artefactTypes.register('Synchronized',{icon:'glyphicon-align-justify', form:'partials/artefacts/synchronized.html'});
   artefactTypes.register('Sequence',{icon:'glyphicon-align-justify', form:'partials/artefacts/sequence.html'});
