@@ -634,7 +634,7 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
             
             $scope.table = {};
             
-            $scope.tabledef = {}
+            $scope.tabledef = {uid:'executions'}
             $scope.tabledef.columns = function(columns) {
               _.each(_.where(columns,{'title':'ID'}),function(col){col.visible=false});
               _.each(_.where(columns,{'title':'Description'}),function(col){

@@ -174,7 +174,7 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
       
       $scope.table = {};
 
-      $scope.tabledef = {}
+      $scope.tabledef = {uid:'artefacts'};
       
       $scope.tabledef.columns = function(columns) {
         _.each(_.where(columns, { 'title' : 'ID' }), function(col) {

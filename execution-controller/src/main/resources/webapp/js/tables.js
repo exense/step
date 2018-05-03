@@ -42,9 +42,9 @@ angular.module('dataTable', ['export'])
 .directive('inputdropdown', ['$http',function($http) {
   return {
     restrict: 'E',
-    scope: {options:'=',action:'='},
+    scope: {options:'=',action:'=',initialValue:'='},
     controller: function($scope){
-      $scope.inputtext = '';
+      $scope.inputtext = $scope.initialValue?$scope.initialValue:'';
       
       $scope.createRegexpForSelection = function(selection) {
         regexp = '';
@@ -89,7 +89,7 @@ angular.module('dataTable', ['export'])
   };
 }])
 
-.directive('datatable', ['$compile','$http','$timeout','$q','Preferences','ExportService',function($compile,$http,$timeout,$q,Preferences,ExportService) {
+.directive('datatable', ['$compile','$http','$timeout','$q','stateStorage','Preferences','ExportService',function($compile,$http,$timeout,$q,stateStorage,Preferences,ExportService) {
   return {
     restrict:'E',
     scope: {
@@ -118,7 +118,23 @@ angular.module('dataTable', ['export'])
         if(attr.selectionmode=='multiple') {
           tableOptions.columns.push({'title':'','data': null,'width':'15px','render': function(data, type, row) {return '<input id="selectionInput-'+row[0]+'" type="checkbox" />'}})
         }
-
+        
+        if(scope.tabledef.uid) {
+          tableOptions.stateSave = true;
+          tableOptions.stateSaveCallback = function(settings,data) {
+            var state = stateStorage.get(scope, scope.tabledef.uid);
+            if(!state) {
+              state = {};
+            }
+            state.tableState = data;
+            stateStorage.store(scope,state, scope.tabledef.uid);
+          };
+          tableOptions.stateLoadCallback = function(settings) {
+            var state = stateStorage.get(scope, scope.tabledef.uid);
+            return (state&&state.tableState)?state.tableState:null;
+          }          
+        }
+        
         var table = tableElement.dataTable(tableOptions); 
         var tableAPI = table.DataTable();
         
@@ -215,10 +231,10 @@ angular.module('dataTable', ['export'])
                   tableOptions.columns[i].distinct = [];
                 }
                 inputScope.options = tableOptions.columns[i].distinct;
-                
+                inputScope.initialValue = column.search();
                 var input;
                 if(!tableOptions.columns[i].inputType || tableOptions.columns[i].inputType=='TEXT_DROPDOWN' || tableOptions.columns[i].inputType=='TEXT') {
-                  input = '<inputdropdown options ="options" action="action"/>';
+                  input = '<inputdropdown options ="options" action="action" initial-value="initialValue"/>';
                 } else if(tableOptions.columns[i].inputType=='DATE_RANGE') {
                   input = '<dateinput action="action"/>';
                 } 

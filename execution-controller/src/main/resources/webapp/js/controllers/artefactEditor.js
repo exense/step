@@ -43,7 +43,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
         $scope.executionParameters = data;
       })
       
-      $scope.controlsTable = {};
+      $scope.controlsTable = {uid:'artefactEditorControls'};
       $scope.controlsTable.columns = [ { "title" : "ID", "visible" : false },
                                    {"title" : "Name"},
                                    { "title" : "Actions", "width":"80px", "render": function ( data, type, row ) {
@@ -70,7 +70,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       $scope.handle = {};
       $scope.table = {};
 
-      $scope.tabledef = {}
+      $scope.tabledef = {uid:'artefactEditorFunctions'}
       $scope.tabledef.columns = function(columns) {
         _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
           col.visible = false
@@ -92,7 +92,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
         return columns;
       };
       
-      $scope.artefactTable = {};
+      $scope.artefactTable = {uid:'artefactEditorArtefacts'};
       $scope.artefactTable.columns = function(columns) {
         _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
           col.visible = false

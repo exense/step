@@ -238,19 +238,21 @@ angular.module('step',['ngStorage','ngCookies'])
   
     //$location.path($scope.$$statepath.join('/'));
   }
-  this.get = function($scope) {
+  this.get = function($scope, key) {
+    var k = key?key:$scope.$$statepath.join('.');
     if(this.persistState) {
-      return $cookies[$scope.$$statepath.join('.')]
+      return $cookies[k]
     } else {
-      return this.localStore[$scope.$$statepath.join('.')]      
+      return this.localStore[k]      
     }
   };
   
-  this.store = function ($scope, model) {
+  this.store = function ($scope, model, key) {
+    var k = key?key:$scope.$$statepath.join('.');
     if(this.persistState) {
-      $cookies[$scope.$$statepath.join('.')]=model;
+      $cookies[k]=model;
     } else {
-      this.localStore[$scope.$$statepath.join('.')]=model;
+      this.localStore[k]=model;
     }
   };
 }])
