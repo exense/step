@@ -154,13 +154,15 @@ public class GridClient implements Closeable {
 	}
 	
 	public void returnTokenHandle(TokenWrapper tokenWrapper) throws AgentCommunicationException {
-		if(!tokenWrapper.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
-			tokenRegistry.returnToken(tokenWrapper);		
-		}
-		
-		if(tokenWrapper.hasSession()) {
-			//tokenWrapper.setHasSession(false);
-			releaseSession(tokenWrapper.getAgent(),tokenWrapper.getToken());			
+		try {
+			if(tokenWrapper.hasSession()) {
+				//tokenWrapper.setHasSession(false);
+				releaseSession(tokenWrapper.getAgent(),tokenWrapper.getToken());			
+			}			
+		} finally {
+			if(!tokenWrapper.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
+				tokenRegistry.returnToken(tokenWrapper);		
+			}			
 		}
 	}
 	
