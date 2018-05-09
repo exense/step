@@ -23,32 +23,26 @@
 	<packaging>jar</packaging>
 
 	<parent>
-		<groupId>step</groupId>
+		<groupId>ch.exense.step</groupId>
 		<artifactId>java-plugin</artifactId>
-		<version>3.6.1</version>
+		<version>3.6.2-SNAPSHOT</version>
 	</parent>
 	
 	<dependencies>
 		<dependency>
-			<groupId>step</groupId>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>core</artifactId>
 			<version>${project.version}</version>
 		</dependency>		
 		<dependency>
-			<groupId>step</groupId>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>functions</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>step</groupId>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>java-plugin-handler</artifactId>
 			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -86,7 +80,7 @@
 						<configuration>
 							<artifactItems>
 								<artifactItem>
-									<groupId>step</groupId>
+									<groupId>ch.exense.step</groupId>
 									<artifactId>java-plugin-handler</artifactId>
 									<classifier>jar-with-dependencies</classifier>
 									<type>jar</type>

@@ -23,30 +23,44 @@
 	<packaging>jar</packaging>
 
 	<parent>
-		<groupId>step</groupId>
+		<groupId>ch.exense.step</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.6.1</version>
+		<version>3.6.2-SNAPSHOT</version>
 		<relativePath>../parent</relativePath>
 	</parent>
 
 	<dependencies>
 		<dependency>
-			<groupId>step</groupId>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>base-artefacts</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>core</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>grid-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>step</groupId>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>step</groupId>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>commons</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>step</groupId>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>base-artefacts</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -70,20 +84,6 @@
 		    <groupId>com.jayway.jsonpath</groupId>
 		    <artifactId>json-path</artifactId>
 		    <version>2.3.0</version>
-		</dependency>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>base-artefacts</artifactId>
-			<version>${project.version}</version>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>step</groupId>
-			<artifactId>core</artifactId>
-			<version>${project.version}</version>
-			<type>test-jar</type>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
