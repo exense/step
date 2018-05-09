@@ -23,9 +23,9 @@
 	<packaging>pom</packaging>
 
 	<parent>
-		<groupId>step</groupId>
+		<groupId>ch.exense.step</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.6.1</version>
+		<version>3.6.2-SNAPSHOT</version>
 		<relativePath>../parent</relativePath>
 	</parent>
 
@@ -34,17 +34,17 @@
 		<module>script-dev-selenium-2</module>
 		<module>script-dev-selenium-3</module>
 	</modules>
-	
+	<!-- 
 	<distributionManagement>
 		<repository>
 			<id>nexus</id>
 			<url>http://nexus.exense.ch/nexus/content/repositories/releases</url>
 		</repository>
 	</distributionManagement>
-	
+	 -->
 	<dependencies>
 		<dependency>
-			<groupId>step</groupId>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>grid-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>

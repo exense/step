@@ -84,6 +84,7 @@ public class VariablesManager {
 	}
 	
 	/**
+	 * @param key key
 	 * @throws UndefinedVariableException if the variable is undefined
 	 */
 	public String getVariableAsString(String key) {

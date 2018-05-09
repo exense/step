@@ -23,9 +23,9 @@
 	<packaging>pom</packaging>
 
 	<parent>
-		<groupId>step</groupId>
+		<groupId>ch.exense.step</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.6.1</version>
+		<version>3.6.2-SNAPSHOT</version>
 		<relativePath>../parent</relativePath>
 	</parent>
 	
