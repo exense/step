@@ -33,9 +33,9 @@ public class StyleSyntax {
     /**
      * Analysiert den angegebenen Stil und setzt diesen excel-konform.
      * 
-     * @param strStyle
-     * @param wb
-     * @return
+     * @param strStyle strStyle
+     * @param _wb _wb
+     * @return XSSFCellStyle
      */
     public static XSSFCellStyle composeStyle(String strStyle, Workbook _wb) {
     	if(_wb instanceof XSSFWorkbook) {

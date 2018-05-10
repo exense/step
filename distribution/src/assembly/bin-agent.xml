@@ -38,7 +38,7 @@
 		<moduleSet>
 			<useAllReactorProjects>true</useAllReactorProjects>
 			<includes>
-				<include>step:agent</include>
+				<include>ch.exense.step:agent</include>
 			</includes>
 			<binaries>
 				<outputDirectory>lib</outputDirectory>

@@ -15,9 +15,9 @@
 	<packaging>jar</packaging>
 
 	<parent>
-		<groupId>step</groupId>
+		<groupId>ch.exense.step</groupId>
 		<artifactId>script-dev</artifactId>
-		<version>3.6.1</version>
+		<version>3.6.2-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>

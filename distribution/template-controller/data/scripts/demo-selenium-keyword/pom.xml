@@ -1,7 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>io.denkbar.step.examples</groupId>
+	
+	<groupId>ch.exense.step.examples</groupId>
 	<version>0.0.1-SNAPSHOT</version>
 	<artifactId>demo-selenium-keyword</artifactId>
 	
@@ -14,9 +15,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>step</groupId>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>script-dev-selenium-3</artifactId>
-			<version>3.6.1</version>
+			<version>3.6.2-SNAPSHOT</version>  
 			<type>pom</type>
 		</dependency>
 		<dependency>
@@ -39,7 +40,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.3.1</version>
+				<version>2.4</version>
 				<configuration>
 					<outputDirectory>..</outputDirectory>
 					<finalName>demo-selenium-keyword</finalName>     

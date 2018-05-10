@@ -131,12 +131,14 @@ public class ExcelFunctions {
 	 *    					Ein mit Komma getrennter Eingabestring mit folgenden Teilen:
 	 *    
 	 *    					<code>schriftschnitt</code>, <code>farbe</code>, <code>schriftgroesse</code>, <code>schriftart</code>
+	 *    					<ul>
 	 *    					<li> <code>schriftschnitt</code>: bold italic underline strikethrough (Kombinationen moeglich)
 	 *    					<li> <code>farbe</code>: red/blue (rote Schrift auf blauem Hintergrund). 0:0:0/255:255:255 (weisse Schrift auf schwarzem Hintergrund)
 	 *    					<li> <code>schriftgroesse</code>: 11 (selbe Angabe wie in Excel)
    	 *    					<li> <code>schriftart</code>: Arial (selbe Angabe wie in Excel)
+   	 *    					</ul>
 	 *    
-	 * @throws IOException 
+	 * @throws IOException IOException
 	 */
     public static void putCell(String workbookPath, String sheetName, String cellIndex, String cellValue, String style) throws IOException {
     	File workBookFile = new File(workbookPath);
@@ -164,6 +166,7 @@ public class ExcelFunctions {
 	 * Konvertiert unterschiedliche Formate in Strings.
 	 * 
 	 * @param cell Excel Zelle
+	 * @param evaluator FormulaEvaluator
 	 * @return Wert der Zelle als String
 	 */
 	public static String getCellValueAsString(Cell cell, FormulaEvaluator evaluator){

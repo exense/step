@@ -23,9 +23,9 @@
 	<packaging>jar</packaging>
 
 	<parent>
-		<groupId>step</groupId>
+		<groupId>ch.exense.step</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.6.1</version>
+		<version>3.6.2-SNAPSHOT</version>
 		<relativePath>../parent</relativePath>
 	</parent>
 	
@@ -54,6 +54,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
+			 	<version>2.7</version>
 				<configuration>
 					<artifactId>commons</artifactId>
 					<skip>false</skip>
