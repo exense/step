@@ -34,9 +34,11 @@ public interface PluginCallbacks {
 	
 	public void afterExecutionEnd(ExecutionContext context);
 	
-	public void afterReportNodeSkeletonCreation(ReportNode node);
+	public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node);
 	
-	public void afterReportNodeExecution(ReportNode node);
+	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node);
+	
+	public void afterReportNodeExecution(ExecutionContext context, ReportNode node);
 	
 	public void associateThread(ExecutionContext context, Thread thread);
 	
