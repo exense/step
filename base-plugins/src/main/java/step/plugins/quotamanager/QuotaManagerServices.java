@@ -37,7 +37,7 @@ public class QuotaManagerServices extends AbstractServices {
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getQuotaManagerStatus() {
 		StringWriter writer = new StringWriter();
-		QuotaManager quotaManager = (QuotaManager) getContext().get(QuotaManagerPlugin.QUOTAMANAGER_KEY);
+		QuotaManager quotaManager = (QuotaManager) getContext().get(QuotaManager.class);
 
 		writer.write("QuotaManager status:\n");
 		for(QuotaHandlerStatus status:quotaManager.getStatus()) {

@@ -19,21 +19,53 @@
 package step.plugins.quotamanager;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import step.commons.conf.Configuration;
 import step.commons.conf.FileWatchService;
 import step.core.GlobalContext;
+import step.core.artefacts.reports.ReportNode;
+import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
 public class QuotaManagerPlugin extends AbstractPlugin {
+		
+	private QuotaManager quotaManager;
 	
-	public static final String QUOTAMANAGER_KEY = "QuotaManager_Instance";
+	private ConcurrentHashMap<String, UUID> permits = new ConcurrentHashMap<>();
 	
+	@Override
+	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
+		Map<String, Object> bindings = new HashMap<>();
+		
+		bindings.putAll(context.getVariablesManager().getAllVariables());
+		bindings.put("node", node);
+		
+		UUID permit;
+		try {
+			permit = quotaManager.acquirePermit(bindings);
+		} catch (Exception e) {
+			throw new RuntimeException("Error while getting permit from quota manager", e);
+		}
+		permits.put(node.getId().toString(), permit);
+	}
+
+	@Override
+	public void afterReportNodeExecution(ReportNode node) {
+		UUID permit = permits.remove(node.getId().toString());
+		if(permit!=null) {
+			quotaManager.releasePermit(permit);
+		}
+	}
+
 	private QuotaManager initQuotaManager(String config) {		
 		final File configFile = new File(config);
-		final QuotaManager quotaManager = new QuotaManager(configFile);
+		quotaManager = new QuotaManager(configFile);
 		FileWatchService.getInstance().register(configFile, new Runnable() {
 			@Override
 			public void run() {
@@ -48,7 +80,7 @@ public class QuotaManagerPlugin extends AbstractPlugin {
 		String config = Configuration.getInstance().getProperty("quotamanager.config");
 		if(config!=null) {
 			QuotaManager manager = initQuotaManager(config);
-			context.put(QUOTAMANAGER_KEY, manager);
+			context.put(QuotaManager.class, manager);
 			context.getServiceRegistrationCallback().registerService(QuotaManagerServices.class);
 		}
 	}
