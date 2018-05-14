@@ -42,12 +42,31 @@ public abstract class AbstractPlugin implements PluginCallbacks {
 	@Override
 	public void afterExecutionEnd(ExecutionContext context) {}
 
-	@Override
+	@Deprecated()
 	public void afterReportNodeSkeletonCreation(ReportNode node) {
+	}
+
+	@Deprecated()
+	public void beforeReportNodeExecution(ReportNode node) {
+	}
+	
+	@Deprecated()
+	public void afterReportNodeExecution(ReportNode node) {
 	}
 	
 	@Override
-	public void afterReportNodeExecution(ReportNode node) {
+	public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node) {
+		afterReportNodeSkeletonCreation(node);
+	}
+
+	@Override
+	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
+		beforeReportNodeExecution(node);
+	}
+	
+	@Override
+	public void afterReportNodeExecution(ExecutionContext context, ReportNode node) {
+		afterReportNodeExecution(node);
 	}
 
 	@Override

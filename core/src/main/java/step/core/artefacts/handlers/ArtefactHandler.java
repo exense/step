@@ -158,7 +158,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			reportNodeAccessor.save(node);
 		}
 		
-		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeSkeletonCreation(node);
+		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeSkeletonCreation(context, node);
 		
 		afterDelegation(node, parentNode, artefact);
 	}
@@ -201,6 +201,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		boolean persistAfter = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
 		boolean persistOnlyNonPassed = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistonlynonpassed",false);
 		
+		context.getGlobalContext().getPluginManager().getProxy().beforeReportNodeExecution(context, node);
+
 		try {
 			context.getGlobalContext().getDynamicBeanResolver().evaluate(artefact, getBindings());
 			node.setArtefactInstance(artefact);
@@ -234,7 +236,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 		
 		
-		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeExecution(node);
+		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeExecution(context, node);
 		
 		afterDelegation(node, parentNode, artefact);
 		
