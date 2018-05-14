@@ -19,7 +19,7 @@
 <QuotaManagerConfig>
   <quotas>
     <Quota>
-      <quotaKeyFunction>key</quotaKeyFunction>
+      <quotaKeyFunction>node.getClass().getSimpleName().equals("TestCaseReportNode")?user:null</quotaKeyFunction>
       <permits>1</permits>
       <acquireTimeoutMs>0</acquireTimeoutMs>
     </Quota>
