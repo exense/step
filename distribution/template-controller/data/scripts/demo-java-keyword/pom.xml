@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>script-dev-java</artifactId>
-			<version>3.6.2-SNAPSHOT</version>  
+			<version>3.6.3</version>  
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
