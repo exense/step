@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import step.common.managedoperations.OperationManager;
 import step.commons.conf.Configuration;
 import step.commons.conf.FileWatchService;
 import step.core.GlobalContext;
@@ -34,6 +35,8 @@ import step.core.plugins.Plugin;
 
 @Plugin
 public class QuotaManagerPlugin extends AbstractPlugin {
+	
+	private OperationManager operationManager;
 		
 	private QuotaManager quotaManager;
 	
@@ -46,11 +49,14 @@ public class QuotaManagerPlugin extends AbstractPlugin {
 		bindings.putAll(context.getVariablesManager().getAllVariables());
 		bindings.put("node", node);
 		
+		operationManager.enter("Waiting for quota", new Object());
 		UUID permit;
 		try {
 			permit = quotaManager.acquirePermit(bindings);
 		} catch (Exception e) {
 			throw new RuntimeException("Error while getting permit from quota manager", e);
+		} finally {
+			operationManager.exit();
 		}
 		permits.put(node.getId().toString(), permit);
 	}
