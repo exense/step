@@ -17,7 +17,7 @@
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>script-dev-selenium-3</artifactId>
-			<version>3.6.2-SNAPSHOT</version>  
+			<version>3.6.3</version>  
 			<type>pom</type>
 		</dependency>
 		<dependency>
