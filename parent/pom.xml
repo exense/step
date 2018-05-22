@@ -34,12 +34,14 @@
 			<email>jerome.comte@exense.ch</email>
 			<organization>Exense</organization>
 			<organizationUrl>http://exense.ch</organizationUrl>
+			<url>http://step.exense.ch/</url>
 		</developer>
 		<developer>
 			<name>Dorian Cransac</name>
 			<email>dorian.cransac@exense.ch</email>
 			<organization>Exense</organization>
 			<organizationUrl>http://exense.ch</organizationUrl>
+			<url>http://step.exense.ch/</url>
 		</developer>
 	</developers>
 	<scm>
@@ -47,31 +49,135 @@
 		<developerConnection>scm:git:ssh://github.com:denkbar/step.git</developerConnection>
 		<url>https://github.com/denkbar/step/</url>
 	</scm>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<repositories>
+		<!-- Private nexus -->
 		<repository>
-			<id>nexus</id>
+			<id>nexus-release</id>
 			<url>http://nexus.exense.ch/nexus/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>nexus-snapshot</id>
+			<url>http://nexus.exense.ch/nexus/content/repositories/snapshots</url>
+		</repository>
+		<!-- Sonatype nexus -->
+		<repository>
+			<id>ossrh-release</id>
+			<url>http://nexus.exense.ch/nexus/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>ossrh-snapshot</id>
+			<url>http://nexus.exense.ch/nexus/content/repositories/snapshots</url>
 		</repository>
 	</repositories>
 
-	<distributionManagement>
-		<repository>
-			<id>ossrh</id>
-			<url>
-				https://oss.sonatype.org/service/local/staging/deploy/maven2/
-			</url>
-		</repository>
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>
-				https://oss.sonatype.org/content/repositories/snapshots
-			</url>
-		</snapshotRepository>
-	</distributionManagement>
+	<profiles>
+		<profile>
+			<!-- Private nexus -->
+			<id>Default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<distributionManagement>
+				<repository>
+					<id>nexus</id>
+					<url>http://nexus.exense.ch/nexus/content/repositories/releases</url>
+				</repository>
+				<snapshotRepository>
+					<id>nexus</id>
+					<url>http://nexus.exense.ch/nexus/content/repositories/snapshots</url>
+				</snapshotRepository>
+			</distributionManagement>
+		</profile>
+		<profile>
+			<!-- Sonatype nexus -->
+			<id>Sonatype</id>
+			<activation>
+				<property>
+					<name>deployment-type</name>
+					<value>sonatype</value>
+				</property>
+			</activation>
+			<distributionManagement>
+				<repository>
+					<id>ossrh</id>
+					<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+				</repository>
+				<snapshotRepository>
+					<id>ossrh</id>
+					<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+				</snapshotRepository>
+			</distributionManagement>
+			<build>
+				<plugins>
+					<!-- Deployment -->
+					<plugin>
+						<groupId>org.sonatype.plugins</groupId>
+						<artifactId>nexus-staging-maven-plugin</artifactId>
+						<version>1.6.7</version>
+						<extensions>true</extensions>
+						<configuration>
+							<serverId>ossrh</serverId>
+							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+							<autoReleaseAfterClose>true</autoReleaseAfterClose>
+						</configuration>
+					</plugin>
+					<!-- Deployment -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.6</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+								<configuration>
+									<gpgArguments>
+										<arg>--pinentry-mode</arg>
+										<arg>loopback</arg>
+									</gpgArguments>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>3.0.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>2.9.1</version>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 	<modules>
 		<module>../grid-api</module>
@@ -117,17 +223,6 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.7</version>
-				<extensions>true</extensions>
-				<configuration>
-					<serverId>ossrh</serverId>
-					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<autoReleaseAfterClose>true</autoReleaseAfterClose>
-				</configuration>
-			</plugin>
-			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
@@ -151,53 +246,6 @@
 						<logback.configurationFile>${basedir}/../parent/logback-maven.xml</logback.configurationFile>
 					</systemPropertyVariables>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.9.1</version>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-gpg-plugin</artifactId>
-				<version>1.6</version>
-				<executions>
-					<execution>
-						<id>sign-artifacts</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-						<configuration>
-							<gpgArguments>
-								<arg>--pinentry-mode</arg>
-								<arg>loopback</arg>
-							</gpgArguments>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>
