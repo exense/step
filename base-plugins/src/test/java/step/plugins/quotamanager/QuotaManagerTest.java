@@ -296,6 +296,7 @@ public class QuotaManagerTest {
 		
 		HashMap<String, Object> bindings = new HashMap<>();
 		bindings.put("key", "key1");
+		bindings.put("node", "foo");
 		
 		QuotaManager manager = new QuotaManager(FileHelper.getClassLoaderResource(this.getClass(),"QuotaManagerConfig.xml"));
 		UUID id = manager.acquirePermit(bindings);
