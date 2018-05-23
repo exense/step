@@ -71,6 +71,10 @@ public class ReportNode {
 		return _id;
 	}
 
+	public void setId(ObjectId id) {
+		this._id = id;
+	}
+
 	public ObjectId getParentID() {
 		return parentID;
 	}
