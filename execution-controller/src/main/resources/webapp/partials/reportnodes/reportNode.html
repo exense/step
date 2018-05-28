@@ -2,6 +2,7 @@
 	<!-- <div class="form-group">{{artefact._class}} - {{node.name}} <reportnode-status status="node.status" /></div> -->
 	<div style="margin-top:10px;" ng-include="reportNodeType.template"></div>
 	
+	<div ng-if="node.resolvedArtefact.customAttributes.source">Source: {{node.resolvedArtefact.customAttributes.source}}</div>
 	<div>Start: {{ node.executionTime | date:'dd.MM.yyyy HH:mm:ss'}}</div>
 	<div>Duration (ms): {{node.duration}}</div>
 	<div class="panel panel-default" style="margin-top:10px;">
