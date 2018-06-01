@@ -25,6 +25,12 @@ import step.grid.client.GridClient;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.plugins.adaptergrid.GridPlugin;
 
+/**
+ * @deprecated Use step.localrunner.LocalRunner instead
+ * This class will be removed from this package in the future
+ *
+ */
+@Deprecated
 public class LocalRunner implements PlanRunner {
 	
 	ExecutionContext context;
@@ -119,7 +125,7 @@ public class LocalRunner implements PlanRunner {
 		context.getGlobalContext().put(GridPlugin.FUNCTIONCLIENT_KEY, functionClient);
 		context.getGlobalContext().put(FunctionExecutionService.class, functionClient);
 		context.getGlobalContext().put(FunctionRepository.class, functionRepo);
-		context.getGlobalContext().put(FunctionRouter.class, new FunctionRouter(functionClient, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()))));
+		context.getGlobalContext().put(FunctionRouter.class, new FunctionRouter(functionClient, functionClient, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()))));
 	}
 
 	public ExecutionContext getContext() {

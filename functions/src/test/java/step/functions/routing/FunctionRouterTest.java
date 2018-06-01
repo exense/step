@@ -32,7 +32,7 @@ public class FunctionRouterTest {
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
 
 		FunctionClient client = new FunctionClient(context.getGlobalContext(), null, null);
-		FunctionRouter router = new FunctionRouter(client, dynamicJsonObjectResolver);
+		FunctionRouter router = new FunctionRouter(client, client, dynamicJsonObjectResolver);
 		
 		CallFunction callFunction = new CallFunction();
 		callFunction.getToken().setValue("{\"callFunction\":\"cf\"}");

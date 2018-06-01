@@ -75,7 +75,7 @@ public class GridPlugin extends AbstractPlugin {
 		context.put(FunctionRepository.class.getName(), functionRepository);
 		
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		context.put(FunctionRouter.class.getName(), new FunctionRouter(functionClient, dynamicJsonObjectResolver));
+		context.put(FunctionRouter.class.getName(), new FunctionRouter(functionClient, functionClient, dynamicJsonObjectResolver));
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
 		context.getServiceRegistrationCallback().registerService(FunctionRepositoryServices.class);

@@ -10,7 +10,8 @@ import step.artefacts.handlers.TokenSelectorHelper;
 import step.common.managedoperations.OperationManager;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.functions.Function;
-import step.functions.FunctionClient;
+import step.functions.FunctionExecutionService;
+import step.functions.FunctionTypeRegistry;
 import step.functions.type.AbstractFunctionType;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient.AgentCommunicationException;
@@ -20,11 +21,14 @@ public class FunctionRouter {
 
 	protected final TokenSelectorHelper tokenSelectorHelper;
 	
-	protected final FunctionClient functionClient;
+	protected final FunctionExecutionService functionExecutionService;
+	
+	protected final FunctionTypeRegistry functionTypeRegistry;
 
-	public FunctionRouter(FunctionClient functionClient, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
+	public FunctionRouter(FunctionExecutionService functionClient, FunctionTypeRegistry functionTypeRegistry, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
 		super();
-		this.functionClient = functionClient;
+		this.functionExecutionService = functionClient;
+		this.functionTypeRegistry = functionTypeRegistry;
 		this.tokenSelectorHelper = new TokenSelectorHelper(dynamicJsonObjectResolver);
 	}
 
@@ -32,7 +36,7 @@ public class FunctionRouter {
 		TokenWrapper token;
 		if(function.requiresLocalExecution()) {
 			// The function requires a local execution => get a local token
-			token = functionClient.getLocalTokenHandle();
+			token = functionExecutionService.getLocalTokenHandle();
 		} else {
 			if(functionGroupContext!=null) {
 				if(functionGroupContext.getToken()!=null) {
@@ -60,7 +64,7 @@ public class FunctionRouter {
 		TokenWrapper token;
 		OperationManager.getInstance().enter("Token selection", selectionCriteria);
 		try {
-			token = functionClient.getTokenHandle(pretenderAttributes, selectionCriteria, createSession);
+			token = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria, createSession);
 		} finally {
 			OperationManager.getInstance().exit();					
 		}
@@ -79,10 +83,13 @@ public class FunctionRouter {
 		}
 		
 		// Criteria from function type
-		AbstractFunctionType<Function> functionType = functionClient.getFunctionTypeByFunction(function);
-		Map<String, Interest> tokenSelectionCriteriaFromFunctionType = functionType.getTokenSelectionCriteria(function);
-		if(tokenSelectionCriteriaFromFunctionType!=null) {
-			selectionCriteria.putAll(tokenSelectionCriteriaFromFunctionType);
+		// TODO As a workaround we're ignoring null functionTypeRegistry. Remove this in the future
+		if(functionTypeRegistry != null) {
+			AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionTypeByFunction(function);
+			Map<String, Interest> tokenSelectionCriteriaFromFunctionType = functionType.getTokenSelectionCriteria(function);
+			if(tokenSelectionCriteriaFromFunctionType!=null) {
+				selectionCriteria.putAll(tokenSelectionCriteriaFromFunctionType);
+			}			
 		}
 		
 		// Criteria from function
