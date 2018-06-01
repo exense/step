@@ -41,7 +41,7 @@ import step.grid.io.AttachmentHelper;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
-public class FunctionClient implements FunctionExecutionService {
+public class FunctionClient implements FunctionExecutionService, FunctionTypeRegistry {
 
 	private final GridClient gridClient;
 	
@@ -133,6 +133,7 @@ public class FunctionClient implements FunctionExecutionService {
 	}
 
 	@SuppressWarnings("unchecked")
+	@Override
 	public void registerFunctionType(AbstractFunctionType<? extends Function> functionType) {
 		functionType.setContext(context);
 		functionType.init();
@@ -148,6 +149,7 @@ public class FunctionClient implements FunctionExecutionService {
 		}
 	}
 	
+	@Override
 	public AbstractFunctionType<Function> getFunctionTypeByFunction(Function function) {
 		return getFunctionTypeByType(function.getClass().getName());
 	}
