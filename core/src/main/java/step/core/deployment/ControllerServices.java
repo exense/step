@@ -21,7 +21,6 @@ package step.core.deployment;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,6 @@ import org.bson.types.ObjectId;
 import step.commons.datatable.DataTable;
 import step.commons.datatable.TableRow;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
@@ -280,15 +278,14 @@ public class ControllerServices extends AbstractServices {
 	@Path("/reportnode/{id}/children")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="report-read")
-	public List<ReportNode> getReportNodeChildren(@PathParam("id") String reportNodeId) {
-		int limit = 1000;
+	public List<ReportNode> getReportNodeChildren(@PathParam("id") String reportNodeId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+		skip = skip!=null?skip:0;
+		limit = limit!=null?limit:1000;
+		
 		List<ReportNode> result = new ArrayList<>();
-		Iterator<ReportNode> it = getContext().getReportAccessor().getChildren(new ObjectId(reportNodeId));
+		Iterator<ReportNode> it = getContext().getReportAccessor().getChildren(new ObjectId(reportNodeId), skip, limit);
 		while(it.hasNext()) {
 			result.add(it.next());
-			if(result.size()>limit) {
-				break;
-			}
 		}		
 		return result;
 	}

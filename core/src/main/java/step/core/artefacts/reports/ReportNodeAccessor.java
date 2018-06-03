@@ -40,7 +40,7 @@ import step.core.accessors.MongoClientSession;
 import step.core.accessors.MongoDBAccessorHelper;
 
 
-public class ReportNodeAccessor extends AbstractAccessor {
+public class ReportNodeAccessor extends AbstractAccessor implements ReportTreeAccessor {
 		
 	MongoCollection reports;
 	
@@ -97,6 +97,10 @@ public class ReportNodeAccessor extends AbstractAccessor {
 
     public Iterator<ReportNode> getChildren(ObjectId parentID) {    	
     	return reports.find("{parentID: #}",parentID).sort("{executionTime: 1}").as(ReportNode.class).iterator();
+    }
+    
+    public Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit) {    	
+    	return reports.find("{parentID: #}",parentID).skip(skip).limit(limit).sort("{executionTime: 1}").as(ReportNode.class).iterator();
     }
     
 	public Iterator<ReportNode> getReportNodesByExecutionID(String executionID) {
@@ -250,5 +254,10 @@ public class ReportNodeAccessor extends AbstractAccessor {
 		public void setSum(int sum) {
 			this.sum = sum;
 		}
+	}
+
+	@Override
+	public Iterator<ReportNode> getChildren(String parentID) {
+		return getChildren(new ObjectId(parentID));
 	}
 }
