@@ -38,34 +38,40 @@ public class QuotaManagerPlugin extends AbstractPlugin {
 		
 	private ConcurrentHashMap<String, UUID> permits = new ConcurrentHashMap<>();
 
-	private OperationManager operationManager;
+	private OperationManager operationManager = OperationManager.getInstance();
 		
 	private QuotaManager quotaManager;
 	
+	private boolean enabled = false;
+	
 	@Override
 	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
-		Map<String, Object> bindings = new HashMap<>();
-		
-		bindings.putAll(context.getVariablesManager().getAllVariables());
-		bindings.put("node", node);
-		
-		operationManager.enter("Waiting for quota", new Object());
-		UUID permit;
-		try {
-			permit = quotaManager.acquirePermit(bindings);
-		} catch (Exception e) {
-			throw new RuntimeException("Error while getting permit from quota manager", e);
-		} finally {
-			operationManager.exit();
+		if(enabled) {
+			Map<String, Object> bindings = new HashMap<>();
+			
+			bindings.putAll(context.getVariablesManager().getAllVariables());
+			bindings.put("node", node);
+			
+			operationManager.enter("Waiting for quota", new Object());
+			UUID permit;
+			try {
+				permit = quotaManager.acquirePermit(bindings);
+			} catch (Exception e) {
+				throw new RuntimeException("Error while getting permit from quota manager", e);
+			} finally {
+				operationManager.exit();
+			}
+			permits.put(node.getId().toString(), permit);			
 		}
-		permits.put(node.getId().toString(), permit);
 	}
 
 	@Override
 	public void afterReportNodeExecution(ReportNode node) {
-		UUID permit = permits.remove(node.getId().toString());
-		if(permit!=null) {
-			quotaManager.releasePermit(permit);
+		if(enabled) {
+			UUID permit = permits.remove(node.getId().toString());
+			if(permit!=null) {
+				quotaManager.releasePermit(permit);
+			}			
 		}
 	}
 
@@ -88,6 +94,7 @@ public class QuotaManagerPlugin extends AbstractPlugin {
 			QuotaManager manager = initQuotaManager(config);
 			context.put(QuotaManager.class, manager);
 			context.getServiceRegistrationCallback().registerService(QuotaManagerServices.class);
+			enabled = true;
 		}
 	}
 }
