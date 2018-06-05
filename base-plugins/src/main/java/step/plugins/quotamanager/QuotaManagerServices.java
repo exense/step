@@ -39,15 +39,19 @@ public class QuotaManagerServices extends AbstractServices {
 		StringWriter writer = new StringWriter();
 		QuotaManager quotaManager = (QuotaManager) getContext().get(QuotaManager.class);
 
-		writer.write("QuotaManager status:\n");
-		for(QuotaHandlerStatus status:quotaManager.getStatus()) {
-			writer.write("  Quota \"" + status.getConfiguration().getId() + "\" (" + status.getConfiguration().getDescription() + "):\n");
-			for(QuotaHandlerStatusEntry quotaKeyStatus:status.getEntries()) {
-				String peakDisplay = quotaKeyStatus.getUsage()>quotaKeyStatus.getPeak()?"n.a.":Integer.toString(quotaKeyStatus.getPeak());
-				writer.write("    Key \"" + quotaKeyStatus.getQuotaKey() + "\". Quota usage: " + quotaKeyStatus.getUsage() + "/" + 
-					status.getConfiguration().getPermits() + " (Peak: " + peakDisplay + ")" + "\n");
-			}
-			
+		if(quotaManager!=null) {
+			writer.write("QuotaManager status:\n");
+			for(QuotaHandlerStatus status:quotaManager.getStatus()) {
+				writer.write("  Quota \"" + status.getConfiguration().getId() + "\" (" + status.getConfiguration().getDescription() + "):\n");
+				for(QuotaHandlerStatusEntry quotaKeyStatus:status.getEntries()) {
+					String peakDisplay = quotaKeyStatus.getUsage()>quotaKeyStatus.getPeak()?"n.a.":Integer.toString(quotaKeyStatus.getPeak());
+					writer.write("    Key \"" + quotaKeyStatus.getQuotaKey() + "\". Quota usage: " + quotaKeyStatus.getUsage() + "/" + 
+							status.getConfiguration().getPermits() + " (Peak: " + peakDisplay + ")" + "\n");
+				}
+				
+			}			
+		} else {
+			writer.write("The quota manager is disabled. You can enable it by setting the property quotamanager.config in the step configuration.");
 		}
 		
 		return writer.toString();

@@ -89,11 +89,12 @@ public class QuotaManagerPlugin extends AbstractPlugin {
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) {
+		context.getServiceRegistrationCallback().registerService(QuotaManagerServices.class);
+
 		String config = Configuration.getInstance().getProperty("quotamanager.config");
 		if(config!=null) {
 			QuotaManager manager = initQuotaManager(config);
 			context.put(QuotaManager.class, manager);
-			context.getServiceRegistrationCallback().registerService(QuotaManagerServices.class);
 			enabled = true;
 		}
 	}
