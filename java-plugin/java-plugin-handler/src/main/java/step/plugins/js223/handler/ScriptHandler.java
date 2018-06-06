@@ -52,7 +52,7 @@ public class ScriptHandler extends AbstractMessageHandler {
 	
 	public static final Map<String, String> scriptLangugaeMap = new ConcurrentHashMap<>();
 	
-	protected ScriptEngineManager manager = new ScriptEngineManager();
+	protected ScriptEngineManager manager;
 		
 	public ScriptHandler() {
 		scriptLangugaeMap.put("groovy", "groovy");
@@ -60,26 +60,33 @@ public class ScriptHandler extends AbstractMessageHandler {
 	}
 	
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {        
-        Map<String, String> properties = buildPropertyMap(token, message);
-        
-        File scriptFile = retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties).getFile();
-        
-        String scriptLanguage = properties.get(SCRIPT_LANGUAGE);        
-        String engineName = scriptLangugaeMap.get(scriptLanguage);
-        ScriptEngine engine = loadScriptEngine(engineName);	      
-
-        OutputMessageBuilder outputBuilder = new OutputMessageBuilder();
-        Bindings binding = createBindings(token, message, outputBuilder, properties);     
-
-        try {
-        	executeScript(scriptFile, binding, engine);        	
-        } catch(Exception e) {        	
-        	executeErrorHandlerScript(token, properties, engine, binding);
-        	throw e;
-        }
-        
-        return outputBuilder.build();
+	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {    
+		ClassLoader initialClassloader = Thread.currentThread().getContextClassLoader();
+		try {
+			Thread.currentThread().setContextClassLoader(agentTokenServices.getApplicationContextBuilder().getCurrentContext().getClassLoader());
+			Map<String, String> properties = buildPropertyMap(token, message);
+			
+			File scriptFile = retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties).getFile();
+			
+			String scriptLanguage = properties.get(SCRIPT_LANGUAGE);        
+			String engineName = scriptLangugaeMap.get(scriptLanguage);
+			ScriptEngine engine = loadScriptEngine(engineName);	      
+			
+			OutputMessageBuilder outputBuilder = new OutputMessageBuilder();
+			Bindings binding = createBindings(token, message, outputBuilder, properties);     
+			
+			try {
+				executeScript(scriptFile, binding, engine);        	
+			} catch(Exception e) {        	
+				executeErrorHandlerScript(token, properties, engine, binding);
+				throw e;
+			}
+			
+			return outputBuilder.build();			
+		} finally {
+			Thread.currentThread().setContextClassLoader(initialClassloader);
+		}
+		
 	}
 
 	private void executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding)
@@ -118,6 +125,7 @@ public class ScriptHandler extends AbstractMessageHandler {
 	}
 
 	private ScriptEngine loadScriptEngine(String engineName) {
+		manager = new ScriptEngineManager(Thread.currentThread().getContextClassLoader());
 		ScriptEngine engine = manager.getEngineByName(engineName);
 		if(engine==null) {
 			throw new RuntimeException("Unable to find script engine with name '"+engineName+"'");
