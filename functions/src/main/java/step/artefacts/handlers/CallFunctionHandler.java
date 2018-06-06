@@ -247,9 +247,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			VariablesManager variableManager = context.getVariablesManager();
 			variableManager.putVariable(node, "callReport", node);
 			
-			node.getOutputObject().forEach((k,v)->{
-				variableManager.putVariable(node, k, v.toString());
-			});
+//			node.getOutputObject().forEach((k,v)->{
+//				variableManager.putVariable(node, k, v.toString());
+//			});
 			
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.execute_(node, testArtefact, true);				
