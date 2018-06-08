@@ -100,7 +100,7 @@ window.console.log = window.console.log || function(){};
 </head>
 
 <body>
-
+<script>step.bootstrap();</script>
 <div ng-controller="AppController">
 	<div ng-if="isInitialized && authService.isAuthenticated()">
 		<nav class="navbar navbar-default">
