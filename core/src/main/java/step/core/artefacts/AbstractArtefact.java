@@ -27,6 +27,8 @@ import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 
 @JsonTypeInfo(use=Id.CUSTOM,property="_class")
@@ -41,6 +43,8 @@ public abstract class AbstractArtefact {
 		
 	protected List<ObjectId> childrenIDs;
 	 
+	@JsonSerialize(using = MapSerializer.class)
+	@JsonDeserialize(using = MapDeserializer.class) 
 	protected Map<String, Object> customAttributes;
 	
 	protected List<ObjectId> attachments;

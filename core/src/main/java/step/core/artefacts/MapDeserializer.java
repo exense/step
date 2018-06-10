@@ -12,13 +12,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+// Used to deserialize Map<String, Object>. Per default jackson deserialize the map values as Map
 public class MapDeserializer extends JsonDeserializer<Map<String, Object>> {
 
 	private ObjectMapper mapper;
 	
 	public MapDeserializer() {
 		super();
-		// TODO Auto-generated constructor stub
 		mapper = new ObjectMapper();
 		mapper.enableDefaultTyping();
 	}
@@ -26,22 +26,20 @@ public class MapDeserializer extends JsonDeserializer<Map<String, Object>> {
 	@Override
 	public Map<String, Object> deserialize(JsonParser jp, DeserializationContext ctxt)
 			throws IOException, JsonProcessingException {
-		Map<String,Object> result = new HashMap<>();
 		JsonNode node = jp.readValueAsTree();
-        ObjectNode o = (ObjectNode) node;
+		
+		Map<String, Object> result = new HashMap<>();
+		ObjectNode o = (ObjectNode) node;
         o.fields().forEachRemaining(e -> {
         	String key = e.getKey();
         	JsonNode eNode = e.getValue();
-        	if(eNode!=null && eNode instanceof ObjectNode) {
-        		ObjectNode valueNode = (ObjectNode) e.getValue();
-        		try {
-        			result.put(key, mapper.treeToValue(valueNode.get(key), Object.class));
-        		} catch (Throwable ex) {
-        			// Ignore these exception as it can be a ClassNotFoundException
-        		}        		
+        	try {
+        		result.put(key, mapper.treeToValue(eNode, Object.class));
+        	} catch (Throwable ex) {
+        		// Ignore these exception as it can be a ClassNotFoundException
         	}
         });
-        
-        return result;
+		
+		return result;
 	}
 }

@@ -9,13 +9,13 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
+// Used to deserialize Map<String, Object>. Per default jackson deserialize the map values as Map
 public class MapSerializer extends JsonSerializer<Map<String, Object>> {
 
 	private ObjectMapper mapper;
 	
 	public MapSerializer() {
 		super();
-		// TODO Auto-generated constructor stub
 		mapper = new ObjectMapper();
 		mapper.enableDefaultTyping();
 	}
@@ -23,11 +23,6 @@ public class MapSerializer extends JsonSerializer<Map<String, Object>> {
 	@Override
 	public void serialize(Map<String, Object> value, JsonGenerator gen, SerializerProvider serializers)
 			throws IOException, JsonProcessingException {
-		gen.writeStartObject();
-		for(String key:value.keySet()) {
-	        gen.writeFieldName(key);
-	        mapper.writeValue(gen, value);
-		}
-		gen.writeEndObject();
+		mapper.writeValue(gen, value);
 	}
 }
