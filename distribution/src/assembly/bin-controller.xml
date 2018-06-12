@@ -22,7 +22,7 @@
 	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3 http://maven.apache.org/xsd/assembly-1.1.3.xsd">
 	<id>bin-controller</id>
 	<formats>
-		<format>zip</format>
+		<format>dir</format>
 	</formats>
 	<includeBaseDirectory>false</includeBaseDirectory>
 	<fileSets>
@@ -31,8 +31,19 @@
 			<outputDirectory>./</outputDirectory>
 			<excludes>
 				<exclude>**/dummy.txt</exclude>
+                <exclude>bin/*.sh</exclude>
+                <exclude>bin/*.command</exclude>
 			</excludes>
 		</fileSet>
+		<fileSet>
+            <directory>template-controller/bin</directory>
+            <outputDirectory>./bin</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+                <include>*.command</include>
+            </includes>
+            <fileMode>0444</fileMode>
+        </fileSet>
 	</fileSets>
 	<moduleSets>
 		<moduleSet>
