@@ -6,19 +6,12 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<artifactId>demo-java-keyword</artifactId>
-	
-	<repositories>
-		<repository>
-			<id>nexus</id>
-			<url>http://nexus.exense.ch/nexus/content/repositories/releases</url>
-		</repository>
-	</repositories>
 
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>script-dev-java</artifactId>
-			<version>3.6.3</version>  
+			<version>3.6.4</version>  
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
