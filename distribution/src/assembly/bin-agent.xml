@@ -42,7 +42,7 @@
                 <include>*.sh</include>
                 <include>*.command</include>
             </includes>
-            <fileMode>0744/fileMode>
+            <fileMode>0744</fileMode>
         </fileSet>
 	</fileSets>
 	<moduleSets>
