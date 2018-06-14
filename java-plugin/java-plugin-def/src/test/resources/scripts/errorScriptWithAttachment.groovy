@@ -16,5 +16,5 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-Java.type('java.lang.System').getProperties().put("errorHandler", "executed");
-output.setError("Error :)")
+output.setError("E",new java.lang.Exception());
+INVALID;

@@ -38,6 +38,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());		
 		registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props);
 		registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props);
+		registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props);
 		return props;
 	}
 	

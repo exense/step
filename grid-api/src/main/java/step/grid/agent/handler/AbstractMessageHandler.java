@@ -21,7 +21,11 @@ public abstract class AbstractMessageHandler implements MessageHandler, AgentCon
 	
 	protected FileVersion retrieveFileVersion(String properyName, Map<String,String> properties) throws IOException {
 		FileVersionId fileVersionId = getFileVersionId(properyName, properties);
-		return agentTokenServices.getFileManagerClient().requestFileVersion(fileVersionId.getFileId(), fileVersionId.getVersion());
+		if(fileVersionId!=null) {
+			return agentTokenServices.getFileManagerClient().requestFileVersion(fileVersionId.getFileId(), fileVersionId.getVersion());			
+		} else {
+			return null;
+		}
 	}
 	
 	protected FileVersionId getFileVersionId(String properyName, Map<String,String> properties) {

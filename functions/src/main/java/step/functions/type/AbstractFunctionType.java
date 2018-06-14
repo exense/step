@@ -66,12 +66,14 @@ public abstract class AbstractFunctionType<T extends Function> {
 	}
 	
 	protected void registerFile(DynamicValue<String> dynamicValue, String properyName, Map<String, String> props) {
-		String filepath = dynamicValue.get();
-		if(filepath!=null && filepath.trim().length()>0) {
-			FileResolver fileResolver = new FileResolver(context.getAttachmentManager());
-			
-			File file = fileResolver.resolve(filepath);
-			registerFile(file, properyName, props);			
+		if(dynamicValue!=null) {
+			String filepath = dynamicValue.get();
+			if(filepath!=null && filepath.trim().length()>0) {
+				FileResolver fileResolver = new FileResolver(context.getAttachmentManager());
+				
+				File file = fileResolver.resolve(filepath);
+				registerFile(file, properyName, props);			
+			}			
 		}
 	}
 	

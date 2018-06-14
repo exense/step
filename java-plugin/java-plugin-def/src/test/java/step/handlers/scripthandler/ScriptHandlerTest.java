@@ -75,18 +75,42 @@ public class ScriptHandlerTest {
 //		Assert.assertEquals("val1",output.getResult().getString("key1"));
 //	}
 	
-// TODO implement error handler
-//	@Test 
-//	public void testErrorHandler() {
-//		GeneralScriptFunction f = buildTestFunction("javascript","errorHandler.js");
-//		f.setErrorHandler ...
-//		try {
-//			Output out = run(f, "{\"key1\":\"val1\"}");
-//			Assert.assertFalse(true);
-//		} catch(Exception e) {
-//			Assert.assertEquals("executed", System.getProperties().get("errorHandler"));
-//		}
-//	}
+	@Test 
+	public void testErrorWithoutErrorHandler() {
+		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
+		Output out = run(f, "{}");
+		Assert.assertTrue(out.getError().contains("INVALID SCRIPT"));
+		Assert.assertTrue(out.getError().startsWith("Error while running script errorScript.js"));
+		Assert.assertEquals(1,out.getAttachments().size());
+	}
+	
+	@Test 
+	public void testErrorHandler() {
+		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
+		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorHandler.js"));
+		Output out = run(f, "{}");
+		Assert.assertEquals("Error :)",out.getError());
+	}
+	
+	@Test 
+	// Test that attachments generated in the script are conserved after an exception is thrown
+	public void testErrorScriptWithAttachmentAndWithoutErrorHandler() {
+		GeneralScriptFunction f = buildTestFunction("javascript","errorScriptWithAttachment.groovy");
+		Output out = run(f, "{}");
+		Assert.assertTrue(out.getError().contains("INVALID"));
+		Assert.assertTrue(out.getError().startsWith("Error while running script"));
+		Assert.assertEquals(2,out.getAttachments().size());
+	}
+	
+	@Test 
+	public void testErrorHandlerWithError() {
+		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
+		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorScript.js"));
+		Output out = run(f, "{}");
+		Assert.assertTrue(out.getError().contains("INVALID SCRIPT"));
+		Assert.assertTrue(out.getError().startsWith("Error while running error handler script:"));
+		Assert.assertEquals(1,out.getAttachments().size());
+	}
 	
 	@Test 
 	public void testParallel() throws InterruptedException, ExecutionException, TimeoutException {

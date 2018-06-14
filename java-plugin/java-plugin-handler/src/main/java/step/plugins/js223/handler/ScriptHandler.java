@@ -37,6 +37,7 @@ import javax.script.SimpleBindings;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.filemanager.FileManagerClient.FileVersion;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
@@ -78,22 +79,31 @@ public class ScriptHandler extends AbstractMessageHandler {
 			try {
 				executeScript(scriptFile, binding, engine);        	
 			} catch(Exception e) {        	
-				executeErrorHandlerScript(token, properties, engine, binding);
-				throw e;
+				boolean throwException = executeErrorHandlerScript(token, properties, engine, binding, outputBuilder);
+				if(throwException) {
+					outputBuilder.setError("Error while running script "+scriptFile.getName() + ": " + e.getMessage(), e);
+				}
 			}
 			
 			return outputBuilder.build();			
 		} finally {
 			Thread.currentThread().setContextClassLoader(initialClassloader);
 		}
-		
 	}
 
-	private void executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding)
+	private boolean executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding, OutputMessageBuilder outputBuilder)
 			throws FileNotFoundException, Exception, IOException {
-		if(properties.containsKey(ERROR_HANDLER_FILE)) {
+		FileVersion errorScriptFileVersion = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties);
+		if(errorScriptFileVersion!=null) {
 			File errorScriptFile = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties).getFile();
-			executeScript(errorScriptFile, binding, engine);
+			try {
+				executeScript(errorScriptFile, binding, engine);				
+			} catch(Exception e) {
+				outputBuilder.setError("Error while running error handler script: "+errorScriptFile.getName() + ". "+e.getMessage(), e);
+			}
+			return false;
+		} else {
+			return true;
 		}
 	}
 

@@ -11,6 +11,8 @@ public class GeneralScriptFunction extends Function {
 	
 	DynamicValue<String> librariesFile = new DynamicValue<>("");
 	
+	DynamicValue<String> errorHandlerFile = new DynamicValue<>("");
+	
 	public DynamicValue<String> getScriptFile() {
 		return scriptFile;
 	}
@@ -33,5 +35,13 @@ public class GeneralScriptFunction extends Function {
 
 	public void setLibrariesFile(DynamicValue<String> librariesFile) {
 		this.librariesFile = librariesFile;
+	}
+
+	public DynamicValue<String> getErrorHandlerFile() {
+		return errorHandlerFile;
+	}
+
+	public void setErrorHandlerFile(DynamicValue<String> errorHandlerFile) {
+		this.errorHandlerFile = errorHandlerFile;
 	}
 }
