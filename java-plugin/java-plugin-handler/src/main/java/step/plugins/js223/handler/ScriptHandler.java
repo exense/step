@@ -79,7 +79,7 @@ public class ScriptHandler extends AbstractMessageHandler {
 			try {
 				executeScript(scriptFile, binding, engine);        	
 			} catch(Exception e) {        	
-				boolean throwException = executeErrorHandlerScript(token, properties, engine, binding, outputBuilder);
+				boolean throwException = executeErrorHandlerScript(token, properties, engine, binding, outputBuilder, e);
 				if(throwException) {
 					outputBuilder.setError("Error while running script "+scriptFile.getName() + ": " + e.getMessage(), e);
 				}
@@ -91,11 +91,12 @@ public class ScriptHandler extends AbstractMessageHandler {
 		}
 	}
 
-	private boolean executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding, OutputMessageBuilder outputBuilder)
+	private boolean executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding, OutputMessageBuilder outputBuilder, Exception exception)
 			throws FileNotFoundException, Exception, IOException {
 		FileVersion errorScriptFileVersion = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties);
 		if(errorScriptFileVersion!=null) {
 			File errorScriptFile = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties).getFile();
+			binding.put("exception", exception);
 			try {
 				executeScript(errorScriptFile, binding, engine);				
 			} catch(Exception e) {

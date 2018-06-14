@@ -89,7 +89,7 @@ public class ScriptHandlerTest {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorHandler.js"));
 		Output out = run(f, "{}");
-		Assert.assertEquals("Error :)",out.getError());
+		Assert.assertTrue(out.getError().contains("INVALID SCRIPT"));
 	}
 	
 	@Test 
