@@ -45,9 +45,9 @@
 		</developer>
 	</developers>
 	<scm>
-		<connection>scm:git:git://github.com/denkbar/step/</connection>
-		<developerConnection>scm:git:ssh://github.com:denkbar/step.git</developerConnection>
-		<url>https://github.com/denkbar/step/</url>
+		<connection>scm:git:git://github.com/exense/step/</connection>
+		<developerConnection>scm:git:ssh://github.com:exense/step.git</developerConnection>
+		<url>https://github.com/exense/step/</url>
 	</scm>
 
 	<properties>
