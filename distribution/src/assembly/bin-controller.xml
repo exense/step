@@ -31,8 +31,19 @@
 			<outputDirectory>./</outputDirectory>
 			<excludes>
 				<exclude>**/dummy.txt</exclude>
+                <exclude>bin/*.sh</exclude>
+                <exclude>bin/*.command</exclude>
 			</excludes>
 		</fileSet>
+		<fileSet>
+            <directory>template-controller/bin</directory>
+            <outputDirectory>./bin</outputDirectory>
+            <includes>
+                <include>*.sh</include>
+                <include>*.command</include>
+            </includes>
+            <fileMode>0744</fileMode>
+        </fileSet>
 	</fileSets>
 	<moduleSets>
 		<moduleSet>
