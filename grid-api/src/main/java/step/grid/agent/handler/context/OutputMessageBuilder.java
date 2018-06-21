@@ -36,6 +36,13 @@ import step.grid.io.AttachmentHelper;
 import step.grid.io.Measure;
 import step.grid.io.OutputMessage;
 
+/**
+ * A builder for OutputMessage instances.
+ * 
+ * @author Jérôme Comte
+ * @author Dorian Cransac
+ *
+ */
 public class OutputMessageBuilder {
 	
 	private JsonObjectBuilder payloadBuilder;
@@ -68,36 +75,89 @@ public class OutputMessageBuilder {
 		this.payloadBuilder = payloadBuilder;
 	}
 
-	public OutputMessageBuilder add(String arg0, boolean arg1) {
-		payloadBuilder.add(arg0, arg1);
+	/**
+	 * Adds an output attribute  
+	 * If the object contains a mapping for the specified name, this method replaces the old value with the specified value.
+	 * 
+	 * @param name the name of the output attribute
+	 * @param value the value of the output attribute
+	 * @return this instance
+	 */
+	public OutputMessageBuilder add(String name, boolean value) {
+		payloadBuilder.add(name, value);
 		return this;
 	}
 
-	public OutputMessageBuilder add(String arg0, double arg1) {
-		payloadBuilder.add(arg0, arg1);
+	/**
+	 * Adds an output attribute  
+	 * If the object contains a mapping for the specified name, this method replaces the old value with the specified value.
+	 * 
+	 * @param name the name of the output attribute
+	 * @param value the value of the output attribute
+	 * @return this instance
+	 */
+	public OutputMessageBuilder add(String name, double value) {
+		payloadBuilder.add(name, value);
 		return this;
 	}
 
-	public OutputMessageBuilder add(String arg0, int arg1) {
-		payloadBuilder.add(arg0, arg1);
+	/**
+	 * Adds an output attribute  
+	 * If the object contains a mapping for the specified name, this method replaces the old value with the specified value.
+	 * 
+	 * @param name the name of the output attribute
+	 * @param value the value of the output attribute
+	 * @return this instance
+	 */
+	public OutputMessageBuilder add(String name, int value) {
+		payloadBuilder.add(name, value);
+		return this;
+	}
+
+	/**
+	 * Adds an output attribute  
+	 * If the object contains a mapping for the specified name, this method replaces the old value with the specified value.
+	 * 
+	 * @param name the name of the output attribute
+	 * @param value the value of the output attribute
+	 * @return this instance
+	 */
+	public OutputMessageBuilder add(String name, long value) {
+		payloadBuilder.add(name, value);
 		return this;
 	}
 	
-	public OutputMessageBuilder add(String arg0, long arg1) {
-		payloadBuilder.add(arg0, arg1);
-		return this;
-	}
-	
-	public OutputMessageBuilder add(String arg0, String arg1) {
-		payloadBuilder.add(arg0, arg1);
+	/**
+	 * Adds an output attribute  
+	 * If the object contains a mapping for the specified name, this method replaces the old value with the specified value.
+	 * 
+	 * @param name the name of the output attribute
+	 * @param value the value of the output attribute
+	 * @return this instance
+	 */
+	public OutputMessageBuilder add(String name, String value) {
+		payloadBuilder.add(name, value);
 		return this;
 	}
 
+	/**
+	 * Reports a technical error.
+	 * 
+	 * @param technicalError the error message of the technical error
+	 * @return this instance
+	 */
 	public OutputMessageBuilder setError(String technicalError) {
 		error = technicalError;
 		return this;
 	}
 	
+	/**
+	 * Appends a technical error message.
+	 * Calling this method for the first time will have the same effect as calling setError
+	 * 
+	 * @param technicalError the error message of the technical error
+	 * @return this instance
+	 */
 	public OutputMessageBuilder appendError(String technicalError) {
 		if(error!=null) {
 			error += technicalError;			
@@ -107,25 +167,51 @@ public class OutputMessageBuilder {
 		return this;
 	}
 	
-	public String getPayloadJson() {
-		return payloadJson;
-	}
-
-	public void setPayloadJson(String payloadJson) {
-		this.payloadJson = payloadJson;
-	}
-
+	/**
+	 * Reports a technical error and appends the exception causing this error
+	 * as attachment
+	 * 
+	 * @param errorMessage the error message of the technical error
+	 * @param e the exception that caused the technical error
+	 * @return this instance
+	 */
 	public OutputMessageBuilder setError(String errorMessage, Throwable e) {
 		setError(errorMessage);
 		addAttachment(generateAttachmentForException(e));
 		return this;
 	}
+	
+	/**
+	 * @return the payload of this output. This has no eff
+	 * 
+	 */
+	public String getPayloadJson() {
+		return payloadJson;
+	}
 
+	/**
+	 * 
+	 * @param payloadJson
+	 */
+	public void setPayloadJson(String payloadJson) {
+		this.payloadJson = payloadJson;
+	}
+
+	/**
+	 * Adds attachments to the output
+	 * 
+	 * @param attachments the list of attachments to be added to the output
+	 */
 	public void addAttachments(List<Attachment> attachments) {
 		createAttachmentListIfNeeded();
 		attachments.addAll(attachments);
 	}
 
+	/**
+	 * Adds an attachment to the output
+	 * 
+	 * @param attachment the attachment to be added to the output
+	 */
 	public void addAttachment(Attachment attachment) {
 		createAttachmentListIfNeeded();
 		attachments.add(attachment);
@@ -137,26 +223,58 @@ public class OutputMessageBuilder {
 		}
 	}
 	
+	/**
+	 * Starts a performance measurement. The current time will be used as starttime
+	 * 
+	 * @param id a unique identifier of the measurement
+	 */
 	public void startMeasure(String id) {
 		measureHelper.startMeasure(id);
 	}
 
+	/**
+	 * Starts a performance measurement
+	 * 
+	 * @param id a unique identifier of the measurement
+	 * @param begin the start time of the measurement
+	 */
 	public void startMeasure(String id, long begin) {
 		measureHelper.startMeasure(id, begin);
 	}
 
+	/**
+	 * Adds a performance measurement
+	 * 
+	 * @param measureName a unique identifier of the measurement
+	 * @param durationMillis the duration of the measurement in ms
+	 */
 	public void addMeasure(String measureName, long durationMillis) {
 		measureHelper.addMeasure(measureName, durationMillis);
 	}
 	
+	/**
+	 * Adds a performance measurement with custom data
+	 * 
+	 * @param measureName a unique identifier of the measurement
+	 * @param durationMillis the duration of the measurement in ms
+	 * @param data the custom data of the measurement
+	 */
 	public void addMeasure(String measureName, long aDurationMillis, Map<String, Object> data) {
 		measureHelper.addMeasure(measureName, aDurationMillis, data);
 	}
 
+	/**
+	 * Stops the current performance measurement and adds it to the output
+	 */
 	public void stopMeasure() {
 		measureHelper.stopMeasure();
 	}
 
+	/**
+	 * Stops the current performance measurement and adds it to the output. 
+	 * 
+	 * @param data custom data to be added to the measurement
+	 */
 	public void stopMeasure(Map<String, Object> data) {
 		measureHelper.stopMeasure(data);
 	}
@@ -170,6 +288,11 @@ public class OutputMessageBuilder {
 		this.lastMeasureHandle = null;
 	}
 
+	/**
+	 * Builds the output instance
+	 * 
+	 * @return the output message
+	 */
 	public OutputMessage build() {
 		OutputMessage message = new OutputMessage();
 		JsonObject payload;
