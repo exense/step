@@ -49,11 +49,12 @@ import step.core.deployment.ApplicationServices;
 import step.core.deployment.AuthenticationFilter;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.ErrorFilter;
-import step.core.deployment.JacksonMapperProvider;
 import step.core.deployment.FileServices;
+import step.core.deployment.JacksonMapperProvider;
 import step.core.export.ExportServices;
 import step.core.export.ImportServices;
 import step.grid.agent.ArgumentParser;
+import step.plugins.events.EventBrokerServices;
 import step.plugins.interactive.InteractiveServices;
 
 
@@ -173,6 +174,7 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ApplicationServices.class);
 		resourceConfig.registerClasses(ControllerServices.class);
 		resourceConfig.registerClasses(InteractiveServices.class);
+		resourceConfig.registerClasses(EventBrokerServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
 		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);
