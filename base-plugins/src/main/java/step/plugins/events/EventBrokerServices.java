@@ -26,8 +26,8 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import step.core.deployment.AbstractServices;
@@ -60,18 +60,18 @@ public class EventBrokerServices extends AbstractServices {
 	}
 	
 	@GET
-	@Path("/event")
+	@Path("/event/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Event peekEvent(@QueryParam("id") String id) {
+	public Event peekEvent(@PathParam("id") String id) {
 		return eb.get(id);
 	}
 	
 	@DELETE
-	@Path("/event")
+	@Path("/event/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Event consumeEvent(String id) {
+	public Event consumeEvent(@PathParam("id") String id) {
 		Event ret = eb.get(id);
 		eb.remove(id);
 		return ret;

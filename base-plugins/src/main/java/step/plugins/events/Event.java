@@ -20,63 +20,45 @@ package step.plugins.events;
 
 import java.util.Map;
 
-/**
- * @author doriancransac
- *
- */
 public class Event {
 	
 	private String id;
 	private String name;
 	private String group;
-	private Map<String, Object> meta;
+	private Map<String, Object> payload;
 
-	/**
-	 * @return the id
-	 */
 	public String getId() {
 		return id;
 	}
-	/**
-	 * @param id the id to set
-	 */
+
 	public Event setId(String id) {
 		this.id = id;
 		return this;
 	}
-	/**
-	 * @return the name
-	 */
+
 	public String getName() {
 		return name;
 	}
-	/**
-	 * @param name the name to set
-	 */
+
 	public Event setName(String name) {
 		this.name = name;
 		return this;
 	}
-	/**
-	 * @return the group
-	 */
+
 	public String getGroup() {
 		return group;
 	}
 	
-	/**
-	 * @param group the group to set
-	 */
 	public Event setGroup(String group) {
 		this.group = group;
 		return this;
 	}
-	public Map<String, Object> getMeta() {
-		return meta;
+	public Map<String, Object> getPayload() {
+		return payload;
 	}
 	
-	public Event setMeta(Map<String, Object> meta) {
-		this.meta = meta;
+	public Event setPayload(Map<String, Object> payload) {
+		this.payload = payload;
 		return this;
 	}
 
@@ -86,7 +68,7 @@ public class Event {
 				.append("id=").append(id).append(",")
 				.append("group=").append(group).append(",")
 				.append("name=").append(name).append(",")
-				.append("meta=").append(meta)
+				.append("payload=").append(payload)
 				.append("}")
 				.toString();
 	}
