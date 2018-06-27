@@ -8,3 +8,4 @@ target/
 .project
 node_modules/
 bower_components/
+.DS_Store
