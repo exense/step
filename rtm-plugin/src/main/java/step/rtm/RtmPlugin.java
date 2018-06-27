@@ -54,7 +54,7 @@ public class RtmPlugin extends AbstractPlugin {
 		} else {
 			File warFile = new File(war);
 			if(!warFile.exists()||!warFile.canRead()) {
-				throw new RuntimeException("The file '"+war+"' set by the property 'plugins.rtm.war' doesn't exist or cannot be read. Unable to start RTM.");	
+				throw new RuntimeException("The file '"+war+"' with absolute path '"+warFile.getAbsolutePath()+"' set by the property 'plugins.rtm.war' doesn't exist or cannot be read. Unable to start RTM.");	
 			}
 		}
 		webappCtx.setWar(war);
