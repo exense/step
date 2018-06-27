@@ -20,6 +20,7 @@ package step.plugins.events;
 
 import java.util.UUID;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -30,7 +31,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import step.core.accessors.CRUDAccessor;
 import step.core.deployment.AbstractServices;
+import step.plugins.parametermanager.Parameter;
 
 @Singleton
 @Path("/eventbroker")
@@ -40,7 +43,11 @@ public class EventBrokerServices extends AbstractServices {
 	
 	public EventBrokerServices(){
 		super();
-		eb = new EventBroker();
+	}
+	
+	@PostConstruct
+	public void init() {
+		eb = (EventBroker) getContext().get(EventBroker.class);
 	}
 	
 	@GET

@@ -174,7 +174,6 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ApplicationServices.class);
 		resourceConfig.registerClasses(ControllerServices.class);
 		resourceConfig.registerClasses(InteractiveServices.class);
-		resourceConfig.registerClasses(EventBrokerServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
 		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);
