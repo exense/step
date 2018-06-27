@@ -71,7 +71,7 @@ angular.module('artefacts',['step'])
   artefactTypes.register('For',{icon:'glyphicon-th', form:'partials/artefacts/for.html'});
   artefactTypes.register('ForEach',{icon:'glyphicon-th', form:'partials/artefacts/forEach.html'});
   artefactTypes.register('While',{icon:'glyphicon-repeat', form:'partials/artefacts/while.html'});
-  artefactTypes.register('WaitAndPoll',{icon:'glyphicon-repeat', form:'partials/artefacts/waitAndPoll.html'});
+  artefactTypes.register('WaitForEvent',{icon:'glyphicon-exclamation-sign', form:'partials/artefacts/waitForEvent.html'});
   artefactTypes.register('DataSet',{icon:'glyphicon-th-large', form:'partials/artefacts/dataSet.html'});
   artefactTypes.register('Synchronized',{icon:'glyphicon-align-justify', form:'partials/artefacts/synchronized.html'});
   artefactTypes.register('Sequence',{icon:'glyphicon-align-justify', form:'partials/artefacts/sequence.html'});
@@ -85,7 +85,7 @@ angular.module('artefacts',['step'])
   artefactTypes.register('ThreadGroup',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html'});
   artefactTypes.register('Switch',{icon:'glyphicon-option-vertical', form:'partials/artefacts/switch.html'});
   artefactTypes.register('Case',{icon:'glyphicon-minus', form:'partials/artefacts/case.html'});
-  artefactTypes.register('RetryIfFails',{icon:'glyphicon-th', form:'partials/artefacts/retryIfFails.html'});
+  artefactTypes.register('RetryIfFails',{icon:'glyphicon-retweet', form:'partials/artefacts/retryIfFails.html'});
   artefactTypes.register('Check',{icon:'glyphicon-ok', form:'partials/artefacts/check.html'});
   artefactTypes.register('Assert',{icon:'glyphicon-ok', form:'partials/artefacts/assert.html'});
   artefactTypes.register('Placeholder',{icon:'glyphicon-unchecked', form:'partials/artefacts/placeholder.html'});

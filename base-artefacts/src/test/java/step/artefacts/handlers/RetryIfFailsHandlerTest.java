@@ -81,6 +81,32 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 	}
 	
 	@Test
+	public void testTimeout() {
+		setupContext();
+		
+		RetryIfFails block = add(new RetryIfFails());
+		block.setTimeout(new DynamicValue<Integer>(200));
+		block.setGracePeriod(new DynamicValue<Integer>(50));
+		
+		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(300);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}), block);
+				
+		execute(block);
+		
+		ReportNode child = getFirstReportNode();
+		Assert.assertTrue(child.getDuration()>=250);
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+	}
+	
+	@Test
 	public void testFalse() {
 		setupContext();
 		

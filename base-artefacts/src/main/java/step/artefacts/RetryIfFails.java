@@ -27,9 +27,11 @@ import step.core.dynamicbeans.DynamicValue;
 public class RetryIfFails extends AbstractArtefact {
 	
 	DynamicValue<Integer> maxRetries = new DynamicValue<Integer>(1);
-	
+		
 	DynamicValue<Integer> gracePeriod = new DynamicValue<Integer>(1000);
 
+	DynamicValue<Integer> timeout = new DynamicValue<Integer>(0);
+	
 	public DynamicValue<Integer> getMaxRetries() {
 		return maxRetries;
 	}
@@ -44,6 +46,14 @@ public class RetryIfFails extends AbstractArtefact {
 
 	public void setGracePeriod(DynamicValue<Integer> gracePeriod) {
 		this.gracePeriod = gracePeriod;
+	}
+
+	public DynamicValue<Integer> getTimeout() {
+		return timeout;
+	}
+
+	public void setTimeout(DynamicValue<Integer> timeout) {
+		this.timeout = timeout;
 	}
 
 }
