@@ -35,6 +35,12 @@ public class ThreadGroup extends AbstractArtefact {
 	DynamicValue<Integer> pacing = new DynamicValue<Integer>(null);
 
 	DynamicValue<Integer> startOffset = new DynamicValue<Integer>(0);
+	
+	DynamicValue<String> item = new DynamicValue<String>("gcounter");
+	
+	DynamicValue<String> localItem = new DynamicValue<String>("literationId");
+
+	DynamicValue<String> userItem = new DynamicValue<String>("userId");
 
 	public DynamicValue<Integer> getUsers() {
 		return users;
@@ -74,6 +80,30 @@ public class ThreadGroup extends AbstractArtefact {
 
 	public void setStartOffset(DynamicValue<Integer> startOffset) {
 		this.startOffset = startOffset;
+	}
+
+	public DynamicValue<String> getItem() {
+		return item;
+	}
+
+	public void setItem(DynamicValue<String> item) {
+		this.item = item;
+	}
+
+	public DynamicValue<String> getLocalItem() {
+		return localItem;
+	}
+
+	public void setLocalItem(DynamicValue<String> localItem) {
+		this.localItem = localItem;
+	}
+
+	public DynamicValue<String> getUserItem() {
+		return userItem;
+	}
+
+	public void setUserItem(DynamicValue<String> userItem) {
+		this.userItem = userItem;
 	}
 	
 

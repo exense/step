@@ -3,6 +3,9 @@
 	<form>		
 		<dynamic-textfield label="'Number of threads'" on-save="save()" dynamic-value="artefact.users" />
 		<dynamic-textfield label="'Number of iterations per thread'" on-save="save()" dynamic-value="artefact.iterations" />
+		<dynamic-textfield label="'Local iterationId variable (handle)'" on-save="save()" dynamic-value="artefact.localItem" />
+		<dynamic-textfield label="'UserId variable (handle)'" on-save="save()" dynamic-value="artefact.userItem" />
+		<dynamic-textfield label="'Global counter variable (handle)'" on-save="save()" dynamic-value="artefact.item" />
 		<div class="panel panel-default">
 			<div class="panel-heading">
 				<a ng-click="showLoadDistribution = !showLoadDistribution">Load distribution parameters</a>

@@ -18,9 +18,11 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 
 import step.artefacts.Sequence;
 import step.artefacts.ThreadGroup;
@@ -57,10 +59,17 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			rampup = pacing;
 		}
 		
+		// Attach global iteration counter & user counter
+		LongAdder gcounter = new LongAdder();
+		// Using bindings instead
+		//context.getVariablesManager().putVariable(node, testArtefact.getItem().get(), gcounter);
+		
 		ExecutorService executor = Executors.newFixedThreadPool(numberOfUsers);
 		try {
+			
+			// -- Paralellize --
 			for(int j=0;j<numberOfUsers;j++) {
-				final int groupID = j;
+				final int groupID = j;				
 				final long localStartOffset = testArtefact.getStartOffset().get()+(long)((1.0*groupID)/numberOfUsers*rampup);
 				executor.submit(new Runnable() {
 					public void run() {
@@ -69,8 +78,12 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 						ReportNode iterationReportNode = null;
 						try {
 							Thread.sleep(localStartOffset);
+							
+							// -- Iterate --
 							for(int i=0;i<numberOfIterations;i++) {
 								long startTime = System.currentTimeMillis();
+								
+								gcounter.increment();
 								
 								if(context.isInterrupted()) {
 									break;
@@ -82,8 +95,14 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 								for(AbstractArtefact child:getChildren(testArtefact)) {
 									iterationTestCase.addChild(child.getId());
 								}
+								
+								HashMap<String, Object> newVariable = new HashMap<>();
+								newVariable.put(testArtefact.getLocalItem().get(), i);
+								newVariable.put(testArtefact.getUserItem().get(), groupID);
+								//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
+								newVariable.put(testArtefact.getItem().get(), gcounter.intValue());
 
-								iterationReportNode = delegateExecute(iterationTestCase, node);
+								iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
 								
 								if(pacing!=0) {
 									long endTime = System.currentTimeMillis();
