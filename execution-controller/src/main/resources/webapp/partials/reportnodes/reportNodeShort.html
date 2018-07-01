@@ -32,13 +32,13 @@
 	<div ng-if="node._class=='step.artefacts.reports.AssertReportNode'">
 		<div ng-if="node.message"><small><em>{{node.message}}}}</em></small></div>
 	</div>
-	<div ng-if="node.resolvedArtefact._class=='Set' && node.resolvedArtefact.key.value">
-		<div>{{node.resolvedArtefact.key.value}} = {{node.resolvedArtefact.value.value}}</div>
+	<div ng-if="node.resolvedArtefact._class=='Set'">
+		<div>{{node.key}} = {{node.value}}</div>
 	</div>
 	<div ng-if="node.error">Error: <small><em>{{node.error.msg}}
 		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>	
 	</div>
 	<div uib-collapse="!isShowDetails">
-		<reportnode node='reportNode' />
+		<reportnode node='reportNode' show-artefact="true" />
 	</div>
 </div>

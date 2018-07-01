@@ -22,7 +22,8 @@ angular.module('reportNodes',['step','artefacts'])
   return {
     restrict: 'E',
     scope: {
-      node: '='
+      node: '=',
+      showArtefact: '='
     },
     templateUrl: 'partials/reportnodes/reportNode.html',
     controller: function($scope, $http) {
@@ -54,11 +55,12 @@ angular.module('reportNodes',['step','artefacts'])
     scope: {
       node: '=',
       executionViewServices: '=',
-      includeStatus: '='
+      includeStatus: '=',
+      showDetails: '='
     },
     templateUrl: 'partials/reportnodes/reportNodeShort.html',
     controller: function($scope,$http,artefactTypes) {
-      $scope.isShowDetails = false;
+      $scope.isShowDetails = $scope.showDetails;
       
       $scope.artefactTypes = artefactTypes;
       $scope.concatenate = function(map) {
@@ -69,15 +71,21 @@ angular.module('reportNodes',['step','artefacts'])
         return result.substring(0,result.length-1);
       };
       
-      $scope.toggleDetails = function() {
-        $scope.isShowDetails = !$scope.isShowDetails;
-        if($scope.isShowDetails) {
+      // The format of the node serialized by the DataTableService differs 
+      // from the serialization format of the REST service /controller/reportnode
+      // For this reason we're unfortunately forced to retrieve the ReportNode again.
+      // The serialization format should be uniformed in the future
+      $scope.$watch('node',function(node, oldStatus) {
+        if(node) {
           var id = $scope.node._id.$oid?$scope.node._id.$oid:$scope.node.id;
           $http.get('rest/controller/reportnode/'+id).then(function(response) {
             $scope.reportNode = response.data;
-            $scope.isShowDetails = true;
           })
         }
+      })
+       
+      $scope.toggleDetails = function() {
+        $scope.isShowDetails = !$scope.isShowDetails;
       }
     }
   };
