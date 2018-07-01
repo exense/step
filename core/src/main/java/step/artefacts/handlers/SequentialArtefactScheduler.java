@@ -43,7 +43,7 @@ public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefac
 	}
 	
 	public void execute_(ReportNode node, AbstractArtefact testArtefact, Boolean continueOnError) {
-		ReportNodeStatus parentResultStatus = node.getStatus(); 
+		ReportNodeStatus resultStatus = null; 
 		try {			
 			for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact, context)) {
 				if(context.isInterrupted()) {
@@ -51,8 +51,8 @@ public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefac
 				}
 				ReportNode resultNode = ArtefactHandler.delegateExecute(context, child, node);
 				
-				if(parentResultStatus==null || resultNode.getStatus().ordinal()<parentResultStatus.ordinal()) {
-					parentResultStatus = resultNode.getStatus();
+				if(resultStatus==null || resultNode.getStatus().ordinal()<resultStatus.ordinal()) {
+					resultStatus = resultNode.getStatus();
 				}
 				
 				Boolean continueOnce = null;
@@ -92,7 +92,11 @@ public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefac
 				if(context.isInterrupted()) {
 					node.setStatus(ReportNodeStatus.INTERRUPTED);
 				} else {
-					node.setStatus(parentResultStatus);					
+					// Setting the result node status to PASSED when no children nodes have been executed
+					if(resultStatus == null) {
+						resultStatus = ReportNodeStatus.PASSED;
+					}
+					node.setStatus(resultStatus);						
 				}
 			}
 		}
