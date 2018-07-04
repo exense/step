@@ -16,7 +16,7 @@ public class FileHelperTest {
 
 	@Test
 	public void testDeleteOnExitReucrsive() throws IOException {
-		File dir = new File("./FileHelperTestFolder/");
+		File dir = new File("./FileHelperTestFolder1/");
 		dir.mkdir();
 		
 		File f1 = new File(dir.getAbsolutePath()+"/f1");
@@ -33,7 +33,7 @@ public class FileHelperTest {
 	
 	@Test
 	public void testComputeLastModificationDateRecursive() throws IOException {
-		File dir = new File("FileHelperTestFolder/");
+		File dir = new File("FileHelperTestFolder2/");
 		dir.mkdir();
 		dir.deleteOnExit();
 		
@@ -74,7 +74,7 @@ public class FileHelperTest {
 	
 	@Test
 	public void testGetLastModificationDateFromCache() throws IOException, InterruptedException {
-		File dir = new File("FileHelperTestFolder2/");
+		File dir = new File("FileHelperTestFolder3/");
 		dir.mkdir();
 		dir.deleteOnExit();
 		
