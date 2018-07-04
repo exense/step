@@ -28,7 +28,6 @@ import step.artefacts.Check;
 import step.artefacts.Script;
 import step.artefacts.Sequence;
 import step.artefacts.Set;
-import step.artefacts.testutils.AbstractArtefactHandlerTest;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
