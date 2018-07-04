@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import step.artefacts.CallPlan;
 import step.artefacts.CheckArtefact;
+import step.artefacts.testutils.AbstractArtefactHandlerTest;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ContextBuilder;

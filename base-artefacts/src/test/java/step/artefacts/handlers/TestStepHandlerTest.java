@@ -22,6 +22,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import step.artefacts.testutils.AbstractArtefactHandlerTest;
+
 @RunWith(MockitoJUnitRunner.class)  
 public class TestStepHandlerTest extends AbstractArtefactHandlerTest {
 	

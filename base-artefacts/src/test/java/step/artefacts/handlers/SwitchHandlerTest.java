@@ -26,6 +26,7 @@ import step.artefacts.Case;
 import step.artefacts.IfBlock;
 import step.artefacts.Set;
 import step.artefacts.Switch;
+import step.artefacts.testutils.AbstractArtefactHandlerTest;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;

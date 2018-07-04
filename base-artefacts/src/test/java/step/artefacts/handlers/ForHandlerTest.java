@@ -27,6 +27,7 @@ import org.junit.Test;
 import step.artefacts.CheckArtefact;
 import step.artefacts.ForBlock;
 import step.artefacts.reports.ForBlockReportNode;
+import step.artefacts.testutils.AbstractArtefactHandlerTest;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;

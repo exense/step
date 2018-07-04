@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.artefacts.handlers;
+package step.artefacts.testutils;
 
 import java.util.List;
 import java.util.Spliterator;

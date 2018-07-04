@@ -31,6 +31,7 @@ import step.artefacts.Assert;
 import step.artefacts.Assert.AssertOperator;
 import step.artefacts.reports.AssertReportNode;
 import step.artefacts.reports.CallFunctionReportNode;
+import step.artefacts.testutils.AbstractArtefactHandlerTest;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 

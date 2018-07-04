@@ -23,6 +23,7 @@ import static junit.framework.Assert.assertEquals;
 import org.junit.Test;
 
 import step.artefacts.Sequence;
+import step.artefacts.testutils.AbstractArtefactHandlerTest;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
