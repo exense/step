@@ -64,8 +64,7 @@ public class EventBrokerServices extends AbstractServices {
 	public Event putEvent(Event event) {
 		if(event != null)
 			event.setSubmitionTimestamp(System.currentTimeMillis());
-		eb.put(event);
-		return event;
+		return eb.put(event);
 	}
 	
 	@GET
@@ -74,8 +73,6 @@ public class EventBrokerServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event peekEvent(@PathParam("id") String id) {
 		Event event = eb.get(id);
-		if(event != null)
-			event.setReceptionTimestamp(System.currentTimeMillis());
 		return event;
 	}
 	
@@ -85,7 +82,8 @@ public class EventBrokerServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event consumeEvent(@PathParam("id") String id) {
 		Event ret = eb.get(id);
-		ret.setReceptionTimestamp(System.currentTimeMillis());
+		if(ret != null)
+			ret.setDeletionTimestamp(System.currentTimeMillis());
 		eb.remove(id);
 		return ret;
 	}

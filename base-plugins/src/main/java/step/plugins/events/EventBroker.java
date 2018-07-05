@@ -19,6 +19,7 @@
 package step.plugins.events;
 
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -33,10 +34,12 @@ public class EventBroker {
 		events = new ConcurrentHashMap<String, Event>();
 	}
 
-	public void put(Event event){
+	public Event put(Event event){
+		String uuid = UUID.randomUUID().toString();
 		if(event == null || event.getId() == null || event.getId().isEmpty())
-			throw new RuntimeException("Null or empty event or event id.");
+			events.put(uuid, event.setId(uuid));
 		events.put(event.getId(), event);
+		return event;
 	}
 	
 	public void clear(){

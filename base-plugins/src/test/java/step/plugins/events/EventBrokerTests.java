@@ -58,4 +58,11 @@ public class EventBrokerTests {
 		Assert.assertEquals(false,eb.hasEvent("123"));
 		Assert.assertEquals(false,eb.hasEvent("myGroup", "toto"));
 	}
+	
+	@Test
+	public void testNoId(){
+		Event e = eb.put(new Event().setGroup("abc").setName("def"));
+		Assert.assertNotNull(e.getId());
+		Assert.assertEquals(false, e.getId().isEmpty());
+	}
 }
