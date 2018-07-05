@@ -47,7 +47,7 @@ public class EventBroker {
 		if(!hasEvent(id))
 			return null;
 		else
-			return events.get(id);
+			return events.get(id).setLastReadTimestamp(System.currentTimeMillis());
 	}
 
 	public boolean hasEvent(String id){
@@ -62,9 +62,10 @@ public class EventBroker {
 	}
 
 	public Event get(String group, String name){
-		return events.get(lookup(group, name));
+		return get(lookup(group, name));
 	}
 
+	//TODO: see Event class (deletionTimestamp)
 	public void remove(String id){
 		events.remove(id);
 	}

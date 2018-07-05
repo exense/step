@@ -26,6 +26,25 @@ public class Event {
 	private String name;
 	private String group;
 	private Map<String, Object> payload;
+	
+	private final long creationTimestamp;
+	
+	private long submitionTimestamp;
+	private long receptionTimestamp;
+	
+	private long insertionTimestamp;
+	/* TODO
+	 * Currently unused to prevent mem leak
+	 * The signature of remove() needs to return a copy of the event
+	 * Which in turn requires a deep copy of the event payload to avoid accumulation in the ReportNodeCache
+	 */
+	private long deletionTimestamp;
+	
+	private long lastReadTimestamp;
+	
+	public Event(){
+		creationTimestamp = System.currentTimeMillis();
+	}
 
 	public String getId() {
 		return id;
@@ -72,4 +91,54 @@ public class Event {
 				.append("}")
 				.toString();
 	}
+
+	public long getCreationTimestamp() {
+		return creationTimestamp;
+	}
+
+	public long getSubmitionTimestamp() {
+		return submitionTimestamp;
+	}
+
+	public Event setSubmitionTimestamp(long submitionTimestamp) {
+		this.submitionTimestamp = submitionTimestamp;
+		return this;
+	}
+
+	public long getReceptionTimestamp() {
+		return receptionTimestamp;
+	}
+
+	public Event setReceptionTimestamp(long receptionTimestamp) {
+		this.receptionTimestamp = receptionTimestamp;
+		return this;
+	}
+
+	public long getInsertionTimestamp() {
+		return insertionTimestamp;
+	}
+
+	public Event setInsertionTimestamp(long insertionTimestamp) {
+		this.insertionTimestamp = insertionTimestamp;
+		return this;
+	}
+
+	public long getDeletionTimestamp() {
+		return deletionTimestamp;
+	}
+
+	public Event setDeletionTimestamp(long deletionTimestamp) {
+		this.deletionTimestamp = deletionTimestamp;
+		return this;
+	}
+
+	public long getLastReadTimestamp() {
+		return lastReadTimestamp;
+	}
+
+	public Event setLastReadTimestamp(long lastReadTimestamp) {
+		this.lastReadTimestamp = lastReadTimestamp;
+		return this;
+	}
+
 }
