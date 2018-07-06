@@ -35,9 +35,10 @@ public class EventBroker {
 	}
 
 	public Event put(Event event){
-		String uuid = UUID.randomUUID().toString();
-		if(event == null || event.getId() == null || event.getId().isEmpty())
+		if(event == null || event.getId() == null || event.getId().isEmpty()){
+			String uuid = UUID.randomUUID().toString();
 			events.put(uuid, event.setId(uuid));
+		}
 		events.put(event.getId(), event);
 		return event;
 	}
