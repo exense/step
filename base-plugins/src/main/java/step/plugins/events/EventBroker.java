@@ -86,8 +86,14 @@ public class EventBroker {
 		try{
 			id = events.values().stream().filter(v -> 
 			{
-				if(v.getGroup().equals(group) && v.getName().equals(name))
-					return true;
+				if(v.getGroup().equals(group)){
+					if(name == null || name.isEmpty())
+						return true;
+					else{
+						if(v.getName().equals(name))
+							return true;
+					}
+				}
 				return false;
 			}).findAny().get().getId();
 		}catch(NoSuchElementException e){}
@@ -96,5 +102,10 @@ public class EventBroker {
 	}
 	public String toString(){
 		return events.toString();
+	}
+
+	public void clearGroup(String group) {
+		while(hasEvent(group, null))
+			remove(lookup(group, null));
 	}
 }

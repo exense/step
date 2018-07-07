@@ -91,6 +91,22 @@ public class EventBrokerServices extends AbstractServices {
 		return event;
 	}
 
+
+	@DELETE
+	@Path("/event/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Event consumeEvent(@PathParam("id") String id) {
+		Event ret = eb.get(id);
+		if(ret != null)
+			ret.setDeletionTimestamp(System.currentTimeMillis());
+		synchronized(eb){
+			eb.remove(id);
+		}
+		return ret;
+	}
+
+
 	@DELETE
 	@Path("/event/group/{group}/name/{name}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -112,20 +128,34 @@ public class EventBrokerServices extends AbstractServices {
 	@Path("/events")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String clear(String id) {
-		eb.clear();
+	public String clear() {
+		synchronized(eb){
+			eb.clear();
+		}
 		return "{ \"status\" : \"success\"}";
 	}
 
+	@DELETE
+	@Path("/events/group/{group}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String clearGroup(@PathParam("group") String group) {
+		synchronized(eb){
+			eb.clearGroup(group);
+		}
+		return "{ \"status\" : \"success\"}";
+	}
 
 	//For test purposes
 	@GET
 	@Path("/magicevent")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Event magicPutEvent() {
-		return putEvent(new Event()
-				.setId(UUID.randomUUID().toString())
-				.setName("hello")
-				.setGroup("testGroup"));
+		synchronized(eb){
+			return putEvent(new Event()
+					.setId(UUID.randomUUID().toString())
+					.setName("hello")
+					.setGroup("testGroup"));
+		}
 	}
 }
