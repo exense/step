@@ -81,6 +81,10 @@ public class EventBroker {
 	//TODO: add and maintain a group-name multimap index for faster lookups
 	//TODO: regex support? contains instead of equals?
 	public String lookup(String group, String name){
+		
+		if(group == null)
+			throw new RuntimeException("group can not be null.");
+		
 		String id = null;
 		
 		try{
