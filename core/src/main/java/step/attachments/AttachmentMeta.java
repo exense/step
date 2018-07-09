@@ -39,6 +39,10 @@ public class AttachmentMeta {
 	public ObjectId getId() {
 		return _id;
 	}
+	
+	public void setId(ObjectId id) {
+		this._id = id;
+	}
 
 	public String getName() {
 		return name;
