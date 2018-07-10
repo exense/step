@@ -191,7 +191,7 @@ public class OutputMessageBuilder {
 
 	/**
 	 * 
-	 * @param payloadJson
+	 * @param payloadJson the payload of this output.
 	 */
 	public void setPayloadJson(String payloadJson) {
 		this.payloadJson = payloadJson;
@@ -256,7 +256,7 @@ public class OutputMessageBuilder {
 	 * Adds a performance measurement with custom data
 	 * 
 	 * @param measureName a unique identifier of the measurement
-	 * @param durationMillis the duration of the measurement in ms
+	 * @param aDurationMillis the duration of the measurement in ms
 	 * @param data the custom data of the measurement
 	 */
 	public void addMeasure(String measureName, long aDurationMillis, Map<String, Object> data) {
