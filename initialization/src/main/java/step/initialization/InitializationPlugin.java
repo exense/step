@@ -34,6 +34,7 @@ import javax.json.JsonObject;
 
 import org.bson.Document;
 import org.jongo.MongoCollection;
+import org.jongo.MongoCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +73,8 @@ public class InitializationPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		MongoCollection controllerLogs = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "controllerlogs");
 		
+		checkVersion(context, controllerLogs);
+		
 		long runCounts = controllerLogs.count();
 		
 		if(runCounts==0) {
@@ -96,7 +99,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		// This should only be executed when migrating from 3.3 to 3.4...
 		// setArtefactNameIfEmpty(context);
 		
-		insertLogEntry(controllerLogs);
+		insertLogEntry(context, controllerLogs);
 				
 		super.executionControllerStart(context);
 	}
@@ -254,10 +257,31 @@ public class InitializationPlugin extends AbstractPlugin {
 		}
 	}
 	
-	private void insertLogEntry(MongoCollection controllerLogs) {
+	private void insertLogEntry(GlobalContext context, MongoCollection controllerLogs) {
 		ControllerLog logEntry = new ControllerLog();
 		logEntry.setStart(new Date());
+		logEntry.setVersion(context.getCurrentVersion());
 		controllerLogs.insert(logEntry);
+	}
+	
+	private void checkVersion(GlobalContext context, MongoCollection controllerLogs) {
+		MongoCursor<ControllerLog> cursor = controllerLogs.find().sort("{start:-1}").as(ControllerLog.class);
+		if(cursor.count()>0) {
+			ControllerLog latestLog = controllerLogs.find().sort("{start:-1}").as(ControllerLog.class).next();
+			logger.info("Last start of the controller: "+ latestLog.toString());
+			if(latestLog.getVersion()!=null) {
+				if(context.getCurrentVersion().compareTo(latestLog.getVersion())>0) {
+					// TODO run migration scripts
+					logger.info("Starting controller with a newer version. Current version is "
+							+context.getCurrentVersion()+". Version of last start was "+latestLog.getVersion());
+				} else if (context.getCurrentVersion().compareTo(latestLog.getVersion())<0) {
+					logger.info("Starting controller with an older version. Current version is "
+							+context.getCurrentVersion()+". Version of last start was "+latestLog.getVersion());
+				}
+			}					
+		} else {
+			logger.info("No start log found. Starting the controller for the first time against this DB...");
+		}
 	}
 	
 //	private void setupExecuteProcessFunction(GlobalContext context) {		

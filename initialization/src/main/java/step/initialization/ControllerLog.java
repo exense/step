@@ -20,11 +20,13 @@ package step.initialization;
 
 import java.util.Date;
 
+import step.core.Version;
+
 public class ControllerLog {
 
 	private Date start;
 	
-	private String version;
+	private Version version;
 
 	public ControllerLog() {
 		super();
@@ -38,12 +40,16 @@ public class ControllerLog {
 		this.start = start;
 	}
 
-	public String getVersion() {
+	public Version getVersion() {
 		return version;
 	}
 
-	public void setVersion(String version) {
+	public void setVersion(Version version) {
 		this.version = version;
 	}
 
+	@Override
+	public String toString() {
+		return "ControllerLog [start=" + start + ", version=" + version + "]";
+	}
 }

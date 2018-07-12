@@ -217,4 +217,9 @@ public class GlobalContext extends AbstractContext {
 		this.attachmentManager = attachmentManager;
 	}
 	
+	public Version getCurrentVersion() {
+		// TODO read this from manifest
+		return new Version(3,7,3);
+	}
+	
 }
