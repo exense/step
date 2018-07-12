@@ -41,6 +41,9 @@ public class ScreenTemplateServiceTest {
 
 			@Override
 			public void registerHandler(Handler handler) {}
+
+			@Override
+			public void stop() {}
 		});
 		ScreenTemplatePlugin s = new ScreenTemplatePlugin();
 		s.executionControllerStart(dummyContext);

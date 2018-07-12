@@ -18,7 +18,9 @@
  *******************************************************************************/
 package step.commons.conf;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -27,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import step.commons.helpers.FileHelper;
 
-public class FileWatchService extends Thread {
+public class FileWatchService extends Thread implements Closeable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(FileWatchService.class);
 		
@@ -60,7 +62,7 @@ public class FileWatchService extends Thread {
 		super.run();
 		
 		try {
-			while(true) {
+			while(running) {
 				Thread.sleep(interval);
 				
 				synchronized (subscriptions) {
@@ -112,5 +114,12 @@ public class FileWatchService extends Thread {
 			logger.debug("Unregistering file " + file);
 			subscriptions.remove(file);
 		}
+	}
+
+	private volatile boolean running = true;
+	
+	@Override
+	public void close() throws IOException {
+		running = false;
 	}
 }

@@ -63,7 +63,20 @@ import step.core.scheduler.ExecutiontTaskParameters;
 @Singleton
 @Path("controller")
 public class ControllerServices extends AbstractServices {
-
+	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/shutdown")
+	@Secured(right="admin")
+	public void shutdown() {
+		new Thread() {
+			@Override
+			public void run() {
+				controller.destroy();
+			}
+		};
+	}
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/task")

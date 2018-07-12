@@ -24,6 +24,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -100,6 +101,13 @@ public class InteractiveServices extends AbstractServices {
 				});
 			}
 		}, 60000, 60000);
+	}
+	
+	@PreDestroy
+	private void close() {
+		if(sessionExpirationTimer != null) {
+			sessionExpirationTimer.cancel();
+		}
 	}
 
 	@POST
