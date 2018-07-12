@@ -74,7 +74,7 @@ public class ControllerServices extends AbstractServices {
 			public void run() {
 				controller.destroy();
 			}
-		};
+		}.start();;
 	}
 	
 	@POST
