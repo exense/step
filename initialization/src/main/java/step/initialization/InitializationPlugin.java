@@ -87,10 +87,14 @@ public class InitializationPlugin extends AbstractPlugin {
 		migrateGeneralScriptFunctions(context);
 		
 		// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
-		renameArtefactType(context, "FunctionGroup", "Session");
-		renameArtefactType(context, "CallFunction", "CallKeyword");
+		// Because of the performance impact of this process we're commenting this out
+		// renameArtefactType(context, "FunctionGroup", "Session");
+		// renameArtefactType(context, "CallFunction", "CallKeyword");
 		
-		setArtefactNameIfEmpty(context);
+		// The following has been used for the migration from 3.3.x to 3.4.x or higher 
+		// Because of the performance impact of this process we're commenting this out
+		// This should only be executed when migrating from 3.3 to 3.4...
+		// setArtefactNameIfEmpty(context);
 		
 		insertLogEntry(controllerLogs);
 				
