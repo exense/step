@@ -22,7 +22,7 @@ angular.module('reportNodes',['step','artefacts'])
   return {
     restrict: 'E',
     scope: {
-      node: '=',
+      id: '=',
       showArtefact: '='
     },
     templateUrl: 'partials/reportnodes/reportNode.html',
@@ -34,14 +34,18 @@ angular.module('reportNodes',['step','artefacts'])
       }
       
       $scope.children = [];
-      $scope.$watch('node',function(node, oldStatus) {
-        if(node) {
-          $scope.reportNodeType = (node._class in reportNodeTypes)?reportNodeTypes[node._class]:reportNodeTypes['Default'];
-          $http.get('rest/controller/reportnode/'+node.id+"/children").then(function(response) {
-            $scope.children = response.data;
-          })
-          $http.get('rest/controller/artefact/'+node.artefactID).then(function(response) {
-            $scope.artefact = response.data;
+      $scope.$watch('id',function(nodeId) {
+        if(nodeId) {
+          $http.get('rest/controller/reportnode/'+nodeId).then(function(response) {
+            var node = response.data;
+            $scope.node = node;
+            $scope.reportNodeType = (node._class in reportNodeTypes)?reportNodeTypes[node._class]:reportNodeTypes['Default'];
+            $http.get('rest/controller/reportnode/'+node.id+"/children").then(function(response) {
+              $scope.children = response.data;
+            })
+            $http.get('rest/controller/artefact/'+node.artefactID).then(function(response) {
+              $scope.artefact = response.data;
+            })
           })
         }
       })
@@ -70,17 +74,13 @@ angular.module('reportNodes',['step','artefacts'])
         });
         return result.substring(0,result.length-1);
       };
-      
-      // The format of the node serialized by the DataTableService differs 
-      // from the serialization format of the REST service /controller/reportnode
-      // For this reason we're unfortunately forced to retrieve the ReportNode again.
-      // The serialization format should be uniformed in the future
       $scope.$watch('node',function(node, oldStatus) {
         if(node) {
-          var id = $scope.node._id.$oid?$scope.node._id.$oid:$scope.node.id;
-          $http.get('rest/controller/reportnode/'+id).then(function(response) {
-            $scope.reportNode = response.data;
-          })
+          // The format of the node serialized by the DataTableService differs 
+          // from the serialization format of the REST service /controller/reportnode
+          // For this reason we're unfortunately forced to retrieve the ReportNode again.
+          // The serialization format should be uniformed in the future
+          $scope.reportNodeId = $scope.node._id.$oid?$scope.node._id.$oid:$scope.node.id;
         }
       })
        

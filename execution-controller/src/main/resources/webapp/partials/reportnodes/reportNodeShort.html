@@ -38,7 +38,7 @@
 	<div ng-if="node.error">Error: <small><em>{{node.error.msg}}
 		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>	
 	</div>
-	<div uib-collapse="!isShowDetails">
-		<reportnode node='reportNode' show-artefact="true" />
+	<div ng-if="isShowDetails">
+		<reportnode id="reportNodeId" show-artefact="true" />
 	</div>
 </div>
