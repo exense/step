@@ -23,34 +23,22 @@ import static step.planbuilder.FunctionPlanBuilder.keywordWithKeyValues;
 import static step.planbuilder.FunctionPlanBuilder.session;
 
 import java.io.StringReader;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import org.bson.Document;
 import org.jongo.MongoCollection;
-import org.jongo.MongoCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.Block;
-import com.mongodb.client.result.UpdateResult;
-
 import step.artefacts.CallFunction;
-import step.artefacts.CallPlan;
-import step.artefacts.Check;
 import step.artefacts.TestCase;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoDBAccessorHelper;
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.LocalPlanRepository;
@@ -63,44 +51,28 @@ import step.plugins.adaptergrid.FunctionRepositoryImpl;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.selenium.SeleniumFunction;
+import step.versionmanager.VersionManager;
 
-@Plugin
+@Plugin(prio=2)
 public class InitializationPlugin extends AbstractPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(InitializationPlugin.class);
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		MongoCollection controllerLogs = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "controllerlogs");
-		
-		checkVersion(context, controllerLogs);
-		
-		long runCounts = controllerLogs.count();
-		
-		if(runCounts==0) {
+		VersionManager versionManager = context.get(VersionManager.class);
+
+		if(versionManager.getLatestControllerLog()==null) {
 			// First start
+			logger.info("Initializing Users...");
 			setupUsers(context);
+			
+			logger.info("Setting up demo plans...");
 			setupDemo(context);
 			//setupExecuteProcessFunction(context);
 			createSeleniumDemoPlan(context.getArtefactAccessor(), "Chrome");
 		}
-		
-		migrateCallFunction(context);
-		migrateGeneralScriptFunction(context);
-		migrateGeneralScriptFunctions(context);
-		
-		// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
-		// Because of the performance impact of this process we're commenting this out
-		// renameArtefactType(context, "FunctionGroup", "Session");
-		// renameArtefactType(context, "CallFunction", "CallKeyword");
-		
-		// The following has been used for the migration from 3.3.x to 3.4.x or higher 
-		// Because of the performance impact of this process we're commenting this out
-		// This should only be executed when migrating from 3.3 to 3.4...
-		// setArtefactNameIfEmpty(context);
-		
-		insertLogEntry(context, controllerLogs);
-				
+						
 		super.executionControllerStart(context);
 	}
 
@@ -110,178 +82,6 @@ public class InitializationPlugin extends AbstractPlugin {
 		user.setRole("admin");
 		user.setPassword(UserAccessor.encryptPwd("init"));
 		context.getUserAccessor().save(user);
-	}
-	
-	// This function migrates the artefact of type 'CallFunction' that have the attribute 'function' declared as string instead of DynamicValue
-	// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
-	private void migrateGeneralScriptFunction(GlobalContext context) {
-		logger.info("Searching for keywords of type 'Script' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> functions = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "functions");
-		
-		Document filter = new Document("type", "step.plugins.functions.types.GeneralScriptFunction");
-		Document replacement = new Document("$set", new Document("type", "step.plugins.java.GeneralScriptFunction"));
-		UpdateResult result = functions.updateMany(filter, replacement);
-		
-		logger.info("Migrated "+result.getModifiedCount()+" artefacts of type 'step.plugins.functions.types.GeneralScriptFunction'");
-	}
-	
-	// This function migrates the artefact of type 'CallFunction' that have the attribute 'function' declared as string instead of DynamicValue
-	// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
-	private void migrateCallFunction(GlobalContext context) {
-		logger.info("Searching for artefacts of type 'CallFunction' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> artefacts = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "artefacts");
-		
-		AtomicInteger i = new AtomicInteger();
-		Document filterCallFunction = new Document("_class", "CallFunction");
-		artefacts.find(filterCallFunction).forEach(new Block<Document>() {
-
-			@Override
-			public void apply(Document t) {
-				if(t.containsKey("function")) {
-					try {
-						i.incrementAndGet();
-						String function = t.getString("function");
-						Document d = new Document();
-						d.append("dynamic", false);
-						d.append("value", function);
-						t.replace("function", d);
-						
-						Document filter = new Document("_id", t.get("_id"));
-						
-						artefacts.replaceOne(filter, t);
-						logger.info("Migrating "+function+" to "+d.toJson());
-					} catch(ClassCastException e) {
-						// ignore
-					}
-				}
-			}
-		});
-		
-		logger.info("Migrated "+i.get()+" artefacts of type 'CallFunction'");
-	}
-	
-	private void migrateGeneralScriptFunctions(GlobalContext context) {
-		logger.info("Searching for functions of type 'step.plugins.functions.types.GeneralScriptFunction' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> functions = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "functions");
-		
-		AtomicInteger i = new AtomicInteger();
-		Document filterCallFunction = new Document("type", "step.plugins.functions.types.GeneralScriptFunction");
-		functions.find(filterCallFunction).forEach(new Block<Document>() {
-
-			@Override
-			public void apply(Document t) {
-				t.replace("type", "step.plugins.java.GeneralScriptFunction");
-				Document filter = new Document("_id", t.get("_id"));
-				functions.replaceOne(filter, t);
-				i.incrementAndGet();
-			}
-		});
-		
-		logger.info("Migrated "+i.get()+" functions of type 'step.plugins.functions.types.GeneralScriptFunction'");
-	}
-	
-
-	private void renameArtefactType(GlobalContext context, String classFrom, String classTo) {
-		logger.info("Searching for artefacts of type '"+classFrom+"' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> artefacts = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "artefacts");
-		
-		AtomicInteger i = new AtomicInteger();
-		Document filterCallFunction = new Document("_class", classFrom);
-		artefacts.find(filterCallFunction).forEach(new Block<Document>() {
-
-			@Override
-			public void apply(Document t) {
-				try {
-					i.incrementAndGet();
-					t.put("_class", classTo);
-					
-					Document filter = new Document("_id", t.get("_id"));
-					
-					artefacts.replaceOne(filter, t);
-					logger.info("Migrating "+classFrom+ " to "+t.toJson());
-				} catch(ClassCastException e) {
-					// ignore
-				}
-			}
-		});
-		
-		logger.info("Migrated "+i.get()+" artefacts of type '"+classFrom+"'");
-	}
-	
-	
-	
-	// This function ensures that all the artefacts have their name saved properly in the attribute map. 
-	// This will only be needed for the migration from 3.3.x or lower to 3.4.x or higher
-	private void setArtefactNameIfEmpty(GlobalContext context) {
-		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
-		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
-		
-		ArtefactAccessor a = context.getArtefactAccessor();
-		
-		AbstractArtefact artefact;
-		Iterator<AbstractArtefact> it = a.getAll();
-		while(it.hasNext()) {
-			artefact = it.next();
-			Map<String,String> attributes = artefact.getAttributes();
-			if(attributes==null) {
-				attributes = new HashMap<>();
-				artefact.setAttributes(attributes);
-			}
-			
-			if(!attributes.containsKey("name")) {
-				String name = null;
-				if(artefact instanceof CallFunction) {
-					CallFunction calllFunction = (CallFunction) artefact;
-					if(calllFunction.getFunctionId()!=null) {
-						Function function = functionRepository.getFunctionById(calllFunction.getFunctionId());
-						if(function!=null && function.getAttributes()!=null && function.getAttributes().containsKey(Function.NAME)) {
-							name = function.getAttributes().get(Function.NAME);
-						}						
-					}
-				} else if(artefact instanceof CallPlan) {
-					CallPlan callPlan = (CallPlan) artefact;
-					if(callPlan.getArtefactId()!=null) {
-						AbstractArtefact calledArtefact = a.get(callPlan.getArtefactId());
-						if(calledArtefact != null && calledArtefact.getAttributes()!=null && calledArtefact.getAttributes().containsKey("name")) {
-							name = calledArtefact.getAttributes().get("name");
-						}						
-					}
-				}
-				if(name == null) {
-					Artefact annotation = artefact.getClass().getAnnotation(Artefact.class);
-					name =  annotation.name().length() > 0 ? annotation.name() : artefact.getClass().getSimpleName();
-				}
-				attributes.put("name", name);
-				a.save(artefact);
-			}
-		}
-	}
-	
-	private void insertLogEntry(GlobalContext context, MongoCollection controllerLogs) {
-		ControllerLog logEntry = new ControllerLog();
-		logEntry.setStart(new Date());
-		logEntry.setVersion(context.getCurrentVersion());
-		controllerLogs.insert(logEntry);
-	}
-	
-	private void checkVersion(GlobalContext context, MongoCollection controllerLogs) {
-		MongoCursor<ControllerLog> cursor = controllerLogs.find().sort("{start:-1}").as(ControllerLog.class);
-		if(cursor.count()>0) {
-			ControllerLog latestLog = controllerLogs.find().sort("{start:-1}").as(ControllerLog.class).next();
-			logger.info("Last start of the controller: "+ latestLog.toString());
-			if(latestLog.getVersion()!=null) {
-				if(context.getCurrentVersion().compareTo(latestLog.getVersion())>0) {
-					// TODO run migration scripts
-					logger.info("Starting controller with a newer version. Current version is "
-							+context.getCurrentVersion()+". Version of last start was "+latestLog.getVersion());
-				} else if (context.getCurrentVersion().compareTo(latestLog.getVersion())<0) {
-					logger.info("Starting controller with an older version. Current version is "
-							+context.getCurrentVersion()+". Version of last start was "+latestLog.getVersion());
-				}
-			}					
-		} else {
-			logger.info("No start log found. Starting the controller for the first time against this DB...");
-		}
 	}
 	
 //	private void setupExecuteProcessFunction(GlobalContext context) {		
@@ -313,58 +113,6 @@ public class InitializationPlugin extends AbstractPlugin {
 		Function googleSearchMock = addSeleniumFunction(functionRepository, "Google_Search_Mock", "javascript", "../data/scripts/Google_Search_Mock.js" );
 		
 		Function jmeterDemoFunction = addJMeterFunction(functionRepository, "Demo_Keyword_JMeter", "../data/scripts/Demo_JMeter.jmx");
-	}
-//
-//	private void createDemoForEachPlan(ArtefactAccessor artefacts, String planName)  {
-//		CallFunction call1 = createCallFunctionWithCheck(artefacts,"Javascript_HttpGet","{\"url\":\"[[dataPool.url]]\"}","output.getString(\"data\").contains(\"[[dataPool.check]]\")");
-//		
-//		ForEachBlock forEach = new ForEachBlock();
-//		CSVDataPool conf = new CSVDataPool();
-//		conf.setFile(new DynamicValue<String>("../data/testdata/demo.csv"));
-//		forEach.setDataSource(conf);
-//		forEach.setDataSourceType("csv");
-//		forEach.addChild(call1.getId());
-//		artefacts.save(forEach);
-//
-//		Map<String, String> tcAttributes = new HashMap<>();
-//		TestCase testCase = new TestCase();
-//		testCase.setRoot(true);
-//		
-//		tcAttributes.put("name", planName);
-//		testCase.setAttributes(tcAttributes);
-//		testCase.addChild(forEach.getId());
-//		artefacts.save(testCase);
-//	}
-//	
-//	private void createDemoPlan(ArtefactAccessor artefacts, String planName, String functionId, String args, String check) {
-//		Map<String, String> tcAttributes = new HashMap<>();
-//		TestCase testCase = new TestCase();
-//		testCase.setRoot(true);
-//		
-//		tcAttributes.put("name", planName);
-//		testCase.setAttributes(tcAttributes);
-//		
-//		CallFunction call1 = createCallFunctionByIdWithCheck(artefacts, functionId, args, check);
-//		
-//		testCase.addChild(call1.getId());
-//		
-//		testCase.setRoot(true);
-//		artefacts.save(testCase);
-//	}
-
-	private CallFunction createCallFunctionByIdWithCheck(ArtefactAccessor artefacts, String functionId, String args,
-			String check) {
-		CallFunction call1 = createCallFunctionById(functionId, args);
-
-		if(check!=null) {
-			Check check1 = new Check();
-			check1.setExpression(new DynamicValue<>(check, ""));
-			artefacts.save(check1);
-			call1.addChild(check1.getId());
-		}
-		
-		artefacts.save(call1);
-		return call1;
 	}
 	
 	private CallFunction createCallFunctionById(String functionId, String args) {
