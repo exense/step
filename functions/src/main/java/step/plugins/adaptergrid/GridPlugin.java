@@ -19,6 +19,8 @@
 package step.plugins.adaptergrid;
 
 import org.jongo.MongoCollection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mongodb.MongoClient;
 
@@ -39,6 +41,8 @@ import step.grid.client.GridClient;
 
 @Plugin
 public class GridPlugin extends AbstractPlugin {
+	
+	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
 
 	public static final String GRID_KEY = "Grid_Instance";
 	
@@ -46,13 +50,15 @@ public class GridPlugin extends AbstractPlugin {
 	
 	public static final String FUNCTIONCLIENT_KEY = "FunctionClient_Instance";
 	
+	private Grid grid;
+	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		
 		Integer gridPort = Configuration.getInstance().getPropertyAsInteger("grid.port",8081);
 		Integer tokenTTL = Configuration.getInstance().getPropertyAsInteger("grid.ttl",60000);
 		
-		Grid grid = new Grid(gridPort, tokenTTL);
+		grid = new Grid(gridPort, tokenTTL);
 		grid.start();
 		
 		GridClient client = new GridClient(grid, grid);
@@ -86,6 +92,13 @@ public class GridPlugin extends AbstractPlugin {
 		Object o = context.get(GRIDCLIENT_KEY);
 		if(o!=null) {
 			((GridClient)o).close();
+		}
+		if(grid!=null) {
+			try {
+				grid.stop();
+			} catch (Exception e) {
+				logger.error("Error while stopping the grid server",e);
+			}
 		}
 	}
 }

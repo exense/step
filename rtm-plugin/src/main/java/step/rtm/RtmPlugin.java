@@ -64,6 +64,13 @@ public class RtmPlugin extends AbstractPlugin {
 		accessor = MeasurementAccessor.getInstance();
 	}
 
+	@Override
+	public void executionControllerDestroy(GlobalContext context) {
+		if(accessor !=null) {
+			accessor.close();
+		}
+	}
+
 	private void cloneProperty(Properties rtmProperties, step.commons.conf.Configuration stepProperties, String property) {
 		if(stepProperties.getProperty(property)!=null) {
 			rtmProperties.put(property, stepProperties.getProperty(property));			

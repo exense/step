@@ -38,6 +38,8 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.attachments.DownloadFileServlet;
 import step.commons.conf.Configuration;
@@ -54,7 +56,6 @@ import step.core.deployment.JacksonMapperProvider;
 import step.core.export.ExportServices;
 import step.core.export.ImportServices;
 import step.grid.agent.ArgumentParser;
-import step.plugins.events.EventBrokerServices;
 import step.plugins.interactive.InteractiveServices;
 
 
@@ -67,6 +68,8 @@ public class ControllerServer {
 	private ContextHandlerCollection handlers;
 	
 	private Integer port;
+	
+	private static final Logger logger = LoggerFactory.getLogger(ControllerServer.class);
 	
 	public static void main(String[] args) throws Exception {
 		ArgumentParser arguments = new ArgumentParser(args);
@@ -107,6 +110,16 @@ public class ControllerServer {
 
 		server.setHandler(handlers);
 		server.start();
+	}
+	
+	private void stop() {
+		try {
+			server.stop();
+		} catch (Exception e) {
+			logger.error("Error while stopping jetty",e);
+		} finally {
+			server.destroy();
+		}
 	}
 
 	private void setupConnectors() {
@@ -165,6 +178,15 @@ public class ControllerServer {
 			@Override
 			public void registerHandler(Handler handler) {
 				addHandler(handler);
+			}
+
+			@Override
+			public void stop() {
+				try {
+					ControllerServer.this.stop();
+				} catch (Exception e) {
+					logger.error("Error while trying to stop the controller",e);
+				}
 			}
 		});
 		

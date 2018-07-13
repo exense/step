@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -67,6 +68,13 @@ public class AccessServices extends AbstractServices {
 				sessions.entrySet().removeIf(entry->(entry.getValue().lasttouch+sessionTimeout)<time);
 			}
 		}, 60000, 60000);
+	}
+	
+	@PreDestroy
+	private void close() {
+		if(sessionExpirationTimer != null) {
+			sessionExpirationTimer.cancel();			
+		}
 	}
 
 	private void initAuthenticator() throws Exception {

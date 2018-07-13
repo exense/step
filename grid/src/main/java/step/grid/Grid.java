@@ -74,6 +74,9 @@ public class Grid implements TokenRegistry, GridFileService {
 
 	public void stop() throws Exception {
 		server.stop();
+		agentRefs.close();
+		tokenPool.close();
+		
 	}
 
 	public void start() throws Exception {

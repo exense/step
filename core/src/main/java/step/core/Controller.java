@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.core;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.eclipse.jetty.server.Handler;
@@ -28,6 +29,7 @@ import com.mongodb.MongoClient;
 
 import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
+import step.commons.conf.FileWatchService;
 import step.core.access.UserAccessor;
 import step.core.accessors.CollectionRegistry;
 import step.core.accessors.MongoClientSession;
@@ -57,7 +59,13 @@ public class Controller {
 	
 	private ExecutionScheduler scheduler;
 	
+	private ServiceRegistrationCallback serviceRegistrationCallback;
+	
+	private MongoClient mongoClient;
+	private MongoClientSession mongoClientSession;
+	
 	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			
+		this.serviceRegistrationCallback = serviceRegistrationCallback;
 		pluginManager = new PluginManager();
 		pluginManager.initialize();
 		
@@ -78,9 +86,9 @@ public class Controller {
 		
 		Configuration configuration = Configuration.getInstance();
 		
-		MongoClientSession mongoClientSession = new MongoClientSession(configuration);
+		mongoClientSession = new MongoClientSession(configuration);
+		mongoClient = MongoDBAccessorHelper.getClient();
 		
-		MongoClient mongoClient = MongoDBAccessorHelper.getClient();
 		context.setConfiguration(configuration);
 		context.setMongoClient(mongoClient);
 		context.setMongoClientSession(mongoClientSession);
@@ -108,18 +116,31 @@ public class Controller {
 	}
 
 	public void destroy() {
-		//TODO wait for tasks to terminate
+		// waits for executions to terminate
 		scheduler.shutdown();
 
+		serviceRegistrationCallback.stop();
+		// TODO do this without singleton
+		try {
+			FileWatchService.getInstance().close();
+		} catch (IOException e) {
+			logger.error("Error while closing FileService", e);
+			
+		}
+
+		// call shutdown hooks
 		pluginManager.getProxy().executionControllerDestroy(context);
 		
-		destroyContext();
-	}
-	
-	private void destroyContext() {
-		if(context.getMongoClient()!=null) {
-			context.getMongoClient().close();
+		if(mongoClient != null) {
+			mongoClient.close();
 		}
+		if(mongoClientSession !=null) {
+			try {
+				mongoClientSession.close();
+			} catch (IOException e) {
+				logger.error("Error while closing mongo client", e);
+			}
+		}		
 	}
 	
 	private void recover() {
@@ -152,6 +173,8 @@ public class Controller {
 		public void registerService(Class<?> serviceClass);
 		
 		public void registerHandler(Handler handler);
+		
+		public void stop();
 	}
 	
 }

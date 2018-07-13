@@ -18,6 +18,8 @@
  *******************************************************************************/
 package step.grid.tokenpool;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,7 +33,7 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TokenPool<P extends Identity, F extends Identity> {
+public class TokenPool<P extends Identity, F extends Identity> implements Closeable {
 	
 	private final static Logger logger = LoggerFactory.getLogger(TokenPool.class);
 	
@@ -304,5 +306,10 @@ public class TokenPool<P extends Identity, F extends Identity> {
 			}
 			return result;
 		}
+	}
+
+	@Override
+	public void close() throws IOException {
+		keepaliveTimeoutCheckTimer.cancel();
 	}
 }

@@ -78,7 +78,7 @@ public class Executor {
 
 	public void shutdown() {
 		try {
-			scheduler.shutdown();
+			scheduler.shutdown(true);
 		} catch (SchedulerException e) {
 			throw new RuntimeException(e);
 		}
