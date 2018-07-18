@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.plugins.events;
 
+import java.util.Map;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
@@ -50,9 +51,10 @@ public class EventBrokerServices extends AbstractServices {
 
 	@GET
 	@Path("/events")
+	@Produces(MediaType.APPLICATION_JSON)
 	//@Consumes(MediaType.APPLICATION_JSON)
-	public String getEventBrokerStatus() {
-		return eb.toString();
+	public Map<String, Event> getEventBrokerStatus() {
+		return eb.asMap();
 	}
 
 	@POST
@@ -127,7 +129,6 @@ public class EventBrokerServices extends AbstractServices {
 	@DELETE
 	@Path("/events")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
 	public String clear() {
 		synchronized(eb){
 			eb.clear();

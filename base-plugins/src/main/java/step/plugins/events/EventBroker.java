@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.plugins.events;
 
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -111,5 +112,9 @@ public class EventBroker {
 	public void clearGroup(String group) {
 		while(hasEvent(group, null))
 			remove(lookup(group, null));
+	}
+
+	public Map<String, Event> asMap() {
+		return events;
 	}
 }
