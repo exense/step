@@ -26,7 +26,7 @@ import step.grid.io.OutputMessage;
 public class TestTokenHandler implements MessageHandler {
 
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws InterruptedException {
+	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
 		OutputMessage output = new OutputMessage();
 		output.setPayload(message.getArgument());
 		
@@ -39,6 +39,10 @@ public class TestTokenHandler implements MessageHandler {
 			} else {
 				sleep(delay);			
 			}
+		} else if(message.getArgument().containsKey("exception")) {
+			throw new Exception(message.getArgument().getString("exception"));
+		} else if(message.getArgument().containsKey("exceptionWithoutMessage")) {
+			throw new Exception();
 		}
 		
 		return output;

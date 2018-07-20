@@ -69,7 +69,7 @@ public class KeywordRunner {
 			return run(function, read(argument), properties);
 		}
 		
-		public OutputMessage run(String function, String argument) {
+		public OutputMessage run(String function, String argument) throws Exception {
 			return run(function, read(argument), new HashMap<String, String>());
 		}
 
@@ -85,11 +85,11 @@ public class KeywordRunner {
 			return run(function, argument, new HashMap<String, String>());
 		}
 		
-		public OutputMessage run(String function, JsonObject argument, Map<String, String> properties) {
+		public OutputMessage run(String function, JsonObject argument, Map<String, String> properties) throws Exception {
 			return execute(function, argument, properties);
 		}
 
-		private OutputMessage execute(String function, JsonObject argument, Map<String, String> properties) {
+		private OutputMessage execute(String function, JsonObject argument, Map<String, String> properties) throws Exception {
 			InputMessage input = new InputMessage();
 			input.setFunction(function);
 			input.setArgument(argument);			
@@ -106,7 +106,7 @@ public class KeywordRunner {
 				}
 				return output;
 			} catch (Exception e) {
-				throw new RuntimeException(e);
+				throw e;
 			}
 		}
 		

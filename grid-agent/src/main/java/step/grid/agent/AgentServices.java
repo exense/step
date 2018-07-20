@@ -183,13 +183,9 @@ public class AgentServices {
 
 
 	protected OutputMessage handleUnexpectedError(InputMessage inputMessage, Exception e) {
-		StringBuilder message = new StringBuilder();
-		message.append("Error in agent '").append(agent.getAgentUrl()).append("'");
-		if(inputMessage!=null && inputMessage.getFunction()!=null) {
-			message.append(" while executing '").append(inputMessage.getFunction()).append("'");
-		}
-		if(e.getMessage()!=null) {
-			message.append(": ").append(e.getMessage()); 
+		String message = e.getMessage();
+		if(message == null) {
+			message = "Empty error message";
 		}
 		OutputMessage output = newErrorOutput(message.toString());
 		output.addAttachment(generateAttachmentForException(e));

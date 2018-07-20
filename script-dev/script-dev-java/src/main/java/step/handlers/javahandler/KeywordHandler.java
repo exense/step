@@ -65,8 +65,7 @@ public class KeywordHandler extends AbstractMessageHandler {
 	}
 
 	private OutputMessage invokeMethod(Method m, AgentTokenWrapper token, InputMessage message)
-			throws InstantiationException, IllegalAccessException, InvocationTargetException, ClassNotFoundException,
-			IllegalArgumentException, NoSuchMethodException, SecurityException {
+			throws Exception {
 		Class<?> clazz = m.getDeclaringClass();
 		Object instance = clazz.newInstance();
 
@@ -98,7 +97,12 @@ public class KeywordHandler extends AbstractMessageHandler {
 			} catch (Exception e) {
 				boolean throwException = script.onError(e);
 				if (throwException) {
-					throw e;
+					Throwable cause = e.getCause();
+					if(e instanceof InvocationTargetException && cause!=null && cause instanceof Exception) {
+						throw (Exception) cause;
+					} else {
+						throw e;
+					}
 				}
 			} finally {
 				// TODO error handling

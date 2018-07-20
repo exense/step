@@ -47,6 +47,30 @@ public class AgentTest extends AbstractGridTest {
 	}
 	
 	@Test
+	public void testException() throws Exception {
+		Map<String, Interest> interests = new HashMap<>();
+		interests.put("att1", new Interest(Pattern.compile("val.*"), true));
+		
+		JsonObject o = Json.createObjectBuilder().add("exception", "My Error").build();
+		
+		TokenWrapper token = client.getTokenHandle(null, interests, true);
+		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 1000);
+		Assert.assertEquals("My Error", outputMessage.getError());
+	}
+	
+	@Test
+	public void testExceptionWithoutMessage() throws Exception {
+		Map<String, Interest> interests = new HashMap<>();
+		interests.put("att1", new Interest(Pattern.compile("val.*"), true));
+		
+		JsonObject o = Json.createObjectBuilder().add("exceptionWithoutMessage", "").build();
+		
+		TokenWrapper token = client.getTokenHandle(null, interests, true);
+		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 1000);
+		Assert.assertEquals("Empty error message", outputMessage.getError());
+	}
+	
+	@Test
 	public void testNoSession() throws Exception {
 		Map<String, Interest> interests = new HashMap<>();
 		interests.put("att1", new Interest(Pattern.compile("val.*"), true));
