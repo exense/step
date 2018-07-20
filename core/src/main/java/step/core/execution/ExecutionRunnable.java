@@ -128,6 +128,7 @@ public class ExecutionRunnable implements Runnable {
 					try {
 						importResult = context.getGlobalContext().getRepositoryObjectManager().importArtefact(artefactPointer);											
 					} catch (Exception e) {
+						logger.error("Error while importing repository object "+artefactPointer.toString(), e);
 						importResult = new ImportResult();
 						String error = "Unexpected error while importing plan: "+e.getMessage();
 						List<String> errors = new ArrayList<>();
