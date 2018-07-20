@@ -36,10 +36,9 @@ public class ExpressionHandlerTest {
 	}
 
 	@Test
-	public void testTemplates() {
-		ExpressionHandler e = new ExpressionHandler("step.expressions.GroovyFunctions");
-		Object o = e.evaluateGroovyExpression("\"Today is ${yyyyMMdd}\"", null);
-		SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
-		Assert.assertEquals("Today is " +f.format(new Date()), o.toString());
+	public void testScriptBaseClassWithArrays() {
+		ExpressionHandler e = new ExpressionHandler("step.expressions.GroovyTestFunctions");
+		Object o = e.evaluateGroovyExpression("\"${testArrays()[0]}\"", null);
+		Assert.assertEquals("foo", o.toString());
 	}
 }
