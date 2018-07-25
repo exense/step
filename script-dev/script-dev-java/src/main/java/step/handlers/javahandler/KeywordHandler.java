@@ -45,20 +45,22 @@ public class KeywordHandler extends AbstractMessageHandler {
 		URLClassLoader cl = (URLClassLoader) context.getClassLoader();
 		
 		String kwClassnames = message.getProperties().get(KEYWORD_CLASSES);
-		for(String kwClassname:kwClassnames.split(";")) {
-			Class<?> kwClass = cl.loadClass(kwClassname);
-			
-			for (Method m : kwClass.getDeclaredMethods()) {
-				if(m.isAnnotationPresent(Keyword.class)) {
-					Keyword annotation = m.getAnnotation(Keyword.class);
-					String annotatedFunctionName = annotation.name();
-					if (((annotatedFunctionName == null || annotatedFunctionName.length() == 0)
-							&& m.getName().equals(message.getFunction()))
-							|| annotatedFunctionName.equals(message.getFunction())) {
-						return invokeMethod(m, token, message);
-					}		
-				}
-			}			
+		if(kwClassnames != null && kwClassnames.trim().length()>0) {
+			for(String kwClassname:kwClassnames.split(";")) {
+				Class<?> kwClass = cl.loadClass(kwClassname);
+				
+				for (Method m : kwClass.getDeclaredMethods()) {
+					if(m.isAnnotationPresent(Keyword.class)) {
+						Keyword annotation = m.getAnnotation(Keyword.class);
+						String annotatedFunctionName = annotation.name();
+						if (((annotatedFunctionName == null || annotatedFunctionName.length() == 0)
+								&& m.getName().equals(message.getFunction()))
+								|| annotatedFunctionName.equals(message.getFunction())) {
+							return invokeMethod(m, token, message);
+						}		
+					}
+				}			
+			}
 		}
 
 		throw new Exception("Unable to find method annoted by '" + Keyword.class.getName() + "' with name=='"+ message.getFunction() + "'");
