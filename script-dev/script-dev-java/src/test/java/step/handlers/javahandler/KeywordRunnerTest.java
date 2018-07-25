@@ -88,4 +88,17 @@ public class KeywordRunnerTest {
 		}
 		Assert.assertEquals("Please specify at leat one class containing the keyword definitions",exception.getMessage());
 	}
+	
+	@Test
+	public void testEmptyKeywordLibrary() throws Exception {
+		Exception exception = null;
+		ExecutionContext runner = KeywordRunner.getExecutionContext(MyEmptyKeywordLibrary.class);
+		try {
+			OutputMessage output = runner.run("MyKeyword");
+			
+		} catch(Exception e) {
+			exception = e;
+		}
+		Assert.assertEquals("Unable to find method annoted by 'step.handlers.javahandler.Keyword' with name=='MyKeyword'",exception.getMessage());
+	}
 }
