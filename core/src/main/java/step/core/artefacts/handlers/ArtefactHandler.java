@@ -88,7 +88,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				// the report node created during the createSkeleton phase couldn't be found.
 				// the reason might be that at least one report node in the path to the current report node hasn't been persisted
 				// if one node gets persisted or not depends on the ArtefactType: AbstractArtefact.isCreateSkeleton()
-				// It his therefore depending on the Plan if all the nodes of the path are persisted.
+				// It is therefore depending on the Plan if all the nodes of the path are persisted.
 				// We use to throw an exception in that case but it seems to be a better option to just ignore this
 				// and create the node again instead of throwing an error
 				node = createReportNode(parentNode, testArtefact);
