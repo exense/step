@@ -32,7 +32,7 @@ import step.core.execution.ExecutionContext;
 
 public class TestSetHandlerTest extends AbstractArtefactHandlerTest {
 	
-	@Test
+	//@Test
 	public void testParallel() throws Exception {
 		HashSet<Long> threadIdSet = new HashSet<>();
 
@@ -41,7 +41,7 @@ public class TestSetHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals("Ensure that the TestSetHandler runs the child artefacts in parallel", 10, threadIdSet.size());
 	}
 	
-	@Test
+	//@Test
 	public void testSequential() throws Exception {
 		HashSet<Long> threadIdSet = new HashSet<>();
 
