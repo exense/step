@@ -325,7 +325,7 @@ public class ControllerServices extends AbstractServices {
 		try {
 			return getContext().getRepositoryObjectManager().getArtefactInfo(ref);
 		} catch (Exception e) {
-			throw new WebApplicationException(Response.status(500).entity("Unable to retrieve artefact.").type("text/plain").build());
+			throw new WebApplicationException(Response.status(500).entity("Unable to retrieve artefact."+e.getMessage()).type("text/plain").build());
 		}
 	}
 	
