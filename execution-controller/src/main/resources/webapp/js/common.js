@@ -16,12 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-SelectionModel = function(dataFunction) {
+SelectionModel = function(dataFunction, idAttribute) {
 
   var me = this;
   
   // 'custom','none', 'all'
   this.currentSelectionMode;
+  
+  this.idAttribute = idAttribute;
   
   this.selectionModel = {};
   
@@ -44,7 +46,7 @@ SelectionModel = function(dataFunction) {
   this.getModel = function(id) {
     var entry =  this.selectionModel[id];
     if(entry==null) {
-      var row = _.find(dataFunction(),function(val){return val[0]==id})
+      var row = _.find(dataFunction(),function(val){return me.getId(val)==id})
       entry = {selected:me.defaultSelector(row)};
       this.selectionModel[id]=entry;
     }
@@ -58,7 +60,7 @@ SelectionModel = function(dataFunction) {
   
   this.setSelectionAll = function(value) {
     _.each(dataFunction(),function(dataRow){
-      me.setSelection(dataRow[0],value);
+      me.setSelection(me.getId(dataRow),value);
     })
     me.currentSelectionMode = value?'all':'none';    
   };
@@ -84,8 +86,16 @@ SelectionModel = function(dataFunction) {
   
   this.getDataRowsBySelection = function(selected) {
     return _.filter(dataFunction(), function(val) {
-      return selected?me.isSelected(val[0]):!me.isSelected(val[0])})
+      return selected?me.isSelected(me.getId(val)):!me.isSelected(me.getId(val))})
   };
+  
+  this.getId = function(val) {
+    if(idAttribute) {
+      return val[idAttribute];
+    } else {
+      return val[0];
+    }
+  }
 }
 
 function ObjectTracker(destroyer) {
