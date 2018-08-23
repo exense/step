@@ -31,6 +31,7 @@ SelectionModel = function(dataFunction, idAttribute) {
   
   this.setDefaultSelection = function(selected) {
     me.setSelectionAll(selected);
+    me.defaultSelector = function() {return selected};
   }
   
   this.setDefaultSelector = function(defaultSelector) {
