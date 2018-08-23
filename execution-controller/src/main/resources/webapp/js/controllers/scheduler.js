@@ -18,8 +18,8 @@
  *******************************************************************************/
 var schedulerController = angular.module('schedulerControllers',['dataTable']);
 
-schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$uibModal', 'AuthService', 
-  function($scope, $http,$stateStorage, $uibModal,AuthService) {
+schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$uibModal', 'AuthService','Dialogs', 
+  function($scope, $http,$stateStorage, $uibModal,AuthService, Dialogs) {
     $stateStorage.push($scope, 'scheduler', {});
     
     $scope.authService = AuthService;
@@ -31,7 +31,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
         	'<div class="btn-group">' +
         	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#SchedulerCtrl\').scope().editTask(\''+row[0]+'\')">' +
         	'<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
-        	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#SchedulerCtrl\').scope().deleteTask(\''+row[0]+'\',true)">' +
+        	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#SchedulerCtrl\').scope().askAndDeleteTask(\''+row[0]+'\',true)">' +
         	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
         	'</button> ' +
         	'</div>' +
@@ -45,6 +45,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	}
 	
 	$scope.tabledef = {}
+	$scope.tabledef.defaultSelection = 'none'
 	$scope.tabledef.columns = [ {"title" : "ID", "visible": false}, 
 	                   {"title" : "cronExpression"}, 
 	                   {"title" : "Description"},
@@ -90,11 +91,24 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
   }
 
 	$scope.deleteSelected = function(remove) {
-		var rows = $scope.datatable.getSelection().selectedItems;
-		
-		for(i=0;i<rows.length;i++) {
-			$scope.deleteTask(rows[i][0], remove);		
-		}
+	  var rows = $scope.datatable.getSelection().selectedItems;
+	  var itemCount = rows.length
+	  if(itemCount == 0) {
+	    Dialogs.showErrorMsg("You haven't selected any item")
+	  } else {
+	    var msg
+	    if(itemCount == 1) {
+	      msg = remove?'Are you sure you want to delete this item?':'Are you sure you want to disable this item?'
+	    } else {
+	      msg = remove?'Are you sure you want to delete these '+rows.length+' items?':'Are you sure you want to disable these '+rows.length+' items?'
+	    }
+      Dialogs.showWarning(msg).then(function() {
+        for(i=0;i<rows.length;i++) {
+          $scope.deleteTask(rows[i][0], remove);
+        }
+      })	    
+	  }
+
 	};
 	
 	$scope.editTask = function(id) {
@@ -116,6 +130,13 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
       function (task) {});
     }); 
 	}
+	
+	$scope.askAndDeleteTask = function(id, remove) {
+	  var msg = remove?'Are you sure you want to delete this item?':'Are you sure you want to disable this item?'
+	  Dialogs.showWarning(msg).then(function() {
+	    $scope.deleteTask(id, remove) 
+	  })
+  }
 	
 	$scope.deleteTask = function(id, remove) {
 		$http.delete("rest/controller/task/"+id+"?remove="+remove).then(function() {

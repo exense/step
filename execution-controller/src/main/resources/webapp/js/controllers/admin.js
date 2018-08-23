@@ -24,7 +24,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
    }])   
 
 .controller('UserListCtrl',
-    function($scope, $interval, $http, helpers, $uibModal) {
+    function($scope, $interval, $http, helpers, $uibModal, Dialogs) {
       $scope.datatable = {}
       
       $scope.loadTable = function loadTable() {
@@ -46,7 +46,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
                 '<div class="btn-group">' +
                 '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#UserListCtrl\').scope().editUser(\''+row[0]+'\')">' +
                 '<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
-                '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#UserListCtrl\').scope().removeUser(\''+row[0]+'\')">' +
+                '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#UserListCtrl\').scope().askAndRemoveUser(\''+row[0]+'\')">' +
                 '<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
                 '</button> '+
                 '</div></div>';
@@ -57,9 +57,16 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
         
         $scope.forAllSelected = function(fctName) {
           var rows = $scope.datatable.getSelection().selectedItems;
-          
-          for(i=0;i<rows.length;i++) {
-            $scope[fctName](rows[i][0]);       
+          var itemCount = rows.length;
+          if(itemCount >= 1) {
+            var msg = itemCount == 1? 'Are you sure you want to perform this operation for this item?':'Are you sure you want to perform this operation for these ' + itemCount + ' items?';
+            Dialogs.showWarning(msg).then(function() {
+              for(i=0;i<rows.length;i++) {
+                $scope[fctName](rows[i][0]);       
+              }            
+            })            
+          } else {
+            Dialogs.showErrorMsg("You haven't selected any item");
           }
         };
           
@@ -67,6 +74,12 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
           $http.post("rest/admin/user/"+id+"/resetpwd").then(function() {
             $scope.loadTable();
           });
+        }
+        
+        $scope.askAndRemoveUser = function(username) {
+          Dialogs.showDeleteWarning().then(function() {
+            $scope.removeUser(username)          
+          })
         }
         
         $scope.removeUser = function(username) {
