@@ -379,10 +379,22 @@ angular.module('step',['ngStorage','ngCookies'])
 .factory('Dialogs', function ($rootScope, $uibModal) {
   var dialogs = {};
   
-  dialogs.showDeleteWarning = function() {
+  dialogs.showDeleteWarning = function(i) {
+    var msg;
+    if(i == undefined || i==1) {
+      msg = 'Are you sure you want to delete this item?'
+    } else {
+      msg = 'Are you sure you want to delete these ' + i + ' items?'
+    }
+    return dialogs.showWarning(msg);
+  }
+  
+  dialogs.showWarning = function(msg) {
     var modalInstance = $uibModal.open({animation: false, templateUrl: 'partials/confirmationDialog.html',
       controller: 'DialogCtrl', 
-      resolve: {message:function(){return 'Are you sure you want to delete this item?'}}});
+      resolve: {message:function(){
+        return msg
+      }}});
     return modalInstance.result;
   }
   
