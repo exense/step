@@ -97,12 +97,7 @@ angular.module('reportNodes',['step','artefacts'])
     templateUrl: 'partials/reportnodes/attachments.html',
     controller: function($scope) {
       $scope.$watch("node",function(node) {
-        if(node.attachments) {
-          $scope.attachments = [];
-          _.each(node.attachments, function(attachment) {
-            $scope.attachments.push({id:attachment.id,name:attachment.name});
-          })
-        }
+        $scope.attachments = node.attachments;
       })
     }
   };
