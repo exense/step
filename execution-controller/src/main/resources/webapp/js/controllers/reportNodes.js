@@ -74,13 +74,10 @@ angular.module('reportNodes',['step','artefacts'])
         });
         return result.substring(0,result.length-1);
       };
+      $scope.reportNodeId = $scope.node.id;
       $scope.$watch('node',function(node, oldStatus) {
         if(node) {
-          // The format of the node serialized by the DataTableService differs 
-          // from the serialization format of the REST service /controller/reportnode
-          // For this reason we're unfortunately forced to retrieve the ReportNode again.
-          // The serialization format should be uniformed in the future
-          $scope.reportNodeId = $scope.node._id.$oid?$scope.node._id.$oid:$scope.node.id;
+          $scope.reportNodeId = $scope.node.id;
         }
       })
        
@@ -103,7 +100,7 @@ angular.module('reportNodes',['step','artefacts'])
         if(node.attachments) {
           $scope.attachments = [];
           _.each(node.attachments, function(attachment) {
-            $scope.attachments.push({id:attachment._id?attachment._id.$oid:attachment.id,name:attachment.name});
+            $scope.attachments.push({id:attachment.id,name:attachment.name});
           })
         }
       })

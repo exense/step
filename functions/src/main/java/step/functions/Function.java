@@ -22,18 +22,15 @@ import java.util.Map;
 
 import javax.json.JsonObject;
 
-import org.bson.types.ObjectId;
-
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 
 @JsonTypeInfo(use=Id.CLASS,property="type")
-public class Function {
+public class Function extends AbstractOrganizableObject {
 	
-	ObjectId _id;
-	Map<String, String> attributes;
 	DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
 	JsonObject schema;
 	Map<String, String> tokenSelectionCriteria;
@@ -47,22 +44,6 @@ public class Function {
 	}
 
 	public static final String NAME = "name";
-
-	public ObjectId getId() {
-		return _id;
-	}
-
-	public void setId(ObjectId id) {
-		this._id = id;
-	}
-
-	public Map<String, String> getAttributes() {
-		return attributes;
-	}
-
-	public void setAttributes(Map<String, String> attributes) {
-		this.attributes = attributes;
-	}
 	
 	public DynamicValue<Integer> getCallTimeout() {
 		return callTimeout;

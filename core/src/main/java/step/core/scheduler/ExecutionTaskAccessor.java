@@ -36,8 +36,8 @@ public class ExecutionTaskAccessor  {
 		collection = MongoDBAccessorHelper.getCollection(client, "tasks");
 	}
 	
-	public ExecutiontTaskParameters get(String nodeId) {
-		return collection.findOne(new ObjectId(nodeId)).as(ExecutiontTaskParameters.class);
+	public ExecutiontTaskParameters get(ObjectId nodeId) {
+		return collection.findOne(nodeId).as(ExecutiontTaskParameters.class);
 	}
 		
 	public Iterator<ExecutiontTaskParameters> getActiveAndInactiveExecutionTasks() {
@@ -53,6 +53,6 @@ public class ExecutionTaskAccessor  {
 	}
 	
 	public void remove(ExecutiontTaskParameters schedule) {
-		collection.remove(new ObjectId(schedule.getId()));
+		collection.remove(schedule.getId());
 	}
 }

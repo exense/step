@@ -80,14 +80,14 @@ public class ExecutionRunnableTest {
 
 		r.run();
 		
-		Execution execution = globalContext.getExecutionAccessor().get(e.getId());
+		Execution execution = globalContext.getExecutionAccessor().get(e.getId().toString());
 		assertNotNull(execution);
 		assertNotNull(execution.getStartTime());
 		assertNotNull(execution.getEndTime());
 		assertEquals(ExecutionStatus.ENDED,execution.getStatus());
 		assertNull(execution.getExecutionTaskID());
 		
-		ReportNode node = globalContext.getReportAccessor().getReportNodesByExecutionIDAndArtefactID(e.getId(), artefact.getId().toString()).next();
+		ReportNode node = globalContext.getReportAccessor().getReportNodesByExecutionIDAndArtefactID(e.getId().toString(), artefact.getId().toString()).next();
 		assertNotNull(node);
 		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		

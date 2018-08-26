@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
-public interface CRUDAccessor<T extends AbstractDBObject> {
+public interface CRUDAccessor<T extends AbstractIdentifiableObject> {
 
 	T get(ObjectId id);
 

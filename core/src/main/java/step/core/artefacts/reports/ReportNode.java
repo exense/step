@@ -25,18 +25,17 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
-import step.attachments.AttachmentMeta;
-import step.core.artefacts.AbstractArtefact;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
-@JsonTypeInfo(use=Id.CLASS,property="_class")
-public class ReportNode {
-	
-	public ObjectId _id;
+import step.attachments.AttachmentMeta;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.artefacts.AbstractArtefact;
 
+@JsonTypeInfo(use=Id.CLASS,property="_class")
+public class ReportNode extends AbstractIdentifiableObject {
+	
 	protected ObjectId parentID;
 		
 	protected String name;
@@ -64,15 +63,6 @@ public class ReportNode {
 
 	public ReportNode() {
 		super();
-		_id = new ObjectId();
-	}
-
-	public ObjectId getId() {
-		return _id;
-	}
-
-	public void setId(ObjectId id) {
-		this._id = id;
 	}
 
 	public ObjectId getParentID() {

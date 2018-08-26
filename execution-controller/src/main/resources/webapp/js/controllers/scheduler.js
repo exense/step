@@ -57,10 +57,10 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 		  var data = response.data;
 			var dataSet = [];
 			for (i = 0; i < data.length; i++) {
-				dataSet[i] = [data[i]._id,
+				dataSet[i] = [data[i].id,
 				              data[i].cronExpression,
 				              data[i].name,
-				              data[i]._id,
+				              data[i].id,
 				              data[i].active];
 			}
 			$scope.tabledef.data = dataSet;

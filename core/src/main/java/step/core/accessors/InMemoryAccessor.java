@@ -26,7 +26,7 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
-public class InMemoryAccessor<T extends AbstractDBObject> implements CRUDAccessor<T> {
+public class InMemoryAccessor<T extends AbstractIdentifiableObject> implements CRUDAccessor<T> {
 
 	public InMemoryAccessor() {
 	}

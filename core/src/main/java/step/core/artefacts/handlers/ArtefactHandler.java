@@ -277,7 +277,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	private REPORT_NODE createReportNode(ReportNode parentNode, ARTEFACT testArtefact) {
 		REPORT_NODE node = createReportNode_(parentNode, testArtefact);
-		node._id = new ObjectId();
+		node.setId(new ObjectId());
 		node.setName(getReportNodeName(testArtefact));
 		node.setParentID(parentNode.getId());
 		node.setArtefactID(testArtefact.getId());

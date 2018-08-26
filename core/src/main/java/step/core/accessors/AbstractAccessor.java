@@ -2,19 +2,18 @@ package step.core.accessors;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import org.bson.Document;
 import org.jongo.Jongo;
 import org.jongo.marshall.jackson.JacksonMapper;
 
-import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DB;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.IndexOptions;
+
+import step.core.deployment.JacksonMapperProvider;
 
 public class AbstractAccessor {
 
@@ -32,9 +31,9 @@ public class AbstractAccessor {
 	protected org.jongo.MongoCollection getJongoCollection(String collectionName) {
 		DB db = mongoClientSession.getDB();
 		
-		Jongo jongo = new Jongo(db,new JacksonMapper.Builder()
-			      .registerModule(new JSR353Module())
-			      .registerModule(new JsonOrgModule()).build());
+		ObjectMapper objectMapper = JacksonMapperProvider.createDBMapper();
+		
+		Jongo jongo = new Jongo(db,new JacksonMapper.Builder(objectMapper).build());
 		org.jongo.MongoCollection collection = jongo.getCollection(collectionName);
 		return collection;
 	}

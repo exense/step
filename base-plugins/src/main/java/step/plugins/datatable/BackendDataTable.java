@@ -105,11 +105,6 @@ public class BackendDataTable {
 		return this;
 	}
 	
-	public BackendDataTable addRowAsJson(String columnTitle, String... searchAttributes) {
-		columns.add(new ColumnDef(columnTitle, null, InputType.TEXT, new RowAsJsonFormatter(), new MultiTextCriterium(searchAttributes), null));
-		return this;
-	}
-	
 	public BackendDataTable addRowAsJson(String columnTitle, List<String> searchAttributes) {
 		columns.add(new ColumnDef(columnTitle, null, InputType.TEXT, new RowAsJsonFormatter(), new MultiTextCriterium(searchAttributes), null));
 		return this;

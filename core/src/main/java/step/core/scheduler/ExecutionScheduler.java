@@ -21,6 +21,7 @@ package step.core.scheduler;
 import java.util.Iterator;
 import java.util.List;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,11 +61,11 @@ public class ExecutionScheduler {
 			try {
 				boolean mayFireAgain = executor.schedule(task);
 				if(!mayFireAgain) {
-					removeExecutionTask(task.getId());
+					removeExecutionTask(task.getId().toString());
 				}
 			} catch (Exception e) {
 				logger.error("An error occurred while scheduling task. "+ task.toString()+ ". Disabling task.", e);
-				disableExecutionTask(task.getId());
+				disableExecutionTask(task.getId().toString());
 			}
 		}
 		
@@ -110,7 +111,7 @@ public class ExecutionScheduler {
 	}
 
 	public ExecutiontTaskParameters get(String id) {
-		return context.getScheduleAccessor().get(id);
+		return context.getScheduleAccessor().get(new ObjectId(id));
 	}
 	
 	private void save(ExecutiontTaskParameters schedule) {

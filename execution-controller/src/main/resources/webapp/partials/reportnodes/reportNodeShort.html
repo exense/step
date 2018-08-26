@@ -9,10 +9,10 @@
 		<span class="pull-right"><attachments node="node" /></span>
 		<span class="pull-right" style="margin-right:5px">
 			<div class="btn-group btn-group-menu">
-				<button type="button" class="btn btn-default btn-xs" uib-tooltip="Show this node in the tree view" ng-click="executionViewServices.showNodeInTree(node._id.$oid)">
+				<button type="button" class="btn btn-default btn-xs" uib-tooltip="Show this node in the tree view" ng-click="executionViewServices.showNodeInTree(reportNodeId)">
 					<span class="icon-tree" />
 				</button>
-				<button ng-if="executionViewServices.getExecution()&&executionViewServices.getExecution().executionType=='TestSet'" type="button" class="btn btn-default btn-xs" uib-tooltip="Select the test case containing this node in the test case table" ng-click="executionViewServices.showTestCase(node._id.$oid)">
+				<button ng-if="executionViewServices.getExecution()&&executionViewServices.getExecution().executionType=='TestSet'" type="button" class="btn btn-default btn-xs" uib-tooltip="Select the test case containing this node in the test case table" ng-click="executionViewServices.showTestCase(reportNodeId)">
 					<span class="glyphicon glyphicon-list-alt" />
 				</button>
 				<button type="button" class="btn btn-default btn-xs" uib-tooltip="Show/hide details" ng-click="toggleDetails()">
@@ -39,6 +39,6 @@
 		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>	
 	</div>
 	<div ng-if="isShowDetails">
-		<reportnode id="reportNodeId" show-artefact="true" />
+		<reportnode id="reportNodeId" show-artefact="false" />
 	</div>
 </div>

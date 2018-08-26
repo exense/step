@@ -20,9 +20,9 @@ package step.plugins.parametermanager;
 
 import step.commons.activation.ActivableObject;
 import step.commons.activation.Expression;
-import step.core.accessors.AbstractDBObject;
+import step.core.accessors.AbstractOrganizableObject;
 
-public class Parameter extends AbstractDBObject implements ActivableObject {
+public class Parameter extends AbstractOrganizableObject implements ActivableObject {
 	
 	String key;
 	

@@ -41,7 +41,7 @@ public class TestCaseIdFilter extends ArtefactFilter {
 	@Override
 	public boolean isSelected(AbstractArtefact artefact) {
 		if(artefact instanceof TestCase) {
-			return artefact._id!=null?includedIds.contains(artefact._id.toString()):false;
+			return artefact.getId()!=null?includedIds.contains(artefact.getId().toString()):false;
 		} else {
 			return true;
 		}

@@ -103,7 +103,7 @@ public class ExecutionRunnable implements Runnable {
 	private ReportNode createAndPersistRootReportNode() {
 		ReportNode resultNode = new ReportNode();
 		resultNode.setExecutionID(context.getExecutionId());
-		resultNode._id = new ObjectId(context.getExecutionId());
+		resultNode.setId(new ObjectId(context.getExecutionId()));
 		context.setReport(resultNode);
 		context.getReportNodeCache().put(resultNode);
 		context.getGlobalContext().getReportAccessor().save(resultNode);

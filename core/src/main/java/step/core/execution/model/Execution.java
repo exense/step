@@ -21,19 +21,15 @@ package step.core.execution.model;
 import java.util.List;
 import java.util.Map;
 
-import org.jongo.marshall.jackson.oid.ObjectId;
-
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.repositories.Repository.ImportResult;
 
 
 
-public class Execution  {
-	
-	@ObjectId
-	public String _id;
+public class Execution extends AbstractIdentifiableObject {
 	
 	Long startTime;
 	
@@ -63,14 +59,6 @@ public class Execution  {
 		super();
 	}
 
-	public String getId() {
-		return _id;
-	}
-	
-	public void setId(String id) {
-		_id = id;
-	}
-	
 	public long getStartTime() {
 		return startTime;
 	}

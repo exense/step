@@ -2,25 +2,12 @@ package step.core.accessors;
 
 import java.util.Map;
 
-import org.bson.types.ObjectId;
-
-public class AbstractDBObject {
-
-	protected ObjectId _id;
+public class AbstractOrganizableObject extends AbstractIdentifiableObject {
 	
 	protected Map<String, String> attributes;
 	
-	public AbstractDBObject() {
+	public AbstractOrganizableObject() {
 		super();
-		_id = new ObjectId();
-	}
-
-	public ObjectId getId() {
-		return _id;
-	}
-	
-	public void setId(ObjectId _id) {
-		this._id = _id;
 	}
 
 	public Map<String, String> getAttributes() {

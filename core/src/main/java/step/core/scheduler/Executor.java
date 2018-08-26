@@ -93,7 +93,7 @@ public class Executor {
 	}
 	
 	public void deleteSchedule(ExecutiontTaskParameters task) {
-		JobKey key = new JobKey(task.getId());
+		JobKey key = new JobKey(task.getId().toString());
 		try {
 			scheduler.deleteJob(key);
 		} catch (SchedulerException e) {
@@ -107,7 +107,7 @@ public class Executor {
 	}
 
 	public boolean schedule(ExecutiontTaskParameters task) {
-		JobKey key = new JobKey(task.getId());
+		JobKey key = new JobKey(task.getId().toString());
 		try {
 			if(scheduler.checkExists(key)) {
 				deleteSchedule(task);
@@ -127,7 +127,7 @@ public class Executor {
 		
 		Trigger trigger = TriggerBuilder.newTrigger().startNow().build();
 
-		String executionID = execution.getId();
+		String executionID = execution.getId().toString();
 		JobDetail job = buildSingleJob(executionID);
 		
 		scheduleJob(trigger, job);
@@ -160,7 +160,7 @@ public class Executor {
 		data.put(EXECUTION_TASK_ID, task.getId());
 		data.put(EXECUTION_PARAMETERS, task.getExecutionsParameters());
 		
-		return JobBuilder.newJob().ofType(ExecutionJob.class).withIdentity(task.getId()).usingJobData(data).build();
+		return JobBuilder.newJob().ofType(ExecutionJob.class).withIdentity(task.getId().toString()).usingJobData(data).build();
 	}
 	
 	public List<ExecutionRunnable> getCurrentExecutions() {

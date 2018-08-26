@@ -30,7 +30,7 @@ import org.jongo.MongoCollection;
 
 
 
-public class AbstractCRUDAccessor<T extends AbstractDBObject> extends AbstractAccessor implements CRUDAccessor<T> {
+public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends AbstractAccessor implements CRUDAccessor<T> {
 			
 	private MongoCollection collection;
 	

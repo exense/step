@@ -48,21 +48,25 @@ public class JacksonMapperProvider implements ContextResolver<ObjectMapper> {
     public ObjectMapper getContext(Class<?> type) {
         return mapper;
     }
- 
-    public static ObjectMapper createMapper() {
+    
+    /**
+     * @return an ObjectMapper for the persistence layer
+     */
+    public static ObjectMapper createDBMapper() {
         ObjectMapper mapper = new ObjectMapper();
-//        mapper.configure(AUTO_DETECT_GETTERS, false);
-//        mapper.configure(AUTO_DETECT_SETTERS, false);
-//        mapper.setDeserializationConfig(mapper.getDeserializationConfig().without(FAIL_ON_UNKNOWN_PROPERTIES));
-//        mapper.setSerializationConfig(mapper.getSerializationConfig().withSerializationInclusion(NON_DEFAULT));
-//        mapper.setVisibilityChecker(Std.defaultInstance().withFieldVisibility(ANY));
-// 
+        mapper.registerModule(new JSR353Module());
+        mapper.registerModule(new JsonOrgModule());
+        return mapper;
+    }
+ 
+    /**
+     * @return an ObjectMapper for the UI or export layer
+     */
+    public static ObjectMapper createMapper() {
+        ObjectMapper mapper = createDBMapper();
         mapper.registerModule(new SimpleModule("jersey", new Version(1, 0, 0, null,null,null)) //
                         .addSerializer(_id, _idSerializer()) //
                         .addDeserializer(_id, _idDeserializer()));
-        mapper.registerModule(new JSR353Module());
-        mapper.registerModule(new JsonOrgModule());
-        
         return mapper;
     }
  

@@ -31,13 +31,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 
+import step.core.accessors.AbstractOrganizableObject;
+
 @JsonTypeInfo(use=Id.CUSTOM,property="_class")
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)
-public abstract class AbstractArtefact {
-	
-	public ObjectId _id;
-	
-	protected Map<String, String> attributes;
+public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	
 	protected String description;
 		
@@ -67,22 +65,6 @@ public abstract class AbstractArtefact {
 		return annotation.name().length() > 0 ? annotation.name() : artefactClass.getSimpleName();
 	}
 
-	public ObjectId getId() {
-		return _id;
-	}
-	
-	public void setId(ObjectId _id) {
-		this._id = _id;
-	}
-	
-	public Map<String, String> getAttributes() {
-		return attributes;
-	}
-
-	public void setAttributes(Map<String, String> attributes) {
-		this.attributes = attributes;
-	}
-	
 	public String getDescription() {
 		return description;
 	}

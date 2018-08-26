@@ -39,7 +39,7 @@ public class ExecutionRunnableFactory {
 	}
 
 	private ExecutionContext createExecutionContext(Execution execution) {
-		ExecutionContext context = new ExecutionContext(execution.getId());
+		ExecutionContext context = new ExecutionContext(execution.getId().toString());
 		context.setGlobalContext(globalContext);
 		context.updateStatus(ExecutionStatus.INITIALIZING);
 		context.setExecutionParameters(execution.getExecutionParameters());

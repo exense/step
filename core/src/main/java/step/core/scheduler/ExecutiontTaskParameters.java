@@ -18,14 +18,10 @@
  *******************************************************************************/
 package step.core.scheduler;
 
-import org.jongo.marshall.jackson.oid.ObjectId;
-
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.execution.model.ExecutionParameters;
 
-public class ExecutiontTaskParameters {
-	
-	@ObjectId
-	public String _id;
+public class ExecutiontTaskParameters extends AbstractIdentifiableObject {
 	
 	public String name;
 	
@@ -45,14 +41,6 @@ public class ExecutiontTaskParameters {
 		this.executionsParameters = executionsParameters;
 		this.cronExpression = cronExpr;
 		this.active = true;
-	}
-	
-	public String getId() {
-		return _id;
-	}
-	
-	public void setId(String id) {
-		_id = id;
 	}
 
 	public String getName() {

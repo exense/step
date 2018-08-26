@@ -33,9 +33,9 @@ public class InMemoryExecutionAccessor extends ExecutionAccessor {
 	@Override
 	public void save(Execution execution) {
 		if(execution.getId()==null) {
-			execution.setId((new ObjectId()).toString());
+			execution.setId(new ObjectId());
 		}
-		map.put(execution.getId(), execution);
+		map.put(execution.getId().toString(), execution);
 	}
 
 	@Override

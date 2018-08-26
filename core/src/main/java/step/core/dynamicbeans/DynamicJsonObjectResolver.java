@@ -31,8 +31,6 @@ import javax.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class DynamicJsonObjectResolver {
 	
 	private static Logger logger = LoggerFactory.getLogger(DynamicJsonObjectResolver.class);
@@ -45,8 +43,6 @@ public class DynamicJsonObjectResolver {
 		super();
 		this.valueResolver = valueResolver;
 	}
-
-	ObjectMapper mapper = new ObjectMapper();
 	
 	public JsonObject evaluate(JsonObject o, Map<String, Object> bindings) {
 		JsonObjectBuilder builder = jprov.createObjectBuilder();
