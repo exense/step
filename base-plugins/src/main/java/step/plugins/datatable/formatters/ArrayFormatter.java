@@ -25,6 +25,8 @@ import org.bson.Document;
 
 public class ArrayFormatter implements Formatter {
 
+	protected DocumentToJsonFormatter documentToJsonFormatter = new DocumentToJsonFormatter();
+	
 	@Override
 	public String format(Object value, Document row) {
 		if(value!=null && value instanceof Collection) {
@@ -33,7 +35,7 @@ public class ArrayFormatter implements Formatter {
 			Iterator<?> i = ((Collection<?>)value).iterator();
 			while(i.hasNext()) {
 				Object next = i.next();
-				b.append(next instanceof Document?((Document)next).toJson():next.toString());
+				b.append(next instanceof Document?documentToJsonFormatter.format((Document)next):next.toString());
 				if(i.hasNext()) {
 					b.append(",");
 				}
