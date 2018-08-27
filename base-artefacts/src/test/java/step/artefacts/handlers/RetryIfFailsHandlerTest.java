@@ -30,7 +30,6 @@ import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ExecutionContext;
 
 public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -41,12 +40,7 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 		RetryIfFails block = add(new RetryIfFails());
 		block.setMaxRetries(new DynamicValue<Integer>(2));
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
-			@Override
-			public void run() {
-				ExecutionContext.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
-			}
-		}), block);
+		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED)), block);
 		
 		execute(block);
 		
@@ -64,12 +58,7 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 		block.setMaxRetries(new DynamicValue<Integer>(2));
 		block.setGracePeriod(new DynamicValue<Integer>(1000));
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
-			@Override
-			public void run() {
-				ExecutionContext.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED);
-			}
-		}), block);
+		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED)), block);
 				
 		execute(block);
 		
@@ -88,15 +77,12 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 		block.setTimeout(new DynamicValue<Integer>(200));
 		block.setGracePeriod(new DynamicValue<Integer>(50));
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
-			@Override
-			public void run() {
+		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c-> {
 				try {
 					Thread.sleep(300);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-			}
 		}), block);
 				
 		execute(block);

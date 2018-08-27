@@ -30,7 +30,6 @@ import step.artefacts.reports.ForBlockReportNode;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ExecutionContext;
 import step.datapool.sequence.IntSequenceDataPool;
 
 public class ForHandlerTest extends AbstractArtefactHandlerTest {
@@ -53,14 +52,11 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
-			@Override
-			public void run() {
-				ExecutionContext.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c->{
+				context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 				assertEquals(i.get(),(int)context.getVariablesManager().getVariableAsInteger("item"));
 				i.addAndGet(2);
-			}
-		}), f);
+			}), f);
 		
 		execute(f);
 		
@@ -93,15 +89,12 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
-			@Override
-			public void run() {
+		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c-> {
 				if(i.get()==2) {
 					context.getVariablesManager().updateVariable("break", "true");
 				}
 				i.addAndGet(1);
-			}
-		}), f);
+			}), f);
 		
 		execute(f);
 		
@@ -125,12 +118,9 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(new Runnable() {
-			@Override
-			public void run() {
-				ExecutionContext.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED);
-			}
-		}), f);
+		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c -> {
+				context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED);
+			}), f);
 		
 		execute(f);
 		

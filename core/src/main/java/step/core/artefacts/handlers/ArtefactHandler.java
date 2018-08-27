@@ -99,7 +99,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			node = createReportNode(parentNode, testArtefact);			
 		}
 
-		ExecutionContext.setCurrentReportNode(node);
+		context.setCurrentReportNode(node);
 		
 		context.getReportNodeCache().put(node);
 		
@@ -127,7 +127,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	private void afterDelegation(REPORT_NODE node, ReportNode parentNode, ARTEFACT testArtefact) {
 		context.getReportNodeCache().remove(node);
-		ExecutionContext.setCurrentReportNode(context.getReportNodeCache().get(node.getParentID().toString()));
+		context.setCurrentReportNode(context.getReportNodeCache().get(node.getParentID().toString()));
 		
 		context.getVariablesManager().releaseVariables(node.getId().toString());
 		

@@ -37,7 +37,7 @@ public class ReportNodeAttributesManager {
 	
 	public void addCustomAttribute(String key, String value) {
 		VariablesManager varMan = context.getVariablesManager();
-		varMan.putVariable(ExecutionContext.getCurrentReportNode(), CUSTOM_ATTRIBUTES_PREFIX+key, value);
+		varMan.putVariable(context.getCurrentReportNode(), CUSTOM_ATTRIBUTES_PREFIX+key, value);
 	}
 	
 	public Map<String, String> getCustomAttributes() {

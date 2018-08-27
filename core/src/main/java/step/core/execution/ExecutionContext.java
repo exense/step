@@ -32,7 +32,7 @@ import step.core.variables.VariablesManager;
 
 public class ExecutionContext extends AbstractContext  {
 		
-	private static ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
+	private ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
 	
 	private GlobalContext globalContext;
 
@@ -98,7 +98,7 @@ public class ExecutionContext extends AbstractContext  {
 		return reportNodeCache;
 	}
 
-	public static ReportNode getCurrentReportNode() {
+	public ReportNode getCurrentReportNode() {
 		ReportNode currentNode = currentNodeRegistry.get();
 		if(currentNode==null) {
 			throw new RuntimeException("Current report node is null!");
@@ -107,12 +107,12 @@ public class ExecutionContext extends AbstractContext  {
 		}
 	}
 	
-	public static void setCurrentReportNode(ReportNode node) {
+	public void setCurrentReportNode(ReportNode node) {
 		currentNodeRegistry.set(node);
 	}
 	
-	public static void setCurrentContext(ExecutionContext context) {
-		context.getGlobalContext().getPluginManager().getProxy().associateThread(context, Thread.currentThread());
+	public void associateThread() {
+		getGlobalContext().getPluginManager().getProxy().associateThread(this, Thread.currentThread());
 	}
 
 	public String getExecutionId() {

@@ -27,7 +27,6 @@ import step.artefacts.TestScenario;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
-import step.core.execution.ExecutionContext;
 
 public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNode> {
 
@@ -45,7 +44,7 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 		for(final AbstractArtefact child:artefacts) {
 			executor.submit(new Runnable() {
 				public void run() {
-					ExecutionContext.setCurrentContext(context);
+					context.associateThread();
 					delegateExecute(child, node);
 				}
 			});

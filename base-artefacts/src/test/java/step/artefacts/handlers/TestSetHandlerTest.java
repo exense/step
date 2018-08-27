@@ -22,13 +22,10 @@ import static junit.framework.Assert.assertEquals;
 
 import java.util.HashSet;
 
-import org.junit.Test;
-
 import step.artefacts.CheckArtefact;
 import step.artefacts.TestSet;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ExecutionContext;
 
 public class TestSetHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -64,15 +61,12 @@ public class TestSetHandlerTest extends AbstractArtefactHandlerTest {
 		int nChilds = 20;
 		
 		for(int j=0;j<nChilds;j++) {
-			addAsChildOf(new CheckArtefact(new Runnable() {
-				@Override
-				public void run() {
+			addAsChildOf(new CheckArtefact(c-> {
 					synchronized (threadIdSet) {
 						threadIdSet.add(Thread.currentThread().getId());						
 					}
-					ExecutionContext.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
-				}
-			}), set);			
+					context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+				}), set);			
 		}
 		
 		createSkeleton(set);

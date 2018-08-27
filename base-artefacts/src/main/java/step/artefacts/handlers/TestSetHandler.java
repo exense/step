@@ -31,7 +31,6 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionManager;
 
 public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
@@ -102,7 +101,7 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 
 		@Override
 		public void run() {
-			ExecutionContext.setCurrentContext(context);
+			context.associateThread();
 			
 			try {
 				for(AbstractArtefact testArtefact:bundle.getTestcases()) {

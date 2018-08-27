@@ -77,11 +77,6 @@ public class AbstractArtefactHandlerTest {
 	}
 	
 	protected CheckArtefact newTestArtefact(final ReportNodeStatus status) {
-		return new CheckArtefact(new Runnable() {
-			@Override
-			public void run() {
-				ExecutionContext.getCurrentReportNode().setStatus(status);
-			}
-		});
+		return new CheckArtefact(c->context.getCurrentReportNode().setStatus(status));
 	}
 }

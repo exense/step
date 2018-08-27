@@ -43,7 +43,7 @@ public class ExecutionTestHelper {
 		c.getVariablesManager().putVariable(c.getReport(), ReportNodeAttachmentManager.QUOTA_VARNAME, 100);
 		c.getVariablesManager().putVariable(c.getReport(), ArtefactHandler.CONTINUE_EXECUTION, "false");
 		
-		ExecutionContext.setCurrentContext(c);
+		c.associateThread();
 		return c;
 		
 	}
@@ -63,7 +63,7 @@ public class ExecutionTestHelper {
 		c.setGlobalContext(g);
 		c.getReportNodeCache().put(root);
 		c.setReport(root);
-		ExecutionContext.setCurrentReportNode(root);
+		c.setCurrentReportNode(root);
 		c.setExecutionParameters(new ExecutionParameters("dummy", null, ExecutionMode.RUN));
 		return c;
 	}

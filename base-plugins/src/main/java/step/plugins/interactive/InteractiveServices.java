@@ -125,7 +125,7 @@ public class InteractiveServices extends AbstractServices {
 		
 		executionContext.getReportNodeCache().put(session.root);
 		executionContext.setReport(session.root);
-		ExecutionContext.setCurrentReportNode(session.root);
+		executionContext.setCurrentReportNode(session.root);
 		session.c.getVariablesManager().putVariable(session.root, FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY, 
 				session.functionGroupContext);
 
@@ -182,7 +182,7 @@ public class InteractiveServices extends AbstractServices {
 			session.c.getArtefactCache().clear();
 
 			ParameterManager parameterManager = getContext().get(ParameterManager.class);
-			ExecutionContext.setCurrentReportNode(session.root);
+			session.c.setCurrentReportNode(session.root);
 			ParameterManagerPlugin.putVariables(session.c, session.root, executionParameters.getExecutionParameters(), VariableType.IMMUTABLE);
 			Map<String, String> parameters = parameterManager.getAllParameters(ExecutionContextBindings.get(session.c));
 			ParameterManagerPlugin.putVariables(session.c, session.root, parameters, VariableType.IMMUTABLE);	

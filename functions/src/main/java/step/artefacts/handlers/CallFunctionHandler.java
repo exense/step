@@ -266,7 +266,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
-		properties.put(PARENTREPORTID, ExecutionContext.getCurrentReportNode().getId().toString());
+		properties.put(PARENTREPORTID, context.getCurrentReportNode().getId().toString());
 		
 		Input input = new Input();
 		input.setArgument(argument);

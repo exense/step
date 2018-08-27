@@ -20,7 +20,6 @@ package step.core.variables;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,12 +30,15 @@ import step.core.execution.ReportNodeCache;
 
 public class VariablesManager {
 	
+	private final ExecutionContext context;
+	
 	private final ReportNodeCache nodeCache;
 		
 	private ConcurrentHashMap<String, Map<String, Variable>> register = new ConcurrentHashMap<>();
 		
 	public VariablesManager(ExecutionContext context) {
 		super();
+		this.context = context;
 		this.nodeCache = context.getReportNodeCache();
 	}
 	
@@ -48,7 +50,7 @@ public class VariablesManager {
 	}
 	
 	public void updateVariable(String key, Object value) throws ImmutableVariableException {
-		ReportNode currentNode = ExecutionContext.getCurrentReportNode();
+		ReportNode currentNode = context.getCurrentReportNode();
 		Variable closestVariable = getVariable_(currentNode, key, true);
 		if(closestVariable!=null) {
 			if(closestVariable.getType()==VariableType.NORMAL) {
@@ -73,7 +75,7 @@ public class VariablesManager {
 	}
 	
 	public Object getVariable(String key) {
-		ReportNode currentNode = ExecutionContext.getCurrentReportNode();
+		ReportNode currentNode = context.getCurrentReportNode();
 		return getVariable(currentNode, key, true);
 	}
 	
@@ -170,7 +172,7 @@ public class VariablesManager {
 	
 	public Map<String, Object> getAllVariables() {	
 		Map<String, Object> result = new HashMap<>();
-		ReportNode currentNode = ExecutionContext.getCurrentReportNode();
+		ReportNode currentNode = context.getCurrentReportNode();
 		do {
 			Map<String, Variable> variableMap = register.get(currentNode.getId().toString());
 			if(variableMap!=null) {
@@ -187,7 +189,7 @@ public class VariablesManager {
 	}
 	
 	public Object getFirstVariableMatching(Pattern pattern) {		
-		ReportNode currentNode = ExecutionContext.getCurrentReportNode();
+		ReportNode currentNode = context.getCurrentReportNode();
 		return getFirstVariableMatching(currentNode, pattern);
 	}
 

@@ -56,7 +56,7 @@ public class ExecutionRunnable implements Runnable {
 	@Override
 	public void run() {
 		try {
-			ExecutionContext.setCurrentContext(context);
+			context.associateThread();
 
 			ReportNode rootReportNode = createAndPersistRootReportNode();
 
@@ -107,7 +107,7 @@ public class ExecutionRunnable implements Runnable {
 		context.setReport(resultNode);
 		context.getReportNodeCache().put(resultNode);
 		context.getGlobalContext().getReportAccessor().save(resultNode);
-		ExecutionContext.setCurrentReportNode(resultNode);
+		context.setCurrentReportNode(resultNode);
 		return resultNode;
 	}
 	

@@ -31,7 +31,6 @@ import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ExecutionContext;
 
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 	
@@ -73,7 +72,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 				final long localStartOffset = testArtefact.getStartOffset().get()+(long)((1.0*groupID)/numberOfUsers*rampup);
 				executor.submit(new Runnable() {
 					public void run() {
-						ExecutionContext.setCurrentContext(context);
+						context.associateThread();
 						
 						ReportNode iterationReportNode = null;
 						try {

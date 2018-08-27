@@ -29,7 +29,7 @@ public class CheckArtefactHandler extends ArtefactHandler<CheckArtefact, ReportN
 
 	@Override
 	protected void execute_(ReportNode node, CheckArtefact testArtefact) {
-		testArtefact.getExecutionRunnable().run();
+		testArtefact.getExecutionRunnable().accept(context);
 	}
 
 	@Override

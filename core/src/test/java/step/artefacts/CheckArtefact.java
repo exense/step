@@ -18,28 +18,31 @@
  *******************************************************************************/
 package step.artefacts;
 
+import java.util.function.Consumer;
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.execution.ExecutionContext;
 
 @Artefact(handler=CheckArtefactHandler.class)
 public class CheckArtefact extends AbstractArtefact {
 
-	private Runnable executionRunnable;
+	private Consumer<ExecutionContext> executionRunnable;
 
 	public CheckArtefact() {
 		super();
 	}
 	
-	public CheckArtefact(Runnable executionRunnable) {
+	public CheckArtefact(Consumer<ExecutionContext> executionRunnable) {
 		super();
 		this.executionRunnable = executionRunnable;
 	}
 
-	public Runnable getExecutionRunnable() {
+	public Consumer<ExecutionContext> getExecutionRunnable() {
 		return executionRunnable;
 	}
 
-	public void setExecutionRunnable(Runnable executionRunnable) {
+	public void setExecutionRunnable(Consumer<ExecutionContext> executionRunnable) {
 		this.executionRunnable = executionRunnable;
 	}
 	

@@ -107,7 +107,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 		c.setGlobalContext(g);
 		c.getReportNodeCache().put(root);
 		c.setReport(root);
-		ExecutionContext.setCurrentReportNode(root);
+		c.setCurrentReportNode(root);
 		c.setExecutionParameters(new ExecutionParameters("dummy", null, ExecutionMode.RUN));
 		return c;
 	}

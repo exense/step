@@ -11,7 +11,6 @@ import step.artefacts.CheckArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ContextBuilder;
-import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 import step.planbuilder.PlanBuilder;
 
@@ -23,8 +22,8 @@ public class CallPlanHandlerTest extends AbstractArtefactHandlerTest {
 		
 		AtomicBoolean executed = new AtomicBoolean();
 		
-		CheckArtefact check = new CheckArtefact(()->{
-			ExecutionContext.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+		CheckArtefact check = new CheckArtefact(c->{
+			context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 			executed.set(true);
 		});
 		

@@ -70,12 +70,7 @@ public class ExecutionRunnableTest {
 			}
 		});
 		
-		CheckArtefact artefact = new CheckArtefact(new Runnable() {
-			@Override
-			public void run() {
-				ExecutionContext.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
-			}
-		});
+		CheckArtefact artefact = new CheckArtefact(c->c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED));
 		globalContext.getArtefactAccessor().save(artefact);
 		
 		ImportResult result = new ImportResult();

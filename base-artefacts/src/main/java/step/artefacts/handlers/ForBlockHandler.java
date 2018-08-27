@@ -148,7 +148,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 
 		@Override
 		public void run() {
-			ExecutionContext.setCurrentContext(context);
+			context.associateThread();
 			
 			try {
 				DataPoolRow nextValue = null;

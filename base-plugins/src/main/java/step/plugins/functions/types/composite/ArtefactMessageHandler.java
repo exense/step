@@ -54,8 +54,8 @@ public class ArtefactMessageHandler implements MessageHandler {
 		
 		globalContext.getReportAccessor().save(parentNode);
 
-		ReportNode previousCurrentNode = ExecutionContext.getCurrentReportNode();
-		ExecutionContext.setCurrentReportNode(parentNode);
+		ReportNode previousCurrentNode = executionContext.getCurrentReportNode();
+		executionContext.setCurrentReportNode(parentNode);
 		executionContext.getReportNodeCache().put(parentNode);
 		
 		AbstractArtefact artefact = globalContext.getArtefactAccessor().get(artefactId);
@@ -73,7 +73,7 @@ public class ArtefactMessageHandler implements MessageHandler {
 			return output.build();
 		} finally {
 			executionContext.getVariablesManager().removeVariable(parentNode, "output");
-			ExecutionContext.setCurrentReportNode(previousCurrentNode);
+			executionContext.setCurrentReportNode(previousCurrentNode);
 		}
 		
 	}
