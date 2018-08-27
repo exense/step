@@ -18,8 +18,6 @@
  *******************************************************************************/
 package step.core.execution;
 
-import java.util.List;
-
 import step.core.AbstractContext;
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
@@ -27,7 +25,6 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
-import step.core.execution.model.ReportExport;
 import step.core.variables.VariablesManager;
 
 public class ExecutionContext extends AbstractContext  {
@@ -52,8 +49,6 @@ public class ExecutionContext extends AbstractContext  {
 	
 	private final ArtefactCache artefactCache;
 	
-	private List<ReportExport> reportExports;
-
 	public ExecutionContext(String executionId) {
 		super();
 				
@@ -130,15 +125,7 @@ public class ExecutionContext extends AbstractContext  {
 	public String toString() {
 		return "ExecutionContext [executionId=" + executionId + "]";
 	}
-
-	public List<ReportExport> getReportExports() {
-		return reportExports;
-	}
-
-	public void setReportExports(List<ReportExport> reportExports) {
-		this.reportExports = reportExports;
-	}
-
+	
 	public ExecutionParameters getExecutionParameters() {
 		return executionParameters;
 	}

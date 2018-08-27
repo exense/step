@@ -29,6 +29,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.ReportExport;
 import step.core.repositories.Repository.ImportResult;
@@ -81,8 +82,7 @@ public class ExecutionRunnable implements Runnable {
 				
 				if(!context.isSimulation()) {
 					updateStatus(ExecutionStatus.EXPORTING);
-					List<ReportExport> exports = exportExecution(context.getExecutionId());	
-					context.setReportExports(exports);				
+					exportExecution(context.getExecutionId());				
 					logger.info("Test execution ended and reported. Execution ID: " + context.getExecutionId());
 				} else {
 					logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + context.getExecutionId());
@@ -146,8 +146,9 @@ public class ExecutionRunnable implements Runnable {
 		return importResult;
 	}
 	
-	private List<ReportExport> exportExecution(String executionId) {		
-		Execution execution = context.getGlobalContext().getExecutionAccessor().get(executionId);
+	private void exportExecution(String executionId) {		
+		ExecutionAccessor executionAccessor = context.getGlobalContext().getExecutionAccessor();
+		Execution execution = executionAccessor.get(executionId);
 		
 		if(execution!=null) {
 			RepositoryObjectManager repositoryObjectManager = context.getGlobalContext().getRepositoryObjectManager();
@@ -155,7 +156,8 @@ public class ExecutionRunnable implements Runnable {
 			List<ReportExport> exports = new ArrayList<>();
 			exports.add(report);
 			
-			return exports;			
+			execution.setReportExports(exports);
+			executionAccessor.save(execution);
 		} else {
 			throw new RuntimeException("Unable to find execution with id "+executionId);
 		}

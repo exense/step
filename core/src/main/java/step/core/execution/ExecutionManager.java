@@ -55,7 +55,6 @@ public class ExecutionManager {
 			execution.setEndTime(System.currentTimeMillis());
 		}
 		execution.setStatus(context.getStatus());
-		execution.setReportExports(context.getReportExports());
 		if(context.getArtefact()!=null) {
 			execution.setArtefactID(context.getArtefact().getId().toString());
 			if(execution.getDescription()==null) {
