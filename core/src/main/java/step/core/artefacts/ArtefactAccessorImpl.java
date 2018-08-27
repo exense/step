@@ -18,7 +18,6 @@
  *******************************************************************************/
 package step.core.artefacts;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 

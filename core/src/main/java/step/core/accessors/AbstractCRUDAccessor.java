@@ -44,9 +44,6 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 		collection = getJongoCollection(collectionName);
 	}
 	
-	/* (non-Javadoc)
-	 * @see step.core.accessors.CRUDAccessor#get(org.bson.types.ObjectId)
-	 */
 	@Override
 	public T get(ObjectId id) {
 		T entity = collection.findOne(id).as(entityClass);
@@ -57,9 +54,6 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 		return get(new ObjectId(id));
 	}
 	
-	/* (non-Javadoc)
-	 * @see step.core.accessors.CRUDAccessor#findByAttributes(java.util.Map)
-	 */
 	@Override
 	public T findByAttributes(Map<String, String> attributes) {
 		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
@@ -71,34 +65,22 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 		return collection.findOne(query).as(entityClass);
 	}
 	
-	/* (non-Javadoc)
-	 * @see step.core.accessors.CRUDAccessor#getAll()
-	 */
 	@Override
 	public Iterator<T> getAll() {
 		return collection.find().as(entityClass);
 	}
 	
-	/* (non-Javadoc)
-	 * @see step.core.accessors.CRUDAccessor#remove(org.bson.types.ObjectId)
-	 */
 	@Override
 	public void remove(ObjectId id) {
 		collection.remove(id);
 	}
 	
-	/* (non-Javadoc)
-	 * @see step.core.accessors.CRUDAccessor#save(T)
-	 */
 	@Override
 	public T save(T entity) {
 		collection.save(entity);
 		return entity;
 	}
 	
-	/* (non-Javadoc)
-	 * @see step.core.accessors.CRUDAccessor#save(java.util.List)
-	 */
 	@Override
 	public void save(List<? extends T> entities) {
 		this.collection.insert(entities.toArray());
