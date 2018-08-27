@@ -65,7 +65,7 @@ public class AbstractArtefactHandlerTest {
 	}
 	
 	protected ReportNode getFirstReportNode() {
-		return getReportNodeAccessor().getChildren(context.getReportNodeTree().getRoot().getId()).next();
+		return getReportNodeAccessor().getChildren(context.getReport().getId()).next();
 	}
 	
 	protected List<ReportNode> getChildren(ReportNode node) {

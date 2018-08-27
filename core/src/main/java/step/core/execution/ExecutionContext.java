@@ -40,8 +40,6 @@ public class ExecutionContext extends AbstractContext  {
 	
 	private final String executionId;
 	
-	private String executionTaskID;
-					
 	private AbstractArtefact artefact;
 
 	private ReportNode report;
@@ -54,8 +52,6 @@ public class ExecutionContext extends AbstractContext  {
 	
 	private final ArtefactCache artefactCache;
 	
-	private final ReportNodeTree reportNodeTree;
-	
 	private List<ReportExport> reportExports;
 
 	public ExecutionContext(String executionId) {
@@ -65,7 +61,6 @@ public class ExecutionContext extends AbstractContext  {
 				
 		reportNodeCache = new ReportNodeCache();
 		artefactCache = new ArtefactCache();
-		reportNodeTree = new ReportNodeTree(this);
 				
 		variablesManager = new VariablesManager(this);
 	}
@@ -84,14 +79,6 @@ public class ExecutionContext extends AbstractContext  {
 
 	public void setReport(ReportNode report) {
 		this.report = report;
-	}
-
-	public String getExecutionTaskID() {
-		return executionTaskID;
-	}
-
-	public void setExecutionTaskID(String executionTaskID) {
-		this.executionTaskID = executionTaskID;
 	}
 	
 	public ReportNodeCache getReportNodeCache() {
@@ -166,10 +153,6 @@ public class ExecutionContext extends AbstractContext  {
 
 	public void setGlobalContext(GlobalContext globalContext) {
 		this.globalContext = globalContext;
-	}
-
-	public ReportNodeTree getReportNodeTree() {
-		return reportNodeTree;
 	}
 
 	public ArtefactCache getArtefactCache() {
