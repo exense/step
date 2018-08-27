@@ -60,7 +60,7 @@ public class ExecutionRunnableTest {
 	
 	@Test 
 	public void test() throws Exception {
-		GlobalContext globalContext = ExecutionTestHelper.createGlobalContext();
+		GlobalContext globalContext = ContextBuilder.createGlobalContext();
 		globalContext.getPluginManager().register(new AbstractPlugin() {
 
 			@Override

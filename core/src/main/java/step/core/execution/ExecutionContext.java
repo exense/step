@@ -56,7 +56,6 @@ public class ExecutionContext extends AbstractContext  {
 				
 		reportNodeCache = new ReportNodeCache();
 		artefactCache = new ArtefactCache();
-				
 		variablesManager = new VariablesManager(this);
 	}
 

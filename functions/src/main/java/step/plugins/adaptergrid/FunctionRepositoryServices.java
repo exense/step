@@ -32,13 +32,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import step.core.GlobalContext;
-import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.execution.ExecutionContext;
-import step.core.execution.model.ExecutionMode;
-import step.core.execution.model.ExecutionParameters;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.functions.Function;
 import step.functions.FunctionClient;
@@ -99,17 +94,6 @@ public class FunctionRepositoryServices extends AbstractServices {
 			Function copy = getFunctionClient().copyFunction(source);
 			repo.addFunction(copy);
 		}
-	}
-	
-	public static ExecutionContext createContext(GlobalContext g) {
-		ReportNode root = new ReportNode();
-		ExecutionContext c = new ExecutionContext("");
-		c.setGlobalContext(g);
-		c.getReportNodeCache().put(root);
-		c.setReport(root);
-		c.setCurrentReportNode(root);
-		c.setExecutionParameters(new ExecutionParameters("dummy", null, ExecutionMode.RUN));
-		return c;
 	}
 	
 	@DELETE

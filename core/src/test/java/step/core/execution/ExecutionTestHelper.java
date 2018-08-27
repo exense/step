@@ -18,22 +18,8 @@
  *******************************************************************************/
 package step.core.execution;
 
-import step.attachments.AttachmentManager;
-import step.commons.conf.Configuration;
-import step.core.GlobalContext;
-import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.reports.InMemoryReportNodeAccessor;
-import step.core.artefacts.reports.ReportNode;
-import step.core.dynamicbeans.DynamicBeanResolver;
-import step.core.dynamicbeans.DynamicValueResolver;
-import step.core.execution.model.ExecutionMode;
-import step.core.execution.model.ExecutionParameters;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
-import step.core.plugins.PluginManager;
-import step.core.repositories.RepositoryObjectManager;
-import step.core.scheduler.InMemoryExecutionTaskAccessor;
-import step.expressions.ExpressionHandler;
 
 public class ExecutionTestHelper {
 
@@ -47,48 +33,10 @@ public class ExecutionTestHelper {
 		return c;
 		
 	}
-	
+
 	public static ExecutionContext createContext() {
-		
-		GlobalContext g = createGlobalContext();
-		
-		ExecutionContext c = createContext(g);
-
-		return c;
-	}
-
-	public static ExecutionContext createContext(GlobalContext g) {
-		ReportNode root = new ReportNode();
-		ExecutionContext c = new ExecutionContext("");
-		c.setGlobalContext(g);
-		c.getReportNodeCache().put(root);
-		c.setReport(root);
-		c.setCurrentReportNode(root);
-		c.setExecutionParameters(new ExecutionParameters("dummy", null, ExecutionMode.RUN));
+		ExecutionContext c = ContextBuilder.createLocalExecutionContext();
 		return c;
 	}
 	
-	public static GlobalContext createGlobalContext() {
-		GlobalContext context = new GlobalContext();
-
-		context.setExpressionHandler(new ExpressionHandler());
-		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
-		
-		PluginManager pluginManager = new PluginManager();
-		context.setPluginManager(pluginManager);
-		
-		context.setConfiguration(Configuration.getInstance());
-		
-		context.setExecutionAccessor(new InMemoryExecutionAccessor());
-		context.setArtefactAccessor(new InMemoryArtefactAccessor());
-		context.setReportAccessor(new InMemoryReportNodeAccessor());
-		context.setScheduleAccessor(new InMemoryExecutionTaskAccessor());
-		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
-		
-		context.setEventManager(new EventManager());
-		context.setAttachmentManager(new AttachmentManager(Configuration.getInstance()));
-
-		
-		return context;
-	}
 }

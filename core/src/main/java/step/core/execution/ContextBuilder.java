@@ -15,6 +15,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
+import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.expressions.ExpressionHandler;
 
 public class ContextBuilder {
@@ -48,18 +49,13 @@ public class ContextBuilder {
 		PluginManager pluginManager = new PluginManager();
 		context.setPluginManager(pluginManager);
 		
-		//MongoClient client = Mockito.mock(MongoClient.class);
-		//context.setMongoClient(client);
-		
 		context.setConfiguration(Configuration.getInstance());
 		
 		context.put(CollectionRegistry.class, new CollectionRegistry());
 		context.setExecutionAccessor(new InMemoryExecutionAccessor());
 		context.setArtefactAccessor(new InMemoryArtefactAccessor());
 		context.setReportAccessor(new InMemoryReportNodeAccessor());
-		
-		//ExecutionTaskAccessor schedulerAccessor = Mockito.mock(ExecutionTaskAccessor.class);
-		//context.setScheduleAccessor(schedulerAccessor);
+		context.setScheduleAccessor(new InMemoryExecutionTaskAccessor());
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		
 		context.setEventManager(new EventManager());
