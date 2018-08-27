@@ -25,10 +25,10 @@ import static junit.framework.Assert.assertNull;
 import java.util.ArrayList;
 
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import step.artefacts.CheckArtefact;
 import step.core.GlobalContext;
+import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
@@ -42,6 +42,22 @@ import step.core.repositories.RepositoryObjectReference;
 
 public class ExecutionRunnableTest {
 
+	private static class TestRepositoryObjectManager extends RepositoryObjectManager {
+
+		private ImportResult result;
+		
+		public TestRepositoryObjectManager(ImportResult result, ArtefactAccessor artefactAccessor) {
+			super(artefactAccessor);
+			this.result = result;
+		}
+
+		@Override
+		public ImportResult importArtefact(RepositoryObjectReference artefact) throws Exception {
+			return result;
+		}
+		
+	}
+	
 	@Test 
 	public void test() throws Exception {
 		GlobalContext globalContext = ExecutionTestHelper.createGlobalContext();
@@ -61,12 +77,13 @@ public class ExecutionRunnableTest {
 			}
 		});
 		globalContext.getArtefactAccessor().save(artefact);
-
-		RepositoryObjectManager repo = Mockito.mock(RepositoryObjectManager.class);		
+		
 		ImportResult result = new ImportResult();
 		result.setSuccessful(true);
 		result.setArtefactId(artefact.getId().toString());
-		Mockito.when(repo.importArtefact(Mockito.anyObject())).thenReturn(result);
+		
+		RepositoryObjectManager repo = new TestRepositoryObjectManager(result, globalContext.getArtefactAccessor());
+		
 		globalContext.setRepositoryObjectManager(repo);
 		
 		ExecutionRunnableFactory f = new ExecutionRunnableFactory(globalContext);

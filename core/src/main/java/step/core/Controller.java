@@ -25,28 +25,26 @@ import org.eclipse.jetty.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.MongoClient;
-
 import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.commons.conf.FileWatchService;
-import step.core.access.UserAccessor;
+import step.core.access.UserAccessorImpl;
 import step.core.accessors.CollectionRegistry;
 import step.core.accessors.MongoClientSession;
-import step.core.accessors.MongoDBAccessorHelper;
-import step.core.artefacts.ArtefactAccessor;
+import step.core.artefacts.ArtefactAccessorImpl;
 import step.core.artefacts.ArtefactManager;
-import step.core.artefacts.reports.ReportNodeAccessor;
+import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.EventManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionScheduler;
-import step.core.scheduler.ExecutionTaskAccessor;
+import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.expressions.ExpressionHandler;
 
 public class Controller {
@@ -61,7 +59,6 @@ public class Controller {
 	
 	private ServiceRegistrationCallback serviceRegistrationCallback;
 	
-	private MongoClient mongoClient;
 	private MongoClientSession mongoClientSession;
 	
 	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			
@@ -87,19 +84,16 @@ public class Controller {
 		Configuration configuration = Configuration.getInstance();
 		
 		mongoClientSession = new MongoClientSession(configuration);
-		mongoClient = MongoDBAccessorHelper.getClient();
 		
 		context.setConfiguration(configuration);
-		context.setMongoClient(mongoClient);
 		context.setMongoClientSession(mongoClientSession);
-		context.setMongoDatabase(MongoDBAccessorHelper.getInstance().getMongoDatabase(mongoClient));
 		context.put(CollectionRegistry.class, new CollectionRegistry());
-		context.setExecutionAccessor(new ExecutionAccessor(mongoClient));
-		context.setArtefactAccessor(new ArtefactAccessor(mongoClient));
+		context.setExecutionAccessor(new ExecutionAccessorImpl(mongoClientSession));
+		context.setArtefactAccessor(new ArtefactAccessorImpl(mongoClientSession));
+		context.setReportAccessor(new ReportNodeAccessorImpl(mongoClientSession));
+		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(mongoClientSession));
+		context.setUserAccessor(new UserAccessorImpl(mongoClientSession));
 		context.setArtefactManager(new ArtefactManager(context.getArtefactAccessor()));
-		context.setReportAccessor(new ReportNodeAccessor(mongoClient));
-		context.setScheduleAccessor(new ExecutionTaskAccessor(mongoClient));
-		context.setUserAccessor(new UserAccessor(mongoClient));
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass")));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
@@ -131,9 +125,6 @@ public class Controller {
 		// call shutdown hooks
 		pluginManager.getProxy().executionControllerDestroy(context);
 		
-		if(mongoClient != null) {
-			mongoClient.close();
-		}
 		if(mongoClientSession !=null) {
 			try {
 				mongoClientSession.close();

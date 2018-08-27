@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
-import step.core.accessors.MongoDBAccessorHelper;
 
 public class VersionManager {
 	
@@ -23,7 +22,8 @@ public class VersionManager {
 	public VersionManager(GlobalContext context) {
 		super();
 		this.context = context;
-		controllerLogs = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "controllerlogs");
+		
+		controllerLogs = context.getMongoClientSession().getJongoCollection("controllerlogs");
 	}
 
 	public void readLatestControllerLog() {

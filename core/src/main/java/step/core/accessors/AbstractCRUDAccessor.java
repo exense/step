@@ -32,7 +32,7 @@ import org.jongo.MongoCollection;
 
 public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends AbstractAccessor implements CRUDAccessor<T> {
 			
-	private MongoCollection collection;
+	protected MongoCollection collection;
 	
 	private Class<T> entityClass;
 	

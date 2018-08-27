@@ -19,26 +19,17 @@
 package step.core.artefacts.reports;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.bson.types.ObjectId;
 
-public class InMemoryReportNodeAccessor extends ReportNodeAccessor {
+import step.commons.datatable.DataTable;
+import step.core.accessors.InMemoryCRUDAccessor;
 
-	Map<ObjectId, ReportNode> map = new HashMap<>();
-
-	@Override
-	public void save(ReportNode node) {
-		map.put(node.getId(), node);
-	}
-
-	@Override
-	public ReportNode get(ObjectId nodeId) {
-		return map.get(nodeId);
-	}
+public class InMemoryReportNodeAccessor extends InMemoryCRUDAccessor<ReportNode> implements ReportNodeAccessor {
 
 	@Override
 	public Iterator<ReportNode> getChildren(ObjectId parentID) {
@@ -65,6 +56,86 @@ public class InMemoryReportNodeAccessor extends ReportNodeAccessor {
 			}
 		}
 		return nodes.iterator();
+	}
+
+	@Override
+	public void createIndexesIfNeeded(Long ttl) {
+		
+	}
+
+	@Override
+	public List<ReportNode> getReportNodePath(ObjectId id) {
+		LinkedList<ReportNode> result = new LinkedList<>();
+		appendParentNodeToPath(result, get(id));
+		return result;
+	}
+	
+	private void appendParentNodeToPath(LinkedList<ReportNode> path, ReportNode node) {
+		path.addFirst(node);
+		ReportNode parentNode;
+		if(node.getParentID()!=null) {
+			parentNode = get(node.getParentID());
+			if (parentNode != null) {
+				appendParentNodeToPath(path, parentNode);
+			}
+		}
+	}
+
+	@Override
+	public Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Iterator<ReportNode> getReportNodesByExecutionID(String executionID) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public long countReportNodesByExecutionID(String executionID) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Iterator<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Iterator<ReportNode> getLeafReportNodesByExecutionID(String executionID) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Iterator<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID,
+			List<Map<String, String>> customAttributes) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Iterator<ReportNode> getFailedLeafReportNodesByExecutionID(String executionID) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public DataTable getTimeBasedReport(String executionID, int resolution) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public ReportNode getRootReportNode(String executionID) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Map<ReportNodeStatus, Integer> getLeafReportNodesStatusDistribution(String executionID,
+			String reportNodeClass) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Iterator<ReportNode> getChildren(String parentID) {
+		return getChildren(new ObjectId(parentID));
 	}
 
 }

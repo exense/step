@@ -37,8 +37,7 @@ import step.artefacts.CallFunction;
 import step.artefacts.TestCase;
 import step.core.GlobalContext;
 import step.core.access.User;
-import step.core.access.UserAccessor;
-import step.core.accessors.MongoDBAccessorHelper;
+import step.core.access.UserAccessorImpl;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.LocalPlanRepository;
@@ -80,7 +79,7 @@ public class InitializationPlugin extends AbstractPlugin {
 		User user = new User();
 		user.setUsername("admin");
 		user.setRole("admin");
-		user.setPassword(UserAccessor.encryptPwd("init"));
+		user.setPassword(UserAccessorImpl.encryptPwd("init"));
 		context.getUserAccessor().save(user);
 	}
 	
@@ -93,7 +92,7 @@ public class InitializationPlugin extends AbstractPlugin {
 //	}
 
 	private void setupDemo(GlobalContext context) {
-		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
+		MongoCollection functionCollection = context.getMongoClientSession().getJongoCollection("functions");				
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
 		JsonObject schema = null;

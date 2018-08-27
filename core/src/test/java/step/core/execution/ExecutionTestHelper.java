@@ -18,10 +18,6 @@
  *******************************************************************************/
 package step.core.execution;
 
-import org.mockito.Mockito;
-
-import com.mongodb.MongoClient;
-
 import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
@@ -36,7 +32,7 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
-import step.core.scheduler.ExecutionTaskAccessor;
+import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.expressions.ExpressionHandler;
 
 public class ExecutionTestHelper {
@@ -81,17 +77,12 @@ public class ExecutionTestHelper {
 		PluginManager pluginManager = new PluginManager();
 		context.setPluginManager(pluginManager);
 		
-		MongoClient client = Mockito.mock(MongoClient.class);
-		context.setMongoClient(client);
-		
 		context.setConfiguration(Configuration.getInstance());
 		
 		context.setExecutionAccessor(new InMemoryExecutionAccessor());
 		context.setArtefactAccessor(new InMemoryArtefactAccessor());
 		context.setReportAccessor(new InMemoryReportNodeAccessor());
-		
-		ExecutionTaskAccessor schedulerAccessor = Mockito.mock(ExecutionTaskAccessor.class);
-		context.setScheduleAccessor(schedulerAccessor);
+		context.setScheduleAccessor(new InMemoryExecutionTaskAccessor());
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		
 		context.setEventManager(new EventManager());

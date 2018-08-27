@@ -44,7 +44,7 @@ public class ParameterManagerPlugin extends AbstractPlugin {
 		AbstractCRUDAccessor<Parameter> parameterAccessor = new AbstractCRUDAccessor<>(context.getMongoClientSession(), "parameters", Parameter.class);
 		context.put("ParameterAccessor", parameterAccessor);
 		
-		context.get(CollectionRegistry.class).register("parameters", new ParameterCollection(context.getMongoDatabase()));
+		context.get(CollectionRegistry.class).register("parameters", new ParameterCollection(context.getMongoClientSession().getMongoDatabase()));
 		
 		ParameterManager parameterManager = new ParameterManager(parameterAccessor);
 		context.put(ParameterManager.class, parameterManager);

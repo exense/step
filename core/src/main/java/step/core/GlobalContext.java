@@ -18,9 +18,6 @@
  *******************************************************************************/
 package step.core;
 
-import com.mongodb.MongoClient;
-import com.mongodb.client.MongoDatabase;
-
 import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.Controller.ServiceRegistrationCallback;
@@ -45,11 +42,7 @@ public class GlobalContext extends AbstractContext {
 	
 	private RepositoryObjectManager repositoryObjectManager;
 	
-	private MongoClient mongoClient;
-	
 	private MongoClientSession mongoClientSession;
-	
-	private MongoDatabase mongoDatabase;
 	
 	private ExecutionAccessor executionAccessor;
 	
@@ -91,24 +84,6 @@ public class GlobalContext extends AbstractContext {
 
 	public void setMongoClientSession(MongoClientSession mongoClientSession) {
 		this.mongoClientSession = mongoClientSession;
-	}
-
-	@Deprecated
-	public MongoClient getMongoClient() {
-		return mongoClient;
-	}
-
-	public void setMongoClient(MongoClient mongoClient) {
-		this.mongoClient = mongoClient;
-	}
-
-	@Deprecated
-	public MongoDatabase getMongoDatabase() {
-		return mongoDatabase;
-	}
-
-	public void setMongoDatabase(MongoDatabase mongoDatabase) {
-		this.mongoDatabase = mongoDatabase;
 	}
 
 	public ExecutionAccessor getExecutionAccessor() {

@@ -8,7 +8,6 @@ import com.mongodb.Block;
 
 import step.core.GlobalContext;
 import step.core.Version;
-import step.core.accessors.MongoDBAccessorHelper;
 import step.migration.MigrationTask;
 
 /**
@@ -30,7 +29,7 @@ public class RenameArtefactType extends MigrationTask {
 	
 	private void renameArtefactType(GlobalContext context, String classFrom, String classTo) {
 		logger.info("Searching for artefacts of type '"+classFrom+"' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> artefacts = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "artefacts");
+		com.mongodb.client.MongoCollection<Document> artefacts = context.getMongoClientSession().getMongoDatabase().getCollection("artefacts");
 		
 		AtomicInteger i = new AtomicInteger();
 		Document filterCallFunction = new Document("_class", classFrom);

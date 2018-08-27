@@ -9,7 +9,6 @@ import org.jongo.MongoCollection;
 import step.artefacts.CallFunction;
 import step.artefacts.CallPlan;
 import step.core.Version;
-import step.core.accessors.MongoDBAccessorHelper;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.ArtefactAccessor;
@@ -30,7 +29,7 @@ public class SetArtefactNamesIfEmpty extends MigrationTask {
 
 	@Override
 	public void runUpgradeScript() {
-		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(context.getMongoClient(), "functions");				
+		MongoCollection functionCollection = context.getMongoClientSession().getJongoCollection("functions");				
 		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
 		ArtefactAccessor a = context.getArtefactAccessor();

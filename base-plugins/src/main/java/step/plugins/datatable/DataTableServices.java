@@ -87,7 +87,7 @@ public class DataTableServices extends AbstractServices {
 	public void init() {
 		exportTaskManager = new ExportTaskManager(getContext().getAttachmentManager());
 		
-		MongoDatabase database = getContext().getMongoDatabase();
+		MongoDatabase database = getContext().getMongoClientSession().getMongoDatabase();
 		
 		dataTableRegistry = getContext().get(DataTableRegistry.class);
 		

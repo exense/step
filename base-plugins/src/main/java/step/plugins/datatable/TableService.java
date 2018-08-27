@@ -76,7 +76,7 @@ public class TableService extends AbstractServices {
 	
 	@PostConstruct
 	public void init() {
-		database = getContext().getMongoDatabase();
+		database = getContext().getMongoClientSession().getMongoDatabase();
 		collectionRegistry = getContext().get(CollectionRegistry.class);
 	}
 	

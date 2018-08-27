@@ -18,29 +18,48 @@
  *******************************************************************************/
 package step.core.execution;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bson.types.ObjectId;
 
+import step.core.accessors.InMemoryCRUDAccessor;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 
-public class InMemoryExecutionAccessor extends ExecutionAccessor {
-
-	Map<String, Execution> map = new HashMap<>();
+public class InMemoryExecutionAccessor extends InMemoryCRUDAccessor<Execution> implements ExecutionAccessor {
 
 	@Override
-	public void save(Execution execution) {
-		if(execution.getId()==null) {
-			execution.setId(new ObjectId());
-		}
-		map.put(execution.getId().toString(), execution);
+	public void createIndexesIfNeeded(Long ttl) {
 	}
 
 	@Override
-	public Execution get(String executionId) {
-		return map.get(executionId);
+	public Execution get(String nodeId) {
+		return get(new ObjectId(nodeId));
 	}
 
+	@Override
+	public List<Execution> getActiveTests() {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public List<Execution> getTestExecutionsByArtefactURL(String artefactURL) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Iterable<Execution> findByCritera(Map<String, Object> criteria, int limit) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Iterable<Execution> findLastStarted(int limit) {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Iterable<Execution> findLastEnded(int limit) {
+		throw new RuntimeException("Not implemented");
+	}
 }

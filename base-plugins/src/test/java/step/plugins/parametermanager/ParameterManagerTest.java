@@ -35,13 +35,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import step.commons.activation.Expression;
-import step.core.accessors.InMemoryAccessor;
+import step.core.accessors.InMemoryCRUDAccessor;
 
 public class ParameterManagerTest {
 
 	@Test
 	public void test1() throws ScriptException {
-		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+		InMemoryCRUDAccessor<Parameter> accessor = new InMemoryCRUDAccessor<>();
 		ParameterManager m = new ParameterManager(accessor);
 		
 		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
@@ -70,7 +70,7 @@ public class ParameterManagerTest {
 	
 	@Test
 	public void testPerf() throws ScriptException {
-		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+		InMemoryCRUDAccessor<Parameter> accessor = new InMemoryCRUDAccessor<>();
 		ParameterManager m = new ParameterManager(accessor);
 		
 		int nIt = 100;
@@ -96,7 +96,7 @@ public class ParameterManagerTest {
 	
 	@Test
 	public void testParallel() throws ScriptException, InterruptedException, ExecutionException {
-		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+		InMemoryCRUDAccessor<Parameter> accessor = new InMemoryCRUDAccessor<>();
 		ParameterManager m = new ParameterManager(accessor);
 		
 		int nIt = 100;

@@ -5,6 +5,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jongo.Jongo;
+import org.jongo.MongoCollection;
+import org.jongo.marshall.jackson.JacksonMapper;
+
+import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
@@ -15,11 +21,11 @@ import step.commons.conf.Configuration;
 
 public class MongoClientSession implements Closeable {
 
-	MongoClient mongoClient;
+	protected MongoClient mongoClient;
 	
-	String db;
+	protected String db;
 	
-	Configuration configuration;
+	protected Configuration configuration;
 
 	public MongoClientSession(Configuration configuration) {
 		super();
@@ -46,13 +52,20 @@ public class MongoClientSession implements Closeable {
 		mongoClient = new MongoClient(address, credentials);
 	}
 	
-	@Deprecated
-	public DB getDB() {
-		return mongoClient.getDB(db);		
-	}
-	
 	public MongoDatabase getMongoDatabase() {
 		return mongoClient.getDatabase(db);
+	}
+	
+	public org.jongo.MongoCollection getJongoCollection(String collectionName) {
+		@SuppressWarnings("deprecation")
+		DB db = mongoClient.getDB(this.db);
+		
+		Jongo jongo = new Jongo(db,new JacksonMapper.Builder()
+			      .registerModule(new JSR353Module())
+			      .registerModule(new JsonOrgModule()).build());
+		MongoCollection collection = jongo.getCollection(collectionName);
+		
+		return collection;
 	}
 
 	@Override

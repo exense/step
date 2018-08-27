@@ -22,11 +22,8 @@ import org.jongo.MongoCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.MongoClient;
-
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
-import step.core.accessors.MongoDBAccessorHelper;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.plugins.AbstractPlugin;
@@ -63,8 +60,7 @@ public class GridPlugin extends AbstractPlugin {
 		
 		GridClient client = new GridClient(grid, grid);
 
-		MongoClient mongoClient = context.getMongoClient();
-		MongoCollection functionCollection = MongoDBAccessorHelper.getCollection(mongoClient, "functions");	
+		MongoCollection functionCollection = context.getMongoClientSession().getJongoCollection("functions");	
 		
 		FunctionEditorRegistry editorRegistry = new FunctionEditorRegistry();
 		context.put(FunctionEditorRegistry.class.getName(), editorRegistry);

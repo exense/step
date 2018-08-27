@@ -76,7 +76,7 @@ public class ExecutionScheduler {
 	}
 	
 	public Iterator<ExecutiontTaskParameters> getActiveAndInactiveExecutionTasks() {
-		return context.getScheduleAccessor().getActiveAndInactiveExecutionTasks();
+		return context.getScheduleAccessor().getAll();
 	}
 	
 	public void removeExecutionTask(String executionTaskID) {
@@ -119,7 +119,7 @@ public class ExecutionScheduler {
 	}
 	
 	private void remove(ExecutiontTaskParameters schedule) {
-		context.getScheduleAccessor().remove(schedule);
+		context.getScheduleAccessor().remove(schedule.getId());
 	}
 	
 	public List<ExecutionRunnable> getCurrentExecutions() {

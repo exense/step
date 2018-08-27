@@ -43,7 +43,7 @@ public class RtmPlugin extends AbstractPlugin {
 		}
 		measureReportNodes = stepProperties.getPropertyAsBoolean("plugins.rtm.measurereportnodes", true);
 		
-		AbstractAccessor.createOrUpdateCompoundIndex(context.getMongoDatabase().getCollection("measurements"),"eId", "begin");
+		AbstractAccessor.createOrUpdateCompoundIndex(context.getMongoClientSession().getMongoDatabase().getCollection("measurements"),"eId", "begin");
 
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");

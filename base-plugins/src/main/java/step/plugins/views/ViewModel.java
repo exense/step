@@ -3,8 +3,10 @@ package step.plugins.views;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
+import step.core.accessors.AbstractIdentifiableObject;
+
 @JsonTypeInfo(use=Id.CLASS,property="_class")
-public abstract class ViewModel {
+public abstract class ViewModel extends AbstractIdentifiableObject {
 	
 	String viewId;
 	

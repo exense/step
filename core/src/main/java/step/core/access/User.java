@@ -1,11 +1,9 @@
 package step.core.access;
 
-import org.bson.types.ObjectId;
+import step.core.accessors.AbstractIdentifiableObject;
 
-public class User {
+public class User extends AbstractIdentifiableObject {
 	
-	public ObjectId _id;
-
 	private String username;
 
 	private String password;
@@ -16,14 +14,6 @@ public class User {
 
 	public User() {
 		super();
-	}
-
-	public ObjectId getId() {
-		return _id;
-	}
-	
-	public void setId(ObjectId _id) {
-		this._id = _id;
 	}
 
 	public String getUsername() {

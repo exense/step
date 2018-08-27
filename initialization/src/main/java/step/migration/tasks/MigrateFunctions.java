@@ -9,7 +9,6 @@ import com.mongodb.client.result.UpdateResult;
 
 import step.core.GlobalContext;
 import step.core.Version;
-import step.core.accessors.MongoDBAccessorHelper;
 import step.migration.MigrationTask;
 
 /**
@@ -32,7 +31,8 @@ public class MigrateFunctions extends MigrationTask {
 	
 	private void migrateGeneralScriptFunction(GlobalContext context) {
 		logger.info("Searching for keywords of type 'Script' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> functions = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "functions");
+		
+		com.mongodb.client.MongoCollection<Document> functions = context.getMongoClientSession().getMongoDatabase().getCollection("functions");
 		
 		Document filter = new Document("type", "step.plugins.functions.types.GeneralScriptFunction");
 		Document replacement = new Document("$set", new Document("type", "step.plugins.java.GeneralScriptFunction"));
@@ -43,7 +43,7 @@ public class MigrateFunctions extends MigrationTask {
 	
 	private void migrateGeneralScriptFunctions(GlobalContext context) {
 		logger.info("Searching for functions of type 'step.plugins.functions.types.GeneralScriptFunction' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> functions = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "functions");
+		com.mongodb.client.MongoCollection<Document> functions = context.getMongoClientSession().getMongoDatabase().getCollection("functions");
 		
 		AtomicInteger i = new AtomicInteger();
 		Document filterCallFunction = new Document("type", "step.plugins.functions.types.GeneralScriptFunction");
@@ -65,7 +65,7 @@ public class MigrateFunctions extends MigrationTask {
 	// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
 	private void migrateCallFunction(GlobalContext context) {
 		logger.info("Searching for artefacts of type 'CallFunction' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> artefacts = MongoDBAccessorHelper.getMongoCollection_(context.getMongoClient(), "artefacts");
+		com.mongodb.client.MongoCollection<Document> artefacts = context.getMongoClientSession().getMongoDatabase().getCollection("artefacts");
 		
 		AtomicInteger i = new AtomicInteger();
 		Document filterCallFunction = new Document("_class", "CallFunction");

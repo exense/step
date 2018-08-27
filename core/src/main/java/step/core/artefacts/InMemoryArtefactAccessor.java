@@ -19,41 +19,19 @@
 package step.core.artefacts;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 
-public class InMemoryArtefactAccessor extends ArtefactAccessor {
+import step.core.accessors.InMemoryCRUDAccessor;
 
-	Map<ObjectId, AbstractArtefact> map = new HashMap<>();
-
-	@Override
-	public AbstractArtefact get(ObjectId artefactID) {
-		return map.get(artefactID);
-	}
-
-	@Override
-	public AbstractArtefact get(String artefactID) {
-		return get(new ObjectId(artefactID));
-	}
+public class InMemoryArtefactAccessor extends InMemoryCRUDAccessor<AbstractArtefact> implements ArtefactAccessor {
 
 	@Override
 	public Iterator<AbstractArtefact> getChildren(AbstractArtefact parent) {
 		return parent.getChildrenIDs().stream().map(id->get(id)).iterator();
-	}
-
-	@Override
-	public AbstractArtefact save(AbstractArtefact artefact) {
-		return map.put(artefact.getId(), artefact);
-	}
-
-	@Override
-	public void save(List<? extends AbstractArtefact> artefacts) {
-		artefacts.stream().forEach(artefact->save(artefact));
 	}
 	
 	public Collection<? extends AbstractArtefact> getCollection() {
@@ -66,4 +44,25 @@ public class InMemoryArtefactAccessor extends ArtefactAccessor {
 		return (Iterator<AbstractArtefact>) getCollection().stream().filter(a->a.isRoot()).collect(Collectors.toList()).iterator();
 	}
 
+	private WorkArtefactFactory workArtefactFactory = new WorkArtefactFactory();
+	
+	@Override
+	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {
+		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, false);
+	}
+
+	@Override
+	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name, boolean copyChildren) {
+		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, copyChildren);
+	}
+
+	@Override
+	public AbstractArtefact findRootArtefactByAttributes(Map<String, String> attributes) {
+		return null;
+	}
+
+	@Override
+	public AbstractArtefact get(String artefactID) {
+		return get(new ObjectId(artefactID));
+	}
 }
