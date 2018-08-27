@@ -26,7 +26,7 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		if (file == null || file.length() < 1)
 			throw new RuntimeException("file path is incorrect.");
 		
-		FileResolver fileResolver = new FileResolver(context.getGlobalContext().getAttachmentManager());
+		FileResolver fileResolver = new FileResolver(context.getAttachmentManager());
 		filePath = fileResolver.resolve(file).getAbsolutePath();
 		
 		initReader();

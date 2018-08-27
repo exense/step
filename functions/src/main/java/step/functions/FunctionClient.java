@@ -28,7 +28,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.GlobalContext;
+import step.attachments.AttachmentManager;
+import step.commons.conf.Configuration;
+import step.core.dynamicbeans.DynamicBeanResolver;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
@@ -45,17 +47,22 @@ public class FunctionClient implements FunctionExecutionService, FunctionTypeReg
 
 	private final GridClient gridClient;
 	
-	private final FunctionRepository functionRepository;
+	private final AttachmentManager attachmentManager;
 	
-	private final GlobalContext context;
+	private final FunctionRepository functionRepository;
 	
 	private final Map<String, AbstractFunctionType<Function>> functionTypes = new HashMap<>();
 	
+	private final DynamicBeanResolver dynamicBeanResolver;
+	private final Configuration configuration;
+	
 	private static final Logger logger = LoggerFactory.getLogger(FunctionClient.class);
 	
-	public FunctionClient(GlobalContext context, GridClient gridClient, FunctionRepository functionRepository) {
+	public FunctionClient(AttachmentManager attachmentManager, Configuration configuration, DynamicBeanResolver dynamicBeanResolver, GridClient gridClient, FunctionRepository functionRepository) {
 		super();
-		this.context = context;
+		this.attachmentManager = attachmentManager;
+		this.configuration = configuration;
+		this.dynamicBeanResolver = dynamicBeanResolver;
 		this.gridClient = gridClient;
 		this.functionRepository = functionRepository;
 	}
@@ -90,7 +97,7 @@ public class FunctionClient implements FunctionExecutionService, FunctionTypeReg
 		output.setFunction(function);
 		try {
 			AbstractFunctionType<Function> functionType = getFunctionTypeByFunction(function);
-			context.getDynamicBeanResolver().evaluate(function, Collections.<String, Object>unmodifiableMap(input.getProperties()));
+			dynamicBeanResolver.evaluate(function, Collections.<String, Object>unmodifiableMap(input.getProperties()));
 			
 			String handlerChain = functionType.getHandlerChain(function);
 			FileVersionId handlerPackage = functionType.getHandlerPackage(function);
@@ -135,7 +142,9 @@ public class FunctionClient implements FunctionExecutionService, FunctionTypeReg
 	@SuppressWarnings("unchecked")
 	@Override
 	public void registerFunctionType(AbstractFunctionType<? extends Function> functionType) {
-		functionType.setContext(context);
+		functionType.setConfiguration(configuration);
+		functionType.setAttachmentManager(attachmentManager);
+		functionType.setFunctionClient(this);
 		functionType.init();
 		functionTypes.put(functionType.newFunction().getClass().getName(), (AbstractFunctionType<Function>) functionType);
 	}

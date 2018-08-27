@@ -21,9 +21,8 @@ package step.core.execution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.GlobalContext;
 import step.core.execution.model.ExecutionStatus;
-import step.core.plugins.PluginManager;
+import step.core.plugins.ExecutionCallbacks;
 import step.core.repositories.Repository.ImportResult;
 
 public class ExecutionLifecycleManager {
@@ -32,7 +31,7 @@ public class ExecutionLifecycleManager {
 	
 	private final ExecutionManager executionManager;
 	
-	private final PluginManager pluginManager;
+	private final ExecutionCallbacks executionCallbacks;
 	
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionLifecycleManager.class);
 	
@@ -40,16 +39,15 @@ public class ExecutionLifecycleManager {
 		super();
 		this.context = context;
 		
-		GlobalContext globalContext = context.getGlobalContext();
-		this.executionManager = new ExecutionManager(globalContext);
-		this.pluginManager = globalContext.getPluginManager();
+		this.executionManager = new ExecutionManager(context.getExecutionAccessor());
+		this.executionCallbacks = context.getExecutionCallbacks();
 	}
 
 	public void abort() {
 		if(context.getStatus()!=ExecutionStatus.ENDED) {
 			executionManager.updateStatus(context, ExecutionStatus.ABORTING);
 		}
-		pluginManager.getProxy().beforeExecutionEnd(context);
+		executionCallbacks.beforeExecutionEnd(context);
 	}
 	
 	public void afterImport(ImportResult importResult) {
@@ -57,12 +55,12 @@ public class ExecutionLifecycleManager {
 	}
 	
 	public void executionStarted() {
-		pluginManager.getProxy().executionStart(context);
+		executionCallbacks.executionStart(context);
 		executionManager.updateParameters(context);
 	}
 	
 	public void executionEnded() {
-		pluginManager.getProxy().afterExecutionEnd(context);
+		executionCallbacks.afterExecutionEnd(context);
 	}
 	
 	public void updateStatus(ExecutionStatus newStatus) {

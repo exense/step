@@ -19,9 +19,9 @@
 package step.plugins.events;
 
 import step.core.GlobalContext;
+import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
-import step.plugins.quotamanager.QuotaManagerServices;
 
 @Plugin
 public class EventBrokerPlugin extends AbstractPlugin {
@@ -32,5 +32,11 @@ public class EventBrokerPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context)  throws Exception {
 		context.put(EventBroker.class, eventBroker);
 		context.getServiceRegistrationCallback().registerService(EventBrokerServices.class);
+	}
+
+	@Override
+	public void executionStart(ExecutionContext context) {
+		context.put(EventBroker.class, eventBroker);
+		super.executionStart(context);
 	}
 }

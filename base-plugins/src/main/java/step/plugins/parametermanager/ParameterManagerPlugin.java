@@ -39,6 +39,8 @@ public class ParameterManagerPlugin extends AbstractPlugin {
 	
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerPlugin.class);
 		
+	protected ParameterManager parameterManager;
+	
 	@Override
 	public void executionControllerStart(GlobalContext context) {
 		AbstractCRUDAccessor<Parameter> parameterAccessor = new AbstractCRUDAccessor<>(context.getMongoClientSession(), "parameters", Parameter.class);
@@ -48,14 +50,13 @@ public class ParameterManagerPlugin extends AbstractPlugin {
 		
 		ParameterManager parameterManager = new ParameterManager(parameterAccessor);
 		context.put(ParameterManager.class, parameterManager);
+		this.parameterManager = parameterManager;
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
 	}
 
 	@Override
 	public void executionStart(ExecutionContext context) {
-		ParameterManager parameterManager = context.getGlobalContext().get(ParameterManager.class);
-		
 		if(parameterManager!=null) {
 			ReportNode rootNode = context.getReport();
 			VariablesManager varMan = context.getVariablesManager();

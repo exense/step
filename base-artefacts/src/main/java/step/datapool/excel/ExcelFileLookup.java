@@ -36,7 +36,7 @@ public class ExcelFileLookup {
 	public File lookup(String workbookPath) {
 		File workBookFile;
 		if(workbookPath.startsWith("attachment:")) {
-			workBookFile = context.getGlobalContext().getAttachmentManager().getFileById(workbookPath.replace("attachment:", ""));
+			workBookFile = context.getAttachmentManager().getFileById(workbookPath.replace("attachment:", ""));
 		} else if(workbookPath.contains("/")||workbookPath.contains("\\")) {
 			workBookFile = new File(workbookPath);
 		} else {		

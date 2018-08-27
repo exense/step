@@ -21,7 +21,6 @@ package step.core.execution;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
@@ -32,9 +31,9 @@ public class ExecutionManager {
 	
 	private final ExecutionAccessor accessor;
 	
-	public ExecutionManager(GlobalContext globalContext) {
+	public ExecutionManager(ExecutionAccessor accessor) {
 		super();
-		accessor = globalContext.getExecutionAccessor();
+		this.accessor = accessor;
 	}
 
 	protected void updateParameters(ExecutionContext context) {

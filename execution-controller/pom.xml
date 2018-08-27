@@ -34,6 +34,13 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>core</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>			
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>functions</artifactId>
 			<version>${project.version}</version>
 		</dependency>

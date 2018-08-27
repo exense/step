@@ -14,7 +14,7 @@ public class SeleniumFunctionType extends AbstractScriptFunctionType<SeleniumFun
 		String seleniumVersion = function.getSeleniumVersion();
 		
 		String propertyName = "plugins.selenium.libs."+seleniumVersion;
-		String seleniumLibPath = getContext().getConfiguration().getProperty(propertyName);
+		String seleniumLibPath = configuration.getProperty(propertyName);
 		if(seleniumLibPath==null) {
 			throw new RuntimeException("Property '"+propertyName+"' in step.properties isn't set. Please set it to path of the installation folder of selenium");
 		}

@@ -19,7 +19,7 @@ public class DefaultPlanRunner implements PlanRunner {
 	@Override
 	public ReportNode run(Plan plan) {
 		init();
-		context.getGlobalContext().getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
+		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
 		return ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
 	}
 }

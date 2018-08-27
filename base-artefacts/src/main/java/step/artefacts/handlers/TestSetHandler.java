@@ -37,7 +37,7 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestSet testSet) {	
-		ExecutionManager executionManager = new ExecutionManager(context.getGlobalContext());
+		ExecutionManager executionManager = new ExecutionManager(context.getExecutionAccessor());
 		executionManager.updateExecutionType(context, "TestSet");
 		runParallel(node, testSet, false);
 	}

@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.artefacts.CallFunction;
+import step.commons.conf.Configuration;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
@@ -29,9 +30,9 @@ public class FunctionRouterTest {
 	
 	@Test
 	public void test() {
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 
-		FunctionClient client = new FunctionClient(context.getGlobalContext(), null, null);
+		FunctionClient client = new FunctionClient(context.getAttachmentManager(), new Configuration(), context.getDynamicBeanResolver(), null, null);
 		FunctionRouter router = new FunctionRouter(client, client, dynamicJsonObjectResolver);
 		
 		CallFunction callFunction = new CallFunction();

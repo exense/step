@@ -18,20 +18,26 @@
  *******************************************************************************/
 package step.core.execution;
 
+import step.attachments.AttachmentManager;
+import step.commons.conf.Configuration;
 import step.core.AbstractContext;
-import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeAccessor;
+import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.plugins.ExecutionCallbacks;
+import step.core.repositories.RepositoryObjectManager;
 import step.core.variables.VariablesManager;
+import step.expressions.ExpressionHandler;
 
 public class ExecutionContext extends AbstractContext  {
 		
 	private ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
-	
-	private GlobalContext globalContext;
 
 	private ExecutionParameters executionParameters;
 	
@@ -48,6 +54,26 @@ public class ExecutionContext extends AbstractContext  {
 	private final ReportNodeCache reportNodeCache;
 	
 	private final ArtefactCache artefactCache;
+	
+	private ArtefactAccessor artefactAccessor;
+	
+	private ReportNodeAccessor reportNodeAccessor;
+	
+	private ExecutionAccessor executionAccessor;
+	
+	private AttachmentManager attachmentManager;
+	
+	private ExpressionHandler expressionHandler;
+	
+	private DynamicBeanResolver dynamicBeanResolver;
+	
+	private EventManager eventManager;
+	
+	private ExecutionCallbacks executionCallbacks;
+	
+	private Configuration configuration;
+	
+	private RepositoryObjectManager repositoryObjectManager;
 	
 	public ExecutionContext(String executionId) {
 		super();
@@ -93,7 +119,7 @@ public class ExecutionContext extends AbstractContext  {
 	}
 	
 	public void associateThread() {
-		getGlobalContext().getPluginManager().getProxy().associateThread(this, Thread.currentThread());
+		getExecutionCallbacks().associateThread(this, Thread.currentThread());
 	}
 
 	public String getExecutionId() {
@@ -132,16 +158,88 @@ public class ExecutionContext extends AbstractContext  {
 	public void setExecutionParameters(ExecutionParameters parameters) {
 		this.executionParameters = parameters;
 	}
-	
-	public GlobalContext getGlobalContext() {
-		return globalContext;
-	}
-
-	public void setGlobalContext(GlobalContext globalContext) {
-		this.globalContext = globalContext;
-	}
 
 	public ArtefactCache getArtefactCache() {
 		return artefactCache;
+	}
+
+	public ArtefactAccessor getArtefactAccessor() {
+		return artefactAccessor;
+	}
+
+	public ReportNodeAccessor getReportNodeAccessor() {
+		return reportNodeAccessor;
+	}
+
+	public ExecutionAccessor getExecutionAccessor() {
+		return executionAccessor;
+	}
+	
+	public ExpressionHandler getExpressionHandler() {
+		return expressionHandler;
+	}
+	
+	public AttachmentManager getAttachmentManager() {
+		return attachmentManager;
+	}
+	
+	public DynamicBeanResolver getDynamicBeanResolver() {
+		return dynamicBeanResolver;
+	}
+	
+	public EventManager getEventManager() {
+		return eventManager;
+	}
+
+	public ExecutionCallbacks getExecutionCallbacks() {
+		return executionCallbacks;
+	}
+
+	public Configuration getConfiguration() {
+		return configuration;
+	}
+
+	public RepositoryObjectManager getRepositoryObjectManager() {
+		return repositoryObjectManager;
+	}
+
+	protected void setArtefactAccessor(ArtefactAccessor artefactAccessor) {
+		this.artefactAccessor = artefactAccessor;
+	}
+
+	protected void setReportNodeAccessor(ReportNodeAccessor reportNodeAccessor) {
+		this.reportNodeAccessor = reportNodeAccessor;
+	}
+
+	protected void setExecutionAccessor(ExecutionAccessor executionAccessor) {
+		this.executionAccessor = executionAccessor;
+	}
+
+	protected void setAttachmentManager(AttachmentManager attachmentManager) {
+		this.attachmentManager = attachmentManager;
+	}
+
+	protected void setExpressionHandler(ExpressionHandler expressionHandler) {
+		this.expressionHandler = expressionHandler;
+	}
+
+	protected void setDynamicBeanResolver(DynamicBeanResolver dynamicBeanResolver) {
+		this.dynamicBeanResolver = dynamicBeanResolver;
+	}
+
+	protected void setEventManager(EventManager eventManager) {
+		this.eventManager = eventManager;
+	}
+
+	protected void setExecutionCallbacks(ExecutionCallbacks executionCallbacks) {
+		this.executionCallbacks = executionCallbacks;
+	}
+
+	protected void setConfiguration(Configuration configuration) {
+		this.configuration = configuration;
+	}
+
+	protected void setRepositoryObjectManager(RepositoryObjectManager repositoryObjectManager) {
+		this.repositoryObjectManager = repositoryObjectManager;
 	}
 }

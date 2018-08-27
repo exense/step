@@ -88,7 +88,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 									break;
 								}
 								
-								ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
+								ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
 								Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Group_"+groupID+"_Iteration_"+i);
 								
 								for(AbstractArtefact child:getChildren(testArtefact)) {

@@ -29,12 +29,12 @@ public class CallPlanHandlerTest extends AbstractArtefactHandlerTest {
 		
 		
 		Plan calledPlan = PlanBuilder.create().add(check).build();
-		context.getGlobalContext().getArtefactAccessor().save(new ArrayList<>(calledPlan.getArtefacts()));
+		context.getArtefactAccessor().save(new ArrayList<>(calledPlan.getArtefacts()));
 		
 		CallPlan callPlan = new CallPlan();
 		callPlan.setArtefactId(calledPlan.getRoot().getId().toString());
 		Plan plan = PlanBuilder.create().add(callPlan).build();
-		context.getGlobalContext().getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
+		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
 		
 		ArtefactHandler.delegateCreateReportSkeleton(context, plan.getRoot(),context.getReport());
 		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());	

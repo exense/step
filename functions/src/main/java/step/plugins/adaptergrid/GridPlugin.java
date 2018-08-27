@@ -26,6 +26,7 @@ import step.commons.conf.Configuration;
 import step.core.GlobalContext;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.FunctionClient;
@@ -49,6 +50,10 @@ public class GridPlugin extends AbstractPlugin {
 	
 	private Grid grid;
 	
+	private FunctionClient functionClient;
+	
+	private FunctionRepositoryImpl functionRepository;
+	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		
@@ -65,9 +70,9 @@ public class GridPlugin extends AbstractPlugin {
 		FunctionEditorRegistry editorRegistry = new FunctionEditorRegistry();
 		context.put(FunctionEditorRegistry.class.getName(), editorRegistry);
 
-		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
+		functionRepository = new FunctionRepositoryImpl(functionCollection);
 		
-		FunctionClient functionClient = new FunctionClient(context, client, functionRepository);
+		functionClient = new FunctionClient(context.getAttachmentManager(), context.getConfiguration(), context.getDynamicBeanResolver(), client, functionRepository);
 		
 		context.put(GRID_KEY, grid);
 		context.put(GRIDCLIENT_KEY, client);
@@ -81,6 +86,16 @@ public class GridPlugin extends AbstractPlugin {
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
 		context.getServiceRegistrationCallback().registerService(FunctionRepositoryServices.class);
+	}
+
+	@Override
+	public void executionStart(ExecutionContext context) {
+		context.put(FunctionExecutionService.class.getName(), functionClient);
+		context.put(FunctionRepository.class.getName(), functionRepository);
+		
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+		context.put(FunctionRouter.class.getName(), new FunctionRouter(functionClient, functionClient, dynamicJsonObjectResolver));
+		super.executionStart(context);
 	}
 
 	@Override

@@ -16,34 +16,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.artefacts.handlers;
+package step.core.plugins;
 
-import java.util.Map;
-
-import step.artefacts.Script;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
-import step.expressions.ExpressionHandler;
+import step.core.execution.ExecutionContext;
 
-public class ScriptHandler extends ArtefactHandler<Script, ReportNode> {
+public interface ExecutionCallbacks {
 	
-	@Override
-	protected void createReportSkeleton_(ReportNode parentNode, Script testArtefact) {
+	public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node);
+	
+	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node);
+	
+	public void afterReportNodeExecution(ExecutionContext context, ReportNode node);
+	
+	public void associateThread(ExecutionContext context, Thread thread);
+	
+	public void unassociateThread(ExecutionContext context, Thread thread);
+	
+	public void executionStart(ExecutionContext context);
 
-	}
-
-	@Override
-	protected void execute_(ReportNode node, Script testArtefact) {
-		ExpressionHandler expressionHandler = context.getExpressionHandler();
-		Map<String, Object> bindings = context.getVariablesManager().getAllVariables();
-		
-		expressionHandler.evaluateGroovyExpression(testArtefact.getScript(), bindings);
-		node.setStatus(ReportNodeStatus.PASSED);
-	}
-
-	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, Script testArtefact) {
-		return new ReportNode();
-	}
+	public void beforeExecutionEnd(ExecutionContext context);
+	
+	public void afterExecutionEnd(ExecutionContext context);
 }

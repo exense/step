@@ -60,10 +60,10 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
 		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 
-		DynamicValueResolver resolver = new DynamicValueResolver(context.getGlobalContext().getExpressionHandler());
+		DynamicValueResolver resolver = new DynamicValueResolver(context.getExpressionHandler());
 		DynamicValue<Boolean> condition = testArtefact.getCondition(); 
 
-		ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
+		ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
 		
 		try {
 			while(reevaluateCondition(resolver, condition) && condition.get() 														// expression is true

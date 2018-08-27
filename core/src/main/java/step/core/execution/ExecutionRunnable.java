@@ -69,7 +69,7 @@ public class ExecutionRunnable implements Runnable {
 			executionLifecycleManager.afterImport(importResult);
 			
 			if(importResult.isSuccessful()) {
-				AbstractArtefact artefact = context.getGlobalContext().getArtefactAccessor().get(importResult.getArtefactId());
+				AbstractArtefact artefact = context.getArtefactAccessor().get(importResult.getArtefactId());
 				context.setArtefact(artefact);
 				
 				logger.info("Starting test execution. Execution ID: " + context.getExecutionId());
@@ -106,7 +106,7 @@ public class ExecutionRunnable implements Runnable {
 		resultNode.setId(new ObjectId(context.getExecutionId()));
 		context.setReport(resultNode);
 		context.getReportNodeCache().put(resultNode);
-		context.getGlobalContext().getReportAccessor().save(resultNode);
+		context.getReportNodeAccessor().save(resultNode);
 		context.setCurrentReportNode(resultNode);
 		return resultNode;
 	}
@@ -126,7 +126,7 @@ public class ExecutionRunnable implements Runnable {
 					importResult.setSuccessful(true);
 				} else {
 					try {
-						importResult = context.getGlobalContext().getRepositoryObjectManager().importArtefact(artefactPointer);											
+						importResult = context.getRepositoryObjectManager().importArtefact(artefactPointer);											
 					} catch (Exception e) {
 						logger.error("Error while importing repository object "+artefactPointer.toString(), e);
 						importResult = new ImportResult();
@@ -147,11 +147,11 @@ public class ExecutionRunnable implements Runnable {
 	}
 	
 	private void exportExecution(String executionId) {		
-		ExecutionAccessor executionAccessor = context.getGlobalContext().getExecutionAccessor();
+		ExecutionAccessor executionAccessor = context.getExecutionAccessor();
 		Execution execution = executionAccessor.get(executionId);
 		
 		if(execution!=null) {
-			RepositoryObjectManager repositoryObjectManager = context.getGlobalContext().getRepositoryObjectManager();
+			RepositoryObjectManager repositoryObjectManager = context.getRepositoryObjectManager();
 			ReportExport report = repositoryObjectManager.exportTestExecutionReport(execution.getExecutionParameters().getArtefact(), executionId);
 			List<ReportExport> exports = new ArrayList<>();
 			exports.add(report);

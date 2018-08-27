@@ -40,7 +40,6 @@ public class ArtefactMessageHandler implements MessageHandler {
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message)
 			throws Exception {
 		ExecutionContext executionContext = (ExecutionContext) token.getToken().getAttachedObject(CallFunctionHandler.EXECUTION_CONTEXT_KEY);
-		GlobalContext globalContext = executionContext.getGlobalContext();
 		
 		String artefactId = message.getProperties().get(CallFunctionHandler.ARTEFACTID);
 		String parentReportId = message.getProperties().get(CallFunctionHandler.PARENTREPORTID);
@@ -52,13 +51,13 @@ public class ArtefactMessageHandler implements MessageHandler {
 		}
 		parentNode.setExecutionID(executionContext.getExecutionId());
 		
-		globalContext.getReportAccessor().save(parentNode);
+		executionContext.getReportNodeAccessor().save(parentNode);
 
 		ReportNode previousCurrentNode = executionContext.getCurrentReportNode();
 		executionContext.setCurrentReportNode(parentNode);
 		executionContext.getReportNodeCache().put(parentNode);
 		
-		AbstractArtefact artefact = globalContext.getArtefactAccessor().get(artefactId);
+		AbstractArtefact artefact = executionContext.getArtefactAccessor().get(artefactId);
 		
 		executionContext.getVariablesManager().putVariable(parentNode, "input", message.getArgument());
 		OutputMessageBuilder output = new OutputMessageBuilder();

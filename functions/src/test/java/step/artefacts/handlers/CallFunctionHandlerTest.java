@@ -57,7 +57,7 @@ public class CallFunctionHandlerTest {
 		runner.run(plan);
 
 
-		InMemoryReportNodeAccessor reportNodes = (InMemoryReportNodeAccessor) runner.getContext().getGlobalContext().getReportAccessor();
+		InMemoryReportNodeAccessor reportNodes = (InMemoryReportNodeAccessor) runner.getContext().getReportNodeAccessor();
 		
 		ReportNode assertReportNode = reportNodes.getReportNodesByExecutionIDAndArtefactID(runner.getContext().getExecutionId(), assertString.getId().toString()).next();
 		assertEquals(assertReportNode.getStatus(), ReportNodeStatus.PASSED);

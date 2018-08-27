@@ -61,7 +61,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 				HashMap<String, Object> newVariable = new HashMap<>();
 				newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 				
-				ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
+				ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
 				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+rowCount);
 				for(AbstractArtefact child:selectedChildren)
 					iterationTestCase.addChild(child.getId());
@@ -163,7 +163,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					HashMap<String, Object> newVariable = new HashMap<>();
 					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 					
-					ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
+					ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
 					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+i);
 					for(AbstractArtefact child:selectedChildren) {
 						iterationTestCase.addChild(child.getId());

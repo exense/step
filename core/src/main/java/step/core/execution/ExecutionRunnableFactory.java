@@ -40,9 +40,19 @@ public class ExecutionRunnableFactory {
 
 	private ExecutionContext createExecutionContext(Execution execution) {
 		ExecutionContext context = new ExecutionContext(execution.getId().toString());
-		context.setGlobalContext(globalContext);
 		context.updateStatus(ExecutionStatus.INITIALIZING);
 		context.setExecutionParameters(execution.getExecutionParameters());
+		
+		context.setExpressionHandler(globalContext.getExpressionHandler());
+		context.setDynamicBeanResolver(globalContext.getDynamicBeanResolver());
+		context.setConfiguration(globalContext.getConfiguration());
+		context.setExecutionAccessor(globalContext.getExecutionAccessor());
+		context.setArtefactAccessor(globalContext.getArtefactAccessor());
+		context.setReportNodeAccessor(globalContext.getReportAccessor());
+		context.setRepositoryObjectManager(globalContext.getRepositoryObjectManager());
+		context.setEventManager(globalContext.getEventManager());
+		context.setAttachmentManager(globalContext.getAttachmentManager());
+		context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
 		
 		return context;
 	}

@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import step.artefacts.CheckArtefact;
 import step.core.GlobalContext;
+import step.core.GlobalContextBuilder;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -60,7 +61,7 @@ public class ExecutionRunnableTest {
 	
 	@Test 
 	public void test() throws Exception {
-		GlobalContext globalContext = ContextBuilder.createGlobalContext();
+		GlobalContext globalContext = GlobalContextBuilder.createGlobalContext();
 		globalContext.getPluginManager().register(new AbstractPlugin() {
 
 			@Override

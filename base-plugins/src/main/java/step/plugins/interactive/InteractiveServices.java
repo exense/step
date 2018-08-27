@@ -116,7 +116,7 @@ public class InteractiveServices extends AbstractServices {
 	@Secured(right="interactive")
 	public String start() throws AgentCommunicationException {
 		InteractiveSession session = new InteractiveSession();
-		ExecutionContext  executionContext = ContextBuilder.createContext(getContext());;
+		ExecutionContext  executionContext = ContextBuilder.createExecutionContext(getContext());
 		session.c = executionContext;
 		session.lasttouch = System.currentTimeMillis();
 		session.root = new ReportNode();
@@ -129,6 +129,7 @@ public class InteractiveServices extends AbstractServices {
 		session.c.getVariablesManager().putVariable(session.root, FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY, 
 				session.functionGroupContext);
 
+		executionContext.getExecutionCallbacks().executionStart(executionContext);
 		sessions.put(id, session);
 		return id;
 	}
@@ -150,6 +151,7 @@ public class InteractiveServices extends AbstractServices {
 			FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);
 			functionExecutionService.returnTokenHandle(token);
 		}
+		session.c.getExecutionCallbacks().afterExecutionEnd(session.c);
 	}
 	
 	public static class ExecutionParameters {

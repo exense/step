@@ -6,9 +6,8 @@ import java.util.Map;
 import step.artefacts.Sequence;
 import step.artefacts.handlers.CallFunctionHandler;
 import step.core.artefacts.AbstractArtefact;
-import step.functions.Function;
-import step.functions.editors.FunctionEditor;
-import step.functions.editors.FunctionEditorRegistry;
+import step.core.artefacts.ArtefactAccessor;
+import step.core.artefacts.ArtefactManager;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
@@ -16,21 +15,18 @@ import step.plugins.functions.types.composite.ArtefactMessageHandler;
 
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
 
+	private final ArtefactAccessor artefactAccessor;
+	private final ArtefactManager artefactManager;
+
+	public CompositeFunctionType(ArtefactAccessor artefactAccessor, ArtefactManager artefactManager) {
+		super();
+		this.artefactAccessor = artefactAccessor;
+		this.artefactManager = artefactManager;
+	}
+
 	@Override
 	public void init() {
 		super.init();
-		
-		context.get(FunctionEditorRegistry.class).register(new FunctionEditor() {
-			@Override
-			public String getEditorPath(Function function) {
-				return "/root/artefacteditor/"+((CompositeFunction)function).getArtefactId();
-			}
-
-			@Override
-			public boolean isValidForFunction(Function function) {
-				return function instanceof CompositeFunction;
-			}
-		});
 	}
 	
 	@Override
@@ -49,7 +45,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	public void setupFunction(CompositeFunction function) throws SetupFunctionException {
 		super.setupFunction(function);
   		Sequence sequence = new Sequence();
-  		context.getArtefactAccessor().save(sequence);
+  		artefactAccessor.save(sequence);
   		
   		function.setArtefactId(sequence.getId().toString());		
 	}
@@ -59,7 +55,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 		CompositeFunction copy = super.copyFunction(function);
 
 		String artefactId = function.getArtefactId();
-		AbstractArtefact artefactCopy = context.getArtefactManager().copyArtefact(artefactId);
+		AbstractArtefact artefactCopy = artefactManager.copyArtefact(artefactId);
 		
 		copy.setArtefactId(artefactCopy.getId().toString());
 		return copy;

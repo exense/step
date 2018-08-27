@@ -81,7 +81,7 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 			
 			context.getVariablesManager().putVariable(parentNode, VariableType.NORMAL, testArtefact.getItem().get(), new DataSetWrapper(testArtefact, dataSet));
 			
-			context.getGlobalContext().getEventManager().addReportNodeEventListener(parentNode, new ReportNodeEventListener() {
+			context.getEventManager().addReportNodeEventListener(parentNode, new ReportNodeEventListener() {
 				@Override
 				public void onDestroy() {
 					try {

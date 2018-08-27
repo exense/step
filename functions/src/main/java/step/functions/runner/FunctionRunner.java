@@ -7,8 +7,11 @@ import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import step.core.GlobalContext;
-import step.core.execution.ContextBuilder;
+import step.attachments.AttachmentManager;
+import step.commons.conf.Configuration;
+import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.dynamicbeans.DynamicValueResolver;
+import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.FunctionClient;
 import step.functions.FunctionRepository;
@@ -18,14 +21,11 @@ import step.functions.type.AbstractFunctionType;
 import step.grid.Grid;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.client.GridClient;
-import step.plugins.adaptergrid.GridPlugin;
 
 public class FunctionRunner {
 
 	public static class Context {
 				
-		GlobalContext globalContext;
-		
 		AgentTokenWrapper token;
 		
 		FunctionClient functionClient;
@@ -55,18 +55,16 @@ public class FunctionRunner {
 			}
 		};
 
-		public Context(AbstractFunctionType<?> functionType, Map<String, String> properties) {
+		protected Context(Configuration configuration, AbstractFunctionType<?> functionType, Map<String, String> properties) {
 			super();
 			token = new AgentTokenWrapper();
 			if(properties!=null) {
 				token.setProperties(properties);
 			}
-			globalContext = ContextBuilder.createGlobalContext();
 			Grid grid = new Grid(0);
 			GridClient client = new GridClient(grid, grid);
-			functionClient = new FunctionClient(globalContext, client, functionRepository);
+			functionClient = new FunctionClient(new AttachmentManager(configuration), configuration, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())), client, functionRepository);
 			functionClient.registerFunctionType(functionType);
-			globalContext.put(GridPlugin.FUNCTIONCLIENT_KEY, functionClient);
 			
 		} 
 		
@@ -91,18 +89,18 @@ public class FunctionRunner {
 				throw new RuntimeException(e);
 			}
 		}
-
-		public GlobalContext getGlobalContext() {
-			return globalContext;
-		}
 	}
 	
 	public static Context getContext(AbstractFunctionType<?> functionType) {
-		return new Context(functionType, null);
+		return new Context(new Configuration(),functionType, null);
 	}
 	
 	public static Context getContext(AbstractFunctionType<?> functionType, Map<String, String> properties) {
-		return new Context(functionType, properties);
+		return new Context(new Configuration(),functionType, properties);
+	}
+	
+	public static Context getContext(Configuration configuration,AbstractFunctionType<?> functionType, Map<String, String> properties) {
+		return new Context(configuration,functionType, properties);
 	}
 	
 }

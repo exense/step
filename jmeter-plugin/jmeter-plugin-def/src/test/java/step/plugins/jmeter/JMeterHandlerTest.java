@@ -28,11 +28,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.commons.conf.Configuration;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.Output;
 import step.functions.runner.FunctionRunner;
-import step.functions.runner.FunctionRunner.Context;
 import step.grid.bootstrap.ResourceExtractor;
 
 public class JMeterHandlerTest {
@@ -52,9 +52,9 @@ public class JMeterHandlerTest {
 		}
 	}
 	private Output run(JMeterFunction f, String inputJson) {
-		Context ctx = FunctionRunner.getContext(new JMeterFunctionType());
-		ctx.getGlobalContext().getConfiguration().put("plugins.jmeter.home", "../../distribution/template-controller/ext/jmeter");
-		return FunctionRunner.getContext(new JMeterFunctionType()).run(f, inputJson, new HashMap<>());
+		Configuration configuration = new Configuration();
+		configuration.put("plugins.jmeter.home", "../../distribution/template-controller/ext/jmeter");
+		return FunctionRunner.getContext(configuration,new JMeterFunctionType(), new HashMap<>()).run(f, inputJson, new HashMap<>());
 	}
 	
 	private JMeterFunction buildTestFunction() {

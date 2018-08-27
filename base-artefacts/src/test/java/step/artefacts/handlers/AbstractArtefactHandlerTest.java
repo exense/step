@@ -48,7 +48,7 @@ public class AbstractArtefactHandlerTest {
 	}
 
 	private ArtefactAccessor getArtefactAccessor() {
-		return context.getGlobalContext().getArtefactAccessor();
+		return context.getArtefactAccessor();
 	}
 	
 	protected <T extends AbstractArtefact> T addAsChildOf(T artefact, AbstractArtefact parent) {
@@ -73,7 +73,7 @@ public class AbstractArtefactHandlerTest {
 	}
 
 	private ReportNodeAccessor getReportNodeAccessor() {
-		return context.getGlobalContext().getReportAccessor();
+		return context.getReportNodeAccessor();
 	}
 	
 	protected CheckArtefact newTestArtefact(final ReportNodeStatus status) {

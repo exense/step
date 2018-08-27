@@ -147,7 +147,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	
 	public File getScriptFile(T function) {
 		String scriptFilePath = function.getScriptFile().get();
-		FileResolver fileResolver = new FileResolver(context.getAttachmentManager());
+		FileResolver fileResolver = new FileResolver(attachmentManager);
 		return fileResolver.resolve(scriptFilePath);
 	}
 }

@@ -76,11 +76,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		functionExecutionService = context.getGlobalContext().get(FunctionExecutionService.class);
-		functionRepository = context.getGlobalContext().get(FunctionRepository.class);
-		functionRouter = context.getGlobalContext().get(FunctionRouter.class);
+		functionExecutionService = context.get(FunctionExecutionService.class);
+		functionRepository = context.get(FunctionRepository.class);
+		functionRouter = context.get(FunctionRouter.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
-		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
+		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 		this.selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 	}
 
@@ -178,7 +178,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	private void validateInput(Input input, Function function) {
-		if(context.getGlobalContext().getConfiguration().getPropertyAsBoolean("enforceschemas", false)){
+		if(context.getConfiguration().getPropertyAsBoolean("enforceschemas", false)){
 			JsonSchemaValidator.validate(function.getSchema().toString(), input.getArgument().toString());
 		}
 	}

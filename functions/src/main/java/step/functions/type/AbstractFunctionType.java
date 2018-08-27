@@ -5,30 +5,48 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import step.attachments.AttachmentManager;
 import step.attachments.FileResolver;
+import step.commons.conf.Configuration;
 import step.commons.helpers.FileHelper;
-import step.core.GlobalContext;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
-import step.functions.Input;
 import step.functions.FunctionClient;
+import step.functions.Input;
 import step.grid.agent.Agent;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.tokenpool.Interest;
-import step.plugins.adaptergrid.GridPlugin;
 
 public abstract class AbstractFunctionType<T extends Function> {
-
-	protected GlobalContext context;
 	
-	public GlobalContext getContext() {
-		return context;
+	protected Configuration configuration;
+	protected AttachmentManager attachmentManager;
+	protected FunctionClient functionClient;
+	
+	public Configuration getConfiguration() {
+		return configuration;
 	}
 
-	public void setContext(GlobalContext context) {
-		this.context = context;
+	public void setConfiguration(Configuration configuration) {
+		this.configuration = configuration;
 	}
-	
+
+	public FunctionClient getFunctionClient() {
+		return functionClient;
+	}
+
+	public void setFunctionClient(FunctionClient functionClient) {
+		this.functionClient = functionClient;
+	}
+
+	public AttachmentManager getAttachmentManager() {
+		return attachmentManager;
+	}
+
+	public void setAttachmentManager(AttachmentManager attachmentManager) {
+		this.attachmentManager = attachmentManager;
+	}
+
 	public void init() {}
 
 	public Map<String, Interest> getTokenSelectionCriteria(T function) {
@@ -69,7 +87,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 		if(dynamicValue!=null) {
 			String filepath = dynamicValue.get();
 			if(filepath!=null && filepath.trim().length()>0) {
-				FileResolver fileResolver = new FileResolver(context.getAttachmentManager());
+				FileResolver fileResolver = new FileResolver(attachmentManager);
 				
 				File file = fileResolver.resolve(filepath);
 				registerFile(file, properyName, props);			
@@ -78,14 +96,12 @@ public abstract class AbstractFunctionType<T extends Function> {
 	}
 	
 	protected void registerFile(File file, String properyName, Map<String, String> props) {
-		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
 		String fileHandle = functionClient.registerAgentFile(file);
 		props.put(properyName+".id", fileHandle);
 		props.put(properyName+".version", Long.toString(FileHelper.getLastModificationDateRecursive(file)));
 	}
 	
 	protected FileVersionId registerFile(File file) {
-		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
 		String fileHandle = functionClient.registerAgentFile(file);
 		return new FileVersionId(fileHandle, FileHelper.getLastModificationDateRecursive(file));
 	}

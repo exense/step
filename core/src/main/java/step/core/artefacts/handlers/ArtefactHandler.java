@@ -80,7 +80,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		REPORT_NODE node;
 		
 		if(executionPhase==Phase.EXECUTION && testArtefact.isCreateSkeleton()) {
-			ReportNodeAccessor reportNodeAccessor = context.getGlobalContext().getReportAccessor();
+			ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
 			
 			// search for the report node that has been created during skeleton phase
 			node = (REPORT_NODE) reportNodeAccessor.getReportNodeByParentIDAndArtefactID(parentNode.getId(), testArtefact.getId());
@@ -133,14 +133,14 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		context.getVariablesManager().putVariable(parentNode, "report", node);
 		
-		context.getGlobalContext().getEventManager().notifyReportNodeDestroyed(node);
+		context.getEventManager().notifyReportNodeDestroyed(node);
 	}
 	
 	public void createReportSkeleton(ReportNode parentNode, ARTEFACT artefact,  Map<String, Object> newVariables) {		
 		REPORT_NODE node = beforeDelegation(Phase.SKELETON_CREATION, parentNode, artefact, newVariables);
 		
 		try {
-			context.getGlobalContext().getDynamicBeanResolver().evaluate(artefact, getBindings());
+			context.getDynamicBeanResolver().evaluate(artefact, getBindings());
 			
 			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(artefact)) {
@@ -154,11 +154,11 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 		
 		if(artefact.isCreateSkeleton()) {
-			ReportNodeAccessor reportNodeAccessor = context.getGlobalContext().getReportAccessor();
+			ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
 			reportNodeAccessor.save(node);
 		}
 		
-		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeSkeletonCreation(context, node);
+		context.getExecutionCallbacks().afterReportNodeSkeletonCreation(context, node);
 		
 		afterDelegation(node, parentNode, artefact);
 	}
@@ -166,7 +166,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected Map<String, Object> getBindings() {
 		Map<String, Object> bindings = new HashMap<>();
 		bindings.putAll(context.getVariablesManager().getAllVariables());
-		bindings.put("attachmentManager", context.getGlobalContext().getAttachmentManager());
+		bindings.put("attachmentManager", context.getAttachmentManager());
 		return bindings;
 	}
 	
@@ -191,7 +191,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 		
 		REPORT_NODE node = beforeDelegation(Phase.EXECUTION, parentNode, artefact, newVariables);
-		ReportNodeAccessor reportNodeAccessor = context.getGlobalContext().getReportAccessor();
+		ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
 		
 		long t1 = System.currentTimeMillis();
 		node.setExecutionTime(t1);
@@ -201,10 +201,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		boolean persistAfter = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
 		boolean persistOnlyNonPassed = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistonlynonpassed",false);
 		
-		context.getGlobalContext().getPluginManager().getProxy().beforeReportNodeExecution(context, node);
+		context.getExecutionCallbacks().beforeReportNodeExecution(context, node);
 
 		try {
-			context.getGlobalContext().getDynamicBeanResolver().evaluate(artefact, getBindings());
+			context.getDynamicBeanResolver().evaluate(artefact, getBindings());
 			node.setArtefactInstance(artefact);
 			node.setResolvedArtefact(artefact);
 			
@@ -236,7 +236,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 		
 		
-		context.getGlobalContext().getPluginManager().getProxy().afterReportNodeExecution(context, node);
+		context.getExecutionCallbacks().afterReportNodeExecution(context, node);
 		
 		afterDelegation(node, parentNode, artefact);
 		
@@ -305,8 +305,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	public static List<AbstractArtefact> getChildren(AbstractArtefact artefact, ExecutionContext context) { 
 		ArtefactCache artefactCache = context.getArtefactCache();
-		DynamicBeanResolver dynamicBeanResolver = context.getGlobalContext().getDynamicBeanResolver();
-		ArtefactAccessor accessor = context.getGlobalContext().getArtefactAccessor();
+		DynamicBeanResolver dynamicBeanResolver = context.getDynamicBeanResolver();
+		ArtefactAccessor accessor = context.getArtefactAccessor();
 		List<AbstractArtefact> result = new ArrayList<>();
 		if(artefact.getChildrenIDs()!=null) {
 			for(ObjectId childrenID:artefact.getChildrenIDs()) {
@@ -325,7 +325,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		List<ObjectId> attachments = artefact.getAttachments();
 		if(attachments!=null) {
 			for(ObjectId attachmentId:attachments) {
-				AttachmentManager attachmentManager = context.getGlobalContext().getAttachmentManager();
+				AttachmentManager attachmentManager = context.getAttachmentManager();
 				File file = attachmentManager.getFileById(attachmentId);
 				context.getVariablesManager().putVariable(report, FILE_VARIABLE_PREFIX+file.getName(), file);
 			}

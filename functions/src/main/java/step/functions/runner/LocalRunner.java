@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
+import step.commons.conf.Configuration;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -118,14 +119,14 @@ public class LocalRunner implements PlanRunner {
 			}
 		};		
 		
-		FunctionClient functionClient = new FunctionClient(context.getGlobalContext(), gridClient, functionRepo);
+		FunctionClient functionClient = new FunctionClient(context.getAttachmentManager(), new Configuration(), context.getDynamicBeanResolver(), gridClient, functionRepo);
 		LocalFunctionType type = new LocalFunctionType(handler);
 		functionClient.registerFunctionType(type);
 
-		context.getGlobalContext().put(GridPlugin.FUNCTIONCLIENT_KEY, functionClient);
-		context.getGlobalContext().put(FunctionExecutionService.class, functionClient);
-		context.getGlobalContext().put(FunctionRepository.class, functionRepo);
-		context.getGlobalContext().put(FunctionRouter.class, new FunctionRouter(functionClient, functionClient, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()))));
+		context.put(GridPlugin.FUNCTIONCLIENT_KEY, functionClient);
+		context.put(FunctionExecutionService.class, functionClient);
+		context.put(FunctionRepository.class, functionRepo);
+		context.put(FunctionRouter.class, new FunctionRouter(functionClient, functionClient, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()))));
 	}
 
 	public ExecutionContext getContext() {
@@ -135,7 +136,7 @@ public class LocalRunner implements PlanRunner {
 	@Override
 	public ReportNode run(Plan plan) {
 		init();
-		context.getGlobalContext().getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
+		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
 		return ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
 	}
 }

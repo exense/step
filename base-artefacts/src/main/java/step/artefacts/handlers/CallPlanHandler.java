@@ -42,7 +42,7 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
+		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 	}
 
 	
@@ -77,11 +77,11 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
 	protected AbstractArtefact selectArtefact(CallPlan testArtefact) {
 		AbstractArtefact a;
-		ArtefactAccessor artefactAccessor = context.getGlobalContext().getArtefactAccessor();
+		ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
 		if(testArtefact.getArtefactId()!=null) {
-			a =  context.getGlobalContext().getArtefactAccessor().get(testArtefact.getArtefactId());
+			a =  context.getArtefactAccessor().get(testArtefact.getArtefactId());
 		} else {
-			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getGlobalContext().getExpressionHandler()));
+			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 			SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(testArtefact.getSelectionAttributes().get(), getBindings());
 			a = artefactAccessor.findRootArtefactByAttributes(selectionAttributes);

@@ -46,7 +46,7 @@ public class SwitchHandler extends ArtefactHandler<Switch, ReportNode> {
 		for(AbstractArtefact child:getChildren(testArtefact)) {
 			if(child instanceof Case) {
 				Case c = (Case) child;
-				context.getGlobalContext().getDynamicBeanResolver().evaluate(c, context.getVariablesManager().getAllVariables());
+				context.getDynamicBeanResolver().evaluate(c, context.getVariablesManager().getAllVariables());
 				
 				if(evaluationResultStr.equals(c.getValue().get())) {
 					if(execution) {

@@ -33,7 +33,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 		Map<String, String> props = new HashMap<>();
 		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props);
 		
-		String home = context.getConfiguration().getProperty("plugins.jmeter.home");
+		String home = configuration.getProperty("plugins.jmeter.home");
 		if(home!=null) {
 			File homeFile = new File(home);
 			registerFile(homeFile, "$jmeter.libraries", props);
