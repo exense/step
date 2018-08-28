@@ -1,9 +1,12 @@
 package step.core.plans.runner;
 
-import step.core.artefacts.reports.ReportNode;
+import java.util.Map;
+
 import step.core.plans.Plan;
 
 public interface PlanRunner {
 
-	public ReportNode run(Plan plan);
+	public PlanRunnerResult run(Plan plan);
+	
+	public PlanRunnerResult run(Plan plan, Map<String, String> executionParameters);
 }

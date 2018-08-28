@@ -1,25 +1,31 @@
 package step.core.plans.runner;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 
+/**
+ * A simple runner that runs plans locally and doesn't support functions
+ * 
+ * @author Jérôme Comte
+ *
+ */
 public class DefaultPlanRunner implements PlanRunner {
-	
-	ExecutionContext context;
-	
-	protected void init() {
-		context = ContextBuilder.createLocalExecutionContext();
+
+	@Override
+	public PlanRunnerResult run(Plan plan) {
+		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
+		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
+		return new PlanRunnerResult(context.getExecutionId(), context.getReport().getId().toString(), context.getReportNodeAccessor());
 	}
 
 	@Override
-	public ReportNode run(Plan plan) {
-		init();
-		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
-		return ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
+	public PlanRunnerResult run(Plan plan, Map<String, String> executionParameters) {
+		throw new UnsupportedOperationException("Running a plan with execution parameters isn't support by this runner.");
 	}
 }

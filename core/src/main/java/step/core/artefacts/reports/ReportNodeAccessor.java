@@ -9,7 +9,7 @@ import org.bson.types.ObjectId;
 import step.commons.datatable.DataTable;
 import step.core.accessors.CRUDAccessor;
 
-public interface ReportNodeAccessor extends CRUDAccessor<ReportNode> {
+public interface ReportNodeAccessor extends CRUDAccessor<ReportNode>, ReportTreeAccessor {
 
 	void createIndexesIfNeeded(Long ttl);
 

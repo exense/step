@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
@@ -38,7 +39,7 @@ import step.planbuilder.PlanBuilder;
 public class TestGroupHandler {
 
 	@Test
-	public void test() {		
+	public void test() throws IOException {		
 		ThreadGroup threadGroup = new ThreadGroup();
 		threadGroup.setIterations(new DynamicValue<Integer>(10));
 		threadGroup.setPacing(new DynamicValue<Integer>(10));
@@ -53,10 +54,10 @@ public class TestGroupHandler {
 		DefaultPlanRunner runner = new DefaultPlanRunner();
 		
 		long t1 = System.currentTimeMillis();
-		ReportNode result = runner.run(plan);
+		runner.run(plan).visitReportTree(node->{
+			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		});
 		long t2 = System.currentTimeMillis();
-		
-		plan.getArtefacts();
 		
 		Assert.assertEquals(50, iterations.get());
 		

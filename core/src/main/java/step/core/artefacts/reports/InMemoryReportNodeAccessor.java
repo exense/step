@@ -19,6 +19,7 @@
 package step.core.artefacts.reports;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,7 +34,12 @@ public class InMemoryReportNodeAccessor extends InMemoryCRUDAccessor<ReportNode>
 
 	@Override
 	public Iterator<ReportNode> getChildren(ObjectId parentID) {
-		return map.values().stream().filter(node->parentID.equals(node.getParentID())).iterator();
+		return map.values().stream().filter(node->parentID.equals(node.getParentID())).sorted(new Comparator<ReportNode>() {
+			@Override
+			public int compare(ReportNode o1, ReportNode o2) {
+				return Long.compare(o1.getExecutionTime(), o2.getExecutionTime());
+			}
+		}).iterator();
 	}
 
 	@Override
@@ -136,6 +142,11 @@ public class InMemoryReportNodeAccessor extends InMemoryCRUDAccessor<ReportNode>
 	@Override
 	public Iterator<ReportNode> getChildren(String parentID) {
 		return getChildren(new ObjectId(parentID));
+	}
+
+	@Override
+	public ReportNode get(String id) {
+		return get(new ObjectId(id));
 	}
 
 }

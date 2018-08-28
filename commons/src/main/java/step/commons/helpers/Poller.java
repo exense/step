@@ -7,7 +7,7 @@ public class Poller {
 
 	public static void waitFor(Supplier<Boolean> predicate, long timeout) throws TimeoutException, InterruptedException {
 		long t1 = System.currentTimeMillis();
-		while(System.currentTimeMillis()<t1+timeout) {
+		while(timeout == 0 || System.currentTimeMillis()<t1+timeout) {
 			boolean result = predicate.get();
 			if(result) {
 				return;

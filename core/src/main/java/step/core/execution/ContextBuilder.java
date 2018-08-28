@@ -30,6 +30,8 @@ public class ContextBuilder {
 		context.setArtefactAccessor(new InMemoryArtefactAccessor());
 		context.setReportNodeAccessor(new InMemoryReportNodeAccessor());
 		
+		context.getReportNodeAccessor().save(root);
+		
 		Configuration configuration = new Configuration();
 		context.setAttachmentManager(new AttachmentManager(configuration));
 		context.setConfiguration(configuration);
