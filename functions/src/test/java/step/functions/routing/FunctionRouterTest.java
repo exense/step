@@ -9,14 +9,22 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.artefacts.CallFunction;
+import step.attachments.AttachmentManager;
+import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
+import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionTestHelper;
+import step.expressions.ExpressionHandler;
 import step.functions.Function;
-import step.functions.FunctionClient;
+import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionTypeRegistry;
+import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.tokenpool.Interest;
 
 public class FunctionRouterTest {
@@ -30,10 +38,6 @@ public class FunctionRouterTest {
 	
 	@Test
 	public void test() {
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-
-		FunctionClient client = new FunctionClient(context.getAttachmentManager(), new Configuration(), context.getDynamicBeanResolver(), null, null);
-		FunctionRouter router = new FunctionRouter(client, client, dynamicJsonObjectResolver);
 		
 		CallFunction callFunction = new CallFunction();
 		callFunction.getToken().setValue("{\"callFunction\":\"cf\"}");
@@ -42,7 +46,9 @@ public class FunctionRouterTest {
 		Map<String, String> map = new HashMap<>();
 		map.put("function", "f");
 		function.setTokenSelectionCriteria(map);
-		client.registerFunctionType(new AbstractFunctionType<Function>() {
+		
+		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new AttachmentManager(new Configuration())), null);
+		functionTypeRegistry.registerFunctionType(new AbstractFunctionType<Function>() {
 
 			@Override
 			public String getHandlerChain(Function function) {
@@ -67,6 +73,12 @@ public class FunctionRouterTest {
 			}
 		});
 		
+		
+		FunctionExecutionService client = new FunctionExecutionServiceImpl(null, null, functionTypeRegistry, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
+
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+		FunctionRouter router = new FunctionRouter(client, functionTypeRegistry, dynamicJsonObjectResolver);
+
 		Map<String, Object> bindings = new HashMap<>();
 		bindings.put("route_to_key", "val");
 		Map<String, Interest> selectionCriteria = router.buildSelectionCriteriaMap(callFunction, function, null, bindings);

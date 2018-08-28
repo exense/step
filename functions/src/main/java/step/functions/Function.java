@@ -31,9 +31,9 @@ import step.core.dynamicbeans.DynamicValue;
 @JsonTypeInfo(use=Id.CLASS,property="type")
 public class Function extends AbstractOrganizableObject {
 	
-	DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
-	JsonObject schema;
-	Map<String, String> tokenSelectionCriteria;
+	protected DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
+	protected JsonObject schema;
+	protected Map<String, String> tokenSelectionCriteria;
 	
 	public Map<String, String> getTokenSelectionCriteria() {
 		return tokenSelectionCriteria;

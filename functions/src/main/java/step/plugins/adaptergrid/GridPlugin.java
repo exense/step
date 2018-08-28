@@ -18,10 +18,10 @@
  *******************************************************************************/
 package step.plugins.adaptergrid;
 
-import org.jongo.MongoCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -29,11 +29,17 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
-import step.functions.FunctionClient;
-import step.functions.FunctionExecutionService;
-import step.functions.FunctionRepository;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.FunctionAccessorImpl;
+import step.functions.accessor.FunctionCRUDAccessor;
 import step.functions.editors.FunctionEditorRegistry;
+import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceImpl;
+import step.functions.manager.FunctionManager;
+import step.functions.manager.FunctionManagerImpl;
 import step.functions.routing.FunctionRouter;
+import step.functions.type.FunctionTypeRegistry;
+import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
 import step.grid.client.GridClient;
 
@@ -42,17 +48,17 @@ public class GridPlugin extends AbstractPlugin {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
 
-	public static final String GRID_KEY = "Grid_Instance";
-	
-	public static final String GRIDCLIENT_KEY = "GridClient_Instance";
-	
-	public static final String FUNCTIONCLIENT_KEY = "FunctionClient_Instance";
-	
 	private Grid grid;
+	private GridClient client;
 	
-	private FunctionClient functionClient;
+	private FunctionEditorRegistry editorRegistry;
+	private FunctionTypeRegistry functionTypeRegistry;
+
+	private FunctionCRUDAccessor functionAccessor;
+	private FunctionManager functionManager;
 	
-	private FunctionRepositoryImpl functionRepository;
+	private FunctionExecutionService functionExecutionService;
+	private FunctionRouter functionRouter;
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
@@ -65,44 +71,44 @@ public class GridPlugin extends AbstractPlugin {
 		
 		GridClient client = new GridClient(grid, grid);
 
-		MongoCollection functionCollection = context.getMongoClientSession().getJongoCollection("functions");	
-		
-		FunctionEditorRegistry editorRegistry = new FunctionEditorRegistry();
-		context.put(FunctionEditorRegistry.class.getName(), editorRegistry);
+		editorRegistry = new FunctionEditorRegistry();
+		functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(context.getAttachmentManager()), grid);
 
-		functionRepository = new FunctionRepositoryImpl(functionCollection);
+		functionAccessor = new FunctionAccessorImpl(context.getMongoClientSession());
+		functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
 		
-		functionClient = new FunctionClient(context.getAttachmentManager(), context.getConfiguration(), context.getDynamicBeanResolver(), client, functionRepository);
-		
-		context.put(GRID_KEY, grid);
-		context.put(GRIDCLIENT_KEY, client);
-		context.put(FUNCTIONCLIENT_KEY, functionClient);
-				
-		context.put(FunctionExecutionService.class.getName(), functionClient);
-		context.put(FunctionRepository.class.getName(), functionRepository);
+		functionExecutionService = new FunctionExecutionServiceImpl(client, functionAccessor, functionTypeRegistry, context.getDynamicBeanResolver());
 		
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		context.put(FunctionRouter.class.getName(), new FunctionRouter(functionClient, functionClient, dynamicJsonObjectResolver));
+		functionRouter = new FunctionRouter(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
+
+		context.put(Grid.class, grid);
+				
+		context.put(FunctionAccessor.class, functionAccessor);
+		context.put(FunctionManager.class, functionManager);
+		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
+		
+		context.put(FunctionEditorRegistry.class, editorRegistry);
+		context.put(FunctionExecutionService.class, functionExecutionService);
+		context.put(FunctionRouter.class, functionRouter);
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
-		context.getServiceRegistrationCallback().registerService(FunctionRepositoryServices.class);
+		context.getServiceRegistrationCallback().registerService(FunctionServices.class);
 	}
 
 	@Override
 	public void executionStart(ExecutionContext context) {
-		context.put(FunctionExecutionService.class.getName(), functionClient);
-		context.put(FunctionRepository.class.getName(), functionRepository);
-		
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		context.put(FunctionRouter.class.getName(), new FunctionRouter(functionClient, functionClient, dynamicJsonObjectResolver));
+		// Bindings needed for the execution
+		context.put(FunctionAccessor.class, functionAccessor);
+		context.put(FunctionExecutionService.class, functionExecutionService);
+		context.put(FunctionRouter.class.getName(), functionRouter);
 		super.executionStart(context);
 	}
 
 	@Override
 	public void executionControllerDestroy(GlobalContext context) {
-		Object o = context.get(GRIDCLIENT_KEY);
-		if(o!=null) {
-			((GridClient)o).close();
+		if(client!=null) {
+			client.close();
 		}
 		if(grid!=null) {
 			try {

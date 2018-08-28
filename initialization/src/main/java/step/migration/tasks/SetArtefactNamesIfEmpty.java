@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.jongo.MongoCollection;
+import org.bson.types.ObjectId;
 
 import step.artefacts.CallFunction;
 import step.artefacts.CallPlan;
@@ -13,8 +13,9 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.FunctionAccessorImpl;
 import step.migration.MigrationTask;
-import step.plugins.adaptergrid.FunctionRepositoryImpl;
 
 /**
  * This function ensures that all the artefacts have their name saved properly in the attribute map. 
@@ -29,8 +30,7 @@ public class SetArtefactNamesIfEmpty extends MigrationTask {
 
 	@Override
 	public void runUpgradeScript() {
-		MongoCollection functionCollection = context.getMongoClientSession().getJongoCollection("functions");				
-		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
+		FunctionAccessor functionRepository = new FunctionAccessorImpl(context.getMongoClientSession());
 		
 		ArtefactAccessor a = context.getArtefactAccessor();
 		
@@ -49,7 +49,7 @@ public class SetArtefactNamesIfEmpty extends MigrationTask {
 				if(artefact instanceof CallFunction) {
 					CallFunction calllFunction = (CallFunction) artefact;
 					if(calllFunction.getFunctionId()!=null) {
-						Function function = functionRepository.getFunctionById(calllFunction.getFunctionId());
+						Function function = functionRepository.get(new ObjectId(calllFunction.getFunctionId()));
 						if(function!=null && function.getAttributes()!=null && function.getAttributes().containsKey(Function.NAME)) {
 							name = function.getAttributes().get(Function.NAME);
 						}						

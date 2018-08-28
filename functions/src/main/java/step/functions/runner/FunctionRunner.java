@@ -1,23 +1,27 @@
 package step.functions.runner;
 
 import java.io.StringReader;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 
 import step.attachments.AttachmentManager;
+import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
-import step.functions.FunctionClient;
-import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
+import step.functions.accessor.FunctionCRUDAccessor;
+import step.functions.accessor.InMemoryFunctionAccessorImpl;
+import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionTypeRegistry;
+import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.client.GridClient;
@@ -28,32 +32,9 @@ public class FunctionRunner {
 				
 		AgentTokenWrapper token;
 		
-		FunctionClient functionClient;
+		FunctionExecutionService functionExecutionService;
 		
-		FunctionRepository functionRepository = new FunctionRepository() {
-			
-			Map<String, Function> functions = new HashMap<>();
-			
-			@Override
-			public Function getFunctionById(String id) {
-				return functions.get(id);
-			}
-			
-			@Override
-			public Function getFunctionByAttributes(Map<String, String> attributes) {
-				throw new RuntimeException();
-			}
-			
-			@Override
-			public void deleteFunction(String functionId) {
-				
-			}
-			
-			@Override
-			public void addFunction(Function function) {
-				functions.put(function.getId().toString(), function);
-			}
-		};
+		FunctionCRUDAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
 
 		protected Context(Configuration configuration, AbstractFunctionType<?> functionType, Map<String, String> properties) {
 			super();
@@ -63,9 +44,11 @@ public class FunctionRunner {
 			}
 			Grid grid = new Grid(0);
 			GridClient client = new GridClient(grid, grid);
-			functionClient = new FunctionClient(new AttachmentManager(configuration), configuration, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())), client, functionRepository);
-			functionClient.registerFunctionType(functionType);
 			
+			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new AttachmentManager(configuration)), grid);
+			functionTypeRegistry.registerFunctionType(functionType);
+			
+			functionExecutionService = new FunctionExecutionServiceImpl(client, functionAccessor, functionTypeRegistry, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
 		} 
 		
 		private JsonObject read(String argument) {
@@ -77,14 +60,14 @@ public class FunctionRunner {
 		}
 		
 		public Output run(Function function, JsonObject argument, Map<String, String> properties) {	
-			functionRepository.addFunction(function);
+			functionAccessor.save(function);
 			
 			Input input = new Input();
 			input.setArgument(argument);
 			input.setProperties(properties);
 			
 			try {
-				return functionClient.callFunction(functionClient.getLocalTokenHandle(), function.getId().toString(), input);
+				return functionExecutionService.callFunction(functionExecutionService.getLocalTokenHandle(), function.getId().toString(), input);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}

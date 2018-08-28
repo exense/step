@@ -4,8 +4,7 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
-import step.functions.FunctionClient;
-import step.plugins.adaptergrid.GridPlugin;
+import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(prio=10)
 public class JavaPlugin extends AbstractPlugin {
@@ -21,8 +20,8 @@ public class JavaPlugin extends AbstractPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		registerWebapp(context,"/javaplugin/");
-		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
-		functionClient.registerFunctionType(new GeneralScriptFunctionType());
+		FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);
+		functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType());
 		super.executionControllerStart(context);
 	}
 

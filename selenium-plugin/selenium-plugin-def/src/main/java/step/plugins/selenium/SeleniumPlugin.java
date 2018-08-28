@@ -4,8 +4,7 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
-import step.functions.FunctionClient;
-import step.plugins.adaptergrid.GridPlugin;
+import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(prio=100)
 public class SeleniumPlugin extends AbstractPlugin {
@@ -14,8 +13,8 @@ public class SeleniumPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		registerWebapp(context,"/seleniumplugin/");
 		
-		FunctionClient functionClient = (FunctionClient) context.get(GridPlugin.FUNCTIONCLIENT_KEY);
-		functionClient.registerFunctionType(new SeleniumFunctionType());
+		FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);
+		functionTypeRegistry.registerFunctionType(new SeleniumFunctionType(context.getConfiguration()));
 		
 		super.executionControllerStart(context);
 	}

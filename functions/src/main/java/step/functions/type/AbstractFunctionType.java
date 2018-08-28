@@ -5,48 +5,30 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import step.attachments.AttachmentManager;
 import step.attachments.FileResolver;
-import step.commons.conf.Configuration;
 import step.commons.helpers.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
-import step.functions.FunctionClient;
 import step.functions.Input;
+import step.grid.GridFileService;
 import step.grid.agent.Agent;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.tokenpool.Interest;
 
 public abstract class AbstractFunctionType<T extends Function> {
 	
-	protected Configuration configuration;
-	protected AttachmentManager attachmentManager;
-	protected FunctionClient functionClient;
+	protected FileResolver fileResolver;
+
+	protected GridFileService gridFileServices;
+
+	public void setFileResolver(FileResolver fileResolver) {
+		this.fileResolver = fileResolver;
+	}
 	
-	public Configuration getConfiguration() {
-		return configuration;
+	public void setGridFileServices(GridFileService gridFileServices) {
+		this.gridFileServices = gridFileServices;
 	}
-
-	public void setConfiguration(Configuration configuration) {
-		this.configuration = configuration;
-	}
-
-	public FunctionClient getFunctionClient() {
-		return functionClient;
-	}
-
-	public void setFunctionClient(FunctionClient functionClient) {
-		this.functionClient = functionClient;
-	}
-
-	public AttachmentManager getAttachmentManager() {
-		return attachmentManager;
-	}
-
-	public void setAttachmentManager(AttachmentManager attachmentManager) {
-		this.attachmentManager = attachmentManager;
-	}
-
+	
 	public void init() {}
 
 	public Map<String, Interest> getTokenSelectionCriteria(T function) {
@@ -87,8 +69,6 @@ public abstract class AbstractFunctionType<T extends Function> {
 		if(dynamicValue!=null) {
 			String filepath = dynamicValue.get();
 			if(filepath!=null && filepath.trim().length()>0) {
-				FileResolver fileResolver = new FileResolver(attachmentManager);
-				
 				File file = fileResolver.resolve(filepath);
 				registerFile(file, properyName, props);			
 			}			
@@ -96,13 +76,13 @@ public abstract class AbstractFunctionType<T extends Function> {
 	}
 	
 	protected void registerFile(File file, String properyName, Map<String, String> props) {
-		String fileHandle = functionClient.registerAgentFile(file);
+		String fileHandle = gridFileServices.registerFile(file);
 		props.put(properyName+".id", fileHandle);
 		props.put(properyName+".version", Long.toString(FileHelper.getLastModificationDateRecursive(file)));
 	}
 	
 	protected FileVersionId registerFile(File file) {
-		String fileHandle = functionClient.registerAgentFile(file);
+		String fileHandle = gridFileServices.registerFile(file);
 		return new FileVersionId(fileHandle, FileHelper.getLastModificationDateRecursive(file));
 	}
 	

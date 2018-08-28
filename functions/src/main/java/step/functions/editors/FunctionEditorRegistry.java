@@ -9,7 +9,6 @@ public class FunctionEditorRegistry {
 
 	List<FunctionEditor> editors = new CopyOnWriteArrayList<>();
 	
-	
 	public <T extends Function> void register(FunctionEditor functionEditor) {
 		editors.add(functionEditor);
 	}

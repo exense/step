@@ -25,7 +25,6 @@ import javax.json.JsonObjectBuilder;
 import javax.json.spi.JsonProvider;
 
 import org.bson.types.ObjectId;
-import org.jongo.MongoCollection;
 
 import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.MongoClientSession;
@@ -33,9 +32,7 @@ import step.core.accessors.MongoClientSession;
 
 
 public class ArtefactAccessorImpl extends AbstractCRUDAccessor<AbstractArtefact> implements ArtefactAccessor {
-			
-	private MongoCollection artefacts;
-		
+
 	public ArtefactAccessorImpl(MongoClientSession clientSession) {
 		super(clientSession, "artefacts", AbstractArtefact.class);
 	}
@@ -74,7 +71,7 @@ public class ArtefactAccessorImpl extends AbstractCRUDAccessor<AbstractArtefact>
 		}
 
 		String query = builder.build().toString();
-		return artefacts.findOne(query).as(AbstractArtefact.class);
+		return collection.findOne(query).as(AbstractArtefact.class);
 	}
 	
 	@Override
@@ -86,7 +83,7 @@ public class ArtefactAccessorImpl extends AbstractCRUDAccessor<AbstractArtefact>
 	public Iterator<AbstractArtefact> getRootArtefacts() {
 		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
 		builder.add("root", true);
-		return artefacts.find(builder.build().toString()).as(AbstractArtefact.class);
+		return collection.find(builder.build().toString()).as(AbstractArtefact.class);
 	}
 	
     @Override

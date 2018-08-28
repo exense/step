@@ -26,7 +26,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
-import step.functions.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionService;
 import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
 

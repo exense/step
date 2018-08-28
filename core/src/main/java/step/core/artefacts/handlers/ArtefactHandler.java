@@ -359,6 +359,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 	
 	protected void failWithException(ReportNode result, String errorMsg, Throwable e, boolean generateAttachment) {
+		if(logger.isDebugEnabled()) {
+			logger.debug("Error in node", e);
+		}
 		if(generateAttachment && !(e instanceof ValidationException)) {			
 			reportNodeAttachmentManager.attach(e, result);
 		}

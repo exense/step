@@ -29,6 +29,8 @@ import javax.json.JsonValue.ValueType;
 import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonParsingException;
 
+import org.bson.types.ObjectId;
+
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.reports.CallFunctionReportNode;
@@ -45,10 +47,10 @@ import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaExcept
 import step.core.variables.VariablesManager;
 import step.datapool.DataSetHandle;
 import step.functions.Function;
-import step.functions.FunctionExecutionService;
-import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.execution.FunctionExecutionService;
 import step.functions.routing.FunctionRouter;
 import step.functions.validation.JsonSchemaValidator;
 import step.grid.Token;
@@ -62,7 +64,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	
 	protected FunctionExecutionService functionExecutionService;
 	
-	protected FunctionRepository functionRepository;
+	protected FunctionAccessor functionAccessor;
 	
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
@@ -77,7 +79,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	public void init(ExecutionContext context) {
 		super.init(context);
 		functionExecutionService = context.get(FunctionExecutionService.class);
-		functionRepository = context.get(FunctionRepository.class);
+		functionAccessor = context.get(FunctionAccessor.class);
 		functionRouter = context.get(FunctionRouter.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
@@ -186,11 +188,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	private Function getFunction(CallFunction testArtefact) {
 		Function function;
 		if(testArtefact.getFunctionId()!=null) {
-			function = functionRepository.getFunctionById(testArtefact.getFunctionId());
+			function = functionAccessor.get(new ObjectId(testArtefact.getFunctionId()));
 		} else {
 			String selectionAttributesJson = testArtefact.getFunction().get();
 			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, getBindings());
-			function = functionRepository.getFunctionByAttributes(attributes);
+			function = functionAccessor.findByAttributes(attributes);
 		}
 		return function;
 	}

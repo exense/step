@@ -54,7 +54,7 @@ public class JMeterHandlerTest {
 	private Output run(JMeterFunction f, String inputJson) {
 		Configuration configuration = new Configuration();
 		configuration.put("plugins.jmeter.home", "../../distribution/template-controller/ext/jmeter");
-		return FunctionRunner.getContext(configuration,new JMeterFunctionType(), new HashMap<>()).run(f, inputJson, new HashMap<>());
+		return FunctionRunner.getContext(configuration,new JMeterFunctionType(configuration), new HashMap<>()).run(f, inputJson, new HashMap<>());
 	}
 	
 	private JMeterFunction buildTestFunction() {

@@ -36,12 +36,12 @@ import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.functions.Function;
-import step.functions.FunctionClient;
-import step.functions.FunctionRepository;
 import step.functions.Input;
 import step.functions.Output;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
+import step.functions.execution.FunctionExecutionService;
+import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
@@ -49,21 +49,19 @@ import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.tokenpool.Interest;
 
 @Path("/functions")
-public class FunctionRepositoryServices extends AbstractServices {
+public class FunctionServices extends AbstractServices {
 
-	ReportNodeAttachmentManager reportNodeAttachmentManager;
+	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
-	private FunctionClient getFunctionClient() {
-		return (FunctionClient) getContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
-	}
+	protected FunctionManager functionManager;
 	
-	private FunctionRepository getFunctionRepository() {
-		return getFunctionClient().getFunctionRepository();
-	}
+	protected FunctionExecutionService functionExecutionService;
 	
 	@PostConstruct
 	public void init() {
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().getAttachmentManager());
+		functionManager = getContext().get(FunctionManager.class);
+		functionExecutionService = getContext().get(FunctionExecutionService.class);
 	}
 
 	@POST
@@ -72,14 +70,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Path("/")
 	@Secured(right="kw-write")
 	public Function save(Function function) throws SetupFunctionException, FunctionTypeException {
-		FunctionRepository repo = getFunctionRepository();
-		if(function.getId()==null || repo.getFunctionById(function.getId().toString())==null) {
-			getFunctionClient().setupFunction(function);
-		} else {
-			getFunctionClient().updateFunction(function);
-		}
-		repo.addFunction(function);
-		return function;
+		return functionManager.saveFunction(function);
 	}
 	
 	@POST
@@ -88,43 +79,35 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="kw-write")
 	public void copyFunction(@PathParam("id") String id) throws FunctionTypeException {		
-		FunctionRepository repo = getFunctionRepository();
-		Function source = repo.getFunctionById(id);
-		if(source!=null) {
-			Function copy = getFunctionClient().copyFunction(source);
-			repo.addFunction(copy);
-		}
+		functionManager.copyFunction(id);
 	}
 	
 	@DELETE
 	@Path("/{id}")
 	@Secured(right="kw-delete")
 	public void delete(@PathParam("id") String functionId) throws FunctionTypeException {
-		FunctionRepository repo = getFunctionRepository();
-		Function function = repo.getFunctionById(functionId);
-		getFunctionClient().deleteFunction(function);
-		getFunctionRepository().deleteFunction(functionId);
+		functionManager.deleteFunction(functionId);
 	}
 	
 	@POST
 	@Path("/search")
 	@Secured(right="kw-read")
 	public Function get(Map<String,String> attributes) {
-		return getFunctionRepository().getFunctionByAttributes(attributes);
+		return functionManager.getFunctionByAttributes(attributes);
 	}
 	
 	@GET
 	@Path("/{id}")
 	@Secured(right="kw-read")
 	public Function get(@PathParam("id") String functionId) {
-		return getFunctionRepository().getFunctionById(functionId);
+		return functionManager.getFunctionById(functionId);
 	}
 	
 	@GET
 	@Path("/{id}/editor")
 	@Secured(right="kw-read")
 	public String getFunctionEditor(@PathParam("id") String functionId) {
-		Function function = getFunctionRepository().getFunctionById(functionId);
+		Function function = functionManager.getFunctionById(functionId);
 		FunctionEditor editor = getContext().get(FunctionEditorRegistry.class).getFunctionEditor(function);
 		if(editor!=null) {
 			return editor.getEditorPath(function);
@@ -139,7 +122,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="kw-read")
 	public Function newFunctionTypeConf(@PathParam("id") String type) {
-		Function newFunction = getFunctionClient().newFunction(type);
+		Function newFunction = functionManager.newFunction(type);
 		newFunction.setAttributes(new HashMap<>());
 		newFunction.getAttributes().put(Function.NAME, "");
 		newFunction.setSchema(Json.createObjectBuilder().build());
@@ -183,7 +166,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Path("/executor/tokens/select")
 	@Secured(right="kw-execute")
 	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter) throws AgentCommunicationException {
-		return getFunctionClient().getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession);
+		return functionExecutionService.getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession);
 	}
 
 	@POST
@@ -191,7 +174,7 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Path("/executor/tokens/return")
 	@Secured(right="kw-execute")
 	public void returnTokenHandle(TokenWrapper token) throws AgentCommunicationException {
-		getFunctionClient().returnTokenHandle(token);
+		functionExecutionService.returnTokenHandle(token);
 	}
 	
 	public static class CallFunctionInput {
@@ -245,9 +228,9 @@ public class FunctionRepositoryServices extends AbstractServices {
 	@Secured(right="kw-execute")
 	public Output callFunction(CallFunctionInput input) {
 		if(input.functionId!=null) {
-			return getFunctionClient().callFunction(input.tokenHandle, input.functionId, input.input);			
+			return functionExecutionService.callFunction(input.tokenHandle, input.functionId, input.input);			
 		} else {
-			return getFunctionClient().callFunction(input.tokenHandle, input.functionAttributes, input.input);			
+			return functionExecutionService.callFunction(input.tokenHandle, input.functionAttributes, input.input);			
 		}
 	}
 }

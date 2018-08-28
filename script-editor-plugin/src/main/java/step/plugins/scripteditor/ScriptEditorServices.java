@@ -13,10 +13,8 @@ import javax.ws.rs.PathParam;
 
 import step.commons.conf.Configuration;
 import step.core.deployment.AbstractServices;
-import step.functions.FunctionClient;
-import step.functions.FunctionRepository;
-import step.grid.Grid;
-import step.plugins.adaptergrid.GridPlugin;
+import step.functions.manager.FunctionManager;
+import step.functions.type.FunctionTypeRegistry;
 import step.plugins.java.AbstractScriptFunctionType;
 import step.plugins.java.GeneralScriptFunction;
 
@@ -27,7 +25,6 @@ public class ScriptEditorServices extends AbstractServices {
 	@GET
 	@Path("/file/{filename}")
 	public String getScript(@PathParam("filename") String filename) throws IOException {
-		Grid grid = (Grid) getContext().get(GridPlugin.GRID_KEY);
 		File scriptFIle = new File(Configuration.getInstance().getProperty("keywords.script.scriptdir")+"/"+filename);
 		byte[] encoded = Files.readAllBytes(Paths.get(scriptFIle.toURI()));
 		return new String(encoded, "UTF-8");
@@ -56,11 +53,12 @@ public class ScriptEditorServices extends AbstractServices {
 		return new String(encoded, "UTF-8");
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private File getScriptFile(String functionid) {
-		FunctionClient functionClient = (FunctionClient) getContext().get(GridPlugin.FUNCTIONCLIENT_KEY);
-		FunctionRepository functionRepository = functionClient.getFunctionRepository();
-		GeneralScriptFunction function = (GeneralScriptFunction) functionRepository.getFunctionById(functionid);
+		FunctionManager functionManager = getContext().get(FunctionManager.class);
+		GeneralScriptFunction function = (GeneralScriptFunction) functionManager.getFunctionById(functionid);
 		
-		return ((AbstractScriptFunctionType)functionClient.getFunctionTypeByFunction(function)).getScriptFile(function);
+		FunctionTypeRegistry functionTypeRegistry = getContext().get(FunctionTypeRegistry.class);
+		return ((AbstractScriptFunctionType)functionTypeRegistry.getFunctionTypeByFunction(function)).getScriptFile(function);
 	}
 }

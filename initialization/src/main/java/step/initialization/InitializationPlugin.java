@@ -29,7 +29,6 @@ import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import org.jongo.MongoCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +44,9 @@ import step.core.plans.Plan;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
+import step.functions.accessor.FunctionAccessorImpl;
+import step.functions.accessor.FunctionCRUDAccessor;
 import step.planbuilder.PlanBuilder;
-import step.plugins.adaptergrid.FunctionRepositoryImpl;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.selenium.SeleniumFunction;
@@ -92,8 +92,7 @@ public class InitializationPlugin extends AbstractPlugin {
 //	}
 
 	private void setupDemo(GlobalContext context) {
-		MongoCollection functionCollection = context.getMongoClientSession().getJongoCollection("functions");				
-		FunctionRepositoryImpl functionRepository = new FunctionRepositoryImpl(functionCollection);
+		FunctionCRUDAccessor functionRepository = new FunctionAccessorImpl(context.getMongoClientSession());
 		
 		JsonObject schema = null;
 		if(context.getConfiguration().getPropertyAsBoolean("enforceschemas", false)){
@@ -141,10 +140,10 @@ public class InitializationPlugin extends AbstractPlugin {
 		repo.save(plan);
 	}
 	
-	private Function addScriptFunction(FunctionRepositoryImpl functionRepository, String name, String scriptLanguage, String scriptFile) {
+	private Function addScriptFunction(FunctionCRUDAccessor functionRepository, String name, String scriptLanguage, String scriptFile) {
 		return addScriptFunction(functionRepository, name, scriptLanguage, scriptFile, null);
 	}
-	private Function addScriptFunction(FunctionRepositoryImpl functionRepository, String name, String scriptLanguage, String scriptFile, JsonObject schema) {
+	private Function addScriptFunction(FunctionCRUDAccessor functionRepository, String name, String scriptLanguage, String scriptFile, JsonObject schema) {
 		GeneralScriptFunction function = new GeneralScriptFunction();
 		Map<String, String> kwAttributes = new HashMap<>();
 		kwAttributes.put(Function.NAME, name);
@@ -156,11 +155,11 @@ public class InitializationPlugin extends AbstractPlugin {
 		}else{
 			function.setSchema(Json.createObjectBuilder().build());
 		}
-		functionRepository.addFunction(function);
+		functionRepository.save(function);
 		return function;
 	}
 	
-	private Function addSeleniumFunction(FunctionRepositoryImpl functionRepository, String name, String scriptLanguage, String scriptFile) {
+	private Function addSeleniumFunction(FunctionCRUDAccessor functionRepository, String name, String scriptLanguage, String scriptFile) {
 		SeleniumFunction function = new SeleniumFunction();
 		Map<String, String> kwAttributes = new HashMap<>();
 		kwAttributes.put(Function.NAME, name);
@@ -168,17 +167,17 @@ public class InitializationPlugin extends AbstractPlugin {
 		function.getScriptLanguage().setValue(scriptLanguage);
 		function.getScriptFile().setValue(scriptFile);
 		function.setSeleniumVersion("3.x");
-		functionRepository.addFunction(function);
+		functionRepository.save(function);
 		return function;
 	}
 	
-	private Function addJMeterFunction(FunctionRepositoryImpl functionRepository, String name, String jmeterFile) {
+	private Function addJMeterFunction(FunctionCRUDAccessor functionRepository, String name, String jmeterFile) {
 		JMeterFunction function = new JMeterFunction();
 		Map<String, String> kwAttributes = new HashMap<>();
 		kwAttributes.put(Function.NAME, name);
 		function.setAttributes(kwAttributes);
 		function.getJmeterTestplan().setValue(jmeterFile);
-		functionRepository.addFunction(function);
+		functionRepository.save(function);
 		return function;
 	}
 }

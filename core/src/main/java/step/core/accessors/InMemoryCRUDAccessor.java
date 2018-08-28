@@ -18,8 +18,13 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 
 	@Override
 	public T findByAttributes(Map<String, String> attributes) {
-		// TODO Auto-generated method stub
-		return null;
+		return map.values().stream().filter(v->{
+			if(v instanceof AbstractOrganizableObject) {
+				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
+			} else {
+				return false;
+			}
+		}).findFirst().get();
 	}
 
 	@Override

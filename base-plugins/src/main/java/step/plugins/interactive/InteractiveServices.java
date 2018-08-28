@@ -50,8 +50,8 @@ import step.core.plans.LocalPlanRepository;
 import step.core.plans.Plan;
 import step.core.variables.VariableType;
 import step.functions.Function;
-import step.functions.FunctionExecutionService;
-import step.functions.FunctionRepository;
+import step.functions.execution.FunctionExecutionService;
+import step.functions.manager.FunctionManager;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient.AgentCommunicationException;
 import step.planbuilder.FunctionPlanBuilder;
@@ -234,8 +234,8 @@ public class InteractiveServices extends AbstractServices {
 		CallFunction callFunction = FunctionPlanBuilder.keywordById(keywordid,"{}");
 		
 		// TODO do this centrally. Currently the same logic is implemented in the UI
-		FunctionRepository functionRepository = getContext().get(FunctionRepository.class);
-		Function function = functionRepository.getFunctionById(keywordid);
+		FunctionManager functionManager = getContext().get(FunctionManager.class);
+		Function function = functionManager.getFunctionById(keywordid);
 		Map<String, String> attributes = new HashMap<>();
 		attributes.put("name", function.getAttributes().get(Function.NAME));
 		callFunction.setAttributes(attributes);
