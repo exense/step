@@ -9,6 +9,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.plans.Plan;
 
 public class PlanBuilderTest {
@@ -81,9 +82,12 @@ public class PlanBuilderTest {
 
 		@Override
 		protected void execute_(ReportNode node, CustomArtefact testArtefact) throws Exception {
-			testArtefact.getChildrenIDs().forEach(childId->{
-				ArtefactHandler.delegateExecute(context, context.getArtefactAccessor().get(childId), node);
-			});
+			if(testArtefact.getChildrenIDs()!=null) {
+				testArtefact.getChildrenIDs().forEach(childId->{
+					ArtefactHandler.delegateExecute(context, context.getArtefactAccessor().get(childId), node);
+				});
+			}
+			node.setStatus(ReportNodeStatus.PASSED);
 		}
 
 		@Override

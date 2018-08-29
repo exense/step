@@ -58,7 +58,7 @@ public class PlanRunnerResult {
 		BufferedWriter bWriter = new BufferedWriter(writer);
 		visitReportTree(event->{
 			try {
-				for(int i=0;i<event.getStack().size()-1;i++) {
+				for(int i=0;i<event.getStack().size();i++) {
 						bWriter.write(" ");
 				}
 				ReportNode node = event.getNode();
