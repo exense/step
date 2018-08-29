@@ -48,6 +48,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.plans.LocalPlanRepository;
 import step.core.plans.Plan;
+import step.core.plans.builder.PlanBuilder;
 import step.core.variables.VariableType;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
@@ -55,7 +56,6 @@ import step.functions.manager.FunctionManager;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient.AgentCommunicationException;
 import step.planbuilder.FunctionPlanBuilder;
-import step.planbuilder.PlanBuilder;
 import step.plugins.parametermanager.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 

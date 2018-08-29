@@ -19,8 +19,10 @@ import step.expressions.ExpressionHandler;
 public class ContextBuilder {
 	
 	public static ExecutionContext createLocalExecutionContext() {
-		ReportNode root = new ReportNode();
 		ExecutionContext context = new ExecutionContext(new ObjectId().toString());
+		
+		ReportNode root = new ReportNode();
+		root.setId(new ObjectId(context.getExecutionId()));
 		context.getReportNodeCache().put(root);
 		context.setReport(root);
 		context.setCurrentReportNode(root);

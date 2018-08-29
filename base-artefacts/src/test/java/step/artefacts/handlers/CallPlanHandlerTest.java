@@ -12,7 +12,7 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ContextBuilder;
 import step.core.plans.Plan;
-import step.planbuilder.PlanBuilder;
+import step.core.plans.builder.PlanBuilder;
 
 public class CallPlanHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -28,12 +28,12 @@ public class CallPlanHandlerTest extends AbstractArtefactHandlerTest {
 		});
 		
 		
-		Plan calledPlan = PlanBuilder.create().add(check).build();
+		Plan calledPlan = PlanBuilder.create().startBlock(check).endBlock().build();
 		context.getArtefactAccessor().save(new ArrayList<>(calledPlan.getArtefacts()));
 		
 		CallPlan callPlan = new CallPlan();
 		callPlan.setArtefactId(calledPlan.getRoot().getId().toString());
-		Plan plan = PlanBuilder.create().add(callPlan).build();
+		Plan plan = PlanBuilder.create().startBlock(callPlan).endBlock().build();
 		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
 		
 		ArtefactHandler.delegateCreateReportSkeleton(context, plan.getRoot(),context.getReport());

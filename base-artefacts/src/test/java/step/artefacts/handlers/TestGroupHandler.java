@@ -19,6 +19,7 @@
 package step.artefacts.handlers;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
@@ -33,8 +34,8 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.ContainsDynamicValues;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
+import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
-import step.planbuilder.PlanBuilder;
 
 public class TestGroupHandler {
 
@@ -54,7 +55,7 @@ public class TestGroupHandler {
 		DefaultPlanRunner runner = new DefaultPlanRunner();
 		
 		long t1 = System.currentTimeMillis();
-		runner.run(plan).visitReportTree(node->{
+		runner.run(plan).visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
 		long t2 = System.currentTimeMillis();

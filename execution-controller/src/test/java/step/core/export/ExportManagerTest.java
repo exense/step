@@ -15,14 +15,15 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.plans.LocalPlanRepository;
 import step.core.plans.Plan;
-import step.planbuilder.PlanBuilder;
+import step.core.plans.builder.PlanBuilder;
+import step.planbuilder.BaseArtefacts;
 
 public class ExportManagerTest {
 
 	@Test
 	public void testExportArtefactWithChildren() throws IOException, InterruptedException, TimeoutException {
 		GlobalContext c = GlobalContextBuilder.createGlobalContext();
-		Plan plan = PlanBuilder.create().startBlock(PlanBuilder.sequence()).add(PlanBuilder.sequence()).endBlock().build();
+		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(BaseArtefacts.sequence()).endBlock().build();
 		LocalPlanRepository repo = new LocalPlanRepository(c.getArtefactAccessor());
 		repo.save(plan);
 		
@@ -45,9 +46,9 @@ public class ExportManagerTest {
 	@Test
 	public void testExportAllArtefacts() throws IOException, InterruptedException, TimeoutException {
 		GlobalContext c = GlobalContextBuilder.createGlobalContext();
-		Sequence rootSequence = PlanBuilder.sequence();
+		Sequence rootSequence = BaseArtefacts.sequence();
 		rootSequence.setRoot(true);
-		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(PlanBuilder.sequence()).endBlock().build();
+		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
 		LocalPlanRepository repo = new LocalPlanRepository(c.getArtefactAccessor());
 		repo.save(plan);
 		

@@ -3,13 +3,13 @@ package step.core.plans.runner;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Iterator;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.artefacts.reports.ReportTreeVisitor;
+import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
 
 public class PlanRunnerResult {
 
@@ -34,7 +34,13 @@ public class PlanRunnerResult {
 		return reportTreeAccessor;
 	}
 	
-	public PlanRunnerResult visitReportTree(Consumer<ReportNode> consumer) {
+	public PlanRunnerResult visitReportNodes(Consumer<ReportNode> consumer) {
+		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
+		visitor.visitNodes(rootReportNodeId, consumer);
+		return this;
+	}
+	
+	public PlanRunnerResult visitReportTree(Consumer<ReportNodeEvent> consumer) {
 		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
 		visitor.visit(rootReportNodeId, consumer);
 		return this;
@@ -48,24 +54,20 @@ public class PlanRunnerResult {
 		return waitForExecutionToTerminate(0);
 	}
 	
-	public void printTree(Writer printer) throws IOException {
-		printReportNode(new BufferedWriter(printer), reportTreeAccessor.get(rootReportNodeId), 0);
-	}
-	
-	protected void printReportNode(BufferedWriter printer, ReportNode node, int level) throws IOException {
-		StringBuilder builder = new StringBuilder();
-		for(int i=0;i<level;i++) {
-			builder.append(" ");
-		}
-		builder.append(node.getName()+":"+node.getStatus()+":"+(node.getError()!=null?node.getError().getMsg():""));
-		printer.write(builder.toString());
-		printer.write("\n");
-		printer.flush();
-		Iterator<ReportNode> it = reportTreeAccessor.getChildren(node.getId().toString());
-		while(it.hasNext()) {
-			printReportNode(printer, it.next(), level+1);
-		}
-	}
-	
-	
+	public void printTree(Writer writer) throws IOException {
+		BufferedWriter bWriter = new BufferedWriter(writer);
+		visitReportTree(event->{
+			try {
+				for(int i=0;i<event.getStack().size()-1;i++) {
+						bWriter.write(" ");
+				}
+				ReportNode node = event.getNode();
+				bWriter.write(node.getName()+":"+node.getStatus()+":"+(node.getError()!=null?node.getError().getMsg():""));
+				bWriter.write("\n");
+			} catch (IOException e) {
+				throw new RuntimeException("Error while printing tree",e);
+			}
+		});
+		bWriter.flush();
+	}	
 }
