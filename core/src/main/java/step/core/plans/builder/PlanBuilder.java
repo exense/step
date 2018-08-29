@@ -21,7 +21,11 @@ public class PlanBuilder {
 	
 	@SuppressWarnings("unchecked")
 	public Plan build() {
-		return new Plan(root, (Collection<AbstractArtefact>) localAccessor.getCollection());
+		if(stack.isEmpty()) {
+			return new Plan(root, (Collection<AbstractArtefact>) localAccessor.getCollection());
+		} else {
+			throw new RuntimeException("Unbalanced block "+stack.peek());
+		}
 	}
 	
 	public PlanBuilder add(AbstractArtefact artefact) {
@@ -45,7 +49,11 @@ public class PlanBuilder {
 	}
 	
 	public PlanBuilder endBlock() {
-		stack.pop();
+		if(!stack.isEmpty()) {
+			stack.pop();
+		} else {
+			throw new RuntimeException("Empty stack. Please first call startBlock before calling endBlock");
+		}
 		return this;
 	}
 

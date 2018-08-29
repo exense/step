@@ -2,12 +2,10 @@ package step.core.artefacts.reports;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static step.core.plans.builder.PlanBuilderTest.artefact;
 
 import org.junit.Test;
 
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
@@ -50,39 +48,4 @@ public class ReportTreeVisitorTest {
 			}
 		});
 	}
-
-	protected AbstractArtefact artefact(String description) {
-		CustomArtefact a = new CustomArtefact();
-		a.setDescription(description);
-		return a;
-	}
-	
-	@Artefact(name="Custom", handler = CustomHandler.class)
-	public static class CustomArtefact extends AbstractArtefact {
-		
-	}
-	
-	public static class CustomHandler extends ArtefactHandler<CustomArtefact, ReportNode>{
-
-		@Override
-		protected void createReportSkeleton_(ReportNode parentNode, CustomArtefact testArtefact) {
-			
-		}
-
-		@Override
-		protected void execute_(ReportNode node, CustomArtefact testArtefact) throws Exception {
-			testArtefact.getChildrenIDs().forEach(childId->{
-				ArtefactHandler.delegateExecute(context, context.getArtefactAccessor().get(childId), node);
-			});
-		}
-
-		@Override
-		public ReportNode createReportNode_(ReportNode parentNode, CustomArtefact testArtefact) {
-			return new ReportNode();
-		}
-		
-	}
-	
-	
-
 }
