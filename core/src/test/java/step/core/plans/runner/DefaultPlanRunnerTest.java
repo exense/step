@@ -2,7 +2,11 @@ package step.core.plans.runner;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -33,7 +37,8 @@ public class DefaultPlanRunnerTest {
 		StringWriter w = new StringWriter();
 		runner.run(builder.build()).printTree(w);
 		
-		assertEquals(readResource(getClass(),"DefaultPlanRunnerTestExpected.txt"), w.toString());
+		//assertEquals(readResource(getClass(),"DefaultPlanRunnerTestExpected.txt"), w.toString());
+		assertEquals(readResource(new File("src/test/java/step/core/plans/runner/DefaultPlanRunnerTestExpected.txt")), w.toString());
 	}
 	
 	@Test
@@ -60,7 +65,22 @@ public class DefaultPlanRunnerTest {
 	}
 	
 	public static String readResource(Class<?> clazz, String resourceName) {
-		try(Scanner scanner = new Scanner(clazz.getResourceAsStream(resourceName), StandardCharsets.UTF_8.name())) {
+		return scan(clazz.getResourceAsStream(resourceName));
+	}
+
+	public static String readResource(File resource) {
+		try(FileInputStream fis = new FileInputStream(resource)){
+			return scan(fis);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static String scan(InputStream is){
+		try(Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
 			return scanner.useDelimiter("\\A").next();
 		}
 	}
