@@ -65,12 +65,12 @@ public class DefaultPlanRunnerTest {
 	}
 	
 	public static String readResource(Class<?> clazz, String resourceName) {
-		return scan(clazz.getResourceAsStream(resourceName));
+		return readStream(clazz.getResourceAsStream(resourceName));
 	}
 
 	public static String readResource(File resource) {
 		try(FileInputStream fis = new FileInputStream(resource)){
-			return scan(fis);
+			return readStream(fis);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -79,9 +79,9 @@ public class DefaultPlanRunnerTest {
 		return null;
 	}
 
-	public static String scan(InputStream is){
+	public static String readStream(InputStream is){
 		try(Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
-			return scanner.useDelimiter("\\A").next();
+			return scanner.useDelimiter("\\A").next().replaceAll("\r\n", "\n");
 		}
 	}
 }
