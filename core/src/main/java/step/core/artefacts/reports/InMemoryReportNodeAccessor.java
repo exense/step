@@ -37,7 +37,7 @@ public class InMemoryReportNodeAccessor extends InMemoryCRUDAccessor<ReportNode>
 		return map.values().stream().filter(node->parentID.equals(node.getParentID())).sorted(new Comparator<ReportNode>() {
 			@Override
 			public int compare(ReportNode o1, ReportNode o2) {
-				return Long.compare(o1.getExecutionTime(), o2.getExecutionTime());
+				return o1.getId().compareTo(o2.getId());
 			}
 		}).iterator();
 	}
