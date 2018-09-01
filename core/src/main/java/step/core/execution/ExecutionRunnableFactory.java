@@ -39,21 +39,33 @@ public class ExecutionRunnableFactory {
 	}
 
 	private ExecutionContext createExecutionContext(Execution execution) {
-		ExecutionContext context = new ExecutionContext(execution.getId().toString());
-		context.updateStatus(ExecutionStatus.INITIALIZING);
+		boolean isolatedContext = execution.getExecutionParameters().isIsolatedExecution();
+		String executionId = execution.getId().toString();
+		ExecutionContext context;
+		if(isolatedContext) {
+			context = ContextBuilder.createLocalExecutionContext(executionId);
+			context.setExecutionAccessor(globalContext.getExecutionAccessor());
+			context.setReportNodeAccessor(globalContext.getReportAccessor());
+			context.setRepositoryObjectManager(globalContext.getRepositoryObjectManager());
+			context.setEventManager(globalContext.getEventManager());
+			context.setAttachmentManager(globalContext.getAttachmentManager());
+			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
+		} else {
+			context = new ExecutionContext(executionId);
+			context.setExpressionHandler(globalContext.getExpressionHandler());
+			context.setDynamicBeanResolver(globalContext.getDynamicBeanResolver());
+			context.setConfiguration(globalContext.getConfiguration());
+			context.setExecutionAccessor(globalContext.getExecutionAccessor());
+			context.setArtefactAccessor(globalContext.getArtefactAccessor());
+			context.setReportNodeAccessor(globalContext.getReportAccessor());
+			context.setRepositoryObjectManager(globalContext.getRepositoryObjectManager());
+			context.setEventManager(globalContext.getEventManager());
+			context.setAttachmentManager(globalContext.getAttachmentManager());
+			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
+		}
+
 		context.setExecutionParameters(execution.getExecutionParameters());
-		
-		context.setExpressionHandler(globalContext.getExpressionHandler());
-		context.setDynamicBeanResolver(globalContext.getDynamicBeanResolver());
-		context.setConfiguration(globalContext.getConfiguration());
-		context.setExecutionAccessor(globalContext.getExecutionAccessor());
-		context.setArtefactAccessor(globalContext.getArtefactAccessor());
-		context.setReportNodeAccessor(globalContext.getReportAccessor());
-		context.setRepositoryObjectManager(globalContext.getRepositoryObjectManager());
-		context.setEventManager(globalContext.getEventManager());
-		context.setAttachmentManager(globalContext.getAttachmentManager());
-		context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
-		
+		context.updateStatus(ExecutionStatus.INITIALIZING);
 		return context;
 	}
 	

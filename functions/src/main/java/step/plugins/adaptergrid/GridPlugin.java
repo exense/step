@@ -32,6 +32,7 @@ import step.core.plugins.Plugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.accessor.FunctionCRUDAccessor;
+import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceImpl;
@@ -69,7 +70,7 @@ public class GridPlugin extends AbstractPlugin {
 		grid = new Grid(gridPort, tokenTTL);
 		grid.start();
 		
-		GridClient client = new GridClient(grid, grid);
+		client = new GridClient(grid, grid);
 
 		editorRegistry = new FunctionEditorRegistry();
 		functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(context.getAttachmentManager()), grid);
@@ -99,9 +100,21 @@ public class GridPlugin extends AbstractPlugin {
 	@Override
 	public void executionStart(ExecutionContext context) {
 		// Bindings needed for the execution
-		context.put(FunctionAccessor.class, functionAccessor);
-		context.put(FunctionExecutionService.class, functionExecutionService);
-		context.put(FunctionRouter.class.getName(), functionRouter);
+		boolean isolatedExecution = context.getExecutionParameters().isIsolatedExecution();
+		if(isolatedExecution) {
+			FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
+			FunctionExecutionService functionExecutionService = new FunctionExecutionServiceImpl(client, functionAccessor, functionTypeRegistry, context.getDynamicBeanResolver());
+			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+			FunctionRouter functionRouter = new FunctionRouter(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
+			
+			context.put(FunctionAccessor.class, functionAccessor);
+			context.put(FunctionExecutionService.class, functionExecutionService);
+			context.put(FunctionRouter.class.getName(), functionRouter);
+		} else {
+			context.put(FunctionAccessor.class, functionAccessor);
+			context.put(FunctionExecutionService.class, functionExecutionService);
+			context.put(FunctionRouter.class.getName(), functionRouter);
+		}
 		super.executionStart(context);
 	}
 

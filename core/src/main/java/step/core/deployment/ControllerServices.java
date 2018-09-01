@@ -18,7 +18,11 @@
  *******************************************************************************/
 package step.core.deployment;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -42,7 +46,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.bson.types.ObjectId;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import step.attachments.AttachmentContainer;
+import step.attachments.AttachmentManager;
 import step.commons.datatable.DataTable;
 import step.commons.datatable.TableRow;
 import step.core.artefacts.AbstractArtefact;
@@ -59,6 +67,8 @@ import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.grid.Grid;
+import step.grid.filemanager.FileManagerServer;
 
 @Singleton
 @Path("controller")
@@ -159,13 +169,13 @@ public class ControllerServices extends AbstractServices {
 		return link;
 	}	
 	
-	@POST
-	@Path("/execution/{id}/report")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public ReportExport reportExecution(@PathParam("id") String executionID, RepositoryObjectReference report) {
-		return getContext().getRepositoryObjectManager().exportTestExecutionReport(report, executionID);
-	}
+//	@POST
+//	@Path("/execution/{id}/report")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public ReportExport reportExecution(@PathParam("id") String executionID, RepositoryObjectReference report) {
+//		return getContext().getRepositoryObjectManager().exportTestExecutionReport(report, executionID);
+//	}
 	
 	@GET
 	@Path("/execution/{id}/statusdistribution")
@@ -572,4 +582,26 @@ public class ControllerServices extends AbstractServices {
 		}
 	}
 	
+	@POST
+	@Path("/grid/file")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String registerFile(@FormDataParam("file") InputStream uploadedInputStream,
+			@FormDataParam("file") FormDataContentDisposition fileDetail) {
+		
+		if (uploadedInputStream == null || fileDetail == null)
+			throw new RuntimeException("Invalid arguments");
+
+		Grid grid =  controller.getContext().get(Grid.class);
+
+		AttachmentContainer container = controller.getContext().getAttachmentManager().createAttachmentContainer();
+		File file = new File(container.getContainer()+"/"+fileDetail.getFileName());
+		try {
+			Files.copy(uploadedInputStream, file.toPath());
+		} catch (IOException e) {
+			throw new RuntimeException("Error while saving file.");
+		}
+		
+		return grid.registerFile(file);
+	}
 }

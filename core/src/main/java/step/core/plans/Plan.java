@@ -3,17 +3,24 @@ package step.core.plans;
 import java.util.Collection;
 
 import step.core.artefacts.AbstractArtefact;
+import step.functions.Function;
 
 public class Plan {
 
-	AbstractArtefact root;
+	protected AbstractArtefact root;
 	
-	Collection<AbstractArtefact> artefacts;
-
+	protected Collection<AbstractArtefact> artefacts;
+	
+	protected Collection<Function> functions;
+	
 	public Plan(AbstractArtefact root, Collection<AbstractArtefact> artefacts) {
 		super();
 		this.root = root;
 		this.artefacts = artefacts;
+	}
+
+	public Plan() {
+		super();
 	}
 
 	public AbstractArtefact getRoot() {
@@ -30,5 +37,13 @@ public class Plan {
 
 	public void setArtefacts(Collection<AbstractArtefact> artefacts) {
 		this.artefacts = artefacts;
+	}
+	
+	public Collection<Function> getFunctions() {
+		return functions;
+	}
+
+	public void setFunctions(Collection<Function> functions) {
+		this.functions = functions;
 	}
 }

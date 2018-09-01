@@ -24,7 +24,7 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 			} else {
 				return false;
 			}
-		}).findFirst().get();
+		}).findFirst().orElse(null);
 	}
 
 	@Override

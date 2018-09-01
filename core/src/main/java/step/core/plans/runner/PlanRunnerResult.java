@@ -2,6 +2,7 @@ package step.core.plans.runner;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -54,7 +55,11 @@ public class PlanRunnerResult {
 		return waitForExecutionToTerminate(0);
 	}
 	
-	public void printTree(Writer writer) throws IOException {
+	public PlanRunnerResult printTree() throws IOException {
+		return printTree(new OutputStreamWriter(System.out));
+	}
+	
+	public PlanRunnerResult printTree(Writer writer) throws IOException {
 		BufferedWriter bWriter = new BufferedWriter(writer);
 		visitReportTree(event->{
 			try {
@@ -69,5 +74,6 @@ public class PlanRunnerResult {
 			}
 		});
 		bWriter.flush();
+		return this;
 	}	
 }

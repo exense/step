@@ -53,7 +53,7 @@ public class ExecutionRunnableTest {
 		}
 
 		@Override
-		public ImportResult importArtefact(RepositoryObjectReference artefact) throws Exception {
+		public ImportResult importArtefact(ExecutionContext context, RepositoryObjectReference artefact) throws Exception {
 			return result;
 		}
 		

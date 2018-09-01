@@ -126,7 +126,7 @@ public class ExecutionRunnable implements Runnable {
 					importResult.setSuccessful(true);
 				} else {
 					try {
-						importResult = context.getRepositoryObjectManager().importArtefact(artefactPointer);											
+						importResult = context.getRepositoryObjectManager().importArtefact(context, artefactPointer);											
 					} catch (Exception e) {
 						logger.error("Error while importing repository object "+artefactPointer.toString(), e);
 						importResult = new ImportResult();
@@ -152,7 +152,7 @@ public class ExecutionRunnable implements Runnable {
 		
 		if(execution!=null) {
 			RepositoryObjectManager repositoryObjectManager = context.getRepositoryObjectManager();
-			ReportExport report = repositoryObjectManager.exportTestExecutionReport(execution.getExecutionParameters().getArtefact(), executionId);
+			ReportExport report = repositoryObjectManager.exportTestExecutionReport(context, execution.getExecutionParameters().getArtefact());
 			List<ReportExport> exports = new ArrayList<>();
 			exports.add(report);
 			

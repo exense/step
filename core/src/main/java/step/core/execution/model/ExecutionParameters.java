@@ -39,6 +39,8 @@ public class ExecutionParameters {
 	ExecutionMode mode;
 	
 	Map<String, String> customParameters;
+	
+	boolean isolatedExecution = false;
 
 	public ExecutionParameters() {
 		super();
@@ -105,6 +107,14 @@ public class ExecutionParameters {
 
 	public void setCustomParameters(Map<String, String> customParameters) {
 		this.customParameters = customParameters;
+	}
+
+	public boolean isIsolatedExecution() {
+		return isolatedExecution;
+	}
+
+	public void setIsolatedExecution(boolean isolatedExecution) {
+		this.isolatedExecution = isolatedExecution;
 	}
 
 }

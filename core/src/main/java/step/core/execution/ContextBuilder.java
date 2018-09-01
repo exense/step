@@ -19,7 +19,11 @@ import step.expressions.ExpressionHandler;
 public class ContextBuilder {
 	
 	public static ExecutionContext createLocalExecutionContext() {
-		ExecutionContext context = new ExecutionContext(new ObjectId().toString());
+		return createLocalExecutionContext(new ObjectId().toString());
+	}
+	
+	public static ExecutionContext createLocalExecutionContext(String executionId) {
+		ExecutionContext context = new ExecutionContext(executionId);
 		
 		ReportNode root = new ReportNode();
 		root.setId(new ObjectId(context.getExecutionId()));

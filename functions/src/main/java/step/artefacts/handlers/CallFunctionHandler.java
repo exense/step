@@ -189,11 +189,19 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		Function function;
 		if(testArtefact.getFunctionId()!=null) {
 			function = functionAccessor.get(new ObjectId(testArtefact.getFunctionId()));
+			if(function == null) {
+				throw new RuntimeException("Unable to find keyword with id "+testArtefact.getFunctionId());
+			}
 		} else {
 			String selectionAttributesJson = testArtefact.getFunction().get();
 			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, getBindings());
 			function = functionAccessor.findByAttributes(attributes);
+			if(function == null) {
+				throw new RuntimeException("Unable to find keyword with attributes "+selectionAttributesJson);
+			}
 		}
+		
+		
 		return function;
 	}
 

@@ -18,7 +18,7 @@ public class DefaultPlanRunner implements PlanRunner {
 
 	@Override
 	public PlanRunnerResult run(Plan plan) {
-		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext context = buildExecutionContext();
 		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
 		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
 		return new PlanRunnerResult(context.getExecutionId(), context.getReport().getId().toString(), context.getReportNodeAccessor());
@@ -27,5 +27,9 @@ public class DefaultPlanRunner implements PlanRunner {
 	@Override
 	public PlanRunnerResult run(Plan plan, Map<String, String> executionParameters) {
 		throw new UnsupportedOperationException("Running a plan with execution parameters isn't support by this runner.");
+	}
+	
+	protected ExecutionContext buildExecutionContext() {
+		return ContextBuilder.createLocalExecutionContext();
 	}
 }

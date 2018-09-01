@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
+import step.core.execution.ExecutionContext;
 import step.core.execution.model.ReportExport;
 import step.core.execution.model.ReportExportStatus;
 import step.core.repositories.Repository.ImportResult;
@@ -50,10 +51,10 @@ public class RepositoryObjectManager {
 		repositories.put(id, repository);
 	}
 
-	public ImportResult importArtefact(RepositoryObjectReference artefact) throws Exception  {
+	public ImportResult importArtefact(ExecutionContext context, RepositoryObjectReference artefact) throws Exception  {
 		String respositoryId = artefact.getRepositoryID();
 		Repository repository = getRepository(respositoryId);
-		return repository.importArtefact(artefact.getRepositoryParameters());
+		return repository.importArtefact(context, artefact.getRepositoryParameters());
 	}
 
 	private Repository getRepository(String respositoryId) {
@@ -64,7 +65,7 @@ public class RepositoryObjectManager {
 		return repository;
 	}
 	
-	public ReportExport exportTestExecutionReport(RepositoryObjectReference report, String executionID) {	
+	public ReportExport exportTestExecutionReport(ExecutionContext context, RepositoryObjectReference report) {	
 		ReportExport export = new ReportExport();
 
 		String respositoryId = report.getRepositoryID();
@@ -72,12 +73,12 @@ public class RepositoryObjectManager {
 			Repository repository = getRepository(respositoryId);
 			
 			try {
-				repository.exportExecution(report.getRepositoryParameters(), executionID);	
+				repository.exportExecution(context, report.getRepositoryParameters());	
 				export.setStatus(ReportExportStatus.SUCCESSFUL);
 			} catch (Exception e) {
 				export.setStatus(ReportExportStatus.FAILED);
 				export.setError(e.getMessage() + ". See application logs for more details.");
-				logger.error("Error while exporting test " + executionID + " to " + respositoryId,e);
+				logger.error("Error while exporting test " + context.getExecutionId() + " to " + respositoryId,e);
 			}			
 		}
 		return export;
