@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -47,17 +46,16 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
-import step.repositories.staging.StagingContextRegistry.StagingContextImpl;
 
 @Singleton
 @Path("staging")
 public class StagingRepositoryServices extends AbstractServices {
 	
-	protected StagingContextRegistry registry;
+	protected StagingContextAccessorImpl stagingContextAccessor ;
 	
 	@PostConstruct
 	public void init() {
-		registry = getContext().get(StagingContextRegistry.class);
+		stagingContextAccessor = getContext().get(StagingContextAccessorImpl.class);
 	}
 	
 	@GET
@@ -65,10 +63,9 @@ public class StagingRepositoryServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public String createContext() {
-		String id = UUID.randomUUID().toString();
-		StagingContextImpl context = new StagingContextImpl(id);
-		registry.put(id, context);
-		return id;
+		StagingContext context = new StagingContext();
+		stagingContextAccessor.save(context);
+		return context.getId().toString();
 	}
 	
 	@POST
@@ -76,8 +73,9 @@ public class StagingRepositoryServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public void uploadPlan(@PathParam("id") String id, Plan plan) {
-		StagingContextImpl context = registry.get(id);
+		StagingContext context = stagingContextAccessor.get(id);
 		context.setPlan(plan);
+		stagingContextAccessor.save(context);
 	}
 	
 	@POST
@@ -86,7 +84,7 @@ public class StagingRepositoryServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String uploadFile(@PathParam("id") String id, @FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail) {
-		StagingContextImpl context = registry.get(id);
+		StagingContext context = stagingContextAccessor.get(id);
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
 
@@ -99,6 +97,7 @@ public class StagingRepositoryServices extends AbstractServices {
 		}
 		
 		context.addAttachment(container.getMeta().getId().toString());
+		stagingContextAccessor.save(context);
 		return container.getMeta().getId().toString();
 	}
 	
@@ -107,15 +106,15 @@ public class StagingRepositoryServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public String execute(@PathParam("id") String id, Map<String, String> executionParameters, @QueryParam("isolate") boolean isolate) {
-		StagingContextImpl context = registry.get(id);
+		StagingContext context = stagingContextAccessor.get(id);
 		
 		ExecutionParameters params = new ExecutionParameters();
 		HashMap<String, String> repositoryParameters = new HashMap<>();
 		repositoryParameters.put("contextid", id);
 		
-		params.setArtefact(new RepositoryObjectReference("local-isolated", repositoryParameters));
+		params.setArtefact(new RepositoryObjectReference(StagingRepositoryPlugin.STAGING_REPOSITORY, repositoryParameters));
 		params.setMode(ExecutionMode.RUN);
-		params.setDescription("Remote test");
+		params.setDescription(context.plan.getRoot().getAttributes().get("name"));
 		params.setIsolatedExecution(isolate);
 		// TODO replace by the real user
 		params.setUserID("remote");
@@ -129,7 +128,7 @@ public class StagingRepositoryServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public void destroy(@PathParam("id") String id) {
-		StagingContextImpl context = registry.get(id);
+		StagingContext context = stagingContextAccessor.get(id);
 		
 		context.getAttachments().forEach(attachmentId->{
 			controller.getContext().getAttachmentManager().deleteContainer(attachmentId);

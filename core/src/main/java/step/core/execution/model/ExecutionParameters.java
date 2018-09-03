@@ -109,11 +109,11 @@ public class ExecutionParameters {
 		this.customParameters = customParameters;
 	}
 
-	public boolean isIsolatedExecution() {
+	public Boolean isIsolatedExecution() {
 		return isolatedExecution;
 	}
 
-	public void setIsolatedExecution(boolean isolatedExecution) {
+	public void setIsolatedExecution(Boolean isolatedExecution) {
 		this.isolatedExecution = isolatedExecution;
 	}
 

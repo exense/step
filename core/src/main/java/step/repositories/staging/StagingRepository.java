@@ -9,15 +9,14 @@ import step.core.repositories.Repository;
 import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionCRUDAccessor;
-import step.repositories.staging.StagingContextRegistry.StagingContextImpl;
 
 public class StagingRepository implements Repository {
 
-	protected StagingContextRegistry stagingContextRegistry;
+	protected StagingContextAccessorImpl stagingContextAccessor;
 	
-	public StagingRepository(StagingContextRegistry stagingContextRegistry) {
+	public StagingRepository(StagingContextAccessorImpl stagingContextRegistry) {
 		super();
-		this.stagingContextRegistry = stagingContextRegistry;
+		this.stagingContextAccessor = stagingContextRegistry;
 	}
 
 	@Override
@@ -28,7 +27,7 @@ public class StagingRepository implements Repository {
 
 	@Override
 	public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
-		StagingContextImpl stagingContext = stagingContextRegistry.get(repositoryParameters.get("contextid"));
+		StagingContext stagingContext = stagingContextAccessor.get(repositoryParameters.get("contextid"));
 		
 		ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
 		stagingContext.plan.getArtefacts().forEach(a->artefactAccessor.save(a));
