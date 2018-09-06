@@ -116,6 +116,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
     restrict: 'E',
     scope: {
       artefact: '&',
+      isolateExecution: '=',
       description: '=', 
       includedTestcases: '&',
       onExecute: '&',
@@ -127,7 +128,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
       
       $scope.authService = AuthService;
       $scope.executionParameters = $scope.execution?$scope.execution.executionParameters.customParameters:{};
-      $scope.isolateExecution = $scope.execution?$scope.execution.executionParameters.isolatedExecution:false;
+      $scope.isolateExecution = $scope.isolateExecution?$scope.isolateExecution:($scope.execution?$scope.execution.executionParameters.isolatedExecution:false);
             
       function buildExecutionParams(simulate) {
         var executionParams = {userID:$rootScope.context.userID};

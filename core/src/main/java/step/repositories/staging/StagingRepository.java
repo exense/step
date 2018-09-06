@@ -21,8 +21,11 @@ public class StagingRepository implements Repository {
 
 	@Override
 	public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		StagingContext stagingContext = stagingContextAccessor.get(repositoryParameters.get("contextid"));
+		ArtefactInfo info = new ArtefactInfo();
+		info.setType("testplan");
+		info.setName(stagingContext.getPlan().getRoot().getAttributes().get("name"));
+		return info;
 	}
 
 	@Override

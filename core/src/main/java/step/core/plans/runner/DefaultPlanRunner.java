@@ -7,6 +7,8 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.FunctionCRUDAccessor;
 
 /**
  * A simple runner that runs plans locally and doesn't support functions
@@ -20,6 +22,12 @@ public class DefaultPlanRunner implements PlanRunner {
 	public PlanRunnerResult run(Plan plan) {
 		ExecutionContext context = buildExecutionContext();
 		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
+		if(plan.getFunctions()!=null) {
+			FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
+			if(functionAccessor!=null && functionAccessor instanceof FunctionCRUDAccessor) {
+				((FunctionCRUDAccessor)functionAccessor).save(new ArrayList<>(plan.getFunctions()));
+			}
+		}
 		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
 		return new PlanRunnerResult(context.getExecutionId(), context.getReport().getId().toString(), context.getReportNodeAccessor());
 	}

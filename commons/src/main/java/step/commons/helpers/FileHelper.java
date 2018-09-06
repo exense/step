@@ -25,8 +25,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
@@ -303,6 +306,18 @@ public class FileHelper {
 			return url!=null?new File(url.toURI().getPath()):null;
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("Error while parsing URI of resource "+resourceName,e);
+		}
+	}
+	
+	public static String readStream(InputStream is){
+		try(Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
+			return scanner.useDelimiter("\\A").next().replaceAll("\r\n", "\n");
+		}
+	}
+	
+	public static String readResource(Class<?> clazz, String resourceName){
+		try(Scanner scanner = new Scanner(clazz.getResourceAsStream(resourceName), StandardCharsets.UTF_8.name())) {
+			return scanner.useDelimiter("\\A").next().replaceAll("\r\n", "\n");
 		}
 	}
 

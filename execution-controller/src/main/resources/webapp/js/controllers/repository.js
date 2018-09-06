@@ -40,6 +40,8 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
   	    $rootScope.context.userID = $location.search().user;  	      
   	  }
       
+  	  $scope.isolateExecution = $location.search().isolate?$location.search().isolate:false;
+  	  
   	  if($location.search().repositoryId) {
   	    $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':$location.search()};
   	    $scope.loading = true;
