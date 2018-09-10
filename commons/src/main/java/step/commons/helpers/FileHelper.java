@@ -25,8 +25,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
@@ -117,25 +121,30 @@ public class FileHelper {
 		zos.close();
 	}
 	
+	public static void extractFolder(byte[] bytes, File target) {
+		extractFolder(new ByteArrayInputStream(bytes), target);
+	}
+
 	
-	public static void extractFolder(byte[] bytes, File target) 
+	public static void extractFolder(InputStream stream, File target) 
 	{
-		ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(bytes));
-	    try
-	    {
-	        int BUFFER = 2048;
-
-	        target.mkdir();
-
-	        ZipEntry entry;
-	        // Process each entry
-	        while ((entry=zip.getNextEntry())!=null)
-	        {
-	            String currentEntry = entry.getName();
-
-	            File destFile = new File(target.getAbsolutePath(), currentEntry);
-	            File destinationParent = destFile.getParentFile();
-
+		ZipInputStream zip = new ZipInputStream(stream);
+		try
+		{
+			int BUFFER = 2048;
+			
+			target.mkdir();
+			
+			ZipEntry entry;
+			// Process each entry
+			while ((entry=zip.getNextEntry())!=null)
+			{
+				String currentEntry = entry.getName();
+				
+				File destFile = new File(target.getAbsolutePath(), currentEntry);
+				File destinationParent = destFile.getParentFile();
+				
+	
 	            destinationParent.mkdirs();
 
 	            if (!entry.isDirectory())
@@ -304,6 +313,30 @@ public class FileHelper {
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("Error while parsing URI of resource "+resourceName,e);
 		}
+	}
+	
+	public static String readStream(InputStream is){
+		try(Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
+			return scanner.useDelimiter("\\A").next().replaceAll("\r\n", "\n");
+		}
+	}
+	
+	public static String readResource(Class<?> clazz, String resourceName){
+		try(Scanner scanner = new Scanner(clazz.getResourceAsStream(resourceName), StandardCharsets.UTF_8.name())) {
+			return scanner.useDelimiter("\\A").next().replaceAll("\r\n", "\n");
+		}
+	}
+	
+	public static long copy(final InputStream input, final OutputStream output, int bufferSize) throws IOException {
+
+		final byte[] buffer = new byte[bufferSize];
+		int n = 0;
+		long count = 0;
+		while ((n = input.read(buffer)) > 0) {
+			output.write(buffer, 0, n);
+			count += n;
+		}
+		return count;
 	}
 
 }
