@@ -1,8 +1,6 @@
 package step.grid.filemanager;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.commons.helpers.FileHelper;
-import step.grid.filemanager.FileProvider.TransportableFile;
 
 public class FileManagerClientImpl implements FileManagerClient {
 	
@@ -19,7 +16,7 @@ public class FileManagerClientImpl implements FileManagerClient {
 	
 	private File dataFolder;
 	
-	private FileProvider fileProvider;
+	private StreamingFileProvider fileProvider;
 
 	private Map<String, FileInfo> cache = new ConcurrentHashMap<>();
 	
@@ -27,7 +24,7 @@ public class FileManagerClientImpl implements FileManagerClient {
 		return dataFolder.getAbsolutePath();
 	}
 
-	public FileManagerClientImpl(File dataFolder, FileProvider fileProvider) {
+	public FileManagerClientImpl(File dataFolder, StreamingFileProvider fileProvider) {
 		super();
 		logger.info("Starting file manager client using data folder: "+dataFolder.getAbsolutePath());
 		this.dataFolder = dataFolder;
@@ -155,36 +152,27 @@ public class FileManagerClientImpl implements FileManagerClient {
 	}
 	
 	private File requestControllerFile(String fileId, long lastModified) throws IOException {
+		File container = createContainer(fileId, lastModified);		
+		File file = retrieveFile(fileId, container);
+		return file.getAbsoluteFile();	
+	}
+
+	private File retrieveFile(String fileId, File container) throws IOException {
 		long t1 = System.currentTimeMillis();
-		TransportableFile transportableFile = fileProvider.getTransportableFile(fileId);
+		File file = fileProvider.saveFileTo(fileId, container);
 		if(logger.isDebugEnabled()) {
 			logger.debug("Got file "+ fileId +" from server in "+(System.currentTimeMillis()-t1)+"ms.");
 		}
-		
-		long t2 = System.currentTimeMillis();
-		byte[] bytes = transportableFile.getBytes();
+		return file;
+	}
+
+	private File createContainer(String fileId, long lastModified) {
 		File container = new File(dataFolder+"/"+fileId	+ "/" + lastModified);
 		if(container.exists()) {
 			FileHelper.deleteFolder(container);
 		}
 		container.mkdirs();
-		FileHelper.deleteFolderOnExit(container);		
-		
-		File file = new File(container+"/"+transportableFile.getName());
-		if(transportableFile.isDirectory()) {
-			FileHelper.extractFolder(bytes, file);
-		} else {
-			try {
-				BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-				bos.write(bytes);
-				bos.close();
-			} catch (IOException ex) {
-				
-			}						
-		}
-		if(logger.isDebugEnabled()) {
-			logger.debug("Uncompressed file "+ fileId +" in "+(System.currentTimeMillis()-t2)+"ms to "+file.getAbsoluteFile());
-		}
-		return file.getAbsoluteFile();	
+		FileHelper.deleteFolderOnExit(container);
+		return container;
 	}
 }

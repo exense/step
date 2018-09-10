@@ -18,6 +18,9 @@
  *******************************************************************************/
 package step.grid.agent;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.regex.Matcher;
@@ -35,11 +38,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.google.common.io.ByteStreams;
 
-import step.grid.filemanager.FileProvider;
+import step.commons.helpers.FileHelper;
+import step.grid.filemanager.StreamingFileProvider;
 
-public class RegistrationClient implements FileProvider {
+public class RegistrationClient implements StreamingFileProvider {
 	
 	private final String registrationServer;
 	
@@ -81,23 +84,31 @@ public class RegistrationClient implements FileProvider {
 	}
 
 	@Override
-	public TransportableFile getTransportableFile(String fileId) throws IOException {
-		try {
-			Response response = client.target(registrationServer + "/grid/file/"+fileId).request().property(ClientProperties.READ_TIMEOUT, callTimeout)
-					.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).get();
-			InputStream in = (InputStream) response.getEntity();
-			byte[] bytes;
-			bytes = ByteStreams.toByteArray(in);
-			boolean isDirectory = response.getHeaderString("content-disposition").contains("dir");
-			Matcher m = Pattern.compile(".*filename = (.+?);.*").matcher(response.getHeaderString("content-disposition"));
-			if(m.find()) {
-				String filename = m.group(1);
-				return new TransportableFile(filename, isDirectory, bytes);				
+	public File saveFileTo(String fileHandle, File container) throws IOException {
+		Response response = client.target(registrationServer + "/grid/file/"+fileHandle).request().property(ClientProperties.READ_TIMEOUT, callTimeout)
+				.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).get();
+		InputStream in = (InputStream) response.getEntity();
+		boolean isDirectory = response.getHeaderString("content-disposition").contains("dir");
+		Matcher m = Pattern.compile(".*filename = (.+?);.*").matcher(response.getHeaderString("content-disposition"));
+		if(m.find()) {
+			String filename = m.group(1);
+			
+			long t2 = System.currentTimeMillis();
+			File file = new File(container+"/"+filename);
+			if(isDirectory) {
+				FileHelper.extractFolder(in, file);
 			} else {
-				throw new RuntimeException("Unable to find filename in header: "+response.getHeaderString("content-disposition"));
+				BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
+				FileHelper.copy(in, bos, 1024);
+				bos.close();					
 			}
-		} catch (IOException e) {
-			throw e;
+			if(logger.isDebugEnabled()) {
+				logger.debug("Uncompressed file "+ fileHandle +" in "+(System.currentTimeMillis()-t2)+"ms to "+file.getAbsoluteFile());
+			}
+			
+			return file;				
+		} else {
+			throw new RuntimeException("Unable to find filename in header: "+response.getHeaderString("content-disposition"));
 		}
 	}
 }

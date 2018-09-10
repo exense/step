@@ -39,11 +39,11 @@ public class FIleManagerTest {
 		tempDataFolder.mkdirs();
 		
 		try {
-			FileManagerClient client = new FileManagerClientImpl(tempDataFolder, new FileProvider() {
+			FileManagerClient client = new FileManagerClientImpl(tempDataFolder, new StreamingFileProvider() {
 				@Override
-				public TransportableFile getTransportableFile(String fileHandle) throws IOException {
+				public File saveFileTo(String fileHandle, File file) throws IOException {
 					remoteCallCounts.incrementAndGet();
-					return a;
+					return testFile;
 				}
 			});
 			File clientFile = client.requestFile(id, 1);
@@ -71,11 +71,12 @@ public class FIleManagerTest {
 		tempDataFolder.mkdirs();
 		try {
 			
-			final FileManagerClient client = new FileManagerClientImpl(tempDataFolder, new FileProvider() {
+			final FileManagerClient client = new FileManagerClientImpl(tempDataFolder, new StreamingFileProvider() {
 				@Override
-				public TransportableFile getTransportableFile(String fileHandle) throws IOException {
+				public File saveFileTo(String fileHandle, File file) throws IOException {
+					File testFile = new File(file+"/test");
 					remoteCallCounts.incrementAndGet();
-					return new TransportableFile("", false, new byte[]{11});
+					return testFile;
 				}
 			});
 			
