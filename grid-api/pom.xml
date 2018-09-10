@@ -20,7 +20,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>grid-api</artifactId>
-	
+
 	<parent>
 		<groupId>ch.exense.step</groupId>
 		<artifactId>parent</artifactId>
@@ -29,18 +29,29 @@
 	</parent>
 
 	<dependencies>
-		<dependency>  
-		   <groupId>org.glassfish</groupId> 
-		   <artifactId>javax.json</artifactId> 
-		   <version>1.0</version> 
+		<dependency>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+			<version>2.3.0</version>
 		</dependency>
 		<dependency>
-		    <groupId>com.fasterxml.jackson.core</groupId>
-		    <artifactId>jackson-annotations</artifactId>
-		    <version>2.5.4</version>
+			<groupId>javax.activation</groupId>
+			<artifactId>activation</artifactId>
+			<version>1.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.json</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.5.4</version>
 		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<plugins>
 
