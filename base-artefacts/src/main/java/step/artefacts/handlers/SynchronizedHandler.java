@@ -21,21 +21,34 @@ package step.artefacts.handlers;
 import step.artefacts.Synchronized;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.execution.ExecutionContext;
 
 public class SynchronizedHandler extends ArtefactHandler<Synchronized, ReportNode> {
+	
+	private static final String LOCK_OBJECT_KEY = "$synchronizedHandlerLockObject";
 	
 	private SequenceHandler sh = new SequenceHandler();
 	
 	@Override
+	public void init(ExecutionContext context) {
+		super.init(context);
+		synchronized (LOCK_OBJECT_KEY) {
+			if(context.get(LOCK_OBJECT_KEY)==null) {
+				context.put(LOCK_OBJECT_KEY, new Object());
+			}
+		}
+	}
+
+	@Override
 	public void createReportSkeleton_(ReportNode node, Synchronized testArtefact) {
-		
 		sh.createReportSkeleton_(node, testArtefact);
 	}
 	
 	@Override
 	public void execute_(ReportNode node, Synchronized testArtefact) {
 		sh.init(context);
-		synchronized(context) {
+		Object lock = context.get(LOCK_OBJECT_KEY);
+		synchronized(lock) {
 			sh.execute_(node, testArtefact);
 		}
 	}
