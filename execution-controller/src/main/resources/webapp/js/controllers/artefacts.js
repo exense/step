@@ -88,7 +88,7 @@ angular.module('artefacts',['step'])
   artefactTypes.register('Check',{icon:'glyphicon-ok', form:'partials/artefacts/check.html'});
   artefactTypes.register('Assert',{icon:'glyphicon-ok', form:'partials/artefacts/assert.html'});
   artefactTypes.register('Placeholder',{icon:'glyphicon-unchecked', form:'partials/artefacts/placeholder.html'});
-
+  artefactTypes.register('Export',{icon:'glyphicon-export', form:'partials/artefacts/export.html'});
 });
 
 angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export'])
