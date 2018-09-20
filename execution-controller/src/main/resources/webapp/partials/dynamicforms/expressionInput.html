@@ -2,6 +2,7 @@
 	<label ng-if="label">
 		<span class="ng-binding">{{label}}</span>
 	</label>
+	<span ng-if="tooltip" class="glyphicon glyphicon-question-sign" uib-tooltip="{{tooltip}}"></span>
 	<div class="input-group">
 		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.expression" />
 		<span class="input-group-btn">
