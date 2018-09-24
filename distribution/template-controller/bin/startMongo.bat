@@ -18,6 +18,8 @@
 @rem ***************************************************************************
 rem @echo off
 
+TITLE STEP MongoDB
+
 SET MONGO_PATH=
 rem if mongod.exe isn't on your path, then set your own as follows (watch for the backslash and double quote at the end):
 rem SET MONGO_PATH="D:\Program Files\MongoDB\Server\3.0\bin"\
