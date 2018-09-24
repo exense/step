@@ -64,6 +64,31 @@ public class FIleManagerTest {
 	}
 	
 	@Test
+	public void testFileDeletion() throws IOException {
+		FileManagerServer server = new FileManagerServer();
+		
+		byte[] content = new byte[]{11};
+		
+		File testFile = new File("./testFileManagerFileDeletion");
+		testFile.deleteOnExit();
+		Files.write(content, testFile);
+		
+		String id = server.registerFile(testFile);
+		Assert.assertNotNull(id);
+		
+		testFile.delete();
+		Exception ex = null;
+		try {
+			server.registerFile(testFile);
+		} catch(Exception e) {
+			ex = e;
+		}
+		Assert.assertNotNull(ex);
+		Assert.assertTrue(ex.getMessage().contains("Unable to find or read file"));
+		
+	}
+	
+	@Test
 	public void testParallel() throws IOException, InterruptedException {
 		AtomicInteger remoteCallCounts = new AtomicInteger(0);
 		
