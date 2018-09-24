@@ -16,13 +16,13 @@ public class FileManagerServer implements FileProvider {
 	ConcurrentHashMap<File, String> reverseRegistry = new ConcurrentHashMap<>();
 	
 	public String registerFile(File file) {
+		if(!file.exists()||!file.canRead()) {
+			throw new RuntimeException("Unable to find or read file "+file.getAbsolutePath());
+		}
+
 		String handle = reverseRegistry.computeIfAbsent(file, new Function<File, String>() {
 			@Override
 			public String apply(File t) {
-				if(!file.exists()||!file.canRead()) {
-					throw new RuntimeException("Unable to find or read file "+file.getAbsolutePath());
-				}
-				
 				String handle = UUID.randomUUID().toString();
 				registry.put(handle, file);
 				return handle;
