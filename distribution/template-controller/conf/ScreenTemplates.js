@@ -3,7 +3,7 @@
   {"id":"env","options":["TEST","PROD"],"label":"Environment"}
 ],
 "executionTable":[
-  {"id":"executionParameters.customParameters.profile","label":"Profile"}
+  {"id":"executionParameters.customParameters.env","label":"Profile"}
 ],
 "functionTable":[
   {"id":"name","label":"Name","type":"TEXT"}
