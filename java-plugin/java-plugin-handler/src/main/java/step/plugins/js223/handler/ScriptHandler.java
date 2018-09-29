@@ -61,10 +61,8 @@ public class ScriptHandler extends AbstractMessageHandler {
 	}
 	
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {    
-		ClassLoader initialClassloader = Thread.currentThread().getContextClassLoader();
-		try {
-			Thread.currentThread().setContextClassLoader(agentTokenServices.getApplicationContextBuilder().getCurrentContext().getClassLoader());
+	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
+		return agentTokenServices.getApplicationContextBuilder().runInContext(()->{
 			Map<String, String> properties = buildPropertyMap(token, message);
 			
 			File scriptFile = retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties).getFile();
@@ -86,9 +84,7 @@ public class ScriptHandler extends AbstractMessageHandler {
 			}
 			
 			return outputBuilder.build();			
-		} finally {
-			Thread.currentThread().setContextClassLoader(initialClassloader);
-		}
+		});
 	}
 
 	private boolean executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding, OutputMessageBuilder outputBuilder, Exception exception)

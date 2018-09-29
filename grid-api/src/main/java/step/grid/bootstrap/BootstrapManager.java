@@ -34,7 +34,7 @@ public class BootstrapManager {
 		if(message.getHandlerPackage()!=null) {
 			contextBuilder.pushContext(new RemoteApplicationContextFactory(fileManager, message.getHandlerPackage()));			
 		}
-		return runInContext(new Callable<OutputMessage>() {
+		return contextBuilder.runInContext(new Callable<OutputMessage>() {
 			@Override
 			public OutputMessage call() throws Exception {
 				MessageHandlerPool handlerPool = (MessageHandlerPool) contextBuilder.getCurrentContext().get("handlerPool");
@@ -46,16 +46,6 @@ public class BootstrapManager {
 				return handler.handle(token, message);
 			}
 		});
-	}
-	
-	private <T> T runInContext(Callable<T> runnable) throws Exception {
-		ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
-		Thread.currentThread().setContextClassLoader(contextBuilder.getCurrentContext().getClassLoader());
-		try {
-			return runnable.call();
-		} finally {
-			Thread.currentThread().setContextClassLoader(previousCl);
-		}
 	}
 	
 	public OutputMessage runBootstraped(AgentTokenWrapper token, InputMessage message) throws IOException, Exception {

@@ -57,6 +57,13 @@ public class JavaJarHandlerTest {
 		Assert.assertEquals("MyValue",output.getResult().getString("MyKey"));
 	}
 	
+	@Test 
+	public void testContextClassloader() {
+		GeneralScriptFunction f = buildTestFunction("TestClassloader","java-plugin-handler-test.jar");
+		Output output = run(f, "{}");
+		Assert.assertTrue(output.getResult().getString("clURLs").contains("java-plugin-handler-test.jar"));
+	}
+	
 	private Output run(GeneralScriptFunction f, String inputJson) {
 		return FunctionRunner.getContext(new GeneralScriptFunctionType()).run(f, inputJson, new HashMap<>());
 	}

@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -94,5 +95,15 @@ public class ApplicationContextBuilder {
 	
 	public ApplicationContext getCurrentContext() {
 		return currentContexts.get();
+	}
+	
+	public <T> T runInContext(Callable<T> runnable) throws Exception {
+		ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
+		Thread.currentThread().setContextClassLoader(getCurrentContext().getClassLoader());
+		try {
+			return runnable.call();
+		} finally {
+			Thread.currentThread().setContextClassLoader(previousCl);
+		}
 	}
 }

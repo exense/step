@@ -57,7 +57,9 @@ public class JavaJarHandler extends AbstractMessageHandler {
 		}
 		message.getProperties().put(KeywordHandler.KEYWORD_CLASSES, kwClassnames);
 		
-		return messageHandlerPool.get(KeywordHandler.class.getName(), appContextBuilder.getCurrentContext().getClassLoader()).handle(token, message);	
+		return appContextBuilder.runInContext(()->{
+			return messageHandlerPool.get(KeywordHandler.class.getName(), appContextBuilder.getCurrentContext().getClassLoader()).handle(token, message);	
+		});
 	}
 	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {
