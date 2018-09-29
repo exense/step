@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
+import step.core.Version;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.versionmanager.ControllerLog;
@@ -48,16 +49,19 @@ public class MigrationExecutionPlugin extends AbstractPlugin {
 		
 		ControllerLog latestLog = versionManager.getLatestControllerLog();
 		if(latestLog!=null) {
-			if(latestLog.getVersion()!=null) {
-				if(context.getCurrentVersion().compareTo(latestLog.getVersion())>0) {
-					logger.info("Starting controller with a newer version. Current version is "
-							+context.getCurrentVersion()+". Version of last start was "+latestLog.getVersion());
-				} else if (context.getCurrentVersion().compareTo(latestLog.getVersion())<0) {
-					logger.info("Starting controller with an older version. Current version is "
-							+context.getCurrentVersion()+". Version of last start was "+latestLog.getVersion());
-				}
-				migrationManager.migrate(latestLog.getVersion(), context.getCurrentVersion());
-			}					
-		}
+			Version latestVersion = latestLog.getVersion();
+			// Version tracking has been introduced with 3.8.0 therefore assuming version 3.7.0 as latest version if null
+			if(latestVersion==null) {
+				latestVersion = new Version(3, 7, 0);
+			}
+			if(context.getCurrentVersion().compareTo(latestVersion)>0) {
+				logger.info("Starting controller with a newer version. Current version is "
+						+context.getCurrentVersion()+". Version of last start was "+latestVersion);
+			} else if (context.getCurrentVersion().compareTo(latestVersion)<0) {
+				logger.info("Starting controller with an older version. Current version is "
+						+context.getCurrentVersion()+". Version of last start was "+latestVersion);
+			}
+			migrationManager.migrate(latestVersion, context.getCurrentVersion());
+		}					
 	}
 }
