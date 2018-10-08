@@ -19,9 +19,9 @@
 package step.grid.agent.tokenpool;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,24 +30,25 @@ public class AgentTokenPool {
 	
 	private static final Logger logger = LoggerFactory.getLogger(AgentTokenPool.class);
 	
-	private final Map<String, AgentTokenWrapper> pool = new HashMap<>();
+	private final Map<String, AgentTokenWrapper> pool = new ConcurrentHashMap<>();
 	
 	public AgentTokenPool() {
 		super();
 	}
 
-	public synchronized List<AgentTokenWrapper> getTokens() {
-		List<AgentTokenWrapper> result = new ArrayList<>(pool.size());
-		result.addAll(pool.values());
+	public List<AgentTokenWrapper> getTokens() {
+		List<AgentTokenWrapper> result = new ArrayList<>(pool.values());
 		return result;
 	}
 	
-	public synchronized void offerToken(AgentTokenWrapper token) {
-		logger.debug("offerToken: " + token.toString());
+	public void offerToken(AgentTokenWrapper token) {
+		if(logger.isDebugEnabled()) {
+			logger.debug("offerToken: " + token.toString());
+		}
 		pool.put(token.getUid(), token);
 	}
 	
-	public synchronized AgentTokenWrapper getTokenForExecution(String tokenId) throws InvalidTokenIdException {
+	public AgentTokenWrapper getTokenForExecution(String tokenId) throws InvalidTokenIdException {
 		AgentTokenWrapper token = pool.get(tokenId);
 		if(token!=null) {
 			if(token.getTokenReservationSession()==null) {
@@ -79,7 +80,7 @@ public class AgentTokenPool {
 		return token;
 	}
 	
-	public synchronized void createTokenReservationSession(String tokenId) throws InvalidTokenIdException {
+	public void createTokenReservationSession(String tokenId) throws InvalidTokenIdException {
 		AgentTokenWrapper token = getToken(tokenId);
 		if(token!=null) {
 			TokenReservationSession previousTokenReservationSession = token.getTokenReservationSession();
@@ -100,7 +101,7 @@ public class AgentTokenPool {
 		}
 	}
 	
-	public synchronized void closeTokenReservationSession(String tokenId) throws InvalidTokenIdException {
+	public void closeTokenReservationSession(String tokenId) throws InvalidTokenIdException {
 		AgentTokenWrapper token = getToken(tokenId);
 		if(token!=null) {
 			TokenReservationSession tokenReservationSession = token.getTokenReservationSession();
