@@ -102,6 +102,11 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		File scriptFile;
 		
 		String scriptFilename = function.getScriptFile().get();
+		
+		if (scriptFilename.startsWith("attachment:")) {
+			return null;
+		}
+		
 		if(scriptFilename==null || scriptFilename.trim().length()==0) {
 			scriptFile = getDefaultScriptFile(function);
 			function.getScriptFile().setValue(scriptFile.getAbsolutePath());
