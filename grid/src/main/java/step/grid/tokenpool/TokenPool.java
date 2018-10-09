@@ -37,7 +37,7 @@ public class TokenPool<P extends Identity, F extends Identity> implements Closea
 	
 	private final static Logger logger = LoggerFactory.getLogger(TokenPool.class);
 	
-	final AffinityEvaluator affinityEval;
+	final AffinityEvaluator<P, F> affinityEval;
 	
 	final Map<String,Token<F>> tokens = new HashMap<>();
 	
@@ -47,7 +47,7 @@ public class TokenPool<P extends Identity, F extends Identity> implements Closea
 	
 	Timer keepaliveTimeoutCheckTimer;
 	
-	public TokenPool(AffinityEvaluator affinityEval) {
+	public TokenPool(AffinityEvaluator<P, F> affinityEval) {
 		super();
 		this.affinityEval = affinityEval;
 		
@@ -239,6 +239,11 @@ public class TokenPool<P extends Identity, F extends Identity> implements Closea
 		token.lastTouch = System.currentTimeMillis();
 	}
 	
+	public Token<F> getToken(String id) {
+		synchronized (tokens) {
+			return tokens.get(id);
+		}
+	}
 	
 	public void invalidate(String id) {
 		synchronized (tokens) {

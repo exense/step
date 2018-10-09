@@ -159,6 +159,8 @@ public class GridClient implements Closeable {
 				//tokenWrapper.setHasSession(false);
 				releaseSession(tokenWrapper.getAgent(),tokenWrapper.getToken());			
 			}			
+		} catch(Exception e) {
+			tokenRegistry.markTokenAsFailing(tokenWrapper,"Error while releasing token",e);
 		} finally {
 			if(!tokenWrapper.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
 				tokenRegistry.returnToken(tokenWrapper);		
@@ -183,7 +185,12 @@ public class GridClient implements Closeable {
 		if(token.isLocal()) {
 			output = callLocalToken(token, message);
 		} else {
-			output = callAgent(agent, token, message);						
+			try {
+				output = callAgent(agent, token, message);
+			} catch(Exception e) {
+				tokenRegistry.markTokenAsFailing(tokenWrapper, "Error while calling agent ("+function+")", e);
+				throw e;
+			}
 		}
 		return output;
 	}

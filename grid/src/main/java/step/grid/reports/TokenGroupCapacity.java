@@ -26,6 +26,8 @@ public class TokenGroupCapacity {
 	
 	int usage = 0;
 	
+	int error = 0;
+	
 	int capacity = 0;
 	
 	public TokenGroupCapacity(Map<String, String> key) {
@@ -40,6 +42,10 @@ public class TokenGroupCapacity {
 	public void incrementCapacity() {
 		capacity++;
 	}
+	
+	public void incrementError() {
+		error++;
+	}
 
 	public Map<String, String> getKey() {
 		return key;
@@ -51,6 +57,10 @@ public class TokenGroupCapacity {
 
 	public int getCapacity() {
 		return capacity;
+	}
+
+	public int getError() {
+		return error;
 	}
 	
 }

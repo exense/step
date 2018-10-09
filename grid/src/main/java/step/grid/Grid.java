@@ -39,7 +39,6 @@ import step.grid.agent.RegistrationMessage;
 import step.grid.filemanager.FileManagerServer;
 import step.grid.filemanager.FileProvider;
 import step.grid.tokenpool.Identity;
-import step.grid.tokenpool.SimpleAffinityEvaluator;
 import step.grid.tokenpool.Token;
 import step.grid.tokenpool.TokenPool;
 import step.grid.tokenpool.TokenRegistry;
@@ -91,7 +90,7 @@ public class Grid implements TokenRegistry, GridFileService {
 	}
 	
 	private void initializeTokenPool() {
-		tokenPool = new TokenPool<>(new SimpleAffinityEvaluator());
+		tokenPool = new TokenPool<>(new AffinityEvaluatorImpl());
 		tokenPool.setKeepaliveTimeout(keepAliveTimeout);
 	}
 	
@@ -145,6 +144,23 @@ public class Grid implements TokenRegistry, GridFileService {
 		tokenPool.returnToken(object);
 	}
 	
+	@Override
+	public void markTokenAsFailing(TokenWrapper object, String errorMessage, Exception e) {
+		TokenHealth tokenHealth = object.getTokenHealth();
+		tokenHealth.setErrorMessage(errorMessage);
+		tokenHealth.setException(e);
+		tokenHealth.setHasError(true);
+	}
+	
+	public void removeTokenError(String tokenId) {
+		Token<TokenWrapper> token = tokenPool.getToken(tokenId);
+		TokenWrapper tokenWrapper = token.getObject();
+		TokenHealth tokenHealth = tokenWrapper.getTokenHealth();
+		tokenHealth.setErrorMessage(null);
+		tokenHealth.setException(null);
+		tokenHealth.setHasError(false);
+	}
+
 	@Override
 	public String registerFile(File file) {
 		return fileManager.registerFile(file);

@@ -118,7 +118,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				
 				node.setAgentUrl(token.getAgent().getAgentUrl());
 				node.setTokenId(token.getID());
-				token.setCurrentOwner(node);
+				token.setCurrentOwner(new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription()));
 				
 				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()});
 				Output output;

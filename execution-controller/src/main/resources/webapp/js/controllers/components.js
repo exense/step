@@ -13,6 +13,53 @@ angular.module('components',['step'])
   };
 })
 
+.directive('gridStatusDistribution', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      tokenGroup: '='
+    },
+    templateUrl: 'partials/components/gridStatusSummary.html',
+    controller: function($scope, $http) {
+      
+    }
+  };
+})
+
+.directive('executionLink', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      executionId: '=',
+      executionDescription: '='
+    },
+    templateUrl: 'partials/components/executionLink.html',
+    controller: function($scope, $http) {
+      $scope.$watch('executionId', function() {
+        if($scope.executionId && !$scope.executionDescription) {
+          $http.get('rest/controller/execution/' + $scope.executionId).then(function(response) {
+            var data = response.data;
+            $scope.executionDescription = data.description;
+          })
+        }
+      })
+    }
+  };
+})
+
+.directive('jsonViewer', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      json: '='
+    },
+    templateUrl: 'partials/components/jsonViewer.html',
+    controller: function($scope, $http) {
+    }
+  };
+})
+
+
 .directive('fileUploadField', function() {
   return {
     restrict: 'E',

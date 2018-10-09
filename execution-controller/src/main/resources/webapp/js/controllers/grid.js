@@ -24,12 +24,12 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
       
       $scope.autorefresh = true;
 
-      if($scope.$state == null) { $scope.$state = 'adapters' };
+      if($scope.$state == null) { $scope.$state = 'tokens' };
       
       $scope.tabs = [
           { id: 'agents'},
-          { id: 'adapters'},
           { id: 'tokens'},
+          { id: 'adapters'},
           { id: 'quotamanager'}
       ]
       
@@ -111,13 +111,16 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
 
 .controller('AdapterListCtrl', [
   	'$scope',
+  	'$compile',
   	'$interval',
   	'$http',
   	'helpers',
-  	function($scope, $interval, $http, helpers) {
+  	function($scope, $compile, $interval, $http, helpers) {
   	  $scope.$state = 'adapters';
   	  
   	  $scope.keySelectioModel = {};
+  	  
+  	  $scope.table = {};
   	  
   	  $http.get("rest/grid/keys").then(
           function(response) { 
@@ -137,7 +140,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
   			  var data = response.data;
   			  var dataSet = [];
   			  for (i = 0; i < data.length; i++) {
-  				dataSet[i] = [ helpers.formatAsKeyValueList(data[i].key), {usage:data[i].usage, capacity:data[i].capacity} ];
+  				dataSet[i] = [ helpers.formatAsKeyValueList(data[i].key), {usage:data[i].usage, capacity:data[i].capacity, error:data[i].error} ];
   			  }
   			  $scope.tabledef.data = dataSet;
   			});
@@ -153,23 +156,22 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
       });
   	  
   	  $scope.tabledef = {};
-  	  $scope.tabledef.columns = [ { "title" : "URL" }, 
-  	                     { "title" : "Usage", "render" : function(data, type, row) {
-                            	var usagePerc = data.usage*100/data.capacity;
-                            	var style;
-                            	if (usagePerc>90) {
-                            	  style = 'progress-bar-danger'
-                            	} else if (usagePerc>70) {
-                            	  style = 'progress-bar-warning'
-                                } else {
-                                  style = 'progress-bar-success'
-                            	}
-                            	
-                            	return '<div class="progress">'
-                            	  		+'<div class="progress-bar ' + style + '" role="progressbar" aria-valuenow="'+usagePerc+'" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;width: '+usagePerc+'%;">'
-                            	  		+data.usage+'/'+data.capacity
-                            			+'</div></div>';
-                              } }];
+  	  $scope.tabledef.columns = [ 
+  	    {
+          "title" : "URL"
+        }, 
+        {
+          "title" : "Usage",
+          "createdCell" : function(td, cellData, rowData, row, col) {
+            var rowScope = $scope.$new(true, $scope);
+            $scope.table.trackScope(rowScope);
+            rowScope.data = cellData;
+            var content = $compile("<grid-status-distribution token-group='data' />")(rowScope);
+            angular.element(td).html(content);
+            //rowScope.$apply();
+          }
+        } 
+        ];
 
   	} ])
 
@@ -180,34 +182,41 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
 	function($scope, $interval, $http) {
 	  $scope.$state = 'tokens'
 	  
+	  $scope.tokens;  
+	    
 	  $scope.loadTable = function loadTable() {
-		$http.get("rest/grid/token").then(
-			function(response) {
-			  var data = response.data;
-			  var dataSet = [];
-			  for (i = 0; i < data.length; i++) {
-				dataSet[i] = [ data[i].token.id, data[i].token.agentid,
-					data[i].token.attributes != null ? JSON.stringify(data[i].token.attributes) : '',
-					data[i].token.selectionPatterns != null ? JSON.stringify(data[i].token.selectionPatterns) : '',
-					data[i].owner != null ? data[i].owner.executionID : '-'   ];
-			  }
-			  $scope.tabledef.data = dataSet;
-			});
+      $http.get("rest/grid/token").then(function(response) {
+        $scope.tokens = []
+        _.each(response.data, function(e) {
+          var type = e.token.attributes.$agenttype;
+          $scope.tokens.push({
+            id : e.token.id,
+            typeLabel : type == 'default' ? 'Java' : (type == 'node' ? 'Node.js' : (type == 'dotnet' ? '.NET' : 'Unknown')),
+            type : type,
+            attributes : e.token.attributes,
+            attributesAsString : JSON.stringify(e.token.attributes),
+            agentUrl : e.agent.agentUrl,
+            executionId : e.currentOwner ? e.currentOwner.executionId : null,
+            executionDescription : e.currentOwner ? e.currentOwner.executionDescription : null,
+            status : (e.tokenHealth.hasError ? 'ERROR' : (e.currentOwner ? 'IN_USE' : 'FREE')),
+            errorMessage : e.tokenHealth.errorMessage,
+            hasError : e.tokenHealth.hasError
+          });
+        })
+      });
 	  };
-
-	  $scope.tabledef = {};
-	  $scope.tabledef.columns = [ { "title" : "ID" }, { "title" : "AgentID" }, { "title" : "Attributes" },
-		  { "title" : "Selection Pattern" }, { "title" : "Execution ID", "render": function (value) {return '<a href="#/root/executions/'+value+'">'+value+'</a>'}} ];
+	  
+	  $scope.removeTokenError = function(tokenId) {
+	    $http.post("rest/grid/token/"+tokenId+"/repair").then(function(){$scope.loadTable()});
+	  }
 
 	  $scope.loadTable();
-      
       var refreshTimer = $interval(function(){
-        if($scope.autorefresh){$scope.loadTable()}}, 2000);
+        if($scope.autorefresh){$scope.loadTable()}}, 5000);
       
       $scope.$on('$destroy', function() {
         $interval.cancel(refreshTimer);
       });
-
 	} ])
 	
 .controller('QuotaManagerCtrl', [

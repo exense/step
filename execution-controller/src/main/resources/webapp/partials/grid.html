@@ -1,7 +1,7 @@
 <div ng-controller="GridCtrl">
 	<uib-tabset active="activeTab()"> 
 		<uib-tab heading="Agents" select="onSelection('agents')">
-			<div ng-controller="AgentListCtrl">
+			<div ng-controller="AgentListCtrl" ng-if="$state=='agents'">
 				<div class="toolbar">
 					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox>
 						<span class="glyphicon glyphicon-refresh" />
@@ -15,8 +15,79 @@
 				</div>
 			</div>
 		</uib-tab> 
+		<uib-tab heading="Tokens" select="onSelection('tokens')">
+			<div ng-controller="TokenListCtrl" ng-if="$state=='tokens'">
+				<div class="toolbar">
+					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox>
+						<span class="glyphicon glyphicon-refresh" />
+					</button>
+				</div>
+				<div class="panel-body">
+					<st-table data="tokens" uid="'tokenList'" persist-state="true">
+						<actions>
+						</actions>
+						<columns>
+							<column name="id">
+								<header>ID</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
+								<cell><span><small>{{row.id}}</small></span></cell>
+							</column>
+							<column name="typeLabel">
+								<header>Type</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
+								<cell>
+									<span class="agent-type agent-type-{{row.type}}"></span>
+									<span>{{row.typeLabel}}</span>
+								</cell>
+							</column>
+							<column name="agentUrl">
+								<header>Agent</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
+								<cell><span>{{row.agentUrl}}</span></cell>
+							</column>
+							<column name="attributesAsString">
+								<header>Attributes</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
+								<cell><json-viewer json="row.attributes"/></cell>
+							</column>
+							
+							<column name="status">
+								<header>State</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue" options="[{text:'IN_USE'},{text:'ERROR'},{text:'FREE'}]"/></second-header>
+								<cell>
+									<div ng-class="['text-center', 'token-status', 'token-status-' + row.status ]">{{row.status}}</div>
+								</cell>
+							</column>
+							<column name="executionDescription">
+								<header>Used by</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
+								<cell>
+									<span ng-show="row.executionId"><execution-link execution-id="row.executionId" execution-description="row.executionDescription"/></span>
+								</cell>
+							</column>
+							<column name="errorMessage">
+								<header>Error</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
+								<cell><span>{{row.errorMessage}}</span></cell>
+							</column>
+							<column name="errorMessage">
+								<header></header>
+								<second-header></second-header>
+								<cell>
+									<div class="btn-group btn-group-xs">
+										<button type="button" class="btn btn-default" ng-show="row.hasError" ng-click="$parent.removeTokenError(row.id)" uib-tooltip="Mark token error as resolved">
+											<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+										</button>
+									</div>
+								</cell> 
+							</column>
+						</columns>
+					</st-table>
+				</div>
+			</div>
+		</uib-tab> 		
 		<uib-tab heading="Token Groups" select="onSelection('adapters')">
-			<div ng-controller="AdapterListCtrl">
+			<div ng-controller="AdapterListCtrl" ng-if="$state=='adapters'">
 				<div class="toolbar">
 					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox>
 						<span class="glyphicon glyphicon-refresh" />
@@ -34,25 +105,13 @@
 					</form>
 					</p>
 					<p>
-						<datatable tabledef="tabledef" selectionmode="none" />
+						<datatable handle="table" tabledef="tabledef" selectionmode="none" />
 					</p>
 				</div>
 			</div>
 		</uib-tab> 
-		<uib-tab heading="Token list" select="onSelection('tokens')">
-			<div ng-controller="TokenListCtrl">
-				<div class="toolbar">
-					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox>
-						<span class="glyphicon glyphicon-refresh" />
-					</button>
-				</div>
-				<div class="panel-body">
-					<datatable tabledef="tabledef" selectionmode="multiple" />
-				</div>
-			</div>
-		</uib-tab> 
 		<uib-tab heading="Quota Manager" select="onSelection('quotamanager')">
-			<div ng-controller="QuotaManagerCtrl">
+			<div ng-controller="QuotaManagerCtrl" ng-if="$state=='quotamanager'">
 				<div class="toolbar">
 					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox>
 						<span class="glyphicon glyphicon-refresh" />

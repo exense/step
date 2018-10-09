@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import step.grid.reports.TokenAssociation;
 import step.grid.reports.TokenGroupCapacity;
 import step.grid.tokenpool.Interest;
 
@@ -55,8 +54,12 @@ public class GridReportBuilder {
 			}
 			TokenGroupCapacity c = countsByIdentity.get(key);
 			c.incrementCapacity();
-			if(!token.isFree()) {
-				c.incrementUsage();					
+			if(aToken.getTokenHealth()!=null && aToken.getTokenHealth().isHasError()) {
+				c.incrementError();
+			} else {
+				if(!token.isFree()) {
+					c.incrementUsage();
+				}
 			}
 		}
 		
@@ -101,12 +104,12 @@ public class GridReportBuilder {
 		return null;
 	}
 	
-	public List<TokenAssociation> getTokenAssociations(boolean onlyWithOwner) {
-		List<TokenAssociation> tokens = new ArrayList<>();
+	public List<TokenWrapper> getTokenAssociations(boolean onlyWithOwner) {
+		List<TokenWrapper> tokens = new ArrayList<>();
 		for(step.grid.tokenpool.Token<TokenWrapper> token:grid.getTokens()) {
-			Object currentOwner = token.getObject().getCurrentOwner();
+			TokenWrapperOwner currentOwner = token.getObject().getCurrentOwner();
 			if(currentOwner!=null||(currentOwner==null&&!onlyWithOwner)) {
-				tokens.add(new TokenAssociation(token.getObject().getToken(), currentOwner));
+				tokens.add(token.getObject());
 			}
 		}
 		return tokens;

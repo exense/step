@@ -270,3 +270,55 @@ div.progress {
     to { transform: scale(1) rotate(360deg);}
 }
 /* Loading button */
+
+.token-status {
+	color: white;
+	padding: 4px;
+	border-radius: 10px;
+	font-size: 75%;
+	width: 100px;
+}
+
+.token-status-IN_USE {
+	background:#337ab7;
+}
+
+.token-status-ERROR {
+	background:black;
+}
+
+.token-status-FREE {
+	background:#5cb85c;
+}
+
+.agent-type {
+	display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.agent-type-default {
+    background: #007396;
+}
+
+.agent-type-node {
+    background: #6cc24a;
+}
+
+.agent-type-dotnet {
+    background: #ffbb00;
+}
+
+.json-key-value {
+	margin-right:7px;
+	color:#555;
+}
+.json-key {
+	margin-right:2px;
+	font-size: smaller;
+}
+.json-value {
+	color:#555;
+	font-weight: bolder;
+}

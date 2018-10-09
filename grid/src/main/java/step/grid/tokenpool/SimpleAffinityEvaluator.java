@@ -23,12 +23,12 @@ import java.util.regex.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SimpleAffinityEvaluator implements AffinityEvaluator {
+public class SimpleAffinityEvaluator<P extends Identity, F extends Identity> implements AffinityEvaluator<P, F> {
 
 	private final static Logger logger = LoggerFactory.getLogger(SimpleAffinityEvaluator.class);
 	
 	@Override
-	public int getAffinityScore(Identity i1, Identity i2) {
+	public int getAffinityScore(P i1, F i2) {
 		
 		int pretenderScore = getScore(i1, i2);
 		if(pretenderScore!=-1) {

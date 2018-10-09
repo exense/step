@@ -31,7 +31,9 @@ public class TokenWrapper implements Identity {
 	
 	private AgentRef agent;
 	
-	private Object currentOwner;
+	private final TokenHealth tokenHealth = new TokenHealth();
+	
+	private TokenWrapperOwner currentOwner;
 	
 	private boolean hasSession = false;
 	
@@ -69,11 +71,11 @@ public class TokenWrapper implements Identity {
 		return agent;
 	}
 
-	public Object getCurrentOwner() {
+	public TokenWrapperOwner getCurrentOwner() {
 		return currentOwner;
 	}
 
-	public void setCurrentOwner(Object currentOwner) {
+	public void setCurrentOwner(TokenWrapperOwner currentOwner) {
 		this.currentOwner = currentOwner;
 	}
 
@@ -91,6 +93,10 @@ public class TokenWrapper implements Identity {
 
 	public void setHasSession(boolean hasSession) {
 		this.hasSession = hasSession;
+	}
+
+	public TokenHealth getTokenHealth() {
+		return tokenHealth;
 	}
 
 	@Override

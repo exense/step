@@ -36,13 +36,14 @@ import org.slf4j.LoggerFactory;
 import junit.framework.Assert;
 
 
+@SuppressWarnings("resource")
 public class TokenPoolTest {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TokenPoolTest.class);
 	
 	@Test
 	public void test_Match_Positive_1() throws Exception {
-		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		IdentityImpl token = new IdentityImpl();
 		token.addAttribute("color", "red");
@@ -59,7 +60,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Match_Positive_2() throws Exception {
-		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		IdentityImpl token = new IdentityImpl();
 		token.addAttribute("color", "red");
@@ -79,7 +80,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Match_Negative_2() {
-		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		IdentityImpl token = new IdentityImpl();
 		token.addAttribute("color", "red");
@@ -93,10 +94,9 @@ public class TokenPoolTest {
 		pretender.addAttribute("color", "yellow");
 		pretender.addInterest("color",new Interest( Pattern.compile("green"), true));
 		
-		IdentityImpl selectedIdentityImpl;
 		Exception e1 = null;
 		try {
-			selectedIdentityImpl = pool.selectToken(pretender, 10);
+			pool.selectToken(pretender, 10);
 		} catch (Exception e) {
 			e1 = e;
 		}
@@ -106,7 +106,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Match_Preference_1() throws Exception {
-		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		IdentityImpl token = new IdentityImpl();
 		token.addAttribute("color", "red");
@@ -134,7 +134,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Match_Preference_2() throws Exception {
-		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		IdentityImpl token = new IdentityImpl();
 		token.addAttribute("color", "red");
@@ -174,7 +174,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Pool_Select() {
-		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		IdentityImpl token = new IdentityImpl();
 		token.addAttribute("color", "red");
@@ -186,10 +186,9 @@ public class TokenPoolTest {
 		IdentityImpl pretender = new IdentityImpl();
 		pretender.addInterest("color",new Interest( Pattern.compile("green"), true));
 		
-		IdentityImpl selectedIdentityImpl;
 		Exception e1 = null;
 		try {
-			selectedIdentityImpl = pool.selectToken(pretender, 10);
+			pool.selectToken(pretender, 10);
 		} catch (Exception e) {
 			e1 = e;
 		}
@@ -199,7 +198,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Pool_Invalidate_1() throws Exception {
-		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator());
+		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		final IdentityImpl token = new IdentityImpl();
 		token.addAttribute("id", "1");
 		
@@ -212,7 +211,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Pool_Invalidate_2() throws Exception {
-		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator());
+		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		final IdentityImpl token = new IdentityImpl();
 		token.addAttribute("id", "1");
 		
@@ -231,7 +230,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Pool_Invalidate_3() throws Exception {
-		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator());
+		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		final IdentityImpl token = new IdentityImpl();
 		token.addAttribute("id", "1");
 		
@@ -250,7 +249,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Pool_NotifyAfterTokenRemove() throws InterruptedException {
-		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		IdentityImpl token = new IdentityImpl();
 		token.addAttribute("color", "red");
@@ -279,9 +278,8 @@ public class TokenPoolTest {
 
 			@Override
 			public void run() {
-				IdentityImpl selectedIdentityImpl;
 				try {
-					selectedIdentityImpl = pool.selectToken(pretender, 0, 1);
+					pool.selectToken(pretender, 0, 1);
 				} catch (TimeoutException e) {
 					if(tokenInvalidated.get()) {
 						l.add(e);
@@ -296,11 +294,11 @@ public class TokenPoolTest {
 		};
 		
 		t.start();
-		Thread.currentThread().sleep(10);
+		Thread.sleep(10);
 		tokenInvalidated.set(true);
 		pool.invalidateToken(token);
 		pool.returnToken(token);
-		Thread.currentThread().sleep(100);
+		Thread.sleep(100);
 		Assert.assertEquals(1, l.size());
 		Assert.assertTrue(l.get(0) instanceof TimeoutException);
 		
@@ -308,7 +306,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Pool_WaitingQueue() throws Exception {
-		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		final IdentityImpl token = new IdentityImpl();
 		token.addAttribute("color", "red");
@@ -335,7 +333,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Pool_Parallel_1TokenPerThread() throws Exception {
-		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		final IdentityImpl pretender = new IdentityImpl();
 		pretender.addInterest("color",new Interest( Pattern.compile("red"), true));
@@ -384,7 +382,7 @@ public class TokenPoolTest {
 		token.addAttribute("shape", "circle");
 		
 		final int periodNs = 1000;
-		Future offeringThread = e.submit(new Callable<Boolean>() {
+		Future<Boolean> offeringThread = e.submit(new Callable<Boolean>() {
 			@Override
 			public Boolean call() throws Exception {
 				long t2 = System.currentTimeMillis();
@@ -418,7 +416,7 @@ public class TokenPoolTest {
 	
 	@Test
 	public void test_Pool_Parallel() throws Exception {
-		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		final IdentityImpl token = new IdentityImpl();
 		token.addAttribute("color", "red");
@@ -472,7 +470,7 @@ public class TokenPoolTest {
 		
 		
 		final int periodNs = 1000;
-		Future offeringThread = e.submit(new Callable<Boolean>() {
+		Future<Boolean> offeringThread = e.submit(new Callable<Boolean>() {
 			@Override
 			public Boolean call() throws Exception {
 				long t2 = System.currentTimeMillis();
@@ -506,7 +504,7 @@ public class TokenPoolTest {
 	}
 	
 	public void test_Pool_Perf_Poolsize() throws Exception {
-		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool(new SimpleAffinityEvaluator());
+		final TokenPool<IdentityImpl, IdentityImpl> pool = new TokenPool<>(new SimpleAffinityEvaluator<IdentityImpl, IdentityImpl>());
 		
 		final IdentityImpl pretender = new IdentityImpl();
 		pretender.addInterest("color",new Interest( Pattern.compile("red"), true));

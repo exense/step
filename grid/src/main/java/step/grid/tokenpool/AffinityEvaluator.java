@@ -18,7 +18,7 @@
  *******************************************************************************/
 package step.grid.tokenpool;
 
-public interface AffinityEvaluator {
+public interface AffinityEvaluator<P extends Identity, F extends Identity> {
 
-	public int getAffinityScore(Identity i1, Identity i2);
+	public int getAffinityScore(P i1, F i2);
 }
