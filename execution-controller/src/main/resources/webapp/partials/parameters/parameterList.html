@@ -1,7 +1,7 @@
 <div id="ParameterListCtrl" ng-controller="ParameterListCtrl">
 	<div class="row">
 	</div>
-	<st-table collection="parameters" handle="tableHandle">
+	<st-table collection="'parameters'" handle="tableHandle" uid="'parameterList'" persist-state="true">
 		<actions>
 			<div class="btn-group btn-group-menu">
 				<button type="button" ng-disabled="!authService.hasRight('param-write')" class="btn btn-default" ng-click="pasteParameter()" uib-tooltip="Paste parameter">
@@ -15,27 +15,27 @@
 		<columns>
 			<column name="key">
 				<header>Key</header>
-				<second-header><inputdropdown action="search"/></second-header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.key}}</span></cell>
 			</column>
 			<column name="value">
 				<header>Value</header>
-				<second-header><inputdropdown action="search"/></second-header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.value}}</span></cell>
 			</column>
 			<column name="activationExpression.script">
 				<header>Activation script</header>
-				<second-header><inputdropdown action="search"/></second-header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.activationExpression.script}}</span></cell>
 			</column>
 			<column name="description">
 				<header>Description</header>
-				<second-header><inputdropdown action="search"/></second-header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.description}}</span></cell>
 			</column>
 			<column name="priority">
 				<header>Priority</header>
-				<second-header><inputdropdown action="search"/></second-header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.priority}}</span></cell>
 			</column>
 			<column>
