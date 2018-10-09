@@ -145,8 +145,9 @@ public class Grid implements TokenRegistry, GridFileService {
 	}
 	
 	@Override
-	public void markTokenAsFailing(TokenWrapper object, String errorMessage, Exception e) {
-		TokenHealth tokenHealth = object.getTokenHealth();
+	public void markTokenAsFailing(String tokenId, String errorMessage, Exception e) {
+		Token<TokenWrapper> token = tokenPool.getToken(tokenId);
+		TokenHealth tokenHealth = token.getObject().getTokenHealth();
 		tokenHealth.setErrorMessage(errorMessage);
 		tokenHealth.setException(e);
 		tokenHealth.setHasError(true);

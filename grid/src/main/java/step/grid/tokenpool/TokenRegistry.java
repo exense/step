@@ -15,6 +15,6 @@ public interface TokenRegistry {
 
 	List<step.grid.tokenpool.Token<TokenWrapper>> getTokens();
 	
-	void markTokenAsFailing(TokenWrapper object, String errorMessage, Exception e);
+	void markTokenAsFailing(String tokenId, String errorMessage, Exception e);
 
 }
