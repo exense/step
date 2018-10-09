@@ -141,6 +141,7 @@ function ObjectTracker(destroyer) {
           destroyer(o);
         })
     })
+    me.objectRegistry = {};
   }
   
   this.newCycle();
