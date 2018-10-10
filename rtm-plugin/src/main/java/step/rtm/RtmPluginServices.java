@@ -8,6 +8,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 
 @Singleton
@@ -25,17 +27,18 @@ public class RtmPluginServices {
 	@GET
 	@Path("/rtmlink/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public RTMLink getRtmLink(@PathParam("id") String executionID) {
+	public RTMLink getRtmLink(ContainerRequestContext requestContext, @PathParam("id") String executionID) {
 		RTMLink link = new RTMLink();
+		Cookie sessionCookie = requestContext.getCookies().get("sessionid");
 		try {
-			link.link = getAggregateViewByEid(executionID);
+			link.link = getAggregateViewByEid(sessionCookie.getValue(), executionID);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
 		return link;
 	}	
 	
-	private String getAggregateViewByEid(String eid) throws UnsupportedEncodingException {
+	private String getAggregateViewByEid(String cookie, String eid) throws UnsupportedEncodingException {
 		return "rtm/#Aggregate/select/"+URLEncoder.encode(
 				"{"+
 						  "\"guiParams\": {"+
@@ -70,17 +73,18 @@ public class RtmPluginServices {
 						      "\"timeout\": \"600\""+
 						    "},"+
 						    "\"aggregateGraphView\": {"+
-						      "\"chartMetricChoice\": \"AVG\""+
+						      "\"chartMetricChoice\": \"avg\""+
 						    "},"+
 						    "\"aggregateTableView\": {"+
 						      "\"checkedAggTableMetrics\": ["+
 						        "\"begin\","+
-						        "\"CNT\","+
-						        "\"AVG\""+
+						        "\"cnt\","+
+						        "\"avg\""+
 						      "],"+
 						      "\"isSwitchedOn\": \"false\""+
 						    "}"+
-						  "}"+
+						  "},"+
+						   "\"sessionToken\" : \""+cookie+"\""+
 						"}"
 				, "UTF-8").replace("+", "%20");
 	}

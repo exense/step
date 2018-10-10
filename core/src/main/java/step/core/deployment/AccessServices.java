@@ -14,6 +14,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.NewCookie;
@@ -170,6 +171,26 @@ public class AccessServices extends AbstractServices {
 			return session;			
 		} else {
 			return ANONYMOUS_SESSION;
+		}
+	}
+	
+	//Not "Secured" on purpose:
+	//we're allow third parties to loosely check the validity of a token in an SSO context
+	@GET
+	@Path("/checkToken")
+	public Boolean isValidToken(@QueryParam("token") String token) {
+		boolean useAuthentication = Configuration.getInstance().getPropertyAsBoolean("authentication", true);
+		if(useAuthentication) {
+			try {
+				validateAndTouchToken(token);
+			} catch (TokenValidationException e) {
+				logger.debug("Token " + token + " is invalid.");
+				return false;
+			}
+			logger.debug("Token " + token + " is valid.");
+			return true;
+		} else {
+			return true;
 		}
 	}
 
