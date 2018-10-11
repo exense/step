@@ -29,16 +29,15 @@ public class RtmPluginServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public RTMLink getRtmLink(ContainerRequestContext requestContext, @PathParam("id") String executionID) {
 		RTMLink link = new RTMLink();
-		Cookie sessionCookie = requestContext.getCookies().get("sessionid");
 		try {
-			link.link = getAggregateViewByEid(sessionCookie.getValue(), executionID);
+			link.link = getAggregateViewByEid(executionID);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
 		return link;
 	}	
 	
-	private String getAggregateViewByEid(String cookie, String eid) throws UnsupportedEncodingException {
+	private String getAggregateViewByEid(String eid) throws UnsupportedEncodingException {
 		return "rtm/#Aggregate/select/"+URLEncoder.encode(
 				"{"+
 						  "\"guiParams\": {"+
@@ -83,8 +82,7 @@ public class RtmPluginServices {
 						      "],"+
 						      "\"isSwitchedOn\": \"false\""+
 						    "}"+
-						  "},"+
-						   "\"sessionToken\" : \""+cookie+"\""+
+						  "}"+
 						"}"
 				, "UTF-8").replace("+", "%20");
 	}
