@@ -35,6 +35,7 @@ public class TokenWrapper implements Identity {
 	
 	private volatile TokenWrapperState state = TokenWrapperState.FREE;
 	
+	@JsonIgnore
 	private TokenWrapperOwner currentOwner;
 	
 	private boolean hasSession = false;
