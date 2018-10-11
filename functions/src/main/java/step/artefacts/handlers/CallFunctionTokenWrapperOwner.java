@@ -8,6 +8,10 @@ public class CallFunctionTokenWrapperOwner implements TokenWrapperOwner {
 	private String executionId;
 	private String executionDescription;
 	
+	public CallFunctionTokenWrapperOwner() {
+		super();
+	}
+
 	public CallFunctionTokenWrapperOwner(String reportNodeId, String executionId, String executionDescription) {
 		super();
 		this.reportNodeId = reportNodeId;
@@ -26,6 +30,16 @@ public class CallFunctionTokenWrapperOwner implements TokenWrapperOwner {
 	public String getExecutionDescription() {
 		return executionDescription;
 	}
-	
-	
+
+	public void setReportNodeId(String reportNodeId) {
+		this.reportNodeId = reportNodeId;
+	}
+
+	public void setExecutionId(String executionId) {
+		this.executionId = executionId;
+	}
+
+	public void setExecutionDescription(String executionDescription) {
+		this.executionDescription = executionDescription;
+	}
 }
