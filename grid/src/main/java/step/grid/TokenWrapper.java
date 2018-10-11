@@ -33,6 +33,7 @@ public class TokenWrapper implements Identity {
 	
 	private final TokenHealth tokenHealth = new TokenHealth();
 	
+	@JsonIgnore
 	private TokenWrapperOwner currentOwner;
 	
 	private boolean hasSession = false;
