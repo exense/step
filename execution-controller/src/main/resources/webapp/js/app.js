@@ -22,6 +22,12 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   $locationProvider.hashPrefix('');
 }])
 
+.config(['$compileProvider', function ($compileProvider) {
+  $compileProvider.debugInfoEnabled(false);
+  //$compileProvider.commentDirectivesEnabled(false);
+  //$compileProvider.cssClassDirectivesEnabled(false);
+}])
+
 .config(['$httpProvider', function($httpProvider) {
   //initialize get if not there
   if (!$httpProvider.defaults.headers.get) {
