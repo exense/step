@@ -1,6 +1,6 @@
 package step.grid;
 
-public class TokenHealth {
+public class TokenWrapperError {
 
 	protected String errorMessage;
 	

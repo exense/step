@@ -18,15 +18,16 @@
  *******************************************************************************/
 package step.grid.reports;
 
+import java.util.HashMap;
 import java.util.Map;
+
+import step.grid.TokenWrapperState;
 
 public class TokenGroupCapacity {
 
 	Map<String, String> key;
 	
-	int usage = 0;
-	
-	int error = 0;
+	Map<TokenWrapperState, Integer> countByState = new HashMap<>();
 	
 	int capacity = 0;
 	
@@ -35,32 +36,28 @@ public class TokenGroupCapacity {
 		this.key = key;
 	}
 
-	public void incrementUsage() {
-		usage++;
-	}
-	
 	public void incrementCapacity() {
 		capacity++;
 	}
 	
-	public void incrementError() {
-		error++;
+	public void incrementUsage(TokenWrapperState state) {
+		if(!countByState.containsKey(state)) {
+			countByState.put(state, 1);
+		} else {
+			countByState.put(state, countByState.get(state)+1);
+		}
 	}
 
 	public Map<String, String> getKey() {
 		return key;
 	}
 
-	public int getUsage() {
-		return usage;
-	}
-
 	public int getCapacity() {
 		return capacity;
 	}
 
-	public int getError() {
-		return error;
+	public Map<TokenWrapperState, Integer> getCountByState() {
+		return countByState;
 	}
-	
+
 }

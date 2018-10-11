@@ -291,6 +291,10 @@ div.progress {
 	background:#5cb85c;
 }
 
+.token-status-MAINTENANCE {
+	background:#fbd544;
+}
+
 .agent-type {
 	display: inline-block;
     width: 12px;

@@ -1,12 +1,15 @@
 <div class="progress"
-	uib-tooltip="Used: {{tokenGroup.usage}}, In error: {{tokenGroup.error}}, Total: {{tokenGroup.capacity}} ">
+	uib-tooltip="Used: {{tokenGroup.countByState['IN_USE']}}, In error: {{tokenGroup.countByState['IN_USE']}}, Total: {{tokenGroup.capacity}} ">
 	<div class="progress-bar token-status-IN_USE"
-		ng-attr-style="color:white; width:{{tokenGroup.usage/tokenGroup.capacity*100}}%;">
-		{{tokenGroup.usage}}</div>
+		ng-attr-style="color:white; width:{{tokenGroup.countByState['IN_USE']/tokenGroup.capacity*100}}%;">
+		{{tokenGroup.countByState['IN_USE']}}</div>
+	<div class="progress-bar token-status-MAINTENANCE"
+		ng-attr-style="color:white; width:{{tokenGroup.countByState['MAINTENANCE']/tokenGroup.capacity*100}}%;">
+		{{tokenGroup.countByState['ERROR']}}</div>
 	<div class="progress-bar token-status-ERROR"
-		ng-attr-style="color:white; width:{{tokenGroup.error/tokenGroup.capacity*100}}%;">
-		{{tokenGroup.error}}</div>
+		ng-attr-style="color:white; width:{{tokenGroup.countByState['ERROR']/tokenGroup.capacity*100}}%;">
+		{{tokenGroup.countByState['ERROR']}}</div>
 	<div class="progress-bar token-status-FREE"
-		ng-attr-style="color:white; width:{{(tokenGroup.capacity-tokenGroup.error-tokenGroup.usage)/tokenGroup.capacity*100}}%;">
-		{{tokenGroup.capacity}}</div>
+		ng-attr-style="color:white; width:{{tokenGroup.countByState['FREE']/tokenGroup.capacity*100}}%;">
+		{{tokenGroup.countByState['FREE']}}</div>
 </div>

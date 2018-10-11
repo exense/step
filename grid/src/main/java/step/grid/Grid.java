@@ -90,7 +90,7 @@ public class Grid implements TokenRegistry, GridFileService {
 	}
 	
 	private void initializeTokenPool() {
-		tokenPool = new TokenPool<>(new AffinityEvaluatorImpl());
+		tokenPool = new TokenPool<>(new TokenWrapperAffinityEvaluatorImpl());
 		tokenPool.setKeepaliveTimeout(keepAliveTimeout);
 	}
 	
@@ -136,11 +136,17 @@ public class Grid implements TokenRegistry, GridFileService {
 	@Override
 	public TokenWrapper selectToken(Identity pretender, long matchTimeout, long noMatchTimeout)
 			throws TimeoutException, InterruptedException {
-		return tokenPool.selectToken(pretender, matchTimeout, noMatchTimeout);
+		TokenWrapper tokenWrapper = tokenPool.selectToken(pretender, matchTimeout, noMatchTimeout);
+		tokenWrapper.setState(TokenWrapperState.IN_USE);
+		return tokenWrapper;
 	}
 
 	@Override
 	public void returnToken(TokenWrapper object) {
+		// Only change the state if it is IN_USE. Other states (like ERROR) are kept unchanged
+		if(object.getState()==TokenWrapperState.IN_USE) {
+			object.setState(TokenWrapperState.FREE);
+		}
 		tokenPool.returnToken(object);
 	}
 	
@@ -150,7 +156,7 @@ public class Grid implements TokenRegistry, GridFileService {
 		TokenHealth tokenHealth = token.getObject().getTokenHealth();
 		tokenHealth.setErrorMessage(errorMessage);
 		tokenHealth.setException(e);
-		tokenHealth.setHasError(true);
+		token.getObject().setState(TokenWrapperState.ERROR);
 	}
 	
 	public void removeTokenError(String tokenId) {
@@ -159,7 +165,16 @@ public class Grid implements TokenRegistry, GridFileService {
 		TokenHealth tokenHealth = tokenWrapper.getTokenHealth();
 		tokenHealth.setErrorMessage(null);
 		tokenHealth.setException(null);
-		tokenHealth.setHasError(false);
+		token.getObject().setState(TokenWrapperState.FREE);
+	}
+	
+	public void startTokenMaintenance(String tokenId) {
+		tokenPool.addReturnTokenListener(tokenId, t->t.setState(TokenWrapperState.MAINTENANCE));
+	}
+	
+	public void stopTokenMaintenance(String tokenId) {
+		Token<TokenWrapper> token = tokenPool.getToken(tokenId);
+		token.getObject().setState(TokenWrapperState.FREE);
 	}
 
 	@Override

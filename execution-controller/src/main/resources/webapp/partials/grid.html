@@ -51,11 +51,11 @@
 								<cell><json-viewer json="row.attributes"/></cell>
 							</column>
 							
-							<column name="status">
+							<column name="state">
 								<header>State</header>
-								<second-header><inputdropdown action="search" initial-value="initialValue" options="[{text:'IN_USE'},{text:'ERROR'},{text:'FREE'}]"/></second-header>
+								<second-header><inputdropdown action="search" initial-value="initialValue" options="[{text:'IN_USE'},{text:'ERROR'},{text:'MAINTENANCE'},{text:'FREE'}]"/></second-header>
 								<cell>
-									<div ng-class="['text-center', 'token-status', 'token-status-' + row.status ]">{{row.status}}</div>
+									<div ng-class="['text-center', 'token-status', 'token-status-' + row.state ]">{{row.state}}</div>
 								</cell>
 							</column>
 							<column name="executionDescription">
@@ -77,6 +77,12 @@
 									<div class="btn-group btn-group-xs">
 										<button type="button" class="btn btn-default" ng-show="row.hasError" ng-click="$parent.removeTokenError(row.id)" uib-tooltip="Mark token error as resolved">
 											<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+										</button>
+										<button type="button" class="btn btn-default" ng-show="row.state!='MAINTENANCE'" ng-click="$parent.enterTokenMaintenance(row.id)" uib-tooltip="">
+											<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+										</button>
+										<button type="button" class="btn btn-default" ng-show="row.state=='MAINTENANCE'" ng-click="$parent.exitTokenMaintenance(row.id)" uib-tooltip="">
+											<span class="glyphicon glyphicon-play" aria-hidden="true"></span>
 										</button>
 									</div>
 								</cell> 

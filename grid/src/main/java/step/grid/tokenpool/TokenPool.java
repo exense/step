@@ -28,7 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,8 @@ public class TokenPool<P extends Identity, F extends Identity> implements Closea
 	final AffinityEvaluator<P, F> affinityEval;
 	
 	final Map<String,Token<F>> tokens = new HashMap<>();
+	
+	final Map<String,Consumer<F>> listeners = new ConcurrentHashMap<>();
 	
 	final List<WaitingPretender<P,F>> waitingPretenders = Collections.synchronizedList(new LinkedList<WaitingPretender<P,F>>());
 	
@@ -169,6 +173,17 @@ public class TokenPool<P extends Identity, F extends Identity> implements Closea
 		return matchingResult.bestMatch!=null;
 	}
 	
+	public void addReturnTokenListener(String tokenId, Consumer<F> consumer) {
+		synchronized (tokens) {
+			Token<F> token = tokens.get(tokenId);
+			if(token.available) {
+				callListener(token.getObject(), consumer);
+			} else {
+				listeners.put(tokenId, consumer);
+			}
+		}
+	}
+	
 	public void returnToken(F object) {
 		synchronized (tokens) {
 			if(logger.isDebugEnabled())
@@ -178,8 +193,20 @@ public class TokenPool<P extends Identity, F extends Identity> implements Closea
 				removeToken(token);
 			} else {
 				token.available = true;
+				Consumer<F> listener = listeners.remove(object.getID());
+				if(listener!=null) {
+					callListener(object, listener);
+				}
 				checkForMatchInPretenderWaitingQueue(token);
 			}
+		}
+	}
+
+	protected void callListener(F object, Consumer<F> listener) {
+		try {
+			listener.accept(object);
+		} catch(Exception e) {
+			logger.error("Error while calling listener for token " + object.getID(), e);
 		}
 	}
 

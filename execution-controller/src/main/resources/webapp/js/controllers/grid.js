@@ -140,7 +140,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
   			  var data = response.data;
   			  var dataSet = [];
   			  for (i = 0; i < data.length; i++) {
-  				dataSet[i] = [ helpers.formatAsKeyValueList(data[i].key), {usage:data[i].usage, capacity:data[i].capacity, error:data[i].error} ];
+  				dataSet[i] = [ helpers.formatAsKeyValueList(data[i].key), data[i] ];
   			  }
   			  $scope.tabledef.data = dataSet;
   			});
@@ -198,18 +198,25 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
             agentUrl : e.agent.agentUrl,
             executionId : e.currentOwner ? e.currentOwner.executionId : null,
             executionDescription : e.currentOwner ? e.currentOwner.executionDescription : null,
-            status : (e.tokenHealth.hasError ? 'ERROR' : (e.currentOwner ? 'IN_USE' : 'FREE')),
-            errorMessage : e.tokenHealth.errorMessage,
-            hasError : e.tokenHealth.hasError
+            state : e.state,
+            errorMessage : e.tokenHealth.errorMessage
           });
         })
       });
 	  };
 	  
 	  $scope.removeTokenError = function(tokenId) {
-	    $http.post("rest/grid/token/"+tokenId+"/repair").then(function(){$scope.loadTable()});
+	    $http.delete("rest/grid/token/"+tokenId+"/error").then(function(){$scope.loadTable()});
 	  }
+	  
+	  $scope.startTokenMaintenance = function(tokenId) {
+      $http.post("rest/grid/token/"+tokenId+"/maintenance").then(function(){$scope.loadTable()});
+    }
 
+	  $scope.stopTokenMaintenance = function(tokenId) {
+      $http.delete("rest/grid/token/"+tokenId+"/maintenance").then(function(){$scope.loadTable()});
+    }
+	  
 	  $scope.loadTable();
       var refreshTimer = $interval(function(){
         if($scope.autorefresh){$scope.loadTable()}}, 5000);
@@ -218,7 +225,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
         $interval.cancel(refreshTimer);
       });
 	} ])
-	
+
 .controller('QuotaManagerCtrl', [
     '$scope',
     '$http',

@@ -33,6 +33,8 @@ public class TokenWrapper implements Identity {
 	
 	private final TokenHealth tokenHealth = new TokenHealth();
 	
+	private volatile TokenWrapperState state = TokenWrapperState.FREE;
+	
 	private TokenWrapperOwner currentOwner;
 	
 	private boolean hasSession = false;
@@ -97,6 +99,14 @@ public class TokenWrapper implements Identity {
 
 	public TokenHealth getTokenHealth() {
 		return tokenHealth;
+	}
+
+	public TokenWrapperState getState() {
+		return state;
+	}
+
+	protected void setState(TokenWrapperState state) {
+		this.state = state;
 	}
 
 	@Override

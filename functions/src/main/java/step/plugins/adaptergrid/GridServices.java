@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -80,12 +81,28 @@ public class GridServices extends AbstractServices {
 		return getReportBuilder().getTokenAssociations(false);
 	}
 	
+	@DELETE
+	@Secured
+	@Path("/token/{id}/error")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void removeTokenError(@PathParam("id") String tokenId) {
+		getAdapterGrid().removeTokenError(tokenId);
+	}
+	
 	@POST
 	@Secured
-	@Path("/token/{id}/repair")
+	@Path("/token/{id}/maintenance")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public void repairToken(@PathParam("id") String tokenId) {
-		getAdapterGrid().removeTokenError(tokenId);
+	public void startTokenMaintenance(@PathParam("id") String tokenId) {
+		getAdapterGrid().startTokenMaintenance(tokenId);
+	}
+	
+	@DELETE
+	@Secured
+	@Path("/token/{id}/maintenance")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void stopTokenMaintenance(@PathParam("id") String tokenId) {
+		getAdapterGrid().stopTokenMaintenance(tokenId);
 	}
 	
 	@GET

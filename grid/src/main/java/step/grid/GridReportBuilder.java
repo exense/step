@@ -54,13 +54,7 @@ public class GridReportBuilder {
 			}
 			TokenGroupCapacity c = countsByIdentity.get(key);
 			c.incrementCapacity();
-			if(aToken.getTokenHealth()!=null && aToken.getTokenHealth().isHasError()) {
-				c.incrementError();
-			} else {
-				if(!token.isFree()) {
-					c.incrementUsage();
-				}
-			}
+			c.incrementUsage(aToken.getState());
 		}
 		
 		return new ArrayList<>(countsByIdentity.values());
