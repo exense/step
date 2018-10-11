@@ -17,9 +17,74 @@
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
 angular.module('tables', ['export','dataTable'])
+
+.controller('StTableController', function ($scope) {
+  var ctrl = this;
+  
+  var serverSide = $scope.collection?true:false;
+  
+  var scopesTracker = new ScopeTracker();
+  var headerScopesTracker = new ScopeTracker();
+  
+  $scope.$on('$destroy', function() {
+    scopesTracker.destroy();
+    headerScopesTracker.destroy();
+  });
+  
+  ctrl.dtColumns = [];
+  
+  ctrl.addColumn = function(column) {
+    var colDef = {
+        "name" : column.name,
+        "data": column.name
+      };
+    
+    colDef.createdCell = function(td, cellData, rowData, row, col) {
+      var rowScope;
+      var content = column.cellTransclude(function(clone, scope) {
+        if(serverSide) {
+          scope.row = JSON.parse(rowData[0]);
+        } else {
+          scope.row = rowData;
+        }
+        rowScope = scope;
+      });
+      
+      angular.element(td).empty();
+      angular.element(td).append(content);
+      if(serverSide) {
+        rowScope.$digest();
+      }
+      scopesTracker.track(rowScope);
+    };
+    
+    colDef.headerRenderer = createHeaderRenderer(column.headerTransclude);
+    colDef.secondHeaderRenderer = createHeaderRenderer(column.secondHeaderTransclude);
+    
+    function createHeaderRenderer(headerTransclude) {
+      return function(element, column, handle) {
+        var headerScope;
+        var content = headerTransclude(function(clone, scope){
+          headerScope = scope;
+          headerScope.initialValue = column.search();
+          headerScope.search = function(expression){handle.search(colDef.name,expression)};
+        });
+        element.empty();
+        element.append(content);
+        headerScopesTracker.track(headerScope);
+      }
+    }
+    
+    ctrl.newCycle = function() {
+      scopesTracker.newCycle()
+    }
+
+    ctrl.dtColumns.push(colDef);
+  }
+  
+})
 .directive('stTable', function($compile, $http, Preferences, stateStorage) {
   return {
-    restrict : 'E',
     scope : {
       uid: '=',
       handle: '=',
@@ -28,17 +93,16 @@ angular.module('tables', ['export','dataTable'])
       persistState: '='
     },
     transclude : {
-      'actions' : '?actions',
-      'columns' : '?columns'
+      'stActions' : '?stActions',
+      'stColumns' : '?stColumns'
     },
-    link : function(scope, element, attr, tabsCtrl, linker) {
+    replace: false,    
+    controller : 'StTableController',
+    controllerAs: 'table',
+    link : function(scope, element, attr, controller, transclude) {
       var serverSide = scope.collection?true:false;
       
-      scope.scopesTracker = new ScopeTracker();
-      scope.headerScopesTracker = new ScopeTracker();
       scope.$on('$destroy', function() {
-        scope.scopesTracker.destroy();
-        scope.headerScopesTracker.destroy();
         if(scope.table) {
           scope.table.destroy();
         }
@@ -50,8 +114,9 @@ angular.module('tables', ['export','dataTable'])
       tableOptions.pageLength = parseInt(Preferences.get("tables_itemsperpage", 10));
       tableOptions.dom = 'lrtip';
       tableOptions.fnDrawCallback = function() {
-        scope.scopesTracker.newCycle();
+        controller.newCycle();
       };
+      tableOptions.columns = controller.dtColumns;
 
       if (scope.persistState) {
         if (scope.uid) {
@@ -73,61 +138,6 @@ angular.module('tables', ['export','dataTable'])
           console.error("Unable to persist table state if the table uid isn't specified. Please set the attribute 'uid'")
         }
       }
-
-      // Table columns
-      var columns = linker(function() {}, null, 'columns');
-      var dtColumns = [];
-      columns.find("column").each(function() {
-        var header = '<div>'+angular.element(this).find("header").first().html()+'</div>';
-        var secondHeaderSearch = angular.element(this).find("second-header");
-        var secondHeader = '<div>'+(secondHeaderSearch.length>0?secondHeaderSearch.first().html():"")+'</div>';
-        var cell = angular.element(this).find("cell").first().html();
-        var name = angular.element(this).attr("name");
-        
-        var colDef = {
-          "title" : header,
-          "name" : name,
-          "data": name
-        };
-
-        colDef.createdCell = function(td, cellData, rowData, row, col) {
-          var rowScope = scope.$new(false, scope.$parent);
-          if(serverSide) {
-            rowScope.row = JSON.parse(rowData[0]);
-          } else {
-            rowScope.row = rowData;
-          }
-          
-          if(!colDef.compiledCell) {
-            colDef.compiledCell = $compile(cell);
-          }
-          
-          var content = colDef.compiledCell(rowScope, function(){});
-          angular.element(td).empty();
-          angular.element(td).append(content);
-          if(serverSide) {
-            rowScope.$digest();
-          }
-          scope.scopesTracker.track(rowScope);
-        };
-        
-        function createHeaderRenderer(headerHtml) {
-          return function(element, column, handle) {
-            var headerScope = scope.$new(false, scope.$parent);
-            headerScope.initialValue = column.search();
-            headerScope.search = function(expression){handle.search(name,expression)};
-            var content = $compile(headerHtml)(headerScope);
-            element.empty();
-            element.append(content);
-            scope.headerScopesTracker.track(headerScope);
-          }
-        }
-        colDef.headerRenderer = createHeaderRenderer(header);
-        colDef.secondHeaderRenderer = createHeaderRenderer(secondHeader);
-        
-        dtColumns.push(colDef);
-      })
-      tableOptions.columns = dtColumns;
 
       if(serverSide) {
         var query = 'rest/table/' + scope.collection + '/data';
@@ -153,7 +163,7 @@ angular.module('tables', ['export','dataTable'])
       scope.table = table;
       
       // Table actions
-      var tableActions = linker(function() {}, null, 'actions');
+      var tableActions = transclude(function() {}, null, 'stActions');
       var cmdDiv;
       if (element.find('div.dataTables_filter').length > 0) {
         cmdDiv = element.find('div.dataTables_filter');
@@ -192,12 +202,43 @@ angular.module('tables', ['export','dataTable'])
           table.settings()[0].aoColumns[i].secondHeaderRenderer(secondHeader,table.column(i),scope.handle);
         }
       });
-      
-
     },
     templateUrl : 'partials/datatable.html'
   };
 })
+
+.directive('stColumn', function($compile, $http, Preferences, stateStorage) {
+  return {
+    replace: true,
+    transclude : {
+      'header' : '?header',
+      'secondHeader' : '?secondHeader',
+      'cell' : '?cell',
+    },
+    require: '^stTable',
+    scope : {
+      'name':'@'
+    },
+    controller : function($scope) {
+    },
+    link : function(scope, elm, attrs, tableController, transclude) {
+      tableController.addColumn({
+        name:scope.name,
+        headerTransclude : function(callback) {
+          return transclude(callback, null, 'header')
+        },
+        secondHeaderTransclude : function(callback) {
+          return transclude(callback, null, 'secondHeader')
+        },
+        cellTransclude : function(callback) {
+          return transclude(callback, null, 'cell')
+        },
+      })
+          
+    }
+  }
+})
+    
 
 // hack to suppress DataTable warning
 // see http://stackoverflow.com/questions/11941876/correctly-suppressing-warnings-in-datatables

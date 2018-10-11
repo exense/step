@@ -2,7 +2,7 @@
 	<div class="row">
 	</div>
 	<st-table collection="'parameters'" handle="tableHandle" uid="'parameterList'" persist-state="true">
-		<actions>
+		<st-actions>
 			<div class="btn-group btn-group-menu">
 				<button type="button" ng-disabled="!authService.hasRight('param-write')" class="btn btn-default" ng-click="pasteParameter()" uib-tooltip="Paste parameter">
 					<span class="glyphicon glyphicon-paste"></span>
@@ -11,34 +11,34 @@
 			<div class="btn-group btn-group-menu">
 				<button type="button" ng-disabled="!authService.hasRight('param-write')" class="btn btn-success" ng-click="addParameter()">New parameter</button>
 			</div>
-		</actions>
-		<columns>
-			<column name="key">
+		</st-actions>
+		<st-columns>
+			<st-column name="key">
 				<header>Key</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.key}}</span></cell>
-			</column>
-			<column name="value">
+			</st-column>
+			<st-column name="value">
 				<header>Value</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.value}}</span></cell>
-			</column>
-			<column name="activationExpression.script">
+			</st-column>
+			<st-column name="activationExpression.script">
 				<header>Activation script</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.activationExpression.script}}</span></cell>
-			</column>
-			<column name="description">
+			</st-column>
+			<st-column name="description">
 				<header>Description</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.description}}</span></cell>
-			</column>
-			<column name="priority">
+			</st-column>
+			<st-column name="priority">
 				<header>Priority</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
 				<cell><span>{{row.priority}}</span></cell>
-			</column>
-			<column>
+			</st-column>
+			<st-column>
 				<header>Actions</header>
 				<cell>
 					<div class="btn-group">
@@ -53,7 +53,7 @@
             			</button>
           			</div>
           		</cell>
-			</column>
-		</columns>
+			</st-column>
+		</st-columns>
 	</st-table>
 </div>
