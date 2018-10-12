@@ -131,7 +131,7 @@ public class GridClient implements Closeable {
 		localToken.setAgentid(Grid.LOCAL_AGENT);		
 		localToken.setAttributes(new HashMap<String, String>());
 		localToken.setSelectionPatterns(new HashMap<String, Interest>());
-		TokenWrapper tokenWrapper = new TokenWrapper(localToken, new AgentRef(Grid.LOCAL_AGENT, "localhost"));
+		TokenWrapper tokenWrapper = new TokenWrapper(localToken, new AgentRef(Grid.LOCAL_AGENT, "localhost", "default"));
 		return tokenWrapper;
 	}
 	

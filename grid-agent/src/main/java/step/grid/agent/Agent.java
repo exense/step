@@ -62,6 +62,7 @@ public class Agent {
 	private static final Logger logger = LoggerFactory.getLogger(Agent.class);
 	
 	public static final String AGENT_TYPE_KEY = "$agenttype";
+	public static final String AGENT_TYPE = "default";
 	
 	private String id;
 	
@@ -134,7 +135,7 @@ public class Agent {
 			token.getToken().setAgentid(id);
 			Map<String, String> allAttributes = new HashMap<>();
 			allAttributes.putAll(attributes);
-			allAttributes.put(AGENT_TYPE_KEY, "default");
+			allAttributes.put(AGENT_TYPE_KEY, AGENT_TYPE);
 			token.setAttributes(allAttributes);
 			token.setSelectionPatterns(createInterestMap(selectionPatterns));
 			token.setProperties(properties);

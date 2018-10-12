@@ -45,7 +45,7 @@ public class RegistrationTask extends TimerTask {
 	public void run() {
 		if(!interrupted) {
 			try {		
-				RegistrationMessage message = new RegistrationMessage(new AgentRef(agent.getId(), agent.getAgentUrl()), agent.getTokens());
+				RegistrationMessage message = new RegistrationMessage(new AgentRef(agent.getId(), agent.getAgentUrl(), Agent.AGENT_TYPE), agent.getTokens());
 				logger.debug("Sending registration message "+message.toString());
 				client.sendRegistrationMessage(message);
 			} catch (Exception e) {

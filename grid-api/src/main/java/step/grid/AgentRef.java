@@ -23,15 +23,18 @@ public class AgentRef {
 	private String agentId;
 	
 	private String agentUrl;
+	
+	private String agentType;
 
 	public AgentRef() {
 		super();
 	}
 
-	public AgentRef(String agentId, String agentUrl) {
+	public AgentRef(String agentId, String agentUrl, String agentType) {
 		super();
 		this.agentId = agentId;
 		this.agentUrl = agentUrl;
+		this.agentType = agentType;
 	}
 
 	public String getAgentId() {
@@ -48,6 +51,14 @@ public class AgentRef {
 
 	public void setAgentUrl(String agentUrl) {
 		this.agentUrl = agentUrl;
+	}
+
+	public String getAgentType() {
+		return agentType;
+	}
+
+	public void setAgentType(String agentType) {
+		this.agentType = agentType;
 	}
 
 	@Override
