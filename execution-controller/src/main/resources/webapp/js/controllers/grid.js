@@ -24,7 +24,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
       
       $scope.autorefresh = true;
 
-      if($scope.$state == null) { $scope.$state = 'tokens' };
+      if($scope.$state == null) { $scope.$state = 'agents' };
       
       $scope.tabs = [
           { id: 'agents'},
@@ -55,44 +55,27 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
       $scope.loadTable = function loadTable() {
         $http.get("rest/grid/agent").then(
           function(response) {
-            var data = response.data;
-            var dataSet = [];
-            for (i = 0; i < data.length; i++) {
-              dataSet[i] = [ data[i].agentId, data[i].agentUrl];
-            }
-            $scope.tabledef.data = dataSet;
+            $scope.agents = []
+            _.each(response.data, function(e) {
+              var type = e.agentRef.agentType;
+              $scope.agents.push({
+                id : e.agentRef.agentId,
+                url: e.agentRef.agentUrl,
+                typeLabel : type == 'default' ? 'Java' : (type == 'node' ? 'Node.js' : (type == 'dotnet' ? '.NET' : 'Unknown')),
+                tokensCapacity : e.tokensCapacity,
+                type : type,
+              });
+            })
           });
         };
 
-        $scope.tabledef = {};
-        $scope.tabledef.columns = [ { "title" : "ID", "visible" : false}, { "title" : "Url" } ];
-
-//        $scope.tabledef.actions = [{"label":"Interrupt","action":function() {$scope.interruptSelected()}},
-//                                   {"label":"Resume","action":function() {$scope.resumeSelected()}}];
-//        
         $scope.loadTable();
         
-        $scope.interruptSelected = function() {
-          var rows = $scope.datatable.getSelection().selectedItems;
-          
-          for(i=0;i<rows.length;i++) {
-            $scope.interrupt(rows[i][0]);       
-          }
-        };
-          
         $scope.interrupt = function(id) {
           $http.put("rest/grid/agent/"+id+"/interrupt").then(function() {
                 $scope.loadTable();
             });
         }
-        
-        $scope.resumeSelected = function() {
-          var rows = $scope.datatable.getSelection().selectedItems;
-          
-          for(i=0;i<rows.length;i++) {
-            $scope.resume(rows[i][0]);       
-          }
-        };
           
         $scope.resume = function(id) {
           $http.put("rest/grid/agent/"+id+"/resume").then(function() {
@@ -101,7 +84,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
         }
           
         var refreshTimer = $interval(function(){
-            if($scope.autorefresh){$scope.loadTable()}}, 2000);
+            if($scope.autorefresh){$scope.loadTable()}}, 5000);
           
           $scope.$on('$destroy', function() {
             $interval.cancel(refreshTimer);
@@ -120,8 +103,6 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
   	  
   	  $scope.keySelectioModel = {};
   	  
-  	  $scope.table = {};
-  	  
   	  $http.get("rest/grid/keys").then(
           function(response) { 
             $scope.keys = ['url']; $scope.keySelectioModel['url']=true;
@@ -135,44 +116,27 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
   	      queryParam+='groupby='+key+'&'
   	      }
   	    })
-  		$http.get("rest/grid/token/usage?"+queryParam).then(
-  			function(response) {
-  			  var data = response.data;
-  			  var dataSet = [];
-  			  for (i = 0; i < data.length; i++) {
-  				dataSet[i] = [ helpers.formatAsKeyValueList(data[i].key), data[i] ];
-  			  }
-  			  $scope.tabledef.data = dataSet;
-  			});
-  	  };
+    		$http.get("rest/grid/token/usage?"+queryParam).then(
+    			function(response) {
+    			  $scope.tokenGroups = []
+    			  _.each(response.data, function(e) {
+              $scope.tokenGroups.push({
+                key : e.key,
+                keyAsString : JSON.stringify(e.key),
+                tokensCapacity : e
+              });
+            })
+    		});
+    	};
   	  
   	  $scope.$watchCollection('keySelectioModel',function() {$scope.loadTable()});
   	  
   	  var refreshTimer = $interval(function(){
-        if($scope.autorefresh){$scope.loadTable();}}, 2000);
+        if($scope.autorefresh){$scope.loadTable();}}, 5000);
       
       $scope.$on('$destroy', function() {
         $interval.cancel(refreshTimer);
       });
-  	  
-  	  $scope.tabledef = {};
-  	  $scope.tabledef.columns = [ 
-  	    {
-          "title" : "URL"
-        }, 
-        {
-          "title" : "Usage",
-          "createdCell" : function(td, cellData, rowData, row, col) {
-            var rowScope = $scope.$new(true, $scope);
-            $scope.table.trackScope(rowScope);
-            rowScope.data = cellData;
-            var content = $compile("<grid-status-distribution token-group='data' />")(rowScope);
-            angular.element(td).html(content);
-            //rowScope.$apply();
-          }
-        } 
-        ];
-
   	} ])
 
 .controller('TokenListCtrl', [

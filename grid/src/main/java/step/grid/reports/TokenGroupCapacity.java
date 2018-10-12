@@ -56,6 +56,10 @@ public class TokenGroupCapacity {
 		return capacity;
 	}
 
+	public void setCountByState(Map<TokenWrapperState, Integer> countByState) {
+		this.countByState = countByState;
+	}
+
 	public Map<TokenWrapperState, Integer> getCountByState() {
 		return countByState;
 	}

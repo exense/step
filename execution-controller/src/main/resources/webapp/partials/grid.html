@@ -9,9 +9,45 @@
 				</div>
 		
 				<div class="panel-body">
-					<p>
-						<datatable tabledef="tabledef" handle="datatable" selectionmode="multiple" />
-					</p>
+					<st-table data="agents" uid="'agentList'" persist-state="true">
+						<st-actions>
+						</st-actions>
+						<st-columns>
+							<st-column name="id">
+								<header>Url</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
+								<cell><span><small>{{row.url}}</small></span></cell>
+							</st-column>
+							<st-column name="typeLabel">
+								<header>Type</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
+								<cell>
+									<span class="agent-type agent-type-{{row.type}}"></span>
+									<span>{{row.typeLabel}}</span>
+								</cell>
+							</st-column>
+							<st-column name="tokensCapacity">
+								<header>Token states</header>
+								<cell>
+									<grid-status-distribution token-group="row.tokensCapacity" />
+								</cell>
+							</st-column>
+							<st-column name="actions">
+								<header>Actions</header>
+								<second-header></second-header>
+								<cell>
+									<div class="btn-group btn-group-xs">
+										<button type="button" class="btn btn-default" ng-click="interrupt(row.id)" uib-tooltip="" >
+											<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+										</button>
+										<button type="button" class="btn btn-default" ng-click="resume(row.id)" uib-tooltip="">
+											<span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+										</button>
+									</div>
+								</cell>
+							</st-column>
+						</st-columns>
+					</st-table>
 				</div>
 			</div>
 		</uib-tab> 
@@ -101,18 +137,36 @@
 				</div>
 		
 				<div class="panel-body">
-					<p>
-					<form class="form-inline">
-						<label>Group by:</label>
-						<div class="checkbox" style="margin-left: 10px" ng-repeat="key in keys">
-							<label> <input type="checkbox" ng-model="keySelectioModel[key]"> {{key}}
-							</label>
-						</div>
-					</form>
-					</p>
-					<p>
-						<datatable handle="table" tabledef="tabledef" selectionmode="none" />
-					</p>
+					<div>
+						<form class="form-inline">
+							<label>Group by:</label>
+							<div class="checkbox" style="margin-left: 10px" ng-repeat="key in keys">
+								<label> <input type="checkbox" ng-model="keySelectioModel[key]"/> {{key}} 
+								</label>
+							</div>
+						</form>
+					</div>
+					<div style="margin-top:10px;">
+						<st-table data="tokenGroups" uid="'tokenGroups'" persist-state="true">
+							<st-actions>
+							</st-actions>
+							<st-columns>
+								<st-column name="keyAsString">
+									<header>Key</header>
+									<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
+									<cell>
+										<json-viewer json="row.key"/>
+									</cell>
+								</st-column>
+								<st-column name="tokensCapacity">
+									<header>Token states</header>
+									<cell>
+										<grid-status-distribution token-group="row.tokensCapacity" />
+									</cell>
+								</st-column>
+							</st-columns>
+						</st-table>
+					</div>
 				</div>
 			</div>
 		</uib-tab> 

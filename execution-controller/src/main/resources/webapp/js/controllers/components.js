@@ -55,6 +55,9 @@ angular.module('components',['step'])
     },
     templateUrl: 'partials/components/jsonViewer.html',
     controller: function($scope, $http) {
+      $scope.$watch('json', function() {
+        $scope.keys = Object.keys($scope.json);
+      })
     }
   };
 })
