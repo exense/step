@@ -23,7 +23,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 }])
 
 .config(['$compileProvider', function ($compileProvider) {
-  $compileProvider.debugInfoEnabled(false);
+  // Unfortunately required to retrieve scope from elements: angular.element(\'#MyCtrl\').scope() 
+  $compileProvider.debugInfoEnabled(true);
   //$compileProvider.commentDirectivesEnabled(false);
   //$compileProvider.cssClassDirectivesEnabled(false);
 }])
