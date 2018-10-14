@@ -203,7 +203,7 @@ angular.module('tables', ['export','dataTable'])
         }
       });
     },
-    templateUrl : 'partials/datatable.html'
+    templateUrl : 'partials/ntable.html'
   };
 })
 
