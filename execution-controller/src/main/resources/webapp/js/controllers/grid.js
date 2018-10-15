@@ -82,6 +82,12 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
                 $scope.loadTable();
             });
         }
+        
+        $scope.removeTokenErrors = function(id) {
+          $http.delete("/rest/grid/agent/"+id+"/tokens/errors").then(function() {
+                $scope.loadTable();
+            });
+        }
           
         var refreshTimer = $interval(function(){
             if($scope.autorefresh){$scope.loadTable()}}, 5000);

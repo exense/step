@@ -130,6 +130,18 @@ public class GridServices extends AbstractServices {
 			}
 		});
 	}
+	
+	@DELETE
+	@Secured
+	@Path("/agent/{id}/tokens/errors")
+	@Produces(MediaType.APPLICATION_JSON)
+	public void removeAgentTokenErrors(@PathParam("id") String agentId) {
+		grid.getTokens().forEach(token->{
+			if(token.getObject().getState().equals(TokenWrapperState.ERROR)) {
+				grid.removeTokenError(token.getObject().getID());
+			}
+		});
+	}
 
 	@GET
 	@Path("/token")
