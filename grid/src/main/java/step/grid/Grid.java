@@ -155,6 +155,7 @@ public class Grid implements TokenRegistry, GridFileService {
 		Token<TokenWrapper> token = tokenPool.getToken(tokenId);
 		TokenHealth tokenHealth = token.getObject().getTokenHealth();
 		tokenHealth.setErrorMessage(errorMessage);
+		tokenHealth.setTokenWrapperOwner(token.getObject().getCurrentOwner());
 		tokenHealth.setException(e);
 		token.getObject().setState(TokenWrapperState.ERROR);
 	}

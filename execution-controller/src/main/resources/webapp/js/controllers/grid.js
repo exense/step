@@ -163,7 +163,8 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
             executionId : e.currentOwner ? e.currentOwner.executionId : null,
             executionDescription : e.currentOwner ? e.currentOwner.executionDescription : null,
             state : e.state,
-            errorMessage : e.tokenHealth.errorMessage
+            errorMessage : e.tokenHealth.errorMessage,
+            tokenHealth : e.tokenHealth
           });
         })
       });

@@ -104,7 +104,12 @@
 							<st-column name="errorMessage">
 								<header>Error</header>
 								<second-header><inputdropdown action="search" initial-value="initialValue"/></second-header>
-								<cell><span>{{row.errorMessage}}</span></cell>
+								<cell>
+									<div ng-if="row.state=='ERROR'">
+										<div>{{row.errorMessage}}</div>
+										<div ng-if="row.tokenHealth.tokenWrapperOwner">Caused by: <execution-link execution-id="row.tokenHealth.tokenWrapperOwner.executionId" execution-description="tokenHealth.tokenWrapperOwner.executionDescription"/></div>
+									</div>
+								</cell>
 							</st-column>
 							<st-column>
 								<header></header>
