@@ -25,7 +25,7 @@ angular.module('reportTable',['step','reportNodes'])
     var stepsTable = {};
     stepsTable.columns = function(columns) {
       _.each(_.where(columns,{'title':'ID'}),function(col){col.visible=false});
-      _.each(_.where(columns,{'title':'Begin'}),function(col){col.sClass = 'rowDetailsToggle';col.width="80px"});
+      _.each(_.where(columns,{'title':'Begin'}),function(col){col.sClass = 'rowDetailsToggle';col.width="60px"});
       _.each(_.where(columns,{'title':'Step'}),function(col){
         col.sClass = 'rowDetailsToggle';
         col.createdCell =  function (td, cellData, rowData, row, col) {
