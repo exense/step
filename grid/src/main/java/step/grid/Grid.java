@@ -143,39 +143,57 @@ public class Grid implements TokenRegistry, GridFileService {
 
 	@Override
 	public void returnToken(TokenWrapper object) {
-		// Only change the state if it is IN_USE. Other states (like ERROR) are kept unchanged
-		if(object.getState()==TokenWrapperState.IN_USE) {
-			object.setState(TokenWrapperState.FREE);
-		}
+		object.performAtomically(()->{
+			// Only change the state if it is IN_USE. Other states (like ERROR) are kept unchanged
+			if(object.getState()==TokenWrapperState.IN_USE) {
+				object.setState(TokenWrapperState.FREE);
+			}
+		});
 		tokenPool.returnToken(object);
 	}
 	
 	@Override
 	public void markTokenAsFailing(String tokenId, String errorMessage, Exception e) {
 		Token<TokenWrapper> token = tokenPool.getToken(tokenId);
+		TokenWrapper tokenWrapper = token.getObject();
 		TokenHealth tokenHealth = token.getObject().getTokenHealth();
-		tokenHealth.setErrorMessage(errorMessage);
-		tokenHealth.setTokenWrapperOwner(token.getObject().getCurrentOwner());
-		tokenHealth.setException(e);
-		token.getObject().setState(TokenWrapperState.ERROR);
+		tokenWrapper.performAtomically(()->{
+			tokenHealth.setErrorMessage(errorMessage);
+			tokenHealth.setTokenWrapperOwner(token.getObject().getCurrentOwner());
+			tokenHealth.setException(e);
+			token.getObject().setState(TokenWrapperState.ERROR);
+		});
 	}
 	
 	public void removeTokenError(String tokenId) {
 		Token<TokenWrapper> token = tokenPool.getToken(tokenId);
 		TokenWrapper tokenWrapper = token.getObject();
 		TokenHealth tokenHealth = tokenWrapper.getTokenHealth();
-		tokenHealth.setErrorMessage(null);
-		tokenHealth.setException(null);
-		token.getObject().setState(TokenWrapperState.FREE);
+		tokenWrapper.performAtomically(()->{
+			if(tokenWrapper.getState().equals(TokenWrapperState.ERROR)) {
+				tokenHealth.setErrorMessage(null);
+				tokenHealth.setException(null);
+				token.getObject().setState(TokenWrapperState.FREE);
+			}
+		});
 	}
 	
 	public void startTokenMaintenance(String tokenId) {
+		Token<TokenWrapper> token = tokenPool.getToken(tokenId);
+		TokenWrapper tokenWrapper = token.getObject();
+		tokenWrapper.setState(TokenWrapperState.MAINTENANCE_REQUESTED);
 		tokenPool.addReturnTokenListener(tokenId, t->t.setState(TokenWrapperState.MAINTENANCE));
 	}
 	
 	public void stopTokenMaintenance(String tokenId) {
 		Token<TokenWrapper> token = tokenPool.getToken(tokenId);
-		token.getObject().setState(TokenWrapperState.FREE);
+		TokenWrapper tokenWrapper = token.getObject();
+		tokenWrapper.performAtomically(()->{
+			// Only change the state if it is currently in MAINTENANCE. Other states are kept unchanged
+			if(tokenWrapper.getState().equals(TokenWrapperState.MAINTENANCE)) {
+				token.getObject().setState(TokenWrapperState.FREE);
+			}
+		});
 	}
 
 	@Override

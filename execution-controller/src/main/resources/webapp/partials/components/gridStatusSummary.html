@@ -3,6 +3,9 @@
 	<div class="progress-bar token-status-IN_USE"
 		ng-attr-style="color:white; width:{{tokenGroup.countByState['IN_USE']/tokenGroup.capacity*100}}%;">
 		{{tokenGroup.countByState['IN_USE']}}</div>
+	<div class="progress-bar token-status-MAINTENANCE_REQUESTED"
+		ng-attr-style="color:white; width:{{tokenGroup.countByState['MAINTENANCE_REQUESTED']/tokenGroup.capacity*100}}%;">
+		{{tokenGroup.countByState['MAINTENANCE_REQUESTED']}}</div>	
 	<div class="progress-bar token-status-MAINTENANCE"
 		ng-attr-style="color:white; width:{{tokenGroup.countByState['MAINTENANCE']/tokenGroup.capacity*100}}%;">
 		{{tokenGroup.countByState['MAINTENANCE']}}</div>

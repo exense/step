@@ -106,7 +106,15 @@ public class TokenWrapper implements Identity {
 	}
 
 	protected void setState(TokenWrapperState state) {
-		this.state = state;
+		synchronized (this) {
+			this.state = state;
+		}
+	}
+	
+	protected void performAtomically(Runnable runnable) {
+		synchronized (this) {
+			runnable.run();
+		}
 	}
 
 	@Override

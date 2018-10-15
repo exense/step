@@ -8,6 +8,8 @@ public enum TokenWrapperState {
 	
 	ERROR,
 	
+	MAINTENANCE_REQUESTED,
+	
 	MAINTENANCE;
 
 }

@@ -291,6 +291,10 @@ div.progress {
 	background:#5cb85c;
 }
 
+.token-status-MAINTENANCE_REQUESTED {
+	background:#337ab79e;
+}
+
 .token-status-MAINTENANCE {
 	background:#fbd544;
 }
