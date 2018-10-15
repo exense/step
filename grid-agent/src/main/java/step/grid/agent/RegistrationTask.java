@@ -33,8 +33,6 @@ public class RegistrationTask extends TimerTask {
 	
 	private final RegistrationClient client;
 	
-	private boolean interrupted;
-
 	public RegistrationTask(Agent agent, RegistrationClient client) {
 		super();
 		this.agent = agent;
@@ -43,23 +41,13 @@ public class RegistrationTask extends TimerTask {
 
 	@Override
 	public void run() {
-		if(!interrupted) {
-			try {		
-				RegistrationMessage message = new RegistrationMessage(new AgentRef(agent.getId(), agent.getAgentUrl(), Agent.AGENT_TYPE), agent.getTokens());
-				logger.debug("Sending registration message "+message.toString());
-				client.sendRegistrationMessage(message);
-			} catch (Exception e) {
-				logger.error("An unexpected error occurred while registering the adapter.",e);
-			}
+		try {		
+			RegistrationMessage message = new RegistrationMessage(new AgentRef(agent.getId(), agent.getAgentUrl(), Agent.AGENT_TYPE), agent.getTokens());
+			logger.debug("Sending registration message "+message.toString());
+			client.sendRegistrationMessage(message);
+		} catch (Exception e) {
+			logger.error("An unexpected error occurred while registering the adapter.",e);
 		}
-	}
-	
-	protected void interrupt() {
-		interrupted = true;
-	}
-	
-	protected void resume() {
-		interrupted = false;
 	}
 	
 	protected void unregister() {
