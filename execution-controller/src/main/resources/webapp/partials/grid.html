@@ -3,7 +3,7 @@
 		<uib-tab heading="Agents" select="onSelection('agents')">
 			<div ng-controller="AgentListCtrl" ng-if="$state=='agents'">
 				<div class="toolbar">
-					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox>
+					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox  tooltip-placement="bottom" uib-tooltip="Auto refresh">
 						<span class="glyphicon glyphicon-refresh" />
 					</button>
 				</div>
@@ -57,7 +57,7 @@
 		<uib-tab heading="Tokens" select="onSelection('tokens')">
 			<div ng-controller="TokenListCtrl" ng-if="$state=='tokens'">
 				<div class="toolbar">
-					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox>
+					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox tooltip-placement="bottom" uib-tooltip="Auto refresh">
 						<span class="glyphicon glyphicon-refresh" />
 					</button>
 				</div>
@@ -139,7 +139,7 @@
 		<uib-tab heading="Token Groups" select="onSelection('adapters')">
 			<div ng-controller="AdapterListCtrl" ng-if="$state=='adapters'">
 				<div class="toolbar">
-					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox>
+					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox tooltip-placement="bottom" uib-tooltip="Auto refresh">
 						<span class="glyphicon glyphicon-refresh" />
 					</button>
 				</div>
@@ -181,7 +181,7 @@
 		<uib-tab heading="Quota Manager" select="onSelection('quotamanager')">
 			<div ng-controller="QuotaManagerCtrl" ng-if="$state=='quotamanager'">
 				<div class="toolbar">
-					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox>
+					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox tooltip-placement="bottom" uib-tooltip="Auto refresh">
 						<span class="glyphicon glyphicon-refresh" />
 					</button>
 				</div>
