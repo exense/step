@@ -316,13 +316,14 @@ div.progress {
 
 .json-key-value {
 	margin-right:7px;
+	display: inline;
 	color:#555;
 }
 .json-key {
 	margin-right:2px;
 	font-size: smaller;
+	font-weight: lighter;
 }
 .json-value {
 	color:#555;
-	font-weight: bolder;
 }
