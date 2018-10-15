@@ -331,3 +331,9 @@ div.progress {
 .json-value {
 	color:#555;
 }
+
+.btn-default.active {
+	color: #fff;
+	background-color: #337ab7;
+	border-color: #275b88;
+}
