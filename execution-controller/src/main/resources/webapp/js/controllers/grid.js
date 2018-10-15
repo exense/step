@@ -18,9 +18,11 @@
  *******************************************************************************/
 angular.module('gridControllers', [ 'dataTable', 'step' ])
 
-.controller('GridCtrl', ['$scope', 'stateStorage',
-    function($scope, $stateStorage) {
+.controller('GridCtrl', ['$scope', 'stateStorage', 'AuthService',
+    function($scope, $stateStorage, AuthService) {
       $stateStorage.push($scope, 'grid');
+      
+      $scope.authService = AuthService;
       
       $scope.autorefresh = true;
 

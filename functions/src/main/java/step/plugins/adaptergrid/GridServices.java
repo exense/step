@@ -108,7 +108,7 @@ public class GridServices extends AbstractServices {
 	}
 	
 	@PUT
-	@Secured
+	@Secured(right="token-manage")
 	@Path("/agent/{id}/interrupt")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void interruptAgent(@PathParam("id") String agentId) {
@@ -120,7 +120,7 @@ public class GridServices extends AbstractServices {
 	}
 	
 	@PUT
-	@Secured
+	@Secured(right="token-manage")
 	@Path("/agent/{id}/resume")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void resumeAgent(@PathParam("id") String agentId) {
@@ -132,7 +132,7 @@ public class GridServices extends AbstractServices {
 	}
 	
 	@DELETE
-	@Secured
+	@Secured(right="token-manage")
 	@Path("/agent/{id}/tokens/errors")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void removeAgentTokenErrors(@PathParam("id") String agentId) {
@@ -151,7 +151,7 @@ public class GridServices extends AbstractServices {
 	}
 	
 	@DELETE
-	@Secured
+	@Secured(right="token-manage")
 	@Path("/token/{id}/error")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void removeTokenError(@PathParam("id") String tokenId) {
@@ -159,7 +159,7 @@ public class GridServices extends AbstractServices {
 	}
 	
 	@POST
-	@Secured
+	@Secured(right="token-manage")
 	@Path("/token/{id}/maintenance")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void startTokenMaintenance(@PathParam("id") String tokenId) {
@@ -167,7 +167,7 @@ public class GridServices extends AbstractServices {
 	}
 	
 	@DELETE
-	@Secured
+	@Secured(right="token-manage")
 	@Path("/token/{id}/maintenance")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void stopTokenMaintenance(@PathParam("id") String tokenId) {
