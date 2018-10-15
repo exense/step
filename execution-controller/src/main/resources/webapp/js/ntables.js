@@ -34,10 +34,14 @@ angular.module('tables', ['export','dataTable'])
   ctrl.dtColumns = [];
   
   ctrl.addColumn = function(column) {
-    var colDef = {
-        "name" : column.name,
-        "data": column.name
-      };
+    var colDef = {};
+
+    if (column.name) {
+      colDef['data'] = column.name;
+      colDef['name'] = column.name;
+    } else {
+      colDef['defaultContent'] = "";
+    }
     
     colDef.createdCell = function(td, cellData, rowData, row, col) {
       var rowScope;
@@ -71,7 +75,9 @@ angular.module('tables', ['export','dataTable'])
         });
         element.empty();
         element.append(content);
-        headerScopesTracker.track(headerScope);
+        if(headerScope) {
+          headerScopesTracker.track(headerScope);
+        }
       }
     }
     
@@ -87,9 +93,9 @@ angular.module('tables', ['export','dataTable'])
   return {
     scope : {
       uid: '=',
-      handle: '=',
-      data: '=',
-      collection: '=',
+      handle: '=?',
+      data: '=?',
+      collection: '=?',
       persistState: '='
     },
     transclude : {
@@ -217,7 +223,7 @@ angular.module('tables', ['export','dataTable'])
     },
     require: '^stTable',
     scope : {
-      'name':'@'
+      'name':'@?'
     },
     controller : function($scope) {
     },

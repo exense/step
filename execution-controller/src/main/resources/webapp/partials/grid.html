@@ -32,15 +32,15 @@
 									<grid-status-distribution token-group="row.tokensCapacity" />
 								</cell>
 							</st-column>
-							<st-column name="actions">
+							<st-column>
 								<header>Actions</header>
 								<second-header></second-header>
 								<cell>
 									<div class="btn-group btn-group-xs">
-										<button type="button" class="btn btn-default" ng-click="interrupt(row.id)" uib-tooltip="" >
+										<button type="button" class="btn btn-default" ng-click="interrupt(row.id)" uib-tooltip="Pause agent and enter maintenance mode" >
 											<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
 										</button>
-										<button type="button" class="btn btn-default" ng-click="resume(row.id)" uib-tooltip="">
+										<button type="button" class="btn btn-default" ng-click="resume(row.id)" uib-tooltip="Resume agent and exit maintenance mode">
 											<span class="glyphicon glyphicon-play" aria-hidden="true"></span>
 										</button>
 									</div>
