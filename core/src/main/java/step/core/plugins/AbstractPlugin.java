@@ -75,6 +75,10 @@ public abstract class AbstractPlugin implements PluginCallbacks {
 	@Override
 	public void unassociateThread(ExecutionContext context, Thread thread) {}
 	
+	public boolean validate(GlobalContext context) {
+		return true;
+	}
+
 	public WebPlugin getWebPlugin() {
 		return null;
 	}
@@ -89,5 +93,4 @@ public abstract class AbstractPlugin implements PluginCallbacks {
 		
 		context.getServiceRegistrationCallback().registerHandler(ctx);
 	}
-
 }

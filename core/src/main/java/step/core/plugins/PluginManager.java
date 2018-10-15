@@ -31,14 +31,16 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.GlobalContext;
+
 public class PluginManager implements InvocationHandler{
 	
 	private static Logger logger = LoggerFactory.getLogger(PluginManager.class);
 	
 	private List<AbstractPlugin> plugins = new CopyOnWriteArrayList<>();
 	
-	public void initialize() throws Exception {
-		loadAnnotatedPlugins();
+	public void initialize(GlobalContext context) throws Exception {
+		loadAnnotatedPlugins(context);
 	}
 	
 	public PluginCallbacks getProxy() {
@@ -49,12 +51,13 @@ public class PluginManager implements InvocationHandler{
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void loadAnnotatedPlugins() throws InstantiationException, IllegalAccessException  {
+	private void loadAnnotatedPlugins(GlobalContext context) throws InstantiationException, IllegalAccessException  {
 		Set<Class<?>> pluginClasses = new Reflections("step").getTypesAnnotatedWith(Plugin.class);
 		
 		for(Class<?> pluginClass:pluginClasses) {
 			AbstractPlugin plugin = newPluginInstance((Class<AbstractPlugin>) pluginClass);
-			register(plugin);
+			if(plugin.validate(context))
+				register(plugin);
 		}
 		
 		plugins.sort(new Comparator<AbstractPlugin>() {
