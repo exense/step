@@ -103,6 +103,42 @@ angular.module('reportNodes',['step','artefacts'])
   };
 })
 
+.directive('attachmentsPreview', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      attachments: '='
+    },
+    templateUrl: 'partials/reportnodes/attachmentsPreview.html',
+    controller: function($scope, $http) {
+
+    }
+  };
+})
+
+.directive('attachmentPreview', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      attachment: '='
+    },
+    templateUrl: 'partials/reportnodes/attachmentPreview.html',
+    controller: function($scope, $http) {
+      $scope.$watch("attachment",function(attachment) {
+
+      })
+      
+      $scope.isImage = function() {
+        return $scope.attachment.name.endsWith(".jpg") || $scope.attachment.name.endsWith(".png")
+      }
+      
+      $scope.isText = function() {
+        return $scope.attachment.name.endsWith(".log") || $scope.attachment.name.endsWith(".txt")
+      }
+    }
+  };
+})
+
 .directive('reportnodeStatus', function() {
   return {
     restrict: 'E',

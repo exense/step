@@ -38,6 +38,9 @@
 	<div ng-if="node.error">Error: <small><em>{{node.error.msg}}
 		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>	
 	</div>
+	<div>
+		<attachments-preview attachments="node.attachments" />
+	</div>
 	<div ng-if="isShowDetails">
 		<reportnode id="reportNodeId" show-artefact="false" />
 	</div>

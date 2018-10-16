@@ -337,3 +337,28 @@ div.progress {
 	background-color: #337ab7;
 	border-color: #275b88;
 }
+
+.attachments-preview {
+	margin: 5px;
+}
+
+.attachment-preview {
+	margin: 0px;
+}
+
+.attachment-preview-label {
+	overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.attachment-preview-icon {
+	margin-right: 5px;
+}
+
+
+.thumbnail {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 5px;
+    width: 150px;
+}
