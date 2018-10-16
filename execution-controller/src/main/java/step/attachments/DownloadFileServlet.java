@@ -42,6 +42,7 @@ public class DownloadFileServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String uuid = (String) request.getParameter("uuid");
 		String deleteAfterDownload = (String) request.getParameter("deleteAfterDownload");
+		String inline = (String) request.getParameter("inline");
 		
 		File downloadFile = attachmentManager.getFileById(uuid);
 				
@@ -49,16 +50,27 @@ public class DownloadFileServlet extends HttpServlet {
 
 		ServletContext context = getServletContext();
 		String mimeType = context.getMimeType(downloadFile.getName());
+		String contentDisposition;
 		if (mimeType == null) {
-			mimeType = "application/octet-stream";
+			if(downloadFile.getName().endsWith(".log")) {
+				mimeType = "text/plain";
+			} else {
+				mimeType = "application/octet-stream";
+			}
 		}
 
+		if(inline!=null && inline.equals("true")) {
+			contentDisposition = "inline";
+		} else {
+			contentDisposition = "attachment";
+		}
+		
 		response.setContentType(mimeType);
 		response.setContentLength((int) downloadFile.length());
 		
 		// forces download
 		String headerKey = "Content-Disposition";
-		String headerValue = String.format("attachment; filename=\"%s\"",
+		String headerValue = String.format(contentDisposition+"; filename=\"%s\"",
 				downloadFile.getName());
 		response.setHeader(headerKey, headerValue);
 		// obtains response's output stream
