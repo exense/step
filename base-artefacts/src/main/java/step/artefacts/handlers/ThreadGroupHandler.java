@@ -111,7 +111,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 										Thread.sleep(pacingWait);
 									} else {
 										// TODO: this is an application warning. Instead of being logged it should be shown to the end-user in a warning console
-										logger.warn("Pacing of TestGroup " + testArtefact.getId() + " in test " + context.getExecutionId() + " exceeded. " +
+										logger.debug("Pacing of TestGroup " + testArtefact.getId() + " in test " + context.getExecutionId() + " exceeded. " +
 												"The iteration lasted " + duration + "ms. The defined pacing was: " + testArtefact.getPacing() + "ms.");
 									}
 								}
