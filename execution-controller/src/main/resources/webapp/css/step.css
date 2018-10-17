@@ -361,4 +361,9 @@ div.progress {
     border-radius: 6px;
     padding: 5px;
     width: 150px;
+    transition: transform .2s;
+}
+
+img.thumbnail:hover {
+  transform: scale(3);
 }
