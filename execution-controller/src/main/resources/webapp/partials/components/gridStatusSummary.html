@@ -1,5 +1,5 @@
 <div class="progress"
-	uib-tooltip="Used: {{tokenGroup.countByState['IN_USE']}}, In error: {{tokenGroup.countByState['IN_USE']}}, Total: {{tokenGroup.capacity}} ">
+	uib-tooltip="Used: {{tokenGroup.countByState['IN_USE']}}, In error: {{tokenGroup.countByState['ERROR']}}, Total: {{tokenGroup.capacity}} ">
 	<div class="progress-bar token-status-IN_USE"
 		ng-attr-style="color:white; width:{{tokenGroup.countByState['IN_USE']/tokenGroup.capacity*100}}%;">
 		{{tokenGroup.countByState['IN_USE']}}</div>
