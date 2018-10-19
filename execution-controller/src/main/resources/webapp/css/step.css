@@ -339,16 +339,22 @@ div.progress {
 }
 
 .attachments-preview {
-	margin: 5px;
+	margin-top: 5px;
 }
 
 .attachment-preview {
-	margin: 0px;
+	display: inline-block;
+	margin-right: 5px;
+    margin-bottom: 5px;
+	border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 5px;
 }
 
 .attachment-preview-label {
-	overflow: hidden;
-    text-overflow: ellipsis;
+    text-decoration: none;
+    font-size: 85%;
+    color: #5f6368;
 }
 
 .attachment-preview-icon {
@@ -356,14 +362,13 @@ div.progress {
 }
 
 
-.thumbnail {
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 5px;
+.attachment-thumbnail {
+	transition: transform .2s;
+    transition-delay: 1s;
     width: 150px;
-    transition: transform .2s;
+    margin-bottom: 2px;
 }
 
-img.thumbnail:hover {
+img.attachment-thumbnail:hover {
   transform: scale(3);
 }

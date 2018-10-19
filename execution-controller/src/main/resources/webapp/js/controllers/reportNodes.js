@@ -135,6 +135,10 @@ angular.module('reportNodes',['step','artefacts'])
       $scope.isText = function() {
         return $scope.attachment.name.endsWith(".log") || $scope.attachment.name.endsWith(".txt")
       }
+      
+      $scope.showLabel = function() {
+        return $scope.isText() || !$scope.attachment.name.startsWith("screenshot.");
+      }
     }
   };
 })
