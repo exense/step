@@ -27,6 +27,8 @@ public class OutputMessage {
 	
 	private JsonObject payload;
 	
+	private AgentError agentError;
+
 	private String error;
 	
 	private List<Attachment> attachments;
@@ -35,6 +37,14 @@ public class OutputMessage {
 
 	public OutputMessage() {
 		super();
+	}
+	
+	public AgentError getAgentError() {
+		return agentError;
+	}
+	
+	public void setAgentError(AgentError agentError) {
+		this.agentError = agentError;
 	}
 
 	public JsonObject getPayload() {

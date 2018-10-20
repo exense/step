@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.grid.filemanager.FileProviderException;
 import step.grid.io.InputMessage;
 
 public class ApplicationContextBuilder {
@@ -62,7 +63,7 @@ public class ApplicationContextBuilder {
 		currentContexts.set(rootContext);
 	}
 	
-	public void pushContext(ApplicationContextFactory descriptor) {
+	public void pushContext(ApplicationContextFactory descriptor) throws ApplicationContextBuilderException {
 		synchronized(this) {
 			ApplicationContext parentContext = currentContexts.get();
 			if(parentContext==null) {
@@ -73,22 +74,30 @@ public class ApplicationContextBuilder {
 			ApplicationContext context;
 			if(!parentContext.childContexts.containsKey(contextKey)) {
 				context = new ApplicationContext();
-				buildClassLoader(descriptor, context, parentContext);
+				try {
+					buildClassLoader(descriptor, context, parentContext);
+				} catch (FileProviderException e) {
+					throw new ApplicationContextBuilderException(e);
+				}
 				parentContext.childContexts.put(contextKey, context);
 			} else {
 				context = parentContext.childContexts.get(contextKey);	
-				if(descriptor.requiresReload()) {
-					buildClassLoader(descriptor, context, parentContext);
-					context.contextObjects.clear();
-				} else {
-					
+				try {
+					if(descriptor.requiresReload()) {
+							buildClassLoader(descriptor, context, parentContext);
+						context.contextObjects.clear();
+					} else {
+						
+					}
+				} catch (FileProviderException e) {
+					throw new ApplicationContextBuilderException(e);
 				}
 			}
 			currentContexts.set(context);
 		}
 	}
 
-	private void buildClassLoader(ApplicationContextFactory descriptor, ApplicationContext context,	ApplicationContext parentContext) {
+	private void buildClassLoader(ApplicationContextFactory descriptor, ApplicationContext context,	ApplicationContext parentContext) throws FileProviderException {
 		ClassLoader classLoader = descriptor.buildClassLoader(parentContext.classLoader);
 		context.classLoader = classLoader;
 	}

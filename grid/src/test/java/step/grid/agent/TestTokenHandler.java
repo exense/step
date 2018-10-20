@@ -43,7 +43,9 @@ public class TestTokenHandler implements MessageHandler {
 			throw new Exception(message.getArgument().getString("exception"));
 		} else if(message.getArgument().containsKey("exceptionWithoutMessage")) {
 			throw new Exception();
-		}
+		} else if(message.getArgument().containsKey("error")) {
+			output.setError(message.getArgument().getString("error"));
+		} 
 		
 		return output;
 	}

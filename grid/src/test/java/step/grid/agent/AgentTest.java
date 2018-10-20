@@ -29,6 +29,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import step.grid.TokenWrapper;
+import step.grid.io.AgentErrorCode;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
@@ -55,19 +56,21 @@ public class AgentTest extends AbstractGridTest {
 		
 		TokenWrapper token = client.getTokenHandle(null, interests, true);
 		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 1000);
-		Assert.assertEquals("My Error", outputMessage.getError());
+		Assert.assertEquals(AgentErrorCode.UNEXPECTED, outputMessage.getAgentError().getErrorCode());
+		Assert.assertTrue(outputMessage.getAttachments().size()==1);
 	}
 	
+
 	@Test
-	public void testExceptionWithoutMessage() throws Exception {
+	public void testError() throws Exception {
 		Map<String, Interest> interests = new HashMap<>();
 		interests.put("att1", new Interest(Pattern.compile("val.*"), true));
 		
-		JsonObject o = Json.createObjectBuilder().add("exceptionWithoutMessage", "").build();
+		JsonObject o = Json.createObjectBuilder().add("error", "My Error").build();
 		
 		TokenWrapper token = client.getTokenHandle(null, interests, true);
 		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 1000);
-		Assert.assertEquals("Empty error message", outputMessage.getError());
+		Assert.assertEquals("My Error", outputMessage.getError());
 	}
 	
 	@Test
@@ -89,13 +92,13 @@ public class AgentTest extends AbstractGridTest {
 		TokenWrapper token = client.getTokenHandle(null, null, true);
 		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 100);
 		
-		Assert.assertEquals("Timeout while processing request. Request execution interrupted successfully.",outputMessage.getError());
+		Assert.assertEquals(AgentErrorCode.TIMEOUT_REQUEST_INTERRUPTED,outputMessage.getAgentError().getErrorCode());
 		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace_before_interruption.log"));
 		
 		
 		// check if the token has been returned to the pool. In this case the second call should return the same error
 		outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 10);
-		Assert.assertEquals("Timeout while processing request. Request execution interrupted successfully.",outputMessage.getError());
+		Assert.assertEquals(AgentErrorCode.TIMEOUT_REQUEST_INTERRUPTED,outputMessage.getAgentError().getErrorCode());
 	}
 	
 	@Test
@@ -105,7 +108,7 @@ public class AgentTest extends AbstractGridTest {
 		TokenWrapper token = client.getTokenHandle(null, null, true);
 		OutputMessage outputMessage = client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 100);
 		
-		Assert.assertEquals("Timeout while processing request. WARNING: Request execution couldn't be interrupted. Subsequent calls to that token may fail!",outputMessage.getError());
+		Assert.assertEquals(AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED,outputMessage.getAgentError().getErrorCode());
 		Assert.assertTrue(outputMessage.getAttachments().get(0).getName().equals("stacktrace_before_interruption.log"));
 
 		

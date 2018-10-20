@@ -18,7 +18,7 @@ import step.grid.filemanager.FileProvider.TransportableFile;
 public class FIleManagerTest {
 
 	@Test
-	public void test() throws IOException {
+	public void test() throws FileProviderException, IOException {
 		FileManagerServer server = new FileManagerServer();
 		
 		byte[] content = new byte[]{11};
@@ -41,7 +41,7 @@ public class FIleManagerTest {
 		try {
 			FileManagerClient client = new FileManagerClientImpl(tempDataFolder, new StreamingFileProvider() {
 				@Override
-				public File saveFileTo(String fileHandle, File file) throws IOException {
+				public File saveFileTo(String fileHandle, File file) throws FileProviderException {
 					remoteCallCounts.incrementAndGet();
 					return testFile;
 				}
@@ -98,7 +98,7 @@ public class FIleManagerTest {
 			
 			final FileManagerClient client = new FileManagerClientImpl(tempDataFolder, new StreamingFileProvider() {
 				@Override
-				public File saveFileTo(String fileHandle, File file) throws IOException {
+				public File saveFileTo(String fileHandle, File file) throws FileProviderException {
 					File testFile = new File(file+"/test");
 					remoteCallCounts.incrementAndGet();
 					return testFile;

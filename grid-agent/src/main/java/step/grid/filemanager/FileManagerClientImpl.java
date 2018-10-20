@@ -1,7 +1,6 @@
 package step.grid.filemanager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -87,16 +86,12 @@ public class FileManagerClientImpl implements FileManagerClient {
 		}
 	}	
 	
-	public File requestFile(String uid, long lastModified) {
-		try {
-			return requestFileVersion(uid, lastModified).getFile();
-		} catch (IOException e) {
-			throw new RuntimeException("Error while requesting file "+uid,e);
-		}
+	public File requestFile(String uid, long lastModified) throws FileProviderException {
+		return requestFileVersion(uid, lastModified).getFile();
 	}
 	
 	@Override
-	public FileVersion requestFileVersion(String uid, long lastModified) throws IOException {
+	public FileVersion requestFileVersion(String uid, long lastModified) throws FileProviderException {
 		FileVersion response = new FileVersion();
 		response.setFileId(uid);
 		
@@ -141,7 +136,7 @@ public class FileManagerClientImpl implements FileManagerClient {
 		return response;
 	}
 
-	private void requestFileAndUpdateCache(FileInfo fileInfo, String uid, long lastModified) throws IOException {
+	private void requestFileAndUpdateCache(FileInfo fileInfo, String uid, long lastModified) throws FileProviderException {
 		File file = requestControllerFile(uid, lastModified);
 		updateFileInfo(fileInfo, file, lastModified);
 	}
@@ -151,13 +146,13 @@ public class FileManagerClientImpl implements FileManagerClient {
 		fileInfo.lastModified = lastModified;
 	}
 	
-	private File requestControllerFile(String fileId, long lastModified) throws IOException {
+	private File requestControllerFile(String fileId, long lastModified) throws FileProviderException {
 		File container = createContainer(fileId, lastModified);		
 		File file = retrieveFile(fileId, container);
 		return file.getAbsoluteFile();	
 	}
 
-	private File retrieveFile(String fileId, File container) throws IOException {
+	private File retrieveFile(String fileId, File container) throws FileProviderException {
 		long t1 = System.currentTimeMillis();
 		File file = fileProvider.saveFileTo(fileId, container);
 		if(logger.isDebugEnabled()) {

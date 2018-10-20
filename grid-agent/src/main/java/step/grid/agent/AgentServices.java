@@ -21,7 +21,9 @@ package step.grid.agent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,6 +50,11 @@ import step.grid.agent.tokenpool.AgentTokenPool;
 import step.grid.agent.tokenpool.AgentTokenPool.InvalidTokenIdException;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.bootstrap.BootstrapManager;
+import step.grid.contextbuilder.ApplicationContextBuilderException;
+import step.grid.filemanager.ControllerCallTimeout;
+import step.grid.filemanager.FileProviderException;
+import step.grid.io.AgentError;
+import step.grid.io.AgentErrorCode;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.io.InputMessage;
@@ -106,6 +113,8 @@ public class AgentServices {
 							context.t = Thread.currentThread();
 							agent.getAgentTokenServices().getApplicationContextBuilder().resetContext();
 							return bootstrapManager.runBootstraped(tokenWrapper, message);
+						} catch(ApplicationContextBuilderException e) {
+							return handleContextBuilderError(message, e);
 						} catch (Exception e) {
 							return handleUnexpectedError(message, e);
 						} finally {			
@@ -129,20 +138,19 @@ public class AgentServices {
 					future.cancel(true);
 
 					if(!interruptionSucceeded) {
-						return newErrorOutput("Timeout while processing request. WARNING: Request execution couldn't be interrupted. "
-								+ "Subsequent calls to that token may fail!", attachments.toArray(new Attachment[0]));		
+						return newAgentErrorOutput(new AgentError(AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED), attachments.toArray(new Attachment[0]));		
 					} else {
-						return newErrorOutput("Timeout while processing request. Request execution interrupted successfully.", attachments.toArray(new Attachment[0]));			
+						return newAgentErrorOutput(new AgentError(AgentErrorCode.TIMEOUT_REQUEST_INTERRUPTED), attachments.toArray(new Attachment[0]));			
 					}	
 				}
 				//} else {
 				//	return newErrorOutput("Token " + tokenId + " already in use. The reason might be that a previous request timed out and couldn't be interrupted.");					
 				//}
 			} else {
-				return newErrorOutput("No token found with id "+tokenId);
+				return newAgentErrorOutput(new AgentError(AgentErrorCode.TOKEN_NOT_FOUND));
 			}
 		} catch(InvalidTokenIdException e) {
-			return newErrorOutput("No token found with id '" + tokenId + "'");
+			return newAgentErrorOutput(new AgentError(AgentErrorCode.TOKEN_NOT_FOUND));
 		} catch (Exception e) {
 			return handleUnexpectedError(message, e);
 		}
@@ -181,20 +189,40 @@ public class AgentServices {
 		tokenPool.closeTokenReservationSession(tokenId);
 	}
 
+	protected OutputMessage handleContextBuilderError(InputMessage inputMessage, ApplicationContextBuilderException e) {
+		Throwable cause = e.getCause();
+		AgentError error;
+		if(cause instanceof FileProviderException) {
+			FileProviderException fileProviderException = (FileProviderException) cause;
+			
+			Map<AgentErrorCode.Details, String> details = new HashMap<>();
+			details.put(AgentErrorCode.Details.FILE_HANDLE, fileProviderException.getFileHandle());
 
-	protected OutputMessage handleUnexpectedError(InputMessage inputMessage, Exception e) {
-		String message = e.getMessage();
-		if(message == null) {
-			message = "Empty error message";
+			Throwable fileProviderExceptionCause = fileProviderException.getCause();
+			if(fileProviderExceptionCause instanceof ControllerCallTimeout) {
+				error = new AgentError(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_TIMEOUT);
+				details.put(AgentErrorCode.Details.TIMEOUT, Long.toString(((ControllerCallTimeout) fileProviderExceptionCause).getTimeout()));
+				error.setErrorDetails(details);
+			} else {
+				error = new AgentError(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_ERROR, details);
+			}
+		} else {
+			error = new AgentError(AgentErrorCode.CONTEXT_BUILDER);
 		}
-		OutputMessage output = newErrorOutput(message.toString());
+		OutputMessage output = newAgentErrorOutput(error);
 		output.addAttachment(generateAttachmentForException(e));
 		return output;
 	}
 
-	protected OutputMessage newErrorOutput(String error, Attachment...attachments) {
+	protected OutputMessage handleUnexpectedError(InputMessage inputMessage, Exception e) {
+		OutputMessage output = newAgentErrorOutput(new AgentError(AgentErrorCode.UNEXPECTED));
+		output.addAttachment(generateAttachmentForException(e));
+		return output;
+	}
+
+	protected OutputMessage newAgentErrorOutput(AgentError error, Attachment...attachments) {
 		OutputMessage output = new OutputMessage();
-		output.setError(error);
+		output.setAgentError(error);
 		if(attachments!=null) {
 			for (Attachment attachment : attachments) {
 				output.addAttachment(attachment);			

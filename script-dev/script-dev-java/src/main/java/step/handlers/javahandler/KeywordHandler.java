@@ -100,11 +100,13 @@ public class KeywordHandler extends AbstractMessageHandler {
 				boolean throwException = script.onError(e);
 				if (throwException) {
 					Throwable cause = e.getCause();
+					Throwable reportedEx;
 					if(e instanceof InvocationTargetException && cause!=null && cause instanceof Exception) {
-						throw (Exception) cause;
+						reportedEx = cause;
 					} else {
-						throw e;
+						reportedEx = e;
 					}
+					output.setError(reportedEx.getMessage()!=null?reportedEx.getMessage():"Empty error message", reportedEx);
 				}
 			} finally {
 				// TODO error handling

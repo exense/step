@@ -21,8 +21,8 @@ package step.grid.agent;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketTimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 import step.commons.helpers.FileHelper;
+import step.grid.filemanager.ControllerCallException;
+import step.grid.filemanager.ControllerCallTimeout;
+import step.grid.filemanager.FileProviderException;
 import step.grid.filemanager.StreamingFileProvider;
 
 public class RegistrationClient implements StreamingFileProvider {
@@ -84,31 +87,55 @@ public class RegistrationClient implements StreamingFileProvider {
 	}
 
 	@Override
-	public File saveFileTo(String fileHandle, File container) throws IOException {
-		Response response = client.target(registrationServer + "/grid/file/"+fileHandle).request().property(ClientProperties.READ_TIMEOUT, callTimeout)
-				.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).get();
-		InputStream in = (InputStream) response.getEntity();
-		boolean isDirectory = response.getHeaderString("content-disposition").contains("dir");
-		Matcher m = Pattern.compile(".*filename = (.+?);.*").matcher(response.getHeaderString("content-disposition"));
-		if(m.find()) {
-			String filename = m.group(1);
-			
-			long t2 = System.currentTimeMillis();
-			File file = new File(container+"/"+filename);
-			if(isDirectory) {
-				FileHelper.extractFolder(in, file);
+	public File saveFileTo(String fileHandle, File container) throws FileProviderException {
+		try {
+			Response response;
+			try {
+				response = client.target(registrationServer + "/grid/file/"+fileHandle).request().property(ClientProperties.READ_TIMEOUT, callTimeout)
+						.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout).get();
+			} catch (ProcessingException e) {
+				Throwable cause = e.getCause();
+				if(cause!=null && cause instanceof SocketTimeoutException) {
+					String causeMessage =  cause.getMessage();
+					if(causeMessage.contains("Read timed out")) {
+						throw new ControllerCallTimeout(e, callTimeout);
+					} else {
+						throw new ControllerCallException(e);
+					}
+				} else {
+					throw new ControllerCallException(e);
+				}
+			}
+			if(response.getStatus()!=200) {
+				String error = response.readEntity(String.class);
+				throw new RuntimeException("Unexpected server error: "+error);
 			} else {
-				BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-				FileHelper.copy(in, bos, 1024);
-				bos.close();					
+				InputStream in = (InputStream) response.getEntity();
+				boolean isDirectory = response.getHeaderString("content-disposition").contains("dir");
+				Matcher m = Pattern.compile(".*filename = (.+?);.*").matcher(response.getHeaderString("content-disposition"));
+				if(m.find()) {
+					String filename = m.group(1);
+					
+					long t2 = System.currentTimeMillis();
+					File file = new File(container+"/"+filename);
+					if(isDirectory) {
+						FileHelper.extractFolder(in, file);
+					} else {
+						BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
+						FileHelper.copy(in, bos, 1024);
+						bos.close();					
+					}
+					if(logger.isDebugEnabled()) {
+						logger.debug("Uncompressed file "+ fileHandle +" in "+(System.currentTimeMillis()-t2)+"ms to "+file.getAbsoluteFile());
+					}
+					
+					return file;				
+				} else {
+					throw new RuntimeException("Unable to find filename in header: "+response.getHeaderString("content-disposition"));
+				}
 			}
-			if(logger.isDebugEnabled()) {
-				logger.debug("Uncompressed file "+ fileHandle +" in "+(System.currentTimeMillis()-t2)+"ms to "+file.getAbsoluteFile());
-			}
-			
-			return file;				
-		} else {
-			throw new RuntimeException("Unable to find filename in header: "+response.getHeaderString("content-disposition"));
+		} catch(Exception e) {
+			throw new FileProviderException(fileHandle, e);
 		}
 	}
 }

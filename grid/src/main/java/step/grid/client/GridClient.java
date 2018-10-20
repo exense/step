@@ -20,6 +20,7 @@ package step.grid.client;
 
 import java.io.Closeable;
 import java.io.File;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import javax.json.JsonObject;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -241,12 +243,24 @@ public class GridClient implements Closeable {
 		try {
 			try {
 				response = f.apply(builder);				
+			} catch(ProcessingException e) {
+				Throwable cause = e.getCause();
+				if(cause!=null && cause instanceof SocketTimeoutException) {
+					String causeMessage =  cause.getMessage();
+					if(causeMessage != null && causeMessage.contains("Read timed out")) {
+						throw new AgentCallTimeoutException(e);
+					} else {
+						throw new AgentCommunicationException(e);
+					}
+				} else {
+					throw new AgentCommunicationException(e);
+				}
 			} catch(Exception e) {
-				throw new AgentCommunicationException(agentRef, token, cmd, e);
+				throw new AgentCommunicationException(e);
 			}
 			if(!(response.getStatus()==204||response.getStatus()==200)) {
 				String error = response.readEntity(String.class);
-				throw new AgentCommunicationException(agentRef, token, cmd, error);
+				throw new AgentSideException(error);
 			} else {
 				if(mapper!=null) {
 					return mapper.apply(response);
@@ -265,33 +279,37 @@ public class GridClient implements Closeable {
 	
 		private static final long serialVersionUID = 4337204149079143691L;
 
-		AgentRef agentRef;
-		
-		Token token;
-		
-		String cmd;
-		
-		String errorMessage;
-
-		public AgentCommunicationException(AgentRef agentRef, Token token, String cmd, String errorMessage) {
-			super();
-			this.agentRef = agentRef;
-			this.token = token;
-			this.cmd = cmd;
-			this.errorMessage = errorMessage;
-		}
-		
-		public AgentCommunicationException(AgentRef agentRef, Token token, String cmd, Exception e) {
-			super(e);
-			this.errorMessage = e.getMessage();
-			this.agentRef = agentRef;
-			this.token = token;
-			this.cmd = cmd;
+		public AgentCommunicationException(String message, Throwable cause) {
+			super(message, cause);
 		}
 
-		@Override
-		public String getMessage() {
-			return "Error while calling agent "+agentRef+" to execute "+cmd+" on token "+token+": "+errorMessage;
+		public AgentCommunicationException(Throwable cause) {
+			super(cause);
+		}
+
+		public AgentCommunicationException(String message) {
+			super(message);
+		}
+	}
+	
+	@SuppressWarnings("serial")
+	public static class AgentCallTimeoutException extends AgentCommunicationException {
+
+		public AgentCallTimeoutException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		public AgentCallTimeoutException(Throwable cause) {
+			super(cause);
+		}
+		
+	}
+	
+	@SuppressWarnings("serial")
+	public static class AgentSideException extends AgentCommunicationException {
+
+		public AgentSideException(String message) {
+			super(message);
 		}
 	}
 
@@ -329,6 +347,10 @@ public class GridClient implements Closeable {
 
 	public String registerFile(File file) {
 		return fileService.registerFile(file);
+	}
+	
+	public File getRegisteredFile(String fileHandle) {
+		return fileService.getRegisteredFile(fileHandle);
 	}
 
 	@Override

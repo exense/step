@@ -1,6 +1,5 @@
 package step.grid.contextbuilder;
 
-import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
@@ -8,6 +7,7 @@ import java.util.List;
 import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerClient.FileVersion;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileProviderException;
 
 public class RemoteApplicationContextFactory extends ApplicationContextFactory {
 
@@ -27,21 +27,17 @@ public class RemoteApplicationContextFactory extends ApplicationContextFactory {
 	}
 
 	@Override
-	public boolean requiresReload() {
+	public boolean requiresReload() throws FileProviderException {
 		FileVersion localClassLoaderFolder = requestLatestClassPathFolder();
 		return localClassLoaderFolder.isModified();
 	}
 
-	private FileVersion requestLatestClassPathFolder() {
-		try {
-			return fileManager.requestFileVersion(remoteClassLoaderFolder.getFileId(), remoteClassLoaderFolder.getVersion());			
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+	private FileVersion requestLatestClassPathFolder() throws FileProviderException {
+		return fileManager.requestFileVersion(remoteClassLoaderFolder.getFileId(), remoteClassLoaderFolder.getVersion());			
 	}
 
 	@Override
-	public ClassLoader buildClassLoader(ClassLoader parentClassLoader) {
+	public ClassLoader buildClassLoader(ClassLoader parentClassLoader) throws FileProviderException {
 		FileVersion localClassLoaderFolder = requestLatestClassPathFolder();
 
 		List<URL> urls;

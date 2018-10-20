@@ -1,6 +1,5 @@
 package step.grid.agent.handler;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,6 +7,7 @@ import step.grid.agent.AgentTokenServices;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.filemanager.FileManagerClient.FileVersion;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileProviderException;
 import step.grid.io.InputMessage;
 
 public abstract class AbstractMessageHandler implements MessageHandler, AgentContextAware {
@@ -19,7 +19,7 @@ public abstract class AbstractMessageHandler implements MessageHandler, AgentCon
 		this.agentTokenServices = agentTokenServices;
 	}
 	
-	protected FileVersion retrieveFileVersion(String properyName, Map<String,String> properties) throws IOException {
+	protected FileVersion retrieveFileVersion(String properyName, Map<String,String> properties) throws FileProviderException {
 		FileVersionId fileVersionId = getFileVersionId(properyName, properties);
 		if(fileVersionId!=null) {
 			return agentTokenServices.getFileManagerClient().requestFileVersion(fileVersionId.getFileId(), fileVersionId.getVersion());			
