@@ -80,7 +80,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		try {
 			return gridClient.getTokenHandle(attributes, interests, createSession);
 		} catch (AgentCallTimeoutException e) {
-			throw new FunctionExecutionServiceException("Timeout while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties",e );
+			throw new FunctionExecutionServiceException("Timeout after "+e.getCallTimeout()+"ms while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties",e );
 		} catch (AgentSideException e) {
 			throw new FunctionExecutionServiceException("Unexepected error on the agent side while reserving the agent token: "+e.getMessage(),e);
 		} catch (AgentCommunicationException e) {
@@ -95,7 +95,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		try {
 			gridClient.returnTokenHandle(adapterToken);
 		} catch (AgentCallTimeoutException e) {
-			throw new FunctionExecutionServiceException("Timeout while releasing the agent token. You can increase the call timeout by setting 'grid.client.token.release.timeout.ms' in step.properties",e );
+			throw new FunctionExecutionServiceException("Timeout after "+e.getCallTimeout()+"ms while releasing the agent token. You can increase the call timeout by setting 'grid.client.token.release.timeout.ms' in step.properties",e );
 		} catch (AgentSideException e) {
 			throw new FunctionExecutionServiceException("Unexepected error on the agent side while releasing the agent token: "+e.getMessage(),e);
 		} catch (AgentCommunicationException e) {

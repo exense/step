@@ -73,6 +73,8 @@ public class GridClientImpl implements GridClient {
 	
 	private final TokenRegistry tokenRegistry;
 	
+	private final TokenLifecycleStrategy tokenLifecycleStrategy;
+	
 	private Client client;
 
 	public GridClientImpl(TokenRegistry tokenRegistry, GridFileService fileService) {
@@ -81,7 +83,13 @@ public class GridClientImpl implements GridClient {
 	}
 	
 	public GridClientImpl(GridClientConfiguration gridClientConfiguration, TokenRegistry tokenRegistry, GridFileService fileService) {
+		this(gridClientConfiguration, tokenRegistry, new DefaultTokenLifecycleStrategy(), fileService);
+	}
+	
+	public GridClientImpl(GridClientConfiguration gridClientConfiguration, TokenRegistry tokenRegistry, TokenLifecycleStrategy tokenLifecycleStrategy, GridFileService fileService) {
 		super();
+		
+		this.tokenLifecycleStrategy = tokenLifecycleStrategy;
 		
 		this.gridClientConfiguration = gridClientConfiguration;
 		this.tokenRegistry = tokenRegistry;
@@ -151,6 +159,7 @@ public class GridClientImpl implements GridClient {
 				reserveSession(tokenWrapper.getAgent(), tokenWrapper.getToken());			
 				tokenWrapper.setHasSession(true);				
 			} catch(AgentCommunicationException e) {
+				tokenLifecycleStrategy.afterTokenReservationError(getTokenLifecycleCallback(tokenWrapper), tokenWrapper, e);
 				logger.warn("Error while reserving session for token "+tokenWrapper.getID() +". Returning token to pool. "
 						+ "Subsequent call to this token may fail or leaks may appear on the agent side.", e);
 				returnTokenHandle(tokenWrapper);
@@ -168,7 +177,7 @@ public class GridClientImpl implements GridClient {
 				releaseSession(tokenWrapper.getAgent(),tokenWrapper.getToken());			
 			}			
 		} catch(Exception e) {
-			tokenRegistry.markTokenAsFailing(tokenWrapper.getID(),"Error while releasing token",e);
+			tokenLifecycleStrategy.afterTokenReleaseError(getTokenLifecycleCallback(tokenWrapper), tokenWrapper, e);
 			throw e;
 		} finally {
 			if(!tokenWrapper.getToken().getAgentid().equals(Grid.LOCAL_AGENT)) {
@@ -197,12 +206,17 @@ public class GridClientImpl implements GridClient {
 		} else {
 			try {
 				output = callAgent(agent, token, message);
+				tokenLifecycleStrategy.afterTokenCall(getTokenLifecycleCallback(tokenWrapper), tokenWrapper, output);
 			} catch(Exception e) {
-				tokenRegistry.markTokenAsFailing(tokenWrapper.getID(), "Error while calling agent ("+function+")", e);
+				tokenLifecycleStrategy.afterTokenCallError(getTokenLifecycleCallback(tokenWrapper), tokenWrapper, e);
 				throw e;
 			}
 		}
 		return output;
+	}
+
+	protected TokenLifecycleStrategyCallback getTokenLifecycleCallback(TokenWrapper tokenWrapper) {
+		return new TokenLifecycleStrategyCallback(tokenRegistry, tokenWrapper.getID());
 	}
 
 	private OutputMessage callLocalToken(Token token, InputMessage message) throws Exception {
@@ -217,38 +231,35 @@ public class GridClientImpl implements GridClient {
 
 	private void reserveSession(AgentRef agentRef, Token token) throws AgentCommunicationException {
 		call(agentRef, token, "/reserve", builder-> {
-			builder.property(ClientProperties.READ_TIMEOUT, gridClientConfiguration.getReserveSessionTimeout());
 			return builder.get();
-		});
+		}, gridClientConfiguration.getReserveSessionTimeout());
 	}
 	
 	private OutputMessage callAgent(AgentRef agentRef, Token token, InputMessage message) throws AgentCommunicationException {
 		return (OutputMessage) call(agentRef, token, "/process", builder->{
-			builder.property(ClientProperties.READ_TIMEOUT, gridClientConfiguration.getReadTimeoutOffset()+message.getCallTimeout());
 			Entity<InputMessage> entity = Entity.entity(message, MediaType.APPLICATION_JSON);
 			return builder.post(entity);
 		}, response-> {
 			return response.readEntity(OutputMessage.class);
-		});
+		}, gridClientConfiguration.getReadTimeoutOffset()+message.getCallTimeout());
 	}
 	
 	private void releaseSession(AgentRef agentRef, Token token) throws AgentCommunicationException {
 		call(agentRef, token, "/release", builder->{
-			builder.property(ClientProperties.READ_TIMEOUT, gridClientConfiguration.getReleaseSessionTimeout());
 			return builder.get();
-		});
+		}, gridClientConfiguration.getReleaseSessionTimeout());
 	}
 	
-	private void call(AgentRef agentRef, Token token, String cmd, Function<Builder, Response> f) throws AgentCommunicationException {
-		call(agentRef, token, cmd, f, null);
+	private void call(AgentRef agentRef, Token token, String cmd, Function<Builder, Response> f, int callTimeout) throws AgentCommunicationException {
+		call(agentRef, token, cmd, f, null, callTimeout);
 	}
 	
-	private Object call(AgentRef agentRef, Token token, String cmd, Function<Builder, Response> f, Function<Response, Object> mapper) throws AgentCommunicationException {
+	private Object call(AgentRef agentRef, Token token, String cmd, Function<Builder, Response> f, Function<Response, Object> mapper, int readTimeout) throws AgentCommunicationException {
 		String agentUrl = agentRef.getAgentUrl();
 		int connectionTimeout = gridClientConfiguration.getReadTimeoutOffset();
 
 		Builder builder =  client.target(agentUrl + "/token/" + token.getId() + cmd).request()
-				.property(ClientProperties.READ_TIMEOUT, gridClientConfiguration.getReadTimeoutOffset())
+				.property(ClientProperties.READ_TIMEOUT, readTimeout)
 				.property(ClientProperties.CONNECT_TIMEOUT, connectionTimeout);
 		
 		Response response = null;
@@ -260,7 +271,7 @@ public class GridClientImpl implements GridClient {
 				if(cause!=null && cause instanceof SocketTimeoutException) {
 					String causeMessage =  cause.getMessage();
 					if(causeMessage != null && causeMessage.contains("Read timed out")) {
-						throw new AgentCallTimeoutException(e);
+						throw new AgentCallTimeoutException(readTimeout, e);
 					} else {
 						throw new AgentCommunicationException(e);
 					}
@@ -307,12 +318,20 @@ public class GridClientImpl implements GridClient {
 	@SuppressWarnings("serial")
 	public static class AgentCallTimeoutException extends AgentCommunicationException {
 
-		public AgentCallTimeoutException(String message, Throwable cause) {
+		private final long callTimeout; 
+		
+		public AgentCallTimeoutException(long callTimeout, String message, Throwable cause) {
 			super(message, cause);
+			this.callTimeout = callTimeout;
 		}
 
-		public AgentCallTimeoutException(Throwable cause) {
+		public AgentCallTimeoutException(long callTimeout, Throwable cause) {
 			super(cause);
+			this.callTimeout = callTimeout;
+		}
+
+		public long getCallTimeout() {
+			return callTimeout;
 		}
 		
 	}

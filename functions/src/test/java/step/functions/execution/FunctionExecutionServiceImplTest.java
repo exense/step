@@ -72,7 +72,7 @@ public class FunctionExecutionServiceImplTest {
 	
 	@Test
 	public void testReserveTimeoutError() {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, new AgentCallTimeoutException("Reserve error", null), null);
+		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, new AgentCallTimeoutException(functionCallTimeout, "Reserve error", null), null);
 		
 		FunctionExecutionServiceException e = null;
 		try {
@@ -81,7 +81,7 @@ public class FunctionExecutionServiceImplTest {
 			e = e1;
 		}
 		Assert.assertNotNull(e);
-		Assert.assertEquals("Timeout while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties", e.getMessage());
+		Assert.assertEquals("Timeout after "+functionCallTimeout+"ms while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties", e.getMessage());
 	}
 	
 	@Test
@@ -101,7 +101,7 @@ public class FunctionExecutionServiceImplTest {
 	
 	@Test
 	public void testReleaseTimeoutError() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCallTimeoutException("Release error", null));
+		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCallTimeoutException(functionCallTimeout, "Release error", null));
 		
 		FunctionExecutionServiceException e = null;
 		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true);
@@ -111,7 +111,7 @@ public class FunctionExecutionServiceImplTest {
 			e = e1;
 		}
 		Assert.assertNotNull(e);
-		Assert.assertEquals("Timeout while releasing the agent token. You can increase the call timeout by setting 'grid.client.token.release.timeout.ms' in step.properties", e.getMessage());
+		Assert.assertEquals("Timeout after "+functionCallTimeout+"ms while releasing the agent token. You can increase the call timeout by setting 'grid.client.token.release.timeout.ms' in step.properties", e.getMessage());
 	}
 	
 	@Test
@@ -125,7 +125,7 @@ public class FunctionExecutionServiceImplTest {
 	
 	@Test
 	public void testCallTimeout() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new AgentCallTimeoutException("Call timeout", null), null, null);
+		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new AgentCallTimeoutException(functionCallTimeout, "Call timeout", null), null, null);
 		
 		Output output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);

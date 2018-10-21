@@ -18,6 +18,9 @@
  *******************************************************************************/
 package step.plugins.adaptergrid;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +37,7 @@ import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.accessor.FunctionCRUDAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.editors.FunctionEditorRegistry;
+import step.functions.execution.ConfigurableTokenLifecycleStrategy;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.manager.FunctionManager;
@@ -45,6 +49,8 @@ import step.grid.Grid;
 import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.GridClientImpl;
+import step.grid.client.TokenLifecycleStrategy;
+import step.grid.io.AgentErrorCode;
 
 @Plugin
 public class GridPlugin extends AbstractPlugin {
@@ -73,8 +79,10 @@ public class GridPlugin extends AbstractPlugin {
 		grid = new Grid(gridPort, tokenTTL);
 		grid.start();
 		
+		TokenLifecycleStrategy tokenLifecycleStrategy = getTokenLifecycleStrategy(configuration);
+		
 		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration);
-		client = new GridClientImpl(gridClientConfiguration, grid, grid);
+		client = new GridClientImpl(gridClientConfiguration, grid, tokenLifecycleStrategy, grid);
 
 		editorRegistry = new FunctionEditorRegistry();
 		functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(context.getAttachmentManager()), grid);
@@ -99,6 +107,15 @@ public class GridPlugin extends AbstractPlugin {
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
 		context.getServiceRegistrationCallback().registerService(FunctionServices.class);
+	}
+
+	protected ConfigurableTokenLifecycleStrategy getTokenLifecycleStrategy(Configuration configuration) {
+		return new ConfigurableTokenLifecycleStrategy(
+				configuration.getPropertyAsBoolean("grid.client.token.lifecycle.remove.on.tokenreleaseerror", true),
+				configuration.getPropertyAsBoolean("grid.client.token.lifecycle.remove.on.tokenreservationerror", true),
+				configuration.getPropertyAsBoolean("grid.client.token.lifecycle.remove.on.tokencallerror", true),
+				configuration.getPropertyAsBoolean("grid.client.token.lifecycle.remove.on.agenterror", true),
+				Arrays.asList(configuration.getProperty("grid.client.token.lifecycle.remove.on.agenterrors", AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED.toString()).split(",")).stream().map(v->AgentErrorCode.valueOf(v)).collect(Collectors.toSet()));
 	}
 
 	protected GridClientConfiguration buildGridClientConfiguration(Configuration configuration) {
