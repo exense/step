@@ -12,7 +12,12 @@ public class MyKeywordLibrary extends AbstractKeyword {
 	
 	@Keyword
 	public void MyErrorKeyword() throws Exception {
-		throw new Exception("My Error");
+		output.setError("My error");
+	}
+	
+	@Keyword
+	public void MyExceptionKeyword() throws Exception {
+		throw new Exception("My exception");
 	}
 	
 	@Keyword

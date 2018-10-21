@@ -38,6 +38,21 @@ public class KeywordHandler extends AbstractMessageHandler {
 	public static final String KEYWORD_CLASSES = "$keywordClasses";
 	
 	private static final Logger logger = LoggerFactory.getLogger(KeywordHandler.class);
+	
+	private boolean throwExceptionOnError = false;
+
+	public KeywordHandler(boolean throwExceptionOnError) {
+		super();
+		this.throwExceptionOnError = throwExceptionOnError;
+	}
+
+	public boolean isThrowExceptionOnError() {
+		return throwExceptionOnError;
+	}
+
+	public void setThrowExceptionOnError(boolean throwExceptionOnError) {
+		this.throwExceptionOnError = throwExceptionOnError;
+	}
 
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
@@ -101,12 +116,16 @@ public class KeywordHandler extends AbstractMessageHandler {
 				if (throwException) {
 					Throwable cause = e.getCause();
 					Throwable reportedEx;
-					if(e instanceof InvocationTargetException && cause!=null && cause instanceof Exception) {
+					if(e instanceof InvocationTargetException && cause!=null && cause instanceof Throwable) {
 						reportedEx = cause;
 					} else {
 						reportedEx = e;
 					}
 					output.setError(reportedEx.getMessage()!=null?reportedEx.getMessage():"Empty error message", reportedEx);
+					if(throwExceptionOnError) {
+						OutputMessage outputMessage = output.build();
+						throw new KeywordException(output.build(), outputMessage.getError(), reportedEx);
+					}
 				}
 			} finally {
 				// TODO error handling
@@ -115,6 +134,11 @@ public class KeywordHandler extends AbstractMessageHandler {
 			output.add("Info:", "The class '" + clazz.getName() + "' doesn't extend '" + AbstractKeyword.class.getName()
 					+ "'. Extend this class to get input parameters from STEP and return output.");
 		}
-		return output.build();
+		OutputMessage outputMessage = output.build();
+		if(throwExceptionOnError && outputMessage.getError() != null) {
+			throw new KeywordException(outputMessage, outputMessage.getError());
+		} else {
+			return outputMessage;
+		}
 	}
 }

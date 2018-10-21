@@ -49,7 +49,7 @@ public class KeywordRunner {
 		
 		List<Class<?>> functionClasses;
 		
-		public ExecutionContext(List<Class<?>> functionClasses, Map<String, String> properties) {
+		public ExecutionContext(List<Class<?>> functionClasses, Map<String, String> properties, boolean throwExceptionOnError) {
 			super();
 			this.functionClasses = functionClasses;
 			token = new AgentTokenWrapper();
@@ -61,10 +61,14 @@ public class KeywordRunner {
 			AgentTokenServices tokenServices = new AgentTokenServices(null);
 			tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
 			token.setServices(tokenServices);
-			handler = new KeywordHandler();
+			handler = new KeywordHandler(throwExceptionOnError);
 			handler.init(tokenServices);
 		} 
 		
+		public void setThrowExceptionOnError(boolean throwExceptionOnError) {
+			handler.setThrowExceptionOnError(throwExceptionOnError);
+		}
+
 		public OutputMessage run(String function, String argument, Map<String, String> properties) throws Exception {
 			return run(function, read(argument), properties);
 		}
@@ -124,7 +128,7 @@ public class KeywordRunner {
 		if(keywordClass.length==0) {
 			throw new RuntimeException("Please specify at leat one class containing the keyword definitions");
 		}
-		return new ExecutionContext(Arrays.asList(keywordClass), properties);
+		return new ExecutionContext(Arrays.asList(keywordClass), properties, true);
 	}
 	
 }

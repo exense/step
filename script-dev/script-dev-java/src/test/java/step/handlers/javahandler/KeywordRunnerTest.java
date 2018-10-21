@@ -44,25 +44,74 @@ public class KeywordRunnerTest {
 		Exception exception = null;
 		ExecutionContext runner = KeywordRunner.getExecutionContext(MyKeywordLibrary.class);
 		try {
-			OutputMessage output = runner.run("MyErrorKeyword");
+			runner.run("MyErrorKeyword");
 		} catch(Exception e) {
 			exception = e;
 		}
-		Assert.assertEquals("My Error",exception.getMessage());
+		Assert.assertEquals("My error",exception.getMessage());
 	}
 	
+	@Test
+	public void testException() throws Exception {
+		Exception exception = null;
+		ExecutionContext runner = KeywordRunner.getExecutionContext(MyKeywordLibrary.class);
+		try {
+			runner.run("MyExceptionKeyword");
+		} catch(Exception e) {
+			exception = e;
+		}
+		Assert.assertEquals("My exception",exception.getMessage());
+		Assert.assertTrue(exception instanceof KeywordException);
+		// the exception thrown by the keyword is attached as cause
+		Assert.assertNotNull(exception.getCause());
+	}
+
 	@Test
 	public void testErrorKeywordWithThrowable() throws Exception {
 		Exception exception = null;
 		ExecutionContext runner = KeywordRunner.getExecutionContext(MyKeywordLibrary.class);
 		try {
-			OutputMessage output = runner.run("MyErrorKeywordWithThrowable");
+			runner.run("MyErrorKeywordWithThrowable");
 		} catch(Exception e) {
 			exception = e;
 		}
-		// In this case the throwable thrown in the keyword is attached as Cause of the exception
-		// The reason is that the current API of AbstractMessageHandler doesn't throws Throwable but Exception
-		Assert.assertEquals("My throwable",exception.getCause().getMessage());
+		Assert.assertEquals("My throwable",exception.getMessage());
+	}
+	
+	@Test
+	public void testRunnerDoesntThrowExceptionOnError() throws Exception {
+		Exception exception = null;
+		ExecutionContext runner = KeywordRunner.getExecutionContext(MyKeywordLibrary.class);
+		// we're testing here the following flag. In that case no exception should be thrown in case of an error
+		runner.setThrowExceptionOnError(false);
+		
+		OutputMessage output = null;
+		try {
+			output = runner.run("MyErrorKeyword");
+		} catch(Exception e) {
+			exception = e;
+		}
+		Assert.assertNotNull(output);
+		Assert.assertEquals("My error",output.getError());
+		Assert.assertNull(exception);
+	}
+	
+	@Test
+	public void testRunnerDoesntThrowExceptionOnException() throws Exception {
+		Exception exception = null;
+		ExecutionContext runner = KeywordRunner.getExecutionContext(MyKeywordLibrary.class);
+		// we're testing here the following flag. In that case exceptions thrown in the keyword should be reported as error
+		runner.setThrowExceptionOnError(false);
+		
+		OutputMessage output = null;
+		try {
+			output = runner.run("MyExceptionKeyword");
+		} catch(Exception e) {
+			exception = e;
+		}
+		Assert.assertNotNull(output);
+		Assert.assertEquals("My exception",output.getError());
+		Assert.assertNull(exception);
 	}
 	
 	@Test
@@ -70,8 +119,7 @@ public class KeywordRunnerTest {
 		Exception exception = null;
 		ExecutionContext runner = KeywordRunner.getExecutionContext(MyKeywordLibrary.class);
 		try {
-			OutputMessage output = runner.run("UnexistingKeyword");
-			
+			runner.run("UnexistingKeyword");
 		} catch(Exception e) {
 			exception = e;
 		}
@@ -94,8 +142,7 @@ public class KeywordRunnerTest {
 		Exception exception = null;
 		ExecutionContext runner = KeywordRunner.getExecutionContext(MyEmptyKeywordLibrary.class);
 		try {
-			OutputMessage output = runner.run("MyKeyword");
-			
+			runner.run("MyKeyword");
 		} catch(Exception e) {
 			exception = e;
 		}
