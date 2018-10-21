@@ -52,9 +52,10 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.variables.VariableType;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.manager.FunctionManager;
 import step.grid.TokenWrapper;
-import step.grid.client.GridClient.AgentCommunicationException;
+import step.grid.client.GridClientImpl.AgentCommunicationException;
 import step.planbuilder.FunctionPlanBuilder;
 import step.plugins.parametermanager.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
@@ -93,7 +94,7 @@ public class InteractiveServices extends AbstractServices {
 					if((session.lasttouch+sessionTimeout)<time) {
 						try {
 							closeSession(session);
-						} catch (AgentCommunicationException e) {
+						} catch (FunctionExecutionServiceException e) {
 							
 						}
 						sessions.remove(sessionId);
@@ -138,14 +139,14 @@ public class InteractiveServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}/stop")
 	@Secured(right="interactive")
-	public void stop(@PathParam("id") String sessionId) throws AgentCommunicationException {
+	public void stop(@PathParam("id") String sessionId) throws FunctionExecutionServiceException {
 		InteractiveSession session = getAndTouchSession(sessionId);
 		if(session!=null) {
 			closeSession(session);			
 		}
 	}
 
-	private void closeSession(InteractiveSession session) throws AgentCommunicationException {
+	private void closeSession(InteractiveSession session) throws FunctionExecutionServiceException {
 		TokenWrapper token = session.functionGroupContext.getToken();
 		if(token!=null) {
 			FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);

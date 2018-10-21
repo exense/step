@@ -24,7 +24,7 @@ import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.client.GridClient;
+import step.grid.client.GridClientImpl;
 
 public class FunctionRunner {
 
@@ -43,7 +43,7 @@ public class FunctionRunner {
 				token.setProperties(properties);
 			}
 			Grid grid = new Grid(0);
-			GridClient client = new GridClient(grid, grid);
+			GridClientImpl client = new GridClientImpl(grid, grid);
 			
 			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new AttachmentManager(configuration)), grid);
 			functionTypeRegistry.registerFunctionType(functionType);

@@ -41,6 +41,10 @@ public class KeywordHandler extends AbstractMessageHandler {
 	
 	private boolean throwExceptionOnError = false;
 
+	public KeywordHandler() {
+		super();
+	}
+
 	public KeywordHandler(boolean throwExceptionOnError) {
 		super();
 		this.throwExceptionOnError = throwExceptionOnError;

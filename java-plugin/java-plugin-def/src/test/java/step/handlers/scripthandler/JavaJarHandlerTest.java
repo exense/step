@@ -40,14 +40,14 @@ public class JavaJarHandlerTest {
 	public void testJarWithoutKeywords() {
 		GeneralScriptFunction f = buildTestFunction("dummy","java-plugin-handler.jar");
 		Output output = run(f, "{\"key1\":\"val1\"}");
-		Assert.assertEquals("Unexpected error while calling function: java.lang.Exception Unable to find method annoted by 'step.handlers.javahandler.Keyword' with name=='dummy'",output.getError());
+		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Unable to find method annoted by 'step.handlers.javahandler.Keyword' with name=='dummy'",output.getError());
 	}
 	
 	@Test 
 	public void testJarWithMatchingKeyword() {
 		GeneralScriptFunction f = buildTestFunction("MyKeywordNotExisting","java-plugin-handler-test.jar");
 		Output output = run(f, "{}");
-		Assert.assertEquals("Unexpected error while calling function: java.lang.Exception Unable to find method annoted by 'step.handlers.javahandler.Keyword' with name=='MyKeywordNotExisting'",output.getError());
+		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Unable to find method annoted by 'step.handlers.javahandler.Keyword' with name=='MyKeywordNotExisting'",output.getError());
 	}
 	
 	@Test 

@@ -38,13 +38,13 @@ import step.functions.Output;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.routing.FunctionRouter;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.AgentRef;
 import step.grid.Token;
 import step.grid.TokenWrapper;
-import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.tokenpool.Interest;
 
 public class CallFunctionHandlerTest {
@@ -104,13 +104,13 @@ public class CallFunctionHandlerTest {
 		FunctionExecutionService functionExecutionService = new FunctionExecutionService() {
 			
 			@Override
-			public void returnTokenHandle(TokenWrapper adapterToken) throws AgentCommunicationException {
+			public void returnTokenHandle(TokenWrapper adapterToken) throws FunctionExecutionServiceException {
 				
 			}
 			
 			@Override
 			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession) throws AgentCommunicationException {
+					boolean createSession) throws FunctionExecutionServiceException {
 				return token;
 			}
 			

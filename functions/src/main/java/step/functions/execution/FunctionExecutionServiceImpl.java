@@ -37,10 +37,10 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
+import step.grid.client.GridClientImpl.AgentCallTimeoutException;
+import step.grid.client.GridClientImpl.AgentCommunicationException;
+import step.grid.client.GridClientImpl.AgentSideException;
 import step.grid.client.GridClient;
-import step.grid.client.GridClient.AgentCallTimeoutException;
-import step.grid.client.GridClient.AgentCommunicationException;
-import step.grid.client.GridClient.AgentSideException;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.AgentError;
 import step.grid.io.AgentErrorCode;
@@ -76,14 +76,31 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	}
 
 	@Override
-	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession) throws AgentCommunicationException {
-		return gridClient.getTokenHandle(attributes, interests, createSession);
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession) throws FunctionExecutionServiceException {
+		try {
+			return gridClient.getTokenHandle(attributes, interests, createSession);
+		} catch (AgentCallTimeoutException e) {
+			throw new FunctionExecutionServiceException("Timeout while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties",e );
+		} catch (AgentSideException e) {
+			throw new FunctionExecutionServiceException("Unexepected error on the agent side while reserving the agent token: "+e.getMessage(),e);
+		} catch (AgentCommunicationException e) {
+			throw new FunctionExecutionServiceException("Communication error between the controller and the agent while reserving the agent token",e);
+		} 
 	}
 
 	@Override
-	public void returnTokenHandle(TokenWrapper adapterToken) throws AgentCommunicationException {
+	public void returnTokenHandle(TokenWrapper adapterToken) throws FunctionExecutionServiceException {
 		adapterToken.setCurrentOwner(null);
-		gridClient.returnTokenHandle(adapterToken);
+		
+		try {
+			gridClient.returnTokenHandle(adapterToken);
+		} catch (AgentCallTimeoutException e) {
+			throw new FunctionExecutionServiceException("Timeout while releasing the agent token. You can increase the call timeout by setting 'grid.client.token.release.timeout.ms' in step.properties",e );
+		} catch (AgentSideException e) {
+			throw new FunctionExecutionServiceException("Unexepected error on the agent side while releasing the agent token: "+e.getMessage(),e);
+		} catch (AgentCommunicationException e) {
+			throw new FunctionExecutionServiceException("Communication error between the controller and the agent while releasing the agent token",e);
+		} 
 	}
 	
 	@Override
@@ -173,11 +190,11 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		return output;
 	}
 
-	public static void attachExceptionToOutput(Output output, Exception e) {
+	private void attachExceptionToOutput(Output output, Exception e) {
 		attachExceptionToOutput(output, "Unexpected error while calling keyword: " + e.getClass().getName() + " " + e.getMessage(), e);
 	}
 	
-	public static void attachExceptionToOutput(Output output, String message, Exception e) {
+	private void attachExceptionToOutput(Output output, String message, Exception e) {
 		output.setError(message);
 		Attachment attachment = AttachmentHelper.generateAttachmentForException(e);
 		List<Attachment> attachments = output.getAttachments();

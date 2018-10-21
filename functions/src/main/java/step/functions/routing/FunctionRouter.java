@@ -11,10 +11,10 @@ import step.common.managedoperations.OperationManager;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
-import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.tokenpool.Interest;
 
 public class FunctionRouter {
@@ -32,7 +32,7 @@ public class FunctionRouter {
 		this.tokenSelectorHelper = new TokenSelectorHelper(dynamicJsonObjectResolver);
 	}
 
-	public TokenWrapper selectToken(CallFunction callFunction, Function function, FunctionGroupContext functionGroupContext, Map<String, Object> bindings) throws AgentCommunicationException {
+	public TokenWrapper selectToken(CallFunction callFunction, Function function, FunctionGroupContext functionGroupContext, Map<String, Object> bindings) throws FunctionExecutionServiceException {
 		TokenWrapper token;
 		if(function.requiresLocalExecution()) {
 			// The function requires a local execution => get a local token
@@ -58,7 +58,7 @@ public class FunctionRouter {
 		return token;
 	}
 
-	private TokenWrapper selectToken(Map<String, Interest> selectionCriteria, boolean createSession) throws AgentCommunicationException {		
+	private TokenWrapper selectToken(Map<String, Interest> selectionCriteria, boolean createSession) throws FunctionExecutionServiceException {		
 		Map<String, String> pretenderAttributes = new HashMap<>();
 		
 		TokenWrapper token;

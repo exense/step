@@ -41,11 +41,11 @@ import step.functions.Output;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
-import step.grid.client.GridClient.AgentCommunicationException;
 import step.grid.tokenpool.Interest;
 
 @Path("/functions")
@@ -165,7 +165,7 @@ public class FunctionServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/select")
 	@Secured(right="kw-execute")
-	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter) throws AgentCommunicationException {
+	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter) throws FunctionExecutionServiceException {
 		return functionExecutionService.getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession);
 	}
 
@@ -173,7 +173,7 @@ public class FunctionServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/return")
 	@Secured(right="kw-execute")
-	public void returnTokenHandle(TokenWrapper token) throws AgentCommunicationException {
+	public void returnTokenHandle(TokenWrapper token) throws FunctionExecutionServiceException {
 		functionExecutionService.returnTokenHandle(token);
 	}
 	

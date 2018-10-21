@@ -43,6 +43,8 @@ import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
 import step.grid.client.GridClient;
+import step.grid.client.GridClientConfiguration;
+import step.grid.client.GridClientImpl;
 
 @Plugin
 public class GridPlugin extends AbstractPlugin {
@@ -63,14 +65,16 @@ public class GridPlugin extends AbstractPlugin {
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
+		Configuration configuration = context.getConfiguration();
 		
-		Integer gridPort = Configuration.getInstance().getPropertyAsInteger("grid.port",8081);
-		Integer tokenTTL = Configuration.getInstance().getPropertyAsInteger("grid.ttl",60000);
+		Integer gridPort = configuration.getPropertyAsInteger("grid.port",8081);
+		Integer tokenTTL = configuration.getPropertyAsInteger("grid.ttl",60000);
 		
 		grid = new Grid(gridPort, tokenTTL);
 		grid.start();
 		
-		client = new GridClient(grid, grid);
+		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration);
+		client = new GridClientImpl(gridClientConfiguration, grid, grid);
 
 		editorRegistry = new FunctionEditorRegistry();
 		functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(context.getAttachmentManager()), grid);
@@ -95,6 +99,16 @@ public class GridPlugin extends AbstractPlugin {
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
 		context.getServiceRegistrationCallback().registerService(FunctionServices.class);
+	}
+
+	protected GridClientConfiguration buildGridClientConfiguration(Configuration configuration) {
+		GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
+		gridClientConfiguration.setNoMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.nomatch.timeout.ms", gridClientConfiguration.getNoMatchExistsTimeout()));
+		gridClientConfiguration.setMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.matchexist.timeout.ms", gridClientConfiguration.getMatchExistsTimeout()));
+		gridClientConfiguration.setReadTimeoutOffset(configuration.getPropertyAsInteger("grid.client.token.call.readtimeout.offset.ms", gridClientConfiguration.getReadTimeoutOffset()));
+		gridClientConfiguration.setReserveSessionTimeout(configuration.getPropertyAsInteger("grid.client.token.reserve.timeout.ms", gridClientConfiguration.getReserveSessionTimeout()));
+		gridClientConfiguration.setReleaseSessionTimeout(configuration.getPropertyAsInteger("grid.client.token.release.timeout.ms", gridClientConfiguration.getReleaseSessionTimeout()));
+		return gridClientConfiguration;
 	}
 
 	@Override

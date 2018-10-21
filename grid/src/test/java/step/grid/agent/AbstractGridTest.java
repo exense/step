@@ -29,7 +29,7 @@ import org.junit.Before;
 
 import step.grid.Grid;
 import step.grid.agent.conf.AgentConf;
-import step.grid.client.GridClient;
+import step.grid.client.GridClientImpl;
 
 public abstract class AbstractGridTest {
 
@@ -37,7 +37,7 @@ public abstract class AbstractGridTest {
 	
 	protected Grid grid;
 	
-	protected GridClient client;
+	protected GridClientImpl client;
 	
 	int nTokens = 1;
 
@@ -61,7 +61,7 @@ public abstract class AbstractGridTest {
 		agent.addTokens(nTokens, attributes, null, null);
 		agent.start();
 
-		client = new GridClient(grid, grid);
+		client = new GridClientImpl(grid, grid);
 	}
 	
 	protected void addToken(int count, Map<String, String> attributes) {
