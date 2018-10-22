@@ -90,8 +90,6 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 	@Override
 	public void returnTokenHandle(TokenWrapper adapterToken) throws FunctionExecutionServiceException {
-		adapterToken.setCurrentOwner(null);
-		
 		try {
 			gridClient.returnTokenHandle(adapterToken);
 		} catch (AgentCallTimeoutException e) {

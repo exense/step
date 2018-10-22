@@ -18,20 +18,30 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import javax.json.Json;
+
+import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import junit.framework.Assert;
 import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
+import step.attachments.AttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
+import step.core.execution.model.ExecutionMode;
+import step.datapool.DataSetHandle;
 import step.functions.Function;
 import step.functions.Input;
 import step.functions.Output;
@@ -45,20 +55,271 @@ import step.functions.type.FunctionTypeRegistry;
 import step.grid.AgentRef;
 import step.grid.Token;
 import step.grid.TokenWrapper;
+import step.grid.io.Attachment;
+import step.grid.io.Measure;
 import step.grid.tokenpool.Interest;
 
 public class CallFunctionHandlerTest {
 	
+	private static final ObjectId FUNCTION_ID_ERROR = new ObjectId();
+	private static final ObjectId FUNCTION_ID_SUCCESS = new ObjectId();
+
 	@Test
 	public void test() {
-		ExecutionContext executionContext = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext executionContext = buildExecutionContext();
+		
+		Function function = newFunction(FUNCTION_ID_SUCCESS);
+		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		
+		CallFunctionHandler handler = new CallFunctionHandler();
+		handler.init(executionContext);
+		
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunctionId(function.getId().toString());
+		
+		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
 
+		Assert.assertEquals(1, node.getAttachments().size());
+		AttachmentMeta attachment = node.getAttachments().get(0);
+		Assert.assertEquals("Attachment1", attachment.getName());
+		
+		Assert.assertEquals(1, node.getMeasures().size());
+		
+		Assert.assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
+		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+	}
+	
+	@Test
+	public void testByAttributes() {
+		ExecutionContext executionContext = buildExecutionContext();
+		
+		Function function = newFunction("MyFunction");
+		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		
+		CallFunctionHandler handler = new CallFunctionHandler();
+		handler.init(executionContext);
+		
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunction(new DynamicValue<String>("{\"name\":\"MyFunction\"}"));
+		
+		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
+
+		Assert.assertEquals(1, node.getAttachments().size());
+		AttachmentMeta attachment = node.getAttachments().get(0);
+		Assert.assertEquals("Attachment1", attachment.getName());
+		
+		Assert.assertEquals(1, node.getMeasures().size());
+		
+		Assert.assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
+		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+	}
+	
+	@Test
+	public void testDrainOutputToMap() {
+		ExecutionContext executionContext = buildExecutionContext();
+		
+		Function function = newFunction(FUNCTION_ID_SUCCESS);
+		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		
+		CallFunctionHandler handler = new CallFunctionHandler();
+		handler.init(executionContext);
+		
+		Map<String, String> map = new HashMap<>();
+		executionContext.getVariablesManager().putVariable(executionContext.getReport(),"map", map);
+		
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunctionId(function.getId().toString());
+		callFunction.setResultMap(new DynamicValue<String>("map"));
+		
+		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
+
+		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		
+		Assert.assertEquals("Value1", map.get("Output1"));
+	}
+	
+	@Test
+	public void testDrainOutputToDataSetHandle() {
+		ExecutionContext executionContext = buildExecutionContext();
+		
+		Function function = newFunction(FUNCTION_ID_SUCCESS);
+		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		
+		CallFunctionHandler handler = new CallFunctionHandler();
+		handler.init(executionContext);
+		
+		List<Object> addedRows = new ArrayList<>();
+		DataSetHandle dataSetHandle = new DataSetHandle() {
+
+			@Override
+			public Object next() {
+				return null;
+			}
+
+			@Override
+			public void addRow(Object row) {
+				addedRows.add(row);
+			}
+			
+		};
+		executionContext.getVariablesManager().putVariable(executionContext.getReport(),"dataSet", dataSetHandle);
+		
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunctionId(function.getId().toString());
+		callFunction.setResultMap(new DynamicValue<String>("dataSet"));
+		
+		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
+
+		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		
+		Assert.assertEquals("Value1", ((Map<String, String>)addedRows.get(0)).get("Output1"));
+	}
+
+	protected Function newFunction(ObjectId id) {
+		Function function = new Function();
+		function.setId(id);
+		return function;
+	}
+	
+	protected Function newFunction(String name) {
 		Function function = new Function();
 		
-		InMemoryFunctionAccessorImpl funcitonAccessor = new InMemoryFunctionAccessorImpl();
-		funcitonAccessor.save(function);
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put(Function.NAME, name);
+		function.setAttributes(attributes);
+		return function;
+	}
+	
+	@Test
+	public void testError() {
+		ExecutionContext executionContext = buildExecutionContext();
 		
-		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistry() {
+		Function function = newFunction(FUNCTION_ID_ERROR);
+		
+		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		
+		CallFunctionHandler handler = new CallFunctionHandler();
+		handler.init(executionContext);
+		
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunctionId(function.getId().toString());
+		
+		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
+		
+		Assert.assertEquals("My Error", node.getError().getMsg());
+	}
+	
+	@Test
+	public void testSimulation() {
+		ExecutionContext executionContext = buildExecutionContext();
+		executionContext.getExecutionParameters().setMode(ExecutionMode.SIMULATION);
+		
+		Function function = newFunction(FUNCTION_ID_SUCCESS);
+		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		
+		CallFunctionHandler handler = new CallFunctionHandler();
+		handler.init(executionContext);
+		
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunctionId(function.getId().toString());
+		
+		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, new ReportNode());
+		
+		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		Assert.assertEquals("{}", node.getOutput());
+		Assert.assertNull(node.getError());
+	}
+
+	protected ExecutionContext buildExecutionContext() {
+		ExecutionContext executionContext = ContextBuilder.createLocalExecutionContext();
+		InMemoryFunctionAccessorImpl funcitonAccessor = new InMemoryFunctionAccessorImpl();
+		
+		FunctionTypeRegistry functionTypeRegistry = getFunctionTypeRepository();
+		FunctionExecutionService functionExecutionService = getFunctionExecutionService();
+		
+		FunctionRouter functionRouter = new FunctionRouter(functionExecutionService, functionTypeRegistry, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(executionContext.getExpressionHandler())));
+		
+		executionContext.put(FunctionAccessor.class, funcitonAccessor);
+		executionContext.put(FunctionRouter.class, functionRouter);
+		executionContext.put(FunctionExecutionService.class, functionExecutionService);
+		return executionContext;
+	}
+
+	protected FunctionExecutionService getFunctionExecutionService() {
+		TokenWrapper token = getLocalToken();
+		
+		return new FunctionExecutionService() {
+			
+			@Override
+			public void returnTokenHandle(TokenWrapper adapterToken) throws FunctionExecutionServiceException {
+				
+			}
+			
+			@Override
+			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
+					boolean createSession) throws FunctionExecutionServiceException {
+				return token;
+			}
+			
+			@Override
+			public TokenWrapper getLocalTokenHandle() {
+				return null;
+			}
+			
+			@Override
+			public Output callFunction(TokenWrapper tokenHandle, String functionId, Input input) {
+				return newOutput(functionId);
+			}
+			public Output callFunction(TokenWrapper tokenHandle, Map<String, String> functionAttributes, Input input) {
+				return newPassedOutput();
+			}
+			
+			protected Output newOutput(String functionId) {
+				if(functionId.equals(FUNCTION_ID_ERROR.toString())) {
+					return newErrorOutput();
+				} else {
+					return newPassedOutput();
+				}
+			}
+			
+			protected Output newPassedOutput() {
+				Output output = new Output();
+				
+				List<Attachment> attachments = new ArrayList<>();
+				Attachment attachment = new Attachment();
+				attachment.setName("Attachment1");
+				attachment.setHexContent("");
+				attachments.add(attachment);
+				output.setAttachments(attachments);
+				
+				List<Measure> measures = new ArrayList<>();
+				measures.add(new Measure("Measure1", 1, 1, null));
+				output.setMeasures(measures);
+				
+				output.setResult(Json.createObjectBuilder().add("Output1", "Value1").build());
+				
+				return output;
+			}
+			
+			protected Output newErrorOutput() {
+				Output output = new Output();
+				output.setError("My Error");
+				return output;
+			}
+		};
+	}
+
+	protected TokenWrapper getLocalToken() {
+		Token localToken = new Token();
+		localToken.setAgentid("local");
+		TokenWrapper token = new TokenWrapper();
+		token.setToken(localToken);
+		token.setAgent(new AgentRef());
+		return token;
+	}
+
+	protected FunctionTypeRegistry getFunctionTypeRepository() {
+		return new FunctionTypeRegistry() {
 			
 			@Override
 			public void registerFunctionType(AbstractFunctionType<? extends Function> functionType) {
@@ -94,57 +355,6 @@ public class CallFunctionHandlerTest {
 				};
 			}
 		};
-		
-		Token localToken = new Token();
-		localToken.setAgentid("local");
-		TokenWrapper token = new TokenWrapper();
-		token.setToken(localToken);
-		token.setAgent(new AgentRef());
-		
-		FunctionExecutionService functionExecutionService = new FunctionExecutionService() {
-			
-			@Override
-			public void returnTokenHandle(TokenWrapper adapterToken) throws FunctionExecutionServiceException {
-				
-			}
-			
-			@Override
-			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession) throws FunctionExecutionServiceException {
-				return token;
-			}
-			
-			@Override
-			public TokenWrapper getLocalTokenHandle() {
-				return null;
-			}
-			
-			@Override
-			public Output callFunction(TokenWrapper tokenHandle, String functionId, Input input) {
-				return new Output();
-			}
-			
-			@Override
-			public Output callFunction(TokenWrapper tokenHandle, Map<String, String> functionAttributes, Input input) {
-				return new Output();
-			}
-		};
-		
-		FunctionRouter functionRouter = new FunctionRouter(functionExecutionService, functionTypeRegistry, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(executionContext.getExpressionHandler())));
-		
-		executionContext.put(FunctionAccessor.class, funcitonAccessor);
-		executionContext.put(FunctionRouter.class, functionRouter);
-		executionContext.put(FunctionExecutionService.class, functionExecutionService);
-		
-		CallFunctionHandler handler = new CallFunctionHandler();
-		handler.init(executionContext);
-		
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunctionId(function.getId().toString());
-		
-		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, new ReportNode());
-		
-		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 	}
 }
 

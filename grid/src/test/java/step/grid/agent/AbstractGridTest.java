@@ -20,6 +20,7 @@ package step.grid.agent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -28,8 +29,13 @@ import org.junit.After;
 import org.junit.Before;
 
 import step.grid.Grid;
+import step.grid.TokenWrapper;
 import step.grid.agent.conf.AgentConf;
 import step.grid.client.GridClientImpl;
+import step.grid.client.GridClientImpl.AgentCommunicationException;
+import step.grid.io.AgentErrorCode;
+import step.grid.io.OutputMessage;
+import step.grid.tokenpool.Interest;
 
 public abstract class AbstractGridTest {
 
@@ -86,5 +92,38 @@ public abstract class AbstractGridTest {
 	
 	protected JsonObject newDummyJson() {
 		return Json.createObjectBuilder().add("a", "b").build();
+	}
+	
+	protected void stopTokenMaintenance(TokenWrapper token) {
+		grid.stopTokenMaintenance(token.getID());
+	}
+
+	protected void startTokenMaintenance(TokenWrapper token) {
+		grid.startTokenMaintenance(token.getID());
+	}
+
+	protected void removeTokenError(TokenWrapper token) {
+		grid.removeTokenError(token.getID());
+	}
+
+	protected void returnToken(TokenWrapper token) throws AgentCommunicationException {
+		client.returnTokenHandle(token);
+	}
+
+	protected OutputMessage callTokenAndProduceAgentError(TokenWrapper token) throws Exception {
+		JsonObject o = Json.createObjectBuilder().add("agentError", AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED.toString()).build();
+		return client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 1000);
+	}
+	
+	protected OutputMessage callToken(TokenWrapper token) throws Exception {
+		JsonObject o = newDummyJson();
+		return client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 1000);
+	}
+
+	protected TokenWrapper selectToken() throws AgentCommunicationException {
+		Map<String, Interest> interests = new HashMap<>();
+		interests.put("att1", new Interest(Pattern.compile("val.*"), true));
+		TokenWrapper token = client.getTokenHandle(null, interests, true);
+		return token;
 	}
 }

@@ -52,8 +52,6 @@ public class FunctionExecutionServiceImplTest {
 		Assert.assertNotNull(output.getFunction());
 		Assert.assertNotNull(token.getCurrentOwner());
 		f.returnTokenHandle(token);
-		Assert.assertNull(token.getCurrentOwner());
-		
 	}
 	
 	@Test

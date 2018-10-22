@@ -144,6 +144,7 @@ public class Grid implements TokenRegistry, GridFileService {
 	@Override
 	public void returnToken(TokenWrapper object) {
 		object.performAtomically(()->{
+			object.setCurrentOwner(null);
 			// Only change the state if it is IN_USE. Other states (like ERROR) are kept unchanged
 			if(object.getState()==TokenWrapperState.IN_USE) {
 				object.setState(TokenWrapperState.FREE);

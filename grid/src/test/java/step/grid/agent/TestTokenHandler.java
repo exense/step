@@ -20,6 +20,8 @@ package step.grid.agent;
 
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.io.AgentError;
+import step.grid.io.AgentErrorCode;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
@@ -45,6 +47,8 @@ public class TestTokenHandler implements MessageHandler {
 			throw new Exception();
 		} else if(message.getArgument().containsKey("error")) {
 			output.setError(message.getArgument().getString("error"));
+		} else if(message.getArgument().containsKey("agentError")) {
+			output.setAgentError(new AgentError(AgentErrorCode.valueOf(message.getArgument().getString("agentError"))));
 		} 
 		
 		return output;
