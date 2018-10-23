@@ -126,7 +126,9 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
         	}
           });
           
-          modalInstance.result.then(function (functionParams) {}, function () {}); 
+          modalInstance.result.then(function (functionParams) {
+            reload();
+          }, function () {}); 
         });
       }
       
