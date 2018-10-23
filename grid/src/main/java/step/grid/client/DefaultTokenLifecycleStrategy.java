@@ -26,7 +26,7 @@ public class DefaultTokenLifecycleStrategy implements TokenLifecycleStrategy {
 	@Override
 	public void afterTokenCall(TokenLifecycleStrategyCallback callback, TokenWrapper tokenWrapper,
 			OutputMessage outputMessage) {
-		if(outputMessage.getAgentError()!=null) {
+		if(outputMessage!=null && outputMessage.getAgentError()!=null) {
 			if(outputMessage.getAgentError().getErrorCode().equals(AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED)) {
 				callback.addTokenError("Error while calling agent", null);
 			}

@@ -95,7 +95,7 @@ public class ConfigurableTokenLifecycleStrategy implements TokenLifecycleStrateg
 	public void afterTokenCall(TokenLifecycleStrategyCallback callback, TokenWrapper tokenWrapper,
 			OutputMessage outputMessage) {
 		if(addErrorOnAgentError) {
-			if(outputMessage.getAgentError()!=null) {
+			if(outputMessage!=null && outputMessage.getAgentError()!=null) {
 				if(concernedAgentErrors == null || concernedAgentErrors.isEmpty() || concernedAgentErrors.contains(outputMessage.getAgentError().getErrorCode())) {
 					callback.addTokenError("Error while calling agent", null);
 				}
