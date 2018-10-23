@@ -14,6 +14,7 @@ import step.commons.helpers.FileHelper;
 import step.grid.TokenWrapper;
 import step.grid.agent.AbstractGridTest;
 import step.grid.agent.TestTokenHandler;
+import step.grid.bootstrap.ResourceExtractor;
 import step.grid.client.GridClientImpl.AgentCallTimeoutException;
 import step.grid.io.OutputMessage;
 
@@ -30,7 +31,8 @@ public class GridClientTest extends AbstractGridTest {
 		
 		TokenWrapper token = selectToken();
 
-		File testFile = new File(this.getClass().getResource("TestFile").getFile());
+		File testFile = ResourceExtractor.extractResource(this.getClass().getClassLoader(), "TestFile.txt");
+
 		String fileHandle = client.registerFile(testFile);
 		
 		JsonObject input = Json.createObjectBuilder().add("file", fileHandle).add("fileVersion", FileHelper.getLastModificationDateRecursive(testFile)).build();
@@ -71,7 +73,7 @@ public class GridClientTest extends AbstractGridTest {
 		Exception actualException = null;
 		JsonObject o = newDummyJson();
 		try {
-			client.call(token, "testFunction", o, TestTokenHandler.class.getName(), null, null, 1);			
+			client.call(token, "testFunction", o, TestMessageHandler.class.getName(), null, null, 1);			
 		} catch (Exception e) {
 			actualException = e;
 		}
