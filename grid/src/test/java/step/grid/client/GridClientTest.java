@@ -1,15 +1,21 @@
 package step.grid.client;
 
+import java.io.File;
+import java.util.HashMap;
+
+import javax.json.Json;
 import javax.json.JsonObject;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import step.commons.helpers.FileHelper;
 import step.grid.TokenWrapper;
 import step.grid.agent.AbstractGridTest;
 import step.grid.agent.TestTokenHandler;
 import step.grid.client.GridClientImpl.AgentCallTimeoutException;
+import step.grid.io.OutputMessage;
 
 public class GridClientTest extends AbstractGridTest {
 	
@@ -19,19 +25,22 @@ public class GridClientTest extends AbstractGridTest {
 	}
 	
 	@Test
-	public void testAgentCallTimeoutDuringReservation() throws Exception {
-		getClient(0,1,1);
+	public void testFileRegistration() throws Exception {
+		getClient(0,10000,10000);
 		
-		Exception actualException = null;
-		try {
-			selectToken();
-		} catch (Exception e) {
-			actualException = e;
-		}
+		TokenWrapper token = selectToken();
+
+		File testFile = new File(this.getClass().getResource("TestFile").getFile());
+		String fileHandle = client.registerFile(testFile);
 		
-		Assert.assertNotNull(actualException);
-		Assert.assertTrue(actualException instanceof AgentCallTimeoutException);
+		JsonObject input = Json.createObjectBuilder().add("file", fileHandle).add("fileVersion", FileHelper.getLastModificationDateRecursive(testFile)).build();
+		
+		OutputMessage output = client.call(token, "test", input, TestMessageHandler.class.getName(), null, new HashMap<>(), 10000);
+		
+		Assert.assertEquals("TEST", output.getPayload().getString("content"));
 	}
+
+	// AgentCallTimeout during reservation is currently impossible to test as we don't have any hook in the reservation where to inject a sleep
 	
 	@Test
 	public void testAgentCallTimeoutDuringRelease() throws Exception {
@@ -39,6 +48,9 @@ public class GridClientTest extends AbstractGridTest {
 		
 		TokenWrapper token = selectToken();
 
+		
+		client.call(token, "test", newDummyJson(), TestMessageHandler.class.getName(), null, new HashMap<>(), 1000);
+		
 		Exception actualException = null;
 		try {
 			returnToken(token);
