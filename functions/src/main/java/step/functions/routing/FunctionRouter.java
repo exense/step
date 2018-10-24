@@ -39,15 +39,17 @@ public class FunctionRouter {
 			token = functionExecutionService.getLocalTokenHandle();
 		} else {
 			if(functionGroupContext!=null) {
-				if(functionGroupContext.getToken()!=null) {
-					// Token already present in context => reusing it
-					token = functionGroupContext.getToken();
-				} else {
-					// Token not present in context => select a token and create a new agent session
-					Map<String, Interest> selectionCriteria = buildSelectionCriteriaMap(callFunction, function,	functionGroupContext, bindings);
-					token = selectToken(selectionCriteria, true);
-					// attach the token to the function group context
-					functionGroupContext.setToken(token);
+				synchronized (functionGroupContext) {
+					if(functionGroupContext.getToken()!=null) {
+						// Token already present in context => reusing it
+						token = functionGroupContext.getToken();
+					} else {
+						// Token not present in context => select a token and create a new agent session
+						Map<String, Interest> selectionCriteria = buildSelectionCriteriaMap(callFunction, function,	functionGroupContext, bindings);
+						token = selectToken(selectionCriteria, true);
+						// attach the token to the function group context
+						functionGroupContext.setToken(token);
+					}
 				}
 			} else {
 				// No FunctionGroupContext. Simply select a token without creating an agent session
