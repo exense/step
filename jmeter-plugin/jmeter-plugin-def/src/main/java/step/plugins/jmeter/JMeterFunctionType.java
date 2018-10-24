@@ -38,15 +38,8 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 
 	@Override
 	public Map<String, String> getHandlerProperties(JMeterFunction function) {
-		String testPlanPath = function.getJmeterTestplan().get();
-		if(testPlanPath == null) {
-			throw new RuntimeException("The 'JMeter Testplan' should not be null. Please change your Keyword configuration.");
-		} 
-		
-		File testPlanFile = fileResolver.resolve(testPlanPath);
-		
 		Map<String, String> props = new HashMap<>();
-		registerFile(testPlanFile, "$jmeter.testplan.file", props);
+		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props);
 		
 		String home = configuration.getProperty("plugins.jmeter.home");
 		if(home!=null) {
