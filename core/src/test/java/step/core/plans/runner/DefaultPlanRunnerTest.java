@@ -1,17 +1,8 @@
 package step.core.plans.runner;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,11 +25,9 @@ public class DefaultPlanRunnerTest {
 		builder.endBlock();
 		
 		DefaultPlanRunner runner = new DefaultPlanRunner();
-		StringWriter w = new StringWriter();
-		runner.run(builder.build()).printTree(w);
+		PlanRunnerResult result = runner.run(builder.build());
 		
-		//assertEquals(readResource(getClass(),"DefaultPlanRunnerTestExpected.txt"), w.toString());
-		assertEquals(readResource(new File("src/test/java/step/core/plans/runner/DefaultPlanRunnerTestExpected.txt")), w.toString());
+		PlanRunnerResultAssert.assertEquals(this.getClass(), "DefaultPlanRunnerTestExpected.txt", result);
 	}
 	
 	@Test
@@ -61,27 +50,6 @@ public class DefaultPlanRunnerTest {
 		s.awaitTermination(1, TimeUnit.MINUTES);
 		for (Future<?> future : futures) {
 			future.get();
-		}
-	}
-	
-	public static String readResource(Class<?> clazz, String resourceName) {
-		return readStream(clazz.getResourceAsStream(resourceName));
-	}
-
-	public static String readResource(File resource) {
-		try(FileInputStream fis = new FileInputStream(resource)){
-			return readStream(fis);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	public static String readStream(InputStream is){
-		try(Scanner scanner = new Scanner(is, StandardCharsets.UTF_8.name())) {
-			return scanner.useDelimiter("\\A").next().replaceAll("\r\n", "\n");
 		}
 	}
 }
