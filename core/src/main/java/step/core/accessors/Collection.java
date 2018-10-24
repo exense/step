@@ -60,7 +60,6 @@ public class Collection {
 //			query.append("]}");
 //		}
 		
-		Document sortDoc = new Document(order.getAttributeName(), order.getOrder());
 //		StringBuilder sort = new StringBuilder();
 //		sort.append("{").append(order.getAttributeName()).append(":")
 //			.append(Integer.toString(order.getOrder())).append("}");
@@ -72,7 +71,11 @@ public class Collection {
 		option.skip(0).limit(countLimit);
 		long countResults = collection.count(query, option);
 		
-		FindIterable<Document> find = collection.find(query).sort(sortDoc);
+		FindIterable<Document> find = collection.find(query);
+		if(order!=null) {
+			Document sortDoc = new Document(order.getAttributeName(), order.getOrder());
+			find.sort(sortDoc);
+		}
 		if(skip!=null) {
 			find.skip(skip);
 		}

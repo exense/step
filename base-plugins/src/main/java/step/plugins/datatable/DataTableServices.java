@@ -231,7 +231,11 @@ public class DataTableServices extends AbstractServices {
 		int sortColumnID = Integer.parseInt(params.getFirst("order[0][column]"));
 		ColumnDef sortColumn = table.getColumnByID(sortColumnID);
 		String sortDir = params.getFirst("order[0][dir]");
-		SearchOrder order = new SearchOrder(sortColumn.getValue(), sortDir.equals("asc")?1:-1);
+		
+		SearchOrder order = null;
+		if(sortColumn.getValue() != null) {
+			order = new SearchOrder(sortColumn.getValue(), sortDir.equals("asc")?1:-1);
+		}
 		
 		if(table.getQuery()!=null) {
 			JsonObject filter = null;
