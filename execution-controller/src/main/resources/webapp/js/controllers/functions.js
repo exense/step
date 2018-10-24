@@ -45,7 +45,6 @@ angular.module('functionsControllers',['dataTable','step'])
 
 .run(function(FunctionTypeRegistry) {
   FunctionTypeRegistry.register('step.plugins.functions.types.CompositeFunction','Composite','partials/functions/forms/composite.html');
-  FunctionTypeRegistry.register('step.plugins.functions.types.GrinderFunction','Grinder','partials/functions/forms/grinder.html');
 })
 
 .factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {
