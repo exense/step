@@ -6,6 +6,7 @@ import static step.core.plans.builder.PlanBuilderTest.artefact;
 
 import org.junit.Test;
 
+import junit.framework.Assert;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
@@ -14,16 +15,22 @@ import step.core.plans.runner.PlanRunnerResult;
 public class ReportTreeVisitorTest {
 
 	@Test
-	public void test() {
-		Plan plan = PlanBuilder.create().startBlock(artefact("Root"))
-											.add(artefact("Node1"))
-											.startBlock(artefact("Node2"))
-												.add(artefact("Node2.1"))
-											.endBlock()
-										.endBlock().build();
-		
+	public void testGetRootReportNode() {
+		Plan plan = getDummyPlan();
 		DefaultPlanRunner runner = new DefaultPlanRunner();
-		
+		PlanRunnerResult result = runner.run(plan);
+		ReportTreeAccessor treeAccessor = result.getReportTreeAccessor();
+		ReportTreeVisitor v = new ReportTreeVisitor(treeAccessor);
+		ReportNode root = v.getRootReportNode(result.getExecutionId());
+
+		Assert.assertNotNull(root);
+		Assert.assertEquals("Root", root.getArtefactInstance().getDescription());
+	}
+	
+	@Test
+	public void test() {
+		Plan plan = getDummyPlan();
+		DefaultPlanRunner runner = new DefaultPlanRunner();
 		PlanRunnerResult result = runner.run(plan);
 		ReportTreeAccessor treeAccessor = result.getReportTreeAccessor();
 		ReportTreeVisitor v = new ReportTreeVisitor(treeAccessor);
@@ -47,5 +54,15 @@ public class ReportTreeVisitorTest {
 				throw new RuntimeException("Unexpected node "+node.getName());
 			}
 		});
+	}
+	
+	protected Plan getDummyPlan() {
+		Plan plan = PlanBuilder.create().startBlock(artefact("Root"))
+				.add(artefact("Node1"))
+				.startBlock(artefact("Node2"))
+				.add(artefact("Node2.1"))
+				.endBlock()
+				.endBlock().build();
+		return plan;
 	}
 }

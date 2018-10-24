@@ -13,13 +13,17 @@ public class ReportTreeVisitor {
 		this.reportTreeAccessor = reportTreeAccessor;
 	}
 
+	public ReportNode getRootReportNode(String executionId) {
+		return reportTreeAccessor.getChildren(executionId).next();
+	}
+	
 	public void visitNodes(String executionId, Consumer<ReportNode> consumer) {
 		visit(executionId, event->consumer.accept(event.node));
 	}
 	
 	public void visit(String executionId, Consumer<ReportNodeEvent> consumer) {
 		try {
-			ReportNode root = reportTreeAccessor.getChildren(executionId).next();
+			ReportNode root = getRootReportNode(executionId);
 			Stack<ReportNode> stack = new Stack<>();
 			visitChildrenWithEvents(root, stack, consumer);	
 		} catch(NoSuchElementException e) {
