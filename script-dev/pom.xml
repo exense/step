@@ -34,14 +34,7 @@
 		<module>script-dev-selenium-2</module>
 		<module>script-dev-selenium-3</module>
 	</modules>
-	<!-- 
-	<distributionManagement>
-		<repository>
-			<id>nexus</id>
-			<url>http://nexus.exense.ch/nexus/content/repositories/releases</url>
-		</repository>
-	</distributionManagement>
-	 -->
+
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
