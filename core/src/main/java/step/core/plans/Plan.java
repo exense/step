@@ -2,6 +2,8 @@ package step.core.plans;
 
 import java.util.Collection;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import step.core.artefacts.AbstractArtefact;
 import step.functions.Function;
 
@@ -23,6 +25,11 @@ public class Plan {
 		super();
 	}
 
+	@JsonIgnore
+	public String getId() {
+		return getRoot().getId().toString();
+	}
+	
 	public AbstractArtefact getRoot() {
 		return root;
 	}

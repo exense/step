@@ -8,8 +8,18 @@ public interface CRUDAccessor<T extends AbstractIdentifiableObject> extends Acce
 
 	void remove(ObjectId id);
 
+	/**
+	 * Save an entity. If an entity with the same id exists, it will be updated otherwise inserted. 
+	 * 
+	 * @param entity the entity instance to be saved
+	 */
 	T save(T entity);
 
+	/**
+	 * Save a list of entities. 
+	 * 
+	 * @param entities the list of entities to be saved
+	 */
 	void save(List<? extends T> entities);
 
 }
