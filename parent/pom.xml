@@ -82,11 +82,11 @@
 			</activation>
 			<distributionManagement>
 				<repository>
-					<id>nexus</id>
+					<id>step-enterprise</id>
 					<url>https://nexus-enterprise.exense.ch/repository/step/</url>
 				</repository>
 			</distributionManagement>
-						<build>
+			<build>
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
