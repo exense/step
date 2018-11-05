@@ -62,7 +62,9 @@ public class MongoClientSession implements Closeable {
 		
 		Jongo jongo = new Jongo(db,new JacksonMapper.Builder()
 			      .registerModule(new JSR353Module())
-			      .registerModule(new JsonOrgModule()).build());
+			      .registerModule(new JsonOrgModule())
+			      .registerModule(new DefaultAccessorModule())
+			      .build());
 		MongoCollection collection = jongo.getCollection(collectionName);
 		
 		return collection;
