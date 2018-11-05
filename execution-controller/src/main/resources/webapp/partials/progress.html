@@ -112,6 +112,38 @@
 						</div>
 					</div>
 				</uib-tab>
+				<uib-tab heading="Errors">
+					<div class="panel-body">
+						<st-table data="countByErrorMsg" uid="'errorDistribution'" persist-state="true">
+							<st-actions>
+							</st-actions>
+							<st-columns>
+								<st-column name="errorMessage">
+									<header>Error message</header>
+									<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+									<cell><span>{{row.errorMessage}}</span></cell>
+								</st-column>
+								<st-column>
+									<header>Count</header>
+									<cell>
+										<span>{{row.errorCount}}</span>
+									</cell>
+								</st-column>
+								<st-column>
+									<header>%</header>
+									<cell>
+										<span>{{row.errorCount/errorDistribution.errorCount*100 | number:1}}%</span>
+									</cell>
+								</st-column>
+								<st-column>
+									<header>Overall %</header>
+									<cell>
+										<span>{{row.errorCount/errorDistribution.count*100 | number:1}}%</span>
+									</cell>
+								</st-column>
+						</st-table>
+					</div>
+				</uib-tab>
 			</uib-tabset>
 		</div>
 		<div class="col-xs-3">

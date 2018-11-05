@@ -492,6 +492,14 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           $scope.testcasesProgress = response.data;
         });
         
+        $http.get('rest/views/errorDistribution/' + eId).then(function(response) {
+          $scope.errorDistribution = response.data;
+          $scope.countByErrorMsg = [];
+          _.map($scope.errorDistribution.countByErrorMsg, function(val, key) {
+            $scope.countByErrorMsg.push({errorMessage:key, errorCount:val})
+          });
+        });
+        
         if($scope.stepsTable && $scope.stepsTable.Datatable) {
           $scope.stepsTable.Datatable.ajax.reload(null, false);
         }
