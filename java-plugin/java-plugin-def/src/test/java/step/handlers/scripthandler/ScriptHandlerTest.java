@@ -68,6 +68,22 @@ public class ScriptHandlerTest {
 		Assert.assertEquals("kéÿ1",output.getResult().getString("key1"));
 	}
 	
+	@Test 
+	public void testGroovyThrowable() {
+		GeneralScriptFunction f = buildTestFunction("groovy","throwable.groovy");
+		Output output = run(f, "{}");
+		Assert.assertTrue(output.getError().contains("Error while running script throwable.groovy: assert false"));
+	}
+	
+	@Test 
+	public void testGroovyThrowableWithErrorHandler() {
+		GeneralScriptFunction f = buildTestFunction("groovy","throwable.groovy");
+		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorHandler.groovy"));
+		Output output = run(f, "{}");
+		Assert.assertEquals("Error handler called",output.getError());
+	}
+	
+	
 //	@Test 
 //	public void testPython1() {
 //		GeneralScriptFunction f = buildTestFunction("python","testPython.py");
