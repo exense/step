@@ -105,7 +105,7 @@ public class DataTableServices extends AbstractServices {
 		executions.addCustomColumn("Summary", new ExecutionSummaryFormatter(controller.getContext()));
 		
 		ColumnBuilder leafReportNodesColumns = new ColumnBuilder();
-		leafReportNodesColumns.addDateColumn("Begin", "executionTime").addColumn("Name","name").addColumn("Status","status").addColumn("Error", "error")
+		leafReportNodesColumns.addDateColumn("Begin", "executionTime").addColumn("Name","name").addJsonColumn("Keyword","functionAttributes").addColumn("Status","status").addColumn("Error", "error")
 		.addColumn("Input","input").addColumn("Output","output").addColumn("Duration","duration").addColumn("Adapter", "adapter");
 
 		// Report table
