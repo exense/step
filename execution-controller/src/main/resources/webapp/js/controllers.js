@@ -500,6 +500,11 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           });
         });
         
+        $scope.searchStepByError = function(error) {
+          $scope.tabs.selectedTab = 0;
+          $scope.stepsTable.columns[2].search(error);
+        }
+        
         if($scope.stepsTable && $scope.stepsTable.Datatable) {
           $scope.stepsTable.Datatable.ajax.reload(null, false);
         }
