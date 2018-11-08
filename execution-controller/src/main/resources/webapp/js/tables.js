@@ -42,9 +42,10 @@ angular.module('dataTable', ['export'])
 .directive('inputdropdown', ['$http',function($http) {
   return {
     restrict: 'E',
-    scope: {options:'=',action:'=',initialValue:'='},
+    scope: {options:'=',action:'=',initialValue:'=',handle:'='},
     controller: function($scope){
-      $scope.inputtext = $scope.initialValue?$scope.initialValue:'';
+      $scope.model = {};
+      $scope.model.inputtext = $scope.initialValue?$scope.initialValue:'';
       
       $scope.createRegexpForSelection = function(selection) {
         regexp = '';
@@ -56,6 +57,13 @@ angular.module('dataTable', ['export'])
           regexp=selection[0].text;
         }
         return regexp;
+      }
+      
+      if($scope.handle) {
+        $scope.handle.set = function(value) {
+          $scope.model.inputtext = value;
+          $scope.action($scope.model.inputtext);
+        }
       }
       
       $scope.$watchCollection('options', function(newOptions, oldOptions) {
@@ -81,8 +89,8 @@ angular.module('dataTable', ['export'])
 
       $scope.selectionChanged = function() {
         var selection = _.where($scope.options, { selected : true });
-        $scope.inputtext = $scope.createRegexpForSelection(selection);
-        $scope.action($scope.inputtext);
+        $scope.model.inputtext = $scope.createRegexpForSelection(selection);
+        $scope.action($scope.model.inputtext);
       };
     },
     templateUrl: 'partials/inputdropdown.html'
@@ -113,6 +121,8 @@ angular.module('dataTable', ['export'])
       scope.$on('$destroy', function() {
         scope.scopesTracker.destroy();
       });
+      
+      var columns = {};
       
       var init = function(tableOptions) {
         if(attr.selectionmode=='multiple') {
@@ -226,6 +236,15 @@ angular.module('dataTable', ['export'])
                 inputScope.action = function(value) {
                   column.search(value,true,false).draw();
                 }
+            
+                inputScope.handle={};
+            		var colApi = {
+                    search: function(criterion) {
+                      inputScope.handle.set(criterion)
+                    }
+                }
+                
+                columns[i] = colApi;
                 
                 if(!tableOptions.columns[i].distinct) {
                   tableOptions.columns[i].distinct = [];
@@ -234,7 +253,7 @@ angular.module('dataTable', ['export'])
                 inputScope.initialValue = column.search();
                 var input;
                 if(!tableOptions.columns[i].inputType || tableOptions.columns[i].inputType=='TEXT_DROPDOWN' || tableOptions.columns[i].inputType=='TEXT') {
-                  input = '<inputdropdown options ="options" action="action" initial-value="initialValue"/>';
+                  input = '<inputdropdown options ="options" action="action" initial-value="initialValue" handle="handle"/>';
                 } else if(tableOptions.columns[i].inputType=='DATE_RANGE') {
                   input = '<dateinput action="action"/>';
                 } 
@@ -273,6 +292,7 @@ angular.module('dataTable', ['export'])
         if(scope.handle) {
           scope.handle.datatable = table;
           scope.handle.Datatable = tableAPI;
+          scope.handle.columns = columns;
         }
         
         scope.datatable = table;
