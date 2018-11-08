@@ -85,7 +85,7 @@ public class Agent {
 		
 		if(agentConfStr!=null) {
 			AgentConfParser parser = new AgentConfParser();
-			AgentConf agentConf = parser.parser(new File(agentConfStr));
+			AgentConf agentConf = parser.parser(arguments, new File(agentConfStr));
 
 			if(arguments.hasOption("gridHost")) {
 				agentConf.setGridHost(arguments.getOption("gridHost"));

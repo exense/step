@@ -121,7 +121,7 @@
 								<st-column name="errorMessage">
 									<header>Error message</header>
 									<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-									<cell><span>{{row.errorMessage}}</span></cell>
+									<cell><span><a ng-click="searchStepByError(row.errorMessage)">{{row.errorMessage}}</span></cell>
 								</st-column>
 								<st-column>
 									<header>Count</header>
@@ -132,13 +132,13 @@
 								<st-column>
 									<header>%</header>
 									<cell>
-										<span>{{row.errorCount/errorDistribution.errorCount*100 | number:1}}%</span>
+										<span>{{(row.errorCount/errorDistribution.errorCount*100) | number:1}}%</span>
 									</cell>
 								</st-column>
 								<st-column>
 									<header>Overall %</header>
 									<cell>
-										<span>{{row.errorCount/errorDistribution.count*100 | number:1}}%</span>
+										<span>{{(row.errorCount/errorDistribution.count*100) | number:1}}%</span>
 									</cell>
 								</st-column>
 						</st-table>

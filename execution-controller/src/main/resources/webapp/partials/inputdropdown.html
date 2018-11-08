@@ -1,5 +1,5 @@
 <div class="input-group input-group-sm"  ng-if="options.length>0">
-	<input class="form-control" aria-label="..." ng-model="inputtext" ng-keypress="($event.which === 13)?action(inputtext):0">
+	<input class="form-control" aria-label="..." ng-model="model.inputtext" ng-keypress="($event.which === 13)?action(model.inputtext):0">
 	
 	<div class="input-group-btn" data-ng-class='{open: open}' ng-if="options.length>0">
 		<button type="button" class="btn btn-default" data-ng-click='open=!open'>
@@ -15,4 +15,4 @@
 		</ul>
 	</div>
 </div>
-<input ng-if="!options || options.length==0" class="form-control input-sm" aria-label="..." ng-model="inputtext" ng-keypress="($event.which === 13)?action(inputtext):0">
+<input ng-if="!options || options.length==0" class="form-control input-sm" aria-label="..." ng-model="model.inputtext" ng-keypress="($event.which === 13)?action(model.inputtext):0">
