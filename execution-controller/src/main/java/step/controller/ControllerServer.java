@@ -77,7 +77,7 @@ public class ControllerServer {
 		Configuration configuration; 
 		String configStr = arguments.getOption("config");
 		if(configStr!=null) {
-			configuration = new Configuration(new File(configStr));
+			configuration = new Configuration(new File(configStr), arguments.getOptions());
 		} else {
 			configuration = new Configuration();
 		}

@@ -20,9 +20,13 @@ package step.commons.conf;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.nio.file.Files;
+import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +42,8 @@ public class Configuration {
 	
 	private Properties properties;
 	
+	private Map<String, String> placeholders;
+	
 	public Configuration() {
 		super();
 
@@ -45,10 +51,15 @@ public class Configuration {
 	}
 
 	public Configuration(File propertyFile) {
+		this(propertyFile, null);
+	}
+	
+	public Configuration(File propertyFile, Map<String, String> placeholders) {
 		super();
 		
 		this.propertyFile = propertyFile;
-
+		this.placeholders = placeholders;
+		
 		try {
 			load();			
 		} catch (Exception e) {
@@ -73,9 +84,27 @@ public class Configuration {
 	public void load() throws FileNotFoundException, IOException {
 		properties = new Properties();
 		if(propertyFile!=null) {
-			properties.load(new FileReader(propertyFile));			
+			String propertiesContent = new String(Files.readAllBytes(propertyFile.toPath()));
+			String resolvedPropertiesContent = replacePlaceholders(propertiesContent);
+			properties.load(new StringReader(resolvedPropertiesContent));			
 		}
 	}
+	
+	private String replacePlaceholders(String configXml) {
+        StringBuffer sb = new StringBuffer();
+        Matcher m = Pattern.compile("\\$\\{(.+?)\\}").matcher(configXml);
+        while (m.find()) {
+            String key = m.group(1);
+            if(placeholders!=null) {
+            	String replacement = placeholders.get(key);
+            	m.appendReplacement(sb, replacement);
+            } else {
+            	throw new RuntimeException("Not able to replace placeholder '"+key+"'.Placeholder map is null");
+            }
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
 	
 	public static void setInstance(Configuration instance) {
 		INSTANCE = instance;
