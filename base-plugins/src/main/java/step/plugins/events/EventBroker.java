@@ -40,8 +40,7 @@ public class EventBroker {
 			String uuid = UUID.randomUUID().toString();
 			events.put(uuid, event.setId(uuid));
 		}
-		events.put(event.getId(), event);
-		return event;
+		return events.put(event.getId(), event);
 	}
 	
 	public void clear(){
@@ -91,6 +90,8 @@ public class EventBroker {
 		try{
 			id = events.values().stream().filter(v -> 
 			{
+				//TODO: this check can be externalized from the filter for better performance
+				// create two disctinct predicates for the filter?
 				if(v.getGroup().equals(group)){
 					if(name == null || name.isEmpty())
 						return true;
