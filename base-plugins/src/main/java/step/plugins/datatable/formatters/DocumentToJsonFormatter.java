@@ -2,7 +2,7 @@ package step.plugins.datatable.formatters;
 
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 
 import org.bson.BSONException;
 import org.bson.Document;
@@ -10,6 +10,7 @@ import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
+import org.bson.json.StrictCharacterStreamJsonWriter;
 import org.bson.types.ObjectId;
 
 public class DocumentToJsonFormatter {
@@ -54,13 +55,14 @@ public class DocumentToJsonFormatter {
 		@Override
 		protected void doWriteInt64(long value) {
 			// writing Int64 as string instead of {"numberLong":"1111"}
+			Field f;
 			try {
-				// we have to use reflection to access the private method "writeNameHelper" of the parent class
-				Method m = this.getClass().getSuperclass().getDeclaredMethod("writeNameHelper", String.class);
-				m.setAccessible(true);
-				m.invoke(this, getName());
-				writer.write(Long.toString(value));
-			} catch (Exception e) {
+				// we have to use reflection to access the private member strictJsonWriter
+				f = this.getClass().getSuperclass().getDeclaredField("strictJsonWriter");
+				f.setAccessible(true);
+				StrictCharacterStreamJsonWriter writer = (StrictCharacterStreamJsonWriter) f.get(this);
+				writer.writeNumber(Long.toString(value));
+			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 				throw new BSONException("Wrapping IOException", e);
 			}
 		}
