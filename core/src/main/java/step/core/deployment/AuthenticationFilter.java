@@ -53,8 +53,8 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 						}
 					}
 				} catch (TokenValidationException e) {
-					//only a warning, due to refresh calls in clients after expiration -> TODO: stop refresh after X attempts on client side?
-					logger.warn("Incorrect session token or the token could not be validated.", e);
+					//only a debug, due to refresh calls in clients after expiration -> TODO: stop refresh after X attempts on client side?
+					logger.debug("Incorrect session token or the token could not be validated.", e);
 					requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 				} catch (Exception e) {
 					logger.error("An exception was thrown while checking user rights.", e);
