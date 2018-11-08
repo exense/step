@@ -45,7 +45,7 @@ public class MongoClientSession implements Closeable {
 		ServerAddress address = new ServerAddress(host, port);
 		List<MongoCredential> credentials = new ArrayList<>();
 		if(user!=null) {
-			MongoCredential credential = MongoCredential.createMongoCRCredential(user, db, pwd.toCharArray());
+			MongoCredential credential = MongoCredential.createCredential(user, db, pwd.toCharArray());
 			credentials.add(credential);
 		}
 		
