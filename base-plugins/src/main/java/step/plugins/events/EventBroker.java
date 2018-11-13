@@ -92,7 +92,7 @@ public class EventBroker {
 			{
 				//TODO: this check can be externalized from the filter for better performance
 				// create two disctinct predicates for the filter?
-				if(v.getGroup().equals(group)){
+				if(v.getGroup() != null && v.getGroup().equals(group)){
 					if(name == null || name.isEmpty())
 						return true;
 					else{
