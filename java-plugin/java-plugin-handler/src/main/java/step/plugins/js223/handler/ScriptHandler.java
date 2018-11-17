@@ -34,14 +34,13 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 
-import step.grid.agent.handler.AbstractMessageHandler;
-import step.grid.agent.handler.context.OutputMessageBuilder;
+import step.functions.Input;
+import step.functions.Output;
+import step.functions.OutputBuilder;
+import step.functions.execution.AbstractFunctionHandler;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.filemanager.FileManagerClient.FileVersion;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
 
-public class ScriptHandler extends AbstractMessageHandler {
+public class ScriptHandler extends AbstractFunctionHandler {
 
 	public static final String SCRIPT_LANGUAGE = "$scriptlanguage";
 
@@ -61,23 +60,23 @@ public class ScriptHandler extends AbstractMessageHandler {
 	}
 	
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
-		return agentTokenServices.getApplicationContextBuilder().runInContext(()->{
-			Map<String, String> properties = buildPropertyMap(token, message);
+	public Output<?> handle(Input<?> message) throws Exception {
+		return runInContext(()->{
+			Map<String, String> properties = message.getProperties();
 			
-			File scriptFile = retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties).getFile();
+			File scriptFile = retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties);
 			
 			String scriptLanguage = properties.get(SCRIPT_LANGUAGE);        
 			String engineName = scriptLangugaeMap.get(scriptLanguage);
 			ScriptEngine engine = loadScriptEngine(engineName);	      
 			
-			OutputMessageBuilder outputBuilder = new OutputMessageBuilder();
-			Bindings binding = createBindings(token, message, outputBuilder, properties);     
+			OutputBuilder outputBuilder = new OutputBuilder();
+			Bindings binding = createBindings(getToken(), message, outputBuilder, properties);     
 			
 			try {
 				executeScript(scriptFile, binding, engine);        	
 			} catch(Throwable e) {        	
-				boolean throwException = executeErrorHandlerScript(token, properties, engine, binding, outputBuilder, e);
+				boolean throwException = executeErrorHandlerScript(getToken(), properties, engine, binding, outputBuilder, e);
 				if(throwException) {
 					outputBuilder.setError("Error while running script "+scriptFile.getName() + ": " + e.getMessage(), e);
 				}
@@ -87,11 +86,11 @@ public class ScriptHandler extends AbstractMessageHandler {
 		});
 	}
 
-	private boolean executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding, OutputMessageBuilder outputBuilder, Throwable exception)
+	private boolean executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding, OutputBuilder outputBuilder, Throwable exception)
 			throws FileNotFoundException, Exception, IOException {
-		FileVersion errorScriptFileVersion = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties);
+		File errorScriptFileVersion = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties);
 		if(errorScriptFileVersion!=null) {
-			File errorScriptFile = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties).getFile();
+			File errorScriptFile = errorScriptFileVersion;
 			binding.put("exception", exception);
 			try {
 				executeScript(errorScriptFile, binding, engine);				
@@ -116,16 +115,17 @@ public class ScriptHandler extends AbstractMessageHandler {
         }
 	}
 
-	private Bindings createBindings(AgentTokenWrapper token, InputMessage message, OutputMessageBuilder outputBuilder,
+	private Bindings createBindings(AgentTokenWrapper token, Input<?> input, OutputBuilder outputBuilder,
 			Map<String, String> properties) {
 		Bindings binding = new SimpleBindings();
-        binding.put("input", message.getArgument());
-        binding.put("inputJson", message.getArgument().toString());
+        binding.put("input", input.getPayload());
+        binding.put("inputJson", input.getPayload().toString());
         
         binding.put("output", outputBuilder);
         binding.put("context", outputBuilder);
         
-        binding.put("properties", properties);
+        binding.put("properties", mergeAllProperties(input));
+        
         binding.put("session", token.getTokenReservationSession());
         binding.put("tokenSession", token.getSession());
 		return binding;

@@ -30,6 +30,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.json.JsonObject;
+
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,31 +49,51 @@ public class ScriptHandlerTest {
 	@Test 
 	public void test1() {
 		GeneralScriptFunction f = buildTestFunction("javascript","test1.js");
-		Output output = run(f, "{\"key1\":\"val1\"}");
-		Assert.assertEquals("val1",output.getResult().getString("key1"));
+		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
+		Assert.assertEquals("val1",output.getPayload().getString("key1"));
 	}
-	private Output run(GeneralScriptFunction f, String inputJson) {
-		return FunctionRunner.getContext(new GeneralScriptFunctionType()).run(f, inputJson, new HashMap<>());
+	
+	@Test 
+	public void testProperties() {
+		
+		Map<String, String> tokenProperties = new HashMap<>();
+		tokenProperties.put("tokenProp1", "MyTokenProp");
+		
+		Map<String, String> properties = new HashMap<>();
+		properties.put("prop1", "MyProp");
+		
+		GeneralScriptFunction f = buildTestFunction("javascript","test1.js");
+		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}", properties);
+		Assert.assertEquals("val1",output.getPayload().getString("key1"));
+		Assert.assertEquals("MyProp",output.getPayload().getString("prop1"));
+	}
+	
+	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson) {
+		return run(f, inputJson, new HashMap<>());
+	}
+	
+	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson, Map<String, String> properties) {
+		return FunctionRunner.getContext(new GeneralScriptFunctionType(), properties).run(f, inputJson);
 	}
 
 	@Test 
 	public void testGroovy1() {
 		GeneralScriptFunction f = buildTestFunction("groovy","testGroovy1.groovy");
-		Output output = run(f, "{\"key1\":\"val1\"}");
-		Assert.assertEquals("val1",output.getResult().getString("key1"));
+		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
+		Assert.assertEquals("val1",output.getPayload().getString("key1"));
 	}
 
 	@Test 
 	public void testGroovy() {
 		GeneralScriptFunction f = buildTestFunction("groovy","testGroovyUTF8.groovy");
-		Output output = run(f, "{\"key1\":\"val1\"}");
-		Assert.assertEquals("kéÿ1",output.getResult().getString("key1"));
+		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
+		Assert.assertEquals("kéÿ1",output.getPayload().getString("key1"));
 	}
 	
 	@Test 
 	public void testGroovyThrowable() {
 		GeneralScriptFunction f = buildTestFunction("groovy","throwable.groovy");
-		Output output = run(f, "{}");
+		Output<JsonObject> output = run(f, "{}");
 		Assert.assertTrue(output.getError().contains("Error while running script throwable.groovy: assert false"));
 	}
 	
@@ -79,7 +101,7 @@ public class ScriptHandlerTest {
 	public void testGroovyThrowableWithErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("groovy","throwable.groovy");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorHandler.groovy"));
-		Output output = run(f, "{}");
+		Output<JsonObject> output = run(f, "{}");
 		Assert.assertEquals("Error handler called",output.getError());
 	}
 	
@@ -87,14 +109,14 @@ public class ScriptHandlerTest {
 //	@Test 
 //	public void testPython1() {
 //		GeneralScriptFunction f = buildTestFunction("python","testPython.py");
-//		Output output = run(f, "{\"key1\":\"val1\"}");
+//		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
 //		Assert.assertEquals("val1",output.getResult().getString("key1"));
 //	}
 	
 	@Test 
 	public void testErrorWithoutErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
-		Output out = run(f, "{}");
+		Output<JsonObject> out = run(f, "{}");
 		Assert.assertTrue(out.getError().contains("INVALID SCRIPT"));
 		Assert.assertTrue(out.getError().startsWith("Error while running script errorScript.js"));
 		Assert.assertEquals(1,out.getAttachments().size());
@@ -104,7 +126,7 @@ public class ScriptHandlerTest {
 	public void testErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorHandler.js"));
-		Output out = run(f, "{}");
+		Output<JsonObject> out = run(f, "{}");
 		Assert.assertTrue(out.getError().contains("INVALID SCRIPT"));
 	}
 	
@@ -112,7 +134,7 @@ public class ScriptHandlerTest {
 	// Test that attachments generated in the script are conserved after an exception is thrown
 	public void testErrorScriptWithAttachmentAndWithoutErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScriptWithAttachment.groovy");
-		Output out = run(f, "{}");
+		Output<JsonObject> out = run(f, "{}");
 		Assert.assertTrue(out.getError().contains("INVALID"));
 		Assert.assertTrue(out.getError().startsWith("Error while running script"));
 		Assert.assertEquals(2,out.getAttachments().size());
@@ -122,7 +144,7 @@ public class ScriptHandlerTest {
 	public void testErrorHandlerWithError() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorScript.js"));
-		Output out = run(f, "{}");
+		Output<JsonObject> out = run(f, "{}");
 		Assert.assertTrue(out.getError().contains("INVALID SCRIPT"));
 		Assert.assertTrue(out.getError().startsWith("Error while running error handler script:"));
 		Assert.assertEquals(1,out.getAttachments().size());
@@ -142,8 +164,8 @@ public class ScriptHandlerTest {
 				@Override
 				public Boolean call() throws Exception {
 					GeneralScriptFunction f = buildTestFunction("javascript","test1.js");
-					Output output = run(f, "{\"key1\":\"val1\"}");
-					Assert.assertEquals("val1",output.getResult().getString("key1"));
+					Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
+					Assert.assertEquals("val1",output.getPayload().getString("key1"));
 					return true;
 				}
 			}));

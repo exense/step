@@ -22,6 +22,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.json.JsonObject;
+
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,17 +46,17 @@ public class JMeterHandlerTest {
 		File jmeterHomer = new File("../../distribution/template-controller/ext/jmeter");
 		if(jmeterHomer.exists()) {
 			JMeterFunction f = buildTestFunction();
-			Output output = run(f, "{}");
+			Output<JsonObject> output = run(f, "{}");
 			Assert.assertNull(output.getError());
-			Assert.assertNotNull(output.getResult().get("samples"));
+			Assert.assertNotNull(output.getPayload().get("samples"));
 		} else {
 			logger.warn("Skipping JMeterHandler test as no JMeter installation could been found");
 		}
 	}
-	private Output run(JMeterFunction f, String inputJson) {
+	private Output<JsonObject> run(JMeterFunction f, String inputJson) {
 		Configuration configuration = new Configuration();
 		configuration.put("plugins.jmeter.home", "../../distribution/template-controller/ext/jmeter");
-		return FunctionRunner.getContext(configuration,new JMeterFunctionType(configuration), new HashMap<>()).run(f, inputJson, new HashMap<>());
+		return FunctionRunner.getContext(configuration,new JMeterFunctionType(configuration), new HashMap<>()).run(f, inputJson);
 	}
 	
 	private JMeterFunction buildTestFunction() {

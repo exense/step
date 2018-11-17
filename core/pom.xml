@@ -31,8 +31,14 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>grid</artifactId>
+			<artifactId>functions-api</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-grid-server</artifactId>
+			<version>${step-grid.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>

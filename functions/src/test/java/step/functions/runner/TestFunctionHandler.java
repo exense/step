@@ -1,18 +1,19 @@
 package step.functions.runner;
 
-import step.grid.agent.handler.AbstractMessageHandler;
-import step.grid.agent.handler.context.OutputMessageBuilder;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
+import javax.json.Json;
+import javax.json.JsonObject;
 
-public class TestFunctionHandler extends AbstractMessageHandler {
+import step.functions.Input;
+import step.functions.Output;
+import step.functions.execution.AbstractFunctionHandler;
+
+public class TestFunctionHandler extends AbstractFunctionHandler {
 
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
-		OutputMessageBuilder o = new OutputMessageBuilder();
-		o.add("mous", "tache");
-		return o.build();
+	public Output<?> handle(Input<?> input) throws Exception {
+		Output<JsonObject> output = new Output<>();
+		output.setPayload(Json.createObjectBuilder().add("mous", "tache").build());
+		return output;
 	}
 
 }

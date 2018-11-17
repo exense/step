@@ -23,6 +23,7 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.json.Json;
+import javax.json.JsonObject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -182,7 +183,7 @@ public class FunctionServices extends AbstractServices {
 		String functionId;
 		Map<String, String> functionAttributes;
 		TokenWrapper tokenHandle;
-		Input input;
+		Input<JsonObject> input;
 		
 		public CallFunctionInput() {
 			super();
@@ -212,11 +213,11 @@ public class FunctionServices extends AbstractServices {
 			this.functionAttributes = functionAttributes;
 		}
 
-		public Input getInput() {
+		public Input<JsonObject> getInput() {
 			return input;
 		}
 
-		public void setInput(Input input) {
+		public void setInput(Input<JsonObject> input) {
 			this.input = input;
 		}
 		
@@ -226,11 +227,11 @@ public class FunctionServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/execute")
 	@Secured(right="kw-execute")
-	public Output callFunction(CallFunctionInput input) {
+	public Output<JsonObject> callFunction(CallFunctionInput input) {
 		if(input.functionId!=null) {
-			return functionExecutionService.callFunction(input.tokenHandle, input.functionId, input.input);			
+			return functionExecutionService.callFunction(input.tokenHandle, input.functionId, input.input, JsonObject.class);			
 		} else {
-			return functionExecutionService.callFunction(input.tokenHandle, input.functionAttributes, input.input);			
+			return functionExecutionService.callFunction(input.tokenHandle, input.functionAttributes, input.input, JsonObject.class);			
 		}
 	}
 }

@@ -52,6 +52,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<step-grid.version>0.9.0</step-grid.version>
 		<junit.version>4.8.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
 	</properties>
@@ -203,20 +204,18 @@
 	</profiles>
 
 	<modules>
-		<module>../grid-api</module>
-		<module>../grid-agent</module>
-		<module>../grid</module>
+		<module>../agent</module>
 		<module>../functions</module>
+		<module>../functions-api</module>		
 		<module>../core</module>
 		<module>../commons</module>
 		<module>../base-plugins</module>
 		<module>../rtm-plugin</module>
 		<module>../base-artefacts</module>
 		<module>../execution-controller</module>
-		<module>../agent</module>
 		<module>../initialization</module>
-		<module>../node-plugin</module>
 		<module>../java-plugin</module>
+		<module>../node-plugin</module>
 		<module>../selenium-plugin</module>
 		<module>../jmeter-plugin</module>
 		<module>../script-editor-plugin</module>

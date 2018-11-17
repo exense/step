@@ -50,16 +50,6 @@
 			<artifactId>java-plugin-def</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>selenium-plugin-def</artifactId>
-			<version>${project.version}</version>
-		</dependency>	
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>jmeter-plugin-def</artifactId>
-			<version>${project.version}</version>
-		</dependency>	
 	</dependencies>
 
 	<build>

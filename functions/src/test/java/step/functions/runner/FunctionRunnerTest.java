@@ -3,6 +3,8 @@ package step.functions.runner;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.json.JsonObject;
+
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,7 +21,7 @@ public class FunctionRunnerTest {
 		Map<String, String> attributes = new HashMap<>();
 		attributes.put(Function.NAME, "moustache");
 		f.setAttributes(attributes);
-		Output o = FunctionRunner.getContext(new TestFunctionType()).run(f, "{}", new HashMap<>());
-		Assert.assertEquals("tache", o.getResult().getString("mous"));
+		Output<JsonObject> o = FunctionRunner.getContext(new TestFunctionType()).run(f, "{}");
+		Assert.assertEquals("tache", o.getPayload().getString("mous"));
 	}
 }

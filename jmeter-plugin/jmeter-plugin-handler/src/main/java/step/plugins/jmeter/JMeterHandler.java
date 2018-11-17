@@ -1,37 +1,17 @@
 package step.plugins.jmeter;
 
-import step.grid.agent.AgentTokenServices;
-import step.grid.agent.handler.AbstractMessageHandler;
-import step.grid.agent.handler.MessageHandlerPool;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.contextbuilder.LocalResourceApplicationContextFactory;
-import step.grid.contextbuilder.RemoteApplicationContextFactory;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
+import step.functions.Input;
+import step.functions.Output;
+import step.functions.execution.AbstractFunctionHandler;
 
-public class JMeterHandler extends AbstractMessageHandler {
-	
-	private ApplicationContextBuilder appContextBuilder;
-		
-	private MessageHandlerPool messageHandlerPool;
-		
-	@Override
-	public void init(AgentTokenServices agentTokenServices) {
-		super.init(agentTokenServices);
-		appContextBuilder = agentTokenServices.getApplicationContextBuilder();	
-		messageHandlerPool = new MessageHandlerPool(agentTokenServices);
-	}
+public class JMeterHandler extends AbstractFunctionHandler {
 	
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
-
-		RemoteApplicationContextFactory jmeterLibrariesContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId("$jmeter.libraries", message.getProperties()));
-		appContextBuilder.pushContext(jmeterLibrariesContext);
-
-		LocalResourceApplicationContextFactory jmeterLocalHandlerContext = new LocalResourceApplicationContextFactory(getClass().getClassLoader(), "jmeter-plugin-local-handler.jar");
-		appContextBuilder.pushContext(jmeterLocalHandlerContext);
+	public Output<?> handle(Input<?> input) throws Exception {
+		pushRemoteApplicationContext("$jmeter.libraries", input.getProperties());
 		
-		return messageHandlerPool.get("step.plugins.jmeter.JMeterLocalHandler", appContextBuilder.getCurrentContext().getClassLoader()).handle(token, message);			
+		pushLocalApplicationContext(getClass().getClassLoader(), "jmeter-plugin-local-handler.jar");
+		
+		return delegate("step.plugins.jmeter.JMeterLocalHandler", input);
 	}
 }

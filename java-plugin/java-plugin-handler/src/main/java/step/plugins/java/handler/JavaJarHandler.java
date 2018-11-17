@@ -10,56 +10,32 @@ import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
 
-import step.grid.agent.AgentTokenServices;
-import step.grid.agent.handler.AbstractMessageHandler;
-import step.grid.agent.handler.MessageHandlerPool;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.contextbuilder.ApplicationContextBuilder;
+import step.functions.Input;
+import step.functions.Output;
+import step.functions.execution.AbstractFunctionHandler;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
-import step.grid.contextbuilder.RemoteApplicationContextFactory;
-import step.grid.filemanager.FileManagerClient;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordHandler;
 import step.plugins.js223.handler.ScriptHandler;
 
-public class JavaJarHandler extends AbstractMessageHandler {
-	
-	private ApplicationContextBuilder appContextBuilder;
-		
-	private MessageHandlerPool messageHandlerPool;
-				
-	@Override
-	public void init(AgentTokenServices agentTokenServices) {
-		super.init(agentTokenServices);
-		appContextBuilder = agentTokenServices.getApplicationContextBuilder();	
-		messageHandlerPool = new MessageHandlerPool(agentTokenServices);
-	}
+public class JavaJarHandler extends AbstractFunctionHandler {
 	
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, final InputMessage message) throws Exception {
-		FileManagerClient fmClient = token.getServices().getFileManagerClient();
-		FileVersionId currentkeywordVersion = getFileVersionId(ScriptHandler.SCRIPT_FILE, message.getProperties());
+	public Output<?> handle(Input<?> input) throws Exception {
+		//message.getProperties().put("keywordRootPath", fileManagerClient.getDataFolderPath() + "\\"+ currentkeywordVersion.getFileId() + "\\" + currentkeywordVersion.getVersion());
 		
-		message.getProperties().put("keywordRootPath", fmClient.getDataFolderPath() + "\\"+ currentkeywordVersion.getFileId() + "\\" + currentkeywordVersion.getVersion());
+		pushRemoteApplicationContext(ScriptHandler.SCRIPT_FILE, input.getProperties());
 		
-		RemoteApplicationContextFactory scriptJarContext = new RemoteApplicationContextFactory(fmClient, currentkeywordVersion);
-		appContextBuilder.pushContext(scriptJarContext);
-		
-		ApplicationContext context = agentTokenServices.getApplicationContextBuilder().getCurrentContext();
+		ApplicationContext context = getCurrentContext();
 
 		String kwClassnames = (String) context.get("kwClassnames");
 		if (kwClassnames == null) {
 			kwClassnames = getKeywordClassList((URLClassLoader) context.getClassLoader());
 			context.put("kwClassnames", kwClassnames);
 		}
-		message.getProperties().put(KeywordHandler.KEYWORD_CLASSES, kwClassnames);
+		input.getProperties().put(KeywordHandler.KEYWORD_CLASSES, kwClassnames);
 		
-		return appContextBuilder.runInContext(()->{
-			return messageHandlerPool.get(KeywordHandler.class.getName(), appContextBuilder.getCurrentContext().getClassLoader()).handle(token, message);	
-		});
+		return delegate(KeywordHandler.class.getName(), input);
 	}
 	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {

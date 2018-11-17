@@ -29,11 +29,6 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>grid</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.rtm</groupId>
 			<artifactId>rtm-commons</artifactId>
 			<version>2.2.0</version>

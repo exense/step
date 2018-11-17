@@ -22,13 +22,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.json.Json;
+import javax.json.JsonObject;
 
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
+import step.functions.Input;
+import step.functions.Output;
 
 public class ProcessHandlerTest {
 
@@ -44,12 +44,12 @@ public class ProcessHandlerTest {
 			echoCmd = "echo test";
 		}
 		
-		InputMessage message = new InputMessage();
+		Input<JsonObject> message = new Input<>();
 		message.setProperties(properties);
-		message.setArgument(Json.createObjectBuilder().add("cmd", echoCmd).build());
-		message.setCallTimeout(10000);
+		message.setPayload(Json.createObjectBuilder().add("cmd", echoCmd).build());
+		message.setFunctionCallTimeout(10000);
 		
-		OutputMessage out = processhandler.handle(new AgentTokenWrapper(), message);
+		Output<JsonObject> out = (Output<JsonObject>) processhandler.handle(message);
 		
 		Assert.assertEquals("test\n",out.getPayload().getString("stdout"));
 	}

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.json.Json;
+import javax.json.JsonObject;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;
@@ -33,6 +34,7 @@ import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.reports.Measure;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -56,7 +58,6 @@ import step.grid.AgentRef;
 import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.io.Attachment;
-import step.grid.io.Measure;
 import step.grid.tokenpool.Interest;
 
 public class CallFunctionHandlerTest {
@@ -266,15 +267,18 @@ public class CallFunctionHandlerTest {
 				return null;
 			}
 			
+			@SuppressWarnings("unchecked")
 			@Override
-			public Output callFunction(TokenWrapper tokenHandle, String functionId, Input input) {
-				return newOutput(functionId);
-			}
-			public Output callFunction(TokenWrapper tokenHandle, Map<String, String> functionAttributes, Input input) {
-				return newPassedOutput();
+			public <IN, OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, String functionId, Input<IN> input,	Class<OUT> outputClass) {
+				return (Output<OUT>) newOutput(functionId);
 			}
 			
-			protected Output newOutput(String functionId) {
+			@SuppressWarnings("unchecked")
+			public <IN, OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, Map<String, String> functionAttributes,	Input<IN> input, Class<OUT> outputClass) {
+				return (Output<OUT>) newPassedOutput();
+			}
+			
+			protected Output<JsonObject> newOutput(String functionId) {
 				if(functionId.equals(FUNCTION_ID_ERROR.toString())) {
 					return newErrorOutput();
 				} else {
@@ -282,8 +286,8 @@ public class CallFunctionHandlerTest {
 				}
 			}
 			
-			protected Output newPassedOutput() {
-				Output output = new Output();
+			protected Output<JsonObject> newPassedOutput() {
+				Output<JsonObject> output = new Output<JsonObject>();
 				
 				List<Attachment> attachments = new ArrayList<>();
 				Attachment attachment = new Attachment();
@@ -296,13 +300,13 @@ public class CallFunctionHandlerTest {
 				measures.add(new Measure("Measure1", 1, 1, null));
 				output.setMeasures(measures);
 				
-				output.setResult(Json.createObjectBuilder().add("Output1", "Value1").build());
+				output.setPayload(Json.createObjectBuilder().add("Output1", "Value1").build());
 				
 				return output;
 			}
 			
-			protected Output newErrorOutput() {
-				Output output = new Output();
+			protected Output<JsonObject> newErrorOutput() {
+				Output<JsonObject> output = new Output<JsonObject>();
 				output.setError("My Error");
 				return output;
 			}

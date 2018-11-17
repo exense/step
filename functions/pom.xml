@@ -32,6 +32,11 @@
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>functions-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>base-artefacts</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
@@ -46,8 +51,8 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>grid-api</artifactId>
-			<version>${project.version}</version>
+			<artifactId>step-grid-api</artifactId>
+			<version>${step-grid.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
@@ -95,6 +100,35 @@
 	
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.10</version>
+				<executions>
+					<execution>
+						<id>copy</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>ch.exense.step</groupId>
+									<artifactId>functions-api</artifactId>
+									<classifier>jar-with-dependencies</classifier>
+									<type>jar</type>
+									<overWrite>false</overWrite>
+									<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
+									<destFileName>functions-api.jar</destFileName>
+								</artifactItem>
+							</artifactItems>
+							<overWriteReleases>true</overWriteReleases>
+							<overWriteSnapshots>true</overWriteSnapshots>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>

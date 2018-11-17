@@ -22,6 +22,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.json.JsonObject;
+
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,33 +41,48 @@ public class JavaJarHandlerTest {
 	@Test 
 	public void testJarWithoutKeywords() {
 		GeneralScriptFunction f = buildTestFunction("dummy","java-plugin-handler.jar");
-		Output output = run(f, "{\"key1\":\"val1\"}");
+		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
 		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Unable to find method annoted by 'step.handlers.javahandler.Keyword' with name=='dummy'",output.getError());
 	}
 	
 	@Test 
 	public void testJarWithMatchingKeyword() {
 		GeneralScriptFunction f = buildTestFunction("MyKeywordNotExisting","java-plugin-handler-test.jar");
-		Output output = run(f, "{}");
+		Output<JsonObject> output = run(f, "{}");
 		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Unable to find method annoted by 'step.handlers.javahandler.Keyword' with name=='MyKeywordNotExisting'",output.getError());
 	}
 	
 	@Test 
 	public void testJarWithKeyword() {
 		GeneralScriptFunction f = buildTestFunction("MyKeyword1","java-plugin-handler-test.jar");
-		Output output = run(f, "{\"key1\":\"val1\"}");
-		Assert.assertEquals("MyValue",output.getResult().getString("MyKey"));
+		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
+		Assert.assertEquals("MyValue",output.getPayload().getString("MyKey"));
+	}
+	
+	@Test 
+	public void testProperties() {
+		Map<String, String> properties = new HashMap<>();
+		properties.put("prop1", "MyProp");
+		
+		GeneralScriptFunction f = buildTestFunction("MyKeyword1","java-plugin-handler-test.jar");
+		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}", properties);
+		Assert.assertEquals("MyValue",output.getPayload().getString("MyKey"));
+		Assert.assertEquals("MyProp",output.getPayload().getString("prop1"));
 	}
 	
 	@Test 
 	public void testContextClassloader() {
 		GeneralScriptFunction f = buildTestFunction("TestClassloader","java-plugin-handler-test.jar");
-		Output output = run(f, "{}");
-		Assert.assertTrue(output.getResult().getString("clURLs").contains("java-plugin-handler-test.jar"));
+		Output<JsonObject> output = run(f, "{}");
+		Assert.assertTrue(output.getPayload().getString("clURLs").contains("java-plugin-handler-test.jar"));
 	}
 	
-	private Output run(GeneralScriptFunction f, String inputJson) {
-		return FunctionRunner.getContext(new GeneralScriptFunctionType()).run(f, inputJson, new HashMap<>());
+	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson) {
+		return FunctionRunner.getContext(new GeneralScriptFunctionType()).run(f, inputJson);
+	}
+	
+	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson, Map<String, String> properties) {
+		return FunctionRunner.getContext(new GeneralScriptFunctionType(), properties).run(f, inputJson);
 	}
 	
 	private GeneralScriptFunction buildTestFunction(String kwName, String scriptFile) {

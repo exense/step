@@ -11,6 +11,11 @@ public class MyKeywordLibrary extends AbstractKeyword {
 	@Keyword
 	public void MyKeyword1() {
 		output.add("MyKey", "MyValue");
+		if(properties!=null) {
+			properties.forEach((key, value)->{
+				output.add(key, value);
+			});
+		}
 	}
 	
 	@Keyword

@@ -15,8 +15,8 @@ public interface FunctionExecutionService {
 	
 	void returnTokenHandle(TokenWrapper adapterToken) throws FunctionExecutionServiceException;
 
-	Output callFunction(TokenWrapper tokenHandle, Map<String, String> functionAttributes, Input input);
+	 <IN,OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, Map<String, String> functionAttributes, Input<IN> input, Class<OUT> outputClass);
 
-	Output callFunction(TokenWrapper tokenHandle, String functionId, Input input);
+	 <IN,OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, String functionId, Input<IN> input, Class<OUT> outputClass);
 
 }

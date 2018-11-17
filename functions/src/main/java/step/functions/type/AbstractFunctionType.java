@@ -45,7 +45,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	public abstract Map<String, String> getHandlerProperties(T function);
 	
-	public void beforeFunctionCall(T function, Input input, Map<String, String> properties) {
+	public void beforeFunctionCall(T function, Input<?> input, Map<String, String> properties) {
 		
 	}
 	

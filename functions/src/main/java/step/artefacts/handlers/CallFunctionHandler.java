@@ -100,8 +100,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		node.setFunctionId(function.getId().toString());
 		node.setFunctionAttributes(function.getAttributes());
 
-		Input input = buildInput(argumentStr);
-		node.setInput(input.getArgument().toString());
+		Input<JsonObject> input = buildInput(argumentStr);
+		node.setInput(input.getPayload().toString());
 		
 		validateInput(input, function);
 
@@ -121,9 +121,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				token.setCurrentOwner(new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription()));
 				
 				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()});
-				Output output;
+				
+				Output<JsonObject> output;
 				try {
-					output = functionExecutionService.callFunction(token, function.getId().toString(), input);
+					output = functionExecutionService.callFunction(token, function.getId().toString(), input, JsonObject.class);
 				} finally {
 					OperationManager.getInstance().exit();
 				}
@@ -136,13 +137,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					node.setStatus(ReportNodeStatus.PASSED);
 				}
 	
-				if(output.getResult() != null) {
-					context.getVariablesManager().putVariable(node, "output", output.getResult());
-					node.setOutput(output.getResult().toString());
-					node.setOutputObject(output.getResult());
+				if(output.getPayload() != null) {
+					context.getVariablesManager().putVariable(node, "output", output.getPayload());
+					node.setOutput(output.getPayload().toString());
+					node.setOutputObject(output.getPayload());
 					ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
 					if(parentNode!=null) {
-						context.getVariablesManager().putVariable(parentNode, "previous", output.getResult());					
+						context.getVariablesManager().putVariable(parentNode, "previous", output.getPayload());					
 					}
 				}
 				
@@ -171,17 +172,17 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				callChildrenArtefacts(node, testArtefact);
 			}
 		} else {
-			Output output = new Output();
-			output.setResult(jprov.createObjectBuilder().build());
-			node.setOutputObject(output.getResult());
-			node.setOutput(output.getResult().toString());
+			Output<JsonObject> output = new Output<>();
+			output.setPayload(jprov.createObjectBuilder().build());
+			node.setOutputObject(output.getPayload());
+			node.setOutput(output.getPayload().toString());
 			node.setStatus(ReportNodeStatus.PASSED);
 		}
 	}
 
-	private void validateInput(Input input, Function function) {
+	private void validateInput(Input<JsonObject> input, Function function) {
 		if(context.getConfiguration().getPropertyAsBoolean("enforceschemas", false)){
-			JsonSchemaValidator.validate(function.getSchema().toString(), input.getArgument().toString());
+			JsonSchemaValidator.validate(function.getSchema().toString(), input.getPayload().toString());
 		}
 	}
 
@@ -206,9 +207,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@SuppressWarnings("unchecked")
-	private void drainOutput(String drainOutputValue, Output output) {
+	private void drainOutput(String drainOutputValue, Output<JsonObject> output) {
 		if(drainOutputValue!=null&&drainOutputValue.trim().length()>0) {
-			JsonObject resultJson = output.getResult();
+			JsonObject resultJson = output.getPayload();
 			if(resultJson!=null) {
 				Object var = context.getVariablesManager().getVariable(drainOutputValue);
 				if(var instanceof Map) {
@@ -271,15 +272,15 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	
 	public static final String PARENTREPORTID = "$parentreportid";
 	
-	private Input buildInput(String argumentStr) {
+	private Input<JsonObject> buildInput(String argumentStr) {
 		JsonObject argument = parseAndResolveJson(argumentStr);
 		
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
 		properties.put(PARENTREPORTID, context.getCurrentReportNode().getId().toString());
 		
-		Input input = new Input();
-		input.setArgument(argument);
+		Input<JsonObject> input = new Input<>();
+		input.setPayload(argument);
 		input.setProperties(properties);
 		return input;
 	}

@@ -36,7 +36,12 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>core</artifactId>
 			<version>${project.version}</version>
-		</dependency>		
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>functions-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>commons</artifactId>

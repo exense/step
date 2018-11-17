@@ -21,28 +21,25 @@ package step.plugins.functions.types.composite;
 import org.bson.types.ObjectId;
 
 import step.artefacts.handlers.CallFunctionHandler;
-import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.variables.VariableType;
-import step.grid.agent.handler.MessageHandler;
-import step.grid.agent.handler.context.OutputMessageBuilder;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
+import step.functions.Input;
+import step.functions.Output;
+import step.functions.OutputBuilder;
+import step.functions.execution.AbstractFunctionHandler;
 
-public class ArtefactMessageHandler implements MessageHandler {
+public class ArtefactMessageHandler extends AbstractFunctionHandler {
 
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message)
-			throws Exception {
-		ExecutionContext executionContext = (ExecutionContext) token.getToken().getAttachedObject(CallFunctionHandler.EXECUTION_CONTEXT_KEY);
+	protected Output<?> handle(Input<?> input) {
+		ExecutionContext executionContext = (ExecutionContext) getToken().getToken().getAttachedObject(CallFunctionHandler.EXECUTION_CONTEXT_KEY);
 		
-		String artefactId = message.getProperties().get(CallFunctionHandler.ARTEFACTID);
-		String parentReportId = message.getProperties().get(CallFunctionHandler.PARENTREPORTID);
+		String artefactId = input.getProperties().get(CallFunctionHandler.ARTEFACTID);
+		String parentReportId = input.getProperties().get(CallFunctionHandler.PARENTREPORTID);
 		
 		ReportNode parentNode;
 		parentNode = new ReportNode();
@@ -59,8 +56,8 @@ public class ArtefactMessageHandler implements MessageHandler {
 		
 		AbstractArtefact artefact = executionContext.getArtefactAccessor().get(artefactId);
 		
-		executionContext.getVariablesManager().putVariable(parentNode, "input", message.getArgument());
-		OutputMessageBuilder output = new OutputMessageBuilder();
+		executionContext.getVariablesManager().putVariable(parentNode, "input", input.getPayload());
+		OutputBuilder output = new OutputBuilder();
 		executionContext.getVariablesManager().putVariable(parentNode, VariableType.IMMUTABLE, "output", output);
 		
 		try {
@@ -74,7 +71,6 @@ public class ArtefactMessageHandler implements MessageHandler {
 			executionContext.getVariablesManager().removeVariable(parentNode, "output");
 			executionContext.setCurrentReportNode(previousCurrentNode);
 		}
-		
 	}
 
 }

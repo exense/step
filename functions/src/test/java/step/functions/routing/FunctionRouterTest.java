@@ -1,11 +1,14 @@
 package step.functions.routing;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import junit.framework.Assert;
 import step.artefacts.CallFunction;
@@ -25,6 +28,11 @@ import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
+import step.grid.TokenWrapper;
+import step.grid.client.GridClient;
+import step.grid.client.GridClientImpl.AgentCommunicationException;
+import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
 public class FunctionRouterTest {
@@ -73,8 +81,7 @@ public class FunctionRouterTest {
 			}
 		});
 		
-		
-		FunctionExecutionService client = new FunctionExecutionServiceImpl(null, null, functionTypeRegistry, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
+		FunctionExecutionService client = new FunctionExecutionServiceImpl(getDummyGridClient(), null, functionTypeRegistry, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
 
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 		FunctionRouter router = new FunctionRouter(client, functionTypeRegistry, dynamicJsonObjectResolver);
@@ -87,5 +94,47 @@ public class FunctionRouterTest {
 		Assert.assertEquals("cf", selectionCriteria.get("callFunction").getSelectionPattern().pattern());
 		Assert.assertEquals("f", selectionCriteria.get("function").getSelectionPattern().pattern());
 
+	}
+
+	private GridClient getDummyGridClient() {
+		return new GridClient() {
+			
+			@Override
+			public String registerFile(File arg0) {
+				return "dummyFileId";
+			}
+			
+			@Override
+			public File getRegisteredFile(String arg0) {
+				return null;
+			}
+			
+			@Override
+			public void returnTokenHandle(TokenWrapper arg0) throws AgentCommunicationException {
+				
+			}
+			
+			@Override
+			public TokenWrapper getTokenHandle(Map<String, String> arg0, Map<String, Interest> arg1, boolean arg2)
+					throws AgentCommunicationException {
+				return null;
+			}
+			
+			@Override
+			public TokenWrapper getLocalTokenHandle() {
+				return null;
+			}
+			
+			@Override
+			public void close() {
+				
+			}
+			
+			@Override
+			public OutputMessage call(TokenWrapper arg0, JsonNode arg2, String arg3, FileVersionId arg4,
+					Map<String, String> arg5, int arg6) throws Exception {
+				return null;
+			}
+		};
 	}
 }

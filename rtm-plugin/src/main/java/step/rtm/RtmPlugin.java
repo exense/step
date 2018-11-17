@@ -14,11 +14,11 @@ import org.rtm.commons.MeasurementAccessor;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractAccessor;
+import step.core.artefacts.reports.Measure;
 import step.core.artefacts.reports.ReportNode;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
-import step.grid.io.Measure;
 
 @Plugin
 public class RtmPlugin extends AbstractPlugin {

@@ -12,32 +12,24 @@ import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
 import org.apache.jorphan.collections.HashTreeTraverser;
 
-import step.grid.agent.AgentTokenServices;
-import step.grid.agent.handler.AbstractMessageHandler;
-import step.grid.agent.handler.context.OutputMessageBuilder;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.functions.Input;
+import step.functions.Output;
+import step.functions.OutputBuilder;
+import step.functions.execution.AbstractFunctionHandler;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.filemanager.FileManagerClient.FileVersion;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
 
-public class JMeterLocalHandler extends AbstractMessageHandler {
+public class JMeterLocalHandler extends AbstractFunctionHandler {
 
 	String jmeterHome;
 
 	@Override
-	public void init(AgentTokenServices tokenServices) {
-		super.init(tokenServices);
-		// SaveService.loadProperties();
-	}
-
-	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
-		ApplicationContext context = token.getServices().getApplicationContextBuilder().getCurrentContext();
+	public Output<?> handle(Input<?> message) throws Exception {
+		ApplicationContext context = getCurrentContext();
 		if(context.get("initialized")==null) {
 			FileVersionId jmeterLibs = getFileVersionId("$jmeter.libraries", message.getProperties());
-			FileVersion jmeterLibFolder = token.getServices().getFileManagerClient().requestFileVersion(jmeterLibs.getFileId(), jmeterLibs.getVersion());
+			FileVersion jmeterLibFolder = getToken().getServices().getFileManagerClient().requestFileVersion(jmeterLibs.getFileId(), jmeterLibs.getVersion());
 			jmeterHome = jmeterLibFolder.getFile().getAbsolutePath();
 			updateClasspathSystemProperty();
 			
@@ -49,9 +41,9 @@ public class JMeterLocalHandler extends AbstractMessageHandler {
 			context.put("initialized", true);
 		}
 		
-		OutputMessageBuilder out = new OutputMessageBuilder();
+		OutputBuilder out = new OutputBuilder();
 
-		File testPlanFile = retrieveFileVersion("$jmeter.testplan.file", message.getProperties()).getFile();
+		File testPlanFile = retrieveFileVersion("$jmeter.testplan.file", message.getProperties());
 
 		StandardJMeterEngine jmeter = new StandardJMeterEngine();
 
@@ -90,9 +82,9 @@ public class JMeterLocalHandler extends AbstractMessageHandler {
 
 	}
 
-	private Arguments createArguments(InputMessage message) {
+	private Arguments createArguments(Input<?> input) {
 		Arguments arguments = new Arguments();
-		JsonObject inputJson = message.getArgument();
+		JsonObject inputJson = (JsonObject) input.getPayload();
 		if (inputJson != null) {
 			for (String key : inputJson.keySet()) {
 				arguments.addArgument(key, inputJson.getString(key));

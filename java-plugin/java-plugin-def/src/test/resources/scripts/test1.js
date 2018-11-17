@@ -17,3 +17,9 @@
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
 output.add('key1',input.key1.toString())
+if(properties.containsKey('prop1')) {
+	output.add('prop1',properties['prop1'])
+}
+if(properties.containsKey('tokenProp1')) {
+	output.add('tokenProp1',properties['tokenProp1'])
+}

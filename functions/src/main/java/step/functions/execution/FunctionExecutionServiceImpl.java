@@ -29,6 +29,10 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import step.commons.helpers.FileHelper;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.functions.Function;
 import step.functions.Input;
@@ -37,10 +41,11 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
+import step.grid.bootstrap.ResourceExtractor;
+import step.grid.client.GridClient;
 import step.grid.client.GridClientImpl.AgentCallTimeoutException;
 import step.grid.client.GridClientImpl.AgentCommunicationException;
 import step.grid.client.GridClientImpl.AgentSideException;
-import step.grid.client.GridClient;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.AgentError;
 import step.grid.io.AgentErrorCode;
@@ -59,6 +64,10 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	
 	private final DynamicBeanResolver dynamicBeanResolver;
 	
+	private final FileVersionId functionHandlerPackage;
+	
+	private final ObjectMapper mapper;
+	
 	public FunctionExecutionServiceImpl(GridClient gridClient, FunctionAccessor functionAccessor,
 			FunctionTypeRegistry functionTypeRegistry, DynamicBeanResolver dynamicBeanResolver) {
 		super();
@@ -66,6 +75,13 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		this.functionAccessor = functionAccessor;
 		this.functionTypeRegistry = functionTypeRegistry;
 		this.dynamicBeanResolver = dynamicBeanResolver;
+	
+		File functionHandlerJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "functions-api.jar");
+		long version = FileHelper.getLastModificationDateRecursive(functionHandlerJar);
+		
+		functionHandlerPackage = new FileVersionId(gridClient.registerFile(functionHandlerJar), version);
+		
+		mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();
 	}
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionExecutionServiceImpl.class);
@@ -102,26 +118,37 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	}
 	
 	@Override
-	public Output callFunction(TokenWrapper tokenHandle, Map<String,String> functionAttributes, Input input) {	
+	public <IN,OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, Map<String,String> functionAttributes, Input<IN> input, Class<OUT> outputClass) {	
 		Function function = functionAccessor.findByAttributes(functionAttributes);
-		return callFunction(tokenHandle, function.getId().toString(), input);
+		return callFunction(tokenHandle, function.getId().toString(), input, outputClass);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Output callFunction(TokenWrapper tokenHandle, String functionId, Input input) {	
+	public <IN,OUT> Output<OUT>  callFunction(TokenWrapper tokenHandle, String functionId, Input<IN> input, Class<OUT> outputClass) {	
 		Function function = functionAccessor.get(new ObjectId(functionId));
 		
-		Output output = new Output();
-		output.setFunction(function);
+		input.setFunction(function.getAttributes().get(Function.NAME));
+		
+		Output<OUT> output = new Output<OUT>();
 		try {
 			AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionTypeByFunction(function);
 			dynamicBeanResolver.evaluate(function, Collections.<String, Object>unmodifiableMap(input.getProperties()));
 			
 			String handlerChain = functionType.getHandlerChain(function);
 			FileVersionId handlerPackage = functionType.getHandlerPackage(function);
+
+			// Build the property map used for the agent layer
+			Map<String, String> inputMessageProperties = new HashMap<>();
+			inputMessageProperties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, handlerChain);
+			if(handlerPackage != null) {
+				inputMessageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
+			}
 			
+			// Build the property map used for the function layer
 			Map<String, String> properties = new HashMap<>();
 			properties.putAll(input.getProperties());
+			
 			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
 			if(handlerProperties!=null) {
 				properties.putAll(handlerProperties);				
@@ -129,10 +156,23 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			
 			functionType.beforeFunctionCall(function, input, properties);
 			
+			input.setProperties(properties);
+
 			int callTimeout = function.getCallTimeout().get();
+
+			// Calculate the call timeout of the function. The offset is required to ensure that the call timeout of the function,
+			// if used in the function handler, occurs before the agent timeout that will interrupt the thread
+			if(callTimeout < 100) {
+				throw new RuntimeException("The defined call timeout of the function should be higher than 100ms");
+			}
+			input.setFunctionCallTimeout(callTimeout-100l);
+
+			// Serialize the input object
+			JsonNode node = mapper.valueToTree(input);
+			
 			OutputMessage outputMessage;
 			try {
-				outputMessage = gridClient.call(tokenHandle, function.getAttributes().get(Function.NAME), input.getArgument(), handlerChain, handlerPackage, properties, callTimeout);
+				outputMessage = gridClient.call(tokenHandle, node, FunctionMessageHandler.class.getName(), functionHandlerPackage, inputMessageProperties, callTimeout);
 			} catch (AgentCallTimeoutException e) {
 				attachExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword",e );
 				return output;
@@ -172,12 +212,17 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 					output.setError("Unknown agent error: "+agentError);
 				}
 			} else {
-				output.setError(outputMessage.getError());				
+				output = mapper.treeToValue(outputMessage.getPayload(), Output.class);
 			}
 			
-			output.setResult(outputMessage.getPayload());
-			output.setAttachments(outputMessage.getAttachments());
-			output.setMeasures(outputMessage.getMeasures());
+			if(outputMessage.getAttachments()!=null) {
+				if(output.getAttachments()==null) {
+					output.setAttachments(outputMessage.getAttachments());
+				} else {
+					output.getAttachments().addAll(outputMessage.getAttachments());					
+				}
+			}
+
 			return output;
 		} catch (Exception e) {
 			if(logger.isDebugEnabled()) {
@@ -187,12 +232,24 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		}
 		return output;
 	}
+	
+	protected Map<String, String> registerFile(File file, String properyName) {
+		String fileHandle = gridClient.registerFile(file);
+		return fileVersionIdToMap(properyName, new FileVersionId(fileHandle, FileHelper.getLastModificationDateRecursive(file)));
+	}
+	
+	protected Map<String, String> fileVersionIdToMap(String propertyName, FileVersionId fileVersionId) {
+		Map<String, String> props = new HashMap<>();
+		props.put(propertyName+".id", fileVersionId.getFileId());
+		props.put(propertyName+".version", Long.toString(fileVersionId.getVersion()));
+		return props;
+	}
 
-	private void attachExceptionToOutput(Output output, Exception e) {
+	private void attachExceptionToOutput(Output<?> output, Exception e) {
 		attachExceptionToOutput(output, "Unexpected error while calling keyword: " + e.getClass().getName() + " " + e.getMessage(), e);
 	}
 	
-	private void attachExceptionToOutput(Output output, String message, Exception e) {
+	private void attachExceptionToOutput(Output<?> output, String message, Exception e) {
 		output.setError(message);
 		Attachment attachment = AttachmentHelper.generateAttachmentForException(e);
 		List<Attachment> attachments = output.getAttachments();

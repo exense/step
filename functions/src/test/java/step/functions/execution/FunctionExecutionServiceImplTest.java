@@ -11,6 +11,9 @@ import javax.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.DynamicValueResolver;
@@ -18,6 +21,7 @@ import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.Input;
 import step.functions.Output;
+import step.functions.OutputBuilder;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
@@ -42,14 +46,13 @@ public class FunctionExecutionServiceImplTest {
 		
 		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true);
 		token.setCurrentOwner(new TokenWrapperOwner() {});
-		Input i = getDummyInput();
+		Input<JsonObject> i = getDummyInput();
 		Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
-		Output output = f.callFunction(token, new HashMap<>(), i);
+		Output<JsonObject> output = f.callFunction(token, new HashMap<>(), i, JsonObject.class);
 		Assert.assertNotNull(output);
 		Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
 		
 		Assert.assertNull(output.getError());
-		Assert.assertNotNull(output.getFunction());
 		Assert.assertNotNull(token.getCurrentOwner());
 		f.returnTokenHandle(token);
 	}
@@ -116,7 +119,7 @@ public class FunctionExecutionServiceImplTest {
 	public void testCallAgentCommunicationException() throws FunctionExecutionServiceException {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new AgentCommunicationException("Call error"), null, null);
 		
-		Output output = callFunctionWithDummyInput(f);
+		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
 		Assert.assertEquals("Communication error between the controller and the agent while calling the agent", output.getError());
 	}
@@ -125,7 +128,7 @@ public class FunctionExecutionServiceImplTest {
 	public void testCallTimeout() throws FunctionExecutionServiceException {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new AgentCallTimeoutException(functionCallTimeout, "Call timeout", null), null, null);
 		
-		Output output = callFunctionWithDummyInput(f);
+		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
 		Assert.assertEquals("Timeout after "+functionCallTimeout+ "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword", output.getError());
 		
@@ -135,19 +138,35 @@ public class FunctionExecutionServiceImplTest {
 	public void testCallException() throws FunctionExecutionServiceException {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new Exception("Call exception", null), null, null);
 		
-		Output output = callFunctionWithDummyInput(f);
+		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
 		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Call exception", output.getError());
 	}
 	
 	@Test
+	public void testMeasures() throws FunctionExecutionServiceException {
+		OutputBuilder outputBuilder = new OutputBuilder();
+		
+		outputBuilder.startMeasure("Measure1");
+		outputBuilder.stopMeasure();
+		
+		Output<?> expectedOutput = outputBuilder.build();
+		
+		FunctionExecutionService f = getFunctionExecutionService(expectedOutput, null, null, null);
+		
+		Output<JsonObject> output = callFunctionWithDummyInput(f);
+		Assert.assertNotNull(output);
+		Assert.assertEquals(1, output.getMeasures().size());
+	}
+	
+	@Test
 	public void testError() throws FunctionExecutionServiceException {
-		OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
-		OutputMessage outputMessage = outputMessageBuilder.setError("My error").build();
+		OutputBuilder outputBuilder = new OutputBuilder();
+		Output<?> expectedOutput = outputBuilder.setError("My error").build();
 		
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(outputMessage, null, null, null);
+		FunctionExecutionService f = getFunctionExecutionService(expectedOutput, null, null, null);
 		
-		Output output = callFunctionWithDummyInput(f);
+		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
 		Assert.assertEquals("My error", output.getError());
 	}
@@ -160,26 +179,26 @@ public class FunctionExecutionServiceImplTest {
 		
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(outputMessage, null, null, null);
 		
-		Output output = callFunctionWithDummyInput(f);
+		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
 		Assert.assertEquals("Unexepected error while executing the keyword on the agent", output.getError());
 	}
 
-	protected Output callFunctionWithDummyInput(FunctionExecutionService f)
+	protected Output<JsonObject> callFunctionWithDummyInput(FunctionExecutionService f)
 			throws FunctionExecutionServiceException {
 		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true);
 		token.setCurrentOwner(new TokenWrapperOwner() {});
-		Input i = getDummyInput();
-		Output output = f.callFunction(token, new HashMap<>(), i);
+		Input<JsonObject> i = getDummyInput();
+		Output<JsonObject> output = f.callFunction(token, new HashMap<>(), i, JsonObject.class);
 		return output;
 	}
 
-	protected Input getDummyInput() {
-		Input i = new Input();
+	protected Input<JsonObject> getDummyInput() {
+		Input<JsonObject> i = new Input<JsonObject>();
 		HashMap<String, String> inputProperties = new HashMap<>();
 		inputProperties.put("inputProperty1", "inputProperty1");
 		i.setProperties(inputProperties);
-		i.setArgument(Json.createObjectBuilder().build());
+		i.setPayload(Json.createObjectBuilder().build());
 		return i;
 	}
 
@@ -190,6 +209,15 @@ public class FunctionExecutionServiceImplTest {
 		DynamicBeanResolver dynamicBeanResolver = getDynamicBeanResolver();
 		FunctionExecutionService f = new FunctionExecutionServiceImpl(gridClient, functionAccessor, functionTypeRegistry, dynamicBeanResolver);
 		return f;
+	}
+	
+	protected FunctionExecutionService getFunctionExecutionService(Output<?> output, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
+		OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
+		
+		ObjectMapper mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();
+		outputMessageBuilder.setPayload(mapper.valueToTree(output));
+		
+		return getFunctionExecutionServiceForGridClientTest(outputMessageBuilder.build(), callException, reserveTokenException, returnTokenException);
 	}
 
 	protected DynamicBeanResolver getDynamicBeanResolver() {
@@ -219,7 +247,7 @@ public class FunctionExecutionServiceImplTest {
 				return new AbstractFunctionType<Function>() {
 					
 					@Override
-					public void beforeFunctionCall(Function function, Input input, Map<String, String> properties) {
+					public void beforeFunctionCall(Function function, Input<?> input, Map<String, String> properties) {
 						super.beforeFunctionCall(function, input, properties);
 						beforeFunctionCallHasBeenCall.set(true);
 					}
@@ -261,7 +289,7 @@ public class FunctionExecutionServiceImplTest {
 			
 			@Override
 			public String registerFile(File file) {
-				throw new RuntimeException("Shouldn't be called");
+				return "DummyId";
 			}
 			
 			@Override
@@ -292,11 +320,18 @@ public class FunctionExecutionServiceImplTest {
 			}
 			
 			@Override
-			public OutputMessage call(TokenWrapper tokenWrapper, String function, JsonObject argument, String handler,
+			public OutputMessage call(TokenWrapper tokenWrapper, JsonNode argument, String handler,
 					FileVersionId handlerPackage, Map<String, String> properties, int callTimeout) throws Exception {
 				assert callTimeout == functionCallTimeout;
-				assert properties.containsKey("inputProperty1");
-				assert properties.containsKey("handlerProperty1");
+				assert !properties.containsKey("inputProperty1");
+				assert !properties.containsKey("handlerProperty1");
+				
+				ObjectMapper mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();
+				Input<?> input = mapper.treeToValue(argument, Input.class);
+				assert input.getFunctionCallTimeout() == functionCallTimeout-100l;
+				assert input.getProperties().containsKey("inputProperty1");
+				assert input.getProperties().containsKey("handlerProperty1");
+				
 				if(callException !=null) {
 					throw callException;
 				} else if(outputMessage !=null) {

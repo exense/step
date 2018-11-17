@@ -21,8 +21,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>grid-api</artifactId>
-			<version>${project.version}</version>
+			<artifactId>step-grid-api</artifactId>
+			<version>${step-grid.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -43,13 +43,13 @@
 							<artifactItems>
 								<artifactItem>
 									<groupId>ch.exense.step</groupId>
-									<artifactId>grid-agent</artifactId>
-									<version>${project.version}</version>
+									<artifactId>step-grid-agent</artifactId>
+									<version>${step-grid.version}</version>
 									<type>jar</type>
 									<classifier>jar-with-dependencies</classifier>
 									<overWrite>false</overWrite>
 									<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
-									<destFileName>grid-agent.jar</destFileName>
+									<destFileName>step-grid-agent.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
 							<overWriteReleases>true</overWriteReleases>

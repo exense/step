@@ -25,7 +25,7 @@ import javax.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.grid.agent.handler.context.OutputMessageBuilder;
+import step.functions.OutputBuilder;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 
@@ -33,7 +33,7 @@ public class AbstractKeyword {
 	
 	protected Logger logger = LoggerFactory.getLogger(AbstractKeyword.class);
 
-	protected OutputMessageBuilder output;
+	protected OutputBuilder output;
 	
 	protected JsonObject input;
 
@@ -72,11 +72,11 @@ public class AbstractKeyword {
 		this.input = input;
 	}
 
-	public OutputMessageBuilder getOutputBuilder() {
+	public OutputBuilder getOutputBuilder() {
 		return output;
 	}
 
-	public void setOutputBuilder(OutputMessageBuilder outputBuilder) {
+	public void setOutputBuilder(OutputBuilder outputBuilder) {
 		this.output = outputBuilder;
 	}
 

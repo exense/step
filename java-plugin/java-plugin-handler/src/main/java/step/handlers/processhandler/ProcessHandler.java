@@ -9,33 +9,32 @@ import java.util.concurrent.TimeoutException;
 import javax.json.JsonObject;
 
 import step.commons.processmanager.ManagedProcess;
-import step.grid.agent.handler.MessageHandler;
-import step.grid.agent.handler.context.OutputMessageBuilder;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.functions.Input;
+import step.functions.Output;
+import step.functions.OutputBuilder;
+import step.functions.execution.AbstractFunctionHandler;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
 
-public class ProcessHandler implements MessageHandler {
+public class ProcessHandler extends AbstractFunctionHandler {
 
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
+	public Output<?> handle(Input<?> input) throws Exception {
 		
-		String maxOutputPayloadSizeStr = message.getProperties().get("processhandler.output.payload.maxsize");
+		String maxOutputPayloadSizeStr = input.getProperties().get("processhandler.output.payload.maxsize");
 		Long maxOutputPayloadSize = maxOutputPayloadSizeStr!=null?Long.parseLong(maxOutputPayloadSizeStr):1000;
 		
-		String maxOutputAttachmentSizeStr = message.getProperties().get("processhandler.output.attachment.maxsize");
+		String maxOutputAttachmentSizeStr = input.getProperties().get("processhandler.output.attachment.maxsize");
 		Long maxOutputAttachmentSize = maxOutputAttachmentSizeStr!=null?Long.parseLong(maxOutputAttachmentSizeStr):10000000;
 		
-		OutputMessageBuilder output = new OutputMessageBuilder(); 
-		JsonObject argument = message.getArgument();
+		OutputBuilder output = new OutputBuilder(); 
+		JsonObject argument = (JsonObject) input.getPayload();
 		if(argument.containsKey("cmd")) {
 			String cmd = argument.getString("cmd");
-			ManagedProcess process = new ManagedProcess(cmd, "ProcessHandler");
-			try {
+			
+			try (ManagedProcess process = new ManagedProcess(cmd, "ProcessHandler")) {
 				process.start();
-				process.waitFor(Math.max(0, message.getCallTimeout()-1000));
+				process.waitFor(input.getFunctionCallTimeout());
 				
 				attachOutput(maxOutputPayloadSize, maxOutputAttachmentSize, output, "stdout", process.getProcessOutputLog());
 				attachOutput(maxOutputPayloadSize, maxOutputAttachmentSize, output, "stderr", process.getProcessErrorLog());
@@ -44,8 +43,6 @@ public class ProcessHandler implements MessageHandler {
 			} catch (Exception e) {
 				output.addAttachment(AttachmentHelper.generateAttachmentForException(e));
 				output.setError("Error while running process");
-			} finally {
-				process.destroy();
 			}
 		} else {
 			output.setError("Missing argument 'cmd'");
@@ -53,7 +50,7 @@ public class ProcessHandler implements MessageHandler {
 		return output.build();
 	}
 
-	public void attachOutput(Long maxOutputPayloadSize, Long maxOutputAttachmentSize, OutputMessageBuilder output,
+	public void attachOutput(Long maxOutputPayloadSize, Long maxOutputAttachmentSize, OutputBuilder output,
 			String outputName, File file) throws IOException {
 		StringBuilder processOutput = new StringBuilder();
 		if(file.length()<maxOutputPayloadSize) {

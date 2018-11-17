@@ -25,8 +25,8 @@ import javax.json.JsonObject;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import step.core.artefacts.reports.Measure;
 import step.core.artefacts.reports.ReportNode;
-import step.grid.io.Measure;
 
 public class CallFunctionReportNode extends ReportNode {
 

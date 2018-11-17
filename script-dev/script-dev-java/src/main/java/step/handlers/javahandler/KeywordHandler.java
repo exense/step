@@ -21,19 +21,20 @@ package step.handlers.javahandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
-import java.util.Map;
+
+import javax.json.JsonObject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.grid.agent.handler.AbstractMessageHandler;
-import step.grid.agent.handler.context.OutputMessageBuilder;
+import step.functions.Input;
+import step.functions.Output;
+import step.functions.OutputBuilder;
+import step.functions.execution.AbstractFunctionHandler;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
 
-public class KeywordHandler extends AbstractMessageHandler {
+public class KeywordHandler extends AbstractFunctionHandler {
 	
 	public static final String KEYWORD_CLASSES = "$keywordClasses";
 	
@@ -59,11 +60,11 @@ public class KeywordHandler extends AbstractMessageHandler {
 	}
 
 	@Override
-	public OutputMessage handle(AgentTokenWrapper token, InputMessage message) throws Exception {
-		ApplicationContext context = agentTokenServices.getApplicationContextBuilder().getCurrentContext();
+	public Output<?> handle(Input<?> input) throws Exception {
+		ApplicationContext context = getCurrentContext();
 		URLClassLoader cl = (URLClassLoader) context.getClassLoader();
 		
-		String kwClassnames = message.getProperties().get(KEYWORD_CLASSES);
+		String kwClassnames = input.getProperties().get(KEYWORD_CLASSES);
 		if(kwClassnames != null && kwClassnames.trim().length()>0) {
 			for(String kwClassname:kwClassnames.split(";")) {
 				Class<?> kwClass = cl.loadClass(kwClassname);
@@ -73,19 +74,19 @@ public class KeywordHandler extends AbstractMessageHandler {
 						Keyword annotation = m.getAnnotation(Keyword.class);
 						String annotatedFunctionName = annotation.name();
 						if (((annotatedFunctionName == null || annotatedFunctionName.length() == 0)
-								&& m.getName().equals(message.getFunction()))
-								|| annotatedFunctionName.equals(message.getFunction())) {
-							return invokeMethod(m, token, message);
+								&& m.getName().equals(input.getFunction()))
+								|| annotatedFunctionName.equals(input.getFunction())) {
+							return invokeMethod(m, getToken(), input);
 						}		
 					}
 				}			
 			}
 		}
 
-		throw new Exception("Unable to find method annoted by '" + Keyword.class.getName() + "' with name=='"+ message.getFunction() + "'");
+		throw new Exception("Unable to find method annoted by '" + Keyword.class.getName() + "' with name=='"+ input.getFunction() + "'");
 	}
 
-	private OutputMessage invokeMethod(Method m, AgentTokenWrapper token, InputMessage message)
+	private Output<?> invokeMethod(Method m, AgentTokenWrapper token, Input<?> input)
 			throws Exception {
 		Class<?> clazz = m.getDeclaringClass();
 		Object instance = clazz.newInstance();
@@ -95,23 +96,15 @@ public class KeywordHandler extends AbstractMessageHandler {
 					+ clazz.getClassLoader().toString());
 		}
 
-		Map<String, String> properties = buildPropertyMap(token, message);
-
-		if (logger.isDebugEnabled()) {
-			logger.debug("Using property map: " + properties.toString());
-		}
-
-		// AbstractScript script = null;
-		OutputMessageBuilder output = new OutputMessageBuilder();
-
+		OutputBuilder outputBuilder = new OutputBuilder();
 
 		if (instance instanceof AbstractKeyword) {
 			AbstractKeyword script = (AbstractKeyword) instance;
 			script.setTokenSession(token.getSession());
 			script.setSession(token.getTokenReservationSession());
-			script.setInput(message.getArgument());
-			script.setProperties(properties);
-			script.setOutputBuilder(output);
+			script.setInput((JsonObject) input.getPayload());
+			script.setProperties(mergeAllProperties(input));
+			script.setOutputBuilder(outputBuilder);
 
 			try {
 				m.invoke(instance);
@@ -125,24 +118,25 @@ public class KeywordHandler extends AbstractMessageHandler {
 					} else {
 						reportedEx = e;
 					}
-					output.setError(reportedEx.getMessage()!=null?reportedEx.getMessage():"Empty error message", reportedEx);
+					outputBuilder.setError(reportedEx.getMessage()!=null?reportedEx.getMessage():"Empty error message", reportedEx);
 					if(throwExceptionOnError) {
-						OutputMessage outputMessage = output.build();
-						throw new KeywordException(output.build(), outputMessage.getError(), reportedEx);
+						Output<?> outputMessage = outputBuilder.build();
+						throw new KeywordException(outputBuilder.build(), outputMessage.getError(), reportedEx);
 					}
 				}
 			} finally {
 				// TODO error handling
 			}
 		} else {
-			output.add("Info:", "The class '" + clazz.getName() + "' doesn't extend '" + AbstractKeyword.class.getName()
+			outputBuilder.add("Info:", "The class '" + clazz.getName() + "' doesn't extend '" + AbstractKeyword.class.getName()
 					+ "'. Extend this class to get input parameters from STEP and return output.");
 		}
-		OutputMessage outputMessage = output.build();
-		if(throwExceptionOnError && outputMessage.getError() != null) {
-			throw new KeywordException(outputMessage, outputMessage.getError());
+		
+		Output<?> output = outputBuilder.build();
+		if(throwExceptionOnError && output.getError() != null) {
+			throw new KeywordException(output, output.getError());
 		} else {
-			return outputMessage;
+			return output;
 		}
 	}
 }

@@ -31,7 +31,13 @@
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>grid-api</artifactId>
+			<artifactId>step-grid-api</artifactId>
+			<version>${step-grid.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>functions-api</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>

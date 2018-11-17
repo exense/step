@@ -3,10 +3,12 @@ package step.handlers.javahandler;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.json.JsonObject;
+
 import org.junit.Assert;
 import org.junit.Test;
 
-import step.grid.io.OutputMessage;
+import step.functions.Output;
 import step.handlers.javahandler.KeywordRunner.ExecutionContext;
 
 public class KeywordRunnerTest {
@@ -14,7 +16,7 @@ public class KeywordRunnerTest {
 	@Test
 	public void test() throws Exception {
 		ExecutionContext runner = KeywordRunner.getExecutionContext(MyKeywordLibrary.class);
-		OutputMessage output = runner.run("MyKeyword");
+		Output<JsonObject> output = runner.run("MyKeyword");
 		Assert.assertEquals("test",output.getPayload().getString("test"));
 	}
 	
@@ -23,14 +25,14 @@ public class KeywordRunnerTest {
 		Map<String, String> properties = new HashMap<>();
 		properties.put("prop1", "My Property");
 		ExecutionContext runner = KeywordRunner.getExecutionContext(properties, MyKeywordLibrary.class);
-		OutputMessage output = runner.run("MyKeywordUsingProperties");
+		Output<JsonObject> output = runner.run("MyKeywordUsingProperties");
 		Assert.assertEquals("My Property",output.getPayload().getString("prop"));
 	}
 	
 	@Test
 	public void testSession() throws Exception {
 		ExecutionContext runner = KeywordRunner.getExecutionContext(MyKeywordLibrary.class);
-		OutputMessage output = runner.run("MyKeywordUsingSession1");
+		Output<JsonObject> output = runner.run("MyKeywordUsingSession1");
 		Assert.assertEquals("test", System.getProperty("testProperty"));
 		output = runner.run("MyKeywordUsingSession2");
 		Assert.assertEquals("Test String",output.getPayload().getString("sessionObject"));
@@ -85,7 +87,7 @@ public class KeywordRunnerTest {
 		// we're testing here the following flag. In that case no exception should be thrown in case of an error
 		runner.setThrowExceptionOnError(false);
 		
-		OutputMessage output = null;
+		Output<JsonObject> output = null;
 		try {
 			output = runner.run("MyErrorKeyword");
 		} catch(Exception e) {
@@ -103,7 +105,7 @@ public class KeywordRunnerTest {
 		// we're testing here the following flag. In that case exceptions thrown in the keyword should be reported as error
 		runner.setThrowExceptionOnError(false);
 		
-		OutputMessage output = null;
+		Output<JsonObject> output = null;
 		try {
 			output = runner.run("MyExceptionKeyword");
 		} catch(Exception e) {

@@ -1,6 +1,7 @@
 package step.functions.runner;
 
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.json.Json;
@@ -23,14 +24,13 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.client.GridClientImpl;
 
 public class FunctionRunner {
 
 	public static class Context {
 				
-		AgentTokenWrapper token;
+		Map<String, String> properties;
 		
 		FunctionExecutionService functionExecutionService;
 		
@@ -38,11 +38,11 @@ public class FunctionRunner {
 
 		protected Context(Configuration configuration, AbstractFunctionType<?> functionType, Map<String, String> properties) {
 			super();
-			token = new AgentTokenWrapper();
-			if(properties!=null) {
-				token.setProperties(properties);
-			}
+
+			this.properties = properties;
+			
 			Grid grid = new Grid(0);
+			
 			GridClientImpl client = new GridClientImpl(grid, grid);
 			
 			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new AttachmentManager(configuration)), grid);
@@ -55,19 +55,19 @@ public class FunctionRunner {
 			return Json.createReader(new StringReader(argument)).readObject();
 		}
 		
-		public Output run(Function function, String argument, Map<String, String> properties) {	
-			return run(function, read(argument), properties);
+		public Output<JsonObject> run(Function function, String argument) {	
+			return run(function, read(argument));
 		}
 		
-		public Output run(Function function, JsonObject argument, Map<String, String> properties) {	
+		public Output<JsonObject> run(Function function, JsonObject argument) {	
 			functionAccessor.save(function);
 			
-			Input input = new Input();
-			input.setArgument(argument);
+			Input<JsonObject> input = new Input<>();
+			input.setPayload(argument);
 			input.setProperties(properties);
 			
 			try {
-				return functionExecutionService.callFunction(functionExecutionService.getLocalTokenHandle(), function.getId().toString(), input);
+				return functionExecutionService.callFunction(functionExecutionService.getLocalTokenHandle(), function.getId().toString(), input, JsonObject.class);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
@@ -75,7 +75,7 @@ public class FunctionRunner {
 	}
 	
 	public static Context getContext(AbstractFunctionType<?> functionType) {
-		return new Context(new Configuration(),functionType, null);
+		return new Context(new Configuration(),functionType, new HashMap<>());
 	}
 	
 	public static Context getContext(AbstractFunctionType<?> functionType, Map<String, String> properties) {

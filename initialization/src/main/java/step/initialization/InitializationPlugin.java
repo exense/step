@@ -18,27 +18,14 @@
  *******************************************************************************/
 package step.initialization;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.artefacts.CallFunction;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.access.UserAccessorImpl;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
-import step.functions.Function;
-import step.functions.accessor.FunctionCRUDAccessor;
-import step.plugins.java.GeneralScriptFunction;
-import step.plugins.jmeter.JMeterFunction;
-import step.plugins.selenium.SeleniumFunction;
 import step.versionmanager.VersionManager;
 
 @Plugin(prio=2)
@@ -66,53 +53,5 @@ public class InitializationPlugin extends AbstractPlugin {
 		user.setPassword(UserAccessorImpl.encryptPwd("init"));
 		context.getUserAccessor().save(user);
 	}
-	
-	private CallFunction createCallFunctionById(String functionId, String args) {
-		CallFunction call1 = new CallFunction();
-		call1.setFunctionId(functionId);
-		call1.setArgument(new DynamicValue<String>(args));
-		return call1;
-	}
 
-	private Function addScriptFunction(FunctionCRUDAccessor functionRepository, String name, String scriptLanguage, String scriptFile) {
-		return addScriptFunction(functionRepository, name, scriptLanguage, scriptFile, null);
-	}
-	
-	private Function addScriptFunction(FunctionCRUDAccessor functionRepository, String name, String scriptLanguage, String scriptFile, JsonObject schema) {
-		GeneralScriptFunction function = new GeneralScriptFunction();
-		Map<String, String> kwAttributes = new HashMap<>();
-		kwAttributes.put(Function.NAME, name);
-		function.setAttributes(kwAttributes);
-		function.getScriptLanguage().setValue(scriptLanguage);
-		function.getScriptFile().setValue(scriptFile);
-		if(schema != null){
-			function.setSchema(schema);
-		}else{
-			function.setSchema(Json.createObjectBuilder().build());
-		}
-		functionRepository.save(function);
-		return function;
-	}
-	
-	private Function addSeleniumFunction(FunctionCRUDAccessor functionRepository, String name, String scriptLanguage, String scriptFile) {
-		SeleniumFunction function = new SeleniumFunction();
-		Map<String, String> kwAttributes = new HashMap<>();
-		kwAttributes.put(Function.NAME, name);
-		function.setAttributes(kwAttributes);
-		function.getScriptLanguage().setValue(scriptLanguage);
-		function.getScriptFile().setValue(scriptFile);
-		function.setSeleniumVersion("3.x");
-		functionRepository.save(function);
-		return function;
-	}
-	
-	private Function addJMeterFunction(FunctionCRUDAccessor functionRepository, String name, String jmeterFile) {
-		JMeterFunction function = new JMeterFunction();
-		Map<String, String> kwAttributes = new HashMap<>();
-		kwAttributes.put(Function.NAME, name);
-		function.setAttributes(kwAttributes);
-		function.getJmeterTestplan().setValue(jmeterFile);
-		functionRepository.save(function);
-		return function;
-	}
 }

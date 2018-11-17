@@ -30,12 +30,13 @@ import javax.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.functions.Input;
+import step.functions.Output;
+import step.functions.execution.FunctionHandlerFactory;
 import step.grid.agent.AgentTokenServices;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.io.InputMessage;
-import step.grid.io.OutputMessage;
 
 public class KeywordRunner {
 	
@@ -62,18 +63,19 @@ public class KeywordRunner {
 			tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
 			token.setServices(tokenServices);
 			handler = new KeywordHandler(throwExceptionOnError);
-			handler.init(tokenServices);
+			FunctionHandlerFactory factory = new FunctionHandlerFactory();
+			factory.initialize(token, handler);
 		} 
 		
 		public void setThrowExceptionOnError(boolean throwExceptionOnError) {
 			handler.setThrowExceptionOnError(throwExceptionOnError);
 		}
 
-		public OutputMessage run(String function, String argument, Map<String, String> properties) throws Exception {
+		public Output<JsonObject> run(String function, String argument, Map<String, String> properties) throws Exception {
 			return run(function, read(argument), properties);
 		}
 		
-		public OutputMessage run(String function, String argument) throws Exception {
+		public Output<JsonObject> run(String function, String argument) throws Exception {
 			return run(function, read(argument), new HashMap<String, String>());
 		}
 
@@ -81,30 +83,31 @@ public class KeywordRunner {
 			return Json.createReader(new StringReader(argument)).readObject();
 		}
 		
-		public OutputMessage run(String function) throws Exception {
+		public Output<JsonObject> run(String function) throws Exception {
 			return run(function, Json.createObjectBuilder().build(), new HashMap<String, String>());
 		}
 		
-		public OutputMessage run(String function, JsonObject argument) throws Exception {
+		public Output<JsonObject> run(String function, JsonObject argument) throws Exception {
 			return run(function, argument, new HashMap<String, String>());
 		}
 		
-		public OutputMessage run(String function, JsonObject argument, Map<String, String> properties) throws Exception {
+		public Output<JsonObject> run(String function, JsonObject argument, Map<String, String> properties) throws Exception {
 			return execute(function, argument, properties);
 		}
 
-		private OutputMessage execute(String function, JsonObject argument, Map<String, String> properties) throws Exception {
-			InputMessage input = new InputMessage();
+		@SuppressWarnings("unchecked")
+		private Output<JsonObject> execute(String function, JsonObject argument, Map<String, String> properties) throws Exception {
+			Input<JsonObject> input = new Input<>();
 			input.setFunction(function);
-			input.setArgument(argument);			
+			input.setPayload(argument);			
 			StringBuilder classes = new StringBuilder();
 			functionClasses.forEach(cl->{classes.append(cl.getName()+";");});
 			properties.put(KeywordHandler.KEYWORD_CLASSES, classes.toString());
 			input.setProperties(properties);
 			
-			OutputMessage output;
+			Output<JsonObject> output;
 			try {
-				output = handler.handle(token, input);
+				output = (Output<JsonObject>) handler.handle(input);
 				if(output.getError()!=null) {
 					logger.error("Keyword error occurred:"+output.getError());
 				}

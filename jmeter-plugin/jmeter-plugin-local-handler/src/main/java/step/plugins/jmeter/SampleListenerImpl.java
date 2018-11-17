@@ -16,13 +16,13 @@ import org.apache.jmeter.samplers.SampleListener;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.testelement.AbstractTestElement;
 
-import step.grid.agent.handler.context.OutputMessageBuilder;
+import step.functions.OutputBuilder;
 
 public class SampleListenerImpl extends AbstractTestElement implements SampleListener, Cloneable {
 
 	private static final long serialVersionUID = -4394201534114759490L;
 	
-	OutputMessageBuilder outputBuilder;
+	OutputBuilder outputBuilder;
 	
 	List<SampleResult> samples = Collections.synchronizedList(new ArrayList<>());
 	
@@ -30,7 +30,7 @@ public class SampleListenerImpl extends AbstractTestElement implements SampleLis
 		super();
 	}
 
-	public SampleListenerImpl(OutputMessageBuilder outputBuilder) {
+	public SampleListenerImpl(OutputBuilder outputBuilder) {
 		super();
 		this.outputBuilder = outputBuilder;
 	}
@@ -59,11 +59,11 @@ public class SampleListenerImpl extends AbstractTestElement implements SampleLis
 	@Override
 	public void sampleStopped(SampleEvent e) {}
 
-	public OutputMessageBuilder getOut() {
+	public OutputBuilder getOut() {
 		return outputBuilder;
 	}
 
-	public void setOut(OutputMessageBuilder out) {
+	public void setOut(OutputBuilder out) {
 		this.outputBuilder = out;
 	}
 	
