@@ -33,7 +33,6 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-api</artifactId>
 			<version>${step-grid.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
@@ -60,22 +59,25 @@
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<configuration>
-					<appendAssemblyId>true</appendAssemblyId>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-				</configuration>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.1.0</version>
 				<executions>
 					<execution>
-						<id>make-assembly</id>
 						<phase>package</phase>
 						<goals>
-							<goal>single</goal>
+							<goal>shade</goal>
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<shadedArtifactAttached>true</shadedArtifactAttached>
+					<artifactSet>
+						<excludes>
+							<exclude>ch.exense.step:step-grid-api</exclude>
+						</excludes>
+					</artifactSet>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

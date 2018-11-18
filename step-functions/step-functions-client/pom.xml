@@ -69,7 +69,7 @@
 								<artifactItem>
 									<groupId>ch.exense.step</groupId>
 									<artifactId>step-functions-handler</artifactId>
-									<classifier>jar-with-dependencies</classifier>
+									<classifier>shaded</classifier>
 									<type>jar</type>
 									<overWrite>false</overWrite>
 									<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
