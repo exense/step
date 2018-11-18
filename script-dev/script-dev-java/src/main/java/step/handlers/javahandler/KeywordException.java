@@ -1,6 +1,6 @@
 package step.handlers.javahandler;
 
-import step.functions.Output;
+import step.functions.io.Output;
 
 @SuppressWarnings("serial")
 public class KeywordException extends Exception {

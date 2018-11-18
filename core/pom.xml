@@ -31,10 +31,19 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>functions-api</artifactId>
+			<artifactId>step-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-handler</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-repository</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-server</artifactId>
@@ -43,7 +52,7 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>3.8.2</version>
+			<version>${mongodb.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jongo</groupId>
@@ -79,7 +88,7 @@
 		<dependency>
 			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy-all</artifactId>
-			<version>2.2.1</version>
+			<version>${groovy.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -115,17 +124,12 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr353</artifactId>
-			<version>2.5.2</version>
+			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-json-org</artifactId>
-			<version>2.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-pool</groupId>
-			<artifactId>commons-pool</artifactId>
-			<version>1.6</version>
+			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.antlr</groupId>

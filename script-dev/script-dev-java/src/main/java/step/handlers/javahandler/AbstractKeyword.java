@@ -25,7 +25,7 @@ import javax.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.functions.OutputBuilder;
+import step.functions.io.OutputBuilder;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 

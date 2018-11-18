@@ -10,9 +10,9 @@ import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
 
-import step.functions.Input;
-import step.functions.Output;
-import step.functions.execution.AbstractFunctionHandler;
+import step.functions.handler.AbstractFunctionHandler;
+import step.functions.io.Input;
+import step.functions.io.Output;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordHandler;

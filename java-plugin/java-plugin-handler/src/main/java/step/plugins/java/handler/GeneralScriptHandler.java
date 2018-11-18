@@ -1,8 +1,8 @@
 package step.plugins.java.handler;
 
-import step.functions.Input;
-import step.functions.Output;
-import step.functions.execution.AbstractFunctionHandler;
+import step.functions.handler.AbstractFunctionHandler;
+import step.functions.io.Input;
+import step.functions.io.Output;
 import step.plugins.js223.handler.ScriptHandler;
 
 public class GeneralScriptHandler extends AbstractFunctionHandler {

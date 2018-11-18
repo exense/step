@@ -27,10 +27,10 @@ import javax.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.functions.Input;
-import step.functions.Output;
-import step.functions.OutputBuilder;
-import step.functions.execution.AbstractFunctionHandler;
+import step.functions.handler.AbstractFunctionHandler;
+import step.functions.io.Input;
+import step.functions.io.Output;
+import step.functions.io.OutputBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 

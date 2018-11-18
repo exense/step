@@ -39,7 +39,7 @@ import org.junit.Test;
 import step.commons.helpers.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
-import step.functions.Output;
+import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.GeneralScriptFunctionType;

@@ -55,6 +55,9 @@
 		<step-grid.version>0.9.0</step-grid.version>
 		<junit.version>4.8.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
+		<groovy.version>2.2.1</groovy.version>
+		<mongodb.version>3.8.2</mongodb.version>
+		<jackson.version>2.5.4</jackson.version>
 	</properties>
 
 	<repositories>
@@ -205,10 +208,11 @@
 
 	<modules>
 		<module>../agent</module>
-		<module>../functions</module>
-		<module>../functions-api</module>		
-		<module>../core</module>
 		<module>../commons</module>
+		<module>../step-functions</module>
+		<module>../step-core</module>
+		<module>../step-core-model</module>
+		<module>../core</module>
 		<module>../base-plugins</module>
 		<module>../rtm-plugin</module>
 		<module>../base-artefacts</module>

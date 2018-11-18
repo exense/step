@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import step.commons.conf.Configuration;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
-import step.functions.Output;
+import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
 import step.grid.bootstrap.ResourceExtractor;
 

@@ -27,8 +27,8 @@ import javax.json.JsonObject;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.functions.Input;
-import step.functions.Output;
+import step.functions.io.Input;
+import step.functions.io.Output;
 
 public class ProcessHandlerTest {
 

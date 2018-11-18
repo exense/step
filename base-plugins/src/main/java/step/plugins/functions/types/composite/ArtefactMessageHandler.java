@@ -27,10 +27,10 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.variables.VariableType;
-import step.functions.Input;
-import step.functions.Output;
-import step.functions.OutputBuilder;
-import step.functions.execution.AbstractFunctionHandler;
+import step.functions.handler.AbstractFunctionHandler;
+import step.functions.io.Input;
+import step.functions.io.Output;
+import step.functions.io.OutputBuilder;
 
 public class ArtefactMessageHandler extends AbstractFunctionHandler {
 

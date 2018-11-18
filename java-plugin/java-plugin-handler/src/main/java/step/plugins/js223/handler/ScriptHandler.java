@@ -34,10 +34,10 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 
-import step.functions.Input;
-import step.functions.Output;
-import step.functions.OutputBuilder;
-import step.functions.execution.AbstractFunctionHandler;
+import step.functions.handler.AbstractFunctionHandler;
+import step.functions.io.Input;
+import step.functions.io.Output;
+import step.functions.io.OutputBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 
 public class ScriptHandler extends AbstractFunctionHandler {

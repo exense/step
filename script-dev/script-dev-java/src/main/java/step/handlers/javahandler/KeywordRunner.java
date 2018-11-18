@@ -30,9 +30,9 @@ import javax.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.functions.Input;
-import step.functions.Output;
-import step.functions.execution.FunctionHandlerFactory;
+import step.functions.handler.FunctionHandlerFactory;
+import step.functions.io.Input;
+import step.functions.io.Output;
 import step.grid.agent.AgentTokenServices;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;

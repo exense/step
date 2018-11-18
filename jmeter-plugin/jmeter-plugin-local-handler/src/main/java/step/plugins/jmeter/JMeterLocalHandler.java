@@ -12,10 +12,10 @@ import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
 import org.apache.jorphan.collections.HashTreeTraverser;
 
-import step.functions.Input;
-import step.functions.Output;
-import step.functions.OutputBuilder;
-import step.functions.execution.AbstractFunctionHandler;
+import step.functions.handler.AbstractFunctionHandler;
+import step.functions.io.Input;
+import step.functions.io.Output;
+import step.functions.io.OutputBuilder;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.filemanager.FileManagerClient.FileVersion;
 import step.grid.filemanager.FileManagerClient.FileVersionId;

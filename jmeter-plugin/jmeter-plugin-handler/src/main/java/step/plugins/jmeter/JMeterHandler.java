@@ -1,8 +1,8 @@
 package step.plugins.jmeter;
 
-import step.functions.Input;
-import step.functions.Output;
-import step.functions.execution.AbstractFunctionHandler;
+import step.functions.handler.AbstractFunctionHandler;
+import step.functions.io.Input;
+import step.functions.io.Output;
 
 public class JMeterHandler extends AbstractFunctionHandler {
 	

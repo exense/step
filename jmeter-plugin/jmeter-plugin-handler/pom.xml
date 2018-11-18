@@ -37,7 +37,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>functions-api</artifactId>
+			<artifactId>step-functions-handler</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>

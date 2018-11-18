@@ -16,7 +16,7 @@ import org.apache.jmeter.samplers.SampleListener;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.testelement.AbstractTestElement;
 
-import step.functions.OutputBuilder;
+import step.functions.io.OutputBuilder;
 
 public class SampleListenerImpl extends AbstractTestElement implements SampleListener, Cloneable {
 

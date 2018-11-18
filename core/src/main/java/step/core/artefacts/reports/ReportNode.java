@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import step.attachments.AttachmentMeta;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.artefacts.AbstractArtefact;
+import step.core.reports.Error;
 
 @JsonTypeInfo(use=Id.CLASS,property="_class")
 public class ReportNode extends AbstractIdentifiableObject {

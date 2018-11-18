@@ -8,7 +8,7 @@ import javax.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
 
-import step.functions.Output;
+import step.functions.io.Output;
 import step.handlers.javahandler.KeywordRunner.ExecutionContext;
 
 public class KeywordRunnerTest {
