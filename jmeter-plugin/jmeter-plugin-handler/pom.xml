@@ -62,6 +62,9 @@
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<shadedArtifactAttached>true</shadedArtifactAttached>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
