@@ -28,7 +28,6 @@ public class Input<IN> {
 	
 	protected long functionCallTimeout;
 	
-	@JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=JsonTypeInfo.As.PROPERTY, property="@class")
 	protected IN payload;
 	
 	protected Map<String, String> properties;

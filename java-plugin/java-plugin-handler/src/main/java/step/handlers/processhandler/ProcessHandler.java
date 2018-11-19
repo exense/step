@@ -9,17 +9,17 @@ import java.util.concurrent.TimeoutException;
 import javax.json.JsonObject;
 
 import step.commons.processmanager.ManagedProcess;
-import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 
-public class ProcessHandler extends AbstractFunctionHandler {
+public class ProcessHandler extends JsonBasedFunctionHandler {
 
 	@Override
-	public Output<?> handle(Input<?> input) throws Exception {
+	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
 		
 		String maxOutputPayloadSizeStr = input.getProperties().get("processhandler.output.payload.maxsize");
 		Long maxOutputPayloadSize = maxOutputPayloadSizeStr!=null?Long.parseLong(maxOutputPayloadSizeStr):1000;

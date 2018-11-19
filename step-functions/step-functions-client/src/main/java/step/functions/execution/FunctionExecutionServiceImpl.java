@@ -28,6 +28,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -113,9 +114,8 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		} 
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public <IN,OUT> Output<OUT>  callFunction(TokenWrapper tokenHandle, Function function, Input<IN> input, Class<OUT> outputClass) {	
+	public <IN,OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, Function function, Input<IN> input, Class<OUT> outputClass) {	
 		input.setFunction(function.getAttributes().get(Function.NAME));
 		
 		Output<OUT> output = new Output<OUT>();
@@ -200,7 +200,8 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 					output.setError("Unknown agent error: "+agentError);
 				}
 			} else {
-				output = mapper.treeToValue(outputMessage.getPayload(), Output.class);
+				JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Output.class, Output.class, outputClass);
+				output = mapper.readValue(mapper.treeAsTokens(outputMessage.getPayload()), javaType);
 			}
 			
 			if(outputMessage.getAttachments()!=null) {

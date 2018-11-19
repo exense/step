@@ -29,18 +29,19 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.json.JsonObject;
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 
-import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 
-public class ScriptHandler extends AbstractFunctionHandler {
+public class ScriptHandler extends JsonBasedFunctionHandler {
 
 	public static final String SCRIPT_LANGUAGE = "$scriptlanguage";
 
@@ -60,9 +61,9 @@ public class ScriptHandler extends AbstractFunctionHandler {
 	}
 	
 	@Override
-	public Output<?> handle(Input<?> message) throws Exception {
+	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
 		return runInContext(()->{
-			Map<String, String> properties = message.getProperties();
+			Map<String, String> properties = input.getProperties();
 			
 			File scriptFile = retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties);
 			
@@ -71,7 +72,7 @@ public class ScriptHandler extends AbstractFunctionHandler {
 			ScriptEngine engine = loadScriptEngine(engineName);	      
 			
 			OutputBuilder outputBuilder = new OutputBuilder();
-			Bindings binding = createBindings(getToken(), message, outputBuilder, properties);     
+			Bindings binding = createBindings(getToken(), input, outputBuilder, properties);     
 			
 			try {
 				executeScript(scriptFile, binding, engine);        	

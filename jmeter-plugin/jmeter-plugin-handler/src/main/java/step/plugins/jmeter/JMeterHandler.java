@@ -1,13 +1,15 @@
 package step.plugins.jmeter;
 
-import step.functions.handler.AbstractFunctionHandler;
+import javax.json.JsonObject;
+
+import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 
-public class JMeterHandler extends AbstractFunctionHandler {
+public class JMeterHandler extends JsonBasedFunctionHandler {
 	
 	@Override
-	public Output<?> handle(Input<?> input) throws Exception {
+	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
 		pushRemoteApplicationContext("$jmeter.libraries", input.getProperties());
 		
 		pushLocalApplicationContext(getClass().getClassLoader(), "jmeter-plugin-local-handler.jar");

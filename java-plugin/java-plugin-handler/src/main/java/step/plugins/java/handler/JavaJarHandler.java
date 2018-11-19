@@ -6,11 +6,13 @@ import java.net.URLClassLoader;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.json.JsonObject;
+
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
 
-import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
@@ -18,10 +20,10 @@ import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordHandler;
 import step.plugins.js223.handler.ScriptHandler;
 
-public class JavaJarHandler extends AbstractFunctionHandler {
+public class JavaJarHandler extends JsonBasedFunctionHandler {
 	
 	@Override
-	public Output<?> handle(Input<?> input) throws Exception {
+	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
 		//message.getProperties().put("keywordRootPath", fileManagerClient.getDataFolderPath() + "\\"+ currentkeywordVersion.getFileId() + "\\" + currentkeywordVersion.getVersion());
 		
 		pushRemoteApplicationContext(ScriptHandler.SCRIPT_FILE, input.getProperties());
@@ -35,7 +37,7 @@ public class JavaJarHandler extends AbstractFunctionHandler {
 		}
 		input.getProperties().put(KeywordHandler.KEYWORD_CLASSES, kwClassnames);
 		
-		return delegate(KeywordHandler.class.getName(), input);
+		return delegate(KeywordHandler.class, input);
 	}
 	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {

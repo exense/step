@@ -150,7 +150,7 @@ public class FunctionExecutionServiceImplTest {
 		outputBuilder.startMeasure("Measure1");
 		outputBuilder.stopMeasure();
 		
-		Output<?> expectedOutput = outputBuilder.build();
+		Output<JsonObject> expectedOutput = outputBuilder.build();
 		
 		FunctionExecutionService f = getFunctionExecutionService(expectedOutput, null, null, null);
 		
@@ -162,7 +162,7 @@ public class FunctionExecutionServiceImplTest {
 	@Test
 	public void testError() throws FunctionExecutionServiceException {
 		OutputBuilder outputBuilder = new OutputBuilder();
-		Output<?> expectedOutput = outputBuilder.setError("My error").build();
+		Output<JsonObject> expectedOutput = outputBuilder.setError("My error").build();
 		
 		FunctionExecutionService f = getFunctionExecutionService(expectedOutput, null, null, null);
 		
@@ -210,7 +210,7 @@ public class FunctionExecutionServiceImplTest {
 		return f;
 	}
 	
-	protected FunctionExecutionService getFunctionExecutionService(Output<?> output, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
+	protected FunctionExecutionService getFunctionExecutionService(Output<JsonObject> output, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
 		OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
 		
 		ObjectMapper mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();

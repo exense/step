@@ -1,5 +1,6 @@
 package step.functions.handler;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -41,12 +42,15 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		return token.getServices().getApplicationContextBuilder().runInContext(()->{
 			// Instantiate the function handler 
 			String handlerClass = inputMessage.getProperties().get(FUNCTION_HANDLER_KEY);
+			@SuppressWarnings("rawtypes")
 			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(token, handlerClass);
 			
 			// Deserialize the Input from the message payload
-			Input<?> input = mapper.treeToValue(inputMessage.getPayload(), Input.class);
+			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
+			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 			
 			// Handle the input
+			@SuppressWarnings("unchecked")
 			Output<?> output = functionHandler.handle(input);
 			
 			// Serialize the output

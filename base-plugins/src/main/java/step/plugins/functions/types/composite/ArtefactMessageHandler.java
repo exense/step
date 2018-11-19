@@ -18,6 +18,8 @@
  *******************************************************************************/
 package step.plugins.functions.types.composite;
 
+import javax.json.JsonObject;
+
 import org.bson.types.ObjectId;
 
 import step.artefacts.handlers.CallFunctionHandler;
@@ -27,15 +29,15 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.variables.VariableType;
-import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 
-public class ArtefactMessageHandler extends AbstractFunctionHandler {
+public class ArtefactMessageHandler extends JsonBasedFunctionHandler {
 
 	@Override
-	protected Output<?> handle(Input<?> input) {
+	protected Output<JsonObject> handle(Input<JsonObject> input) {
 		ExecutionContext executionContext = (ExecutionContext) getToken().getToken().getAttachedObject(CallFunctionHandler.EXECUTION_CONTEXT_KEY);
 		
 		String artefactId = input.getProperties().get(CallFunctionHandler.ARTEFACTID);

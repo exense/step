@@ -28,13 +28,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 
-public class KeywordHandler extends AbstractFunctionHandler {
+public class KeywordHandler extends JsonBasedFunctionHandler {
 	
 	public static final String KEYWORD_CLASSES = "$keywordClasses";
 	
@@ -60,7 +61,7 @@ public class KeywordHandler extends AbstractFunctionHandler {
 	}
 
 	@Override
-	public Output<?> handle(Input<?> input) throws Exception {
+	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
 		ApplicationContext context = getCurrentContext();
 		URLClassLoader cl = (URLClassLoader) context.getClassLoader();
 		
@@ -86,7 +87,7 @@ public class KeywordHandler extends AbstractFunctionHandler {
 		throw new Exception("Unable to find method annoted by '" + Keyword.class.getName() + "' with name=='"+ input.getFunction() + "'");
 	}
 
-	private Output<?> invokeMethod(Method m, AgentTokenWrapper token, Input<?> input)
+	private Output<JsonObject> invokeMethod(Method m, AgentTokenWrapper token, Input<JsonObject> input)
 			throws Exception {
 		Class<?> clazz = m.getDeclaringClass();
 		Object instance = clazz.newInstance();
@@ -102,7 +103,7 @@ public class KeywordHandler extends AbstractFunctionHandler {
 			AbstractKeyword script = (AbstractKeyword) instance;
 			script.setTokenSession(token.getSession());
 			script.setSession(token.getTokenReservationSession());
-			script.setInput((JsonObject) input.getPayload());
+			script.setInput(input.getPayload());
 			script.setProperties(mergeAllProperties(input));
 			script.setOutputBuilder(outputBuilder);
 
@@ -132,7 +133,7 @@ public class KeywordHandler extends AbstractFunctionHandler {
 					+ "'. Extend this class to get input parameters from STEP and return output.");
 		}
 		
-		Output<?> output = outputBuilder.build();
+		Output<JsonObject> output = outputBuilder.build();
 		if(throwExceptionOnError && output.getError() != null) {
 			throw new KeywordException(output, output.getError());
 		} else {

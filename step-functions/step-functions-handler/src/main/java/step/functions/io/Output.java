@@ -27,7 +27,6 @@ import step.grid.io.Attachment;
 
 public class Output<OUT> {
 	
-	@JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=JsonTypeInfo.As.PROPERTY, property="@class")
 	private OUT payload;
 	
 	private String error;

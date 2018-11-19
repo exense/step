@@ -12,7 +12,7 @@ import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
 import org.apache.jorphan.collections.HashTreeTraverser;
 
-import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
@@ -20,12 +20,12 @@ import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.filemanager.FileManagerClient.FileVersion;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 
-public class JMeterLocalHandler extends AbstractFunctionHandler {
+public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
 	String jmeterHome;
 
 	@Override
-	public Output<?> handle(Input<?> message) throws Exception {
+	public Output<JsonObject> handle(Input<JsonObject> message) throws Exception {
 		ApplicationContext context = getCurrentContext();
 		if(context.get("initialized")==null) {
 			FileVersionId jmeterLibs = getFileVersionId("$jmeter.libraries", message.getProperties());

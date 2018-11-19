@@ -17,7 +17,7 @@ import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.filemanager.FileProviderException;
 
-public abstract class AbstractFunctionHandler {
+public abstract class AbstractFunctionHandler<IN, OUT> {
 
 	private AgentTokenWrapper token;
 	private FileManagerClient fileManagerClient;
@@ -82,11 +82,16 @@ public abstract class AbstractFunctionHandler {
 		}
 	}
 
-	protected abstract Output<?> handle(Input<?> input) throws Exception;
+	protected abstract Output<OUT> handle(Input<IN> input) throws Exception;
 	
-	protected Output<?> delegate(String functionHandlerClassname, Input<?> input) throws Exception {
+	protected Output<OUT> delegate(Class<?> functionHandlerClass, Input<IN> input) throws Exception {
+		return delegate(functionHandlerClass.getName(), input);
+	}
+	
+	protected Output<OUT> delegate(String functionHandlerClassname, Input<IN> input) throws Exception {
 		return applicationContextBuilder.runInContext(()->{
-			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(token, functionHandlerClassname);
+			@SuppressWarnings("unchecked")
+			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(token, functionHandlerClassname);
 			return functionHandler.handle(input);
 		});
 	}
@@ -105,4 +110,8 @@ public abstract class AbstractFunctionHandler {
 	protected AgentTokenWrapper getToken() {
 		return token;
 	}
+	
+	public abstract Class<IN> getInputPayloadClass();
+	
+	public abstract Class<OUT> getOutputPayloadClass();
 }
