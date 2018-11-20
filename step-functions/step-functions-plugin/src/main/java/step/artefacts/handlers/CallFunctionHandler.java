@@ -57,6 +57,8 @@ import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -129,10 +131,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					OperationManager.getInstance().exit();
 				}
 				
-				String errorMsg = output.getError();
-				if(errorMsg!=null) {
-					node.setError(errorMsg, 0, true);
-					node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+				Error error = output.getError();
+				if(error!=null) {
+					node.setError(error);
+					node.setStatus(error.getType()==ErrorType.TECHNICAL?ReportNodeStatus.TECHNICAL_ERROR:ReportNodeStatus.FAILED);
 				} else {
 					node.setStatus(ReportNodeStatus.PASSED);
 				}

@@ -5,25 +5,24 @@ import step.functions.io.Output;
 @SuppressWarnings("serial")
 public class KeywordException extends Exception {
 
-	private final Output<?> outputMessage;
+	private final Output<?> output;
 	
-	public KeywordException(Output<?> outputMessage, Throwable cause) {
-		super(cause);
-		this.outputMessage = outputMessage;
+	public KeywordException(Output<?> output, Throwable cause) {
+		super(getMessage(output), cause);
+		this.output = output;
 	}
 
-	public KeywordException(Output<?> outputMessage, String message, Throwable cause) {
-		super(message, cause);
-		this.outputMessage = outputMessage;
+	public KeywordException(Output<?> output) {
+		super(getMessage(output));
+		this.output = output;
+	}
+	
+	private static String getMessage(Output<?> output) {
+		return output.getError()!=null?output.getError().getMsg():"Undefined keywor error message";
 	}
 
-	public KeywordException(Output<?> outputMessage, String message) {
-		super(message);
-		this.outputMessage = outputMessage;
-	}
-
-	public Output<?> getOutputMessage() {
-		return outputMessage;
+	public Output<?> getOutput() {
+		return output;
 	}
 
 }

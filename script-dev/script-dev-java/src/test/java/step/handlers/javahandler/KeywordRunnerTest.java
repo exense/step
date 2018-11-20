@@ -94,7 +94,7 @@ public class KeywordRunnerTest {
 			exception = e;
 		}
 		Assert.assertNotNull(output);
-		Assert.assertEquals("My error",output.getError());
+		Assert.assertEquals("My error",output.getError().getMsg());
 		Assert.assertNull(exception);
 	}
 	
@@ -112,7 +112,7 @@ public class KeywordRunnerTest {
 			exception = e;
 		}
 		Assert.assertNotNull(output);
-		Assert.assertEquals("My exception",output.getError());
+		Assert.assertEquals("My exception",output.getError().getMsg());
 		Assert.assertNull(exception);
 	}
 	

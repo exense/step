@@ -27,7 +27,6 @@ import javax.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.functions.handler.AbstractFunctionHandler;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -121,8 +120,8 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 					}
 					outputBuilder.setError(reportedEx.getMessage()!=null?reportedEx.getMessage():"Empty error message", reportedEx);
 					if(throwExceptionOnError) {
-						Output<?> outputMessage = outputBuilder.build();
-						throw new KeywordException(outputBuilder.build(), outputMessage.getError(), reportedEx);
+						Output<?> output = outputBuilder.build();
+						throw new KeywordException(output, reportedEx);
 					}
 				}
 			} finally {
@@ -135,7 +134,7 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 		
 		Output<JsonObject> output = outputBuilder.build();
 		if(throwExceptionOnError && output.getError() != null) {
-			throw new KeywordException(output, output.getError());
+			throw new KeywordException(output);
 		} else {
 			return output;
 		}

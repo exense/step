@@ -44,6 +44,8 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 import step.core.reports.Measure;
 import step.datapool.DataSetHandle;
 import step.functions.Function;
@@ -303,7 +305,7 @@ public class CallFunctionHandlerTest {
 			
 			protected Output<JsonObject> newErrorOutput() {
 				Output<JsonObject> output = new Output<JsonObject>();
-				output.setError("My Error");
+				output.setError(new Error(ErrorType.TECHNICAL, "keyword", "My Error", 0, true));
 				return output;
 			}
 		};

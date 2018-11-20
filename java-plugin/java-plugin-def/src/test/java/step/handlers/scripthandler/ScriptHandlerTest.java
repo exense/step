@@ -94,7 +94,7 @@ public class ScriptHandlerTest {
 	public void testGroovyThrowable() {
 		GeneralScriptFunction f = buildTestFunction("groovy","throwable.groovy");
 		Output<JsonObject> output = run(f, "{}");
-		Assert.assertTrue(output.getError().contains("Error while running script throwable.groovy: assert false"));
+		Assert.assertTrue(output.getError().getMsg().contains("Error while running script throwable.groovy: assert false"));
 	}
 	
 	@Test 
@@ -102,7 +102,7 @@ public class ScriptHandlerTest {
 		GeneralScriptFunction f = buildTestFunction("groovy","throwable.groovy");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorHandler.groovy"));
 		Output<JsonObject> output = run(f, "{}");
-		Assert.assertEquals("Error handler called",output.getError());
+		Assert.assertEquals("Error handler called",output.getError().getMsg());
 	}
 	
 	
@@ -117,8 +117,8 @@ public class ScriptHandlerTest {
 	public void testErrorWithoutErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
 		Output<JsonObject> out = run(f, "{}");
-		Assert.assertTrue(out.getError().contains("INVALID SCRIPT"));
-		Assert.assertTrue(out.getError().startsWith("Error while running script errorScript.js"));
+		Assert.assertTrue(out.getError().getMsg().contains("INVALID SCRIPT"));
+		Assert.assertTrue(out.getError().getMsg().startsWith("Error while running script errorScript.js"));
 		Assert.assertEquals(1,out.getAttachments().size());
 	}
 	
@@ -127,7 +127,7 @@ public class ScriptHandlerTest {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorHandler.js"));
 		Output<JsonObject> out = run(f, "{}");
-		Assert.assertTrue(out.getError().contains("INVALID SCRIPT"));
+		Assert.assertTrue(out.getError().getMsg().contains("INVALID SCRIPT"));
 	}
 	
 	@Test 
@@ -135,8 +135,8 @@ public class ScriptHandlerTest {
 	public void testErrorScriptWithAttachmentAndWithoutErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScriptWithAttachment.groovy");
 		Output<JsonObject> out = run(f, "{}");
-		Assert.assertTrue(out.getError().contains("INVALID"));
-		Assert.assertTrue(out.getError().startsWith("Error while running script"));
+		Assert.assertTrue(out.getError().getMsg().contains("INVALID"));
+		Assert.assertTrue(out.getError().getMsg().startsWith("Error while running script"));
 		Assert.assertEquals(2,out.getAttachments().size());
 	}
 	
@@ -145,8 +145,8 @@ public class ScriptHandlerTest {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorScript.js"));
 		Output<JsonObject> out = run(f, "{}");
-		Assert.assertTrue(out.getError().contains("INVALID SCRIPT"));
-		Assert.assertTrue(out.getError().startsWith("Error while running error handler script:"));
+		Assert.assertTrue(out.getError().getMsg().contains("INVALID SCRIPT"));
+		Assert.assertTrue(out.getError().getMsg().startsWith("Error while running error handler script:"));
 		Assert.assertEquals(1,out.getAttachments().size());
 	}
 	

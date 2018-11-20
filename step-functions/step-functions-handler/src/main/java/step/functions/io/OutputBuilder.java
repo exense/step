@@ -35,6 +35,8 @@ import step.core.reports.Measure;
 import step.core.reports.MeasurementsBuilder;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 
 /**
  * A builder for Output instances.
@@ -51,7 +53,7 @@ public class OutputBuilder {
 	
 	private MeasurementsBuilder measureHelper;
 	
-	private String error;
+	private Error error;
 	
 	private List<Attachment> attachments;
 	
@@ -141,13 +143,13 @@ public class OutputBuilder {
 	}
 
 	/**
-	 * Reports a technical error.
+	 * Reports a technical error. This will be reported as ERROR in STEP
 	 * 
 	 * @param technicalError the error message of the technical error
 	 * @return this instance
 	 */
 	public OutputBuilder setError(String technicalError) {
-		error = technicalError;
+		error = new Error(ErrorType.TECHNICAL, "keyword", technicalError, 0, true);
 		return this;
 	}
 	
@@ -160,9 +162,9 @@ public class OutputBuilder {
 	 */
 	public OutputBuilder appendError(String technicalError) {
 		if(error!=null) {
-			error += technicalError;			
+			error.setMsg(error.getMsg()+technicalError);			
 		} else {
-			error = technicalError;	
+			setError(technicalError);
 		}
 		return this;
 	}
@@ -178,6 +180,22 @@ public class OutputBuilder {
 	public OutputBuilder setError(String errorMessage, Throwable e) {
 		setError(errorMessage);
 		addAttachment(generateAttachmentForException(e));
+		return this;
+	}
+	
+	/**
+	 * Reports a business error. This will be reported as FAILED in STEP
+	 * 
+	 * @param businessError the error message of the business error
+	 * @return this instance
+	 */
+	public OutputBuilder setBusinessError(String businessError) {
+		error = new Error(ErrorType.BUSINESS, "keyword", businessError, 0, true);
+		return this;
+	}
+	
+	public OutputBuilder setError(Error error) {
+		this.error = error;
 		return this;
 	}
 	

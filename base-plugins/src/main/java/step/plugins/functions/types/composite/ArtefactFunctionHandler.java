@@ -33,8 +33,10 @@ import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 
-public class ArtefactMessageHandler extends JsonBasedFunctionHandler {
+public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	protected Output<JsonObject> handle(Input<JsonObject> input) {
@@ -65,8 +67,12 @@ public class ArtefactMessageHandler extends JsonBasedFunctionHandler {
 		try {
 			ReportNode node = ArtefactHandler.delegateExecute(executionContext, artefact,parentNode);
 			if(node.getStatus()== ReportNodeStatus.TECHNICAL_ERROR || node.getStatus()== ReportNodeStatus.FAILED) {
-				output.setError("Error in composite execution. Composite status: " + node.getStatus() + 
-						(node.getError()!=null?". Error message: "+node.getError().getMsg():""));						
+				Error error = new Error();
+				error.setCode(0);
+				error.setMsg("Error in composite keyword");
+				error.setRoot(false);
+				error.setType(node.getStatus().equals(ReportNodeStatus.FAILED)?ErrorType.BUSINESS:ErrorType.TECHNICAL);
+				output.setError(error);
 			}
 			return output.build();
 		} finally {

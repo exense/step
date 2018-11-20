@@ -11,7 +11,7 @@ import step.core.artefacts.ArtefactManager;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
-import step.plugins.functions.types.composite.ArtefactMessageHandler;
+import step.plugins.functions.types.composite.ArtefactFunctionHandler;
 
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
 
@@ -31,7 +31,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	
 	@Override
 	public String getHandlerChain(CompositeFunction function) {
-		return ArtefactMessageHandler.class.getName();
+		return ArtefactFunctionHandler.class.getName();
 	}
 
 	@Override
