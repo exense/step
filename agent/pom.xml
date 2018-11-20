@@ -47,7 +47,7 @@
 									<version>${step-grid.version}</version>
 									<type>jar</type>
 									<classifier>jar-with-dependencies</classifier>
-									<overWrite>false</overWrite>
+									<overWrite>true</overWrite>
 									<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
 									<destFileName>step-grid-agent.jar</destFileName>
 								</artifactItem>
