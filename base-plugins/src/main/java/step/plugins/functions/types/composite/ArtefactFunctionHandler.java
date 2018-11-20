@@ -20,21 +20,19 @@ package step.plugins.functions.types.composite;
 
 import javax.json.JsonObject;
 
-import org.bson.types.ObjectId;
-
 import step.artefacts.handlers.CallFunctionHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 import step.core.variables.VariableType;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
-import step.core.reports.Error;
-import step.core.reports.ErrorType;
 
 public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 
@@ -46,14 +44,12 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 		String parentReportId = input.getProperties().get(CallFunctionHandler.PARENTREPORTID);
 		
 		ReportNode parentNode;
-		parentNode = new ReportNode();
 		if(parentReportId!=null) {
-			parentNode.setParentID(new ObjectId(parentReportId));
+			parentNode = executionContext.getReportNodeAccessor().get(parentReportId);
+		} else {
+			throw new RuntimeException("Parent node id is null. This should never occur");
 		}
-		parentNode.setExecutionID(executionContext.getExecutionId());
 		
-		executionContext.getReportNodeAccessor().save(parentNode);
-
 		ReportNode previousCurrentNode = executionContext.getCurrentReportNode();
 		executionContext.setCurrentReportNode(parentNode);
 		executionContext.getReportNodeCache().put(parentNode);

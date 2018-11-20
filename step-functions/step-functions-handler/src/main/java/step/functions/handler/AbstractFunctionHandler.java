@@ -24,7 +24,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	private ApplicationContextBuilder applicationContextBuilder;
 	private FunctionHandlerFactory functionHandlerFactory;
 
-	protected void initialize(AgentTokenWrapper token) {
+	public void initialize(AgentTokenWrapper token) {
 		this.token = token;
 		applicationContextBuilder = token.getServices().getApplicationContextBuilder();
 		functionHandlerFactory = new FunctionHandlerFactory();
