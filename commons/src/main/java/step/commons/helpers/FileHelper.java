@@ -188,6 +188,7 @@ public class FileHelper {
 	public static final byte[] zipDirectory(File directory) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ZipOutputStream zos = new ZipOutputStream(out);
+		zos.setLevel(ZipOutputStream.STORED);
 		zip(directory, directory, zos);
 		zos.close();
 		return out.toByteArray();
