@@ -32,7 +32,6 @@ import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 
 public class KeywordHandler extends JsonBasedFunctionHandler {
 	
@@ -61,8 +60,7 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		ApplicationContext context = getCurrentContext();
-		URLClassLoader cl = (URLClassLoader) context.getClassLoader();
+		URLClassLoader cl = (URLClassLoader) Thread.currentThread().getContextClassLoader();
 		
 		String kwClassnames = input.getProperties().get(KEYWORD_CLASSES);
 		if(kwClassnames != null && kwClassnames.trim().length()>0) {

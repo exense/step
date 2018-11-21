@@ -26,18 +26,21 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
 		//message.getProperties().put("keywordRootPath", fileManagerClient.getDataFolderPath() + "\\"+ currentkeywordVersion.getFileId() + "\\" + currentkeywordVersion.getVersion());
 		
-		pushRemoteApplicationContext(ScriptHandler.SCRIPT_FILE, input.getProperties());
+		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.SCRIPT_FILE, input.getProperties());
 		
 		ApplicationContext context = getCurrentContext();
 
 		String kwClassnames = (String) context.get("kwClassnames");
 		if (kwClassnames == null) {
-			kwClassnames = getKeywordClassList((URLClassLoader) context.getClassLoader());
+			kwClassnames = getKeywordClassList((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader());
 			context.put("kwClassnames", kwClassnames);
 		}
 		input.getProperties().put(KeywordHandler.KEYWORD_CLASSES, kwClassnames);
 		
-		return delegate(KeywordHandler.class, input);
+		// Using the forked to branch in order no to have the ClassLoader of java-plugin-handler.jar as parent.
+		// the project java-plugin-handler.jar has many dependencies that might conflict with the dependencies of the 
+		// keyword. One of these dependencies is guava for example.
+		return delegate(FORKED_BRANCH, KeywordHandler.class.getName(), input);
 	}
 	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {

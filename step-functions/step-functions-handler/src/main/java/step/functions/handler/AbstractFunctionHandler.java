@@ -23,6 +23,8 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	private FileManagerClient fileManagerClient;
 	private ApplicationContextBuilder applicationContextBuilder;
 	private FunctionHandlerFactory functionHandlerFactory;
+	
+	public static final String FORKED_BRANCH = "forkedBranch";
 
 	public void initialize(AgentTokenWrapper token) {
 		this.token = token;
@@ -32,10 +34,19 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	}
 	
 	/**
-	 * @return the current {@link ApplicationContext} with the associate {@link ClassLoader}
+	 * @return the current {@link ApplicationContext} of the default branch
 	 */
 	protected ApplicationContext getCurrentContext() {
-		return applicationContextBuilder.getCurrentContext();
+		return getCurrentContext(ApplicationContextBuilder.MASTER);
+	}
+	
+	
+	/**
+	 * @param branch
+	 * @return the current {@link ApplicationContext} of the branch specified in the argument
+	 */
+	protected ApplicationContext getCurrentContext(String branch) {
+		return applicationContextBuilder.getCurrentContext(branch);
 	}
 
 	/**
@@ -49,17 +60,98 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		return applicationContextBuilder.runInContext(callable);
 	}
 
+	/**
+	 * Executes the callable in the current context of the branch specified as argument
+	 * 
+	 * @param branch the name of the branch to be used for execution
+	 * @param callable the callable to be executed in the current {@link ApplicationContext}
+	 * @return the result of the callable
+	 * @throws Exception
+	 */
+	protected <T> T runInContext(String branch, Callable<T> callable) throws Exception {
+		return applicationContextBuilder.runInContext(callable);
+	}
+
+	/**
+	 * Push a new context based on a local file (jar or zip) to the default branch. See {@link ApplicationContextBuilder} for details
+	 * 
+	 * @param classLoader the classloader to be used to search the file
+	 * @param resourceName the name of the resource to be pushed
+	 * @throws ApplicationContextBuilderException
+	 */
 	protected void pushLocalApplicationContext(ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
+		pushLocalApplicationContext(ApplicationContextBuilder.MASTER, classLoader, resourceName);	
+	}
+
+	/**
+	 *Push a new context based on a local file (jar or zip) to the branch specified as argument. See {@link ApplicationContextBuilder} for details
+	 * 
+	 * @param branch the name of the branch on which the context has to be pushed
+	 * @param classLoader the classloader to be used to search the file
+	 * @param resourceName the name of the resource to be pushed
+	 * @throws ApplicationContextBuilderException
+	 */
+	protected void pushLocalApplicationContext(String branch, ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
 		LocalResourceApplicationContextFactory localContext = new LocalResourceApplicationContextFactory(classLoader, resourceName);
-		applicationContextBuilder.pushContext(localContext);			
+		applicationContextBuilder.pushContext(branch, localContext);			
 	}
 	
+	/**
+	 * Push a new remote context to the default branch. See {@link ApplicationContextBuilder} for details
+	 * 
+	 * @param fileId the id of the remote file (jar or folder) to be pushed
+	 * @param properties
+	 * @throws ApplicationContextBuilderException
+	 */
 	protected void pushRemoteApplicationContext(String fileId, Map<String, String> properties) throws ApplicationContextBuilderException {
+		pushRemoteApplicationContext(ApplicationContextBuilder.MASTER, fileId, properties);
+	}
+
+	/**
+	 * Push a new remote context to the branch specified as argument. See {@link ApplicationContextBuilder} for details
+	 * 
+	 * @param branch the name of the branch on which the context has to be pushed
+	 * @param fileId the id of the remote file (jar or folder) to be pushed
+	 * @param properties
+	 * @throws ApplicationContextBuilderException
+	 */
+	protected void pushRemoteApplicationContext(String branch, String fileId, Map<String, String> properties) throws ApplicationContextBuilderException {
 		FileVersionId librariesFileVersion = getFileVersionId(fileId, properties);
 		if(librariesFileVersion!=null) {
 			RemoteApplicationContextFactory librariesContext = new RemoteApplicationContextFactory(fileManagerClient, librariesFileVersion);
-			applicationContextBuilder.pushContext(librariesContext);			
+			applicationContextBuilder.pushContext(branch, librariesContext);			
 		}
+	}
+	
+	/**
+	 * Delegate the execution of the function to the {@link AbstractFunctionHandler} specified 
+	 * in the arguments in the context of the specified branch
+	 * 
+	 * @param branchName
+	 * @param functionHandlerClassname
+	 * @param input
+	 * @return
+	 * @throws Exception
+	 */
+	protected Output<OUT> delegate(String branchName, String functionHandlerClassname, Input<IN> input) throws Exception {
+		return applicationContextBuilder.runInContext(branchName, ()->{
+			@SuppressWarnings("unchecked")
+			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext(branchName).getClassLoader(), functionHandlerClassname, token);
+			return functionHandler.handle(input);
+		});
+	}
+	
+	/**
+	 * Delegate the execution of the function to the {@link AbstractFunctionHandler} specified 
+	 * in the arguments in the context of the default branch
+	 * 
+	 * @param functionHandlerClassname
+	 * @param input
+	 * @return
+	 * @throws Exception
+	 */
+	protected Output<OUT> delegate(String functionHandlerClassname, Input<IN> input) throws Exception {
+		return delegate(ApplicationContextBuilder.MASTER, functionHandlerClassname, input);
 	}
 	
 	protected File retrieveFileVersion(String properyName, Map<String,String> properties) throws FileProviderException {
@@ -83,18 +175,6 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	}
 
 	protected abstract Output<OUT> handle(Input<IN> input) throws Exception;
-	
-	protected Output<OUT> delegate(Class<?> functionHandlerClass, Input<IN> input) throws Exception {
-		return delegate(functionHandlerClass.getName(), input);
-	}
-	
-	protected Output<OUT> delegate(String functionHandlerClassname, Input<IN> input) throws Exception {
-		return applicationContextBuilder.runInContext(()->{
-			@SuppressWarnings("unchecked")
-			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(token, functionHandlerClassname);
-			return functionHandler.handle(input);
-		});
-	}
 	
 	protected Map<String, String> mergeAllProperties(Input<?> input) {
 		Map<String, String> properties = new HashMap<>();
