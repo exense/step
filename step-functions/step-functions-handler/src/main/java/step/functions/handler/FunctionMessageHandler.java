@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import step.functions.io.Input;
 import step.functions.io.Output;
+import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileManagerClient.FileVersionId;
 import step.grid.io.InputMessage;
@@ -23,6 +25,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	// Cached object mapper for message payload serialization
 	private ObjectMapper mapper;
 	
+	private ApplicationContextBuilder applicationContextBuilder;
+	
 	public FunctionHandlerFactory functionHandlerFactory = new FunctionHandlerFactory();
 	
 	public FunctionMessageHandler() {
@@ -32,18 +36,26 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	}
 
 	@Override
+	public void init(AgentTokenServices agentTokenServices) {
+		super.init(agentTokenServices);
+		applicationContextBuilder = agentTokenServices.getApplicationContextBuilder();
+		
+		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
+	}
+
+	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage inputMessage) throws Exception {
 		FileVersionId functionPackage = getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties());
 		if(functionPackage != null) {
 			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties()));
-			token.getServices().getApplicationContextBuilder().pushContext(functionHandlerContext);
+			applicationContextBuilder.pushContext(functionHandlerContext);
 		}
 		
-		return token.getServices().getApplicationContextBuilder().runInContext(()->{
+		return applicationContextBuilder.runInContext(()->{
 			// Instantiate the function handler 
 			String handlerClass = inputMessage.getProperties().get(FUNCTION_HANDLER_KEY);
 			@SuppressWarnings("rawtypes")
-			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(token, handlerClass);
+			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext().getClassLoader(), handlerClass, token);
 			
 			// Deserialize the Input from the message payload
 			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());

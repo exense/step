@@ -11,11 +11,16 @@ public class GeneralScriptHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		pushRemoteApplicationContext(ScriptHandler.LIBRARIES_FILE, input.getProperties());
+		// Using the forked to branch in order no to have the ClassLoader of java-plugin-handler.jar as parent.
+		// the project java-plugin-handler.jar has many dependencies that might conflict with the dependencies of the 
+		// keyword. One of these dependencies is guava for example.
+		pushLocalApplicationContext(FORKED_BRANCH, getCurrentContext().getClassLoader(), "script-dev-java.jar");
+		
+		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.LIBRARIES_FILE, input.getProperties());
 		
 		String scriptLanguage = input.getProperties().get(ScriptHandler.SCRIPT_LANGUAGE);
 		Class<?> handlerClass = scriptLanguage.equals("java")?JavaJarHandler.class:ScriptHandler.class;
-		return delegate(handlerClass, input);		
+		return delegate(handlerClass.getName(), input);		
 	}
 
 }

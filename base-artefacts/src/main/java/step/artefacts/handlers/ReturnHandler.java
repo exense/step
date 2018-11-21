@@ -31,7 +31,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
-import step.grid.agent.handler.context.OutputMessageBuilder;
+import step.functions.io.OutputBuilder;
 
 public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 	
@@ -55,9 +55,9 @@ public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 		node.setStatus(ReportNodeStatus.PASSED);
 
 		Object o = context.getVariablesManager().getVariable("output");
-		if(o!=null && o instanceof OutputMessageBuilder) {
+		if(o!=null && o instanceof OutputBuilder) {
 			JsonObject outputJsonAfterResolving = resolveOutputJson(testArtefact);
-			((OutputMessageBuilder)o).setPayloadJson(outputJsonAfterResolving.toString());
+			((OutputBuilder)o).setPayloadJson(outputJsonAfterResolving.toString());
 		}
 	}
 

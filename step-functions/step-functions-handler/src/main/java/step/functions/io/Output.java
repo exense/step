@@ -20,7 +20,7 @@ package step.functions.io;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import step.core.reports.Error;
 
 import step.core.reports.Measure;
 import step.grid.io.Attachment;
@@ -29,7 +29,7 @@ public class Output<OUT> {
 	
 	private OUT payload;
 	
-	private String error;
+	private Error error;
 	
 	private List<Attachment> attachments;
 	
@@ -43,11 +43,11 @@ public class Output<OUT> {
 		this.payload = payload;
 	}
 
-	public String getError() {
+	public Error getError() {
 		return error;
 	}
 
-	public void setError(String error) {
+	public void setError(Error error) {
 		this.error = error;
 	}
 

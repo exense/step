@@ -2,14 +2,35 @@ package step.core.reports;
 
 public class Error {
 	
+	ErrorType type = ErrorType.TECHNICAL;
+	
+	String layer;
+	
 	String msg;
 	
 	Integer code;
 	
 	boolean root;
 
+	public Error(ErrorType type, String layer, String msg, Integer code, boolean root) {
+		super();
+		this.type = type;
+		this.layer = layer;
+		this.msg = msg;
+		this.code = code;
+		this.root = root;
+	}
+
 	public Error() {
 		super();
+	}
+
+	public ErrorType getType() {
+		return type;
+	}
+
+	public void setType(ErrorType type) {
+		this.type = type;
 	}
 
 	public String getMsg() {

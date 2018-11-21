@@ -20,21 +20,21 @@ package step.plugins.functions.types.composite;
 
 import javax.json.JsonObject;
 
-import org.bson.types.ObjectId;
-
 import step.artefacts.handlers.CallFunctionHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 import step.core.variables.VariableType;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 
-public class ArtefactMessageHandler extends JsonBasedFunctionHandler {
+public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	protected Output<JsonObject> handle(Input<JsonObject> input) {
@@ -44,14 +44,12 @@ public class ArtefactMessageHandler extends JsonBasedFunctionHandler {
 		String parentReportId = input.getProperties().get(CallFunctionHandler.PARENTREPORTID);
 		
 		ReportNode parentNode;
-		parentNode = new ReportNode();
 		if(parentReportId!=null) {
-			parentNode.setParentID(new ObjectId(parentReportId));
+			parentNode = executionContext.getReportNodeAccessor().get(parentReportId);
+		} else {
+			throw new RuntimeException("Parent node id is null. This should never occur");
 		}
-		parentNode.setExecutionID(executionContext.getExecutionId());
 		
-		executionContext.getReportNodeAccessor().save(parentNode);
-
 		ReportNode previousCurrentNode = executionContext.getCurrentReportNode();
 		executionContext.setCurrentReportNode(parentNode);
 		executionContext.getReportNodeCache().put(parentNode);
@@ -65,8 +63,12 @@ public class ArtefactMessageHandler extends JsonBasedFunctionHandler {
 		try {
 			ReportNode node = ArtefactHandler.delegateExecute(executionContext, artefact,parentNode);
 			if(node.getStatus()== ReportNodeStatus.TECHNICAL_ERROR || node.getStatus()== ReportNodeStatus.FAILED) {
-				output.setError("Error in composite execution. Composite status: " + node.getStatus() + 
-						(node.getError()!=null?". Error message: "+node.getError().getMsg():""));						
+				Error error = new Error();
+				error.setCode(0);
+				error.setMsg("Error in composite keyword");
+				error.setRoot(false);
+				error.setType(node.getStatus().equals(ReportNodeStatus.FAILED)?ErrorType.BUSINESS:ErrorType.TECHNICAL);
+				output.setError(error);
 			}
 			return output.build();
 		} finally {

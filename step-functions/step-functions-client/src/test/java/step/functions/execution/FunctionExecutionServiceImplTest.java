@@ -121,7 +121,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
-		Assert.assertEquals("Communication error between the controller and the agent while calling the agent", output.getError());
+		Assert.assertEquals("Communication error between the controller and the agent while calling the agent", output.getError().getMsg());
 	}
 	
 	@Test
@@ -130,7 +130,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
-		Assert.assertEquals("Timeout after "+functionCallTimeout+ "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword", output.getError());
+		Assert.assertEquals("Timeout after "+functionCallTimeout+ "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword", output.getError().getMsg());
 		
 	}
 	
@@ -140,7 +140,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
-		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Call exception", output.getError());
+		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Call exception", output.getError().getMsg());
 	}
 	
 	@Test
@@ -168,7 +168,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
-		Assert.assertEquals("My error", output.getError());
+		Assert.assertEquals("My error", output.getError().getMsg());
 	}
 	
 	@Test
@@ -181,7 +181,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
-		Assert.assertEquals("Unexepected error while executing the keyword on the agent", output.getError());
+		Assert.assertEquals("Unexepected error while executing the keyword on the agent", output.getError().getMsg());
 	}
 
 	protected Output<JsonObject> callFunctionWithDummyInput(FunctionExecutionService f)

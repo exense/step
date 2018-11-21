@@ -54,6 +54,8 @@ import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
@@ -176,28 +178,28 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			if(agentError != null) {
 				AgentErrorCode errorCode = agentError.getErrorCode();
 				if(errorCode.equals(AgentErrorCode.TIMEOUT_REQUEST_INTERRUPTED)) {
-					output.setError("Timeout after " + callTimeout + "ms while executing the keyword on the agent. The keyword execution could be interrupted on the agent side. You can increase the call timeout in the configuration screen of the keyword");
+					output.setError(newAgentError("Timeout after " + callTimeout + "ms while executing the keyword on the agent. The keyword execution could be interrupted on the agent side. You can increase the call timeout in the configuration screen of the keyword"));
 				} else if(errorCode.equals(AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED)) {
-					output.setError("Timeout after " + callTimeout + "ms while executing the keyword on the agent. WARNING: The keyword execution couldn't be interrupted on the agent side. You can increase the call timeout in the configuration screen of the keyword");
+					output.setError(newAgentError("Timeout after " + callTimeout + "ms while executing the keyword on the agent. WARNING: The keyword execution couldn't be interrupted on the agent side. You can increase the call timeout in the configuration screen of the keyword"));
 				} else if(errorCode.equals(AgentErrorCode.TOKEN_NOT_FOUND)) {
-					output.setError("The agent token doesn't exist on the agent side");
+					output.setError(newAgentError("The agent token doesn't exist on the agent side"));
 				} else if(errorCode.equals(AgentErrorCode.UNEXPECTED)) {
-					output.setError("Unexepected error while executing the keyword on the agent");
+					output.setError(newAgentError("Unexepected error while executing the keyword on the agent"));
 				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER)) {
-					output.setError("Unexpected error on the agent side while building the execution context of the keyword");
+					output.setError(newAgentError("Unexpected error on the agent side while building the execution context of the keyword"));
 				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_ERROR)) {
-					output.setError("Error while downloading a resource from the controller");
+					output.setError(newAgentError("Error while downloading a resource from the controller"));
 				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_TIMEOUT)) {
 					String timeout = agentError.getErrorDetails().get(AgentErrorCode.Details.TIMEOUT);
 					String filehandle = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_HANDLE);
 					File file = gridClient.getRegisteredFile(filehandle);
 					if(file!=null) {
-						output.setError("Timeout after "+ timeout + "ms while downloading the following resource from the controller: "+file.getPath()+". You can increase the download timeout by setting gridReadTimeout in AgentConf.js");
+						output.setError(newAgentError("Timeout after "+ timeout + "ms while downloading the following resource from the controller: "+file.getPath()+". You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
 					} else {
-						output.setError("Timeout after "+ timeout + "ms while downloading a resource from the controller. You can increase the download timeout by setting gridReadTimeout in AgentConf.js");
+						output.setError(newAgentError("Timeout after "+ timeout + "ms while downloading a resource from the controller. You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
 					}
 				} else {
-					output.setError("Unknown agent error: "+agentError);
+					output.setError(newAgentError("Unknown agent error: "+agentError));
 				}
 			} else {
 				JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Output.class, Output.class, outputClass);
@@ -221,6 +223,10 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		}
 		return output;
 	}
+
+	private Error newAgentError(String message) {
+		return new Error(ErrorType.TECHNICAL, "agent", message, 0, true);
+	}
 	
 	protected Map<String, String> registerFile(File file, String properyName) {
 		String fileHandle = gridClient.registerFile(file);
@@ -239,7 +245,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	}
 	
 	private void attachExceptionToOutput(Output<?> output, String message, Exception e) {
-		output.setError(message);
+		output.setError( new Error(ErrorType.TECHNICAL, "functionClient", message, 0, true));
 		Attachment attachment = AttachmentHelper.generateAttachmentForException(e);
 		List<Attachment> attachments = output.getAttachments();
 		if(attachments==null) {

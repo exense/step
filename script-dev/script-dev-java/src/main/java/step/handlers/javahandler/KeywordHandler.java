@@ -27,13 +27,11 @@ import javax.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.functions.handler.AbstractFunctionHandler;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 
 public class KeywordHandler extends JsonBasedFunctionHandler {
 	
@@ -62,8 +60,7 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		ApplicationContext context = getCurrentContext();
-		URLClassLoader cl = (URLClassLoader) context.getClassLoader();
+		URLClassLoader cl = (URLClassLoader) Thread.currentThread().getContextClassLoader();
 		
 		String kwClassnames = input.getProperties().get(KEYWORD_CLASSES);
 		if(kwClassnames != null && kwClassnames.trim().length()>0) {
@@ -121,8 +118,8 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 					}
 					outputBuilder.setError(reportedEx.getMessage()!=null?reportedEx.getMessage():"Empty error message", reportedEx);
 					if(throwExceptionOnError) {
-						Output<?> outputMessage = outputBuilder.build();
-						throw new KeywordException(outputBuilder.build(), outputMessage.getError(), reportedEx);
+						Output<?> output = outputBuilder.build();
+						throw new KeywordException(output, reportedEx);
 					}
 				}
 			} finally {
@@ -135,7 +132,7 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 		
 		Output<JsonObject> output = outputBuilder.build();
 		if(throwExceptionOnError && output.getError() != null) {
-			throw new KeywordException(output, output.getError());
+			throw new KeywordException(output);
 		} else {
 			return output;
 		}

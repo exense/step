@@ -35,6 +35,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 
+import step.functions.handler.AbstractFunctionHandler;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -62,7 +63,8 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
 	
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		return runInContext(()->{
+		// Using the forked branch here. See GeneralScriptHandler for details
+		return runInContext(AbstractFunctionHandler.FORKED_BRANCH, ()->{
 			Map<String, String> properties = input.getProperties();
 			
 			File scriptFile = retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties);
