@@ -84,7 +84,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   ViewRegistry.registerView('myaccount','partials/myaccount.html');
 })
 
-.controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, ViewRegistry) {
+.controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, MaintenanceService, ViewRegistry) {
   stateStorage.push($scope, 'root',{});
   
   $scope.isInitialized = false;
@@ -110,6 +110,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   };
   
   $scope.authService = AuthService;
+  $scope.maintenanceService = MaintenanceService;
   
   if(!$location.path()) {
     $location.path('/root/artefacts')    
@@ -263,6 +264,22 @@ angular.module('step',['ngStorage','ngCookies'])
     }
   };
 }])
+
+.factory('MaintenanceService', function ($http, $rootScope, Preferences) {
+  var service = {};
+  
+  var maintenanceMessage;
+  
+  $http.get('rest/admin/maintenance/message').then(function(res) {
+    maintenanceMessage = res.data;
+  })
+  
+  service.getMaintenanceMessage = function() {
+    return maintenanceMessage;
+  }
+  
+  return service;
+})
 
 .factory('AuthService', function ($http, $rootScope, Preferences) {
   var authService = {};
