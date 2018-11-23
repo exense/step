@@ -216,9 +216,37 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
   
   $scope.isSchemaEnforced = AuthService.getConf().miscParams.enforceschemas;
   
+  $scope.addRoutingCriteria = function() {
+    $scope.criteria.push({key:"",value:""});
+  }
+  
+  $scope.removeRoutingCriteria = function(key) {
+    delete $scope.function_.tokenSelectionCriteria[key];
+    loadTokenSelectionCriteria($scope.function_);
+  }
+  
+  $scope.saveRoutingCriteria = function() {
+    var tokenSelectionCriteria = {}
+    _.each($scope.criteria, function(entry) {
+      tokenSelectionCriteria[entry.key]=entry.value;
+    });
+    $scope.function_.tokenSelectionCriteria = tokenSelectionCriteria;
+  }
+  
   $http.get("rest/screens/functionTable").then(function(response){
     $scope.inputs=response.data;
-  }); 
+  });
+  
+  var loadTokenSelectionCriteria = function(function_) {
+    $scope.criteria = [];
+    if(function_ && function_.tokenSelectionCriteria) {
+      _.mapObject(function_.tokenSelectionCriteria,function(val,key) {
+        $scope.criteria.push({key:key,value:val});
+      });
+    }
+  }
+  
+  loadTokenSelectionCriteria(function_);
   
   $scope.loadInitialFunction = function() {
     $http.get("rest/functions/types/"+$scope.function_.type).then(function(response){
@@ -232,6 +260,9 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
           initialFunction.schema = $scope.function_.schema;
         }
       }
+      
+      loadTokenSelectionCriteria(initialFunction);
+      
       $scope.function_ = initialFunction;
       $scope.schemaStr = JSON.stringify($scope.function_.schema);
     })  
