@@ -34,10 +34,7 @@ public class GeneralScriptFunction extends Function {
 	}
 
 	/**
-	 * @param scriptLanguage the script language of this function. Per default the following language are supported:
-	 * 	<li> javascript
-	 * 	<li> groovy
-	 * 	<li> java 
+	 * @param scriptLanguage the script language of this function. Per default the following language are supported: "javascript", "groovy", "java" 
 	 */
 	public void setScriptLanguage(DynamicValue<String> scriptLanguage) {
 		this.scriptLanguage = scriptLanguage;
