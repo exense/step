@@ -116,6 +116,20 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
 
       })
       
+.controller('ControllerSettingsCtrl', function($scope, $http) {
+  
+  $scope.maintenanceMessage;
+  
+  $http.get("rest/admin/maintenance/message").then(function(res) {
+    $scope.maintenanceMessage = res.data;
+  });
+  
+  $scope.saveMaintenanceMessage = function() {
+    $http.post("rest/admin/maintenance/message", $scope.maintenanceMessage).then(function() {
+    });
+  }
+})
+      
 .controller('editUserModalCtrl', function ($scope, $uibModalInstance, $http, $location, AuthService, user) {
    $scope.roles = AuthService.getConf().roles;
    $scope.user = user;

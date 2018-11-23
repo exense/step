@@ -20,6 +20,7 @@ package step.core.deployment;
 
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -36,10 +37,21 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import step.core.access.Preferences;
 import step.core.access.User;
+import step.core.controller.ControllerSettingAccessor;
+import step.core.controller.ControllerSetting;
 
 @Singleton
 @Path("admin")
 public class AdminServices extends AbstractServices {
+	
+	protected ControllerSettingAccessor controllerSettingsAccessor;
+
+	private static final String MAINTENANCE_MESSAGE_KEY = "maintenance_message";
+	
+	@PostConstruct
+	public void init() {
+		controllerSettingsAccessor = new ControllerSettingAccessor(controller.getContext().getMongoClientSession());
+	}
 
 	@POST
 	@Secured(right="user-write")
@@ -104,6 +116,26 @@ public class AdminServices extends AbstractServices {
 		}
 	}
 	
+	@GET
+	@Secured
+	@Path("/maintenance/message")
+	public String getMaintenanceMessage() {
+		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_MESSAGE_KEY);
+		return setting!=null?setting.getValue():null;
+	}
+	
+	@POST
+	@Secured(right="admin")
+	@Path("/maintenance/message")
+	public void setMaintenanceMessage(String message) {
+		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_MESSAGE_KEY);
+		if(setting == null) {
+			setting = new ControllerSetting();
+			setting.setKey(MAINTENANCE_MESSAGE_KEY);
+		}
+		setting.setValue(message);
+		controllerSettingsAccessor.save(setting);
+	}
 	
 	@POST
 	@Secured
