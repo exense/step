@@ -13,8 +13,8 @@ public interface PlanRepository {
 	Plan load(Map<String, String> attributes);
 
 	/**
-	 * Save (Insert or Update) a Plan
-	 * @param plan
+	 * Save (Insert or Update) a Plan to the remote repository
+	 * @param plan the plan to be saved
 	 */
 	void save(Plan plan);
 

@@ -12,6 +12,10 @@ import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.artefacts.reports.ReportTreeVisitor;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
 
+/**
+ * This class provides an API for the manipulation of plan executions
+ *
+ */
 public class PlanRunnerResult {
 
 	protected final String executionId;
@@ -35,30 +39,64 @@ public class PlanRunnerResult {
 		return reportTreeAccessor;
 	}
 	
+	/**
+	 * Visits the report tree of the execution using the {@link Consumer} of {@link ReportNode}
+	 * @param consumer
+	 * @return
+	 */
 	public PlanRunnerResult visitReportNodes(Consumer<ReportNode> consumer) {
 		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
 		visitor.visitNodes(rootReportNodeId, consumer);
 		return this;
 	}
 	
+	/**
+	 * Visits the report tree of the execution using the {@link Consumer} of {@link ReportNodeEvent}
+	 * @param consumer 
+	 * @return
+	 */
 	public PlanRunnerResult visitReportTree(Consumer<ReportNodeEvent> consumer) {
 		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
 		visitor.visit(rootReportNodeId, consumer);
 		return this;
 	}
 	
+	/**
+	 * Wait for an the execution to terminate
+	 * @param timeout the timeout in ms
+	 * @return
+	 * @throws TimeoutException
+	 * @throws InterruptedException
+	 */
 	public PlanRunnerResult waitForExecutionToTerminate(long timeout) throws TimeoutException, InterruptedException {
 		return this;
 	}
 	
+	/**
+	 * Wait indefinitely for an the execution to terminate
+	 * @return
+	 * @throws TimeoutException
+	 * @throws InterruptedException
+	 */
 	public PlanRunnerResult waitForExecutionToTerminate() throws TimeoutException, InterruptedException {
 		return waitForExecutionToTerminate(0);
 	}
 	
+	/**
+	 * Prints the result tree to the standard output
+	 * @return
+	 * @throws IOException
+	 */
 	public PlanRunnerResult printTree() throws IOException {
 		return printTree(new OutputStreamWriter(System.out));
 	}
 	
+	/**
+	 * Prints the result tree to the {@link Writer} provided as input
+	 * @param writer 
+	 * @return
+	 * @throws IOException
+	 */
 	public PlanRunnerResult printTree(Writer writer) throws IOException {
 		BufferedWriter bWriter = new BufferedWriter(writer);
 		visitReportTree(event->{
