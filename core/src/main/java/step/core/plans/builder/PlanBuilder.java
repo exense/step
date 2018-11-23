@@ -7,6 +7,10 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.plans.Plan;
 
+/**
+ * This class provides an API for the creation of {@link Plan}
+ *
+ */
 public class PlanBuilder {
 
 	protected AbstractArtefact root;
@@ -19,6 +23,9 @@ public class PlanBuilder {
 		return new PlanBuilder();
 	}
 	
+	/**
+	 * @return the {@link Plan} created by this builder
+	 */
 	@SuppressWarnings("unchecked")
 	public Plan build() {
 		if(stack.isEmpty()) {
@@ -28,6 +35,11 @@ public class PlanBuilder {
 		}
 	}
 	
+	/**
+	 * Adds a node to the current parent
+	 * @param artefact the {@link AbstractArtefact} to be added
+	 * @return this instance of the {@link PlanBuilder}
+	 */
 	public PlanBuilder add(AbstractArtefact artefact) {
 		if(root==null) {
 			throw new RuntimeException("No root artefact defined. Please first call the method startBlock to define the root element");
@@ -37,17 +49,26 @@ public class PlanBuilder {
 		return this;
 	}
 	
-	public PlanBuilder startBlock(AbstractArtefact a) {
+	/**
+	 * Adds a node to the current parent and defines it as the new current parent
+	 * @param artefact the {@link AbstractArtefact} to be added and set as current parent
+	 * @return this instance of the {@link PlanBuilder}
+	 */
+	public PlanBuilder startBlock(AbstractArtefact artefact) {
 		if(root!=null) {
-			addToCurrentParent(a);
+			addToCurrentParent(artefact);
 		} else {
-			root = a;
+			root = artefact;
 		}
-		localAccessor.save(a);
-		stack.push(a);
+		localAccessor.save(artefact);
+		stack.push(artefact);
 		return this;
 	}
 	
+	/**
+	 * Removes the current parent from the stack and switch back to the previous parent
+	 * @return this instance of the {@link PlanBuilder}
+	 */
 	public PlanBuilder endBlock() {
 		if(!stack.isEmpty()) {
 			stack.pop();
