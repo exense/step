@@ -46,6 +46,9 @@ public class FileServices extends AbstractServices {
 			super();
 		}
 
+		/**
+		 * @return an handle to the uploaded file
+		 */
 		public String getAttachmentId() {
 			return attachmentId;
 		}

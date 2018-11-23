@@ -28,6 +28,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 
+/**
+ * This class encapsulates all the configuration parameters of functions (aka Keywords)
+ * which can also be defined on the configuration dialog of Keywords in the UI 
+ *
+ */
 @JsonTypeInfo(use=Id.CLASS,property="type")
 public class Function extends AbstractOrganizableObject {
 	
@@ -39,6 +44,11 @@ public class Function extends AbstractOrganizableObject {
 		return tokenSelectionCriteria;
 	}
 
+	/**
+	 * Defines additional selection criteria of agent token on which the function should be executed
+	 * 
+	 * @param tokenSelectionCriteria a map containing the additional selection criteria as key-value pairs
+	 */
 	public void setTokenSelectionCriteria(Map<String, String> tokenSelectionCriteria) {
 		this.tokenSelectionCriteria = tokenSelectionCriteria;
 	}
@@ -49,6 +59,9 @@ public class Function extends AbstractOrganizableObject {
 		return callTimeout;
 	}
 
+	/**
+	 * @param callTimeout the call timeout of the function in ms
+	 */
 	public void setCallTimeout(DynamicValue<Integer> callTimeout) {
 		this.callTimeout = callTimeout;
 	}
@@ -57,6 +70,11 @@ public class Function extends AbstractOrganizableObject {
 		return schema;
 	}
 
+	/**
+	 * Sets the JSON schema to be used to validate the function's input at execution time
+	 * 
+	 * @param schema the JSON schema of the function{@link https://json-schema.org/} 
+	 */
 	public void setSchema(JsonObject schema) {
 		this.schema = schema;
 	}
