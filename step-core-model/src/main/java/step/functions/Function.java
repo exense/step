@@ -73,7 +73,7 @@ public class Function extends AbstractOrganizableObject {
 	/**
 	 * Sets the JSON schema to be used to validate the function's input at execution time
 	 * 
-	 * @param schema the JSON schema of the function{@link https://json-schema.org/} 
+	 * @param schema the JSON schema of the function. See https://json-schema.org/ for more details concerning JSON schema.
 	 */
 	public void setSchema(JsonObject schema) {
 		this.schema = schema;
