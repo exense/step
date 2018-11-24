@@ -22,13 +22,11 @@ angular.module('scriptEditor',['step'])
   ViewRegistry.registerView('scripteditor','scripteditor/partials/scriptEditor.html');
 })
 
-.controller('ScriptEditorCtrl', function($scope, $http, stateStorage, AuthService) {
+.controller('ScriptEditorCtrl', function($scope, $http, $rootScope, $location, stateStorage, AuthService) {
       stateStorage.push($scope, 'scripteditor', {});
 
       $scope.authService = AuthService;
       $scope.functionid = $scope.$state;
- 
-      $scope.functionExecutionPanelHandle = {};
       
       var editor = ace.edit("editor");
       editor.setTheme("ace/theme/chrome");
@@ -48,7 +46,14 @@ angular.module('scriptEditor',['step'])
       
       $scope.execute = function() {
         $scope.save().then(function() {
-          $scope.functionExecutionPanelHandle.execute();
+          $http.post("rest/interactive/functiontest/"+$scope.functionid+"/start").then(function(response) {
+            var result = response.data;
+            $rootScope.artefactEditorInitialState = {
+                interactive : true,
+                selectedNode : result.callFunctionId
+            }
+            $location.path('/root/artefacteditor/' + result.rootArtefactId);
+          });
         })
       }
 })
