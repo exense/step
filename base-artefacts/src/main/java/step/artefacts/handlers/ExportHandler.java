@@ -47,30 +47,42 @@ public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
 		String filename = testArtefact.getFile().get();
 		if(filename != null) {
 			File file = new File(filename);
+			if(!file.exists()) {
+				file.mkdirs();
+			}
+				
 			if(testArtefact.getValue()!=null) {
 				Object value = testArtefact.getValue().get();
-				if(value instanceof List<?>) {
-					if(file.isDirectory()) {
-						List<?> list = (List<?>) value;
-						for (Object object : list) {
-							if(object instanceof AttachmentMeta) {
-								AttachmentMeta attachmentMeta = (AttachmentMeta) object;
-								File fileToCopy = context.getAttachmentManager().getFileById(attachmentMeta.getId().toString());
-								File target = new File(file+"/"+fileToCopy.getName());
-								try {
-									Files.copy(fileToCopy, target);
-								} catch (IOException e) {
-									throw new RuntimeException("Error while copying file "+fileToCopy.getName()+" to "+target.getAbsolutePath());
+				if(value != null) {
+					if(value instanceof List<?>) {
+						if(file.isDirectory()) {
+							List<?> list = (List<?>) value;
+							for (Object object : list) {
+								if(object instanceof AttachmentMeta) {
+									AttachmentMeta attachmentMeta = (AttachmentMeta) object;
+									File fileToCopy = context.getAttachmentManager().getFileById(attachmentMeta.getId().toString());
+									File target = new File(file+"/"+fileToCopy.getName());
+									try {
+										Files.copy(fileToCopy, target);
+									} catch (IOException e) {
+										throw new RuntimeException("Error while copying file "+fileToCopy.getName()+" to "+target.getAbsolutePath());
+									}
 								}
-							}
-						}						
+							}						
+						} else {
+							fail(node, "The folder "+file.getPath()+" is not a directory. Please set the argument 'File' to the export's output directory.");
+						}
+					} else {
+						fail(node, "The object defined by the value expression '"+testArtefact.getValue().getExpression()+"' is not a list. The Export control currently only supports the export of attachment lists.");
 					}
 				} else {
-					
+					fail(node, "The object defined by the value expression '"+testArtefact.getValue().getExpression()+"' is null. Please change the value expression to point to the object to be exported.");
 				}
+			} else {
+				fail(node, "The argument 'Value' is null or hasn't been set. Please set the argument 'Value' to the object that should be exported.");
 			}
 		} else {
-			
+			fail(node, "The argument 'File' is null or hasn't been set. Please set the argument 'File' to the export's output directory.");
 		}
 	}
 
