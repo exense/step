@@ -21,10 +21,15 @@
 		</uib-tab>
 		<uib-tab heading="Controller">
 			<div class="panel-body" id="ControllerSettingsCtrl" ng-controller="ControllerSettingsCtrl">
-				<div class="form-group">
-					<label>Maintenance message</label>
-					<span class="glyphicon glyphicon-question-sign" uib-tooltip="The following message will be displayed as warning on the header to all users. Leave empty to disable this warning."></span>
-					<textarea ng-blur="saveMaintenanceMessage()" ng-model="maintenanceMessage" class="form-control" rows="5"></textarea>
+				<div>
+					<div class="col-xs-2">
+						<ul class="nav nav-pills nav-stacked">
+							<li ng-repeat="entry in configurationItems" ng-class="{'active': entry && entry == currentConfigurationItem}"><a ng-click="setCurrentConfigurationItem(entry)">{{entry.label}}</a></li>
+						</ul>
+					</div>
+					<div class="col-xs-10">
+						<div ng-include="currentConfigurationItem.template">
+					</div>
 				</div>
 			</div>
 		</uib-tab>

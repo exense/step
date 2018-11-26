@@ -67,6 +67,21 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
     customViews[viewId] = template;
   }
   
+  var customDashlets = {};
+  
+  api.getDashlets = function (path) {
+    var dashlets = customDashlets[path];
+    if(!dashlets) {
+      dashlets = []
+      customDashlets[path] = dashlets
+    }
+    return dashlets;
+  }
+  
+  api.registerDashlet = function(path,label,template) {
+    api.getDashlets(path).push({label:label, template:template});
+  }  
+  
   return api;
 })
 

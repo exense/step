@@ -116,7 +116,18 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
 
       })
       
-.controller('ControllerSettingsCtrl', function($scope, $http) {
+.run(function(ViewRegistry) {
+  ViewRegistry.registerDashlet('admin/controller','Maintenance','partials/maintenanceConfiguration.html');
+})
+
+.controller('ControllerSettingsCtrl', function($scope, $http, ViewRegistry) {
+  $scope.configurationItems = ViewRegistry.getDashlets("admin/controller");
+  
+  $scope.currentConfigurationItem;
+  
+  $scope.setCurrentConfigurationItem = function(item) {
+	$scope.currentConfigurationItem = item;
+  }
   
   $scope.maintenanceMessage;
   
