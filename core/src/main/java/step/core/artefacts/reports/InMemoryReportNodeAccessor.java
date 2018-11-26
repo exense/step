@@ -130,7 +130,9 @@ public class InMemoryReportNodeAccessor extends InMemoryCRUDAccessor<ReportNode>
 
 	@Override
 	public ReportNode getRootReportNode(String executionID) {
-		throw new RuntimeException("Not implemented");
+		return map.values().stream().filter(node->{
+			return node.executionID!=null && executionID.equals(executionID)&&node.parentID==null;
+		}).findFirst().get();
 	}
 
 	@Override
