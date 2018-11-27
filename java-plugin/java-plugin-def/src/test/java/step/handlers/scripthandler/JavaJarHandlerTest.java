@@ -95,6 +95,7 @@ public class JavaJarHandlerTest {
 		f.setAttributes(attributes);
 		File file = ResourceExtractor.extractResource(getClass().getClassLoader(), scriptFile);
 		f.setScriptFile(new DynamicValue<String>(file.getPath()));
+		file.deleteOnExit();
 		return f;
 	}
 }
