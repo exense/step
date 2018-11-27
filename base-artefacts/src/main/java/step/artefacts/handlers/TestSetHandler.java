@@ -50,7 +50,7 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	private void runParallel(ReportNode node, TestSet testSet, boolean execution) {
 		int numberOfThreads = context.getVariablesManager().getVariableAsInteger("tec.execution.threads",1);
 
-		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.PASSED);
+		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
 		
 		TestSetScheduler scheduler = new DefaultTestSetScheduler();
 		List<TestCaseBundle> bundles = scheduler.bundleTestCases(getChildren(testSet), numberOfThreads);
