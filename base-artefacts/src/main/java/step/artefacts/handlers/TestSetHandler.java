@@ -50,12 +50,14 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	private void runParallel(ReportNode node, TestSet testSet, boolean execution) {
 		int numberOfThreads = context.getVariablesManager().getVariableAsInteger("tec.execution.threads",1);
 
+		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.PASSED);
+		
 		TestSetScheduler scheduler = new DefaultTestSetScheduler();
 		List<TestCaseBundle> bundles = scheduler.bundleTestCases(getChildren(testSet), numberOfThreads);
 		ExecutorService executor = Executors.newFixedThreadPool(bundles.size());
 		try {
 			for(TestCaseBundle bundle:bundles) {
-				BundleProcessor bundleProcessor = new BundleProcessor(testSet, bundle, node, execution);
+				BundleProcessor bundleProcessor = new BundleProcessor(testSet, bundle, node, execution, reportNodeStatusComposer);
 				executor.submit(bundleProcessor);
 			}
 			
@@ -69,12 +71,7 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 				}
 			}
 			
-			ReportNodeStatus status;
-			if(context.isInterrupted()) {
-				status = ReportNodeStatus.INTERRUPTED;
-			} else {
-				status = ReportNodeStatus.PASSED;
-			}
+			ReportNodeStatus status = reportNodeStatusComposer.getParentStatus();
 			
 			node.setStatus(status);
 		} catch (Throwable e) {
@@ -91,12 +88,15 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 		private TestCaseBundle bundle;
 		
 		private ReportNode node;
+		
+		private AtomicReportNodeStatusComposer reportNodeStatusComposer;
 
-		public BundleProcessor(TestSet testSet, TestCaseBundle bundle, ReportNode node, boolean execution) {
+		public BundleProcessor(TestSet testSet, TestCaseBundle bundle, ReportNode node, boolean execution, AtomicReportNodeStatusComposer reportNodeStatusComposer) {
 			super();
 			this.bundle = bundle;
 			this.node = node;
 			this.execution = execution;
+			this.reportNodeStatusComposer = reportNodeStatusComposer;
 		}
 
 		@Override
@@ -109,7 +109,8 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 						break;
 					}				
 					if(execution) {
-						delegateExecute(testArtefact, node);	
+						ReportNode resultNode = delegateExecute(testArtefact, node);
+						reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
 					} else {
 						delegateCreateReportSkeleton(testArtefact, node);
 					}

@@ -43,7 +43,8 @@ public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefac
 	}
 	
 	public void execute_(ReportNode node, AbstractArtefact testArtefact, Boolean continueOnError) {
-		ReportNodeStatus parentResultStatus = node.getStatus(); 
+		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
+		
 		try {			
 			for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact, context)) {
 				if(context.isInterrupted()) {
@@ -51,9 +52,7 @@ public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefac
 				}
 				ReportNode resultNode = ArtefactHandler.delegateExecute(context, child, node);
 				
-				if(parentResultStatus==null || resultNode.getStatus().ordinal()<parentResultStatus.ordinal()) {
-					parentResultStatus = resultNode.getStatus();
-				}
+				reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
 				
 				Boolean continueOnce = null;
 				try {
@@ -92,7 +91,7 @@ public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefac
 				if(context.isInterrupted()) {
 					node.setStatus(ReportNodeStatus.INTERRUPTED);
 				} else {
-					node.setStatus(parentResultStatus);					
+					node.setStatus(reportNodeStatusComposer.getParentStatus());					
 				}
 			}
 		}
