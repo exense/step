@@ -76,7 +76,12 @@ public class ExecutionRunnable implements Runnable {
 				updateStatus(ExecutionStatus.RUNNING);
 				
 				ArtefactHandler.delegateCreateReportSkeleton(context, artefact, rootReportNode);
-				ArtefactHandler.delegateExecute(context, artefact, rootReportNode);
+				ReportNode planReportNode = ArtefactHandler.delegateExecute(context, artefact, rootReportNode);
+				
+				if(planReportNode!=null && planReportNode.getStatus() != null) {
+					rootReportNode.setStatus(planReportNode.getStatus());
+					context.getReportNodeAccessor().save(rootReportNode);
+				}
 				
 				logger.debug("Test execution ended. Reporting result.... Execution ID: " + context.getExecutionId());
 				
