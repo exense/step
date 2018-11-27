@@ -96,6 +96,7 @@ angular.module('tables', ['export','dataTable'])
       handle: '=?',
       data: '=?',
       collection: '=?',
+      dom: '=?',
       persistState: '='
     },
     transclude : {
@@ -118,7 +119,7 @@ angular.module('tables', ['export','dataTable'])
 
       var tableOptions = {}
       tableOptions.pageLength = parseInt(Preferences.get("tables_itemsperpage", 10));
-      tableOptions.dom = 'lrtip';
+      tableOptions.dom = scope.dom?scope.dom:'lrtip';
       tableOptions.fnDrawCallback = function() {
         controller.newCycle();
       };
