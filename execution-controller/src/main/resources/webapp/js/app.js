@@ -78,8 +78,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
     return dashlets;
   }
   
-  api.registerDashlet = function(path,label,template) {
-    api.getDashlets(path).push({label:label, template:template});
+  api.registerDashlet = function(path,label,template, id) {
+    api.getDashlets(path).push({label:label, template:template, id: id});
   }  
   
   return api;

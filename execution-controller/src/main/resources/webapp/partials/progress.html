@@ -176,6 +176,15 @@
 					</ul>
 				</div>
 			</div>
+			
+			<div ng-repeat="entry in customPanels" ng-attr-id="{{entry.id}}" class="panel panel-default">
+				<div class="panel-heading">
+					<a ng-click="toggleShowPanel(entry.id)">{{entry.label}}</a>
+				</div>
+				<div class="panel-body" ng-show="isShowPanel(entry.id)">
+					<div ng-include="entry.template"></div>
+				</div>
+			</div>
 	
 			<div ng-attr-id="{{getPanelId('currentOperations')}}" ng-if="execution.status != 'ENDED'" class="panel panel-default">
 				<div class="panel-heading">

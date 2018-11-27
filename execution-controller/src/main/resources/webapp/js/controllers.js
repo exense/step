@@ -215,7 +215,7 @@ tecAdminControllers.controller('newTaskModalCtrl', function ($scope, $uibModalIn
   };
 });
 
-tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory) {
+tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry) {
   return {
     restrict: 'E',
     scope: {
@@ -242,6 +242,11 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           "parameters":{label:"Execution parameters",show:false, enabled:true},
           "currentOperations":{label:"Current operations",show:true, enabled:true}
       }
+      
+      $scope.customPanels = ViewRegistry.getDashlets("execution");
+      _.each($scope.customPanels, function(panel) {
+        panels[panel.id] = {label:panel.label, show:true, enabled:true}
+      })
       
       $scope.scrollTo = function(viewId) {
         panels[viewId].show=true;
