@@ -58,4 +58,35 @@ public class RepositoryObjectReference {
 		return "RepositoryObjectReference [repositoryID=" + repositoryID
 				+ ", repositoryParameters=" + repositoryParameters + "]";
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((repositoryID == null) ? 0 : repositoryID.hashCode());
+		result = prime * result + ((repositoryParameters == null) ? 0 : repositoryParameters.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		RepositoryObjectReference other = (RepositoryObjectReference) obj;
+		if (repositoryID == null) {
+			if (other.repositoryID != null)
+				return false;
+		} else if (!repositoryID.equals(other.repositoryID))
+			return false;
+		if (repositoryParameters == null) {
+			if (other.repositoryParameters != null)
+				return false;
+		} else if (!repositoryParameters.equals(other.repositoryParameters))
+			return false;
+		return true;
+	}
 }
