@@ -19,9 +19,9 @@ import step.grid.tokenpool.Interest;
 public class FunctionRouter {
 
 	protected final TokenSelectorHelper tokenSelectorHelper;
-	
+
 	protected final FunctionExecutionService functionExecutionService;
-	
+
 	protected final FunctionTypeRegistry functionTypeRegistry;
 
 	public FunctionRouter(FunctionExecutionService functionClient, FunctionTypeRegistry functionTypeRegistry, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
@@ -61,7 +61,7 @@ public class FunctionRouter {
 
 	private TokenWrapper selectToken(Map<String, Interest> selectionCriteria, boolean createSession) throws FunctionExecutionServiceException {		
 		Map<String, String> pretenderAttributes = new HashMap<>();
-		
+
 		TokenWrapper token;
 		OperationManager.getInstance().enter("Token selection", selectionCriteria);
 		try {
@@ -74,15 +74,15 @@ public class FunctionRouter {
 
 	protected Map<String, Interest> buildSelectionCriteriaMap(CallFunction callFunction, Function function, FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
 		Map<String, Interest> selectionCriteria = new HashMap<>();
-		
+
 		// Criteria from CallFunction Artefact
 		selectionCriteria.putAll(tokenSelectorHelper.getTokenSelectionCriteria(callFunction, bindings));
-		
+
 		// Criteria from Session Artefact if available
 		if(functionGroupContext!=null && functionGroupContext.getAdditionalSelectionCriteria()!=null) {
 			selectionCriteria.putAll(functionGroupContext.getAdditionalSelectionCriteria());
 		}
-		
+
 		// Criteria from function type
 		// TODO As a workaround we're ignoring null functionTypeRegistry. Remove this in the future
 		if(functionTypeRegistry != null) {
@@ -92,25 +92,27 @@ public class FunctionRouter {
 				selectionCriteria.putAll(tokenSelectionCriteriaFromFunctionType);
 			}			
 		}
-		
+
 		// Criteria from function
 		Map<String,String> tokenSelectionCriteriaFromFunction = function.getTokenSelectionCriteria();
 		if(tokenSelectionCriteriaFromFunction!=null) {
 			tokenSelectionCriteriaFromFunction.keySet().stream().forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(tokenSelectionCriteriaFromFunction.get(key)), true)));
 		}
-		
+
 		// Criteria from bindings (Special variable "route_to_")
 		addTokenSelectionCriteriaFromBindings(selectionCriteria, bindings);
 		return selectionCriteria;
 	}
 
 	private static final String ROUTE_TO = "route_to_";
-	
+
 	private Map<String, Interest> addTokenSelectionCriteriaFromBindings(Map<String, Interest> addtionalSelectionCriteria, Map<String, Object> bindings) {
 		bindings.forEach((k,v)->{
-			if(k.startsWith(ROUTE_TO)) {
-				Pattern selectionPattern = Pattern.compile(v.toString());
-				addtionalSelectionCriteria.put(k.replaceFirst(ROUTE_TO, ""), new Interest(selectionPattern, true));
+			if(v!=null){
+				if(k.startsWith(ROUTE_TO)) {
+					Pattern selectionPattern = Pattern.compile(v.toString());
+					addtionalSelectionCriteria.put(k.replaceFirst(ROUTE_TO, ""), new Interest(selectionPattern, true));
+				}
 			}
 		});
 		return addtionalSelectionCriteria;
