@@ -61,14 +61,11 @@ public class EventBrokerServices extends AbstractServices {
 	@Path("/event")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Event putEvent(Event event) {
+	public Event putEvent(Event event) throws Exception {
 		if(event != null)
 			event.setSubmitionTimestamp(System.currentTimeMillis());
-		Event ret = null;
-		synchronized(eb){
-			ret = eb.put(event);
-		}
-		return ret;
+
+			return eb.put(event);
 	}
 
 	@GET
@@ -76,7 +73,7 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event peekEvent(@PathParam("id") String id) {
-		Event event = eb.get(id);
+		Event event = eb.peek(id);
 		if(event != null)
 			event.setLastReadTimestamp(System.currentTimeMillis());
 		return event;
@@ -87,7 +84,7 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event peekEventByGroupAndName(@PathParam("group") String group, @PathParam("name") String name) {
-		Event event = eb.get(group, name);
+		Event event = eb.peek(group, name);
 		if(event != null)
 			event.setLastReadTimestamp(System.currentTimeMillis());
 		return event;
@@ -102,9 +99,6 @@ public class EventBrokerServices extends AbstractServices {
 		Event ret = eb.get(id);
 		if(ret != null)
 			ret.setDeletionTimestamp(System.currentTimeMillis());
-		synchronized(eb){
-			eb.remove(id);
-		}
 		return ret;
 	}
 
@@ -114,12 +108,8 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event consumeEventByGroupAndName(@PathParam("group") String group, @PathParam("name") String name) {
-		Event ret = null;
-		synchronized(eb){
-			ret = eb.get(group, name);
-			if(ret != null)
-				eb.remove(ret.getId());
-		}
+		Event ret = eb.get(group, name);
+
 		if(ret != null)
 			ret.setDeletionTimestamp(System.currentTimeMillis());
 
@@ -130,9 +120,7 @@ public class EventBrokerServices extends AbstractServices {
 	@Path("/events")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String clear() {
-		synchronized(eb){
-			eb.clear();
-		}
+		eb.clear();
 		return "{ \"status\" : \"success\"}";
 	}
 
@@ -141,22 +129,8 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String clearGroup(@PathParam("group") String group) {
-		synchronized(eb){
 			eb.clearGroup(group);
-		}
 		return "{ \"status\" : \"success\"}";
 	}
 
-	//For test purposes
-	@GET
-	@Path("/magicevent")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Event magicPutEvent() {
-		synchronized(eb){
-			return putEvent(new Event()
-					.setId(UUID.randomUUID().toString())
-					.setName("hello")
-					.setGroup("testGroup"));
-		}
-	}
 }

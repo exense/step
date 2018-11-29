@@ -18,13 +18,13 @@
  *******************************************************************************/
 package step.plugins.events;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import step.plugins.events.Event;
-import step.plugins.events.EventBroker;
 
 /**
  * @author doriancransac
@@ -41,28 +41,90 @@ public class EventBrokerTests {
 	
 	@After
 	public void after(){
-		eb = new EventBroker();
+		//System.out.println("---\n"+ eb);
 	}
 	
 	@Test
-	public void testGetEvent(){
-		eb.put(new Event().setId("123").setName("toto").setGroup("myGroup"));
+	public void testGetEvent() throws Exception{
+		eb.put(new Event().setId("123").setGroup("myGroup").setName("toto"));
 		Assert.assertEquals("toto",eb.get("123").getName());
+		eb.put(new Event().setId("123").setGroup("myGroup").setName("toto"));
 		Assert.assertEquals("123",eb.get("myGroup", "toto").getId());
 	}
 	
 	@Test
-	public void testRemoveEvent(){
-		eb.put(new Event().setId("123").setName("toto").setGroup("myGroup"));
-		eb.remove("123");
-		Assert.assertEquals(false,eb.hasEvent("123"));
-		Assert.assertEquals(false,eb.hasEvent("myGroup", "toto"));
+	public void testPeekEvent() throws Exception{
+		eb.put(new Event().setId("234").setName("tata").setGroup("thisGroup"));
+		Assert.assertEquals("thisGroup",eb.peek("234").getGroup());
+		Assert.assertEquals("234",eb.peek("thisGroup", "tata").getId());
 	}
 	
 	@Test
-	public void testNoId(){
-		Event e = eb.put(new Event().setGroup("abc").setName("def"));
-		Assert.assertNotNull(e.getId());
-		Assert.assertEquals(false, e.getId().isEmpty());
+	public void testPreviousIdValueFresh() throws Exception{
+		Event e = eb.put(new Event().setId("uvw"));
+		Assert.assertEquals(null, e);
+	}
+	
+	@Test
+	public void testNoIdNoGroup() throws Exception{
+		try{
+			Event e = eb.put(new Event().setName("foo"));
+		}catch(Exception e){
+			Assert.assertEquals(true, e.getMessage().contains("Event has neither an explicit id or a group."));	
+		}
+	}
+	
+	@Test
+	public void testPreviousValueOverride() throws Exception{
+		
+		String valueKey = "value";
+		
+		Map<String, Object> first = new HashMap<>();
+		Map<String, Object> second = new HashMap<>();
+		Map<String, Object> third = new HashMap<>();
+				
+		first.put(valueKey, "1");
+		second.put(valueKey, "2");
+		third.put(valueKey, "3");
+		
+		Event e1 = eb.put(new Event().setId("ijk").setPayload(first));
+		//e1 should be null since the previous event associated with id "ijk" was null (no mapping) 
+		Event e2 = eb.put(new Event().setId("ijk").setPayload(second));
+		//e1 is now overridden inside the broker, e2 has the value of the first even we sent (which is not e1 though!)
+		Assert.assertNotNull(null, e2);
+		Assert.assertEquals("1", e2.getPayload().get(valueKey));
+		Event e3 = eb.put(new Event().setId("ijk").setPayload(third));
+		Assert.assertEquals("2", e3.getPayload().get(valueKey));
+		Event e4 = eb.get("ijk");
+		Assert.assertEquals("3", e4.getPayload().get(valueKey));
+	}
+	
+	@Test
+	public void testNoGroupOverride() throws Exception{
+		String valueKey = "value";
+		
+		Map<String, Object> first = new HashMap<>();
+		Map<String, Object> second = new HashMap<>();
+				
+		first.put(valueKey, "1");
+		second.put(valueKey, "2");
+		
+		Event e1 = eb.put(new Event().setGroup("aGroup").setPayload(first));
+		Event e2 = eb.put(new Event().setGroup("aGroup").setPayload(second));
+		
+		Assert.assertNotNull(null, e2);
+		// Consume 1st event
+		Event e3 = eb.get("aGroup", null);
+		// Consume 2st event
+		Event e4 = eb.get("aGroup", null);
+
+		// We've got two different events (or at least different eventIds)
+		Assert.assertEquals(true, !e3.getId().equals(e4.getId()));
+
+		// 1st event has either value 1 or 2 (no ordering garantee)
+		Assert.assertEquals(true, e3.getPayload().get(valueKey).equals("1") || e3.getPayload().get(valueKey).equals("2"));
+
+		// 1st event has either value 1 or 2 (no ordering garantee)
+		Assert.assertEquals(true, e4.getPayload().get(valueKey).equals("1") || e4.getPayload().get(valueKey).equals("2"));
 	}
 }

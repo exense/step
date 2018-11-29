@@ -35,12 +35,23 @@ public class EventBroker {
 		events = new ConcurrentHashMap<String, Event>();
 	}
 
-	public Event put(Event event){
-		if(event == null || event.getId() == null || event.getId().isEmpty()){
-			String uuid = UUID.randomUUID().toString();
-			events.put(uuid, event.setId(uuid));
+	public Event put(Event event) throws Exception{
+		if(event == null)
+			throw new Exception("Event is null.");
+		
+		if(event.getId() == null || event.getId().isEmpty()){
+			if(event.getGroup() == null || event.getGroup().isEmpty()){
+				throw new Exception("Event has neither an explicit id or a group. Can't add it.");
+			}else{
+				String mapKey = UUID.randomUUID().toString();
+				event.setId(mapKey);
+				// In this case (Group based), we're returning the event valued with the internal id instead of always returning a "null mapping"...
+				events.put(mapKey, event);
+				return event;
+			}
+		}else{
+			return events.put(event.getId(), event);
 		}
-		return events.put(event.getId(), event);
 	}
 	
 	public void clear(){
@@ -48,38 +59,35 @@ public class EventBroker {
 	}
 
 	public Event get(String id){
-		if(!hasEvent(id))
+		if(id == null || id.isEmpty())
 			return null;
-		else
-			return events.get(id).setLastReadTimestamp(System.currentTimeMillis());
+		Event ret = events.remove(id);
+		if(ret != null)
+			ret.setDeletionTimestamp(System.currentTimeMillis());
+		return ret;
+	}
+	
+	public Event peek(String id){
+		if(id == null || id.isEmpty())
+			return null;
+		Event ret = events.get(id);
+		if(ret != null)
+			ret.setLastReadTimestamp(System.currentTimeMillis());
+		return ret;
+	}
+	
+	public Event peek(String group, String name){
+		if(group == null || group.isEmpty())
+			return null;
+		String id = lookup(group, name);
+		if(id == null || id.isEmpty())
+			return null;
+		Event ret = events.get(id);
+		if(ret != null)
+			ret.setLastReadTimestamp(System.currentTimeMillis());
+		return ret;
 	}
 
-	public boolean hasEvent(String id){
-		if(id == null)
-			return false;
-		else
-			return events.containsKey(id);
-	}
-
-	public boolean hasEvent(String group, String name){
-		return hasEvent(lookup(group, name));
-	}
-
-	public Event get(String group, String name){
-		return get(lookup(group, name));
-	}
-
-	//TODO: see Event class (deletionTimestamp)
-	public void remove(String id){
-		events.remove(id);
-	}
-
-	public void remove(String group, String name){
-		remove(lookup(group, name));
-	}
-
-	//TODO: add and maintain a group-name multimap index for faster lookups
-	//TODO: regex support? contains instead of equals?
 	public String lookup(String group, String name){
 		
 		if(group == null)
@@ -118,4 +126,33 @@ public class EventBroker {
 	public Map<String, Event> asMap() {
 		return events;
 	}
+	
+	
+	/* Privatizing to force atomic use of "has+get+remove" in one concept (get) by client */
+	private boolean hasEvent(String id){
+		if(id == null)
+			return false;
+		else
+			return events.containsKey(id);
+	}
+
+	private boolean hasEvent(String group, String name){
+		return hasEvent(lookup(group, name));
+	}
+
+	public Event get(String group, String name){
+		return get(lookup(group, name));
+	}
+	
+	//TODO: see Event class (deletionTimestamp)
+	private void remove(String id){
+		events.remove(id);
+	}
+
+	private void remove(String group, String name){
+		remove(lookup(group, name));
+	}
+	
+	/* */
 }
+
