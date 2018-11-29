@@ -30,14 +30,21 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EventBroker {
 
 	private ConcurrentHashMap<String, Event> events;
-
-	public EventBroker(){
+	private long circuitBreakerThreshold;
+	
+	public EventBroker(long circuitBreakerThreshold){
 		events = new ConcurrentHashMap<String, Event>();
+		this.circuitBreakerThreshold = circuitBreakerThreshold;
 	}
 
 	public Event put(Event event) throws Exception{
 		if(event == null)
 			throw new Exception("Event is null.");
+		
+		//Circuit breaker: throw Exception instead of fail silently
+		if(events.size() >= this.circuitBreakerThreshold)
+			throw new Exception("Broker size exceeds " + this.circuitBreakerThreshold + " events. Circuit breaker is on.");
+			//return null;
 		
 		if(event.getId() == null || event.getId().isEmpty()){
 			if(event.getGroup() == null || event.getGroup().isEmpty()){
@@ -154,5 +161,14 @@ public class EventBroker {
 	}
 	
 	/* */
+	
+
+	public long getCircuitBreakerThreshold() {
+		return circuitBreakerThreshold;
+	}
+
+	public void setCircuitBreakerThreshold(long circuitBreakerThreshold) {
+		this.circuitBreakerThreshold = circuitBreakerThreshold;
+	}
 }
 

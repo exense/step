@@ -26,10 +26,12 @@ import step.core.plugins.Plugin;
 @Plugin
 public class EventBrokerPlugin extends AbstractPlugin {
 		
-	private EventBroker eventBroker = new EventBroker();
+	private EventBroker eventBroker;
 	
 	@Override
 	public void executionControllerStart(GlobalContext context)  throws Exception {
+		String circuitBreakerProp = context.getConfiguration().getProperty("eventbroker.circuitBreakerThreshold", "5000"); 
+		eventBroker = new EventBroker(Long.parseLong(circuitBreakerProp));
 		context.put(EventBroker.class, eventBroker);
 		context.getServiceRegistrationCallback().registerService(EventBrokerServices.class);
 	}
