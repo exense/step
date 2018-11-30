@@ -92,6 +92,7 @@ public class RtmPlugin extends AbstractPlugin {
 				measurement.put("begin", stepReport.getExecutionTime());
 				measurement.put("rnId", stepReport.getId().toString());
 				measurement.put("rnStatus", stepReport.getStatus().toString());
+				measurement.put("type", "keyword");
 				measurements.add(measurement);
 				
 			}
