@@ -161,4 +161,36 @@ public class EventBrokerTests {
 		Assert.assertEquals("1", eb.findOldestEvent().getId());
 		Assert.assertEquals("3", eb.findYoungestEvent().getId());
 	}
+	
+	@Test
+	public void testMonitoringCumulatedStats() throws Exception{
+		for(int i=1; i <= 3; i++){
+			eb.put(new Event().setId(String.valueOf(i)));
+			Thread.sleep(10);
+		}
+		
+		Assert.assertEquals(3, eb.getCumulatedPuts());
+		
+		for(int i=1; i <= 3; i++){
+			eb.get(String.valueOf(i));
+			Thread.sleep(10);
+		}
+		
+		Assert.assertEquals(3, eb.getCumulatedGets());
+		
+		//Failed get
+		eb.get("bar");
+		
+		Assert.assertEquals(3, eb.getCumulatedGets());
+		
+		Assert.assertEquals(0, eb.getCumulatedPeeks());
+		
+		//Failed peek
+		eb.peek("bar");
+		Assert.assertEquals(0, eb.getCumulatedPeeks());
+		
+		eb.put(new Event().setId("bar"));
+		eb.peek("bar");
+		Assert.assertEquals(1, eb.getCumulatedPeeks());
+	}
 }

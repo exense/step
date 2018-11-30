@@ -110,7 +110,8 @@ public class EventBroker {
 			return null;
 		Event ret = events.remove(id);
 		if(this.advancedStatsOn){
-			this.cumulatedGets.increment();
+			if(ret != null) //we only count "real" gets (which found and returned an event)
+				this.cumulatedGets.increment();
 		}
 		if(ret != null)
 			ret.setDeletionTimestamp(System.currentTimeMillis());
@@ -122,7 +123,8 @@ public class EventBroker {
 			return null;
 		Event ret = events.get(id);
 		if(this.advancedStatsOn){
-			this.cumulatedPeeks.increment();
+			if(ret != null) //we only count "real" peeks (which found and returned an event)
+				this.cumulatedPeeks.increment();
 		}
 		if(ret != null)
 			ret.setLastReadTimestamp(System.currentTimeMillis());
