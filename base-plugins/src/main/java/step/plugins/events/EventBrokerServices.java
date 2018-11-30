@@ -65,7 +65,7 @@ public class EventBrokerServices extends AbstractServices {
 		if(event != null)
 			event.setSubmitionTimestamp(System.currentTimeMillis());
 
-			return eb.put(event);
+		return eb.put(event);
 	}
 
 	@GET
@@ -119,20 +119,24 @@ public class EventBrokerServices extends AbstractServices {
 	@DELETE
 	@Path("/events")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String clear() {
+	public Map<String, Object> clear() {
+		Map<String, Object> ret = new HashMap<>();
 		eb.clear();
-		return "{ \"status\" : \"success\"}";
+		ret.put("status","success");
+		return ret;
 	}
 
 	@DELETE
 	@Path("/events/group/{group}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String clearGroup(@PathParam("group") String group) {
-			eb.clearGroup(group);
-		return "{ \"status\" : \"success\"}";
+	public Map<String, Object> clearGroup(@PathParam("group") String group) {
+		Map<String, Object> ret = new HashMap<>();
+		eb.clearGroup(group);
+		ret.put("status","success");
+		return ret;
 	}
-	
+
 	@GET
 	@Path("/events/monitoring/global")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -142,12 +146,12 @@ public class EventBrokerServices extends AbstractServices {
 		// static conf
 		stats.put("s_advStatsOn", eb.getAdvancedStatsOn());
 		stats.put("s_circuitBreakerThresholt", eb.getCircuitBreakerThreshold());
-		
+
 		//dynamic stats
 		stats.put("d_size", eb.getSize());
 		stats.put("d_youngestEvent", eb.findYoungestEvent());
 		stats.put("d_oldestEvent", eb.findOldestEvent());
-		
+
 		if(eb.getAdvancedStatsOn()){
 			stats.put("a_cumulatedPuts", eb.getCumulatedPuts());
 			stats.put("a_cumulatedGets", eb.getCumulatedGets());
@@ -155,7 +159,7 @@ public class EventBrokerServices extends AbstractServices {
 		}
 		return stats;
 	}
-	
+
 	@GET
 	@Path("/events/monitoring/group/{group}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -163,21 +167,23 @@ public class EventBrokerServices extends AbstractServices {
 	public Map<String, Object> getGroupStats(@PathParam("group") String group) throws Exception {
 		if(group == null || group.isEmpty())
 			throw new Exception("Groupname is null or empty.");
-		
+
 		Map<String, Object> stats = new HashMap<>();
 		stats.put("g_"+group+"_size", eb.getSizeForGroup(group));
 		stats.put("g_"+group+"youngestEvent", eb.findYoungestEventForGroup(group));
 		stats.put("g_"+group+"oldestEvent", eb.findOldestEventForGroup(group));
 		return stats;
 	}
-	
+
 	@GET
 	@Path("/events/monitoring/clear")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String clearStats() {
+	public Map<String, Object> clearStats() {
+		Map<String, Object> ret = new HashMap<>();
 		eb.clearStats();
-		return "{ \"status\" : \"success\"}";
+		ret.put("status","success");
+		return ret;
 	}
 
 }
