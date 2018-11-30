@@ -36,7 +36,7 @@ public class EventBrokerTests {
 
 	@Before
 	public void before(){
-		eb = new EventBroker(1000);
+		eb = new EventBroker(1000, true);
 	}
 
 	@After
@@ -149,5 +149,16 @@ public class EventBrokerTests {
 			Assert.assertEquals(true, e1.getMessage().contains("Broker size exceeds"));
 		}
 		Assert.assertEquals(true, exceptionRaised);
+	}
+	
+	@Test
+	public void testMonitoringEventAge() throws Exception{
+		for(int i=1; i <= 3; i++){
+			eb.put(new Event().setId(String.valueOf(i)));
+			Thread.sleep(10);
+		}
+		
+		Assert.assertEquals("1", eb.findOldestEvent().getId());
+		Assert.assertEquals("3", eb.findYoungestEvent().getId());
 	}
 }

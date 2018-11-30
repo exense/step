@@ -18,8 +18,8 @@
  *******************************************************************************/
 package step.plugins.events;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -130,6 +130,53 @@ public class EventBrokerServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String clearGroup(@PathParam("group") String group) {
 			eb.clearGroup(group);
+		return "{ \"status\" : \"success\"}";
+	}
+	
+	@GET
+	@Path("/events/monitoring/global")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Map<String, Object> getStats() {
+		Map<String, Object> stats = new HashMap<>();
+		// static conf
+		stats.put("s_advStatsOn", eb.getAdvancedStatsOn());
+		stats.put("s_circuitBreakerThresholt", eb.getCircuitBreakerThreshold());
+		
+		//dynamic stats
+		stats.put("d_size", eb.getSize());
+		stats.put("d_youngestEvent", eb.findYoungestEvent());
+		stats.put("d_oldestEvent", eb.findOldestEvent());
+		
+		if(eb.getAdvancedStatsOn()){
+			stats.put("a_cumulatedPuts", eb.getCumulatedPuts());
+			stats.put("a_cumulatedGets", eb.getCumulatedGets());
+			stats.put("a_cumulatedPeeks", eb.getCumulatedPeeks());
+		}
+		return stats;
+	}
+	
+	@GET
+	@Path("/events/monitoring/group/{group}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Map<String, Object> getGroupStats(@PathParam("group") String group) throws Exception {
+		if(group == null || group.isEmpty())
+			throw new Exception("Groupname is null or empty.");
+		
+		Map<String, Object> stats = new HashMap<>();
+		stats.put("g_"+group+"_size", eb.getSizeForGroup(group));
+		stats.put("g_"+group+"youngestEvent", eb.findYoungestEventForGroup(group));
+		stats.put("g_"+group+"oldestEvent", eb.findOldestEventForGroup(group));
+		return stats;
+	}
+	
+	@GET
+	@Path("/events/monitoring/clear")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String clearStats() {
+		eb.clearStats();
 		return "{ \"status\" : \"success\"}";
 	}
 
