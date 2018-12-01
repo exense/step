@@ -132,38 +132,43 @@ public class EventBroker {
 	}
 
 	public Event peek(String group, String name){
-		if(group == null || group.isEmpty())
-			return null;
-		String id = lookup(group, name);
-		if(id == null || id.isEmpty())
-			return null;
-		Event ret = events.get(id);
-		if(ret != null)
-			ret.setLastReadTimestamp(System.currentTimeMillis());
-		return ret;
+		return peek(lookup(group,name));
 	}
 
-	public String lookup(String group, String name){
+	public String lookup(String searchedGroup, String searchedName){
 
-		if(group == null)
-			throw new RuntimeException("group can not be null.");
+		if(searchedGroup == null || searchedGroup.isEmpty() || searchedGroup.equals("null"))
+			throw new RuntimeException("group can not be null, empty or \"null\", found value=" + searchedGroup);
 
 		String id = null;
 
 		try{
-			id = events.values().stream().filter(v -> 
+			id = events.values().stream().filter(event -> 
 			{
-				//TODO: this check can be externalized from the filter for better performance
-				// create two disctinct predicates for the filter?
-				if(v.getGroup() != null && v.getGroup().equals(group)){
-					if(name == null || name.isEmpty())
+				String eventGroup = event.getGroup();
+				String eventName = event.getName();
+				// 1) we find an event matching this group
+				if(eventGroup != null && eventGroup.equals(searchedGroup)){
+					// 2) special case: if the searched name is null or empty or has value "null", it's a match regardless of the event's own name
+					if(searchedName == null || searchedName.isEmpty() || searchedName.equals("null"))
 						return true;
 					else{
-						if(v.getName().equals(name))
-							return true;
+						// 3) if we're looking for a legit / specific name, then it needs to match exactly that of the event's
+						// 3.1) special case: first we discard events which don't have a legit name
+						if(eventName == null || eventName.isEmpty() || eventName.equals("null")){
+							return false;
+						}else{// 3.2) the event has a legit name
+							if(searchedName.equals(eventName))// match
+								return true;
+							else{
+								// Wrong name
+								return false;
+							}
+						}
 					}
+				}else{// Wrong group
+					return false;
 				}
-				return false;
 			}).findAny().get().getId();
 		}catch(NoSuchElementException e){}
 
@@ -275,10 +280,9 @@ public class EventBroker {
 	}
 
 	public void clearStats() {
-		// TODO Auto-generated method stub
-		
+		initStats();
 	}
-	
+
 	private void initStats(){
 		this.cumulatedPuts = new LongAdder();
 		this.cumulatedGets = new LongAdder();
