@@ -45,7 +45,7 @@
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -67,58 +67,60 @@
 	</dependencies>
 
 	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.1.1</version>
-				<executions>
-					<execution>
-						<id>copy</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>ch.exense.step</groupId>
-									<artifactId>java-plugin-handler</artifactId>
-									<classifier>jar-with-dependencies</classifier>
-									<type>jar</type>
-									<overWrite>false</overWrite>
-									<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
-									<destFileName>java-plugin-handler.jar</destFileName>
-								</artifactItem>
-							</artifactItems>
-							<overWriteReleases>true</overWriteReleases>
-							<overWriteSnapshots>true</overWriteSnapshots>
-						</configuration>
-					</execution>
-					<execution>
-						<id>copy-test</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>ch.exense.step</groupId>
-									<artifactId>java-plugin-handler-test</artifactId>
-									<classifier>jar-with-dependencies</classifier>
-									<type>jar</type>
-									<overWrite>false</overWrite>
-									<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
-									<destFileName>java-plugin-handler-test.jar</destFileName>
-								</artifactItem>
-							</artifactItems>
-							<overWriteReleases>true</overWriteReleases>
-							<overWriteSnapshots>true</overWriteSnapshots>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>	
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>3.1.1</version>
+					<executions>
+						<execution>
+							<id>copy</id>
+							<phase>validate</phase>
+							<goals>
+								<goal>copy</goal>
+							</goals>
+							<configuration>
+								<artifactItems>
+									<artifactItem>
+										<groupId>ch.exense.step</groupId>
+										<artifactId>java-plugin-handler</artifactId>
+										<classifier>jar-with-dependencies</classifier>
+										<type>jar</type>
+										<overWrite>false</overWrite>
+										<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
+										<destFileName>java-plugin-handler.jar</destFileName>
+									</artifactItem>
+								</artifactItems>
+								<overWriteReleases>true</overWriteReleases>
+								<overWriteSnapshots>true</overWriteSnapshots>
+							</configuration>
+						</execution>
+						<execution>
+							<id>copy-test</id>
+							<phase>validate</phase>
+							<goals>
+								<goal>copy</goal>
+							</goals>
+							<configuration>
+								<artifactItems>
+									<artifactItem>
+										<groupId>ch.exense.step</groupId>
+										<artifactId>java-plugin-handler-test</artifactId>
+										<classifier>jar-with-dependencies</classifier>
+										<type>jar</type>
+										<overWrite>false</overWrite>
+										<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
+										<destFileName>java-plugin-handler-test.jar</destFileName>
+									</artifactItem>
+								</artifactItems>
+								<overWriteReleases>true</overWriteReleases>
+								<overWriteSnapshots>true</overWriteSnapshots>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 </project>
