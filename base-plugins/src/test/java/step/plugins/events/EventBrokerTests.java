@@ -217,21 +217,35 @@ public class EventBrokerTests {
 	}
 	
 	@Test
-	public void testGroupListContent() throws Exception{
+	public void testGroupSizeAndContent() throws Exception{
 		eb.put(new Event().setGroup("foo"));
 		eb.put(new Event().setGroup("foo"));
 		eb.put(new Event().setGroup("bar"));
 
 		Assert.assertEquals(2, eb.getGroupEvents("foo").size());
+		Assert.assertEquals(2, eb.getSizeForGroup("foo"));
 		Assert.assertEquals(1, eb.getGroupEvents("bar").size());
+		Assert.assertEquals(1, eb.getSizeForGroup("bar"));
 		
 		eb.get("*", null);
 		eb.get("*", null);
 		eb.get("*", null);
 		
 		Assert.assertEquals(0, eb.getGroupEvents("foo").size());
-		Assert.assertEquals(0, eb.getGroupEvents("bar").size());
+		Assert.assertEquals(0, eb.getSizeForGroup("bar"));
 		
+	}
+	
+
+	@Test
+	public void testGroupStats() throws Exception{
+		eb.put(new Event().setGroup("xyz").setName("1"));
+		Thread.sleep(10);
+		eb.put(new Event().setGroup("xyz").setName("2"));
+		
+		Assert.assertEquals("1", eb.findOldestEventForGroup("xyz").getName());
+		Assert.assertEquals("2", eb.findYoungestEventForGroup("xyz").getName());
+		Assert.assertEquals(true, eb.findOldestEventForGroup("xyz").getInsertionTimestamp() < eb.findYoungestEventForGroup("xyz").getInsertionTimestamp());
 	}
 	
 }

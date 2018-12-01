@@ -62,6 +62,45 @@ public class EventBroker {
 		initStats();
 	}
 
+	public void clear(){
+		events.clear();
+	}
+
+	public String toString(){
+		return events.toString();
+	}
+
+	public Map<String, Event> asMap() {
+		return events;
+	}
+
+	public long getCircuitBreakerThreshold() {
+		return circuitBreakerThreshold;
+	}
+
+	public void setCircuitBreakerThreshold(long circuitBreakerThreshold) {
+		this.circuitBreakerThreshold = circuitBreakerThreshold;
+	}
+
+	public int getSize(){
+		return events.size();
+	}
+
+	/* Privatized to force atomic use of "has+get+remove" in one concept (get) by client */
+	private boolean hasEvent(String id){
+		if(id == null)
+			return false;
+		else
+			return events.containsKey(id);
+	}
+
+	private boolean hasEvent(String group, String name){
+		return hasEvent(lookup(group, name));
+	}
+	/**/
+
+	/** Main primitives, based on id **/
+
 	public Event put(Event event) throws Exception{
 		if(event == null)
 			throw new Exception("Event is null.");
@@ -105,10 +144,6 @@ public class EventBroker {
 		return ret==null?putRetEvent:ret;
 	}
 
-	public void clear(){
-		events.clear();
-	}
-
 	public Event get(String id){
 		if(id == null || id.isEmpty())
 			return null;
@@ -134,50 +169,9 @@ public class EventBroker {
 			ret.setLastReadTimestamp(System.currentTimeMillis());
 		return ret;
 	}
+	/****/
 
-	public Event peek(String group, String name){
-		return peek(lookup(group,name));
-	}
-
-	public String lookupOld(String searchedGroup, String searchedName){
-
-		if(searchedGroup == null || searchedGroup.isEmpty() || searchedGroup.equals("null"))
-			throw new RuntimeException("group can not be null, empty or \"null\", found value=" + searchedGroup);
-
-		String id = null;
-
-		try{
-			id = events.values().stream().filter(event -> 
-			{
-				String eventGroup = event.getGroup();
-				String eventName = event.getName();
-				// 1) we find an event matching this group
-				if((eventGroup != null && eventGroup.equals(searchedGroup)) || searchedGroup.equals("*")){
-					// 2) special case: if the searched name is null or empty or has value "null", it's a match regardless of the event's own name
-					if(searchedName == null || searchedName.isEmpty() || searchedName.equals("null"))
-						return true;
-					else{
-						// 3) if we're looking for a legit / specific name, then it needs to match exactly that of the event's
-						// 3.1) special case: first we discard events which don't have a legit name
-						if(eventName == null || eventName.isEmpty() || eventName.equals("null")){
-							return false;
-						}else{// 3.2) the event has a legit name
-							if(searchedName.equals(eventName))// match
-								return true;
-							else{
-								// Wrong name
-								return false;
-							}
-						}
-					}
-				}else{// Wrong group
-					return false;
-				}
-			}).findAny().get().getId();
-		}catch(NoSuchElementException e){}
-
-		return id;
-	}
+	/** Lookup (used as an adapter from Group use case to Id use case **/
 
 	public String lookup(String searchedGroup, String searchedName){
 		if(searchedGroup == null || searchedGroup.isEmpty() || searchedGroup.equals("null"))
@@ -188,7 +182,7 @@ public class EventBroker {
 		else
 			return lookupNamedGroupBasedEvent(searchedGroup, searchedName);
 	}
-	
+
 	public String lookupNamedGroupBasedEvent(String searchedGroup, String searchedName){
 		return events.values().stream()
 				.filter(e -> e.getGroup().equals(searchedGroup) || searchedGroup.equals("*"))
@@ -201,64 +195,25 @@ public class EventBroker {
 				.filter(e -> e.getGroup().equals(searchedGroup) || searchedGroup.equals("*"))
 				.findAny().get().getId();
 	}
-	
-	public String toString(){
-		return events.toString();
+
+	/** Group primitives, adapted via lookup() to Id primitives **/
+
+	public Event peek(String group, String name){
+		return peek(lookup(group,name));
 	}
 
 	public void clearGroup(String group) {
 		while(hasEvent(group, null))
-			remove(lookup(group, null));
-	}
-
-	public Map<String, Event> asMap() {
-		return events;
-	}
-
-
-	/* Privatizing to force atomic use of "has+get+remove" in one concept (get) by client */
-	private boolean hasEvent(String id){
-		if(id == null)
-			return false;
-		else
-			return events.containsKey(id);
-	}
-
-	private boolean hasEvent(String group, String name){
-		return hasEvent(lookup(group, name));
+			events.remove(lookup(group, null));
 	}
 
 	public Event get(String group, String name){
 		return get(lookup(group, name));
 	}
 
-	//TODO: see Event class (deletionTimestamp)
-	private void remove(String id){
-		events.remove(id);
-	}
+	/****/
 
-	private void remove(String group, String name){
-		remove(lookup(group, name));
-	}
-
-	/* */
-
-
-	public long getCircuitBreakerThreshold() {
-		return circuitBreakerThreshold;
-	}
-
-	public void setCircuitBreakerThreshold(long circuitBreakerThreshold) {
-		this.circuitBreakerThreshold = circuitBreakerThreshold;
-	}
-
-	public int getSize(){
-		return events.size();
-	}
-
-	public boolean isStatsOn() {
-		return advancedStatsOn;
-	}
+	/** Stats **/
 
 	public void setAdvancedStatsOn(boolean statsOn) {
 		this.advancedStatsOn = statsOn;
@@ -266,14 +221,6 @@ public class EventBroker {
 
 	public boolean getAdvancedStatsOn() {
 		return this.advancedStatsOn;
-	}
-
-	public Event findOldestEvent(){
-		return events.values().stream().min(Comparator.comparing(Event::getInsertionTimestamp)).get();
-	}
-
-	public Event findYoungestEvent(){
-		return events.values().stream().max(Comparator.comparing(Event::getInsertionTimestamp)).get();
 	}
 
 	public long getCumulatedPuts() {
@@ -292,19 +239,32 @@ public class EventBroker {
 		return sizeWaterMark;
 	}
 
-	public Object getSizeForGroup(String group) {
-		// TODO Auto-generated method stub
-		return null;
+	public Event findOldestEvent(){
+		return events.values().stream().min(Comparator.comparing(Event::getInsertionTimestamp)).get();
 	}
 
-	public Object findYoungestEventForGroup(String group) {
-		// TODO Auto-generated method stub
-		return null;
+	public Event findYoungestEvent(){
+		return events.values().stream().max(Comparator.comparing(Event::getInsertionTimestamp)).get();
 	}
 
-	public Object findOldestEventForGroup(String group) {
-		// TODO Auto-generated method stub
-		return null;
+	public int getSizeForGroup(String group) {
+		try{
+			return events.values().stream()
+					.filter(e -> e.getGroup().equals(group))
+					.map(e -> 1)
+					.reduce((x,y) -> x+y).get();
+		}catch(NoSuchElementException e){
+			return 0;
+		}
+
+	}
+
+	public Event findYoungestEventForGroup(String group) {
+		return events.values().stream().filter(e -> e.getGroup().equals(group)).max(Comparator.comparing(Event::getInsertionTimestamp)).get();
+	}
+
+	public Event findOldestEventForGroup(String group) {
+		return events.values().stream().filter(e -> e.getGroup().equals(group)).min(Comparator.comparing(Event::getInsertionTimestamp)).get();
 	}
 
 	public void clearStats() {
@@ -316,6 +276,9 @@ public class EventBroker {
 		this.cumulatedGets = new LongAdder();
 		this.cumulatedPeeks = new LongAdder();
 	}
+	/****/
+
+	/** Group access **/
 
 	public Set<Event> getGroupEvents(String group){
 		return getGroupEvents(group, 0, Integer.MAX_VALUE);
@@ -328,7 +291,6 @@ public class EventBroker {
 				.limit(limit)
 				.collect(Collectors.toSet());
 	}
-
 
 	public Map<String, Set<Event>> getFullGroupBasedEventMap(){
 		return getFullGroupBasedEventMap(0, Integer.MAX_VALUE);
@@ -354,5 +316,6 @@ public class EventBroker {
 		Set<Object> seen = ConcurrentHashMap.newKeySet();
 		return t -> seen.add(keyExtractor.apply(t));
 	}
+	/****/
 }
 
