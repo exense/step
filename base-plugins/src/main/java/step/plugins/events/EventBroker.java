@@ -46,6 +46,8 @@ public class EventBroker {
 
 	private int sizeWaterMark = 0;
 
+	public static String DEFAULT_GROUP_VALUE = "<default>";
+
 	public EventBroker(){
 		this.circuitBreakerThreshold = 5000L;
 		this.advancedStatsOn = true;
@@ -74,7 +76,7 @@ public class EventBroker {
 	public Map<String, Event> getIdBasedEventMap() {
 		return events;
 	}
-	
+
 	public Map<String, Event> getIdBasedEventMap(int skip, int limit) {
 		return events.values().stream()
 				.skip(skip)
@@ -113,6 +115,9 @@ public class EventBroker {
 		if(event == null)
 			throw new Exception("Event is null.");
 
+		if(event.getGroup() == null)
+			event.setGroup(DEFAULT_GROUP_VALUE);
+
 		Event ret = null;
 		Event putRetEvent = null;
 		String mapKey = null;
@@ -123,24 +128,21 @@ public class EventBroker {
 			throw new Exception("Broker size exceeds " + this.circuitBreakerThreshold + " events. Circuit breaker is on.");
 
 		if(event.getId() == null || event.getId().isEmpty()){
-			if(event.getGroup() == null || event.getGroup().isEmpty()){
-				throw new Exception("Event has neither an explicit id or a group. Can't add it.");
-			}else{
-				mapKey = UUID.randomUUID().toString();
-				event.setId(mapKey);
+			mapKey = UUID.randomUUID().toString();
+			event.setId(mapKey);
 
-				//we're in the Group use case, so we prefer to return the event itself (benefit: returning the uuid to the user) 
-				ret = event;
-			}
+			//we're in the Group use case, so we prefer to return the event itself (benefit: returning the uuid to the user) 
+			ret = event;
+
 		}else{
 			mapKey = event.getId();
 		} 
 
 		event.setInsertionTimestamp(System.currentTimeMillis());
-		
+
 		// we want to return the previous value in the Id use case (putRetEvent)
 		putRetEvent = events.put(mapKey, event);
-		
+
 		if(this.advancedStatsOn){
 			this.cumulatedPuts.increment();
 
@@ -186,12 +188,12 @@ public class EventBroker {
 			throw new RuntimeException("group can not be null, empty or \"null\", found value=" + searchedGroup);
 
 		Optional<Event> event;
-		
+
 		if(searchedGroup.equals("*") || searchedName == null || searchedName.isEmpty() || searchedName.equals("null"))
 			event = lookupLooseGroupBasedEvent(searchedGroup);
 		else
 			event = lookupNamedGroupBasedEvent(searchedGroup, searchedName);
-		
+
 		if(event.isPresent())
 			return event.get().getId();
 		else
