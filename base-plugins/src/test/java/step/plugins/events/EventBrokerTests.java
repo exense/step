@@ -65,7 +65,8 @@ public class EventBrokerTests {
 		Assert.assertEquals(null, e);
 	}
 
-	@Test
+	//Now allowing null group (-> "<default>")
+	//@Test
 	public void testNoIdNoGroup() throws Exception{
 
 		String invalidEventMessage = "Event has neither an explicit id or a group.";
