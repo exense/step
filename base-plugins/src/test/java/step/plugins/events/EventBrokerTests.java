@@ -211,9 +211,9 @@ public class EventBrokerTests {
 		eb.put(new Event().setGroup("foo"));
 		eb.put(new Event().setGroup("bar"));
 
-		Assert.assertEquals(2, eb.getDistinctGroupList().size());
-		Assert.assertEquals(true, eb.getDistinctGroupList().contains("foo"));
-		Assert.assertEquals(true, eb.getDistinctGroupList().contains("bar"));
+		Assert.assertEquals(2, eb.getDistinctGroupNames().size());
+		Assert.assertEquals(true, eb.getDistinctGroupNames().contains("foo"));
+		Assert.assertEquals(true, eb.getDistinctGroupNames().contains("bar"));
 	}
 	
 	@Test

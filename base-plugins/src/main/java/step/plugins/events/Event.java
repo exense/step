@@ -29,17 +29,15 @@ public class Event {
 	
 	private final long creationTimestamp;
 	
+	//TODO turn these timestamps into generic map of <String,Long> ?
+	
+	// For client side
 	private long submitionTimestamp;
 	private long receptionTimestamp;
 	
+	// Server side
 	private long insertionTimestamp;
-	/* TODO
-	 * Currently unused to prevent mem leak
-	 * The signature of remove() needs to return a copy of the event
-	 * Which in turn requires a deep copy of the event payload to avoid accumulation in the ReportNodeCache
-	 */
 	private long deletionTimestamp;
-	
 	private long lastReadTimestamp;
 	
 	public Event(){

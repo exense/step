@@ -20,6 +20,7 @@ package step.plugins.events;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -50,11 +51,27 @@ public class EventBrokerServices extends AbstractServices {
 	}
 
 	@GET
-	@Path("/events")
+	@Path("/events/asIdMap")
 	@Produces(MediaType.APPLICATION_JSON)
 	//@Consumes(MediaType.APPLICATION_JSON)
-	public Map<String, Event> getEventBrokerStatus() {
+	public Map<String, Event> getEventBrokerIdMap() {
 		return eb.asMap();
+	}
+	
+	@GET
+	@Path("/events/asGroupMap/skip/{skip}/limit/{limit}")
+	@Produces(MediaType.APPLICATION_JSON)
+	//@Consumes(MediaType.APPLICATION_JSON)
+	public Map<String, Set<Event>> getEventBrokerGroupMap(@PathParam("skip") int skip, @PathParam("limit") int limit) {
+		return eb.getFullGroupBasedEventMap(skip, limit);
+	}
+	
+	@GET
+	@Path("/events/asGroupMap")
+	@Produces(MediaType.APPLICATION_JSON)
+	//@Consumes(MediaType.APPLICATION_JSON)
+	public Map<String, Set<Event>> getEventBrokerGroupMap() {
+		return eb.getFullGroupBasedEventMap();
 	}
 
 	@POST
@@ -62,9 +79,6 @@ public class EventBrokerServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Event putEvent(Event event) throws Exception {
-		if(event != null)
-			event.setSubmitionTimestamp(System.currentTimeMillis());
-
 		return eb.put(event);
 	}
 
@@ -73,10 +87,7 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event peekEvent(@PathParam("id") String id) {
-		Event event = eb.peek(id);
-		if(event != null)
-			event.setLastReadTimestamp(System.currentTimeMillis());
-		return event;
+		return eb.peek(id);
 	}
 
 	@GET
@@ -84,10 +95,39 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event peekEventByGroupAndName(@PathParam("group") String group, @PathParam("name") String name) {
-		Event event = eb.peek(group, name);
-		if(event != null)
-			event.setLastReadTimestamp(System.currentTimeMillis());
-		return event;
+		return eb.peek(group, name);
+	}
+
+	@GET
+	@Path("/event/group/{group}/skip/{skip}/limit/{limit}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Set<Event> getGroupSkipLimit(@PathParam("group") String group, @PathParam("skip") int skip, @PathParam("limit") int limit) {
+		return eb.getGroupEvents(group, skip, limit);
+	}
+	
+	@GET
+	@Path("/event/group/{group}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Set<Event> getFullGroup(@PathParam("group") String group) {
+		return eb.getGroupEvents(group);
+	}
+	
+	@GET
+	@Path("/event/groups")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Set<String> getGroups() {
+		return eb.getDistinctGroupNames();
+	}
+
+	@GET
+	@Path("/event/group/{group}/size")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public int getGroupSize(@PathParam("group") String group) {
+		return eb.getSizeForGroup(group);
 	}
 
 
@@ -96,10 +136,7 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event consumeEvent(@PathParam("id") String id) {
-		Event ret = eb.get(id);
-		if(ret != null)
-			ret.setDeletionTimestamp(System.currentTimeMillis());
-		return ret;
+		return eb.get(id);
 	}
 
 
@@ -108,12 +145,7 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event consumeEventByGroupAndName(@PathParam("group") String group, @PathParam("name") String name) {
-		Event ret = eb.get(group, name);
-
-		if(ret != null)
-			ret.setDeletionTimestamp(System.currentTimeMillis());
-
-		return ret;
+		return eb.get(group, name);
 	}
 
 	@DELETE
@@ -170,8 +202,8 @@ public class EventBrokerServices extends AbstractServices {
 
 		Map<String, Object> stats = new HashMap<>();
 		stats.put("g_"+group+"_size", eb.getSizeForGroup(group));
-		stats.put("g_"+group+"youngestEvent", eb.findYoungestEventForGroup(group));
-		stats.put("g_"+group+"oldestEvent", eb.findOldestEventForGroup(group));
+		stats.put("g_"+group+"_youngestEvent", eb.findYoungestEventForGroup(group));
+		stats.put("g_"+group+"_oldestEvent", eb.findOldestEventForGroup(group));
 		return stats;
 	}
 

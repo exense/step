@@ -21,6 +21,7 @@ package step.plugins.events;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -104,8 +105,6 @@ public class EventBroker {
 	public Event put(Event event) throws Exception{
 		if(event == null)
 			throw new Exception("Event is null.");
-		else
-			event.setInsertionTimestamp(System.currentTimeMillis());
 
 		Event ret = null;
 		Event putRetEvent = null;
@@ -130,9 +129,11 @@ public class EventBroker {
 			mapKey = event.getId();
 		} 
 
+		event.setInsertionTimestamp(System.currentTimeMillis());
+		
 		// we want to return the previous value in the Id use case (putRetEvent)
 		putRetEvent = events.put(mapKey, event);
-
+		
 		if(this.advancedStatsOn){
 			this.cumulatedPuts.increment();
 
@@ -173,27 +174,34 @@ public class EventBroker {
 
 	/** Lookup (used as an adapter from Group use case to Id use case **/
 
-	public String lookup(String searchedGroup, String searchedName){
+	private String lookup(String searchedGroup, String searchedName){
 		if(searchedGroup == null || searchedGroup.isEmpty() || searchedGroup.equals("null"))
 			throw new RuntimeException("group can not be null, empty or \"null\", found value=" + searchedGroup);
 
+		Optional<Event> event;
+		
 		if(searchedGroup.equals("*") || searchedName == null || searchedName.isEmpty() || searchedName.equals("null"))
-			return lookupLooseGroupBasedEvent(searchedGroup);
+			event = lookupLooseGroupBasedEvent(searchedGroup);
 		else
-			return lookupNamedGroupBasedEvent(searchedGroup, searchedName);
+			event = lookupNamedGroupBasedEvent(searchedGroup, searchedName);
+		
+		if(event.isPresent())
+			return event.get().getId();
+		else
+			return null;
 	}
 
-	public String lookupNamedGroupBasedEvent(String searchedGroup, String searchedName){
+	private Optional<Event> lookupNamedGroupBasedEvent(String searchedGroup, String searchedName){
 		return events.values().stream()
 				.filter(e -> e.getGroup().equals(searchedGroup) || searchedGroup.equals("*"))
 				.filter(e -> e.getName().equals(searchedName))
-				.findAny().get().getId();
+				.findAny();
 	}
 
-	public String lookupLooseGroupBasedEvent(String searchedGroup){
+	private Optional<Event> lookupLooseGroupBasedEvent(String searchedGroup){
 		return events.values().stream()
 				.filter(e -> e.getGroup().equals(searchedGroup) || searchedGroup.equals("*"))
-				.findAny().get().getId();
+				.findAny();
 	}
 
 	/** Group primitives, adapted via lookup() to Id primitives **/
@@ -304,7 +312,7 @@ public class EventBroker {
 				.collect(Collectors.groupingBy(Event::getGroup, Collectors.toSet()));
 	}
 
-	public Set<String> getDistinctGroupList(){
+	public Set<String> getDistinctGroupNames(){
 		//return getFullGroupBasedEventMap().keySet();
 		return events.values().stream()
 				.map(e -> e.getGroup())
@@ -312,7 +320,7 @@ public class EventBroker {
 				.collect(Collectors.toSet());
 	}
 
-	public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+	private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
 		Set<Object> seen = ConcurrentHashMap.newKeySet();
 		return t -> seen.add(keyExtractor.apply(t));
 	}
