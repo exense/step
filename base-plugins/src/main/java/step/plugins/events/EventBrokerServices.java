@@ -107,7 +107,7 @@ public class EventBrokerServices extends AbstractServices {
 	}
 
 	@GET
-	@Path("/event/group/{group}/skip/{skip}/limit/{limit}")
+	@Path("/events/group/{group}/skip/{skip}/limit/{limit}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Set<Event> getGroupSkipLimit(@PathParam("group") String group, @PathParam("skip") int skip, @PathParam("limit") int limit) {
@@ -115,7 +115,7 @@ public class EventBrokerServices extends AbstractServices {
 	}
 	
 	@GET
-	@Path("/event/group/{group}")
+	@Path("/events/group/{group}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Set<Event> getFullGroup(@PathParam("group") String group) {
@@ -123,7 +123,7 @@ public class EventBrokerServices extends AbstractServices {
 	}
 	
 	@GET
-	@Path("/event/groups")
+	@Path("/events/groups")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Set<String> getGroups() {
@@ -131,7 +131,7 @@ public class EventBrokerServices extends AbstractServices {
 	}
 
 	@GET
-	@Path("/event/group/{group}/size")
+	@Path("/events/group/{group}/size")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public int getGroupSize(@PathParam("group") String group) {

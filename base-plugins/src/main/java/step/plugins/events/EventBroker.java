@@ -257,11 +257,19 @@ public class EventBroker {
 	}
 
 	public Event findOldestEvent(){
-		return events.values().stream().min(Comparator.comparing(Event::getInsertionTimestamp)).get();
+		Optional<Event> event = events.values().stream().min(Comparator.comparing(Event::getInsertionTimestamp));
+		if(event.isPresent())
+			return event.get();
+		else
+			return null;
 	}
 
 	public Event findYoungestEvent(){
-		return events.values().stream().max(Comparator.comparing(Event::getInsertionTimestamp)).get();
+		Optional<Event> event = events.values().stream().max(Comparator.comparing(Event::getInsertionTimestamp));
+		if(event.isPresent())
+			return event.get();
+		else
+			return null;
 	}
 
 	public int getSizeForGroup(String group) {

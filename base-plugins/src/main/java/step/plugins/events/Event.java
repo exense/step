@@ -29,7 +29,7 @@ public class Event {
 	
 	private final long creationTimestamp;
 	
-	//TODO turn these timestamps into generic map of <String,Long> ?
+	//TODO add "meta" map and put timestamps in that map
 	
 	// For client side
 	private long submitionTimestamp;
