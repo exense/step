@@ -49,21 +49,13 @@ public class EventBrokerServices extends AbstractServices {
 	public void init() {
 		eb = (EventBroker) getContext().get(EventBroker.class);
 	}
-
+	
 	@GET
 	@Path("/events/asIdMap")
 	@Produces(MediaType.APPLICATION_JSON)
 	//@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Event> getEventBrokerIdMap() {
-		return eb.asMap();
-	}
-	
-	@GET
-	@Path("/events/asGroupMap/skip/{skip}/limit/{limit}")
-	@Produces(MediaType.APPLICATION_JSON)
-	//@Consumes(MediaType.APPLICATION_JSON)
-	public Map<String, Set<Event>> getEventBrokerGroupMap(@PathParam("skip") int skip, @PathParam("limit") int limit) {
-		return eb.getFullGroupBasedEventMap(skip, limit);
+		return eb.getIdBasedEventMap();
 	}
 	
 	@GET
@@ -72,6 +64,22 @@ public class EventBrokerServices extends AbstractServices {
 	//@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Set<Event>> getEventBrokerGroupMap() {
 		return eb.getFullGroupBasedEventMap();
+	}
+
+	@GET
+	@Path("/events/asIdMap/skip/{skip}/limit/{limit}")
+	@Produces(MediaType.APPLICATION_JSON)
+	//@Consumes(MediaType.APPLICATION_JSON)
+	public Map<String, Event> getEventBrokerIdMap(@PathParam("skip") int skip, @PathParam("limit") int limit) {
+		return eb.getIdBasedEventMap(skip, limit);
+	}
+	
+	@GET
+	@Path("/events/asGroupMap/skip/{skip}/limit/{limit}")
+	@Produces(MediaType.APPLICATION_JSON)
+	//@Consumes(MediaType.APPLICATION_JSON)
+	public Map<String, Set<Event>> getEventBrokerGroupMap(@PathParam("skip") int skip, @PathParam("limit") int limit) {
+		return eb.getGroupBasedEventMap(skip, limit);
 	}
 
 	@POST

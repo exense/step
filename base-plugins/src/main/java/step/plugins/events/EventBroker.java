@@ -71,8 +71,15 @@ public class EventBroker {
 		return events.toString();
 	}
 
-	public Map<String, Event> asMap() {
+	public Map<String, Event> getIdBasedEventMap() {
 		return events;
+	}
+	
+	public Map<String, Event> getIdBasedEventMap(int skip, int limit) {
+		return events.values().stream()
+				.skip(skip)
+				.limit(limit)
+				.collect(Collectors.toMap(Event::getId, e -> e));
 	}
 
 	public long getCircuitBreakerThreshold() {
@@ -301,28 +308,21 @@ public class EventBroker {
 	}
 
 	public Map<String, Set<Event>> getFullGroupBasedEventMap(){
-		return getFullGroupBasedEventMap(0, Integer.MAX_VALUE);
+		return getGroupBasedEventMap(0, Integer.MAX_VALUE);
 	}
 
-	public Map<String, Set<Event>> getFullGroupBasedEventMap(int skip, int limit){
+	public Map<String, Set<Event>> getGroupBasedEventMap(int skip, int limit){
 		return events.values().stream()
-				.filter(distinctByKey(Event::getGroup))
 				.skip(skip)
 				.limit(limit)
 				.collect(Collectors.groupingBy(Event::getGroup, Collectors.toSet()));
 	}
 
 	public Set<String> getDistinctGroupNames(){
-		//return getFullGroupBasedEventMap().keySet();
 		return events.values().stream()
 				.map(e -> e.getGroup())
 				.distinct()
 				.collect(Collectors.toSet());
-	}
-
-	private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
-		Set<Object> seen = ConcurrentHashMap.newKeySet();
-		return t -> seen.add(keyExtractor.apply(t));
 	}
 	/****/
 }
