@@ -21,9 +21,13 @@ package step.plugins.events;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author doriancransac
@@ -79,7 +83,7 @@ public class EventBroker {
 			}else{
 				mapKey = UUID.randomUUID().toString();
 				event.setId(mapKey);
-			
+
 				//we're in the Group use case, so we prefer to return the event itself (benefit: returning the uuid to the user) 
 				ret = event;
 			}
@@ -97,7 +101,7 @@ public class EventBroker {
 				this.sizeWaterMark = size;
 			}
 		}
-		
+
 		return ret==null?putRetEvent:ret;
 	}
 
@@ -135,7 +139,7 @@ public class EventBroker {
 		return peek(lookup(group,name));
 	}
 
-	public String lookup(String searchedGroup, String searchedName){
+	public String lookupOld(String searchedGroup, String searchedName){
 
 		if(searchedGroup == null || searchedGroup.isEmpty() || searchedGroup.equals("null"))
 			throw new RuntimeException("group can not be null, empty or \"null\", found value=" + searchedGroup);
@@ -148,7 +152,7 @@ public class EventBroker {
 				String eventGroup = event.getGroup();
 				String eventName = event.getName();
 				// 1) we find an event matching this group
-				if(eventGroup != null && eventGroup.equals(searchedGroup)){
+				if((eventGroup != null && eventGroup.equals(searchedGroup)) || searchedGroup.equals("*")){
 					// 2) special case: if the searched name is null or empty or has value "null", it's a match regardless of the event's own name
 					if(searchedName == null || searchedName.isEmpty() || searchedName.equals("null"))
 						return true;
@@ -174,6 +178,30 @@ public class EventBroker {
 
 		return id;
 	}
+
+	public String lookup(String searchedGroup, String searchedName){
+		if(searchedGroup == null || searchedGroup.isEmpty() || searchedGroup.equals("null"))
+			throw new RuntimeException("group can not be null, empty or \"null\", found value=" + searchedGroup);
+
+		if(searchedGroup.equals("*") || searchedName == null || searchedName.isEmpty() || searchedName.equals("null"))
+			return lookupLooseGroupBasedEvent(searchedGroup);
+		else
+			return lookupNamedGroupBasedEvent(searchedGroup, searchedName);
+	}
+	
+	public String lookupNamedGroupBasedEvent(String searchedGroup, String searchedName){
+		return events.values().stream()
+				.filter(e -> e.getGroup().equals(searchedGroup) || searchedGroup.equals("*"))
+				.filter(e -> e.getName().equals(searchedName))
+				.findAny().get().getId();
+	}
+
+	public String lookupLooseGroupBasedEvent(String searchedGroup){
+		return events.values().stream()
+				.filter(e -> e.getGroup().equals(searchedGroup) || searchedGroup.equals("*"))
+				.findAny().get().getId();
+	}
+	
 	public String toString(){
 		return events.toString();
 	}
@@ -287,6 +315,44 @@ public class EventBroker {
 		this.cumulatedPuts = new LongAdder();
 		this.cumulatedGets = new LongAdder();
 		this.cumulatedPeeks = new LongAdder();
+	}
+
+	public Set<Event> getGroupEvents(String group){
+		return getGroupEvents(group, 0, Integer.MAX_VALUE);
+	}
+
+	public Set<Event> getGroupEvents(String group, int skip, int limit){
+		return events.values().stream()
+				.filter(e -> e.getGroup().equals(group))
+				.skip(skip)
+				.limit(limit)
+				.collect(Collectors.toSet());
+	}
+
+
+	public Map<String, Set<Event>> getFullGroupBasedEventMap(){
+		return getFullGroupBasedEventMap(0, Integer.MAX_VALUE);
+	}
+
+	public Map<String, Set<Event>> getFullGroupBasedEventMap(int skip, int limit){
+		return events.values().stream()
+				.filter(distinctByKey(Event::getGroup))
+				.skip(skip)
+				.limit(limit)
+				.collect(Collectors.groupingBy(Event::getGroup, Collectors.toSet()));
+	}
+
+	public Set<String> getDistinctGroupList(){
+		//return getFullGroupBasedEventMap().keySet();
+		return events.values().stream()
+				.map(e -> e.getGroup())
+				.distinct()
+				.collect(Collectors.toSet());
+	}
+
+	public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+		Set<Object> seen = ConcurrentHashMap.newKeySet();
+		return t -> seen.add(keyExtractor.apply(t));
 	}
 }
 

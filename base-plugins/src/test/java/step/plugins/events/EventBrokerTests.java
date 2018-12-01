@@ -67,12 +67,23 @@ public class EventBrokerTests {
 
 	@Test
 	public void testNoIdNoGroup() throws Exception{
+
+		String invalidEventMessage = "Event has neither an explicit id or a group.";
+
+		assertPutInvalidEventExceptionMessage(new Event().setName("foo"), invalidEventMessage);
+		assertPutInvalidEventExceptionMessage(new Event().setId(""), invalidEventMessage);
+		assertPutInvalidEventExceptionMessage(new Event().setId(null), invalidEventMessage);
+		assertPutInvalidEventExceptionMessage(new Event().setGroup(""), invalidEventMessage);
+		assertPutInvalidEventExceptionMessage(new Event().setGroup(null), invalidEventMessage);
+	}
+
+	public void assertPutInvalidEventExceptionMessage(Event e, String message){
 		boolean exceptionRaised = false;
 		try{
-			Event e = eb.put(new Event().setName("foo"));
-		}catch(Exception e){
+			eb.put(e);
+		}catch(Exception e1){
 			exceptionRaised = true;
-			Assert.assertEquals(true, e.getMessage().contains("Event has neither an explicit id or a group."));	
+			Assert.assertEquals(true, e1.getMessage().contains(message));			
 		}
 		Assert.assertEquals(true, exceptionRaised);
 	}
@@ -135,12 +146,11 @@ public class EventBrokerTests {
 	public void testCircuitBreaker() throws Exception{
 		long circuitBreakerThreshold = 3L;
 		eb.setCircuitBreakerThreshold(circuitBreakerThreshold);
-		
+
 		for(int i=1; i <= circuitBreakerThreshold; i++){
-			Event e = new Event().setGroup("circuitBreaker");
-			System.out.println(eb.put(e).getId());
+			eb.put(new Event().setGroup("circuitBreaker"));
 		}
-		
+
 		boolean exceptionRaised = false;
 		try{
 			eb.put(new Event().setGroup("circuitBreaker"));
@@ -150,47 +160,78 @@ public class EventBrokerTests {
 		}
 		Assert.assertEquals(true, exceptionRaised);
 	}
-	
+
 	@Test
 	public void testMonitoringEventAge() throws Exception{
 		for(int i=1; i <= 3; i++){
 			eb.put(new Event().setId(String.valueOf(i)));
 			Thread.sleep(10);
 		}
-		
+
 		Assert.assertEquals("1", eb.findOldestEvent().getId());
 		Assert.assertEquals("3", eb.findYoungestEvent().getId());
 	}
-	
+
 	@Test
 	public void testMonitoringCumulatedStats() throws Exception{
 		for(int i=1; i <= 3; i++){
 			eb.put(new Event().setId(String.valueOf(i)));
 			Thread.sleep(10);
 		}
-		
+
 		Assert.assertEquals(3, eb.getCumulatedPuts());
-		
+
 		for(int i=1; i <= 3; i++){
 			eb.get(String.valueOf(i));
 			Thread.sleep(10);
 		}
-		
+
 		Assert.assertEquals(3, eb.getCumulatedGets());
-		
+
 		//Failed get
 		eb.get("bar");
-		
+
 		Assert.assertEquals(3, eb.getCumulatedGets());
-		
+
 		Assert.assertEquals(0, eb.getCumulatedPeeks());
-		
+
 		//Failed peek
 		eb.peek("bar");
 		Assert.assertEquals(0, eb.getCumulatedPeeks());
-		
+
 		eb.put(new Event().setId("bar"));
 		eb.peek("bar");
 		Assert.assertEquals(1, eb.getCumulatedPeeks());
 	}
+
+	@Test
+	public void testDistinctGroupList() throws Exception{
+
+		eb.put(new Event().setGroup("foo"));
+		eb.put(new Event().setGroup("foo"));
+		eb.put(new Event().setGroup("bar"));
+
+		Assert.assertEquals(2, eb.getDistinctGroupList().size());
+		Assert.assertEquals(true, eb.getDistinctGroupList().contains("foo"));
+		Assert.assertEquals(true, eb.getDistinctGroupList().contains("bar"));
+	}
+	
+	@Test
+	public void testGroupListContent() throws Exception{
+		eb.put(new Event().setGroup("foo"));
+		eb.put(new Event().setGroup("foo"));
+		eb.put(new Event().setGroup("bar"));
+
+		Assert.assertEquals(2, eb.getGroupEvents("foo").size());
+		Assert.assertEquals(1, eb.getGroupEvents("bar").size());
+		
+		eb.get("*", null);
+		eb.get("*", null);
+		eb.get("*", null);
+		
+		Assert.assertEquals(0, eb.getGroupEvents("foo").size());
+		Assert.assertEquals(0, eb.getGroupEvents("bar").size());
+		
+	}
+	
 }
