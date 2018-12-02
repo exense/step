@@ -45,6 +45,12 @@ public class EventBrokerTests {
 	}
 
 	@Test
+	public void testGetAbsentId() throws Exception{
+		Assert.assertEquals(null,eb.get("an_id_that_is_absent"));
+	}
+
+	
+	@Test
 	public void testGetEvent() throws Exception{
 		eb.put(new Event().setId("123").setGroup("myGroup").setName("toto"));
 		Assert.assertEquals("toto",eb.get("123").getName());
