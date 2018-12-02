@@ -39,6 +39,7 @@ public class EventBroker {
 	private ConcurrentHashMap<String, Event> events;
 	private long circuitBreakerThreshold;
 	private boolean advancedStatsOn;
+	private boolean syncGroupOn;
 
 	private LongAdder cumulatedPuts;
 	private LongAdder cumulatedGets;
@@ -51,12 +52,14 @@ public class EventBroker {
 	public EventBroker(){
 		this.circuitBreakerThreshold = 5000L;
 		this.advancedStatsOn = true;
+		this.syncGroupOn = false;
 		init();
 	}
 
-	public EventBroker(long circuitBreakerThreshold, boolean advancedStatsOn){
+	public EventBroker(long circuitBreakerThreshold, boolean advancedStatsOn, boolean syncGroupOn){
 		this.circuitBreakerThreshold = circuitBreakerThreshold;
 		this.advancedStatsOn = advancedStatsOn;
+		this.syncGroupOn = syncGroupOn;
 		init();
 	}
 
@@ -189,10 +192,25 @@ public class EventBroker {
 
 		Optional<Event> event;
 
-		if(searchedGroup.equals("*") || searchedName == null || searchedName.isEmpty() || searchedName.equals("null"))
-			event = lookupLooseGroupBasedEvent(searchedGroup);
-		else
-			event = lookupNamedGroupBasedEvent(searchedGroup, searchedName);
+		// loose group search
+		if(searchedGroup.equals("*") || searchedName == null || searchedName.isEmpty() || searchedName.equals("null")){
+			if(this.syncGroupOn){// collision-free lookups
+				synchronized(this.events){
+					event = lookupLooseGroupBasedEvent(searchedGroup);
+				}
+			}else{ // misses are tolerated
+				event = lookupLooseGroupBasedEvent(searchedGroup);
+			}
+		}
+		else{ // narrow name-based search
+			if(this.syncGroupOn){// collision-free lookups
+				synchronized(this.events){
+					event = lookupNamedGroupBasedEvent(searchedGroup, searchedName);
+				}
+			}else{ // misses are tolerated
+				event = lookupNamedGroupBasedEvent(searchedGroup, searchedName);
+			}
+		}
 
 		if(event.isPresent())
 			return event.get().getId();
@@ -239,7 +257,16 @@ public class EventBroker {
 	public boolean getAdvancedStatsOn() {
 		return this.advancedStatsOn;
 	}
+	
+	public boolean getSyncGroupOn() {
+		return this.syncGroupOn;
+	}
 
+	public void setSyncGroupOn(boolean syncGroupOn) {
+		this.syncGroupOn = syncGroupOn;
+	}
+
+	
 	public long getCumulatedPuts() {
 		return cumulatedPuts.longValue();
 	}
