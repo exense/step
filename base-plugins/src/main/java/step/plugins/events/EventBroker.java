@@ -26,8 +26,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -39,7 +37,6 @@ public class EventBroker {
 	private ConcurrentHashMap<String, Event> events;
 	private long circuitBreakerThreshold;
 	private boolean advancedStatsOn;
-	private boolean syncGroupOn;
 
 	private LongAdder cumulatedPuts;
 	private LongAdder cumulatedGets;
@@ -52,14 +49,12 @@ public class EventBroker {
 	public EventBroker(){
 		this.circuitBreakerThreshold = 5000L;
 		this.advancedStatsOn = true;
-		this.syncGroupOn = false;
 		init();
 	}
 
-	public EventBroker(long circuitBreakerThreshold, boolean advancedStatsOn, boolean syncGroupOn){
+	public EventBroker(long circuitBreakerThreshold, boolean advancedStatsOn){
 		this.circuitBreakerThreshold = circuitBreakerThreshold;
 		this.advancedStatsOn = advancedStatsOn;
-		this.syncGroupOn = syncGroupOn;
 		init();
 	}
 
@@ -194,22 +189,10 @@ public class EventBroker {
 
 		// loose group search
 		if(searchedGroup.equals("*") || searchedName == null || searchedName.isEmpty() || searchedName.equals("null")){
-			if(this.syncGroupOn){// collision-free lookups
-				synchronized(this.events){
-					event = lookupLooseGroupBasedEvent(searchedGroup);
-				}
-			}else{ // misses are tolerated
-				event = lookupLooseGroupBasedEvent(searchedGroup);
-			}
+			event = lookupLooseGroupBasedEvent(searchedGroup);
 		}
 		else{ // narrow name-based search
-			if(this.syncGroupOn){// collision-free lookups
-				synchronized(this.events){
-					event = lookupNamedGroupBasedEvent(searchedGroup, searchedName);
-				}
-			}else{ // misses are tolerated
-				event = lookupNamedGroupBasedEvent(searchedGroup, searchedName);
-			}
+			event = lookupNamedGroupBasedEvent(searchedGroup, searchedName);
 		}
 
 		if(event.isPresent())
@@ -217,6 +200,24 @@ public class EventBroker {
 		else
 			return null;
 	}
+
+	/** Here we're trying to protect against collisions, i.e concurrent removals of same-id events**/
+	private Event lookupForRemove(String searchedGroup, String searchedName){
+		String hit = lookup(searchedGroup, searchedName);
+		Event ret = null;
+		while(
+				hit != null // if hit is null, either there was never a match or another thread stole the last key
+				&& (ret = events.remove(hit)) == null){ // someone just stole the last key
+			hit = lookup(searchedGroup, searchedName); // let's try our luck again until we successfully remove a key or run out of matching keys (null)
+		}
+
+		if(this.advancedStatsOn){
+			if(ret != null) //we only count "real" gets (which found and returned an event)
+				this.cumulatedGets.increment();
+		}
+		return ret;
+	}
+
 
 	private Optional<Event> lookupNamedGroupBasedEvent(String searchedGroup, String searchedName){
 		return events.values().stream()
@@ -242,8 +243,9 @@ public class EventBroker {
 			events.remove(lookup(group, null));
 	}
 
+	/** Now using a sync-free optimistic version of the group lookup as an alternative to syncGroupOn **/
 	public Event get(String group, String name){
-		return get(lookup(group, name));
+		return lookupForRemove(group, name);
 	}
 
 	/****/
@@ -257,16 +259,7 @@ public class EventBroker {
 	public boolean getAdvancedStatsOn() {
 		return this.advancedStatsOn;
 	}
-	
-	public boolean getSyncGroupOn() {
-		return this.syncGroupOn;
-	}
 
-	public void setSyncGroupOn(boolean syncGroupOn) {
-		this.syncGroupOn = syncGroupOn;
-	}
-
-	
 	public long getCumulatedPuts() {
 		return cumulatedPuts.longValue();
 	}

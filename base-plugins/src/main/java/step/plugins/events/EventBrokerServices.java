@@ -186,7 +186,6 @@ public class EventBrokerServices extends AbstractServices {
 		// static conf
 		stats.put("s_advStatsOn", eb.getAdvancedStatsOn());
 		stats.put("s_advStatsOn", eb.getAdvancedStatsOn());
-		stats.put("s_syncGroupOn", eb.getSyncGroupOn());
 		
 		stats.put("s_circuitBreakerThreshold", eb.getCircuitBreakerThreshold());
 
@@ -231,18 +230,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	
 	/** Conf Services **/
-	//TODO extend this to a generic config map with generic GET/POST on properties
-	@GET
-	@Path("/events/config/syncGroupOn/{syncGroupOn}")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Map<String, Object> setSyncGroupOn(@PathParam("syncGroupOn") boolean syncGroupOn) {
-		Map<String, Object> ret = new HashMap<>();
-		eb.setSyncGroupOn(syncGroupOn);
-		ret.put("status","success");
-		return ret;
-	}
-	
+	//TODO extend this to a generic config map with generic GET/POST on properties	
 	@GET
 	@Path("/events/config/circuitBreakerThreshold/{circuitBreakerThreshold}")
 	@Produces(MediaType.APPLICATION_JSON)

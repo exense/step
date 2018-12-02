@@ -36,7 +36,7 @@ public class EventBrokerTests {
 
 	@Before
 	public void before(){
-		eb = new EventBroker(1000, true, false);
+		eb = new EventBroker(1000, true);
 	}
 
 	@After
