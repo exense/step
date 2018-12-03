@@ -197,6 +197,8 @@ public class EventBrokerServices extends AbstractServices {
 		if(eb.getAdvancedStatsOn()){
 			stats.put("a_cumulatedPuts", eb.getCumulatedPuts());
 			stats.put("a_cumulatedGets", eb.getCumulatedGets());
+			stats.put("a_cumulatedAttemptedGets", eb.getCumulatedAttemptedGets());
+			stats.put("a_cumulatedAttemptedGroupGets", eb.getCumulatedAttemptedGroupGets());
 			stats.put("a_cumulatedPeeks", eb.getCumulatedPeeks());
 		}
 		return stats;
