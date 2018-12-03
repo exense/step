@@ -185,12 +185,12 @@ public class EventBrokerServices extends AbstractServices {
 		Map<String, Object> stats = new HashMap<>();
 		// static conf
 		stats.put("s_advStatsOn", eb.getAdvancedStatsOn());
-		stats.put("s_advStatsOn", eb.getAdvancedStatsOn());
 		
 		stats.put("s_circuitBreakerThreshold", eb.getCircuitBreakerThreshold());
 
 		//dynamic stats
 		stats.put("d_size", eb.getSize());
+		stats.put("d_sizeWaterMark", eb.getSizeWaterMark());
 		stats.put("d_youngestEvent", eb.findYoungestEvent());
 		stats.put("d_oldestEvent", eb.findOldestEvent());
 

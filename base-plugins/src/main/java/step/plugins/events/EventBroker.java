@@ -340,6 +340,8 @@ public class EventBroker {
 		this.cumulatedAttemptedGets = new LongAdder();
 		this.cumulatedAttemptedGroupGets = new LongAdder();
 		this.cumulatedPeeks = new LongAdder();
+		
+		this.sizeWaterMark = 0;
 	}
 	/****/
 
