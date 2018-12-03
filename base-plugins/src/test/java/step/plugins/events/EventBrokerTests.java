@@ -20,6 +20,10 @@ package step.plugins.events;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -49,7 +53,7 @@ public class EventBrokerTests {
 		Assert.assertEquals(null,eb.get("an_id_that_is_absent"));
 	}
 
-	
+
 	@Test
 	public void testGetEvent() throws Exception{
 		eb.put(new Event().setId("123").setGroup("myGroup").setName("toto"));
@@ -222,7 +226,7 @@ public class EventBrokerTests {
 		Assert.assertEquals(true, eb.getDistinctGroupNames().contains("foo"));
 		Assert.assertEquals(true, eb.getDistinctGroupNames().contains("bar"));
 	}
-	
+
 	@Test
 	public void testGroupSizeAndContent() throws Exception{
 		eb.put(new Event().setGroup("foo"));
@@ -233,26 +237,177 @@ public class EventBrokerTests {
 		Assert.assertEquals(2, eb.getSizeForGroup("foo"));
 		Assert.assertEquals(1, eb.getGroupEvents("bar").size());
 		Assert.assertEquals(1, eb.getSizeForGroup("bar"));
-		
+
 		eb.get("*", null);
 		eb.get("*", null);
 		eb.get("*", null);
-		
+
 		Assert.assertEquals(0, eb.getGroupEvents("foo").size());
 		Assert.assertEquals(0, eb.getSizeForGroup("bar"));
-		
+
 	}
-	
+
 
 	@Test
 	public void testGroupStats() throws Exception{
 		eb.put(new Event().setGroup("xyz").setName("1"));
 		Thread.sleep(10);
 		eb.put(new Event().setGroup("xyz").setName("2"));
-		
+
 		Assert.assertEquals("1", eb.findOldestEventForGroup("xyz").getName());
 		Assert.assertEquals("2", eb.findYoungestEventForGroup("xyz").getName());
 		Assert.assertEquals(true, eb.findOldestEventForGroup("xyz").getInsertionTimestamp() < eb.findYoungestEventForGroup("xyz").getInsertionTimestamp());
 	}
+
+	@Test
+	public void testParallelGroupPutGetByPair() throws Exception{
+		int nbThreads = 500;
+		final int nbIterations = 100;
+		final String group = UUID.randomUUID().toString();
+
+		ExecutorService executor = Executors.newFixedThreadPool(nbThreads);
+		for(int threadNb = 0; threadNb<nbThreads; threadNb++){
+			final String threadId = String.format("%07d", threadNb);
+			executor.execute(new Runnable(){
+
+				@Override
+				public void run() {
+					for(int i=0;i<nbIterations; i++){
+						final String itId = String.format("%07d", i);
+						final String identifier = "T"+threadId+"_I"+itId;
+						//String uuid = UUID.randomUUID().toString();
+						String uuid = identifier;
+						try {
+							Event e = eb.put(new Event().setGroup(group).setName(uuid));
+							Assert.assertEquals(true, e != null && e.getId() != null && !e.getId().isEmpty());
+						} catch (Exception e) {e.printStackTrace();}
+						Event e = eb.get(group, uuid);
+						Assert.assertEquals(group, e.getGroup());
+						Assert.assertEquals(uuid, e.getName());
+					}
+				}
+			});
+		}
+		executor.shutdown();
+		Assert.assertEquals(true,executor.awaitTermination(2L, TimeUnit.MINUTES));
+
+		System.out.println("[testParallelGroupPutGetByPair] Size=" + eb.getSize() +"; Watermark=" + eb.getSizeWaterMark() + "; Puts="+eb.getCumulatedPuts() + "; Gets=" + eb.getCumulatedGets() + ";");
+		
+		// Make sure we put enough pressure on the CHM
+		Assert.assertEquals(true, eb.getSizeWaterMark() > 1 && eb.getSizeWaterMark() < eb.getCircuitBreakerThreshold());
+
+		//Actual checks
+		Assert.assertEquals(0, eb.getSize());
+		Assert.assertEquals(nbThreads*nbIterations, eb.getCumulatedPuts());
+		Assert.assertEquals(nbThreads*nbIterations, eb.getCumulatedGets());
+	}
 	
+	@Test
+	public void testParallelIdPutGetByPair() throws Exception{
+		int nbThreads = 500;
+		final int nbIterations = 1000;
+		final String group = UUID.randomUUID().toString();
+
+		ExecutorService executor = Executors.newFixedThreadPool(nbThreads);
+		for(int threadNb = 0; threadNb<nbThreads; threadNb++){
+			final String threadId = String.format("%07d", threadNb);
+			executor.execute(new Runnable(){
+
+				@Override
+				public void run() {
+					for(int i=0;i<nbIterations; i++){
+						final String itId = String.format("%07d", i);
+						final String identifier = "T"+threadId+"_I"+itId;
+						//String uuid = UUID.randomUUID().toString();
+						String uuid = identifier;
+						try {
+							Event e = eb.put(new Event().setId(uuid));
+							Assert.assertEquals(true, e == null);
+						} catch (Exception e) {e.printStackTrace();}
+						Event e = eb.get(uuid);
+						Assert.assertEquals(uuid, e.getId());
+					}
+				}
+			});
+		}
+		executor.shutdown();
+		Assert.assertEquals(true,executor.awaitTermination(2L, TimeUnit.MINUTES));
+
+		System.out.println("[testParallelIdPutGetByPair] Size=" + eb.getSize() +"; Watermark=" + eb.getSizeWaterMark() + "; Puts="+eb.getCumulatedPuts() + "; Gets=" + eb.getCumulatedGets() + ";");
+		
+		// Make sure we put enough pressure on the broker
+		Assert.assertEquals(true, eb.getSizeWaterMark() > 1 && eb.getSizeWaterMark() < eb.getCircuitBreakerThreshold());
+
+		//Actual checks
+		Assert.assertEquals(0, eb.getSize());
+		Assert.assertEquals(nbThreads*nbIterations, eb.getCumulatedPuts());
+		Assert.assertEquals(nbThreads*nbIterations, eb.getCumulatedGets());
+	}
+	
+	@Test
+	public void testParallelGroupPutBeforeGet() throws Exception{
+		int nbThreads = 100;
+		final int nbIterations = 100;
+		final int totalExpectedEvents = nbThreads*nbIterations;
+		eb.setCircuitBreakerThreshold(totalExpectedEvents + 1);
+		final String group = UUID.randomUUID().toString();
+
+		ExecutorService executorPuts = Executors.newFixedThreadPool(nbThreads);
+		for(int threadNb = 0; threadNb<nbThreads; threadNb++){
+			final String threadId = String.format("%07d", threadNb);
+			executorPuts.execute(new Runnable(){
+
+				@Override
+				public void run() {
+					for(int i=0;i<nbIterations; i++){
+						final String itId = String.format("%07d", i);
+						final String identifier = "T"+threadId+"_I"+itId;
+						try {
+							Event e = eb.put(new Event().setGroup(group).setName(identifier));
+							Assert.assertEquals(true, e != null && e.getId() != null && !e.getId().isEmpty());
+						} catch (Exception e) {e.printStackTrace();}
+					}
+				}
+			});
+		}
+		executorPuts.shutdown();
+		Assert.assertEquals(true,executorPuts.awaitTermination(1L, TimeUnit.MINUTES));
+		
+		System.out.println("Putters finished :"+eb.getSize() + " events in map; Watermark=" + eb.getSizeWaterMark() + "; Puts="+eb.getCumulatedPuts() + "; Gets=" + eb.getCumulatedGets() + "; Starting getters");
+		// Intermediate check
+		Assert.assertEquals(true, eb.getSizeWaterMark() == totalExpectedEvents);
+		Assert.assertEquals(true, eb.getSize() == totalExpectedEvents);
+
+		ExecutorService executorGets = Executors.newFixedThreadPool(nbThreads);
+		for(int threadNb = 0; threadNb<nbThreads; threadNb++){
+			final String threadId = String.format("%07d", threadNb);
+			executorGets.execute(new Runnable(){
+
+				@Override
+				public void run() {
+					for(int i=0;i<nbIterations; i++){
+						final String itId = String.format("%07d", i);
+						final String identifier = "T"+threadId+"_I"+itId;
+						Event e = eb.get(group, identifier);
+						Assert.assertEquals(group, e.getGroup());
+						Assert.assertEquals(identifier, e.getName());
+					}
+				}
+			});
+		}
+		executorGets.shutdown();
+		Assert.assertEquals(true, executorGets.awaitTermination(10L, TimeUnit.MINUTES));
+		
+		System.out.println("[testParallelGroupPutBeforeGet] Size=" + eb.getSize() +"; Watermark=" + eb.getSizeWaterMark() + "; Puts="+eb.getCumulatedPuts() + "; Gets=" + eb.getCumulatedGets() + "; AttemptedGets=" + eb.getCumulatedAttemptedGets() + "; AttemptedGroupGets=" + eb.getCumulatedAttemptedGroupGets() + ";");
+		
+		// Making sure we were unimpeded by the circuitBreaker
+		Assert.assertEquals(true, eb.getSizeWaterMark() < eb.getCircuitBreakerThreshold());
+		 
+		//Actual checks
+		Assert.assertEquals(true, eb.getSizeWaterMark() == totalExpectedEvents);
+		Assert.assertEquals(0, eb.getSize());
+		Assert.assertEquals(totalExpectedEvents, eb.getCumulatedPuts());
+		Assert.assertEquals(totalExpectedEvents, eb.getCumulatedGets());
+}
+
 }

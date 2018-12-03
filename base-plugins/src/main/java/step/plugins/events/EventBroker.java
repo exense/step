@@ -40,6 +40,8 @@ public class EventBroker {
 
 	private LongAdder cumulatedPuts;
 	private LongAdder cumulatedGets;
+	private LongAdder cumulatedAttemptedGets;
+	private LongAdder cumulatedAttemptedGroupGets;
 	private LongAdder cumulatedPeeks;
 
 	private int sizeWaterMark = 0;
@@ -144,8 +146,9 @@ public class EventBroker {
 		if(this.advancedStatsOn){
 			this.cumulatedPuts.increment();
 
-			if(size > this.sizeWaterMark){ 
-				this.sizeWaterMark = size;
+			// we're avoiding to call CHM.size() again which is an expensive call
+			if(size + 1 > this.sizeWaterMark){ 
+				this.sizeWaterMark = size + 1;
 			}
 		}
 
@@ -153,6 +156,9 @@ public class EventBroker {
 	}
 
 	public Event get(String id){
+		if(this.advancedStatsOn){
+			this.cumulatedAttemptedGets.increment();
+		}
 		if(id == null || id.isEmpty())
 			return null;
 		Event ret = events.remove(id);
@@ -245,6 +251,9 @@ public class EventBroker {
 
 	/** Now using a sync-free optimistic version of the group lookup as an alternative to syncGroupOn **/
 	public Event get(String group, String name){
+		if(this.advancedStatsOn){
+			this.cumulatedAttemptedGroupGets.increment();
+		}
 		return lookupForRemove(group, name);
 	}
 
@@ -268,10 +277,19 @@ public class EventBroker {
 		return cumulatedGets.longValue();
 	}
 
+	public long getCumulatedAttemptedGets() {
+		return cumulatedAttemptedGets.longValue();
+	}
+
+	public long getCumulatedAttemptedGroupGets() {
+		return cumulatedAttemptedGroupGets.longValue();
+	}
+
 	public long getCumulatedPeeks() {
 		return cumulatedPeeks.longValue();
 	}
 
+	/** Unreliable due to the nature of CHM **/
 	public int getSizeWaterMark() {
 		return sizeWaterMark;
 	}
@@ -319,6 +337,8 @@ public class EventBroker {
 	private void initStats(){
 		this.cumulatedPuts = new LongAdder();
 		this.cumulatedGets = new LongAdder();
+		this.cumulatedAttemptedGets = new LongAdder();
+		this.cumulatedAttemptedGroupGets = new LongAdder();
 		this.cumulatedPeeks = new LongAdder();
 	}
 	/****/
