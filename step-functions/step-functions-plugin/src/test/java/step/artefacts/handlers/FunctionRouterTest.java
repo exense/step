@@ -25,6 +25,7 @@ import step.core.execution.ExecutionTestHelper;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
@@ -32,7 +33,9 @@ import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.TokenWrapper;
 import step.grid.client.GridClient;
 import step.grid.client.GridClientImpl.AgentCommunicationException;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileManagerException;
+import step.grid.filemanager.FileVersion;
+import step.grid.filemanager.FileVersionId;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
@@ -46,7 +49,7 @@ public class FunctionRouterTest {
 	}
 	
 	@Test
-	public void test() {
+	public void test() throws FunctionExecutionServiceException {
 		
 		CallFunction callFunction = new CallFunction();
 		callFunction.getToken().setValue("{\"callFunction\":\"cf\"}");
@@ -101,12 +104,12 @@ public class FunctionRouterTest {
 		return new GridClient() {
 			
 			@Override
-			public String registerFile(File arg0) {
-				return "dummyFileId";
+			public FileVersion registerFile(File file) throws FileManagerException {
+				return new FileVersion(null, null, false);
 			}
-			
+
 			@Override
-			public File getRegisteredFile(String arg0) {
+			public FileVersion getRegisteredFile(FileVersionId fileVersionId) throws FileManagerException {
 				return null;
 			}
 			

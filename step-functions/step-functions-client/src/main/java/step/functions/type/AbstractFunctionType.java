@@ -6,13 +6,14 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import step.attachments.FileResolver;
-import step.commons.helpers.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.io.Input;
 import step.grid.GridFileService;
 import step.grid.agent.Agent;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileManagerException;
+import step.grid.filemanager.FileVersion;
+import step.grid.filemanager.FileVersionId;
 import step.grid.tokenpool.Interest;
 
 public abstract class AbstractFunctionType<T extends Function> {
@@ -76,14 +77,19 @@ public abstract class AbstractFunctionType<T extends Function> {
 	}
 	
 	protected void registerFile(File file, String properyName, Map<String, String> props) {
-		String fileHandle = gridFileServices.registerFile(file);
-		props.put(properyName+".id", fileHandle);
-		props.put(properyName+".version", Long.toString(FileHelper.getLastModificationDateRecursive(file)));
+		FileVersionId fileVersionId = registerFile(file);
+		props.put(properyName+".id", fileVersionId.getFileId());
+		props.put(properyName+".version", Long.toString(fileVersionId.getVersion()));
 	}
 	
 	protected FileVersionId registerFile(File file) {
-		String fileHandle = gridFileServices.registerFile(file);
-		return new FileVersionId(fileHandle, FileHelper.getLastModificationDateRecursive(file));
+		FileVersion fileVersion;
+		try {
+			fileVersion = gridFileServices.registerFile(file);
+			return fileVersion.getVersionId();
+		} catch (FileManagerException e) {
+			throw new RuntimeException("Error while registering file "+file.getAbsolutePath(), e);
+		}
 	}
 	
 	protected FileVersionId registerFile(String filepath) {

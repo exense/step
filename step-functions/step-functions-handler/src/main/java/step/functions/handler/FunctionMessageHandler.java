@@ -12,7 +12,7 @@ import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 

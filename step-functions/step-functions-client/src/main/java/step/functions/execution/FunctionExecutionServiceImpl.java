@@ -32,8 +32,9 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.commons.helpers.FileHelper;
 import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 import step.functions.Function;
 import step.functions.handler.FunctionInputOutputObjectMapperFactory;
 import step.functions.handler.FunctionMessageHandler;
@@ -47,15 +48,15 @@ import step.grid.client.GridClient;
 import step.grid.client.GridClientImpl.AgentCallTimeoutException;
 import step.grid.client.GridClientImpl.AgentCommunicationException;
 import step.grid.client.GridClientImpl.AgentSideException;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileManagerException;
+import step.grid.filemanager.FileVersion;
+import step.grid.filemanager.FileVersionId;
 import step.grid.io.AgentError;
 import step.grid.io.AgentErrorCode;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
-import step.core.reports.Error;
-import step.core.reports.ErrorType;
 
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
@@ -69,16 +70,22 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	
 	private final ObjectMapper mapper;
 	
-	public FunctionExecutionServiceImpl(GridClient gridClient, FunctionTypeRegistry functionTypeRegistry, DynamicBeanResolver dynamicBeanResolver) {
+	public FunctionExecutionServiceImpl(GridClient gridClient, FunctionTypeRegistry functionTypeRegistry, DynamicBeanResolver dynamicBeanResolver) throws FunctionExecutionServiceException {
 		super();
 		this.gridClient = gridClient;
 		this.functionTypeRegistry = functionTypeRegistry;
 		this.dynamicBeanResolver = dynamicBeanResolver;
 	
 		File functionHandlerJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "step-functions-handler.jar");
-		long version = FileHelper.getLastModificationDateRecursive(functionHandlerJar);
 		
-		functionHandlerPackage = new FileVersionId(gridClient.registerFile(functionHandlerJar), version);
+		FileVersion functionHandlerPackageVersionId;
+		try {
+			functionHandlerPackageVersionId = gridClient.registerFile(functionHandlerJar);
+		} catch (FileManagerException e) {
+			throw new FunctionExecutionServiceException("Error while registering file "+functionHandlerJar+" to the grid", e);
+		}
+		
+		functionHandlerPackage = functionHandlerPackageVersionId.getVersionId();
 		
 		mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();
 	}
@@ -192,9 +199,10 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_TIMEOUT)) {
 					String timeout = agentError.getErrorDetails().get(AgentErrorCode.Details.TIMEOUT);
 					String filehandle = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_HANDLE);
-					File file = gridClient.getRegisteredFile(filehandle);
-					if(file!=null) {
-						output.setError(newAgentError("Timeout after "+ timeout + "ms while downloading the following resource from the controller: "+file.getPath()+". You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
+					long fileversion = Long.parseLong(agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_VERSION));
+					FileVersion fileVersion = gridClient.getRegisteredFile(new FileVersionId(filehandle, fileversion));
+					if(fileVersion!=null) {
+						output.setError(newAgentError("Timeout after "+ timeout + "ms while downloading the following resource from the controller: "+fileVersion.getFile().getPath()+". You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
 					} else {
 						output.setError(newAgentError("Timeout after "+ timeout + "ms while downloading a resource from the controller. You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
 					}
@@ -228,9 +236,9 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		return new Error(ErrorType.TECHNICAL, "agent", message, 0, true);
 	}
 	
-	protected Map<String, String> registerFile(File file, String properyName) {
-		String fileHandle = gridClient.registerFile(file);
-		return fileVersionIdToMap(properyName, new FileVersionId(fileHandle, FileHelper.getLastModificationDateRecursive(file)));
+	protected Map<String, String> registerFile(File file, String properyName) throws FileManagerException {
+		FileVersion fileVersion = gridClient.registerFile(file);
+		return fileVersionIdToMap(properyName, fileVersion.getVersionId());
 	}
 	
 	protected Map<String, String> fileVersionIdToMap(String propertyName, FileVersionId fileVersionId) {

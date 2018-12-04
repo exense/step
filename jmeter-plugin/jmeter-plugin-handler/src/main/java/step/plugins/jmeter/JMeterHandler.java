@@ -10,7 +10,7 @@ public class JMeterHandler extends JsonBasedFunctionHandler {
 	
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		pushRemoteApplicationContext("$jmeter.libraries", input.getProperties());
+		pushRemoteApplicationContext(JMeterLocalHandler.JMETER_LIBRARIES, input.getProperties());
 		
 		pushLocalApplicationContext(getClass().getClassLoader(), "jmeter-plugin-local-handler.jar");
 		

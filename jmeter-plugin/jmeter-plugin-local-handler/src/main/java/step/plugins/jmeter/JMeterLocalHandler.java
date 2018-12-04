@@ -17,20 +17,22 @@ import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
-import step.grid.filemanager.FileManagerClient.FileVersion;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
 
 public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
-	String jmeterHome;
+	public static final String JMETER_TESTPLAN = "$jmeter.testplan.file";
+
+	public static final String JMETER_LIBRARIES = "$jmeter.libraries";
+	
+	protected String jmeterHome;
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> message) throws Exception {
 		ApplicationContext context = getCurrentContext();
 		if(context.get("initialized")==null) {
-			FileVersionId jmeterLibs = getFileVersionId("$jmeter.libraries", message.getProperties());
-			FileVersion jmeterLibFolder = getToken().getServices().getFileManagerClient().requestFileVersion(jmeterLibs.getFileId(), jmeterLibs.getVersion());
-			jmeterHome = jmeterLibFolder.getFile().getAbsolutePath();
+			File jmeterLibFolder = retrieveFileVersion(JMETER_LIBRARIES, message.getProperties());
+			
+			jmeterHome = jmeterLibFolder.getAbsolutePath();
 			updateClasspathSystemProperty();
 			
 			JMeterUtils.setJMeterHome(jmeterHome);
@@ -43,7 +45,7 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 		
 		OutputBuilder out = new OutputBuilder();
 
-		File testPlanFile = retrieveFileVersion("$jmeter.testplan.file", message.getProperties());
+		File testPlanFile = retrieveFileVersion(JMETER_TESTPLAN, message.getProperties());
 
 		StandardJMeterEngine jmeter = new StandardJMeterEngine();
 

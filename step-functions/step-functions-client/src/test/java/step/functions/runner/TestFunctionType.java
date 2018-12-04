@@ -3,7 +3,7 @@ package step.functions.runner;
 import java.util.Map;
 
 import step.functions.type.AbstractFunctionType;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileVersionId;
 
 public class TestFunctionType extends AbstractFunctionType<TestFunction> {
 

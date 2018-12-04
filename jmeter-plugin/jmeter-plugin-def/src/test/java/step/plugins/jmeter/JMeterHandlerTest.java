@@ -19,6 +19,7 @@
 package step.plugins.jmeter;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
+import step.functions.runner.FunctionRunner.Context;
 import step.grid.bootstrap.ResourceExtractor;
 
 public class JMeterHandlerTest {
@@ -56,7 +58,12 @@ public class JMeterHandlerTest {
 	private Output<JsonObject> run(JMeterFunction f, String inputJson) {
 		Configuration configuration = new Configuration();
 		configuration.put("plugins.jmeter.home", "../../distribution/template-controller/ext/jmeter");
-		return FunctionRunner.getContext(configuration,new JMeterFunctionType(configuration), new HashMap<>()).run(f, inputJson);
+		
+		try (Context context = FunctionRunner.getContext(configuration,new JMeterFunctionType(configuration), new HashMap<>())) {
+			return context.run(f, inputJson);			
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	private JMeterFunction buildTestFunction() {

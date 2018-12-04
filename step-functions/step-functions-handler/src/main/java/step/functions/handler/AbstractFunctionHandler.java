@@ -14,8 +14,9 @@ import step.grid.contextbuilder.ApplicationContextBuilderException;
 import step.grid.contextbuilder.LocalResourceApplicationContextFactory;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileManagerClient;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
-import step.grid.filemanager.FileProviderException;
+import step.grid.filemanager.FileManagerException;
+import step.grid.filemanager.FileVersion;
+import step.grid.filemanager.FileVersionId;
 
 public abstract class AbstractFunctionHandler<IN, OUT> {
 
@@ -154,10 +155,11 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		return delegate(ApplicationContextBuilder.MASTER, functionHandlerClassname, input);
 	}
 	
-	protected File retrieveFileVersion(String properyName, Map<String,String> properties) throws FileProviderException {
+	protected File retrieveFileVersion(String properyName, Map<String,String> properties) throws FileManagerException {
 		FileVersionId fileVersionId = getFileVersionId(properyName, properties);
 		if(fileVersionId != null) {
-			return fileManagerClient.requestFile(fileVersionId.getFileId(), fileVersionId.getVersion());
+			FileVersion fileVersion = fileManagerClient.requestFileVersion(fileVersionId);
+			return fileVersion != null ? fileVersion.getFile() : null;
 		} else {
 			return null;
 		}

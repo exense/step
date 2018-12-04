@@ -19,6 +19,7 @@
 package step.handlers.scripthandler;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +33,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
+import step.functions.runner.FunctionRunner.Context;
 import step.grid.bootstrap.ResourceExtractor;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.GeneralScriptFunctionType;
@@ -78,11 +80,19 @@ public class JavaJarHandlerTest {
 	}
 	
 	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson) {
-		return FunctionRunner.getContext(new GeneralScriptFunctionType()).run(f, inputJson);
+		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType())) {
+			return context.run(f, inputJson);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson, Map<String, String> properties) {
-		return FunctionRunner.getContext(new GeneralScriptFunctionType(), properties).run(f, inputJson);
+		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType(), properties)) {
+			return context.run(f, inputJson);			
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	private GeneralScriptFunction buildTestFunction(String kwName, String scriptFile) {

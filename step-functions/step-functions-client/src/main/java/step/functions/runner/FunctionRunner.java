@@ -1,5 +1,8 @@
 package step.functions.runner;
 
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,11 +13,13 @@ import javax.json.JsonObject;
 import step.attachments.AttachmentManager;
 import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
+import step.commons.helpers.FileHelper;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -26,25 +31,34 @@ import step.grid.client.GridClientImpl;
 
 public class FunctionRunner {
 
-	public static class Context {
+	public static class Context implements Closeable {
 				
 		Map<String, String> properties;
 		
 		FunctionExecutionService functionExecutionService;
 		
+		Grid grid;
+		GridClientImpl client;
+		File fileManagerDirectory;
+		
 		protected Context(Configuration configuration, AbstractFunctionType<?> functionType, Map<String, String> properties) {
 			super();
 
 			this.properties = properties;
+			this.fileManagerDirectory = FileHelper.createTempFolder();
 			
-			Grid grid = new Grid(0);
+			grid = new Grid(fileManagerDirectory, 0);
 			
-			GridClientImpl client = new GridClientImpl(grid, grid);
+			client = new GridClientImpl(grid);
 			
-			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new AttachmentManager(configuration)), grid);
+			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new AttachmentManager(configuration)), client);
 			functionTypeRegistry.registerFunctionType(functionType);
 			
-			functionExecutionService = new FunctionExecutionServiceImpl(client, functionTypeRegistry, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
+			try {
+				functionExecutionService = new FunctionExecutionServiceImpl(client, functionTypeRegistry, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
+			} catch (FunctionExecutionServiceException e) {
+				throw new RuntimeException("Error while creating function execution service", e);
+			}
 		} 
 		
 		private JsonObject read(String argument) {
@@ -65,6 +79,12 @@ public class FunctionRunner {
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
+		}
+
+		@Override
+		public void close() throws IOException {
+			client.close();
+			FileHelper.deleteFolder(fileManagerDirectory);
 		}
 	}
 	

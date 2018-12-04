@@ -50,7 +50,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import step.attachments.AttachmentContainer;
-import step.attachments.AttachmentManager;
 import step.commons.datatable.DataTable;
 import step.commons.datatable.TableRow;
 import step.core.artefacts.AbstractArtefact;
@@ -62,13 +61,14 @@ import step.core.execution.ExecutionRunnable;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
-import step.core.execution.model.ReportExport;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
 import step.core.scheduler.ExecutiontTaskParameters;
-import step.grid.Grid;
-import step.grid.filemanager.FileManagerServer;
+import step.grid.client.GridClient;
+import step.grid.filemanager.FileManagerException;
+import step.grid.filemanager.FileVersion;
+import step.grid.filemanager.FileVersionId;
 
 @Singleton
 @Path("controller")
@@ -586,13 +586,13 @@ public class ControllerServices extends AbstractServices {
 	@Path("/grid/file")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String registerFile(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail) {
+	public FileVersionId registerFile(@FormDataParam("file") InputStream uploadedInputStream,
+			@FormDataParam("file") FormDataContentDisposition fileDetail) throws FileManagerException {
 		
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
 
-		Grid grid =  controller.getContext().get(Grid.class);
+		GridClient grid =  controller.getContext().get(GridClient.class);
 
 		AttachmentContainer container = controller.getContext().getAttachmentManager().createAttachmentContainer();
 		File file = new File(container.getContainer()+"/"+fileDetail.getFileName());
@@ -602,6 +602,7 @@ public class ControllerServices extends AbstractServices {
 			throw new RuntimeException("Error while saving file.");
 		}
 		
-		return grid.registerFile(file);
+		FileVersion fileVersion = grid.registerFile(file);
+		return fileVersion.getVersionId();
 	}
 }

@@ -7,7 +7,7 @@ import java.util.Map;
 import step.commons.conf.Configuration;
 import step.functions.type.AbstractFunctionType;
 import step.grid.bootstrap.ResourceExtractor;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileVersionId;
 
 public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 

@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.functions.plugin;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.execution.ConfigurableTokenLifecycleStrategy;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.manager.FunctionManager;
 import step.functions.manager.FunctionManagerImpl;
@@ -78,16 +80,17 @@ public class GridPlugin extends AbstractPlugin {
 		Integer gridPort = configuration.getPropertyAsInteger("grid.port",8081);
 		Integer tokenTTL = configuration.getPropertyAsInteger("grid.ttl",60000);
 		
-		grid = new Grid(gridPort, tokenTTL);
+		String fileManagerPath = configuration.getProperty("grid.filemanager.path", "filemanager");
+		grid = new Grid(new File(fileManagerPath), gridPort, tokenTTL);
 		grid.start();
 		
 		TokenLifecycleStrategy tokenLifecycleStrategy = getTokenLifecycleStrategy(configuration);
 		
 		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration);
-		client = new GridClientImpl(gridClientConfiguration, grid, tokenLifecycleStrategy, grid);
+		client = new GridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
 
 		editorRegistry = new FunctionEditorRegistry();
-		functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(context.getAttachmentManager()), grid);
+		functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(context.getAttachmentManager()), client);
 
 		functionAccessor = new FunctionAccessorImpl(context.getMongoClientSession());
 		functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
@@ -98,6 +101,7 @@ public class GridPlugin extends AbstractPlugin {
 		functionRouter = new FunctionRouter(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
 
 		context.put(Grid.class, grid);
+		context.put(GridClient.class, client);
 				
 		context.put(FunctionAccessor.class, functionAccessor);
 		context.put(FunctionManager.class, functionManager);
@@ -136,7 +140,12 @@ public class GridPlugin extends AbstractPlugin {
 		boolean isolatedExecution = context.getExecutionParameters().isIsolatedExecution();
 		if(isolatedExecution) {
 			FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
-			FunctionExecutionService functionExecutionService = new FunctionExecutionServiceImpl(client, functionTypeRegistry, context.getDynamicBeanResolver());
+			FunctionExecutionService functionExecutionService;
+			try {
+				functionExecutionService = new FunctionExecutionServiceImpl(client, functionTypeRegistry, context.getDynamicBeanResolver());
+			} catch (FunctionExecutionServiceException e) {
+				throw new RuntimeException("Error while creating function execution service", e);
+			}
 			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 			FunctionRouter functionRouter = new FunctionRouter(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
 			

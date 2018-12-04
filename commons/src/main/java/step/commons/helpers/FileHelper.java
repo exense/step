@@ -30,6 +30,7 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +51,21 @@ public class FileHelper {
 	
 	private static final Logger logger = LoggerFactory.getLogger(FileHelper.class);
 
+	public static File createTempFolder() {
+		return createTempFolder(null);
+	}
+	
+	public static File createTempFolder(String prefix) {
+		File file;
+		try {
+			file = Files.createTempDirectory(prefix).toFile();
+			deleteFolderOnExit(file);
+			return file;
+		} catch (IOException e) {
+			throw new RuntimeException("Error while creating temporary folder",e);
+		}
+	}
+	
 	public static void deleteFolder(File folder) {
 		File[] files = folder.listFiles();
 		if (files != null) {

@@ -31,7 +31,9 @@ import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.client.GridClient;
 import step.grid.client.GridClientImpl.AgentCallTimeoutException;
 import step.grid.client.GridClientImpl.AgentCommunicationException;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileManagerException;
+import step.grid.filemanager.FileVersion;
+import step.grid.filemanager.FileVersionId;
 import step.grid.io.AgentError;
 import step.grid.io.AgentErrorCode;
 import step.grid.io.OutputMessage;
@@ -206,7 +208,12 @@ public class FunctionExecutionServiceImplTest {
 		GridClient gridClient = getGridClient(outputMessage, callException, reserveTokenException, returnTokenException);
 		FunctionTypeRegistry functionTypeRegistry = getFunctionTypeRegistry();
 		DynamicBeanResolver dynamicBeanResolver = getDynamicBeanResolver();
-		FunctionExecutionService f = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, dynamicBeanResolver);
+		FunctionExecutionService f;
+		try {
+			f = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, dynamicBeanResolver);
+		} catch (FunctionExecutionServiceException e) {
+			throw new RuntimeException(e);
+		}
 		return f;
 	}
 	
@@ -285,13 +292,13 @@ public class FunctionExecutionServiceImplTest {
 		return new GridClient() {
 			
 			@Override
-			public String registerFile(File file) {
-				return "DummyId";
+			public FileVersion registerFile(File file) throws FileManagerException {
+				return new FileVersion(null, null, false);
 			}
-			
+
 			@Override
-			public File getRegisteredFile(String fileHandle) {
-				return new File("testFile");
+			public FileVersion getRegisteredFile(FileVersionId fileVersionId) throws FileManagerException {
+				return new FileVersion(null, null, false);
 			}
 			
 			@Override

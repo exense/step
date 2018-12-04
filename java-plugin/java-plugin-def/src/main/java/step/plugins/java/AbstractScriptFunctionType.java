@@ -18,7 +18,7 @@ import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
 import step.grid.bootstrap.ResourceExtractor;
-import step.grid.filemanager.FileManagerClient.FileVersionId;
+import step.grid.filemanager.FileVersionId;
 import step.plugins.java.handler.GeneralScriptHandler;
 import step.plugins.js223.handler.ScriptHandler;
 
