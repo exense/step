@@ -280,7 +280,7 @@ angular.module('step',['ngStorage','ngCookies'])
   };
 }])
 
-.factory('MaintenanceService', function ($http, $rootScope, Preferences) {
+.factory('MaintenanceService', function ($http, $rootScope, Preferences, $sce) {
   var service = {};
   
   var maintenanceMessage;
@@ -291,6 +291,10 @@ angular.module('step',['ngStorage','ngCookies'])
   
   service.getMaintenanceMessage = function() {
     return maintenanceMessage;
+  }
+  
+  service.trustAsHtml = function(html) {
+    return $sce.trustAsHtml(html);
   }
   
   return service;

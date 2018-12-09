@@ -128,7 +128,9 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
   $scope.setCurrentConfigurationItem = function(item) {
 	$scope.currentConfigurationItem = item;
   }
-  
+})
+
+.controller('MaintenanceSettingsCtrl', function($scope, $http, ViewRegistry) {
   $scope.maintenanceMessage;
   
   $http.get("rest/admin/maintenance/message").then(function(res) {
@@ -140,7 +142,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
     });
   }
 })
-      
+
 .controller('editUserModalCtrl', function ($scope, $uibModalInstance, $http, $location, AuthService, user) {
    $scope.roles = AuthService.getConf().roles;
    $scope.user = user;
