@@ -49,9 +49,14 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		if(functionPackage != null) {
 			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties()));
 			applicationContextBuilder.pushContext(functionHandlerContext);
+		} else {
+			throw new Exception("Missing "+FileVersionId.class.getSimpleName()+" of the function package in the input message's properties. The function handler should be defined using the property prefix "+FUNCTION_HANDLER_PACKAGE_KEY);
 		}
 		
 		return applicationContextBuilder.runInContext(()->{
+			// Reset the application context of the forked branch
+			applicationContextBuilder.resetContext(AbstractFunctionHandler.FORKED_BRANCH);
+			
 			// Instantiate the function handler 
 			String handlerClass = inputMessage.getProperties().get(FUNCTION_HANDLER_KEY);
 			@SuppressWarnings("rawtypes")
