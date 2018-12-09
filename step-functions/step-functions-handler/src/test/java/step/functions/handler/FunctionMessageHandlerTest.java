@@ -57,6 +57,15 @@ public class FunctionMessageHandlerTest {
 		
 		message.setProperties(properties);
 		
+		Input<TestInput> input = getTestInput();
+		
+		message.setPayload(new ObjectMapper().valueToTree(input));
+		
+		OutputMessage outputMessage = messageHandlerPool.get(FunctionMessageHandler.class.getName()).handle(agentToken, message);
+		Assert.assertEquals("Bonjour", outputMessage.getPayload().get("payload").get("message").asText());
+	}
+
+	private Input<TestInput> getTestInput() {
 		Input<TestInput> input = new Input<>();
 		Map<String, String> inputProperties = new HashMap<>();
 		inputProperties.put("myInputProp1", "myInputPropValue1");		
@@ -64,11 +73,7 @@ public class FunctionMessageHandlerTest {
 		TestInput testInput = new TestInput();
 		testInput.setMessage("Hallo");
 		input.setPayload(testInput);;
-		
-		message.setPayload(new ObjectMapper().valueToTree(input));
-		
-		OutputMessage outputMessage = messageHandlerPool.get(FunctionMessageHandler.class.getName()).handle(agentToken, message);
-		Assert.assertEquals("Bonjour", outputMessage.getPayload().get("payload").get("message").asText());
+		return input;
 	}
 	
 	/**
@@ -103,8 +108,12 @@ public class FunctionMessageHandlerTest {
 		Assert.assertEquals(0, exceptions.size());
 	}
 	
+	/**
+	 * Test the {@link FunctionMessageHandler} without handler package set in the message properties
+	 * @throws Exception
+	 */
 	@Test
-	public void testMissingHandler() throws Exception {
+	public void testNoHandlerPackage() throws Exception {
 		AgentTokenServices tokenServices = getLocalAgentTokenServices();
 		AgentTokenWrapper agentToken = getAgentToken(tokenServices);
 		
@@ -114,18 +123,13 @@ public class FunctionMessageHandlerTest {
 		InputMessage message = new InputMessage();
 		
 		HashMap<String, String> properties = new HashMap<String, String>();
-
+		properties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, TestFunctionHandler.class.getName());
 		message.setProperties(properties);
 		
-		message.setPayload(new ObjectMapper().createObjectNode());
+		Input<TestInput> input = getTestInput();
+		message.setPayload(new ObjectMapper().valueToTree(input));
 		
-		Exception e = null;
-		try {
-			h.handle(agentToken, message);
-		} catch (Exception ex) {
-			e = ex;
-		}
-		Assert.assertEquals("Missing FileVersionId of the function package in the input message's properties. The function handler should be defined using the property prefix $functionhandlerjar", e.getMessage());
+		h.handle(agentToken, message);
 	}
 
 	private AgentTokenWrapper getAgentToken(AgentTokenServices tokenServices) {
