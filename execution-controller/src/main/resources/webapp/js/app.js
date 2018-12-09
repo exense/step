@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','parametersControllers','artefactsControllers','artefactEditor','reportBrowserControllers','adminControllers'])
+var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','parametersControllers','artefactsControllers','artefactEditor','reportBrowserControllers','adminControllers','screenConfigurationControllers'])
 
 .config(['$locationProvider', function($locationProvider) {
   $locationProvider.hashPrefix('');

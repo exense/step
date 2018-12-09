@@ -69,7 +69,7 @@ import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
 import step.plugins.datatable.formatters.custom.ExecutionSummaryFormatter;
 import step.plugins.screentemplating.Input;
-import step.plugins.screentemplating.ScreenTemplatePlugin;
+import step.plugins.screentemplating.ScreenTemplateManager;
 
 @Singleton
 @Path("datatable")
@@ -95,7 +95,7 @@ public class DataTableServices extends AbstractServices {
 		executions.addColumn("ID", "_id").addColumn("Description", "description").addDateColumn("Start time", "startTime")
 		.addDateColumn("End time", "endTime").addColumn("User", "executionParameters.userID");
 				
-		ScreenTemplatePlugin screenTemplates = (ScreenTemplatePlugin) getContext().get(ScreenTemplatePlugin.SCREEN_TEMPLATE_KEY);
+		ScreenTemplateManager screenTemplates = getContext().get(ScreenTemplateManager.class);
 		if(screenTemplates!=null) {
 			for(Input input:screenTemplates.getInputsForScreen("executionTable", null)) {
 				executions.addColumn(input.getLabel(), input.getId());

@@ -31,10 +31,15 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Activator {
 
 	private static final String DEFAULT_SCRIPT_ENGINE = "nashorn";
 
+	public static final Logger logger = LoggerFactory.getLogger(Activator.class);
+	
 	public static <T extends ActivableObject> List<T> compileActivationExpressions(List<T> objects) throws ScriptException {
 		for(ActivableObject object:objects) {
 			compileActivationExpression(object);
@@ -44,6 +49,10 @@ public class Activator {
 	
 	public static void compileActivationExpression(ActivableObject object) throws ScriptException {
 		Expression expression = object.getActivationExpression();
+		compileExpression(expression);
+	}
+
+	protected static void compileExpression(Expression expression) throws ScriptException {
 		if(expression!=null && expression.compiledScript==null) {
 			String scriptEngine = expression.scriptEngine!=null?expression.scriptEngine:DEFAULT_SCRIPT_ENGINE;
 
@@ -62,6 +71,11 @@ public class Activator {
 	public static Boolean evaluateActivationExpression(Bindings bindings, Expression activationExpression) {
 		Boolean expressionResult; 
 		if(activationExpression!=null) {
+			try {
+				compileExpression(activationExpression);
+			} catch (ScriptException e1) {
+				logger.error("Error while evaluating expression "+activationExpression, e1);
+			}
 			CompiledScript script = activationExpression.compiledScript;
 			if(script!=null) {
 				try {

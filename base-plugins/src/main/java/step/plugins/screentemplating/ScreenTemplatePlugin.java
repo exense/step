@@ -18,20 +18,8 @@
  *******************************************************************************/
 package step.plugins.screentemplating;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.Arrays;
 
-import javax.script.ScriptException;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-
-import step.commons.activation.Activator;
-import step.commons.conf.Configuration;
-import step.commons.conf.FileRepository;
-import step.commons.conf.FileRepository.FileRepositoryCallback;
-import step.commons.helpers.FileHelper;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
@@ -39,67 +27,33 @@ import step.core.plugins.Plugin;
 @Plugin
 public class ScreenTemplatePlugin extends AbstractPlugin {
 
-	public static final String SCREEN_TEMPLATE_KEY = "ScreenTemplatePlugin_Instance";
-	
-	FileRepository<Map<String, List<Input>>> repo;
-	
-	Map<String, List<Input>> screenTemplates;
+	protected ScreenTemplateManager screenTemplateManager;
+	protected ScreenInputAccessor screenInputAccessor;
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) {
-		String config = Configuration.getInstance().getProperty("screentemplate.config");
-		if(config==null) {
-			File file = FileHelper.getClassLoaderResource(this.getClass(), "ScreenTemplates.js");
-			if(file!=null) {
-				config = file.getAbsolutePath();
-			}
-		}
+		screenInputAccessor = new ScreenInputAccessorImpl(context.getMongoClientSession());
+		screenTemplateManager = new ScreenTemplateManager(screenInputAccessor);
 		
-		if(config!=null) {
-			repo = new FileRepository<Map<String, List<Input>>>(new File(config), new TypeReference<Map<String, List<Input>>>() {}, new FileRepositoryCallback<Map<String, List<Input>>>() {
-				@Override
-				public void onLoad(Map<String, List<Input>> screens) throws ScriptException {
-					for(String screenId:screens.keySet()) {
-						List<Input> inputs = screens.get(screenId);
-						Activator.compileActivationExpressions(inputs);
-						for(Input input:inputs) {
-							if(input.getOptions()!=null) {
-								Activator.compileActivationExpressions(input.getOptions());
-							}
-						}	
-					}
-					screenTemplates = screens;
-					
-				}} );
-			
-			context.put(SCREEN_TEMPLATE_KEY, this);
-			context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
-		} else {
-			
-		}
-	}
-	
-	public List<Input> getInputsForScreen(String screenId, Map<String,Object> contextBindings) {
-		assertInitialized();
-
-		List<Input> result = new ArrayList<>();
-		List<Input> inputs =  Activator.findAllMatches(contextBindings, screenTemplates.get(screenId));
-		for(Input input:inputs) {
-			List<Option> options = input.getOptions();
-			List<Option> activeOptions = null;
-			if(options!=null) {
-				activeOptions = Activator.findAllMatches(contextBindings, options);
-			}
-			result.add(new Input(input.getType(), input.getId(), input.getLabel(), activeOptions));
-		}
+		initializeScreenInputsIfNecessary();
 		
-		return result;
-	}
-	
-	private void assertInitialized() {
-		if(screenTemplates==null) {
-			throw new RuntimeException("Service not initialized");
-		}
+		context.put(ScreenInputAccessor.class, screenInputAccessor);
+		context.put(ScreenTemplateManager.class, screenTemplateManager);
+		context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
 	}
 
+	private void initializeScreenInputsIfNecessary() {
+		if(screenInputAccessor.getScreenInputsByScreenId("artefactTable").isEmpty()) {
+			screenInputAccessor.save(new ScreenInput("artefactTable", new Input(InputType.TEXT, "attributes.name", "Name", null)));
+		}
+		if(screenInputAccessor.getScreenInputsByScreenId("functionTable").isEmpty()) {
+			screenInputAccessor.save(new ScreenInput("functionTable", new Input(InputType.TEXT, "name", "Name", null)));
+		}
+		if(screenInputAccessor.getScreenInputsByScreenId("executionTable").isEmpty()) {
+			screenInputAccessor.save(new ScreenInput("executionTable", new Input(InputType.TEXT, "executionParameters.customParameters.env", "Environment", null)));
+		}
+		if(screenInputAccessor.getScreenInputsByScreenId("executionParameters").isEmpty()) {
+			screenInputAccessor.save(new ScreenInput("executionParameters", new Input(InputType.DROPDOWN, "env", "Environment", Arrays.asList(new Option[] {new Option("TEST"),new Option("PROD")}))));
+		}
+	}
 }

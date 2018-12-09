@@ -19,6 +19,7 @@
 package step.plugins.screentemplating;
 
 import step.commons.activation.AbstractActivableObject;
+import step.commons.activation.Expression;
 
 public class Option extends AbstractActivableObject {
 	
@@ -33,6 +34,12 @@ public class Option extends AbstractActivableObject {
 		this.value = value;
 	}
 
+	public Option(String value, String activationExpression) {
+		super();
+		this.setActivationExpression(new Expression(activationExpression));
+		this.value = value;
+	}
+	
 	public String getValue() {
 		return value;
 	}

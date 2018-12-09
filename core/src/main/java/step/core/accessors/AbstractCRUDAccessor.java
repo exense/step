@@ -36,7 +36,7 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 	
 	private Class<T> entityClass;
 	
-	private static JsonProvider jsonProvider = JsonProvider.provider();
+	protected static JsonProvider jsonProvider = JsonProvider.provider();
 		
 	public AbstractCRUDAccessor(MongoClientSession clientSession, String collectionName, Class<T> entityClass) {
 		super(clientSession);

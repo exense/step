@@ -1,0 +1,28 @@
+package step.plugins.screentemplating;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.json.JsonObjectBuilder;
+
+import step.core.accessors.AbstractCRUDAccessor;
+import step.core.accessors.MongoClientSession;
+
+public class ScreenInputAccessorImpl extends AbstractCRUDAccessor<ScreenInput> implements ScreenInputAccessor {
+
+	public ScreenInputAccessorImpl(MongoClientSession clientSession) {
+		super(clientSession, "screenInputs", ScreenInput.class);
+	}
+
+	@Override
+	public List<ScreenInput> getScreenInputsByScreenId(String screenId) {
+		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
+		builder.add("screenId", screenId);
+
+		List<ScreenInput> result = new ArrayList<>();
+		String query = builder.build().toString();
+		collection.find(query).as(ScreenInput.class).forEach(r->result.add(r));
+		return result;
+	}
+
+}

@@ -19,34 +19,74 @@
 package step.plugins.screentemplating;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
-import junit.framework.Assert;
-
-import org.eclipse.jetty.server.Handler;
+import org.bson.types.ObjectId;
 import org.junit.Test;
 
-import step.core.Controller.ServiceRegistrationCallback;
-import step.core.GlobalContext;
+import junit.framework.Assert;
+import step.commons.activation.Expression;
 
-public class ScreenTemplateServiceTest {
+public class ScreenTemplateManagerTest {
 
 	@Test
 	public void test() {
-		GlobalContext dummyContext = new GlobalContext();
-		dummyContext.setServiceRegistrationCallback(new ServiceRegistrationCallback() {
-			@Override
-			public void registerService(Class<?> serviceClass) {}
+		
+		ScreenInputAccessor a = new ScreenInputAccessor() {
 
 			@Override
-			public void registerHandler(Handler handler) {}
+			public List<ScreenInput> getScreenInputsByScreenId(String screenId) {
+				if(screenId.equals("testScreen1")) {
+					List<ScreenInput> result = new ArrayList<>();
+					result.add(new ScreenInput("testScreen1", new Input("Param1")));
+					result.add(new ScreenInput("testScreen1", new Input("Param2", Arrays.asList(new Option[] {new Option("Option1"), new Option("Option2")}))));
+					result.add(new ScreenInput("testScreen1", new Input(InputType.TEXT,"Param3","LabelParam3", Arrays.asList(new Option[] {new Option("Option1"), new Option("Option2"), new Option("Option3","user=='user1'")}))));
+					ScreenInput i = new ScreenInput("testScreen1", new Input(InputType.TEXT,"Param4","LabelParam4", Arrays.asList(new Option[] {new Option("Option1"), new Option("Option2")})));
+					i.getInput().setActivationExpression(new Expression("user=='user1'"));
+					result.add(i);
+					i = new ScreenInput("testScreen1", new Input("Param5", Arrays.asList(new Option[] {new Option("Option1"), new Option("Option2")})));
+					i.getInput().setActivationExpression(new Expression("user=='user1'"));
+					result.add(i);
+					return result;
+				}
+				throw new RuntimeException("Unknown screen "+screenId);
+			}
 
 			@Override
-			public void stop() {}
-		});
-		ScreenTemplatePlugin s = new ScreenTemplatePlugin();
-		s.executionControllerStart(dummyContext);
+			public void remove(ObjectId id) {
+			}
+
+			@Override
+			public ScreenInput save(ScreenInput entity) {
+				return null;
+			}
+
+			@Override
+			public void save(List<? extends ScreenInput> entities) {
+			}
+
+			@Override
+			public ScreenInput get(ObjectId id) {
+				return null;
+			}
+
+			@Override
+			public ScreenInput findByAttributes(Map<String, String> attributes) {
+				return null;
+			}
+
+			@Override
+			public Iterator<ScreenInput> getAll() {
+				return null;
+			}
+			
+		};
+
+		ScreenTemplateManager s = new ScreenTemplateManager(a);
 		
 		List<Input> inputs = s.getInputsForScreen("testScreen1", new HashMap<String, Object>());
 		Assert.assertEquals(3, inputs.size());
