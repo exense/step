@@ -280,17 +280,27 @@ angular.module('step',['ngStorage','ngCookies'])
   };
 }])
 
-.factory('MaintenanceService', function ($http, $rootScope, Preferences, $sce) {
+.factory('MaintenanceService', function ($http, $rootScope, Preferences, $sce, $interval) {
   var service = {};
   
   var maintenanceMessage;
   
-  $http.get('rest/admin/maintenance/message').then(function(res) {
-    maintenanceMessage = res.data;
-  })
+  function loadMaintenanceMessage() {
+    $http.get('rest/admin/maintenance/message').then(function(res) {
+      maintenanceMessage = res.data;
+    })
+  }
+  
+  loadMaintenanceMessage();
+  
+  $interval(loadMaintenanceMessage, 10000);
   
   service.getMaintenanceMessage = function() {
     return maintenanceMessage;
+  }
+  
+  service.reloadMaintenanceMessage = function() {
+    loadMaintenanceMessage();
   }
   
   service.trustAsHtml = function(html) {

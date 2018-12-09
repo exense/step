@@ -130,7 +130,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
   }
 })
 
-.controller('MaintenanceSettingsCtrl', function($scope, $http, ViewRegistry) {
+.controller('MaintenanceSettingsCtrl', function($scope, $http, ViewRegistry, MaintenanceService) {
   $scope.maintenanceMessage;
   
   $http.get("rest/admin/maintenance/message").then(function(res) {
@@ -139,6 +139,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
   
   $scope.saveMaintenanceMessage = function() {
     $http.post("rest/admin/maintenance/message", $scope.maintenanceMessage).then(function() {
+      MaintenanceService.reloadMaintenanceMessage();
     });
   }
 })
