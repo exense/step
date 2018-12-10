@@ -157,7 +157,7 @@ public class Executor {
 	
 	private JobDetail buildScheduledJob(ExecutiontTaskParameters task) {
 		JobDataMap data = new JobDataMap();
-		data.put(EXECUTION_TASK_ID, task.getId());
+		data.put(EXECUTION_TASK_ID, task.getId().toString());
 		data.put(EXECUTION_PARAMETERS, task.getExecutionsParameters());
 		
 		return JobBuilder.newJob().ofType(ExecutionJob.class).withIdentity(task.getId().toString()).usingJobData(data).build();
