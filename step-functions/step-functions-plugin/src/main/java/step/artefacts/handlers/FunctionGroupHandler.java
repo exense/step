@@ -60,6 +60,8 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		
 		TokenWrapper token;
 		
+		TokenWrapper localToken;
+		
 		final Map<String, Interest> additionalSelectionCriteria;
 
 		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria) {
@@ -73,6 +75,14 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 
 		public void setToken(TokenWrapper token) {
 			this.token = token;
+		}
+
+		public TokenWrapper getLocalToken() {
+			return localToken;
+		}
+
+		public void setLocalToken(TokenWrapper localToken) {
+			this.localToken = localToken;
 		}
 
 		public Map<String, Interest> getAdditionalSelectionCriteria() {

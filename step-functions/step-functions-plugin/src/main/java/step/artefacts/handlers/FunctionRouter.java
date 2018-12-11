@@ -35,7 +35,18 @@ public class FunctionRouter {
 		TokenWrapper token;
 		if(function.requiresLocalExecution()) {
 			// The function requires a local execution => get a local token
-			token = functionExecutionService.getLocalTokenHandle();
+			if(functionGroupContext!=null) {
+				synchronized (functionGroupContext) {
+					if(functionGroupContext.getLocalToken()!=null) {
+						token = functionGroupContext.getLocalToken();
+					} else {
+						token = functionExecutionService.getLocalTokenHandle();
+						functionGroupContext.setLocalToken(token);
+					}
+				}
+			} else {
+				token = functionExecutionService.getLocalTokenHandle();
+			}
 		} else {
 			if(functionGroupContext!=null) {
 				synchronized (functionGroupContext) {
