@@ -160,10 +160,10 @@ public class EventBrokerServices extends AbstractServices {
 	@Path("/events")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String, Object> clear() {
-		Map<String, Object> ret = new HashMap<>();
 		eb.clear();
-		ret.put("status","success");
-		return ret;
+		Map<String, Object> successMap = new HashMap<>();
+		successMap.put("success", "true");
+		return successMap;
 	}
 
 	@DELETE
@@ -171,10 +171,10 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Object> clearGroup(@PathParam("group") String group) {
-		Map<String, Object> ret = new HashMap<>();
 		eb.clearGroup(group);
-		ret.put("status","success");
-		return ret;
+		Map<String, Object> successMap = new HashMap<>();
+		successMap.put("success", "true");
+		return successMap;
 	}
 
 	@GET
@@ -182,26 +182,7 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Object> getStats() {
-		Map<String, Object> stats = new HashMap<>();
-		// static conf
-		stats.put("s_advStatsOn", eb.getAdvancedStatsOn());
-		
-		stats.put("s_circuitBreakerThreshold", eb.getCircuitBreakerThreshold());
-
-		//dynamic stats
-		stats.put("d_size", eb.getSize());
-		stats.put("d_sizeWaterMark", eb.getSizeWaterMark());
-		stats.put("d_youngestEvent", eb.findYoungestEvent());
-		stats.put("d_oldestEvent", eb.findOldestEvent());
-
-		if(eb.getAdvancedStatsOn()){
-			stats.put("a_cumulatedPuts", eb.getCumulatedPuts());
-			stats.put("a_cumulatedGets", eb.getCumulatedGets());
-			stats.put("a_cumulatedAttemptedGets", eb.getCumulatedAttemptedGets());
-			stats.put("a_cumulatedAttemptedGroupGets", eb.getCumulatedAttemptedGroupGets());
-			stats.put("a_cumulatedPeeks", eb.getCumulatedPeeks());
-		}
-		return stats;
+		return eb.getStats();
 	}
 
 	@GET
@@ -209,14 +190,7 @@ public class EventBrokerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Object> getGroupStats(@PathParam("group") String group) throws Exception {
-		if(group == null || group.isEmpty())
-			throw new Exception("Groupname is null or empty.");
-
-		Map<String, Object> stats = new HashMap<>();
-		stats.put("g_"+group+"_size", eb.getSizeForGroup(group));
-		stats.put("g_"+group+"_youngestEvent", eb.findYoungestEventForGroup(group));
-		stats.put("g_"+group+"_oldestEvent", eb.findOldestEventForGroup(group));
-		return stats;
+		return eb.getGroupStats(group);
 	}
 
 	@GET

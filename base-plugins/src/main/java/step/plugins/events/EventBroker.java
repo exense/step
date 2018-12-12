@@ -19,6 +19,7 @@
 package step.plugins.events;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -289,6 +290,44 @@ public class EventBroker {
 		return cumulatedPeeks.longValue();
 	}
 
+	public Map<String, Object> getStats() {
+		Map<String, Object> stats = new HashMap<>();
+		// static conf
+		stats.put("s_advStatsOn", getAdvancedStatsOn());
+
+		stats.put("s_circuitBreakerThreshold", getCircuitBreakerThreshold());
+
+		//dynamic stats
+		stats.put("d_size", getSize());
+		stats.put("d_sizeWaterMark", getSizeWaterMark());
+		stats.put("d_youngestEvent", findYoungestEvent());
+		stats.put("d_oldestEvent", findOldestEvent());
+
+		if(getAdvancedStatsOn()){
+			stats.put("a_cumulatedPuts", getCumulatedPuts());
+			stats.put("a_cumulatedGets", getCumulatedGets());
+			stats.put("a_cumulatedAttemptedGets", getCumulatedAttemptedGets());
+			stats.put("a_cumulatedAttemptedGroupGets", getCumulatedAttemptedGroupGets());
+			stats.put("a_cumulatedPeeks", getCumulatedPeeks());
+		}
+		return stats;
+	}
+
+	/**
+	 * @param group
+	 * @return
+	 */
+	public Map<String, Object> getGroupStats(String group) {
+		if(group == null || group.isEmpty())
+			throw new RuntimeException("Groupname is null or empty.");
+
+		Map<String, Object> stats = new HashMap<>();
+		stats.put("g_"+group+"_size", getSizeForGroup(group));
+		stats.put("g_"+group+"_youngestEvent", findYoungestEventForGroup(group));
+		stats.put("g_"+group+"_oldestEvent", findOldestEventForGroup(group));
+		return stats;
+	}
+
 	/** Unreliable due to the nature of CHM **/
 	public int getSizeWaterMark() {
 		return sizeWaterMark;
@@ -340,7 +379,7 @@ public class EventBroker {
 		this.cumulatedAttemptedGets = new LongAdder();
 		this.cumulatedAttemptedGroupGets = new LongAdder();
 		this.cumulatedPeeks = new LongAdder();
-		
+
 		this.sizeWaterMark = 0;
 	}
 	/****/
