@@ -48,6 +48,7 @@ public class EventBroker {
 	private int sizeWaterMark = 0;
 
 	public static String DEFAULT_GROUP_VALUE = "<default>";
+	public static String DEFAULT_NAME_VALUE = "<default>";
 
 	public EventBroker(){
 		this.circuitBreakerThreshold = 5000L;
@@ -119,6 +120,9 @@ public class EventBroker {
 		if(event.getGroup() == null)
 			event.setGroup(DEFAULT_GROUP_VALUE);
 
+		if(event.getName() == null)
+			event.setName(DEFAULT_NAME_VALUE);
+		
 		Event ret = null;
 		Event putRetEvent = null;
 		String mapKey = null;
@@ -190,12 +194,15 @@ public class EventBroker {
 
 	private String lookup(String searchedGroup, String searchedName){
 		if(searchedGroup == null || searchedGroup.isEmpty() || searchedGroup.equals("null"))
-			throw new RuntimeException("group can not be null, empty or \"null\", found value=" + searchedGroup);
-
+			searchedGroup = "*";
+		
+		if(searchedName == null || searchedName.isEmpty() || searchedName.equals("null"))
+			searchedName = "*";
+			
 		Optional<Event> event;
 
 		// loose group search
-		if(searchedGroup.equals("*") || searchedName == null || searchedName.isEmpty() || searchedName.equals("null")){
+		if(searchedName.equals("*")){
 			event = lookupLooseGroupBasedEvent(searchedGroup);
 		}
 		else{ // narrow name-based search
@@ -229,7 +236,7 @@ public class EventBroker {
 	private Optional<Event> lookupNamedGroupBasedEvent(String searchedGroup, String searchedName){
 		return events.values().stream()
 				.filter(e -> e.getGroup().equals(searchedGroup) || searchedGroup.equals("*"))
-				.filter(e -> e.getName().equals(searchedName))
+				.filter(e -> e.getName().equals(searchedName) || searchedName.equals("*")) //Just in case
 				.findAny();
 	}
 

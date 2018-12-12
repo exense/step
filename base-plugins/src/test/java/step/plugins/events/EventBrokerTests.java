@@ -226,6 +226,31 @@ public class EventBrokerTests {
 		Assert.assertEquals(true, eb.getDistinctGroupNames().contains("foo"));
 		Assert.assertEquals(true, eb.getDistinctGroupNames().contains("bar"));
 	}
+	
+	@Test
+	public void testWildCards() throws Exception{
+		String id = null;
+		id = eb.put(new Event().setGroup("lorel")).getId();
+		Assert.assertEquals(id, eb.get("*", "*").getId());
+		
+		id = eb.put(new Event().setGroup("lorel").setName("hardy")).getId();
+		Assert.assertEquals(id, eb.get("*", "hardy").getId());
+		
+		id = eb.put(new Event().setGroup("lorel").setName("hardy")).getId();
+		Assert.assertEquals(id, eb.get("lorel", "*").getId());
+		
+		id = eb.put(new Event().setName("hardy")).getId();
+		Assert.assertEquals(id, eb.get("*", "hardy").getId());
+		
+		id = eb.put(new Event().setName("hardy")).getId();
+		Assert.assertEquals(id, eb.get(null, "hardy").getId());
+		
+		id = eb.put(new Event().setGroup("lorel")).getId();
+		Assert.assertNull(eb.get(null, "hardy"));
+
+		id = eb.put(new Event().setGroup("lorel").setName("hardy")).getId();
+		Assert.assertEquals(id, eb.get(null, null).getId());
+	}
 
 	@Test
 	public void testGroupSizeAndContent() throws Exception{
