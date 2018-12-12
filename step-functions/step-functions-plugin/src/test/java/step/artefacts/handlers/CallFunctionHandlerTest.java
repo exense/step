@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,14 +28,14 @@ import javax.json.Json;
 import javax.json.JsonObject;
 
 import org.bson.types.ObjectId;
+import org.junit.After;
 import org.junit.Test;
 
 import junit.framework.Assert;
 import step.artefacts.CallFunction;
-import step.artefacts.handlers.CallFunctionHandler;
-import step.artefacts.handlers.FunctionRouter;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.commons.helpers.FileHelper;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -68,6 +69,13 @@ public class CallFunctionHandlerTest {
 	private static final ObjectId FUNCTION_ID_ERROR = new ObjectId();
 	private static final ObjectId FUNCTION_ID_SUCCESS = new ObjectId();
 
+	@After
+	public void cleanup() {
+		// delete the attachment folder created during the tests
+		File attachmentFolder = new File("attachments");
+		FileHelper.deleteFolder(attachmentFolder);
+	}
+	
 	@Test
 	public void test() {
 		ExecutionContext executionContext = buildExecutionContext();
