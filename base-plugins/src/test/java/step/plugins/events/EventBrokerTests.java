@@ -248,6 +248,8 @@ public class EventBrokerTests {
 		id = eb.put(new Event().setGroup("lorel")).getId();
 		Assert.assertNull(eb.get(null, "hardy"));
 
+		eb.clear();
+		
 		id = eb.put(new Event().setGroup("lorel").setName("hardy")).getId();
 		Assert.assertEquals(id, eb.get(null, null).getId());
 	}

@@ -18,10 +18,11 @@
  *******************************************************************************/
 package step.plugins.events;
 
+import java.io.Closeable;
 import java.util.Map;
 import java.util.Set;
 
-public interface EventBrokerClient {
+public interface EventBrokerClient extends Closeable{
 	
 	public Map<String, Event> getEventBrokerIdMap();
 
@@ -60,5 +61,5 @@ public interface EventBrokerClient {
 	public int getGroupSize(String group);
 
 	public Map<String, Object> setCircuitBreakerThreshold(long circuitBreakerThreshold);
-
+	
 }

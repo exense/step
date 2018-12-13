@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.plugins.events;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -200,6 +201,14 @@ public class InMemoryEventBrokerClient implements EventBrokerClient{
 		Map<String, Object> successMap = new HashMap<>();
 		successMap.put("success", "true");
 		return successMap;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.io.Closeable#close()
+	 */
+	@Override
+	public void close() throws IOException {
+		// nothing to do here
 	}
 
 }
