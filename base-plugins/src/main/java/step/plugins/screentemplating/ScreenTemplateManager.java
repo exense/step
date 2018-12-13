@@ -9,6 +9,8 @@ import step.commons.activation.Activator;
 
 public class ScreenTemplateManager {
 
+	protected final List<ScreenTemplateChangeListener> listeners = new ArrayList<>();
+	
 	protected ScreenInputAccessor screenInputAccessor;
 
 	public ScreenTemplateManager(ScreenInputAccessor screenInputAccessor) {
@@ -31,6 +33,14 @@ public class ScreenTemplateManager {
 		}
 		
 		return result;
+	}
+	
+	public void registerListener(ScreenTemplateChangeListener listener) {
+		listeners.add(listener);
+	}
+	
+	public void notifyChange() {
+		listeners.forEach(l->l.onChange());
 	}
 
 }

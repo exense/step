@@ -75,7 +75,7 @@ public class ScreenTemplateService extends AbstractServices {
 	@Secured
 	@Path("/input/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public ScreenInput getInput(@PathParam("id") String id) {		
+	public ScreenInput getInput(@PathParam("id") String id) {
 		return screenInputAccessor.get(new ObjectId(id));
 	}
 	
@@ -85,6 +85,7 @@ public class ScreenTemplateService extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public void deleteInput(@PathParam("id") String id) {		
 		screenInputAccessor.remove(new ObjectId(id));
+		screenTemplateManager.notifyChange();
 	}
 	
 	@POST
@@ -93,6 +94,7 @@ public class ScreenTemplateService extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public void saveInput(ScreenInput screenInput) {
 		screenInputAccessor.save(screenInput);
+		screenTemplateManager.notifyChange();
 	}
 
 	private Map<String, Object> getContextBindings(UriInfo uriInfo, ContainerRequestContext crc) {

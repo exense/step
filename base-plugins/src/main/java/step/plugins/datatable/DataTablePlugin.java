@@ -22,12 +22,12 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 
-@Plugin
+@Plugin(prio=2)
 public class DataTablePlugin extends AbstractPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) {
-		context.put(DataTableRegistry.class, new DataTableRegistry());
+		context.put(DataTableRegistry.class, new DataTableRegistry(context));
 		context.getServiceRegistrationCallback().registerService(DataTableServices.class);
 	}
 

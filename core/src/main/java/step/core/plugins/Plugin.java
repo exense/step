@@ -24,6 +24,10 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Plugin {
 
+	/**
+	 * @return the priority of loading of the plugin. Plugins with the lowest value will be executed first 
+	 * 
+	 */
 	int prio() default 1;
 	
 }

@@ -66,8 +66,6 @@ public class TableService extends AbstractServices {
 	
 	protected CollectionRegistry collectionRegistry;
 	
-	protected DataTableRegistry dataTableRegistry;
-	
 	protected ExportTaskManager exportTaskManager;
 	
 	ExecutorService reportExecutor = Executors.newFixedThreadPool(2);
