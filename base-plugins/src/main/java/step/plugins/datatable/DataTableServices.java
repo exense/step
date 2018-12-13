@@ -23,14 +23,12 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -54,22 +52,15 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
-import step.core.accessors.Collection;
 import step.core.accessors.CollectionFind;
 import step.core.accessors.SearchOrder;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.execution.model.ExecutionStatus;
 import step.core.export.ExportTaskManager;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
-import step.plugins.datatable.formatters.custom.ExecutionSummaryFormatter;
-import step.plugins.screentemplating.Input;
-import step.plugins.screentemplating.ScreenTemplateManager;
 
 @Singleton
 @Path("datatable")
@@ -81,87 +72,12 @@ public class DataTableServices extends AbstractServices {
 	
 	protected ExportTaskManager exportTaskManager;
 	
-	ExecutorService reportExecutor = Executors.newFixedThreadPool(2);
+	protected final ExecutorService reportExecutor = Executors.newFixedThreadPool(2);
 	
 	@PostConstruct
 	public void init() {
 		exportTaskManager = new ExportTaskManager(getContext().getAttachmentManager());
-		
-		MongoDatabase database = getContext().getMongoClientSession().getMongoDatabase();
-		
 		dataTableRegistry = getContext().get(DataTableRegistry.class);
-		
-		BackendDataTable executions = new BackendDataTable(new Collection(database, "executions"));
-		executions.addColumn("ID", "_id").addColumn("Description", "description").addDateColumn("Start time", "startTime")
-		.addDateColumn("End time", "endTime").addColumn("User", "executionParameters.userID");
-				
-		ScreenTemplateManager screenTemplates = getContext().get(ScreenTemplateManager.class);
-		if(screenTemplates!=null) {
-			for(Input input:screenTemplates.getInputsForScreen("executionTable", null)) {
-				executions.addColumn(input.getLabel(), input.getId());
-			}
-		}
-		executions.addTextWithDropdownColumn("Status", "status", Arrays.asList(ExecutionStatus.values()).stream().map(Object::toString).collect(Collectors.toList()));
-		executions.addCustomColumn("Summary", new ExecutionSummaryFormatter(controller.getContext()));
-		
-		ColumnBuilder leafReportNodesColumns = new ColumnBuilder();
-		leafReportNodesColumns.addDateColumn("Begin", "executionTime").addColumn("Name","name").addJsonColumn("Keyword","functionAttributes").addColumn("Status","status").addColumn("Error", "error")
-		.addColumn("Input","input").addColumn("Output","output").addColumn("Duration","duration").addColumn("Adapter", "adapter");
-
-		// Report table
-		
-		List<String> reportSearchAttributes = new ArrayList<>();
-		if(screenTemplates!=null) {
-			for(Input input:screenTemplates.getInputsForScreen("functionTable", null)) {
-				reportSearchAttributes.add("functionAttributes."+input.getId());
-			}
-		}
-		reportSearchAttributes.add("input");
-		reportSearchAttributes.add("output");
-		reportSearchAttributes.add("error.msg");
-		reportSearchAttributes.add("name");
-		
-		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports"));
-		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step",reportSearchAttributes)
-		.addTextWithDropdownColumnOptimized("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
-		.setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
-		
-		BackendDataTable artefactTable = new BackendDataTable(new Collection(database, "artefacts"));
-		artefactTable.addColumn("ID", "_id");
-		if(screenTemplates!=null) {
-			for(Input input:screenTemplates.getInputsForScreen("artefactTable", null)) {
-				artefactTable.addColumn(input.getLabel(), input.getId());
-			}
-		}
-		artefactTable.addColumn("Type", "_class").addRowAsJson("Actions");
-		artefactTable.setQuery(new CollectionQueryFactory() {
-			@Override
-			public Bson buildAdditionalQuery(JsonObject filter) {
-				return new Document("root", true);
-			}
-		});
-		
-		BackendDataTable functionTable = new BackendDataTable(new Collection(database, "functions"));
-		functionTable.addColumn("ID", "_id");
-		if(screenTemplates!=null) {
-			for(Input input:screenTemplates.getInputsForScreen("functionTable", null)) {
-				functionTable.addColumn(input.getLabel(), "attributes."+input.getId());
-			}
-		}
-		functionTable.addColumn("Type", "type");
-		functionTable.addRowAsJson("Actions");
-		
-		BackendDataTable leafReportNodesOQL = new BackendDataTable(new Collection(database, "reports"));
-		leafReportNodesOQL.addColumn("ID", "_id").addColumn("Execution", "executionID").addTimeColumn("Begin", "executionTime").addRowAsJson("Step",reportSearchAttributes)
-		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
-		.setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
-
-		dataTableRegistry.addTable("executions", executions);
-		dataTableRegistry.addTable("reports", leafReportNodes);
-		dataTableRegistry.addTable("reportsByOQL", leafReportNodesOQL);
-		dataTableRegistry.addTable("artefacts", artefactTable);
-		dataTableRegistry.addTable("functions", functionTable);		
-
 	}
 	
 	@PreDestroy
