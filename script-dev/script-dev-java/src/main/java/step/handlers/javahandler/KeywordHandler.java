@@ -20,7 +20,6 @@ package step.handlers.javahandler;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URLClassLoader;
 
 import javax.json.JsonObject;
 
@@ -60,7 +59,7 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		URLClassLoader cl = (URLClassLoader) Thread.currentThread().getContextClassLoader();
+		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		
 		String kwClassnames = input.getProperties().get(KEYWORD_CLASSES);
 		if(kwClassnames != null && kwClassnames.trim().length()>0) {
