@@ -160,9 +160,9 @@ public class EventBrokerTests {
 		eb.put(new Event());
 		eb.put(new Event());
 		
-		Assert.assertEquals(1, eb.getIdBasedEventMap(1, 1).size());
-		Assert.assertEquals(1, eb.getIdBasedEventMap(2, 2).size());
-		Assert.assertEquals(2, eb.getIdBasedEventMap(2, 3).size());
+		Assert.assertEquals(1, eb.getIdBasedEventMap(1, 2).size());
+		Assert.assertEquals(1, eb.getIdBasedEventMap(2, 3).size());
+		Assert.assertEquals(2, eb.getIdBasedEventMap(2, 4).size());
 	}
 	
 	@Test
