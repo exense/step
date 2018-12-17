@@ -154,6 +154,18 @@ public class EventBrokerTests {
 	}
 
 	@Test
+	public void testSkipLimit() throws Exception{
+		eb.put(new Event());
+		eb.put(new Event());
+		eb.put(new Event());
+		eb.put(new Event());
+		
+		Assert.assertEquals(1, eb.getIdBasedEventMap(1, 1).size());
+		Assert.assertEquals(1, eb.getIdBasedEventMap(2, 2).size());
+		Assert.assertEquals(2, eb.getIdBasedEventMap(2, 3).size());
+	}
+	
+	@Test
 	public void testCircuitBreaker() throws Exception{
 		long circuitBreakerThreshold = 3L;
 		eb.setCircuitBreakerThreshold(circuitBreakerThreshold);

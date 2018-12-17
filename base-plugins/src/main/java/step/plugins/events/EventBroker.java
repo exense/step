@@ -81,8 +81,8 @@ public class EventBroker {
 
 	public Map<String, Event> getIdBasedEventMap(int skip, int limit) {
 		return events.values().stream()
-				.skip(skip)
 				.limit(limit)
+				.skip(skip)
 				.collect(Collectors.toMap(Event::getId, e -> e));
 	}
 
@@ -400,8 +400,8 @@ public class EventBroker {
 	public Set<Event> getGroupEvents(String group, int skip, int limit){
 		return events.values().stream()
 				.filter(e -> e.getGroup().equals(group))
-				.skip(skip)
 				.limit(limit)
+				.skip(skip)
 				.collect(Collectors.toSet());
 	}
 
@@ -411,8 +411,8 @@ public class EventBroker {
 
 	public Map<String, Set<Event>> getGroupBasedEventMap(int skip, int limit){
 		return events.values().stream()
-				.skip(skip)
 				.limit(limit)
+				.skip(skip)
 				.collect(Collectors.groupingBy(Event::getGroup, Collectors.toSet()));
 	}
 
