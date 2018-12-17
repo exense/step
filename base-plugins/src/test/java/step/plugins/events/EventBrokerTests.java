@@ -155,14 +155,18 @@ public class EventBrokerTests {
 
 	@Test
 	public void testSkipLimit() throws Exception{
-		eb.put(new Event());
-		eb.put(new Event());
-		eb.put(new Event());
-		eb.put(new Event());
+		eb.put(new Event().setGroup("A"));
+		eb.put(new Event().setGroup("B"));
+		eb.put(new Event().setGroup("C"));
+		eb.put(new Event().setGroup("D"));
 		
 		Assert.assertEquals(1, eb.getIdBasedEventMap(1, 2).size());
 		Assert.assertEquals(1, eb.getIdBasedEventMap(2, 3).size());
 		Assert.assertEquals(2, eb.getIdBasedEventMap(2, 4).size());
+		
+		Assert.assertEquals(1, eb.getGroupBasedEventMap(1, 2).size());
+		Assert.assertEquals(1, eb.getGroupBasedEventMap(2, 3).size());
+		Assert.assertEquals(2, eb.getGroupBasedEventMap(2, 4).size());
 	}
 	
 	@Test
