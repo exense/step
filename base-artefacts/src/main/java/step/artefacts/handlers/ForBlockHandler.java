@@ -92,8 +92,10 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 			
 			AtomicInteger failedLoopsCounter = new AtomicInteger();
 			AtomicInteger loopsCounter = new AtomicInteger();
-			IterationRunnable iterationRunnable = new IterationRunnable(testArtefact, selectedChildren, node, dataSet, failedLoopsCounter, loopsCounter);
-			
+			AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
+
+			IterationRunnable iterationRunnable = new IterationRunnable(testArtefact, selectedChildren, node, dataSet, failedLoopsCounter, loopsCounter, reportNodeStatusComposer);
+						
 			Integer numberOfThreads = testArtefact.getThreads().get();
 			if(numberOfThreads>1) {
 				ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
@@ -109,11 +111,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 			
 			node.setErrorCount(failedLoopsCounter.get());
 			node.setCount(loopsCounter.get());
-			if(failedLoopsCounter.get()>0) {
-				node.setStatus(ReportNodeStatus.FAILED);
-			} else {
-				node.setStatus(ReportNodeStatus.PASSED);
-			}
+			node.setStatus(reportNodeStatusComposer.getParentStatus());
 		} catch(Exception e) {
 			failWithException(node, e);
 		} finally {
@@ -131,17 +129,19 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		
 		private final DataSet<?> dataSet;
 		private final AtomicInteger failedLoops;
+		private final AtomicReportNodeStatusComposer reportNodeStatusComposer;
 		private final ReportNode node;
 		private final AbstractForBlock testArtefact;
 		private final AtomicInteger loopsCounter;
 		private final List<AbstractArtefact> selectedChildren;
 
-		public IterationRunnable(AbstractForBlock testArtefact, List<AbstractArtefact> selectedChildren, ReportNode node, DataSet<?> dataSet, AtomicInteger failedLoops, AtomicInteger loopsCounter) {
+		public IterationRunnable(AbstractForBlock testArtefact, List<AbstractArtefact> selectedChildren, ReportNode node, DataSet<?> dataSet, AtomicInteger failedLoops, AtomicInteger loopsCounter, AtomicReportNodeStatusComposer reportNodeStatusComposer) {
 			super();
 			this.testArtefact = testArtefact;
 			this.node = node;
 			this.dataSet = dataSet;
 			this.failedLoops = failedLoops;
+			this.reportNodeStatusComposer = reportNodeStatusComposer;
 			this.loopsCounter = loopsCounter;
 			this.selectedChildren = selectedChildren;
 		}
@@ -170,6 +170,8 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					}
 					
 					ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
+					
+					reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
 					
 					if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
 						failedLoops.incrementAndGet();
