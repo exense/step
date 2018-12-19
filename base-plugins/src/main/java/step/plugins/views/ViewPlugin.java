@@ -2,8 +2,11 @@ package step.plugins.views;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
@@ -13,6 +16,8 @@ import step.core.plugins.Plugin;
 
 @Plugin
 public class ViewPlugin extends AbstractPlugin {
+	
+	private static Logger logger = LoggerFactory.getLogger(ViewPlugin.class);
 
 	public static final String VIEW_PLUGIN_KEY = "ViewPlugin_Instance";
 	
@@ -72,37 +77,48 @@ public class ViewPlugin extends AbstractPlugin {
 	@Override
 	public void executionStart(ExecutionContext context) {
 		for(AbstractView<ViewModel> view:register.values()) {
-			ViewModel model = view.init();
-			model.setExecutionId(context.getExecutionId());
-			model.setViewId(view.getViewId());
-			view.addModel(context.getExecutionId(), model);
+			try {
+				ViewModel model = view.init();
+				model.setExecutionId(context.getExecutionId());
+				model.setViewId(view.getViewId());
+				view.addModel(context.getExecutionId(), model);
+			} catch (Exception e) {
+				logger.error("Error while initializing view "+view.getViewId(), e);
+			}
 		}
 	}
 
 	@Override
 	public void afterExecutionEnd(ExecutionContext context) {
 		for(AbstractView<?> view:register.values()) {
-			ViewModel model = view.removeModel(context.getExecutionId());
-			accessor.save(model);
-		}
-	}
-
-	@Override
-	public void afterReportNodeSkeletonCreation(ReportNode node) {
-		for(AbstractView<ViewModel> view:register.values()) {
-			ViewModel model = view.getModel(node.getExecutionID());
-			synchronized (model) {
-				view.afterReportNodeSkeletonCreation(model, node);				
+			try {
+				ViewModel model = view.removeModel(context.getExecutionId());
+				accessor.save(model);
+			} catch(Exception e) {
+				logger.error("Error while saving view "+view.getViewId(), e);
 			}
 		}
 	}
 
 	@Override
+	public void afterReportNodeSkeletonCreation(ReportNode node) {
+		invokeViewHooks(node, (model, view)->view.afterReportNodeSkeletonCreation(model, node));
+	}
+
+	@Override
 	public void afterReportNodeExecution(ReportNode node) {
+		invokeViewHooks(node, (model, view)->view.afterReportNodeExecution(model, node));
+	}
+	
+	protected void invokeViewHooks(ReportNode node, BiConsumer<ViewModel, AbstractView<ViewModel>> consumer) {
 		for(AbstractView<ViewModel> view:register.values()) {
 			ViewModel model = view.getModel(node.getExecutionID());
 			synchronized (model) {
-				view.afterReportNodeExecution(model, node);
+				try {
+					consumer.accept(model, view);
+				} catch(Exception e) {
+					logger.error("Error while invoking view "+view.getViewId()+" for node "+node.toString(), e);
+				}
 			}
 		}
 	}
