@@ -20,8 +20,12 @@ package step.artefacts.handlers;
 
 import static junit.framework.Assert.assertEquals;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import step.artefacts.CheckArtefact;
@@ -30,6 +34,9 @@ import step.artefacts.reports.ForBlockReportNode;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.plans.Plan;
+import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.DefaultPlanRunner;
 import step.datapool.sequence.IntSequenceDataPool;
 
 public class ForHandlerTest extends AbstractArtefactHandlerTest {
@@ -94,6 +101,7 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 					context.getVariablesManager().updateVariable("break", "true");
 				}
 				i.addAndGet(1);
+				context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 			}), f);
 		
 		execute(f);
@@ -128,6 +136,34 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		assertEquals(2, child.getCount());
 		assertEquals(2, child.getErrorCount());		
+	}
+	
+	@Test
+	public void testTechnicalError() throws IOException, TimeoutException, InterruptedException {
+		ForBlock forBlock = new ForBlock();
+
+		IntSequenceDataPool conf = new IntSequenceDataPool();
+		conf.setStart(new DynamicValue<Integer>(1));;
+		conf.setEnd(new DynamicValue<Integer>(2));;
+		
+		forBlock.setDataSource(conf);
+		
+		
+		Plan plan = PlanBuilder.create().startBlock(forBlock).add(new CheckArtefact(c -> {
+				c.getCurrentReportNode().setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+			})).endBlock().build();
+		
+		DefaultPlanRunner runner = new DefaultPlanRunner();
+		
+		runner.run(plan).waitForExecutionToTerminate().visitReportTree(e->{
+			// Root node
+			if(e.getParentNode()==null) {
+				Assert.assertEquals(ForBlockReportNode.class, e.getNode().getClass());;
+				// Assert that the status of the root node is TECHNICAL_ERROR
+				Assert.assertEquals(ReportNodeStatus.TECHNICAL_ERROR, e.getNode().getStatus());
+			}
+		});
+		
 	}
 }
 
