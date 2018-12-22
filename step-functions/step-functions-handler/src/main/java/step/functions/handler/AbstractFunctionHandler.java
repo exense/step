@@ -11,6 +11,7 @@ import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.contextbuilder.ApplicationContextBuilderException;
+import step.grid.contextbuilder.LocalFolderApplicationContextFactory;
 import step.grid.contextbuilder.LocalResourceApplicationContextFactory;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileManagerClient;
@@ -94,6 +95,29 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalApplicationContext(String branch, ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
 		LocalResourceApplicationContextFactory localContext = new LocalResourceApplicationContextFactory(classLoader, resourceName);
+		applicationContextBuilder.pushContext(branch, localContext);			
+	}
+	
+	/**
+	 * Push a new context based on a local folder containing a list of jars to the master branch. See {@link ApplicationContextBuilder} for details
+	 * 
+	 * @param libFolder the folder containing the jars to be pushed to the context
+	 * @throws ApplicationContextBuilderException
+	 */
+	protected void pushLocalFolderApplicationContext(File libFolder) throws ApplicationContextBuilderException {
+		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
+		applicationContextBuilder.pushContext(ApplicationContextBuilder.MASTER, localContext);			
+	}
+	
+	/**
+	 * Push a new context based on a local folder containing a list of jars to the branch specified as argument. See {@link ApplicationContextBuilder} for details
+	 * 
+	 * @param branch the name of the branch on which the context has to be pushed
+	 * @param libFolder the folder containing the jars to be pushed to the context
+	 * @throws ApplicationContextBuilderException
+	 */
+	protected void pushLocalFolderApplicationContext(String branch, File libFolder) throws ApplicationContextBuilderException {
+		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
 		applicationContextBuilder.pushContext(branch, localContext);			
 	}
 	
