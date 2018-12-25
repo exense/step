@@ -27,7 +27,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	
 	private ApplicationContextBuilder applicationContextBuilder;
 	
-	public FunctionHandlerFactory functionHandlerFactory = new FunctionHandlerFactory();
+	public FunctionHandlerFactory functionHandlerFactory;
 	
 	public FunctionMessageHandler() {
 		super();
@@ -38,13 +38,18 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	@Override
 	public void init(AgentTokenServices agentTokenServices) {
 		super.init(agentTokenServices);
-		applicationContextBuilder = agentTokenServices.getApplicationContextBuilder();
+		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader());
 		
 		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
+		
+		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient(), 
+				agentTokenServices.getAgentProperties());
 	}
 
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage inputMessage) throws Exception {
+		applicationContextBuilder.resetContext();
+		
 		FileVersionId functionPackage = getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties());
 		if(functionPackage != null) {
 			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties()));
@@ -52,13 +57,11 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		}
 		
 		return applicationContextBuilder.runInContext(()->{
-			// Reset the application context of the forked branch
-			applicationContextBuilder.resetContext(AbstractFunctionHandler.FORKED_BRANCH);
-			
 			// Instantiate the function handler 
 			String handlerClass = inputMessage.getProperties().get(FUNCTION_HANDLER_KEY);
 			@SuppressWarnings("rawtypes")
-			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext().getClassLoader(), handlerClass, token);
+			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext().getClassLoader(), 
+					handlerClass, token.getSession(), token.getTokenReservationSession());
 			
 			// Deserialize the Input from the message payload
 			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());

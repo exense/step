@@ -30,7 +30,6 @@ import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
 
 public class KeywordHandler extends JsonBasedFunctionHandler {
 	
@@ -73,7 +72,7 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 						if (((annotatedFunctionName == null || annotatedFunctionName.length() == 0)
 								&& m.getName().equals(input.getFunction()))
 								|| annotatedFunctionName.equals(input.getFunction())) {
-							return invokeMethod(m, getToken(), input);
+							return invokeMethod(m, input);
 						}		
 					}
 				}			
@@ -83,7 +82,7 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 		throw new Exception("Unable to find method annoted by '" + Keyword.class.getName() + "' with name=='"+ input.getFunction() + "'");
 	}
 
-	private Output<JsonObject> invokeMethod(Method m, AgentTokenWrapper token, Input<JsonObject> input)
+	private Output<JsonObject> invokeMethod(Method m, Input<JsonObject> input)
 			throws Exception {
 		Class<?> clazz = m.getDeclaringClass();
 		Object instance = clazz.newInstance();
@@ -97,8 +96,8 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 
 		if (instance instanceof AbstractKeyword) {
 			AbstractKeyword script = (AbstractKeyword) instance;
-			script.setTokenSession(token.getSession());
-			script.setSession(token.getTokenReservationSession());
+			script.setTokenSession(getTokenSession());
+			script.setSession(getTokenReservationSession());
 			script.setInput(input.getPayload());
 			script.setProperties(mergeAllProperties(input));
 			script.setOutputBuilder(outputBuilder);

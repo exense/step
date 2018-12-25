@@ -33,9 +33,8 @@ import org.slf4j.LoggerFactory;
 import step.functions.handler.FunctionHandlerFactory;
 import step.functions.io.Input;
 import step.functions.io.Output;
-import step.grid.agent.AgentTokenServices;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
+import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 
 public class KeywordRunner {
@@ -44,27 +43,23 @@ public class KeywordRunner {
 
 	public static class ExecutionContext {
 		
-		AgentTokenWrapper token;
+		protected KeywordHandler handler;
 		
-		KeywordHandler handler;
+		protected List<Class<?>> functionClasses;
 		
-		List<Class<?>> functionClasses;
+		private TokenSession tokenSession;
+		private TokenReservationSession tokenReservationSession;
 		
 		public ExecutionContext(List<Class<?>> functionClasses, Map<String, String> properties, boolean throwExceptionOnError) {
 			super();
 			this.functionClasses = functionClasses;
-			token = new AgentTokenWrapper();
-			if(properties!=null) {
-				token.setProperties(properties);
-			}
-			token.setTokenReservationSession(new TokenReservationSession());
 			
-			AgentTokenServices tokenServices = new AgentTokenServices(null);
-			tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
-			token.setServices(tokenServices);
+			tokenSession = new TokenSession();
+			tokenReservationSession = new TokenReservationSession();
+			
 			handler = new KeywordHandler(throwExceptionOnError);
-			FunctionHandlerFactory factory = new FunctionHandlerFactory();
-			factory.initialize(token, handler);
+			FunctionHandlerFactory factory = new FunctionHandlerFactory(new ApplicationContextBuilder(), null, properties);
+			factory.initialize(handler, tokenSession, tokenReservationSession);
 		} 
 		
 		public void setThrowExceptionOnError(boolean throwExceptionOnError) {
@@ -95,7 +90,6 @@ public class KeywordRunner {
 			return execute(function, argument, properties);
 		}
 
-		@SuppressWarnings("unchecked")
 		private Output<JsonObject> execute(String function, JsonObject argument, Map<String, String> properties) throws Exception {
 			Input<JsonObject> input = new Input<>();
 			input.setFunction(function);
@@ -118,8 +112,8 @@ public class KeywordRunner {
 		}
 		
 		public void close() {
-			token.getSession().close();
-			token.getTokenReservationSession().close();
+			tokenSession.close();
+			tokenReservationSession.close();
 		}
 	}
 	

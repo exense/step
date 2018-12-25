@@ -38,7 +38,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	protected Output<JsonObject> handle(Input<JsonObject> input) {
-		ExecutionContext executionContext = (ExecutionContext) getToken().getToken().getAttachedObject(CallFunctionHandler.EXECUTION_CONTEXT_KEY);
+		ExecutionContext executionContext = (ExecutionContext) getTokenReservationSession().get(CallFunctionHandler.EXECUTION_CONTEXT_KEY);
 		
 		String artefactId = input.getProperties().get(CallFunctionHandler.ARTEFACTID);
 		String parentReportId = input.getProperties().get(CallFunctionHandler.PARENTREPORTID);

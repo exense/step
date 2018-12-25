@@ -36,10 +36,11 @@ public class TestFunctionHandler extends AbstractFunctionHandler<TestInput, Test
 		
 		//runInContext(callable)
 		
-		// Test getToken method
-		AgentTokenWrapper token = getToken();
-		Assert.assertNotNull(token);
-		Assert.assertNotNull(token.getServices());
+		// Test getSessions methods
+		Assert.assertNotNull(getTokenSession());
+		Assert.assertNull(getTokenReservationSession());
+		
+		Assert.assertNotNull(getProperties());
 
 		// Test delegation
 		return delegate(SecondTestFunctionHandler.class.getName(), input);

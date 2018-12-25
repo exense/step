@@ -7,7 +7,8 @@ import java.util.concurrent.Callable;
 
 import step.functions.io.Input;
 import step.functions.io.Output;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.agent.tokenpool.TokenReservationSession;
+import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.contextbuilder.ApplicationContextBuilderException;
@@ -21,18 +22,58 @@ import step.grid.filemanager.FileVersionId;
 
 public abstract class AbstractFunctionHandler<IN, OUT> {
 
-	private AgentTokenWrapper token;
 	private FileManagerClient fileManagerClient;
 	private ApplicationContextBuilder applicationContextBuilder;
 	private FunctionHandlerFactory functionHandlerFactory;
 	
+	private TokenSession tokenSession;
+	private TokenReservationSession tokenReservationSession;
+	
+	private Map<String, String> properties;
+	
 	public static final String FORKED_BRANCH = "forkedBranch";
 
-	public void initialize(AgentTokenWrapper token) {
-		this.token = token;
-		applicationContextBuilder = token.getServices().getApplicationContextBuilder();
-		functionHandlerFactory = new FunctionHandlerFactory();
-		fileManagerClient = token.getServices().getFileManagerClient();
+	protected FunctionHandlerFactory getFunctionHandlerFactory() {
+		return functionHandlerFactory;
+	}
+
+	protected void setFunctionHandlerFactory(FunctionHandlerFactory functionHandlerFactory) {
+		this.functionHandlerFactory = functionHandlerFactory;
+	}
+
+	protected void setApplicationContextBuilder(ApplicationContextBuilder applicationContextBuilder) {
+		this.applicationContextBuilder = applicationContextBuilder;
+	}
+
+	protected void setFileManagerClient(FileManagerClient fileManagerClient) {
+		this.fileManagerClient = fileManagerClient;
+	}
+
+	protected void setProperties(Map<String, String> properties) {
+		this.properties = properties;
+	}
+
+	protected Map<String, String> getProperties() {
+		return properties;
+	}
+
+	protected TokenSession getTokenSession() {
+		return tokenSession;
+	}
+
+	protected void setTokenSession(TokenSession tokenSession) {
+		this.tokenSession = tokenSession;
+	}
+
+	protected TokenReservationSession getTokenReservationSession() {
+		return tokenReservationSession;
+	}
+
+	protected void setTokenReservationSession(TokenReservationSession tokenReservationSession) {
+		this.tokenReservationSession = tokenReservationSession;
+	}
+
+	public void initialize() {
 	}
 	
 	/**
@@ -161,7 +202,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	protected Output<OUT> delegate(String branchName, String functionHandlerClassname, Input<IN> input) throws Exception {
 		return applicationContextBuilder.runInContext(branchName, ()->{
 			@SuppressWarnings("unchecked")
-			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext(branchName).getClassLoader(), functionHandlerClassname, token);
+			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext(branchName).getClassLoader(), functionHandlerClassname, tokenSession, tokenReservationSession);
 			return functionHandler.handle(input);
 		});
 	}
@@ -207,14 +248,10 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		if(input.getProperties() != null) {
 			properties.putAll(input.getProperties());
 		}
-		if(token.getProperties()!=null) {
-			properties.putAll(token.getProperties());			
+		if(this.properties!=null) {
+			properties.putAll(this.properties);
 		}
 		return properties;
-	}
-
-	protected AgentTokenWrapper getToken() {
-		return token;
 	}
 	
 	public abstract Class<IN> getInputPayloadClass();

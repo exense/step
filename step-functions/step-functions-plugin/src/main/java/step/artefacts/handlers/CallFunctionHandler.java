@@ -55,6 +55,7 @@ import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.Token;
 import step.grid.TokenWrapper;
+import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.core.reports.Error;
@@ -115,7 +116,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			try {
 				Token gridToken = token.getToken();
 				if(gridToken.isLocal()) {
-					gridToken.attachObject(EXECUTION_CONTEXT_KEY, context);
+					TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
+					session.put(EXECUTION_CONTEXT_KEY, context);
 				}
 				
 				node.setAgentUrl(token.getAgent().getAgentUrl());

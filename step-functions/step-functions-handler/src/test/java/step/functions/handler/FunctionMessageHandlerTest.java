@@ -36,6 +36,8 @@ public class FunctionMessageHandlerTest {
 	
 	protected MessageHandlerPool messageHandlerPool;
 	
+	protected AgentTokenWrapper agentToken;
+	
 	@Before
 	public void before() {
 		tokenServices = getLocalAgentTokenServices();
@@ -160,7 +162,9 @@ public class FunctionMessageHandlerTest {
 
 		});
 		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
-		tokenServices.setAgentProperties(new HashMap<String, String>());
+		Map<String, String> tokenProperties = new HashMap<>();
+		tokenProperties.put("myTokenProp1", "myTokenPropValue1");
+		tokenServices.setAgentProperties(tokenProperties);
 		return tokenServices;
 	}
 

@@ -22,11 +22,11 @@ import step.core.plans.Plan;
 import step.core.plans.PlanRepository;
 import step.core.plans.builder.PlanBuilder;
 import step.core.reports.ErrorType;
+import step.functions.handler.FunctionHandlerFactory;
 import step.functions.io.Input;
 import step.functions.io.Output;
-import step.grid.Token;
-import step.grid.agent.AgentTokenServices;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.agent.tokenpool.TokenReservationSession;
+import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.planbuilder.BaseArtefacts;
 
@@ -46,11 +46,7 @@ public class ArtefactFunctionHandlerTest {
 		ReportNode parentNode = new ReportNode();
 		context.getReportNodeAccessor().save(parentNode);
 		
-		ArtefactFunctionHandler handler = new ArtefactFunctionHandler();
-		
-		AgentTokenWrapper agentToken = getMockedAgentToken(context);
-		
-		handler.initialize(agentToken);
+		ArtefactFunctionHandler handler = createArtefactFunctionHandler(context);
 		
 		Input<JsonObject> input = new Input<>();
 		input.setPayload(Json.createObjectBuilder().add("Input1", "InputValue1").build());
@@ -64,6 +60,18 @@ public class ArtefactFunctionHandlerTest {
 		AtomicInteger count = new AtomicInteger(0);
 		context.getReportNodeAccessor().getAll().forEachRemaining(n->count.incrementAndGet());
 		Assert.assertEquals(4, count.get());
+	}
+
+	protected ArtefactFunctionHandler createArtefactFunctionHandler(ExecutionContext context) {
+		ArtefactFunctionHandler handler = new ArtefactFunctionHandler();
+		
+		FunctionHandlerFactory functionHandlerFactory = new FunctionHandlerFactory(new ApplicationContextBuilder(), null, null);
+		
+		TokenReservationSession tokenReservationSession = new TokenReservationSession();
+		tokenReservationSession.put(CallFunctionHandler.EXECUTION_CONTEXT_KEY, context);
+		
+		functionHandlerFactory.initialize(handler, new TokenSession(), tokenReservationSession);
+		return handler;
 	}
 	
 	@Test
@@ -80,11 +88,7 @@ public class ArtefactFunctionHandlerTest {
 		ReportNode parentNode = new ReportNode();
 		context.getReportNodeAccessor().save(parentNode);
 		
-		ArtefactFunctionHandler handler = new ArtefactFunctionHandler();
-		
-		AgentTokenWrapper agentToken = getMockedAgentToken(context);
-		
-		handler.initialize(agentToken);
+		ArtefactFunctionHandler handler = createArtefactFunctionHandler(context);
 		
 		Input<JsonObject> input = new Input<>();
 		Map<String, String> properties = getInputProperties(compositePlan, parentNode);
@@ -101,16 +105,4 @@ public class ArtefactFunctionHandlerTest {
 		properties.put(CallFunctionHandler.PARENTREPORTID, parentNode.getId().toString());
 		return properties;
 	}
-
-	private AgentTokenWrapper getMockedAgentToken(ExecutionContext context) {
-		Token token = new Token();
-		token.attachObject(CallFunctionHandler.EXECUTION_CONTEXT_KEY, context);
-		
-		AgentTokenWrapper agentToken = new AgentTokenWrapper(token);
-		AgentTokenServices tokenServices = new AgentTokenServices(null);
-		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
-		agentToken.setServices(tokenServices);
-		return agentToken;
-	}
-
 }

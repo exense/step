@@ -40,7 +40,6 @@ import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
 
 public class ScriptHandler extends JsonBasedFunctionHandler {
 
@@ -74,12 +73,12 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
 			ScriptEngine engine = loadScriptEngine(engineName);	      
 			
 			OutputBuilder outputBuilder = new OutputBuilder();
-			Bindings binding = createBindings(getToken(), input, outputBuilder, properties);     
+			Bindings binding = createBindings(input, outputBuilder, properties);     
 			
 			try {
 				executeScript(scriptFile, binding, engine);        	
 			} catch(Throwable e) {        	
-				boolean throwException = executeErrorHandlerScript(getToken(), properties, engine, binding, outputBuilder, e);
+				boolean throwException = executeErrorHandlerScript(properties, engine, binding, outputBuilder, e);
 				if(throwException) {
 					outputBuilder.setError("Error while running script "+scriptFile.getName() + ": " + e.getMessage(), e);
 				}
@@ -89,7 +88,7 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
 		});
 	}
 
-	private boolean executeErrorHandlerScript(AgentTokenWrapper token, Map<String, String> properties, ScriptEngine engine, Bindings binding, OutputBuilder outputBuilder, Throwable exception)
+	private boolean executeErrorHandlerScript(Map<String, String> properties, ScriptEngine engine, Bindings binding, OutputBuilder outputBuilder, Throwable exception)
 			throws FileNotFoundException, Exception, IOException {
 		File errorScriptFileVersion = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties);
 		if(errorScriptFileVersion!=null) {
@@ -118,7 +117,7 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
         }
 	}
 
-	private Bindings createBindings(AgentTokenWrapper token, Input<?> input, OutputBuilder outputBuilder,
+	private Bindings createBindings(Input<?> input, OutputBuilder outputBuilder,
 			Map<String, String> properties) {
 		Bindings binding = new SimpleBindings();
         binding.put("input", input.getPayload());
@@ -129,8 +128,8 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
         
         binding.put("properties", mergeAllProperties(input));
         
-        binding.put("session", token.getTokenReservationSession());
-        binding.put("tokenSession", token.getSession());
+        binding.put("session", getTokenReservationSession());
+        binding.put("tokenSession", getTokenSession());
 		return binding;
 	}
 

@@ -61,6 +61,7 @@ import step.functions.type.FunctionTypeRegistry;
 import step.grid.AgentRef;
 import step.grid.Token;
 import step.grid.TokenWrapper;
+import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.tokenpool.Interest;
 
@@ -325,6 +326,7 @@ public class CallFunctionHandlerTest {
 		TokenWrapper token = new TokenWrapper();
 		token.setToken(localToken);
 		token.setAgent(new AgentRef());
+		token.getToken().attachObject(TokenWrapper.TOKEN_RESERVATION_SESSION, new TokenReservationSession());
 		return token;
 	}
 
