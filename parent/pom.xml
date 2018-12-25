@@ -52,7 +52,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<step-grid.version>0.9.0</step-grid.version>
+		<step-grid.version>0.9.1</step-grid.version>
 		<junit.version>4.8.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
 		<groovy.version>2.2.1</groovy.version>
