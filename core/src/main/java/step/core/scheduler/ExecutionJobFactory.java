@@ -26,6 +26,8 @@ import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 
 import step.core.GlobalContext;
+import step.core.controller.ControllerSetting;
+import step.core.controller.ControllerSettingAccessor;
 import step.core.execution.ExecutionRunnable;
 import step.core.execution.ExecutionRunnableFactory;
 import step.core.execution.model.Execution;
@@ -36,11 +38,15 @@ public class ExecutionJobFactory implements JobFactory {
 	private GlobalContext context;
 	
 	private ExecutionRunnableFactory executionRunnableFactory;
+	
+	private ControllerSettingAccessor controllerSettingAccessor;
 
 	public ExecutionJobFactory(GlobalContext context, ExecutionRunnableFactory executionRunnableFactory) {
 		super();
 		this.context = context;
 		this.executionRunnableFactory = executionRunnableFactory;
+		
+		controllerSettingAccessor = new ControllerSettingAccessor(context.getMongoClientSession());
 	}
 
 	@Override
@@ -54,6 +60,15 @@ public class ExecutionJobFactory implements JobFactory {
 		} else {
 			String executionTaskID = data.getString(Executor.EXECUTION_TASK_ID);
 			ExecutionParameters executionParams = (ExecutionParameters) data.get(Executor.EXECUTION_PARAMETERS);
+			
+			ControllerSetting schedulerUsernameSetting = controllerSettingAccessor.getSettingByKey("scheduler_execution_username");
+			if(schedulerUsernameSetting != null) {
+				String schedulerUsername = schedulerUsernameSetting.getValue();
+				if(schedulerUsername != null && schedulerUsername.trim().length()>0) {
+					executionParams.setUserID(schedulerUsername);
+				}
+			}
+			
 			execution = executionRunnableFactory.createExecution(executionParams, executionTaskID);			
 		}
 		task = executionRunnableFactory.newExecutionRunnable(execution);

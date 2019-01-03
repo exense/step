@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminControllers = angular.module('tecAdminControllers',['components','dataTable','chart.js','step', 'views','ui.bootstrap','reportTree','reportTable']);
+var tecAdminControllers = angular.module('tecAdminControllers',['components','dataTable','chart.js','step', 'views','ui.bootstrap','reportTree','reportTable','schedulerControllers']);
 
 function escapeHtml(str) {
   var div = document.createElement('div');
@@ -110,8 +110,8 @@ tecAdminControllers.directive('executionParameters', function($rootScope, $http,
   };
 });
 
-tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','AuthService',
-                                                    function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,AuthService) {
+tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','AuthService','schedulerServices',
+                                                    function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,AuthService,schedulerServices) {
   return {
     restrict: 'E',
     scope: {
@@ -172,48 +172,13 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
       };
       
       $scope.schedule = function () {
-
         var executionParams = buildExecutionParams(false);
-        
-        var modalInstance = $uibModal.open({
-          animation: $scope.animationsEnabled,
-          templateUrl: 'newTaskModalContent.html',
-          controller: 'newTaskModalCtrl',
-          resolve: {
-            executionParams: function () {
-            return executionParams;
-            }
-          }
-        });
-
-        modalInstance.result.then(function (taskParams) {
-          $http.post("rest/controller/task",taskParams).then(
-            function() {
-              $location.path('/root/scheduler/');
-            });
-
-        }, function () {
-          $log.info('Modal dismissed at: ' + new Date());
-        });
+        schedulerServices.schedule(executionParams);
       };
       
     }
   };
 }]);
-
-tecAdminControllers.controller('newTaskModalCtrl', function ($scope, $uibModalInstance, executionParams) {
-	
-  $scope.name = executionParams.description;
-  
-  $scope.ok = function () {
-    var taskParams = {'name': $scope.name, 'cronExpression':$scope.cron, 'executionsParameters':executionParams};
-    $uibModalInstance.close(taskParams);
-  };
-
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss('cancel');
-  };
-});
 
 tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry) {
   return {

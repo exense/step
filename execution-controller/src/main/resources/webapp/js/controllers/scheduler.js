@@ -18,6 +18,10 @@
  *******************************************************************************/
 var schedulerController = angular.module('schedulerControllers',['dataTable']);
 
+schedulerController.run(function(ViewRegistry) {
+  ViewRegistry.registerDashlet('admin/controller','Scheduler','partials/scheduler/schedulerConfiguration.html');
+});
+
 schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$uibModal', 'AuthService','Dialogs', 
   function($scope, $http,$stateStorage, $uibModal,AuthService, Dialogs) {
     $stateStorage.push($scope, 'scheduler', {});
@@ -115,8 +119,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	  $http.get("rest/controller/task/"+id).then(function(response){
 	    var task = response.data;
       var modalInstance = $uibModal.open({
-        animation: $scope.animationsEnabled,
-        templateUrl: 'editSchedulerTaskModalContent.html',
+        templateUrl: 'partials/scheduler/editTaskDialog.html',
         controller: 'editSchedulerTaskModalCtrl',
         resolve: {
           task: function () {
@@ -171,5 +174,56 @@ schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $
 
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
+  };
+});
+
+schedulerController.factory('schedulerServices', function($http, $location, $uibModal) {
+  var factory = {};
+
+  factory.schedule = function(executionParams) {
+    var modalInstance = $uibModal.open({
+      templateUrl: 'partials/scheduler/newTaskDialog.html',
+      controller: 'newTaskModalCtrl',
+      resolve: {
+        executionParams: function () {
+          return executionParams;
+        }
+      }
+    });
+    
+    modalInstance.result.then(function (taskParams) {
+      $http.post("rest/controller/task",taskParams).then(
+          function() {
+            $location.path('/root/scheduler/');
+          });
+      
+    }, function () {});
+  }
+  
+  return factory
+})
+
+schedulerController.controller('newTaskModalCtrl', function ($scope, $uibModalInstance, executionParams) {
+    
+  $scope.name = executionParams.description;
+  
+  $scope.ok = function () {
+    var taskParams = {'name': $scope.name, 'cronExpression':$scope.cron, 'executionsParameters':executionParams};
+    $uibModalInstance.close(taskParams);
+  };
+
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+});
+    
+schedulerController.controller('SchedulerConfigurationCtrl', function ($scope, $http) {
+  
+  $http.get("rest/settings/scheduler_execution_username").then(function(response){
+    $scope.executionUser = response.data?response.data:"";
+  })
+  
+  $scope.save = function () {
+    $http.post("rest/settings/scheduler_execution_username", $scope.executionUser)
   };
 });
