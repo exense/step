@@ -49,7 +49,7 @@ public class ReportNode extends AbstractIdentifiableObject {
 	
 	protected Integer duration;
 		
-	protected List<AttachmentMeta> attachments;
+	protected List<AttachmentMeta> attachments = new ArrayList<>();
 		
 	protected ReportNodeStatus status;
 		
@@ -165,9 +165,6 @@ public class ReportNode extends AbstractIdentifiableObject {
 	}
 	
 	public void addAttachment(AttachmentMeta attachment) {
-		if(attachments==null) {
-			attachments = new ArrayList<>();
-		}
 		attachments.add(attachment);
 	}
 	
