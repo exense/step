@@ -47,6 +47,18 @@ angular.module('components',['step'])
   };
 })
 
+.directive('date', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      time: '='
+    },
+    templateUrl: 'partials/components/date.html',
+    controller: function() {  
+    }
+  };
+})
+
 .directive('jsonViewer', function() {
   return {
     restrict: 'E',

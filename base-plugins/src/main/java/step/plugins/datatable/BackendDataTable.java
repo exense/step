@@ -95,6 +95,11 @@ public class BackendDataTable {
 		return this;
 	}
 	
+	public BackendDataTable addDateAsEpochColumn(String columnTitle, String value) {
+		columns.add(new ColumnDef(columnTitle, value, InputType.DATE_RANGE, new StringFormatter(), new DateRangeCriterium("dd.MM.yyyy"), null));
+		return this;
+	}
+	
 	public BackendDataTable addTimeColumn(String columnTitle, String value) {
 		columns.add(new ColumnDef(columnTitle, value, InputType.TEXT, new DateFormatter("HH:mm:ss"), new DateRangeCriterium("dd.MM.yyyy"), null));
 		return this;

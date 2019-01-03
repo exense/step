@@ -167,8 +167,8 @@
 						</li>
 						<li><strong>Mode</strong> <span>{{execution.executionParameters.mode}}</span></li>
 						<li><strong>User</strong> <span>{{execution.executionParameters.userID}}</span></li>
-						<li><strong>Start</strong> <span>{{ execution.startTime | date:'dd.MM.yyyy HH:mm:ss'}}</span></li>
-						<li><strong>End</strong> <span>{{ execution.endTime | date:'dd.MM.yyyy HH:mm:ss'}}</span></li>
+						<li><strong>Start</strong> <date time="execution.startTime" /></li>
+						<li><strong>End</strong> <date time="execution.endTime" /></li>
 						<li><strong>Execution ID</strong> <span>{{execution.id}}</span></li>
 						<li><strong>Origin</strong> <span>Repository={{execution.executionParameters.artefact.repositoryID}}</span> <span
 							ng-repeat="(key, value) in execution.executionParameters.artefact.repositoryParameters"> {{key}}={{value}}

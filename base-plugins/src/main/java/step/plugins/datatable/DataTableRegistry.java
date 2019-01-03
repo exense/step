@@ -47,8 +47,8 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 	
 	protected void init() {
 		BackendDataTable executions = new BackendDataTable(new Collection(database, "executions"));
-		executions.addColumn("ID", "_id").addColumn("Description", "description").addDateColumn("Start time", "startTime")
-		.addDateColumn("End time", "endTime").addColumn("User", "executionParameters.userID");
+		executions.addColumn("ID", "_id").addColumn("Description", "description").addDateAsEpochColumn("Start time", "startTime")
+		.addDateAsEpochColumn("End time", "endTime").addColumn("User", "executionParameters.userID");
 				
 		for(Input input:screenTemplates.getInputsForScreen("executionTable", null)) {
 			executions.addColumn(input.getLabel(), input.getId());

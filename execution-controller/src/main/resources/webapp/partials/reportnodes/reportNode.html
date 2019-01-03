@@ -3,7 +3,7 @@
 	<div style="margin-top:10px;" ng-include="reportNodeType.template"></div>
 	
 	<div ng-if="node.resolvedArtefact.customAttributes.source">Source: {{node.resolvedArtefact.customAttributes.source}}</div>
-	<div>Start: {{ node.executionTime | date:'dd.MM.yyyy HH:mm:ss'}}</div>
+	<div>Start: <date time="node.executionTime" /></div>
 	<div>Duration (ms): {{node.duration}}</div>
 	<div class="panel panel-default" style="margin-top:10px;">
 		<div class="panel-heading"><a ng-click="showArtefact = !showArtefact">Plan node</a></div>

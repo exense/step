@@ -626,6 +626,26 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
               _.each(_.where(columns,{'title':'Description'}),function(col){
                 col.render = function ( data, type, row ) {return '<a href="#/root/executions/'+row[0]+'">'+data+'</a>'};
               });
+              _.each(_.where(columns,{'title':'Start time'}),function(col){
+                col.createdCell =  function (td, cellData, rowData, row, col) {
+                  var rowScope = $scope.$new(true, $scope);
+                  $scope.table.trackScope(rowScope);
+                  rowScope.time = cellData;
+                  var content = $compile("<date time='time' />")(rowScope);
+                  angular.element(td).html(content);  
+                  rowScope.$apply();
+                };
+              });
+              _.each(_.where(columns,{'title':'End time'}),function(col){
+                col.createdCell =  function (td, cellData, rowData, row, col) {
+                  var rowScope = $scope.$new(true, $scope);
+                  $scope.table.trackScope(rowScope);
+                  rowScope.time = cellData;
+                  var content = $compile("<date time='time' />")(rowScope);
+                  angular.element(td).html(content);  
+                  rowScope.$apply();
+                };
+              });
               _.each(_.where(columns,{'title':'Status'}),function(col){
                col.searchmode="select";
                col.render = function ( data, type, row ) {return '<span class="executionStatus status-' + data +'">'  +data+ '</span>';};
