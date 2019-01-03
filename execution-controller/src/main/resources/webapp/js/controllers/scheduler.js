@@ -212,6 +212,10 @@ schedulerController.controller('newTaskModalCtrl', function ($scope, $uibModalIn
     $uibModalInstance.close(taskParams);
   };
 
+  $scope.applyPreset = function(preset) {
+    $scope.cron = preset;
+  }
+  
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
