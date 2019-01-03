@@ -21,6 +21,7 @@ package step.artefacts.handlers;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import com.google.common.io.Files;
 
@@ -44,6 +45,15 @@ public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
 	}
 
 	private void export(ReportNode node, Export testArtefact) {
+		
+		Pattern filter = null;
+		if(testArtefact.getFilter()!=null) {
+			String filterExpr =  testArtefact.getFilter().get();
+			if(filterExpr != null && filterExpr.trim().length()>0) {
+				filter = Pattern.compile(filterExpr);
+			}
+		}
+		
 		String filename = testArtefact.getFile().get();
 		if(filename != null) {
 			File file = new File(filename);
@@ -61,11 +71,15 @@ public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
 								if(object instanceof AttachmentMeta) {
 									AttachmentMeta attachmentMeta = (AttachmentMeta) object;
 									File fileToCopy = context.getAttachmentManager().getFileById(attachmentMeta.getId().toString());
-									File target = new File(file+"/"+fileToCopy.getName());
-									try {
-										Files.copy(fileToCopy, target);
-									} catch (IOException e) {
-										throw new RuntimeException("Error while copying file "+fileToCopy.getName()+" to "+target.getAbsolutePath());
+									// Export only if the file name matches the defined filter
+									if(filter == null || filter.matcher(fileToCopy.getName()).matches()) {
+										String filenamePrefix = testArtefact.getPrefix()!=null?testArtefact.getPrefix().get():"";
+										File target = new File(file+"/"+filenamePrefix+fileToCopy.getName());
+										try {
+											Files.copy(fileToCopy, target);
+										} catch (IOException e) {
+											throw new RuntimeException("Error while copying file "+fileToCopy.getName()+" to "+target.getAbsolutePath());
+										}
 									}
 								}
 							}						

@@ -31,6 +31,10 @@ public class Export extends AbstractArtefact {
 	
 	private DynamicValue<String> file = new DynamicValue<>("");
 
+	private DynamicValue<String> prefix = new DynamicValue<>("");
+	
+	private DynamicValue<String> filter = new DynamicValue<>("");
+	
 	public DynamicValue<String> getValue() {
 		return value;
 	}
@@ -45,5 +49,21 @@ public class Export extends AbstractArtefact {
 
 	public void setFile(DynamicValue<String> file) {
 		this.file = file;
+	}
+
+	public DynamicValue<String> getPrefix() {
+		return prefix;
+	}
+
+	public void setPrefix(DynamicValue<String> prefix) {
+		this.prefix = prefix;
+	}
+
+	public DynamicValue<String> getFilter() {
+		return filter;
+	}
+
+	public void setFilter(DynamicValue<String> filter) {
+		this.filter = filter;
 	}
 }
