@@ -24,6 +24,10 @@ function escapeHtml(str) {
   return div.innerHTML;
 };
 
+function escapeRegExp(string){
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+};
+
 tecAdminControllers.factory('executionServices', function($http,$q,$filter) {
   var urlBase = 'rest/views';
   var factory = {};
@@ -472,7 +476,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         
         $scope.searchStepByError = function(error) {
           $scope.tabs.selectedTab = 0;
-          $scope.stepsTable.columns[2].search(error);
+          $scope.stepsTable.columns[2].search(escapeRegExp(error));
         }
         
         if($scope.stepsTable && $scope.stepsTable.Datatable) {
