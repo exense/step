@@ -120,7 +120,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
     restrict: 'E',
     scope: {
       artefact: '&',
-      isolateExecution: '=',
+      isolateExecution: '=?',
       description: '=', 
       includedTestcases: '&',
       onExecute: '&',
