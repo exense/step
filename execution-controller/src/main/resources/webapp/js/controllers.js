@@ -185,7 +185,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
     restrict: 'E',
     scope: {
       eid: '=',
-      updateTabStatus: '&statusUpdate',
       updateTabTitle: '&titleUpdate',
       closeTab: '&closeTab',
       active: '&active'
@@ -445,7 +444,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
             }
             $scope.configParamTable.data = dataSet;
           }
-          $scope.updateTabTitle()(eId,data.description);
+          // Set actual execution to the tab title
+          $scope.updateTabTitle()(eId,data);
         });        
       }
       
@@ -543,7 +543,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       })
       
       $scope.$watch('execution.status',function(newSatus, oldStatus) {
-        $scope.updateTabStatus()(eId,newSatus);
         if(newSatus=='ENDED') {
           if(oldStatus&&$scope.autorefresh) {
             refreshAll();
@@ -576,17 +575,15 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
   $scope.selectTab = function(eid) {
     $scope.$state = eid;
   }
-
-  $scope.updateTabStatus = function(eid, status) {
-    _.findWhere($scope.tabs, {id:eid}).status=status;
+  
+  $scope.updateTabTitle = function(eid, execution) {
+    var tab = _.findWhere($scope.tabs, {id:eid});
+    tab.title = execution.description;
+    tab.execution = execution;
   }
   
-  $scope.updateTabTitle = function(eid, title) {
-    _.findWhere($scope.tabs, {id:eid}).title=title;
-  }
-  
-  $scope.getTabStatus = function(eid) {
-    return _.findWhere($scope.tabs, {id:eid}).status;
+  $scope.getTabExecution = function(eid) {
+    return _.findWhere($scope.tabs, {id:eid}).execution;
   }
   
   $scope.closeTab = function(eid) {
@@ -623,6 +620,8 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
             $scope.tabledef = {uid:'executions'}
             $scope.tabledef.columns = function(columns) {
               _.each(_.where(columns,{'title':'ID'}),function(col){col.visible=false});
+              _.each(_.where(columns,{'title':'Execution'}),function(col){col.visible=false});
+              _.each(_.where(columns,{'title':'Summary'}),function(col){col.visible=false});
               _.each(_.where(columns,{'title':'Description'}),function(col){
                 col.render = function ( data, type, row ) {return '<a href="#/root/executions/'+row[0]+'">'+data+'</a>'};
               });
@@ -650,13 +649,13 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
                col.searchmode="select";
                col.render = function ( data, type, row ) {return '<span class="executionStatus status-' + data +'">'  +data+ '</span>';};
               });
-              _.each(_.where(columns,{'title':'Summary'}),function(col){
-                col.width="160px";
+              _.each(_.where(columns,{'title':'Result'}),function(col){
                 col.createdCell =  function (td, cellData, rowData, row, col) {
                   var rowScope = $scope.$new(true, $scope);
                   $scope.table.trackScope(rowScope);
-                  rowScope.distribution = JSON.parse(cellData);
-                  var content = $compile("<div style=\"width:160px;\"><status-distribution progress='distribution' /></div>")(rowScope);
+                  rowScope.execution = JSON.parse(rowData[_.findIndex(columns, function(entry){return entry.title=='Execution'})])
+                  rowScope.distribution = JSON.parse(rowData[_.findIndex(columns, function(entry){return entry.title=='Summary'})])
+                  var content = $compile("<table class=\"executionTableResult\"><tr><td><execution-result execution='execution' /></td><td><status-distribution progress='distribution' /></td></tr></table>")(rowScope);
                   angular.element(td).html(content);  
                   rowScope.$apply();
                 };

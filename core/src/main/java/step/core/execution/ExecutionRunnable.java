@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
@@ -79,7 +80,9 @@ public class ExecutionRunnable implements Runnable {
 				ReportNode planReportNode = ArtefactHandler.delegateExecute(context, artefact, rootReportNode);
 				
 				if(planReportNode!=null && planReportNode.getStatus() != null) {
-					rootReportNode.setStatus(planReportNode.getStatus());
+					ReportNodeStatus resultStatus = planReportNode.getStatus();
+					executionLifecycleManager.updateExecutionResult(context, resultStatus);
+					rootReportNode.setStatus(resultStatus);
 					context.getReportNodeAccessor().save(rootReportNode);
 				}
 				

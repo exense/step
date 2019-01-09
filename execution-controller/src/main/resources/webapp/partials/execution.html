@@ -31,8 +31,7 @@
 	
 	<ul class="nav nav-tabs">
 	  <li role="presentation" ng-class="{active: isTabActive(tab.id)}" ng-repeat="tab in tabs track by tab.id">
-	  <!-- ng-click="selectTab(tab.id)" -->
-	  	<a ng-click="selectTab(tab.id)" ><span ng-if="tab.type=='progress'&&getTabStatus(tab.id)!='ENDED'"><i class="executionStatus status-{{getTabStatus(tab.id)}}" ng-class="getTabStatus(tab.id)!='ENDED'?'glyphicon glyphicon-refresh icon-refresh-animate':''"/></span> {{tab.title}} <i class="glyphicon glyphicon-remove" ng-if="tab.id!='list'" ng-click="closeTab(tab.id)" aria-hidden="true"/> </a>
+	  	<a ng-click="selectTab(tab.id)" ><execution-result ng-if="tab.id!='list'" execution="getTabExecution(tab.id)" /> {{tab.title}} <i class="glyphicon glyphicon-remove" ng-if="tab.id!='list'" ng-click="closeTab(tab.id)" aria-hidden="true"/> </a>
 	  </li>
 	</ul>
 	
@@ -56,7 +55,7 @@
 				</div>
 			</div>
 			<div class="panel-body" ng-if="tab.type=='progress'">
-				<execution-progress eid="tab.id" status-update="updateTabStatus" title-update="updateTabTitle" close-tab="closeTab(tab.id)" active="isTabActive(tab.id)" />
+				<execution-progress eid="tab.id" title-update="updateTabTitle" close-tab="closeTab(tab.id)" active="isTabActive(tab.id)" />
 			</div>
 		</div>
 	</div>

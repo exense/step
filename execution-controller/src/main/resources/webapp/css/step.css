@@ -9,23 +9,6 @@
 	right: 150px;
 }
 
-.executionStatus { 
-	  	color: white;
-	    /* padding:7px;
-	    border-radius:6px; */
-	    padding: 4px;
-		border-radius: 4px;
-		font-size: 75%;
-	  }
-	  
-i.executionStatus {
-	background:transparent;
-}
-
-div.executionStatus,span.executionStatus {
-	color:white;
-}
-
 .status-ENDED {
 	background:gray;
 	color:gray
@@ -58,64 +41,66 @@ div.executionStatus,span.executionStatus {
 
 .status-SKIPPED {
 	background:#A0A0A0;
+	color:#A0A0A0;
 }
 
 .status-NORUN {
 	background:#A0A0A0;
+	color:#A0A0A0;
 }
 	  
 .status-PASSED {
 	background:#5cb85c;
+	color:#5cb85c;
 }
 
 .status-FAILED {
 	background:#d9534f;
+	color:#d9534f;
 }
 
 .status-TECHNICAL_ERROR {
 	background:black;
+	color:black;
 }
 
 .status-INTERRUPTED {
 	background:#f9c038;
-}
-
-i.status-PASSED {
-	color:#5cb85c;
-}
-
-i.status-FAILED {
-	color:#d9534f;
-}
-
-i.status-SKIPPED {
-	color:#A0A0A0;
-}
-
-i.status-NORUN {
-	color:#A0A0A0;
-}
-
-i.status-TECHNICAL_ERROR {
-	color:black;
-}
-
-i.status-INTERRUPTED {
 	color:#f9c038;
 }
 
-i.status-RUNNING {
-	color:#337ab7;
+.statusSummary {
+	color: white;
 }
 
-.reportNodeStatus { 
-	  	color: white;
-	    padding: 4px;
-		border-radius: 4px;
-		font-size: 75%;
-	    /* width:15px; */
-/* 	    font-size:0; */
-	  }
+.executionResult {
+	background: transparent;
+	/* glyphicon size */
+	font-size: 100%;
+}
+
+.smaller {
+	/* glyphicon size */
+	font-size: 75%;
+}
+
+.executionStatus {
+	color: white;
+	padding: 4px;
+	border-radius: 4px;
+	font-size: 75%;
+}
+
+.reportNodeIcon {
+	background: transparent;
+}
+
+.reportNodeStatus {
+	color: white;
+	padding: 4px;
+	border-radius: 4px;
+	font-size: 75%;
+}
 
 button.btn-run {
     color: #fff;
@@ -371,4 +356,8 @@ div.progress {
 
 img.attachment-thumbnail:hover {
   transform: scale(3);
+}
+
+table.executionTableResult td {
+	padding-right:10px;
 }

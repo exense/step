@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
@@ -38,6 +39,8 @@ public class ExecutionManager {
 
 	protected void updateParameters(ExecutionContext context) {
 		Execution execution = getExecution(context);
+		
+		execution.setResult(ReportNodeStatus.RUNNING);
 		
 		HashMap<String, String> params = new HashMap<>();
 		for(Entry<String, Object> entry:context.getVariablesManager().getAllVariables().entrySet()) {
@@ -87,6 +90,12 @@ public class ExecutionManager {
 	public void updateExecutionType(ExecutionContext context, String newType) {
 		Execution execution = getExecution(context);
 		execution.setExecutionType(newType);
+		saveExecution(execution);
+	}
+	
+	public void updateExecutionResult(ExecutionContext context, ReportNodeStatus resultStatus) {
+		Execution execution = getExecution(context);
+		execution.setResult(resultStatus);
 		saveExecution(execution);
 	}
 }

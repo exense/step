@@ -157,3 +157,42 @@ angular.module('components',['step'])
     },
     templateUrl: 'partials/components/fileUploadField.html'}
 })
+
+.directive('executionResult', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      execution: '='    
+    },
+    templateUrl: 'partials/components/executionResult.html',
+    controller: function($scope) {
+      $scope.iconClass = function() {
+        var css = ''
+        if($scope.execution) {
+          css += 'glyphicon';
+          if($scope.execution.status!='ENDED') {
+            css += ' glyphicon-refresh icon-refresh-animate smaller';
+          } else {
+            if($scope.execution.result=='PASSED') {
+              css += ' glyphicon-ok-sign'
+            } else {
+              css += ' glyphicon-exclamation-sign'
+            }
+          }       
+        }
+        return css;
+      }
+      $scope.result = function() {
+        if($scope.execution) {
+          if($scope.execution.status!='ENDED') {
+            return $scope.execution.status
+          } else {
+            return $scope.execution.result
+          }          
+        } else {
+          return "";
+        }
+      }
+    }
+  };
+})
