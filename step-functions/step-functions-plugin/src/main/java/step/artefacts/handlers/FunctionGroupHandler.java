@@ -103,6 +103,9 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 			if(handle.getToken()!=null) {
 				functionExecutionService.returnTokenHandle(handle.getToken());
 			}
+			if(handle.getLocalToken()!=null) {
+				functionExecutionService.returnTokenHandle(handle.getLocalToken());
+			}
 		}	
 	}
 
