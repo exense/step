@@ -45,6 +45,7 @@ angular.module('functionsControllers',['dataTable','step'])
 
 .run(function(FunctionTypeRegistry) {
   FunctionTypeRegistry.register('step.plugins.functions.types.CompositeFunction','Composite','partials/functions/forms/composite.html');
+  FunctionTypeRegistry.register('step.functions.base.types.LocalFunction','LocalFunction','partials/functions/forms/localFunction.html');
 })
 
 .factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {

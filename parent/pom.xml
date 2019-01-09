@@ -106,6 +106,7 @@
 		<module>../step-core</module>
 		<module>../step-core-model</module>
 		<module>../core</module>
+		<module>../base-functions</module>
 		<module>../base-plugins</module>
 		<module>../rtm-plugin</module>
 		<module>../base-artefacts</module>
