@@ -29,6 +29,7 @@ import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.planbuilder.BaseArtefacts;
+import step.plugins.functions.types.CompositeFunctionType;
 
 public class ArtefactFunctionHandlerTest {
 
@@ -101,8 +102,8 @@ public class ArtefactFunctionHandlerTest {
 
 	private Map<String, String> getInputProperties(Plan compositePlan, ReportNode parentNode) {
 		Map<String, String> properties = new HashMap<>();
-		properties.put(CallFunctionHandler.ARTEFACTID, compositePlan.getRoot().getId().toString());
-		properties.put(CallFunctionHandler.PARENTREPORTID, parentNode.getId().toString());
+		properties.put(CompositeFunctionType.ARTEFACTID_KEY, compositePlan.getRoot().getId().toString());
+		properties.put(CallFunctionHandler.PARENTREPORTID_KEY, parentNode.getId().toString());
 		return properties;
 	}
 }

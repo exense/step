@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import step.artefacts.Sequence;
-import step.artefacts.handlers.CallFunctionHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactManager;
@@ -15,6 +14,9 @@ import step.plugins.functions.types.composite.ArtefactFunctionHandler;
 
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
 
+	// Key agreed upon to pass the artefact serving as root to the handler (via props)
+	public static final String ARTEFACTID_KEY = "$artefactid";
+	
 	private final ArtefactAccessor artefactAccessor;
 	private final ArtefactManager artefactManager;
 
@@ -37,7 +39,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	@Override
 	public Map<String, String> getHandlerProperties(CompositeFunction function) {
 		Map<String, String> props = new HashMap<>();
-		props.put(CallFunctionHandler.ARTEFACTID, function.getArtefactId());
+		props.put(ARTEFACTID_KEY, function.getArtefactId());
 		return props;
 	}
 

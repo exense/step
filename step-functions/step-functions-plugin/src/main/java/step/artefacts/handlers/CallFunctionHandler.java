@@ -65,6 +65,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	public static final String STEP_NODE_KEY = "currentStep";
 	
+	public static final String PARENTREPORTID_KEY = "$parentreportid";
+	
 	protected FunctionExecutionService functionExecutionService;
 	
 	protected FunctionAccessor functionAccessor;
@@ -270,18 +272,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			scheduler.execute_(node, testArtefact, true);				
 		}
 	}
-
-
-	public static final String ARTEFACTID = "$artefactid";
-	
-	public static final String PARENTREPORTID = "$parentreportid";
 	
 	private Input<JsonObject> buildInput(String argumentStr) {
 		JsonObject argument = parseAndResolveJson(argumentStr);
 		
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
-		properties.put(PARENTREPORTID, context.getCurrentReportNode().getId().toString());
+		properties.put(PARENTREPORTID_KEY, context.getCurrentReportNode().getId().toString());
 		
 		Input<JsonObject> input = new Input<>();
 		input.setPayload(argument);

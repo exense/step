@@ -33,6 +33,7 @@ import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
+import step.plugins.functions.types.CompositeFunctionType;
 
 public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 
@@ -40,8 +41,8 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 	protected Output<JsonObject> handle(Input<JsonObject> input) {
 		ExecutionContext executionContext = (ExecutionContext) getTokenReservationSession().get(CallFunctionHandler.EXECUTION_CONTEXT_KEY);
 		
-		String artefactId = input.getProperties().get(CallFunctionHandler.ARTEFACTID);
-		String parentReportId = input.getProperties().get(CallFunctionHandler.PARENTREPORTID);
+		String artefactId = input.getProperties().get(CompositeFunctionType.ARTEFACTID_KEY);
+		String parentReportId = input.getProperties().get(CallFunctionHandler.PARENTREPORTID_KEY);
 		
 		ReportNode parentNode;
 		if(parentReportId!=null) {
