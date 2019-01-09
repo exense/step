@@ -30,7 +30,7 @@
 			</ul>
 			<ul class="nav navbar-nav navbar-right">
 				<li>
-					<a id="sessionDropdown" data-toggle="dropdown"><span class="glyphicon glyphicon-user" aria-hidden="true"></span>{{context.userID}} [{{context.role}}]</a>
+					<a id="sessionDropdown" data-toggle="dropdown"><i class="glyphicon glyphicon-user" ></i> {{context.userID}} [{{context.role}}]</a>
 					<ul class="dropdown-menu" aria-labelledby="sessionDropdown">
 						<li><a ng-click="setView('myaccount')">My account</a></li>
 						<li><a ng-click="authService.logout()">Logout</a></li>
