@@ -125,6 +125,16 @@ public class AccessServices extends AbstractServices {
         }    
     }
 	
+	@POST
+	@Secured
+	@Path("/logout")
+    public void logout(@Context ContainerRequestContext crc) {
+		Session session = (Session) crc.getProperty("session");
+		if(session != null) {
+			sessions.remove(session.getToken());
+		}
+    }
+	
 	@GET
 	@Path("/conf")
 	public AccessConfiguration getAccessConfiguration() {

@@ -127,9 +127,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   $scope.authService = AuthService;
   $scope.maintenanceService = MaintenanceService;
   
-  if(!$location.path()) {
-    $location.path('/root/artefacts')    
-  }
+  AuthService.gotoDefaultPage();
   
 })
 
@@ -310,7 +308,7 @@ angular.module('step',['ngStorage','ngCookies'])
   return service;
 })
 
-.factory('AuthService', function ($http, $rootScope, Preferences) {
+.factory('AuthService', function ($http, $rootScope, $location, Preferences) {
   var authService = {};
   var serviceContext = {};
 
@@ -346,6 +344,21 @@ angular.module('step',['ngStorage','ngCookies'])
         $rootScope.$broadcast('step.login.succeeded');
       });
   };
+  
+  authService.logout = function () {
+    return $http
+      .post('rest/access/logout')
+      .then(function (res) {
+        $rootScope.context = {'userID':'anonymous'};
+        authService.gotoDefaultPage();
+      });
+  };
+  
+  authService.gotoDefaultPage = function() {
+    if(!$location.path()) {
+      $location.path('/root/artefacts')    
+    }
+  }
  
   authService.isAuthenticated = function () {
     return $rootScope.context.userID && $rootScope.context.userID!='anonymous';
