@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import step.core.accessors.AbstractIdentifiableObject;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.repositories.Repository.ImportResult;
 
 
@@ -40,6 +41,8 @@ public class Execution extends AbstractIdentifiableObject {
 	String executionType;
 			
 	ExecutionStatus status;
+	
+	ReportNodeStatus result;
 	
 	String artefactID;
 	
@@ -81,6 +84,14 @@ public class Execution extends AbstractIdentifiableObject {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public ReportNodeStatus getResult() {
+		return result;
+	}
+
+	public void setResult(ReportNodeStatus result) {
+		this.result = result;
 	}
 
 	public ExecutionStatus getStatus() {

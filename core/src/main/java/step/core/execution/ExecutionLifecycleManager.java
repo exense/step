@@ -21,6 +21,7 @@ package step.core.execution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.repositories.Repository.ImportResult;
@@ -65,6 +66,10 @@ public class ExecutionLifecycleManager {
 	
 	public void updateStatus(ExecutionStatus newStatus) {
 		executionManager.updateStatus(context,newStatus);
+	}
+
+	public void updateExecutionResult(ExecutionContext context, ReportNodeStatus resultStatus) {
+		executionManager.updateExecutionResult(context, resultStatus);
 	}
 	
 }

@@ -54,8 +54,10 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 			executions.addColumn(input.getLabel(), input.getId());
 		}
 
-		executions.addTextWithDropdownColumn("Status", "status", Arrays.asList(ExecutionStatus.values()).stream().map(Object::toString).collect(Collectors.toList()));
-		executions.addCustomColumn("Summary", new ExecutionSummaryFormatter(context));
+		executions.addTextWithDropdownColumn("Status", "status", Arrays.asList(ExecutionStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
+			.addTextWithDropdownColumn("Result", "result", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
+			.addCustomColumn("Summary", new ExecutionSummaryFormatter(context))
+			.addRowAsJson("Execution");
 		
 		ColumnBuilder leafReportNodesColumns = new ColumnBuilder();
 		leafReportNodesColumns.addDateColumn("Begin", "executionTime").addColumn("Name","name").addJsonColumn("Keyword","functionAttributes").addColumn("Status","status").addColumn("Error", "error")
