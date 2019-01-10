@@ -58,7 +58,7 @@
 		<groovy.version>2.2.1</groovy.version>
 		<mongodb.version>3.8.2</mongodb.version>
 		<jackson.version>2.5.4</jackson.version>
-		<rtm.version>2.2.3-SNAPSHOT</rtm.version>
+		<rtm.version>2.2.2</rtm.version>
 	</properties>
 
 	<repositories>
