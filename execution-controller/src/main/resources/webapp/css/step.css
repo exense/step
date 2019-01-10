@@ -11,6 +11,11 @@ a { cursor: pointer; }
 	right: 150px;
 }
 
+.status-UNKNOW {
+	background:#dadada;
+	color:#dadada
+}
+
 .status-ENDED {
 	background:gray;
 	color:gray

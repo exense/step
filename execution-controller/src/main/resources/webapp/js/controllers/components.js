@@ -187,7 +187,12 @@ angular.module('components',['step'])
           if($scope.execution.status!='ENDED') {
             return $scope.execution.status
           } else {
-            return $scope.execution.result
+            if($scope.execution.result) {
+              return $scope.execution.result
+            } else {
+              // backward compatibility with executions run before 3.9
+              return "UNKNOW";
+            }
           }          
         } else {
           return "";
