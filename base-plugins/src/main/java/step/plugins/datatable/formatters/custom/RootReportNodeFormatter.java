@@ -1,5 +1,7 @@
 package step.plugins.datatable.formatters.custom;
 
+import java.util.Iterator;
+
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,15 +33,20 @@ public class RootReportNodeFormatter implements Formatter {
 		String eid = row.get("_id").toString();
 		
 		ReportNode rootReportNode = reportNodeAccessor.getRootReportNode(eid);
-		rootReportNode = reportNodeAccessor.getChildren(rootReportNode.getId()).next();
-		if(rootReportNode != null) {
-			try {
-				return mapper.writeValueAsString(rootReportNode);
-			} catch (JsonProcessingException e) {
-				logger.error("Error while serializing report node "+rootReportNode, e);
+		Iterator<ReportNode> rootReportNodeChildren = reportNodeAccessor.getChildren(rootReportNode.getId());
+		if(rootReportNodeChildren.hasNext()) {
+			rootReportNode = rootReportNodeChildren.next();
+			if(rootReportNode != null) {
+				try {
+					return mapper.writeValueAsString(rootReportNode);
+				} catch (JsonProcessingException e) {
+					logger.error("Error while serializing report node "+rootReportNode, e);
+				}
+			} else {
+				logger.error("Unable to find root report node for execution "+eid);
 			}
 		} else {
-			logger.error("Unable to find root report node for execution "+eid);
+			logger.error("No children found for report node with id "+rootReportNode.getId());
 		}
 		return "{}";
 	}
