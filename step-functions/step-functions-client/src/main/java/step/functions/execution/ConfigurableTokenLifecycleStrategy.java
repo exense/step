@@ -1,5 +1,7 @@
 package step.functions.execution;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import step.grid.TokenWrapper;
@@ -16,6 +18,7 @@ public class ConfigurableTokenLifecycleStrategy implements TokenLifecycleStrateg
 	private boolean addErrorOnAgentError = true;
 	private Set<AgentErrorCode> concernedAgentErrors;
 	
+	private List<TokenErrorListener> listeners = new ArrayList<>();
 	
 	public ConfigurableTokenLifecycleStrategy(boolean addErrorOnTokenReleaseError,
 			boolean addErrorOnTokenReservationError, boolean addErrorOnTokenCallError, boolean addErrorOnAgentError,
@@ -72,7 +75,7 @@ public class ConfigurableTokenLifecycleStrategy implements TokenLifecycleStrateg
 	public void afterTokenReleaseError(TokenLifecycleStrategyCallback callback, TokenWrapper tokenWrapper,
 			Exception e) {
 		if(addErrorOnTokenReleaseError) {
-			callback.addTokenError("Error while releasing token",e);
+			addTokenError(callback, "Error while releasing token",e);
 		}
 	}
 
@@ -80,14 +83,14 @@ public class ConfigurableTokenLifecycleStrategy implements TokenLifecycleStrateg
 	public void afterTokenReservationError(TokenLifecycleStrategyCallback callback, TokenWrapper tokenWrapper,
 			Exception e) {
 		if(addErrorOnTokenReservationError) {
-			callback.addTokenError("Error while reserving token",e);
+			addTokenError(callback, "Error while reserving token",e);
 		}
 	}
 
 	@Override
 	public void afterTokenCallError(TokenLifecycleStrategyCallback callback, TokenWrapper tokenWrapper, Exception e) {
 		if(addErrorOnTokenCallError) { 
-			callback.addTokenError("Error while calling agent", e);
+			addTokenError(callback, "Error while calling agent", e);
 		}
 	}
 
@@ -97,9 +100,18 @@ public class ConfigurableTokenLifecycleStrategy implements TokenLifecycleStrateg
 		if(addErrorOnAgentError) {
 			if(outputMessage!=null && outputMessage.getAgentError()!=null) {
 				if(concernedAgentErrors == null || concernedAgentErrors.isEmpty() || concernedAgentErrors.contains(outputMessage.getAgentError().getErrorCode())) {
-					callback.addTokenError("Error while calling agent", null);
+					addTokenError(callback, "Error while calling agent", null);
 				}
 			}
 		}
+	}
+	
+	protected void addTokenError(TokenLifecycleStrategyCallback callback, String errorMessage, Exception e) {
+		addTokenError(callback, errorMessage, e);
+		listeners.forEach(l->l.onTokenError(errorMessage, e));
+	}
+
+	public boolean registerTokenErrorListener(TokenErrorListener e) {
+		return listeners.add(e);
 	}
 }

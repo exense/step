@@ -100,6 +100,7 @@ public class GridPlugin extends AbstractPlugin {
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 		functionRouter = new FunctionRouter(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
 
+		context.put(TokenLifecycleStrategy.class, tokenLifecycleStrategy);
 		context.put(Grid.class, grid);
 		context.put(GridClient.class, client);
 				
