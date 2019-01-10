@@ -54,6 +54,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   
   var customViews = {};
   
+  var customMenuEntries = [];
+  
   api.getViewTemplate = function (view) {
     var customView = customViews[view];
     if(customView) {
@@ -65,6 +67,14 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   
   api.registerView = function(viewId,template) {
     customViews[viewId] = template;
+  }
+  
+  api.registerCustomMenuEntry = function(label, viewId) {
+    customMenuEntries.push({label: label, viewId: viewId})
+  }
+  
+  api.getCustomMenuEntries = function() {
+    return customMenuEntries;
   }
   
   var customDashlets = {};
@@ -126,6 +136,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   
   $scope.authService = AuthService;
   $scope.maintenanceService = MaintenanceService;
+  $scope.viewRegistry = ViewRegistry;
   
   AuthService.gotoDefaultPage();
   

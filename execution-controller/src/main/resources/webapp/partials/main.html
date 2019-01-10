@@ -9,22 +9,24 @@
 		</div>
 		<div class="collapse navbar-collapse">
 			<ul class="nav navbar-nav">
-				<li ng-class="{ active: isViewActive('artefacts') }"><a ui-sref="grid" ng-click="setView('artefacts')">Plans</a></li>
-				<li ng-class="{ active: isViewActive('functions') }"><a ui-sref="grid" ng-click="setView('functions')">Keywords</a></li>
-				<li ng-class="{ active: isViewActive('parameters') }"><a ui-sref="parameters"
-					ng-click="setView('parameters')">Parameters</a></li>
-				<li ng-class="{ active: isViewActive('executions') }"><a ui-sref="execution"
-					ng-click="setView('executions')">Executions</a></li>
-				<li ng-class="{ active: isViewActive('reportBrowser') }"><a ui-sref="reportBrowser"
-					ng-click="setView('reportBrowser')">Reports</a></li>
-				<li ng-class="{ active: isViewActive('scheduler') }"><a ui-sref="scheduler" ng-click="setView('scheduler')">Scheduler</a></li>
-				<li ng-class="{ active: isViewActive('grid') }"><a ui-sref="grid" ng-click="setView('grid')">Grid</a></li>
-				<li ng-if="authService.hasRight('admin')" ng-class="{ active: isViewActive('admin') }"><a ui-sref="admin"
-					ng-click="setView('admin')">Admin</a></li>
-				<li><a ui-sref="admin" ng-click="setView('admin')" id="dropdownMenuHelp" data-toggle="dropdown">Help</a>
+				<li ng-class="{ active: isViewActive('artefacts') }"><a ng-click="setView('artefacts')"><span class="glyphicon glyphicon-file"></span> Plans</a></li>
+				<li ng-class="{ active: isViewActive('functions') }"><a ng-click="setView('functions')"><span class="glyphicon glyphicon-record"></span> Keywords</a></li>
+				<li ng-class="{ active: isViewActive('parameters') }"><a ng-click="setView('parameters')"><span class="glyphicon glyphicon-list-alt"></span> Parameters</a></li>
+				<li ng-class="{ active: isViewActive('executions') }"><a ng-click="setView('executions')"><span class="glyphicon glyphicon-tasks"></span> Executions</a></li>
+				<li ng-class="{ active: isViewActive('scheduler') }"><a ng-click="setView('scheduler')"><span class="glyphicon glyphicon-time"></span> Scheduler</a></li>
+				<li ng-class="{ active: isViewActive('grid') }"><a ng-click="setView('grid')"><span class="glyphicon glyphicon-th"></span> Grid</a></li>
+				<li ng-if="authService.hasRight('admin')" ng-class="{ active: isViewActive('admin') }"><a ng-click="setView('admin')"><span class="glyphicon glyphicon-cog"></span> Admin</a></li>
+				<li><a id="dropdownMenuHelp" data-toggle="dropdown"><span class="glyphicon glyphicon-question-sign"></span> Help</a>
 					<ul class="dropdown-menu" aria-labelledby="dropdownMenuHelp">
 						<li><a target="_blank" href="http://docs.exense.ch/wiki/step/">Documentation</a></li>
 						<li><a target="_blank" href="http://step.exense.ch/">About</a></li>
+					</ul>
+				</li>
+				<li>
+					<a id="otherDropdown" data-toggle="dropdown"><span class="glyphicon glyphicon-menu-hamburger"></span></a>
+					<ul class="dropdown-menu" aria-labelledby="otherDropdown">
+						<li><a ui-sref="reportBrowser" ng-click="setView('reportBrowser')">Reports</a></li>
+						<li ng-repeat="entry in viewRegistry.getCustomMenuEntries()" ><a ng-click="setView(entry.viewId)">{{entry.label}}</a></li>
 					</ul>
 				</li>
 			</ul>
@@ -32,8 +34,8 @@
 				<li>
 					<a id="sessionDropdown" data-toggle="dropdown"><i class="glyphicon glyphicon-user" ></i> {{context.userID}} [{{context.role}}]</a>
 					<ul class="dropdown-menu" aria-labelledby="sessionDropdown">
-						<li><a ng-click="setView('myaccount')">My account</a></li>
-						<li><a ng-click="authService.logout()">Logout</a></li>
+						<li><a ng-click="setView('myaccount')"><span class="glyphicon glyphicon-cog"></span> My account</a></li>
+						<li><a ng-click="authService.logout()"><span class="glyphicon glyphicon-off"></span> Logout</a></li>
 					</ul>
 				</li>
 			</ul>
