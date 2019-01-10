@@ -162,7 +162,7 @@ public class EventBrokerServices extends AbstractServices {
 	public Map<String, Object> clear() {
 		eb.clear();
 		Map<String, Object> successMap = new HashMap<>();
-		successMap.put("success", "true");
+		successMap.put("status", "success");
 		return successMap;
 	}
 
@@ -173,7 +173,7 @@ public class EventBrokerServices extends AbstractServices {
 	public Map<String, Object> clearGroup(@PathParam("group") String group) {
 		eb.clearGroup(group);
 		Map<String, Object> successMap = new HashMap<>();
-		successMap.put("success", "true");
+		successMap.put("status", "success");
 		return successMap;
 	}
 
