@@ -19,6 +19,7 @@ import step.core.accessors.Collection;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.ExecutionStatus;
 import step.plugins.datatable.formatters.custom.ExecutionSummaryFormatter;
+import step.plugins.datatable.formatters.custom.RootReportNodeFormatter;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.ScreenTemplateChangeListener;
 import step.plugins.screentemplating.ScreenTemplateManager;
@@ -57,6 +58,7 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 		executions.addTextWithDropdownColumn("Status", "status", Arrays.asList(ExecutionStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
 			.addTextWithDropdownColumn("Result", "result", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
 			.addCustomColumn("Summary", new ExecutionSummaryFormatter(context))
+			.addCustomColumn("RootReportNode", new RootReportNodeFormatter(context))
 			.addRowAsJson("Execution");
 		
 		ColumnBuilder leafReportNodesColumns = new ColumnBuilder();

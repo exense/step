@@ -88,6 +88,33 @@ angular.module('reportNodes',['step','artefacts'])
   };
 })
 
+.directive('reportNodeIcon', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      node: '='
+    },
+    templateUrl: 'partials/reportnodes/reportNodeIcon.html',
+    controller: function($scope,artefactTypes) {
+      $scope.artefactTypes = artefactTypes;
+      
+      $scope.cssClass = function() {
+        var cssClass = '';
+        var node = $scope.node;
+        if(node) {
+          var cssClass = 'reportNodeIcon status-'+node.status+' glyphicon ';
+          if(node.resolvedArtefact) {
+            cssClass += artefactTypes.getIcon(node.resolvedArtefact._class)
+          } else {
+            cssClass += artefactTypes.getDefaultIcon()
+          }
+        }
+        return cssClass;
+      }
+    }
+  };
+})
+
 .directive('attachments', function() {
   return {
     restrict: 'E',

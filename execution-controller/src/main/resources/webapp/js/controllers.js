@@ -626,8 +626,16 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
               _.each(_.where(columns,{'title':'ID'}),function(col){col.visible=false});
               _.each(_.where(columns,{'title':'Execution'}),function(col){col.visible=false});
               _.each(_.where(columns,{'title':'Summary'}),function(col){col.visible=false});
+              _.each(_.where(columns,{'title':'RootReportNode'}),function(col){col.visible=false});
               _.each(_.where(columns,{'title':'Description'}),function(col){
-                col.render = function ( data, type, row ) {return '<a href="#/root/executions/'+row[0]+'">'+data+'</a>'};
+                col.createdCell =  function (td, cellData, rowData, row, col) {
+                  var rowScope = $scope.$new(true, $scope);
+                  $scope.table.trackScope(rowScope);
+                  rowScope.rootReportNode = JSON.parse(rowData[_.findIndex(columns, function(entry){return entry.title=='RootReportNode'})])
+                  var content = $compile('<report-node-icon node="rootReportNode" /> <a href="#/root/executions/'+rowData[0]+'">'+cellData+'</a>')(rowScope);
+                  angular.element(td).html(content);  
+                  rowScope.$apply();
+                };
               });
               _.each(_.where(columns,{'title':'Start time'}),function(col){
                 col.createdCell =  function (td, cellData, rowData, row, col) {
