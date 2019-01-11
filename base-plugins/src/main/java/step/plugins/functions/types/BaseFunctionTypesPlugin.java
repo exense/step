@@ -1,20 +1,11 @@
 package step.plugins.functions.types;
 
 import java.io.StringReader;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.json.Json;
-
-import org.reflections.Reflections;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
 
 import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
@@ -24,10 +15,10 @@ import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.base.types.LocalFunction;
 import step.functions.base.types.LocalFunctionType;
+import step.functions.base.types.handler.BaseFunctionReflectionHelper;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.FunctionTypeRegistry;
-import step.handlers.javahandler.Keyword;
 
 @Plugin(prio=10)
 public class BaseFunctionTypesPlugin extends AbstractPlugin {
@@ -60,7 +51,7 @@ public class BaseFunctionTypesPlugin extends AbstractPlugin {
 
 		List<String> keywordList = null;
 		try {
-			keywordList = LocalFunctionType.getLocalKeywordList();
+			keywordList = BaseFunctionReflectionHelper.getLocalKeywordList();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -74,9 +65,15 @@ public class BaseFunctionTypesPlugin extends AbstractPlugin {
 				if(function == null) {
 					function = new LocalFunction();
 					function.setAttributes(attributes);
-					function.setSchema(Json.createReader(
-							new StringReader("{}"))
-							.readObject());
+					try {
+						function.setSchema(Json.createReader(
+								new StringReader(BaseFunctionReflectionHelper.getLocalKeywordsWithSchemas().get(keyword)))
+								.readObject());
+					} catch (Exception e) {
+						function.setSchema(Json.createReader(
+								new StringReader("{}"))
+								.readObject());
+					}
 					functionAccessor.save(function);
 				}
 			}

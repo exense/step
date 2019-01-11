@@ -22,7 +22,6 @@ import java.util.List;
 
 import javax.json.JsonObject;
 
-import step.functions.base.types.LocalFunctionType;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.handlers.javahandler.KeywordHandler;
@@ -34,7 +33,7 @@ public class LocalFunctionHandler extends KeywordHandler {
 
 		List<String> keywordClasses;
 		try {
-			keywordClasses = LocalFunctionType.getLocalKeywordClassNames();
+			keywordClasses = BaseFunctionReflectionHelper.getLocalKeywordClassNames();
 		} catch (Exception e) {
 			String errorMsg = "Error while looking for LocalFunction class names";
 			throw new Exception(errorMsg, e);
