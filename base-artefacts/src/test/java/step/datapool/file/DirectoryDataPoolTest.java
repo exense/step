@@ -28,6 +28,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ContextBuilder;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataSet;
+import step.datapool.file.FileDataPoolImpl.ExtendedFile;
 
 public class DirectoryDataPoolTest {
 	
@@ -35,6 +36,14 @@ public class DirectoryDataPoolTest {
 	public void testDirectoryDataPoolTestToString() {		
 		DataSet<?> pool = getDataPool("folder","folder");
 		Assert.assertTrue(pool.next().getValue().toString().contains("File.txt"));
+		pool.close();
+	}
+	
+	@Test
+	public void testDirectoryDataPoolTestGetName() {		
+		DataSet<?> pool = getDataPool("folder","folder");
+		Assert.assertEquals("File",((ExtendedFile)pool.next().getValue()).getNameWithoutExtension());
+		Assert.assertEquals("File2.txt",((ExtendedFile)pool.next().getValue()).getName());
 		pool.close();
 	}
 

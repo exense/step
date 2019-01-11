@@ -47,11 +47,38 @@ public class FileDataPoolImpl extends DataSet<DirectoryDataPool> {
 	public void reset() {
 		throw new RuntimeException("Reset method not implemented for this DataSet type");
 	}
+	
+	public class ExtendedFile {
+		
+		private final File file;
+
+		public ExtendedFile(File file) {
+			super();
+			this.file = file;
+		}
+		
+		public String getName() {
+			return file.getName();
+		}
+		
+		public String getNameWithoutExtension() {
+			String fname = getName();
+			int id = fname.lastIndexOf('.'); 
+			return id >= 0 ? fname.substring(0, id) : fname;
+		}
+
+		@Override
+		public String toString() {
+			return file.getAbsolutePath();
+		}
+		
+		
+	}
 
 	@Override
 	public Object next_() {
 		if(fileIterator.hasNext()) {
-			return fileIterator.next().getAbsolutePath();
+			return new ExtendedFile(fileIterator.next());
 		} else {
 			return null;
 		}
