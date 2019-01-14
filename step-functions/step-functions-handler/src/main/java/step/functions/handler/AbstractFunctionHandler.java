@@ -112,7 +112,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 * @throws Exception
 	 */
 	protected <T> T runInContext(String branch, Callable<T> callable) throws Exception {
-		return applicationContextBuilder.runInContext(callable);
+		return applicationContextBuilder.runInContext(branch, callable);
 	}
 
 	/**
