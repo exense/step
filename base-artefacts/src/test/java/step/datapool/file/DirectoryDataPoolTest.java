@@ -46,6 +46,13 @@ public class DirectoryDataPoolTest {
 		Assert.assertEquals("File2.txt",((ExtendedFile)pool.next().getValue()).getName());
 		pool.close();
 	}
+	
+	@Test
+	public void testDirectoryDataPoolTestGetPath() {		
+		DataSet<?> pool = getDataPool("folder","folder");
+		Assert.assertEquals("D:\\git\\master\\step\\base-artefacts\\target\\test-classes\\folder",((ExtendedFile)pool.next().getValue()).getPath());
+		pool.close();
+	}
 
 	protected DataSet<?> getDataPool(String file, String type) {
 		DirectoryDataPool conf = getDataSourceConf(file);

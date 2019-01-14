@@ -66,6 +66,10 @@ public class FileDataPoolImpl extends DataSet<DirectoryDataPool> {
 			int id = fname.lastIndexOf('.'); 
 			return id >= 0 ? fname.substring(0, id) : fname;
 		}
+		
+		public String getPath() {
+			return file.getParent();
+		}
 
 		@Override
 		public String toString() {
