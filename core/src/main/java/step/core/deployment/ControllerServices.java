@@ -169,6 +169,15 @@ public class ControllerServices extends AbstractServices {
 		return link;
 	}	
 	
+	@POST
+	@Path("/executions/byref")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="report-read")
+	public List<Execution> getExecutionsByRepositoryObjectReference(RepositoryObjectReference objectReference) {
+		List<Execution> executionsByArtefactURL = getContext().getExecutionAccessor().getTestExecutionsByArtefactURL(objectReference);
+		return executionsByArtefactURL;
+	}
+	
 //	@POST
 //	@Path("/execution/{id}/report")
 //	@Consumes(MediaType.APPLICATION_JSON)

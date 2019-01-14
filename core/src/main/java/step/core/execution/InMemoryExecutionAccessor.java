@@ -26,6 +26,7 @@ import org.bson.types.ObjectId;
 import step.core.accessors.InMemoryCRUDAccessor;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.repositories.RepositoryObjectReference;
 
 public class InMemoryExecutionAccessor extends InMemoryCRUDAccessor<Execution> implements ExecutionAccessor {
 
@@ -44,7 +45,7 @@ public class InMemoryExecutionAccessor extends InMemoryCRUDAccessor<Execution> i
 	}
 
 	@Override
-	public List<Execution> getTestExecutionsByArtefactURL(String artefactURL) {
+	public List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference) {
 		throw new RuntimeException("Not implemented");
 	}
 

@@ -28,6 +28,7 @@ import org.bson.types.ObjectId;
 
 import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.MongoClientSession;
+import step.core.repositories.RepositoryObjectReference;
 
 public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> implements ExecutionAccessor {
 		
@@ -60,11 +61,9 @@ public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> imple
 	}
 	
 	@Override
-	public List<Execution> getTestExecutionsByArtefactURL(String artefactURL) {
+	public List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference) {
 		List<Execution> result = new ArrayList<>();
-    	for(Execution execution:collection.find("{artefactURL: '" + artefactURL +"'}").as(Execution.class)) {
-    		result.add(execution);
-    	}
+		collection.find("{executionParameters.artefact: #}", objectReference).as(Execution.class).forEach(e->result.add(e));;
 		return result;
 	}
 	

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import step.core.accessors.CRUDAccessor;
+import step.core.repositories.RepositoryObjectReference;
 
 public interface ExecutionAccessor extends CRUDAccessor<Execution> {
 
@@ -13,7 +14,7 @@ public interface ExecutionAccessor extends CRUDAccessor<Execution> {
 
 	List<Execution> getActiveTests();
 
-	List<Execution> getTestExecutionsByArtefactURL(String artefactURL);
+	List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference);
 
 	Iterable<Execution> findByCritera(Map<String, Object> criteria, int limit);
 
