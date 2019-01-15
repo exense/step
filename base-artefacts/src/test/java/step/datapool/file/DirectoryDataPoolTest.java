@@ -20,6 +20,8 @@ package step.datapool.file;
 
 import java.io.File;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import junit.framework.Assert;
@@ -32,40 +34,39 @@ import step.datapool.file.FileDataPoolImpl.ExtendedFile;
 
 public class DirectoryDataPoolTest {
 	
+	private DataSet<?> pool;
+	
+	private File file;
+	
+	@Before
+	public void before() {
+		file = FileHelper.getClassLoaderResource(this.getClass(), "folder");
+		
+		DirectoryDataPool conf = new DirectoryDataPool();
+		conf.setFolder(new DynamicValue<String>(file.getAbsolutePath()));
+
+		pool =  DataPoolFactory.getDataPool("folder", conf, ContextBuilder.createLocalExecutionContext());
+		pool.init();
+	}
+	
+	@After
+	public void after() {
+		pool.close();
+	}
+	
 	@Test
 	public void testDirectoryDataPoolTestToString() {		
-		DataSet<?> pool = getDataPool("folder","folder");
 		Assert.assertTrue(pool.next().getValue().toString().contains("File.txt"));
-		pool.close();
 	}
 	
 	@Test
 	public void testDirectoryDataPoolTestGetName() {		
-		DataSet<?> pool = getDataPool("folder","folder");
 		Assert.assertEquals("File",((ExtendedFile)pool.next().getValue()).getNameWithoutExtension());
 		Assert.assertEquals("File2.txt",((ExtendedFile)pool.next().getValue()).getName());
-		pool.close();
 	}
 	
 	@Test
 	public void testDirectoryDataPoolTestGetPath() {		
-		DataSet<?> pool = getDataPool("folder","folder");
-		Assert.assertEquals("D:\\git\\master\\step\\base-artefacts\\target\\test-classes\\folder",((ExtendedFile)pool.next().getValue()).getPath());
-		pool.close();
-	}
-
-	protected DataSet<?> getDataPool(String file, String type) {
-		DirectoryDataPool conf = getDataSourceConf(file);
-		DataSet<?> pool =  DataPoolFactory.getDataPool(type, conf, ContextBuilder.createLocalExecutionContext());
-		pool.init();
-		return pool;
-	}
-	
-	private DirectoryDataPool getDataSourceConf(String filename) {
-		File file = FileHelper.getClassLoaderResource(this.getClass(), filename);
-		
-		DirectoryDataPool conf = new DirectoryDataPool();
-		conf.setFolder(new DynamicValue<String>(file.getAbsolutePath()));
-		return conf;
+		Assert.assertEquals(file.getAbsolutePath(),((ExtendedFile)pool.next().getValue()).getPath());
 	}
 }
