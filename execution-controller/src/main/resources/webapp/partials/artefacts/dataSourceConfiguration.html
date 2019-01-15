@@ -31,7 +31,7 @@
 	</div>
 	
 		<div ng-if="artefact.dataSourceType=='gsheet'">
-		<dynamic-textfield label="'Service Account Key'" on-save="save()" dynamic-value="artefact.dataSource.serviceAccountKey" />
+		<file-input label="'Service Account Key File'" on-save="save()" dynamic-value="artefact.dataSource.serviceAccountKey" />
 		<dynamic-textfield label="'File Id'" on-save="save()" dynamic-value="artefact.dataSource.fileId" />
 		<dynamic-textfield label="'Tab Name'" on-save="save()" dynamic-value="artefact.dataSource.tabName" />
 		</div>
