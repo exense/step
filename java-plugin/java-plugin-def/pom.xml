@@ -75,6 +75,7 @@
 								<artifactItem>
 									<groupId>ch.exense.step</groupId>
 									<artifactId>java-plugin-handler</artifactId>
+									<version>${project.version}</version>
 									<classifier>jar-with-dependencies</classifier>
 									<type>jar</type>
 									<overWrite>false</overWrite>
@@ -97,6 +98,7 @@
 								<artifactItem>
 									<groupId>ch.exense.step</groupId>
 									<artifactId>java-plugin-handler-test</artifactId>
+									<version>${project.version}</version>
 									<classifier>jar-with-dependencies</classifier>
 									<type>jar</type>
 									<overWrite>false</overWrite>

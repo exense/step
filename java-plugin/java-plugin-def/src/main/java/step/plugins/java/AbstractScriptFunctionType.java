@@ -24,21 +24,32 @@ import step.plugins.js223.handler.ScriptHandler;
 
 public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction> extends AbstractFunctionType<T> {
 
-	File daemonJar;
+	protected File daemonJar;
+	
+	protected Configuration configuration;
 	
 	@Override
 	public void init() {
 		super.init();
 		daemonJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "java-plugin-handler.jar");
+		configuration = Configuration.getInstance();
 	}
 	
 	public Map<String, String> getHandlerProperties(T function) {
 		Map<String, String> props = new HashMap<>();
 		props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());		
 		registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props);
+		addPluginLibsIfRequired(function.getScriptLanguage().get(), props);
 		registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props);
 		registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props);
 		return props;
+	}
+
+	protected void addPluginLibsIfRequired(String scriptLanguage, Map<String, String> props) {
+		String property = configuration.getProperty("plugins."+scriptLanguage+".libs", null);
+		if(property != null) {
+			registerFile(new File(property), ScriptHandler.PLUGIN_LIBRARIES_FILE, props);
+		}
 	}
 	
 	@Override
