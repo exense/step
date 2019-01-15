@@ -30,6 +30,12 @@
 		<dynamic-textfield label="'Primary write key'" on-save="save()" dynamic-value="artefact.dataSource.writePKey" />
 	</div>
 	
+		<div ng-if="artefact.dataSourceType=='gsheet'">
+		<dynamic-textfield label="'Service Account Key'" on-save="save()" dynamic-value="artefact.dataSource.serviceAccountKey" />
+		<dynamic-textfield label="'File Id'" on-save="save()" dynamic-value="artefact.dataSource.fileId" />
+		<dynamic-textfield label="'Tab Name'" on-save="save()" dynamic-value="artefact.dataSource.tabName" />
+		</div>
+	
 	<div ng-if="artefact.dataSourceType=='sequence'">
 		<dynamic-textfield label="'Start'" on-save="save()" dynamic-value="artefact.dataSource.start" />
 		<dynamic-textfield label="'End'" on-save="save()" dynamic-value="artefact.dataSource.end" />
