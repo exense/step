@@ -39,13 +39,16 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 
 	@Override
 	public void execute_(final ReportNode node, TestScenario testArtefact) {
+		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
+		
 		List<AbstractArtefact> artefacts = getChildren(testArtefact);
 		ExecutorService executor = Executors.newFixedThreadPool(artefacts.size());
 		for(final AbstractArtefact child:artefacts) {
 			executor.submit(new Runnable() {
 				public void run() {
 					context.associateThread();
-					delegateExecute(child, node);
+					ReportNode childReportNode = delegateExecute(child, node);
+					reportNodeStatusComposer.addStatusAndRecompose(childReportNode.getStatus());
 				}
 			});
 		}
@@ -56,6 +59,8 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 		} catch (InterruptedException e) {
 			logger.error("An error occcurred while waiting for the executor to terminate",e);
 		}
+		
+		node.setStatus(reportNodeStatusComposer.getParentStatus());
 	}
 
 	@Override
