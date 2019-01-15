@@ -47,6 +47,8 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
 
 	public static final String SCRIPT_FILE = "$function.library.file";
 	
+	public static final String PLUGIN_LIBRARIES_FILE = "$plugin.libraries.file";
+	
 	public static final String LIBRARIES_FILE = "$libraries.file";
 	
 	public static final String ERROR_HANDLER_FILE = "$errorhandler.file";

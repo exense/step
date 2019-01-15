@@ -16,6 +16,8 @@ public class GeneralScriptHandler extends JsonBasedFunctionHandler {
 		// keyword. One of these dependencies is guava for example.
 		pushLocalApplicationContext(FORKED_BRANCH, getCurrentContext().getClassLoader(), "script-dev-java.jar");
 		
+		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.PLUGIN_LIBRARIES_FILE, input.getProperties());
+		
 		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.LIBRARIES_FILE, input.getProperties());
 		
 		String scriptLanguage = input.getProperties().get(ScriptHandler.SCRIPT_LANGUAGE);
