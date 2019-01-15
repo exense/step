@@ -34,6 +34,7 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
+import step.attachments.FileResolver;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataSet;
 
@@ -44,19 +45,18 @@ import step.datapool.DataSet;
  */
 public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfiguration> {
 
+	FileResolver fileResolver;
+	
 	private String saKey;
 	private String fileId;
 	private String tabName;
 
 	List<List<Object>> datapool;
-	
+
 	List<String> headers;
-	
+
 	int cursor;
 
-	/**
-	 * @param configuration
-	 */
 	public GoogleSheetv4DataPool(GoogleSheetv4DataPoolConfiguration configuration) {
 		super(configuration);
 		saKey = configuration.getServiceAccountKey().get();
@@ -68,6 +68,7 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 
 	@Override
 	public void init() {
+		fileResolver = new FileResolver(context.getAttachmentManager());
 		createDatapool(saKey, fileId, tabName);
 		createHeaders();
 		this.cursor = 1; // skip headers
@@ -82,7 +83,7 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 	private int getIndexForHeader(String header) {
 		return this.headers.indexOf(header);
 	}
-	
+
 	@Override
 	public void reset() {
 		init();
@@ -106,15 +107,15 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 	public void addRow(Object row) {
 		throw new RuntimeException("Not implemented");
 	}
-	
+
 	private class RowWrapper extends SimpleStringMap{
-		
+
 		private int cursor;
-		
+
 		public RowWrapper(int cursor){
 			this.cursor = cursor;
 		}
-		
+
 		@Override
 		public int size() {
 			return datapool.get(cursor).size();
@@ -133,7 +134,7 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 			return (String) datapool.get(cursor).get(getIndexForHeader(key));
 		}
 
-		
+
 		//TODO:easy to implement by turning the datapool into List<LinkedList<Object>>
 		@Override
 		public String put(String key, String value) {
@@ -144,16 +145,15 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 		public Set<String> keySet() {
 			return new HashSet<>(headers);
 		}
-		
+
 	}
 
 	public void createDatapool(String saKey, String fileId, String tabName){
 		try {
 			this.service = buildService(getCredential(saKey));
 			this.datapool = getValuesForRange(fileId, tabName);
-
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -161,8 +161,19 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 		Set<String> all = new HashSet<>();
 		all.addAll(SheetsScopes.all());
 		all.addAll(DriveScopes.all());
-		return GoogleCredential.fromStream(new FileInputStream(saKey))
-				.createScoped(all);
+
+		GoogleCredential gCred = null;
+		FileInputStream keyFileIS = null;
+		try{
+			keyFileIS = new FileInputStream(this.fileResolver.resolve(saKey));
+			gCred = GoogleCredential.fromStream(keyFileIS)
+					.createScoped(all);
+		}finally{
+			if(keyFileIS != null)
+				keyFileIS.close();
+		}
+
+		return gCred;
 	}
 
 	public Sheets buildService(GoogleCredential credential) throws IOException,
