@@ -73,14 +73,21 @@
 			</exclusions>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
-		
-		<!-- For future use as a replacement of the CSVFileReader (Apache commons CSV with FileChannel = no mem footprint + synced results -->
-		<!-- <dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-csv</artifactId>
-			<version>1.4</version>
-		</dependency>-->
 
+		<!-- For future use as a replacement of the CSVFileReader (Apache commons 
+			CSV with FileChannel = no mem footprint + synced results -->
+		<!-- <dependency> <groupId>org.apache.commons</groupId> <artifactId>commons-csv</artifactId> 
+			<version>1.4</version> </dependency> -->
+		<dependency>
+			<groupId>com.google.apis</groupId>
+			<artifactId>google-api-services-sheets</artifactId>
+			<version>v4-rev20190109-1.27.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.apis</groupId>
+			<artifactId>google-api-services-drive</artifactId>
+			<version>v3-rev20181213-1.27.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -88,7 +95,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
-			  	<version>3.0.0-M1</version>
+				<version>3.0.0-M1</version>
 				<configuration>
 					<artifactId>base-artefacts</artifactId>
 					<skip>false</skip>
