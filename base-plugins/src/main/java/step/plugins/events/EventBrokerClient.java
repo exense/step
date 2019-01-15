@@ -36,11 +36,11 @@ public interface EventBrokerClient extends Closeable{
 
 	public Event peekEvent(String id);
 
-	public Event peekEventByGroupAndName(String group, String name);
+	public Event peekEventByGroupAndName(String group, String name) throws Exception;
 
 	public Event consumeEvent(String id);
 
-	public Event consumeEventByGroupAndName(String group, String name);
+	public Event consumeEventByGroupAndName(String group, String name) throws Exception;
 
 	public Map<String, Boolean> clear();
 	
@@ -52,7 +52,7 @@ public interface EventBrokerClient extends Closeable{
 
 	public Map<String, Object> clearStats();
 
-	public Set<Event> getGroupSkipLimit(String group, int skip, int limit);
+	public Set<Event> getGroupSkipLimit(String group, int skip, int limit) throws Exception;
 
 	public Set<Event> getFullGroup(String group);
 
