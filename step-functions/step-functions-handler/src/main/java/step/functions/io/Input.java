@@ -18,9 +18,11 @@
  *******************************************************************************/
 package step.functions.io;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import step.grid.io.Attachment;
 
 public class Input<IN> {
 
@@ -31,6 +33,8 @@ public class Input<IN> {
 	protected IN payload;
 	
 	protected Map<String, String> properties;
+	
+	private List<Attachment> attachments = new ArrayList<>();
 
 	/**
 	 * @return the name of the function (keyword) to be executed
@@ -74,5 +78,13 @@ public class Input<IN> {
 
 	public void setProperties(Map<String, String> properties) {
 		this.properties = properties;
+	}
+	
+	public List<Attachment> getAttachments() {
+		return attachments;
+	}
+
+	public void setAttachments(List<Attachment> attachments) {
+		this.attachments = attachments;
 	}
 }
