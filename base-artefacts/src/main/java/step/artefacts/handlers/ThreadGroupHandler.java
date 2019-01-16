@@ -30,7 +30,6 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
 
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 	
@@ -62,6 +61,8 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		LongAdder gcounter = new LongAdder();
 		// Using bindings instead
 		//context.getVariablesManager().putVariable(node, testArtefact.getItem().get(), gcounter);
+		
+		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
 		
 		ExecutorService executor = Executors.newFixedThreadPool(numberOfUsers);
 		try {
@@ -102,6 +103,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 								newVariable.put(testArtefact.getItem().get(), gcounter.intValue());
 
 								iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
+								reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
 								
 								if(pacing!=0) {
 									long endTime = System.currentTimeMillis();
@@ -119,6 +121,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 						} catch (Exception e) {
 							if(iterationReportNode!=null) {
 								failWithException(iterationReportNode, e);
+								reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
 							}
 						}
 					}
@@ -127,7 +130,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			
 			executor.shutdown();
 			executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
-			node.setStatus(ReportNodeStatus.PASSED);
+			node.setStatus(reportNodeStatusComposer.getParentStatus());
 		} catch (InterruptedException e) {
 			failWithException(node, e);
 		} finally {
