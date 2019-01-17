@@ -37,6 +37,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import step.core.access.Preferences;
 import step.core.access.User;
+import step.core.access.UserAccessor;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSetting;
 
@@ -58,10 +59,16 @@ public class AdminServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/user")
 	public void save(User user) {
-		if(user.getId()==null) {
+		UserAccessor userAccessor = getContext().getUserAccessor();
+
+		User previousUser = userAccessor.get(user.getId());
+		if(previousUser == null) {
+			// previousUser is null => we're creating a new user
+			// initializing password
 			resetPwd(user);
 		}
-		getContext().getUserAccessor().save(user);
+		
+		userAccessor.save(user);
 	}
 
 	@DELETE
