@@ -46,8 +46,10 @@ import step.functions.io.Output;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
+import step.grid.Grid;
 import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
+import step.grid.tokenpool.Token;
 
 @Path("/functions")
 public class FunctionServices extends AbstractServices {
@@ -58,11 +60,14 @@ public class FunctionServices extends AbstractServices {
 	
 	protected FunctionExecutionService functionExecutionService;
 	
+	protected Grid grid;
+	
 	@PostConstruct
 	public void init() {
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().getAttachmentManager());
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);
+		grid = getContext().get(Grid.class);
 	}
 
 	@POST
@@ -175,7 +180,10 @@ public class FunctionServices extends AbstractServices {
 	@Path("/executor/tokens/return")
 	@Secured(right="kw-execute")
 	public void returnTokenHandle(TokenWrapper token) throws FunctionExecutionServiceException {
-		functionExecutionService.returnTokenHandle(token);
+		// the following is quite ugly. We have to search for the local instance of this token and return exactly this class instance 
+		// and not the one that has been deserialized. TODO: change the signature of this service to pass the ID of the token and not the entire object 
+		Token<TokenWrapper> localTokenInstance = grid.getTokens().stream().filter(t->t.getObject().getID().equals(token.getID())).findFirst().get();
+		functionExecutionService.returnTokenHandle(localTokenInstance.getObject());
 	}
 	
 	public static class CallFunctionInput {
