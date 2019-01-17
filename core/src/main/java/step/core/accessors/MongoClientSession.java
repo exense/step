@@ -40,7 +40,7 @@ public class MongoClientSession implements Closeable {
 		Integer port = configuration.getPropertyAsInteger("db.port",27017);
 		String user = configuration.getProperty("db.username");
 		String pwd = configuration.getProperty("db.password");
-		int maxConnections = configuration.getPropertyAsInteger("db.maxConnections", 10);
+		int maxConnections = configuration.getPropertyAsInteger("db.maxConnections", 200);
 			
 		db = configuration.getProperty("db.database","step");
 
