@@ -45,7 +45,7 @@
 	<scm>
 		<connection>scm:git:git@github.com/exense/step.git</connection>
 		<developerConnection>scm:git:git@github.com/exense/step.git</developerConnection>
-		<url>git@github.com/exense/step.git</url>
+		<url>https://github.com/exense/step.git</url>
   </scm>
 
 	<properties>
