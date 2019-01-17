@@ -469,10 +469,17 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
         $http.get('rest/views/errorDistribution/' + eId).then(function(response) {
           $scope.errorDistribution = response.data;
           $scope.countByErrorMsg = [];
+          $scope.countByErrorCode = [];
           _.map($scope.errorDistribution.countByErrorMsg, function(val, key) {
             $scope.countByErrorMsg.push({errorMessage:key, errorCount:val})
           });
+		 _.map($scope.errorDistribution.countByErrorCode, function(val, key) {
+            $scope.countByErrorCode.push({errorCode:key, errorCodeCount:val})
+          });
         });
+        
+        $scope.errorDistributionToggleStates = ['message', 'code'];
+        $scope.selectedErrorDistirbutionToggle = 'message';
         
         $scope.searchStepByError = function(error) {
           $scope.tabs.selectedTab = 0;

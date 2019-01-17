@@ -114,6 +114,12 @@
 				</uib-tab>
 				<uib-tab heading="Errors">
 					<div class="panel-body">
+					<div class="row">
+						<span>Group by: </span><span><select ng-model="selectedErrorDistirbutionToggle" ng-options="x for x in errorDistributionToggleStates"></select><span>
+					</div>
+					<div>&nbsp</div><div>&nbsp</div>
+					
+					<div ng-if="selectedErrorDistirbutionToggle == 'message'">
 						<st-table data="countByErrorMsg" uid="'errorDistribution'" persist-state="true">
 							<st-actions>
 							</st-actions>
@@ -121,7 +127,7 @@
 								<st-column name="errorMessage">
 									<header>Error message</header>
 									<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-									<cell><span><a ng-click="searchStepByError(row.errorMessage)">{{row.errorMessage}}</span></cell>
+									<cell><span><a ng-click="searchStepByError(row.errorMessage)">{{row.errorMessage}}</a></span></cell>
 								</st-column>
 								<st-column>
 									<header>Count</header>
@@ -143,6 +149,36 @@
 								</st-column>
 						</st-table>
 					</div>
+					<div ng-if="selectedErrorDistirbutionToggle == 'code'">
+						<st-table data="countByErrorCode" uid="'errorDistribution'" persist-state="true">
+							<st-actions>
+							</st-actions>
+							<st-columns>
+								<st-column name="errorCode">
+									<header>Error code</header>
+									<cell><span>{{row.errorCode}}</span></cell>
+								</st-column>
+								<st-column>
+									<header>Count</header>
+									<cell>
+										<span>{{row.errorCodeCount}}</span>
+									</cell>
+								</st-column>
+								<st-column>
+									<header>%</header>
+									<cell>
+										<span>{{(row.errorCodeCount/errorDistribution.errorCount*100) | number:1}}%</span>
+									</cell>
+								</st-column>
+								<st-column>
+									<header>Overall %</header>
+									<cell>
+										<span>{{(row.errorCodeCount/errorDistribution.count*100) | number:1}}%</span>
+									</cell>
+								</st-column>
+						</st-table>
+					</div>	
+				  </div>
 				</uib-tab>
 			</uib-tabset>
 		</div>
