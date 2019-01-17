@@ -12,7 +12,7 @@
 
 	<groupId>ch.exense.step</groupId>
 	<artifactId>parent</artifactId>
-	<version>3.9.0</version>
+	<version>3.9.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Step</name>
@@ -44,9 +44,8 @@
 	</developers>
 	<scm>
 		<connection>scm:git:git://github.com/exense/step.git</connection>
-		<developerConnection>scm:git:https://github.com/exense/step.git/</developerConnection>
+		<developerConnection>scm:git:https://github.com/exense/step/step.git</developerConnection>
 		<url>https://github.com/exense/step.git</url>
-    <tag>3.9.0</tag>
   </scm>
 
 	<properties>
@@ -136,6 +135,14 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
 				<version>3.0.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<!-- Javadoc -->
 			<plugin>
