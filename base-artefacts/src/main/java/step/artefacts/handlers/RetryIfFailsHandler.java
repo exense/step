@@ -36,7 +36,8 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 
 	@Override
 	protected void execute_(ReportNode node, RetryIfFails testArtefact) {
-		boolean success = false;
+		
+		ReportNodeStatus lastStatus = ReportNodeStatus.NORUN;
 		
 		long begin = System.currentTimeMillis();
 		
@@ -46,24 +47,25 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 			
 			ReportNode iterationReportNode = delegateExecute(iterationTestCase, node);
 			
-			if(iterationReportNode.getStatus()==ReportNodeStatus.PASSED) {
-				success = true;
-			}
+			lastStatus = iterationReportNode.getStatus();
 			
 			if(iterationReportNode.getStatus()==ReportNodeStatus.PASSED || context.isInterrupted()) {
 				break;
 			}
 			
 			if(testArtefact.getTimeout().get() > 0 && System.currentTimeMillis() > (begin + testArtefact.getTimeout().get())){
+				lastStatus = ReportNodeStatus.FAILED;
 				break;
 			}
 			
 			try {
 				Thread.sleep(testArtefact.getGracePeriod().get());
-			} catch (InterruptedException e) {}
+			} catch (InterruptedException e) {
+				lastStatus = ReportNodeStatus.INTERRUPTED;
+			}
 		}
 		
-		node.setStatus(success?ReportNodeStatus.PASSED:ReportNodeStatus.FAILED);
+		node.setStatus(lastStatus);
 	}
 
 	@Override
