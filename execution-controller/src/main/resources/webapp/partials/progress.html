@@ -121,7 +121,10 @@
 								<st-column name="errorMessage">
 									<header>Error message</header>
 									<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-									<cell><span><a ng-click="searchStepByError(row.errorMessage)">{{row.errorMessage}}</span></cell>
+									<cell>
+										<span ng-if="row.errorMessage!='Other'"><a ng-click="searchStepByError(row.errorMessage)">{{row.errorMessage}}</a></span>
+										<span ng-if="row.errorMessage=='Other'">Other</span>
+									</cell>
 								</st-column>
 								<st-column>
 									<header>Count</header>
