@@ -1,8 +1,6 @@
 package step.plugins.views.functions;
 
-import java.util.Map;
-
-import step.core.accessors.DottedKeyMap;
+import step.core.accessors.collections.ViewCounterMap;
 import step.plugins.views.ViewModel;
 
 public class ErrorDistribution extends ViewModel {
@@ -11,7 +9,28 @@ public class ErrorDistribution extends ViewModel {
 
 	protected long errorCount = 0;
 	
-	protected DottedKeyMap<String, Integer> countByErrorMsg = new DottedKeyMap<>();
+	protected ViewCounterMap countByErrorCode;
+
+	protected ViewCounterMap countByErrorMsg;
+	
+	private int otherThreshhold;
+	
+	private String defaultKey;
+	
+	public ErrorDistribution(int customThreshold, String defaultKey){
+		this.otherThreshhold = customThreshold;
+		this.defaultKey = defaultKey;
+		init();
+	}
+
+	private ErrorDistribution() {
+	}
+	
+	private void init(){
+		this.countByErrorCode = new ViewCounterMap(this.otherThreshhold, this.defaultKey);
+		this.countByErrorMsg = new ViewCounterMap(this.otherThreshhold, this.defaultKey);
+	}
+	
 
 	public long getCount() {
 		return count;
@@ -29,11 +48,27 @@ public class ErrorDistribution extends ViewModel {
 		this.errorCount = errorCount;
 	}
 
-	public Map<String, Integer> getCountByErrorMsg() {
+	public void incrementByMsg(String message){
+		this.countByErrorMsg.incrementForKey(message);
+	}
+
+	public void incrementByCode(String code){
+		this.countByErrorCode.incrementForKey(code);
+	}
+
+	public ViewCounterMap getCountByErrorCode() {
+		return countByErrorCode;
+	}
+
+	public void setCountByErrorCode(ViewCounterMap countByErrorCode) {
+		this.countByErrorCode = countByErrorCode;
+	}
+
+	public ViewCounterMap getCountByErrorMsg() {
 		return countByErrorMsg;
 	}
 
-	public void setCountByErrorMsg(DottedKeyMap<String, Integer> countByErrorMsg) {
+	public void setCountByErrorMsg(ViewCounterMap countByErrorMsg) {
 		this.countByErrorMsg = countByErrorMsg;
 	}
 }

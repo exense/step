@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.core.accessors;
+package step.core.accessors.serialization;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -26,6 +26,8 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+
+import step.core.accessors.collections.DottedKeyMap;
 
 @SuppressWarnings("rawtypes")
 public class DottedMapKeySerializer extends JsonSerializer<DottedKeyMap> {

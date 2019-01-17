@@ -46,7 +46,10 @@ public class ErrorDistributionViewTest {
 			view.afterReportNodeExecution(model, node);
 		}
 		
-		Assert.assertEquals(501,model.countByErrorMsg.size());
-		Assert.assertEquals(500,(int)model.countByErrorMsg.get("Other"));
+		Assert.assertEquals(501,model.getCountByErrorMsg().size());
+		Assert.assertEquals(500,(int)model.getCountByErrorMsg().get("Other"));
+		
+		Assert.assertEquals(1,model.getCountByErrorCode().size());
+		Assert.assertEquals(1000,(int)model.getCountByErrorCode().get("0"));
 	}
 }

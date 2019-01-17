@@ -7,8 +7,8 @@ import step.plugins.views.View;
 
 @View
 public class ErrorDistributionView extends AbstractView<ErrorDistribution> {	
-
-	private int otherThreshhold = 500;
+	
+	protected static final String DEFAULT_KEY = "Other";
 	
 	@Override
 	public void afterReportNodeSkeletonCreation(ErrorDistribution model, ReportNode node) {
@@ -20,29 +20,15 @@ public class ErrorDistributionView extends AbstractView<ErrorDistribution> {
 			model.setCount(model.getCount()+1);
 			if(node.getError()!=null && node.getError().getMsg()!=null) {
 				model.setErrorCount(model.getErrorCount()+1);
-				
-				String key = node.getError().getMsg();
-				Integer count = model.countByErrorMsg.get(key);
-				if(count==null) {
-					if(model.countByErrorMsg.size()<otherThreshhold) {
-						model.countByErrorMsg.put(key, 1);
-					} else {
-						Integer currentOtherCount = model.countByErrorMsg.get("Other");
-						if(currentOtherCount==null) {
-							currentOtherCount = 0;
-						}
-						model.countByErrorMsg.put("Other", currentOtherCount+1);
-					}
-				} else {
-					model.countByErrorMsg.put(key, count+1);
-				}
+				model.incrementByMsg(node.getError().getMsg());
+				model.incrementByCode(node.getError().getCode() == null?"default":node.getError().getCode().toString()); //temporary due to Integer type
 			}
 		}
 	}
 
 	@Override
 	public ErrorDistribution init() {
-		return new ErrorDistribution();
+		return new ErrorDistribution(500, DEFAULT_KEY);
 	}
 
 	@Override

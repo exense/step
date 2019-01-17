@@ -1,4 +1,4 @@
-package step.core.accessors;
+package step.core.accessors.collections;
 
 import java.util.HashMap;
 
