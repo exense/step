@@ -13,6 +13,7 @@ import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
@@ -39,7 +40,8 @@ public class MongoClientSession implements Closeable {
 		Integer port = configuration.getPropertyAsInteger("db.port",27017);
 		String user = configuration.getProperty("db.username");
 		String pwd = configuration.getProperty("db.password");
-		
+		int maxConnections = configuration.getPropertyAsInteger("db.maxConnections", 10);
+			
 		db = configuration.getProperty("db.database","step");
 
 		ServerAddress address = new ServerAddress(host, port);
@@ -48,8 +50,10 @@ public class MongoClientSession implements Closeable {
 			MongoCredential credential = MongoCredential.createCredential(user, db, pwd.toCharArray());
 			credentials.add(credential);
 		}
+		MongoClientOptions.Builder clientOptions = new MongoClientOptions.Builder();
+		MongoClientOptions options = clientOptions.connectionsPerHost(maxConnections).build();
+		mongoClient = new MongoClient(address, credentials,options);
 		
-		mongoClient = new MongoClient(address, credentials);
 	}
 	
 	public MongoDatabase getMongoDatabase() {
