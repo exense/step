@@ -2,6 +2,8 @@ package step.core.accessors.collections;
 
 import java.util.HashMap;
 
+import step.core.accessors.serialization.DottedMapKeySerializer;
+
 /**
  * 
  * A special Map that is serialized by {@link DottedMapKeySerializer}
