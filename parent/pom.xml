@@ -6,13 +6,16 @@
 	but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
 	or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
 	for more details. You should have received a copy of the GNU Affero General 
-	Public License along with STEP. If not, see <http://www.gnu.org/licenses />. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	Public License along with STEP. If not, see <http://www.gnu.org/licenses 
+	/>. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>ch.exense.step</groupId>
 	<artifactId>parent</artifactId>
-	<version>3.9.0</version>
+	<version>3.9.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Step</name>
@@ -46,8 +49,7 @@
 		<connection>scm:git:git://github.com/exense/step.git</connection>
 		<developerConnection>scm:git:[push=]https://github.com/exense/step.git[fetch=]https://github.com/exense/step.git</developerConnection>
 		<url>https://github.com/exense/step.git</url>
-    <tag>3.9.0</tag>
-  </scm>
+	</scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -78,7 +80,7 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
 		</repository>
 	</distributionManagement>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -251,7 +253,6 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
 
 	<profiles>
 		<profile>
