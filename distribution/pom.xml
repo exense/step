@@ -6,8 +6,11 @@
 	but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
 	or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
 	for more details. You should have received a copy of the GNU Affero General 
-	Public License along with STEP. If not, see <http://www.gnu.org/licenses />. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	Public License along with STEP. If not, see <http://www.gnu.org/licenses 
+	/>. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>ch.exense.step</groupId>
@@ -20,7 +23,7 @@
 	<packaging>pom</packaging>
 	<name>Distribution</name>
 
-	<dependencies>		
+	<dependencies>
 		<dependency>
 			<groupId>ch.exense.rtm</groupId>
 			<artifactId>rtm</artifactId>
@@ -76,30 +79,27 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.1.1</version>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.1.0</version>
 				<executions>
 					<execution>
 						<id>copy</id>
 						<phase>package</phase>
 						<goals>
-							<goal>copy</goal>
+							<goal>copy-resources</goal>
 						</goals>
 					</execution>
 				</executions>
 				<configuration>
-					<artifactItems>
-						<artifactItem>
-						    <groupId>org.codehaus.groovy</groupId>
-						    <artifactId>groovy-all</artifactId>
-						    <version>2.4.16</version>
-							<overWrite>false</overWrite>
-							<outputDirectory>${project.build.directory}/../template-controller/ext/groovy</outputDirectory>
-						</artifactItem>
-					</artifactItems>
-					<outputDirectory>${project.build.directory}/wars</outputDirectory>
-					<overWriteReleases>false</overWriteReleases>
-					<overWriteSnapshots>true</overWriteSnapshots>
+					<outputDirectory>${basedir}/..</outputDirectory>
+					<resources>
+						<resource>
+							<directory>target/</directory>
+							<includes>
+								<include>**/*.zip</include>
+							</includes>
+						</resource>
+					</resources>
 				</configuration>
 			</plugin>
 		</plugins>
