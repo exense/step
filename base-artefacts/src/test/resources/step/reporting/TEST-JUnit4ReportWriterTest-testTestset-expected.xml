@@ -1,0 +1,13 @@
+<testsuite name="TS01" time="0.12" tests="8" skipped="1" failures="2" errors="2">
+<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC01 - PASSED" time="0.01"></testcase>
+<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC02 - PASSED in Sequence" time="0.01"></testcase>
+<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC03 - FAILED without error message" time="0.00"><failure type=""></failure>
+</testcase>
+<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC04 - FAILED with error message" time="0.06"><failure type="">my message</failure>
+<failure type="">my message</failure>
+</testcase>
+<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC05 - TECH_ERROR" time="0.00"><error type=""></error>
+</testcase>
+<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC06 - TECH_ERROR with message" time="0.00"><error type="">My error message</error>
+</testcase>
+</testsuite>

@@ -1,6 +1,7 @@
 package step.core.plans.runner;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -11,6 +12,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.artefacts.reports.ReportTreeVisitor;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
+import step.reporting.ReportWriter;
 
 /**
  * This class provides an API for the manipulation of plan executions
@@ -45,7 +47,7 @@ public class PlanRunnerResult {
 	 * @return
 	 */
 	public PlanRunnerResult visitReportNodes(Consumer<ReportNode> consumer) {
-		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
+		ReportTreeVisitor visitor = getReportTreeVisitor();
 		visitor.visitNodes(rootReportNodeId, consumer);
 		return this;
 	}
@@ -56,9 +58,13 @@ public class PlanRunnerResult {
 	 * @return
 	 */
 	public PlanRunnerResult visitReportTree(Consumer<ReportNodeEvent> consumer) {
-		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
+		ReportTreeVisitor visitor = getReportTreeVisitor();
 		visitor.visit(rootReportNodeId, consumer);
 		return this;
+	}
+
+	protected ReportTreeVisitor getReportTreeVisitor() {
+		return new ReportTreeVisitor(reportTreeAccessor);
 	}
 	
 	/**
@@ -114,4 +120,17 @@ public class PlanRunnerResult {
 		bWriter.flush();
 		return this;
 	}	
+	
+	/**
+	 * Writes a report of the execution using the provided {@link ReportWriter} 
+	 * 
+	 * @param reportWriter the {@link ReportWriter} to be used to write the report
+	 * @param outputFile the output file of the report
+	 * @return this instance
+	 * @throws IOException if an exception occurs while writing the report
+	 */
+	public PlanRunnerResult writeReport(ReportWriter reportWriter, File outputFile) throws IOException {
+		reportWriter.writeReport(reportTreeAccessor, executionId, outputFile);		
+		return this;
+	}
 }

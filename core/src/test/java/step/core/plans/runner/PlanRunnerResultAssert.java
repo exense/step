@@ -13,6 +13,36 @@ import junit.framework.Assert;
 
 public class PlanRunnerResultAssert {
 
+	public static void assertEquals(File expectedFile, File actualFile) throws IOException {
+		Assert.assertEquals(readResource(expectedFile), readResource(actualFile));
+	}
+	
+	/**
+	 * Compare 2 resources
+	 * @param clazz the class loader of the expected resource
+	 * @param expectedResourceName the name of the expected resource
+	 * @param actualFile the actual file
+	 * @param ignoredPatterns the regexp patterns to be ignored during comparison
+	 * @throws IOException
+	 */
+	public static void assertEquals(Class<?> clazz, String expectedResourceName, File actualFile, String... ignoredPatterns) throws IOException {
+		String expected = readResource(clazz, expectedResourceName);
+		expected = removeIgnoredPatterns(expected, ignoredPatterns);
+		
+		String actual = readResource(actualFile);
+		actual = removeIgnoredPatterns(actual, ignoredPatterns);
+		
+		Assert.assertEquals(expected, actual);
+	}
+
+	protected static String removeIgnoredPatterns(String text, String... ignoredPatterns) {
+		String result = text;
+		for(String pattern:ignoredPatterns) {
+			result = text.replaceAll(pattern, "");
+		}
+		return result;
+	}
+	
 	public static void assertEquals(File expectedReportTreeFile, PlanRunnerResult actualResult) throws IOException {
 		StringWriter writer = new StringWriter();
 		actualResult.printTree(writer);
