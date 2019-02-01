@@ -107,7 +107,7 @@ public class ConfigurableTokenLifecycleStrategy implements TokenLifecycleStrateg
 	}
 	
 	protected void addTokenError(TokenLifecycleStrategyCallback callback, String errorMessage, Exception e) {
-		addTokenError(callback, errorMessage, e);
+		callback.addTokenError(errorMessage, e);
 		listeners.forEach(l->l.onTokenError(errorMessage, e));
 	}
 
