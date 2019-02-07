@@ -13,10 +13,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import junit.framework.Assert;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
-import step.artefacts.handlers.FunctionRouter;
-import step.attachments.AttachmentManager;
-import step.attachments.FileResolver;
-import step.commons.conf.Configuration;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -57,7 +53,7 @@ public class FunctionRouterTest {
 		map.put("function", "f");
 		function.setTokenSelectionCriteria(map);
 		
-		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new AttachmentManager(new Configuration())), null);
+		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(null, null);
 		functionTypeRegistry.registerFunctionType(new AbstractFunctionType<Function>() {
 
 			@Override

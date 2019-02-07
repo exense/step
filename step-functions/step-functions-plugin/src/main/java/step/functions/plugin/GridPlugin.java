@@ -90,7 +90,7 @@ public class GridPlugin extends AbstractPlugin {
 		client = new GridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
 
 		editorRegistry = new FunctionEditorRegistry();
-		functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(context.getAttachmentManager()), client);
+		functionTypeRegistry = new FunctionTypeRegistryImpl(context.get(FileResolver.class), client);
 
 		functionAccessor = new FunctionAccessorImpl(context.getMongoClientSession());
 		functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);

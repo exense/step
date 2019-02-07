@@ -1,0 +1,32 @@
+<div class="modal-header">
+	<h3 class="modal-title">Search Resource</h3>
+</div>
+<div class="modal-body">
+	<st-table collection="'resources'" handle="tableHandle" uid="'resourceList'" persist-state="true">
+		<st-columns>
+			<st-column name="attributes.name">
+				<header>Name</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell><span>{{row.attributes.name}}</span></cell>
+			</st-column>
+			<st-column name="resourceName">
+				<header>Filename</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell><span>{{row.resourceName}}</span></cell>
+			</st-column>
+			<st-column>
+				<header></header>
+				<cell>
+					<div class="btn-group">
+						<button type="button" class="btn btn-default btn-xs" ng-click="$parent.selectResource(row._id.$oid)" uib-tooltip="Select this resource">
+            				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+            			</button>
+          			</div>
+          		</cell>
+			</st-column>
+		</st-columns>
+	</st-table>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

@@ -21,25 +21,24 @@ package step.datapool.excel;
 import java.io.File;
 import java.util.regex.Pattern;
 
+import step.attachments.FileResolver;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.execution.ExecutionContext;
 
 public class ExcelFileLookup {
 
 	ExecutionContext context;
+	FileResolver fileResolver;
 	
 	public ExcelFileLookup(ExecutionContext context) {
 		super();
 		this.context = context;
+		this.fileResolver = context.get(FileResolver.class);
 	}
 
 	public File lookup(String workbookPath) {
-		File workBookFile;
-		if(workbookPath.startsWith("attachment:")) {
-			workBookFile = context.getAttachmentManager().getFileById(workbookPath.replace("attachment:", ""));
-		} else if(workbookPath.contains("/")||workbookPath.contains("\\")) {
-			workBookFile = new File(workbookPath);
-		} else {		
+		File workBookFile = fileResolver.resolve(workbookPath);
+		if(workBookFile == null || !workBookFile.exists()) {
 			if(context!=null) {
 				Object o = null;
 				if(workbookPath.isEmpty()) {
