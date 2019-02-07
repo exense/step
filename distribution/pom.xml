@@ -116,7 +116,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<outputDirectory>${basedir}/..</outputDirectory>
+					<outputDirectory>${distribution.zip_dir}</outputDirectory>
 					<resources>
 						<resource>
 							<directory>target/</directory>

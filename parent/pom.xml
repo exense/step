@@ -6,8 +6,11 @@
 	but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
 	or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
 	for more details. You should have received a copy of the GNU Affero General 
-	Public License along with STEP. If not, see <http://www.gnu.org/licenses />. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	Public License along with STEP. If not, see <http://www.gnu.org/licenses 
+	/>. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>ch.exense.step</groupId>
@@ -46,8 +49,8 @@
 		<connection>scm:git:git://github.com/exense/step.git</connection>
 		<developerConnection>scm:git:[push=]https://github.com/exense/step.git[fetch=]https://github.com/exense/step.git</developerConnection>
 		<url>https://github.com/exense/step.git</url>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -258,6 +261,9 @@
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
+			<properties>
+				<distribution.zip_dir>${basedir}</distribution.zip_dir>
+			</properties>
 			<!-- Local compilation - no signature -->
 		</profile>
 		<profile>
@@ -265,6 +271,9 @@
 			<activation>
 				<activeByDefault>false</activeByDefault>
 			</activation>
+			<properties>
+				<distribution.zip_dir>C:/Server/Jenkins/workspace/step-oss/</distribution.zip_dir>
+			</properties>
 			<build>
 				<plugins>
 					<!-- Signature -->
