@@ -3,6 +3,7 @@ package step.core.execution;
 import org.bson.types.ObjectId;
 
 import step.attachments.AttachmentManager;
+import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
 import step.core.artefacts.InMemoryArtefactAccessor;
@@ -50,6 +51,8 @@ public class ContextBuilder {
 		
 		context.setExpressionHandler(new ExpressionHandler());
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
+		
+		context.put(FileResolver.class, new FileResolver(null, null));
 		
 		return context;
 	}

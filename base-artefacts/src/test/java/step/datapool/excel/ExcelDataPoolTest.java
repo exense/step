@@ -33,6 +33,7 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ContextBuilder;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolRow;
 import step.datapool.Utils;
@@ -44,10 +45,15 @@ public class ExcelDataPoolTest {
 		ExcelDataPool conf = getDataSourceConf(false, "ExcelDataPool.xlsx", null);
 		
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
+		initPool(pool);
 		
-		pool.init();
 		Assert.assertEquals("DefaultValue", ((SimpleStringMap)pool.next().getValue()).get("A"));
 		pool.close();
+	}
+
+	private void initPool(ExcelDataPoolImpl pool) {
+		pool.setContext(ContextBuilder.createLocalExecutionContext());
+		pool.init();
 	}
 	
 	@Test
@@ -56,7 +62,7 @@ public class ExcelDataPoolTest {
 		
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
 		
-		pool.init();
+		initPool(pool);
 		Assert.assertTrue(((SimpleStringMap)pool.next().getValue()).toString().startsWith("Keys=Key1 Values=Value1 Result="));
 		pool.close();
 	}
@@ -67,7 +73,7 @@ public class ExcelDataPoolTest {
 		
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
 		
-		pool.init();
+		initPool(pool);
 		Assert.assertEquals("DefaultValue", ((SimpleStringMap)pool.next().getValue()).get("A"));
 		
 		pool.reset();
@@ -90,7 +96,7 @@ public class ExcelDataPoolTest {
 		
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
 		
-		pool.init();
+		initPool(pool);
 
 		List<Exception> exceptions = new ArrayList<>();
 		
@@ -135,7 +141,7 @@ public class ExcelDataPoolTest {
 
 		ExcelDataPoolImpl pool2 = new ExcelDataPoolImpl(conf);
 		
-		pool2.init();
+		initPool(pool2);
 		
 		for(int i=1;i<=nIt;i++) {
 			SimpleStringMap row = (SimpleStringMap)pool2.next().getValue();
@@ -157,7 +163,7 @@ public class ExcelDataPoolTest {
 	public void testWithoutHeaders() {		
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(false, "ExcelDataPool.xlsx", "WithoutHeaders"));
 		
-		pool.init();
+		initPool(pool);
 		
 		for(int i=1;i<=10;i++) {
 			Assert.assertEquals("Value"+i, ((SimpleStringMap)pool.next().getValue()).get("B"));
@@ -172,7 +178,7 @@ public class ExcelDataPoolTest {
 	public void testCrossSheet() {	
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(false, "ExcelDataPool.xlsx", "WithoutHeaders"));
 		
-		pool.init();
+		initPool(pool);
 		
 		for(int i=1;i<=10;i++) {
 			Assert.assertEquals("Value"+i, ((SimpleStringMap)pool.next().getValue()).get("WithoutHeaders2::B"));
@@ -188,7 +194,7 @@ public class ExcelDataPoolTest {
 	public void testWithHeaders() {		
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "WithHeaders"));
 		
-		pool.init();
+		initPool(pool);
 		
 		for(int i=1;i<=10;i++) {
 			SimpleStringMap row = (SimpleStringMap)pool.next().getValue();
@@ -210,7 +216,7 @@ public class ExcelDataPoolTest {
 	public void testWrite() {
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "Write"));
 
-		pool.init();
+		initPool(pool);
 		
 		String value = UUID.randomUUID().toString();
 		
@@ -226,7 +232,7 @@ public class ExcelDataPoolTest {
 
 		pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "Write"));
 		
-		pool.init();
+		initPool(pool);
 		
 		for(int i=1;i<=10;i++) {
 			SimpleStringMap row = (SimpleStringMap)pool.next().getValue();
@@ -243,7 +249,7 @@ public class ExcelDataPoolTest {
 	public void testValueChanged() {
 		ExcelDataPoolImpl pool  = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPoolValueChanged.xlsx", "DefaultSheet"));
 
-		pool.init();
+		initPool(pool);
 				
 		DataPoolRow r;
 		while((r=pool.next())!=null) {
@@ -260,7 +266,7 @@ public class ExcelDataPoolTest {
 	public void testNoSave() {
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPoolImmutable.xlsx", "Write"));
 		
-		pool.init();
+		initPool(pool);
 		
 		String value = UUID.randomUUID().toString();
 		
@@ -274,7 +280,7 @@ public class ExcelDataPoolTest {
 		
 		pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPoolImmutable.xlsx", "Write"));
 		
-		pool.init();
+		initPool(pool);
 				
 		for(int i=1;i<=10;i++) {
 			SimpleStringMap row = (SimpleStringMap)pool.next().getValue();
@@ -288,7 +294,7 @@ public class ExcelDataPoolTest {
 	public void testSKIP() {
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(false, "ExcelDataPool.xlsx", "SKIP"));
 		
-		pool.init();
+		initPool(pool);
 		
 		int i=0;
 		while(pool.next()!=null) {i++;}
@@ -302,7 +308,7 @@ public class ExcelDataPoolTest {
 	public void testStop() {
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(false, "ExcelDataPool.xlsx", "Stop"));
 		
-		pool.init();
+		initPool(pool);
 		
 		int i=0;
 		while(pool.next()!=null) {i++;}
@@ -315,7 +321,7 @@ public class ExcelDataPoolTest {
 	@Test
 	public void testAddRow() {
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "AddRow"));
-		pool.init();
+		initPool(pool);
 		String uid = UUID.randomUUID().toString();
 		
 		HashMap<String, String> row = new HashMap<>();
@@ -330,7 +336,7 @@ public class ExcelDataPoolTest {
 		pool.close();
 		
 		pool = new ExcelDataPoolImpl(getDataSourceConf(true, "ExcelDataPool.xlsx", "AddRow"));
-		pool.init();
+		initPool(pool);
 		
 		try {
 			boolean containsNewRow = false;
@@ -364,7 +370,7 @@ public class ExcelDataPoolTest {
 		conf.setForWrite(new DynamicValue<Boolean>(true));
 		
 		ExcelDataPoolImpl pool = new ExcelDataPoolImpl(conf);
-		pool.init();
+		initPool(pool);
 		
 		HashMap<String, String> row = new HashMap<>();
 		row.put("Col1", uid);
@@ -378,7 +384,7 @@ public class ExcelDataPoolTest {
 		pool.close();
 		
 		pool = new ExcelDataPoolImpl(conf);
-		pool.init();
+		initPool(pool);
 		
 		try {
 			boolean containsNewRow = false;

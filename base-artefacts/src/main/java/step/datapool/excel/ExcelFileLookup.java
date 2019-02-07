@@ -33,29 +33,36 @@ public class ExcelFileLookup {
 	public ExcelFileLookup(ExecutionContext context) {
 		super();
 		this.context = context;
-		this.fileResolver = context.get(FileResolver.class);
+		if(context!=null) {
+			this.fileResolver = context.get(FileResolver.class);
+		}
 	}
 
 	public File lookup(String workbookPath) {
-		File workBookFile = fileResolver.resolve(workbookPath);
-		if(workBookFile == null || !workBookFile.exists()) {
-			if(context!=null) {
-				Object o = null;
-				if(workbookPath.isEmpty()) {
-					Pattern excelFilenamePattern = Pattern.compile("^.*\\.xls(x)?$");
-					o = context.getVariablesManager().getFirstVariableMatching(excelFilenamePattern);
+		File workBookFile;
+		if(workbookPath.contains("/")||workbookPath.contains("\\")) {
+			workBookFile = new File(workbookPath);
+		} else {
+			workBookFile = fileResolver!=null?fileResolver.resolve(workbookPath):null;
+			if(workBookFile == null || !workBookFile.exists()) {
+				if(context!=null) {
+					Object o = null;
+					if(workbookPath.isEmpty()) {
+						Pattern excelFilenamePattern = Pattern.compile("^.*\\.xls(x)?$");
+						o = context.getVariablesManager().getFirstVariableMatching(excelFilenamePattern);
+					} else {
+						o = context.getVariablesManager().getVariable(ArtefactHandler.FILE_VARIABLE_PREFIX + workbookPath);
+					}
+					
+					if(o!=null && o instanceof File) {
+						workBookFile = (File) o;
+					} else {
+						throw new RuntimeException("The workbook '" + workbookPath + "' couldn't be found.");
+					}
+					
 				} else {
-					o = context.getVariablesManager().getVariable(ArtefactHandler.FILE_VARIABLE_PREFIX + workbookPath);
+					throw new RuntimeException("Unable to lookup workbook '" + workbookPath + "' because the context is null. This should never happen");
 				}
-				
-				if(o!=null && o instanceof File) {
-					workBookFile = (File) o;
-				} else {
-					throw new RuntimeException("The workbook '" + workbookPath + "' couldn't be found.");
-				}
-				
-			} else {
-				throw new RuntimeException("Unable to lookup workbook '" + workbookPath + "' because the context is null. This should never happen");
 			}
 		}
 		return workBookFile;

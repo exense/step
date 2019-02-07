@@ -10,6 +10,8 @@ import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 
+import step.attachments.AttachmentManager;
+import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
 import step.commons.helpers.FileHelper;
 import step.core.dynamicbeans.DynamicBeanResolver;
@@ -26,6 +28,7 @@ import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
 import step.grid.client.GridClientImpl;
+import step.resources.LocalResourceManagerImpl;
 
 public class FunctionRunner {
 
@@ -49,7 +52,8 @@ public class FunctionRunner {
 			
 			client = new GridClientImpl(grid);
 			
-			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(null, client);
+			FileResolver fileResolver = new FileResolver(new AttachmentManager(configuration), new LocalResourceManagerImpl());
+			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, client);
 			functionTypeRegistry.registerFunctionType(functionType);
 			
 			try {
