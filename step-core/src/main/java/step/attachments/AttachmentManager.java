@@ -69,7 +69,7 @@ public class AttachmentManager {
 			File file = new File(folder+"/"+list[0]);
 			return file;
 		} else {
-			return null;
+			throw new RuntimeException("The attachment with ID "+id+" doesn't exist.");
 		}	
 	}
 	
