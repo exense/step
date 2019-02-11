@@ -164,8 +164,8 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
           resolve: {}
         });
 
-        modalInstance.result.then(function (artefact) {
-          $scope.function_.artefactId = artefact.id;
+        modalInstance.result.then(function () {
+          reload();
         });
       }
       
