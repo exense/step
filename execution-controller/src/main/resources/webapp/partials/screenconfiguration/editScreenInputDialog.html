@@ -31,7 +31,15 @@
 								<tr ng-repeat="option in input.input.options">
 									<td style="padding:2px;"><input class="form-control input-sm" ng-model="option.value" placeholder="Value"></td>
 									<td style="padding:2px;"><input class="form-control input-sm" ng-model="option.activationExpression.script" placeholder="Activation expression"></td>
-									<td style="padding:2px;"><button class="btn btn-danger btn-xs" ng-click="removeOption(option.value)" type="button"><i class="glyphicon glyphicon-remove"></i></button></td>	
+									<td style="padding:2px;">
+										<div class="btn-group">
+											<button class="btn btn-default btn-xs" ng-click="moveOption(option.value, -1)" type="button"><i class="glyphicon glyphicon glyphicon-chevron-up"></i></button>
+								    		<button class="btn btn-default btn-xs" ng-click="moveOption(option.value, 1)" type="button"><i class="glyphicon glyphicon glyphicon-chevron-down"></i></button>
+								  		</div>
+										<div class="btn-group">
+											<button class="btn btn-danger btn-xs" ng-click="removeOption(option.value)" type="button"><i class="glyphicon glyphicon-remove"></i></button>
+										</div>
+									</td>	
 								</tr>
 							</tbody>
 						</table>

@@ -98,6 +98,17 @@ angular.module('screenConfigurationControllers',['tables','step'])
     $scope.input.input.options.push({value:"",activationExpression:{script:""}});
   }
   
+  $scope.moveOption = function(value, offset) {
+    var options = $scope.input.input.options;
+    var position = _.findIndex(options, function(option) {return option && option.value == value});
+    var newPosition = position + offset;
+    if(newPosition >= 0 && newPosition < options.length) {
+      var item = options[position];
+      options.splice(position, 1);
+      options.splice(newPosition, 0, item);
+    }
+  }
+  
   $scope.removeOption = function(value) {
     $scope.input.input.options = _.reject($scope.input.input.options, function(option) {return option.value == value});
   }
