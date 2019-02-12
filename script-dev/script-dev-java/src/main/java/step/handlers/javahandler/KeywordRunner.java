@@ -58,8 +58,8 @@ public class KeywordRunner {
 			tokenReservationSession = new TokenReservationSession();
 			
 			handler = new KeywordHandler(throwExceptionOnError);
-			FunctionHandlerFactory factory = new FunctionHandlerFactory(new ApplicationContextBuilder(), null, properties);
-			factory.initialize(handler, tokenSession, tokenReservationSession);
+			FunctionHandlerFactory factory = new FunctionHandlerFactory(new ApplicationContextBuilder(), null);
+			factory.initialize(handler, tokenSession, tokenReservationSession, properties);
 		} 
 		
 		public void setThrowExceptionOnError(boolean throwExceptionOnError) {

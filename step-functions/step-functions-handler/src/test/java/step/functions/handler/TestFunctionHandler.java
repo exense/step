@@ -7,7 +7,6 @@ import java.util.Map;
 import junit.framework.Assert;
 import step.functions.io.Input;
 import step.functions.io.Output;
-import step.grid.agent.tokenpool.AgentTokenWrapper;
 
 public class TestFunctionHandler extends AbstractFunctionHandler<TestInput, TestOutput> {
 
@@ -29,6 +28,7 @@ public class TestFunctionHandler extends AbstractFunctionHandler<TestInput, Test
 		//  Test property merging
 		Map<String, String> mergedProperties = mergeAllProperties(input);
 		Assert.assertEquals("myTokenPropValue1", mergedProperties.get("myTokenProp1"));
+		Assert.assertEquals("myAgentPropValue1", mergedProperties.get("myAgentProp1"));
 		Assert.assertEquals("myInputPropValue1", mergedProperties.get("myInputProp1"));
 		
 		// Test payload

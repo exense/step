@@ -66,12 +66,12 @@ public class ArtefactFunctionHandlerTest {
 	protected ArtefactFunctionHandler createArtefactFunctionHandler(ExecutionContext context) {
 		ArtefactFunctionHandler handler = new ArtefactFunctionHandler();
 		
-		FunctionHandlerFactory functionHandlerFactory = new FunctionHandlerFactory(new ApplicationContextBuilder(), null, null);
+		FunctionHandlerFactory functionHandlerFactory = new FunctionHandlerFactory(new ApplicationContextBuilder(), null);
 		
 		TokenReservationSession tokenReservationSession = new TokenReservationSession();
 		tokenReservationSession.put(CallFunctionHandler.EXECUTION_CONTEXT_KEY, context);
 		
-		functionHandlerFactory.initialize(handler, new TokenSession(), tokenReservationSession);
+		functionHandlerFactory.initialize(handler, new TokenSession(), tokenReservationSession, null);
 		return handler;
 	}
 	
