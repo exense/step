@@ -162,9 +162,11 @@ public class FunctionMessageHandlerTest {
 
 		});
 		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
-		Map<String, String> tokenProperties = new HashMap<>();
-		tokenProperties.put("myTokenProp1", "myTokenPropValue1");
-		tokenServices.setAgentProperties(tokenProperties);
+		Map<String, String> agentProperties = new HashMap<>();
+		agentProperties.put("myAgentProp1", "myAgentPropValue1");
+		agentProperties.put("myTokenProp1", "defaultValue");
+		
+		tokenServices.setAgentProperties(agentProperties);
 		return tokenServices;
 	}
 

@@ -1,5 +1,8 @@
 package step.functions.handler;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -42,8 +45,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		
 		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
 		
-		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient(), 
-				agentTokenServices.getAgentProperties());
+		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient());
 	}
 
 	@Override
@@ -57,11 +59,13 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		}
 		
 		return applicationContextBuilder.runInContext(()->{
+			// Merge the token and agent properties
+			Map<String, String> mergedAgentProperties = getMergedAgentProperties(token);
 			// Instantiate the function handler 
 			String handlerClass = inputMessage.getProperties().get(FUNCTION_HANDLER_KEY);
 			@SuppressWarnings("rawtypes")
 			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext().getClassLoader(), 
-					handlerClass, token.getSession(), token.getTokenReservationSession());
+					handlerClass, token.getSession(), token.getTokenReservationSession(), mergedAgentProperties);
 			
 			// Deserialize the Input from the message payload
 			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
@@ -80,5 +84,18 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			return outputMessageBuilder.build();
 			
 		});
+	}
+
+	private Map<String, String> getMergedAgentProperties(AgentTokenWrapper token) {
+		Map<String, String> mergedAgentProperties = new HashMap<>();
+		Map<String, String> agentProperties = token.getServices().getAgentProperties();
+		if(agentProperties !=null) {
+			mergedAgentProperties.putAll(agentProperties);
+		}
+		Map<String, String> tokenProperties = token.getProperties();
+		if(tokenProperties != null) {
+			mergedAgentProperties.putAll(tokenProperties);
+		}
+		return mergedAgentProperties;
 	}
 }

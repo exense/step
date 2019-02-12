@@ -25,7 +25,7 @@ public class FunctionRunnerTest {
 		f.setAttributes(attributes);
 		
 		try(Context context = FunctionRunner.getContext(new TestFunctionType())) {
-			Output<JsonObject> o = FunctionRunner.getContext(new TestFunctionType()).run(f, "{}");
+			Output<JsonObject> o = context.run(f, "{}");
 			Assert.assertEquals("tache", o.getPayload().getString("mous"));
 		}
 	}

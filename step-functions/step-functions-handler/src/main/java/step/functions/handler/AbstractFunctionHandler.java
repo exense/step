@@ -202,7 +202,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	protected Output<OUT> delegate(String branchName, String functionHandlerClassname, Input<IN> input) throws Exception {
 		return applicationContextBuilder.runInContext(branchName, ()->{
 			@SuppressWarnings("unchecked")
-			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext(branchName).getClassLoader(), functionHandlerClassname, tokenSession, tokenReservationSession);
+			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext(branchName).getClassLoader(), functionHandlerClassname, tokenSession, tokenReservationSession, properties);
 			return functionHandler.handle(input);
 		});
 	}
