@@ -2,7 +2,7 @@
 	<h3 class="modal-title">File already exists</h3>
 </div>
 <div class="modal-body">
-	<div class="alert alert-warning">The same file has already been uploaded to the following resource(s)</div>
+	<div class="alert alert-warning">The same file has already been uploaded to the following resource(s). Do you want to link to an existing resource?</div>
 	
 	<st-table data="similarResources">
 		<st-columns>
@@ -20,7 +20,7 @@
 				<header></header>
 				<cell>
 					<div class="btn-group">
-						<button type="button" class="btn btn-primary btn-xs" ng-click="$parent.selectResource(row._id.$oid)" uib-tooltip="Select this resource">
+						<button type="button" class="btn btn-primary btn-xs" ng-click="$parent.selectResource(row.id)" uib-tooltip="Select this resource">
             				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Use this resource
             			</button>
           			</div>

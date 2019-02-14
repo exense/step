@@ -34,12 +34,12 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 	
 	@Override
-	public Resource createResource(InputStream resourceStream, String resourceFileName, boolean checkForDuplicates) throws IOException, SimilarResourceExistingException {
-		Resource resource = createResource(resourceFileName);
+	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates) throws IOException, SimilarResourceExistingException {
+		Resource resource = createResource(resourceType, resourceFileName);
 		ResourceRevision resourceRevision = createResourceRevisionAndSaveContent(resourceStream, resourceFileName, resource);
 		
 		if(checkForDuplicates) {
-			List<Resource> resourcesWithSameChecksum = getSimilarResources(resourceRevision);
+			List<Resource> resourcesWithSameChecksum = getSimilarResources(resource, resourceRevision);
 			if(resourcesWithSameChecksum.size()>0) {
 				throw new SimilarResourceExistingException(resource, resourcesWithSameChecksum);
 			}
@@ -65,21 +65,21 @@ public class ResourceManagerImpl implements ResourceManager {
 		Resource resource = getResource(resourceId);
 		
 		resourceRevisionAccessor.getResourceRevisionsByResourceId(resourceId).forEachRemaining(revision->{
-			FileHelper.deleteFolder(getResourceRevisionContainer(revision));
+			FileHelper.deleteFolder(getResourceRevisionContainer(resource, revision));
 			resourceRevisionAccessor.remove(revision.getId());
 		});
 		
 		resourceAccessor.remove(resource.getId());
 	}
 	
-	private List<Resource> getSimilarResources(ResourceRevision resourceRevision) {
+	private List<Resource> getSimilarResources(Resource actualResource, ResourceRevision actualResourceRevision) {
 		List<Resource> result = new ArrayList<>();
-		resourceRevisionAccessor.getResourceRevisionsByChecksum(resourceRevision.getChecksum()).forEachRemaining(revision->{
-			if(!revision.getId().equals(resourceRevision.getId())) {
+		resourceRevisionAccessor.getResourceRevisionsByChecksum(actualResourceRevision.getChecksum()).forEachRemaining(revision->{
+			if(!revision.getId().equals(actualResourceRevision.getId())) {
 				Resource resource = resourceAccessor.get(new ObjectId(revision.getResourceId()));
 				if(resource.getCurrentRevisionId().equals(revision.getId())) {
 					try {
-						if(FileUtils.contentEquals(getResourceRevisionFile(revision), getResourceRevisionFile(resourceRevision))) {
+						if(FileUtils.contentEquals(getResourceRevisionFile(resource, revision), getResourceRevisionFile(actualResource, actualResourceRevision))) {
 							result.add(resource);
 						}
 					} catch (IOException e) {
@@ -93,8 +93,9 @@ public class ResourceManagerImpl implements ResourceManager {
 	
 	@Override
 	public ResourceRevisionContent getResourceContent(String resourceId) throws FileNotFoundException {
-		ResourceRevision resourceRevision = getResourceRevisionByResourceId(resourceId);
-		return getResourceRevisionContent(resourceRevision);
+		Resource resource = getResource(resourceId);
+		ResourceRevision resourceRevision = getResourceRevision(resource.getCurrentRevisionId());
+		return getResourceRevisionContent(resource, resourceRevision);
 	}
 	
 	@Override
@@ -107,19 +108,20 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public ResourceRevisionContent getResourceRevisionContent(String resourceRevisionId) throws FileNotFoundException {
 		ResourceRevision resourceRevision = resourceRevisionAccessor.get(new ObjectId(resourceRevisionId));
-		return getResourceRevisionContent(resourceRevision);
+		Resource resource = resourceAccessor.get(new ObjectId(resourceRevision.getResourceId()));
+		return getResourceRevisionContent(resource, resourceRevision);
 	}
 	
 	@Override
 	public File getResourceFile(String resourceId) {
 		Resource resource = getResource(resourceId);
 		ResourceRevision resourceRevision = getResourceRevision(resource.getCurrentRevisionId());
-		return getResourceRevisionFile(resourceRevision);
+		return getResourceRevisionFile(resource, resourceRevision);
 	}
 	
-	private ResourceRevisionContent getResourceRevisionContent(ResourceRevision resourceRevision)
+	private ResourceRevisionContent getResourceRevisionContent(Resource resource, ResourceRevision resourceRevision)
 			throws FileNotFoundException {
-		File resourceRevisionFile = getResourceRevisionFile(resourceRevision);
+		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
 		FileInputStream resourceRevisionStream = new FileInputStream(resourceRevisionFile);
 		return new ResourceRevisionContent(resourceRevisionStream, resourceRevision.getResourceFileName());
 	}
@@ -133,12 +135,12 @@ public class ResourceManagerImpl implements ResourceManager {
 		return resourceAccessor.get(new ObjectId(resourceId));
 	}
 	
-	private File getResourceRevisionFile(ResourceRevision revision) {
-		return new File(getResourceRevisionContainer(revision).getPath()+"/"+revision.getResourceFileName());
+	private File getResourceRevisionFile(Resource resource, ResourceRevision revision) {
+		return new File(getResourceRevisionContainer(resource, revision).getPath()+"/"+revision.getResourceFileName());
 	}
 	
-	private File getResourceRevisionContainer(ResourceRevision revision) {
-		File containerFile = new File(resourceRootFolder+"/"+revision.getId().toString());
+	private File getResourceRevisionContainer(Resource resource, ResourceRevision revision) {
+		File containerFile = new File(resourceRootFolder+"/"+resource.getResourceType()+"/"+revision.getId().toString());
 		containerFile.mkdirs();
 		return containerFile;
 	}
@@ -146,7 +148,7 @@ public class ResourceManagerImpl implements ResourceManager {
 	private ResourceRevision createResourceRevisionAndSaveContent(InputStream resourceStream, String resourceFileName,
 			Resource resource) throws IOException {
 		ResourceRevision revision = createResourceRevision(resourceFileName, resource.getId().toString());
-		File resourceFile = saveResourceRevisionContent(resourceStream, resourceFileName, revision);
+		File resourceFile = saveResourceRevisionContent(resourceStream, resource, revision);
 		
 		String checksum = getMD5Checksum(resourceFile);
 		revision.setChecksum(checksum);
@@ -185,12 +187,13 @@ public class ResourceManagerImpl implements ResourceManager {
 		}
 	}
 	
-	private Resource createResource(String name) {
+	private Resource createResource(String resourceType, String name) {
 		Resource resource = new Resource();
 		Map<String, String> attributes = new HashMap<>();
 		attributes.put(Resource.NAME, name);
 		resource.setAttributes(attributes);
 		resource.setResourceName(name);
+		resource.setResourceType(resourceType);
 		return resource;
 	}
 
@@ -201,8 +204,8 @@ public class ResourceManagerImpl implements ResourceManager {
 		return revision;
 	}
 	
-	private File saveResourceRevisionContent(InputStream resourceStream, String resourceFileName, ResourceRevision revision) throws IOException {
-		File resourceFile = getResourceRevisionFile(revision);
+	private File saveResourceRevisionContent(InputStream resourceStream, Resource resource, ResourceRevision revision) throws IOException {
+		File resourceFile = getResourceRevisionFile(resource, revision);
 		Files.copy(resourceStream, resourceFile.toPath());
 		
 		return resourceFile;

@@ -8,6 +8,8 @@ public class Resource extends AbstractOrganizableObject {
 
 	protected ObjectId currentRevisionId;
 	
+	protected String resourceType;
+	
 	protected String resourceName;
 	
 	public ObjectId getCurrentRevisionId() {
@@ -16,6 +18,14 @@ public class Resource extends AbstractOrganizableObject {
 
 	public void setCurrentRevisionId(ObjectId currentRevisionId) {
 		this.currentRevisionId = currentRevisionId;
+	}
+
+	public String getResourceType() {
+		return resourceType;
+	}
+
+	public void setResourceType(String resourceType) {
+		this.resourceType = resourceType;
 	}
 
 	public String getResourceName() {

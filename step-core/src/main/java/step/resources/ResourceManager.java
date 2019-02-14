@@ -16,7 +16,7 @@ public interface ResourceManager {
 	 * @throws IOException
 	 * @throws SimilarResourceExistingException 
 	 */
-	Resource createResource(InputStream resourceStream, String resourceFileName, boolean checkForDuplicates) throws IOException, SimilarResourceExistingException;
+	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates) throws IOException, SimilarResourceExistingException;
 
 	/**
 	 * Save the content provided as stream to an existing resource. 

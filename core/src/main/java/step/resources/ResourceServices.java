@@ -12,6 +12,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -67,12 +68,14 @@ public class ResourceServices extends AbstractServices {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail) throws IOException {
+			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType) throws IOException {
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
+		if (resourceType == null || resourceType.length() == 0)
+			throw new RuntimeException("Missing resource type query parameter 'type'");
 		
 		try {
-			Resource resource = resourceManager.createResource(uploadedInputStream, fileDetail.getFileName(), true);
+			Resource resource = resourceManager.createResource(resourceType, uploadedInputStream, fileDetail.getFileName(), true);
 			return new ResourceUploadResponse(resource, null);
 		} catch (SimilarResourceExistingException e) {
 			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());

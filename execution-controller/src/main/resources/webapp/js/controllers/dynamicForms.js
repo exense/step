@@ -151,6 +151,7 @@ dynamicForms.directive('dynamicCheckbox', function() {
     scope: {
       dynamicValue: '=',
       label: '=',
+      type: '=',
       tooltip: '=',
       onSave: '&'
     },
@@ -167,7 +168,7 @@ dynamicForms.directive('dynamicCheckbox', function() {
         $scope.uploading = true;
         if(file) {
           Upload.upload({
-            url: url,
+            url: url+"?type="+$scope.type,
             data: {file: file}
           }).then(function (resp) {
             $scope.uploading = false;

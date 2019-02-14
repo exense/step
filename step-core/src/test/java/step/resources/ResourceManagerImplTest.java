@@ -21,7 +21,7 @@ public class ResourceManagerImplTest {
 		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
 		
 		// Create a resource
-		Resource resource = resourceManager.createResource(this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false);
+		Resource resource = resourceManager.createResource("test", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false);
 		Assert.assertNotNull(resource);
 		
 		// Assert that the resource has been persisted
@@ -49,7 +49,7 @@ public class ResourceManagerImplTest {
 		Assert.assertEquals(secondResourceRevisionFromResource, secondResourceRevision);
 		Assert.assertNotSame(fisrtResourceRevisionFromDB, secondResourceRevision);
 		
-		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/"+secondResourceRevisionFromResource.getId().toString()+"/"+secondResourceRevisionFromResource.getResourceFileName());
+		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/test/"+secondResourceRevisionFromResource.getId().toString()+"/"+secondResourceRevisionFromResource.getResourceFileName());
 		Assert.assertTrue(resourceFileActual.exists());
 		
 		
@@ -83,15 +83,17 @@ public class ResourceManagerImplTest {
 		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
 		
 		// Create a resource
-		resourceManager.createResource(this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
-		resourceManager.createResource(this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false);
+		resourceManager.createResource("test", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
+		resourceManager.createResource("test", this.getClass().getResourceAsStream("TestResource2.txt"), "TestResource2.txt", true);
+		resourceManager.createResource("test", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false);
 		SimilarResourceExistingException actualException = null;
 		try {
-			resourceManager.createResource(this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
+			resourceManager.createResource("test", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
 		} catch (SimilarResourceExistingException e) {
 			actualException = e;
 		}
 		Assert.assertNotNull(actualException);
+		Assert.assertEquals(2, actualException.getSimilarResources().size());
 		
 	}
 
