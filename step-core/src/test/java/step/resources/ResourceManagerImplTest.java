@@ -49,7 +49,7 @@ public class ResourceManagerImplTest {
 		Assert.assertEquals(secondResourceRevisionFromResource, secondResourceRevision);
 		Assert.assertNotSame(fisrtResourceRevisionFromDB, secondResourceRevision);
 		
-		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/test/"+secondResourceRevisionFromResource.getId().toString()+"/"+secondResourceRevisionFromResource.getResourceFileName());
+		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/test/"+resourceId+"/"+secondResourceRevisionFromResource.getId().toString()+"/"+secondResourceRevisionFromResource.getResourceFileName());
 		Assert.assertTrue(resourceFileActual.exists());
 		
 		
@@ -95,6 +95,30 @@ public class ResourceManagerImplTest {
 		Assert.assertNotNull(actualException);
 		Assert.assertEquals(2, actualException.getSimilarResources().size());
 		
+	}
+	
+	@Test
+	public void testDeletedResourceException() throws IOException, SimilarResourceExistingException {
+		File rootFolder = FileHelper.createTempFolder();
+		
+		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
+		ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
+		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
+		
+		// Create a resource
+		Resource resource = resourceManager.createResource("test", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
+		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/test/"+resource.getId().toString()+"/"+resource.getCurrentRevisionId().toString()+"/TestResource.txt");
+		resourceFileActual.delete();
+		
+		
+		Exception actualException = null;
+		try {
+			resourceManager.getResourceContent(resource.getId().toString());
+		} catch (Exception e) {
+			actualException = e;
+		}
+		Assert.assertNotNull(actualException);
+		Assert.assertEquals("The resource revision file " +resourceFileActual.getAbsolutePath() +" doesn't exist or cannot be read", actualException.getMessage());
 	}
 
 	protected void assertResourceContent(ResourceRevisionContent resourceContent) throws IOException {

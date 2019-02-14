@@ -45,12 +45,12 @@ public interface ResourceManager {
 	 * @return the content of the resource as stream
 	 * @throws FileNotFoundException
 	 */
-	ResourceRevisionContent getResourceContent(String resourceId) throws FileNotFoundException;
+	ResourceRevisionContent getResourceContent(String resourceId) throws IOException;
 	
 	File getResourceFile(String resourceId);
 
 	ResourceRevision getResourceRevisionByResourceId(String resourceId);
 
-	ResourceRevisionContent getResourceRevisionContent(String resourceRevisionId) throws FileNotFoundException;
+	ResourceRevisionContent getResourceRevisionContent(String resourceRevisionId) throws IOException;
 
 }
