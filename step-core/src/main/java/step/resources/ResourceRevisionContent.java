@@ -1,31 +1,14 @@
 package step.resources;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 
+public interface ResourceRevisionContent {
 
-public class ResourceRevisionContent implements Closeable {
+	InputStream getResourceStream();
 
-	private final InputStream resourceStream;
-	private final String resourceName;
-	
-	public ResourceRevisionContent (InputStream resourceStream, String resourceName) {
-		super();
-		this.resourceStream = resourceStream;
-		this.resourceName = resourceName;
-	}
+	String getResourceName();
 
-	public InputStream getResourceStream() {
-		return resourceStream;
-	}
+	void close() throws IOException;
 
-	public String getResourceName() {
-		return resourceName;
-	}
-
-	@Override
-	public void close() throws IOException {
-		resourceStream.close();
-	}
 }

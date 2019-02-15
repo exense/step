@@ -1,26 +1,25 @@
 package step.core.export;
 
-import java.io.File;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import step.attachments.AttachmentContainer;
-import step.attachments.AttachmentManager;
+import step.resources.Resource;
+import step.resources.ResourceManager;
 
 public class ExportTaskManager {
 	
-	protected AttachmentManager attachmentManager;
+	protected ResourceManager resourceManager;
 	
 	protected Map<String, ExportStatus> exportStatusMap = new ConcurrentHashMap<>();
 	
 	protected ExecutorService exportExecutor = Executors.newFixedThreadPool(2);
 	
-	public ExportTaskManager(AttachmentManager attachmentManager) {
+	public ExportTaskManager(ResourceManager resourceManager) {
 		super();
-		this.attachmentManager = attachmentManager;
+		this.resourceManager = resourceManager;
 	}
 	
 	public ExportStatus createExportTask(ExportRunnable runnable) {
@@ -31,19 +30,21 @@ public class ExportTaskManager {
 	public ExportStatus createExportTask(String exportId, ExportRunnable runnable) {
 		ExportStatus status = new ExportStatus(exportId);
 		exportStatusMap.put(exportId, status);
-		AttachmentContainer container = attachmentManager.createAttachmentContainer();
-		status.setAttachmentID(container.getMeta().getId().toString());
 		runnable.setStatus(status);
-		runnable.setContainer(container.getContainer());
+		runnable.setResourceManager(resourceManager);
 		exportExecutor.submit(new Runnable() {
 
 			@Override
 			public void run() {
+				Resource resource = null;
 				try {
-					runnable.runExport();
+					resource = runnable.runExport();
 				} catch(Exception e) {
 					
 				} finally {
+					if(resource!=null) {
+						status.setAttachmentID(resource.getId().toString());
+					}
 					status.ready = true;
 				}
 				
@@ -57,25 +58,25 @@ public class ExportTaskManager {
 		
 		ExportStatus status;
 		
-		File container;
+		private	ResourceManager resourceManager;
 		
 		public ExportStatus getStatus() {
 			return status;
 		}
 
+		private void setResourceManager(ResourceManager resourceManager) {
+			this.resourceManager = resourceManager;
+		}
+
+		protected ResourceManager getResourceManager() {
+			return resourceManager;
+		}
+
 		private void setStatus(ExportStatus status) {
 			this.status = status;
 		}
-
-		protected File getContainer() {
-			return container;
-		}
-
-		private void setContainer(File container) {
-			this.container = container;
-		}
 		
-		protected abstract void runExport() throws Exception;
+		protected abstract Resource runExport() throws Exception;
 		
 	}
 	

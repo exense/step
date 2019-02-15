@@ -1,6 +1,7 @@
 package step.core.export;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.TimeoutException;
@@ -28,9 +29,9 @@ public class ExportManagerTest {
 		repo.save(plan);
 		
 		File testExportFile = new File("testExport.json");
-		try {
+		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = new ExportManager(c.getArtefactAccessor());
-			exportManager.exportArtefactWithChildren(plan.getRoot().getId().toString(), testExportFile);
+			exportManager.exportArtefactWithChildren(plan.getRoot().getId().toString(), outputStream);
 			
 			InMemoryArtefactAccessor artefactAccessor = new InMemoryArtefactAccessor();
 			ImportManager importManager = new ImportManager(artefactAccessor);
@@ -53,9 +54,9 @@ public class ExportManagerTest {
 		repo.save(plan);
 		
 		File testExportFile = new File("testExport.json");
-		try {
+		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = new ExportManager(c.getArtefactAccessor());
-			exportManager.exportAllArtefacts(testExportFile);
+			exportManager.exportAllArtefacts(outputStream);
 			
 			InMemoryArtefactAccessor artefactAccessor = new InMemoryArtefactAccessor();
 			ImportManager importManager = new ImportManager(artefactAccessor);

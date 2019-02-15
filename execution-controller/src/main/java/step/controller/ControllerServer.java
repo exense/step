@@ -51,7 +51,6 @@ import step.core.deployment.ApplicationServices;
 import step.core.deployment.AuthenticationFilter;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.ErrorFilter;
-import step.core.deployment.FileServices;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.export.ExportServices;
 import step.core.export.ImportServices;
@@ -201,7 +200,6 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ErrorFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
 		resourceConfig.registerClasses(ExportServices.class, ImportServices.class);
-		resourceConfig.registerClasses(FileServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -25,13 +26,12 @@ import org.slf4j.LoggerFactory;
 
 import step.commons.helpers.FileHelper;
 import step.core.deployment.AbstractServices;
-import step.core.deployment.FileServices;
 import step.core.deployment.Secured;
 
 @Path("/resources")
 public class ResourceServices extends AbstractServices { 
 
-	private static final Logger logger = LoggerFactory.getLogger(FileServices.class);
+	private static final Logger logger = LoggerFactory.getLogger(ResourceServices.class);
 
 	protected ResourceManager resourceManager;
 	protected ResourceAccessor resourceAccessor;
@@ -116,9 +116,9 @@ public class ResourceServices extends AbstractServices {
 	@GET
 	@Secured
 	@Path("/{id}/content")
-	public Response getResourceContent(@PathParam("id") String resourceId) throws IOException {
+	public Response getResourceContent(@PathParam("id") String resourceId, @QueryParam("inline") boolean inline) throws IOException {
 		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
-		return getResponseForResourceRevisionContent(resourceContent);
+		return getResponseForResourceRevisionContent(resourceContent, inline);
 	}
 	
 	@DELETE
@@ -131,19 +131,43 @@ public class ResourceServices extends AbstractServices {
 	@GET
 	@Secured
     @Path("/revision/{id}/content")
-	public Response getResourceRevisionContent(@PathParam("id") String resourceRevisionId) throws IOException {
-		ResourceRevisionContent resourceContent = resourceManager.getResourceRevisionContent(resourceRevisionId);
-		return getResponseForResourceRevisionContent(resourceContent);
+	public Response getResourceRevisionContent(@PathParam("id") String resourceRevisionId, @QueryParam("inline") boolean inline) throws IOException {
+		ResourceRevisionContentImpl resourceContent = resourceManager.getResourceRevisionContent(resourceRevisionId);
+		return getResponseForResourceRevisionContent(resourceContent, inline);
 	}
 	
-	protected Response getResponseForResourceRevisionContent(ResourceRevisionContent resourceContent) {
+	@javax.ws.rs.core.Context 
+	ServletContext context;
+	
+	protected Response getResponseForResourceRevisionContent(ResourceRevisionContent resourceContent, boolean inline) {
 		StreamingOutput fileStream = new StreamingOutput() {
 			@Override
 			public void write(java.io.OutputStream output) throws IOException {
 				FileHelper.copy(resourceContent.getResourceStream(), output, 2048);
+				resourceContent.close();
 			}
 		};
-		return Response.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-				.header("content-disposition", "attachment; filename = "+resourceContent.getResourceName()).build();
+		
+		String resourceName = resourceContent.getResourceName();
+		String mimeType = context.getMimeType(resourceName);
+		if (mimeType == null) {
+			if(resourceName.endsWith(".log")) {
+				mimeType = "text/plain";
+			} else {
+				mimeType = "application/octet-stream";
+			}
+		}
+		
+		String contentDisposition;
+		if(inline) {
+			contentDisposition = "inline";
+		} else {
+			contentDisposition = "attachment";
+		}
+		
+		String headerValue = String.format(contentDisposition+"; filename=\"%s\"", resourceName);
+		
+		return Response.ok(fileStream, mimeType)
+				.header("content-disposition", headerValue).build();
 	}
 }

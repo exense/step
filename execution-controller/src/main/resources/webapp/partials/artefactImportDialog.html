@@ -3,8 +3,7 @@
 </div>
 
 <div class="modal-body">
-	<button type="file" ngf-select="upload($file)">Select File</button>
-	<uib-progressbar ng-if="progress" animate="false" value="progress" type="success"><b>{{progress}}%</b></uib-progressbar>
+	<resource-input st-type="'temp'" st-model="resourcePath" />	
 </div>
 <div class="modal-footer">
 	<button class="btn btn-primary" type="button" ng-click="save()">Save</button>

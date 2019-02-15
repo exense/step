@@ -1,10 +1,11 @@
 package step.core.export;
 
-import java.io.File;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.file.Files;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -28,9 +29,9 @@ public class ExportManager {
 		this.accessor = accessor;
 	}
 
-	public void exportArtefactWithChildren(String artefactId, File outputFile) throws FileNotFoundException, IOException {
+	public void exportArtefactWithChildren(String artefactId, OutputStream outputStream) throws FileNotFoundException, IOException {
 		ObjectMapper mapper = getMapper();	
-		try (Writer writer = Files.newBufferedWriter(outputFile.toPath())) {
+		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
 			exportArtefactRecursive(mapper, writer, new ObjectId(artefactId));
 		} catch(Exception e) {
 			logger.error("Error while exporting artefact with id "+artefactId,e);
@@ -43,9 +44,9 @@ public class ExportManager {
 		return mapper;
 	}
 	
-	public void exportAllArtefacts(File outputFile) throws FileNotFoundException, IOException {
+	public void exportAllArtefacts(OutputStream outputStream) throws FileNotFoundException, IOException {
 		ObjectMapper mapper = getMapper();
-		try (Writer writer = Files.newBufferedWriter(outputFile.toPath())) {
+		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
 			accessor.getRootArtefacts().forEachRemaining((a)->{
 				try {
 					exportArtefactRecursive(mapper, writer, new ObjectId(a.getId().toString()));

@@ -19,8 +19,6 @@
 package step.core.miscellaneous;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -28,13 +26,14 @@ import java.io.StringWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.attachments.AttachmentContainer;
-import step.attachments.AttachmentManager;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.variables.UndefinedVariableException;
 import step.core.variables.VariablesManager;
+import step.resources.Resource;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevisionContainer;
 
 
 // TODO refactor this class to remove the ExecutionContext dependency 
@@ -46,21 +45,21 @@ public class ReportNodeAttachmentManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ReportNodeAttachmentManager.class);
 	
-	private AttachmentManager attachmentManager;
+	private ResourceManager resourceManager;
 	
 	private ExecutionContext context;
 	
 	public ReportNodeAttachmentManager(ExecutionContext context) {
 		super();
 		this.context = context;
-		this.attachmentManager = context.getAttachmentManager();
+		this.resourceManager = context.get(ResourceManager.class);
 	}
 
 	// Warning: only use this constructor if you know that you will only use the method createAttachmentWithoutQuotaCheck. 
 	// The other methods need an ExecutionContext to check the quota usage
-	public ReportNodeAttachmentManager(AttachmentManager attachmentManager) {
+	public ReportNodeAttachmentManager(ResourceManager resourceManager) {
 		super();
-		this.attachmentManager = attachmentManager;
+		this.resourceManager = resourceManager;
 	}
 
 	private boolean checkAndUpateAttachmentQuota() {
@@ -125,18 +124,32 @@ public class ReportNodeAttachmentManager {
 	}
 
 	public AttachmentMeta createAttachmentWithoutQuotaCheck(byte[] content, String filename) {
-		AttachmentContainer container = attachmentManager.createAttachmentContainer();
+		ResourceRevisionContainer container;
 		try {
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(new File(container.getContainer().getAbsoluteFile()+"/"+filename)));
-			bos.write(content);
-			bos.close();
-		} catch (IOException ex) {
-			logger.error("Unable to write exception.log", ex);
+			container = resourceManager.createResourceContainer("attachment", filename);
+			try {
+				BufferedOutputStream bos = new BufferedOutputStream(container.getOutputStream());
+				bos.write(content);
+				bos.close();
+			} catch (IOException ex) {
+				logger.error("Unable to write exception.log", ex);
+				throw new RuntimeException("Error while ", ex);
+			} finally {
+				try {
+					container.save();
+				} catch (IOException e) {
+					logger.error("Error while closing resource container", e);
+				}
+			}
+			
+			Resource resource = container.getResource();
+			AttachmentMeta attachmentMeta = new AttachmentMeta();
+			attachmentMeta.setId(resource.getId());
+			attachmentMeta.setName(resource.getResourceName());
+			return attachmentMeta;
+		} catch (IOException e1) {
+			throw new RuntimeException("Error while createing resource container", e1);
 		}
-		
-		AttachmentMeta attachment = container.getMeta();
-		attachment.setName(filename);
-		return attachment;
 	}
 	
 	public void attach(byte[] content, String filename, ReportNode reportNode ) {

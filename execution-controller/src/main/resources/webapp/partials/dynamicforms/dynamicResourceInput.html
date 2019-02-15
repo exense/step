@@ -1,0 +1,7 @@
+<div ng-if="!isDynamic()" class="form-group form-group-sm">
+	<label ng-if="label">{{label}}</label>
+	<span ng-if="tooltip" class="glyphicon glyphicon-question-sign" uib-tooltip="{{tooltip}}"></span>
+	<button class="btn btn-default btn-xs pull-right" type="button" title="Use a function to set this attribute" ng-click="useDynamicExpression()"><span class="glyphicon glyphicon-flash" ></span></button>
+	<resource-input st-type="type" st-model="dynamicValue.value" />
+</div>
+<expression-input />

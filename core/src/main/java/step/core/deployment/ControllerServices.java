@@ -590,28 +590,4 @@ public class ControllerServices extends AbstractServices {
 			a.remove(id);
 		}
 	}
-	
-	@POST
-	@Path("/grid/file")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces(MediaType.APPLICATION_JSON)
-	public FileVersionId registerFile(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail) throws FileManagerException {
-		
-		if (uploadedInputStream == null || fileDetail == null)
-			throw new RuntimeException("Invalid arguments");
-
-		GridClient grid =  controller.getContext().get(GridClient.class);
-
-		AttachmentContainer container = controller.getContext().getAttachmentManager().createAttachmentContainer();
-		File file = new File(container.getContainer()+"/"+fileDetail.getFileName());
-		try {
-			Files.copy(uploadedInputStream, file.toPath());
-		} catch (IOException e) {
-			throw new RuntimeException("Error while saving file.");
-		}
-		
-		FileVersion fileVersion = grid.registerFile(file);
-		return fileVersion.getVersionId();
-	}
 }

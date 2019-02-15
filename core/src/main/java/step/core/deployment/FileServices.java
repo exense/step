@@ -100,13 +100,6 @@ public class FileServices extends AbstractServices {
 				.header("content-disposition", "attachment; filename = "+file.getName()).build();
 	}
 	
-	@DELETE
-	@Secured
-    @Path("/{id}")
-	public void deleteFile(@PathParam("id") String id) {
-		attachmentManager.deleteContainer(id);
-	}
-	
 	@GET
 	@Secured
     @Path("/{id}/name")

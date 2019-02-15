@@ -1,6 +1,6 @@
 <div class="attachment-preview">
-<a target="_blank" href="files?uuid={{attachment.id}}&inline=true">
-	<img ng-if="isImage(attachment)" class="attachment-thumbnail" ng-src="files?uuid={{attachment.id}}">
+<a target="_blank" href="rest/resources/{{attachment.id}}/content?inline=true">
+	<img ng-if="isImage(attachment)" class="attachment-thumbnail" ng-src="rest/resources/{{attachment.id}}/content">
 	<div ng-if="showLabel()" class="attachment-preview-label"><span ng-if="isText(attachment)" class="glyphicon glyphicon-file attachment-preview-icon" aria-hidden="true"></span>{{attachment.name}}</div>
 </a>
 </div>

@@ -18,10 +18,8 @@
  *******************************************************************************/
 package step.repositories.staging;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,23 +37,29 @@ import javax.ws.rs.core.MediaType;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import step.attachments.AttachmentContainer;
+import step.commons.helpers.FileHelper;
+import step.core.GlobalContext;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevisionContainer;
 
 @Singleton
 @Path("staging")
 public class StagingRepositoryServices extends AbstractServices {
 	
 	protected StagingContextAccessorImpl stagingContextAccessor ;
+	protected ResourceManager resourceManager;
 	
 	@PostConstruct
 	public void init() {
-		stagingContextAccessor = getContext().get(StagingContextAccessorImpl.class);
+		GlobalContext context = getContext();
+		stagingContextAccessor = context.get(StagingContextAccessorImpl.class);
+		resourceManager = context.get(ResourceManager.class);
 	}
 	
 	@GET
@@ -83,22 +87,24 @@ public class StagingRepositoryServices extends AbstractServices {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String uploadFile(@PathParam("id") String id, @FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail) {
+			@FormDataParam("file") FormDataContentDisposition fileDetail) throws IOException {
 		StagingContext context = stagingContextAccessor.get(id);
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
 
-		AttachmentContainer container = controller.getContext().getAttachmentManager().createAttachmentContainer();
-		File file = new File(container.getContainer()+"/"+fileDetail.getFileName());
+		ResourceRevisionContainer container = resourceManager.createResourceContainer("stagingContextFiles", fileDetail.getFileName());
 		try {
-			Files.copy(uploadedInputStream, file.toPath());
+			FileHelper.copy(uploadedInputStream, container.getOutputStream(), 2048);
 		} catch (IOException e) {
 			throw new RuntimeException("Error while saving file.");
+		} finally {
+			container.save();
 		}
 		
-		context.addAttachment(container.getMeta().getId().toString());
+		String resourceId = container.getResource().getId().toString();
+		context.addAttachment(resourceId);
 		stagingContextAccessor.save(context);
-		return container.getMeta().getId().toString();
+		return resourceId;
 	}
 	
 	@POST
@@ -130,8 +136,8 @@ public class StagingRepositoryServices extends AbstractServices {
 	public void destroy(@PathParam("id") String id) {
 		StagingContext context = stagingContextAccessor.get(id);
 		
-		context.getAttachments().forEach(attachmentId->{
-			controller.getContext().getAttachmentManager().deleteContainer(attachmentId);
+		context.getAttachments().forEach(resourceId->{
+			resourceManager.deleteResource(resourceId);
 		});
 	}
 }
