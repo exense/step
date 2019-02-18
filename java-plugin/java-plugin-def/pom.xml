@@ -37,6 +37,12 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>java-plugin-handler-test2</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
@@ -103,6 +109,29 @@
 									<overWrite>false</overWrite>
 									<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
 									<destFileName>java-plugin-handler-test.jar</destFileName>
+								</artifactItem>
+							</artifactItems>
+							<overWriteReleases>true</overWriteReleases>
+							<overWriteSnapshots>true</overWriteSnapshots>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-test2</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>ch.exense.step</groupId>
+									<artifactId>java-plugin-handler-test2</artifactId>
+									<version>${project.version}</version>
+									<classifier>jar-with-dependencies</classifier>
+									<type>jar</type>
+									<overWrite>false</overWrite>
+									<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
+									<destFileName>java-plugin-handler-test2.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
 							<overWriteReleases>true</overWriteReleases>

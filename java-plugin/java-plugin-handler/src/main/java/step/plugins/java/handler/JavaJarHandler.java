@@ -28,7 +28,7 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 		
 		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.SCRIPT_FILE, input.getProperties());
 		
-		ApplicationContext context = getCurrentContext();
+		ApplicationContext context = getCurrentContext(FORKED_BRANCH);
 
 		String kwClassnames = (String) context.get("kwClassnames");
 		if (kwClassnames == null) {

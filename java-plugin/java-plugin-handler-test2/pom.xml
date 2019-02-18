@@ -19,32 +19,56 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>java-plugin</artifactId>
-	<packaging>pom</packaging>
+	<artifactId>java-plugin-handler-test2</artifactId>
+	<packaging>jar</packaging>
 
 	<parent>
 		<groupId>ch.exense.step</groupId>
-		<artifactId>parent</artifactId>
+		<artifactId>java-plugin</artifactId>
 		<version>3.9.3-SNAPSHOT</version>
-		<relativePath>../parent</relativePath>
 	</parent>
 	
-
-	<modules>
-		<module>java-plugin-def</module>
-		<module>java-plugin-handler</module>
-		<module>java-plugin-handler-test</module>
-		<module>java-plugin-handler-test2</module>
-	</modules>
-	
-	
 	<dependencies>
-
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>script-dev-java</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-handler</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
-
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<appendAssemblyId>true</appendAssemblyId>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>	
 	</build>
 </project>
