@@ -34,6 +34,7 @@
 		<module>java-plugin-def</module>
 		<module>java-plugin-handler</module>
 		<module>java-plugin-handler-test</module>
+		<module>java-plugin-handler-test2</module>
 	</modules>
 	
 	

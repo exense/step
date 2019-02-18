@@ -61,6 +61,24 @@ public class JavaJarHandlerTest {
 		Assert.assertEquals("MyValue",output.getPayload().getString("MyKey"));
 	}
 	
+	/**
+	 * Test the execution of 2 keywords of 2 different jars using the same context. 
+	 */
+	@Test 
+	public void test2JarsWithMultipleKeywords() {
+		GeneralScriptFunction f = buildTestFunction("MyKeyword1","java-plugin-handler-test.jar");
+		GeneralScriptFunction f2 = buildTestFunction("MyKeyword2","java-plugin-handler-test2.jar");
+		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType())) {
+			Output<JsonObject> output = context.run(f, "{\"key1\":\"val1\"}");
+			Assert.assertEquals("MyValue",output.getPayload().getString("MyKey"));
+			output = context.run(f2, "{\"key1\":\"val1\"}");
+			Assert.assertEquals("MyValue",output.getPayload().getString("MyKey"));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		
+	}
+	
 	@Test 
 	public void testProperties() {
 		Map<String, String> properties = new HashMap<>();
