@@ -12,7 +12,7 @@
 
 	<groupId>ch.exense.step</groupId>
 	<artifactId>parent</artifactId>
-	<version>3.9.2</version>
+	<version>3.9.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Step</name>
@@ -46,7 +46,7 @@
 		<connection>scm:git:git://github.com/exense/step.git</connection>
 		<developerConnection>scm:git:[push=]https://github.com/exense/step.git[fetch=]https://github.com/exense/step.git</developerConnection>
 		<url>https://github.com/exense/step.git</url>
-		<tag>3.9.2</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<properties>
