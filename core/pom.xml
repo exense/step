@@ -16,7 +16,7 @@
 	<parent>
 		<groupId>ch.exense.step</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.9.2-SNAPSHOT</version>
+		<version>3.9.2</version>
 		<relativePath>../parent</relativePath>
 	</parent>
 
