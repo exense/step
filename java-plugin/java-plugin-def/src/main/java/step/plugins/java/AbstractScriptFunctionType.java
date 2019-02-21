@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
@@ -114,7 +115,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		
 		String scriptFilename = function.getScriptFile().get();
 		
-		if (scriptFilename.startsWith("attachment:")) {
+		if (scriptFilename.startsWith(FileResolver.RESOURCE_PREFIX)) {
 			return null;
 		}
 		

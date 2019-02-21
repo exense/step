@@ -1,8 +1,8 @@
 <div ng-if="node.attachments.length>1" class="dropdown">
 	<span class="glyphicon glyphicon-paperclip dropdown-toggle" aria-hidden="true" data-toggle="dropdown"></span>
 	<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
-		<li ng-repeat="attachment in attachments" role="presentation"><a role="menuitem" tabindex="-1" href="files?uuid={{attachment.id}}">{{attachment.name?attachment.name:attachment.id}}</a></li>
+		<li ng-repeat="attachment in attachments" role="presentation"><a role="menuitem" tabindex="-1" href="rest/resources/{{attachment.id}}/content">{{attachment.name?attachment.name:attachment.id}}</a></li>
 	</ul>
 </div>
 
-<a ng-if="attachments.length==1" href="files?uuid={{attachments[0].id}}"><span class="glyphicon glyphicon-paperclip dropdown-toggle" aria-hidden="true"></span></a>
+<a ng-if="attachments.length==1" href="rest/resources/{{attachments[0].id}}/content"><span class="glyphicon glyphicon-paperclip dropdown-toggle" aria-hidden="true"></span></a>

@@ -3,11 +3,11 @@
 		<label>Script language</label> 
 		<select ng-model="function_.scriptLanguage.value" ng-options="option for option in ['java','javascript','groovy']" class="form-control" />
 	</div>
-	<resource-input label="'Libraries'" type="'functions'" tooltip="''"  dynamic-value="function_.librariesFile" />
+	<dynamic-resource-input label="'Libraries'" type="'functions'" tooltip="''"  dynamic-value="function_.librariesFile" />
 	<div ng-if="function_.scriptLanguage.value=='java'">
-		<resource-input label="'Jar file or class folder'" type="'functions'" tooltip="'Specify a file accessible to the controller. This file will be transferred automatically to the agents.'"  dynamic-value="function_.scriptFile" />
+		<dynamic-resource-input label="'Jar file or class folder'" type="'functions'" tooltip="'Specify a file accessible to the controller. This file will be transferred automatically to the agents.'"  dynamic-value="function_.scriptFile" />
 	</div>
 	<div ng-if="function_.scriptLanguage.value!='java'">
-		<resource-input label="'Script file'" type="'functions'" tooltip="'Leave empty if you wan\'t step to generate it for you otherwise specify a file accessible to the controller. This file will be transferred automatically to the agents.'"  dynamic-value="function_.scriptFile" />
+		<dynamic-resource-input label="'Script file'" type="'functions'" tooltip="'Leave empty if you wan\'t step to generate it for you otherwise specify a file accessible to the controller. This file will be transferred automatically to the agents.'"  dynamic-value="function_.scriptFile" />
 	</div>
 </div>

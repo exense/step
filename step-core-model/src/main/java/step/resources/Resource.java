@@ -12,6 +12,8 @@ public class Resource extends AbstractOrganizableObject {
 	
 	protected String resourceName;
 	
+	protected boolean ephemeral;
+	
 	public ObjectId getCurrentRevisionId() {
 		return currentRevisionId;
 	}
@@ -34,5 +36,13 @@ public class Resource extends AbstractOrganizableObject {
 
 	public void setResourceName(String resourceName) {
 		this.resourceName = resourceName;
+	}
+
+	public boolean isEphemeral() {
+		return ephemeral;
+	}
+
+	public void setEphemeral(boolean ephemeral) {
+		this.ephemeral = ephemeral;
 	}
 }

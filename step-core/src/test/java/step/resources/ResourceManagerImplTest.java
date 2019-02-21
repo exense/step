@@ -120,6 +120,56 @@ public class ResourceManagerImplTest {
 		Assert.assertNotNull(actualException);
 		Assert.assertEquals("The resource revision file " +resourceFileActual.getAbsolutePath() +" doesn't exist or cannot be read", actualException.getMessage());
 	}
+	
+	@Test
+	public void testEphemeralResources() throws IOException, SimilarResourceExistingException {
+		File rootFolder = FileHelper.createTempFolder();
+		
+		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
+		ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
+		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
+		
+		// Create a resource
+		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
+		
+		String resourceId = resource.getId().toString();
+		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
+		resourceContent.close();
+		
+		Exception actualException = null;
+		try {
+			resourceManager.getResourceContent(resourceId);
+		} catch (Exception e) {
+			actualException = e;
+		}
+		Assert.assertNotNull(actualException);
+		Assert.assertEquals("The resource with ID "+resourceId+" doesn't exist" , actualException.getMessage());
+	}
+	
+	@Test
+	public void testEphemeralResources2() throws IOException, SimilarResourceExistingException {
+		File rootFolder = FileHelper.createTempFolder();
+		
+		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
+		ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
+		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
+		
+		// Create a resource
+		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
+		
+		String resourceId = resource.getId().toString();
+		ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resourceId);
+		resourceFile.close();
+		
+		Exception actualException = null;
+		try {
+			resourceManager.getResourceContent(resourceId);
+		} catch (Exception e) {
+			actualException = e;
+		}
+		Assert.assertNotNull(actualException);
+		Assert.assertEquals("The resource with ID "+resourceId+" doesn't exist" , actualException.getMessage());
+	}
 
 	protected void assertResourceContent(ResourceRevisionContent resourceContent) throws IOException {
 		Assert.assertNotNull(resourceContent);

@@ -2,7 +2,7 @@ package step.resources;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -32,11 +32,26 @@ public class ResourceManagerImpl implements ResourceManager {
 		this.resourceAccessor = resourceAccessor;
 		this.resourceRevisionAccessor = resourceRevisionAccessor;
 	}
-	
+
 	@Override
-	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates) throws IOException, SimilarResourceExistingException {
+	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException {
 		Resource resource = createResource(resourceType, resourceFileName);
-		ResourceRevision resourceRevision = createResourceRevisionAndSaveContent(resourceStream, resourceFileName, resource);
+		ResourceRevision revision = createResourceRevision(resourceFileName, resource.getId().toString());
+		createResourceRevisionContainer(resource, revision);
+		File file = getResourceRevisionFile(resource, revision);
+		FileOutputStream fileOutputStream = new FileOutputStream(file);
+		return new ResourceRevisionContainer(resource, revision, fileOutputStream, this);
+	}
+	
+	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, boolean checkForDuplicates) throws IOException, SimilarResourceExistingException {
+		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
+		String checksum = getMD5Checksum(resourceRevisionFile);
+		resourceRevision.setChecksum(checksum);
+		resourceRevisionAccessor.save(resourceRevision);
+		
+		resource.setCurrentRevisionId(resourceRevision.getId());
+		
+		resourceAccessor.save(resource);
 		
 		if(checkForDuplicates) {
 			List<Resource> resourcesWithSameChecksum = getSimilarResources(resource, resourceRevision);
@@ -44,8 +59,14 @@ public class ResourceManagerImpl implements ResourceManager {
 				throw new SimilarResourceExistingException(resource, resourcesWithSameChecksum);
 			}
 		}
-		
-		return resource;
+	}
+	
+	@Override
+	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates) throws IOException, SimilarResourceExistingException {
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName);
+		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
+		resourceContainer.save(checkForDuplicates);
+		return resourceContainer.getResource();
 	}
 	
 	@Override
@@ -98,6 +119,13 @@ public class ResourceManagerImpl implements ResourceManager {
 		return getResourceRevisionContent(resource, resourceRevision);
 	}
 	
+
+	protected void closeResourceRevisionContent(Resource resource) {
+		if(resource.isEphemeral()) {
+			deleteResource(resource.getId().toString());
+		}
+	}
+	
 	@Override
 	public ResourceRevision getResourceRevisionByResourceId(String resourceId) {
 		Resource resource = getResource(resourceId);
@@ -106,27 +134,28 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public ResourceRevisionContent getResourceRevisionContent(String resourceRevisionId) throws IOException {
+	public ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException {
 		ResourceRevision resourceRevision = getResourceRevision(new ObjectId(resourceRevisionId));
 		Resource resource = getResource(resourceRevision.getResourceId());
 		return getResourceRevisionContent(resource, resourceRevision);
 	}
 	
 	@Override
-	public File getResourceFile(String resourceId) {
+	public ResourceRevisionFileHandle getResourceFile(String resourceId) {
 		Resource resource = getResource(resourceId);
 		ResourceRevision resourceRevision = getCurrentResourceRevision(resource);
-		return getResourceRevisionFile(resource, resourceRevision);
+		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
+		return new ResourceRevisionFileHandleImpl(this, resource, resourceRevisionFile);
 	}
 	
-	private ResourceRevisionContent getResourceRevisionContent(Resource resource, ResourceRevision resourceRevision)
+	private ResourceRevisionContentImpl getResourceRevisionContent(Resource resource, ResourceRevision resourceRevision)
 			throws IOException {
 		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
 		if(!resourceRevisionFile.exists() || !resourceRevisionFile.canRead()) {
 			throw new IOException("The resource revision file "+resourceRevisionFile.getAbsolutePath()+" doesn't exist or cannot be read");
 		}
 		FileInputStream resourceRevisionStream = new FileInputStream(resourceRevisionFile);
-		return new ResourceRevisionContent(resourceRevisionStream, resourceRevision.getResourceFileName());
+		return new ResourceRevisionContentImpl(this, resource, resourceRevisionStream, resourceRevision.getResourceFileName());
 	}
 	
 	private ResourceRevision getCurrentResourceRevision(Resource resource) {
@@ -223,6 +252,9 @@ public class ResourceManagerImpl implements ResourceManager {
 		resource.setAttributes(attributes);
 		resource.setResourceName(name);
 		resource.setResourceType(resourceType);
+		if(resourceType.equals("temp")) {
+			resource.setEphemeral(true);
+		}
 		return resource;
 	}
 

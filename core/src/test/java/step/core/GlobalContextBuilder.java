@@ -1,6 +1,5 @@
 package step.core;
 
-import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.accessors.CollectionRegistry;
 import step.core.artefacts.InMemoryArtefactAccessor;
@@ -35,8 +34,6 @@ public class GlobalContextBuilder {
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		
 		context.setEventManager(new EventManager());
-		context.setAttachmentManager(new AttachmentManager(Configuration.getInstance()));
-
 		
 		return context;
 	}

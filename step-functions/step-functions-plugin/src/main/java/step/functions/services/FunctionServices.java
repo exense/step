@@ -48,6 +48,7 @@ import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
+import step.resources.ResourceManager;
 
 @Path("/functions")
 public class FunctionServices extends AbstractServices {
@@ -60,7 +61,7 @@ public class FunctionServices extends AbstractServices {
 	
 	@PostConstruct
 	public void init() {
-		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().getAttachmentManager());
+		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().get(ResourceManager.class));
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);
 	}

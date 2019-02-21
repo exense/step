@@ -292,24 +292,11 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
 
 .controller('importArtefactModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs) {
   
-  var attachmentId; 
-  
-  $scope.upload = function (file) {
-    Upload.upload({
-        url: 'rest/files',
-        data: {file: file}
-    }).then(function (resp) {
-      attachmentId = resp.data.attachmentId; 
-    }, function (resp) {
-        console.log('Error status: ' + resp.status);
-    }, function (evt) {
-        $scope.progress = parseInt(100.0 * evt.loaded / evt.total);
-    });
-  };
+  $scope.resourcePath; 
   
   $scope.save = function() {
-    if(attachmentId) {
-      $http({url:"rest/import/container/"+attachmentId+"/artefact",method:"POST"}).then(function(response) {
+    if($scope.resourcePath) {
+      $http({url:"rest/import/artefact",method:"POST",params:{path:$scope.resourcePath}}).then(function(response) {
         $uibModalInstance.close(response.data);
       })      
     } else {

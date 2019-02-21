@@ -18,11 +18,7 @@
  *******************************************************************************/
 package step.core.deployment;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -46,10 +42,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.bson.types.ObjectId;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import step.attachments.AttachmentContainer;
 import step.commons.datatable.DataTable;
 import step.commons.datatable.TableRow;
 import step.core.artefacts.AbstractArtefact;
@@ -65,10 +58,6 @@ import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
 import step.core.scheduler.ExecutiontTaskParameters;
-import step.grid.client.GridClient;
-import step.grid.filemanager.FileManagerException;
-import step.grid.filemanager.FileVersion;
-import step.grid.filemanager.FileVersionId;
 
 @Singleton
 @Path("controller")
@@ -589,29 +578,5 @@ public class ControllerServices extends AbstractServices {
 			}
 			a.remove(id);
 		}
-	}
-	
-	@POST
-	@Path("/grid/file")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces(MediaType.APPLICATION_JSON)
-	public FileVersionId registerFile(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail) throws FileManagerException {
-		
-		if (uploadedInputStream == null || fileDetail == null)
-			throw new RuntimeException("Invalid arguments");
-
-		GridClient grid =  controller.getContext().get(GridClient.class);
-
-		AttachmentContainer container = controller.getContext().getAttachmentManager().createAttachmentContainer();
-		File file = new File(container.getContainer()+"/"+fileDetail.getFileName());
-		try {
-			Files.copy(uploadedInputStream, file.toPath());
-		} catch (IOException e) {
-			throw new RuntimeException("Error while saving file.");
-		}
-		
-		FileVersion fileVersion = grid.registerFile(file);
-		return fileVersion.getVersionId();
 	}
 }

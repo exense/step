@@ -2,7 +2,6 @@ package step.core.execution;
 
 import org.bson.types.ObjectId;
 
-import step.attachments.AttachmentManager;
 import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
@@ -16,6 +15,8 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.expressions.ExpressionHandler;
+import step.resources.LocalResourceManagerImpl;
+import step.resources.ResourceManager;
 
 public class ContextBuilder {
 	
@@ -40,7 +41,6 @@ public class ContextBuilder {
 		context.getReportNodeAccessor().save(root);
 		
 		Configuration configuration = new Configuration();
-		context.setAttachmentManager(new AttachmentManager(configuration));
 		context.setConfiguration(configuration);
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
 		
@@ -52,7 +52,9 @@ public class ContextBuilder {
 		context.setExpressionHandler(new ExpressionHandler());
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		
-		context.put(FileResolver.class, new FileResolver(null, null));
+		LocalResourceManagerImpl resourceManager = new LocalResourceManagerImpl();
+		context.put(ResourceManager.class, resourceManager);
+		context.put(FileResolver.class, new FileResolver(resourceManager));
 		
 		return context;
 	}
@@ -68,7 +70,6 @@ public class ContextBuilder {
 		context.setReportNodeAccessor(globalContext.getReportAccessor());
 		context.setRepositoryObjectManager(globalContext.getRepositoryObjectManager());
 		context.setEventManager(globalContext.getEventManager());
-		context.setAttachmentManager(globalContext.getAttachmentManager());
 		context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
 		return context;
 	}

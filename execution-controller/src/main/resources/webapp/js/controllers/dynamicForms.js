@@ -94,58 +94,7 @@ dynamicForms.directive('dynamicCheckbox', function() {
 .controller('dynamicValueCtrl',function($scope) {
   initDynamicFormsCtrl($scope);
 })
-.directive('fileInput', function() {
-  return {
-    restrict: 'E',
-    scope: {
-      dynamicValue: '=',
-      label: '=',
-      tooltip: '=',
-      onSave: '&'
-    },
-    controller: function($scope,$http,Upload) {
-      initDynamicFormsCtrl($scope);
-      $scope.upload = function (file) {
-        if(file) {
-          Upload.upload({
-            url: 'rest/files',
-            data: {file: file}
-          }).then(function (resp) {
-            attachmentId = resp.data.attachmentId; 
-            $scope.dynamicValue.value = "attachment:"+attachmentId;
-            $scope.onSave();
-          }, function (resp) {
-            console.log('Error status: ' + resp.status);
-          }, function (evt) {
-            $scope.progress = parseInt(100.0 * evt.loaded / evt.total);
-          });          
-        }
-      };
-      $scope.isAttachment = function() {
-        return $scope.dynamicValue && (typeof $scope.dynamicValue.value) == 'string' && $scope.dynamicValue.value.indexOf('attachment:')==0;
-      }
-      $scope.getAttachmentId = function() {
-        return $scope.dynamicValue.value.replace("attachment:","");
-      }
-      
-      $scope.attachmentFilename = "";
-      $scope.$watch('dynamicValue.value',function(newValue) {
-        if(newValue && $scope.isAttachment()) {
-          $http.get("rest/files/"+$scope.getAttachmentId()+"/name").then(
-            function(response) {
-              $scope.attachmentFilename = response.data;
-            });
-        }
-      })
-      
-      $scope.clear = function() {
-        $http.delete("rest/files/"+$scope.getAttachmentId());
-        $scope.dynamicValue.value = '';
-      }
-    },
-    templateUrl: 'partials/dynamicforms/fileInput.html'}
-})
-.directive('resourceInput', function() {
+.directive('dynamicResourceInput', function() {
   return {
     restrict: 'E',
     scope: {
@@ -158,105 +107,11 @@ dynamicForms.directive('dynamicCheckbox', function() {
     controller: function($scope,$http,Upload,Dialogs,ResourceDialogs) {
       initDynamicFormsCtrl($scope);
       
-      $scope.uploading = false;
-      
-      function setResourceIdToFieldValue(resourceId) {
-        $scope.dynamicValue.value = "resource:"+resourceId;
-      }
-      
-      function upload(file, url) {
-        $scope.uploading = true;
-        if(file) {
-          Upload.upload({
-            url: url+"?type="+$scope.type,
-            data: {file: file}
-          }).then(function (resp) {
-            $scope.uploading = false;
-
-            var response = resp.data;
-            var resourceId = response.resource.id; 
-            if(!response.similarResources) {
-              // No similar resource found
-              setResourceIdToFieldValue(resourceId)
-              $scope.onSave();
-            } else {
-              if(response.similarResources.length >= 1) {
-                ResourceDialogs.showFileAlreadyExistsWarning(response.similarResources).then(function(existingResourceId){
-                  if(existingResourceId) {
-                    // Linking to an existing resource
-                    setResourceIdToFieldValue(existingResourceId);
-                    // Delete the previously uploaded resource a
-                    $http.delete("rest/resources/"+resourceId);
-                  } else {
-                    // Creating a new resource
-                    setResourceIdToFieldValue(resourceId);
-                  }
-                  $scope.onSave();
-                })
-              }
-            }
-          }, function (resp) {
-            console.log('Error status: ' + resp.status);
-            $scope.uploading = false;
-          }, function (evt) {
-            $scope.progress = parseInt(100.0 * evt.loaded / evt.total);
-          });
-        }
-      }
-      
-      $scope.upload = function (file) {
-        if($scope.isResource()) {
-          ResourceDialogs.showUpdateResourceWarning().then(function(updateResource){
-            if(updateResource) {
-              // Updating resource
-              upload(file,'rest/resources/'+$scope.getResourceId()+'/content');
-            } else {
-              // Creating a new resource
-              upload(file,'rest/resources/content');              
-            }
-          })
-        } else {
-          // Creating a new resource
-          upload(file,'rest/resources/content');
-        }
-      };
-      
-      $scope.selectResource = function() {
-        ResourceDialogs.searchResource().then(function(resourceId) {
-          setResourceIdToFieldValue(resourceId);
-          $scope.onSave();
-        })
-      }
-      
-      $scope.isResource = function() {
-        return $scope.dynamicValue && (typeof $scope.dynamicValue.value) == 'string' && $scope.dynamicValue.value.indexOf('resource:')==0;
-      }
-      $scope.getResourceId = function() {
-        return $scope.dynamicValue.value.replace("resource:","");
-      }
-      
-      $scope.resourceFilename = "";
       $scope.$watch('dynamicValue.value',function(newValue) {
-        if(newValue && $scope.isResource()) {
-          $http.get("rest/resources/"+$scope.getResourceId()).then(
-            function(response) {
-              var resource = response.data;
-              if(resource) {
-                $scope.resourceNotExisting = false;
-                $scope.resourceFilename = resource.attributes.name;
-                if(resource.attributes.name != resource.resourceName) {
-                  $scope.resourceFilename += " ("+resource.resourceName+")"
-                }
-              } else {
-                $scope.resourceNotExisting = true;
-              }
-            });
+        if(newValue) {
+          $scope.onSave();
         }
       })
-      
-      $scope.clear = function() {
-        $scope.dynamicValue.value = '';
-      }
     },
-    templateUrl: 'partials/dynamicforms/resourceInput.html'}
+    templateUrl: 'partials/dynamicforms/dynamicResourceInput.html'}
 })

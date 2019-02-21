@@ -30,7 +30,6 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.attachments.AttachmentManager;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactFilter;
@@ -42,9 +41,12 @@ import step.core.execution.ArtefactCache;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
+import step.resources.ResourceManager;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 	
+	public static final String BINDING_RESOURCE_MANAGER = "resourceManager";
+
 	protected static Logger logger = LoggerFactory.getLogger(ArtefactHandler.class);
 	
 	protected ExecutionContext context;
@@ -166,8 +168,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected Map<String, Object> getBindings() {
 		Map<String, Object> bindings = new HashMap<>();
 		bindings.putAll(context.getVariablesManager().getAllVariables());
-		bindings.put("attachmentManager", context.getAttachmentManager());
 		bindings.put("context", context);
+		bindings.put(BINDING_RESOURCE_MANAGER, context.get(ResourceManager.class));
 		return bindings;
 	}
 	
@@ -326,8 +328,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		List<ObjectId> attachments = artefact.getAttachments();
 		if(attachments!=null) {
 			for(ObjectId attachmentId:attachments) {
-				AttachmentManager attachmentManager = context.getAttachmentManager();
-				File file = attachmentManager.getFileById(attachmentId);
+				ResourceManager attachmentManager = context.get(ResourceManager.class);
+				File file = attachmentManager.getResourceFile(attachmentId.toString()).getResourceFile();
 				context.getVariablesManager().putVariable(report, FILE_VARIABLE_PREFIX+file.getName(), file);
 			}
 		}

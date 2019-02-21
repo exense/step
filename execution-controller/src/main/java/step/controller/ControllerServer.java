@@ -41,7 +41,6 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.attachments.DownloadFileServlet;
 import step.commons.conf.Configuration;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
@@ -51,7 +50,6 @@ import step.core.deployment.ApplicationServices;
 import step.core.deployment.AuthenticationFilter;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.ErrorFilter;
-import step.core.deployment.FileServices;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.export.ExportServices;
 import step.core.export.ImportServices;
@@ -104,7 +102,6 @@ public class ControllerServer {
 
 		initController();
 		initWebapp();
-		initDownloadServlet();
 		
 		setupConnectors();
 
@@ -201,7 +198,6 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ErrorFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
 		resourceConfig.registerClasses(ExportServices.class, ImportServices.class);
-		resourceConfig.registerClasses(FileServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override
@@ -221,13 +217,5 @@ public class ControllerServer {
 	
 	private synchronized void addHandler(Handler handler) {
 		handlers.addHandler(handler);
-	}
-	
-	private void initDownloadServlet() {
-		ServletHolder downloadServlet = new ServletHolder(new DownloadFileServlet());
-		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		context.setContextPath("/files");
-		context.addServlet(downloadServlet, "/*");
-		addHandler(context);
 	}
 }

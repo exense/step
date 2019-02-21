@@ -11,23 +11,13 @@ angular.module('export',[])
         var status = response.data;
         if(status.ready) {
           var attachmentID = status.attachmentID;
-          $.fileDownload('files?uuid='+attachmentID+'&deleteAfterDownload=true')
+          $.fileDownload('rest/resources/'+attachmentID+'/content')
           .done(function () { 
-            
             
           })
           .fail(function () { alert('File download failed!'); });
         } else {
           if(pollCount==4) {
-//            var modalInstance = $uibModal.open({
-//              templateUrl: 'partials/exportStatusDialog.html',
-//              controller: 'importArtefactModalCtrl',
-//              resolve: {}
-//            });
-//
-//            modalInstance.result.then(function (artefact) {
-//              $scope.function_.artefactId = artefact.id;
-//            });
           }
           $timeout(poll, 500);              
         }

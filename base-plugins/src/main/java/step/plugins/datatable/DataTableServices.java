@@ -18,7 +18,6 @@
  *******************************************************************************/
 package step.plugins.datatable;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.lang.reflect.Field;
@@ -61,6 +60,9 @@ import step.core.deployment.Secured;
 import step.core.export.ExportTaskManager;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
+import step.resources.Resource;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevisionContainer;
 
 @Singleton
 @Path("datatable")
@@ -76,7 +78,7 @@ public class DataTableServices extends AbstractServices {
 	
 	@PostConstruct
 	public void init() {
-		exportTaskManager = new ExportTaskManager(getContext().getAttachmentManager());
+		exportTaskManager = new ExportTaskManager(getContext().get(ResourceManager.class));
 		dataTableRegistry = getContext().get(DataTableRegistry.class);
 	}
 	
@@ -237,11 +239,13 @@ public class DataTableServices extends AbstractServices {
 			this.order = order;
 		}
 
-		protected void runExport() throws Exception {			
+		protected Resource runExport() throws Exception {			
 			try {
 				CollectionFind<Document> find = table.getCollection().find(query, order, null, null);		
 	
-				PrintWriter writer = new PrintWriter(new File(getContainer()+"/export.csv"),"UTF-8");
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer("temp", "export.csv");
+				
+				PrintWriter writer = new PrintWriter(resourceContainer.getOutputStream());
 				
 				try {
 					List<ColumnDef> columns = table.getExportColumns()!=null?table.getExportColumns():table.getColumns();
@@ -275,10 +279,14 @@ public class DataTableServices extends AbstractServices {
 					}
 				} finally {
 					writer.close();
+					resourceContainer.save();
 				}
+				
+				return resourceContainer.getResource();
 				
 			} catch (Exception e) {
 				logger.error("An error occurred while generating report", e);
+				throw e;
 			}
 		}
 	}

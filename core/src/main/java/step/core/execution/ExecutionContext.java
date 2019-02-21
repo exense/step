@@ -18,7 +18,6 @@
  *******************************************************************************/
 package step.core.execution;
 
-import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.AbstractContext;
 import step.core.artefacts.AbstractArtefact;
@@ -60,8 +59,6 @@ public class ExecutionContext extends AbstractContext  {
 	private ReportNodeAccessor reportNodeAccessor;
 	
 	private ExecutionAccessor executionAccessor;
-	
-	private AttachmentManager attachmentManager;
 	
 	private ExpressionHandler expressionHandler;
 	
@@ -179,10 +176,6 @@ public class ExecutionContext extends AbstractContext  {
 		return expressionHandler;
 	}
 	
-	public AttachmentManager getAttachmentManager() {
-		return attachmentManager;
-	}
-	
 	public DynamicBeanResolver getDynamicBeanResolver() {
 		return dynamicBeanResolver;
 	}
@@ -213,10 +206,6 @@ public class ExecutionContext extends AbstractContext  {
 
 	protected void setExecutionAccessor(ExecutionAccessor executionAccessor) {
 		this.executionAccessor = executionAccessor;
-	}
-
-	protected void setAttachmentManager(AttachmentManager attachmentManager) {
-		this.attachmentManager = attachmentManager;
 	}
 
 	protected void setExpressionHandler(ExpressionHandler expressionHandler) {

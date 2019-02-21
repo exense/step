@@ -47,10 +47,12 @@ public interface ResourceManager {
 	 */
 	ResourceRevisionContent getResourceContent(String resourceId) throws IOException;
 	
-	File getResourceFile(String resourceId);
+	ResourceRevisionFileHandle getResourceFile(String resourceId);
 
 	ResourceRevision getResourceRevisionByResourceId(String resourceId);
 
-	ResourceRevisionContent getResourceRevisionContent(String resourceRevisionId) throws IOException;
+	ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException;
+
+	ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException;
 
 }

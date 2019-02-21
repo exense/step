@@ -11,13 +11,13 @@
 				<button class="btn btn-default" type="button" ng-click="selectSource()">Select</button>
 			</span>
 		</div> -->
-		<resource-input label="'Excel file'" type="'datasource'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+		<dynamic-resource-input label="'Excel file'" type="'datasource'" on-save="save()" dynamic-value="artefact.dataSource.file" />
 		<dynamic-textfield label="'Worksheet'" on-save="save()" dynamic-value="artefact.dataSource.worksheet" />
 		<dynamic-checkbox label="'Headers'" on-save="save()" dynamic-value="artefact.dataSource.headers" />
 	</div>
 	
 	<div ng-if="artefact.dataSourceType=='csv'">
-		<resource-input label="'CSV file'" type="'datasource'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+		<dynamic-resource-input label="'CSV file'" type="'datasource'" on-save="save()" dynamic-value="artefact.dataSource.file" />
 		<dynamic-textfield label="'Delimiter'" on-save="save()" dynamic-value="artefact.dataSource.delimiter" />
 	</div>
 	
@@ -31,7 +31,7 @@
 	</div>
 	
 		<div ng-if="artefact.dataSourceType=='gsheet'">
-		<resource-input label="'Service Account Key File'" type="'secret'" on-save="save()" dynamic-value="artefact.dataSource.serviceAccountKey" />
+		<dynamic-resource-input label="'Service Account Key File'" type="'secret'" on-save="save()" dynamic-value="artefact.dataSource.serviceAccountKey" />
 		<dynamic-textfield label="'File Id'" on-save="save()" dynamic-value="artefact.dataSource.fileId" />
 		<dynamic-textfield label="'Tab Name'" on-save="save()" dynamic-value="artefact.dataSource.tabName" />
 		</div>
@@ -47,7 +47,7 @@
 	</div>
 	
 	<div ng-if="artefact.dataSourceType=='file'">
-		<resource-input label="'Flat file'" type="'datasource'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+		<dynamic-resource-input label="'Flat file'" type="'datasource'" on-save="save()" dynamic-value="artefact.dataSource.file" />
 	</div>
 	
 	<div ng-if="artefact.dataSourceType=='folder'">
