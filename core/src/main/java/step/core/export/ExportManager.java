@@ -50,7 +50,7 @@ public class ExportManager {
 			accessor.getRootArtefacts().forEachRemaining((a)->{
 				try {
 					exportArtefactRecursive(mapper, writer, new ObjectId(a.getId().toString()));
-				} catch (IOException e) {
+				} catch (Exception e) {
 					logger.error("Error while exporting artfact "+a.getId().toString(), e);
 				}
 			});

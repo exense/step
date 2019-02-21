@@ -2,7 +2,6 @@ package step.resources;
 
 import java.io.File;
 
-import step.attachments.AttachmentManager;
 import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
 import step.core.GlobalContext;
@@ -29,7 +28,7 @@ public class ResourcePlugin extends AbstractPlugin {
 		context.put(ResourceManager.class, resourceManager);
 		context.getServiceRegistrationCallback().registerService(ResourceServices.class);
 		
-		fileResolver = new FileResolver(new AttachmentManager(context.getConfiguration()), resourceManager);
+		fileResolver = new FileResolver(resourceManager);
 		context.put(FileResolver.class, fileResolver);
 	}
 

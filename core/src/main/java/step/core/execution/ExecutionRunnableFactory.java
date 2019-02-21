@@ -48,7 +48,6 @@ public class ExecutionRunnableFactory {
 			context.setReportNodeAccessor(globalContext.getReportAccessor());
 			context.setRepositoryObjectManager(globalContext.getRepositoryObjectManager());
 			context.setEventManager(globalContext.getEventManager());
-			context.setAttachmentManager(globalContext.getAttachmentManager());
 			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
 		} else {
 			context = new ExecutionContext(executionId);
@@ -60,7 +59,6 @@ public class ExecutionRunnableFactory {
 			context.setReportNodeAccessor(globalContext.getReportAccessor());
 			context.setRepositoryObjectManager(globalContext.getRepositoryObjectManager());
 			context.setEventManager(globalContext.getEventManager());
-			context.setAttachmentManager(globalContext.getAttachmentManager());
 			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
 		}
 

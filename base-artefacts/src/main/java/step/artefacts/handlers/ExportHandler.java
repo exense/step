@@ -30,6 +30,7 @@ import step.attachments.AttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.resources.ResourceManager;
 
 public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
 	
@@ -70,7 +71,8 @@ public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
 							for (Object object : list) {
 								if(object instanceof AttachmentMeta) {
 									AttachmentMeta attachmentMeta = (AttachmentMeta) object;
-									File fileToCopy = context.getAttachmentManager().getFileById(attachmentMeta.getId().toString());
+									ResourceManager resourceManager = context.get(ResourceManager.class);
+									File fileToCopy = resourceManager.getResourceFile(attachmentMeta.getId().toString()).getResourceFile();
 									// Export only if the file name matches the defined filter
 									if(filter == null || filter.matcher(fileToCopy.getName()).matches()) {
 										String filenamePrefix = testArtefact.getPrefix()!=null?testArtefact.getPrefix().get():"";

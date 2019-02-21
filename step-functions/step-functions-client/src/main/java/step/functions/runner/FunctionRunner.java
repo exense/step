@@ -10,7 +10,6 @@ import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import step.attachments.AttachmentManager;
 import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
 import step.commons.helpers.FileHelper;
@@ -52,7 +51,7 @@ public class FunctionRunner {
 			
 			client = new GridClientImpl(grid);
 			
-			FileResolver fileResolver = new FileResolver(new AttachmentManager(configuration), new LocalResourceManagerImpl());
+			FileResolver fileResolver = new FileResolver(new LocalResourceManagerImpl());
 			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, client);
 			functionTypeRegistry.registerFunctionType(functionType);
 			

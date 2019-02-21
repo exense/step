@@ -25,7 +25,6 @@ import org.eclipse.jetty.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.commons.conf.FileWatchService;
 import step.core.access.UserAccessorImpl;
@@ -98,7 +97,6 @@ public class Controller {
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass")));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		context.setEventManager(new EventManager());
-		context.setAttachmentManager(new AttachmentManager(configuration));
 		
 		createOrUpdateIndexes();
 	}

@@ -24,6 +24,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import step.commons.helpers.FileHelper;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
@@ -46,19 +48,36 @@ public class ResourceServices extends AbstractServices {
 		
 		protected Resource resource;
 		protected List<Resource> similarResources;
-		
+
+		public ResourceUploadResponse() {
+			super();
+		}
+
 		public ResourceUploadResponse(Resource resource, List<Resource> similarResources) {
 			super();
 			this.resource = resource;
 			this.similarResources = similarResources;
 		}
+		
+		@JsonIgnore
+		public String getResourceId() {
+			return resource.getId().toString();
+		}
 
 		public Resource getResource() {
 			return resource;
 		}
-
+		
+		public void setResource(Resource resource) {
+			this.resource = resource;
+		}
+		
 		public List<Resource> getSimilarResources() {
 			return similarResources;
+		}
+
+		public void setSimilarResources(List<Resource> similarResources) {
+			this.similarResources = similarResources;
 		}
 	}
 

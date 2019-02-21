@@ -18,7 +18,6 @@
  *******************************************************************************/
 package step.core;
 
-import step.attachments.AttachmentManager;
 import step.commons.conf.Configuration;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
@@ -64,8 +63,6 @@ public class GlobalContext extends AbstractContext {
 	
 	private EventManager eventManager;
 	
-	private AttachmentManager attachmentManager;
-
 	public GlobalContext() {
 		super();
 	}
@@ -182,14 +179,6 @@ public class GlobalContext extends AbstractContext {
 
 	public void setEventManager(EventManager eventManager) {
 		this.eventManager = eventManager;
-	}
-
-	public AttachmentManager getAttachmentManager() {
-		return attachmentManager;
-	}
-
-	public void setAttachmentManager(AttachmentManager attachmentManager) {
-		this.attachmentManager = attachmentManager;
 	}
 	
 	public Version getCurrentVersion() {
