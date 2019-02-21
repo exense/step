@@ -8,7 +8,26 @@
 			<label>Name</label> 
 			<input class="form-control"	ng-model="resource.attributes.name" autofocus>
 		</div>
-				<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
+		<div class="form-group">
+			<label>Type</label> 
+			<input disabled class="form-control"	ng-model="resource.resourceType">
+		</div>
+		<div class="form-group" >
+			<label>Content</label>
+			<div class="input-group">
+				<div ngf-drop="upload($file)" uib-tooltip="Drag and drop the resource file here">
+					<input disabled type="text" class="disabled form-control" ng-model="resource.resourceName" />
+				</div>
+				<div class="input-group-btn">
+					<a class="btn btn-default" href="rest/resources/{{resource.id}}/content">
+						<span class="glyphicon glyphicon-download-alt" aria-hidden="true" uib-tooltip="Download this file"></span>
+					</a>
+				</div>
+			</div>
+			<uib-progressbar ng-if="uploading" max="100" value="progress"><b>{{progress}}%</b></uib-progressbar>
+		</div>
+		
+		<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
 	</form>
 </div>
 <div class="modal-footer">

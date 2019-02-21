@@ -103,17 +103,43 @@ angular.module('resourcesControllers',['tables','step'])
   return dialogs;
 })
 
-.controller('editResourceCtrl', function ($scope, $uibModalInstance, $http, AuthService, id) {
+.controller('editResourceCtrl', function ($scope, $uibModalInstance, $http, AuthService, Upload, id) {
+  
+  function loadResource(id) {
+    $http.get("rest/resources/"+id).then(function(response){
+      $scope.resource = response.data;
+    })    
+  }
   
   if(id==null) {
     $http.get("rest/resources").then(function(response){
       $scope.resource = response.data;
     })  
   } else {
-    $http.get("rest/resources/"+id).then(function(response){
-      $scope.resource = response.data;
-    })      
+    $scope.mode = 'edit';
+    loadResource(id);
   }
+  
+  $scope.uploading = false;
+
+  $scope.upload = function (file) {
+    if(file) {
+      $scope.uploading = true;
+      Upload.upload({
+        url: 'rest/resources/'+$scope.resource.id+'/content',
+        data: {file: file}
+      }).then(function (resp) {
+        // Reload resource to get the updated resourceName
+        loadResource(id);
+        $scope.uploading = false;
+      }, function (resp) {
+        console.log('Error status: ' + resp.status);
+        $scope.uploading = false;
+      }, function (evt) {
+        $scope.progress = parseInt(100.0 * evt.loaded / evt.total);
+      });
+    }
+  };
 
   $scope.save = function () {
     $http.post("rest/resources",$scope.resource).then(function(response) {
