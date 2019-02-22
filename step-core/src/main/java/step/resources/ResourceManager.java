@@ -1,12 +1,19 @@
 package step.resources;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
 public interface ResourceManager {
 
+	public static final String RESOURCE_TYPE_PDF_TEST_SCENARIO_FILE = "pdfTestScenarioFile";
+	public static final String RESOURCE_TYPE_SECRET = "secret";
+	public static final String RESOURCE_TYPE_DATASOURCE = "datasource";
+	public static final String RESOURCE_TYPE_FUNCTIONS = "functions";
+	public static final String RESOURCE_TYPE_STAGING_CONTEXT_FILES = "stagingContextFiles";
+	public static final String RESOURCE_TYPE_ATTACHMENT = "attachment";
+	public static final String RESOURCE_TYPE_TEMP = "temp";
+	
 	/**
 	 * Create a new resource and save the content provided as stream under a new {@link ResourceRevision}
 	 * 

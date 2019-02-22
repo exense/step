@@ -50,7 +50,7 @@ public class ExportServices extends AbstractServices {
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws IOException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer("temp", "artefact_export.json");
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "artefact_export.json");
 				exportManager.exportArtefactWithChildren(id, resourceContainer.getOutputStream());
 				resourceContainer.save();
 				return resourceContainer.getResource();
@@ -67,7 +67,7 @@ public class ExportServices extends AbstractServices {
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer("temp", "artefact_export.json");
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "artefact_export.json");
 				exportManager.exportAllArtefacts(resourceContainer.getOutputStream());
 				resourceContainer.save();
 				return resourceContainer.getResource();

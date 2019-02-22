@@ -243,7 +243,7 @@ public class DataTableServices extends AbstractServices {
 			try {
 				CollectionFind<Document> find = table.getCollection().find(query, order, null, null);		
 	
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer("temp", "export.csv");
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "export.csv");
 				
 				PrintWriter writer = new PrintWriter(resourceContainer.getOutputStream());
 				

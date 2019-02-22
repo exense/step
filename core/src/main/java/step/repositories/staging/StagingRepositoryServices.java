@@ -92,7 +92,7 @@ public class StagingRepositoryServices extends AbstractServices {
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
 
-		ResourceRevisionContainer container = resourceManager.createResourceContainer("stagingContextFiles", fileDetail.getFileName());
+		ResourceRevisionContainer container = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, fileDetail.getFileName());
 		try {
 			FileHelper.copy(uploadedInputStream, container.getOutputStream(), 2048);
 		} catch (IOException e) {

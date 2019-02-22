@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
@@ -20,10 +21,11 @@ import org.bson.types.ObjectId;
 import step.commons.helpers.FileHelper;
 
 public class ResourceManagerImpl implements ResourceManager {
-
+	
 	protected final File resourceRootFolder;
 	protected final ResourceAccessor resourceAccessor;
 	protected final ResourceRevisionAccessor resourceRevisionAccessor;
+	protected final Map<String, ResourceType> resourceTypes;
 	
 	public ResourceManagerImpl(File resourceRootFolder, ResourceAccessor resourceAccessor,
 			ResourceRevisionAccessor resourceRevisionAccessor) {
@@ -31,6 +33,20 @@ public class ResourceManagerImpl implements ResourceManager {
 		this.resourceRootFolder = resourceRootFolder;
 		this.resourceAccessor = resourceAccessor;
 		this.resourceRevisionAccessor = resourceRevisionAccessor;
+		this.resourceTypes = new ConcurrentHashMap<>();
+		
+		resourceTypes.put(RESOURCE_TYPE_TEMP, new CustomResourceType(true));
+		resourceTypes.put(RESOURCE_TYPE_ATTACHMENT, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_STAGING_CONTEXT_FILES, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_FUNCTIONS, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_DATASOURCE, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_SECRET, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_PDF_TEST_SCENARIO_FILE, new CustomResourceType(false));
+		
+	}
+	
+	public void registerResourceType(String name, ResourceType resourceType) {
+		resourceTypes.put(name, resourceType);
 	}
 
 	@Override
@@ -245,16 +261,20 @@ public class ResourceManagerImpl implements ResourceManager {
 		}
 	}
 	
-	private Resource createResource(String resourceType, String name) {
+	private Resource createResource(String resourceTypeId, String name) {
+		ResourceType resourceType = resourceTypes.get(resourceTypeId);
+		if(resourceType ==  null) {
+			throw new RuntimeException("Unknown resource type "+resourceTypeId);
+		}
+		
 		Resource resource = new Resource();
 		Map<String, String> attributes = new HashMap<>();
 		attributes.put(Resource.NAME, name);
 		resource.setAttributes(attributes);
 		resource.setResourceName(name);
-		resource.setResourceType(resourceType);
-		if(resourceType.equals("temp")) {
-			resource.setEphemeral(true);
-		}
+		resource.setResourceType(resourceTypeId);
+		resource.setEphemeral(resourceType.isEphemeral());
+			
 		return resource;
 	}
 
