@@ -7,9 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.bson.Document;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.rtm.commons.Configuration;
 import org.rtm.commons.MeasurementAccessor;
+
+import com.mongodb.client.MongoCollection;
 
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.GlobalContext;
@@ -43,8 +46,10 @@ public class RtmPlugin extends AbstractPlugin {
 		}
 		measureReportNodes = stepProperties.getPropertyAsBoolean("plugins.rtm.measurereportnodes", true);
 		
-		AbstractAccessor.createOrUpdateCompoundIndex(context.getMongoClientSession().getMongoDatabase().getCollection("measurements"),"eId", "begin");
-
+		MongoCollection<Document> measurements = context.getMongoClientSession().getMongoDatabase().getCollection("measurements");
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements,"eId", "begin");
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements,"begin", "name");
+		
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
 
