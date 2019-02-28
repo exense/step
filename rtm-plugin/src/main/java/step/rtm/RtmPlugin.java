@@ -48,7 +48,7 @@ public class RtmPlugin extends AbstractPlugin {
 		
 		MongoCollection<Document> measurements = context.getMongoClientSession().getMongoDatabase().getCollection("measurements");
 		AbstractAccessor.createOrUpdateCompoundIndex(measurements,"eId", "begin");
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements,"begin", "name");
+		AbstractAccessor.createOrUpdateIndex(measurements,"begin");
 		
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
