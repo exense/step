@@ -1,7 +1,7 @@
 <div id="ResourceListCtrl" ng-controller="ResourceListCtrl">
 	<div class="row">
 	</div>
-	<st-table collection="'resources'" handle="tableHandle" uid="'resourceList'" persist-state="true">
+	<st-table collection="'resources'" handle="tableHandle" uid="'resourceList'" persist-state="true" filter="'not(resourceType=attachment)'">
 		<st-actions>
 		</st-actions>
 		<st-columns>
@@ -12,7 +12,7 @@
 			</st-column>
 			<st-column name="resourceType">
 				<header>Type</header>
-				<second-header><inputdropdown options ="[{text:'functions'},{text:'datasource'},{text:'attachment'}]" action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<second-header><inputdropdown options ="[{text:'functions'},{text:'datasource'}]" action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell><span>{{row.resourceType}}</span></cell>
 			</st-column>
 			<st-column name="id">
