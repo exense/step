@@ -368,3 +368,10 @@ img.attachment-thumbnail:hover {
 table.executionTableResult td {
 	padding-right:10px;
 }
+
+.form-group-sm .input-group .btn-auto-size {
+	padding: 5px 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    border-radius: 3px
+}
