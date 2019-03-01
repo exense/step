@@ -269,7 +269,6 @@ public class ResourceManagerImpl implements ResourceManager {
 		
 		Resource resource = new Resource();
 		Map<String, String> attributes = new HashMap<>();
-		attributes.put(Resource.NAME, name);
 		resource.setAttributes(attributes);
 		resource.setResourceName(name);
 		resource.setResourceType(resourceTypeId);

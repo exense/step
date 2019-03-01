@@ -5,20 +5,15 @@
 		<st-actions>
 		</st-actions>
 		<st-columns>
-			<st-column name="attributes.name">
+			<st-column name="resourceName">
 				<header>Name</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><span>{{row.attributes.name}}</span></cell>
+				<cell><span>{{row.resourceName}}</span></cell>
 			</st-column>
 			<st-column name="resourceType">
 				<header>Type</header>
 				<second-header><inputdropdown options ="[{text:'functions'},{text:'datasource'},{text:'attachment'}]" action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell><span>{{row.resourceType}}</span></cell>
-			</st-column>
-			<st-column name="resourceName">
-				<header>Filename</header>
-				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><span>{{row.resourceName}}</span></cell>
 			</st-column>
 			<st-column name="id">
 				<header>ID</header>

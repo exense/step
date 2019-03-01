@@ -148,6 +148,7 @@ angular.module('components',['step'])
             if(!response.similarResources) {
               // No similar resource found
               setResourceIdToFieldValue(resourceId)
+              $scope.resourceFilename = response.resource.resourceName
             } else {
               if(response.similarResources.length >= 1) {
                 ResourceDialogs.showFileAlreadyExistsWarning(response.similarResources).then(function(existingResourceId){
@@ -204,10 +205,7 @@ angular.module('components',['step'])
                   var resource = response.data;
                   if(resource) {
                     $scope.resourceNotExisting = false;
-                    $scope.resourceFilename = resource.attributes.name;
-                    if(resource.attributes.name != resource.resourceName) {
-                      $scope.resourceFilename += " ("+resource.resourceName+")"
-                    }
+                    $scope.resourceFilename = resource.resourceName;
                   } else {
                     $scope.resourceNotExisting = true;
                   }
