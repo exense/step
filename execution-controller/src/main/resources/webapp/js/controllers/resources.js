@@ -70,11 +70,11 @@ angular.module('resourcesControllers',['tables','step'])
     })
   }
   
-  dialogs.searchResource = function() {
+  dialogs.searchResource = function(type) {
     var modalInstance = $uibModal.open({
       templateUrl: 'partials/resources/searchResourceDialog.html',
       controller: 'searchResourceCtrl',
-      resolve: {}
+      resolve: {type: function() {return type}}
     })
 
     return modalInstance.result;    
@@ -152,8 +152,10 @@ angular.module('resourcesControllers',['tables','step'])
   };
 })
 
-.controller('searchResourceCtrl', function ($scope, $uibModalInstance, $http, AuthService) {
+.controller('searchResourceCtrl', function ($scope, $uibModalInstance, $http, AuthService, type) {
 
+  $scope.type = type;
+  
   $scope.selectResource = function (id) {
     $uibModalInstance.close(id);
   }

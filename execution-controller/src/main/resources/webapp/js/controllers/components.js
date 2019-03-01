@@ -184,7 +184,7 @@ angular.module('components',['step'])
       };
       
       $scope.selectResource = function() {
-        ResourceDialogs.searchResource().then(function(resourceId) {
+        ResourceDialogs.searchResource($scope.stType).then(function(resourceId) {
           setResourceIdToFieldValue(resourceId);
         })
       }

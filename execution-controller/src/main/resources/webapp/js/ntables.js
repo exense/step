@@ -96,6 +96,7 @@ angular.module('tables', ['export','dataTable'])
       handle: '=?',
       data: '=?',
       collection: '=?',
+      filter: '=?',
       dom: '=?',
       persistState: '='
     },
@@ -148,6 +149,9 @@ angular.module('tables', ['export','dataTable'])
 
       if(serverSide) {
         var query = 'rest/table/' + scope.collection + '/data';
+        if(scope.filter) {
+          query += '?filter=' + encodeURIComponent(scope.filter);
+        }
         tableOptions.ajax = {
             'url' : query,
             'type' : 'POST'

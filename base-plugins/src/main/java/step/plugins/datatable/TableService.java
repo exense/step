@@ -57,6 +57,7 @@ import step.core.accessors.SearchOrder;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.export.ExportTaskManager;
+import step.core.ql.OQLMongoDBBuilder;
 
 @Singleton
 @Path("table")
@@ -91,7 +92,10 @@ public class TableService extends AbstractServices {
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form) throws Exception {
+	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context UriInfo uriInfo) throws Exception {
+		if(uriInfo.getQueryParameters()!=null) {
+			form.putAll(uriInfo.getQueryParameters());
+		}
 		return getTableData(collectionID, form);
 	}
 	
@@ -166,6 +170,10 @@ public class TableService extends AbstractServices {
 					// TODO implement full text search
 				}
 			}
+		}
+		if(params.containsKey("filter")) {
+			Bson filter = OQLMongoDBBuilder.build(params.getFirst("filter"));
+			queryFragments.add(filter);
 		}
 		return queryFragments;
 	}
