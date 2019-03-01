@@ -91,9 +91,15 @@ angular.module('components',['step'])
         $scope.saveButtonLabel="Save"
       }
       
-      // Initialize staging model
-      // Using stagingModel.value and not value directly to avoid two-way binding issues caused by the ng-if in the template
-      // See https://stackoverflow.com/questions/12618342/ng-model-does-not-update-controller-value
+      function resetStaginModel() {
+        // Initialize staging model
+        // Using stagingModel.value and not value directly to avoid two-way binding issues caused by the ng-if in the template
+        // See https://stackoverflow.com/questions/12618342/ng-model-does-not-update-controller-value
+        $scope.stagingModel = {value: $scope.stModel};
+      }
+      
+      resetStaginModel();
+      
       $scope.stagingModel = {value: $scope.stModel};
       
       // Called when the staging field is left
@@ -215,6 +221,7 @@ angular.module('components',['step'])
       $scope.clear = function() {
         $scope.stModel = "";
         $scope.absoluteFilepath = "";
+        resetStaginModel();
         callOnChangeListener();
       }
       

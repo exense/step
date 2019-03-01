@@ -106,12 +106,6 @@ dynamicForms.directive('dynamicCheckbox', function() {
     },
     controller: function($scope,$http,Upload,Dialogs,ResourceDialogs) {
       initDynamicFormsCtrl($scope);
-      
-      $scope.$watch('dynamicValue.value',function(newValue) {
-        if(newValue) {
-          $scope.onSave();
-        }
-      })
     },
     templateUrl: 'partials/dynamicforms/dynamicResourceInput.html'}
 })
