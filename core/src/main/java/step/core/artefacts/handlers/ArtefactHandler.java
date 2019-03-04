@@ -169,6 +169,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		Map<String, Object> bindings = new HashMap<>();
 		bindings.putAll(context.getVariablesManager().getAllVariables());
 		bindings.put("context", context);
+		bindings.put("variables", context.getVariablesManager());
 		bindings.put(BINDING_RESOURCE_MANAGER, context.get(ResourceManager.class));
 		return bindings;
 	}
