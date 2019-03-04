@@ -23,7 +23,7 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
 	@Override
 	public GeneralScriptFunction newFunction() {
 		GeneralScriptFunction function = new GeneralScriptFunction();
-		function.getScriptLanguage().setValue("javascript");
+		function.getScriptLanguage().setValue("java");
 		return function;
 	}
 }
