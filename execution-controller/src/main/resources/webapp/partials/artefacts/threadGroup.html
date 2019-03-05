@@ -3,9 +3,7 @@
 	<form>		
 		<dynamic-textfield label="'Number of threads'" on-save="save()" dynamic-value="artefact.users" />
 		<dynamic-textfield label="'Number of iterations per thread'" on-save="save()" dynamic-value="artefact.iterations" />
-		<dynamic-textfield label="'Local iterationId variable (handle)'" on-save="save()" dynamic-value="artefact.localItem" />
-		<dynamic-textfield label="'UserId variable (handle)'" on-save="save()" dynamic-value="artefact.userItem" />
-		<dynamic-textfield label="'Global counter variable (handle)'" on-save="save()" dynamic-value="artefact.item" />
+
 		<div class="panel panel-default">
 			<div class="panel-heading">
 				<a ng-click="showLoadDistribution = !showLoadDistribution">Load distribution parameters</a>
@@ -14,6 +12,18 @@
 				<dynamic-textfield label="'Pacing (ms)'" on-save="save()" dynamic-value="artefact.pacing" />
 				<dynamic-textfield label="'Rampup (ms)'" on-save="save()" dynamic-value="artefact.rampup" />
 				<dynamic-textfield label="'Start offset (ms)'" on-save="save()" dynamic-value="artefact.startOffset" />
+				<dynamic-textfield label="'Maximum duration (ms)'" tooltip="'A zero-value means unlimited'" on-save="save()" dynamic-value="artefact.maxDuration" />
+			</div>
+		</div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="showHandles = !showHandles">Handles</a>
+			</div>
+			<div class="panel-body" ng-show="showHandles">
+				<dynamic-textfield label="'Local iterationId variable (handle)'" on-save="save()" dynamic-value="artefact.localItem" />
+				<dynamic-textfield label="'UserId variable (handle)'" on-save="save()" dynamic-value="artefact.userItem" />
+				<dynamic-textfield label="'Global counter variable (handle)'" on-save="save()" dynamic-value="artefact.item" />
 			</div>
 		</div>
 	</form>

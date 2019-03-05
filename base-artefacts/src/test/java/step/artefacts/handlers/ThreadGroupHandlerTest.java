@@ -18,18 +18,23 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.io.IOException;
 import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
 import junit.framework.Assert;
 import step.artefacts.Check;
+import step.artefacts.CheckArtefact;
+import step.artefacts.Sleep;
 import step.artefacts.ThreadGroup;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
+import step.planbuilder.BaseArtefacts;
 
 public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -96,6 +101,49 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 	private Check errorCheck() {
 		Check errorCheck = new Check();
 		return errorCheck;
+	}
+	
+	@Test
+	public void testMaxDurationExceeded() throws Exception {
+		long maxDuration = 50l;
+		AtomicInteger count = new AtomicInteger(0);
+
+		StringWriter writer = testMaxDuration(maxDuration, count);
+		
+		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
+		Assert.assertTrue(count.get()<10);
+	}
+	
+	@Test
+	public void testMaxDurationDefault() throws Exception {
+		long maxDuration = 0l;
+		AtomicInteger count = new AtomicInteger(0);
+
+		StringWriter writer = testMaxDuration(maxDuration, count);
+		
+		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
+		Assert.assertTrue(count.get()==10);
+	}
+
+
+	public StringWriter testMaxDuration(long maxDuration, AtomicInteger count) throws IOException {
+		ThreadGroup artefact = new ThreadGroup();
+		artefact.setMaxDuration(new DynamicValue<Integer>(100));
+		artefact.setIterations(new DynamicValue<Integer>(10));
+		
+		Sleep sleep = new Sleep();
+		sleep.setDuration(new DynamicValue<Long>(maxDuration));
+		
+		CheckArtefact check = new CheckArtefact(c-> {
+			count.incrementAndGet();
+		});
+		
+		Plan plan = PlanBuilder.create().startBlock(artefact).add(sleep).add(check).endBlock().build();
+		DefaultPlanRunner runner = new DefaultPlanRunner();
+		
+		StringWriter writer = new StringWriter();
+		runner.run(plan).printTree(writer);
+		return writer;
 	}
 }
 

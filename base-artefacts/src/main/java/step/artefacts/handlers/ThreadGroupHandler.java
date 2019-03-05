@@ -30,6 +30,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.dynamicbeans.DynamicValue;
 
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 	
@@ -66,6 +67,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		
 		ExecutorService executor = Executors.newFixedThreadPool(numberOfUsers);
 		try {
+			final long groupStartTime = System.currentTimeMillis();
 			
 			// -- Paralellize --
 			for(int j=0;j<numberOfUsers;j++) {
@@ -105,8 +107,8 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 								iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
 								reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
 								
+								long endTime = System.currentTimeMillis();
 								if(pacing!=0) {
-									long endTime = System.currentTimeMillis();
 									long duration = endTime-startTime;
 									long pacingWait = pacing-duration;
 									if(pacingWait>0) {
@@ -115,6 +117,14 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 										// TODO: this is an application warning. Instead of being logged it should be shown to the end-user in a warning console
 										logger.debug("Pacing of TestGroup " + testArtefact.getId() + " in test " + context.getExecutionId() + " exceeded. " +
 												"The iteration lasted " + duration + "ms. The defined pacing was: " + testArtefact.getPacing() + "ms.");
+									}
+								}
+								
+								DynamicValue<Integer> maxDurationProp = testArtefact.getMaxDuration();
+								if(maxDurationProp != null) {
+									Integer maxDuration = maxDurationProp.get();
+									if(maxDuration > 0 && endTime>groupStartTime+maxDuration) {
+										break;
 									}
 								}
 							}

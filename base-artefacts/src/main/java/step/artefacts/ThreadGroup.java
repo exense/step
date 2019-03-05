@@ -36,6 +36,8 @@ public class ThreadGroup extends AbstractArtefact {
 
 	DynamicValue<Integer> startOffset = new DynamicValue<Integer>(0);
 	
+	DynamicValue<Integer> maxDuration = new DynamicValue<Integer>(0);
+	
 	DynamicValue<String> item = new DynamicValue<String>("gcounter");
 	
 	DynamicValue<String> localItem = new DynamicValue<String>("literationId");
@@ -80,6 +82,14 @@ public class ThreadGroup extends AbstractArtefact {
 
 	public void setStartOffset(DynamicValue<Integer> startOffset) {
 		this.startOffset = startOffset;
+	}
+
+	public DynamicValue<Integer> getMaxDuration() {
+		return maxDuration;
+	}
+
+	public void setMaxDuration(DynamicValue<Integer> maxDuration) {
+		this.maxDuration = maxDuration;
 	}
 
 	public DynamicValue<String> getItem() {
