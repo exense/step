@@ -35,7 +35,7 @@
 					<a id="sessionDropdown" data-toggle="dropdown"><i class="glyphicon glyphicon-user" ></i> {{context.userID}} [{{context.role}}]</a>
 					<ul class="dropdown-menu" aria-labelledby="sessionDropdown">
 						<li><a ng-click="setView('myaccount')"><span class="glyphicon glyphicon-cog"></span> My account</a></li>
-						<li><a ng-click="authService.logout()"><span class="glyphicon glyphicon-off"></span> Logout</a></li>
+						<li ng-if="authService.getConf().authentication"><a ng-click="authService.logout()"><span class="glyphicon glyphicon-off"></span> Logout</a></li>
 					</ul>
 				</li>
 			</ul>
