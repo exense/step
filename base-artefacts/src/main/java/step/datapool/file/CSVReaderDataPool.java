@@ -79,7 +79,7 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 	
 	public Vector<String> splitCSV(String readOneLine) {
 		Vector<String> v = new Vector<String>();
-		for(String s : readOneLine.split(this.delimiter))
+		for(String s : readOneLine.split(this.delimiter,-1))
 			v.add(s);
 		
 		return v;
