@@ -31,6 +31,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -329,6 +331,13 @@ public class FileHelper {
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("Error while parsing URI of resource "+resourceName,e);
 		}
+	}
+	
+	public static File extractClassLoaderResourceToTempFile(Class<?> clazz, String resourceName) throws IOException {
+		Path tempFile = Files.createTempFile("resourceName",".tmp");
+		Files.write(tempFile, readResource(clazz, resourceName).getBytes(), StandardOpenOption.APPEND);
+		tempFile.toFile().deleteOnExit();
+		return tempFile.toFile();
 	}
 	
 	public static String readStream(InputStream is){

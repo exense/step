@@ -82,15 +82,4 @@ public class JsonStringDataPoolImpl extends DataSet<JsonStringDataPoolConfigurat
 	public void addRow(Object row) {
 		throw new RuntimeException("Not implemented");
 	}
-
-	@Override
-	public void close() {
-
-	}
-
-	@Override
-	public void init() {
-
-	}
-
 }

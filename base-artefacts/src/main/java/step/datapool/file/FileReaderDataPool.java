@@ -21,7 +21,8 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 
 	@Override
 	public void init() {
-
+		super.init();
+		
 		String file = this.configuration.getFile().get();
 		if (file == null || file.length() < 1)
 			throw new RuntimeException("file path is incorrect.");
@@ -84,6 +85,7 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 
 	@Override
 	public void close() {
+		super.close();
 		try {
 			if(br!=null) {
 				br.close();				

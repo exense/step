@@ -38,6 +38,7 @@ public class FileDataPoolImpl extends DataSet<DirectoryDataPool> {
 	
 	@Override
 	public void init() {
+		super.init();
 		File folder = new File(configuration.getFolder().get());
 		List<File> fileList = Arrays.asList(folder.listFiles());
 		fileIterator = fileList.iterator();
@@ -90,6 +91,7 @@ public class FileDataPoolImpl extends DataSet<DirectoryDataPool> {
 
 	@Override
 	public void close() {
+		super.close();
 	}
 	
 	@Override

@@ -46,26 +46,29 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 		DataSet<?> dataSet = null;
 		try {
-			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource(), context);
-			dataSet.init();
+			dataSet = getDataPool(testArtefact);
 			DataPoolRow nextValue = null;
 			int rowCount = 0;
 			while((nextValue=dataSet.next())!=null) {				
-				if(context.isInterrupted()) {
-					break;
+				try {
+					if(context.isInterrupted()) {
+						break;
+					}
+					
+					rowCount++;
+					
+					HashMap<String, Object> newVariable = new HashMap<>();
+					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
+					
+					ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
+					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+rowCount);
+					for(AbstractArtefact child:selectedChildren)
+						iterationTestCase.addChild(child.getId());
+					
+					delegateCreateReportSkeleton(context, iterationTestCase, node, newVariable);
+				} finally {
+					nextValue.commit();
 				}
-	
-				rowCount++;
-				
-				HashMap<String, Object> newVariable = new HashMap<>();
-				newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
-				
-				ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+rowCount);
-				for(AbstractArtefact child:selectedChildren)
-					iterationTestCase.addChild(child.getId());
-				
-				delegateCreateReportSkeleton(context, iterationTestCase, node, newVariable);
 			}
 		} catch(Exception e) {
 			failWithException(node, e);
@@ -76,6 +79,14 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		}
 	}
 
+	public DataSet<?> getDataPool(AbstractForBlock testArtefact) {
+		DataSet<?> dataSet;
+		dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource(), context);
+		dataSet.enableRowCommit(true);
+		dataSet.init();
+		return dataSet;
+	}
+
 	@Override
 	public void execute_(ForBlockReportNode node, AbstractForBlock testArtefact) {
 				
@@ -83,9 +94,7 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 		try {
 			List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 			
-			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource(), context);
-		
-			dataSet.init();
+			dataSet = getDataPool(testArtefact);
 			
 			context.getVariablesManager().putVariable(node, BREAK_VARIABLE, "false");
 			
@@ -152,28 +161,32 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 			try {
 				DataPoolRow nextValue = null;
 				while((nextValue=dataSet.next())!=null) {	
-					boolean forInterrupted = Boolean.parseBoolean((String)context.getVariablesManager().getVariable(node, BREAK_VARIABLE, false));
-					Integer maxFailedLoops = testArtefact.getMaxFailedLoops().get();
-					if(forInterrupted || context.isInterrupted() || (maxFailedLoops!=null&&failedLoops.get()>=maxFailedLoops)) {
-						break;
-					}
-					int i = loopsCounter.incrementAndGet();
-	
-					HashMap<String, Object> newVariable = new HashMap<>();
-					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
-					
-					ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+i);
-					for(AbstractArtefact child:selectedChildren) {
-						iterationTestCase.addChild(child.getId());
-					}
-					
-					ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
-					
-					reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
-					
-					if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
-						failedLoops.incrementAndGet();
+					try {
+						boolean forInterrupted = Boolean.parseBoolean((String)context.getVariablesManager().getVariable(node, BREAK_VARIABLE, false));
+						Integer maxFailedLoops = testArtefact.getMaxFailedLoops().get();
+						if(forInterrupted || context.isInterrupted() || (maxFailedLoops!=null&&failedLoops.get()>=maxFailedLoops)) {
+							break;
+						}
+						int i = loopsCounter.incrementAndGet();
+		
+						HashMap<String, Object> newVariable = new HashMap<>();
+						newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
+						
+						ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
+						Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+i);
+						for(AbstractArtefact child:selectedChildren) {
+							iterationTestCase.addChild(child.getId());
+						}
+						
+						ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
+						
+						reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
+						
+						if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
+							failedLoops.incrementAndGet();
+						}
+					} finally {
+						nextValue.commit();
 					}
 				}
 			} catch(Exception e) {

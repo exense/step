@@ -18,9 +18,13 @@
  *******************************************************************************/
 package step.datapool;
 
+import java.util.concurrent.Semaphore;
+
 public class DataPoolRow {
 	
 	private final Object value;
+	
+	private final Semaphore commitLock = new Semaphore(0);
 
 	public DataPoolRow(Object value) {
 		super();
@@ -32,5 +36,21 @@ public class DataPoolRow {
 	}
 
 	public String toString(){return value.toString();}
+	
+	/**
+	 * This method has to be called by the user when {@link DataSet#isRowCommitEnabled} is set to true
+	 * at the end of each iteration
+	 */
+	public void commit() {
+		commitLock.release();
+	}
+	
+	/**
+	 * Wait for the row to be committed
+	 * @throws InterruptedException
+	 */
+	public void waitForCommit() throws InterruptedException {
+		commitLock.acquire();
+	}
 	
 }

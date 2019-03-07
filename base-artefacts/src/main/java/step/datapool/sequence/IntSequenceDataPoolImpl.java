@@ -40,6 +40,7 @@ public class IntSequenceDataPoolImpl extends DataSet<IntSequenceDataPool> {
 
 	@Override
 	public void init() {
+		super.init();
 		init=true;
 		cursor = configuration.getStart().get();
 		inc = configuration.getInc().get();
@@ -74,10 +75,6 @@ public class IntSequenceDataPoolImpl extends DataSet<IntSequenceDataPool> {
 		}
 	}
 
-	@Override
-	public void close() {
-	}
-	
 	@Override
 	public void addRow(Object row) {
 		throw new RuntimeException("Not implemented");

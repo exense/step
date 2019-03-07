@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ContextBuilder;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
@@ -40,7 +41,7 @@ public class JsonStringDataPoolTest{
 		JsonStringDataPoolConfiguration poolConf = new JsonStringDataPoolConfiguration();
 		poolConf.setJson(new DynamicValue<String>("{ \"a\" : [\"va1\", \"va2\", \"va3\"], \"b\" : [\"vb1\", \"vb2\", \"vb3\"] }"));
 
-		DataSet<?> pool = DataPoolFactory.getDataPool("json", poolConf, null);
+		DataSet<?> pool = DataPoolFactory.getDataPool("json", poolConf, ContextBuilder.createLocalExecutionContext());
 
 		pool.init();
 		pool.next();

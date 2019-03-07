@@ -62,7 +62,9 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 	}
 
 	@Override
-	public void init() {		
+	public void init() {	
+		super.init();
+		
 		String bookName = configuration.getFile().get();
 		String sheetName = configuration.getWorksheet().get();
 		
@@ -203,7 +205,9 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 	}
 
 	@Override
-	public void close() {	
+	public void close() {
+		super.close();
+		
 		if(workbookSet!=null) {
 			workbookSet.close();				
 		}

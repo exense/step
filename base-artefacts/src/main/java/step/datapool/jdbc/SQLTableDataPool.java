@@ -251,6 +251,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	@Override
 	public void close() {
+		super.close();
 		try {
 			conn1.commit();
 			if(rs != null && !rs.isClosed())
@@ -265,6 +266,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	@Override
 	public void init() {
+		super.init();
 		connect();
 		executeQuery();
 	}

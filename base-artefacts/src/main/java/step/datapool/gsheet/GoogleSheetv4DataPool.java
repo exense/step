@@ -68,6 +68,7 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 
 	@Override
 	public void init() {
+		super.init();
 		fileResolver = context.get(FileResolver.class);
 		createDatapool(saKey, fileId, tabName);
 		createHeaders();
@@ -91,6 +92,7 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 
 	@Override
 	public void close() {
+		super.close();
 		//nothing to do, apparently the Sheet service doesn't need to be closed explicitely
 	}
 

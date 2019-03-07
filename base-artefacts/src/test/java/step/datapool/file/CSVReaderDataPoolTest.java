@@ -19,6 +19,9 @@
 package step.datapool.file;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.junit.Test;
 
@@ -26,8 +29,10 @@ import junit.framework.Assert;
 import step.commons.helpers.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ContextBuilder;
+import step.core.plans.runner.PlanRunnerResultAssert;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolFactory;
+import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
 
 public class CSVReaderDataPoolTest {
@@ -40,18 +45,32 @@ public class CSVReaderDataPoolTest {
 		Assert.assertEquals("", ((SimpleStringMap)pool.next().getValue()).get("Col4").toString());
 		pool.close();
 	}
+
 	
 	@Test
-	public void testCSVReaderDataPoolPut() {		
-		DataSet<?> pool = getDataPool("File.csv");
-		Exception e = null;
-		try {
-			((SimpleStringMap)pool.next().getValue()).put("test", "test");			
-		} catch(Exception ex) {
-			e = ex;
+	public void testCSVReaderDataPoolPut() throws IOException {		
+		File tempFile = FileHelper.extractClassLoaderResourceToTempFile(this.getClass(), "testCSVReaderDataPoolPut.csv");
+		
+		DataSet<?> pool = getDataPool(tempFile, true);
+		
+		ExecutorService threadPool = Executors.newCachedThreadPool();
+		for(int i=0;i<5;i++) {
+			threadPool.submit(() -> {
+				DataPoolRow row = null;
+				while((row=pool.next())!=null) {
+					try {
+						((SimpleStringMap)row.getValue()).put("Col4", "test");			
+					} finally {
+						if(row != null) {
+							row.commit();
+						}
+					}
+				}
+			});
 		}
-		Assert.assertEquals("Put into a CSVRowWrapper row is currently not supported.", e.getMessage());
 		pool.close();
+		
+		PlanRunnerResultAssert.assertEquals(getClass(), "testCSVReaderDataPoolPut.expected.csv", tempFile);
 	}
 	
 	@Test
@@ -60,17 +79,21 @@ public class CSVReaderDataPoolTest {
 		Assert.assertEquals("Col1=row11 Col2=row12 Col3=row13 Col4= Col5=", ((SimpleStringMap)pool.next().getValue()).toString());
 		pool.close();
 	}
-
-	protected DataSet<?> getDataPool(String file) {
+	
+	protected DataSet<?> getDataPool(String filename) {
+		File file = FileHelper.getClassLoaderResource(this.getClass(), filename);
+		return getDataPool(file, false);
+	}
+	
+	protected DataSet<?> getDataPool(File file, boolean enableRowCommit) {
 		FileDataPool conf = getCSVDataSourceConf(file);
 		DataSet<?> pool =  DataPoolFactory.getDataPool("csv", conf, ContextBuilder.createLocalExecutionContext());
+		pool.enableRowCommit(enableRowCommit);
 		pool.init();
 		return pool;
 	}
 	
-	private CSVDataPool getCSVDataSourceConf(String filename) {
-		File file = FileHelper.getClassLoaderResource(this.getClass(), filename);
-		
+	private CSVDataPool getCSVDataSourceConf(File file) {
 		CSVDataPool conf = new CSVDataPool();
 		conf.setFile(new DynamicValue<String>(file.getAbsolutePath()));
 		return conf;
