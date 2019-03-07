@@ -56,8 +56,8 @@ public abstract class DataSet<T> {
 	
 	/**
 	 * @param rowCommit if the row commit is enabled. IMPORTANT: If row commit is enabled, 
-	 * it is the responsibility of the user to call the method {@link DataPoolRow#commit()) after the row has been processed
-	 * If the method {@link DataPoolRow#commit()) isn't called, closing the DataSet may block indefinitely 
+	 * it is the responsibility of the user to call the method {@link DataPoolRow#commit()} after the row has been processed
+	 * If the method {@link DataPoolRow#commit()} isn't called, closing the DataSet may block indefinitely 
 	 */
 	public void enableRowCommit(boolean rowCommit) {
 		this.isRowCommitEnabled = rowCommit;
