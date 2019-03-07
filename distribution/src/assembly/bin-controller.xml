@@ -53,13 +53,4 @@
 			</binaries>
 		</moduleSet>
 	</moduleSets>
-	<dependencySets>
-		<dependencySet>
-			<includes>
-				<include>ch.exense.rtm:rtm</include>
-			</includes>
-			 <outputDirectory>ext</outputDirectory>
-			 <outputFileNameMapping>rtm.war</outputFileNameMapping>
-		</dependencySet>
-	</dependencySets>
 </assembly>
