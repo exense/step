@@ -16,7 +16,7 @@
 	<parent>
 		<groupId>ch.exense.step</groupId>
 		<artifactId>script-dev</artifactId>
-		<version>3.10.0</version>
+		<version>3.10.1-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
