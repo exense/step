@@ -44,10 +44,10 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
 import step.grid.bootstrap.ResourceExtractor;
+import step.grid.client.AbstractGridClientImpl.AgentCallTimeoutException;
+import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
+import step.grid.client.AbstractGridClientImpl.AgentSideException;
 import step.grid.client.GridClient;
-import step.grid.client.GridClientImpl.AgentCallTimeoutException;
-import step.grid.client.GridClientImpl.AgentCommunicationException;
-import step.grid.client.GridClientImpl.AgentSideException;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
@@ -199,7 +199,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_TIMEOUT)) {
 					String timeout = agentError.getErrorDetails().get(AgentErrorCode.Details.TIMEOUT);
 					String filehandle = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_HANDLE);
-					long fileversion = Long.parseLong(agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_VERSION));
+					String fileversion = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_VERSION);
 					FileVersion fileVersion = gridClient.getRegisteredFile(new FileVersionId(filehandle, fileversion));
 					if(fileVersion!=null) {
 						output.setError(newAgentError("Timeout after "+ timeout + "ms while downloading the following resource from the controller: "+fileVersion.getFile().getPath()+". You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
@@ -244,7 +244,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	protected Map<String, String> fileVersionIdToMap(String propertyName, FileVersionId fileVersionId) {
 		Map<String, String> props = new HashMap<>();
 		props.put(propertyName+".id", fileVersionId.getFileId());
-		props.put(propertyName+".version", Long.toString(fileVersionId.getVersion()));
+		props.put(propertyName+".version", fileVersionId.getVersion());
 		return props;
 	}
 

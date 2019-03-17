@@ -41,7 +41,7 @@ import javax.ws.rs.core.MediaType;
 
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.grid.Grid;
+import step.grid.GridImpl;
 import step.grid.GridReportBuilder;
 import step.grid.TokenWrapper;
 import step.grid.TokenWrapperState;
@@ -50,11 +50,11 @@ import step.grid.reports.TokenGroupCapacity;
 @Path("/grid")
 public class GridServices extends AbstractServices {
 
-	protected Grid grid;
+	protected GridImpl grid;
 	
 	@PostConstruct
 	public void init() {
-		grid = getContext().get(Grid.class);
+		grid = getContext().get(GridImpl.class);
 	}
 	
 	private GridReportBuilder getReportBuilder() {

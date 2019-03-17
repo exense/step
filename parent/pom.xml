@@ -52,13 +52,14 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<step-grid.version>0.9.3</step-grid.version>
+		<step-grid.version>1.0.0-SNAPSHOT</step-grid.version>
 		<junit.version>4.8.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
 		<groovy.version>2.2.1</groovy.version>
 		<mongodb.version>3.8.2</mongodb.version>
 		<jackson.version>2.5.4</jackson.version>
 		<rtm.version>2.2.4</rtm.version>
+		<jersey.version>2.23.1</jersey.version>
 	</properties>
 
 	<repositories>
@@ -105,6 +106,7 @@
 		<module>../step-functions</module>
 		<module>../step-core</module>
 		<module>../step-core-model</module>
+		<module>../step-plans</module>
 		<module>../core</module>
 		<module>../base-functions</module>
 		<module>../base-plugins</module>
@@ -112,6 +114,7 @@
 		<module>../base-artefacts</module>
 		<module>../execution-controller</module>
 		<module>../initialization</module>
+		<module>../step-functions-composite</module>
 		<module>../java-plugin</module>
 		<module>../node-plugin</module>
 		<module>../selenium-plugin</module>
@@ -119,6 +122,7 @@
 		<module>../script-editor-plugin</module>
 		<module>../distribution</module>
 		<module>../script-dev</module>
+		<module>../../step-enterprise/remote-client</module>
 	</modules>
 
 	<build>

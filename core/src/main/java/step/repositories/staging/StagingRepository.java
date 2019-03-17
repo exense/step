@@ -5,6 +5,7 @@ import java.util.Map;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.repositories.ArtefactInfo;
+import step.core.repositories.ImportResult;
 import step.core.repositories.Repository;
 import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;

@@ -31,14 +31,14 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ExecutionManager;
+import step.core.execution.ExecutionTypeListener;
 
 public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestSet testSet) {	
-		ExecutionManager executionManager = new ExecutionManager(context.getExecutionAccessor());
-		executionManager.updateExecutionType(context, "TestSet");
+		ExecutionTypeListener executionTypeListener = context.getExecutionTypeListener();
+		executionTypeListener.updateExecutionType(context, "TestSet");
 		runParallel(node, testSet, false);
 	}
 

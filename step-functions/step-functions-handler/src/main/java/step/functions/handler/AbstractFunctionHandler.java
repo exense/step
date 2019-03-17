@@ -32,6 +32,10 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	private Map<String, String> properties;
 	
 	public static final String FORKED_BRANCH = "forkedBranch";
+	
+	public static final String STEP_NODE_KEY = "currentStep";
+	public static final String PARENTREPORTID_KEY = "$parentreportid";
+	public static final String EXECUTION_CONTEXT_KEY = "$executionContext";
 
 	protected FunctionHandlerFactory getFunctionHandlerFactory() {
 		return functionHandlerFactory;
@@ -234,7 +238,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		String key = properyName+".id";
 		if(properties.containsKey(key)) {
 			String transferFileId = properties.get(key);
-			long transferFileVersion = Long.parseLong(properties.get(properyName+".version"));
+			String transferFileVersion = properties.get(properyName+".version");
 			return new FileVersionId(transferFileId, transferFileVersion);			
 		} else {
 			return null;

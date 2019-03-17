@@ -160,6 +160,11 @@ public class FunctionMessageHandlerTest {
 				}
 			}
 
+			@Override
+			public void removeFileVersionFromCache(FileVersionId fileVersionId) {
+				
+			}
+
 		});
 		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
 		Map<String, String> agentProperties = new HashMap<>();
