@@ -114,6 +114,7 @@
 		<module>../base-artefacts</module>
 		<module>../execution-controller</module>
 		<module>../initialization</module>
+		<module>../remote-client</module>
 		<module>../step-functions-composite</module>
 		<module>../java-plugin</module>
 		<module>../node-plugin</module>
@@ -122,7 +123,6 @@
 		<module>../script-editor-plugin</module>
 		<module>../distribution</module>
 		<module>../script-dev</module>
-		<module>../../step-enterprise/remote-client</module>
 	</modules>
 
 	<build>
