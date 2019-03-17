@@ -171,7 +171,7 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 		Configuration configuration = new Configuration();
 		
 		LocalFunctionType type = new LocalFunctionType();
-		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new LocalResourceManagerImpl()), null);
+		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new LocalResourceManagerImpl()), gridClient);
 		functionTypeRegistry.registerFunctionType(type);
 		
 		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(context.getArtefactAccessor(), new ArtefactManager(context.getArtefactAccessor()));
