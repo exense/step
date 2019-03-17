@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionRouter;
 import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
@@ -50,9 +51,10 @@ import step.functions.services.GridServices;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
+import step.grid.GridImpl;
 import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
-import step.grid.client.GridClientImpl;
+import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
 import step.grid.io.AgentErrorCode;
 
@@ -61,7 +63,7 @@ public class GridPlugin extends AbstractPlugin {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
 
-	private Grid grid;
+	private GridImpl grid;
 	private GridClient client;
 	
 	private FunctionEditorRegistry editorRegistry;
@@ -81,13 +83,13 @@ public class GridPlugin extends AbstractPlugin {
 		Integer tokenTTL = configuration.getPropertyAsInteger("grid.ttl",60000);
 		
 		String fileManagerPath = configuration.getProperty("grid.filemanager.path", "filemanager");
-		grid = new Grid(new File(fileManagerPath), gridPort, tokenTTL);
+		grid = new GridImpl(new File(fileManagerPath), gridPort, tokenTTL);
 		grid.start();
 		
 		TokenLifecycleStrategy tokenLifecycleStrategy = getTokenLifecycleStrategy(configuration);
 		
 		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration);
-		client = new GridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
+		client = new LocalGridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
 
 		editorRegistry = new FunctionEditorRegistry();
 		functionTypeRegistry = new FunctionTypeRegistryImpl(context.get(FileResolver.class), client);
@@ -98,10 +100,11 @@ public class GridPlugin extends AbstractPlugin {
 		functionExecutionService = new FunctionExecutionServiceImpl(client, functionTypeRegistry, context.getDynamicBeanResolver());
 		
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		functionRouter = new FunctionRouter(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
+		functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
 
 		context.put(TokenLifecycleStrategy.class, tokenLifecycleStrategy);
 		context.put(Grid.class, grid);
+		context.put(GridImpl.class, grid);
 		context.put(GridClient.class, client);
 				
 		context.put(FunctionAccessor.class, functionAccessor);
@@ -148,11 +151,11 @@ public class GridPlugin extends AbstractPlugin {
 				throw new RuntimeException("Error while creating function execution service", e);
 			}
 			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-			FunctionRouter functionRouter = new FunctionRouter(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
+			FunctionRouter functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
 			
 			context.put(FunctionAccessor.class, functionAccessor);
 			context.put(FunctionExecutionService.class, functionExecutionService);
-			context.put(FunctionRouter.class.getName(), functionRouter);
+			context.put(DefaultFunctionRouterImpl.class.getName(), functionRouter);
 		} else {
 			context.put(FunctionAccessor.class, functionAccessor);
 			context.put(FunctionExecutionService.class, functionExecutionService);

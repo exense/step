@@ -10,7 +10,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.io.Input;
 import step.grid.GridFileService;
-import step.grid.agent.Agent;
+import step.grid.agent.AgentTypes;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
@@ -34,7 +34,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 
 	public Map<String, Interest> getTokenSelectionCriteria(T function) {
 		Map<String, Interest> criteria = new HashMap<>();
-		criteria.put(Agent.AGENT_TYPE_KEY, new Interest(Pattern.compile("default"), true));
+		criteria.put(AgentTypes.AGENT_TYPE_KEY, new Interest(Pattern.compile("default"), true));
 		return criteria;
 	}
 	
@@ -79,7 +79,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	protected void registerFile(File file, String properyName, Map<String, String> props) {
 		FileVersionId fileVersionId = registerFile(file);
 		props.put(properyName+".id", fileVersionId.getFileId());
-		props.put(properyName+".version", Long.toString(fileVersionId.getVersion()));
+		props.put(properyName+".version", fileVersionId.getVersion());
 	}
 	
 	protected FileVersionId registerFile(File file) {

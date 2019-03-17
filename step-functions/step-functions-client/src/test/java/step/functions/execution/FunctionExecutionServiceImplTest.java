@@ -1,6 +1,7 @@
 package step.functions.execution;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,9 +29,9 @@ import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
 import step.grid.TokenWrapperOwner;
 import step.grid.agent.handler.context.OutputMessageBuilder;
+import step.grid.client.AbstractGridClientImpl.AgentCallTimeoutException;
+import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.grid.client.GridClient;
-import step.grid.client.GridClientImpl.AgentCallTimeoutException;
-import step.grid.client.GridClientImpl.AgentCommunicationException;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
@@ -347,6 +348,17 @@ public class FunctionExecutionServiceImplTest {
 
 			@Override
 			public void close() {
+			}
+
+			@Override
+			public void unregisterFile(FileVersionId fileVersionId) {
+				
+			}
+
+			@Override
+			public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory)
+					throws FileManagerException {
+				return null;
 			}
 		};
 	}

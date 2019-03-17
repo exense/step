@@ -131,44 +131,17 @@ public class FunctionServices extends AbstractServices {
 		return newFunction;
 	}
 
-	public static class GetTokenHandleParameter {
-		
-		Map<String, String> attributes;
-		Map<String, Interest> interests;
-		boolean createSession;
-
-		public Map<String, String> getAttributes() {
-			return attributes;
-		}
-		
-		public void setAttributes(Map<String, String> attributes) {
-			this.attributes = attributes;
-		}
-		
-		public Map<String, Interest> getInterests() {
-			return interests;
-		}
-		
-		public void setInterests(Map<String, Interest> interests) {
-			this.interests = interests;
-		}
-		
-		public boolean isCreateSession() {
-			return createSession;
-		}
-		
-		public void setCreateSession(boolean createSession) {
-			this.createSession = createSession;
-		}
-	}
-	
-	
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/select")
 	@Secured(right="kw-execute")
 	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter) throws FunctionExecutionServiceException {
-		return functionExecutionService.getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession);
+		if(!parameter.isLocal()) {
+			return functionExecutionService.getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession);
+		} else {
+			return functionExecutionService.getLocalTokenHandle();
+		}
+		
 	}
 
 	@POST
@@ -179,51 +152,6 @@ public class FunctionServices extends AbstractServices {
 		functionExecutionService.returnTokenHandle(token);
 	}
 	
-	public static class CallFunctionInput {
-		
-		String functionId;
-		Map<String, String> functionAttributes;
-		TokenWrapper tokenHandle;
-		Input<JsonObject> input;
-		
-		public CallFunctionInput() {
-			super();
-		}
-
-		public String getFunctionId() {
-			return functionId;
-		}
-
-		public void setFunctionId(String functionId) {
-			this.functionId = functionId;
-		}
-
-		public TokenWrapper getTokenHandle() {
-			return tokenHandle;
-		}
-
-		public void setTokenHandle(TokenWrapper tokenHandle) {
-			this.tokenHandle = tokenHandle;
-		}
-
-		public Map<String, String> getFunctionAttributes() {
-			return functionAttributes;
-		}
-
-		public void setFunctionAttributes(Map<String, String> functionAttributes) {
-			this.functionAttributes = functionAttributes;
-		}
-
-		public Input<JsonObject> getInput() {
-			return input;
-		}
-
-		public void setInput(Input<JsonObject> input) {
-			this.input = input;
-		}
-		
-	}
-
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/execute")

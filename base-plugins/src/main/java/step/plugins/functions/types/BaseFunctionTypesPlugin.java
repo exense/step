@@ -16,8 +16,6 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.base.types.LocalFunction;
 import step.functions.base.types.LocalFunctionType;
 import step.functions.base.types.handler.BaseFunctionReflectionHelper;
-import step.functions.editors.FunctionEditor;
-import step.functions.editors.FunctionEditorRegistry;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(prio=10)
@@ -27,20 +25,7 @@ public class BaseFunctionTypesPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		super.executionControllerStart(context);
 		FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);		
-		functionTypeRegistry.registerFunctionType(new CompositeFunctionType(context.getArtefactAccessor(), context.getArtefactManager()));
 		functionTypeRegistry.registerFunctionType(new LocalFunctionType());
-
-		context.get(FunctionEditorRegistry.class).register(new FunctionEditor() {
-			@Override
-			public String getEditorPath(Function function) {
-				return "/root/artefacteditor/"+((CompositeFunction)function).getArtefactId();
-			}
-
-			@Override
-			public boolean isValidForFunction(Function function) {
-				return function instanceof CompositeFunction;
-			}
-		});
 
 		setupLocalFunctionsIfNotExisting(context);
 	}

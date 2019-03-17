@@ -33,7 +33,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.ReportExport;
-import step.core.repositories.Repository.ImportResult;
+import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 
@@ -41,14 +41,19 @@ public class ExecutionRunnable implements Runnable {
 	
 	private  final static Logger logger = LoggerFactory.getLogger(ExecutionRunnable.class);
 
+	final RepositoryObjectManager repositoryObjectManager;
+	final ExecutionAccessor executionAccessor; 
+	
 	final ExecutionContext context;
 	
 	final ExecutionLifecycleManager executionLifecycleManager;
 						
-	public ExecutionRunnable(ExecutionContext context) {
+	public ExecutionRunnable(RepositoryObjectManager repositoryObjectManager, ExecutionAccessor executionAccessor, ExecutionContext context) {
 		super();
+		this.repositoryObjectManager = repositoryObjectManager;
+		this.executionAccessor = executionAccessor;
 		this.context = context;
-		this.executionLifecycleManager = new ExecutionLifecycleManager(context);
+		this.executionLifecycleManager = new ExecutionLifecycleManager(executionAccessor, context);
 	}
 
 	public ExecutionContext getContext() {
@@ -134,7 +139,7 @@ public class ExecutionRunnable implements Runnable {
 					importResult.setSuccessful(true);
 				} else {
 					try {
-						importResult = context.getRepositoryObjectManager().importArtefact(context, artefactPointer);											
+						importResult = repositoryObjectManager.importArtefact(context, artefactPointer);											
 					} catch (Exception e) {
 						logger.error("Error while importing repository object "+artefactPointer.toString(), e);
 						importResult = new ImportResult();
@@ -155,11 +160,9 @@ public class ExecutionRunnable implements Runnable {
 	}
 	
 	private void exportExecution(String executionId) {		
-		ExecutionAccessor executionAccessor = context.getExecutionAccessor();
 		Execution execution = executionAccessor.get(executionId);
 		
 		if(execution!=null) {
-			RepositoryObjectManager repositoryObjectManager = context.getRepositoryObjectManager();
 			ReportExport report = repositoryObjectManager.exportTestExecutionReport(context, execution.getExecutionParameters().getArtefact());
 			List<ReportExport> exports = new ArrayList<>();
 			exports.add(report);

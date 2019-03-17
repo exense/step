@@ -30,6 +30,11 @@
 		  <version>${jackson.version}</version>
 		</dependency>
 		<dependency>
+		  <groupId>com.fasterxml.jackson.core</groupId>
+		  <artifactId>jackson-databind</artifactId>
+		  <version>${jackson.version}</version>
+		</dependency>
+		<dependency>
 		    <groupId>org.mongodb</groupId>
 		    <artifactId>bson</artifactId>
 		    <version>${mongodb.version}</version>

@@ -43,7 +43,7 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.execution.ContextBuilder;
+import step.core.execution.ControllerSideExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.plans.LocalPlanRepository;
@@ -55,7 +55,7 @@ import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.manager.FunctionManager;
 import step.grid.TokenWrapper;
-import step.grid.client.GridClientImpl.AgentCommunicationException;
+import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.planbuilder.FunctionPlanBuilder;
 import step.plugins.parametermanager.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
@@ -117,7 +117,7 @@ public class InteractiveServices extends AbstractServices {
 	@Secured(right="interactive")
 	public String start() throws AgentCommunicationException {
 		InteractiveSession session = new InteractiveSession();
-		ExecutionContext  executionContext = ContextBuilder.createExecutionContext(getContext());
+		ExecutionContext  executionContext = ControllerSideExecutionContextBuilder.createExecutionContext(getContext());
 		session.c = executionContext;
 		session.lasttouch = System.currentTimeMillis();
 		session.root = new ReportNode();

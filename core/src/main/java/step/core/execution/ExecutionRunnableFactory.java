@@ -34,7 +34,7 @@ public class ExecutionRunnableFactory {
 	
 	public ExecutionRunnable newExecutionRunnable(Execution execution) {		
 		ExecutionContext context = createExecutionContext(execution);
-		ExecutionRunnable task = new ExecutionRunnable(context);
+		ExecutionRunnable task = new ExecutionRunnable(globalContext.getRepositoryObjectManager(), globalContext.getExecutionAccessor(), context);
 		return task;
 	}
 
@@ -44,9 +44,7 @@ public class ExecutionRunnableFactory {
 		ExecutionContext context;
 		if(isolatedContext) {
 			context = ContextBuilder.createLocalExecutionContext(executionId);
-			context.setExecutionAccessor(globalContext.getExecutionAccessor());
 			context.setReportNodeAccessor(globalContext.getReportAccessor());
-			context.setRepositoryObjectManager(globalContext.getRepositoryObjectManager());
 			context.setEventManager(globalContext.getEventManager());
 			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
 		} else {
@@ -54,10 +52,8 @@ public class ExecutionRunnableFactory {
 			context.setExpressionHandler(globalContext.getExpressionHandler());
 			context.setDynamicBeanResolver(globalContext.getDynamicBeanResolver());
 			context.setConfiguration(globalContext.getConfiguration());
-			context.setExecutionAccessor(globalContext.getExecutionAccessor());
 			context.setArtefactAccessor(globalContext.getArtefactAccessor());
 			context.setReportNodeAccessor(globalContext.getReportAccessor());
-			context.setRepositoryObjectManager(globalContext.getRepositoryObjectManager());
 			context.setEventManager(globalContext.getEventManager());
 			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
 		}

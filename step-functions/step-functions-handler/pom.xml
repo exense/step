@@ -31,12 +31,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-grid-api</artifactId>
-			<version>${step-grid.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-core-model</artifactId>
+			<artifactId>step-functions-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

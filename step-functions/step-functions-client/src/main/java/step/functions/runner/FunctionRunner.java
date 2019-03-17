@@ -25,8 +25,8 @@ import step.functions.io.Output;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
-import step.grid.Grid;
-import step.grid.client.GridClientImpl;
+import step.grid.client.GridClient;
+import step.grid.client.MockedGridClientImpl;
 import step.resources.LocalResourceManagerImpl;
 
 public class FunctionRunner {
@@ -37,8 +37,7 @@ public class FunctionRunner {
 		
 		FunctionExecutionService functionExecutionService;
 		
-		Grid grid;
-		GridClientImpl client;
+		GridClient client;
 		File fileManagerDirectory;
 		
 		protected Context(Configuration configuration, AbstractFunctionType<?> functionType, Map<String, String> properties) {
@@ -47,9 +46,7 @@ public class FunctionRunner {
 			this.properties = properties;
 			this.fileManagerDirectory = FileHelper.createTempFolder();
 			
-			grid = new Grid(fileManagerDirectory, 0);
-			
-			client = new GridClientImpl(grid);
+			client = new MockedGridClientImpl();
 			
 			FileResolver fileResolver = new FileResolver(new LocalResourceManagerImpl());
 			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, client);
