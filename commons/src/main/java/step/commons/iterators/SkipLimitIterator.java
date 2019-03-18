@@ -2,6 +2,7 @@ package step.commons.iterators;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class SkipLimitIterator<T> implements Iterator<T> {
 
@@ -60,6 +61,11 @@ public class SkipLimitIterator<T> implements Iterator<T> {
 	@Override
 	public T next() {
 		T result = next;
+		
+		if (next==null) {
+			throw new NoSuchElementException();
+		}
+			
 		preloadNextElement();
 		return result;
 	}
