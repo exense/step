@@ -1,7 +1,13 @@
 <div ng-controller="CompositeFunctionFormCtrl" class="form-group-sm">
 	<form>
-		<div class="input-group">
+		<div class="form-group">
 			<input ng-disabled="true" type="text" class="form-control" ng-model="function_.artefactId" />
+			<label>
+				<input type="checkbox" ng-model="function_.executeLocally"> 
+				<span class="ng-binding">Execute on controller</span>
+			</label>
+		</div>
+		<div class="input-group">
 			<span class="input-group-btn">
 				<button ng-if="function_.artefactId" class="btn btn-sm btn-default" type="button" ng-click="gotoArtefact()"><span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 				<button class="btn btn-sm btn-default" type="button" ng-click="selectArtefact()">Select</button>
