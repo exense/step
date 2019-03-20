@@ -44,7 +44,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>commons</artifactId>
+			<artifactId>step-commons</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 	</dependencies>

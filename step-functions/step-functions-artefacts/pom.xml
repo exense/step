@@ -48,12 +48,12 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>base-artefacts</artifactId>
+			<artifactId>step-plans-base-artefacts</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>base-artefacts</artifactId>
+			<artifactId>step-plans-base-artefacts</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
 			<scope>test</scope>

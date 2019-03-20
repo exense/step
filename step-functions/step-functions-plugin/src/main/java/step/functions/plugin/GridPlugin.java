@@ -155,12 +155,11 @@ public class GridPlugin extends AbstractPlugin {
 			
 			context.put(FunctionAccessor.class, functionAccessor);
 			context.put(FunctionExecutionService.class, functionExecutionService);
-			//context.put(DefaultFunctionRouterImpl.class.getName(), functionRouter);
-			context.put(FunctionRouter.class.getName(), functionRouter);
+			context.put(FunctionRouter.class, functionRouter);
 		} else {
 			context.put(FunctionAccessor.class, functionAccessor);
 			context.put(FunctionExecutionService.class, functionExecutionService);
-			context.put(FunctionRouter.class.getName(), functionRouter);
+			context.put(FunctionRouter.class, functionRouter);
 		}
 		super.executionStart(context);
 	}
