@@ -18,8 +18,6 @@
  *******************************************************************************/
 package step.functions.base.types.handler;
 
-import java.util.List;
-
 import javax.json.JsonObject;
 
 import step.functions.io.Input;
@@ -28,23 +26,22 @@ import step.handlers.javahandler.KeywordHandler;
 
 public class LocalFunctionHandler extends KeywordHandler {
 
-	@Override
-	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception{
-
-		List<String> keywordClasses;
+	private static String keywordClasses;
+	
+	static {
 		try {
-			keywordClasses = BaseFunctionReflectionHelper.getLocalKeywordClassNames();
+			StringBuilder classMessageToken = new StringBuilder();
+			BaseFunctionReflectionHelper.getLocalKeywordClassNames().forEach(s -> classMessageToken.append(s).append(";"));
+			keywordClasses = classMessageToken.toString().substring(0, classMessageToken.length() - 1);
 		} catch (Exception e) {
 			String errorMsg = "Error while looking for LocalFunction class names";
-			throw new Exception(errorMsg, e);
+			throw new RuntimeException(errorMsg, e);
 		}
-
-		StringBuilder classMessageToken = new StringBuilder();
-
-		keywordClasses.forEach(s -> classMessageToken.append(s).append(";"));
-
-		input.getProperties().put(KEYWORD_CLASSES, classMessageToken.toString().substring(0, classMessageToken.length() - 1));
-		
+	}
+	
+	@Override
+	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception{
+		input.getProperties().put(KEYWORD_CLASSES, keywordClasses);
 		return super.handle(input);
 	}
 
