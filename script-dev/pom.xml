@@ -30,7 +30,6 @@
 	</parent>
 
 	<modules>
-		<module>script-dev-java</module>
 		<module>script-dev-selenium-2</module>
 		<module>script-dev-selenium-3</module>
 	</modules>

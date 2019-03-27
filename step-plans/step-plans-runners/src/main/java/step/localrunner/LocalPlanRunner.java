@@ -34,8 +34,9 @@ import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.client.GridClient;
 import step.grid.client.MockedGridClientImpl;
-import step.handlers.javahandler.KeywordHandler;
+import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.functions.types.CompositeFunctionType;
+import step.plugins.java.handler.KeywordHandler;
 import step.resources.LocalResourceManagerImpl;
 
 /**
@@ -108,7 +109,7 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 			
 			StringBuilder classes = new StringBuilder();
 			functionClasses.forEach(cl->{classes.append(cl.getName()+";");});
-			properties.put(KeywordHandler.KEYWORD_CLASSES, classes.toString());
+			properties.put(KeywordExecutor.KEYWORD_CLASSES, classes.toString());
 			
 			return properties;
 		}

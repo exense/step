@@ -36,11 +36,6 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-controller-base-plugins</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
 			<artifactId>step-plans-base-artefacts</artifactId>
 			<version>${project.version}</version>
 		</dependency>

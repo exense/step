@@ -16,37 +16,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.functions.base.types.handler;
-
-import java.util.List;
+package step.plugins.java.handler;
 
 import javax.json.JsonObject;
 
+import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.handlers.javahandler.KeywordExecutor;
-import step.plugins.java.handler.KeywordHandler;
 
-public class LocalFunctionHandler extends KeywordHandler {
+public class KeywordHandler extends JsonBasedFunctionHandler {
 
 	@Override
-	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception{
-
-		List<String> keywordClasses;
-		try {
-			keywordClasses = BaseFunctionReflectionHelper.getLocalKeywordClassNames();
-		} catch (Exception e) {
-			String errorMsg = "Error while looking for LocalFunction class names";
-			throw new Exception(errorMsg, e);
-		}
-
-		StringBuilder classMessageToken = new StringBuilder();
-
-		keywordClasses.forEach(s -> classMessageToken.append(s).append(";"));
-
-		input.getProperties().put(KeywordExecutor.KEYWORD_CLASSES, classMessageToken.toString().substring(0, classMessageToken.length() - 1));
-		
-		return super.handle(input);
+	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
+		KeywordExecutor executor = new KeywordExecutor(false);
+		return executor.handle(input, getTokenSession(), getTokenReservationSession(), mergeAllProperties(input));
 	}
-
 }

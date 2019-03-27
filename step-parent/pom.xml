@@ -53,6 +53,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<step-grid.version>1.0.0-SNAPSHOT</step-grid.version>
+		<step-api.version>1.0.0-SNAPSHOT</step-api.version>
 		<junit.version>4.8.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
 		<groovy.version>2.2.1</groovy.version>
@@ -111,7 +112,6 @@
 		<module>../step-controller</module>
 		<module>../step-controller-plugins</module>
 		<module>../step-distribution</module>
-		<module>../script-dev</module>
 	</modules>
 
 	<build>

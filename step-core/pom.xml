@@ -26,6 +26,11 @@
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-api-function</artifactId>
+			<version>${step-api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-commons</artifactId>
 			<version>${project.version}</version>
 		</dependency>

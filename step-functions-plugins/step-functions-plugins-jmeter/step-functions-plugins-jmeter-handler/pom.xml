@@ -30,11 +30,6 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-commons</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
 			<artifactId>step-functions-plugins-jmeter-local-handler</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>

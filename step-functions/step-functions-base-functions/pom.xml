@@ -28,8 +28,13 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>script-dev-java</artifactId>
+			<artifactId>step-functions-plugins-java-handler</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-api-keyword</artifactId>
+			<version>${step-api.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>

@@ -17,11 +17,13 @@ import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.handlers.javahandler.Keyword;
-import step.handlers.javahandler.KeywordHandler;
+import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.js223.handler.ScriptHandler;
 
 public class JavaJarHandler extends JsonBasedFunctionHandler {
 	
+	private static final String KW_CLASSNAMES_KEY = "kwClassnames";
+
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
 		//message.getProperties().put("keywordRootPath", fileManagerClient.getDataFolderPath() + "\\"+ currentkeywordVersion.getFileId() + "\\" + currentkeywordVersion.getVersion());
@@ -30,12 +32,12 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 		
 		ApplicationContext context = getCurrentContext(FORKED_BRANCH);
 
-		String kwClassnames = (String) context.get("kwClassnames");
+		String kwClassnames = (String) context.get(KW_CLASSNAMES_KEY);
 		if (kwClassnames == null) {
 			kwClassnames = getKeywordClassList((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader());
-			context.put("kwClassnames", kwClassnames);
+			context.put(KW_CLASSNAMES_KEY, kwClassnames);
 		}
-		input.getProperties().put(KeywordHandler.KEYWORD_CLASSES, kwClassnames);
+		input.getProperties().put(KeywordExecutor.KEYWORD_CLASSES, kwClassnames);
 		
 		// Using the forked to branch in order no to have the ClassLoader of java-plugin-handler.jar as parent.
 		// the project java-plugin-handler.jar has many dependencies that might conflict with the dependencies of the 
@@ -54,7 +56,7 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 				kwClasses.add(method.getDeclaringClass().getName());
 			}
 			StringBuilder kwClassnamesBuilder = new StringBuilder();
-			kwClasses.forEach(kwClassname->kwClassnamesBuilder.append(kwClassname+";"));
+			kwClasses.forEach(kwClassname->kwClassnamesBuilder.append(kwClassname+KeywordExecutor.KEYWORD_CLASSES_DELIMITER));
 			return kwClassnamesBuilder.toString();
 		} catch (Exception e) {
 			String errorMsg = "Error while looking for methods annotated with @Keyword in "+url.toString();

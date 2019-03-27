@@ -1,0 +1,1 @@
+output.setError("Error handler called")

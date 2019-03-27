@@ -64,16 +64,10 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	}
 	
 	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
-	
-	public static final Map<String, String> scriptEngineMap = new ConcurrentHashMap<>();
-	
 	{
 		fileExtensionMap.put("groovy", "groovy");
-		scriptEngineMap.put("groovy", "groovy");
 		fileExtensionMap.put("python", "py");
-		scriptEngineMap.put("python", "python");
 		fileExtensionMap.put("javascript", "js");
-		scriptEngineMap.put("javascript", "nashorn");
 	}
 	
 	protected File getDefaultScriptFile(GeneralScriptFunction function) {

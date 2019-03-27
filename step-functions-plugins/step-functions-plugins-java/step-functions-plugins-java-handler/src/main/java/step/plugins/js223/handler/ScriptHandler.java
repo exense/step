@@ -72,17 +72,22 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
 			
 			String scriptLanguage = properties.get(SCRIPT_LANGUAGE);        
 			String engineName = scriptLangugaeMap.get(scriptLanguage);
-			ScriptEngine engine = loadScriptEngine(engineName);	      
-			
+
 			OutputBuilder outputBuilder = new OutputBuilder();
-			Bindings binding = createBindings(input, outputBuilder, properties);     
-			
-			try {
-				executeScript(scriptFile, binding, engine);        	
-			} catch(Throwable e) {        	
-				boolean throwException = executeErrorHandlerScript(properties, engine, binding, outputBuilder, e);
-				if(throwException) {
-					outputBuilder.setError("Error while running script "+scriptFile.getName() + ": " + e.getMessage(), e);
+			if(engineName == null) {
+				outputBuilder.setError("Unsupported script language: "+scriptLanguage);
+			} else {
+				ScriptEngine engine = loadScriptEngine(engineName);	      
+				
+				Bindings binding = createBindings(input, outputBuilder, properties);     
+				
+				try {
+					executeScript(scriptFile, binding, engine);        	
+				} catch(Throwable e) {        	
+					boolean throwException = executeErrorHandlerScript(properties, engine, binding, outputBuilder, e);
+					if(throwException) {
+						outputBuilder.setError("Error while running script "+scriptFile.getName() + ": " + e.getMessage(), e);
+					}
 				}
 			}
 			
@@ -98,7 +103,7 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
 			binding.put("exception", exception);
 			try {
 				executeScript(errorScriptFile, binding, engine);				
-			} catch(Exception e) {
+			} catch(Throwable e) {
 				outputBuilder.setError("Error while running error handler script: "+errorScriptFile.getName() + ". "+e.getMessage(), e);
 			}
 			return false;
