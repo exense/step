@@ -48,6 +48,12 @@
 				<include>ch.exense.step:step-functions-plugins-node</include>
 			</includes>
 			<binaries>
+				<dependencySets>
+					<dependencySet>
+						<outputDirectory>lib</outputDirectory>
+						<unpack>false</unpack>
+					</dependencySet>
+				</dependencySets>
 				<outputDirectory>lib</outputDirectory>
 				<unpack>false</unpack>
 			</binaries>
