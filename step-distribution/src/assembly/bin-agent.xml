@@ -52,6 +52,12 @@
 				<include>ch.exense.step:step-agent</include>
 			</includes>
 			<binaries>
+				<dependencySets>
+					<dependencySet>
+						<outputDirectory>lib</outputDirectory>
+						<unpack>false</unpack>
+					</dependencySet>
+				</dependencySets>
 				<outputDirectory>lib</outputDirectory>
 				<unpack>false</unpack>
 			</binaries>
