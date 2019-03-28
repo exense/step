@@ -89,12 +89,13 @@
 							<artifactItems>
 								<artifactItem>
 									<groupId>ch.exense.step</groupId>
-									<artifactId>step-api-keyword</artifactId>
-									<version>${step-api.version}</version>
+									<artifactId>step-functions-plugins-java-keyword-handler</artifactId>
+									<version>${project.version}</version>
+									<classifier>jar-with-dependencies</classifier>
 									<type>jar</type>
 									<overWrite>false</overWrite>
 									<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
-									<destFileName>step-api-keyword.jar</destFileName>
+									<destFileName>step-functions-plugins-java-keyword-handler.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
 							<overWriteReleases>true</overWriteReleases>

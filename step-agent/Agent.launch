@@ -16,6 +16,6 @@
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="step.grid.agent.AgentRunner"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-config=src\test\resources\AgentConf.json"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="agent"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="step-agent"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
 </launchConfiguration>

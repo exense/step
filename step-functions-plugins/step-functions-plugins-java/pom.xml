@@ -33,6 +33,7 @@
 		<module>step-functions-plugins-java-def</module>
 		<module>step-functions-plugins-java-controller-def</module>
 		<module>step-functions-plugins-java-handler</module>
+		<module>step-functions-plugins-java-keyword-handler</module>
 		<module>step-functions-plugins-java-handler-test</module>
 		<module>step-functions-plugins-java-handler-test2</module>
 	</modules>

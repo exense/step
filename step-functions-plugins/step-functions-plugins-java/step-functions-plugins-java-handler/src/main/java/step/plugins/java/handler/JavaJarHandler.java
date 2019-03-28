@@ -42,7 +42,7 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 		// Using the forked to branch in order no to have the ClassLoader of java-plugin-handler.jar as parent.
 		// the project java-plugin-handler.jar has many dependencies that might conflict with the dependencies of the 
 		// keyword. One of these dependencies is guava for example.
-		return delegate(FORKED_BRANCH, KeywordHandler.class.getName(), input);
+		return delegate(FORKED_BRANCH, "step.plugins.java.handler.KeywordHandler", input);
 	}
 	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {
