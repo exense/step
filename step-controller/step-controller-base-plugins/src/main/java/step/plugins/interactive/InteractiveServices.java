@@ -56,7 +56,7 @@ import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.manager.FunctionManager;
 import step.grid.TokenWrapper;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
-import step.planbuilder.FunctionPlanBuilder;
+import step.planbuilder.FunctionArtefacts;
 import step.plugins.parametermanager.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 
@@ -232,7 +232,7 @@ public class InteractiveServices extends AbstractServices {
 	@Secured(right="interactive")
 	public FunctionTestingSession startFunctionTestingSession(@PathParam("keywordid") String keywordid) throws AgentCommunicationException {
 		
-		CallFunction callFunction = FunctionPlanBuilder.keywordById(keywordid,"{}");
+		CallFunction callFunction = FunctionArtefacts.keywordById(keywordid,"{}");
 		
 		// TODO do this centrally. Currently the same logic is implemented in the UI
 		FunctionManager functionManager = getContext().get(FunctionManager.class);

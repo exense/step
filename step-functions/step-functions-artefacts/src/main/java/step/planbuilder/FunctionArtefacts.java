@@ -7,7 +7,7 @@ import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.core.dynamicbeans.DynamicValue;
 
-public class FunctionPlanBuilder {
+public class FunctionArtefacts {
 	
 	public static FunctionGroup session() {
 		FunctionGroup call = new FunctionGroup();

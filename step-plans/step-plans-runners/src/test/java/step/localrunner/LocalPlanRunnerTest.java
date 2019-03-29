@@ -3,10 +3,10 @@ package step.localrunner;
 
 import static org.junit.Assert.assertEquals;
 import static step.planbuilder.BaseArtefacts.for_;
-import static step.planbuilder.FunctionPlanBuilder.keyword;
-import static step.planbuilder.FunctionPlanBuilder.keywordWithDynamicInput;
-import static step.planbuilder.FunctionPlanBuilder.keywordWithDynamicKeyValues;
-import static step.planbuilder.FunctionPlanBuilder.keywordWithKeyValues;
+import static step.planbuilder.FunctionArtefacts.keyword;
+import static step.planbuilder.FunctionArtefacts.keywordWithDynamicInput;
+import static step.planbuilder.FunctionArtefacts.keywordWithDynamicKeyValues;
+import static step.planbuilder.FunctionArtefacts.keywordWithKeyValues;
 
 import java.io.IOException;
 import java.io.StringWriter;
