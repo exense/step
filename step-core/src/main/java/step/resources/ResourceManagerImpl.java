@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
 
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 
 public class ResourceManagerImpl implements ResourceManager {
 	

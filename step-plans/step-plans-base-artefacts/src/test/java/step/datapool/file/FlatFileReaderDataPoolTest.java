@@ -23,7 +23,7 @@ import java.io.File;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ContextBuilder;
 import step.datapool.DataPoolFactory;
@@ -46,7 +46,7 @@ public class FlatFileReaderDataPoolTest {
 	}
 	
 	private FileDataPool getDataSourceConf(String filename) {
-		File file = FileHelper.getClassLoaderResource(this.getClass(), filename);
+		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), filename);
 		
 		FileDataPool conf = new FileDataPool();
 		conf.setFile(new DynamicValue<String>(file.getAbsolutePath()));

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.commons.helpers.Poller;
+import ch.exense.commons.io.Poller;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
 import step.resources.Resource;

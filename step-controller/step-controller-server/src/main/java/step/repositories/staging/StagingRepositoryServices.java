@@ -37,7 +37,7 @@ import javax.ws.rs.core.MediaType;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;

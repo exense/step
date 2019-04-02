@@ -8,7 +8,7 @@ import java.util.Scanner;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 
 public class ResourceManagerImplTest {
 

@@ -23,15 +23,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
+import ch.exense.commons.io.FileHelper;
 import junit.framework.Assert;
 import step.commons.conf.FileWatchService;
-import step.commons.helpers.FileHelper;
 
 public class FileWatchServiceTest {
 
 	@Test
 	public void testBasic() throws InterruptedException {
-		File file = FileHelper.getClassLoaderResource(this.getClass(),"FileWatchServiceTest.test");
+		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(),"FileWatchServiceTest.test");
 		long lastModified = 0;
 		file.setLastModified(lastModified);
 		

@@ -37,7 +37,7 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.io.Output;
@@ -196,6 +196,6 @@ public class ScriptHandlerTest {
 	}
 	
 	private String getScriptDir() {
-		return FileHelper.getClassLoaderResource(this.getClass(),"scripts").getAbsolutePath();
+		return FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(),"scripts").getAbsolutePath();
 	}
 }

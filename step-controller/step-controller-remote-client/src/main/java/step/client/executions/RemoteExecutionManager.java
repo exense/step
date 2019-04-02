@@ -10,7 +10,7 @@ import javax.ws.rs.core.MediaType;
 
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
-import step.commons.helpers.Poller;
+import ch.exense.commons.io.Poller;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
@@ -34,12 +34,23 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	}
 	
 	/**
-	 * Executes a plan on the controller
+	 * Executes a plan located on the controller
 	 *  
 	 * @param planId the ID of the plan to be executed. The plan should execute on the controller
 	 * @return the execution ID of the execution
 	 */
 	public String execute(String planId) {
+		return execute(planId, new HashMap<>());
+	}
+	
+	/**
+	 * Executes a plan located on the controller
+	 * 
+	 * @param planId the ID of the plan to be executed. The plan should execute on the controller
+	 * @param parameters the execution parameters (the drop-downs that are set on the execution screen in the UI)
+	 * @return the execution ID of the execution
+	 */
+	public String execute(String planId, Map<String, String> parameters) {
 		Map<String, String> repositoryParameters = new HashMap<>();
 		repositoryParameters.put("artefactid", planId);
 		RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference("local", repositoryParameters);
@@ -48,6 +59,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		executionParameters.setUserID(credentials.getUsername());
 		executionParameters.setMode(ExecutionMode.RUN);
 		executionParameters.setIsolatedExecution(false);
+		executionParameters.setCustomParameters(parameters);
 		return execute(executionParameters);
 	}
 
@@ -58,7 +70,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	 * @param repositoryParameters the parameters to be passed to the repository to locate the plan 
 	 * @return the execution ID of the execution
 	 */
-	public String execute(String repositoryId, Map<String, String> repositoryParameters) {
+	public String executeFromExternalRepository(String repositoryId, Map<String, String> repositoryParameters) {
 		RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference(repositoryId, repositoryParameters);
 		ExecutionParameters executionParameters = new ExecutionParameters();
 		executionParameters.setArtefact(repositoryObjectReference);

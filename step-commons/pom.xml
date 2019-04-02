@@ -33,6 +33,11 @@
 	
 	<dependencies>
 		<dependency>
+			<groupId>ch.exense</groupId>
+			<artifactId>exense-commons</artifactId>
+			<version>${exense-commons.version}</version>
+		</dependency>
+		<dependency>
 		    <groupId>com.fasterxml.jackson.core</groupId>
 		    <artifactId>jackson-core</artifactId>
 		    <version>${jackson.version}</version>
@@ -41,11 +46,6 @@
 		  <groupId>com.fasterxml.jackson.core</groupId>
 		  <artifactId>jackson-databind</artifactId>
 		  <version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>19.0</version>
 		</dependency>
 	</dependencies>
 </project>

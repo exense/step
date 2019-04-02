@@ -24,7 +24,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import junit.framework.Assert;
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -116,7 +116,7 @@ public class ExcelFunctionsTest {
 	}
 	
 	public static File getResourceFile(String filename) {
-		return FileHelper.getClassLoaderResource(ExcelFunctionsTest.class, filename);
+		return FileHelper.getClassLoaderResourceAsFile(ExcelFunctionsTest.class.getClassLoader(), filename);
 	}
 	
 	public void assertException(Runnable r, String msg) {

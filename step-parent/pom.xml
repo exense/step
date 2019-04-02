@@ -52,6 +52,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<exense-commons.version>1.0.0-SNAPSHOT</exense-commons.version>
 		<step-grid.version>1.0.0-SNAPSHOT</step-grid.version>
 		<step-api.version>1.0.0-SNAPSHOT</step-api.version>
 		<junit.version>4.8.1</junit.version>

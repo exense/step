@@ -12,7 +12,7 @@ import junit.framework.Assert;
 import step.artefacts.CheckArtefact;
 import step.artefacts.Export;
 import step.artefacts.Sequence;
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -70,7 +70,7 @@ public class ExportHandlerTest {
 	}
 	
 	protected File getTestFolder() {
-		File file = FileHelper.getClassLoaderResource(this.getClass(), "exportTest/test");
+		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "exportTest/test");
 		file = file.getParentFile();
 		return file;
 	}
