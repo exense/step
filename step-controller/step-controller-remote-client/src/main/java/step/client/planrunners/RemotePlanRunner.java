@@ -14,7 +14,7 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.client.planrepository.RemotePlanRepository;
 import step.client.reports.RemoteReportTreeAccessor;
-import step.commons.helpers.Poller;
+import ch.exense.commons.io.Poller;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportTreeAccessor;

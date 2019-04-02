@@ -25,7 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ContextBuilder;
 import step.datapool.DataPoolFactory;
@@ -40,7 +40,7 @@ public class DirectoryDataPoolTest {
 	
 	@Before
 	public void before() {
-		file = FileHelper.getClassLoaderResource(this.getClass(), "folder");
+		file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "folder");
 		
 		DirectoryDataPool conf = new DirectoryDataPool();
 		conf.setFolder(new DynamicValue<String>(file.getAbsolutePath()));

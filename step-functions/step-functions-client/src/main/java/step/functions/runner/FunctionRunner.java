@@ -12,7 +12,7 @@ import javax.json.JsonObject;
 
 import step.attachments.FileResolver;
 import step.commons.conf.Configuration;
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.expressions.ExpressionHandler;
@@ -44,7 +44,11 @@ public class FunctionRunner {
 			super();
 
 			this.properties = properties;
-			this.fileManagerDirectory = FileHelper.createTempFolder();
+			try {
+				this.fileManagerDirectory = FileHelper.createTempFolder();
+			} catch (IOException e1) {
+				throw new RuntimeException("Error while creating file manager directory", e1);
+			}
 			
 			client = new MockedGridClientImpl();
 			

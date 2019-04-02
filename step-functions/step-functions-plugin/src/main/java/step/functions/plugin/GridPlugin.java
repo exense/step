@@ -52,6 +52,7 @@ import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
 import step.grid.GridImpl;
+import step.grid.GridImpl.GridImplConfig;
 import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
@@ -83,7 +84,14 @@ public class GridPlugin extends AbstractPlugin {
 		Integer tokenTTL = configuration.getPropertyAsInteger("grid.ttl",60000);
 		
 		String fileManagerPath = configuration.getProperty("grid.filemanager.path", "filemanager");
-		grid = new GridImpl(new File(fileManagerPath), gridPort, tokenTTL);
+		
+		GridImplConfig gridConfig = new GridImplConfig();
+		gridConfig.setFileLastModificationCacheConcurrencyLevel(configuration.getPropertyAsInteger("grid.filemanager.cache.concurrencylevel", 4));
+		gridConfig.setFileLastModificationCacheMaximumsize(configuration.getPropertyAsInteger("grid.filemanager.cache.maximumsize", 1000));
+		gridConfig.setFileLastModificationCacheExpireAfter(configuration.getPropertyAsInteger("grid.filemanager.cache.expireafter.ms", 500));
+		gridConfig.setTtl(tokenTTL);
+		
+		grid = new GridImpl(new File(fileManagerPath), gridPort, gridConfig);
 		grid.start();
 		
 		TokenLifecycleStrategy tokenLifecycleStrategy = getTokenLifecycleStrategy(configuration);

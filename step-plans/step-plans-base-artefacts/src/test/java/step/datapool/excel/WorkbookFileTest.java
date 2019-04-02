@@ -31,13 +31,13 @@ import org.junit.Test;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCalcPr;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.STCalcMode;
 
-import step.commons.helpers.FileHelper;
+import ch.exense.commons.io.FileHelper;
 
 
 public class WorkbookFileTest {
 	
 	private File getResourceFile(String filename) {
-		return FileHelper.getClassLoaderResource(this.getClass(), filename);
+		return FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), filename);
 	}
 
 	@Test

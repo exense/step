@@ -31,11 +31,11 @@ import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Test;
 
+import ch.exense.commons.io.FileHelper;
 import junit.framework.Assert;
 import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
-import step.commons.helpers.FileHelper;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;

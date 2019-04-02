@@ -25,8 +25,8 @@ import java.util.concurrent.Executors;
 
 import org.junit.Test;
 
+import ch.exense.commons.io.FileHelper;
 import junit.framework.Assert;
-import step.commons.helpers.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ContextBuilder;
 import step.core.plans.runner.PlanRunnerResultAssert;
@@ -49,7 +49,7 @@ public class CSVReaderDataPoolTest {
 	
 	@Test
 	public void testCSVReaderDataPoolPut() throws IOException {		
-		File tempFile = FileHelper.extractClassLoaderResourceToTempFile(this.getClass(), "testCSVReaderDataPoolPut.csv");
+		File tempFile = FileHelper.extractResourceToTempFile(this.getClass(), "testCSVReaderDataPoolPut.csv");
 		
 		DataSet<?> pool = getDataPool(tempFile, true);
 		
@@ -81,7 +81,7 @@ public class CSVReaderDataPoolTest {
 	}
 	
 	protected DataSet<?> getDataPool(String filename) {
-		File file = FileHelper.getClassLoaderResource(this.getClass(), filename);
+		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), filename);
 		return getDataPool(file, false);
 	}
 	
