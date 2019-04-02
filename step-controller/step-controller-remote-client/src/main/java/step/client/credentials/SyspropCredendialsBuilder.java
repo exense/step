@@ -30,36 +30,27 @@ public class SyspropCredendialsBuilder {
 		} else {
 			return new DefaultLocalCredentials();
 		}
-		
-	}
-	
-	public static void setDefaultNightlyProperties(){
-		setDefaultProperties(new DefaultNightlyCredentials());
-	}
-	
-	public static void setDefaultEENightlyProperties(){
-		setDefaultProperties(new DefaultEENightlyCredentials());
 	}
 	
 	public static void setDefaultLocalProperties(){
-		setDefaultProperties(new DefaultLocalCredentials());
+		setGlobalProperties(new DefaultLocalCredentials());
 	}
 	
-	public static void setDefaultProperties(ControllerCredentials credentials){
+	public static void setGlobalProperties(ControllerCredentials credentials){
 		System.setProperty("rcServerUrl", credentials.getServerUrl());
 		System.setProperty("rcUsername", credentials.getUsername());
 		System.setProperty("rcPassword", credentials.getPassword());
 	}
 	
-	public static String getDefaultUrlProperty(){
+	public static String getGlobalUrlProperty(){
 		return System.getProperty("rcServerUrl");
 	}
 	
-	public static String getDefaultUsernameProperty(){
+	public static String getGlobalUsernameProperty(){
 		return System.getProperty("rcUsername");
 	}
 	
-	public static String getDefaultPasswordProperty(){
+	public static String getGlobalPasswordProperty(){
 		return System.getProperty("rcPassword");
 	}
 }
