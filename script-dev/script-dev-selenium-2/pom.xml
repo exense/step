@@ -31,8 +31,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>script-dev-java</artifactId>
-			<version>${project.version}</version>
+			<artifactId>step-api-keyword</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 		    <groupId>org.seleniumhq.selenium</groupId>
