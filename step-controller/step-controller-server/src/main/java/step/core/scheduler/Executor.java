@@ -39,7 +39,7 @@ import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.execution.ExecutionRunnable;
 import step.core.execution.ExecutionRunnableFactory;
@@ -56,8 +56,12 @@ public class Executor {
 	
 	private ExecutionRunnableFactory executionRunnableFactory;
 	
+	private Configuration configuration;
+	
 	public Executor(GlobalContext globalContext) {
 		super();
+		
+		configuration = globalContext.getConfiguration();
 		
 		try {
 			Properties props = getProperties();
@@ -72,7 +76,7 @@ public class Executor {
 
 	private Properties getProperties() {
 		Properties props = new Properties();
-		props.put("org.quartz.threadPool.threadCount", Configuration.getInstance().getProperty("tec.executor.threads", "10"));
+		props.put("org.quartz.threadPool.threadCount", configuration.getProperty("tec.executor.threads", "10"));
 		return props;
 	}
 

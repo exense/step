@@ -36,7 +36,8 @@ public class ResourceServices extends AbstractServices {
 	protected ResourceAccessor resourceAccessor;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		resourceManager = getContext().get(ResourceManager.class);
 		resourceAccessor = getContext().get(ResourceAccessor.class);
 	}

@@ -35,7 +35,8 @@ public class ExportServices extends AbstractServices {
 	ExportTaskManager exportTaskManager;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		ArtefactAccessor accessor = getContext().getArtefactAccessor();
 		exportTaskManager = new ExportTaskManager(getContext().get(ResourceManager.class));
 		exportManager = new ExportManager(accessor);

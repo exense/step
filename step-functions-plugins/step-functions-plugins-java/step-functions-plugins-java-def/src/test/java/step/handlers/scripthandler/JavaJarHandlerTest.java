@@ -29,6 +29,7 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 
+import ch.exense.commons.app.Configuration;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.io.Output;
@@ -68,7 +69,7 @@ public class JavaJarHandlerTest {
 	public void test2JarsWithMultipleKeywords() {
 		GeneralScriptFunction f = buildTestFunction("MyKeyword1","java-plugin-handler-test.jar");
 		GeneralScriptFunction f2 = buildTestFunction("MyKeyword2","java-plugin-handler-test2.jar");
-		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType())) {
+		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType(new Configuration()))) {
 			Output<JsonObject> output = context.run(f, "{\"key1\":\"val1\"}");
 			Assert.assertEquals("MyValue",output.getPayload().getString("MyKey"));
 			output = context.run(f2, "{\"key1\":\"val1\"}");
@@ -98,7 +99,7 @@ public class JavaJarHandlerTest {
 	}
 	
 	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson) {
-		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType())) {
+		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType(new Configuration()))) {
 			return context.run(f, inputJson);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -106,7 +107,7 @@ public class JavaJarHandlerTest {
 	}
 	
 	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson, Map<String, String> properties) {
-		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType(), properties)) {
+		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType(new Configuration()), properties)) {
 			return context.run(f, inputJson);			
 		} catch (IOException e) {
 			throw new RuntimeException(e);

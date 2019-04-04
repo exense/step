@@ -35,7 +35,7 @@ public class RtmPlugin extends AbstractPlugin {
 		context.getServiceRegistrationCallback().registerService(RtmPluginServices.class);
 
 		Properties rtmProperties = Configuration.getInstance().getUnderlyingPropertyObject();
-		step.commons.conf.Configuration stepProperties = step.commons.conf.Configuration.getInstance(); 
+		ch.exense.commons.app.Configuration stepProperties = context.getConfiguration();
 
 		if(stepProperties.getPropertyAsBoolean("plugins.rtm.useLocalDB", true) == true){
 		cloneProperty(rtmProperties, stepProperties, "db.host");
@@ -53,7 +53,7 @@ public class RtmPlugin extends AbstractPlugin {
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
 
-		String war = step.commons.conf.Configuration.getInstance().getProperty("plugins.rtm.war");
+		String war = stepProperties.getProperty("plugins.rtm.war");
 		if(war==null) {
 			throw new RuntimeException("Property 'plugins.rtm.war' is null. Unable to start RTM.");
 		} else {
@@ -76,7 +76,7 @@ public class RtmPlugin extends AbstractPlugin {
 		}
 	}
 
-	private void cloneProperty(Properties rtmProperties, step.commons.conf.Configuration stepProperties, String property) {
+	private void cloneProperty(Properties rtmProperties, ch.exense.commons.app.Configuration stepProperties, String property) {
 		if(stepProperties.getProperty(property)!=null) {
 			rtmProperties.put(property, stepProperties.getProperty(property));			
 		}

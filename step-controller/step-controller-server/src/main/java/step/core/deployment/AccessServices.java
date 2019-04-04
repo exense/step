@@ -23,7 +23,7 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.access.AccessConfiguration;
 import step.core.access.AccessManager;
 import step.core.access.Authenticator;
@@ -54,8 +54,11 @@ public class AccessServices extends AbstractServices {
 	}
 	
 	@PostConstruct
-	private void init() throws Exception {
+	public void init() throws Exception {
+		super.init();
 		controller.getContext().put(AUTHENTICATION_SERVICE, this);
+		
+		configuration = controller.getContext().getConfiguration();
 		
 		initAuthenticator();
 		initAccessManager();
@@ -64,7 +67,7 @@ public class AccessServices extends AbstractServices {
 		sessionExpirationTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				final int sessionTimeout = Configuration.getInstance().getPropertyAsInteger("ui.sessiontimeout.minutes", 180)*60000;
+				final int sessionTimeout = configuration.getPropertyAsInteger("ui.sessiontimeout.minutes", 180)*60000;
 				long time = System.currentTimeMillis();
 				sessions.entrySet().removeIf(entry->(entry.getValue().lasttouch+sessionTimeout)<time);
 			}
@@ -79,7 +82,7 @@ public class AccessServices extends AbstractServices {
 	}
 
 	private void initAuthenticator() throws Exception {
-		String authenticatorClass = Configuration.getInstance().getProperty("ui.authenticator",null);
+		String authenticatorClass = configuration.getProperty("ui.authenticator",null);
 		if(authenticatorClass==null) {
 			authenticator = new DefaultAuthenticator();
 		} else {
@@ -94,7 +97,7 @@ public class AccessServices extends AbstractServices {
 	}
 	
 	private void initAccessManager() throws Exception {
-		String accessManagerClass = Configuration.getInstance().getProperty("ui.accessmanager",null);
+		String accessManagerClass = configuration.getProperty("ui.accessmanager",null);
 		if(accessManagerClass==null) {
 			accessManager = new DefaultAccessManager();
 		} else {
@@ -155,12 +158,12 @@ public class AccessServices extends AbstractServices {
 		return conf;
 	}
 	
-	public static boolean useAuthentication() {
-		return Configuration.getInstance().getPropertyAsBoolean("authentication", true);
+	public boolean useAuthentication() {
+		return configuration.getPropertyAsBoolean("authentication", true);
 	}
 	
-	public static boolean isDemo() {
-		return Configuration.getInstance().getPropertyAsBoolean("demo", false);
+	public boolean isDemo() {
+		return configuration.getPropertyAsBoolean("demo", false);
 	}
 	
 	static Session ANONYMOUS_SESSION = new Session();
@@ -175,7 +178,7 @@ public class AccessServices extends AbstractServices {
 	@Secured
 	@Path("/session")
 	public Session getSession(@Context ContainerRequestContext crc) {
-		boolean useAuthentication = Configuration.getInstance().getPropertyAsBoolean("authentication", true);
+		boolean useAuthentication = configuration.getPropertyAsBoolean("authentication", true);
 		if(useAuthentication) {
 			Session session = (Session) crc.getProperty("session");
 			return session;			
@@ -189,7 +192,7 @@ public class AccessServices extends AbstractServices {
 	@GET
 	@Path("/checkToken")
 	public Boolean isValidToken(@QueryParam("token") String token) {
-		boolean useAuthentication = Configuration.getInstance().getPropertyAsBoolean("authentication", true);
+		boolean useAuthentication = configuration.getPropertyAsBoolean("authentication", true);
 		if(useAuthentication) {
 			try {
 				validateAndTouchToken(token);

@@ -3,7 +3,7 @@ package step.resources;
 import java.io.File;
 
 import step.attachments.FileResolver;
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractPlugin;

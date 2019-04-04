@@ -38,7 +38,8 @@ public class SettingsServices extends AbstractServices {
 	protected ControllerSettingAccessor controllerSettingsAccessor;
 
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		controllerSettingsAccessor = new ControllerSettingAccessor(controller.getContext().getMongoClientSession());
 	}
 	

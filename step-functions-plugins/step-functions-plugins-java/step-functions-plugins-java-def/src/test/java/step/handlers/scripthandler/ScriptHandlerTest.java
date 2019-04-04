@@ -37,6 +37,7 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 
+import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
@@ -75,7 +76,7 @@ public class ScriptHandlerTest {
 	}
 	
 	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson, Map<String, String> properties) {
-		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType(), properties)) {
+		try (Context context = FunctionRunner.getContext(new GeneralScriptFunctionType(new Configuration()), properties)) {
 			return context.run(f, inputJson);			
 		} catch (IOException e) {
 			throw new RuntimeException(e);

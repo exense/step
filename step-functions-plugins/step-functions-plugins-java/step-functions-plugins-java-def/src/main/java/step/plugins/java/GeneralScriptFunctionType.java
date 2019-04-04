@@ -1,9 +1,14 @@
 package step.plugins.java;
 
+import ch.exense.commons.app.Configuration;
 import step.functions.type.SetupFunctionException;
 
 public class GeneralScriptFunctionType extends AbstractScriptFunctionType<GeneralScriptFunction> {
 		
+	public GeneralScriptFunctionType(Configuration configuration) {
+		super(configuration);
+	}
+
 	@Override
 	public void setupFunction(GeneralScriptFunction function) throws SetupFunctionException {
 		String language = getScriptLanguage(function);

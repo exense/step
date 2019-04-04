@@ -1,5 +1,6 @@
 package step.commons.processmanager;
 
+import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -12,9 +13,12 @@ public class ExternalJVMLauncher {
 
 	private final String javaPath;
 	
-	public ExternalJVMLauncher(String javaPath) {
+	private final File processLogFolder;
+	
+	public ExternalJVMLauncher(String javaPath, File processLogFolder) {
 		super();
 		this.javaPath = javaPath;
+		this.processLogFolder = processLogFolder;
 	}
 	
 	private String buildClasspath() {
@@ -41,7 +45,7 @@ public class ExternalJVMLauncher {
 		
 		cmd.add(mainClass.getName());
 		
-		ManagedProcess process = new ManagedProcess(cmd, name);
+		ManagedProcess process = new ManagedProcess(processLogFolder, cmd, name);
 		process.start();
 		return process;
 	}

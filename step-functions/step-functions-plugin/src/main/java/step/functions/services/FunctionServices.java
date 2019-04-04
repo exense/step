@@ -60,7 +60,8 @@ public class FunctionServices extends AbstractServices {
 	protected FunctionExecutionService functionExecutionService;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().get(ResourceManager.class));
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);

@@ -27,7 +27,7 @@ import step.client.accessors.RemoteArtefactAccessor;
 import step.client.accessors.RemoteFunctionAccessorImpl;
 import step.client.credentials.ControllerCredentials;
 import step.client.resources.RemoteResourceManager;
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -74,7 +74,8 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 			ResourceManager resourceManager = new RemoteResourceManager(credentials);
 			
 			FunctionTypeRegistryImpl functionTypeRegistryImpl = new FunctionTypeRegistryImpl(new FileResolver(resourceManager), gridClient);
-			functionTypeRegistryImpl.registerFunctionType(new GeneralScriptFunctionType());
+			// TODO implement all this properly
+			functionTypeRegistryImpl.registerFunctionType(new GeneralScriptFunctionType(new Configuration()));
 			Configuration configuration = new Configuration();
 			configuration.putProperty("plugins.selenium.libs.3.x", "../distribution/template-controller/ext/selenium/selenium-java-3.5.3");
 			functionTypeRegistryImpl.registerFunctionType(new SeleniumFunctionType(configuration));

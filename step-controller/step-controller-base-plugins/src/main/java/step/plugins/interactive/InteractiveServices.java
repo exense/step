@@ -36,7 +36,6 @@ import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.artefacts.handlers.FunctionGroupHandler;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
-import step.commons.conf.Configuration;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -87,7 +86,7 @@ public class InteractiveServices extends AbstractServices {
 		sessionExpirationTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				final int sessionTimeout = Configuration.getInstance().getPropertyAsInteger("ui.artefacteditor.interactive.sessiontimeout.minutes", 10)*60000;
+				final int sessionTimeout = configuration.getPropertyAsInteger("ui.artefacteditor.interactive.sessiontimeout.minutes", 10)*60000;
 				long time = System.currentTimeMillis();
 				
 				sessions.forEach((sessionId,session)->{

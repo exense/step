@@ -29,11 +29,11 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
 
-import step.commons.conf.Configuration;
-
 public class Collection {
 
-	MongoCollection<Document> collection;
+	protected MongoCollection<Document> collection;
+	
+	private static final int DEFAULT_LIMIT = 1000;
 
 	public Collection(MongoDatabase mongoDatabase, String collectionName) {
 		super();
@@ -66,9 +66,8 @@ public class Collection {
 		
 		long count = collection.count();
 		
-		int countLimit = Configuration.getInstance().getPropertyAsInteger("db.collection.count.limit.default", 1000);
 		CountOptions option = new CountOptions();
-		option.skip(0).limit(countLimit);
+		option.skip(0).limit(DEFAULT_LIMIT);
 		long countResults = collection.count(query, option);
 		
 		FindIterable<Document> find = collection.find(query);

@@ -19,14 +19,17 @@
 package step.plugins.quotamanager;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ch.exense.commons.io.FileWatchService;
 import step.common.managedoperations.OperationManager;
-import step.commons.conf.Configuration;
-import step.commons.conf.FileWatchService;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
@@ -38,11 +41,15 @@ public class QuotaManagerPlugin extends AbstractPlugin {
 		
 	private ConcurrentHashMap<String, UUID> permits = new ConcurrentHashMap<>();
 
+	private FileWatchService fileWatchService;
+	
 	private OperationManager operationManager = OperationManager.getInstance();
 		
 	private QuotaManager quotaManager;
 	
 	private boolean enabled = false;
+	
+	private static final Logger logger = LoggerFactory.getLogger(QuotaManagerPlugin.class);
 	
 	@Override
 	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
@@ -78,7 +85,9 @@ public class QuotaManagerPlugin extends AbstractPlugin {
 	private QuotaManager initQuotaManager(String config) {		
 		final File configFile = new File(config);
 		quotaManager = new QuotaManager(configFile);
-		FileWatchService.getInstance().register(configFile, new Runnable() {
+		
+		fileWatchService = new FileWatchService();
+		fileWatchService.register(configFile, new Runnable() {
 			@Override
 			public void run() {
 				quotaManager.loadConfiguration(configFile);
@@ -91,11 +100,23 @@ public class QuotaManagerPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) {
 		context.getServiceRegistrationCallback().registerService(QuotaManagerServices.class);
 
-		String config = Configuration.getInstance().getProperty("quotamanager.config");
+		String config = context.getConfiguration().getProperty("quotamanager.config");
 		if(config!=null) {
 			QuotaManager manager = initQuotaManager(config);
 			context.put(QuotaManager.class, manager);
 			enabled = true;
 		}
+	}
+
+	@Override
+	public void executionControllerDestroy(GlobalContext context) {
+		if(fileWatchService !=null) {
+			try {
+				fileWatchService.close();
+			} catch (IOException e) {
+				logger.error("Error while closing file watch service", e);
+			}
+		}
+		super.executionControllerDestroy(context);
 	}
 }

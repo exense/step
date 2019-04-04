@@ -53,7 +53,8 @@ public class GridServices extends AbstractServices {
 	protected GridImpl grid;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		grid = getContext().get(GridImpl.class);
 	}
 	

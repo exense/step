@@ -74,7 +74,8 @@ public class TableService extends AbstractServices {
 	protected MongoDatabase database;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		database = getContext().getMongoClientSession().getMongoDatabase();
 		collectionRegistry = getContext().get(CollectionRegistry.class);
 	}

@@ -31,7 +31,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.io.Output;
@@ -57,7 +57,7 @@ public class JMeterHandlerTest {
 	}
 	private Output<JsonObject> run(JMeterFunction f, String inputJson) {
 		Configuration configuration = new Configuration();
-		configuration.put("plugins.jmeter.home", "../../distribution/template-controller/ext/jmeter");
+		configuration.putProperty("plugins.jmeter.home", "../../distribution/template-controller/ext/jmeter");
 		
 		try (Context context = FunctionRunner.getContext(configuration,new JMeterFunctionType(configuration), new HashMap<>())) {
 			return context.run(f, inputJson);			

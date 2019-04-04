@@ -50,7 +50,8 @@ public class AdminServices extends AbstractServices {
 	private static final String MAINTENANCE_MESSAGE_KEY = "maintenance_message";
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		controllerSettingsAccessor = new ControllerSettingAccessor(controller.getContext().getMongoClientSession());
 	}
 

@@ -3,7 +3,7 @@ package step.core.execution;
 import org.bson.types.ObjectId;
 
 import step.attachments.FileResolver;
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;

@@ -77,7 +77,8 @@ public class DataTableServices extends AbstractServices {
 	protected final ExecutorService reportExecutor = Executors.newFixedThreadPool(2);
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		exportTaskManager = new ExportTaskManager(getContext().get(ResourceManager.class));
 		dataTableRegistry = getContext().get(DataTableRegistry.class);
 	}

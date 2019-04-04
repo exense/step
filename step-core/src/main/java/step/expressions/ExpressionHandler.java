@@ -27,23 +27,29 @@ import org.slf4j.LoggerFactory;
 
 import groovy.lang.Binding;
 import groovy.lang.Script;
-import step.commons.conf.Configuration;
 
 public class ExpressionHandler {
 		
 	private static Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
 	
 	private final GroovyPool groovyPool;
-		
+	
+	private final Integer executionTimeWarningTreshold;
+	
 	public ExpressionHandler() {
 		this(null);
 	}
 	
 	public ExpressionHandler(String scriptBaseClass) {
-		super();
-		groovyPool = new GroovyPool(scriptBaseClass);
+		this(scriptBaseClass, null, 1000, -1);
 	}
 	
+	public ExpressionHandler(String scriptBaseClass, Integer executionTimeWarningTreshold, int poolMaxTotal, int poolMaxIdle) {
+		super();
+		this.groovyPool = new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxIdle);
+		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
+	}
+
 	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings) {
 		Object result;
 		try {			
@@ -78,7 +84,7 @@ public class ExpressionHandler {
 			}
 			long duration = System.currentTimeMillis()-t1;
 			
-			Integer warnThreshold = Configuration.getInstance().getPropertyAsInteger("tec.expressions.warningthreshold");
+			Integer warnThreshold = executionTimeWarningTreshold;
 			if(warnThreshold!=null && duration > warnThreshold) {
 				logger.warn("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
 			} else {

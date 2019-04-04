@@ -19,6 +19,7 @@
 package step.controller;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -42,7 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.ArgumentParser;
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.deployment.AccessServices;
@@ -59,6 +60,8 @@ import step.plugins.interactive.InteractiveServices;
 
 public class ControllerServer {
 
+	private Configuration configuration;
+	
 	private Controller controller;
 	
 	private Server server;
@@ -82,18 +85,13 @@ public class ControllerServer {
 		
 		arguments.entrySet().forEach(e->configuration.putProperty(e.getKey(),e.getValue()));
 		
-		Configuration.setInstance(configuration);
-		
-		(new ControllerServer()).start();
+		(new ControllerServer(configuration)).start();
 	}
 	
-	public ControllerServer(Integer port) {
+	public ControllerServer(Configuration configuration) {
 		super();
-		this.port = port;
-	}
-	
-	public ControllerServer() {
-		this(Configuration.getInstance().getPropertyAsInteger("port", 8080));
+		this.configuration = configuration;
+		this.port = configuration.getPropertyAsInteger("port", 8080);
 	}
 
 	public void start() throws Exception {
@@ -117,11 +115,16 @@ public class ControllerServer {
 		} finally {
 			server.destroy();
 		}
+		if(configuration != null) {
+			try {
+				configuration.close();
+			} catch (IOException e) {
+				logger.error("Error while closing configuration",e);
+			}
+		}
 	}
 
 	private void setupConnectors() {
-		Configuration conf = Configuration.getInstance();
-
 		HttpConfiguration http = new HttpConfiguration();
 		http.addCustomizer(new SecureRequestCustomizer());
 		http.setSecureScheme("https");
@@ -130,8 +133,8 @@ public class ControllerServer {
 		connector.addConnectionFactory(new HttpConnectionFactory(http));
 		connector.setPort(port);
 		
-		if(conf.getPropertyAsBoolean("ui.ssl.enabled", false)) {
-			int httpsPort = conf.getPropertyAsInteger("ui.ssl.port", 443);
+		if(configuration.getPropertyAsBoolean("ui.ssl.enabled", false)) {
+			int httpsPort = configuration.getPropertyAsInteger("ui.ssl.port", 443);
 			
 			http.setSecurePort(httpsPort);
 
@@ -139,9 +142,9 @@ public class ControllerServer {
 			https.addCustomizer(new SecureRequestCustomizer());
 			
 			SslContextFactory sslContextFactory = new SslContextFactory();
-			sslContextFactory.setKeyStorePath(conf.getProperty("ui.ssl.keystore.path"));
-			sslContextFactory.setKeyStorePassword(conf.getProperty("ui.ssl.keystore.password"));
-			sslContextFactory.setKeyManagerPassword(conf.getProperty("ui.ssl.keymanager.password"));
+			sslContextFactory.setKeyStorePath(configuration.getProperty("ui.ssl.keystore.path"));
+			sslContextFactory.setKeyStorePassword(configuration.getProperty("ui.ssl.keystore.password"));
+			sslContextFactory.setKeyManagerPassword(configuration.getProperty("ui.ssl.keymanager.password"));
 			
 			ServerConnector sslConnector = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(https));
 			sslConnector.setPort(httpsPort);
@@ -165,7 +168,7 @@ public class ControllerServer {
 		ResourceConfig resourceConfig = new ResourceConfig();
 		resourceConfig.packages(ControllerServices.class.getPackage().getName());
 
-		controller = new Controller();
+		controller = new Controller(configuration);
 		
 		controller.init(new ServiceRegistrationCallback() {
 			public void registerService(Class<?> serviceClass) {

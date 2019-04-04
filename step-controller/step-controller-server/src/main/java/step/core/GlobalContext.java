@@ -18,7 +18,7 @@
  *******************************************************************************/
 package step.core;
 
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoClientSession;

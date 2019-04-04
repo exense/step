@@ -3,18 +3,15 @@ package step.plugins.selenium;
 import java.io.File;
 import java.util.Map;
 
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.type.SetupFunctionException;
 import step.plugins.java.AbstractScriptFunctionType;
 
 public class SeleniumFunctionType extends AbstractScriptFunctionType<SeleniumFunction> {
 
-	protected final Configuration configuration;
-	
 	public SeleniumFunctionType(Configuration configuration) {
-		super();
-		this.configuration = configuration;
+		super(configuration);
 	}
 
 	@Override

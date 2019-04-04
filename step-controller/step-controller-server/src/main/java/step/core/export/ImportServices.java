@@ -31,7 +31,8 @@ public class ImportServices extends AbstractServices {
 	ImportManager importManager;
 		
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		ArtefactAccessor accessor = getContext().getArtefactAccessor();
 		importManager = new ImportManager(accessor);
 		fileResolver = getContext().get(FileResolver.class);

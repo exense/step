@@ -25,8 +25,7 @@ import org.eclipse.jetty.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.commons.conf.Configuration;
-import step.commons.conf.FileWatchService;
+import ch.exense.commons.app.Configuration;
 import step.core.access.UserAccessorImpl;
 import step.core.accessors.CollectionRegistry;
 import step.core.accessors.MongoClientSession;
@@ -50,6 +49,8 @@ public class Controller {
 	
 	private static final Logger logger = LoggerFactory.getLogger(Controller.class);
 	
+	private Configuration configuration;
+	
 	private GlobalContext context;
 		
 	private PluginManager pluginManager;
@@ -60,6 +61,11 @@ public class Controller {
 	
 	private MongoClientSession mongoClientSession;
 	
+	public Controller(Configuration configuration) {
+		super();
+		this.configuration = configuration;
+	}
+
 	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
 		pluginManager = new PluginManager();
@@ -80,8 +86,6 @@ public class Controller {
 		context = new GlobalContext();
 		context.setPluginManager(pluginManager);
 		
-		Configuration configuration = Configuration.getInstance();
-		
 		mongoClientSession = new MongoClientSession(configuration);
 		
 		context.setConfiguration(configuration);
@@ -94,7 +98,10 @@ public class Controller {
 		context.setUserAccessor(new UserAccessorImpl(mongoClientSession));
 		context.setArtefactManager(new ArtefactManager(context.getArtefactAccessor()));
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
-		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass")));
+		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
+				configuration.getPropertyAsInteger("tec.expressions.warningthreshold"),
+				configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000),
+				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		context.setEventManager(new EventManager());
 		
@@ -102,7 +109,7 @@ public class Controller {
 	}
 
 	private void createOrUpdateIndexes() {
-		long dataTTL = Configuration.getInstance().getPropertyAsInteger("db.datattl", 0);
+		long dataTTL = context.getConfiguration().getPropertyAsInteger("db.datattl", 0);
 		context.getReportAccessor().createIndexesIfNeeded(dataTTL);
 		context.getExecutionAccessor().createIndexesIfNeeded(dataTTL);
 	}
@@ -112,13 +119,6 @@ public class Controller {
 		scheduler.shutdown();
 
 		serviceRegistrationCallback.stop();
-		// TODO do this without singleton
-		try {
-			FileWatchService.getInstance().close();
-		} catch (IOException e) {
-			logger.error("Error while closing FileService", e);
-			
-		}
 
 		// call shutdown hooks
 		pluginManager.getProxy().executionControllerDestroy(context);

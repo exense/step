@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionRouter;
 import step.attachments.FileResolver;
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;

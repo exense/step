@@ -11,7 +11,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 
 import step.attachments.FileResolver;
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;

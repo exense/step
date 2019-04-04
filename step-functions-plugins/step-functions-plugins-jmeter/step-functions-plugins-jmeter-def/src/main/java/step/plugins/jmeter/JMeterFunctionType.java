@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.functions.type.AbstractFunctionType;
 import step.grid.bootstrap.ResourceExtractor;
 import step.grid.filemanager.FileVersionId;

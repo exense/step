@@ -22,24 +22,21 @@ import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.commons.conf.Configuration;
-
 public class GroovyPool {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GroovyPool.class);
 		
 	private GenericKeyedObjectPool<GroovyPoolKey, GroovyPoolEntry> pool;
 
-	public GroovyPool(String scriptBaseClass) {
+	public GroovyPool(String scriptBaseClass, int poolMaxTotal, int poolMaxIdle) {
 		super();
 		
-		Configuration conf = Configuration.getInstance();
 		try {
 			pool = new GenericKeyedObjectPool<>(new GroovyPoolFactory(scriptBaseClass));
 			pool.setTestOnBorrow(true);
-			pool.setMaxTotal(conf.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000));
+			pool.setMaxTotal(poolMaxTotal);
 			pool.setMaxActive(-1);
-			pool.setMaxIdle(conf.getPropertyAsInteger("tec.expressions.pool.maxidle",-1));
+			pool.setMaxIdle(poolMaxIdle);
 			pool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
 			pool.setTimeBetweenEvictionRunsMillis(30000);
 			pool.setMinEvictableIdleTimeMillis(-1);

@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.io.FileHelper;
-import step.commons.conf.Configuration;
 
 public class ManagedProcess implements Closeable {
 
@@ -48,8 +47,6 @@ public class ManagedProcess implements Closeable {
 	
 	private final ProcessBuilder builder;
 		
-	private static File logFolder;
-	
 	private File processOutputLog;
 	
 	private File processErrorLog;
@@ -72,31 +69,25 @@ public class ManagedProcess implements Closeable {
 		this(null, commands, name);
 	}
 	
-	public ManagedProcess(File executionDirectory, List<String> commands, String name) throws ManagedProcessException {
+	public ManagedProcess(File logDirectory, List<String> commands, String name) throws ManagedProcessException {
 		super();
 
-		String logdir = Configuration.getInstance().getProperty("managedprocesses.logdir");
-		logFolder = new File(logdir!=null?logdir:".");
-		
+		if(logDirectory == null) {
+			logDirectory = new File(".");
+		}
+
 		UUID uuid = UUID.randomUUID();
 		this.id = name+"_"+uuid;
 		builder = new ProcessBuilder(commands);
 		
-		if(executionDirectory==null) {
-			executionDirectory = new File(logFolder+"/" + id);
-			if(!executionDirectory.exists()) {
-				if(!executionDirectory.mkdir()) {
-					throw new InvalidParameterException("Unable to create log folder for process " + id + ". Please ensure that the folder specified by the parameter adapters.log in the configuration repository exists and is writable.");
-				}
-			}	
-		}
-		this.executionDirectory = executionDirectory;
+		executionDirectory = new File(logDirectory.getAbsolutePath()+"/" + id);
+		if(!executionDirectory.exists()) {
+			if(!executionDirectory.mkdir()) {
+				throw new InvalidParameterException("Unable to create log folder for process " + id + ". Please ensure that the folder specified by the parameter adapters.log in the configuration repository exists and is writable.");
+			}
+		}	
 	}
 	
-	public static File getLogFolder() {
-		return logFolder;
-	}
-
 	public File getProcessOutputLog() {
 		return processOutputLog;
 	}

@@ -18,7 +18,7 @@
  *******************************************************************************/
 package step.core.execution;
 
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.AbstractContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;

@@ -21,7 +21,8 @@ public class ViewPluginServices extends AbstractServices {
 	}
 	
 	@PostConstruct
-	public void init() {		
+	public void init() throws Exception {	
+		super.init();
 		plugin = (ViewPlugin) controller.getContext().get(ViewPlugin.VIEW_PLUGIN_KEY);
 	}
 

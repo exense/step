@@ -14,7 +14,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import step.attachments.FileResolver;
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
@@ -29,13 +29,17 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	
 	protected Configuration configuration;
 	
+	public AbstractScriptFunctionType(Configuration configuration) {
+		super();
+		this.configuration = configuration;
+	}
+	
 	@Override
 	public void init() {
 		super.init();
 		daemonJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "java-plugin-handler.jar");
-		configuration = Configuration.getInstance();
 	}
-	
+
 	public Map<String, String> getHandlerProperties(T function) {
 		Map<String, String> props = new HashMap<>();
 		props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());		
@@ -72,7 +76,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	
 	protected File getDefaultScriptFile(GeneralScriptFunction function) {
 		String filename = getScriptFilename(function);
-		String scriptDir = Configuration.getInstance().getProperty("keywords.script.scriptdir");
+		String scriptDir = configuration.getProperty("keywords.script.scriptdir");
 		File file = new File(scriptDir+"/"+filename);
 		return file;
 	}
@@ -96,7 +100,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	}
 	
 	protected File setupScriptFile(GeneralScriptFunction function, String templateFilename) throws SetupFunctionException {
-		File templateScript = new File(Configuration.getInstance().getProperty("controller.dir")+"/data/templates/"+templateFilename);
+		File templateScript = new File(configuration.getProperty("controller.dir")+"/data/templates/"+templateFilename);
 		try {
 			return setupScriptFile(function,new FileInputStream(templateScript));
 		} catch (FileNotFoundException e) {

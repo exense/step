@@ -11,7 +11,7 @@ import org.bson.types.ObjectId;
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionRouter;
 import step.attachments.FileResolver;
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.artefacts.ArtefactManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;

@@ -40,7 +40,6 @@ import org.apache.poi.ss.util.CellReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.commons.conf.Configuration;
 import step.datapool.excel.CellIndexParser.CellIndex;
 
 public class ExcelFunctions {
@@ -49,6 +48,8 @@ public class ExcelFunctions {
 	
 	private static DecimalFormat customDecimalFormat = null;
 
+	private static int maxExcelSize = 10000000;
+	
 	/**
 	 * Liest einen Wert aus einer Excelzelle. Jeder Zugriff oeffnet die Datei und schliesst
 	 * sie danach wieder.
@@ -66,7 +67,7 @@ public class ExcelFunctions {
 	}
 		
 	public static String getCell(File workBookFile, String sheetName, String cellIndex) {		
-		try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, getMaxExcelSize(), false, false)) {
+		try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, maxExcelSize, false, false)) {
 			Sheet sheet = getSheet(workbookSet, sheetName, false); 
 			
 			Cell cell = getCell(sheet, cellIndex, false);
@@ -142,7 +143,7 @@ public class ExcelFunctions {
 	 */
     public static void putCell(String workbookPath, String sheetName, String cellIndex, String cellValue, String style) throws IOException {
     	File workBookFile = new File(workbookPath);
-    	try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, getMaxExcelSize(), true, true)) {
+    	try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, maxExcelSize, true, true)) {
 			Sheet sheet = getSheet(workbookSet, sheetName, true); 
 			
 			Cell cell = getCell(sheet, cellIndex, true);
@@ -157,10 +158,6 @@ public class ExcelFunctions {
 	    	throw ex;
 	    }
     }
-
-	protected static Integer getMaxExcelSize() {
-		return Configuration.getInstance().getPropertyAsInteger("tec.maxexcelsize");
-	}
 
     /**
 	 * Konvertiert unterschiedliche Formate in Strings.
@@ -301,5 +298,13 @@ public class ExcelFunctions {
 		}
 		
 		return customDecimalFormat;
+	}
+
+	public static int getMaxExcelSize() {
+		return maxExcelSize;
+	}
+
+	public static void setMaxExcelSize(int maxExcelSize) {
+		ExcelFunctions.maxExcelSize = maxExcelSize;
 	}
 }

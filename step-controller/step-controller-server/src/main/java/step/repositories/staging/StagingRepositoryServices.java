@@ -56,7 +56,8 @@ public class StagingRepositoryServices extends AbstractServices {
 	protected ResourceManager resourceManager;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		GlobalContext context = getContext();
 		stagingContextAccessor = context.get(StagingContextAccessorImpl.class);
 		resourceManager = context.get(ResourceManager.class);

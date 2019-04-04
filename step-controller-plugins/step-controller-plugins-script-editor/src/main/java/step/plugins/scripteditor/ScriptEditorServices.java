@@ -11,7 +11,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
-import step.commons.conf.Configuration;
 import step.core.deployment.AbstractServices;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeRegistry;
@@ -25,7 +24,7 @@ public class ScriptEditorServices extends AbstractServices {
 	@GET
 	@Path("/file/{filename}")
 	public String getScript(@PathParam("filename") String filename) throws IOException {
-		File scriptFIle = new File(Configuration.getInstance().getProperty("keywords.script.scriptdir")+"/"+filename);
+		File scriptFIle = new File(configuration.getProperty("keywords.script.scriptdir")+"/"+filename);
 		byte[] encoded = Files.readAllBytes(Paths.get(scriptFIle.toURI()));
 		return new String(encoded, "UTF-8");
 	}
@@ -33,7 +32,7 @@ public class ScriptEditorServices extends AbstractServices {
 	@POST
 	@Path("/file/{filename}")
 	public void saveScript(@PathParam("filename") String filename, String content) throws IOException {
-		File scriptFile = new File(Configuration.getInstance().getProperty("keywords.script.scriptdir")+"/"+filename);
+		File scriptFile = new File(configuration.getProperty("keywords.script.scriptdir")+"/"+filename);
 		Files.write(Paths.get(scriptFile.toURI()),content.getBytes("UTF-8"));
 	}
 	

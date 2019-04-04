@@ -29,10 +29,13 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 	
 	@Inject
 	private ExtendedUriInfo extendendUriInfo;
+	
+	@Inject
+	private AccessServices accessServices;
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
-		boolean useAuthentication = AccessServices.useAuthentication();
+		boolean useAuthentication = accessServices.useAuthentication();
 		if(useAuthentication) {
 			Cookie sessionCookie = requestContext.getCookies().get("sessionid");
 			if(sessionCookie!=null) {

@@ -21,7 +21,7 @@ public class JavaPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		registerWebapp(context,"/javaplugin/");
 		FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);
-		functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType());
+		functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(context.getConfiguration()));
 		super.executionControllerStart(context);
 	}
 

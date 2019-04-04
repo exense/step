@@ -49,7 +49,8 @@ public class ScreenTemplateService extends AbstractServices {
 	protected ScreenInputAccessor screenInputAccessor;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		screenInputAccessor = getContext().get(ScreenInputAccessor.class);
 		screenTemplateManager = getContext().get(ScreenTemplateManager.class);
 	}

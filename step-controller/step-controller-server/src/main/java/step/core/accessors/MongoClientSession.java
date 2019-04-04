@@ -18,7 +18,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
 
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 
 public class MongoClientSession implements Closeable {
 

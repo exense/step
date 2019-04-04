@@ -42,7 +42,8 @@ public class ParameterServices extends AbstractServices {
 	
 	@PostConstruct
 	@SuppressWarnings("unchecked")
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		parameterAccessor = (CRUDAccessor<Parameter>) getContext().get("ParameterAccessor");
 	}
 

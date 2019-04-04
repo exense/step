@@ -18,20 +18,29 @@
  *******************************************************************************/
 package step.core.deployment;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import ch.exense.commons.app.Configuration;
 import step.core.Controller;
 import step.core.GlobalContext;
 import step.core.execution.ExecutionRunnable;
 import step.core.scheduler.ExecutionScheduler;
 
-public class AbstractServices {
+public abstract class AbstractServices {
 
 	@Inject
 	protected Controller controller;
+	
+	protected Configuration configuration;
 
 	public AbstractServices() {
 		super();
+	}
+	
+	@PostConstruct
+	public void init() throws Exception {
+		configuration = controller.getContext().getConfiguration();
 	}
 
 	protected GlobalContext getContext() {

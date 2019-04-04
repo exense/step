@@ -46,7 +46,8 @@ public class EventBrokerServices extends AbstractServices {
 	}
 
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		eb = (EventBroker) getContext().get(EventBroker.class);
 	}
 	

@@ -1,6 +1,6 @@
 package step.core;
 
-import step.commons.conf.Configuration;
+import ch.exense.commons.app.Configuration;
 import step.core.accessors.CollectionRegistry;
 import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
@@ -24,7 +24,7 @@ public class GlobalContextBuilder {
 		PluginManager pluginManager = new PluginManager();
 		context.setPluginManager(pluginManager);
 		
-		context.setConfiguration(Configuration.getInstance());
+		context.setConfiguration(new Configuration());
 		
 		context.put(CollectionRegistry.class, new CollectionRegistry());
 		context.setExecutionAccessor(new InMemoryExecutionAccessor());
