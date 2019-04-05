@@ -40,6 +40,7 @@ import org.apache.poi.ss.util.CellReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.exense.commons.app.Configuration;
 import step.datapool.excel.CellIndexParser.CellIndex;
 
 public class ExcelFunctions {
@@ -48,7 +49,7 @@ public class ExcelFunctions {
 	
 	private static DecimalFormat customDecimalFormat = null;
 
-	private static int maxExcelSize = 10000000;
+	private static Configuration configuration;
 	
 	/**
 	 * Liest einen Wert aus einer Excelzelle. Jeder Zugriff oeffnet die Datei und schliesst
@@ -67,7 +68,7 @@ public class ExcelFunctions {
 	}
 		
 	public static String getCell(File workBookFile, String sheetName, String cellIndex) {		
-		try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, maxExcelSize, false, false)) {
+		try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, getMaxExcelSize(), false, false)) {
 			Sheet sheet = getSheet(workbookSet, sheetName, false); 
 			
 			Cell cell = getCell(sheet, cellIndex, false);
@@ -143,7 +144,7 @@ public class ExcelFunctions {
 	 */
     public static void putCell(String workbookPath, String sheetName, String cellIndex, String cellValue, String style) throws IOException {
     	File workBookFile = new File(workbookPath);
-    	try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, maxExcelSize, true, true)) {
+    	try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, getMaxExcelSize(), true, true)) {
 			Sheet sheet = getSheet(workbookSet, sheetName, true); 
 			
 			Cell cell = getCell(sheet, cellIndex, true);
@@ -301,10 +302,10 @@ public class ExcelFunctions {
 	}
 
 	public static int getMaxExcelSize() {
-		return maxExcelSize;
+		return configuration.getPropertyAsInteger("tec.maxexcelsize", 10000000);
 	}
 
-	public static void setMaxExcelSize(int maxExcelSize) {
-		ExcelFunctions.maxExcelSize = maxExcelSize;
+	public static void setConfiguration(Configuration configuration) {
+		ExcelFunctions.configuration = configuration;
 	}
 }
