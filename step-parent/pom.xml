@@ -295,9 +295,6 @@
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
-			<properties>
-				<distribution.zip_dir>${basedir}</distribution.zip_dir>
-			</properties>
 			<!-- Local compilation - no signature -->
 		</profile>
 		<profile>
@@ -305,9 +302,6 @@
 			<activation>
 				<activeByDefault>false</activeByDefault>
 			</activation>
-			<properties>
-				<distribution.zip_dir>C:/Server/Jenkins/workspace/step-oss/</distribution.zip_dir>
-			</properties>
 			<build>
 				<plugins>
 					<!-- Signature -->
