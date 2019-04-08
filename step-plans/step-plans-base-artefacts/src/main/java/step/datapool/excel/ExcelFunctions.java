@@ -49,7 +49,7 @@ public class ExcelFunctions {
 	
 	private static DecimalFormat customDecimalFormat = null;
 
-	private static Configuration configuration;
+	private static Configuration configuration = new Configuration();
 	
 	/**
 	 * Liest einen Wert aus einer Excelzelle. Jeder Zugriff oeffnet die Datei und schliesst
