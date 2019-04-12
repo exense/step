@@ -43,6 +43,17 @@ angular.module('tables', ['export','dataTable'])
       colDef['defaultContent'] = "";
     }
     
+    colDef.render = function ( data, type, row, meta ) {
+      if(type==='filter') {
+        // get the HTML content of the cell after it has been rendered (digested) by angular
+        var htmlContent = $($scope.table.cell(meta.row, meta.col).node()).text()
+        // return the HTML content after rendering as base for the column searches (type='filter')
+        return htmlContent
+      } else {
+        return data
+      }
+    }
+    
     colDef.createdCell = function(td, cellData, rowData, row, col) {
       var rowScope;
       var content = column.cellTransclude(function(clone, scope) {
@@ -89,7 +100,7 @@ angular.module('tables', ['export','dataTable'])
   }
   
 })
-.directive('stTable', function($compile, $http, Preferences, stateStorage) {
+.directive('stTable', function($compile, $http, Preferences, stateStorage, $timeout) {
   return {
     scope : {
       uid: '=',
@@ -121,6 +132,8 @@ angular.module('tables', ['export','dataTable'])
       var tableOptions = {}
       tableOptions.pageLength = parseInt(Preferences.get("tables_itemsperpage", 10));
       tableOptions.dom = scope.dom?scope.dom:'lrtip';
+      // disable autoWidth: the auto sizing of column widths seems to work better when calculated by the browser
+      tableOptions.autoWidth = false;
       tableOptions.fnDrawCallback = function() {
         controller.newCycle();
       };
@@ -164,7 +177,11 @@ angular.module('tables', ['export','dataTable'])
           if(scope.table) {
             scope.table.clear();
             if (value && value.length > 0) {
-              scope.table.rows.add(value).draw(false);
+              scope.table.rows.add(value);
+              // perform the table draw after the current angular digest cycle in order to let angular render all the cells  (See comment in colDef.render above) 
+              $timeout(function() {
+                scope.table.draw(false)
+              })
             }
           }
         }) 
