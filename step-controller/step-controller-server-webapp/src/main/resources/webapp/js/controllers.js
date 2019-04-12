@@ -64,7 +64,9 @@ tecAdminControllers.directive('executionParameters', function($rootScope, $http,
   return {
     restrict: 'E',
     scope: {
-      model: '='
+      model: '=',
+      stOnChange: '&?',
+      stInline: '=?'
     },
     templateUrl: 'partials/executionParametersForm.html',
     controller: function($scope) {
@@ -79,6 +81,9 @@ tecAdminControllers.directive('executionParameters', function($rootScope, $http,
       
       $scope.updateForm = function() {
         retrieveInputs();
+        if($scope.stOnChange) {
+          $scope.stOnChange($scope.model)
+        }
       }
       
       function retrieveInputs() {        
