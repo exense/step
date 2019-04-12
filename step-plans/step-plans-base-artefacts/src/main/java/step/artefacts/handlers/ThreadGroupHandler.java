@@ -83,8 +83,6 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 							
 							// -- Iterate --
 							for(int i=0;i<numberOfIterations;i++) {
-								long startTime = System.currentTimeMillis();
-								
 								gcounter.increment();
 								
 								if(context.isInterrupted()) {
@@ -93,6 +91,10 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 								
 								ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
 								Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Group_"+groupID+"_Iteration_"+i);
+								
+								if(pacing!=0) {
+									iterationTestCase.setPacing(new DynamicValue<Long>((long)pacing));
+								}
 								
 								for(AbstractArtefact child:getChildren(testArtefact)) {
 									iterationTestCase.addChild(child.getId());
@@ -106,24 +108,11 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 
 								iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
 								reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
-								
-								long endTime = System.currentTimeMillis();
-								if(pacing!=0) {
-									long duration = endTime-startTime;
-									long pacingWait = pacing-duration;
-									if(pacingWait>0) {
-										Thread.sleep(pacingWait);
-									} else {
-										// TODO: this is an application warning. Instead of being logged it should be shown to the end-user in a warning console
-										logger.debug("Pacing of TestGroup " + testArtefact.getId() + " in test " + context.getExecutionId() + " exceeded. " +
-												"The iteration lasted " + duration + "ms. The defined pacing was: " + testArtefact.getPacing() + "ms.");
-									}
-								}
-								
+																
 								DynamicValue<Integer> maxDurationProp = testArtefact.getMaxDuration();
 								if(maxDurationProp != null) {
 									Integer maxDuration = maxDurationProp.get();
-									if(maxDuration > 0 && endTime>groupStartTime+maxDuration) {
+									if(maxDuration > 0 && System.currentTimeMillis()>groupStartTime+maxDuration) {
 										break;
 									}
 								}
