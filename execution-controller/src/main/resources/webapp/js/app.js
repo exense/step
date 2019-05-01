@@ -128,6 +128,9 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   function finishInitialization() {
     $scope.isInitialized = true;
     $scope.logo = AuthService.getConf().miscParams.logomain?AuthService.getConf().miscParams.logomain:"images/logo_step_line_black.png";
+    if(!$location.path()) {
+      AuthService.gotoDefaultPage();
+    }
   }
   AuthService.init().then(function() {
     AuthService.getSession().then(finishInitialization,finishInitialization)
@@ -153,10 +156,6 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   $scope.authService = AuthService;
   $scope.maintenanceService = MaintenanceService;
   $scope.viewRegistry = ViewRegistry;
-  
-  if(!$location.path()) {
-	  AuthService.gotoDefaultPage();
-  }
   
 })
 
@@ -224,7 +223,9 @@ angular.module('step',['ngStorage','ngCookies'])
 //      console.log('Preventing location change to '+$location.path());
 //      event.preventDefault();
 //    }
-    lockLocationChangesUntilPathIsReached($location.path().substr(1).split("/"));
+    if($location.path()) {
+      lockLocationChangesUntilPathIsReached($location.path().substr(1).split("/"));
+    }
   });
   
   this.push = function($scope, ctrlID, defaults) {
@@ -391,7 +392,11 @@ angular.module('step',['ngStorage','ngCookies'])
   };  
   
   authService.gotoDefaultPage = function() {
-    $location.path('/root/artefacts')
+    if(serviceContext.conf && serviceContext.conf.defaultUrl) {
+      $location.path(serviceContext.conf.defaultUrl)
+    } else {
+      $location.path('/root/artefacts')
+    }
   }
  
   authService.isAuthenticated = function () {

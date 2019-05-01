@@ -152,6 +152,9 @@ public class AccessServices extends AbstractServices {
 		if(ctrlConf.hasProperty("logo.main")) {
 			conf.getMiscParams().put("logomain", ctrlConf.getProperty("logo.main"));			
 		}
+		if(ctrlConf.hasProperty("ui.default.url")) {
+			conf.setDefaultUrl(ctrlConf.getProperty("ui.default.url"));
+		}
 		return conf;
 	}
 	
