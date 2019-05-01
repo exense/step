@@ -44,7 +44,7 @@ public class ExecutionContext extends AbstractContext  {
 
 	private ReportNode report;
 	
-	private ExecutionStatus status;
+	private volatile ExecutionStatus status;
 	
 	private final VariablesManager variablesManager;
 				

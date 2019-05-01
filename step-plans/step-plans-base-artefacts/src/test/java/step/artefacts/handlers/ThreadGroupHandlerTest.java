@@ -63,13 +63,13 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		runner.run(plan).printTree(writer);
 		
 		Assert.assertEquals("ThreadGroup:PASSED:\n" + 
-				" Group_0_Iteration_0:PASSED:\n" + 
+				" Group_1_Iteration_1:PASSED:\n" + 
 				"  Check:PASSED:\n" + 
 				"  Check:PASSED:\n" + 
-				" Group_0_Iteration_1:PASSED:\n" + 
+				" Group_1_Iteration_2:PASSED:\n" + 
 				"  Check:PASSED:\n" + 
 				"  Check:PASSED:\n" + 
-				" Group_0_Iteration_2:PASSED:\n" + 
+				" Group_1_Iteration_3:PASSED:\n" + 
 				"  Check:PASSED:\n" + 
 				"  Check:PASSED:\n" + 
 				"", writer.toString());

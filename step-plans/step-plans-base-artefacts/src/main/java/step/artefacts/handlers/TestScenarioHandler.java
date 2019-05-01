@@ -18,15 +18,17 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import step.artefacts.TestScenario;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.threadpool.ThreadPool;
+import step.threadpool.ThreadPool.WorkerController;
+import step.threadpool.WorkerItemConsumerFactory;
 
 public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNode> {
 
@@ -42,23 +44,18 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
 		
 		List<AbstractArtefact> artefacts = getChildren(testArtefact);
-		ExecutorService executor = Executors.newFixedThreadPool(artefacts.size());
-		for(final AbstractArtefact child:artefacts) {
-			executor.submit(new Runnable() {
-				public void run() {
-					context.associateThread();
-					ReportNode childReportNode = delegateExecute(child, node);
-					reportNodeStatusComposer.addStatusAndRecompose(childReportNode.getStatus());
-				}
-			});
-		}
+		Iterator<AbstractArtefact> iterator = artefacts.iterator();
 		
-		executor.shutdown();
-		try {
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-		} catch (InterruptedException e) {
-			logger.error("An error occcurred while waiting for the executor to terminate",e);
-		}
+		ThreadPool threadPool = context.get(ThreadPool.class);
+		threadPool.consumeWork(iterator, new WorkerItemConsumerFactory<AbstractArtefact>() {
+			@Override
+			public Consumer<AbstractArtefact> createWorkItemConsumer(WorkerController<AbstractArtefact> control) {
+				return workItem -> {
+					ReportNode childReportNode = delegateExecute(workItem, node);
+					reportNodeStatusComposer.addStatusAndRecompose(childReportNode.getStatus());
+				};
+			}
+		}, artefacts.size());
 		
 		node.setStatus(reportNodeStatusComposer.getParentStatus());
 	}

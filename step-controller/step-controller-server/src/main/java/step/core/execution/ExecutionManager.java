@@ -4,7 +4,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.ImportResult;
 
-public interface ExecutionManager {
+public interface ExecutionManager extends ExecutionTypeListener {
 
 	void updateExecutionType(ExecutionContext context, String newType);
 

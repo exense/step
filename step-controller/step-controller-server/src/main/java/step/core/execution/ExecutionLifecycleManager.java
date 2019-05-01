@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.repositories.ImportResult;
@@ -37,11 +36,11 @@ public class ExecutionLifecycleManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionLifecycleManager.class);
 	
-	public ExecutionLifecycleManager(ExecutionAccessor executionAccessor, ExecutionContext context) {
+	public ExecutionLifecycleManager(ExecutionManager executionManager, ExecutionContext context) {
 		super();
 		this.context = context;
 		
-		this.executionManager = new ExecutionManagerImpl(executionAccessor);
+		this.executionManager = executionManager;
 		this.executionCallbacks = context.getExecutionCallbacks();
 	}
 

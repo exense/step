@@ -5,6 +5,7 @@ import org.bson.types.ObjectId;
 import step.core.GlobalContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
+import step.threadpool.ThreadPool;
 
 public class ControllerSideExecutionContextBuilder {
 
@@ -18,6 +19,12 @@ public class ControllerSideExecutionContextBuilder {
 		context.setReportNodeAccessor(globalContext.getReportAccessor());
 		context.setEventManager(globalContext.getEventManager());
 		context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
+		context.put(ThreadPool.class, new ThreadPool(context));
+		context.setExecutionTypeListener(new ExecutionTypeListener() {
+			@Override
+			public void updateExecutionType(ExecutionContext context, String newType) {
+			}
+		});
 		return context;
 	}
 }

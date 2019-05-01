@@ -19,10 +19,9 @@
 package step.artefacts.handlers;
 
 import java.util.HashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.Iterator;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
 
 import step.artefacts.Sequence;
 import step.artefacts.ThreadGroup;
@@ -31,6 +30,10 @@ import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
+import step.threadpool.IntegerSequenceIterator;
+import step.threadpool.ThreadPool;
+import step.threadpool.ThreadPool.WorkerController;
+import step.threadpool.WorkerItemConsumerFactory;
 
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 	
@@ -60,91 +63,85 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		
 		// Attach global iteration counter & user counter
 		LongAdder gcounter = new LongAdder();
-		// Using bindings instead
-		//context.getVariablesManager().putVariable(node, testArtefact.getItem().get(), gcounter);
-		
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
 		
-		ExecutorService executor = Executors.newFixedThreadPool(numberOfUsers);
-		try {
-			final long groupStartTime = System.currentTimeMillis();
-			
-			// -- Paralellize --
-			for(int j=0;j<numberOfUsers;j++) {
-				final int groupID = j;				
-				final long localStartOffset = testArtefact.getStartOffset().get()+(long)((1.0*groupID)/numberOfUsers*rampup);
-				executor.submit(new Runnable() {
-					public void run() {
-						context.associateThread();
-						
-						ReportNode iterationReportNode = null;
+		Iterator<Integer> groupIterator = new IntegerSequenceIterator(1,numberOfUsers,1);
+		
+		final long groupStartTime = System.currentTimeMillis();
+		
+		ThreadPool threadPool = context.get(ThreadPool.class);
+		threadPool.consumeWork(groupIterator, new WorkerItemConsumerFactory<Integer>() {
+			@Override
+			public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> groupController) {
+				return groupID -> {
+					try {
+						final long localStartOffset = testArtefact.getStartOffset().get()+(long)((1.0*groupID)/numberOfUsers*rampup);
+
 						try {
 							Thread.sleep(localStartOffset);
-							
-							// -- Iterate --
-							for(int i=0;i<numberOfIterations;i++) {
-								gcounter.increment();
-								
-								if(context.isInterrupted()) {
-									break;
-								}
-								
-								ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-								Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Group_"+groupID+"_Iteration_"+i);
-								
-								if(pacing!=0) {
-									iterationTestCase.setPacing(new DynamicValue<Long>((long)pacing));
-								}
-								
-								for(AbstractArtefact child:getChildren(testArtefact)) {
-									iterationTestCase.addChild(child.getId());
-								}
-								
-								HashMap<String, Object> newVariable = new HashMap<>();
-								newVariable.put(testArtefact.getLocalItem().get(), i);
-								newVariable.put(testArtefact.getUserItem().get(), groupID);
-								//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
-								newVariable.put(testArtefact.getItem().get(), gcounter.intValue());
-
-								iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
-								reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
-																
-								DynamicValue<Integer> maxDurationProp = testArtefact.getMaxDuration();
-								if(maxDurationProp != null) {
-									Integer maxDuration = maxDurationProp.get();
-									if(maxDuration > 0 && System.currentTimeMillis()>groupStartTime+maxDuration) {
-										break;
-									}
-								}
-							}
-						} catch (Exception e) {
-							if(iterationReportNode!=null) {
-								failWithException(iterationReportNode, e);
-								reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
-							}
+						} catch (InterruptedException e1) {
+							throw new RuntimeException(e1);
 						}
+						
+						IntegerSequenceIterator iterationIterator = new IntegerSequenceIterator(1, numberOfIterations, 1);
+						threadPool.consumeWork(iterationIterator, new WorkerItemConsumerFactory<Integer>() {
+							@Override
+							public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> iterationController) {
+								return i -> {
+									ReportNode iterationReportNode = null;
+									try {
+										gcounter.increment();
+										
+										ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
+										Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Group_"+groupID+"_Iteration_"+i);
+										
+										if(pacing!=0) {
+											iterationTestCase.setPacing(new DynamicValue<Long>((long)pacing));
+										}
+										
+										for(AbstractArtefact child:getChildren(testArtefact)) {
+											iterationTestCase.addChild(child.getId());
+										}
+										
+										HashMap<String, Object> newVariable = new HashMap<>();
+										newVariable.put(testArtefact.getLocalItem().get(), i);
+										newVariable.put(testArtefact.getUserItem().get(), groupID);
+										//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
+										newVariable.put(testArtefact.getItem().get(), gcounter.intValue());
+		
+										iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
+										reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
+																		
+										DynamicValue<Integer> maxDurationProp = testArtefact.getMaxDuration();
+										if(maxDurationProp != null) {
+											Integer maxDuration = maxDurationProp.get();
+											if(maxDuration > 0 && System.currentTimeMillis()>groupStartTime+maxDuration) {
+												iterationController.interrupt();
+												groupController.interrupt();
+											}
+										}
+									} catch (Exception e) {
+										if(iterationReportNode!=null) {
+											failWithException(iterationReportNode, e);
+											reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
+										}
+									}
+								};
+							}
+						}, 1);
+					} catch (Exception e) {
+						failWithException(node, e);
+						reportNodeStatusComposer.addStatusAndRecompose(node.getStatus());
 					}
-				});
+				};
 			}
-			
-			executor.shutdown();
-			executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
-			node.setStatus(reportNodeStatusComposer.getParentStatus());
-		} catch (InterruptedException e) {
-			failWithException(node, e);
-		} finally {
-			executor.shutdownNow();
-		}
+		}, numberOfUsers);
 		
-		
+		node.setStatus(reportNodeStatusComposer.getParentStatus());
 	}
 
 	@Override
 	public ReportNode createReportNode_(ReportNode parentNode, ThreadGroup testArtefact) {
 		return new ReportNode();
 	}
-	
-	
-	
-
 }

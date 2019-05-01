@@ -53,7 +53,7 @@ public class ExecutionRunnable implements Runnable {
 		this.repositoryObjectManager = repositoryObjectManager;
 		this.executionAccessor = executionAccessor;
 		this.context = context;
-		this.executionLifecycleManager = new ExecutionLifecycleManager(executionAccessor, context);
+		this.executionLifecycleManager = new ExecutionLifecycleManager(context.get(ExecutionManager.class), context);
 	}
 
 	public ExecutionContext getContext() {

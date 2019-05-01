@@ -22,6 +22,7 @@ import step.core.GlobalContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.threadpool.ThreadPool;
 
 public class ExecutionRunnableFactory {
 		
@@ -56,6 +57,10 @@ public class ExecutionRunnableFactory {
 			context.setReportNodeAccessor(globalContext.getReportAccessor());
 			context.setEventManager(globalContext.getEventManager());
 			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
+			ExecutionManager executionManager = new ExecutionManagerImpl(globalContext.getExecutionAccessor());
+			context.put(ExecutionManager.class, executionManager);
+			context.setExecutionTypeListener(executionManager);
+			context.put(ThreadPool.class, new ThreadPool(context));
 		}
 
 		context.setExecutionParameters(execution.getExecutionParameters());

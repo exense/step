@@ -21,13 +21,24 @@ package step.artefacts;
 import step.artefacts.handlers.TestSetHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(name = "TestSet", handler = TestSetHandler.class)
 public class TestSet extends AbstractArtefact {
 
+	private DynamicValue<Integer> threads = new DynamicValue<Integer>(1);
+	
 	public TestSet() {
 		super();
 		setCreateSkeleton(true);
+	}
+
+	public DynamicValue<Integer> getThreads() {
+		return threads;
+	}
+
+	public void setThreads(DynamicValue<Integer> threads) {
+		this.threads = threads;
 	}
 
 }

@@ -15,6 +15,7 @@ import step.core.plugins.ExecutionCallbacks;
 import step.expressions.ExpressionHandler;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceManager;
+import step.threadpool.ThreadPool;
 
 public class ContextBuilder {
 	
@@ -41,6 +42,12 @@ public class ContextBuilder {
 		context.setConfiguration(configuration);
 		
 		context.setEventManager(new EventManager());
+		context.put(ThreadPool.class, new ThreadPool(context));
+		context.setExecutionTypeListener(new ExecutionTypeListener() {
+			@Override
+			public void updateExecutionType(ExecutionContext context, String newType) {
+			}
+		});
 		
 		context.setExecutionCallbacks(new ExecutionCallbacks() {
 			
