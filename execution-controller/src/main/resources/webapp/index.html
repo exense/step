@@ -100,9 +100,9 @@ window.console.log = window.console.log || function(){};
 <body>
 <script>step.bootstrap();</script>
 <div ng-controller="AppController">
-	<div ng-if="isInitialized && authService.isAuthenticated()" ng-include="'partials/main.html'">
+	<div ng-if="isInitialized && (authService.isAuthenticated() || isPublicView())" ng-include="'partials/main.html'">
 	</div>
-	<div ng-if="isInitialized && !authService.isAuthenticated()" ng-include="'partials/loginForm.html'">
+	<div ng-if="isInitialized && !(authService.isAuthenticated() || isPublicView())" ng-include="'partials/loginForm.html'">
 	</div>
 </div>
 
