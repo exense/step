@@ -44,6 +44,7 @@ public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> imple
 		createOrUpdateIndex(executions_, "startTime");
 		createOrUpdateIndex(executions_, "description");
 		createOrUpdateIndex(executions_, "executionParameters.userID");
+		createOrUpdateIndex(executions_, "executionTaskID");
 	}
 
 	@Override
@@ -64,6 +65,13 @@ public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> imple
 	public List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference) {
 		List<Execution> result = new ArrayList<>();
 		collection.find("{executionParameters.artefact: #}", objectReference).as(Execution.class).forEach(e->result.add(e));;
+		return result;
+	}
+	
+	@Override
+	public List<Execution> getLastExecutionsBySchedulerTaskID(String schedulerTaskID, int limit) {
+		List<Execution> result = new ArrayList<>();
+		collection.find("{executionTaskID: #, status: { $eq: 'ENDED' }}", schedulerTaskID).sort("{ endTime: -1}").limit(limit).as(Execution.class).forEach(e->result.add(e));;
 		return result;
 	}
 	

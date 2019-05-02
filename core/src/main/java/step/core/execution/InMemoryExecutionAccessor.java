@@ -63,4 +63,9 @@ public class InMemoryExecutionAccessor extends InMemoryCRUDAccessor<Execution> i
 	public Iterable<Execution> findLastEnded(int limit) {
 		throw new RuntimeException("Not implemented");
 	}
+
+	@Override
+	public List<Execution> getLastExecutionsBySchedulerTaskID(String schedulerTaskID, int limit) {
+		throw new RuntimeException("Not implemented");
+	}
 }
