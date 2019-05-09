@@ -32,8 +32,9 @@ public class EventBrokerPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context)  throws Exception {
 		String circuitBreakerProp = context.getConfiguration().getProperty("eventbroker.circuitBreakerThreshold", "5000");
 		String statsOnProp = context.getConfiguration().getProperty("eventbroker.advancedStatsOn", "true");
+		String uniqueGroupNameOn = context.getConfiguration().getProperty("eventbroker.uniqueGroupNameOn", "true");
 		
-		eventBroker = new EventBroker(Long.parseLong(circuitBreakerProp), Boolean.parseBoolean(statsOnProp));
+		eventBroker = new EventBroker(Long.parseLong(circuitBreakerProp), Boolean.parseBoolean(statsOnProp), Boolean.parseBoolean(uniqueGroupNameOn));
 		context.put(EventBroker.class, eventBroker);
 		context.getServiceRegistrationCallback().registerService(EventBrokerServices.class);
 	}
