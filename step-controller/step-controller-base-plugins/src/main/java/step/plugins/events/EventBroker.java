@@ -18,7 +18,6 @@
  *******************************************************************************/
 package step.plugins.events;
 
-import java.security.MessageDigest;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
@@ -48,7 +48,7 @@ public class EventBroker {
 	private LongAdder cumulatedAttemptedGroupGets;
 	private LongAdder cumulatedPeeks;
 
-	private int sizeWaterMark = 0;
+	private AtomicInteger sizeWaterMark = new AtomicInteger(0);
 
 	public static String DEFAULT_GROUP_VALUE = "<default>";
 	public static String DEFAULT_NAME_VALUE = "<default>";
@@ -127,34 +127,19 @@ public class EventBroker {
 	/** Main primitives, based on id **/
 
 	public Event put(Event event) throws Exception{
-		if(event == null)
-			throw new Exception("Event is null.");
-
-		if(event.getGroup() == null)
-			event.setGroup(DEFAULT_GROUP_VALUE);
-
-		if(event.getName() == null)
-			event.setName(DEFAULT_NAME_VALUE);
+		clearMisunderstandings(event);
 		
 		Event ret = null;
 		Event putRetEvent = null;
 		String mapKey = null;
-
-		int size = events.size();
-
-		if(size >= this.circuitBreakerThreshold)
-			throw new Exception("Broker size exceeds " + this.circuitBreakerThreshold + " events. Circuit breaker is on.");
 
 		//Group/Name use case
 		if(event.getId() == null || event.getId().isEmpty()){
 
 			//Unique Group-Name combos use case -> similar to uuid use case
 			if(this.uniqueGroupNameOn){
-				MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-				messageDigest.update(("{"+ event.getGroup()+"}--{"+event.getName()+"}").getBytes());
-				mapKey = new String(messageDigest.digest());
-				
-				//ret = null; // we let put() decide of the returned value
+				mapKey = buildUniqueId(event);
+				//"ret" stays null, we let put() decide of the returned value
 			}
 			//Allowing multiple events for same group+name
 			else {
@@ -172,19 +157,46 @@ public class EventBroker {
 
 		event.setInsertionTimestamp(System.currentTimeMillis());
 
+		// intentionally not synchronized: the watermark is provided for information purposes, not a reliable counter for decision-making
+		int size = events.size();
+		if(size < this.circuitBreakerThreshold) {
 		// we want to return the previous value in the Id use case (putRetEvent)
-		putRetEvent = events.put(mapKey, event);
+			putRetEvent = events.put(mapKey, event);
+			updateBrokerStats(size);
+			return ret==null?putRetEvent:ret;
+		}else {
+			throw new Exception("Broker size exceeds " + this.circuitBreakerThreshold + " events. Event with id: "+event.getId()+" was discarded.");
+		}
+	}
 
+	private void updateBrokerStats(int size) {
 		if(this.advancedStatsOn){
 			this.cumulatedPuts.increment();
-
-			// we're avoiding to call CHM.size() again which is an expensive call
-			if(size + 1 > this.sizeWaterMark){ 
-				this.sizeWaterMark = size + 1;
-			}
+			this.sizeWaterMark.incrementAndGet();
 		}
+	}
 
-		return ret==null?putRetEvent:ret;
+	
+	private void clearMisunderstandings(Event event) throws Exception {
+		if(event == null)
+			throw new Exception("Event is null.");
+
+		if(event.getGroup() == null)
+			event.setGroup(DEFAULT_GROUP_VALUE);
+
+		if(event.getName() == null)
+			event.setName(DEFAULT_NAME_VALUE);
+	}
+
+	private String buildUniqueId(Event event) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("{");
+		sb.append(event.getGroup());
+		sb.append("}--{");
+		sb.append(event.getName());
+		sb.append("}");
+		
+		return sb.toString();
 	}
 
 	public Event get(String id){
@@ -364,7 +376,7 @@ public class EventBroker {
 
 	/** Not fully reliable due to the nature of CHM **/
 	public int getSizeWaterMark() {
-		return sizeWaterMark;
+		return sizeWaterMark.get();
 	}
 
 	public Event findOldestEvent(){
@@ -414,7 +426,7 @@ public class EventBroker {
 		this.cumulatedAttemptedGroupGets = new LongAdder();
 		this.cumulatedPeeks = new LongAdder();
 
-		this.sizeWaterMark = 0;
+		this.sizeWaterMark = new AtomicInteger(0);
 	}
 	/****/
 
