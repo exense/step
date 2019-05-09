@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.plugins.events;
 
+import java.security.MessageDigest;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,8 +37,10 @@ import java.util.stream.Collectors;
 public class EventBroker {
 
 	private ConcurrentHashMap<String, Event> events;
+	
 	private long circuitBreakerThreshold;
 	private boolean advancedStatsOn;
+	private boolean uniqueGroupNameOn;
 
 	private LongAdder cumulatedPuts;
 	private LongAdder cumulatedGets;
@@ -53,12 +56,14 @@ public class EventBroker {
 	public EventBroker(){
 		this.circuitBreakerThreshold = 5000L;
 		this.advancedStatsOn = true;
+		this.uniqueGroupNameOn = true;
 		init();
 	}
 
-	public EventBroker(long circuitBreakerThreshold, boolean advancedStatsOn){
+	public EventBroker(long circuitBreakerThreshold, boolean advancedStatsOn, boolean hashedGroupNameOn){
 		this.circuitBreakerThreshold = circuitBreakerThreshold;
 		this.advancedStatsOn = advancedStatsOn;
+		this.uniqueGroupNameOn = hashedGroupNameOn;
 		init();
 	}
 
@@ -92,6 +97,14 @@ public class EventBroker {
 
 	public void setCircuitBreakerThreshold(long circuitBreakerThreshold) {
 		this.circuitBreakerThreshold = circuitBreakerThreshold;
+	}
+	
+	public boolean isUniqueGroupNameOn() {
+		return uniqueGroupNameOn;
+	}
+
+	public void setUniqueGroupNameOn(boolean hashedGroupNameOn) {
+		this.uniqueGroupNameOn = hashedGroupNameOn;
 	}
 
 	public int getSize(){
@@ -132,13 +145,27 @@ public class EventBroker {
 		if(size >= this.circuitBreakerThreshold)
 			throw new Exception("Broker size exceeds " + this.circuitBreakerThreshold + " events. Circuit breaker is on.");
 
+		//Group/Name use case
 		if(event.getId() == null || event.getId().isEmpty()){
-			mapKey = UUID.randomUUID().toString();
+
+			//Unique Group-Name combos use case -> similar to uuid use case
+			if(this.uniqueGroupNameOn){
+				MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+				messageDigest.update(("{"+ event.getGroup()+"}--{"+event.getName()+"}").getBytes());
+				mapKey = new String(messageDigest.digest());
+				
+				//ret = null; // we let put() decide of the returned value
+			}
+			//Allowing multiple events for same group+name
+			else {
+				mapKey = UUID.randomUUID().toString();
+
+				//since we allow collisions, there won't ever be a meaningful previous value (always null)
+				//so we might as well return the event itself. Benefit: the uuid will be known to the client 
+				ret = event;
+			}
+			
 			event.setId(mapKey);
-
-			//we're in the Group use case, so we prefer to return the event itself (benefit: returning the uuid to the user) 
-			ret = event;
-
 		}else{
 			mapKey = event.getId();
 		} 
@@ -335,7 +362,7 @@ public class EventBroker {
 		return stats;
 	}
 
-	/** Unreliable due to the nature of CHM **/
+	/** Not fully reliable due to the nature of CHM **/
 	public int getSizeWaterMark() {
 		return sizeWaterMark;
 	}
