@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +38,8 @@ public class ExpressionHandler {
 	
 	private final Integer executionTimeWarningTreshold;
 	
+	private final String scriptBaseClass;
+	
 	public ExpressionHandler() {
 		this(null);
 	}
@@ -46,6 +50,7 @@ public class ExpressionHandler {
 	
 	public ExpressionHandler(String scriptBaseClass, Integer executionTimeWarningTreshold, int poolMaxTotal, int poolMaxIdle) {
 		super();
+		this.scriptBaseClass = scriptBaseClass;
 		this.groovyPool = new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxIdle);
 		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
 	}
@@ -78,6 +83,18 @@ public class ExpressionHandler {
 					}
 					groovyPool.returnShell(entry);
 				}
+			} catch (MultipleCompilationErrorsException e) {
+				for (Object error : e.getErrorCollector().getErrors()) {
+					if(error instanceof SyntaxErrorMessage) {
+						String message = ((SyntaxErrorMessage) error).getCause().getMessage();
+						if(message.contains("unable to resolve class") && message.contains(scriptBaseClass)) {
+							throw new Exception("Unable to resolve groovy macro class '" + scriptBaseClass + 
+									"'. Please ensure that the groovy script containing your custom macros is available in the classpath.", e);
+						}
+					}
+					System.out.println(error.getClass());
+				}
+				throw e;
 			} catch (Exception e) {
 				logger.error("An error occurred while evaluation groovy expression " + expression, e);
 				throw e;
