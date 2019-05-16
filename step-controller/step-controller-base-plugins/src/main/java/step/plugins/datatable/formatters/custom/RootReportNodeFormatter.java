@@ -43,10 +43,12 @@ public class RootReportNodeFormatter implements Formatter {
 					logger.error("Error while serializing report node "+rootReportNode, e);
 				}
 			} else {
-				logger.error("Unable to find root report node for execution "+eid);
+				logger.error("Error while getting root report node for execution. "
+						+ "Iterator.next() returned null although Iterator.hasNext() returned true. "
+						+ "This should not occur "+eid);
 			}
 		} else {
-			logger.error("No children found for report node with id "+rootReportNode.getId());
+			logger.debug("No children found for report node with id "+rootReportNode.getId());
 		}
 		return "{}";
 	}
