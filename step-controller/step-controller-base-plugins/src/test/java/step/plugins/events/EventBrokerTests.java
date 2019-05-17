@@ -40,7 +40,7 @@ public class EventBrokerTests {
 
 	@Before
 	public void before(){
-		eb = new EventBroker(1000, true);
+		eb = new EventBroker(1000, true, false);
 	}
 
 	@After
@@ -53,6 +53,23 @@ public class EventBrokerTests {
 		Assert.assertEquals(null,eb.get("an_id_that_is_absent"));
 	}
 
+	@Test
+	public void testNameOverride() throws Exception{
+		
+		eb.setUniqueGroupNameOn(true);
+		
+		eb.put(new Event().setName("name_override"));
+		Event firstEvent = eb.peek(EventBroker.DEFAULT_GROUP_VALUE, "name_override");
+		Assert.assertNotNull(firstEvent);
+		Assert.assertNotNull(firstEvent.getId());
+		
+		eb.put(new Event().setName("name_override"));
+		Assert.assertEquals(1, eb.getSize());
+		Event secondEvent = eb.peek(EventBroker.DEFAULT_GROUP_VALUE, "name_override");
+		Assert.assertNotNull(secondEvent);
+		Assert.assertNotNull(secondEvent.getId());
+		Assert.assertNotSame(firstEvent.getId(), secondEvent.getId());
+	}
 
 	@Test
 	public void testGetEvent() throws Exception{

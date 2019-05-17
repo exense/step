@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
@@ -36,8 +37,10 @@ import java.util.stream.Collectors;
 public class EventBroker {
 
 	private ConcurrentHashMap<String, Event> events;
+	
 	private long circuitBreakerThreshold;
 	private boolean advancedStatsOn;
+	private boolean uniqueGroupNameOn;
 
 	private LongAdder cumulatedPuts;
 	private LongAdder cumulatedGets;
@@ -45,7 +48,7 @@ public class EventBroker {
 	private LongAdder cumulatedAttemptedGroupGets;
 	private LongAdder cumulatedPeeks;
 
-	private int sizeWaterMark = 0;
+	private AtomicInteger sizeWaterMark = new AtomicInteger(0);
 
 	public static String DEFAULT_GROUP_VALUE = "<default>";
 	public static String DEFAULT_NAME_VALUE = "<default>";
@@ -53,12 +56,14 @@ public class EventBroker {
 	public EventBroker(){
 		this.circuitBreakerThreshold = 5000L;
 		this.advancedStatsOn = true;
+		this.uniqueGroupNameOn = true;
 		init();
 	}
 
-	public EventBroker(long circuitBreakerThreshold, boolean advancedStatsOn){
+	public EventBroker(long circuitBreakerThreshold, boolean advancedStatsOn, boolean hashedGroupNameOn){
 		this.circuitBreakerThreshold = circuitBreakerThreshold;
 		this.advancedStatsOn = advancedStatsOn;
+		this.uniqueGroupNameOn = hashedGroupNameOn;
 		init();
 	}
 
@@ -93,6 +98,14 @@ public class EventBroker {
 	public void setCircuitBreakerThreshold(long circuitBreakerThreshold) {
 		this.circuitBreakerThreshold = circuitBreakerThreshold;
 	}
+	
+	public boolean isUniqueGroupNameOn() {
+		return uniqueGroupNameOn;
+	}
+
+	public void setUniqueGroupNameOn(boolean hashedGroupNameOn) {
+		this.uniqueGroupNameOn = hashedGroupNameOn;
+	}
 
 	public int getSize(){
 		return events.size();
@@ -114,6 +127,57 @@ public class EventBroker {
 	/** Main primitives, based on id **/
 
 	public Event put(Event event) throws Exception{
+		clearMisunderstandings(event);
+		
+		Event ret = null;
+		Event putRetEvent = null;
+		String mapKey = null;
+
+		//Group/Name use case
+		if(event.getId() == null || event.getId().isEmpty()){
+
+			//Unique Group-Name combos use case -> similar to uuid use case
+			if(this.uniqueGroupNameOn){
+				mapKey = buildUniqueId(event);
+				//"ret" stays null, we let put() decide of the returned value
+			}
+			//Allowing multiple events for same group+name
+			else {
+				mapKey = UUID.randomUUID().toString();
+
+				//since we allow collisions, there won't ever be a meaningful previous value (always null)
+				//so we might as well return the event itself. Benefit: the uuid will be known to the client 
+				ret = event;
+			}
+			
+			event.setId(mapKey);
+		}else{
+			mapKey = event.getId();
+		} 
+
+		event.setInsertionTimestamp(System.currentTimeMillis());
+
+		// intentionally not synchronized: the watermark is provided for information purposes, not a reliable counter for decision-making
+		int size = events.size();
+		if(size < this.circuitBreakerThreshold) {
+		// we want to return the previous value in the Id use case (putRetEvent)
+			putRetEvent = events.put(mapKey, event);
+			updateBrokerStats(size);
+			return ret==null?putRetEvent:ret;
+		}else {
+			throw new Exception("Broker size exceeds " + this.circuitBreakerThreshold + " events. Event with id: "+event.getId()+" was discarded.");
+		}
+	}
+
+	private void updateBrokerStats(int size) {
+		if(this.advancedStatsOn){
+			this.cumulatedPuts.increment();
+			this.sizeWaterMark.incrementAndGet();
+		}
+	}
+
+	
+	private void clearMisunderstandings(Event event) throws Exception {
 		if(event == null)
 			throw new Exception("Event is null.");
 
@@ -122,42 +186,17 @@ public class EventBroker {
 
 		if(event.getName() == null)
 			event.setName(DEFAULT_NAME_VALUE);
+	}
+
+	private String buildUniqueId(Event event) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("{");
+		sb.append(event.getGroup());
+		sb.append("}--{");
+		sb.append(event.getName());
+		sb.append("}");
 		
-		Event ret = null;
-		Event putRetEvent = null;
-		String mapKey = null;
-
-		int size = events.size();
-
-		if(size >= this.circuitBreakerThreshold)
-			throw new Exception("Broker size exceeds " + this.circuitBreakerThreshold + " events. Circuit breaker is on.");
-
-		if(event.getId() == null || event.getId().isEmpty()){
-			mapKey = UUID.randomUUID().toString();
-			event.setId(mapKey);
-
-			//we're in the Group use case, so we prefer to return the event itself (benefit: returning the uuid to the user) 
-			ret = event;
-
-		}else{
-			mapKey = event.getId();
-		} 
-
-		event.setInsertionTimestamp(System.currentTimeMillis());
-
-		// we want to return the previous value in the Id use case (putRetEvent)
-		putRetEvent = events.put(mapKey, event);
-
-		if(this.advancedStatsOn){
-			this.cumulatedPuts.increment();
-
-			// we're avoiding to call CHM.size() again which is an expensive call
-			if(size + 1 > this.sizeWaterMark){ 
-				this.sizeWaterMark = size + 1;
-			}
-		}
-
-		return ret==null?putRetEvent:ret;
+		return sb.toString();
 	}
 
 	public Event get(String id){
@@ -335,9 +374,9 @@ public class EventBroker {
 		return stats;
 	}
 
-	/** Unreliable due to the nature of CHM **/
+	/** Not fully reliable due to the nature of CHM **/
 	public int getSizeWaterMark() {
-		return sizeWaterMark;
+		return sizeWaterMark.get();
 	}
 
 	public Event findOldestEvent(){
@@ -387,7 +426,7 @@ public class EventBroker {
 		this.cumulatedAttemptedGroupGets = new LongAdder();
 		this.cumulatedPeeks = new LongAdder();
 
-		this.sizeWaterMark = 0;
+		this.sizeWaterMark = new AtomicInteger(0);
 	}
 	/****/
 

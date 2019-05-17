@@ -24,15 +24,19 @@ angular.module('reportTree',['step','artefacts'])
     scope: {
       nodeid: '=',
       handle: '='
+    
     },
     controller: function($scope) {
-      
+      $scope.reportTreeSettings = {
+    	'skip' : '',
+    	'limit' : ''
+      };
     },
     link: function($scope, $element) {
       var nodeid = $scope.nodeid;
       
       var treeDiv = angular.element($element[0]).find('#jstree_div');
-      
+      console.log($scope.reportTreeSettings);
       var tree;
       treeDiv.jstree(
           {
@@ -42,7 +46,9 @@ angular.module('reportTree',['step','artefacts'])
             },
             'data' : function (obj, cb) {
               var id = obj.id==='#'?nodeid:obj.id;
-              $http.get("rest/controller/reportnode/"+id+"/children").then(function(response) {
+              console.log($scope.reportTreeSettings);
+              $http.get("rest/controller/reportnode/"+id+"/children?skip="+$scope.reportTreeSettings.skip+"&limit="+$scope.reportTreeSettings.limit).then(function(response) {
+              //$http.get("rest/controller/reportnode/"+id+"/children").then(function(response) {
                 var nodes = response.data;
                var children=_.map(nodes,function(node){
                  // node.resolvedArtefact has been introduced with 3.6.0. We're checking it here for retrocompatibility. Remove this check has soon as possible
@@ -98,8 +104,8 @@ angular.module('reportTree',['step','artefacts'])
         tree.select_node(id);
       }
       
-      $scope.handle.expandPath = function(path) {
-        expandPath(path.slice(0), function() {
+      $scope.handle.expandPath = function(path, reportTreeSettings) {
+    	  expandPath(path.slice(0), function() {
           selectNode(path[path.length-1].reportNode.id);
         })
       }
