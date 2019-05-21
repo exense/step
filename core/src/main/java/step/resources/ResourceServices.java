@@ -133,7 +133,6 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@GET
-	@Secured
 	@Path("/{id}/content")
 	public Response getResourceContent(@PathParam("id") String resourceId, @QueryParam("inline") boolean inline) throws IOException {
 		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
@@ -148,7 +147,6 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@GET
-	@Secured
     @Path("/revision/{id}/content")
 	public Response getResourceRevisionContent(@PathParam("id") String resourceRevisionId, @QueryParam("inline") boolean inline) throws IOException {
 		ResourceRevisionContentImpl resourceContent = resourceManager.getResourceRevisionContent(resourceRevisionId);
