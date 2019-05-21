@@ -98,6 +98,7 @@ angular.module('tables', ['export','dataTable'])
       collection: '=?',
       filter: '=?',
       dom: '=?',
+      order: '=?',
       persistState: '='
     },
     transclude : {
@@ -125,6 +126,9 @@ angular.module('tables', ['export','dataTable'])
         controller.newCycle();
       };
       tableOptions.columns = controller.dtColumns;
+      if(scope.order) {
+        tableOptions.order = scope.order;        
+      }
 
       if (scope.persistState) {
         if (scope.uid) {
