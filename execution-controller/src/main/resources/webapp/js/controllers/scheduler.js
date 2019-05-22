@@ -22,56 +22,18 @@ schedulerController.run(function(ViewRegistry) {
   ViewRegistry.registerDashlet('admin/controller','Scheduler','partials/scheduler/schedulerConfiguration.html');
 });
 
-schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$uibModal', 'AuthService','Dialogs', 
-  function($scope, $http,$stateStorage, $uibModal,AuthService, Dialogs) {
+schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage', '$location', '$uibModal', 'AuthService','Dialogs', 
+  function($scope, $http,$stateStorage, $location, $uibModal,AuthService, Dialogs) {
     $stateStorage.push($scope, 'scheduler', {});
     
     $scope.authService = AuthService;
     
-	$scope.datatable = {}
-
-	var actionColRender = function ( data, type, row ) {
-    	var html = '<div class="input-group">' +
-        	'<div class="btn-group">' +
-        	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#SchedulerCtrl\').scope().editTask(\''+row[0]+'\')">' +
-        	'<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
-        	'<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#SchedulerCtrl\').scope().askAndDeleteTask(\''+row[0]+'\',true)">' +
-        	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
-        	'</button> ' +
-        	'</div>' +
-        	'</div>';
-    	return html;
-    }
-	
-	var statusColRender = function ( data, type, row ) {
-	  var html = '<button type="button" class="btn btn-primary" onclick="angular.element(\'#SchedulerCtrl\').scope().toggleTaskState(\''+row[0]+'\','+data+')" aria-pressed="false" autocomplete="off">'+(data?'On':'Off')+'</button>';
-    return html;
-	}
-	
-	$scope.tabledef = {}
-	$scope.tabledef.defaultSelection = 'none'
-	$scope.tabledef.columns = [ {"title" : "ID", "visible": false}, 
-	                   {"title" : "cronExpression"}, 
-	                   {"title" : "Description"},
-	                   {"title" : "Actions", "render" : actionColRender},
-	                   {"title" : "Status", "render" : statusColRender}];
-	
-	$scope.loadTable = function loadTable() {	
-		$http.get("rest/controller/task").then(function(response) {
-		  var data = response.data;
-			var dataSet = [];
-			for (i = 0; i < data.length; i++) {
-				dataSet[i] = [data[i].id,
-				              data[i].cronExpression,
-				              data[i].name,
-				              data[i].id,
-				              data[i].active];
-			}
-			$scope.tabledef.data = dataSet;
-			
-		});
-	};
-	
+    $scope.loadTable = function loadTable() {
+      $http.get("rest/controller/task").then(function(response) {
+        $scope.schedulerTasks = response.data;
+      });
+    };
+    
 	$scope.enableSelected = function(remove) {
       var rows = $scope.datatable.getSelection().selectedItems;
       
@@ -80,20 +42,24 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
       }
     };
   
-  $scope.toggleTaskState = function(id, currentState) {
-    if(currentState) {
-      $scope.deleteTask(id, false);
-    } else {
-      $scope.enableTask(id);
+    $scope.toggleTaskState = function(id, currentState) {
+      if(currentState) {
+        $scope.deleteTask(id, false);
+      } else {
+        $scope.enableTask(id);
+      }
     }
-  }
     
-  $scope.enableTask = function(id) {
-  	$http.put("rest/controller/task/"+id).then(function() {
-          $scope.loadTable();
+    $scope.enableTask = function(id) {
+      $http.put("rest/controller/task/"+id).then(function() {
+        $scope.loadTable();
       });
-  }
-
+    }
+  
+    $scope.saveTask = function(task) {
+      $http.post("rest/controller/task",task).then()
+    }
+    
 	$scope.deleteSelected = function(remove) {
 	  var rows = $scope.datatable.getSelection().selectedItems;
 	  var itemCount = rows.length
@@ -114,6 +80,16 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	  }
 
 	};
+  
+  $scope.executeTask = function(task) {
+    $http.post("rest/controller/execution",task.executionsParameters).then(
+        function(response) {
+          var eId = response.data;
+          
+          $location.$$search = {};
+          $location.path('/root/executions/'+eId);
+        });
+    };
 	
 	$scope.editTask = function(id) {
 	  $http.get("rest/controller/task/"+id).then(function(response){
@@ -141,12 +117,12 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	  })
   }
 	
-	$scope.deleteTask = function(id, remove) {
-		$http.delete("rest/controller/task/"+id+"?remove="+remove).then(function() {
-			$scope.loadTable();
-		});		
-	}
-	
+  $scope.deleteTask = function(id, remove) {
+    $http.delete("rest/controller/task/"+id+"?remove="+remove).then(function() {
+      $scope.loadTable();
+    });   
+  }
+  
 	$scope.loadTable($scope,$http);
   }]);
 

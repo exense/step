@@ -47,6 +47,20 @@ angular.module('components',['step'])
   };
 })
 
+.directive('planLink', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      planRef: '=',
+      description: '=?'
+    },
+    templateUrl: 'partials/components/planLink.html',
+    controller: function($scope, $http) {
+      
+    }
+  };
+})
+
 .directive('date', function() {
   return {
     restrict: 'E',
