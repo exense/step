@@ -21,6 +21,8 @@ package step.commons.processmanager;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -163,6 +165,20 @@ public class ManagedProcess implements Closeable {
 	}
 	
 	public void destroy() {
+		if(logger.isDebugEnabled()) {
+			try {
+				String errorLog = new String(Files.readAllBytes(getProcessErrorLog().toPath()), Charset.defaultCharset());
+				logger.debug("Error output from managed process "+id+": " + errorLog);
+				logger.debug("End of error output from managed process "+id);
+				
+				String stdOut = new String(Files.readAllBytes(getProcessOutputLog().toPath()), Charset.defaultCharset());
+				logger.debug("Standard output from managed process "+id+": " + stdOut);
+				logger.debug("End of standard output from managed process "+id);
+			} catch (IOException e) {
+				logger.error("Error while logging output of process "+id, e);
+			}
+		}
+		
 		if(process!=null) {
 			process.destroy();
 			try {
