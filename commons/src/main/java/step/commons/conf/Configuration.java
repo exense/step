@@ -97,7 +97,7 @@ public class Configuration {
             String key = m.group(1);
             if(placeholders!=null) {
             	String replacement = placeholders.get(key);
-            	m.appendReplacement(sb, replacement);
+            	m.appendReplacement(sb, Matcher.quoteReplacement(replacement));
             } else {
             	throw new RuntimeException("Not able to replace placeholder '"+key+"'.Placeholder map is null");
             }
@@ -171,6 +171,10 @@ public class Configuration {
 
 	public File getPropertyFile() {
 		return propertyFile;
+	}
+
+	public Map<String, String> getPlaceholders() {
+		return placeholders;
 	}
 
 }
