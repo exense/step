@@ -97,9 +97,13 @@ public class Configuration {
             String key = m.group(1);
             if(placeholders!=null) {
             	String replacement = placeholders.get(key);
-            	m.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+            	if(replacement == null) {
+            		throw new RuntimeException("Missing placeholder '"+key+"'.");
+            	} else {
+            		m.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+            	}
             } else {
-            	throw new RuntimeException("Not able to replace placeholder '"+key+"'.Placeholder map is null");
+            	throw new RuntimeException("Unable to replace placeholders. Placeholder map is null. This should never occur.");
             }
         }
         m.appendTail(sb);
