@@ -160,7 +160,7 @@ public class EventBroker {
 		// intentionally not synchronized: the watermark is provided for information purposes, not a reliable counter for decision-making
 		int size = events.size();
 		if(size < this.circuitBreakerThreshold) {
-		// we want to return the previous value in the Id use case (putRetEvent)
+			// we want to return the previous value in the Id use case (putRetEvent)
 			putRetEvent = events.put(mapKey, event);
 			updateBrokerStats(size);
 			return ret==null?putRetEvent:ret;
@@ -172,7 +172,9 @@ public class EventBroker {
 	private void updateBrokerStats(int size) {
 		if(this.advancedStatsOn){
 			this.cumulatedPuts.increment();
-			this.sizeWaterMark.incrementAndGet();
+			
+			if (size > this.sizeWaterMark.get())
+				this.sizeWaterMark.set(size);
 		}
 	}
 
