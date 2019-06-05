@@ -123,7 +123,11 @@ public class Executor {
 	}
 
 	public String execute(ExecutionParameters executionParameters) {
-		Execution execution = executionRunnableFactory.createExecution(executionParameters, null);
+		return execute(executionParameters, null);
+	}
+	
+	public String execute(ExecutionParameters executionParameters, String executionTaskId) {
+		Execution execution = executionRunnableFactory.createExecution(executionParameters, executionTaskId);
 		
 		Trigger trigger = TriggerBuilder.newTrigger().startNow().build();
 

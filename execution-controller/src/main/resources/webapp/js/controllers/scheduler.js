@@ -82,7 +82,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http','stateStorage
 	};
   
   $scope.executeTask = function(task) {
-    $http.post("rest/controller/execution",task.executionsParameters).then(
+    $http.post("rest/controller/task/" + task.id + "/execute").then(
         function(response) {
           var eId = response.data;
           
