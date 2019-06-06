@@ -144,6 +144,16 @@ public class AdminServices extends AbstractServices {
 		controllerSettingsAccessor.save(setting);
 	}
 	
+	@GET
+	@Secured
+	@Path("/myaccount")
+	@Produces(MediaType.APPLICATION_JSON)
+	public User getMyUser(@Context ContainerRequestContext crc) {
+		Session session = (Session) crc.getProperty("session");
+		User user = getContext().getUserAccessor().getByUsername(session.username);
+		return user;
+	}
+	
 	@POST
 	@Secured
 	@Path("/myaccount/changepwd")

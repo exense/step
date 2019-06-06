@@ -173,7 +173,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
       }
       
       $scope.user = {};
-      $http.get("rest/admin/user/"+$rootScope.context.userID).then(function(response) {
+      $http.get("rest/admin/myaccount").then(function(response) {
         var user = response.data;
         $scope.user=user;
         
