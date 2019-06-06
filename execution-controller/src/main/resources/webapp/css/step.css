@@ -383,3 +383,14 @@ table.executionTableResult td {
 .form-inline div.form-group {
 	margin-bottom: 5px;
 }
+
+.duration-field {
+	color: white;
+	padding: 4px;
+	border-radius: 6px;
+	font-size: 75%;
+	display: inline-block;
+	text-align:center;
+	background-color:#6d6d6d;
+	width:100px;
+}
