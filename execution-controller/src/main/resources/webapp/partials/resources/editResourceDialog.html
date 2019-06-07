@@ -16,7 +16,7 @@
 			<label>Content</label>
 			<div class="input-group">
 				<div ngf-drop="upload($file)" uib-tooltip="Drag and drop the resource file here">
-					<input disabled type="text" class="disabled form-control" ng-model="resource.resourceName" />
+					<input readonly="readonly" type="text" class="disabled form-control" ng-model="resource.resourceName" />
 				</div>
 				<div class="input-group-btn">
 					<a class="btn btn-default" href="rest/resources/{{resource.id}}/content">
