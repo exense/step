@@ -81,6 +81,9 @@ tecAdminControllers.directive('executionParameters', function($rootScope, $http,
       
       $scope.updateForm = function() {
         retrieveInputs();
+        if($scope.stOnChange) {
+          $scope.stOnChange($scope.model)
+        }
       }
       
       function retrieveInputs() {        
