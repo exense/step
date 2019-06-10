@@ -89,4 +89,9 @@ public class RemoteExecutionAccessor extends AbstractRemoteClient implements Exe
 	public Iterator<Execution> getAll() {
 		throw notImplemented();
 	}
+
+	@Override
+	public List<Execution> getLastExecutionsBySchedulerTaskID(String schedulerTaskID, int limit) {
+		throw notImplemented();
+	}	
 }
