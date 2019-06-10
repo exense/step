@@ -632,6 +632,10 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
             $scope.autorefresh = true;
             
             $scope.table = {};
+
+            var descriptionTemplate = $compile('<report-node-icon node="rootReportNode" /> <a href="#/root/executions/{{executionId}}">{{executionDescription}}</a>')
+            var resultTemplate = $compile("<table class=\"executionTableResult\"><tr><td><execution-result execution='execution' /></td><td><status-distribution progress='distribution' /></td></tr></table>");
+            var timeTemplate = $compile("<date time='time' />");
             
             $scope.tabledef = {uid:'executions'}
             $scope.tabledef.columns = function(columns) {
@@ -644,9 +648,11 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
                   var rowScope = $scope.$new(true, $scope);
                   $scope.table.trackScope(rowScope);
                   rowScope.rootReportNode = JSON.parse(rowData[_.findIndex(columns, function(entry){return entry.title=='RootReportNode'})])
-                  var content = $compile('<report-node-icon node="rootReportNode" /> <a href="#/root/executions/'+rowData[0]+'">'+cellData+'</a>')(rowScope);
+                  rowScope.executionId = rowData[0];
+                  rowScope.executionDescription = cellData;
+                  var content = descriptionTemplate(rowScope,function(){});
                   angular.element(td).html(content);  
-                  rowScope.$apply();
+                  rowScope.$digest();
                 };
               });
               _.each(_.where(columns,{'title':'Start time'}),function(col){
@@ -654,9 +660,9 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
                   var rowScope = $scope.$new(true, $scope);
                   $scope.table.trackScope(rowScope);
                   rowScope.time = cellData;
-                  var content = $compile("<date time='time' />")(rowScope);
+                  var content = timeTemplate(rowScope,function(){});
                   angular.element(td).html(content);  
-                  rowScope.$apply();
+                  rowScope.$digest();
                 };
               });
               _.each(_.where(columns,{'title':'End time'}),function(col){
@@ -664,9 +670,9 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
                   var rowScope = $scope.$new(true, $scope);
                   $scope.table.trackScope(rowScope);
                   rowScope.time = cellData;
-                  var content = $compile("<date time='time' />")(rowScope);
+                  var content = timeTemplate(rowScope,function(){});
                   angular.element(td).html(content);  
-                  rowScope.$apply();
+                  rowScope.$digest();
                 };
               });
               _.each(_.where(columns,{'title':'Status'}),function(col){
@@ -679,9 +685,9 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
                   $scope.table.trackScope(rowScope);
                   rowScope.execution = JSON.parse(rowData[_.findIndex(columns, function(entry){return entry.title=='Execution'})])
                   rowScope.distribution = JSON.parse(rowData[_.findIndex(columns, function(entry){return entry.title=='Summary'})])
-                  var content = $compile("<table class=\"executionTableResult\"><tr><td><execution-result execution='execution' /></td><td><status-distribution progress='distribution' /></td></tr></table>")(rowScope);
+                  var content = resultTemplate(rowScope,function(){});
                   angular.element(td).html(content);  
-                  rowScope.$apply();
+                  rowScope.$digest();
                 };
               });
               return columns;
@@ -693,7 +699,7 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
             }
             
             var refreshTimer = $interval(function(){
-              if($scope.autorefresh){refresh();}}, 5000);
+              if($scope.autorefresh){refresh();}}, 10000);
             
             $scope.$on('$destroy', function() {
               $interval.cancel(refreshTimer);
