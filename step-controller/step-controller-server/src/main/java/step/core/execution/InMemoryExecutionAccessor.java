@@ -18,8 +18,10 @@
  *******************************************************************************/
 package step.core.execution;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 
@@ -66,6 +68,11 @@ public class InMemoryExecutionAccessor extends InMemoryCRUDAccessor<Execution> i
 
 	@Override
 	public List<Execution> getLastExecutionsBySchedulerTaskID(String schedulerTaskID, int limit) {
-		throw new RuntimeException("Not implemented");
+		return map.values().stream().filter(e->schedulerTaskID.equals(e.getExecutionTaskID())).sorted(new Comparator<Execution>() {
+			@Override
+			public int compare(Execution o1, Execution o2) {
+				return -o1.getEndTime().compareTo(o2.getEndTime());
+			}
+		}).limit(limit).collect(Collectors.toList());
 	}
 }
