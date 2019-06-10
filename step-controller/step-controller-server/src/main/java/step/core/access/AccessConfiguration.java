@@ -13,6 +13,8 @@ public class AccessConfiguration {
 	List<String> roles;
 	
 	Map<String,String> miscParams;
+	
+	String defaultUrl;
 
 	public AccessConfiguration() {
 		super();
@@ -49,5 +51,13 @@ public class AccessConfiguration {
 
 	public void setMiscParams(Map<String, String> miscParams) {
 		this.miscParams = miscParams;
+	}
+
+	public String getDefaultUrl() {
+		return defaultUrl;
+	}
+
+	public void setDefaultUrl(String defaultUrl) {
+		this.defaultUrl = defaultUrl;
 	}
 }
