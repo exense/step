@@ -38,7 +38,7 @@ public class ExportServices extends AbstractServices {
 	public void init() throws Exception {
 		super.init();
 		ArtefactAccessor accessor = getContext().getArtefactAccessor();
-		exportTaskManager = new ExportTaskManager(getContext().get(ResourceManager.class));
+		exportTaskManager = getContext().get(ExportTaskManager.class);
 		exportManager = new ExportManager(accessor);
 	}
 
@@ -82,7 +82,6 @@ public class ExportServices extends AbstractServices {
 	@Path("/{id}/status")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
 	public ExportStatus getExportStatus(@PathParam("id") String id) {
 		return exportTaskManager.getExportStatus(id);
 	}

@@ -72,7 +72,6 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@POST
-	@Secured
 	@Path("/{id}/content")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -109,7 +108,6 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@GET
-	@Secured
     @Path("/revision/{id}/content")
 	public Response getResourceRevisionContent(@PathParam("id") String resourceRevisionId, @QueryParam("inline") boolean inline) throws IOException {
 		ResourceRevisionContentImpl resourceContent = resourceManager.getResourceRevisionContent(resourceRevisionId);

@@ -200,7 +200,6 @@ public class ControllerServer {
 		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
-		resourceConfig.registerClasses(ExportServices.class, ImportServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	
 			@Override
