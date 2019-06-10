@@ -22,4 +22,6 @@ public interface ExecutionAccessor extends CRUDAccessor<Execution> {
 
 	Iterable<Execution> findLastEnded(int limit);
 
+	List<Execution> getLastExecutionsBySchedulerTaskID(String schedulerTaskID, int limit);
+
 }
