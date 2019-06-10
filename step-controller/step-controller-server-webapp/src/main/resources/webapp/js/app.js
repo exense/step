@@ -56,8 +56,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   
   var customMenuEntries = [];
   
-  api.getViewTemplate = function (view) {
-    var customView = customViews[view];
+  function getCustomView(view) {
+	var customView = customViews[view];
     if(customView) {
       return customView;
     } else {
@@ -65,8 +65,19 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
     }
   }
   
-  api.registerView = function(viewId,template) {
-    customViews[viewId] = template;
+  api.getViewTemplate = function (view) {
+    return getCustomView(view).template;
+  }
+  
+  api.isPublicView = function (view) {
+	return getCustomView(view).isPublicView;
+  }  
+  
+  api.registerView = function(viewId,template,isPublicView) {
+	if(!isPublicView) {
+		isPublicView = false;
+	}
+    customViews[viewId] = {template:template, isPublicView:isPublicView}
   }
   
   api.registerCustomMenuEntry = function(label, viewId) {
@@ -107,6 +118,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   ViewRegistry.registerView('reportBrowser','partials/reportBrowser.html');
   ViewRegistry.registerView('admin','partials/admin.html');
   ViewRegistry.registerView('myaccount','partials/myaccount.html');
+  ViewRegistry.registerView('login','partials/loginForm.html',true);
 })
 
 .controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, MaintenanceService, ViewRegistry) {
@@ -133,12 +145,18 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   $scope.getViewTemplate = function () {
     return ViewRegistry.getViewTemplate($scope.$state);
   };
+
+  $scope.isPublicView = function () {
+    return ViewRegistry.isPublicView($scope.$state);
+  };
   
   $scope.authService = AuthService;
   $scope.maintenanceService = MaintenanceService;
   $scope.viewRegistry = ViewRegistry;
   
-  AuthService.gotoDefaultPage();
+  if(!$location.path()) {
+	  AuthService.gotoDefaultPage();
+  }
   
 })
 
@@ -353,6 +371,9 @@ angular.module('step',['ngStorage','ngCookies'])
         var session = res.data;
         setContext(session);
         $rootScope.$broadcast('step.login.succeeded');
+        if($location.path().indexOf('login') !== -1) {
+        	authService.gotoDefaultPage();
+        }
       });
   };
   
@@ -365,10 +386,12 @@ angular.module('step',['ngStorage','ngCookies'])
       });
   };
   
+  authService.goToLoginPage = function () {
+    return $location.path('/root/login')
+  };  
+  
   authService.gotoDefaultPage = function() {
-    if(!$location.path()) {
-      $location.path('/root/artefacts')    
-    }
+    $location.path('/root/artefacts')
   }
  
   authService.isAuthenticated = function () {
