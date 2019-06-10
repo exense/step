@@ -159,6 +159,16 @@ public class AdminServices extends AbstractServices {
 	
 	@GET
 	@Secured
+	@Path("/myaccount")
+	@Produces(MediaType.APPLICATION_JSON)
+	public User getMyUser(@Context ContainerRequestContext crc) {
+		Session session = (Session) crc.getProperty("session");
+		User user = getContext().getUserAccessor().getByUsername(session.username);
+		return user;
+	}
+		
+	@GET
+	@Secured
 	@Path("/myaccount/preferences")
 	public Preferences getPreferences(@Context ContainerRequestContext crc) {
 		Session session = (Session) crc.getProperty("session");
