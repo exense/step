@@ -80,12 +80,16 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
     customViews[viewId] = {template:template, isPublicView:isPublicView}
   }
   
-  api.registerCustomMenuEntry = function(label, viewId) {
-    customMenuEntries.push({label: label, viewId: viewId})
+  api.registerCustomMenuEntry = function(label, viewId, mainMenu, menuIconClass) {
+    customMenuEntries.push({label: label, viewId: viewId, mainMenu: mainMenu, menuIconClass: menuIconClass})
   }
   
   api.getCustomMenuEntries = function() {
-    return customMenuEntries;
+    return _.filter(customMenuEntries,function(e){return !e.mainMenu});
+  }
+  
+  api.getCustomMainMenuEntries = function() {
+    return _.filter(customMenuEntries,function(e){return e.mainMenu == true});
   }
   
   var customDashlets = {};
