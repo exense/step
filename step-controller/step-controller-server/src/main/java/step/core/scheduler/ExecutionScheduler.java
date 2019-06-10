@@ -110,6 +110,12 @@ public class ExecutionScheduler {
 		return executor.execute(executionParameters);
 	}
 
+	public String executeExecutionTask(String executionTaskID, String user) {
+		ExecutiontTaskParameters task = get(executionTaskID);
+		task.getExecutionsParameters().setUserID(user);
+		return executor.execute(task.getExecutionsParameters(), executionTaskID);
+	}
+	
 	public ExecutiontTaskParameters get(String id) {
 		return context.getScheduleAccessor().get(new ObjectId(id));
 	}

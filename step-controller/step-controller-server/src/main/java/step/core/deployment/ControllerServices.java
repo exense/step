@@ -38,6 +38,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -80,8 +82,21 @@ public class ControllerServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/task")
 	@Secured(right="task-write")
-	public void execute(ExecutiontTaskParameters schedule) {
+	public void schedule(ExecutiontTaskParameters schedule) {
 		getScheduler().addExecutionTask(schedule);
+	}
+	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/task/{id}/execute")
+	@Secured(right="plan-execute")
+	public String execute(@PathParam("id") String executionTaskID, @Context ContainerRequestContext crc) {
+		Session session = (Session) crc.getProperty("session");
+		if(session!=null) {
+			return getScheduler().executeExecutionTask(executionTaskID, session.username);
+		} else {
+			throw new RuntimeException("Invalid session");
+		}
 	}
 	
 	@PUT
