@@ -131,7 +131,7 @@ public class Executor {
 	}
 	
 	public String execute(ExecutionParameters executionParameters, String executionTaskId) {
-		Execution execution = executionRunnableFactory.createExecution(executionParameters, null);
+		Execution execution = executionRunnableFactory.createExecution(executionParameters, executionTaskId);
 		
 		Trigger trigger = TriggerBuilder.newTrigger().startNow().build();
 
