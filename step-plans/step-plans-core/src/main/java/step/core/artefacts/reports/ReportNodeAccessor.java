@@ -45,4 +45,5 @@ public interface ReportNodeAccessor extends CRUDAccessor<ReportNode>, ReportTree
 
 	Iterator<ReportNode> getChildren(String parentID);
 
+	void removeNodesByExecutionID(String executionID);
 }

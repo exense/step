@@ -94,7 +94,7 @@ public class InMemoryReportNodeAccessor extends InMemoryCRUDAccessor<ReportNode>
 
 	@Override
 	public Iterator<ReportNode> getReportNodesByExecutionID(String executionID) {
-		throw new RuntimeException("Not implemented");
+		return map.values().stream().filter(e->e.getExecutionID().equals(executionID)).iterator();
 	}
 
 	@Override
@@ -149,6 +149,11 @@ public class InMemoryReportNodeAccessor extends InMemoryCRUDAccessor<ReportNode>
 	@Override
 	public ReportNode get(String id) {
 		return get(new ObjectId(id));
+	}
+
+	@Override
+	public void removeNodesByExecutionID(String executionID) {
+		map.entrySet().removeIf(e->e.getValue().getExecutionID().equals(executionID));
 	}
 
 }

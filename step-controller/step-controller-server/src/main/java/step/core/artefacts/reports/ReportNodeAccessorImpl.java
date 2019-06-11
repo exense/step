@@ -251,4 +251,10 @@ public class ReportNodeAccessorImpl extends AbstractCRUDAccessor<ReportNode> imp
 	public Iterator<ReportNode> getChildren(String parentID) {
 		return getChildren(new ObjectId(parentID));
 	}
+
+	@Override
+	public void removeNodesByExecutionID(String executionID) {
+		assert executionID != null;
+		collection.remove("{executionID: #}", executionID);
+	}
 }

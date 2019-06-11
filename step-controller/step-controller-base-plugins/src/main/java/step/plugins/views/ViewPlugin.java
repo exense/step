@@ -29,8 +29,9 @@ public class ViewPlugin extends AbstractPlugin {
 	public void executionControllerStart(GlobalContext context) {
 		loadViews();
 		
-		accessor = new ViewModelAccessor(context.getMongoClientSession());
+		accessor = new ViewModelAccessorImpl(context.getMongoClientSession());
 		
+		context.put(ViewModelAccessor.class, accessor);
 		context.getServiceRegistrationCallback().registerService(ViewPluginServices.class);
 		context.put(VIEW_PLUGIN_KEY, this);
 	}

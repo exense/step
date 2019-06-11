@@ -26,6 +26,8 @@ import step.functions.Function;
 @Plugin
 public class RtmPlugin extends AbstractPlugin {
 
+	public static final String ATTRIBUTE_EXECUTION_ID = "eId";
+
 	MeasurementAccessor accessor;
 	
 	boolean measureReportNodes;
@@ -47,7 +49,7 @@ public class RtmPlugin extends AbstractPlugin {
 		measureReportNodes = stepProperties.getPropertyAsBoolean("plugins.rtm.measurereportnodes", true);
 		
 		MongoCollection<Document> measurements = context.getMongoClientSession().getMongoDatabase().getCollection("measurements");
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements,"eId", "begin");
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements,ATTRIBUTE_EXECUTION_ID, "begin");
 		AbstractAccessor.createOrUpdateIndex(measurements,"begin");
 		
 		WebAppContext webappCtx = new WebAppContext();
@@ -67,6 +69,7 @@ public class RtmPlugin extends AbstractPlugin {
 		context.getServiceRegistrationCallback().registerHandler(webappCtx);
 
 		accessor = MeasurementAccessor.getInstance();
+		context.put(MeasurementAccessor.class, accessor);
 	}
 
 	@Override
@@ -91,7 +94,7 @@ public class RtmPlugin extends AbstractPlugin {
 			Map<String, Object> measurement;
 			if(measureReportNodes) {
 				measurement = new HashMap<>();
-				measurement.put("eId", stepReport.getExecutionID());
+				measurement.put(ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
 				measurement.put("name", stepReport.getFunctionAttributes().get(Function.NAME));
 				measurement.put("value", (long)stepReport.getDuration());
 				measurement.put("begin", stepReport.getExecutionTime());
@@ -105,7 +108,7 @@ public class RtmPlugin extends AbstractPlugin {
 			if(stepReport.getMeasures()!=null) {
 				for(Measure measure:stepReport.getMeasures()) {
 					measurement = new HashMap<>();
-					measurement.put("eId", stepReport.getExecutionID());
+					measurement.put(ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
 					measurement.put("name", measure.getName());
 					measurement.put("value", measure.getDuration());
 					measurement.put("begin", measure.getBegin());
