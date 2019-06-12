@@ -27,6 +27,7 @@ import step.core.dynamicbeans.DynamicValue;
 public class While extends AbstractArtefact {
 
 	private DynamicValue<Boolean> condition = new DynamicValue<>("", "");
+	private DynamicValue<Boolean> postCondition = new DynamicValue<>("", "");
 	DynamicValue<Long> pacing = new DynamicValue<Long>();
 	DynamicValue<Long> timeout = new DynamicValue<Long>();
 	DynamicValue<Integer> maxIterations = new DynamicValue<Integer>();
@@ -51,6 +52,14 @@ public class While extends AbstractArtefact {
 		this.condition = condition;
 	}
 	
+	public DynamicValue<Boolean> getPostCondition() {
+		return postCondition;
+	}
+
+	public void setPostCondition(DynamicValue<Boolean> postCondition) {
+		this.postCondition = postCondition;
+	}
+
 	public DynamicValue<Long> getPacing() {
 		return pacing;
 	}

@@ -62,11 +62,12 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
 		DynamicValueResolver resolver = new DynamicValueResolver(context.getExpressionHandler());
 		DynamicValue<Boolean> condition = testArtefact.getCondition(); 
+		DynamicValue<Boolean> postCondition = testArtefact.getPostCondition();
 
 		ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
 		
 		try {
-			while(reevaluateCondition(resolver, condition) && condition.get() 														// expression is true
+			while(reevaluateCondition(resolver, condition) && (condition.get()==null || condition.get()) 														// expression is true
 					&& 		  (timeout == 0 || System.currentTimeMillis() < maxTime)	// infinite Timeout or timeout not reached
 					&&  (maxIterations == 0 || currIterationsCount < maxIterations)){	// maxIterations infinite or not reached
 
@@ -90,6 +91,12 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 				}
 				
 				currIterationsCount++;
+
+				reevaluateCondition(resolver, postCondition);
+				Boolean postConditionValue = postCondition.get();
+				if(postConditionValue != null && !postConditionValue) {
+					break;
+				}
 			}
 			
 			node.setErrorCount(failedLoops);
