@@ -1,4 +1,4 @@
-package step.core.artefacts;
+package step.core.accessors;
 
 import java.io.IOException;
 import java.util.Map;

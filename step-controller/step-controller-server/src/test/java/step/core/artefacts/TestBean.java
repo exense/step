@@ -6,6 +6,9 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import step.core.accessors.MapDeserializer;
+import step.core.accessors.MapSerializer;
+
 public class TestBean {
 
 	@JsonSerialize(using = MapSerializer.class)

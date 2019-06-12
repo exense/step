@@ -1,6 +1,12 @@
 package step.core.accessors;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bson.types.ObjectId;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * This class is the parent class of all objects that have to be identified
@@ -10,6 +16,10 @@ import org.bson.types.ObjectId;
 public class AbstractIdentifiableObject {
 
 	protected ObjectId _id;
+	
+	@JsonSerialize(using = MapSerializer.class)
+	@JsonDeserialize(using = MapDeserializer.class) 
+	protected Map<String, Object> customFields;
 	
 	public AbstractIdentifiableObject() {
 		super();
@@ -28,5 +38,28 @@ public class AbstractIdentifiableObject {
 	 */
 	public void setId(ObjectId _id) {
 		this._id = _id;
+	}
+
+	public Map<String, Object> getCustomFields() {
+		return customFields;
+	}
+
+	public void setCustomFields(Map<String, Object> customFields) {
+		this.customFields = customFields;
+	}
+	
+	public Object getCustomField(String key) {
+		if(customFields!=null) {
+			return customFields.get(key);
+		} else {
+			return null;
+		}
+	}
+
+	public synchronized void addCustomField(String key, Object value) {
+		if(customFields==null) {
+			customFields = new HashMap<>();
+		}
+		customFields.put(key, value);
 	}
 }

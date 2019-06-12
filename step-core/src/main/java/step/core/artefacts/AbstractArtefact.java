@@ -32,6 +32,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.MapDeserializer;
+import step.core.accessors.MapSerializer;
 
 @JsonTypeInfo(use=Id.CUSTOM,property="_class")
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)
