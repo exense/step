@@ -51,4 +51,16 @@ public class ArtefactManager {
 		accessor.save(artefact);
 		return cloneId;
 	}
+	
+	public void removeRecursive(ObjectId artefactId) {
+		AbstractArtefact artefact = accessor.get(artefactId);
+		if(artefact!=null) {
+			if(artefact.getChildrenIDs()!=null) {
+				for(ObjectId childId:artefact.getChildrenIDs()) {
+					removeRecursive(childId);
+				}
+			}
+			accessor.remove(artefactId);
+		}
+	}
 }

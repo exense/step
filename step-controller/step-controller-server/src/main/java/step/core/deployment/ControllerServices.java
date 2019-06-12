@@ -579,19 +579,6 @@ public class ControllerServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-delete")
 	public void deleteArtefact(@PathParam("id") String id) {
-		ArtefactAccessor a = getContext().getArtefactAccessor();
-		removeRecursive(new ObjectId(id), a);
-	}
-
-	private void removeRecursive(ObjectId id, ArtefactAccessor a) {
-		AbstractArtefact artefact = a.get(id);
-		if(artefact!=null) {
-			if(artefact.getChildrenIDs()!=null) {
-				for(ObjectId childId:artefact.getChildrenIDs()) {
-					removeRecursive(childId, a);
-				}
-			}
-			a.remove(id);
-		}
+		getContext().getArtefactManager().removeRecursive(new ObjectId(id));
 	}
 }
