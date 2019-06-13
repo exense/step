@@ -48,6 +48,9 @@ public class ExecutionRunnableFactory {
 			context.setReportNodeAccessor(globalContext.getReportAccessor());
 			context.setEventManager(globalContext.getEventManager());
 			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
+			
+			ExecutionManager executionManager = new ExecutionManagerImpl(globalContext.getExecutionAccessor());
+			context.put(ExecutionManager.class, executionManager);
 		} else {
 			context = new ExecutionContext(executionId);
 			context.setExpressionHandler(globalContext.getExpressionHandler());
