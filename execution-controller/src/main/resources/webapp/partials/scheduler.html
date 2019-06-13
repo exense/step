@@ -12,12 +12,10 @@
 					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 					<cell><plan-link plan-ref="row.executionsParameters.artefact" description="row.name"/></cell>
 				</st-column>
-				<st-column>
-					<header>Parameters</header>
-					<second-header></second-header>
-					<cell>
-						<execution-parameters model="row.executionsParameters.customParameters" st-on-change="saveTask(row)" st-inline="true" />
-					</cell>
+				<st-column name="executionsParameters.customParameters.env">
+					<header>Environment</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell><span>{{row.executionsParameters.customParameters.env}}</span></cell>
 				</st-column>
 				<st-column name="cronExpression">
 					<header>CRON Expression</header>
