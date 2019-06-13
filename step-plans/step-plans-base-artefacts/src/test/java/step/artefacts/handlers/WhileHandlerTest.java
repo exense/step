@@ -19,15 +19,20 @@
 package step.artefacts.handlers;
 
 import static junit.framework.Assert.assertEquals;
-import static step.planbuilder.BaseArtefacts.*;
+import static step.planbuilder.BaseArtefacts.sequence;
+import static step.planbuilder.BaseArtefacts.set;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.CheckArtefact;
+import step.artefacts.Echo;
 import step.artefacts.Set;
+import step.artefacts.Sleep;
 import step.artefacts.While;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -109,6 +114,141 @@ public class WhileHandlerTest extends AbstractArtefactHandlerTest {
 				"   Set:PASSED:\n" + 
 				"" ,writer.toString());
 	}
+	
+	@Test
+	public void testPacingAsInteger() throws Exception {
+		// Create a sequence block with a pacing defined as an Integer
+		Integer pacing = 500;
+		While block = new While();
+		block.setPacing(new DynamicValue<>("500", ""));
+		block.setMaxIterations(new DynamicValue<>(1));
 
+		Echo echo = new Echo();
+		echo.setText(new DynamicValue<>("'This is a test'", ""));
+		
+		// Create a plan with this while block
+		Plan plan = PlanBuilder.create()
+				.startBlock(block).add(echo)
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		
+		// Get start time
+		Long startTime = System.currentTimeMillis();
+		PlanRunnerResult result = planRunner.run(plan);
+		Long duration = System.currentTimeMillis() - startTime;
+		Assert.assertTrue("Execution took less time than defined pacing", duration >= pacing);
+		
+		// Print the report tree and assert it matches the expected report
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+				
+		Assert.assertEquals("While:PASSED:\n" + 
+				" Iteration_0:PASSED:\n" +
+				"  Echo:PASSED:\n" +
+				"", writer.toString());	
+	}
+	
+	@Test
+	public void testPacingAsLong() throws Exception {
+		// Create a sequence block with a pacing defined as a Long
+		Long pacing = 500l;
+		While block = new While();
+		block.setPacing(new DynamicValue<>("500l", ""));
+		block.setMaxIterations(new DynamicValue<>(1));
+
+		Echo echo = new Echo();
+		echo.setText(new DynamicValue<>("'This is a test'", ""));
+		
+		// Create a plan with this while block
+		Plan plan = PlanBuilder.create()
+				.startBlock(block).add(echo)
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		
+		// Get start time
+		Long startTime = System.currentTimeMillis();
+		PlanRunnerResult result = planRunner.run(plan);
+		Long duration = System.currentTimeMillis() - startTime;
+		Assert.assertTrue("Execution took less time than defined pacing", duration >= pacing);
+		
+		// Print the report tree and assert it matches the expected report
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+				
+		Assert.assertEquals("While:PASSED:\n" + 
+				" Iteration_0:PASSED:\n" +
+				"  Echo:PASSED:\n" +
+				"", writer.toString());	
+	}
+	
+	@Test
+	public void testTimeoutExceeded() throws Exception {
+		long timeout = 50l;
+		
+		// As Long
+		AtomicInteger count = new AtomicInteger(0);
+		StringWriter writer = testTimeout("100l", timeout, count);
+		Assert.assertTrue(writer.toString().startsWith("While:"+ReportNodeStatus.PASSED));
+		Assert.assertTrue(count.get()<10);
+		
+		// As Integer
+		count = new AtomicInteger(0);
+		writer = testTimeout("100", timeout, count);
+		Assert.assertTrue(writer.toString().startsWith("While:"+ReportNodeStatus.PASSED));
+		Assert.assertTrue(count.get()<10);
+	}
+	
+	@Test
+	public void testTimeoutDefault() throws Exception {
+		long timeout = 0l;
+		
+		// As Long
+		AtomicInteger count = new AtomicInteger(0);
+		StringWriter writer = testTimeout("100l" ,timeout, count);
+		Assert.assertTrue(writer.toString().startsWith("While:"+ReportNodeStatus.PASSED));
+		Assert.assertTrue(count.get()==10);
+		
+		// As Integer
+		count = new AtomicInteger(0);
+		writer = testTimeout("100", timeout, count);
+		Assert.assertTrue(writer.toString().startsWith("While:"+ReportNodeStatus.PASSED));
+		Assert.assertTrue(count.get()==10);
+	}
+	
+	@Test
+	public void testEmptyTimeoutDefault() throws Exception {
+		long timeout = 0l;
+		
+		// Empty, so no timeout
+		AtomicInteger count = new AtomicInteger(0);
+		StringWriter writer = testTimeout("" ,timeout, count);
+		Assert.assertTrue(writer.toString().startsWith("While:"+ReportNodeStatus.PASSED));
+		Assert.assertTrue(count.get()==10);
+	}
+	
+	private StringWriter testTimeout(String timeoutExpresssion, long timeout, AtomicInteger count) throws IOException {
+		While artefact = new While();
+		artefact.setTimeout(new DynamicValue<>(timeoutExpresssion, ""));
+		artefact.setMaxIterations(new DynamicValue<Integer>(10));
+		
+		Sleep sleep = new Sleep();
+		sleep.setDuration(new DynamicValue<Long>(timeout));
+		
+		CheckArtefact check = new CheckArtefact(c-> {
+			count.incrementAndGet();
+		});
+		
+		Plan plan = PlanBuilder.create().startBlock(artefact).add(sleep).add(check).endBlock().build();
+		DefaultPlanRunner runner = new DefaultPlanRunner();
+		
+		StringWriter writer = new StringWriter();
+		runner.run(plan).printTree(writer);
+		return writer;
+	}		
 }
-

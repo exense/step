@@ -18,6 +18,8 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import static step.artefacts.helper.ArtefactHandlerHelper.getNumberValueAsLong;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -45,8 +47,8 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 	}
 
 	private void evaluateExpressionAndDelegate(WhileReportNode node, While testArtefact, boolean execution) {
-		Long timeoutValue = testArtefact.getTimeout().get();
-		long timeout = timeoutValue==null?0:timeoutValue;
+		Number timeoutNumber = testArtefact.getTimeout().get();
+		long timeout = getNumberValueAsLong(timeoutNumber, 0l);
 		long maxTime = System.currentTimeMillis() + timeout;
 
 		Integer maxIterationsValue = testArtefact.getMaxIterations().get();
@@ -55,8 +57,8 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
 		int failedLoops = 0;
 		
-		Long pacingValue = testArtefact.getPacing().get();
-		long pacing = pacingValue==null?0:pacingValue;
+		Number pacingNumber = testArtefact.getPacing().get();
+		long pacing = getNumberValueAsLong(pacingNumber, 0l);
 
 		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 

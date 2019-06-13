@@ -20,12 +20,21 @@ package step.artefacts.handlers;
 
 import static junit.framework.Assert.assertEquals;
 
+import java.io.StringWriter;
+
 import org.junit.Test;
 
+import junit.framework.Assert;
+import step.artefacts.Echo;
 import step.artefacts.Sequence;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.plans.Plan;
+import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.DefaultPlanRunner;
+import step.core.plans.runner.PlanRunner;
+import step.core.plans.runner.PlanRunnerResult;
 
 public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -154,5 +163,99 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals(1, getChildren(child).size());
 	}
 	
-}
+	@Test
+	public void testPacingAsInteger() throws Exception {
+		// Create a sequence block with a pacing defined as an Integer
+		Integer pacing = 500;
+		Sequence block = new Sequence();
+		block.setPacing(new DynamicValue<>("500", ""));
+	
+		Echo echo = new Echo();
+		echo.setText(new DynamicValue<>("'This is a test'", ""));
+		
+		// Create a plan with this sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(block).add(echo)
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		
+		// Get start time
+		Long startTime = System.currentTimeMillis();
+		PlanRunnerResult result = planRunner.run(plan);
+		Long duration = System.currentTimeMillis() - startTime;	
+		Assert.assertTrue("Execution took less time than defined pacing", duration >= pacing);
+		
+		// Print the report tree and assert it matches the expected report
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+			
+		Assert.assertEquals("Sequence:PASSED:\n" + 
+				" Echo:PASSED:\n" +
+				"" , writer.toString());				
+	}
+	
+	@Test
+	public void testPacingAsLong() throws Exception {
+		// Create a sequence block with a pacing defined as a Long
+		Long pacing = 500l;
+		Sequence block = new Sequence();
+		block.setPacing(new DynamicValue<>("500l", ""));
+	
+		Echo echo = new Echo();
+		echo.setText(new DynamicValue<>("'This is a test'", ""));
+		
+		// Create a plan with this sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(block).add(echo)
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
 
+		// Get start time
+		Long startTime = System.currentTimeMillis();
+		PlanRunnerResult result = planRunner.run(plan);
+		Long duration = System.currentTimeMillis() - startTime;
+		Assert.assertTrue("Execution took less time than defined pacing", duration <= pacing);
+		
+		// Print the report tree and assert it matches the expected report
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+			
+		Assert.assertEquals("Sequence:PASSED:\n" + 
+				" Echo:PASSED:\n" +
+				"" , writer.toString());				
+	}	
+	
+	@Test
+	public void testEmptyPacing() throws Exception {
+		// Create a sequence block with a an empty pacing value
+		Sequence block = new Sequence();
+		block.setPacing(new DynamicValue<>("", ""));
+	
+		Echo echo = new Echo();
+		echo.setText(new DynamicValue<>("'This is a test'", ""));
+		
+		// Create a plan with this sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(block).add(echo)
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		// Print the report tree and assert it matches the expected report
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+			
+		Assert.assertEquals("Sequence:PASSED:\n" + 
+				" Echo:PASSED:\n" +
+				"" , writer.toString());				
+	}	
+}
