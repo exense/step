@@ -1,14 +1,14 @@
 package step.plugins.java;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
 import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(dependencies= {GridPlugin.class})
-public class JavaPlugin extends AbstractPlugin {
+public class JavaPlugin extends AbstractControllerPlugin {
 	
 	@Override
 	public WebPlugin getWebPlugin() {

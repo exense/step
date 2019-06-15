@@ -1,14 +1,14 @@
 package step.plugins.selenium;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
 import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(dependencies= {GridPlugin.class})
-public class SeleniumPlugin extends AbstractPlugin {
+public class SeleniumPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {

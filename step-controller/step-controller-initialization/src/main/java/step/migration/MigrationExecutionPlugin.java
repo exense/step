@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
 import step.core.Version;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.versionmanager.ControllerLog;
 import step.versionmanager.VersionManager;
@@ -33,7 +33,7 @@ import step.versionmanager.VersionManagerPlugin;
 /**
  * This plugin is responsible for the execution of the Migration Tasks
  */
-public class MigrationExecutionPlugin extends AbstractPlugin {
+public class MigrationExecutionPlugin extends AbstractControllerPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(MigrationExecutionPlugin.class);
 	

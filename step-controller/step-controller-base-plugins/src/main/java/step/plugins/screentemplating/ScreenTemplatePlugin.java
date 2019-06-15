@@ -21,11 +21,11 @@ package step.plugins.screentemplating;
 import java.util.Arrays;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class ScreenTemplatePlugin extends AbstractPlugin {
+public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 
 	protected ScreenTemplateManager screenTemplateManager;
 	protected ScreenInputAccessor screenInputAccessor;

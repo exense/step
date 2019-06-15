@@ -36,7 +36,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
@@ -62,7 +62,7 @@ public class ExecutionRunnableTest {
 	@Test 
 	public void test() throws Exception {
 		GlobalContext globalContext = GlobalContextBuilder.createGlobalContext();
-		globalContext.getPluginManager().register(new AbstractPlugin() {
+		globalContext.getPluginManager().register(new AbstractControllerPlugin() {
 
 			@Override
 			public void executionStart(ExecutionContext context) {

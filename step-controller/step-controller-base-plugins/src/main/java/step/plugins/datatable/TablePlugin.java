@@ -19,11 +19,11 @@
 package step.plugins.datatable;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class TablePlugin extends AbstractPlugin {
+public class TablePlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) {

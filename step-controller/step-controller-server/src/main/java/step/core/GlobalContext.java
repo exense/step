@@ -28,7 +28,7 @@ import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.EventManager;
 import step.core.execution.model.ExecutionAccessor;
-import step.core.plugins.PluginManager;
+import step.core.plugins.ControllerPluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.expressions.ExpressionHandler;
@@ -37,7 +37,7 @@ public class GlobalContext extends AbstractContext {
 	
 	private Configuration configuration; 
 	
-	private PluginManager pluginManager;
+	private ControllerPluginManager pluginManager;
 	
 	private RepositoryObjectManager repositoryObjectManager;
 	
@@ -131,11 +131,11 @@ public class GlobalContext extends AbstractContext {
 		this.userAccessor = userAccessor;
 	}
 
-	public PluginManager getPluginManager() {
+	public ControllerPluginManager getPluginManager() {
 		return pluginManager;
 	}
 
-	public void setPluginManager(PluginManager pluginManager) {
+	public void setPluginManager(ControllerPluginManager pluginManager) {
 		this.pluginManager = pluginManager;
 	}
 

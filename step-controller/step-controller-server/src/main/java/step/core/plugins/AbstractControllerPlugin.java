@@ -18,12 +18,31 @@
  *******************************************************************************/
 package step.core.plugins;
 
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.ResourceHandler;
+
 import step.core.GlobalContext;
 
-public interface PluginCallbacks extends ExecutionCallbacks {
+public abstract class AbstractControllerPlugin extends AbstractExecutionPlugin implements ControllerPluginCallbacks {
 
-	public void executionControllerStart(GlobalContext context) throws Exception;
+	@Override
+	public void executionControllerStart(GlobalContext context)  throws Exception {}
+
+	@Override
+	public void executionControllerDestroy(GlobalContext context) {}
+
+	public WebPlugin getWebPlugin() {
+		return null;
+	}
 	
-	public void executionControllerDestroy(GlobalContext context);
-
+	protected void registerWebapp(GlobalContext context, String path) {
+		ResourceHandler bb = new ResourceHandler();
+		
+		bb.setResourceBase(this.getClass().getResource("webapp").toExternalForm());
+		
+		ContextHandler ctx = new ContextHandler(path);
+		ctx.setHandler(bb);
+		
+		context.getServiceRegistrationCallback().registerHandler(ctx);
+	}
 }

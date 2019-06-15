@@ -1,7 +1,7 @@
 package step.plugins.scripteditor;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
 import step.functions.Function;
@@ -11,7 +11,7 @@ import step.functions.plugin.GridPlugin;
 import step.plugins.java.GeneralScriptFunction;
 
 @Plugin(dependencies= {GridPlugin.class})
-public class ScriptEditorPlugin extends AbstractPlugin {
+public class ScriptEditorPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {

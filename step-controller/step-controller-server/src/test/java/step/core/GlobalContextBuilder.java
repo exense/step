@@ -8,7 +8,7 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.EventManager;
 import step.core.execution.InMemoryExecutionAccessor;
-import step.core.plugins.PluginManager;
+import step.core.plugins.ControllerPluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.expressions.ExpressionHandler;
@@ -21,7 +21,7 @@ public class GlobalContextBuilder {
 		context.setExpressionHandler(new ExpressionHandler());
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		
-		PluginManager pluginManager = new PluginManager();
+		ControllerPluginManager pluginManager = new ControllerPluginManager();
 		context.setPluginManager(pluginManager);
 		
 		context.setConfiguration(new Configuration());

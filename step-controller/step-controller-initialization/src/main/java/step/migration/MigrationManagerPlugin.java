@@ -22,14 +22,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin()
 /**
  * This plugin is responsible for the registration of the MigrationManager
  */
-public class MigrationManagerPlugin extends AbstractPlugin {
+public class MigrationManagerPlugin extends AbstractControllerPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(MigrationManagerPlugin.class);
 	

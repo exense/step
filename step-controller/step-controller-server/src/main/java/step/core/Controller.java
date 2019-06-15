@@ -39,7 +39,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionStatus;
-import step.core.plugins.PluginManager;
+import step.core.plugins.ControllerPluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
@@ -53,7 +53,7 @@ public class Controller {
 	
 	private GlobalContext context;
 		
-	private PluginManager pluginManager;
+	private ControllerPluginManager pluginManager;
 	
 	private ExecutionScheduler scheduler;
 	
@@ -68,8 +68,8 @@ public class Controller {
 
 	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
-		pluginManager = new PluginManager();
-		pluginManager.initialize(this.context);
+		pluginManager = new ControllerPluginManager();
+		pluginManager.initialize();
 		
 		initContext();
 		context.setServiceRegistrationCallback(serviceRegistrationCallback);

@@ -6,11 +6,11 @@ import step.attachments.FileResolver;
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.execution.ExecutionContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin()
-public class ResourcePlugin extends AbstractPlugin {
+public class ResourcePlugin extends AbstractControllerPlugin {
 
 	protected ResourceAccessor resourceAccessor;
 	protected ResourceRevisionAccessor resourceRevisionAccessor;

@@ -33,11 +33,11 @@ import step.common.managedoperations.OperationManager;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class QuotaManagerPlugin extends AbstractPlugin {
+public class QuotaManagerPlugin extends AbstractControllerPlugin {
 		
 	private ConcurrentHashMap<String, UUID> permits = new ConcurrentHashMap<>();
 

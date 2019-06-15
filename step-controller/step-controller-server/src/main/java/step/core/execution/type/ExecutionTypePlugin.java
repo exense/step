@@ -1,11 +1,11 @@
 package step.core.execution.type;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class ExecutionTypePlugin extends AbstractPlugin {
+public class ExecutionTypePlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {

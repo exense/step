@@ -1,12 +1,12 @@
 package step.plugins.datapool;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.datapool.excel.ExcelFunctions;
 
 @Plugin
-public class DataPoolPlugin extends AbstractPlugin {
+public class DataPoolPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {

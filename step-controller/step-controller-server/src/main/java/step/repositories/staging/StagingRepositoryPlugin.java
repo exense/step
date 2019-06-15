@@ -1,11 +1,11 @@
 package step.repositories.staging;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class StagingRepositoryPlugin extends AbstractPlugin {
+public class StagingRepositoryPlugin extends AbstractControllerPlugin {
 
 	public static final String STAGING_REPOSITORY = "staging";
 	

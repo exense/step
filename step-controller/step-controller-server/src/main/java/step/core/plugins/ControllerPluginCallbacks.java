@@ -16,31 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.migration.tasks;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package step.core.plugins;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.Plugin;
-import step.migration.MigrationManager;
-import step.migration.MigrationManagerPlugin;
 
-/**
- * This plugin is responsible for the registration of the migration tasks
- */
-@Plugin(dependencies= {MigrationManagerPlugin.class})
-public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
+public interface ControllerPluginCallbacks extends ExecutionCallbacks {
 
-	private static final Logger logger = LoggerFactory.getLogger(MigrationManagerTasksPlugin.class);
+	public void executionControllerStart(GlobalContext context) throws Exception;
 	
-	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
-		MigrationManager migrationManager = context.get(MigrationManager.class);
-		migrationManager.register(new RenameArtefactType());
-		migrationManager.register(new MigrateFunctions());
-		migrationManager.register(new SetArtefactNamesIfEmpty());
+	public void executionControllerDestroy(GlobalContext context);
 
-	}
 }

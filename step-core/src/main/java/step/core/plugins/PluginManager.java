@@ -22,7 +22,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -32,33 +31,32 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.GlobalContext;
-
-public class PluginManager implements InvocationHandler{
+public class PluginManager<T extends AbstractPlugin> implements InvocationHandler{
 	
 	private static Logger logger = LoggerFactory.getLogger(PluginManager.class);
 	
-	private List<AbstractPlugin> plugins = new CopyOnWriteArrayList<>();
+	protected List<T> plugins = new CopyOnWriteArrayList<>();
 	
-	public void initialize(GlobalContext context) throws Exception {
-		loadAnnotatedPlugins(context);
+	public void initialize() throws Exception {
+		loadAnnotatedPlugins();
 	}
 	
-	public PluginCallbacks getProxy() {
-		PluginCallbacks proxy = (PluginCallbacks) Proxy.newProxyInstance(
-				PluginCallbacks.class.getClassLoader(),
-				new Class[] { PluginCallbacks.class }, this);
+	public <CALLBACK extends PluginCallbacks> CALLBACK getProxy(Class<CALLBACK> interfaceClass) {
+		@SuppressWarnings("unchecked")
+		CALLBACK proxy = (CALLBACK) Proxy.newProxyInstance(
+				interfaceClass.getClassLoader(),
+				new Class[] { interfaceClass }, this);
 		return proxy;
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void loadAnnotatedPlugins(GlobalContext context) throws InstantiationException, IllegalAccessException, CircularDependencyException  {
+	private void loadAnnotatedPlugins() throws InstantiationException, IllegalAccessException, CircularDependencyException  {
 		Set<Class<?>> pluginClasses = new Reflections("step").getTypesAnnotatedWith(Plugin.class);
 		logger.debug("Found plugins classes: "+pluginClasses);
 		
 		for(Class<?> pluginClass:pluginClasses) {
-			AbstractPlugin plugin = newPluginInstance((Class<AbstractPlugin>) pluginClass);
-			if(plugin.validate(context))
+			T plugin = newPluginInstance((Class<T>) pluginClass);
+			if(plugin.validate())
 				register(plugin);
 		}
 		
@@ -74,8 +72,8 @@ public class PluginManager implements InvocationHandler{
 	 * @return the sorted list of plugins
 	 * @throws CircularDependencyException if a circular dependency is detected
 	 */
-	protected static List<AbstractPlugin> sortPluginsByDependencies(List<AbstractPlugin> plugins) throws CircularDependencyException {
-		List<AbstractPlugin> result = new ArrayList<>(plugins);
+	protected List<T> sortPluginsByDependencies(List<T> plugins) throws CircularDependencyException {
+		List<T> result = new ArrayList<>(plugins);
 		
 		int iterationCount = 0;
 		
@@ -87,8 +85,8 @@ public class PluginManager implements InvocationHandler{
 			}
 			
 			hasModification = false;
-			List<AbstractPlugin> clone = new ArrayList<>(result);
-			for (AbstractPlugin plugin : result) {
+			List<T> clone = new ArrayList<>(result);
+			for (T plugin : result) {
 				Class<?>[] dependencies = plugin.getClass().getAnnotation(Plugin.class).dependencies();
 				int initialPosition = clone.indexOf(plugin);
 				int newPosition = -1;
@@ -128,13 +126,14 @@ public class PluginManager implements InvocationHandler{
 		
 	}
 
-	public void register(AbstractPlugin plugin) {
+	public void register(T plugin) {
 		plugins.add(plugin);
 	}
 
-	private AbstractPlugin newPluginInstance(Class<AbstractPlugin> _class) throws InstantiationException, IllegalAccessException  {
+	@SuppressWarnings("unchecked")
+	private T newPluginInstance(Class<T> _class) throws InstantiationException, IllegalAccessException  {
 		AbstractPlugin plugin = _class.newInstance();
-		return plugin;
+		return (T) plugin;
 	}
 
 	@Override
@@ -147,16 +146,5 @@ public class PluginManager implements InvocationHandler{
 			}
 		}
 		return null;
-	}
-	
-	public List<WebPlugin> getWebPlugins() {
-		List<WebPlugin> webPlugins = new ArrayList<>();
-		for(AbstractPlugin plugin:plugins) {
-			WebPlugin webPlugin = plugin.getWebPlugin();
-			if(webPlugin!=null) {
-				webPlugins.add(webPlugin);
-			}
-		}
-		return webPlugins;
 	}
 }

@@ -9,7 +9,7 @@ import javax.json.Json;
 
 import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -20,7 +20,7 @@ import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(dependencies= {GridPlugin.class})
-public class BaseFunctionTypesPlugin extends AbstractPlugin {
+public class BaseFunctionTypesPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {

@@ -33,7 +33,7 @@ import step.core.GlobalContext;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionAccessorImpl;
@@ -60,7 +60,7 @@ import step.grid.client.TokenLifecycleStrategy;
 import step.grid.io.AgentErrorCode;
 
 @Plugin
-public class GridPlugin extends AbstractPlugin {
+public class GridPlugin extends AbstractControllerPlugin {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
 

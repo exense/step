@@ -1,14 +1,14 @@
 package step.plugins.node;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
 import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(dependencies= {GridPlugin.class})
-public class NodePlugin extends AbstractPlugin {
+public class NodePlugin extends AbstractControllerPlugin {
 
 	protected GlobalContext context;
 	

@@ -20,11 +20,11 @@ package step.plugins.events;
 
 import step.core.GlobalContext;
 import step.core.execution.ExecutionContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class EventBrokerPlugin extends AbstractPlugin {
+public class EventBrokerPlugin extends AbstractControllerPlugin {
 		
 	private EventBroker eventBroker;
 	

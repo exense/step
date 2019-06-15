@@ -21,7 +21,7 @@ package step.core.plugins;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 
-public interface ExecutionCallbacks {
+public interface ExecutionCallbacks extends PluginCallbacks {
 	
 	public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node);
 	

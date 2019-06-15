@@ -24,13 +24,13 @@ import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.access.UserAccessorImpl;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.versionmanager.VersionManager;
 import step.versionmanager.VersionManagerPlugin;
 
 @Plugin(dependencies= {VersionManagerPlugin.class})
-public class InitializationPlugin extends AbstractPlugin {
+public class InitializationPlugin extends AbstractControllerPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(InitializationPlugin.class);
 	

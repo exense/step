@@ -11,11 +11,11 @@ import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class ViewPlugin extends AbstractPlugin {
+public class ViewPlugin extends AbstractControllerPlugin {
 	
 	private static Logger logger = LoggerFactory.getLogger(ViewPlugin.class);
 

@@ -1,13 +1,13 @@
 package step.core.export;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.resources.ResourceManager;
 import step.resources.ResourcePlugin;
 
 @Plugin(dependencies= {ResourcePlugin.class})
-public class ExportManagerPlugin extends AbstractPlugin {
+public class ExportManagerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {

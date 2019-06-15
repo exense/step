@@ -29,13 +29,13 @@ import step.core.accessors.CollectionRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.variables.VariableType;
 import step.core.variables.VariablesManager;
 
 @Plugin()
-public class ParameterManagerPlugin extends AbstractPlugin {
+public class ParameterManagerPlugin extends AbstractControllerPlugin {
 	
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerPlugin.class);
 		

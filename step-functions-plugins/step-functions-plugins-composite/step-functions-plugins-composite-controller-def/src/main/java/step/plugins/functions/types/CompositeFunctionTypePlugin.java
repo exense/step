@@ -1,7 +1,7 @@
 package step.plugins.functions.types;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
 import step.functions.editors.FunctionEditor;
@@ -10,7 +10,7 @@ import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(dependencies= {GridPlugin.class})
-public class CompositeFunctionTypePlugin extends AbstractPlugin {
+public class CompositeFunctionTypePlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {

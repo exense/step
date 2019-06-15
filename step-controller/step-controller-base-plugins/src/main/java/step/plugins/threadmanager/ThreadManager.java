@@ -29,11 +29,11 @@ import step.common.managedoperations.Operation;
 import step.common.managedoperations.OperationManager;
 import step.core.GlobalContext;
 import step.core.execution.ExecutionContext;
-import step.core.plugins.AbstractPlugin;
+import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class ThreadManager extends AbstractPlugin {
+public class ThreadManager extends AbstractControllerPlugin {
 	
 	private List<Pattern> matchingPatterns = new ArrayList<>();
 	
