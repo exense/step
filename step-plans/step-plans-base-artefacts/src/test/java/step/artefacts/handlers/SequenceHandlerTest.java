@@ -202,7 +202,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		// Create a sequence block with a pacing defined as a Long
 		Long pacing = 500l;
 		Sequence block = new Sequence();
-		block.setPacing(new DynamicValue<>("500l", ""));
+		block.setPacing(new DynamicValue<>(pacing+"l", ""));
 	
 		Echo echo = new Echo();
 		echo.setText(new DynamicValue<>("'This is a test'", ""));
@@ -220,7 +220,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		Long startTime = System.currentTimeMillis();
 		PlanRunnerResult result = planRunner.run(plan);
 		Long duration = System.currentTimeMillis() - startTime;
-		Assert.assertTrue("Execution took less time than defined pacing", duration <= pacing);
+		Assert.assertTrue("Execution took less time than defined pacing", duration >= pacing);
 		
 		// Print the report tree and assert it matches the expected report
 		StringWriter writer = new StringWriter();
