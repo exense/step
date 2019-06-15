@@ -62,14 +62,6 @@ public class PluginManager implements InvocationHandler{
 				register(plugin);
 		}
 		
-		plugins.sort(new Comparator<AbstractPlugin>() {
-			@Override
-			public int compare(AbstractPlugin arg0, AbstractPlugin arg1) {
-				return Integer.compare(arg0.getClass().getAnnotation(Plugin.class).prio(),arg1.getClass().getAnnotation(Plugin.class).prio());
-			}
-		});
-		logger.debug("Sorted plugins by priority: "+plugins);
-		
 		plugins = sortPluginsByDependencies(plugins);
 		logger.info("Loaded plugins in following order: "+plugins);
 	}

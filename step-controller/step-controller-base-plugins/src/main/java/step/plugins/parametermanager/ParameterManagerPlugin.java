@@ -34,7 +34,7 @@ import step.core.plugins.Plugin;
 import step.core.variables.VariableType;
 import step.core.variables.VariablesManager;
 
-@Plugin(prio=10)
+@Plugin()
 public class ParameterManagerPlugin extends AbstractPlugin {
 	
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerPlugin.class);

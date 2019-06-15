@@ -27,8 +27,9 @@ import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.versionmanager.ControllerLog;
 import step.versionmanager.VersionManager;
+import step.versionmanager.VersionManagerPlugin;
 
-@Plugin(prio=3)
+@Plugin(dependencies= {VersionManagerPlugin.class, MigrationManagerPlugin.class})
 /**
  * This plugin is responsible for the execution of the Migration Tasks
  */

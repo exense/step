@@ -4,8 +4,9 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.resources.ResourceManager;
+import step.resources.ResourcePlugin;
 
-@Plugin
+@Plugin(dependencies= {ResourcePlugin.class})
 public class ExportManagerPlugin extends AbstractPlugin {
 
 	@Override

@@ -9,7 +9,7 @@ import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 
-@Plugin(prio=0)
+@Plugin()
 public class ResourcePlugin extends AbstractPlugin {
 
 	protected ResourceAccessor resourceAccessor;

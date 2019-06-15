@@ -2,10 +2,11 @@ package step.plugins.executiontypes;
 
 import step.core.GlobalContext;
 import step.core.execution.type.ExecutionTypeManager;
+import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 
-@Plugin(prio=100)
+@Plugin(dependencies= {ExecutionTypePlugin.class})
 public class BaseExecutionTypePlugin extends AbstractPlugin {
 
 	@Override

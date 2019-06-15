@@ -25,7 +25,7 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 
-@Plugin(prio=1)
+@Plugin()
 /**
  * This plugin is responsible for the registration of the MigrationManager
  */

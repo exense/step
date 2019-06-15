@@ -16,9 +16,10 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.base.types.LocalFunction;
 import step.functions.base.types.LocalFunctionType;
 import step.functions.base.types.handler.BaseFunctionReflectionHelper;
+import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
-@Plugin(prio=10)
+@Plugin(dependencies= {GridPlugin.class})
 public class BaseFunctionTypesPlugin extends AbstractPlugin {
 
 	@Override

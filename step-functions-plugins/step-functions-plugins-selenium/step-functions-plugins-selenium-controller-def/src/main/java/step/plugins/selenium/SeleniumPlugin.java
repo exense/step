@@ -4,9 +4,10 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
+import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
-@Plugin(prio=100)
+@Plugin(dependencies= {GridPlugin.class})
 public class SeleniumPlugin extends AbstractPlugin {
 
 	@Override

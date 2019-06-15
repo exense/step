@@ -19,10 +19,12 @@
 package step.plugins.datatable;
 
 import step.core.GlobalContext;
+import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
+import step.plugins.screentemplating.ScreenTemplatePlugin;
 
-@Plugin(prio=2)
+@Plugin(dependencies= {ExecutionTypePlugin.class, ScreenTemplatePlugin.class})
 public class DataTablePlugin extends AbstractPlugin {
 
 	@Override

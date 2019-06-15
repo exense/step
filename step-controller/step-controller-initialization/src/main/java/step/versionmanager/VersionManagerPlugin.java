@@ -25,7 +25,7 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 
-@Plugin(prio=1)
+@Plugin()
 public class VersionManagerPlugin extends AbstractPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(VersionManagerPlugin.class);

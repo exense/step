@@ -25,11 +25,12 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractPlugin;
 import step.core.plugins.Plugin;
 import step.migration.MigrationManager;
+import step.migration.MigrationManagerPlugin;
 
 /**
  * This plugin is responsible for the registration of the migration tasks
  */
-@Plugin(prio=2)
+@Plugin(dependencies= {MigrationManagerPlugin.class})
 public class MigrationManagerTasksPlugin extends AbstractPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(MigrationManagerTasksPlugin.class);

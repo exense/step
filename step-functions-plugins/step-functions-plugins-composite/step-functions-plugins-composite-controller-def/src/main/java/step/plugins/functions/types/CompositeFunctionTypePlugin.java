@@ -6,9 +6,10 @@ import step.core.plugins.Plugin;
 import step.functions.Function;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
+import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
-@Plugin(prio=10)
+@Plugin(dependencies= {GridPlugin.class})
 public class CompositeFunctionTypePlugin extends AbstractPlugin {
 
 	@Override
