@@ -30,4 +30,8 @@ public @interface Plugin {
 	 */
 	int prio() default 1;
 	
+	/**
+	 * @return the list of plugins this plugin is depending on
+	 */
+	 Class<?>[] dependencies() default {};
 }

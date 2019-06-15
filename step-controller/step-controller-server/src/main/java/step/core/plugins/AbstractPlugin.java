@@ -93,4 +93,9 @@ public abstract class AbstractPlugin implements PluginCallbacks {
 		
 		context.getServiceRegistrationCallback().registerHandler(ctx);
 	}
+	
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName();
+	}
 }
