@@ -22,6 +22,8 @@ import step.core.GlobalContext;
 
 public interface ControllerPluginCallbacks extends ExecutionCallbacks {
 
+	public void onGlobalContextCreation(GlobalContext globalContext);
+	
 	public void executionControllerStart(GlobalContext context) throws Exception;
 	
 	public void executionControllerDestroy(GlobalContext context);

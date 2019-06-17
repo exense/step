@@ -26,6 +26,9 @@ import step.core.GlobalContext;
 public abstract class AbstractControllerPlugin extends AbstractExecutionPlugin implements ControllerPluginCallbacks {
 
 	@Override
+	public void onGlobalContextCreation(GlobalContext globalContext) {}
+	
+	@Override
 	public void executionControllerStart(GlobalContext context)  throws Exception {}
 
 	@Override
