@@ -7,6 +7,7 @@ import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
 
+@Plugin()
 public class ResourceManagerExecutionPlugin extends AbstractExecutionPlugin {
 
 	@Override
