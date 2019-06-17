@@ -23,8 +23,6 @@ import step.core.execution.ExecutionContext;
 
 public interface ExecutionCallbacks extends PluginCallbacks {
 	
-	public void onLocalContextCreation(ExecutionContext context);
-	
 	public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node);
 	
 	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node);

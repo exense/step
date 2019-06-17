@@ -2,6 +2,7 @@ package step.core.execution;
 
 import org.bson.types.ObjectId;
 
+import step.attachments.FileResolver;
 import ch.exense.commons.app.Configuration;
 import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
@@ -10,11 +11,10 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
-import step.core.plugins.AbstractExecutionPlugin;
 import step.core.plugins.ExecutionCallbacks;
-import step.core.plugins.PluginManager;
-import step.core.plugins.ResourceManagerExecutionPlugin;
 import step.expressions.ExpressionHandler;
+import step.resources.LocalResourceManagerImpl;
+import step.resources.ResourceManager;
 import step.threadpool.ThreadPool;
 
 public class ContextBuilder {
@@ -49,31 +49,48 @@ public class ContextBuilder {
 			}
 		});
 		
-		PluginManager<AbstractExecutionPlugin> pluginManager = new PluginManager<AbstractExecutionPlugin>();
-		pluginManager.register(new ResourceManagerExecutionPlugin());
-		try {
-			pluginManager.initialize();
-		} catch (Exception e) {
-			throw new ContextCreationException("Error while initializing plugin manager", e);
-		}
-		
-		ExecutionCallbacks pluginManagerProxy = pluginManager.getProxy(ExecutionCallbacks.class);
-		context.setExecutionCallbacks(pluginManagerProxy);
+		context.setExecutionCallbacks(new ExecutionCallbacks() {
+			
+			@Override
+			public void unassociateThread(ExecutionContext context, Thread thread) {
+			}
+			
+			@Override
+			public void executionStart(ExecutionContext context) {
+			}
+			
+			@Override
+			public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
+			}
+			
+			@Override
+			public void beforeExecutionEnd(ExecutionContext context) {
+			}
+			
+			@Override
+			public void associateThread(ExecutionContext context, Thread thread) {
+			}
+			
+			@Override
+			public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node) {
+			}
+			
+			@Override
+			public void afterReportNodeExecution(ExecutionContext context, ReportNode node) {
+			}
+			
+			@Override
+			public void afterExecutionEnd(ExecutionContext context) {
+			}
+		});
 		
 		context.setExpressionHandler(new ExpressionHandler());
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		
-		pluginManagerProxy.onLocalContextCreation(context);
+		LocalResourceManagerImpl resourceManager = new LocalResourceManagerImpl();
+		context.put(ResourceManager.class, resourceManager);
+		context.put(FileResolver.class, new FileResolver(resourceManager));
 		
 		return context;
-	}
-	
-	@SuppressWarnings("serial")
-	public static class ContextCreationException extends RuntimeException {
-
-		public ContextCreationException(String message, Throwable cause) {
-			super(message, cause);
-		}
-		
 	}
 }

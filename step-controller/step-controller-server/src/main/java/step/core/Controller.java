@@ -39,7 +39,6 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionStatus;
-import step.core.plugins.ControllerPluginCallbacks;
 import step.core.plugins.ControllerPluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionScheduler;
@@ -77,9 +76,7 @@ public class Controller {
 		
 		recover();
 		
-		ControllerPluginCallbacks pluginManagerProxy = pluginManager.getProxy();
-		pluginManagerProxy.onGlobalContextCreation(context);
-		pluginManagerProxy.executionControllerStart(context);
+		pluginManager.getProxy().executionControllerStart(context);
 
 		scheduler = new ExecutionScheduler(context);
 		scheduler.start();

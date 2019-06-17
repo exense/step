@@ -8,9 +8,6 @@ public class AbstractExecutionPlugin extends AbstractPlugin implements Execution
 	public AbstractExecutionPlugin() {
 		super();
 	}
-	
-	@Override
-	public void onLocalContextCreation(ExecutionContext context) {}
 
 	@Override
 	public void executionStart(ExecutionContext context) {}
