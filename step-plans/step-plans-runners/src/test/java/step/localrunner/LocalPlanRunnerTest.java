@@ -2,7 +2,7 @@ package step.localrunner;
 
 
 import static org.junit.Assert.assertEquals;
-import static step.planbuilder.BaseArtefacts.for_;
+import static step.planbuilder.BaseArtefacts.*;
 import static step.planbuilder.FunctionArtefacts.keyword;
 import static step.planbuilder.FunctionArtefacts.keywordWithDynamicInput;
 import static step.planbuilder.FunctionArtefacts.keywordWithDynamicKeyValues;
@@ -19,6 +19,7 @@ import org.junit.Test;
 import junit.framework.Assert;
 import step.artefacts.Echo;
 import step.artefacts.FunctionGroup;
+import step.artefacts.Script;
 import step.artefacts.Sequence;
 import step.artefacts.reports.EchoReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -80,6 +81,20 @@ public class LocalPlanRunnerTest {
 				"  CallKeyword:PASSED:\n" + 
 				" Session:PASSED:\n" + 
 				"  CallKeyword:PASSED:\n", tree.toString());
+	}
+	
+	@Test
+	public void testError() throws IOException {
+		Script script = new Script();
+		script.setScript("throw new Exception()");
+		
+		Plan plan = PlanBuilder.create().startBlock(sequence()).add(script).endBlock().build();
+		
+		StringWriter tree = new StringWriter();
+		runner.run(plan).printTree(tree);
+		
+		Assert.assertEquals("Sequence:TECHNICAL_ERROR:\n" + 
+				" Script:TECHNICAL_ERROR:Error in while running groovy expression: throw new Exception()\n", tree.toString());
 	}
 	
 	@Test
