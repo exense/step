@@ -120,7 +120,7 @@ public class WhileHandlerTest extends AbstractArtefactHandlerTest {
 		// Create a sequence block with a pacing defined as an Integer
 		Integer pacing = 500;
 		While block = new While();
-		block.setPacing(new DynamicValue<>("500", ""));
+		block.setPacing(new DynamicValue<>(pacing.toString(), ""));
 		block.setMaxIterations(new DynamicValue<>(1));
 
 		Echo echo = new Echo();
@@ -156,7 +156,7 @@ public class WhileHandlerTest extends AbstractArtefactHandlerTest {
 		// Create a sequence block with a pacing defined as a Long
 		Long pacing = 500l;
 		While block = new While();
-		block.setPacing(new DynamicValue<>("500l", ""));
+		block.setPacing(new DynamicValue<>(pacing+"l", ""));
 		block.setMaxIterations(new DynamicValue<>(1));
 
 		Echo echo = new Echo();
@@ -206,39 +206,36 @@ public class WhileHandlerTest extends AbstractArtefactHandlerTest {
 	
 	@Test
 	public void testTimeoutDefault() throws Exception {
-		long timeout = 0l;
-		
 		// As Long
 		AtomicInteger count = new AtomicInteger(0);
-		StringWriter writer = testTimeout("100l" ,timeout, count);
+		StringWriter writer = testTimeout("100l" ,50, count);
 		Assert.assertTrue(writer.toString().startsWith("While:"+ReportNodeStatus.PASSED));
-		Assert.assertTrue(count.get()==10);
+		Assert.assertTrue(count.get()<=10);
 		
 		// As Integer
 		count = new AtomicInteger(0);
-		writer = testTimeout("100", timeout, count);
+		writer = testTimeout("100", 50, count);
 		Assert.assertTrue(writer.toString().startsWith("While:"+ReportNodeStatus.PASSED));
-		Assert.assertTrue(count.get()==10);
+		Assert.assertTrue(count.get()<=10);
 	}
 	
 	@Test
 	public void testEmptyTimeoutDefault() throws Exception {
-		long timeout = 0l;
-		
 		// Empty, so no timeout
 		AtomicInteger count = new AtomicInteger(0);
-		StringWriter writer = testTimeout("" ,timeout, count);
+		StringWriter writer = testTimeout("" ,10, count);
 		Assert.assertTrue(writer.toString().startsWith("While:"+ReportNodeStatus.PASSED));
 		Assert.assertTrue(count.get()==10);
 	}
 	
-	private StringWriter testTimeout(String timeoutExpresssion, long timeout, AtomicInteger count) throws IOException {
+	private StringWriter testTimeout(String timeoutExpresssion, long sleepDuration, AtomicInteger count) throws IOException {
 		While artefact = new While();
+		artefact.setCondition(new DynamicValue<Boolean>(true));
 		artefact.setTimeout(new DynamicValue<>(timeoutExpresssion, ""));
 		artefact.setMaxIterations(new DynamicValue<Integer>(10));
 		
 		Sleep sleep = new Sleep();
-		sleep.setDuration(new DynamicValue<Long>(timeout));
+		sleep.setDuration(new DynamicValue<Long>(sleepDuration));
 		
 		CheckArtefact check = new CheckArtefact(c-> {
 			count.incrementAndGet();
