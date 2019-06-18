@@ -20,13 +20,7 @@
 				<div class="panel-body">
 					<div ng-if="artefact.root" class="panel panel-default">
 						<div class="panel-body">
-							<div class="form-group" ng-repeat="(key, value) in artefact.attributes">
-								<label for="{{key}}">{{key}}</label> <input
-									ng-blur="saveAttributes()"
-									class="form-control" id="{{key}}"
-									ng-model="artefact.attributes[key]" ng-disabled="!authService.hasRight('plan-write')" placeholder="{{input.label}}"
-									autofocus>
-							</div>
+							<st-custom-form st-model="artefact" st-on-change="saveAttributes()" st-screen="artefactTable" st-inline="true" st-disabled="!authService.hasRight('plan-write')"/>
 						</div>
 					</div>
 					<artefact handle="handle" artefactid="artefactId" interactive-session-handle="interactiveSession" />
