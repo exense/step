@@ -32,6 +32,9 @@
 				</li>
 			</ul>
 			<ul class="nav navbar-nav navbar-right">
+				<li ng-repeat="entry in viewRegistry.getDashlets('/menu/navbar/right')" >
+					<div ng-include="entry.template"></div>
+				</li>
 				<li>
 					<a id="sessionDropdown" data-toggle="dropdown"><i class="glyphicon glyphicon-user" ></i> {{context.userID}} [{{context.role}}]</a>
 					<ul class="dropdown-menu" aria-labelledby="sessionDropdown">

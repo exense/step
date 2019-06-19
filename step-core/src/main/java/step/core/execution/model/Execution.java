@@ -24,13 +24,13 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.repositories.ImportResult;
 
 
 
-public class Execution extends AbstractIdentifiableObject {
+public class Execution extends AbstractOrganizableObject {
 	
 	Long startTime;
 	

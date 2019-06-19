@@ -1,16 +1,17 @@
 package step.core.deployment;
 
+import step.core.AbstractContext;
 import step.core.access.Profile;
 
-public class Session {
+public class Session extends AbstractContext {
 	
-	String username;
+	protected String username;
 	
-	Profile profile;
+	protected Profile profile;
 	
-	String token;
+	protected String token;
 	
-	long lasttouch;
+	protected long lasttouch;
 
 	public Session() {
 		super();

@@ -24,7 +24,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
-@Plugin(dependencies= {ExecutionTypePlugin.class, ScreenTemplatePlugin.class})
+@Plugin(dependencies= {ExecutionTypePlugin.class, ScreenTemplatePlugin.class, TablePlugin.class})
 public class DataTablePlugin extends AbstractControllerPlugin {
 
 	@Override

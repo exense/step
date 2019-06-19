@@ -41,6 +41,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -55,7 +56,6 @@ import com.mongodb.client.model.Filters;
 
 import step.core.accessors.CollectionFind;
 import step.core.accessors.SearchOrder;
-import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.export.ExportTaskManager;
 import step.core.export.ExportTaskManager.ExportRunnable;
@@ -66,7 +66,7 @@ import step.resources.ResourceRevisionContainer;
 
 @Singleton
 @Path("datatable")
-public class DataTableServices extends AbstractServices {
+public class DataTableServices extends AbstractTableService {
 	
 	private static final Logger logger = LoggerFactory.getLogger(DataTableServices.class);
 	
@@ -105,19 +105,21 @@ public class DataTableServices extends AbstractServices {
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form) throws Exception {
-		return getTableData(collectionID, form);
+	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context ContainerRequestContext crc) throws Exception {
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc);
+		return getTableData(collectionID, form, sessionQueryFragments);
 	}
 	
 	@GET
 	@Path("/{id}/data")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
-		return getTableData(collectionID, uriInfo.getQueryParameters());
+	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) throws Exception {
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc);
+		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragments);
 	}
 	
-	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params) throws Exception {		
+	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, List<Bson> sessionQueryFragments) throws Exception {		
 		BackendDataTable table = dataTableRegistry.getTable(collectionID);
 		
 		List<Bson> queryFragments = new ArrayList<>();
@@ -167,6 +169,10 @@ public class DataTableServices extends AbstractServices {
 			if(fragment!=null) {
 				queryFragments.add(fragment);				
 			}
+		}
+		
+		if(sessionQueryFragments != null) {
+			queryFragments.addAll(sessionQueryFragments);
 		}
 		
 		Bson query = queryFragments.size()>0?Filters.and(queryFragments):new Document();

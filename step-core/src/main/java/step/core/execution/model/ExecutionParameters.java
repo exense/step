@@ -21,10 +21,11 @@ package step.core.execution.model;
 import java.util.List;
 import java.util.Map;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.ArtefactFilter;
 import step.core.repositories.RepositoryObjectReference;
 
-public class ExecutionParameters {
+public class ExecutionParameters extends AbstractOrganizableObject {
 	
 	RepositoryObjectReference artefact;
 	
