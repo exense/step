@@ -27,6 +27,8 @@ public class TablePlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) {
+		TableManager tableManager = new TableManager();
+		context.put(TableManager.class, tableManager);
 		context.getServiceRegistrationCallback().registerService(TableService.class);
 	}
 

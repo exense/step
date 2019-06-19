@@ -22,6 +22,21 @@ angular.module('screenConfigurationControllers',['tables','step'])
   ViewRegistry.registerDashlet('admin/controller','Screens','partials/screenconfiguration/screenConfiguration.html');
 })
 
+.factory('ScreenTemplates', function($http) {
+  
+  var api = {};
+  
+  api.getScreenInputsByScreenId = function(screenId) {
+    var promise = new Promise((resolve, reject) => {
+      $http.get("rest/screens/"+screenId).then(function(response){ 
+        resolve(response.data)
+      })
+    });
+    return promise;
+  }
+  
+  return api;
+})
 
 .controller('ScreenConfigurationCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, InputDialogs, AuthService) {
     stateStorage.push($scope, 'screenconfiguration', {});	
@@ -122,4 +137,36 @@ angular.module('screenConfigurationControllers',['tables','step'])
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
+})
+.directive('stCustomForm', function(ScreenTemplates) {
+  return {
+    restrict: 'E',
+    scope: {
+      stScreen: '@',
+      stModel: '=',
+      stOnChange: '&?',
+      stDisabled: '=?',
+      stInline: '=?'
+    },
+    templateUrl: 'partials/screenconfiguration/customForm.html',
+    controller: function($scope) {
+      ScreenTemplates.getScreenInputsByScreenId($scope.stScreen).then(function(attributes) {$scope.attributes=attributes})
+      
+      $scope.attribute = function(name) {
+        return function(value) {
+          if(value) {
+            eval('$scope.stModel.'+name+'=value')
+          } else {
+            return eval('$scope.stModel.'+name);
+          }
+        }
+      }
+      
+      $scope.saveAttributes = function() {
+        if($scope.stOnChange) {
+          $scope.stOnChange();
+        }
+      }
+    }
+  }
 })

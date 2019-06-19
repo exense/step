@@ -20,6 +20,9 @@ package step.core.deployment;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.ext.ReaderInterceptorContext;
+import javax.ws.rs.ext.WriterInterceptorContext;
 
 import ch.exense.commons.app.Configuration;
 import step.core.Controller;
@@ -28,6 +31,8 @@ import step.core.execution.ExecutionRunnable;
 import step.core.scheduler.ExecutionScheduler;
 
 public abstract class AbstractServices {
+
+	private static final String SESSION = "session";
 
 	@Inject
 	protected Controller controller;
@@ -58,5 +63,20 @@ public abstract class AbstractServices {
 			}
 		}
 		return null;
+	}
+
+	protected Session getSession(ContainerRequestContext crc) {
+		Session session = (Session) crc.getProperty(SESSION);
+		return session;
+	}
+	
+	protected Session getSession(ReaderInterceptorContext crc) {
+		Session session = (Session) crc.getProperty(SESSION);
+		return session;
+	}
+	
+	protected Session getSession(WriterInterceptorContext crc) {
+		Session session = (Session) crc.getProperty(SESSION);
+		return session;
 	}
 }

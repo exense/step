@@ -19,9 +19,10 @@
 package step.core.scheduler;
 
 import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
 
-public class ExecutiontTaskParameters extends AbstractIdentifiableObject {
+public class ExecutiontTaskParameters extends AbstractOrganizableObject {
 	
 	public String name;
 	

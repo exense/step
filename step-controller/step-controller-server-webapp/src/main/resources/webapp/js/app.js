@@ -347,7 +347,7 @@ angular.module('step',['ngStorage','ngCookies'])
   var serviceContext = {};
 
   function setContext(session) {
-    $rootScope.context = {'userID':session.username, 'rights':session.profile.rights, 'role':session.profile.role};
+    $rootScope.context = {'userID':session.username, 'rights':session.profile.rights, 'role':session.profile.role, 'session': session};
     Preferences.load();
   }
   

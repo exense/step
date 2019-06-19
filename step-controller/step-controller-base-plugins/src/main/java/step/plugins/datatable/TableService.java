@@ -37,6 +37,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -54,14 +55,13 @@ import step.core.accessors.Collection;
 import step.core.accessors.CollectionFind;
 import step.core.accessors.CollectionRegistry;
 import step.core.accessors.SearchOrder;
-import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.export.ExportTaskManager;
 import step.core.ql.OQLMongoDBBuilder;
 
 @Singleton
 @Path("table")
-public class TableService extends AbstractServices {
+public class TableService extends AbstractTableService {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TableService.class);
 	
@@ -93,22 +93,24 @@ public class TableService extends AbstractServices {
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context UriInfo uriInfo) throws Exception {
+	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) throws Exception {
 		if(uriInfo.getQueryParameters()!=null) {
 			form.putAll(uriInfo.getQueryParameters());
 		}
-		return getTableData(collectionID, form);
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc);
+		return getTableData(collectionID, form, sessionQueryFragments);
 	}
 	
 	@GET
 	@Path("/{id}/data")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
-		return getTableData(collectionID, uriInfo.getQueryParameters());
+	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) throws Exception {
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc);
+		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragments);
 	}
 	
-	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params) throws Exception {		
+	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, List<Bson> sessionQueryFragments) throws Exception {		
 		Collection collection = collectionRegistry.get(collectionID);
 		if(collection==null) {
 			// no custom collection. use default collection
@@ -128,6 +130,10 @@ public class TableService extends AbstractServices {
 		
 		String sortDir = params.getFirst("order[0][dir]");
 		SearchOrder order = new SearchOrder(sortColumnName, sortDir.equals("asc")?1:-1);
+		
+		if(sessionQueryFragments != null) {
+			queryFragments.addAll(sessionQueryFragments);
+		}
 		
 		Bson query = queryFragments.size()>0?Filters.and(queryFragments):new Document();
 		

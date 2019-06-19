@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractContext {
 
-	private final ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
+	private ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
 	public Object get(Object key) {
 		return attributes.get(key);
@@ -39,6 +39,14 @@ public abstract class AbstractContext {
 	@SuppressWarnings("unchecked")
 	public <T>T get(Class<T> class_) {
 		return (T) attributes.get(class_.getName());
+	}
+
+	public ConcurrentHashMap<String, Object> getAttributes() {
+		return attributes;
+	}
+
+	public void setAttributes(ConcurrentHashMap<String, Object> attributes) {
+		this.attributes = attributes;
 	}
 	
 }

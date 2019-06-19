@@ -1,0 +1,7 @@
+<form ng-class="{'form-inline': stInline}">
+	<div ng-repeat="input in attributes" class="form-group form-group-sm" style="margin-right:10px" >
+		<label ng-class="{'label-normal': stInline}">{{input.label}}</label>
+		<select ng-if="input.type=='DROPDOWN'" ng-disabled="stDisabled" ng-change="saveAttributes()" ng-model-options=" {getterSetter: true }" ng-model="attribute(input.id)" ng-options="option.value as option.value for option in input.options" class="form-control" />
+		<input ng-if="input.type=='TEXT'" ng-disabled="stDisabled" type="text" ng-blur="saveAttributes()" ng-model-options=" {getterSetter: true }" ng-model="attribute(input.id)" class="form-control" />
+	</div>
+</form>

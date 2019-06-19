@@ -76,6 +76,10 @@ public class ExecutionRunnableFactory {
 		execution.setStartTime(System.currentTimeMillis());
 		execution.setExecutionParameters(executionParameters);
 		execution.setStatus(ExecutionStatus.INITIALIZING);
+		
+		if(executionParameters.getAttributes() != null) {
+			execution.setAttributes(executionParameters.getAttributes());
+		}
 
 		if(taskID!=null) {
 			execution.setExecutionTaskID(taskID);
