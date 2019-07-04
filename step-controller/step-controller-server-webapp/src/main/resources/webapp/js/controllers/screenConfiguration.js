@@ -27,7 +27,7 @@ angular.module('screenConfigurationControllers',['tables','step'])
   var api = {};
   
   api.getScreenInputsByScreenId = function(screenId) {
-    var promise = new Promise((resolve, reject) => {
+    var promise = new Promise(function(resolve, reject) {
       $http.get("rest/screens/"+screenId).then(function(response){ 
         resolve(response.data)
       })
