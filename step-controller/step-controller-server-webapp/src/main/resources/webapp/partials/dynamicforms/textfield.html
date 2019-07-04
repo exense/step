@@ -2,7 +2,7 @@
 	<label ng-if="label">{{label}}</label>
 	<span ng-if="tooltip" class="glyphicon glyphicon-question-sign" uib-tooltip="{{tooltip}}"></span>	
 	<div class="input-group">
-		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.value" />
+		<input type="text" class="form-control" ng-blur="onSave()" st-text-popup ng-model="dynamicValue.value" />
 		<span class="input-group-btn">
 			<button class="btn btn-default btn-sm" type="button" title="Use function" ng-click="useDynamicExpression()"><span class="glyphicon glyphicon-flash"></span></button>
 		</span>

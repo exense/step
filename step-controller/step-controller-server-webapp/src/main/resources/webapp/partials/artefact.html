@@ -1,6 +1,6 @@
-<div class="row">
-	<div class="col-xs-6">
-		<div class="panel panel-default">
+<div class="row flex-l panel-container">
+	<div class="w-300 minw-400 cols panel-left">
+		<div class="panel panel-default overflow-x-auto h-100">
 			<div class="panel-body">
 				<div class="input-group" style="margin-bottom:10px;">
 					<div class="btn-group">
@@ -22,11 +22,17 @@
 			</div>
 		</div>
 	</div>
-	<div class="col-xs-6">
-		<div class="panel panel-default">
+	 <div class="splitter">
+            </div>
+	<div class="w-100 cols panel-right">
+		<div class="panel panel-default h-100">
 			<div class="panel-body">
 				<artefact-details artefactid="selectedArtefactId" on-save="onSelectedArtefactSave(artefact)"/>
 			</div>
 		</div>
 	</div>
 </div>
+<script>$(".panel-left").resizable({
+	   handleSelector: ".splitter",
+	   resizeHeight: false
+	 });</script>
