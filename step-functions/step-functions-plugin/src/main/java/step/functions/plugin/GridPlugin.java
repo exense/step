@@ -58,8 +58,9 @@ import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
 import step.grid.io.AgentErrorCode;
+import step.resources.ResourcePlugin;
 
-@Plugin
+@Plugin(dependencies= {ResourcePlugin.class})
 public class GridPlugin extends AbstractControllerPlugin {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
