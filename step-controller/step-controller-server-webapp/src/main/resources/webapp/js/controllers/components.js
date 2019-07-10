@@ -90,25 +90,6 @@ angular.module('components',['step'])
   };
 })
 
-.directive('stTextPopup', function(Dialogs) {
-  return {
-    restrict: 'A',
-    scope: {
-      ngModel: '='
-    },
-	  link: function(scope, element, attr) {
-		  element.on('dblclick', function(event) {
-		    // Prevent default dragging of selected content
-		    event.preventDefault();
-		    modalResult = Dialogs.editTextField(scope);
-		  });  
-	  },
-	  controller: function($scope) {
-	    }
-	  };
-	})
-
-
 .directive('resourceInput', function() {
   return {
     restrict: 'E',
