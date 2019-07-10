@@ -514,6 +514,23 @@ angular.module('step',['ngStorage','ngCookies'])
     return modalInstance.result;
   }
   
+  dialogs.editTextField = function(scope) {
+	    var modalInstance = $uibModal.open({
+	      animation: false,
+	      templateUrl: 'partials/textFieldDialog.html',
+	      controller: 'DialogCtrl', 
+	      resolve: {message:function(){return scope.ngModel}}
+	    }).result.then(
+	        function (value) {
+	          // Use the value you passed from the $modalInstance.close() call
+	          scope.ngModel = value;
+	        },
+	        function (dismissed) {
+	          // Use the value you passed from the $modalInstance.dismiss() call
+	        }
+	    );
+	  }
+  
   return dialogs;
 })
 
@@ -526,7 +543,12 @@ angular.module('step',['ngStorage','ngCookies'])
   
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
-  };  
+  };
+  
+  $scope.saveTextField = function (newValue) {
+    $uibModalInstance.close($scope.message);
+    //.replace(/\r?\n|\r/g,"")
+  };
 })
 
 .service('genericErrorInterceptor', function($q, $injector) {
