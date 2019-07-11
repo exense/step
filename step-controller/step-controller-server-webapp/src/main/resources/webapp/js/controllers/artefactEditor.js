@@ -193,6 +193,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
           load(function(root) {
             tree.open_all();
             setupInitialState(root);
+            overrideJSTreeKeyFunctions();
           });
         }
       });
@@ -210,6 +211,38 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
           delete $rootScope.artefactEditorInitialState;
         } else {
           tree.select_node(root.id);
+        }
+      }
+      
+      function setSelectedNode(o) {
+        if(o && o.length) { 
+          var artefact = o[0];
+          tree.deselect_all(true);
+          tree._open_to(artefact.id);
+          tree.select_node(artefact.id);          
+          focusOnNode(artefact.id);
+        }
+      }
+      
+      function overrideJSTreeKeyFunctions() {
+        kb = tree.settings.core.keyboard;
+        if (kb.hasOwnProperty('up')) {
+          orig = kb['up'];
+          newfunction = function (e) {
+            e.preventDefault();
+            var o = tree.get_prev_dom(e.currentTarget);
+            setSelectedNode(o);
+          }
+          kb['up']=newfunction;
+        }
+        if (kb.hasOwnProperty('down')) {
+          orig = kb['up'];
+          newfunction = function (e) {
+            e.preventDefault();
+            var o = this.get_next_dom(e.currentTarget);
+            setSelectedNode(o);
+          }
+          kb['down']=newfunction;
         }
       }
       
@@ -245,8 +278,33 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       $('#jstree_demo_div').on("move_node.jstree", function (e, data) {
         $http.post("rest/controller/artefact/"+data.node.id+"/move?from="+data.old_parent+"&to="+data.parent+"&pos="+data.position)
         .then(function() {
-          load();
+          load(function () {
+            focusOnNode(data.node.id);
+          });
         })
+      })
+
+      $('#jstree_demo_div').on('keydown.jstree', '.jstree-anchor', function (e, data) {
+        e.preventDefault(); 
+        if(e.which === 46) {
+          $scope.remove();
+        }
+        else if(e.which === 67 && (e.ctrlKey || e.metaKey)) {
+          $scope.copy();
+        }
+        else if(e.which === 86 && (e.ctrlKey || e.metaKey)) {
+          $scope.paste();
+        }
+        else if (e.which === 38 && (e.ctrlKey || e.metaKey)) {
+          $scope.move(-1);
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
+        else if (e.which === 40 && (e.ctrlKey || e.metaKey)) {
+          $scope.move(1);
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
       })
 
       function getNodeLabel(artefact) {
@@ -289,11 +347,19 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
         });
       }
       
+      function focusOnNode(nodeId) {
+        var node = tree.get_node(nodeId, true);
+        if (typeof node.children === "function" && (child = node.children('.jstree-anchor')) !== "undefined") { 
+          child.focus();
+        }
+      }
+      
       function reloadAfterArtefactInsertion(artefact) {
     	load(function() {
   			tree.deselect_all(true);
   			tree._open_to(artefact.id);
   			tree.select_node(artefact.id);    			
+  			focusOnNode(artefact.id);
   		});  
       }
       
@@ -383,7 +449,9 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
         if($rootScope.clipboard && $rootScope.clipboard.object=="artefact") {
           $http.post("rest/controller/artefact/"+$rootScope.clipboard.id+"/copy?to="+selectedArtefact.id)
           .then(function() {
-            load();
+            load(function () {
+              focusOnNode(selectedArtefact.id);
+            });
           });
         }
       }
@@ -391,16 +459,21 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       $scope.remove = function() {
         var selectedArtefact = tree.get_selected(true)[0];
         var parentid = tree.get_parent(selectedArtefact);
+        var previousNode = tree.get_prev_dom(selectedArtefact.id);
         $http.delete("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id).then(function() {
-          load();
+          load(function () {
+            setSelectedNode(previousNode);
+          });
         });
-        }
+      }
       
       $scope.move = function(offset) {
     	var selectedArtefact = tree.get_selected(true)[0];
     	var parentid = tree.get_parent(selectedArtefact);
     	$http.post("rest/controller/artefact/"+parentid+"/children/"+selectedArtefact.id+"/move",offset).then(function() {
-    	  load();
+    	  load(function () {
+          focusOnNode(selectedArtefact.id);
+        });
     	});
       }
       
