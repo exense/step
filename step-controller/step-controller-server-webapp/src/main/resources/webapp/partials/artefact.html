@@ -1,6 +1,6 @@
-<div class="row">
-	<div class="col-xs-6">
-		<div class="panel panel-default">
+<div class="flex">
+	<div resizable r-directions="['right']" r-flex="false" r-width="300">
+		<div class="panel panel-default overflow-x-auto h-100">
 			<div class="panel-body">
 				<div class="input-group" style="margin-bottom:10px;">
 					<div class="btn-group">
@@ -22,8 +22,10 @@
 			</div>
 		</div>
 	</div>
-	<div class="col-xs-6">
-		<div class="panel panel-default">
+
+
+	<div class="panel-right w-100">
+		<div class="panel panel-default h-100">
 			<div class="panel-body">
 				<artefact-details artefactid="selectedArtefactId" on-save="onSelectedArtefactSave(artefact)"/>
 			</div>

@@ -185,7 +185,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 ]);
 
 
-angular.module('step',['ngStorage','ngCookies'])
+angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 .service('helpers', function() {
   this.formatAsKeyValueList = function(obj) {

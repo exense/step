@@ -402,3 +402,16 @@ table.executionTableResult td {
   line-height: 1.5; /* If Placeholder of the input is moved up, rem/modify this. */
   border-radius: 3px;
 }
+
+.minw-100 { min-width: 100px; }
+.minw-200 { min-width: 200px; }
+.minw-300 { min-width: 300px; }
+.minw-350 { min-width: 350px; }
+.minw-400 { min-width: 400px; }
+.minw-450 { min-width: 450px; }
+.minw-500 { min-width: 500px; }
+.minw-600 { min-width: 600px; }
+
+.panel-right {
+	padding-left: 14px;
+}
