@@ -141,6 +141,7 @@
 					<executable>bower</executable>
 					<arguments>
 						<argument>install</argument>
+						<argument>--force</argument>
 					</arguments>
 					<workingDirectory>${basedir}/src/main/resources/webapp</workingDirectory>
 				</configuration>
