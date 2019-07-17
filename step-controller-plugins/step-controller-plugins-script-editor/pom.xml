@@ -33,18 +33,35 @@
 				<executions>
 					<execution>
 						<phase>generate-sources</phase>
+						<id>install-bower</id>
 						<goals>
 							<goal>exec</goal>
 						</goals>
+						<configuration>
+							<executable>bower</executable>
+							<arguments>
+								<argument>install</argument>
+								<argument>-- force</argument>
+							</arguments>
+							<workingDirectory>${basedir}/src/main/resources/step/plugins/scripteditor/webapp</workingDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<phase>generate-sources</phase>
+						<id>prune-bower</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>bower</executable>
+							<arguments>
+								<argument>prubne</argument>
+							</arguments>
+							<workingDirectory>${basedir}/src/main/resources/step/plugins/scripteditor/webapp</workingDirectory>
+						</configuration>
 					</execution>
 				</executions>
-				<configuration>
-					<executable>bower</executable>
-					<arguments>
-						<argument>install</argument>
-					</arguments>
-					<workingDirectory>${basedir}/src/main/resources/step/plugins/scripteditor/webapp</workingDirectory>
-				</configuration>
+				
 			</plugin>
 		</plugins>
 	</build>
