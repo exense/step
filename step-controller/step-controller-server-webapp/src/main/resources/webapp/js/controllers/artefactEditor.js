@@ -278,16 +278,23 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       $(document).on("dnd_move.vakata", function (e, data) {
         //Triggered continuously during drag 
       }).bind("dnd_stop.vakata", function(e, data) { //Triggered on drag complete
-          $http.post("rest/controller/artefacts/move",$scope.nodesToMove)
-          .then(function() {
-            load();
-          }).finally(function() {
-            $scope.nodesToMove=[];
-          });
+          console.log("Release drop with :" );
+          console.log($scope.nodesToMove);
+          if ($scope.nodesToMove !== undefined && $scope.nodesToMove.length > 0) {
+            $http.post("rest/controller/artefacts/move",$scope.nodesToMove)
+            .then(function() {
+              load();
+              tree._open_to($scope.nodesToMove[0].id);
+            }).finally(function() {
+              $scope.nodesToMove=[];
+              console.log("-----in finally, list of node cleaned up: " +  $scope.nodesToMove.length);
+            });
+          }
       });
       
       //Triggered for each node moved before the dnd_stop.vakata event
       $('#jstree_demo_div').on("move_node.jstree", function (e, data) {
+        console.log("node move event for: " + data.node.id);
         if ($scope.nodesToMove === undefined) {
           $scope.nodesToMove = [];
         }
