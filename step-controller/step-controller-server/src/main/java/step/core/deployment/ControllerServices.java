@@ -556,6 +556,24 @@ public class ControllerServices extends AbstractServices {
 	}
 	
 	@POST
+    @Path("/artefacts/move")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right="plan-write")
+    public void moveArtefacts(List<MoveArtefactData> nodes) {
+	    ArtefactAccessor a = getContext().getArtefactAccessor();
+	    for (MoveArtefactData node : nodes) {
+            AbstractArtefact origin = a.get(node.getOldParent());
+            origin.removeChild(new ObjectId(node.getId()));
+            a.save(origin);
+            
+            AbstractArtefact target = a.get(node.getParent());
+            target.add(node.getPosition(), new ObjectId(node.getId()));      
+            a.save(target);
+	    }
+    }
+	
+	@POST
 	@Path("/artefact/{id}/copy")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
