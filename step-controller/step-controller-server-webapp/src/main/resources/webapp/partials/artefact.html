@@ -1,33 +1,35 @@
-<div class="flex">
-	<div resizable r-directions="['right']" r-flex="false" r-width="300">
-		<div class="panel panel-default overflow-x-auto h-100">
-			<div class="panel-body">
-				<div class="input-group" style="margin-bottom:10px;">
-					<div class="btn-group">
-						<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="move(-1)"><span class="glyphicon glyphicon glyphicon-chevron-up" aria-hidden="true"></span></button>
-			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="move(1)"><span class="glyphicon glyphicon glyphicon-chevron-down" aria-hidden="true"></span></button>
+<div class="contentResizable">
+	<div class="rowResizable">
+		<div class="sectionResizable" resizable r-directions="['right']" r-flex="true">
+			<div class="panel panel-default overflow-x-auto h-100">
+				<div class="panel-body">
+					<div class="input-group" style="margin-bottom:10px;">
+						<div class="btn-group">
+							<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="move(-1)"><span class="glyphicon glyphicon glyphicon-chevron-up" aria-hidden="true"></span></button>
+				    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="move(1)"><span class="glyphicon glyphicon glyphicon-chevron-down" aria-hidden="true"></span></button>
+				  		</div>
+				  		<div class="btn-group">
+				    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="copy()">Copy</button>
+				    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="paste()">Paste</button>
+			    		</div>
+				  		<div class="btn-group">
+				    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="remove()">Delete</button>
+			    		</div>
+			    		<div ng-if="isInteractiveSessionActive()" class="btn-group">
+				    		<button type="submit" ng-disabled="!authService.hasRight('interactive')" class="btn btn-default btn-sm btn-info" ng-click="execute()" uib-tooltip="Executes the selected node in the interactive session">Run interactively</button>
+			    		</div>
 			  		</div>
-			  		<div class="btn-group">
-			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="copy()">Copy</button>
-			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="paste()">Paste</button>
-		    		</div>
-			  		<div class="btn-group">
-			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="remove()">Delete</button>
-		    		</div>
-		    		<div ng-if="isInteractiveSessionActive()" class="btn-group">
-			    		<button type="submit" ng-disabled="!authService.hasRight('interactive')" class="btn btn-default btn-sm btn-info" ng-click="execute()" uib-tooltip="Executes the selected node in the interactive session">Run interactively</button>
-		    		</div>
-		  		</div>
-		  		<div id="jstree_demo_div"></div>
+			  		<div id="jstree_demo_div"></div>
+				</div>
 			</div>
 		</div>
-	</div>
-
-
-	<div class="panel-right w-100">
-		<div class="panel panel-default h-100">
-			<div class="panel-body">
-				<artefact-details artefactid="selectedArtefactId" on-save="onSelectedArtefactSave(artefact)"/>
+	
+	
+		<div class="sectionResizable resizable-panel-right">
+			<div class="panel panel-default h-100">
+				<div class="panel-body">
+					<artefact-details artefactid="selectedArtefactId" on-save="onSelectedArtefactSave(artefact)"/>
+				</div>
 			</div>
 		</div>
 	</div>

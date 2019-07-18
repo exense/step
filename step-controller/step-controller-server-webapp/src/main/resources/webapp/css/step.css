@@ -412,6 +412,36 @@ table.executionTableResult td {
 .minw-500 { min-width: 500px; }
 .minw-600 { min-width: 600px; }
 
-.panel-right {
+.resizable-panel-right {
 	padding-left: 14px;
+}
+
+.contentResizable {
+    flex: 1;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-around;
+    align-content: space-around;
+}
+
+.rowResizable {
+    min-height: 200px;
+    flex: 1;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-around;
+    align-content: space-around;
+}
+
+.rowResizable.resizable {
+	flex: 0 0 400px;
+}
+
+.sectionResizable {
+    box-sizing: border-box;
+    flex: 1;
+    min-width: 200px;
+}
+.sectionResizable.resizable {
+	flex: 0 0 400px;
 }
