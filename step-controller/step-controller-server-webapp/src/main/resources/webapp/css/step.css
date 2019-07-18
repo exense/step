@@ -412,6 +412,10 @@ table.executionTableResult td {
 .minw-500 { min-width: 500px; }
 .minw-600 { min-width: 600px; }
 
+.panel-right {
+	padding-left: 14px;
+}
+
 .resizable-panel-right {
 	padding-left: 14px;
 }
