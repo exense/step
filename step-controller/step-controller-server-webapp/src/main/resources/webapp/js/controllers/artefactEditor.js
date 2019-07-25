@@ -278,8 +278,6 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       $(document).on("dnd_move.vakata", function (e, data) {
         //Triggered continuously during drag 
       }).bind("dnd_stop.vakata", function(e, data) { //Triggered on drag complete
-          console.log("Release drop with :" );
-          console.log($scope.nodesToMove);
           if ($scope.nodesToMove !== undefined && $scope.nodesToMove.length > 0) {
             $http.post("rest/controller/artefacts/move",$scope.nodesToMove)
             .then(function() {
@@ -287,14 +285,12 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
               tree._open_to($scope.nodesToMove[0].id);
             }).finally(function() {
               $scope.nodesToMove=[];
-              console.log("-----in finally, list of node cleaned up: " +  $scope.nodesToMove.length);
             });
           }
       });
       
       //Triggered for each node moved before the dnd_stop.vakata event
       $('#jstree_demo_div').on("move_node.jstree", function (e, data) {
-        console.log("node move event for: " + data.node.id);
         if ($scope.nodesToMove === undefined) {
           $scope.nodesToMove = [];
         }
@@ -671,11 +667,22 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
     controller: function($scope,$location,$rootScope, AuthService) {
       $scope.localModel = {json:""}
       $scope.argumentAsTable = [];
+      $scope.isFocusOnLastRow=false;
       
       $scope.$watch('model', function(json) {
         if(json!=$scope.localModel.json) {
           $scope.localModel.json = json;
-          $scope.updateEditors(false);          
+          $scope.updateEditors(false);
+          initLastRow();
+        }
+      })
+      
+      $scope.$watch('isFocusOnLastRow', function(value) {
+        if(value === true) { 
+          $timeout(function() {
+            $("#lastRowKey").focus();
+            $scope.isFocusOnLastRow=false;
+          });
         }
       })
       
@@ -689,6 +696,16 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
           json[entry.key]=entry.value;
         })
         $scope.localModel.json = JSON.stringify(json);
+      }
+      
+      $scope.containsKeyInTable = function(newKey) {
+        var result=false;
+        _.each($scope.argumentAsTable, function(entry) {
+          if (newKey === entry.key) {
+            result = true;;
+          }
+        })
+        return result;
       }
       
       $scope.addRowToTable = function(row) {
@@ -736,16 +753,58 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       
       function initLastRow() {
       	// init last row as a static value
-        $scope.lastRow = {key:"", value:{value:"",dynamic:false}}        
+        $scope.lastRow = {key:"", value:{value:"",dynamic:false}}  
+        var inputElt = document.getElementById("lastRowKey");
+        if (inputElt !== null) {
+          inputElt.style.backgroundColor = "white";
+        }
       }
-      
-      initLastRow();
 
       $scope.commitLastRow = function() {
-        var row = $scope.lastRow;
-        $scope.addRowToTable({"key":row.key, "value":row.value});
-        initLastRow();
+        if ( $scope.lastRow !==  undefined && $scope.lastRow.key !== undefined) {
+          //avoid duplicates
+          if (!$scope.containsKeyInTable($scope.lastRow.key)) {
+            var row = $scope.lastRow;
+            $scope.addRowToTable({"key":row.key, "value":row.value});
+            initLastRow();
+            $scope.isFocusOnLastRow=true;
+          } else  {
+            if ($scope.lastRow.key !== "") {
+               Dialogs.showErrorMsg("The key must be unique!");
+            }
+            document.getElementById("lastRowKey").style.backgroundColor = "#faebd7";
+          }          
+        }
       }
+      
+      $scope.onBlurFromLastRowKey = function() {
+        //Trigger commit from blur event of last key only if 
+        //not tabbed from last key to last value
+        if ($scope.tabbedLastKeyToLastValue) {
+          $scope.tabbedLastKeyToLastValue = false;
+          //or not clicked on last value
+        } else if ($scope.clickedOnLastValue) {
+          $scope.clickedOnLastValue=false;
+          //or key is not empty
+        } else if ($scope.lastRow.key !== "") {
+          $scope.commitLastRow();
+        }
+      }
+      
+      $scope.onLastRowKeyPress = function(event) {
+        var x = event.which || event.keyCode;
+        if (x === 9) {
+          $scope.tabbedLastKeyToLastValue=true;
+        }
+      }
+      
+      $scope.onClickOnLastRowValue = function () {
+        //catch click event on last value to properly handle the blur event on last key 
+        $scope.clickedOnLastValue=true;
+      }
+      
+      
     }
   }
 })
+

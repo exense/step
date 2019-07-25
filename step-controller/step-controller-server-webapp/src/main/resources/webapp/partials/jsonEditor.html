@@ -20,18 +20,22 @@
 							<td><button class="btn btn-danger btn-xs" ng-click="removeRowFromTable(entry.key)" type="button"><i class="glyphicon glyphicon-remove"></i></button></td>	
 						</tr>
 						<tr>
-							<td><input type="text" class="form-control form-control-sm" ng-model="lastRow.key" /></td>
+							<td><input id="lastRowKey" type="text" class="form-control form-control-sm" ng-model="lastRow.key" 
+								ng-keydown="onLastRowKeyPress($event)" 
+								ng-blur="onBlurFromLastRowKey()"
+								placeholder="Unique key"/></td>
 							<td>
-								<dynamic-textfield dynamic-value="lastRow.value" on-save="commitLastRow()" />
+								<dynamic-textfield dynamic-value="lastRow.value" on-save="commitLastRow()" 
+								ng-mousedown="onClickOnLastRowValue()"/>
 							</td>
 							<td></td>	
 						</tr>
 					</tbody>
 				</table>
 			</div>
-			<button ng-click="addRowToTable()" type="button" class="btn btn-sm btn-success pull-right">
+		<!-- 	<button ng-click="addRowToTable()" type="button" class="btn btn-sm btn-success pull-right">
 				<i class="glyphicon glyphicon-plus"></i> New
-			</button>
+			</button>  -->
 		</div>
 	</uib-tab>
 	<uib-tab heading="Raw (JSON)">
