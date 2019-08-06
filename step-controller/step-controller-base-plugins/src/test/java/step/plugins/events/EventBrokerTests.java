@@ -134,11 +134,11 @@ public class EventBrokerTests {
 		Event e2 = eb.put(new Event().setId("ijk").setPayload(second));
 		//e1 is now overridden inside the broker, e2 has the value of the first even we sent (which is not e1 though!)
 		Assert.assertNotNull(null, e2);
-		Assert.assertEquals("1", e2.getPayload().get(valueKey));
+		Assert.assertEquals("1", ((Map)e2.getPayload()).get(valueKey));
 		Event e3 = eb.put(new Event().setId("ijk").setPayload(third));
-		Assert.assertEquals("2", e3.getPayload().get(valueKey));
+		Assert.assertEquals("2", ((Map)e3.getPayload()).get(valueKey));
 		Event e4 = eb.get("ijk");
-		Assert.assertEquals("3", e4.getPayload().get(valueKey));
+		Assert.assertEquals("3", ((Map)e4.getPayload()).get(valueKey));
 	}
 
 	@Test
@@ -164,10 +164,10 @@ public class EventBrokerTests {
 		Assert.assertEquals(true, !e3.getId().equals(e4.getId()));
 
 		// 1st event has either value 1 or 2 (no ordering garantee)
-		Assert.assertEquals(true, e3.getPayload().get(valueKey).equals("1") || e3.getPayload().get(valueKey).equals("2"));
+		Assert.assertEquals(true, ((Map)e3.getPayload()).get(valueKey).equals("1") || ((Map)e3.getPayload()).get(valueKey).equals("2"));
 
 		// 1st event has either value 1 or 2 (no ordering garantee)
-		Assert.assertEquals(true, e4.getPayload().get(valueKey).equals("1") || e4.getPayload().get(valueKey).equals("2"));
+		Assert.assertEquals(true, ((Map)e4.getPayload()).get(valueKey).equals("1") || ((Map)e4.getPayload()).get(valueKey).equals("2"));
 	}
 
 	@Test

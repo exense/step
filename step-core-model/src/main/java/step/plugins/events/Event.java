@@ -25,7 +25,7 @@ public class Event {
 	private String id;
 	private String name;
 	private String group;
-	private Map<String, Object> payload;
+	private Object payload;
 	
 	private final long creationTimestamp;
 	
@@ -70,11 +70,11 @@ public class Event {
 		this.group = group;
 		return this;
 	}
-	public Map<String, Object> getPayload() {
+	public Object getPayload() {
 		return payload;
 	}
 	
-	public Event setPayload(Map<String, Object> payload) {
+	public Event setPayload(Object payload) {
 		this.payload = payload;
 		return this;
 	}
