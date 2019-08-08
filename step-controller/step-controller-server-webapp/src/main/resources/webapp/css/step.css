@@ -430,7 +430,7 @@ table.executionTableResult td {
 
 .rowResizable {
     min-height: 200px;
-    flex: 1;
+   /* flex: 1; cause issue in IE*/
     display: flex;
     flex-flow: row nowrap;
     justify-content: space-around;
