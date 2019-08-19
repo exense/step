@@ -20,6 +20,7 @@ package step.functions.plugin;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -91,6 +92,11 @@ public class GridPlugin extends AbstractControllerPlugin {
 		gridConfig.setFileLastModificationCacheMaximumsize(configuration.getPropertyAsInteger("grid.filemanager.cache.maximumsize", 1000));
 		gridConfig.setFileLastModificationCacheExpireAfter(configuration.getPropertyAsInteger("grid.filemanager.cache.expireafter.ms", 500));
 		gridConfig.setTtl(tokenTTL);
+		
+		gridConfig.setTokenAffinityEvaluatorClass(configuration.getProperty("grid.tokens.affinityevaluator.classname"));
+		Map<String, String> tokenAffinityEvaluatorProperties = configuration.getPropertyNames().stream().filter(p->(p instanceof String && p.toString().startsWith("grid.tokens.affinityevaluator")))
+			.collect(Collectors.toMap(p->p.toString().replace("grid.tokens.affinityevaluator.", ""), p->configuration.getProperty(p.toString())));
+		gridConfig.setTokenAffinityEvaluatorProperties(tokenAffinityEvaluatorProperties);
 		
 		grid = new GridImpl(new File(fileManagerPath), gridPort, gridConfig);
 		grid.start();
