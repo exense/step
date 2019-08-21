@@ -266,6 +266,43 @@ angular.module('components',['step'])
     templateUrl: 'partials/components/resourceInput.html'}
 })
 
+.directive('resourceLabel', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      stModel: '='
+    },
+    controller: function($scope,$http,$timeout,Upload,ResourceDialogs) {
+      $scope.resourceFilename = "";
+      $scope.$watch('stModel',function(newValue) {
+        if(newValue) {
+          if($scope.isResource()) {
+            $http.get("rest/resources/"+$scope.getResourceId()).then(
+                function(response) {
+                  var resource = response.data;
+                  if(resource) {
+                    $scope.resourceNotExisting = false;
+                    $scope.resourceFilename = resource.resourceName;
+                  } else {
+                    $scope.resourceNotExisting = true;
+                  }
+                });
+          } else {
+            $scope.absoluteFilepath = $scope.stModel;
+          }
+        }
+      })
+      
+      $scope.isResource = function() {
+        return $scope.stModel && (typeof $scope.stModel) == 'string' && $scope.stModel.indexOf('resource:')==0;
+      }
+      $scope.getResourceId = function() {
+        return $scope.stModel.replace("resource:","");
+      }
+    },
+    templateUrl: 'partials/components/resourceLabel.html'}
+})
+
 .directive('executionResult', function() {
   return {
     restrict: 'E',
