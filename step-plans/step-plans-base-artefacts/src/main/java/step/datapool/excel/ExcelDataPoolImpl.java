@@ -172,7 +172,12 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 		for(;;) {
 			cursor++;
 			if(cursor <= sheet.getLastRowNum()){
-				Cell cell = (sheet.getRow(cursor)).getCell(0);
+				Row row;
+				if ((row = sheet.getRow(cursor))==null) {
+					return null;
+				}
+				
+				Cell cell = row.getCell(0);
 				if (cell != null){
 					String value = ExcelFunctions.getCellValueAsString(cell, workbookSet.getMainFormulaEvaluator());
 					if (value != null && !value.isEmpty()){
