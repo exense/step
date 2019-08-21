@@ -159,7 +159,11 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       
       $scope.stopInteractive = function() {
         $http.post("rest/interactive/"+$scope.interactiveSession.id+"/stop").then()
-        $scope.interactiveSession.id = null;    
+        $scope.interactiveSession.id = null;
+        //need to reset the context of the console table
+        $scope.stepsTable = reportTableFactory.get(function() {
+          return {'eid':$scope.interactiveSession.id};     
+        }, $scope);
       }
       
       $scope.$on('$destroy', function() {
