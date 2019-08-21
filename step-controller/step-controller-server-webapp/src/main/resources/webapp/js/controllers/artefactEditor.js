@@ -325,7 +325,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
           e.stopImmediatePropagation();
           e.preventDefault();
         }
-        else if (e.which === 13 && (e.ctrlKey || e.metaKey)) {
+        else if (e.which === 13 && (e.ctrlKey || e.metaKey) && $scope.isInteractiveSessionActive()) {
           $scope.execute();
           e.stopImmediatePropagation();
           e.preventDefault();
