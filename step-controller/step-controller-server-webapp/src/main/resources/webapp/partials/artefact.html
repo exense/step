@@ -1,6 +1,5 @@
-<div class="contentResizable">
 	<div class="rowResizable">
-		<div class="sectionResizable" resizable r-directions="['right']" r-flex="true">
+		<div class="sectionResizable sectionResizableTree" resizable r-directions="['right']" r-flex="true">
 			<div class="panel panel-default overflow-x-auto h-100">
 				<div class="panel-body">
 					<div class="input-group" style="margin-bottom:10px;">
@@ -27,12 +26,11 @@
 		</div>
 	
 	
-		<div class="sectionResizable resizable-panel-right">
-			<div class="panel panel-default h-100">
+		<div class="sectionResizable resizable-panel-right minw-300">
+			<div class="panel panel-default overflow-x-auto h-100">
 				<div class="panel-body">
 					<artefact-details artefactid="selectedArtefactId" on-save="onSelectedArtefactSave(artefact)"/>
 				</div>
 			</div>
 		</div>
 	</div>
-</div>

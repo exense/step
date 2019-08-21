@@ -444,8 +444,32 @@ table.executionTableResult td {
 .sectionResizable {
     box-sizing: border-box;
     flex: 1;
-    min-width: 200px;
+    min-width: 0px;
 }
-.sectionResizable.resizable {
-	flex: 0 0 400px;
+.sectionArtefactEditor.resizable {
+	flex: 0 1 600px;
+}
+
+.sectionResizableTree.resizable {
+	flex: 0 1 200px;
+}
+
+@media screen and (min-width: 1200px) {
+	.sectionArtefactEditor.resizable {
+		flex: 0 1 900px;
+	}
+	
+	.sectionResizableTree.resizable {
+		flex: 0 1 300px;
+	}
+}
+
+@media screen and (min-width: 1600px) {
+	.sectionArtefactEditor.resizable {
+		flex: 0 1 1200px;
+	}
+	
+	.sectionResizableTree.resizable {
+		flex: 0 1 400px;
+	}
 }
