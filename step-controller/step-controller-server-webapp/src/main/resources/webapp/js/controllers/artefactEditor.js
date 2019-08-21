@@ -325,6 +325,11 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
           e.stopImmediatePropagation();
           e.preventDefault();
         }
+        else if (e.which === 13 && (e.ctrlKey || e.metaKey)) {
+          $scope.execute();
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
       })
 
       function getNodeLabel(artefact) {
