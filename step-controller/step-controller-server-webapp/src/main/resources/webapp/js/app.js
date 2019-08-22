@@ -542,7 +542,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   return dialogs;
 })
 
-.controller('DialogCtrl', function ($scope, $uibModalInstance, message) {
+.controller('DialogCtrl', function ($scope, $uibModalInstance, $uibModalStack, message) {
   $scope.message = message;
   
   $scope.ok = function() {
@@ -557,6 +557,24 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
     $uibModalInstance.close($scope.message);
     //.replace(/\r?\n|\r/g,"")
   };
+  
+  $scope.$watch(function() {
+    return $('.modal').length;
+  }, function(val) { // every time the number of modals changes
+    if (val > 0) {
+      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
+      $('.modal').on('mousedown', function(e) {
+        if (e.which === 1) { // left click
+          $uibModalStack.getTop().key.dismiss(); // close top modal when clicking
+                                                  // anywhere, you can close all modals
+                                                  // using $modalStack.dismissAll() instead
+        }
+      });
+      $('.modal-content').on('mousedown', function(e) {
+        e.stopPropagation(); // avoid closing the modal when clicking its body
+      });
+    }
+  });
 })
 
 .service('genericErrorInterceptor', function($q, $injector) {
