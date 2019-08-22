@@ -57,7 +57,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   var customMenuEntries = [];
   
   function getCustomView(view) {
-	var customView = customViews[view];
+  var customView = customViews[view];
     if(customView) {
       return customView;
     } else {
@@ -70,13 +70,13 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   }
   
   api.isPublicView = function (view) {
-	return getCustomView(view).isPublicView;
+  return getCustomView(view).isPublicView;
   }  
   
   api.registerView = function(viewId,template,isPublicView) {
-	if(!isPublicView) {
-		isPublicView = false;
-	}
+  if(!isPublicView) {
+    isPublicView = false;
+  }
     customViews[viewId] = {template:template, isPublicView:isPublicView}
   }
   
@@ -131,7 +131,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   $scope.isInitialized = false;
   function finishInitialization() {
     $scope.isInitialized = true;
-    $scope.logo = "images/logotopleft.png";
+    $scope.logo = AuthService.getConf().miscParams.logomain?AuthService.getConf().miscParams.logomain:"images/logo_step_line_black.png";
     if(!$location.path()) {
       AuthService.gotoDefaultPage();
     }
@@ -385,7 +385,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
         setContext(session);
         $rootScope.$broadcast('step.login.succeeded');
         if($location.path().indexOf('login') !== -1) {
-        	authService.gotoDefaultPage();
+          authService.gotoDefaultPage();
         }
       });
   };
@@ -466,9 +466,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
           $rootScope.context = {'userID':'anonymous'};
         }
         if (response.status == 403){
-        	// Fail silently for security reasons
-        	// or implement something like:
-        	//TODO: Dialogs.showErrorMsg("You are not authorized to perform this action.");
+          // Fail silently for security reasons
+          // or implement something like:
+          //TODO: Dialogs.showErrorMsg("You are not authorized to perform this action.");
           }
         return $q.reject(response);
     };
@@ -489,7 +489,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
       $scope.error = "Invalid username/password";
     });
   };
-  $scope.logo = "images/logologin.png";
+  $scope.logo = AuthService.getConf().miscParams.logologinpage?AuthService.getConf().miscParams.logologinpage:"images/logo_step_line_black.png";
   
 })
 
@@ -523,23 +523,80 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   }
   
   dialogs.editTextField = function(scope) {
-	    var modalInstance = $uibModal.open({
-	      animation: false,
-	      templateUrl: 'partials/textFieldDialog.html',
-	      controller: 'DialogCtrl', 
-	      resolve: {message:function(){return scope.ngModel}}
-	    }).result.then(
-	        function (value) {
-	          // Use the value you passed from the $modalInstance.close() call
-	          scope.ngModel = value;
-	        },
-	        function (dismissed) {
-	          // Use the value you passed from the $modalInstance.dismiss() call
-	        }
-	    );
-	  }
+      var modalInstance = $uibModal.open({
+        animation: false,
+        templateUrl: 'partials/textFieldDialog.html',
+        controller: 'DialogCtrl', 
+        resolve: {message:function(){return scope.ngModel}}
+      }).result.then(
+          function (value) {
+            // Use the value you passed from the $modalInstance.close() call
+            scope.ngModel = value;
+          },
+          function (dismissed) {
+            // Use the value you passed from the $modalInstance.dismiss() call
+          }
+      );
+    }
+  
+  dialogs.enterValue = function(title,message,functionOnSuccess) {
+    var modalInstance = $uibModal.open({
+      animation: false,
+      templateUrl: 'partials/enterValueDialog.html',
+      controller: 'ExtentedDialogCtrl', 
+      resolve: {
+        message:function(){return message},
+        title:function(){return title}
+      }
+    }).result.then(
+        function (value) {
+          // Use the value you passed from the $modalInstance.close() call
+          functionOnSuccess(value);
+          //scope.ngModel = value;
+        },
+        function (dismissed) {
+          // Use the value you passed from the $modalInstance.dismiss() call
+        }
+    );
+  }
   
   return dialogs;
+})
+
+.controller('ExtentedDialogCtrl', function ($scope, $uibModalInstance, $uibModalStack, message, title) {
+  $scope.message = message;
+  $scope.title = title;
+  
+  $scope.ok = function() {
+    $uibModalInstance.close(); 
+  }
+  
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+  
+  $scope.saveTextField = function (newValue) {
+    $uibModalInstance.close($scope.message);
+    //.replace(/\r?\n|\r/g,"")
+  };
+  
+  $scope.$watch(function() {
+    return $('.modal').length;
+  }, function(val) { // every time the number of modals changes
+    if (val > 0) {
+      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
+      $('.modal').on('mousedown', function(e) {
+        if (e.which === 1) { // left click
+          $uibModalStack.getTop().key.dismiss(); // close top modal when clicking
+                                                  // anywhere, you can close all modals
+                                                  // using $modalStack.dismissAll() instead
+        }
+      });
+      $('.modal-content').on('mousedown', function(e) {
+        e.stopPropagation(); // avoid closing the modal when clicking its body
+      });
+    }
+  });
 })
 
 .controller('DialogCtrl', function ($scope, $uibModalInstance, $uibModalStack, message) {

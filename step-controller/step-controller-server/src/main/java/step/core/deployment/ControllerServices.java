@@ -579,8 +579,8 @@ public class ControllerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public void copyArtefact(@PathParam("id") String id, 
-			@QueryParam("to") String targetParentId, @QueryParam("pos") int newPosition) {
-		getContext().getArtefactManager().copyArtefact(id, targetParentId);
+			@QueryParam("to") String targetParentId, @QueryParam("pos") int newPosition, @QueryParam("name") String name) {
+		getContext().getArtefactManager().copyArtefact(id, targetParentId,name);
 	}
 	
 	@POST

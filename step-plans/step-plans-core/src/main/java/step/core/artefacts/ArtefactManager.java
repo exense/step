@@ -19,6 +19,10 @@ public class ArtefactManager {
 	}
 	
 	public AbstractArtefact copyArtefact(String id, String targetParentId) {
+		return copyArtefact(id, targetParentId, null);
+	}
+	
+	public AbstractArtefact copyArtefact(String id, String targetParentId, String name) {
 		ObjectId cloneId = copyRecursive(new ObjectId(id));
 		
 		AbstractArtefact target;
@@ -29,8 +33,12 @@ public class ArtefactManager {
 		} else {
 			target = accessor.get(cloneId);
 			if(target.getAttributes()!=null) {
-				String name = target.getAttributes().get("name");
-				target.getAttributes().put("name", name+"_Copy");				
+				String targetName = (name != null) ? name : target.getAttributes().get("name") + "_Copy";
+				target.getAttributes().put("name", targetName);
+			}
+			if (target.getCustomAttribute("ephemeral") != null && (boolean) target.getCustomAttribute("ephemeral") ) {
+				target.getCustomAttributes().remove("ephemeral");
+				target.setRoot(true);
 			}
 			accessor.save(target);
 		}

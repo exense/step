@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','dynamicForms','export'])
 
-.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location, AuthService, reportTableFactory, executionServices, ExportService) {
+.controller('ArtefactEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location,Dialogs,  AuthService, reportTableFactory, executionServices, ExportService) {
       stateStorage.push($scope, 'artefacteditor', {});
       
       $scope.$watch('$state',function() {
@@ -178,6 +178,12 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       
       $scope.exportArtefact = function() {
         ExportService.get("rest/export/artefact/"+$scope.artefact.id);
+      }
+      
+      $scope.cloneArtefact = function() {
+        modalResult = Dialogs.enterValue('Clone plan as ',$scope.artefact.attributes.name+'_Copy', function(value) {
+          $http.post("rest/controller/artefact/"+$scope.artefact.id+"/copy?name=" + value)
+        });   
       }
       
 })
