@@ -149,12 +149,7 @@ public class AccessServices extends AbstractServices {
 		// conf should cover more than just AccessConfiguration but we'll store the info here for right now
 		Configuration ctrlConf = getContext().getConfiguration();
 		conf.getMiscParams().put("enforceschemas", getContext().getConfiguration().getProperty("enforceschemas", "false"));
-		if(ctrlConf.hasProperty("logo.loginpage")) {
-			conf.getMiscParams().put("logologinpage", ctrlConf.getProperty("logo.loginpage"));			
-		}
-		if(ctrlConf.hasProperty("logo.main")) {
-			conf.getMiscParams().put("logomain", ctrlConf.getProperty("logo.main"));			
-		}
+
 		if(ctrlConf.hasProperty("ui.default.url")) {
 			conf.setDefaultUrl(ctrlConf.getProperty("ui.default.url"));
 		}

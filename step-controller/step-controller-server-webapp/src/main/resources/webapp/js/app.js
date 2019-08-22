@@ -131,7 +131,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
   $scope.isInitialized = false;
   function finishInitialization() {
     $scope.isInitialized = true;
-    $scope.logo = AuthService.getConf().miscParams.logomain?AuthService.getConf().miscParams.logomain:"images/logo_step_line_black.png";
+    $scope.logo = "images/logotopleft.png";
     if(!$location.path()) {
       AuthService.gotoDefaultPage();
     }
@@ -489,7 +489,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
       $scope.error = "Invalid username/password";
     });
   };
-  $scope.logo = AuthService.getConf().miscParams.logologinpage?AuthService.getConf().miscParams.logologinpage:"images/logo_step_line_black.png";
+  $scope.logo = "images/logologin.png";
   
 })
 
