@@ -42,7 +42,8 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 		if(entity.getId()==null) {
 			entity.setId(new ObjectId());
 		}
-		return map.put(entity.getId(), entity);
+		map.put(entity.getId(), entity);
+		return entity;
 	}
 
 	@Override
