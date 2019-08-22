@@ -10,6 +10,19 @@
     background: #17D821;
 }
 
+form.form-signin {
+    background-color: #c0f7c3;
+}
+
+.btn-success, .btn-success:active, .btn-success:visited {
+    background-color: #17D821 !important;
+}
+
+.btn-success:hover  {
+    background-color: #89f48e !important;
+}
+
+
 a { cursor: pointer; }
 
 .navbar-default .navbar-nav>li>div {
