@@ -316,10 +316,14 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   var service = {};
   
   var maintenanceMessage;
+  var toggleMaintenanceMessage;
   
   function loadMaintenanceMessage() {
     $http.get('rest/admin/maintenance/message').then(function(res) {
       maintenanceMessage = res.data;
+    })
+    $http.get('rest/admin/maintenance/message/toggle').then(function(res) {
+      toggleMaintenanceMessage = res.data;
     })
   }
   
@@ -329,6 +333,10 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   
   service.getMaintenanceMessage = function() {
     return maintenanceMessage;
+  }
+  
+  service.displayMaintenanceMessage = function() {
+    return (maintenanceMessage && toggleMaintenanceMessage);
   }
   
   service.reloadMaintenanceMessage = function() {

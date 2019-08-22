@@ -48,6 +48,7 @@ public class AdminServices extends AbstractServices {
 	protected ControllerSettingAccessor controllerSettingsAccessor;
 
 	private static final String MAINTENANCE_MESSAGE_KEY = "maintenance_message";
+	private static final String MAINTENANCE_TOGGLE_KEY = "maintenance_message_enabled";
 	
 	@PostConstruct
 	public void init() throws Exception {
@@ -142,6 +143,27 @@ public class AdminServices extends AbstractServices {
 			setting.setKey(MAINTENANCE_MESSAGE_KEY);
 		}
 		setting.setValue(message);
+		controllerSettingsAccessor.save(setting);
+	}
+	
+	@GET
+	@Secured
+	@Path("/maintenance/message/toggle")
+	public boolean getMaintenanceMessageToggle() {
+		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_TOGGLE_KEY);
+		return setting!=null?Boolean.parseBoolean(setting.getValue()):false;
+	}
+	
+	@POST
+	@Secured(right="admin")
+	@Path("/maintenance/message/toggle")
+	public void setMaintenanceMessageToggle(boolean enabled) {
+		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_TOGGLE_KEY);
+		if(setting == null) {
+			setting = new ControllerSetting();
+			setting.setKey(MAINTENANCE_TOGGLE_KEY);
+		}
+		setting.setValue(Boolean.toString(enabled));
 		controllerSettingsAccessor.save(setting);
 	}
 	

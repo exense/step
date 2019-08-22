@@ -1,4 +1,4 @@
-<div ng-if="maintenanceService.getMaintenanceMessage()" class="alert alert-warning" role="alert" ng-bind-html="maintenanceService.trustAsHtml(maintenanceService.getMaintenanceMessage())">
+<div ng-if="maintenanceService.displayMaintenanceMessage()==='true'" class="alert alert-warning" role="alert" ng-bind-html="maintenanceService.trustAsHtml(maintenanceService.getMaintenanceMessage())">
 </div>
 <nav class="navbar navbar-default">
 	<div class="container-fluid">
