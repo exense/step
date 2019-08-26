@@ -1,17 +1,19 @@
 package step.localrunner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 
 import org.bson.types.ObjectId;
 
+import ch.exense.commons.app.Configuration;
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionRouter;
 import step.attachments.FileResolver;
-import ch.exense.commons.app.Configuration;
 import step.core.artefacts.ArtefactManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -138,6 +140,12 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 			@Override
 			public Function findByAttributes(Map<String, String> attributes) {
 				Function function = inMemoryFunctionAccessor.findByAttributes(attributes);
+				function = toLocalFunction(inMemoryFunctionAccessor, attributes, function);
+				return function;
+			}
+
+			protected Function toLocalFunction(InMemoryFunctionAccessorImpl inMemoryFunctionAccessor,
+					Map<String, String> attributes, Function function) {
 				if(function == null) {
 					// Use a local function per default
 					function = new LocalFunction();
@@ -165,6 +173,13 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 			@Override
 			public Iterator<Function> getAll() {
 				return inMemoryFunctionAccessor.getAll();
+			}
+
+			@Override
+			public Spliterator<Function> findManyByAttributes(Map<String, String> attributes) {
+				List<Function> result = new ArrayList<>();
+				inMemoryFunctionAccessor.findManyByAttributes(attributes).forEachRemaining(f->result.add(toLocalFunction(inMemoryFunctionAccessor, attributes, f)));
+				return result.spliterator();
 			}
 
 		};	

@@ -21,6 +21,7 @@ package step.core.accessors;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 
 import javax.json.JsonObjectBuilder;
 import javax.json.spi.JsonProvider;
@@ -56,13 +57,24 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 	
 	@Override
 	public T findByAttributes(Map<String, String> attributes) {
+		String query = queryByAttributes(attributes);
+		return collection.findOne(query).as(entityClass);
+	}
+	
+	@Override
+	public Spliterator<T> findManyByAttributes(Map<String, String> attributes) {
+		String query = queryByAttributes(attributes);
+		return collection.find(query).as(entityClass).spliterator();
+	}
+
+	protected String queryByAttributes(Map<String, String> attributes) {
 		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
 		for(String key:attributes.keySet()) {
 			builder.add("attributes."+key, attributes.get(key));
 		}
 
 		String query = builder.build().toString();
-		return collection.findOne(query).as(entityClass);
+		return query;
 	}
 	
 	@Override

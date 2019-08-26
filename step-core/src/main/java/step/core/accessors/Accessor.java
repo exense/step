@@ -2,6 +2,7 @@ package step.core.accessors;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Spliterator;
 
 import org.bson.types.ObjectId;
 
@@ -22,6 +23,14 @@ public interface Accessor<T extends AbstractIdentifiableObject> {
 	 * @return the object
 	 */
 	T findByAttributes(Map<String, String> attributes);
+	
+	/**
+	 * Find objects by attributes.
+	 * 
+	 * @param attributes the map of mandatory attributes of the object to be found
+	 * @return an {@link Iterator} for the objects found
+	 */
+	Spliterator<T> findManyByAttributes(Map<String, String> attributes);
 
 	Iterator<T> getAll();
 }

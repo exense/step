@@ -3,6 +3,7 @@ package step.client.accessors;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
@@ -59,6 +60,11 @@ public class RemoteFunctionAccessorImpl extends AbstractRemoteClient implements 
 	@Override
 	public void save(List<? extends Function> entities) {
 		entities.forEach(f->save(f));
+	}
+
+	@Override
+	public Spliterator<Function> findManyByAttributes(Map<String, String> attributes) {
+		throw notImplemented();
 	}
 
 }

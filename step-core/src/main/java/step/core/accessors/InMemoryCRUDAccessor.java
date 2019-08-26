@@ -3,6 +3,7 @@ package step.core.accessors;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bson.types.ObjectId;
@@ -25,6 +26,17 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 				return false;
 			}
 		}).findFirst().orElse(null);
+	}
+	
+	@Override
+	public Spliterator<T> findManyByAttributes(Map<String, String> attributes) {
+		return map.values().stream().filter(v->{
+			if(v instanceof AbstractOrganizableObject) {
+				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
+			} else {
+				return false;
+			}
+		}).spliterator();
 	}
 
 	@Override

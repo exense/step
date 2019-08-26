@@ -3,6 +3,7 @@ package step.client.accessors;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 
 import javax.ws.rs.client.Invocation.Builder;
 
@@ -92,6 +93,11 @@ public class RemoteExecutionAccessor extends AbstractRemoteClient implements Exe
 
 	@Override
 	public List<Execution> getLastExecutionsBySchedulerTaskID(String schedulerTaskID, int limit) {
+		throw notImplemented();
+	}
+
+	@Override
+	public Spliterator<Execution> findManyByAttributes(Map<String, String> attributes) {
 		throw notImplemented();
 	}	
 }

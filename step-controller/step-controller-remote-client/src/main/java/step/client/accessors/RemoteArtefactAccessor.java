@@ -3,6 +3,7 @@ package step.client.accessors;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
@@ -93,5 +94,10 @@ public class RemoteArtefactAccessor extends AbstractRemoteClient implements Arte
 	@Override
 	public AbstractArtefact get(String artefactID) {
 		return get(new ObjectId(artefactID));
+	}
+
+	@Override
+	public Spliterator<AbstractArtefact> findManyByAttributes(Map<String, String> attributes) {
+		throw new UnsupportedOperationException();
 	}
 }
