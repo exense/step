@@ -20,6 +20,7 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
 import step.grid.bootstrap.ResourceExtractor;
 import step.grid.filemanager.FileVersionId;
+import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.java.handler.GeneralScriptHandler;
 import step.plugins.js223.handler.ScriptHandler;
 
@@ -47,6 +48,11 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		addPluginLibsIfRequired(function.getScriptLanguage().get(), props);
 		registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props);
 		registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props);
+		
+		if(configuration.getPropertyAsBoolean("plugins.java.validate.properties")) {
+			props.put(KeywordExecutor.VALIDATE_PROPERTIES, Boolean.TRUE.toString());
+		}
+		
 		return props;
 	}
 
