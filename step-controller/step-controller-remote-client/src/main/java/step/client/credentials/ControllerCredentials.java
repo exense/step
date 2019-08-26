@@ -35,6 +35,10 @@ public class ControllerCredentials {
 	public ControllerCredentials(String serverUrl, String username, String password) {
 		super();
 		
+		if(serverUrl == null || serverUrl.isEmpty()) {
+			throw new RuntimeException("Incorrect serverURL: " + serverUrl);
+		}			
+		
 		if (serverUrl.endsWith("/")) {
 			serverUrl = serverUrl.substring(0,serverUrl.length()-1);
 		}
