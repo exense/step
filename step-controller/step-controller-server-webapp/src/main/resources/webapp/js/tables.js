@@ -18,6 +18,23 @@
  *******************************************************************************/
 angular.module('dataTable', ['export'])
 
+.factory('DataTableRegistry', function() {
+  
+  var registry = {};
+  
+  var api = {};
+  
+  api.register = function(tableId,tableModifier) {
+    registry[tableId] = tableModifier;
+  }
+  
+  api.getTableModifier = function(tableId) {
+    return registry[tableId];
+  }
+  
+  return api;
+})
+
 .directive('dateinput', ['$http',function($http) {
   return {
     restrict: 'E',
@@ -97,7 +114,7 @@ angular.module('dataTable', ['export'])
   };
 }])
 
-.directive('datatable', ['$compile','$http','$timeout','$q','stateStorage','Preferences','ExportService',function($compile,$http,$timeout,$q,stateStorage,Preferences,ExportService) {
+.directive('datatable', ['$compile','$http','$timeout','$q','stateStorage','Preferences','ExportService','DataTableRegistry',function($compile,$http,$timeout,$q,stateStorage,Preferences,ExportService,DataTableRegistry) {
   return {
     restrict:'E',
     scope: {
@@ -333,6 +350,11 @@ angular.module('dataTable', ['export'])
             columns = scope.tabledef.columns(columns); 
           }
           
+          var tableModifier = DataTableRegistry.getTableModifier(attr.serverside);
+          if(tableModifier) {
+            columns = tableModifier.columns(scope, scope.handle, columns);
+          }
+          
           tableOptions.columns = columns;
         }));
         
@@ -460,6 +482,9 @@ angular.module('dataTable', ['export'])
         scope.handle.export = scope.export;
         scope.handle.trackScope = function(s) {
           scope.scopesTracker.track(s);
+        }
+        scope.handle.reload = function() {
+          scope.Datatable.ajax.reload(null, false);
         }
       }
       
