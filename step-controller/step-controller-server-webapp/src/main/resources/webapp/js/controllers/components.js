@@ -270,7 +270,8 @@ angular.module('components',['step'])
   return {
     restrict: 'E',
     scope: {
-      stModel: '='
+      stModel: '=', 
+      stFormat: '@?'
     },
     controller: function($scope,$http,$timeout,Upload,ResourceDialogs) {
       $scope.resourceFilename = "";
@@ -289,6 +290,7 @@ angular.module('components',['step'])
                 });
           } else {
             $scope.absoluteFilepath = $scope.stModel;
+            $scope.fileName = $scope.absoluteFilepath.replace(/^.*[\\\/]/, '');
           }
         }
       })
