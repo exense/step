@@ -21,10 +21,11 @@ public class GlobalContextBuilder {
 		context.setExpressionHandler(new ExpressionHandler());
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		
-		ControllerPluginManager pluginManager = new ControllerPluginManager();
+		Configuration configuration = new Configuration();
+		ControllerPluginManager pluginManager = new ControllerPluginManager(configuration);
 		context.setPluginManager(pluginManager);
 		
-		context.setConfiguration(new Configuration());
+		context.setConfiguration(configuration);
 		
 		context.put(CollectionRegistry.class, new CollectionRegistry());
 		context.setExecutionAccessor(new InMemoryExecutionAccessor());

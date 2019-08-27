@@ -68,7 +68,7 @@ public class Controller {
 
 	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
-		pluginManager = new ControllerPluginManager();
+		pluginManager = new ControllerPluginManager(configuration);
 		pluginManager.initialize();
 		
 		initContext();
