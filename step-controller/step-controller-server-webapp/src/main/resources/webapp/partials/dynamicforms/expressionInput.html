@@ -4,7 +4,10 @@
 	</label>
 	<span ng-if="tooltip" class="glyphicon glyphicon-question-sign" uib-tooltip="{{tooltip}}"></span>
 	<div class="input-group">
-		<input type="text" class="form-control" st-text-popup ng-blur="onSave()" ng-model="dynamicValue.expression" />
+		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.expression" />
+		<span class="input-group-btn">
+			<button class="btn btn-default btn-sm" type="button" ng-click="editDynamicExpression()"><span class="glyphicon glyphicon-pencil"></span></button>
+		</span>
 		<span class="input-group-btn">
 			<button class="btn btn-default btn-sm active" type="button" ng-click="useConstantValue()"><span class="glyphicon glyphicon-flash"></span></button>
 		</span>

@@ -63,8 +63,22 @@ dynamicForms.directive('dynamicCheckbox', function() {
       tooltip: '=',
       onSave: '&'
     },
-    controller: function($scope) {
+    controller: function($scope,Dialogs) {
       initDynamicFormsCtrl($scope);
+      $scope.editConstantValue = function() {
+        Dialogs.enterValue('Free text editor', $scope.dynamicValue.value, 'lg','enterTextValueDialog',function(value) {
+          $scope.dynamicValue.value = value;
+          $scope.onSave();
+        });
+      }
+      
+      $scope.editDynamicExpression = function() {
+        Dialogs.enterValue('Free text editor', $scope.dynamicValue.expression, 'lg','enterTextValueDialog',function(value) {
+          $scope.dynamicValue.expression = value;
+          $scope.onSave();
+        });
+      }
+
     },
     templateUrl: 'partials/dynamicforms/textfield.html'}
 })

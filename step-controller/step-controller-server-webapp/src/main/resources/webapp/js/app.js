@@ -526,6 +526,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
       var modalInstance = $uibModal.open({
         animation: false,
         templateUrl: 'partials/textFieldDialog.html',
+        size: 'lg',
         controller: 'DialogCtrl', 
         resolve: {message:function(){return scope.ngModel}}
       }).result.then(
@@ -538,12 +539,15 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
           }
       );
     }
-  
-  dialogs.enterValue = function(title,message,functionOnSuccess) {
+  //template as param?
+  //sizes: sm, md, lg
+  //templates: enterValueDialog or enterTextValueDialog
+  dialogs.enterValue = function(title,message,size,template,functionOnSuccess) {
     var modalInstance = $uibModal.open({
       animation: false,
-      templateUrl: 'partials/enterValueDialog.html',
-      controller: 'ExtentedDialogCtrl', 
+      templateUrl: 'partials/'+template+'.html',
+      controller: 'ExtentedDialogCtrl',
+      size: size,
       resolve: {
         message:function(){return message},
         title:function(){return title}
