@@ -1,5 +1,6 @@
 package step.core.execution.model;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +17,7 @@ public interface ExecutionAccessor extends CRUDAccessor<Execution> {
 
 	List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference);
 
-	Iterable<Execution> findByCritera(Map<String, Object> criteria, int limit);
+	Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end);
 
 	Iterable<Execution> findLastStarted(int limit);
 

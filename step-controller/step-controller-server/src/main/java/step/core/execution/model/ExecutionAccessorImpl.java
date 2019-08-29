@@ -19,13 +19,18 @@
 package step.core.execution.model;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.jongo.MongoCursor;
 
+import step.commons.iterators.SkipLimitIterator;
+import step.commons.iterators.SkipLimitProvider;
 import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.MongoClientSession;
 import step.core.repositories.RepositoryObjectReference;
@@ -67,9 +72,8 @@ public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> imple
 		collection.find("{executionParameters.artefact: #}", objectReference).as(Execution.class).forEach(e->result.add(e));;
 		return result;
 	}
-	
-	@Override
-	public Iterable<Execution> findByCritera(Map<String,Object> criteria, int limit) {
+
+	public List<Execution> findByCritera(Map<String,String> criteria, long start, long end, int skip, int limit) {
 		
 		String critSeparator = ", ";
 		String fieldSeparator = " : ";
@@ -77,7 +81,7 @@ public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> imple
 		
 		query.append("{");
 		
-		for(Entry<String, Object> e : criteria.entrySet())
+		for(Entry<String, String> e : criteria.entrySet())
 		{
 			query.append(e.getKey());
 			query.append(fieldSeparator);
@@ -85,15 +89,38 @@ public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> imple
 			query.append(critSeparator);
 		}
 		
-		// Remove last ","
-		String cleanQuery = null;
-		if(query.length() > 1)
-			cleanQuery = query.substring(0, query.length() - (critSeparator.length()));
-		else
-			cleanQuery = query.toString();
-		cleanQuery += "}";
-		//System.out.println(cleanQuery + ";" + criteria.values());
-		return collection.find(cleanQuery, criteria.values().toArray()).sort("{ \"endTime\" : -1}").limit(limit).as(Execution.class);
+		query.append("startTime");
+		query.append(fieldSeparator);
+		query.append("{ $gte"+fieldSeparator+start+"}");
+		query.append(critSeparator);
+		
+		query.append("endTime");
+		query.append(fieldSeparator);
+		query.append("{ $lte"+fieldSeparator+end+"}");
+		
+		query.append("}");
+		List<Execution> res = new ArrayList<Execution>();
+		
+		MongoCursor<Execution> curs = collection.find(query.toString(), criteria.values().toArray()) .sort("{ \"endTime\" : -1}").limit(limit).as(Execution.class);
+		curs.forEach(val -> res.add(val));
+		
+		return res;
+	}
+
+	@Override
+	public Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end) {
+		return new Iterable<Execution>() { 
+            @Override
+            public Iterator<Execution> iterator() 
+            { 
+                return  new SkipLimitIterator<Execution>(new SkipLimitProvider<Execution>() {
+        			@Override
+        			public List<Execution> getBatch(int skip, int limit) {
+        				return findByCritera(criteria, start.getTime(), end.getTime(), skip, limit);
+        			}
+        		}); 
+            } 
+        };
 	}
 	
 	@Override
