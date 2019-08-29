@@ -101,7 +101,8 @@ public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> imple
 		query.append("}");
 		List<Execution> res = new ArrayList<Execution>();
 		
-		MongoCursor<Execution> curs = collection.find(query.toString(), criteria.values().toArray()) .sort("{ \"endTime\" : -1}").limit(limit).as(Execution.class);
+		MongoCursor<Execution> curs = collection.find(query.toString(), criteria.values().toArray()) .sort("{ \"endTime\" : -1}")
+				.skip(skip).limit(limit).as(Execution.class);
 		curs.forEach(val -> res.add(val));
 		
 		return res;
