@@ -40,6 +40,8 @@ public class Function extends AbstractOrganizableObject {
 	protected JsonObject schema;
 	protected Map<String, String> tokenSelectionCriteria;
 	
+	protected boolean managed;
+	
 	public Map<String, String> getTokenSelectionCriteria() {
 		return tokenSelectionCriteria;
 	}
@@ -81,5 +83,13 @@ public class Function extends AbstractOrganizableObject {
 	
 	public boolean requiresLocalExecution() {
 		return false;
+	}
+
+	public boolean isManaged() {
+		return managed;
+	}
+
+	public void setManaged(boolean managed) {
+		this.managed = managed;
 	}
 }
