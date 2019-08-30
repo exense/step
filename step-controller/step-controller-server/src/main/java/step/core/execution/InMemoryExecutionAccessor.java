@@ -19,6 +19,7 @@
 package step.core.execution;
 
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,7 +53,7 @@ public class InMemoryExecutionAccessor extends InMemoryCRUDAccessor<Execution> i
 	}
 
 	@Override
-	public Iterable<Execution> findByCritera(Map<String, Object> criteria, int limit) {
+	public Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end) {
 		throw new RuntimeException("Not implemented");
 	}
 
