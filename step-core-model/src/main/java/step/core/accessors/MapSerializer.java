@@ -16,8 +16,7 @@ public class MapSerializer extends JsonSerializer<Map<String, Object>> {
 	
 	public MapSerializer() {
 		super();
-		mapper = new ObjectMapper();
-		mapper.enableDefaultTyping();
+		mapper = MapDeserializer.getMapper();
 	}
 
 	@Override
