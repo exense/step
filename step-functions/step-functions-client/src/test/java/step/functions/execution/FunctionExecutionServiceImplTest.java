@@ -25,6 +25,7 @@ import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionExecutionException;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
 import step.grid.TokenWrapperOwner;
@@ -254,7 +255,7 @@ public class FunctionExecutionServiceImplTest {
 				return new AbstractFunctionType<Function>() {
 					
 					@Override
-					public void beforeFunctionCall(Function function, Input<?> input, Map<String, String> properties) {
+					public void beforeFunctionCall(Function function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
 						super.beforeFunctionCall(function, input, properties);
 						beforeFunctionCallHasBeenCall.set(true);
 					}

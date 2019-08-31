@@ -41,6 +41,7 @@ import step.functions.handler.FunctionMessageHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionExecutionException;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
 import step.grid.bootstrap.ResourceExtractor;
@@ -171,13 +172,13 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			try {
 				outputMessage = gridClient.call(tokenHandle, node, FunctionMessageHandler.class.getName(), functionHandlerPackage, inputMessageProperties, callTimeout);
 			} catch (AgentCallTimeoutException e) {
-				attachExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword",e );
+				attachUnexpectedExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword",e );
 				return output;
 			} catch (AgentSideException e) {
-				attachExceptionToOutput(output, "Unexepected error on the agent side: "+e.getMessage(),e );
+				attachUnexpectedExceptionToOutput(output, "Unexepected error on the agent side: "+e.getMessage(),e );
 				return output;
 			} catch (AgentCommunicationException e) {
-				attachExceptionToOutput(output, "Communication error between the controller and the agent while calling the agent",e);
+				attachUnexpectedExceptionToOutput(output, "Communication error between the controller and the agent while calling the agent",e);
 				return output;
 			} 
 			
@@ -223,11 +224,17 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			}
 
 			return output;
+		} catch (FunctionExecutionException e) {
+			output.setError(e.getError());
+			Exception source = e.getSource();
+			if(source != null) {
+				attachExceptionToOutput(output, source);
+			}
 		} catch (Exception e) {
 			if(logger.isDebugEnabled()) {
 				logger.error("Unexpected error while calling function with id "+function.getId().toString(), e);
 			}
-			attachExceptionToOutput(output, e);
+			attachUnexpectedExceptionToOutput(output, e);
 		}
 		return output;
 	}
@@ -248,12 +255,16 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		return props;
 	}
 
-	private void attachExceptionToOutput(Output<?> output, Exception e) {
-		attachExceptionToOutput(output, "Unexpected error while calling keyword: " + e.getClass().getName() + " " + e.getMessage(), e);
+	private void attachUnexpectedExceptionToOutput(Output<?> output, Exception e) {
+		attachUnexpectedExceptionToOutput(output, "Unexpected error while calling keyword: " + e.getClass().getName() + " " + e.getMessage(), e);
 	}
 	
-	private void attachExceptionToOutput(Output<?> output, String message, Exception e) {
+	private void attachUnexpectedExceptionToOutput(Output<?> output, String message, Exception e) {
 		output.setError( new Error(ErrorType.TECHNICAL, "functionClient", message, 0, true));
+		attachExceptionToOutput(output, e);
+	}
+
+	private void attachExceptionToOutput(Output<?> output, Exception e) {
 		Attachment attachment = AttachmentHelper.generateAttachmentForException(e);
 		List<Attachment> attachments = output.getAttachments();
 		if(attachments==null) {
