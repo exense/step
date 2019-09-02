@@ -14,7 +14,6 @@ public class FindByCriteraParam {
 			@JsonProperty("limit") int limit, @JsonProperty("skip") int skip ) throws Exception 
 	{
 		super();
-		System.out.println("-------------------------------------------------------- "+criteria);
 		this.criteria = criteria;
 		this.start = start;
 		this.end = end;
