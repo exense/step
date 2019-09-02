@@ -150,11 +150,15 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
     });
   }
   
-  $scope.switchToggle = function() {
-    $scope.toggle.switch = !$scope.toggle.switch;
+  $scope.upateToggle = function() {
     $http.post("rest/admin/maintenance/message/toggle", $scope.toggle.switch).then(function() {
       MaintenanceService.reloadMaintenanceMessage();
     });
+  }
+  
+  $scope.switchToggle = function() {
+    $scope.toggle.switch = !$scope.toggle.switch;
+    $scope.upateToggle();
   }
 
 })

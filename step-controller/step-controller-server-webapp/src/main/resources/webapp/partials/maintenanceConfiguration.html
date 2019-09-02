@@ -4,7 +4,8 @@
 
 	
 		<span class="glyphicon glyphicon-question-sign"
-			uib-tooltip="The following message will be displayed as warning on the header to all users. Use the switch button on the right to toggle it on/off.">
+			uib-tooltip="The following message will be displayed as warning on the header to all users. 
+			Use the switch button on the right, or below radio buttons to toggle it on/off.">
 		</span>
 		
 		<div class="btn-switch ml-auto" ng-class="{'btn-switch--on':toggle.switch}"
@@ -15,6 +16,14 @@
 			</div>
 		</div>
 	</div>
+	<label>
+    <input type="radio" ng-model="toggle.switch" ng-value="false" ng-change="upateToggle()"> <!-- - -->
+    Do not display maintenance message
+  </label><br/>
+  <label>
+    <input type="radio" ng-model="toggle.switch" ng-value="true" ng-change="upateToggle()">
+    Display maintenance message
+  </label><br/>
 		<textarea ng-blur="saveMaintenanceMessage()"
 			ng-model="maintenanceMessage" class="form-control" rows="5"></textarea>
 </div>
