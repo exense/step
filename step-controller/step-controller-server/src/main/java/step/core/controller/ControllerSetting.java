@@ -8,6 +8,16 @@ public class ControllerSetting extends AbstractIdentifiableObject {
 	
 	protected String value;
 
+	public ControllerSetting(String key, String value) {
+		super();
+		this.key = key;
+		this.value = value;
+	}
+
+	public ControllerSetting() {
+		super();
+	}
+
 	public String getKey() {
 		return key;
 	}
