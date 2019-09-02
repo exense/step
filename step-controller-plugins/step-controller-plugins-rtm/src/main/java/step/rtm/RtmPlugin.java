@@ -11,6 +11,8 @@ import org.bson.Document;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.rtm.commons.Configuration;
 import org.rtm.commons.MeasurementAccessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mongodb.client.MongoCollection;
 
@@ -25,6 +27,8 @@ import step.functions.Function;
 
 @Plugin
 public class RtmPlugin extends AbstractControllerPlugin {
+	
+	private static final Logger logger = LoggerFactory.getLogger(RtmPlugin.class);
 
 	public static final String ATTRIBUTE_EXECUTION_ID = "eId";
 
@@ -138,7 +142,15 @@ public class RtmPlugin extends AbstractControllerPlugin {
 				}
 			}
 
-			accessor.saveManyMeasurements(measurements);;
+			accessor.saveManyMeasurements(measurements);
+			logMeasurements(measurements);
+			//call new function to log all measurements or log them after adding each measure
+		}
+	}
+	
+	public static void logMeasurements(List<Object> measurements) {
+		for (Object o: measurements) {
+			logger.trace("RTM measure:" + o.toString());
 		}
 	}
 
