@@ -36,7 +36,7 @@ angular.module('reportTree',['step','artefacts'])
       var nodeid = $scope.nodeid;
       
       var treeDiv = angular.element($element[0]).find('#jstree_div');
-      console.log($scope.reportTreeSettings);
+      //console.log($scope.reportTreeSettings);
       var tree;
       treeDiv.jstree(
           {
@@ -46,7 +46,7 @@ angular.module('reportTree',['step','artefacts'])
             },
             'data' : function (obj, cb) {
               var id = obj.id==='#'?nodeid:obj.id;
-              console.log($scope.reportTreeSettings);
+              //console.log($scope.reportTreeSettings);
               $http.get("rest/controller/reportnode/"+id+"/children?skip="+$scope.reportTreeSettings.skip+"&limit="+$scope.reportTreeSettings.limit).then(function(response) {
               //$http.get("rest/controller/reportnode/"+id+"/children").then(function(response) {
                 var nodes = response.data;
