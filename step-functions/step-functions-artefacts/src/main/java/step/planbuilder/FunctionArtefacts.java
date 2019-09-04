@@ -3,6 +3,8 @@ package step.planbuilder;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 
+import step.artefacts.Assert;
+import step.artefacts.Assert.AssertOperator;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.core.dynamicbeans.DynamicValue;
@@ -58,7 +60,20 @@ public class FunctionArtefacts {
 		CallFunction call = new CallFunction();
 		call.setArgument(new DynamicValue<String>(input));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
+		call.getAttributes().put("name", keywordName);
 		return call;
+	}
+	
+	public static Assert assertion(DynamicValue<String> actual, AssertOperator operator, DynamicValue<String> expected) {
+		Assert assertion = new Assert();
+		assertion.setActual(actual);
+		assertion.setOperator(operator);
+		assertion.setExpected(expected);
+		return assertion;
+	}
+	
+	public static DynamicValue<String> dynamic(String dynamic) {
+		return new DynamicValue<>(dynamic, "");
 	}
 	
 	public static CallFunction keywordById(String keywordId, String input) {

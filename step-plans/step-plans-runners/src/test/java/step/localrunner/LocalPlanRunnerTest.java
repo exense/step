@@ -77,10 +77,10 @@ public class LocalPlanRunnerTest {
 		
 		Assert.assertEquals("Sequence:PASSED:\n" + 
 				" Session:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  writeSessionValue:PASSED:\n" + 
+				"  assertSessionValue:PASSED:\n" + 
 				" Session:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n", tree.toString());
+				"  assertSessionValue:PASSED:\n", tree.toString());
 	}
 	
 	@Test
@@ -107,35 +107,35 @@ public class LocalPlanRunnerTest {
 		String expectedTree = 
 				"For:PASSED:\n" + 
 				" Iteration1:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
 				" Iteration2:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
 				" Iteration3:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
 				" Iteration4:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
 				" Iteration5:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
 				" Iteration6:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
 				" Iteration7:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
 				" Iteration8:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
 				" Iteration9:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n" + 
 				" Iteration10:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n" + 
-				"  CallKeyword:PASSED:\n";
+				"  keyword1:PASSED:\n" + 
+				"  keyword1:PASSED:\n";
 		
 		StringWriter tree = new StringWriter();
 		runner.run(plan).visitReportNodes(node->{
