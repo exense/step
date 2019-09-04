@@ -1,34 +1,96 @@
+body {
+	background-color: #f9f9f9;	
+}
 
-.navbar-default .navbar-nav > .active{
-    color: #FFF;
-    background: #17D821;
+form.form-signin {
+    background-color: white;
+}
+
+.navbar {
+  border-radius: 0px;
+  border: 0px;	
+}
+
+.navbar-default {
+  background-color: #000000;
+  border-color: #828282;
+}
+.navbar-default .navbar-brand {
+  color: #d8d9da;
+}
+.navbar-default .navbar-brand:hover,
+.navbar-default .navbar-brand:focus {
+  color: #f0f6f0;
+}
+.navbar-default .navbar-text {
+  color: #d8d9da;
+}
+.navbar-default .navbar-nav > li > a {
+  color: #d8d9da;
+}
+.navbar-default .navbar-nav > li > a:hover,
+.navbar-default .navbar-nav > li > a:focus {
+  color: #f0f6f0;
 }
 .navbar-default .navbar-nav > .active > a,
 .navbar-default .navbar-nav > .active > a:hover,
 .navbar-default .navbar-nav > .active > a:focus {
-    color: #FFF;
-    background: #17D821;
+  color: #f0f6f0;
+  background-color: #828282;
+}
+.navbar-default .navbar-nav > .open > a,
+.navbar-default .navbar-nav > .open > a:hover,
+.navbar-default .navbar-nav > .open > a:focus {
+  color: #f0f6f0;
+  background-color: #828282;
+}
+.navbar-default .navbar-toggle {
+  border-color: #828282;
+}
+.navbar-default .navbar-toggle:hover,
+.navbar-default .navbar-toggle:focus {
+  background-color: #828282;
+}
+.navbar-default .navbar-toggle .icon-bar {
+  background-color: #d8d9da;
+}
+.navbar-default .navbar-collapse,
+.navbar-default .navbar-form {
+  border-color: #d8d9da;
+}
+.navbar-default .navbar-link {
+  color: #d8d9da;
+}
+.navbar-default .navbar-link:hover {
+  color: #f0f6f0;
 }
 
-form.form-signin {
-    background-color: #c0f7c3;
+@media (max-width: 767px) {
+  .navbar-default .navbar-nav .open .dropdown-menu > li > a {
+    color: #d8d9da;
+  }
+  .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover,
+  .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus {
+    color: #f0f6f0;
+  }
+  .navbar-default .navbar-nav .open .dropdown-menu > .active > a,
+  .navbar-default .navbar-nav .open .dropdown-menu > .active > a:hover,
+  .navbar-default .navbar-nav .open .dropdown-menu > .active > a:focus {
+    color: #f0f6f0;
+    background-color: #828282;
+  }
 }
 
 .btn-success, .btn-success:active, .btn-success:visited {
-    background-color: #17D821 !important;
+    background-color: #17d821 !important;
+    border-color: #2fcc37 !important;
 }
 
 .btn-success:hover  {
-    background-color: #89f48e !important;
+    background-color: #18e022 !important;
 }
-
 
 a { cursor: pointer; }
-
-.navbar-default .navbar-nav>li>div {
-	padding-top: 15px;
-    padding-bottom: 15px;
-}
 
 .toolbar {
 	position: absolute;
