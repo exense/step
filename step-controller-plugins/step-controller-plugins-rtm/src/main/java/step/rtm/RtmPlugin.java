@@ -143,8 +143,11 @@ public class RtmPlugin extends AbstractControllerPlugin {
 			}
 
 			accessor.saveManyMeasurements(measurements);
-			logMeasurements(measurements);
-			//call new function to log all measurements or log them after adding each measure
+			
+			if (logger.isTraceEnabled()) {
+				logMeasurements(measurements);
+			}
+			
 		}
 	}
 	
