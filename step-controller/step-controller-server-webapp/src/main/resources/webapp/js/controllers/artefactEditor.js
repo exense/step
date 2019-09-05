@@ -182,7 +182,10 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       
       $scope.cloneArtefact = function() {
         modalResult = Dialogs.enterValue('Clone plan as ',$scope.artefact.attributes.name+'_Copy', 'md', 'enterValueDialog', function(value) {
-          $http.post("rest/controller/artefact/"+$scope.artefact.id+"/copy?name=" + value)
+          $http.post("rest/controller/artefact/"+$scope.artefact.id+"/copy?name=" + value).then(function(response){
+            var cloneArtefactId = response.data;
+            $location.path('/root/artefacteditor/' + cloneArtefactId);
+          })
         });   
       }
       
