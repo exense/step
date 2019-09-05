@@ -22,17 +22,16 @@ angular.module('screenConfigurationControllers',['tables','step'])
   ViewRegistry.registerDashlet('admin/controller','Screens','partials/screenconfiguration/screenConfiguration.html');
 })
 
-.factory('ScreenTemplates', function($http) {
+.factory('ScreenTemplates', function($http, $q) {
   
   var api = {};
   
   api.getScreenInputsByScreenId = function(screenId) {
-    var promise = new Promise(function(resolve, reject) {
-      $http.get("rest/screens/"+screenId).then(function(response){ 
+    return $q(function(resolve, reject) {
+      $http.get("rest/screens/"+screenId).then(function(response){
         resolve(response.data)
       })
-    });
-    return promise;
+    })
   }
   
   return api;
@@ -146,11 +145,16 @@ angular.module('screenConfigurationControllers',['tables','step'])
       stModel: '=',
       stOnChange: '&?',
       stDisabled: '=?',
-      stInline: '=?'
+      stInline: '=?',
+      stExcludeFields: '=?'
     },
     templateUrl: 'partials/screenconfiguration/customForm.html',
     controller: function($scope) {
-      ScreenTemplates.getScreenInputsByScreenId($scope.stScreen).then(function(attributes) {$scope.attributes=attributes})
+      ScreenTemplates.getScreenInputsByScreenId($scope.stScreen).then(function(attributes) {
+        $scope.attributes=_.reject(attributes, function(attribute) {
+          return $scope.stExcludeFields!=null && $scope.stExcludeFields.includes(attribute.id);
+        });
+      })
       
       $scope.attribute = function(name) {
         return function(value) {
