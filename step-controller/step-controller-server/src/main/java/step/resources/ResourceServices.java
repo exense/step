@@ -48,14 +48,17 @@ public class ResourceServices extends AbstractServices {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType) throws IOException {
+			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType, @QueryParam("duplicateCheck") Boolean checkForDuplicate) throws IOException {
+		if(checkForDuplicate == null) {
+			checkForDuplicate = true;
+		}
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
 		if (resourceType == null || resourceType.length() == 0)
 			throw new RuntimeException("Missing resource type query parameter 'type'");
 		
 		try {
-			Resource resource = resourceManager.createResource(resourceType, uploadedInputStream, fileDetail.getFileName(), true);
+			Resource resource = resourceManager.createResource(resourceType, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate);
 			return new ResourceUploadResponse(resource, null);
 		} catch (SimilarResourceExistingException e) {
 			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());

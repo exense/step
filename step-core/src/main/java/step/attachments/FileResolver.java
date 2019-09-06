@@ -26,12 +26,26 @@ public class FileResolver {
 			throw new RuntimeException("Attachments have been migrated to the ResourceManager. The reference " + path +
 					" isn't valid anymore. Your attachment should be migrated to the ResourceManager.");
 		} else if(path.startsWith(RESOURCE_PREFIX)) {
-			String resourceId = path.replace(RESOURCE_PREFIX, "");
+			String resourceId = extractResourceId(path);
 			file = resourceManager.getResourceFile(resourceId).getResourceFile();
 		} else {
 			file = new File(path);
 		}
 		return file;
+	}
+	
+	public String resolveResourceId(String path) {
+		String resourceId;
+		if(path != null && path.startsWith(RESOURCE_PREFIX)) {
+			resourceId = extractResourceId(path);
+		} else {
+			resourceId = null;
+		}
+		return resourceId;
+	}
+
+	protected String extractResourceId(String path) {
+		return path.replace(RESOURCE_PREFIX, "");
 	}
 	
 	public FileHandle resolveFileHandle(String path) {
@@ -41,7 +55,7 @@ public class FileResolver {
 			throw new RuntimeException("Attachments have been migrated to the ResourceManager. The reference " + path +
 					" isn't valid anymore. Your attachment should be migrated to the ResourceManager.");
 		} else if(path.startsWith(RESOURCE_PREFIX)) {
-			String resourceId = path.replace(RESOURCE_PREFIX, "");
+			String resourceId = extractResourceId(path);
 			ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resourceId);
 			resourceRevisionFileHandle = resourceFile;
 			file = resourceFile.getResourceFile();

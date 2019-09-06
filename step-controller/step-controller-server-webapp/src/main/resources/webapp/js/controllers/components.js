@@ -113,6 +113,7 @@ angular.module('components',['step'])
     restrict: 'E',
     scope: {
       stType: '=',
+      stBounded: "=?",
       stModel: '=',
       stOnChange: '&?',
       saveButton: '@?',
@@ -123,6 +124,8 @@ angular.module('components',['step'])
       if(!$scope.saveButtonLabel) {
         $scope.saveButtonLabel="Save"
       }
+      
+      $scope.stBounded = angular.isDefined($scope.stBounded)?$scope.stBounded:false;
       
       function resetStaginModel() {
         // Initialize staging model
@@ -170,8 +173,10 @@ angular.module('components',['step'])
       function upload(file, url) {
         if(file) {
           $scope.uploading = true;
+          // do not perform any duplicate check for bounded resources as we do not want to link bounded resources 
+          // to any other resource
           Upload.upload({
-            url: url+"?type="+$scope.stType,
+            url: url+"?type="+$scope.stType+"&duplicateCheck="+!$scope.stBounded,
             data: {file: file}
           }).then(function (resp) {
             $scope.uploading = false;
@@ -208,15 +213,20 @@ angular.module('components',['step'])
       
       $scope.upload = function (file) {
         if($scope.isResource()) {
-          ResourceDialogs.showUpdateResourceWarning().then(function(updateResource){
-            if(updateResource) {
-              // Updating resource
-              upload(file,'rest/resources/'+$scope.getResourceId()+'/content');
-            } else {
-              // Creating a new resource
-              upload(file,'rest/resources/content');              
-            }
-          })
+          if(!$scope.stBounded) {
+            ResourceDialogs.showUpdateResourceWarning().then(function(updateResource){
+              if(updateResource) {
+                // Updating resource
+                upload(file,'rest/resources/'+$scope.getResourceId()+'/content');
+              } else {
+                // Creating a new resource
+                upload(file,'rest/resources/content');              
+              }
+            })
+          } else {
+            // Update the current resource
+            upload(file,'rest/resources/'+$scope.getResourceId()+'/content');
+          }
         } else {
           // Creating a new resource
           upload(file,'rest/resources/content');
