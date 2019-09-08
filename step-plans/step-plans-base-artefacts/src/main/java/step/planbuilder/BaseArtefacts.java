@@ -2,10 +2,14 @@ package step.planbuilder;
 
 import java.io.File;
 
+import step.artefacts.CallPlan;
 import step.artefacts.ForBlock;
 import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
 import step.artefacts.Set;
+import step.artefacts.TestCase;
+import step.artefacts.TestSet;
+import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.excel.ExcelDataPool;
 import step.datapool.sequence.IntSequenceDataPool;
@@ -41,5 +45,40 @@ public class BaseArtefacts {
 		f.setDataSourceType("excel");
 		return f;
 	}
+	
+	public static CallPlan callPlan(String planId) {
+		CallPlan callPlan = new CallPlan();
+		callPlan.setArtefactId(planId);
+		return callPlan;
+	}
+	
+	public static CallPlan callPlan(String planId, String name) {
+		CallPlan callPlan = callPlan(planId);
+		callPlan.getAttributes().put(AbstractArtefact.NAME, name);
+		return callPlan;
+	}
+	
+	public static TestSet testSet() {
+		TestSet testSet = new TestSet();
+		return testSet;
+	}
+	
+	public static TestSet testSet(String name) {
+		TestSet testSet = testSet();
+		testSet.getAttributes().put(AbstractArtefact.NAME, name);
+		return testSet;
+	}
+	
+	public static TestCase testCase() {
+		TestCase testCase = new TestCase();
+		return testCase;
+	}
+	
+	public static TestCase testCase(String name) {
+		TestCase testCase = testCase();
+		testCase.getAttributes().put(AbstractArtefact.NAME, name);
+		return testCase;
+	}
+
 
 }
