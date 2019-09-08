@@ -21,7 +21,12 @@ package step.core.execution.model;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.serialization.EscapingDottedKeysMapDeserializer;
+import step.core.accessors.serialization.EscapingDottedKeysMapSerializer;
 import step.core.artefacts.ArtefactFilter;
 import step.core.repositories.RepositoryObjectReference;
 
@@ -39,6 +44,8 @@ public class ExecutionParameters extends AbstractOrganizableObject {
 	
 	ExecutionMode mode;
 	
+	@JsonSerialize(using = EscapingDottedKeysMapSerializer.class)
+	@JsonDeserialize(using = EscapingDottedKeysMapDeserializer.class)
 	Map<String, String> customParameters;
 	
 	boolean isolatedExecution = false;
