@@ -71,16 +71,17 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart) {
-		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES);
+		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, true);
 	}
 	
-	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type) {
+	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean checkForDuplicates) {
 		MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
         multiPart.bodyPart(bodyPart);
         
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
+        params.put("duplicateCheck", Boolean.toString(checkForDuplicates));
         Builder b = requestBuilder("/rest/resources/content", params);
         return executeRequest(()->b.post(Entity.entity(multiPart, multiPart.getMediaType()), ResourceUploadResponse.class));
 	}
@@ -100,7 +101,7 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName,
 			boolean checkForDuplicates) throws IOException, SimilarResourceExistingException {
 		 StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
-		ResourceUploadResponse upload = upload(bodyPart, resourceType);
+		ResourceUploadResponse upload = upload(bodyPart, resourceType, checkForDuplicates);
 		return upload.getResource();
 	}
 
