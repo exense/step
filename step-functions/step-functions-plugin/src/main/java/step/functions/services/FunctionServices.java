@@ -19,7 +19,10 @@
 package step.functions.services;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.PostConstruct;
 import javax.json.Json;
@@ -37,17 +40,16 @@ import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
-import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
-import step.grid.tokenpool.Interest;
 import step.resources.ResourceManager;
 
 @Path("/functions")
@@ -55,6 +57,7 @@ public class FunctionServices extends AbstractServices {
 
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
+	protected FunctionAccessor functionAccessor;
 	protected FunctionManager functionManager;
 	
 	protected FunctionExecutionService functionExecutionService;
@@ -63,6 +66,7 @@ public class FunctionServices extends AbstractServices {
 	public void init() throws Exception {
 		super.init();
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().get(ResourceManager.class));
+		functionAccessor = getContext().get(FunctionAccessor.class);
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);
 	}
@@ -97,6 +101,13 @@ public class FunctionServices extends AbstractServices {
 	@Secured(right="kw-read")
 	public Function get(Map<String,String> attributes) {
 		return functionManager.getFunctionByAttributes(attributes);
+	}
+	
+	@POST
+	@Path("/find/many")
+	@Secured(right="kw-read")
+	public List<Function> findMany(Map<String,String> attributes) {
+		return StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 	}
 	
 	@GET

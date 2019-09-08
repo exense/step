@@ -7,6 +7,7 @@ import java.util.Spliterator;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 
 import org.bson.types.ObjectId;
@@ -64,7 +65,9 @@ public class RemoteFunctionAccessorImpl extends AbstractRemoteClient implements 
 
 	@Override
 	public Spliterator<Function> findManyByAttributes(Map<String, String> attributes) {
-		throw notImplemented();
+		Builder b = requestBuilder("/rest/functions/find/many");
+		Entity<Map<String, String>> entity = Entity.entity(attributes, MediaType.APPLICATION_JSON);
+		return executeRequest(()->b.post(entity,new GenericType<List<Function>>() {})).spliterator();
 	}
 
 }
