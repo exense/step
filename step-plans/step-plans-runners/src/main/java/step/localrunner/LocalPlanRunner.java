@@ -140,18 +140,24 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 			@Override
 			public Function findByAttributes(Map<String, String> attributes) {
 				Function function = inMemoryFunctionAccessor.findByAttributes(attributes);
-				function = toLocalFunction(inMemoryFunctionAccessor, attributes, function);
+				function = defaultLocalFunctionIfNull(inMemoryFunctionAccessor, attributes, function);
 				return function;
 			}
 
-			protected Function toLocalFunction(InMemoryFunctionAccessorImpl inMemoryFunctionAccessor,
+			protected Function defaultLocalFunctionIfNull(InMemoryFunctionAccessorImpl inMemoryFunctionAccessor,
 					Map<String, String> attributes, Function function) {
 				if(function == null) {
-					// Use a local function per default
-					function = new LocalFunction();
-					function.setAttributes(attributes);
-					inMemoryFunctionAccessor.save(function);
+					function = defaultLocalFunction(inMemoryFunctionAccessor, attributes);
 				}
+				return function;
+			}
+
+			protected Function defaultLocalFunction(InMemoryFunctionAccessorImpl inMemoryFunctionAccessor,
+					Map<String, String> attributes) {
+				// Use a local function per default
+				Function function = new LocalFunction();
+				function.setAttributes(attributes);
+				inMemoryFunctionAccessor.save(function);
 				return function;
 			}
 
@@ -178,7 +184,10 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 			@Override
 			public Spliterator<Function> findManyByAttributes(Map<String, String> attributes) {
 				List<Function> result = new ArrayList<>();
-				inMemoryFunctionAccessor.findManyByAttributes(attributes).forEachRemaining(f->result.add(toLocalFunction(inMemoryFunctionAccessor, attributes, f)));
+				inMemoryFunctionAccessor.findManyByAttributes(attributes).forEachRemaining(f->result.add(defaultLocalFunctionIfNull(inMemoryFunctionAccessor, attributes, f)));
+				if(result.size() == 0) {
+					result.add(defaultLocalFunction(inMemoryFunctionAccessor, attributes));
+				}
 				return result.spliterator();
 			}
 
