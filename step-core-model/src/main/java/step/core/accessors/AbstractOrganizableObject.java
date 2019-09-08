@@ -13,6 +13,7 @@ public class AbstractOrganizableObject extends AbstractIdentifiableObject {
 	protected Map<String, String> attributes;
 	
 	public static final String NAME = "name";
+	public static final String VERSION = "version";
 	
 	public AbstractOrganizableObject() {
 		super();

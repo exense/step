@@ -19,8 +19,14 @@
 package step.artefacts.handlers;
 
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -32,12 +38,11 @@ import javax.json.stream.JsonParsingException;
 import org.bson.types.ObjectId;
 
 import step.artefacts.CallFunction;
-import step.artefacts.handlers.SelectorHelper;
-import step.artefacts.handlers.SequentialArtefactScheduler;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.common.managedoperations.OperationManager;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -46,6 +51,8 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 import step.core.variables.VariablesManager;
 import step.datapool.DataSetHandle;
 import step.functions.Function;
@@ -59,11 +66,11 @@ import step.grid.TokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
-import step.core.reports.Error;
-import step.core.reports.ErrorType;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 	
+	public static final String KEYWORD_ACTIVE_VERSIONS = "keyword.active.versions";
+
 	protected FunctionExecutionService functionExecutionService;
 	
 	protected FunctionAccessor functionAccessor;
@@ -188,7 +195,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	private Function getFunction(CallFunction testArtefact) {
-		Function function;
+		Function function = null;
 		if(testArtefact.getFunctionId()!=null) {
 			function = functionAccessor.get(new ObjectId(testArtefact.getFunctionId()));
 			if(function == null) {
@@ -197,14 +204,40 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		} else {
 			String selectionAttributesJson = testArtefact.getFunction().get();
 			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, getBindings());
-			function = functionAccessor.findByAttributes(attributes);
-			if(function == null) {
-				throw new RuntimeException("Unable to find keyword with attributes "+selectionAttributesJson);
+			
+			List<Function> matchingFunctions = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+			
+			Set<String> activeKeywordVersions = getActiveKeywordVersions();
+			if(activeKeywordVersions != null && activeKeywordVersions.size()>0) {
+				// First try to find a function matching one of the active versions
+				function = matchingFunctions.stream().filter(f->{
+					String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
+					return version != null && activeKeywordVersions.contains(version);
+				}).findFirst().orElse(null);
+				// if no function has been found with one of the active versions, return the first function WITHOUT version
+				if(function == null) {
+					function = matchingFunctions.stream().filter(f->{
+						String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
+						return version == null || version.trim().isEmpty();
+					}).findFirst().orElseThrow(()->new RuntimeException("Unable to find keyword with attributes "+selectionAttributesJson+" matching on of the versions: "+activeKeywordVersions));
+				}
+			} else {
+				// No active versions defined. Return the first function
+				function = matchingFunctions.stream().findFirst().orElseThrow(()->new RuntimeException("Unable to find keyword with attributes "+selectionAttributesJson));
 			}
 		}
 		
 		
 		return function;
+	}
+
+	private Set<String> getActiveKeywordVersions() {
+		String activeKeywordVersionsStr = context.getVariablesManager().getVariableAsString(KEYWORD_ACTIVE_VERSIONS,null);
+		Set<String> activeKeywordVersions = new HashSet<>();
+		if(activeKeywordVersionsStr != null) {
+			activeKeywordVersions.addAll(Arrays.asList(activeKeywordVersionsStr.split(",")));
+		}
+		return activeKeywordVersions;
 	}
 
 	@SuppressWarnings("unchecked")
