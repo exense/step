@@ -122,8 +122,8 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
 
 .controller('ControllerSettingsCtrl', function($scope, $http, ViewRegistry) {
   $scope.configurationItems = ViewRegistry.getDashlets("admin/controller");
-  
-  $scope.currentConfigurationItem;
+
+  $scope.currentConfigurationItem = $scope.configurationItems[0];
   
   $scope.setCurrentConfigurationItem = function(item) {
 	$scope.currentConfigurationItem = item;
