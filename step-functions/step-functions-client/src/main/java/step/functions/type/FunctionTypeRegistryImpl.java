@@ -13,10 +13,18 @@ public class FunctionTypeRegistryImpl implements FunctionTypeRegistry {
 
 	protected final GridFileService gridFileServices;
 	
+	protected final FunctionTypeConfiguration functionTypeConfiguration;
+	
 	public FunctionTypeRegistryImpl(FileResolver fileResolver, GridFileService gridFileServices) {
+		this(fileResolver, gridFileServices, new FunctionTypeConfiguration());
+	}
+
+	public FunctionTypeRegistryImpl(FileResolver fileResolver, GridFileService gridFileServices,
+			FunctionTypeConfiguration functionTypeConfiguration) {
 		super();
 		this.fileResolver = fileResolver;
 		this.gridFileServices = gridFileServices;
+		this.functionTypeConfiguration = functionTypeConfiguration;
 	}
 
 	private final Map<String, AbstractFunctionType<Function>> functionTypes = new ConcurrentHashMap<>();
@@ -24,6 +32,7 @@ public class FunctionTypeRegistryImpl implements FunctionTypeRegistry {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void registerFunctionType(AbstractFunctionType<? extends Function> functionType) {
+		functionType.setFunctionTypeConfiguration(functionTypeConfiguration);
 		functionType.setFileResolver(fileResolver);
 		functionType.setGridFileServices(gridFileServices);
 		functionType.init();
