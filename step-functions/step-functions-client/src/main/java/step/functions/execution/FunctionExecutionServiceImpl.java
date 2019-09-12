@@ -175,7 +175,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 				attachUnexpectedExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword",e );
 				return output;
 			} catch (AgentSideException e) {
-				attachUnexpectedExceptionToOutput(output, "Unexepected error on the agent side: "+e.getMessage(),e );
+				attachUnexpectedExceptionToOutput(output, "Unexpected error on the agent side: "+e.getMessage(),e );
 				return output;
 			} catch (AgentCommunicationException e) {
 				attachUnexpectedExceptionToOutput(output, "Communication error between the controller and the agent while calling the agent",e);
