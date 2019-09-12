@@ -33,6 +33,11 @@ public class TestSet extends AbstractArtefact {
 		setCreateSkeleton(true);
 	}
 
+	public TestSet(int threads) {
+		this();
+		this.threads = new DynamicValue<Integer>(threads);
+	}
+
 	public DynamicValue<Integer> getThreads() {
 		return threads;
 	}

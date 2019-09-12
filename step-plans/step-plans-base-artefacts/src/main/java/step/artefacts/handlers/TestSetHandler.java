@@ -48,7 +48,11 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 
 	private void runParallel(ReportNode node, TestSet testSet, boolean execution) {
 		int numberOfThreads = testSet.getThreads().get();
-
+		
+		if(numberOfThreads == 0) {
+			numberOfThreads = context.getVariablesManager().getVariableAsInteger("tec.execution.threads", 1);
+		}
+		
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
 		
 		List<AbstractArtefact> children = getChildren(testSet);
