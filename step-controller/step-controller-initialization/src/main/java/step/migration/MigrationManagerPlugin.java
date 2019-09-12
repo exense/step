@@ -24,8 +24,9 @@ import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.versionmanager.VersionManagerPlugin;
 
-@Plugin()
+@Plugin(dependencies= {VersionManagerPlugin.class})
 /**
  * This plugin is responsible for the registration of the MigrationManager
  */
