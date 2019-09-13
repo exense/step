@@ -41,8 +41,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
-					<finalName>${project.artifactId}-${project.version}-jwd</finalName>
-					<appendAssemblyId>false</appendAssemblyId>
+					<appendAssemblyId>true</appendAssemblyId>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
