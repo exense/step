@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-
+<meta charset="utf-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
 <script type="text/javascript">
@@ -25,6 +24,11 @@ window.console.log = window.console.log || function(){};
 <script src="bower_components/jquery-file-download/src/Scripts/jquery.fileDownload.js"></script>
 <script src="bower_components/ng-file-upload/ng-file-upload.js"></script>
 <script src="bower_components/angular-resizable/src/angular-resizable.js"></script>
+
+<script src="bower_components/d3/d3.js"></script>
+<script src="bower_components/nvd3/build/nv.d3.js"></script>
+<script src="bower_components/angular-nvd3/dist/angular-nvd3.js"></script>
+<script src="bower_components/exense-visualization/dist/viz.js"></script>
 <!-- endbower -->
 
 <!-- <script type="text/javascript" src="js/lib/jquery-1.10.2.min.js"></script>
@@ -86,12 +90,18 @@ window.console.log = window.console.log || function(){};
 <script src="js/controllers/dynamicForms.js"></script>
 <script src="js/controllers/components.js"></script>
 
+<script src="js/viz-presets.js"></script>
+
 <!-- bower:css -->
 <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
 <link rel="stylesheet" href="bower_components/datatables.net-bs/css/dataTables.bootstrap.css" />
 <link rel="stylesheet" href="bower_components/jstree/dist/themes/default/style.css" />
 <link rel="stylesheet" href="bower_components/tachyons/css/tachyons.css" />
 <link rel="stylesheet" href="bower_components/angular-resizable/angular-resizable.min.css" />
+
+<!-- <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.css">  -->
+<link rel="stylesheet" href="bower_components/nvd3/build/nv.d3.css">
+<link rel="stylesheet" href="bower_components/exense-visualization/dist/viz.css">
 <!-- endbower -->
 <link rel="stylesheet" type="text/css" href="css/step.css">
 <link rel="stylesheet" type="text/css" href="js/chart.css">

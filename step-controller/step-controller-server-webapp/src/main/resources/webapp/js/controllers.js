@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminControllers = angular.module('tecAdminControllers',['components','dataTable','chart.js','step', 'views','ui.bootstrap','reportTree','reportTable','schedulerControllers']);
+var tecAdminControllers = angular.module('tecAdminControllers',['components','dataTable','chart.js','step', 'views','ui.bootstrap','reportTree','reportTable','schedulerControllers', 'wmservice', 'viz-widget-manager']);
 
 function escapeHtml(str) {
   var div = document.createElement('div');
@@ -189,7 +189,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
   };
 }]);
 
-tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry) {
+tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry', 'wmservice',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry, wmservice) {
   return {
     restrict: 'E',
     scope: {
@@ -565,6 +565,15 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
           }
         }
       });
+
+      $scope.$on('dashboard-ready', function () {
+        $scope.$broadcast('dashboard-new');
+        $(document).ready(function () {
+          $scope.$broadcast('dashboard-current-addWidget');
+        });
+      });
+      
+      $scope.presets = new StaticPresets();
     },
     templateUrl: 'partials/progress.html'
   };
