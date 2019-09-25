@@ -1,7 +1,11 @@
 package step.core.plugins;
 
+import javax.json.JsonObject;
+
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
+import step.functions.Function;
+import step.functions.io.Output;
 
 public class AbstractExecutionPlugin extends AbstractPlugin implements ExecutionCallbacks {
 
@@ -51,4 +55,9 @@ public class AbstractExecutionPlugin extends AbstractPlugin implements Execution
 	@Override
 	public void unassociateThread(ExecutionContext context, Thread thread) {}
 
+	@Override
+	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {}
+
+	@Override
+	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {}
 }

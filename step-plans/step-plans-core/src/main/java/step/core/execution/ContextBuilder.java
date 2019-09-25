@@ -1,5 +1,7 @@
 package step.core.execution;
 
+import javax.json.JsonObject;
+
 import org.bson.types.ObjectId;
 
 import step.attachments.FileResolver;
@@ -13,6 +15,8 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plugins.ExecutionCallbacks;
 import step.expressions.ExpressionHandler;
+import step.functions.Function;
+import step.functions.io.Output;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceManager;
 import step.threadpool.ThreadPool;
@@ -81,6 +85,14 @@ public class ContextBuilder {
 			
 			@Override
 			public void afterExecutionEnd(ExecutionContext context) {
+			}
+
+			@Override
+			public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {
+			}
+
+			@Override
+			public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {
 			}
 		});
 		

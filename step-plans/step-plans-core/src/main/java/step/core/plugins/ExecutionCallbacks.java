@@ -18,10 +18,34 @@
  *******************************************************************************/
 package step.core.plugins;
 
+import javax.json.JsonObject;
+
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
+import step.functions.Function;
+import step.functions.io.Output;
 
 public interface ExecutionCallbacks extends PluginCallbacks {
+	
+	/**
+	 * This hook is called before a {@link Function} is executed in CallFunctionHandler 
+	 * just after the {@link Function} has been resolved
+	 * The hook is also called in simulation mode
+	 * 
+	 * @param context the {@link ExecutionContext}
+	 * @param function the resolved {@link Function} that will be executed
+	 */
+	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function);
+	
+	/**
+	 * This hook is called after a {@link Function} is executed in CallFunctionHandler.
+	 * The hook is also called in simulation mode 
+	 * 
+	 * @param context the {@link ExecutionContext}
+	 * @param function the {@link Function} that has been executed
+	 * @param output the result {@link Output} of the execution
+	 */
+	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output);
 	
 	public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node);
 	

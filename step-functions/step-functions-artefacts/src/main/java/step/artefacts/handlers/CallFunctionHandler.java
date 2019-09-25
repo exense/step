@@ -51,6 +51,7 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
+import step.core.plugins.ExecutionCallbacks;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.variables.VariablesManager;
@@ -104,6 +105,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		node.setInput(argumentStr);
 		
 		Function function = getFunction(testArtefact);
+		
+		ExecutionCallbacks executionCallbacks = context.getExecutionCallbacks();
+		executionCallbacks.beforeFunctionExecution(context, node, function);
+		
 		node.setFunctionId(function.getId().toString());
 		node.setFunctionAttributes(function.getAttributes());
 
@@ -112,6 +117,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 		validateInput(input, function);
 
+		Output<JsonObject> output;
 		if(!context.isSimulation()) {		
 			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
 			boolean releaseTokenAfterExecution = (o==null);
@@ -130,7 +136,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				
 				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()});
 				
-				Output<JsonObject> output;
 				try {
 					output = functionExecutionService.callFunction(token, function, input, JsonObject.class);
 				} finally {
@@ -180,12 +185,15 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				callChildrenArtefacts(node, testArtefact);
 			}
 		} else {
-			Output<JsonObject> output = new Output<>();
+			output = new Output<>();
 			output.setPayload(jprov.createObjectBuilder().build());
 			node.setOutputObject(output.getPayload());
 			node.setOutput(output.getPayload().toString());
 			node.setStatus(ReportNodeStatus.PASSED);
 		}
+		
+		executionCallbacks.afterFunctionExecution(context, node, function, output);
+		
 	}
 
 	private void validateInput(Input<JsonObject> input, Function function) {
