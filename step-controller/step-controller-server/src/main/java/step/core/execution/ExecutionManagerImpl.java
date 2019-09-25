@@ -19,7 +19,7 @@
 package step.core.execution;
 
 import java.util.HashMap;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -38,16 +38,17 @@ public class ExecutionManagerImpl implements ExecutionManager {
 	}
 
 	@Override
-	public void updateParameters(ExecutionContext context) {
+	public void updateParameters(ExecutionContext context, Map<String, String> params) {
 		Execution execution = getExecution(context);
 		
 		execution.setResult(ReportNodeStatus.RUNNING);
 		
-		HashMap<String, String> params = new HashMap<>();
-		for(Entry<String, Object> entry:context.getVariablesManager().getAllVariables().entrySet()) {
-			params.put(entry.getKey(), entry.getValue().toString());
+		Map<String, String> parameters = execution.getParameters();
+		if(parameters == null) {
+			parameters = new HashMap<>();
+			execution.setParameters(parameters);
 		}
-		execution.setParameters(params);
+		parameters.putAll(params);
 		
 		saveExecution(execution);
 	}

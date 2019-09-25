@@ -186,7 +186,7 @@ public class InteractiveServices extends AbstractServices {
 			ParameterManager parameterManager = getContext().get(ParameterManager.class);
 			session.c.setCurrentReportNode(session.root);
 			ParameterManagerPlugin.putVariables(session.c, session.root, executionParameters.getExecutionParameters(), VariableType.IMMUTABLE);
-			Map<String, String> parameters = parameterManager.getAllParameters(ExecutionContextBindings.get(session.c));
+			Map<String, String> parameters = parameterManager.getAllParameterValues(ExecutionContextBindings.get(session.c));
 			ParameterManagerPlugin.putVariables(session.c, session.root, parameters, VariableType.IMMUTABLE);	
 			
 			ArtefactHandler.delegateCreateReportSkeleton(session.c, artefact, session.root);

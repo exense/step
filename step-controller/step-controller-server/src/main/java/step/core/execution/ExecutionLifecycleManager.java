@@ -57,7 +57,6 @@ public class ExecutionLifecycleManager {
 	
 	public void executionStarted() {
 		executionCallbacks.executionStart(context);
-		executionManager.updateParameters(context);
 	}
 	
 	public void executionEnded() {

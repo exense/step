@@ -1,5 +1,7 @@
 package step.core.execution;
 
+import java.util.Map;
+
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.ImportResult;
@@ -16,6 +18,6 @@ public interface ExecutionManager extends ExecutionTypeListener {
 
 	void persistStatus(ExecutionContext context);
 
-	void updateParameters(ExecutionContext context);
+	void updateParameters(ExecutionContext context, Map<String, String> params);
 
 }

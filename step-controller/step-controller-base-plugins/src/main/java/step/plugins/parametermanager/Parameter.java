@@ -24,17 +24,20 @@ import step.core.accessors.AbstractOrganizableObject;
 
 public class Parameter extends AbstractOrganizableObject implements ActivableObject {
 	
-	String key;
+	protected String key;
 	
-	String value;
+	protected String value;
 	
-	String description;
+	protected String description;
 	
-	Expression activationExpression;
+	protected Expression activationExpression;
 	
-	Integer priority;
+	protected Integer priority;
 	
-	Boolean protectedValue;
+	protected Boolean protectedValue;
+	
+	protected ParameterScope scope;
+	protected String scopeEntity;
 	
 	public Parameter() {
 		super();
@@ -96,5 +99,28 @@ public class Parameter extends AbstractOrganizableObject implements ActivableObj
 
 	public void setProtectedValue(Boolean protectedValue) {
 		this.protectedValue = protectedValue;
+	}
+
+	/**
+	 * @return the {@link ParameterScope} of this parameter
+	 */
+	public ParameterScope getScope() {
+		return scope;
+	}
+
+	public void setScope(ParameterScope scope) {
+		this.scope = scope;
+	}
+
+	/**
+	 * @return the name of the entity this parameter is restricted to. For instance: if the scope of a Parameter 
+	 * is set to FUNCTION, the scopeEntity represent the name of the Function for which this parameter applies
+	 */
+	public String getScopeEntity() {
+		return scopeEntity;
+	}
+
+	public void setScopeEntity(String scopeEntity) {
+		this.scopeEntity = scopeEntity;
 	}
 }

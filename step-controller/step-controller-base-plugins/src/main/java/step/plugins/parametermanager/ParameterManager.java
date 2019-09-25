@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.script.Bindings;
 import javax.script.ScriptException;
@@ -39,8 +40,12 @@ public class ParameterManager {
 		this.parameterAccessor = parameterAccessor;
 	}
 
-	public Map<String, String> getAllParameters(Map<String, Object> contextBindings) {
-		Map<String, String> result = new HashMap<>();
+	public Map<String, String> getAllParameterValues(Map<String, Object> contextBindings) {
+		return getAllParameters(contextBindings).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().value));
+	}
+	
+	public Map<String, Parameter> getAllParameters(Map<String, Object> contextBindings) {
+		Map<String, Parameter> result = new HashMap<>();
 		Bindings bindings = contextBindings!=null?new SimpleBindings(contextBindings):null;
 
 		Map<String, List<Parameter>> parameterMap = new HashMap<String, List<Parameter>>();
@@ -64,7 +69,7 @@ public class ParameterManager {
 			List<Parameter> parameters = parameterMap.get(key);
 			Parameter bestMatch = Activator.findBestMatch(bindings, parameters);
 			if(bestMatch!=null) {
-				result.put(key, bestMatch.value);
+				result.put(key, bestMatch);
 			}
 		}
 		return result;
