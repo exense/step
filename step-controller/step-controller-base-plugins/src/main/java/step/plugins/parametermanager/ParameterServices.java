@@ -29,6 +29,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.bson.types.ObjectId;
@@ -55,10 +57,14 @@ public class ParameterServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/")
 	@Secured(right="param-write")
-	public Parameter newParameter() {
+	public Parameter newParameter(@Context ContainerRequestContext crc) {
 		Parameter parameter =  new Parameter(new Expression(""), "", "", "");
 		parameter.setPriority(1);
-		parameter.setScope(ParameterScope.GLOBAL);
+		if(hasGlobalParamRight(crc)) {
+			parameter.setScope(ParameterScope.GLOBAL);
+		} else {
+			parameter.setScope(ParameterScope.FUNCTION);
+		}
 		return parameter;
 	}
 	
@@ -67,7 +73,9 @@ public class ParameterServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/")
 	@Secured(right="param-write")
-	public Parameter save(Parameter newParameter) {
+	public Parameter save(Parameter newParameter, @Context ContainerRequestContext crc) {
+		assertRights(newParameter, crc);
+		
 		Parameter oldParameter;
 		if(newParameter.getId()!=null) {
 			oldParameter = parameterAccessor.get(newParameter.getId());
@@ -96,6 +104,18 @@ public class ParameterServices extends AbstractServices {
 		return parameterAccessor.save(newParameter);
 	}
 
+	protected void assertRights(Parameter newParameter, ContainerRequestContext crc) {
+		if(newParameter.getScope() == null || newParameter.getScope()==ParameterScope.GLOBAL) {
+			if(!hasGlobalParamRight(crc)) {
+				throw new RuntimeException("The user is missing the right 'param-global-write' to write global parameters.");
+			}
+		}
+	}
+
+	protected boolean hasGlobalParamRight(ContainerRequestContext crc) {
+		return getSession(crc).getProfile().getRights().contains("param-global-write");
+	}
+
 	protected boolean isProtected(Parameter oldParameter) {
 		return oldParameter.getProtectedValue()!=null && oldParameter.getProtectedValue();
 	}
@@ -105,16 +125,19 @@ public class ParameterServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-write")
-	public Parameter copy(@PathParam("id") String id) {	
+	public Parameter copy(@PathParam("id") String id, @Context ContainerRequestContext crc) {	
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
 		parameter.setId(new ObjectId());
-		return save(parameter);
+		return save(parameter, crc);
 	}
 	
 	@DELETE
 	@Path("/{id}")
 	@Secured(right="param-delete")
-	public void delete(@PathParam("id") String id) {
+	public void delete(@PathParam("id") String id, @Context ContainerRequestContext crc) {
+		Parameter parameter = parameterAccessor.get(new ObjectId(id));
+		assertRights(parameter, crc);
+		
 		parameterAccessor.remove(new ObjectId(id));
 	}
 	

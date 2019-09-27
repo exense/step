@@ -145,6 +145,7 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
 })
 
 .controller('editParameterCtrl', function ($scope, $uibModalInstance, $http, AuthService, id, ParameterScopeRenderer, ScreenTemplates) {
+  $scope.AuthService = AuthService;
   
   $scope.scopeLabel = ParameterScopeRenderer.scopeLabel
   $scope.scopeCssClass = ParameterScopeRenderer.scopeCssClass

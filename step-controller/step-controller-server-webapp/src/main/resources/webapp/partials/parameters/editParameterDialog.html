@@ -11,7 +11,7 @@
 					<span class="caret"></span>
 				</button>
 				<ul uib-dropdown-menu>
-					<li role="menuitem">
+					<li role="menuitem" ng-if="AuthService.hasRight('param-global-write')">
 						<a ng-click="selectScope('GLOBAL')"><i class="glyphicon {{scopeIcon('GLOBAL')}} {{scopeSpanCssClass('GLOBAL')}}"></i> {{scopeLabel('GLOBAL')}}</a>
 					</li>
 					<li role="menuitem" ng-if="isApplicationScopeEnabled">
