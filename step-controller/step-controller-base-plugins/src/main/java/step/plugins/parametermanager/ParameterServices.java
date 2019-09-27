@@ -18,6 +18,9 @@
  *******************************************************************************/
 package step.plugins.parametermanager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.annotation.PostConstruct;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -55,6 +58,7 @@ public class ParameterServices extends AbstractServices {
 	public Parameter newParameter() {
 		Parameter parameter =  new Parameter(new Expression(""), "", "", "");
 		parameter.setPriority(1);
+		parameter.setScope(ParameterScope.GLOBAL);
 		return parameter;
 	}
 	
@@ -131,10 +135,27 @@ public class ParameterServices extends AbstractServices {
 	public Parameter get(@PathParam("id") String id) {
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
 		if(parameter!=null) {
-			if(isProtected(parameter)) {
-				parameter.setValue(PROTECTED_VALUE);				
-			}
+			maskProtectedValue(parameter);
 		}
 		return parameter;
+	}
+	
+	protected Parameter maskProtectedValue(Parameter parameter) {
+		if(isProtected(parameter)) {
+			parameter.setValue(PROTECTED_VALUE);				
+		}
+		return parameter;
+	}
+	
+	@GET
+	@Path("/all")
+	@Secured(right="param-read")
+	public List<Parameter> getAll() {
+		List<Parameter> result = new ArrayList<>();
+		parameterAccessor.getAll().forEachRemaining(p->{
+			result.add(maskProtectedValue(p));
+		});
+		
+		return result;
 	}
 }

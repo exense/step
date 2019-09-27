@@ -1,0 +1,2 @@
+<select ng-if="input.type=='DROPDOWN'" ng-disabled="ngDisabled" ng-change="saveAttributes()" ng-model-options="{getterSetter: true}" ng-model="model()" ng-options="option.value as option.value for option in input.options" class="form-control" />
+<input ng-if="input.type=='TEXT'" ng-disabled="ngDisabled" type="text" ng-blur="saveAttributes()" ng-model-options="{getterSetter: true}" ng-model="model()" class="form-control" />

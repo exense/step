@@ -34,6 +34,14 @@ angular.module('screenConfigurationControllers',['tables','step'])
     })
   }
   
+  api.getScreenInputByScreenId = function(screenId, screenInputId) {
+    return $q(function(resolve, reject) {
+      $http.get("rest/screens/"+screenId+"/"+screenInputId).then(function(response){
+        resolve(response.data)
+      })
+    })
+  }
+  
   return api;
 })
 
@@ -156,12 +164,51 @@ angular.module('screenConfigurationControllers',['tables','step'])
         });
       })
       
-      $scope.attribute = function(name) {
+      $scope.saveAttributes = function() {
+        if($scope.stOnChange) {
+          $scope.stOnChange();
+        }
+      }
+    }
+  }
+})
+.directive('stCustomFormInput', function(ScreenTemplates) {
+  return {
+    restrict: 'E',
+    scope: {
+      ngModel: '=?',
+      stBean: '=?',
+      stInput: '=?',
+      stScreen: '=?',
+      stInputId: '=?',
+      ngOnChange: '&?',
+      ngDisabled: '=?',
+      stInline: '=?'
+    },
+    templateUrl: 'partials/screenconfiguration/customFormInput.html',
+    controller: function ctrl($scope) {
+      if(!$scope.stInput) {
+        ScreenTemplates.getScreenInputByScreenId($scope.stScreen, $scope.stInputId).then(function(input) {
+          $scope.input=input
+        })
+      } else {
+        $scope.input = $scope.stInput
+      }
+      
+      $scope.model = function() {
         return function(value) {
-          if(value) {
-            eval('$scope.stModel.'+name+'=value')
+          if($scope.stBean) {
+            if(angular.isDefined(value)) {
+              eval('$scope.stBean.'+$scope.input.id+'=value');
+            } else {
+              return eval('$scope.stBean.'+$scope.input.id);
+            }
           } else {
-            return eval('$scope.stModel.'+name);
+            if(angular.isDefined(value)) {
+              $scope.ngModel=value;
+            } else {
+              return $scope.ngModel;
+            }
           }
         }
       }

@@ -16,15 +16,19 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('parametersControllers',['tables','step'])
+angular.module('parametersControllers',['tables','step','screenConfigurationControllers'])
 
 .controller('ParameterListCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, ParameterDialogs, AuthService) {
     stateStorage.push($scope, 'parameters', {});	
     $scope.authService = AuthService;
     
     function reload() {
-      $scope.tableHandle.reload();
+      $http.get("rest/parameters/all").then(function(response) {
+        $scope.parameters = response.data;
+      });
     }
+    
+    reload();
     
     $scope.addParameter = function() {
       ParameterDialogs.editParameter(null, function() {reload()});
@@ -81,7 +85,83 @@ angular.module('parametersControllers',['tables','step'])
   return dialogs;
 })
 
-.controller('editParameterCtrl', function ($scope, $uibModalInstance, $http, AuthService, id) {
+.factory('ParameterScopeRenderer', function () {
+  var api = {};
+  
+  // Backward compatibility: assuming GLOBAL scope if not set
+  api.normalizeScope = function(scope) {
+    return scope?scope:'GLOBAL'
+  }
+  
+  api.scopeIcon = function(scope) {
+    scope = api.normalizeScope(scope);
+    if(scope == 'GLOBAL') {
+      return 'glyphicon-unchecked';
+    } else if(scope == 'FUNCTION') {
+      return 'glyphicon-record';
+    } else if(scope == 'APPLICATION') {
+      return 'glyphicon-book';
+    } 
+  }
+  
+  api.scopeCssClass = function(scope) {
+    scope = api.normalizeScope(scope);
+    if(scope == 'GLOBAL') {
+      return 'parameter-scope-global';
+    } else if(scope == 'FUNCTION') {
+      return 'parameter-scope-keyword';
+    } else if(scope == 'APPLICATION') {
+      return 'parameter-scope-application';
+    } 
+  }
+  
+  api.scopeSpanCssClass = function(scope) {
+    scope = api.normalizeScope(scope);
+    return 'parameter-scope '+api.scopeCssClass(scope)
+  }
+  
+  api.label = function(parameter) {
+    if(parameter) {
+      var scope = api.normalizeScope(parameter.scope);
+      if(scope == 'GLOBAL') {
+        return 'Global';
+      } else {
+        return parameter.scopeEntity;
+      }
+    }
+  }
+  
+  api.scopeLabel = function(scope) {
+    if(scope == 'GLOBAL') {
+      return 'Global';
+    } else if(scope == 'FUNCTION') {
+      return 'Keyword';
+    } else if(scope == 'APPLICATION') {
+      return 'Application';
+    } 
+  }
+  
+  return api;
+})
+
+.controller('editParameterCtrl', function ($scope, $uibModalInstance, $http, AuthService, id, ParameterScopeRenderer, ScreenTemplates) {
+  
+  $scope.scopeLabel = ParameterScopeRenderer.scopeLabel
+  $scope.scopeCssClass = ParameterScopeRenderer.scopeCssClass
+  $scope.scopeSpanCssClass = ParameterScopeRenderer.scopeSpanCssClass
+  $scope.scopeIcon = ParameterScopeRenderer.scopeIcon
+
+  $scope.selectScope = function(scope) {
+    $scope.parameter.scopeEntity = '';
+    $scope.parameter.scope = scope;
+  }
+  
+  $scope.isApplicationScopeEnabled = false;
+  ScreenTemplates.getScreenInputByScreenId('functionTable','attributes.app').then(function(input) {
+    if(input) {
+      $scope.isApplicationScopeEnabled = true;
+    }
+  })
   
   if(id==null) {
     $http.get("rest/parameters").then(function(response){
@@ -90,6 +170,9 @@ angular.module('parametersControllers',['tables','step'])
   } else {
     $http.get("rest/parameters/"+id).then(function(response){
       $scope.parameter = response.data;
+      if(!$scope.parameter.scope) {
+        $scope.parameter.scope = ParameterScopeRenderer.normalizeScope($scope.parameter.scope)
+      }
     })      
   }
 
@@ -101,5 +184,22 @@ angular.module('parametersControllers',['tables','step'])
   
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
+  };
+})
+
+.directive('parameterScope', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      parameter: '='
+    },
+    template: '<span uib-tooltip="{{scopeLabel}}" ng-class="scopeSpanCssClass">' + 
+              '<i style="display:inline-block" ng-class="scopeIcon" class="glyphicon"></i> {{label}}</span>',
+    controller: function($scope, ParameterScopeRenderer) {
+      $scope.scopeLabel = ParameterScopeRenderer.scopeLabel($scope.parameter.scope)
+      $scope.scopeIcon = ParameterScopeRenderer.scopeIcon($scope.parameter.scope)
+      $scope.scopeSpanCssClass = ParameterScopeRenderer.scopeSpanCssClass($scope.parameter.scope)
+      $scope.label = ParameterScopeRenderer.label($scope.parameter)
+    }
   };
 })

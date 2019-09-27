@@ -66,6 +66,14 @@ public class ScreenTemplateService extends AbstractServices {
 	
 	@GET
 	@Secured
+	@Path("/{screenid}/{inputid}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Input getInputForScreen(@PathParam("screenid") String screenId, @PathParam("inputid") String inputId, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) {		
+		return getInputsForScreen(screenId, uriInfo, crc).stream().filter(i->i.getId().equals(inputId)).findFirst().orElse(null);
+	}
+	
+	@GET
+	@Secured
 	@Path("/input/byscreen/{screenid}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<ScreenInput> getScreenInputsByScreenId(@PathParam("screenid") String screenId) {		

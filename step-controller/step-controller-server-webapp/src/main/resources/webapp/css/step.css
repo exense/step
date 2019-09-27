@@ -600,3 +600,20 @@ table.executionTableResult td {
 	left : auto;
 	right: 0;
 }
+
+.parameter-scope {
+	padding: 4px;
+	border-radius: 4px;
+}
+
+.parameter-scope-global {
+	background:#35c163;
+}
+
+.parameter-scope-keyword {
+	background:#d90606;
+}
+
+.parameter-scope-application {
+	background:#f5e30a;
+}
