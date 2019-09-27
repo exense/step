@@ -7,9 +7,9 @@ import step.core.GlobalContext;
 
 public class DefaultAccessManager implements AccessManager {
 
-	List<String> defaultRights = Arrays.asList(new String[]{"interactive","plan-read","plan-write","plan-delete","plan-execute","kw-read","kw-write","kw-delete","kw-execute","report-read","execution-write","execution-delete","user-write","user-read","task-read","task-write","task-delete","admin","param-read","param-write","param-delete","token-manage"});
+	public static List<String> defaultRights = Arrays.asList(new String[]{"interactive","plan-read","plan-write","plan-delete","plan-execute","kw-read","kw-write","kw-delete","kw-execute","report-read","execution-write","execution-delete","user-write","user-read","task-read","task-write","task-delete","admin","param-read","param-write","param-delete","token-manage"});
 	
-	List<String> defaultRoles = Arrays.asList(new String[]{"admin"});
+	public static List<String> defaultRoles = Arrays.asList(new String[]{"admin"});
 	
 	@Override
 	public void init(GlobalContext context) {

@@ -166,9 +166,11 @@ public class AccessServices extends AbstractServices {
 	
 	static Session ANONYMOUS_SESSION = new Session();
 	{
-		ANONYMOUS_SESSION.setUsername("admin");
+		String username = "admin";
+		ANONYMOUS_SESSION.setUsername(username);
 		Profile profile = new Profile();
 		profile.setRole("default");
+		profile.setRights(DefaultAccessManager.defaultRights);
 		ANONYMOUS_SESSION.setProfile(profile);
 	}
 	

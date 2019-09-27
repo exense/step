@@ -416,11 +416,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   };
  
   authService.hasRight = function (right) {
-    if(serviceContext.conf.authentication) {
-      return $rootScope.context&&$rootScope.context.rights?$rootScope.context.rights.indexOf(right) !== -1:false;      
-    } else {
-      return true;
-    }
+    return $rootScope.context&&$rootScope.context.rights?$rootScope.context.rights.indexOf(right) !== -1:false;
   }; 
   
   authService.getConf = function() {
