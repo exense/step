@@ -95,7 +95,7 @@ angular.module('screenConfigurationControllers',['tables','step'])
   return dialogs;
 })
 
-.controller('editScreenInputCtrl', function ($scope, $uibModalInstance, $http, AuthService, id, screenId) {
+.controller('editScreenInputCtrl', function ($scope, $uibModalInstance, $uibModalStack, $http, AuthService, id, screenId) {
   
   if(id==null) {
     $scope.input = {screenId:screenId, input: {}}
@@ -136,6 +136,23 @@ angular.module('screenConfigurationControllers',['tables','step'])
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
+  
+  $scope.$watch(function() {
+    return $('.modal').length;
+  }, function(val) { // every time the number of modals changes
+    if (val > 0) {
+      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
+      $('.modal').on('mousedown', function(e) {
+        if (e.which === 1) { // left click
+          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
+          $uibModalStack.getTop().key.dismiss();
+        }
+      });
+      $('.modal-content').on('mousedown', function(e) {
+        e.stopPropagation(); // avoid closing the modal when clicking its body
+      });
+    }
+  });
 })
 .directive('stCustomForm', function(ScreenTemplates) {
   return {
