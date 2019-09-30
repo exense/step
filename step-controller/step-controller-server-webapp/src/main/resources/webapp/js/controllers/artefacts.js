@@ -217,7 +217,7 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
       };
     } ])
     
-.controller('newArtefactModalCtrl', function ($scope, $uibModalInstance, $http, $location, artefactTypes) {
+.controller('newArtefactModalCtrl', function ($scope, $uibModalInstance, $uibModalStack, $http, $location, artefactTypes) {
   
   $scope.artefactTypes = artefactTypes;
   $scope.artefacttype = 'Sequence';
@@ -250,9 +250,27 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
+  
+  $scope.$watch(function() {
+    return $('.modal').length;
+  }, function(val) { // every time the number of modals changes
+    if (val > 0) {
+      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
+      $('.modal').on('mousedown', function(e) {
+        if (e.which === 1) { // left click
+          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
+          $uibModalStack.getTop().key.dismiss();
+        }
+      });
+      $('.modal-content').on('mousedown', function(e) {
+        e.stopPropagation(); // avoid closing the modal when clicking its body
+      });
+    }
+  });
+  
 })
 
-.controller('selectArtefactModalCtrl', function ($scope, $uibModalInstance, $http) {
+.controller('selectArtefactModalCtrl', function ($scope, $uibModalInstance, $uibModalStack, $http) {
   
   $scope.selectArtefact = function(id) {
     $http({url:"rest/controller/artefact/"+id,method:"GET"}).then(function(response) {
@@ -288,9 +306,26 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
+  
+  $scope.$watch(function() {
+    return $('.modal').length;
+  }, function(val) { // every time the number of modals changes
+    if (val > 0) {
+      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
+      $('.modal').on('mousedown', function(e) {
+        if (e.which === 1) { // left click
+          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
+          $uibModalStack.getTop().key.dismiss();
+        }
+      });
+      $('.modal-content').on('mousedown', function(e) {
+        e.stopPropagation(); // avoid closing the modal when clicking its body
+      });
+    }
+  });
 })
 
-.controller('importArtefactModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs) {
+.controller('importArtefactModalCtrl', function ($scope, $http, $uibModalInstance, $uibModalStack, Upload, Dialogs) {
   
   $scope.resourcePath; 
   
@@ -307,4 +342,21 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
+  
+  $scope.$watch(function() {
+    return $('.modal').length;
+  }, function(val) { // every time the number of modals changes
+    if (val > 0) {
+      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
+      $('.modal').on('mousedown', function(e) {
+        if (e.which === 1) { // left click
+          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
+          $uibModalStack.getTop().key.dismiss();
+        }
+      });
+      $('.modal-content').on('mousedown', function(e) {
+        e.stopPropagation(); // avoid closing the modal when clicking its body
+      });
+    }
+  });
 })
