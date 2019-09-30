@@ -21,8 +21,9 @@ package step.plugins.parametermanager;
 import step.commons.activation.ActivableObject;
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractTrackedObject;
 
-public class Parameter extends AbstractOrganizableObject implements ActivableObject {
+public class Parameter extends AbstractTrackedObject implements ActivableObject {
 	
 	protected String key;
 	

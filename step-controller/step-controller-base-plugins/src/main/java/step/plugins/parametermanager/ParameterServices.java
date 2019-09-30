@@ -19,6 +19,7 @@
 package step.plugins.parametermanager;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -101,6 +102,11 @@ public class ParameterServices extends AbstractServices {
 			}
 		}
 
+		String lastModificationUser = getSession(crc).getUsername();
+		Date lastModificationDate = new Date();
+		newParameter.setLastModificationDate(lastModificationDate);
+		newParameter.setLastModificationUser(lastModificationUser);
+		
 		return parameterAccessor.save(newParameter);
 	}
 

@@ -68,7 +68,7 @@ angular.module('components',['step'])
     scope: {
       time: '='
     },
-    templateUrl: 'partials/components/date.html',
+    template: "<span>{{ time | date:'dd.MM.yyyy HH:mm:ss'}}</span>",
     controller: function() {  
     }
   };

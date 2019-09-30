@@ -43,6 +43,11 @@
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell><span>{{row.priority}}</span></cell>
 			</st-column>
+			<st-column name="lastModificationDate">
+				<header>Last modification</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell><span uib-tooltip="{{row.lastModificationUser}}"><date time="row.lastModificationDate" /></span></cell>
+			</st-column>
 			<st-column>
 				<header>Actions</header>
 				<cell>
