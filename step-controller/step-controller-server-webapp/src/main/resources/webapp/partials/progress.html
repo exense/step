@@ -2,6 +2,9 @@
 	<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox tooltip-placement="bottom" uib-tooltip="Auto refresh">
 		<span class="glyphicon glyphicon-refresh" />
 	</button>
+	<button type="button" class="btn btn-default btn-xs" ng-model="lockdisplay" uib-btn-checkbox tooltip-placement="bottom" uib-tooltip="Unlock charts">
+		<span class="glyphicon glyphicon-lock" />
+	</button>
 </div>
 
 <div class="panel-body">
@@ -89,7 +92,7 @@
 				</uib-tab>
 				<uib-tab heading="Performance">
 					<div class="panel-body">
-						<viz-dashboard-manager presets="presets"></viz-dashboard-manager>
+						<viz-dashboard-manager displaymode="displaymode" presets="staticPresets" dashboards="dashboardsendpoint"></viz-dashboard-manager>
 					</div>
 				</uib-tab>
 				<uib-tab heading="Errors">
