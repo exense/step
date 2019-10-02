@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -107,6 +108,111 @@ public class ThreadPoolTest {
 		for (String item : itemList) {
 			if(!processedItems.contains(item)) {
 				fail("The item "+item+" hasn't been processed");
+			}
+		}
+	}
+	
+	@Test
+	public void testAutoMode() {
+		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		context.getVariablesManager().putVariable(context.getReport(), "tec_execution_threads", 2);
+		
+		ThreadPool threadPool = new ThreadPool(context);
+		
+		List<String> itemList = new ArrayList<>();
+		for(int i=0; i<100; i++) {
+			itemList.add("Item"+i);
+		}
+		
+		List<String> itemList2 = new ArrayList<>();
+		for(int i=0; i<100; i++) {
+			itemList2.add(Integer.toString(i));
+		}
+		
+		List<String> processedItems = new CopyOnWriteArrayList<>();
+		
+		ConcurrentHashMap<String,String> threadIdLevel1 = new ConcurrentHashMap<>();
+		ConcurrentHashMap<String,String> threadIdLevel2 = new ConcurrentHashMap<>();
+		threadPool.consumeWork(itemList.iterator(), new WorkerItemConsumerFactory<String>() {
+			@Override
+			public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
+				return item1 -> {
+					threadIdLevel1.put(Thread.currentThread().getName(),"");
+					threadPool.consumeWork(itemList2.iterator(), new WorkerItemConsumerFactory<String>() {
+						@Override
+						public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
+							return item2 -> {
+								threadIdLevel2.put(Thread.currentThread().getName(),"");
+								processedItems.add(item1+item2);
+							};
+						}
+					}, 4);
+				};
+			}
+		}, 4);
+		
+		Assert.assertEquals(2, threadIdLevel1.size());
+		Assert.assertEquals(2, threadIdLevel2.size());
+		for (String item : itemList) {
+			for (String item2 : itemList2) {
+				String concatenatedItem = item+item2;
+				if(!processedItems.contains(concatenatedItem)) {
+					fail("The item "+concatenatedItem+" hasn't been processed");
+				}
+				
+			}
+		}
+	}
+	
+	@Test
+	public void testAutoModeDisabled() {
+		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		// Empty string => disabled
+		context.getVariablesManager().putVariable(context.getReport(), "tec_execution_threads", "");
+		
+		ThreadPool threadPool = new ThreadPool(context);
+		
+		List<String> itemList = new ArrayList<>();
+		for(int i=0; i<100; i++) {
+			itemList.add("Item"+i);
+		}
+		
+		List<String> itemList2 = new ArrayList<>();
+		for(int i=0; i<100; i++) {
+			itemList2.add(Integer.toString(i));
+		}
+		
+		List<String> processedItems = new CopyOnWriteArrayList<>();
+		
+		ConcurrentHashMap<String,String> threadIdLevel1 = new ConcurrentHashMap<>();
+		ConcurrentHashMap<String,String> threadIdLevel2 = new ConcurrentHashMap<>();
+		threadPool.consumeWork(itemList.iterator(), new WorkerItemConsumerFactory<String>() {
+			@Override
+			public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
+				return item1 -> {
+					threadIdLevel1.put(Thread.currentThread().getName(),"");
+					threadPool.consumeWork(itemList2.iterator(), new WorkerItemConsumerFactory<String>() {
+						@Override
+						public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
+							return item2 -> {
+								threadIdLevel2.put(Thread.currentThread().getName(),"");
+								processedItems.add(item1+item2);
+							};
+						}
+					}, 4);
+				};
+			}
+		}, 4);
+		
+		Assert.assertEquals(4, threadIdLevel1.size());
+		Assert.assertEquals(16, threadIdLevel2.size());
+		for (String item : itemList) {
+			for (String item2 : itemList2) {
+				String concatenatedItem = item+item2;
+				if(!processedItems.contains(concatenatedItem)) {
+					fail("The item "+concatenatedItem+" hasn't been processed");
+				}
+				
 			}
 		}
 	}
