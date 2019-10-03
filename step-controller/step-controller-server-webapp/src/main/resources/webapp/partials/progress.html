@@ -90,7 +90,7 @@
 						</div>
 					</div>
 				</uib-tab>
-				<uib-tab heading="Performance">
+				<uib-tab heading="Performance" ng-click="$broadcast('resize-widget');">
 					<div class="panel-body">
 						<viz-dashboard-manager displaymode="displaymode" presets="staticPresets" dashboards="dashboardsendpoint"></viz-dashboard-manager>
 					</div>

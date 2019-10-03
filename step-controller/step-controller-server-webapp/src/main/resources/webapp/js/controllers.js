@@ -569,31 +569,56 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				}
 			});
 
-			$scope.init = false;
-			$scope.displaymode='managed';
-			$scope.staticPresets  = new StaticPresets();
-			$scope.dashboardsendpoint  = [];
-			$scope.dashboardsendpoint.push(new PerformanceDashboard($scope.eid));
+			$scope.displaymode = 'managed';
 
-			$scope.$on('dashletinput-initialized', function () {
-				if($scope.init === false){
-					$scope.init = true;
-					$scope.$broadcast('resize-widget');
-					$scope.$watch('autorefresh',function(newStatus) {
-						$scope.$broadcast('globalsettings-refreshToggle', { 'new': newStatus });
-					})
-					$scope.$watch('lockdisplay',function() {
-						if($scope.displaymode === 'readonly'){
-							$scope.displaymode='managed';
-						}else{
-							if($scope.displaymode === 'managed'){
-								$scope.displaymode='readonly';
-							}
-						}
-						console.log($scope.displaymode)
-					});
+			$scope.initDashboard = function(){
+				$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid)];
+			};
+			
+			$scope.$on('manager-fully-loaded', function () {
+				$scope.$watch('autorefresh',function(newStatus) {
+					$scope.$broadcast('globalsettings-refreshToggle', { 'new': newStatus });
+				});
+				
+				$scope.$watch('execution.status',function(newSatus, oldStatus) {
+					if(newSatus=='ENDED') {
+						$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
+					}
+				});
+			});
+			
+			$scope.unwatchlock = $scope.$watch('lockdisplay',function(newvalue) {
+				if($scope.displaymode === 'readonly'){
+					$scope.displaymode='managed';
+				}else{
+					if($scope.displaymode === 'managed'){
+						$scope.displaymode='readonly';
+					}
 				}
 			});
+
+			$scope.cleanupDashboard = function(){
+				if($scope.dashboardsendpoint && $scope.dashboardsendpoint.length > 0){
+					$scope.$broadcast('dashboard-clear');
+					if(!$scope.dashboardsendpoint || $scope.dashboardsendpoint.length > 0){
+						console.log('Dashboard not cleaned up properly.');
+					}
+				}
+			};
+
+			$scope.$watch('tabs.selectedTab', function(newvalue, oldvalue){
+				//$scope.cleanupDashboard();
+				if(newvalue === 2){
+					//$scope.initDashboard();
+					if($scope.execution.status!=='ENDED') {
+						$scope.$broadcast('globalsettings-refreshToggle', { 'new': $scope.autorefresh });
+					}
+				}else{
+					$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
+				}
+			});
+			
+			$scope.initDashboard();
 		},
 		templateUrl: 'partials/progress.html'
 	};

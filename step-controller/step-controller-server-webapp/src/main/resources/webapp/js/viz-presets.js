@@ -11,7 +11,7 @@ function PerformanceDashboard(executionId) {
 	var dashboardObject = new Dashboard(
 			widgetsArray,
 			'Transaction Performance',
-			new MgrState([new Placeholder("__eId__", executionId, false)],false, false, "Global Settings"));
+			new MgrState([new Placeholder("__eId__", executionId, false), new Placeholder("__name__", ".*", false)],false, false, "Global Settings"));
 
 	dashboardObject.oid = "perfDashboardId";
 	return dashboardObject;
@@ -38,7 +38,7 @@ function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform){
 			"Template",
 			new RTMAggBaseQueryTmpl(metric, transform),
 			new DefaultOffPaging(),
-			new TemplateControls("{ \"selectors1\": [{ \"textFilters\": [{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"true\" }], \"numericalFilters\": [] }], \"serviceParams\": { \"measurementService.nextFactor\": \"0\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"__granularity__\", \"aggregateService.groupby\": \"name\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
+			new TemplateControls("{ \"selectors1\": [{ \"textFilters\": [{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"true\" }, { \"key\": \"name\", \"value\": \"__name__\", \"regex\": \"true\" }], \"numericalFilters\": [] }], \"serviceParams\": { \"measurementService.nextFactor\": \"0\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"__granularity__\", \"aggregateService.groupby\": \"name\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
 					null,
 					[new Placeholder("__granularity__", pGranularity, false)]));
 };
@@ -80,9 +80,8 @@ var addLastMeasurementsTpl = function(widgetsArray){
 				new RTMLatestMeasurementBaseQueryTmpl(),
 				new DefaultOffPaging(),
 				//new Paging("On", new Offset("__FACTOR__", "return 0;", "return value + 1;", "if(value > 0){return value - 1;} else{return 0;}"), null),
-				new TemplateControls("{ \"selectors1\": [{ \"textFilters\": [{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"true\" }], \"numericalFilters\": [] }], \"serviceParams\": { \"measurementService.nextFactor\": \"__FACTOR__\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"auto\", \"aggregateService.groupby\": \"name\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
-						null,
-						[new Placeholder("__FACTOR__", "100", false)]));
+				new TemplateControls("{ \"selectors1\": [{ \"textFilters\": [{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"true\" }, { \"key\": \"name\", \"value\": \"__name__\", \"regex\": \"true\" }], \"numericalFilters\": [] }], \"serviceParams\": { \"measurementService.nextFactor\": \"__FACTOR__\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"auto\", \"aggregateService.groupby\": \"name\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
+						null, [new Placeholder("__FACTOR__", "100", false)]));
 	};
 
 	var config = getMasterSlaveConfig("transformed", "Last 100 Measurements - Scattered values (ms)", "Last 100 Measurements - Value table (ms)");
