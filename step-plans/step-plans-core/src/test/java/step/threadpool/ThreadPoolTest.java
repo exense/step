@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.junit.Test;
@@ -115,7 +117,7 @@ public class ThreadPoolTest {
 	@Test
 	public void testAutoMode() {
 		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
-		context.getVariablesManager().putVariable(context.getReport(), "tec_execution_threads", 2);
+		context.getVariablesManager().putVariable(context.getReport(), "execution_threads_auto", 2);
 		
 		ThreadPool threadPool = new ThreadPool(context);
 		
@@ -131,6 +133,8 @@ public class ThreadPoolTest {
 		
 		List<String> processedItems = new CopyOnWriteArrayList<>();
 		
+		CountDownLatch countDownLatch = new CountDownLatch(2);
+		
 		ConcurrentHashMap<String,String> threadIdLevel1 = new ConcurrentHashMap<>();
 		ConcurrentHashMap<String,String> threadIdLevel2 = new ConcurrentHashMap<>();
 		threadPool.consumeWork(itemList.iterator(), new WorkerItemConsumerFactory<String>() {
@@ -138,6 +142,7 @@ public class ThreadPoolTest {
 			public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
 				return item1 -> {
 					threadIdLevel1.put(Thread.currentThread().getName(),"");
+					waitForOtherWorkersToStart(countDownLatch);
 					threadPool.consumeWork(itemList2.iterator(), new WorkerItemConsumerFactory<String>() {
 						@Override
 						public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
@@ -164,16 +169,24 @@ public class ThreadPoolTest {
 		}
 	}
 	
+	protected void waitForOtherWorkersToStart(CountDownLatch countDownLatch) {
+		countDownLatch.countDown();
+		try {
+			countDownLatch.await(10, TimeUnit.SECONDS);
+		} catch (InterruptedException e1) {
+		}
+	}
+	
 	@Test
 	public void testAutoModeDisabled() {
 		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
 		// Empty string => disabled
-		context.getVariablesManager().putVariable(context.getReport(), "tec_execution_threads", "");
+		context.getVariablesManager().putVariable(context.getReport(), "execution_threads_auto", "");
 		
 		ThreadPool threadPool = new ThreadPool(context);
 		
 		List<String> itemList = new ArrayList<>();
-		for(int i=0; i<100; i++) {
+		for(int i=0; i<4; i++) {
 			itemList.add("Item"+i);
 		}
 		
@@ -184,6 +197,9 @@ public class ThreadPoolTest {
 		
 		List<String> processedItems = new CopyOnWriteArrayList<>();
 		
+		CountDownLatch countDownLatch = new CountDownLatch(4);
+		CountDownLatch countDownLatch2 = new CountDownLatch(16);
+		
 		ConcurrentHashMap<String,String> threadIdLevel1 = new ConcurrentHashMap<>();
 		ConcurrentHashMap<String,String> threadIdLevel2 = new ConcurrentHashMap<>();
 		threadPool.consumeWork(itemList.iterator(), new WorkerItemConsumerFactory<String>() {
@@ -191,11 +207,13 @@ public class ThreadPoolTest {
 			public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
 				return item1 -> {
 					threadIdLevel1.put(Thread.currentThread().getName(),"");
+					waitForOtherWorkersToStart(countDownLatch);
 					threadPool.consumeWork(itemList2.iterator(), new WorkerItemConsumerFactory<String>() {
 						@Override
 						public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
 							return item2 -> {
 								threadIdLevel2.put(Thread.currentThread().getName(),"");
+								waitForOtherWorkersToStart(countDownLatch2);
 								processedItems.add(item1+item2);
 							};
 						}
