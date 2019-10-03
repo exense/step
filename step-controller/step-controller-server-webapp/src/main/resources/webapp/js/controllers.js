@@ -570,9 +570,12 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			});
 
 			$scope.displaymode = 'managed';
-
+			$scope.dashboardsendpoint=[];
+				
 			$scope.initDashboard = function(){
-				$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid)];
+				if($scope.dashboardsendpoint.length < 1){
+					$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid)];
+				}
 			};
 			
 			$scope.$on('manager-fully-loaded', function () {
@@ -597,19 +600,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				}
 			});
 
-			$scope.cleanupDashboard = function(){
-				if($scope.dashboardsendpoint && $scope.dashboardsendpoint.length > 0){
-					$scope.$broadcast('dashboard-clear');
-					if(!$scope.dashboardsendpoint || $scope.dashboardsendpoint.length > 0){
-						console.log('Dashboard not cleaned up properly.');
-					}
-				}
-			};
-
 			$scope.$watch('tabs.selectedTab', function(newvalue, oldvalue){
-				//$scope.cleanupDashboard();
 				if(newvalue === 2){
-					//$scope.initDashboard();
+					$scope.initDashboard();
 					if($scope.execution.status!=='ENDED') {
 						$scope.$broadcast('globalsettings-refreshToggle', { 'new': $scope.autorefresh });
 					}
@@ -617,8 +610,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
 				}
 			});
-			
-			$scope.initDashboard();
 		},
 		templateUrl: 'partials/progress.html'
 	};
