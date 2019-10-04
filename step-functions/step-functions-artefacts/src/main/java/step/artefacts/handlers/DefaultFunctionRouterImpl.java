@@ -14,6 +14,7 @@ import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
+import step.grid.TokenWrapperOwner;
 import step.grid.tokenpool.Interest;
 
 public class DefaultFunctionRouterImpl implements FunctionRouter {
@@ -32,7 +33,7 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 	}
 
 	@Override
-	public TokenWrapper selectToken(CallFunction callFunction, Function function, FunctionGroupContext functionGroupContext, Map<String, Object> bindings) throws FunctionExecutionServiceException {
+	public TokenWrapper selectToken(CallFunction callFunction, Function function, FunctionGroupContext functionGroupContext, Map<String, Object> bindings, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
 		TokenWrapper token;
 		if(function.requiresLocalExecution()) {
 			// The function requires a local execution => get a local token
@@ -57,7 +58,7 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 					} else {
 						// Token not present in context => select a token and create a new agent session
 						Map<String, Interest> selectionCriteria = buildSelectionCriteriaMap(callFunction, function,	functionGroupContext, bindings);
-						token = selectToken(selectionCriteria, true);
+						token = selectToken(selectionCriteria, true, tokenWrapperOwner);
 						// attach the token to the function group context
 						functionGroupContext.setToken(token);
 					}
@@ -65,19 +66,19 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 			} else {
 				// No FunctionGroupContext. Simply select a token without creating an agent session
 				Map<String, Interest> selectionCriteria = buildSelectionCriteriaMap(callFunction, function,	functionGroupContext, bindings);
-				token = selectToken(selectionCriteria, false);
+				token = selectToken(selectionCriteria, false, tokenWrapperOwner);
 			}
 		}
 		return token;
 	}
 
-	private TokenWrapper selectToken(Map<String, Interest> selectionCriteria, boolean createSession) throws FunctionExecutionServiceException {		
+	private TokenWrapper selectToken(Map<String, Interest> selectionCriteria, boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {		
 		Map<String, String> pretenderAttributes = new HashMap<>();
 
 		TokenWrapper token;
 		OperationManager.getInstance().enter("Token selection", selectionCriteria);
 		try {
-			token = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria, createSession);
+			token = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria, createSession, tokenWrapperOwner);
 		} finally {
 			OperationManager.getInstance().exit();					
 		}

@@ -10,6 +10,7 @@ public class GetTokenHandleParameter {
 	Map<String, Interest> interests;
 	boolean createSession;
 	boolean local;
+	String reservationDescription;
 
 	public Map<String, String> getAttributes() {
 		return attributes;
@@ -41,5 +42,13 @@ public class GetTokenHandleParameter {
 
 	public void setLocal(boolean local) {
 		this.local = local;
+	}
+
+	public String getReservationDescription() {
+		return reservationDescription;
+	}
+
+	public void setReservationDescription(String reservationDescription) {
+		this.reservationDescription = reservationDescription;
 	}
 }

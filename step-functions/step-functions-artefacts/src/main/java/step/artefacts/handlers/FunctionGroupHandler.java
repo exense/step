@@ -101,10 +101,10 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 			scheduler.execute_(node, testArtefact);
 		} finally {
 			if(handle.getToken()!=null) {
-				functionExecutionService.returnTokenHandle(handle.getToken());
+				functionExecutionService.returnTokenHandle(handle.getToken().getID());
 			}
 			if(handle.getLocalToken()!=null) {
-				functionExecutionService.returnTokenHandle(handle.getLocalToken());
+				functionExecutionService.returnTokenHandle(handle.getLocalToken().getID());
 			}
 		}	
 	}

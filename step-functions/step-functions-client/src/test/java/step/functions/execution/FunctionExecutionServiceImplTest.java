@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.json.Json;
@@ -21,12 +22,15 @@ import step.core.dynamicbeans.DynamicValueResolver;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.handler.FunctionInputOutputObjectMapperFactory;
+import step.functions.io.FunctionInput;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionExecutionException;
 import step.functions.type.FunctionTypeRegistry;
+import step.grid.AgentRef;
+import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.TokenWrapperOwner;
 import step.grid.agent.handler.context.OutputMessageBuilder;
@@ -48,17 +52,15 @@ public class FunctionExecutionServiceImplTest {
 	public void testHappyPath() throws FunctionExecutionServiceException {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
 		
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true);
-		token.setCurrentOwner(new TokenWrapperOwner() {});
-		Input<JsonObject> i = getDummyInput();
+		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {});
+		FunctionInput<JsonObject> i = getDummyInput();
 		Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
-		Output<JsonObject> output = f.callFunction(token, getFunction(), i, JsonObject.class);
+		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class);
 		Assert.assertNotNull(output);
 		Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
 		
 		Assert.assertNull(output.getError());
-		Assert.assertNotNull(token.getCurrentOwner());
-		f.returnTokenHandle(token);
+		f.returnTokenHandle(token.getID());
 	}
 	
 	@Test
@@ -67,7 +69,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		FunctionExecutionServiceException e = null;
 		try {
-			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true);
+			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null);
 		} catch (FunctionExecutionServiceException e1) {
 			e = e1;
 		}
@@ -81,7 +83,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		FunctionExecutionServiceException e = null;
 		try {
-			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true);
+			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null);
 		} catch (FunctionExecutionServiceException e1) {
 			e = e1;
 		}
@@ -94,9 +96,9 @@ public class FunctionExecutionServiceImplTest {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCommunicationException("Release error"));
 		
 		FunctionExecutionServiceException e = null;
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true);
+		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null);
 		try {
-			f.returnTokenHandle(token);
+			f.returnTokenHandle(token.getID());
 		} catch (FunctionExecutionServiceException e1) {
 			e = e1;
 		}
@@ -109,9 +111,9 @@ public class FunctionExecutionServiceImplTest {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCallTimeoutException(functionCallTimeout, "Release error", null));
 		
 		FunctionExecutionServiceException e = null;
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true);
+		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null);
 		try {
-			f.returnTokenHandle(token);
+			f.returnTokenHandle(token.getID());
 		} catch (FunctionExecutionServiceException e1) {
 			e = e1;
 		}
@@ -190,15 +192,14 @@ public class FunctionExecutionServiceImplTest {
 
 	protected Output<JsonObject> callFunctionWithDummyInput(FunctionExecutionService f)
 			throws FunctionExecutionServiceException {
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true);
-		token.setCurrentOwner(new TokenWrapperOwner() {});
-		Input<JsonObject> i = getDummyInput();
-		Output<JsonObject> output = f.callFunction(token, getFunction(), i, JsonObject.class);
+		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {});
+		FunctionInput<JsonObject> i = getDummyInput();
+		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class);
 		return output;
 	}
 
-	protected Input<JsonObject> getDummyInput() {
-		Input<JsonObject> i = new Input<JsonObject>();
+	protected FunctionInput<JsonObject> getDummyInput() {
+		FunctionInput<JsonObject> i = new FunctionInput<JsonObject>();
 		HashMap<String, String> inputProperties = new HashMap<>();
 		inputProperties.put("inputProperty1", "inputProperty1");
 		i.setProperties(inputProperties);
@@ -304,7 +305,7 @@ public class FunctionExecutionServiceImplTest {
 			}
 			
 			@Override
-			public void returnTokenHandle(TokenWrapper tokenWrapper) throws AgentCommunicationException {
+			public void returnTokenHandle(String tokenWrapperId) throws AgentCommunicationException {
 				if(returnTokenException != null) {
 					throw returnTokenException;
 				}
@@ -316,17 +317,30 @@ public class FunctionExecutionServiceImplTest {
 				if(reserveTokenException != null) {
 					throw reserveTokenException;
 				} else {
-					return new TokenWrapper();
+					return token();
 				}
 			}
 			
 			@Override
-			public TokenWrapper getLocalTokenHandle() {
-				return new TokenWrapper();
+			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
+					boolean createSession, TokenWrapperOwner tokenOwner) throws AgentCommunicationException {
+				TokenWrapper tokenHandle = getTokenHandle(attributes, interests, createSession);
+				return tokenHandle;
 			}
 			
 			@Override
-			public OutputMessage call(TokenWrapper tokenWrapper, JsonNode argument, String handler,
+			public TokenWrapper getLocalTokenHandle() {
+				return token();
+			}
+
+			protected TokenWrapper token() {
+				Token token = new Token();
+				token.setId(UUID.randomUUID().toString());
+				return new TokenWrapper(token, new AgentRef());
+			}
+			
+			@Override
+			public OutputMessage call(String tokenWrapperId, JsonNode argument, String handler,
 					FileVersionId handlerPackage, Map<String, String> properties, int callTimeout) throws Exception {
 				assert callTimeout == functionCallTimeout;
 				assert !properties.containsKey("inputProperty1");

@@ -8,6 +8,7 @@ import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.grid.TokenWrapper;
+import step.grid.TokenWrapperOwner;
 
 public class LocalFunctionRouterImpl implements FunctionRouter {
 
@@ -20,7 +21,7 @@ public class LocalFunctionRouterImpl implements FunctionRouter {
 
 	@Override
 	public TokenWrapper selectToken(CallFunction callFunction, Function function,
-			FunctionGroupContext functionGroupContext, Map<String, Object> bindings)
+			FunctionGroupContext functionGroupContext, Map<String, Object> bindings, TokenWrapperOwner tokenWrapperOwner)
 			throws FunctionExecutionServiceException {
 		return functionExecutionService.getLocalTokenHandle();
 	}

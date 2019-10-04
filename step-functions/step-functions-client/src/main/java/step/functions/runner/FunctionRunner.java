@@ -10,9 +10,9 @@ import java.util.Map;
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import step.attachments.FileResolver;
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
+import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.expressions.ExpressionHandler;
@@ -20,7 +20,7 @@ import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.execution.FunctionExecutionServiceImpl;
-import step.functions.io.Input;
+import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
@@ -72,12 +72,12 @@ public class FunctionRunner {
 		}
 		
 		public Output<JsonObject> run(Function function, JsonObject argument) {	
-			Input<JsonObject> input = new Input<>();
+			FunctionInput<JsonObject> input = new FunctionInput<>();
 			input.setPayload(argument);
 			input.setProperties(properties);
 			
 			try {
-				return functionExecutionService.callFunction(functionExecutionService.getLocalTokenHandle(), function, input, JsonObject.class);
+				return functionExecutionService.callFunction(functionExecutionService.getLocalTokenHandle().getID(), function, input, JsonObject.class);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}

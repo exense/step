@@ -27,6 +27,7 @@ import java.util.stream.StreamSupport;
 import javax.annotation.PostConstruct;
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -34,10 +35,14 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
 
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.core.deployment.Session;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -45,6 +50,7 @@ import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
+import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
@@ -147,9 +153,14 @@ public class FunctionServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/select")
 	@Secured(right="kw-execute")
-	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter) throws FunctionExecutionServiceException {
+	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter, @Context ContainerRequestContext crc, @Context HttpServletRequest req) throws FunctionExecutionServiceException {
+		Session session = getSession(crc);
 		if(!parameter.isLocal()) {
-			return functionExecutionService.getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession);
+			FunctionServiceTokenWrapperOwner tokenWrapperOwner = new FunctionServiceTokenWrapperOwner();
+			tokenWrapperOwner.setUsername(session.getUsername());
+			tokenWrapperOwner.setIpAddress(req.getRemoteAddr());
+			tokenWrapperOwner.setDescription(parameter.getReservationDescription());
+			return functionExecutionService.getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession, tokenWrapperOwner);
 		} else {
 			return functionExecutionService.getLocalTokenHandle();
 		}
@@ -158,23 +169,34 @@ public class FunctionServices extends AbstractServices {
 
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/executor/tokens/return")
+	@Path("/executor/tokens/{id}/return")
 	@Secured(right="kw-execute")
-	public void returnTokenHandle(TokenWrapper token) throws FunctionExecutionServiceException {
-		functionExecutionService.returnTokenHandle(token);
+	public void returnTokenHandle(@PathParam("id") String tokenId) throws FunctionExecutionServiceException {
+		functionExecutionService.returnTokenHandle(tokenId);
 	}
 	
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/executor/execute")
+	@Path("/executor/tokens/{id}/execute/{functionId}")
 	@Secured(right="kw-execute")
-	public Output<JsonObject> callFunction(CallFunctionInput input) {
-		Function function;
-		if(input.functionId!=null) {
-			function = functionManager.getFunctionById(input.getFunctionId());
-		} else {
-			function = functionManager.getFunctionByAttributes(input.getFunctionAttributes());
+	public Output<JsonObject> callFunction(@PathParam("id") String tokenId, @PathParam("functionId") String functionId, FunctionInput<JsonObject> input) {
+		Function function = functionManager.getFunctionById(functionId);
+		return functionExecutionService.callFunction(tokenId, function, input, JsonObject.class);			
+	}
+	
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/executor/tokens/{id}/execute")
+	@Secured(right="kw-execute")
+	public Output<JsonObject> callFunction(@PathParam("id") String tokenId, FunctionInput<JsonObject> input, @Context UriInfo uriInfo) {
+		Map<String,String> functionAttributes = new HashMap<>();
+		uriInfo.getQueryParameters().entrySet().forEach(e->{
+			functionAttributes.put(e.getKey(), e.getValue().get(0));
+		});
+		Function function = functionAccessor.findByAttributes(functionAttributes);
+		if(function == null) {
+			throw new RuntimeException("No function found matching the attributes "+functionAttributes);
 		}
-		return functionExecutionService.callFunction(input.tokenHandle, function, input.input, JsonObject.class);			
+		return functionExecutionService.callFunction(tokenId, function, input, JsonObject.class);			
 	}
 }

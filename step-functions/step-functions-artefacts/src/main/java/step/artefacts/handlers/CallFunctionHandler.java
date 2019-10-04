@@ -60,7 +60,7 @@ import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.handler.AbstractFunctionHandler;
-import step.functions.io.Input;
+import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.grid.Token;
 import step.grid.TokenWrapper;
@@ -112,7 +112,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		node.setFunctionId(function.getId().toString());
 		node.setFunctionAttributes(function.getAttributes());
 
-		Input<JsonObject> input = buildInput(argumentStr);
+		FunctionInput<JsonObject> input = buildInput(argumentStr);
 		node.setInput(input.getPayload().toString());
 		
 		validateInput(input, function);
@@ -122,7 +122,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
 			boolean releaseTokenAfterExecution = (o==null);
 			
-			TokenWrapper token = functionRouter.selectToken(testArtefact, function, (FunctionGroupContext)o, getBindings());
+			CallFunctionTokenWrapperOwner tokenWrapperOwner = new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription());
+			TokenWrapper token = functionRouter.selectToken(testArtefact, function, (FunctionGroupContext)o, getBindings(), tokenWrapperOwner);
 			try {
 				Token gridToken = token.getToken();
 				if(gridToken.isLocal()) {
@@ -132,12 +133,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				
 				node.setAgentUrl(token.getAgent().getAgentUrl());
 				node.setTokenId(token.getID());
-				token.setCurrentOwner(new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription()));
 				
 				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()});
 				
 				try {
-					output = functionExecutionService.callFunction(token, function, input, JsonObject.class);
+					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class);
 				} finally {
 					OperationManager.getInstance().exit();
 				}
@@ -179,7 +179,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				drainOutput(drainOutputValue, output);
 			} finally {
 				if(releaseTokenAfterExecution) {				
-					functionExecutionService.returnTokenHandle(token);
+					functionExecutionService.returnTokenHandle(token.getID());
 				}
 	
 				callChildrenArtefacts(node, testArtefact);
@@ -196,7 +196,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		
 	}
 
-	private void validateInput(Input<JsonObject> input, Function function) {
+	private void validateInput(FunctionInput<JsonObject> input, Function function) {
 		if(context.getConfiguration().getPropertyAsBoolean("enforceschemas", false)){
 			JsonSchemaValidator.validate(function.getSchema().toString(), input.getPayload().toString());
 		}
@@ -309,14 +309,14 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		}
 	}
 	
-	private Input<JsonObject> buildInput(String argumentStr) {
+	private FunctionInput<JsonObject> buildInput(String argumentStr) {
 		JsonObject argument = parseAndResolveJson(argumentStr);
 		
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
 		properties.put(AbstractFunctionHandler.PARENTREPORTID_KEY, context.getCurrentReportNode().getId().toString());
 		
-		Input<JsonObject> input = new Input<>();
+		FunctionInput<JsonObject> input = new FunctionInput<>();
 		input.setPayload(argument);
 		input.setProperties(properties);
 		return input;

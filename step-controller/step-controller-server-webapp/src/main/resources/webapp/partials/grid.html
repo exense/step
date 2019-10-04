@@ -101,7 +101,8 @@
 								<header>Used by</header>
 								<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 								<cell>
-									<span ng-show="row.executionId"><execution-link execution-id="row.executionId" execution-description="row.executionDescription"/></span>
+									<span ng-if="row.executionId"><execution-link execution-id="row.executionId" execution-description="row.executionDescription"/></span>
+									<span ng-if="row.currentOwner._class=='step.functions.services.FunctionServiceTokenWrapperOwner'">Remote client ({{row.currentOwner.username}}, {{row.currentOwner.ipAddress}})</span>
 								</cell>
 							</st-column>
 							<st-column name="errorMessage">

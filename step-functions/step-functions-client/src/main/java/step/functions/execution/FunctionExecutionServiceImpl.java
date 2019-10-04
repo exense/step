@@ -38,17 +38,20 @@ import step.core.reports.ErrorType;
 import step.functions.Function;
 import step.functions.handler.FunctionInputOutputObjectMapperFactory;
 import step.functions.handler.FunctionMessageHandler;
+import step.functions.io.FunctionInput;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionExecutionException;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
+import step.grid.TokenWrapperOwner;
 import step.grid.bootstrap.ResourceExtractor;
 import step.grid.client.AbstractGridClientImpl.AgentCallTimeoutException;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.grid.client.AbstractGridClientImpl.AgentSideException;
 import step.grid.client.GridClient;
+import step.grid.client.GridClientException;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
@@ -99,9 +102,9 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	}
 
 	@Override
-	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession) throws FunctionExecutionServiceException {
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
 		try {
-			return gridClient.getTokenHandle(attributes, interests, createSession);
+			return gridClient.getTokenHandle(attributes, interests, createSession, tokenWrapperOwner);
 		} catch (AgentCallTimeoutException e) {
 			throw new FunctionExecutionServiceException("Timeout after "+e.getCallTimeout()+"ms while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties",e );
 		} catch (AgentSideException e) {
@@ -112,26 +115,36 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	}
 
 	@Override
-	public void returnTokenHandle(TokenWrapper adapterToken) throws FunctionExecutionServiceException {
+	public void returnTokenHandle(String tokenHandleId) throws FunctionExecutionServiceException {
 		try {
-			gridClient.returnTokenHandle(adapterToken);
+			gridClient.returnTokenHandle(tokenHandleId);
 		} catch (AgentCallTimeoutException e) {
 			throw new FunctionExecutionServiceException("Timeout after "+e.getCallTimeout()+"ms while releasing the agent token. You can increase the call timeout by setting 'grid.client.token.release.timeout.ms' in step.properties",e );
 		} catch (AgentSideException e) {
 			throw new FunctionExecutionServiceException("Unexepected error on the agent side while releasing the agent token: "+e.getMessage(),e);
 		} catch (AgentCommunicationException e) {
 			throw new FunctionExecutionServiceException("Communication error between the controller and the agent while releasing the agent token",e);
+		} catch (GridClientException e) {
+			throw new FunctionExecutionServiceException("Unexepected error while releasing the agent token: "+e.getMessage(),e);
 		} 
 	}
 	
 	@Override
-	public <IN,OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, Function function, Input<IN> input, Class<OUT> outputClass) {	
+	public <IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass) {	
+		Input<IN> input = new Input<>();
+		input.setPayload(functionInput.getPayload());
 		input.setFunction(function.getAttributes().get(Function.NAME));
 		
+		// Build the property map used for the function layer
+		Map<String, String> properties = new HashMap<>();
+		if(functionInput.getProperties() !=null) {
+			properties.putAll(functionInput.getProperties());
+		}
+
 		Output<OUT> output = new Output<OUT>();
 		try {
 			AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionTypeByFunction(function);
-			dynamicBeanResolver.evaluate(function, Collections.<String, Object>unmodifiableMap(input.getProperties()));
+			dynamicBeanResolver.evaluate(function, Collections.<String, Object>unmodifiableMap(properties));
 			
 			String handlerChain = functionType.getHandlerChain(function);
 			FileVersionId handlerPackage = functionType.getHandlerPackage(function);
@@ -143,9 +156,6 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 				inputMessageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
 			}
 			
-			// Build the property map used for the function layer
-			Map<String, String> properties = new HashMap<>();
-			properties.putAll(input.getProperties());
 			
 			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
 			if(handlerProperties!=null) {
@@ -170,7 +180,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			
 			OutputMessage outputMessage;
 			try {
-				outputMessage = gridClient.call(tokenHandle, node, FunctionMessageHandler.class.getName(), functionHandlerPackage, inputMessageProperties, callTimeout);
+				outputMessage = gridClient.call(tokenHandleId, node, FunctionMessageHandler.class.getName(), functionHandlerPackage, inputMessageProperties, callTimeout);
 			} catch (AgentCallTimeoutException e) {
 				attachUnexpectedExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword",e );
 				return output;

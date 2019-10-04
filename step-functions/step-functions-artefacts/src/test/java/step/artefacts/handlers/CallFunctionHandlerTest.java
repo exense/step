@@ -54,13 +54,14 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
-import step.functions.io.Input;
+import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.AgentRef;
 import step.grid.Token;
 import step.grid.TokenWrapper;
+import step.grid.TokenWrapperOwner;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.tokenpool.Interest;
@@ -264,13 +265,13 @@ public class CallFunctionHandlerTest {
 		return new FunctionExecutionService() {
 			
 			@Override
-			public void returnTokenHandle(TokenWrapper adapterToken) throws FunctionExecutionServiceException {
+			public void returnTokenHandle(String tokenId) throws FunctionExecutionServiceException {
 				
 			}
 			
 			@Override
 			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession) throws FunctionExecutionServiceException {
+					boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
 				return token;
 			}
 			
@@ -281,7 +282,7 @@ public class CallFunctionHandlerTest {
 			
 			@SuppressWarnings("unchecked")
 			@Override
-			public <IN, OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, Function function, Input<IN> input,	Class<OUT> outputClass) {
+			public <IN, OUT> Output<OUT> callFunction(String tokenId, Function function, FunctionInput<IN> input,	Class<OUT> outputClass) {
 				return (Output<OUT>) newOutput(function.getId().toString());
 			}
 			

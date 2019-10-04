@@ -149,7 +149,7 @@ public class InteractiveServices extends AbstractServices {
 		TokenWrapper token = session.functionGroupContext.getToken();
 		if(token!=null) {
 			FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);
-			functionExecutionService.returnTokenHandle(token);
+			functionExecutionService.returnTokenHandle(token.getID());
 		}
 		session.c.getExecutionCallbacks().afterExecutionEnd(session.c);
 	}

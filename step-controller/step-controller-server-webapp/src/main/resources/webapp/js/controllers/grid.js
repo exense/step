@@ -170,6 +170,7 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
             agentUrl : e.agent.agentUrl,
             executionId : e.currentOwner ? e.currentOwner.executionId : null,
             executionDescription : e.currentOwner ? e.currentOwner.executionDescription : null,
+            currentOwner : e.currentOwner,
             state : e.state,
             errorMessage : e.tokenHealth.errorMessage,
             tokenHealth : e.tokenHealth

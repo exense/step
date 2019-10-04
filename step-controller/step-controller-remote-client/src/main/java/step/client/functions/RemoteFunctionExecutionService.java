@@ -4,7 +4,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 
-import javax.json.JsonObject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.GenericType;
@@ -14,11 +13,11 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
-import step.functions.io.Input;
+import step.functions.io.FunctionInput;
 import step.functions.io.Output;
-import step.functions.services.CallFunctionInput;
 import step.functions.services.GetTokenHandleParameter;
 import step.grid.TokenWrapper;
+import step.grid.TokenWrapperOwner;
 import step.grid.tokenpool.Interest;
 
 public class RemoteFunctionExecutionService extends AbstractRemoteClient implements FunctionExecutionService {
@@ -42,7 +41,7 @@ public class RemoteFunctionExecutionService extends AbstractRemoteClient impleme
 	}
 
 	@Override
-	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession) {
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
 		GetTokenHandleParameter parameter = new GetTokenHandleParameter();
 		parameter.setAttributes(attributes);
 		parameter.setInterests(interests);
@@ -54,22 +53,16 @@ public class RemoteFunctionExecutionService extends AbstractRemoteClient impleme
 	}
 
 	@Override
-	public void returnTokenHandle(TokenWrapper adapterToken) {
-		Builder b = requestBuilder("/rest/functions/executor/tokens/return");
-		Entity<TokenWrapper> entity = Entity.entity(adapterToken, MediaType.APPLICATION_JSON);
-		executeRequest(()->b.post(entity,TokenWrapper.class));
+	public void returnTokenHandle(String tokenId) {
+		Builder b = requestBuilder("/rest/functions/executor/tokens/"+tokenId+"/return");
+		executeRequest(()->b.post(Entity.json(null)));
 	}
 
 	@Override
-	public <IN, OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, Function function, Input<IN> input,
+	public <IN, OUT> Output<OUT> callFunction(String tokenId, Function function, FunctionInput<IN> input,
 			Class<OUT> outputClass) {
-		CallFunctionInput i = new CallFunctionInput();
-		i.setFunctionId(function.getId().toString());
-		i.setInput((Input<JsonObject>) input);
-		i.setTokenHandle(tokenHandle);
-		
-		Builder b = requestBuilder("/rest/functions/executor/execute");
-		Entity<CallFunctionInput> entity = Entity.entity(i, MediaType.APPLICATION_JSON);
+		Builder b = requestBuilder("/rest/functions/executor/tokens/"+tokenId+"/execute/"+function.getId().toString());
+		Entity<FunctionInput<IN>> entity = Entity.entity(input, MediaType.APPLICATION_JSON);
 		
 		ParameterizedType parameterizedGenericType = new ParameterizedType() {
 	        public Type[] getActualTypeArguments() {

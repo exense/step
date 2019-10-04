@@ -20,19 +20,22 @@ import step.core.plans.runner.DefaultPlanRunner;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
-import step.functions.io.Input;
+import step.functions.io.FunctionInput;
 import step.functions.io.Output;
+import step.grid.AgentRef;
+import step.grid.Token;
 import step.grid.TokenWrapper;
+import step.grid.TokenWrapperOwner;
 import step.grid.tokenpool.Interest;
 
 public class FunctionGroupHandlerTest {
 
 	@Test
 	public void test() throws IOException {
-		TokenWrapper localToken = new TokenWrapper();
+		TokenWrapper localToken = token("local");
 		AtomicBoolean localTokenReturned = new AtomicBoolean(false);
 		
-		TokenWrapper token = new TokenWrapper();
+		TokenWrapper token = token("remote");
 		AtomicBoolean tokenReturned = new AtomicBoolean(false);
 		
 		Plan plan = PlanBuilder.create().startBlock(new FunctionGroup()).add(new CheckArtefact(t-> {
@@ -55,23 +58,23 @@ public class FunctionGroupHandlerTest {
 
 					@Override
 					public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-							boolean createSession) throws FunctionExecutionServiceException {
+							boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
 						return null;
 					}
 
 					@Override
-					public void returnTokenHandle(TokenWrapper adapterToken) throws FunctionExecutionServiceException {
-						if(adapterToken == localToken) {
+					public void returnTokenHandle(String id) throws FunctionExecutionServiceException {
+						if(localToken.getID().equals(id)) {
 							localTokenReturned.set(true);
 						}
-						if(adapterToken == token) {
+						if(token.getID().equals(id)) {
 							tokenReturned.set(true);
 						}
 					}
 
 					@Override
-					public <IN, OUT> Output<OUT> callFunction(TokenWrapper tokenHandle, Function function,
-							Input<IN> input, Class<OUT> outputClass) {
+					public <IN, OUT> Output<OUT> callFunction(String id, Function function,
+							FunctionInput<IN> input, Class<OUT> outputClass) {
 						return null;
 					}
 					
@@ -90,6 +93,13 @@ public class FunctionGroupHandlerTest {
 		Assert.assertEquals("Session:PASSED:\n" + 
 				" CheckArtefact:PASSED:\n" + 
 				" Echo:PASSED:\n" ,writer.toString());
+	}
+
+	protected TokenWrapper token(String id) {
+		Token localToken_ = new Token();
+		localToken_.setId(id);
+		TokenWrapper localToken = new TokenWrapper(localToken_, new AgentRef());
+		return localToken;
 	}
 
 }

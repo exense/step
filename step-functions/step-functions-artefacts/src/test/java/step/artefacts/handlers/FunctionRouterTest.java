@@ -29,6 +29,7 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.TokenWrapper;
+import step.grid.TokenWrapperOwner;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.grid.client.GridClient;
 import step.grid.filemanager.FileManagerException;
@@ -112,19 +113,19 @@ public class FunctionRouterTest {
 		callFunction.getToken().setValue("{\"callFunction\":\"cf\"}");
 		
 		// No FunctionGroupContext => A remote token should be selected and returned
-		TokenWrapper token = router.selectToken(callFunction, function, null, new HashMap<>());
+		TokenWrapper token = router.selectToken(callFunction, function, null, new HashMap<>(), null);
 		Assert.assertEquals(REMOTE_TOKEN, token);
 		
 		// FunctionGroupContext without local token => A new local token should be returned and set to the FunctionGroupContext
 		FunctionGroupContext functionGroupContext = new FunctionGroupContext(null);
-		token = router.selectToken(callFunction, function, functionGroupContext, new HashMap<>());
+		token = router.selectToken(callFunction, function, functionGroupContext, new HashMap<>(), null);
 		Assert.assertEquals(REMOTE_TOKEN, token);
 		Assert.assertEquals(REMOTE_TOKEN, functionGroupContext.token);
 		
 		// FunctionGroupContext with a previously set token => The previously set token should be returned
 		functionGroupContext = new FunctionGroupContext(null);
 		functionGroupContext.setToken(FUNCTION_GROUP_TOKEN);
-		token = router.selectToken(callFunction, function, functionGroupContext, new HashMap<>());
+		token = router.selectToken(callFunction, function, functionGroupContext, new HashMap<>(), null);
 		Assert.assertEquals(FUNCTION_GROUP_TOKEN, token);
 	}
 	
@@ -143,19 +144,19 @@ public class FunctionRouterTest {
 		callFunction.getToken().setValue("{\"callFunction\":\"cf\"}");
 		
 		// No FunctionGroupContext => A new local token should be returned
-		TokenWrapper token = router.selectToken(callFunction, localFunction, null, new HashMap<>());
+		TokenWrapper token = router.selectToken(callFunction, localFunction, null, new HashMap<>(), null);
 		Assert.assertEquals(LOCAL_TOKEN, token);
 
 		// FunctionGroupContext without local token => A new local token should be returned and set to the FunctionGroupContext
 		FunctionGroupContext functionGroupContext = new FunctionGroupContext(null);
-		token = router.selectToken(callFunction, localFunction, functionGroupContext, new HashMap<>());
+		token = router.selectToken(callFunction, localFunction, functionGroupContext, new HashMap<>(), null);
 		Assert.assertEquals(LOCAL_TOKEN, token);
 		Assert.assertEquals(LOCAL_TOKEN, functionGroupContext.localToken);
 		
 		// FunctionGroupContext with a previously set token => The previously set token should be returned
 		functionGroupContext = new FunctionGroupContext(null);
 		functionGroupContext.setLocalToken(FUNCTION_GROUP_TOKEN);
-		token = router.selectToken(callFunction, localFunction, functionGroupContext, new HashMap<>());
+		token = router.selectToken(callFunction, localFunction, functionGroupContext, new HashMap<>(), null);
 		Assert.assertEquals(FUNCTION_GROUP_TOKEN, token);
 	}
 
@@ -177,7 +178,7 @@ public class FunctionRouterTest {
 			}
 			
 			@Override
-			public void returnTokenHandle(TokenWrapper arg0) throws AgentCommunicationException {
+			public void returnTokenHandle(String arg0) throws AgentCommunicationException {
 				
 			}
 			
@@ -198,7 +199,7 @@ public class FunctionRouterTest {
 			}
 			
 			@Override
-			public OutputMessage call(TokenWrapper arg0, JsonNode arg2, String arg3, FileVersionId arg4,
+			public OutputMessage call(String arg0, JsonNode arg2, String arg3, FileVersionId arg4,
 					Map<String, String> arg5, int arg6) throws Exception {
 				return null;
 			}
@@ -214,6 +215,12 @@ public class FunctionRouterTest {
 					throws FileManagerException {
 				// TODO Auto-generated method stub
 				return null;
+			}
+
+			@Override
+			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
+					boolean createSession, TokenWrapperOwner tokenOwner) throws AgentCommunicationException {
+				return getTokenHandle(attributes, interests, createSession);
 			}
 		};
 	}

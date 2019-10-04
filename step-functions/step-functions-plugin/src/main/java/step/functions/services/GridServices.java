@@ -84,8 +84,8 @@ public class GridServices extends AbstractServices {
 		List<TokenWrapper> agentTokens = new ArrayList<>();
 		
 		grid.getTokens().forEach(token->{
-			if(agentId.equals(token.getObject().getAgent().getAgentId())) {
-				agentTokens.add(token.getObject());
+			if(agentId.equals(token.getAgent().getAgentId())) {
+				agentTokens.add(token);
 			}
 		});
 		return agentTokens;
@@ -114,8 +114,8 @@ public class GridServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public void interruptAgent(@PathParam("id") String agentId) {
 		grid.getTokens().forEach(token->{
-			if(agentId.equals(token.getObject().getAgent().getAgentId())) {
-				grid.startTokenMaintenance(token.getObject().getID());
+			if(agentId.equals(token.getAgent().getAgentId())) {
+				grid.startTokenMaintenance(token.getID());
 			}
 		});
 	}
@@ -126,8 +126,8 @@ public class GridServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public void resumeAgent(@PathParam("id") String agentId) {
 		grid.getTokens().forEach(token->{
-			if(agentId.equals(token.getObject().getAgent().getAgentId())) {
-				grid.stopTokenMaintenance(token.getObject().getID());
+			if(agentId.equals(token.getAgent().getAgentId())) {
+				grid.stopTokenMaintenance(token.getID());
 			}
 		});
 	}
@@ -138,8 +138,8 @@ public class GridServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public void removeAgentTokenErrors(@PathParam("id") String agentId) {
 		grid.getTokens().forEach(token->{
-			if(token.getObject().getState().equals(TokenWrapperState.ERROR)) {
-				grid.removeTokenError(token.getObject().getID());
+			if(token.getState().equals(TokenWrapperState.ERROR)) {
+				grid.removeTokenError(token.getID());
 			}
 		});
 	}
