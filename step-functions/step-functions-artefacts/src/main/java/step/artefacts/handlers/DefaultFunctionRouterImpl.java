@@ -1,6 +1,7 @@
 package step.artefacts.handlers;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -15,7 +16,9 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
 import step.grid.TokenWrapperOwner;
+import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;
+import step.grid.tokenpool.SimpleAffinityEvaluator;
 
 public class DefaultFunctionRouterImpl implements FunctionRouter {
 
@@ -24,6 +27,8 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 	protected final FunctionExecutionService functionExecutionService;
 
 	protected final FunctionTypeRegistry functionTypeRegistry;
+	
+	protected final SimpleAffinityEvaluator<Identity,Identity> affinityEvaluator = new SimpleAffinityEvaluator<>();
 
 	public DefaultFunctionRouterImpl(FunctionExecutionService functionClient, FunctionTypeRegistry functionTypeRegistry, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
 		super();
@@ -52,15 +57,20 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 		} else {
 			if(functionGroupContext!=null) {
 				synchronized (functionGroupContext) {
-					if(functionGroupContext.getToken()!=null) {
+					Map<String, Interest> selectionCriteria = buildSelectionCriteriaMap(callFunction, function,	functionGroupContext, bindings);
+					
+					// Find a token matching the selection criteria in the context
+					List<TokenWrapper> functionGroupTokens = functionGroupContext.getTokens();
+					TokenWrapper matchingToken = functionGroupTokens.stream().filter(t->
+						affinityEvaluator.getAffinityScore(identity(selectionCriteria, null), identity(null, t.getAttributes())) > 0).findFirst().orElse(null);
+					
+					if(matchingToken != null) {
 						// Token already present in context => reusing it
-						token = functionGroupContext.getToken();
+						token = matchingToken;
 					} else {
-						// Token not present in context => select a token and create a new agent session
-						Map<String, Interest> selectionCriteria = buildSelectionCriteriaMap(callFunction, function,	functionGroupContext, bindings);
+						// No token matching the selection criteria => select a new token and add it to the function group context
 						token = selectToken(selectionCriteria, true, tokenWrapperOwner);
-						// attach the token to the function group context
-						functionGroupContext.setToken(token);
+						functionGroupContext.addToken(token);
 					}
 				}
 			} else {
@@ -70,6 +80,26 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 			}
 		}
 		return token;
+	}
+
+	protected Identity identity(Map<String, Interest> selectionCriteria, Map<String, String> attributes) {
+		return new Identity() {
+			
+			@Override
+			public Map<String, Interest> getInterests() {
+				return selectionCriteria;
+			}
+			
+			@Override
+			public String getID() {
+				return null;
+			}
+			
+			@Override
+			public Map<String, String> getAttributes() {
+				return attributes;
+			}
+		};
 	}
 
 	private TokenWrapper selectToken(Map<String, Interest> selectionCriteria, boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {		

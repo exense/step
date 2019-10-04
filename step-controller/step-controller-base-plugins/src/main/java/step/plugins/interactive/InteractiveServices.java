@@ -19,6 +19,7 @@
 package step.plugins.interactive;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -31,6 +32,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
@@ -63,6 +67,8 @@ import step.plugins.parametermanager.ParameterManagerPlugin;
 @Path("interactive")
 public class InteractiveServices extends AbstractServices {
 
+	private static final Logger logger = LoggerFactory.getLogger(InteractiveServices.class);
+	
 	private Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
 	
 	private Timer sessionExpirationTimer; 
@@ -146,10 +152,16 @@ public class InteractiveServices extends AbstractServices {
 	}
 
 	private void closeSession(InteractiveSession session) throws FunctionExecutionServiceException {
-		TokenWrapper token = session.functionGroupContext.getToken();
-		if(token!=null) {
+		List<TokenWrapper> tokens = session.functionGroupContext.getTokens();
+		if(tokens!=null) {
 			FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);
-			functionExecutionService.returnTokenHandle(token.getID());
+			tokens.forEach(t->{
+				try {
+					functionExecutionService.returnTokenHandle(t.getID());
+				} catch (FunctionExecutionServiceException e) {
+					logger.warn("Error while closing interactive session", e);
+				}
+			});
 		}
 		session.c.getExecutionCallbacks().afterExecutionEnd(session.c);
 	}

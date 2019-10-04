@@ -18,16 +18,19 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import step.artefacts.FunctionGroup;
-import step.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
 import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
 
@@ -58,7 +61,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 
 	public static class FunctionGroupContext {
 		
-		TokenWrapper token;
+		final List<TokenWrapper> tokens = new ArrayList<>();
 		
 		TokenWrapper localToken;
 		
@@ -68,13 +71,13 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 			super();
 			this.additionalSelectionCriteria = additionalSelectionCriteria;
 		}
-
-		public TokenWrapper getToken() {
-			return token;
+		
+		public List<TokenWrapper> getTokens() {
+			return tokens;
 		}
 
-		public void setToken(TokenWrapper token) {
-			this.token = token;
+		public boolean addToken(TokenWrapper e) {
+			return tokens.add(e);
 		}
 
 		public TokenWrapper getLocalToken() {
@@ -100,11 +103,32 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.execute_(node, testArtefact);
 		} finally {
-			if(handle.getToken()!=null) {
-				functionExecutionService.returnTokenHandle(handle.getToken().getID());
+			List<Exception> releaseExceptions = new ArrayList<>();
+			if(handle.getTokens()!=null) {
+				handle.getTokens().forEach(t->{
+					try {
+						functionExecutionService.returnTokenHandle(t.getID());
+					} catch (FunctionExecutionServiceException e) {
+						releaseExceptions.add(e);
+					}
+				});
 			}
 			if(handle.getLocalToken()!=null) {
-				functionExecutionService.returnTokenHandle(handle.getLocalToken().getID());
+				try {
+					functionExecutionService.returnTokenHandle(handle.getLocalToken().getID());
+				} catch (FunctionExecutionServiceException e) {
+					releaseExceptions.add(e);
+				}
+			}
+			
+			int exceptionCount = releaseExceptions.size();
+			if(exceptionCount > 0) {
+				if(exceptionCount == 1) {
+					throw releaseExceptions.get(0);
+				} else {
+					throw new Exception("Multiple errors occurred when releasing agent tokens: "+
+								releaseExceptions.stream().map(e->e.getMessage()).collect(Collectors.joining(", ")));
+				}
 			}
 		}	
 	}

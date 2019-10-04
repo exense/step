@@ -28,6 +28,8 @@ import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
+import step.grid.AgentRef;
+import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.TokenWrapperOwner;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
@@ -85,6 +87,20 @@ public class FunctionRouterTest {
 
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 		router = new DefaultFunctionRouterImpl(client, functionTypeRegistry, dynamicJsonObjectResolver);
+		
+		LOCAL_TOKEN = token();
+		LOCAL_TOKEN_2 = token();
+	}
+
+	protected TokenWrapper token() {
+		return token(new HashMap<>());
+	}
+	
+	protected TokenWrapper token(Map<String, String> attributes) {
+		Token token = new Token();
+		token.setAttributes(attributes);
+		TokenWrapper tokenWrapper = new TokenWrapper(token, new AgentRef());
+		return tokenWrapper;
 	}
 	
 	@Test
@@ -114,19 +130,43 @@ public class FunctionRouterTest {
 		
 		// No FunctionGroupContext => A remote token should be selected and returned
 		TokenWrapper token = router.selectToken(callFunction, function, null, new HashMap<>(), null);
-		Assert.assertEquals(REMOTE_TOKEN, token);
+		Assert.assertNotNull(token);
+		Assert.assertEquals("cf",token.getAttributes().get("callFunction"));
 		
 		// FunctionGroupContext without local token => A new local token should be returned and set to the FunctionGroupContext
 		FunctionGroupContext functionGroupContext = new FunctionGroupContext(null);
 		token = router.selectToken(callFunction, function, functionGroupContext, new HashMap<>(), null);
-		Assert.assertEquals(REMOTE_TOKEN, token);
-		Assert.assertEquals(REMOTE_TOKEN, functionGroupContext.token);
+		Assert.assertNotNull(token);
+		Assert.assertEquals("cf",token.getAttributes().get("callFunction"));
+		Assert.assertEquals(token, functionGroupContext.tokens.get(0));
+		
+		// Token already in FunctionGroupContext => The same token should be returned
+		TokenWrapper token2 = router.selectToken(callFunction, function, functionGroupContext, new HashMap<>(), null);
+		Assert.assertTrue(token == token2);
+	}
+	
+	@Test
+	public void testMultipleTokensInContext() throws FunctionExecutionServiceException {
+		CallFunction callFunction = new CallFunction();
+		callFunction.getToken().setValue("{\"criteria1\":\"c1\"}");
 		
 		// FunctionGroupContext with a previously set token => The previously set token should be returned
-		functionGroupContext = new FunctionGroupContext(null);
-		functionGroupContext.setToken(FUNCTION_GROUP_TOKEN);
-		token = router.selectToken(callFunction, function, functionGroupContext, new HashMap<>(), null);
-		Assert.assertEquals(FUNCTION_GROUP_TOKEN, token);
+		FunctionGroupContext functionGroupContext = new FunctionGroupContext(null);
+		TokenWrapper token = router.selectToken(callFunction, function, functionGroupContext, new HashMap<>(), null);
+		Assert.assertNotNull(token);
+		Assert.assertEquals("c1",token.getAttributes().get("criteria1"));
+		
+		// Select a token with different criteria that do not match the attributes of the previously selected token
+		// => a new token should be returned
+		CallFunction callFunction2 = new CallFunction();
+		callFunction2.getToken().setValue("{\"criteria2\":\"c2\"}");
+		TokenWrapper token2 = router.selectToken(callFunction2, function, functionGroupContext, new HashMap<>(), null);
+		Assert.assertNotNull(token2);
+		Assert.assertEquals("c2",token2.getAttributes().get("criteria2"));
+		
+		// Select a token with the previous criteria => the previously selected token should be returned
+		TokenWrapper token3 = router.selectToken(callFunction2, function, functionGroupContext, new HashMap<>(), null);
+		Assert.assertTrue(token2 == token3);
 	}
 	
 	@Test
@@ -155,14 +195,13 @@ public class FunctionRouterTest {
 		
 		// FunctionGroupContext with a previously set token => The previously set token should be returned
 		functionGroupContext = new FunctionGroupContext(null);
-		functionGroupContext.setLocalToken(FUNCTION_GROUP_TOKEN);
+		functionGroupContext.setLocalToken(LOCAL_TOKEN_2);
 		token = router.selectToken(callFunction, localFunction, functionGroupContext, new HashMap<>(), null);
-		Assert.assertEquals(FUNCTION_GROUP_TOKEN, token);
+		Assert.assertEquals(LOCAL_TOKEN_2, token);
 	}
 
-	private static final TokenWrapper REMOTE_TOKEN = new TokenWrapper();
-	private static final TokenWrapper LOCAL_TOKEN = new TokenWrapper();
-	private static final TokenWrapper FUNCTION_GROUP_TOKEN = new TokenWrapper();
+	private TokenWrapper LOCAL_TOKEN;
+	private TokenWrapper LOCAL_TOKEN_2;
 	
 	private GridClient getDummyGridClient() {
 		return new GridClient() {
@@ -185,7 +224,9 @@ public class FunctionRouterTest {
 			@Override
 			public TokenWrapper getTokenHandle(Map<String, String> arg0, Map<String, Interest> arg1, boolean arg2)
 					throws AgentCommunicationException {
-				return REMOTE_TOKEN;
+				Map<String, String> attributes = new HashMap<>();
+				arg1.entrySet().stream().forEach(e->attributes.put(e.getKey(), e.getValue().getSelectionPattern().toString()));
+				return token(attributes);
 			}
 			
 			@Override
