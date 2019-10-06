@@ -2,6 +2,9 @@
 	<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox tooltip-placement="bottom" uib-tooltip="Auto refresh">
 		<span class="glyphicon glyphicon-refresh" />
 	</button>
+	<button type="button" class="btn btn-default btn-xs" ng-model="lockdisplay" uib-btn-checkbox tooltip-placement="bottom" uib-tooltip="Unlock charts">
+		<span class="glyphicon glyphicon-lock" />
+	</button>
 </div>
 
 <div class="panel-body">
@@ -87,29 +90,9 @@
 						</div>
 					</div>
 				</uib-tab>
-				<uib-tab heading="Performance">
+				<uib-tab heading="Performance" ng-click="$broadcast('resize-widget');">
 					<div class="panel-body">
-						<div ng-attr-id="{{getPanelId('performance')}}" class="panel panel-default">
-							<div class="panel-heading">
-								<a ng-click="toggleShowPanel('performance')">{{getPanelTitle('performance')}}</a>
-								<button class="btn btn-default btn-xs pull-right" type="button" ng-click="openRtm()">Interactive analytics <span class="glyphicon glyphicon-new-window" ></span></button>
-							</div>
-							<div class="panel-body" ng-show="isShowPanel('performance')">
-								<div class="row">
-									<div class="col-xs-6">
-										<canvas id="performance-chart" class="chart chart-line" handle="performancechart" />
-									</div>
-									<div class="col-xs-6">
-										<canvas id="errorate-chart" class="chart chart-line" handle="errorratechart" colours="['#F7464A']" />
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-xs-6">
-										<canvas id="responsetime-by-function-chart" class="chart chart-line" handle="responseTimeByFunctionChart" />
-									</div>
-								</div>
-							</div>
-						</div>
+						<viz-dashboard-manager displaymode="displaymode" presets="staticPresets" dashboards="dashboardsendpoint"></viz-dashboard-manager>
 					</div>
 				</uib-tab>
 				<uib-tab heading="Errors">

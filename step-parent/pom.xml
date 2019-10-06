@@ -6,8 +6,11 @@
 	but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
 	or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License 
 	for more details. You should have received a copy of the GNU Affero General 
-	Public License along with STEP. If not, see <http://www.gnu.org/licenses />. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	Public License along with STEP. If not, see <http://www.gnu.org/licenses 
+	/>. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>ch.exense.step</groupId>
@@ -46,8 +49,8 @@
 		<connection>scm:git:git://github.com/exense/step.git</connection>
 		<developerConnection>scm:git:[push=]https://github.com/exense/step.git[fetch=]https://github.com/exense/step.git</developerConnection>
 		<url>https://github.com/exense/step.git</url>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -55,13 +58,13 @@
 		<exense-commons.version>1.0.0</exense-commons.version>
 		<step-grid.version>1.0.1-SNAPSHOT</step-grid.version>
 		<step-api.version>1.0.0</step-api.version>
-		<!--  -->
+		<!-- -->
 		<junit.version>4.8.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
 		<groovy.version>2.2.1</groovy.version>
 		<mongodb.version>3.8.2</mongodb.version>
 		<jackson.version>2.5.4</jackson.version>
-		<rtm.version>2.2.4</rtm.version>
+		<rtm.version>2.2.6</rtm.version>
 		<jersey.version>2.23.1</jersey.version>
 	</properties>
 
@@ -127,7 +130,7 @@
 					<tagNameFormat>@{project.version}</tagNameFormat>
 				</configuration>
 			</plugin>
-			<!--  Release -->
+			<!-- Release -->
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
@@ -136,7 +139,7 @@
 				<configuration>
 					<serverId>ossrh</serverId>
 					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<!--  Switch to true once next release process has been validated -->
+					<!-- Switch to true once next release process has been validated -->
 					<autoReleaseAfterClose>false</autoReleaseAfterClose>
 				</configuration>
 			</plugin>

@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-
+<meta charset="utf-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
 <script type="text/javascript">
@@ -25,37 +24,12 @@ window.console.log = window.console.log || function(){};
 <script src="bower_components/jquery-file-download/src/Scripts/jquery.fileDownload.js"></script>
 <script src="bower_components/ng-file-upload/ng-file-upload.js"></script>
 <script src="bower_components/angular-resizable/src/angular-resizable.js"></script>
+
+<script src="bower_components/d3/d3.js"></script>
+<script src="bower_components/nvd3/build/nv.d3.js"></script>
+<script src="bower_components/angular-nvd3/dist/angular-nvd3.js"></script>
+<script src="bower_components/exense-visualization/dist/viz.js"></script>
 <!-- endbower -->
-
-<!-- <script type="text/javascript" src="js/lib/jquery-1.10.2.min.js"></script>
-<script type="text/javascript" src="js/lib/jquery.dataTables-1.10.4.min.js"></script>
-<script type="text/javascript" src="js/lib/bootstrap-3.3.2.min.js"></script>
-<script type="text/javascript" src="js/lib/dataTables.bootstrap.js"></script>
-
-
-<script	src="js/lib/angular-1.3.14.js"></script>
-<script	src="js/lib/angular-route-1.3.14.js"></script>
-<script	src="js/lib/angular-cookies-1.3.14.js"></script>
-<script	src="js/lib/ui-bootstrap-tpls-0.13.4.js"></script>
-
-<script type="text/javascript" src="js/lib/ngStorage.js"></script>
-<script type="text/javascript" src="js/lib/angular-ui-router.js"></script>
-
-<script src="js/lib/moment.js"></script>
-<script src="js/lib/d3.min.js"></script>
-<script src="js/lib/line-chart.js"></script>
-<script src="js/lib/Chart.js"></script>
-
-<script src="js/lib/line-chart.js"></script>
-<script src="js/lib/underscore-min.js"></script>
-<script src="js/lib/prefixfree.min.js"></script>
-<script src="js/lib/fileDownload.js"></script>
-<script src="js/lib/jstree.js"></script>
-
-<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.5/css/jquery.dataTables.css">
-<link rel="stylesheet" href="css/bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="css/dataTables.bootstrap.css">
-<link rel="stylesheet" type="text/css" href="css/lib/style.css"> -->
 
 <link rel="icon" type="image/png" href="favicon.png">
 
@@ -86,12 +60,17 @@ window.console.log = window.console.log || function(){};
 <script src="js/controllers/dynamicForms.js"></script>
 <script src="js/controllers/components.js"></script>
 
+<script src="js/viz-presets.js"></script>
+
 <!-- bower:css -->
 <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
 <link rel="stylesheet" href="bower_components/datatables.net-bs/css/dataTables.bootstrap.css" />
 <link rel="stylesheet" href="bower_components/jstree/dist/themes/default/style.css" />
 <link rel="stylesheet" href="bower_components/tachyons/css/tachyons.css" />
 <link rel="stylesheet" href="bower_components/angular-resizable/angular-resizable.min.css" />
+
+<link rel="stylesheet" href="bower_components/nvd3/build/nv.d3.css">
+<link rel="stylesheet" href="bower_components/exense-visualization/dist/viz.css">
 <!-- endbower -->
 <link rel="stylesheet" type="text/css" href="css/step.css">
 <link rel="stylesheet" type="text/css" href="js/chart.css">
