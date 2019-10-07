@@ -43,7 +43,7 @@
 		</developer>
 	</developers>
 	<scm>
-		<connection>scm:git:git://github.com/exense/step.git</connection>
+		<connection>scm:git:https://github.com/exense/step.git</connection>
 		<developerConnection>scm:git:[push=]https://github.com/exense/step.git[fetch=]https://github.com/exense/step.git</developerConnection>
 		<url>https://github.com/exense/step.git</url>
 	  <tag>3.11.0</tag>
