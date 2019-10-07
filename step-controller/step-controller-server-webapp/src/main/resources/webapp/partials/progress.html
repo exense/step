@@ -1,11 +1,19 @@
 <div class="toolbar">
-	<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox tooltip-placement="bottom" uib-tooltip="Auto refresh">
+	<button type="button" class="btn btn-default btn-xs"
+		ng-model="autorefresh" uib-btn-checkbox tooltip-placement="bottom"
+		uib-tooltip="Auto refresh">
 		<span class="glyphicon glyphicon-refresh" />
+	</button>
+	<button type="button" class="btn btn-default btn-xs"
+		ng-model="lockdisplay" uib-btn-checkbox tooltip-placement="bottom"
+		uib-tooltip="Unlock charts">
+		<span class="glyphicon glyphicon-lock" />
 	</button>
 </div>
 
 <div class="panel-body">
-	<div class="row" ng-if="execution.importResult && !execution.importResult.successful">
+	<div class="row"
+		ng-if="execution.importResult && !execution.importResult.successful">
 		<div class="alert alert-danger" role="alert">
 			<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
 			Error while importing plan:
@@ -17,203 +25,181 @@
 
 	<div class="row" ng-if="execution">
 		<div class="col-xs-9">
-			<uib-tabset active="tabs.selectedTab"> 
-				<uib-tab heading="Execution steps">
-					<div class="panel-body">
-						<div ng-attr-id="{{getPanelId('testCases')}}" class="panel panel-default" ng-if="isPanelEnabled('testCases')">
-							<div class="panel-heading">
-								<a ng-click="toggleShowPanel('testCases')">{{getPanelTitle('testCases')}}</a>
-								<div class="pull-right"><status-distribution progress="testcasesProgress" /></div>
-								<div ng-if="execution.status != 'ENDED' && testcasesProgress.countForecast>0"
-									uib-tooltip="Progress: {{testcasesProgress.count}}/{{testcasesProgress.countForecast}}" style="margin-right: 20px; width: 200px"
-									class="progress pull-right">
-									<div class="progress-bar" role="progressbar" aria-valuenow="{{testcasesProgress.count}}" aria-valuemin="0"
-										aria-valuemax="{{testcasesProgress.countForecast}}"
-										ng-attr-style="min-width: 2em; width: {{testcasesProgress.count/testcasesProgress.countForecast*100}}%;">
-										{{testcasesProgress.count}}/{{testcasesProgress.countForecast}}</div>
-								</div>
-							</div>
-							<div class="panel-body" ng-show="isShowPanel('testCases')">
-								<datatable tabledef="testCaseTable" handle="testCaseTable" selectionmode="multiple" columnsearch="true"
-									order="[[1, &quot;asc&quot;]]" />
-							</div>
+			<uib-tabset active="tabs.selectedTab"> <uib-tab
+				heading="Execution steps">
+			<div class="panel-body">
+				<div ng-attr-id="{{getPanelId('testCases')}}"
+					class="panel panel-default" ng-if="isPanelEnabled('testCases')">
+					<div class="panel-heading">
+						<a ng-click="toggleShowPanel('testCases')">{{getPanelTitle('testCases')}}</a>
+						<div class="pull-right">
+							<status-distribution progress="testcasesProgress" />
 						</div>
-			
-						<div ng-attr-id="{{getPanelId('steps')}}" class="panel panel-default">
-							<div class="panel-heading">
-								<a ng-click="toggleShowPanel('steps')">{{getPanelTitle('steps')}}</a>
-								<div class="pull-right"><status-distribution progress="progress" /></div>
-								<div ng-if="execution.status != 'ENDED' && progress.countForecast>0"
-									uib-tooltip="Progress: {{progress.count}}/{{progress.countForecast}}" style="margin-right: 20px; width: 200px"
-									class="progress pull-right">
-									<div class="progress-bar" role="progressbar" aria-valuenow="{{progress.count}}" aria-valuemin="0"
-										aria-valuemax="{{progress.countForecast}}"
-										ng-attr-style="min-width: 2em; width: {{progress.count/progress.countForecast*100}}%;">
-										{{progress.count}}/{{progress.countForecast}}</div>
-								</div>
-							</div>
-							<div class="panel-body" ng-show="isShowPanel('steps')">
-								<datatable serverside="reports" tabledef="stepsTable" handle="stepsTable" params="eid={{eid}}"
-									selectionmode="single" columnsearch="true" order="[[1, &quot;desc&quot;]]">
-									<table-actions>
-										<div class="btn-group btn-group-menu">
-											<button type="button" class="btn btn-default" ng-click="$parent.exportAsCSV()" uib-tooltip="Export as CSV">
-												<span class="glyphicon glyphicon-export"></span>
-											</button>
-										</div>									
-									</table-actions>
-								</datatable>
-							</div>
-						</div>
-						<div ng-attr-id="{{getPanelId('parameters')}}" class="panel panel-default">
-							<div class="panel-heading">
-								<a ng-click="toggleShowPanel('parameters')">{{getPanelTitle('parameters')}}</a>
-							</div>
-							<div class="panel-body" ng-show="isShowPanel('parameters')">
-								<datatable tabledef="configParamTable" handle="configParamTable" columnsearch="true" order="[[0, &quot;asc&quot;]]" />
-							</div>
+						<div
+							ng-if="execution.status != 'ENDED' && testcasesProgress.countForecast>0"
+							uib-tooltip="Progress: {{testcasesProgress.count}}/{{testcasesProgress.countForecast}}"
+							style="margin-right: 20px; width: 200px"
+							class="progress pull-right">
+							<div class="progress-bar" role="progressbar"
+								aria-valuenow="{{testcasesProgress.count}}" aria-valuemin="0"
+								aria-valuemax="{{testcasesProgress.countForecast}}"
+								ng-attr-style="min-width: 2em; width: {{testcasesProgress.count/testcasesProgress.countForecast*100}}%;">
+								{{testcasesProgress.count}}/{{testcasesProgress.countForecast}}</div>
 						</div>
 					</div>
-				</uib-tab>
-				<uib-tab heading="Execution tree">
-					<div class="panel-body">
-						<div ng-attr-id="{{getPanelId('reportTree')}}" class="panel panel-default">
-							<div class="panel-heading">
-								<a ng-click="toggleShowPanel('reportTree')">{{getPanelTitle('reportTree')}}</a>
-							</div>
-							<div class="panel-body" ng-show="isShowPanel('reportTree')">
-								<report-tree nodeid="eid" handle="reportTreeHandle" />
-							</div>
+					<div class="panel-body" ng-show="isShowPanel('testCases')">
+						<datatable tabledef="testCaseTable" handle="testCaseTable"
+							selectionmode="multiple" columnsearch="true"
+							order="[[1, &quot;asc&quot;]]" />
+					</div>
+				</div>
+
+				<div ng-attr-id="{{getPanelId('steps')}}"
+					class="panel panel-default">
+					<div class="panel-heading">
+						<a ng-click="toggleShowPanel('steps')">{{getPanelTitle('steps')}}</a>
+						<div class="pull-right">
+							<status-distribution progress="progress" />
+						</div>
+						<div
+							ng-if="execution.status != 'ENDED' && progress.countForecast>0"
+							uib-tooltip="Progress: {{progress.count}}/{{progress.countForecast}}"
+							style="margin-right: 20px; width: 200px"
+							class="progress pull-right">
+							<div class="progress-bar" role="progressbar"
+								aria-valuenow="{{progress.count}}" aria-valuemin="0"
+								aria-valuemax="{{progress.countForecast}}"
+								ng-attr-style="min-width: 2em; width: {{progress.count/progress.countForecast*100}}%;">
+								{{progress.count}}/{{progress.countForecast}}</div>
 						</div>
 					</div>
-				</uib-tab>
-				<uib-tab heading="Performance">
-					<div class="panel-body">
-						<div ng-attr-id="{{getPanelId('performance')}}" class="panel panel-default">
-							<div class="panel-heading">
-								<a ng-click="toggleShowPanel('performance')">{{getPanelTitle('performance')}}</a>
-								<button class="btn btn-default btn-xs pull-right" type="button" ng-click="openRtm()">Interactive analytics <span class="glyphicon glyphicon-new-window" ></span></button>
-							</div>
-							<div class="panel-body" ng-show="isShowPanel('performance')">
-								<div class="row">
-									<div class="col-xs-6">
-										<canvas id="performance-chart" class="chart chart-line" handle="performancechart" />
-									</div>
-									<div class="col-xs-6">
-										<canvas id="errorate-chart" class="chart chart-line" handle="errorratechart" colours="['#F7464A']" />
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-xs-6">
-										<canvas id="responsetime-by-function-chart" class="chart chart-line" handle="responseTimeByFunctionChart" />
-									</div>
-								</div>
-							</div>
+					<div class="panel-body" ng-show="isShowPanel('steps')">
+						<datatable serverside="reports" tabledef="stepsTable"
+							handle="stepsTable" params="eid={{eid}}" selectionmode="single"
+							columnsearch="true" order="[[1, &quot;desc&quot;]]">
+						<table-actions>
+						<div class="btn-group btn-group-menu">
+							<button type="button" class="btn btn-default"
+								ng-click="$parent.exportAsCSV()" uib-tooltip="Export as CSV">
+								<span class="glyphicon glyphicon-export"></span>
+							</button>
 						</div>
+						</table-actions> </datatable>
 					</div>
-				</uib-tab>
-				<uib-tab heading="Errors">
-					<div class="panel-body">
-					<div class="row">
-						<span>Group by: </span><span><select ng-model="selectedErrorDistirbutionToggle" ng-options="x for x in errorDistributionToggleStates"></select><span>
+				</div>
+				<div ng-attr-id="{{getPanelId('parameters')}}"
+					class="panel panel-default">
+					<div class="panel-heading">
+						<a ng-click="toggleShowPanel('parameters')">{{getPanelTitle('parameters')}}</a>
 					</div>
-					<div>&nbsp</div><div>&nbsp</div>
-					
-					<div ng-if="selectedErrorDistirbutionToggle == 'message'">
-						<st-table data="countByErrorMsg" uid="'errorDistribution'" persist-state="true">
-							<st-actions>
-							</st-actions>
-							<st-columns>
-								<st-column name="errorMessage">
-									<header>Error message</header>
-									<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-									<cell><span><a ng-click="searchStepByError(row.errorMessage)">{{row.errorMessage}}</a></span></cell>
-								</st-column>
-								<st-column>
-									<header>Count</header>
-									<cell>
-										<span>{{row.errorCount}}</span>
-									</cell>
-								</st-column>
-								<st-column>
-									<header>%</header>
-									<cell>
-										<span>{{(row.errorCount/errorDistribution.errorCount*100) | number:1}}%</span>
-									</cell>
-								</st-column>
-								<st-column>
-									<header>Overall %</header>
-									<cell>
-										<span>{{(row.errorCount/errorDistribution.count*100) | number:1}}%</span>
-									</cell>
-								</st-column>
-						</st-table>
+					<div class="panel-body" ng-show="isShowPanel('parameters')">
+						<datatable tabledef="configParamTable" handle="configParamTable"
+							columnsearch="true" order="[[0, &quot;asc&quot;]]" />
 					</div>
-					<div ng-if="selectedErrorDistirbutionToggle == 'code'">
-						<st-table data="countByErrorCode" uid="'errorDistribution'" persist-state="true">
-							<st-actions>
-							</st-actions>
-							<st-columns>
-								<st-column name="errorCode">
-									<header>Error code</header>
-									<cell><span>{{row.errorCode}}</span></cell>
-								</st-column>
-								<st-column>
-									<header>Count</header>
-									<cell>
-										<span>{{row.errorCodeCount}}</span>
-									</cell>
-								</st-column>
-								<st-column>
-									<header>%</header>
-									<cell>
-										<span>{{(row.errorCodeCount/errorDistribution.errorCount*100) | number:1}}%</span>
-									</cell>
-								</st-column>
-								<st-column>
-									<header>Overall %</header>
-									<cell>
-										<span>{{(row.errorCodeCount/errorDistribution.count*100) | number:1}}%</span>
-									</cell>
-								</st-column>
-						</st-table>
-					</div>	
-				  </div>
-				</uib-tab>
-			</uib-tabset>
+				</div>
+			</div>
+			</uib-tab> <uib-tab heading="Execution tree">
+			<div class="panel-body">
+				<div ng-attr-id="{{getPanelId('reportTree')}}"
+					class="panel panel-default">
+					<div class="panel-heading">
+						<a ng-click="toggleShowPanel('reportTree')">{{getPanelTitle('reportTree')}}</a>
+					</div>
+					<div class="panel-body" ng-show="isShowPanel('reportTree')">
+						<report-tree nodeid="eid" handle="reportTreeHandle" />
+					</div>
+				</div>
+			</div>
+			</uib-tab> <uib-tab heading="Performance"
+				ng-click="$broadcast('resize-widget');">
+			<div class="panel-body" style="display: grid;">
+				<div>
+					<button class="btn btn-default btn-xs" type="button"
+						ng-click="openRtm()" style="float: right;">
+						Interactive analytics <span class="glyphicon glyphicon-new-window"></span>
+					</button>
+				</div>
+				<div>
+					<viz-dashboard-manager displaymode="displaymode"
+						presets="staticPresets" dashboards="dashboardsendpoint"></viz-dashboard-manager>
+				</div>
+			</div>
+			</uib-tab> <uib-tab heading="Errors">
+			<div class="panel-body">
+				<div class="row">
+					<span>Group by: </span><span><select
+						ng-model="selectedErrorDistirbutionToggle"
+						ng-options="x for x in errorDistributionToggleStates"></select><span>
+				</div>
+				<div>&nbsp</div>
+				<div>&nbsp</div>
+
+				<div ng-if="selectedErrorDistirbutionToggle == 'message'">
+					<st-table data="countByErrorMsg" uid="'errorDistribution'"
+						persist-state="true"> <st-actions> </st-actions> <st-columns>
+					<st-column name="errorMessage"> <header>Error
+						message</header> <second-header> <inputdropdown
+						action="search" initial-value="initialValue"></inputdropdown></second-header> <cell>
+					<span><a ng-click="searchStepByError(row.errorMessage)">{{row.errorMessage}}</a></span></cell>
+					</st-column> <st-column> <header>Count</header> <cell> <span>{{row.errorCount}}</span>
+					</cell> </st-column> <st-column> <header>%</header> <cell> <span>{{(row.errorCount/errorDistribution.errorCount*100)
+						| number:1}}%</span> </cell> </st-column> <st-column> <header>Overall %</header>
+					<cell> <span>{{(row.errorCount/errorDistribution.count*100)
+						| number:1}}%</span> </cell> </st-column></st-table>
+				</div>
+				<div ng-if="selectedErrorDistirbutionToggle == 'code'">
+					<st-table data="countByErrorCode" uid="'errorDistribution'"
+						persist-state="true"> <st-actions> </st-actions> <st-columns>
+					<st-column name="errorCode"> <header>Error
+						code</header> <cell> <span>{{row.errorCode}}</span></cell> </st-column> <st-column>
+					<header>Count</header> <cell> <span>{{row.errorCodeCount}}</span>
+					</cell> </st-column> <st-column> <header>%</header> <cell> <span>{{(row.errorCodeCount/errorDistribution.errorCount*100)
+						| number:1}}%</span> </cell> </st-column> <st-column> <header>Overall %</header>
+					<cell> <span>{{(row.errorCodeCount/errorDistribution.count*100)
+						| number:1}}%</span> </cell> </st-column></st-table>
+				</div>
+			</div>
+			</uib-tab> </uib-tabset>
 		</div>
 		<div class="col-xs-3">
 			<div class="panel panel-default">
 				<div class="panel-body" ng-if="execution">
-					<execution-commands description="execution.description" artefact="execution.executionParameters.artefact"
-						included-testcases="getIncludedTestcases()" on-execute="onTestExecutionStarted()" execution="execution" />
+					<execution-commands description="execution.description"
+						artefact="execution.executionParameters.artefact"
+						included-testcases="getIncludedTestcases()"
+						on-execute="onTestExecutionStarted()" execution="execution" />
 				</div>
 			</div>
-	
-			<div ng-attr-id="{{getPanelId('executionDetails')}}" class="panel panel-default">
+
+			<div ng-attr-id="{{getPanelId('executionDetails')}}"
+				class="panel panel-default">
 				<div class="panel-heading">
 					<a ng-click="toggleShowPanel('executionDetails')">{{getPanelTitle('executionDetails')}}</a>
 					<div class="executionStatus status-{{execution.status}} pull-right">{{execution.status}}</div>
 				</div>
 				<div class="panel-body" ng-show="isShowPanel('executionDetails')">
 					<ul class="list-unstyled">
-						<li><strong>Plan</strong> <span><a ng-href="#/root/artefacteditor/{{execution.artefactID}}">{{execution.description}}</a></span>
+						<li><strong>Plan</strong> <span><a
+								ng-href="#/root/artefacteditor/{{execution.artefactID}}">{{execution.description}}</a></span>
 						</li>
-						<li ng-repeat="(key, value) in execution.executionParameters.customParameters"><strong>{{key}}</strong> <span>{{value}}</span>
-						</li>
+						<li
+							ng-repeat="(key, value) in execution.executionParameters.customParameters"><strong>{{key}}</strong>
+							<span>{{value}}</span></li>
 						<li><strong>Mode</strong> <span>{{execution.executionParameters.mode}}</span></li>
 						<li><strong>User</strong> <span>{{execution.executionParameters.userID}}</span></li>
 						<li><strong>Start</strong> <date time="execution.startTime" /></li>
 						<li><strong>End</strong> <date time="execution.endTime" /></li>
 						<li><strong>Execution ID</strong> <span>{{execution.id}}</span></li>
-						<li><strong>Origin</strong> <span>Repository={{execution.executionParameters.artefact.repositoryID}}</span> <span
-							ng-repeat="(key, value) in execution.executionParameters.artefact.repositoryParameters"> {{key}}={{value}}
-						</span></li>
+						<li><strong>Origin</strong> <span>Repository={{execution.executionParameters.artefact.repositoryID}}</span>
+							<span
+							ng-repeat="(key, value) in execution.executionParameters.artefact.repositoryParameters">
+								{{key}}={{value}} </span></li>
 					</ul>
 				</div>
 			</div>
-			
-			<div ng-repeat="entry in customPanels" ng-attr-id="{{entry.id}}" class="panel panel-default">
+
+			<div ng-repeat="entry in customPanels" ng-attr-id="{{entry.id}}"
+				class="panel panel-default">
 				<div class="panel-heading">
 					<a ng-click="toggleShowPanel(entry.id)">{{entry.label}}</a>
 				</div>
@@ -221,23 +207,27 @@
 					<div ng-include="entry.template"></div>
 				</div>
 			</div>
-	
-			<div ng-attr-id="{{getPanelId('currentOperations')}}" ng-if="execution.status != 'ENDED'" class="panel panel-default">
+
+			<div ng-attr-id="{{getPanelId('currentOperations')}}"
+				ng-if="execution.status != 'ENDED'" class="panel panel-default">
 				<div class="panel-heading">
 					<a ng-click="toggleShowPanel('currentOperations')">{{getPanelTitle('currentOperations')}}</a>
 				</div>
 				<div class="panel-body" ng-show="isShowPanel('currentOperations')">
-					<datatable tabledef="currentOperationsTable" handle="currentOperationsTable" order="[[0, &quot;asc&quot;]]" />
+					<datatable tabledef="currentOperationsTable"
+						handle="currentOperationsTable" order="[[0, &quot;asc&quot;]]" />
 				</div>
 			</div>
-	
-			<div ng-attr-id="{{getPanelId('throughput')}}" ng-if="progress.count>1">
+
+			<div ng-attr-id="{{getPanelId('throughput')}}"
+				ng-if="progress.count>1">
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<a ng-click="toggleShowPanel('throughput')">{{getPanelTitle('throughput')}}</a>
 					</div>
 					<div class="panel-body" ng-show="isShowPanel('throughput')">
-						<canvas id="throughput-chart" class="chart chart-line" handle="throughputchart" legend="true" click="onClick" />
+						<canvas id="throughput-chart" class="chart chart-line"
+							handle="throughputchart" legend="true" click="onClick" />
 					</div>
 				</div>
 			</div>

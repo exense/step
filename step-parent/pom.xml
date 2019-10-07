@@ -43,7 +43,7 @@
 		</developer>
 	</developers>
 	<scm>
-		<connection>scm:git:git://github.com/exense/step.git</connection>
+		<connection>scm:git:https://github.com/exense/step.git</connection>
 		<developerConnection>scm:git:[push=]https://github.com/exense/step.git[fetch=]https://github.com/exense/step.git</developerConnection>
 		<url>https://github.com/exense/step.git</url>
 	  <tag>HEAD</tag>
@@ -61,7 +61,7 @@
 		<groovy.version>2.2.1</groovy.version>
 		<mongodb.version>3.8.2</mongodb.version>
 		<jackson.version>2.5.4</jackson.version>
-		<rtm.version>2.2.4</rtm.version>
+		<rtm.version>2.2.5</rtm.version>
 		<jersey.version>2.23.1</jersey.version>
 	</properties>
 
@@ -122,7 +122,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5.3</version>
 				<configuration>
 					<tagNameFormat>@{project.version}</tagNameFormat>
 				</configuration>
