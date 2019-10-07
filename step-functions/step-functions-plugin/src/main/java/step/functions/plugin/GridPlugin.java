@@ -49,6 +49,7 @@ import step.functions.manager.FunctionManager;
 import step.functions.manager.FunctionManagerImpl;
 import step.functions.services.FunctionServices;
 import step.functions.services.GridServices;
+import step.functions.type.FunctionTypeConfiguration;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
@@ -107,7 +108,12 @@ public class GridPlugin extends AbstractControllerPlugin {
 		client = new LocalGridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
 
 		editorRegistry = new FunctionEditorRegistry();
-		functionTypeRegistry = new FunctionTypeRegistryImpl(context.get(FileResolver.class), client);
+		
+		FunctionTypeConfiguration functionTypeConfiguration = new FunctionTypeConfiguration();
+		functionTypeConfiguration.setFileResolverCacheConcurrencyLevel(configuration.getPropertyAsInteger("functions.fileresolver.cache.concurrencylevel", 4));
+		functionTypeConfiguration.setFileResolverCacheMaximumsize(configuration.getPropertyAsInteger("functions.fileresolver.cache.maximumsize", 1000));
+		functionTypeConfiguration.setFileResolverCacheExpireAfter(configuration.getPropertyAsInteger("functions.fileresolver.cache.expireafter.ms", 500));
+		functionTypeRegistry = new FunctionTypeRegistryImpl(context.get(FileResolver.class), client, functionTypeConfiguration);
 
 		functionAccessor = new FunctionAccessorImpl(context.getMongoClientSession());
 		functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);

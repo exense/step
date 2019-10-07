@@ -3,7 +3,13 @@ package step.functions.type;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicValue;
@@ -19,18 +25,35 @@ import step.grid.tokenpool.Interest;
 public abstract class AbstractFunctionType<T extends Function> {
 	
 	protected FileResolver fileResolver;
-
+	protected LoadingCache<String, File> fileResolverCache;
+	
 	protected GridFileService gridFileServices;
+	
+	protected FunctionTypeConfiguration functionTypeConfiguration;
 
-	public void setFileResolver(FileResolver fileResolver) {
+	protected void setFunctionTypeConfiguration(FunctionTypeConfiguration functionTypeConfiguration) {
+		this.functionTypeConfiguration = functionTypeConfiguration;
+	}
+
+	protected void setFileResolver(FileResolver fileResolver) {
 		this.fileResolver = fileResolver;
+		
+		fileResolverCache = CacheBuilder.newBuilder().concurrencyLevel(functionTypeConfiguration.getFileResolverCacheConcurrencyLevel())
+				.maximumSize(functionTypeConfiguration.getFileResolverCacheMaximumsize())
+				.expireAfterWrite(functionTypeConfiguration.getFileResolverCacheExpireAfter(), TimeUnit.MILLISECONDS)
+				.build(new CacheLoader<String, File>() {
+					public File load(String filepath) {
+						return fileResolver.resolve(filepath);
+					}
+				});
+		
 	}
 	
-	public void setGridFileServices(GridFileService gridFileServices) {
+	protected void setGridFileServices(GridFileService gridFileServices) {
 		this.gridFileServices = gridFileServices;
 	}
 	
-	public void init() {}
+	protected void init() {}
 
 	public Map<String, Interest> getTokenSelectionCriteria(T function) {
 		Map<String, Interest> criteria = new HashMap<>();
@@ -70,7 +93,14 @@ public abstract class AbstractFunctionType<T extends Function> {
 		if(dynamicValue!=null) {
 			String filepath = dynamicValue.get();
 			if(filepath!=null && filepath.trim().length()>0) {
-				File file = fileResolver.resolve(filepath);
+				File file;
+				try {
+					// Using the file resolver cache here to avoid performance issues
+					// This method might be called at every function execution
+					file = fileResolverCache.get(filepath);
+				} catch (ExecutionException e) {
+					throw new RuntimeException("Error while resolving path "+filepath, e);
+				}
 				registerFile(file, properyName, props);			
 			}			
 		}
