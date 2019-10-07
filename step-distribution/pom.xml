@@ -55,6 +55,7 @@
 							<artifactId>rtm</artifactId>
 							<version>${rtm.version}</version>
 							<type>war</type>
+							<classifier>war</classifier>
 							<overWrite>false</overWrite>
 							<outputDirectory>${project.build.directory}/../template-controller/ext/</outputDirectory>
 							<destFileName>rtm.war</destFileName>
