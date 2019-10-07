@@ -30,7 +30,7 @@
     "ng-file-upload": "^12.2.13",
     "tachyons" : "#4.11.1",
     "angular-resizable": "^1.2.0",
-    "exense-visualization": "alpha-011"
+    "exense-visualization": "alpha-012"
   },
   "resolutions": {
     "angular": "^1.6.1"
