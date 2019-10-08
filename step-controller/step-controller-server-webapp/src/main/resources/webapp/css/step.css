@@ -81,13 +81,19 @@ form.form-signin {
   }
 }
 
-.btn-success, .btn-success:active, .btn-success:visited {
+.btn-success, .btn-success:focus{
     background-color: #17d821 !important;
-    border-color: #2fcc37 !important;
+    border-color: #17d821 !important;
 }
 
-.btn-success:hover  {
-    background-color: #18e022 !important;
+.btn-success:hover, .btn-success.active:hover{
+	background-color:#13b91c !important;
+	border-color: #13b91c !important;
+}
+
+.btn-success.active, .btn-success.active:focus{
+	background-color: #0c7311 !important;
+	border-color: #0c7311 !important;
 }
 
 a { cursor: pointer; }
