@@ -112,6 +112,14 @@
 			</div>
 			</uib-tab> <uib-tab heading="Performance"
 				ng-click="$broadcast('resize-widget');">
+			<div class="panel-body">
+							<div style="text-align: right;">
+					<button class="btn btn-default btn-xs" type="button"
+						ng-click="openRtm()">
+						Interactive analytics <span class="glyphicon glyphicon-new-window"></span>
+					</button>
+				</div>
+			<!-- 
 			<div class="panel-body" style="display: grid;">
 				<div>
 					<button class="btn btn-default btn-xs" type="button"
@@ -119,6 +127,7 @@
 						Interactive analytics <span class="glyphicon glyphicon-new-window"></span>
 					</button>
 				</div>
+				 -->
 				<div>
 					<viz-dashboard-manager displaymode="displaymode"
 						presets="staticPresets" dashboards="dashboardsendpoint"></viz-dashboard-manager>
