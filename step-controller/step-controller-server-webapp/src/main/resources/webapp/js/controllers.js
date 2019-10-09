@@ -200,7 +200,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			closeTab: '&closeTab',
 			active: '&active'
 		},
-		controller: function($scope,$location,$anchorScroll,$compile) {
+		controller: function($scope,$location,$anchorScroll,$compile, $element) {
 			var eId = $scope.eid;
 			console.log('Execution Controller. ID:' + eId);
 
@@ -412,11 +412,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.openRtm = function() {
 				$window.open($scope.rtmlink, '_blank');
 			}
+		
 		},
-		link: function($scope, $element) {
+		link: function($scope, $element, $rootscope) {
 			var eId = $scope.eid;
-
-
 			$http.get('rest/rtm/rtmlink/' + eId).then(function(response) {
 				$scope.rtmlink = response.data.link;
 			})
@@ -568,28 +567,34 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					}
 				}
 			});
-
+			
+			/* Viz Perf Dashboard */
 			$scope.displaymode = 'managed';
-			$scope.dashboardsendpoint=[];
-				
-			$scope.initDashboard = function(){
-				if($scope.dashboardsendpoint.length < 1){
-					$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid)];
-				}
-			};
+			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
+			//keeping model in execution scope to prevent pointless reload
+			$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid)];
+
+			console.log('--> $scope.dashboardsendpoint')
+			console.log($scope.dashboardsendpoint)
+			
+			$scope.$on('dashletinput-initialized', function () {
+				console.log('-> dashletinput-initialized')
+			});
 			
 			$scope.$on('manager-fully-loaded', function () {
+				console.log('-> manager-fully-loaded')
+				
 				$scope.$watch('autorefresh',function(newStatus) {
 					$scope.$broadcast('globalsettings-refreshToggle', { 'new': newStatus });
 				});
-				
+
 				$scope.$watch('execution.status',function(newSatus, oldStatus) {
 					if(newSatus=='ENDED') {
 						$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
 					}
 				});
 			});
-			
+
 			$scope.unwatchlock = $scope.$watch('lockdisplay',function(newvalue) {
 				if($scope.displaymode === 'readonly'){
 					$scope.displaymode='managed';
@@ -601,12 +606,18 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			});
 
 			$scope.$watch('tabs.selectedTab', function(newvalue, oldvalue){
+				//initializing dashboard only when hitting the performance tab
 				if(newvalue === 2){
-					$scope.initDashboard();
 					if($scope.execution.status!=='ENDED') {
-						$scope.$broadcast('globalsettings-refreshToggle', { 'new': $scope.autorefresh });
+						$scope.$broadcast('globalsettings-refreshToggle', { 'new': $scope.autorefresh });						
 					}
+					
+					$(document).ready(function () {
+						$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
+						$scope.$broadcast('resize-widget');
+					});
 				}else{
+					//turning off refresh when clicking other views
 					$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
 				}
 			});

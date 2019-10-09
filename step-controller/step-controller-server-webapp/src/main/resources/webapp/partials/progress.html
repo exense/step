@@ -110,27 +110,18 @@
 					</div>
 				</div>
 			</div>
-			</uib-tab> <uib-tab heading="Performance"
-				ng-click="$broadcast('resize-widget');">
+			</uib-tab> <uib-tab heading="Performance">
 			<div class="panel-body">
-							<div style="text-align: right;">
+				<div style="text-align: right;">
 					<button class="btn btn-default btn-xs" type="button"
 						ng-click="openRtm()">
 						Interactive analytics <span class="glyphicon glyphicon-new-window"></span>
 					</button>
 				</div>
-			<!-- 
-			<div class="panel-body" style="display: grid;">
 				<div>
-					<button class="btn btn-default btn-xs" type="button"
-						ng-click="openRtm()" style="float: right;">
-						Interactive analytics <span class="glyphicon glyphicon-new-window"></span>
-					</button>
-				</div>
-				 -->
-				<div>
-					<viz-dashboard-manager displaymode="displaymode"
-						presets="staticPresets" dashboards="dashboardsendpoint"></viz-dashboard-manager>
+					<viz-dashboard-manager ng-if="tabs.selectedTab === 2" displaymode="displaymode"
+						presets="staticPresets" dashboards="dashboardsendpoint"
+						headermargin="200"></viz-dashboard-manager>
 				</div>
 			</div>
 			</uib-tab> <uib-tab heading="Errors">
