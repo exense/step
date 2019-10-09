@@ -600,3 +600,7 @@ table.executionTableResult td {
 	left : auto;
 	right: 0;
 }
+
+.text-wrapping {
+	overflow-wrap: break-word;
+}
