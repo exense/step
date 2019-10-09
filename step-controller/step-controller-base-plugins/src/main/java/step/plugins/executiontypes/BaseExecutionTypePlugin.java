@@ -5,8 +5,9 @@ import step.core.execution.type.ExecutionTypeManager;
 import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.plugins.views.ViewPlugin;
 
-@Plugin(dependencies= {ExecutionTypePlugin.class})
+@Plugin(dependencies= {ExecutionTypePlugin.class, ViewPlugin.class})
 public class BaseExecutionTypePlugin extends AbstractControllerPlugin {
 
 	@Override
