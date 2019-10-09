@@ -9,9 +9,21 @@ function PerformanceDashboard(executionId) {
 	//TODO:addMeasurementExplorer(widgetsArray) //with paging
 	//TODO:addAggregatesSummaryOptzTpl(widgetsArray);
 	var dashboardObject = new Dashboard(
-			widgetsArray,
 			'Transaction Performance',
-			new MgrState([new Placeholder("__eId__", executionId, false), new Placeholder("__name__", ".*", false)],false, false, "Global Settings"));
+			new DashboardState(
+					new GlobalSettings(
+							[new Placeholder("__eId__", executionId, false), new Placeholder("__name__", ".*", false)],
+							false,
+							false,
+							'Global Settings',
+							3000
+					),
+					widgetsArray,
+					'Viz Dashboard',
+					'aggregated',
+					new DefaultDashboardGui()
+			)
+	);
 
 	dashboardObject.oid = "perfDashboardId";
 	return dashboardObject;
@@ -51,7 +63,7 @@ function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform){
 
 var addAggregatesSummaryTpl = function(widgetsArray){
 	var summaryTransform = "function (response) {\r\n    //var metrics = response.data.payload.metricList;\r\n    var metrics = [\"cnt\",\"avg\", \"min\", \"max\", \"tpm\", \"tps\", \"90th pcl\"];\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    if (payload && payloadKeys.length > 0) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[0]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            for (i = 0; i < metrics.length; i++) {\r\n                var metric = metrics[i];\r\n                if (payload[payloadKeys[0]][serieskeys[j]][metric]) {\r\n                    retData.push({\r\n                        x: metric,\r\n                        y: Math.round(payload[payloadKeys[0]][serieskeys[j]][metric]),\r\n                        z: serieskeys[j]\r\n                    });\r\n                }\r\n            }\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState("Transaction summary", false, 0, {}, new ChartOptions('table'), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform), new DefaultGuiClosed(), new DefaultInfo()));
+	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState("Transaction summary", false, 0, {}, new ChartOptions('seriesTable'), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform), new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(standalone);
 };
 
@@ -101,7 +113,7 @@ var addLastMeasurementsTpl = function(widgetsArray){
 	var config = getMasterSlaveConfig("transformed", "Last 100 Measurements - Scattered values (ms)", "Last 100 Measurements - Value table (ms)");
 
 	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new ChartOptions('scatterChart'), config.masterconfig, new RTMLatestMeasurementTemplatedQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
-	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new ChartOptions('table'), config.slaveconfig, new RTMLatestMeasurementTemplatedQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
+	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new ChartOptions('seriesTable'), config.slaveconfig, new RTMLatestMeasurementTemplatedQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
 
 	widgetsArray.push(master);
 	//widgetsArray.push(slave);
@@ -123,7 +135,7 @@ var addLastMeasurements = function(widgetsArray){
 
 	var config = getMasterSlaveConfig("raw", "Last 100 Measurements - Scattered values (ms)", "Last 100 Measurements - Value table (ms)");
 	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new ChartOptions('scatterChart'), config.masterconfig, new RTMLatestMeasurementBaseQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
-	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new ChartOptions('table'), config.slaveconfig, new RTMLatestMeasurementBaseQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
+	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new ChartOptions('seriesTable'), config.slaveconfig, new RTMLatestMeasurementBaseQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
 
 	widgetsArray.push(master);
 	widgetsArray.push(slave);
