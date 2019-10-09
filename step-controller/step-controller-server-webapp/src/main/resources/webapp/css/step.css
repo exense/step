@@ -623,3 +623,7 @@ table.executionTableResult td {
 .parameter-scope-application {
 	background:#f5e30a;
 }
+
+.text-wrapping {
+	overflow-wrap: break-word;
+}
