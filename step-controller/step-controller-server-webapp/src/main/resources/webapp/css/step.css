@@ -603,4 +603,5 @@ table.executionTableResult td {
 
 .text-wrapping {
 	overflow-wrap: break-word;
+	-ms-word-wrap: break-word;
 }
