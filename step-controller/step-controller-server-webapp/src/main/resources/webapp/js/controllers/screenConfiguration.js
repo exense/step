@@ -177,7 +177,7 @@ angular.module('screenConfigurationControllers',['tables','step'])
     controller: function($scope) {
       ScreenTemplates.getScreenInputsByScreenId($scope.stScreen).then(function(attributes) {
         $scope.attributes=_.reject(attributes, function(attribute) {
-          return $scope.stExcludeFields!=null && $scope.stExcludeFields.includes(attribute.id);
+          return $scope.stExcludeFields!=null && $scope.stExcludeFields.indexOf(attribute.idattribute.id) >= 0;
         });
       })
       
