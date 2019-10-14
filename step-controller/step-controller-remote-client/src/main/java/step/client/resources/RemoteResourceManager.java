@@ -194,4 +194,9 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 			throws IOException {
 		throw new RuntimeException("Not implemented");
 	}
+
+	@Override
+	public Resource lookupResourceByName(String resourcename) {
+		throw new RuntimeException("Not implemented");
+	}
 }
