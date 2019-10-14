@@ -74,7 +74,7 @@ public class FunctionServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/")
+	//@Path("/")
 	@Secured(right="kw-write")
 	public Function save(Function function) throws SetupFunctionException, FunctionTypeException {
 		return functionManager.saveFunction(function);
