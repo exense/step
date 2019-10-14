@@ -174,4 +174,14 @@ public class RemoteExecutionAccessor extends AbstractRemoteClient implements Exe
 	public Spliterator<Execution> findManyByAttributes(Map<String, String> attributes) {
 		throw notImplemented();
 	}
+
+	@Override
+	public Execution findByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		throw notImplemented();
+	}
+
+	@Override
+	public Spliterator<Execution> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		throw notImplemented();
+	}
 }
