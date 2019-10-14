@@ -28,6 +28,10 @@ public class ResourceManagerImplTest {
 		Resource resourceActual = resourceAccessor.get(resource.getId());
 		Assert.assertEquals(resource, resourceActual);
 		
+		// Assert that the resource can be looked up by name
+		Resource resourceFoundByName = resourceManager.lookupResourceByName("TestResource.txt");
+		Assert.assertEquals(resource, resourceFoundByName);
+		
 		// Assert that the revision has been persisted
 		ResourceRevision fisrtResourceRevisionFromDB = resourceRevisionAccessor.get(resource.getCurrentRevisionId());
 		Assert.assertNotNull(fisrtResourceRevisionFromDB);
