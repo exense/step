@@ -27,7 +27,7 @@ public class RtmPluginServices {
 	@GET
 	@Path("/rtmlink/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public RTMLink getRtmLink(ContainerRequestContext requestContext, @PathParam("id") String executionID) {
+	public RTMLink getRtmLink(@PathParam("id") String executionID) {
 		RTMLink link = new RTMLink();
 		try {
 			link.link = getAggregateViewByEid(executionID);

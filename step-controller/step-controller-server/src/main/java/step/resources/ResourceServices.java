@@ -67,7 +67,7 @@ public class ResourceServices extends AbstractServices {
 	
 	@POST
 	@Secured
-	@Path("/")
+	//@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Resource saveResource(Resource resource) {

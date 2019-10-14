@@ -264,11 +264,12 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/execution/{id}/stop")
 	@Secured(right="plan-execute")
-	public void abort(@PathParam("id") String executionID) {
+	public Void abort(@PathParam("id") String executionID) {
 		ExecutionRunnable task = getExecutionRunnable(executionID);
 		if(task!=null) {
 			task.getExecutionLifecycleManager().abort();
 		}
+		return null;
 	}
 	
 	@GET
