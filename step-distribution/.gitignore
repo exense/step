@@ -2,3 +2,6 @@
 /.DS_Store
 /step-agent-*-SNAPSHOT.zip
 /step-controller-*-SNAPSHOT.zip
+rtm.war
+groovy-all-*.jar
+/groovy
