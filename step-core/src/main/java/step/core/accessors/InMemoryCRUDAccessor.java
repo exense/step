@@ -11,7 +11,7 @@ import org.bson.types.ObjectId;
 public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implements CRUDAccessor<T> {
 
 	protected Map<ObjectId, T> map = new ConcurrentHashMap<>();
-	
+
 	@Override
 	public T get(ObjectId id) {
 		return map.get(id);
@@ -23,18 +23,26 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 			if(v instanceof AbstractOrganizableObject) {
 				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
 			} else {
-				return false;
+				if(v instanceof AbstractIdentifiableObject) {
+					return ((AbstractIdentifiableObject)v).customFields.equals(attributes);
+				}else {
+					return false;
+				}
 			}
 		}).findFirst().orElse(null);
 	}
-	
+
 	@Override
 	public Spliterator<T> findManyByAttributes(Map<String, String> attributes) {
 		return map.values().stream().filter(v->{
 			if(v instanceof AbstractOrganizableObject) {
 				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
 			} else {
-				return false;
+				if(v instanceof AbstractIdentifiableObject) {
+					return ((AbstractIdentifiableObject)v).customFields.equals(attributes);
+				}else {
+					return false;
+				}
 			}
 		}).spliterator();
 	}
@@ -61,6 +69,36 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 	@Override
 	public void save(List<? extends T> entities) {
 		entities.forEach(e->save(e));
+	}
+
+	@Override
+	public T findByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		return map.values().stream().filter(v->{
+			if(attributesMapKey.equals("attributes")) {
+				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
+			} else {
+				if(attributesMapKey.equals("customFields")) {
+					return ((AbstractIdentifiableObject)v).customFields.equals(attributes);
+				}else {
+					return false;
+				}
+			}
+		}).findFirst().orElse(null);
+	}
+
+	@Override
+	public Spliterator<T> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		return map.values().stream().filter(v->{
+			if(v instanceof AbstractOrganizableObject) {
+				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
+			} else {
+				if(attributesMapKey.equals("customFields")) {
+					return ((AbstractIdentifiableObject)v).customFields.equals(attributes);
+				}else {
+					return false;
+				}
+			}
+		}).spliterator();
 	}
 
 }

@@ -66,11 +66,27 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 		String query = queryByAttributes(attributes);
 		return collection.find(query).as(entityClass).spliterator();
 	}
-
+	
+	@Override
+	public T findByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		String query = queryByAttributes(attributes, attributesMapKey);
+		return collection.findOne(query).as(entityClass);
+	}
+	
+	@Override
+	public Spliterator<T> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		String query = queryByAttributes(attributes, attributesMapKey);
+		return collection.find(query).as(entityClass).spliterator();
+	}
+	
 	protected String queryByAttributes(Map<String, String> attributes) {
+		return queryByAttributes(attributes, "attributes");
+	}
+
+	protected String queryByAttributes(Map<String, String> attributes, String attributesMapKey) {
 		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
 		for(String key:attributes.keySet()) {
-			builder.add("attributes."+key, attributes.get(key));
+			builder.add(attributesMapKey+"."+key, attributes.get(key));
 		}
 
 		String query = builder.build().toString();
