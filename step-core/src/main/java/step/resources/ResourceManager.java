@@ -17,11 +17,13 @@ public interface ResourceManager {
 	/**
 	 * Create a new resource and save the content provided as stream under a new {@link ResourceRevision}
 	 * 
+	 * @param resourceType the type of the resource
 	 * @param resourceStream the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
+	 * @param checkForDuplicates is duplicate should be checked
 	 * @return the created {@link Resource}
-	 * @throws IOException
-	 * @throws SimilarResourceExistingException 
+	 * @throws IOException an IOException occurs during the call
+	 * @throws SimilarResourceExistingException a similar resource exist
 	 */
 	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates) throws IOException, SimilarResourceExistingException;
 
@@ -34,7 +36,7 @@ public interface ResourceManager {
 	 * @param resourceStream the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename) 
 	 * @return the updated {@link Resource}
-	 * @throws IOException
+	 * @throws IOException an IOException occurs during the call
 	 */
 	Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName)
 			throws IOException;
@@ -50,7 +52,7 @@ public interface ResourceManager {
 	 * Get the content of an existing {@link Resource}
 	 * @param resourceId the id of the {@link Resource} to be deleted
 	 * @return the content of the resource as stream
-	 * @throws FileNotFoundException
+	 * @throws IOException an IOException occurs during the call
 	 */
 	ResourceRevisionContent getResourceContent(String resourceId) throws IOException;
 	

@@ -12,6 +12,7 @@ public interface CRUDAccessor<T extends AbstractIdentifiableObject> extends Acce
 	 * Save an entity. If an entity with the same id exists, it will be updated otherwise inserted. 
 	 * 
 	 * @param entity the entity instance to be saved
+	 * @return the saved entity
 	 */
 	T save(T entity);
 
