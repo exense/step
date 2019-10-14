@@ -256,6 +256,12 @@ public class ResourceManagerImpl implements ResourceManager {
 	
 	private void updateResourceFileNameIfNecessary(String resourceFileName, Resource resource) {
 		if(!resource.getResourceName().equals(resourceFileName)) {
+			Map<String, String> currentAttributes = resource.getAttributes();
+			if(currentAttributes == null) {
+				currentAttributes = new HashMap<String, String>();
+			}
+			currentAttributes.put("name", resourceFileName);
+			resource.setAttributes(currentAttributes);
 			resource.setResourceName(resourceFileName);
 			resourceAccessor.save(resource);
 		}
@@ -269,6 +275,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		
 		Resource resource = new Resource();
 		Map<String, String> attributes = new HashMap<>();
+		attributes.put("name", name);
 		resource.setAttributes(attributes);
 		resource.setResourceName(name);
 		resource.setResourceType(resourceTypeId);
@@ -289,5 +296,12 @@ public class ResourceManagerImpl implements ResourceManager {
 		Files.copy(resourceStream, resourceFile.toPath());
 		
 		return resourceFile;
+	}
+
+	@Override
+	public Resource lookupResourceByName(String resourceName) {
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put("name", resourceName);
+		return resourceAccessor.findByAttributes(attributes);
 	}
 }

@@ -62,4 +62,5 @@ public interface ResourceManager {
 
 	ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException;
 
+	Resource lookupResourceByName(String resourcename);
 }
