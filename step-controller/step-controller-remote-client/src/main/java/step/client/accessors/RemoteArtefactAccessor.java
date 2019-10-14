@@ -100,4 +100,14 @@ public class RemoteArtefactAccessor extends AbstractRemoteClient implements Arte
 	public Spliterator<AbstractArtefact> findManyByAttributes(Map<String, String> attributes) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public AbstractArtefact findByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Spliterator<AbstractArtefact> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		throw new UnsupportedOperationException();
+	}
 }
