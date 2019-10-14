@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 
+import org.apache.poi.ss.formula.eval.NotImplementedException;
 import org.bson.types.ObjectId;
 
 import ch.exense.commons.app.Configuration;
@@ -189,6 +190,16 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 					result.add(defaultLocalFunction(inMemoryFunctionAccessor, attributes));
 				}
 				return result.spliterator();
+			}
+
+			@Override
+			public Function findByAttributes(Map<String, String> attributes, String attributesMapKey) {
+				throw new UnsupportedOperationException("This method is currently not implemented");
+			}
+
+			@Override
+			public Spliterator<Function> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
+				throw new UnsupportedOperationException("This method is currently not implemented");
 			}
 
 		};	

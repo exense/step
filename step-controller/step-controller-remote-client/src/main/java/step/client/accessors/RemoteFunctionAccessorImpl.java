@@ -70,4 +70,14 @@ public class RemoteFunctionAccessorImpl extends AbstractRemoteClient implements 
 		return executeRequest(()->b.post(entity,new GenericType<List<Function>>() {})).spliterator();
 	}
 
+	@Override
+	public Function findByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		throw notImplemented();
+	}
+
+	@Override
+	public Spliterator<Function> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		throw notImplemented();
+	}
+
 }

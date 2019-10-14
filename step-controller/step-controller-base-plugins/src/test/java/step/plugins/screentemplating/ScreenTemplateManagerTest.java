@@ -89,7 +89,17 @@ public class ScreenTemplateManagerTest {
 			public Spliterator<ScreenInput> findManyByAttributes(Map<String, String> attributes) {
 				return null;
 			}
-			
+
+			@Override
+			public ScreenInput findByAttributes(Map<String, String> attributes, String attributesMapKey) {
+				return null;
+			}
+
+			@Override
+			public Spliterator<ScreenInput> findManyByAttributes(Map<String, String> attributes,
+					String attributesMapKey) {
+				return null;
+			}
 		};
 
 		ScreenTemplateManager s = new ScreenTemplateManager(a);
