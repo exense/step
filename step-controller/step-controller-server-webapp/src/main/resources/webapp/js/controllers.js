@@ -572,7 +572,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.displaymode = 'managed';
 			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
 			//keeping model in execution scope to prevent pointless reload
-			$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid)];
+			$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid), new DefaultExplorationDashboard()];
 
 			console.log('--> $scope.dashboardsendpoint')
 			console.log($scope.dashboardsendpoint)
