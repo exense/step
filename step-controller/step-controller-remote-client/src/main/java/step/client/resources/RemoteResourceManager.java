@@ -114,7 +114,7 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public void deleteResource(String resourceId) {
-		Builder b = requestBuilder("/rest/resources/"+resourceId+"/content");
+		Builder b = requestBuilder("/rest/resources/"+resourceId);
 		executeRequest(()-> b.delete());
 	}
 
