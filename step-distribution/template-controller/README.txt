@@ -1,1 +1,1 @@
-See https://github.com/exense/step/wiki
+See https://step.exense.ch/knowledgebase/
