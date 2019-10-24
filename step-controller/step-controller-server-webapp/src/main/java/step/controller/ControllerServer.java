@@ -44,6 +44,8 @@ import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.ArgumentParser;
 import ch.exense.commons.app.Configuration;
+import ch.exense.viz.persistence.accessors.GenericVizAccessor;
+import ch.exense.viz.rest.VizServlet;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.deployment.AccessServices;
@@ -53,8 +55,6 @@ import step.core.deployment.AuthenticationFilter;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.ErrorFilter;
 import step.core.deployment.JacksonMapperProvider;
-import step.core.export.ExportServices;
-import step.core.export.ImportServices;
 import step.plugins.interactive.InteractiveServices;
 
 
@@ -207,6 +207,16 @@ public class ControllerServer {
 				bind(controller).to(Controller.class);
 			}
 		});
+		
+		resourceConfig.registerClasses(VizServlet.class);
+		GenericVizAccessor accessor = new GenericVizAccessor(new ch.exense.viz.persistence.MongoClientSession(configuration));
+		resourceConfig.register(new AbstractBinder() {	
+			@Override
+			protected void configure() {
+				bind(accessor).to(GenericVizAccessor.class);
+			}
+		});
+		
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);
 
 		ServletHolder sh = new ServletHolder(servletContainer);
