@@ -35,8 +35,12 @@ angular.module('dashboardsControllers',['tables','step', 'viz-dashboard-manager'
 		return sbName.split('.')[1];
 	};
 
-	$scope.$on('sb.dashboard-new', function(event) {
-		$scope.$broadcast($scope.deriveEventName(event.name))
+	$scope.$on('sb.dashboard-new', function(event, arg) {
+		if(arg && arg === 'explore'){
+			$scope.$broadcast($scope.deriveEventName(event.name), {displaytype : 'exploded'})
+		}else{
+			$scope.$broadcast($scope.deriveEventName(event.name))
+		}
 	});
 	$scope.$on('sb.dashboard-clear', function(event) {
 		$scope.$broadcast($scope.deriveEventName(event.name))
