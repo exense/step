@@ -2,38 +2,46 @@
 <ul
 	style="list-style-type: none !important; display: inline-flex; padding: 0;">
 	<li><button class="btn btn-primary btn-nav"
-			ng-click="$emit('sb.dashboard-new')">
+			ng-click="$emit('sb.dashboard-new')"
+			uib-tooltip="New dashboard tab" tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-file glyphicon-app"></span>
 		</button></li>
 	<li><button class="btn btn-primary btn-nav"
-			ng-click="$emit('sb.dashboard-clear')">
+			ng-click="$emit('sb.dashboard-clear')"
+			uib-tooltip="Clear all tabs" tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-trash glyphicon-app"></span>
 		</button></li>
 	<li>&nbsp;</li>
 	<li><button class="btn btn-primary btn-nav"
-			ng-click="$emit('sb.dashboard-current-addWidget')">
+			ng-click="$emit('sb.dashboard-current-addWidget')"
+			uib-tooltip="Add dashlet to current tab" tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-plus glyphicon-app"></span>
 		</button></li>
 	<li><button class="btn btn-primary btn-nav"
-			ng-click="$emit('sb.dashboard-current-clearWidgets')">
+			ng-click="$emit('sb.dashboard-current-clearWidgets')"
+			uib-tooltip="Clear all widgets from current tab" tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-minus glyphicon-app"></span>
 		</button></li>
 	<li>&nbsp;</li>
 	<li><button class="btn btn-primary btn-nav"
-			ng-click="$emit('sb.saveDashboard')">
+			ng-click="$emit('sb.saveDashboard')"
+			uib-tooltip="Save session" tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-floppy-save glyphicon-app"></span>
 		</button></li>
 	<li><button class="btn btn-primary btn-nav"
-			ng-click="$emit('sb.loadDashboard')">
+			ng-click="$emit('sb.loadDashboard')"
+			uib-tooltip="Load session" tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-floppy-open glyphicon-app"></span>
 		</button></li>
 	<li>&nbsp;</li>
 	<li><button class="btn btn-primary btn-nav"
-			ng-click="$emit('sb.dashboard-configure')">
+			ng-click="$emit('sb.dashboard-configure')"
+			uib-tooltip="Not supported yet" tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-cog glyphicon-app"></span>
 		</button></li>
 	<li><button class="btn btn-primary btn-nav"
-			ng-click="$emit('sb.docs')">
+			ng-click="$emit('sb.docs')"
+			uib-tooltip="Not supported yet" tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-question-sign glyphicon-app"></span>
 		</button></li>
 </ul>
