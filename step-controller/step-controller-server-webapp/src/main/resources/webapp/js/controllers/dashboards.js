@@ -70,7 +70,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-dashboard-manager'
 	$scope.saveSession = function(sessionName){
 		console.log($scope.dashboardsendpoint);
 		var serialized = angular.toJson({ name : sessionName, state : $scope.dashboardsendpoint }); 
-		$http.post('rest/crud/session', serialized)
+		$http.post('rest/crud/session?name='+sessionName, serialized)
 		.then(function (response) {
 			console.log('response')
 			console.log(response)
