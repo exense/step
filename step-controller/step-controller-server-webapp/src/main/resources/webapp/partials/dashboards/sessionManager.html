@@ -1,5 +1,13 @@
 <div id="SessionManagerCtrl" ng-controller="SessionManagerCtrl">
-	<toolbar dashboards="dashboardsendpoint"></toolbar>
+	<div class="row">
+		<div class="col-md-3">
+			<label>Session name</label>
+			<input class="form-control" ng-model="sessionName" />
+		</div>
+		<div class="col-md-3">
+			<toolbar dashboards="dashboardsendpoint"></toolbar>
+		</div>
+	</div>
 	<viz-dashboard-manager displaymode="'managed'" presets="staticPresets"
 		dashboards="dashboardsendpoint"></viz-dashboard-manager>
 </div>

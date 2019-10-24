@@ -1,40 +1,39 @@
-<nav class="navbar navbar-inverse navbar-fixed-left" role="navigation"
-	style="justify-content: center; text-align: center;">
-	<ul class="nav navbar-nav nav-pills nav-stacked">
-		<li><button class="btn btn-primary btn-nav"
-				ng-click="$emit('sb.dashboard-new')">
-				<span class="glyphicon glyphicon-file glyphicon-app"></span>
-			</button></li>
-		<li><button class="btn btn-primary btn-nav"
-				ng-click="$emit('sb.dashboard-clear')">
-				<span class="glyphicon glyphicon-trash glyphicon-app"></span>
-			</button></li>
-		<li>&nbsp;</li>
-		<li><button class="btn btn-primary btn-nav"
-				ng-click="$emit('sb.dashboard-current-addWidget')">
-				<span class="glyphicon glyphicon-plus glyphicon-app"></span>
-			</button></li>
-		<li><button class="btn btn-primary btn-nav"
-				ng-click="$emit('sb.dashboard-current-clearWidgets')">
-				<span class="glyphicon glyphicon-minus glyphicon-app"></span>
-			</button></li>
-		<li>&nbsp;</li>
-		<li><button class="btn btn-primary btn-nav"
-				ng-click="saveDashboard()">
-				<span class="glyphicon glyphicon-floppy-save glyphicon-app"></span>
-			</button></li>
-		<li><button class="btn btn-primary btn-nav"
-				ng-click="loadDashboard()">
-				<span class="glyphicon glyphicon-floppy-open glyphicon-app"></span>
-			</button></li>
-		<li><button class="btn btn-primary btn-nav"
-				ng-click="$emit('sb.dashboard-configure')">
-				<span class="glyphicon glyphicon-cog glyphicon-app"></span>
-			</button></li>
-		<li>&nbsp;</li>
-		<li><button class="btn btn-primary btn-nav"
-				ng-click="$emit('sb.docs')">
-				<span class="glyphicon glyphicon-question-sign glyphicon-app"></span>
-			</button></li>
-	</ul>
-</nav>
+<label>Tools</label>
+<ul
+	style="list-style-type: none !important; display: inline-flex; padding: 0;">
+	<li><button class="btn btn-primary btn-nav"
+			ng-click="$emit('sb.dashboard-new')">
+			<span class="glyphicon glyphicon-file glyphicon-app"></span>
+		</button></li>
+	<li><button class="btn btn-primary btn-nav"
+			ng-click="$emit('sb.dashboard-clear')">
+			<span class="glyphicon glyphicon-trash glyphicon-app"></span>
+		</button></li>
+	<li>&nbsp;</li>
+	<li><button class="btn btn-primary btn-nav"
+			ng-click="$emit('sb.dashboard-current-addWidget')">
+			<span class="glyphicon glyphicon-plus glyphicon-app"></span>
+		</button></li>
+	<li><button class="btn btn-primary btn-nav"
+			ng-click="$emit('sb.dashboard-current-clearWidgets')">
+			<span class="glyphicon glyphicon-minus glyphicon-app"></span>
+		</button></li>
+	<li>&nbsp;</li>
+	<li><button class="btn btn-primary btn-nav"
+			ng-click="$emit('sb.saveDashboard')">
+			<span class="glyphicon glyphicon-floppy-save glyphicon-app"></span>
+		</button></li>
+	<li><button class="btn btn-primary btn-nav"
+			ng-click="$emit('sb.loadDashboard')">
+			<span class="glyphicon glyphicon-floppy-open glyphicon-app"></span>
+		</button></li>
+	<li>&nbsp;</li>
+	<li><button class="btn btn-primary btn-nav"
+			ng-click="$emit('sb.dashboard-configure')">
+			<span class="glyphicon glyphicon-cog glyphicon-app"></span>
+		</button></li>
+	<li><button class="btn btn-primary btn-nav"
+			ng-click="$emit('sb.docs')">
+			<span class="glyphicon glyphicon-question-sign glyphicon-app"></span>
+		</button></li>
+</ul>

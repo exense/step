@@ -26,6 +26,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-dashboard-manager'
 .controller('SessionManagerCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService) {
     stateStorage.push($scope, 'dashboards', {});	
     $scope.authService = AuthService;
+    $scope.sessionName = "New Session";
 	$scope.staticPresets = new StaticPresets();
 	$scope.dashboardsendpoint = [];
 	//$scope.dashboardsendpoint.push(new PerformanceDashboard());
@@ -58,6 +59,41 @@ angular.module('dashboardsControllers',['tables','step', 'viz-dashboard-manager'
 	$scope.$on('sb.docs', function(event) {
 		$scope.$broadcast($scope.deriveEventName(event.name))
 	});
+	
+	$scope.$on('sb.saveDashboard', function(event) {
+		$scope.saveDashboard($scope.sessionName);
+	});
+	$scope.$on('sb.loadDashboard', function(event) {
+		$scope.loadDashboard($scope.sessionName);
+	});
+
+	$scope.saveDashboard = function(sessionName){
+		console.log($scope.dashboards);
+		var serialized = angular.toJson({ name : sessionName, state : $scope.dashboardsendpoint }); 
+		$http.post('rest/crud/session', serialized)
+		.then(function (response) {
+			console.log('response')
+			console.log(response)
+		}, function (response) {
+			console.log('error response')
+			console.log(response)
+		});
+	};
+
+	$scope.loadDashboard = function(sessionName){
+		$http.get('rest/crud/session?name='+sessionName)
+		.then(function (response) {
+			if(response && response.data && response.data.state && response.data.state.length > 0){
+				$scope.dashboardsendpoint = response.data.state;
+			}else{
+				$scope.dashboardsendpoint = [];	
+			}
+		}, function (response) {
+			console.log('error response')
+			console.log(response)
+		});
+
+	};
 
   })
 .directive('toolbar', function () {
@@ -69,32 +105,6 @@ angular.module('dashboardsControllers',['tables','step', 'viz-dashboard-manager'
 		templateUrl: 'partials/dashboards/toolbar.html',
 		controller: function ($scope, $element, $http) {
 
-			$scope.saveDashboard = function(){
-				console.log($scope.dashboards);
-				var serialized = angular.toJson({ name : 'mysession', state : $scope.dashboards }); 
-				$http.post('rest/crud/session', serialized)
-				.then(function (response) {
-					console.log('response')
-					console.log(response)
-				}, function (response) {
-					console.log('error response')
-					console.log(response)
-				});
-			};
-
-			$scope.loadDashboard = function(name){
-				$http.get('rest/crud/session?name=mysession')
-				.then(function (response) {
-					console.log(response.data.state)
-					$scope.dashboards = response.data.state;
-					console.log('response')
-					console.log(response.data)
-				}, function (response) {
-					console.log('error response')
-					console.log(response)
-				});
-
-			};
 		}
 	};
 })
