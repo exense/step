@@ -51,28 +51,24 @@ angular.module('dashboardsControllers',['tables','step', 'viz-dashboard-manager'
 	$scope.$on('sb.dashboard-current-clearWidgets', function(event) {
 		$scope.$broadcast($scope.deriveEventName(event.name))
 	});
-	$scope.$on('dashboard-change', function(event) {
-		$scope.$broadcast('dashboard-reload');
-	});
-	$scope.$on('sb.dashboard-load', function(event) {
-		$scope.$broadcast($scope.deriveEventName(event.name))
-	});
 	$scope.$on('sb.dashboard-configure', function(event) {
 		$scope.$broadcast($scope.deriveEventName(event.name))
 	});
 	$scope.$on('sb.docs', function(event) {
 		$scope.$broadcast($scope.deriveEventName(event.name))
 	});
-	
-	$scope.$on('sb.saveDashboard', function(event) {
-		$scope.saveDashboard($scope.sessionName);
+	$scope.$on('sb.saveSession', function(event) {
+		$scope.saveSession($scope.sessionName);
 	});
-	$scope.$on('sb.loadDashboard', function(event) {
-		$scope.loadDashboard($scope.sessionName);
+	$scope.$on('sb.loadSession', function(event) {
+		$scope.loadSession($scope.sessionName);
+	});
+	$scope.$on('sb.deleteSession', function(event) {
+		$scope.deleteSession($scope.sessionName);
 	});
 
-	$scope.saveDashboard = function(sessionName){
-		console.log($scope.dashboards);
+	$scope.saveSession = function(sessionName){
+		console.log($scope.dashboardsendpoint);
 		var serialized = angular.toJson({ name : sessionName, state : $scope.dashboardsendpoint }); 
 		$http.post('rest/crud/session', serialized)
 		.then(function (response) {
@@ -84,7 +80,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-dashboard-manager'
 		});
 	};
 
-	$scope.loadDashboard = function(sessionName){
+	$scope.loadSession = function(sessionName){
 		$http.get('rest/crud/session?name='+sessionName)
 		.then(function (response) {
 			if(response && response.data && response.data.state && response.data.state.length > 0){
@@ -92,6 +88,19 @@ angular.module('dashboardsControllers',['tables','step', 'viz-dashboard-manager'
 			}else{
 				$scope.dashboardsendpoint = [];	
 			}
+		}, function (response) {
+			console.log('error response')
+			console.log(response)
+		});
+
+	};
+	
+	$scope.deleteSession = function(sessionName){
+		$http.delete('rest/crud/session?name='+sessionName)
+		.then(function (response) {
+			console.log('response')
+			console.log(response)
+
 		}, function (response) {
 			console.log('error response')
 			console.log(response)

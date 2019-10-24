@@ -12,8 +12,18 @@
 			</button>
 			<ul class="dashboard-new-btn" uib-dropdown-menu role="menu"
 				aria-labelledby="load-query" style="text-align: center;">
-				<h5 ng-click="$emit('sb.dashboard-new', 'viz')"><a><button class="btn btn-success btn-nav"><span class="glyphicon glyphicon-picture glyphicon-app"></span> Visualization tab</button></a></h5>
-				<h5 ng-click="$emit('sb.dashboard-new', 'explore')"><a><button class="btn btn-success btn-nav"><span class="glyphicon glyphicon-search glyphicon-app"></span>   Exploration tab</button></a></h5>
+				<h5 ng-click="$emit('sb.dashboard-new', 'viz')">
+					<a><button class="btn btn-success btn-nav">
+							<span class="glyphicon glyphicon-picture glyphicon-app"></span>
+							Visualization tab
+						</button></a>
+				</h5>
+				<h5 ng-click="$emit('sb.dashboard-new', 'explore')">
+					<a><button class="btn btn-success btn-nav">
+							<span class="glyphicon glyphicon-search glyphicon-app"></span>
+							Exploration tab
+						</button></a>
+				</h5>
 			</ul>
 		</div>
 	</li>
@@ -36,14 +46,19 @@
 		</button></li>
 	<li>&nbsp;</li>
 	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.saveDashboard')" uib-tooltip="Save session"
+			ng-click="$emit('sb.saveSession')" uib-tooltip="Save session"
 			tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-floppy-disk glyphicon-app"></span>
 		</button></li>
 	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.loadDashboard')" uib-tooltip="Load session"
+			ng-click="$emit('sb.loadSession')" uib-tooltip="Load session"
 			tooltip-placement="bottom">
 			<span class="glyphicon glyphicon-folder-open glyphicon-app"></span>
+		</button></li>
+	<li><button class="btn btn-success btn-nav"
+			ng-click="$emit('sb.deleteSession')" uib-tooltip="Delete session"
+			tooltip-placement="bottom">
+			<span class="glyphicon glyphicon-remove glyphicon-app"></span>
 		</button></li>
 	<li>&nbsp;</li>
 	<li><button class="btn btn-success btn-nav"
