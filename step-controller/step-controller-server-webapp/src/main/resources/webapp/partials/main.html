@@ -14,7 +14,7 @@
 				<li ng-class="{ active: isViewActive('parameters') }"><a ng-click="setView('parameters')"><span class="glyphicon glyphicon-list-alt"></span> Parameters</a></li>
 				<li ng-class="{ active: isViewActive('executions') }"><a ng-click="setView('executions')"><span class="glyphicon glyphicon-tasks"></span> Executions</a></li>
 				<li ng-class="{ active: isViewActive('scheduler') }"><a ng-click="setView('scheduler')"><span class="glyphicon glyphicon-time"></span> Scheduler</a></li>
-				<li ng-class="{ active: isViewActive('dashboards') }"><a ng-click="setView('dashboards')"><span class="glyphicon glyphicon-picture"></span> Dashboards</a></li>
+				<li ng-class="{ active: isViewActive('dashboards') }"><a ng-click="setView('dashboards')"><span class="glyphicon glyphicon-stats"></span> Dashboards</a></li>
 				<li ng-class="{ active: isViewActive(entry.viewId) }" ng-repeat="entry in viewRegistry.getCustomMainMenuEntries()" ><a ng-click="setView(entry.viewId)"><span class="{{entry.menuIconClass}}"></span> {{entry.label}}</a></li>
 				<li ng-class="{ active: isViewActive('grid') }"><a ng-click="setView('grid')"><span class="glyphicon glyphicon-th"></span> Grid</a></li>
 				<li ng-if="authService.hasRight('admin')" ng-class="{ active: isViewActive('admin') }"><a ng-click="setView('admin')"><span class="glyphicon glyphicon-cog"></span> Admin</a></li>
