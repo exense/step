@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import ch.exense.commons.app.ArgumentParser;
 import ch.exense.commons.app.Configuration;
 import ch.exense.viz.persistence.accessors.GenericVizAccessor;
+import ch.exense.viz.persistence.mongodb.MongoClientSession;
 import ch.exense.viz.rest.VizServlet;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
@@ -209,7 +210,7 @@ public class ControllerServer {
 		});
 		
 		resourceConfig.registerClasses(VizServlet.class);
-		GenericVizAccessor accessor = new GenericVizAccessor(new ch.exense.viz.persistence.MongoClientSession(configuration));
+		GenericVizAccessor accessor = new GenericVizAccessor(new MongoClientSession(configuration));
 		resourceConfig.register(new AbstractBinder() {	
 			@Override
 			protected void configure() {
