@@ -1,74 +1,76 @@
-<label>Tools</label>
-<ul
-	style="list-style-type: none !important; display: inline-flex; padding: 0;">
-	<li>
-		<div class="btn-group" uib-dropdown
-			is-open="state.gui.status.open.presetquery">
-			<button id="dashboard-new-btn" type="button"
-				class="btn btn-success btn-nav" uib-dropdown-toggle
-				ng-disabled="disabled" uib-tooltip="New dashboard tab"
-				tooltip-placement="left">
-				<span class="glyphicon glyphicon-file glyphicon-app"></span>
-			</button>
-			<ul class="dashboard-new-btn" uib-dropdown-menu role="menu"
-				aria-labelledby="load-query" style="text-align: center;">
-				<h5 ng-click="$emit('sb.dashboard-new', 'viz')">
-					<a><button class="btn btn-success btn-nav">
-							<span class="glyphicon glyphicon-stats glyphicon-app"></span>
-							Visualization tab
-						</button></a>
-				</h5>
-				<h5 ng-click="$emit('sb.dashboard-new', 'explore')">
-					<a><button class="btn btn-success btn-nav">
-							<span class="glyphicon glyphicon-search glyphicon-app"></span>
-							Exploration tab
-						</button></a>
-				</h5>
-			</ul>
-		</div>
-	</li>
-	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.dashboard-clear')" uib-tooltip="Clear all tabs"
-			tooltip-placement="bottom">
-			<span class="glyphicon glyphicon-trash glyphicon-app"></span>
-		</button></li>
-	<li>&nbsp;</li>
-	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.dashboard-current-addWidget')"
-			uib-tooltip="Add dashlet to current tab" tooltip-placement="bottom">
-			<span class="glyphicon glyphicon-plus glyphicon-app"></span>
-		</button></li>
-	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.dashboard-current-clearWidgets')"
-			uib-tooltip="Clear all widgets from current tab"
-			tooltip-placement="bottom">
-			<span class="glyphicon glyphicon-minus glyphicon-app"></span>
-		</button></li>
-	<li>&nbsp;</li>
-	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.saveSession')" uib-tooltip="Save session"
-			tooltip-placement="bottom">
-			<span class="glyphicon glyphicon-floppy-disk glyphicon-app"></span>
-		</button></li>
-	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.loadSession')" uib-tooltip="Load session"
-			tooltip-placement="bottom">
-			<span class="glyphicon glyphicon-folder-open glyphicon-app"></span>
-		</button></li>
-	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.deleteSession')" uib-tooltip="Delete session"
-			tooltip-placement="bottom">
-			<span class="glyphicon glyphicon-remove glyphicon-app"></span>
-		</button></li>
-	<li>&nbsp;</li>
-	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.dashboard-configure')"
-			uib-tooltip="Not supported yet" tooltip-placement="bottom">
-			<span class="glyphicon glyphicon-cog glyphicon-app"></span>
-		</button></li>
-	<li><button class="btn btn-success btn-nav"
-			ng-click="$emit('sb.docs')" uib-tooltip="Not supported yet"
-			tooltip-placement="bottom">
-			<span class="glyphicon glyphicon-question-sign glyphicon-app"></span>
-		</button></li>
-</ul>
+<div style="display: grid;">
+	<label>Tools</label>
+	<ul
+		style="list-style-type: none !important; display: inline-flex; padding: 0;">
+		<li>
+			<div class="btn-group" uib-dropdown
+				is-open="state.gui.status.open.presetquery">
+				<button id="dashboard-new-btn" type="button"
+					class="btn btn-success btn-nav" uib-dropdown-toggle
+					ng-disabled="disabled" uib-tooltip="New dashboard tab"
+					tooltip-placement="left">
+					<span class="glyphicon glyphicon-file glyphicon-app"></span>
+				</button>
+				<ul class="dashboard-new-btn" uib-dropdown-menu role="menu"
+					aria-labelledby="load-query" style="text-align: center;">
+					<h5 ng-click="$emit('sb.dashboard-new', 'viz')">
+						<a><button class="btn btn-success btn-nav">
+								<span class="glyphicon glyphicon-stats glyphicon-app"></span>
+								Visualization tab
+							</button></a>
+					</h5>
+					<h5 ng-click="$emit('sb.dashboard-new', 'explore')">
+						<a><button class="btn btn-success btn-nav">
+								<span class="glyphicon glyphicon-search glyphicon-app"></span>
+								Exploration tab
+							</button></a>
+					</h5>
+				</ul>
+			</div>
+		</li>
+		<li><button class="btn btn-success btn-nav"
+				ng-click="$emit('sb.dashboard-clear')" uib-tooltip="Clear all tabs"
+				tooltip-placement="bottom">
+				<span class="glyphicon glyphicon-trash glyphicon-app"></span>
+			</button></li>
+		<li>&nbsp;</li>
+		<li><button class="btn btn-success btn-nav"
+				ng-click="$emit('sb.dashboard-current-addWidget')"
+				uib-tooltip="Add dashlet to current tab" tooltip-placement="bottom">
+				<span class="glyphicon glyphicon-plus glyphicon-app"></span>
+			</button></li>
+		<li><button class="btn btn-success btn-nav"
+				ng-click="$emit('sb.dashboard-current-clearWidgets')"
+				uib-tooltip="Clear all widgets from current tab"
+				tooltip-placement="bottom">
+				<span class="glyphicon glyphicon-minus glyphicon-app"></span>
+			</button></li>
+		<li>&nbsp;</li>
+		<li><button class="btn btn-success btn-nav"
+				ng-click="$emit('sb.saveSession')" uib-tooltip="Save session"
+				tooltip-placement="bottom">
+				<span class="glyphicon glyphicon-floppy-disk glyphicon-app"></span>
+			</button></li>
+		<li><button class="btn btn-success btn-nav"
+				ng-click="$emit('sb.loadSession')" uib-tooltip="Load session"
+				tooltip-placement="bottom">
+				<span class="glyphicon glyphicon-folder-open glyphicon-app"></span>
+			</button></li>
+		<li><button class="btn btn-success btn-nav"
+				ng-click="$emit('sb.deleteSession')" uib-tooltip="Delete session"
+				tooltip-placement="bottom">
+				<span class="glyphicon glyphicon-remove glyphicon-app"></span>
+			</button></li>
+		<li>&nbsp;</li>
+		<li><button class="btn btn-success btn-nav"
+				ng-click="$emit('sb.dashboard-configure')"
+				uib-tooltip="Not supported yet" tooltip-placement="bottom">
+				<span class="glyphicon glyphicon-cog glyphicon-app"></span>
+			</button></li>
+		<li><button class="btn btn-success btn-nav"
+				ng-click="$emit('sb.docs')" uib-tooltip="Not supported yet"
+				tooltip-placement="bottom">
+				<span class="glyphicon glyphicon-question-sign glyphicon-app"></span>
+			</button></li>
+	</ul>
+</div>
