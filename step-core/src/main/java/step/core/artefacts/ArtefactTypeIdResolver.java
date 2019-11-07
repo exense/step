@@ -57,7 +57,7 @@ public class ArtefactTypeIdResolver implements TypeIdResolver {
 
 	}
 
-	@Override
+	//@Override
 	public JavaType typeFromId(String arg0) {
 		return TypeFactory.defaultInstance().uncheckedSimpleType(ArtefactRegistry.getInstance().getArtefactType(arg0));
 	}
@@ -65,6 +65,12 @@ public class ArtefactTypeIdResolver implements TypeIdResolver {
 	@Override
 	public JavaType typeFromId(DatabindContext arg0, String arg1) {
 		return typeFromId(arg1);
+	}
+
+	@Override
+	public String getDescForKnownTypeIds() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
