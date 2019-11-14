@@ -23,10 +23,32 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
   ViewRegistry.registerCustomMenuEntry('Dashboards','dashboards');
 })
 
-.controller('DashboardsController', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService) {
+.controller('DashboardsController', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService, $location) {
     stateStorage.push($scope, 'dashboards', {});	
     $scope.authService = AuthService;
     $scope.sessionName = "New Session";
 	$scope.staticPresets = new StaticPresets();
 	$scope.dashboardsendpoint = [];
+	
+	//$(document).ready(function(){
+		if($scope.$state && $scope.$state){
+	        $http.get('/rest/viz/crud/sessions?name=' + $scope.$state)
+	        .then(function (response) {
+	            if (response && response.data && response.data.object.state && response.data.object.state.length > 0) {
+	                $scope.dashboardsendpoint.push(response.data.object.state[0]);
+
+	            }
+	        }, function (response) {
+	            console.log('error response')
+	            console.log(response)
+	        });
+		}
+	//});
+	
+	
+	console.log('--debug--');
+	//console.log(stateStorage);
+	//console.log($scope.$state);
+	//console.log($scope.$$statepath);
+	//console.log($location.$$search);
   })
