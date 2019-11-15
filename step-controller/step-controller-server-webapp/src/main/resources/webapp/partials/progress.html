@@ -112,16 +112,31 @@
 			</div>
 			</uib-tab> <uib-tab heading="Performance">
 			<div class="panel-body">
-				<div style="text-align: right;">
-					<button class="btn btn-default btn-xs" type="button"
-						ng-click="openRtm()">
-						Interactive analytics <span class="glyphicon glyphicon-new-window"></span>
-					</button>
+				<div class="row" style="display: flex;" style>
+					<div>
+						<button class="btn btn-default btn-xs" type="button">
+							<a
+								href="/#/root/dashboards/__pp__PerformanceDashboard?__eId__={{eid}}">
+								Transaction dashboard <span
+								class="glyphicon glyphicon-new-window"></span>
+							</a>
+						</button>
+					</div>
+					<div>
+						<button class="btn btn-default btn-xs" type="button"
+							ng-click="openRtm()">
+							Interactive analytics <span
+								class="glyphicon glyphicon-new-window"></span>
+						</button>
+					</div>
 				</div>
-				<div>
-					<viz-dashboard-manager ng-if="tabs.selectedTab === 2" displaymode="displaymode"
-						presets="staticPresets" dashboards="dashboardsendpoint"
-						headermargin="200" restprefix="'/rest'"></viz-dashboard-manager>
+				<div class="row">
+					<div>
+						<viz-dashboard-manager ng-if="tabs.selectedTab === 2"
+							displaymode="displaymode" presets="staticPresets"
+							dashboards="dashboardsendpoint" headermargin="200"
+							restprefix="'/rest'"></viz-dashboard-manager>
+					</div>
 				</div>
 			</div>
 			</uib-tab> <uib-tab heading="Errors">
