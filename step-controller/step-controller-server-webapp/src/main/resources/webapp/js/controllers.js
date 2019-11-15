@@ -572,17 +572,14 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.displaymode = 'managed';
 			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
 			//keeping model in execution scope to prevent pointless reload
-			$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid), new DefaultExplorationDashboard()];
-
-			console.log('--> $scope.dashboardsendpoint')
-			console.log($scope.dashboardsendpoint)
+			$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword'), new DefaultExplorationDashboard()];
 			
 			$scope.$on('dashletinput-initialized', function () {
-				console.log('-> dashletinput-initialized')
+				//console.log('-> dashletinput-initialized')
 			});
 			
 			$scope.$on('manager-fully-loaded', function () {
-				console.log('-> manager-fully-loaded')
+				//console.log('-> manager-fully-loaded')
 				
 				$scope.$watch('autorefresh',function(newStatus) {
 					$scope.$broadcast('globalsettings-refreshToggle', { 'new': newStatus });

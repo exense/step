@@ -1,4 +1,4 @@
-function PerformanceDashboard(executionId) {
+function PerformanceDashboard(executionId, measurementType) {
 
 	var widgetsArray = [];
 
@@ -12,7 +12,7 @@ function PerformanceDashboard(executionId) {
 			'Transaction Performance',
 			new DashboardState(
 					new GlobalSettings(
-							[new Placeholder("__eId__", executionId, false)],
+							[new Placeholder("__eId__", executionId, false), new Placeholder("__measurementType__", measurementType, false)],
 							false,
 							false,
 							'Global Settings',
@@ -53,7 +53,7 @@ function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform){
 			new DefaultPaging(),
 			new Controls(
 					new Template(
-							"{ \"selectors1\": [{ \"textFilters\": [{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }], \"numericalFilters\": [] }], \"serviceParams\": { \"measurementService.nextFactor\": \"0\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"__granularity__\", \"aggregateService.groupby\": \"name\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
+							"{ \"selectors1\": [{ \"textFilters\": [{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }], \"numericalFilters\": [] }], \"serviceParams\": { \"measurementService.nextFactor\": \"0\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"__granularity__\", \"aggregateService.groupby\": \"name\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
 							"",
 							[new Placeholder("__granularity__", pGranularity, false)]
 					)
@@ -102,7 +102,7 @@ var addLastMeasurementsTpl = function(widgetsArray){
 				//new Paging("On", new Offset("__FACTOR__", "return 0;", "return value + 1;", "if(value > 0){return value - 1;} else{return 0;}"), null),
 				new Controls(
 						new Template(
-								"{ \"selectors1\": [{ \"textFilters\": [{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }], \"numericalFilters\": [] }], \"serviceParams\": { \"measurementService.nextFactor\": \"__FACTOR__\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"auto\", \"aggregateService.groupby\": \"name\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
+								"{ \"selectors1\": [{ \"textFilters\": [{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }], \"numericalFilters\": [] }], \"serviceParams\": { \"measurementService.nextFactor\": \"__FACTOR__\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"auto\", \"aggregateService.groupby\": \"name\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
 								"",
 								[new Placeholder("__FACTOR__", "100", false)]
 						)
