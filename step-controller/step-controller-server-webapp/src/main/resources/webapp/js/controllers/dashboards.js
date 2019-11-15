@@ -28,50 +28,54 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	$scope.authService = AuthService;
 	$scope.staticPresets = new StaticPresets();
 	$scope.dashboardsendpoint = [];
-	
+
 	$scope.initFromLocation = function(){
 
 		if($scope.$state && $scope.$state){
-			$scope.sessionName = $scope.$state;
-			$http.get('/rest/viz/crud/sessions?name=' + $scope.$state)
-			.then(function (response) {
-				$scope.dashboardsendpoint.length = 0;
-				if (response && response.data && response.data.object.state && response.data.object.state.length > 0) {
-					//$scope.dashboardsendpoint = $scope.dashboardsendpoint.concat(response.data.object.state);
-					_.each(response.data.object.state, function(item, index){
-						$scope.dashboardsendpoint.push(item);
-					});
-					
-					
-					var init = false;
-					$scope.$on('dashboard-ready', function(event, arg){
-						if(!init){
-							init = true;
-							if($location.$$search){
-								var keys = Object.keys($location.$$search);
-								_.each(keys, function(item, index){
-									var dyn = false;
-									if(item.startsWith('__dyn__')){
-										dyn = true;
-									}
-									$scope.$broadcast('apply-global-setting', { key: item, value : $location.$$search[item], isDynamic : dyn});
-								});
-							}
-						}
-					});
-				}
+			if($scope.$state.startsWith('__pp__')){
+				var dashboardClass = $scope.$state.split('__pp__')[1];
+				$scope.dashboardsendpoint.push(window[dashboardClass]());
+			}else{// custom (load from db)
+				$scope.sessionName = $scope.$state;
+				$http.get('/rest/viz/crud/sessions?name=' + $scope.$state)
+				.then(function (response) {
+					$scope.dashboardsendpoint.length = 0;
+					if (response && response.data && response.data.object.state && response.data.object.state.length > 0) {
+						//$scope.dashboardsendpoint = $scope.dashboardsendpoint.concat(response.data.object.state);
+						_.each(response.data.object.state, function(item, index){
+							$scope.dashboardsendpoint.push(item);
+						});
+					}
 
-			}, function (response) {
-				console.log('error response')
-				console.log(response)
-			});
+				}, function (response) {
+					console.log('error response')
+					console.log(response)
+				});
+			}
 		}
 	}
-	
+
 	//$scope.$watch('$location.$$search', function(){
-		$scope.initFromLocation();
+	$scope.initFromLocation();
 	//});
-	
+
+	var init = false;
+	$scope.$on('dashboard-ready', function(event, arg){
+		if(!init){
+			init = true;
+			if($location.$$search){
+				var keys = Object.keys($location.$$search);
+				_.each(keys, function(item, index){
+					var dyn = false;
+					if(item.startsWith('__dyn__')){
+						dyn = true;
+					}
+					$scope.$broadcast('apply-global-setting', { key: item, value : $location.$$search[item], isDynamic : dyn});
+				});
+			}
+		}
+	});
+
 //	console.log('--debug--');
 //	console.log(stateStorage);
 //	console.log($scope.$state);
