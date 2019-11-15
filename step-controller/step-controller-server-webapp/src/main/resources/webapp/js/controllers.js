@@ -572,7 +572,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.displaymode = 'managed';
 			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
 			//keeping model in execution scope to prevent pointless reload
-			$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword'), new DefaultExplorationDashboard()];
+			$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword'), new DefaultExplorationDashboard()];
 			
 			$scope.$on('dashletinput-initialized', function () {
 				//console.log('-> dashletinput-initialized')

@@ -1,15 +1,21 @@
-function PerformanceDashboard(executionId, measurementType) {
+function PerformanceDashboard(executionId, measurementType, entity) {
 
 	var widgetsArray = [];
+	var entityName = '';
+	if(measurementType && measurementType === 'keyword'){
+		entityName = 'Keyword';
+	}else{
+		entityName = 'Custom Transaction';
+	}
 
 	//addLastMeasurements(widgetsArray);	
-	addAggregatesOverTimeTpl(widgetsArray);
-	addLastMeasurementsTpl(widgetsArray);
-	addAggregatesSummaryTpl(widgetsArray);
+	addAggregatesOverTimeTpl(widgetsArray, entityName);
+	addLastMeasurementsTpl(widgetsArray, entityName);
+	addAggregatesSummaryTpl(widgetsArray, entityName);
 	//TODO:addMeasurementExplorer(widgetsArray) //with paging
 	//TODO:addAggregatesSummaryOptzTpl(widgetsArray);
 	var dashboardObject = new Dashboard(
-			'Transaction Performance',
+			entityName + ' Performance',
 			new DashboardState(
 					new GlobalSettings(
 							[new Placeholder("__eId__", executionId, false), new Placeholder("__measurementType__", measurementType, false)],
@@ -19,7 +25,7 @@ function PerformanceDashboard(executionId, measurementType) {
 							3000
 					),
 					widgetsArray,
-					'Viz Dashboard',
+					entityName + ' Dashboard',
 					'aggregated',
 					new DefaultDashboardGui()
 			)
@@ -61,16 +67,16 @@ function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform){
 	);
 };
 
-var addAggregatesSummaryTpl = function(widgetsArray){
+var addAggregatesSummaryTpl = function(widgetsArray, entityName){
 	var summaryTransform = "function (response) {\r\n    //var metrics = response.data.payload.metricList;\r\n    var metrics = [\"cnt\",\"avg\", \"min\", \"max\", \"tpm\", \"tps\", \"90th pcl\"];\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    if (payload && payloadKeys.length > 0) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[0]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            for (i = 0; i < metrics.length; i++) {\r\n                var metric = metrics[i];\r\n                if (payload[payloadKeys[0]][serieskeys[j]][metric]) {\r\n                    retData.push({\r\n                        x: metric,\r\n                        y: Math.round(payload[payloadKeys[0]][serieskeys[j]][metric]),\r\n                        z: serieskeys[j]\r\n                    });\r\n                }\r\n            }\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState("Transaction summary", false, 0, {}, new ChartOptions('seriesTable'), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform), new DefaultGuiClosed(), new DefaultInfo()));
+	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState(entityName + " stats summary", false, 0, {}, new ChartOptions('seriesTable'), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform), new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(standalone);
 };
 
-var addAggregatesOverTimeTpl = function(widgetsArray){
+var addAggregatesOverTimeTpl = function(widgetsArray, entityName){
 	var overtimeTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: payload[payloadKeys[i]][serieskeys[j]][metric],\r\n                z: serieskeys[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
 	var overtimeFillBlanksTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = [];\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            if(!series.includes(serieskeys[j])){\r\n                series.push(serieskeys[j]);\r\n            }\r\n        }\r\n    }\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < series.length; j++) {\r\n            var yval;\r\n            if(payload[payloadKeys[i]][serieskeys[j]] && payload[payloadKeys[i]][serieskeys[j]][metric]){\r\n              yval = payload[payloadKeys[i]][serieskeys[j]][metric];\r\n            }else{\r\n              //console.log('missing dot: x=' + payloadKeys[i] + '; series=' + series[j]);\r\n              yval = 0;\r\n            }\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: yval,\r\n                z: series[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var config = getMasterSlaveConfig("raw", "Average Response Time over time (ms)", "Transaction count over time (#)");
+	var config = getMasterSlaveConfig("raw", "Average "+entityName+" Duration (ms)", "Nb " + entityName + " per minute");
 
 	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new ChartOptions('lineChart'), config.masterconfig, new RTMAggBaseTemplatedQueryTmpl("avg", "auto", overtimeTransform), new DefaultGuiClosed(), new DefaultInfo()));
 	//var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new ChartOptions('lineChart'), config.slaveconfig, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeTransform), new DefaultGuiClosed(), new DefaultInfo()));
@@ -81,7 +87,7 @@ var addAggregatesOverTimeTpl = function(widgetsArray){
 };
 
 //No paging: FACTOR 100 via template
-var addLastMeasurementsTpl = function(widgetsArray){
+var addLastMeasurementsTpl = function(widgetsArray, entityName){
 	function RTMLatestMeasurementBaseQueryTmpl(){
 		return new SimpleQuery(
 				"Raw", new Service(
@@ -110,7 +116,7 @@ var addLastMeasurementsTpl = function(widgetsArray){
 		);
 	};
 
-	var config = getMasterSlaveConfig("transformed", "Last 100 Measurements - Scattered values (ms)", "Last 100 Measurements - Value table (ms)");
+	var config = getMasterSlaveConfig("transformed", "Last 100 " + entityName +"s - Individual duration (ms)", "Last 100 "+entityName+"s - Value table (ms)");
 
 	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new ChartOptions('scatterChart'), config.masterconfig, new RTMLatestMeasurementTemplatedQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
 	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new ChartOptions('seriesTable'), config.slaveconfig, new RTMLatestMeasurementTemplatedQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
@@ -145,9 +151,9 @@ var getMasterSlaveConfig = function(rawOrTransformed, masterTitle, slaveTitle){
 function StaticPresets() {
 	return {
 		queries: [],
-			controls: {
-				templates: []
-			},
-			configs: []
+		controls: {
+			templates: []
+		},
+		configs: []
 	};
 }
