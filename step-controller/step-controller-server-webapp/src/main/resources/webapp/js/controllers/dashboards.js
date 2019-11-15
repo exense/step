@@ -19,36 +19,62 @@
 angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 
 .run(function(ViewRegistry) {
-  ViewRegistry.registerView('dashboards','partials/dashboards/dashboardsController.html');
-  ViewRegistry.registerCustomMenuEntry('Dashboards','dashboards');
+	ViewRegistry.registerView('dashboards','partials/dashboards/dashboardsController.html');
+	ViewRegistry.registerCustomMenuEntry('Dashboards','dashboards');
 })
 
 .controller('DashboardsController', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService, $location) {
-    stateStorage.push($scope, 'dashboards', {});	
-    $scope.authService = AuthService;
-    $scope.sessionName = "New Session";
+	stateStorage.push($scope, 'dashboards', {});	
+	$scope.authService = AuthService;
 	$scope.staticPresets = new StaticPresets();
 	$scope.dashboardsendpoint = [];
 	
-	//$(document).ready(function(){
-		if($scope.$state && $scope.$state){
-	        $http.get('/rest/viz/crud/sessions?name=' + $scope.$state)
-	        .then(function (response) {
-	            if (response && response.data && response.data.object.state && response.data.object.state.length > 0) {
-	                $scope.dashboardsendpoint.push(response.data.object.state[0]);
+	$scope.initFromLocation = function(){
 
-	            }
-	        }, function (response) {
-	            console.log('error response')
-	            console.log(response)
-	        });
+		if($scope.$state && $scope.$state){
+			$scope.sessionName = $scope.$state;
+			$http.get('/rest/viz/crud/sessions?name=' + $scope.$state)
+			.then(function (response) {
+				$scope.dashboardsendpoint.length = 0;
+				if (response && response.data && response.data.object.state && response.data.object.state.length > 0) {
+					//$scope.dashboardsendpoint = $scope.dashboardsendpoint.concat(response.data.object.state);
+					_.each(response.data.object.state, function(item, index){
+						$scope.dashboardsendpoint.push(item);
+					});
+					
+					
+					var init = false;
+					$scope.$on('dashboard-ready', function(event, arg){
+						if(!init){
+							init = true;
+							if($location.$$search){
+								var keys = Object.keys($location.$$search);
+								_.each(keys, function(item, index){
+									var dyn = false;
+									if(item.startsWith('__dyn__')){
+										dyn = true;
+									}
+									$scope.$broadcast('apply-global-setting', { key: item, value : $location.$$search[item], isDynamic : dyn});
+								});
+							}
+						}
+					});
+				}
+
+			}, function (response) {
+				console.log('error response')
+				console.log(response)
+			});
 		}
+	}
+	
+	//$scope.$watch('$location.$$search', function(){
+		$scope.initFromLocation();
 	//});
 	
-	
-	console.log('--debug--');
-	//console.log(stateStorage);
-	//console.log($scope.$state);
-	//console.log($scope.$$statepath);
-	//console.log($location.$$search);
-  })
+//	console.log('--debug--');
+//	console.log(stateStorage);
+//	console.log($scope.$state);
+//	console.log($scope.$$statepath);
+//	console.log($location.$$search);
+})
