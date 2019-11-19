@@ -113,11 +113,18 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
 		.setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
 
+		BackendDataTable projectsTable = new BackendDataTable(new Collection(database, "projects"));
+		projectsTable.addColumn("ID", "_id");
+		projectsTable.addColumn("Name", "name");
+		projectsTable.addColumn("Owner", "owner");
+		//projectsTable.addRowAsJson("Actions");
+		
 		addTable("executions", executions);
 		addTable("reports", leafReportNodes);
 		addTable("reportsByOQL", leafReportNodesOQL);
 		addTable("artefacts", artefactTable);
-		addTable("functions", functionTable);		
+		addTable("functions", functionTable);
+		addTable("projects", projectsTable);
 
 	}
 
