@@ -117,7 +117,7 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 		projectsTable.addColumn("ID", "_id");
 		projectsTable.addColumn("Name", "name");
 		projectsTable.addColumn("Owner", "owner");
-		//projectsTable.addRowAsJson("Actions");
+		projectsTable.addRowAsJson("Actions");
 		
 		addTable("executions", executions);
 		addTable("reports", leafReportNodes);
