@@ -277,8 +277,12 @@ angular.module('tables', ['export','dataTable'])
 window.alert = (function() {
     var nativeAlert = window.alert;
     return function(message) {
+    	if(message){
         message.indexOf("DataTables warning") === 0 ?
             console.warn(message) :
             nativeAlert(message);
+    	}else{
+    		nativeAlert(message);
+    	}
     }
 })();
