@@ -97,7 +97,7 @@ public class TableService extends AbstractTableService {
 		if(uriInfo.getQueryParameters()!=null) {
 			form.putAll(uriInfo.getQueryParameters());
 		}
-		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc);
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID);
 		return getTableData(collectionID, form, sessionQueryFragments);
 	}
 	
@@ -106,7 +106,7 @@ public class TableService extends AbstractTableService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
 	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) throws Exception {
-		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc);
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID);
 		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragments);
 	}
 	
