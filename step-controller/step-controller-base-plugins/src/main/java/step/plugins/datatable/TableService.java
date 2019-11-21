@@ -37,6 +37,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -93,11 +94,11 @@ public class TableService extends AbstractTableService {
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) throws Exception {
+	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context UriInfo uriInfo, @Context ContainerRequestContext crc, @QueryParam("ignoreContext") String ignoreContext) throws Exception {
 		if(uriInfo.getQueryParameters()!=null) {
 			form.putAll(uriInfo.getQueryParameters());
 		}
-		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID);
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID, ignoreContext);
 		return getTableData(collectionID, form, sessionQueryFragments);
 	}
 	
@@ -105,8 +106,8 @@ public class TableService extends AbstractTableService {
 	@Path("/{id}/data")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) throws Exception {
-		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID);
+	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo, @Context ContainerRequestContext crc, @QueryParam("ignoreContext") String ignoreContext) throws Exception {
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID, ignoreContext);
 		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragments);
 	}
 	

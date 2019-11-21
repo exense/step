@@ -32,13 +32,15 @@ public abstract class AbstractTableService extends AbstractServices {
 		}
 	}
 
-	protected List<Bson> getAdditionalQueryFragmentsFromContext(ContainerRequestContext crc, String collectionID) {
+	protected List<Bson> getAdditionalQueryFragmentsFromContext(ContainerRequestContext crc, String collectionID, String ignoreContext) {
 		Session session = getSession(crc);
 		List<Bson> additionalQueryFragments = new ArrayList<>();
 		if(!excludedContexts.contains(collectionID)) {
-			tableManager.additionalQueryFragmentSuppliers.forEach(s->{
-				additionalQueryFragments.addAll(s.apply(session));
-			});
+			if(ignoreContext == null || !ignoreContext.equals("true")) {
+				tableManager.additionalQueryFragmentSuppliers.forEach(s->{
+					additionalQueryFragments.addAll(s.apply(session));
+				});
+			}
 		}
 		return additionalQueryFragments;
 	}

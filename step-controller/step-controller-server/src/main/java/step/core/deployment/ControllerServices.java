@@ -160,6 +160,14 @@ public class ControllerServices extends AbstractServices {
 		return executionID;
 	}
 	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/save/execution")
+	@Secured(right="plan-execute")
+	public void saveExecution(Execution execution) {
+		getContext().getExecutionAccessor().save(execution);
+	}
+	
 	@GET
 	@Path("/execution/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -174,7 +182,7 @@ public class ControllerServices extends AbstractServices {
 			return link;
 		}
 	}
-	
+		
 	@GET
 	@Path("/execution/{id}/rtmlink")
 	@Produces(MediaType.APPLICATION_JSON)
