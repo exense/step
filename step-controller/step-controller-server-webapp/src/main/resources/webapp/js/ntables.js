@@ -278,7 +278,7 @@ window.alert = (function() {
     var nativeAlert = window.alert;
     return function(message) {
     	if(message){
-        message.indexOf("DataTables warning") === 0 ?
+        message.toString().indexOf("DataTables warning") === 0 ?
             console.warn(message) :
             nativeAlert(message);
     	}else{

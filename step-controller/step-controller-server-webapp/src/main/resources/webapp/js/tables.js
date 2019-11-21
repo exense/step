@@ -358,7 +358,7 @@ angular.module('dataTable', ['export'])
           tableOptions.columns = columns;
         }));
         
-        var query = 'rest/datatable/' + attr.serverside + '/data';
+        var query = 'rest/datatable/' + attr.serverside + '/data?ignoreContext='+attr.ignorecontext;
         if(attr.params) {
           query = query + '?' + attr.params;
         }
@@ -503,7 +503,7 @@ window.alert = (function() {
     var nativeAlert = window.alert;
     return function(message) {
     	if(message){
-        message.indexOf("DataTables warning") === 0 ?
+        message.toString().indexOf("DataTables warning") === 0 ?
             console.warn(message) :
             nativeAlert(message);
     	}else{
