@@ -134,7 +134,7 @@ public class DataTableServices extends AbstractTableService {
 				int columnID = Integer.parseInt(m.group(1));
 				ColumnDef column = null;
 				try{
-					table.getColumnByID(columnID);
+					column = table.getColumnByID(columnID);
 					String searchValue = params.getFirst(key);
 
 					if(searchValue!=null && searchValue.length()>0) {
