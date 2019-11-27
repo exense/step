@@ -213,7 +213,7 @@ angular.module('components',['step'])
       }
       
       $scope.upload = function (file) {
-        if($scope.isResource()) {
+        if($scope.isResource() && !$scope.resourceNotExisting) {
           if(!$scope.stBounded) {
             ResourceDialogs.showUpdateResourceWarning().then(function(updateResource){
               if(updateResource) {
@@ -221,7 +221,7 @@ angular.module('components',['step'])
                 upload(file,'rest/resources/'+$scope.getResourceId()+'/content');
               } else {
                 // Creating a new resource
-                upload(file,'rest/resources/content');              
+                upload(file,'rest/resources/content');
               }
             })
           } else {
