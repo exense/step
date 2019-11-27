@@ -304,4 +304,10 @@ public class ResourceManagerImpl implements ResourceManager {
 		attributes.put("name", resourceName);
 		return resourceAccessor.findByAttributes(attributes);
 	}
+
+	@Override
+	public boolean resourceExists(String resourceId) {
+		Resource resource = resourceAccessor.get(new ObjectId(resourceId));
+		return resource!=null;
+	}
 }

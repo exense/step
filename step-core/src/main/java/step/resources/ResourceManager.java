@@ -1,6 +1,5 @@
 package step.resources;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -41,6 +40,13 @@ public interface ResourceManager {
 	Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName)
 			throws IOException;
 
+	/**
+	 * Test if a given resource id exists
+	 * 
+	 * @param resourceId the id of the resource to test
+	 * @return true if the resource exists 
+	 */
+	boolean resourceExists(String resourceId);
 	/**
 	 * Delete the resource and all its revisions 
 	 * 
