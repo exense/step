@@ -117,7 +117,8 @@ angular.module('components',['step'])
       stModel: '=',
       stOnChange: '&?',
       saveButton: '@?',
-      saveButtonLabel: '@?'
+      saveButtonLabel: '@?',
+      uploadOnly: '=?'
     },
     controller: function($scope,$http,$timeout,Upload,ResourceDialogs) {
       // Defaults
