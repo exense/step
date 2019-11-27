@@ -464,7 +464,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.throughputchart = {};
 			$scope.responseTimeByFunctionChart = {};
 
-			var refresh = function() {        
+			var refresh = function() {
+				//Not used anymore (using rtm data)
+				/*
 				$http.get('rest/views/statusDistributionForFunctionCalls/' + eId).then(function(response) {
 					$scope.progress = response.data;
 				});
@@ -484,7 +486,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						$scope.countByErrorCode.push({errorCode:key, errorCodeCount:val})
 					});
 				});
-
+				 */
 				$scope.errorDistributionToggleStates = ['message', 'code'];
 				$scope.selectedErrorDistirbutionToggle = 'message';
 
@@ -559,20 +561,27 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					refreshAll();
 				}
 			})
+			
+			/* Viz Perf Dashboard */
+			$scope.displaymode = 'managed';
+			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
+
+			$scope.dashboardsendpoint=[];
+
 
 			$scope.$watch('execution.status',function(newSatus, oldStatus) {
+				if(newSatus == 'ENDED'){
+					$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
+				}else{
+					$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
+				}
+
 				if(newSatus=='ENDED') {
 					if(oldStatus&&$scope.autorefresh) {
 						refreshAll();
 					}
 				}
 			});
-			
-			/* Viz Perf Dashboard */
-			$scope.displaymode = 'managed';
-			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
-			//keeping model in execution scope to prevent pointless reload
-			$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword'), new DefaultExplorationDashboard()];
 			
 			$scope.$on('dashletinput-initialized', function () {
 				//console.log('-> dashletinput-initialized')
@@ -582,12 +591,12 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				//console.log('-> manager-fully-loaded')
 				
 				$scope.$watch('autorefresh',function(newStatus) {
-					$scope.$broadcast('globalsettings-refreshToggle', { 'new': newStatus });
+					$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': newStatus });
 				});
 
 				$scope.$watch('execution.status',function(newSatus, oldStatus) {
 					if(newSatus=='ENDED') {
-						$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
+						$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': false });
 					}
 				});
 			});
