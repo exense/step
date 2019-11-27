@@ -11,11 +11,16 @@
 				</button>
 				<button class="btn btn-default btn-auto-size" ng-click="clear()">
 					<span class="glyphicon glyphicon-remove" aria-hidden="true" uib-tooltip="Clear"></span>
-				</button> 	
+				</button>
 			</div>
 		</div>
-		<div ng-if="resourceNotExisting">
-			<input readonly="readonly" type="text" class="form-control" value="Error: the referenced resource doesn't exist anymore."  uib-tooltip="Drag and drop your file here or enter the path to a file accessible from the controller" >
+		<div ng-if="resourceNotExisting" class="input-group">
+			<input readonly="readonly" type="text" class="form-control" value="Error: the referenced resource doesn't exist anymore." uib-tooltip="Drag and drop your file here or enter the path to a file accessible from the controller" >
+			<div class="input-group-btn">
+				<button class="btn btn-default btn-auto-size" ng-click="clear()">
+					<span class="glyphicon glyphicon-remove" aria-hidden="true" uib-tooltip="Clear"></span>
+				</button>
+			</div>
 		</div>			
 	</div>
 	<div ng-if="!isResource()" class="input-group" >
