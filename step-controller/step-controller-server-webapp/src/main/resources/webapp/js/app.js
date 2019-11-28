@@ -639,7 +639,11 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
     service.responseError = function(response) {
         if (response.status == 500) {
           Dialogs = $injector.get('Dialogs');
-          Dialogs.showErrorMsg(response.data)
+          if (response.data.metaMessage.includes("org.rtm.stream.UnknownStreamException")) {
+            console.log('genericErrorInterceptor for rtm: ' + response.data.metaMessage);
+          } else {
+            Dialogs.showErrorMsg(response.data);
+          }
         }
         return $q.reject(response);
     };
