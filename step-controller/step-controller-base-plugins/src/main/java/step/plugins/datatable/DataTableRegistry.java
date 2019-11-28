@@ -115,8 +115,8 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 
 		BackendDataTable projectsTable = new BackendDataTable(new Collection(database, "projects"));
 		projectsTable.addColumn("ID", "_id");
-		projectsTable.addColumn("Name", "name");
-		projectsTable.addColumn("Owner", "owner");
+		projectsTable.addColumn("Name", "attributes.name");
+		projectsTable.addColumn("Owner", "attributes.owner");
 		projectsTable.addRowAsJson("Actions");
 		
 		BackendDataTable parametersTable = new BackendDataTable(new Collection(database, "parameters"));
