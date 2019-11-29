@@ -15,7 +15,7 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity) {
 	var valueField = "value";
 	var groupby = "name";
 	
-	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }]";
+	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[{ \"key\": \"begin\", \"minValue\": \"__from__\", \"maxValue\": \"__to__\" }]";
 
 	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
@@ -64,7 +64,7 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 	var valueField = "value";
 	var groupby = "name";
 	
-	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }]";
+	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[]";
 
 	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
