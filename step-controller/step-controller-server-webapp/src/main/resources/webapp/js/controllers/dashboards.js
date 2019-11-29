@@ -30,34 +30,48 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	$scope.dashboardsendpoint = [];
 
 	$scope.initFromLocation = function(){
+		if($scope.$state.startsWith('__pp__')){
+			var dashboardClass = $scope.$state.split('__pp__')[1];
+			$scope.dashboardsendpoint.push(window[dashboardClass]());
+		}else{// custom (load from db)
+			$scope.sessionName = $scope.$state;
+			$http.get('/rest/viz/crud/sessions?name=' + $scope.$state)
+			.then(function (response) {
+				$scope.dashboardsendpoint.length = 0;
+				if (response && response.data && response.data.object.state && response.data.object.state.length > 0) {
+					//$scope.dashboardsendpoint = $scope.dashboardsendpoint.concat(response.data.object.state);
+					_.each(response.data.object.state, function(item, index){
+						$scope.dashboardsendpoint.push(item);
+					});
+				}
 
-		if($scope.$state && $scope.$state){
-			if($scope.$state.startsWith('__pp__')){
-				var dashboardClass = $scope.$state.split('__pp__')[1];
-				$scope.dashboardsendpoint.push(window[dashboardClass]());
-			}else{// custom (load from db)
-				$scope.sessionName = $scope.$state;
-				$http.get('/rest/viz/crud/sessions?name=' + $scope.$state)
-				.then(function (response) {
-					$scope.dashboardsendpoint.length = 0;
-					if (response && response.data && response.data.object.state && response.data.object.state.length > 0) {
-						//$scope.dashboardsendpoint = $scope.dashboardsendpoint.concat(response.data.object.state);
-						_.each(response.data.object.state, function(item, index){
-							$scope.dashboardsendpoint.push(item);
-						});
-					}
-
-				}, function (response) {
-					console.log('error response')
-					console.log(response)
-				});
-			}
+			}, function (response) {
+				console.log('error response')
+				console.log(response)
+			});
 		}
 	}
 
-	//$scope.$watch('$location.$$search', function(){
-	$scope.initFromLocation();
-	//});
+	$scope.initFromSession = function(){
+		var session = $scope.authService.getContext().session;
+		if(session.dashboards){
+			$scope.dashboardsendpoint = session.dashboards;
+			$scope.sessionName = session.sessionName;
+		}
+	}
+
+	$scope.$on('$destroy', function () {
+		var session = $scope.authService.getContext().session;
+		session.dashboards = $scope.dashboardsendpoint;
+		session.sessionName = $scope.sessionName;
+	});
+
+
+	if($scope.$state && $scope.$state){
+		$scope.initFromLocation();
+	}else{
+		$scope.initFromSession();
+	}
 
 	var init = false;
 	$scope.$on('dashboard-ready', function(event, arg){
