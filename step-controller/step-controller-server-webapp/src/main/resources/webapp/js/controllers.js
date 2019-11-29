@@ -412,6 +412,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.openRtm = function() {
 				$window.open($scope.rtmlink, '_blank');
 			}
+			
+			$scope.openLink = function(link,target) {
+				$window.open(link, target);
+			}
 		
 		},
 		link: function($scope, $element, $rootscope) {
