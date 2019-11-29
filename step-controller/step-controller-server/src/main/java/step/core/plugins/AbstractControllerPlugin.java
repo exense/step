@@ -24,6 +24,16 @@ import org.eclipse.jetty.server.handler.ResourceHandler;
 import step.core.GlobalContext;
 
 public abstract class AbstractControllerPlugin extends AbstractExecutionPlugin implements ControllerPluginCallbacks {
+	
+	public static final String systemProjectId = "5ddfeff571951a1d74de5611";
+	
+	public static final String systemProject = "system";
+	
+	public static final String systemProjectOwner = "system";
+	
+	public static final String almProjectId = "5ddfeff571951a1d74de5615";
+	
+	public static final String almProject = "alm";
 
 	@Override
 	public void executionControllerStart(GlobalContext context)  throws Exception {}
