@@ -65,6 +65,16 @@ form.form-signin {
   color: #f0f6f0;
 }
 
+.navbar-right {
+  float: right !important;
+  margin-right: 50px;
+}
+
+.navbar-nav > li > div {
+  padding: 14px 15px;
+  position: relative;
+}
+
 @media (max-width: 767px) {
   .navbar-default .navbar-nav .open .dropdown-menu > li > a {
     color: #d8d9da;
@@ -101,7 +111,7 @@ a { cursor: pointer; }
 .toolbar {
 	position: absolute;
 	top: 15px;
-	right: 150px;
+	right: 15px;
 }
 
 .status-UNKNOW {
