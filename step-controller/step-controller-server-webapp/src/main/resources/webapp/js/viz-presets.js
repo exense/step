@@ -15,7 +15,7 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity) {
 	var valueField = "value";
 	var groupby = "name";
 	
-	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
+	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[{ \"key\": \"begin\", \"minValue\": \"__from__\", \"maxValue\": \"__to__\" }]";
 
 	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
@@ -29,7 +29,7 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity) {
 			entityName + ' Performance',
 			new DashboardState(
 					new GlobalSettings(
-							[new Placeholder("__eId__", executionId, false), new Placeholder("__measurementType__", measurementType, false),
+							[new Placeholder("__businessobjectid__", executionId, false), new Placeholder("__measurementType__", measurementType?measurementType:'custom', false),
 							new Placeholder("__from__", "new Date(new Date().getTime() - "+timeFrame+").getTime()", true),
 							new Placeholder("__to__", "new Date().getTime()", true)
 							],
@@ -66,7 +66,7 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 	var valueField = "value";
 	var groupby = "name";
 	
-	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
+	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[]";
 
 	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
@@ -80,7 +80,7 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 			entityName + ' Performance',
 			new DashboardState(
 					new GlobalSettings(
-							[new Placeholder("__eId__", executionId, false), new Placeholder("__measurementType__", measurementType, false)],
+							[new Placeholder("__businessobjectid__", executionId, false), new Placeholder("__measurementType__", measurementType?measurementType:'custom', false)],
 							false,
 							false,
 							'Global Settings',
@@ -100,7 +100,7 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 function EffectiveChartOptions(charType, xAxisOverride, timeFrame){
 	var opts = new ChartOptions(charType, false, false,
 			xAxisOverride?xAxisOverride:'function (d) {\r\n    var value;\r\n    if ((typeof d) === \"string\") {\r\n        value = parseInt(d);\r\n    } else {\r\n        value = d;\r\n    }\r\n\r\n    return d3.time.format(\"%H:%M:%S\")(new Date(value));\r\n}', 
-					xAxisOverride?xAxisOverride:'function (d) { return d.toFixed(0); }',
+					xAxisOverride?xAxisOverride:'function (d) { return d.toFixed(1); }',
 			timeFrame?'[new Date(new Date().getTime() - '+timeFrame+').getTime(), new Date().getTime()]':undefined
 	);
 	opts.margin.left = 75;

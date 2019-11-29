@@ -23,7 +23,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	ViewRegistry.registerCustomMenuEntry('Dashboards','dashboards');
 })
 
-.controller('DashboardsController', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService, $location) {
+.controller('DashboardsController', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService, $location, ViewRegistry, EntityRegistry, $element, $uibModal) {
 	stateStorage.push($scope, 'dashboards', {});	
 	$scope.authService = AuthService;
 	$scope.staticPresets = new StaticPresets();
@@ -74,6 +74,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	}
 
 	var init = false;
+
 	$scope.$on('dashboard-ready', function(event, arg){
 		if(!init){
 			init = true;
@@ -90,9 +91,77 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 		}
 	});
 
-//	console.log('--debug--');
-//	console.log(stateStorage);
-//	console.log($scope.$state);
-//	console.log($scope.$$statepath);
-//	console.log($location.$$search);
+	$scope.applyEntities = function(selected){
+		$scope.$broadcast('apply-global-setting', { key: '__businessobjectid__', value : selected, isDynamic : false});
+	};
+
+	$scope.popApplyEntity = function(){
+		Dialogs.selectEntity().then(function(result){
+			$scope.applyEntities(result.array[0]);
+		});
+	};
+
+	$scope.pickPreset = function(){
+		var $ctrl = this;
+		$ctrl.animationsEnabled = true;
+		$ctrl.tableElementParent = angular.element($element).find('presetparent');
+
+		var modalInstance = $uibModal.open({
+			animation: $ctrl.animationsEnabled,
+			ariaLabelledBy: 'modal-title',
+			ariaDescribedBy: 'modal-body',
+			templateUrl: 'partials/dashboardPresetsTable.html',
+			controller: 'DashboardPresetsTableCtrl',
+			controllerAs: '$ctrl',
+			size: 'lg',
+			appendTo: $ctrl.tableElementParent,
+			resolve: {
+				data: function () {
+					return [["PerformanceDashboard"], ["RealtimePerformanceDashboard"], ["Self-Monitoring"], ["Project Overview"]];
+				},
+
+				tableElementParent: function () {
+					return $ctrl.tableElementParent;
+				}
+			}
+		});
+
+		return modalInstance.result;
+	};
+
+	$scope.loadFromPresets = function(){
+		$scope.pickPreset().then(function(result){
+			$scope.dashboardsendpoint = [(window[result[0]]())];
+		});
+	};
 })
+
+.controller('DashboardPresetsTableCtrl', function ($scope, $uibModalInstance, data, tableElementParent) {
+	var $ctrl = this;
+	$ctrl.selected = "";
+
+	$(document).ready(function(){
+
+		$ctrl.table = $('#presetsTable').DataTable({
+			select: true,
+			data: data,
+			columns: [
+				{ title: "Name" },
+				]
+		});
+
+		tableElementParent.on('click', 'tr', function () {
+			$ctrl.selected = $ctrl.table.row( this ).data();
+		} );
+	});
+
+	$ctrl.ok = function () {
+		$uibModalInstance.close($ctrl.selected);
+	};
+
+	$ctrl.cancel = function () {
+		$uibModalInstance.dismiss('cancel');
+	};
+})
+
+

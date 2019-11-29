@@ -1,3 +1,34 @@
 <div id="DashboardsController" ng-controller="DashboardsController">
-	<viz-session-manager restprefix="'/rest'"  dashboards="dashboardsendpoint" currentsession="sessionName" />
+	<div style="display: grid; float: right;">
+		<label>Entities</label>
+		<ul
+			style="list-style-type: none !important; display: inline-flex; padding: 0;">
+			<li><button class="btn btn-success btn-nav"
+					ng-click="popApplyEntity()" uib-tooltip="Apply entity"
+					tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-search glyphicon-app"></span>
+				</button></li>
+		</ul>
+	</div>
+	<div style="display: grid; float: right;">
+		<label>&nbsp;</label>
+		<ul
+			style="list-style-type: none !important; display: inline-flex; padding: 0;">
+			<li>&nbsp;</li>
+		</ul>
+	</div>
+	<div style="display: grid; float: right;">
+		<label>Presets</label>
+		<ul
+			style="list-style-type: none !important; display: inline-flex; padding: 0;">
+			<li><button class="btn btn-success btn-nav"
+					ng-click="loadFromPresets()" uib-tooltip="Load preset"
+					tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-folder-close glyphicon-app"></span>
+				</button></li>
+		<presetparent />
+		</ul>
+	</div>
+	<viz-session-manager restprefix="'/rest'"
+		dashboards="dashboardsendpoint" currentsession="sessionName" />
 </div>
