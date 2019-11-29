@@ -18,11 +18,11 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity) {
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[{ \"key\": \"begin\", \"minValue\": \"__from__\", \"maxValue\": \"__to__\" }]";
 
-	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
-	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
-	addLastMeasurementsTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
-	//addErrorsSummary(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
-	addAggregatesSummaryTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
+	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	addLastMeasurementsTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	//addErrorsSummary(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	addAggregatesSummaryTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 
 
 	var dashboardObject = new Dashboard(
@@ -59,6 +59,8 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 		entityName = 'Custom Transaction';
 	}
 	
+	var timeFrame = null;
+	
 	var timeField = "begin";
 	var timeFormat = "long";
 	var valueField = "value";
@@ -67,11 +69,11 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__eId__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[]";
 
-	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
-	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
-	addLastMeasurementsTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
-	//addErrorsSummary(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
-	addAggregatesSummaryTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters);
+	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	addLastMeasurementsTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	//addErrorsSummary(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	addAggregatesSummaryTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 
 
 	var dashboardObject = new Dashboard(
@@ -95,11 +97,11 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 	return dashboardObject;
 };
 
-function EffectiveChartOptions(charType, xAxisOverride){
+function EffectiveChartOptions(charType, xAxisOverride, timeFrame){
 	var opts = new ChartOptions(charType, false, false,
 			xAxisOverride?xAxisOverride:'function (d) {\r\n    var value;\r\n    if ((typeof d) === \"string\") {\r\n        value = parseInt(d);\r\n    } else {\r\n        value = d;\r\n    }\r\n\r\n    return d3.time.format(\"%H:%M:%S\")(new Date(value));\r\n}', 
-			'function (d) { return d.toFixed(0); }'
-			//,'[new Date(new Date().getTime() - 300000).getTime(), new Date().getTime()]'
+					xAxisOverride?xAxisOverride:'function (d) { return d.toFixed(0); }',
+			timeFrame?'[new Date(new Date().getTime() - '+timeFrame+').getTime(), new Date().getTime()]':undefined
 	);
 	opts.margin.left = 75;
 	return opts;
@@ -122,7 +124,7 @@ function RTMAggBaseQueryTmpl(metric, transform){
 	);
 };
 
-function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters){
+function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	return new TemplatedQuery(
 			"Template",
 			new RTMAggBaseQueryTmpl(metric, transform),
@@ -137,27 +139,27 @@ function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform, entityNam
 	);
 };
 
-var addAggregatesSummaryTpl = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters){
+var addAggregatesSummaryTpl = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	var summaryTransform = "function (response) {\r\n    //var metrics = response.data.payload.metricList;\r\n    var metrics = [\"cnt\",\"avg\", \"min\", \"max\", \"tpm\", \"tps\", \"90th pcl\"];\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    if (payload && payloadKeys.length > 0) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[0]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            for (i = 0; i < metrics.length; i++) {\r\n                var metric = metrics[i];\r\n                if (payload[payloadKeys[0]][serieskeys[j]][metric]) {\r\n                    retData.push({\r\n                        x: metric,\r\n                        y: Math.round(payload[payloadKeys[0]][serieskeys[j]][metric]),\r\n                        z: serieskeys[j]\r\n                    });\r\n                }else{\r\n                    retData.push({ x: metric, y: 0, z: serieskeys[j]});\r\n               }\r\n            }\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var standalone = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(entityName + " stats summary", false, 0, {}, new EffectiveChartOptions('seriesTable', 'function (d) { return d;}'), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters), new DefaultGuiClosed(), new DefaultInfo()));
+	var standalone = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(entityName + " stats summary", false, 0, {}, new EffectiveChartOptions('seriesTable', 'function(d) { return d; }', timeFrame), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(standalone);
 };
 
-var addAggregatesOverTimeTpl = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters){
+var addAggregatesOverTimeTpl = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	var overtimeTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: payload[payloadKeys[i]][serieskeys[j]][metric],\r\n                z: serieskeys[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
 	var overtimeFillBlanksTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = [];\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            if(!series.includes(serieskeys[j])){\r\n                series.push(serieskeys[j]);\r\n            }\r\n        }\r\n    }\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < series.length; j++) {\r\n            var yval;\r\n            if(payload[payloadKeys[i]][serieskeys[j]] && payload[payloadKeys[i]][serieskeys[j]][metric]){\r\n              yval = payload[payloadKeys[i]][serieskeys[j]][metric];\r\n            }else{\r\n              //console.log('missing dot: x=' + payloadKeys[i] + '; series=' + series[j]);\r\n              yval = 0;\r\n            }\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: yval,\r\n                z: series[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
 	var config = getMasterSlaveConfig("raw", "Average "+entityName+" Duration (ms)", "Nb " + entityName + "s per second");
 
-	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('lineChart'), config.masterconfig, new RTMAggBaseTemplatedQueryTmpl("avg", "auto", overtimeTransform,  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters), new DefaultGuiClosed(), new DefaultInfo()));
-	//var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('lineChart'), config.slaveconfig, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeTransform,  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters), new DefaultGuiClosed(), new DefaultInfo()));
-	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('stackedAreaChart', false, true), config.slaveconfig, new RTMAggBaseTemplatedQueryTmpl("tps", "auto", overtimeFillBlanksTransform,  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters), new DefaultGuiClosed(), new DefaultInfo()));
+	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('lineChart', null, timeFrame), config.masterconfig, new RTMAggBaseTemplatedQueryTmpl("avg", "auto", overtimeTransform,  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+	//var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('lineChart'), config.slaveconfig, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeTransform,  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('stackedAreaChart', null, timeFrame), config.slaveconfig, new RTMAggBaseTemplatedQueryTmpl("tps", "auto", overtimeFillBlanksTransform,  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 
 	widgetsArray.push(master);
 	widgetsArray.push(slave);
 };
 
 //No paging: FACTOR 100 via template
-var addLastMeasurementsTpl = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters){
+var addLastMeasurementsTpl = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	function RTMLatestMeasurementBaseQueryTmpl(){
 		return new SimpleQuery(
 				"Raw", new Service(
@@ -170,7 +172,7 @@ var addLastMeasurementsTpl = function(widgetsArray, entityName,timeField, timeFo
 		);
 	};
 
-	function RTMLatestMeasurementTemplatedQuery(entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters){
+	function RTMLatestMeasurementTemplatedQuery(entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 		return new TemplatedQuery(
 				"Template",
 				new RTMLatestMeasurementBaseQueryTmpl(),
@@ -188,15 +190,15 @@ var addLastMeasurementsTpl = function(widgetsArray, entityName,timeField, timeFo
 
 	var config = getMasterSlaveConfig("transformed", "Last 100 " + entityName +"s - Individual duration (ms)", "Last 100 "+entityName+"s - Value table (ms)");
 
-	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('scatterChart'), config.masterconfig, new RTMLatestMeasurementTemplatedQuery(entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters), new DefaultGuiClosed(), new DefaultInfo()) );
-	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('seriesTable'), config.slaveconfig, new RTMLatestMeasurementTemplatedQuery(entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters), new DefaultGuiClosed(), new DefaultInfo()) );
+	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('scatterChart', null, null), config.masterconfig, new RTMLatestMeasurementTemplatedQuery(entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()) );
+	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('seriesTable', null, null), config.slaveconfig, new RTMLatestMeasurementTemplatedQuery(entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()) );
 
 	widgetsArray.push(master);
 	//widgetsArray.push(slave);
 };
 
 //No paging: hardcoded simple query
-var addLastMeasurements = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters){
+var addLastMeasurements = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 
 	function RTMLatestMeasurementBaseQuery(){
 		return new SimpleQuery(
@@ -210,22 +212,22 @@ var addLastMeasurements = function(widgetsArray, entityName,timeField, timeForma
 	};
 
 	var config = getMasterSlaveConfig("raw", "Last 100 Measurements - Scattered values (ms)", "Last 100 Measurements - Value table (ms)");
-	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('scatterChart'), config.masterconfig, new RTMLatestMeasurementBaseQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
-	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('seriesTable'), config.slaveconfig, new RTMLatestMeasurementBaseQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
+	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('scatterChart', null, timeFrame), config.masterconfig, new RTMLatestMeasurementBaseQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
+	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('seriesTable', null, timeFrame), config.slaveconfig, new RTMLatestMeasurementBaseQuery(), new DefaultGuiClosed(), new DefaultInfo()) );
 
 	widgetsArray.push(master);
 	widgetsArray.push(slave);
 };
 
-var addErrorsSummary = function(widgetsArray, entityName, timeField, timeFormat, valueField, groupby, textFilters, numericalFilters){
+var addErrorsSummary = function(widgetsArray, entityName, timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	var summaryTransform = "function (response) {\r\n    //var metrics = response.data.payload.metricList;\r\n    var metrics = [\"cnt\"];\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    if (payload && payloadKeys.length > 0) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[0]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            for (i = 0; i < metrics.length; i++) {\r\n                var metric = metrics[i];\r\n                if (payload[payloadKeys[0]][serieskeys[j]][metric]) {\r\n                    retData.push({\r\n                        x: metric,\r\n                        y: Math.round(payload[payloadKeys[0]][serieskeys[j]][metric]),\r\n                        z: '\u0020' + serieskeys[j].split('_')[0]\r\n                    });\r\n                }else{\r\n                    retData.push({ x: metric, y: 0, z: serieskeys[j]});\r\n               }\r\n                        }\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState(entityName + " status summary", false, 0, {}, new EffectiveChartOptions('singleValueTable'), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("cnt", "max", summaryTransform, entityName,timeField, timeFormat, valueField, "rnStatus", textFilters, numericalFilters), new DefaultGuiClosed(), new DefaultInfo()));
+	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState(entityName + " status summary", false, 0, {}, new EffectiveChartOptions('singleValueTable', 'function(d) { return d; }', timeFrame), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("cnt", "max", summaryTransform, entityName,timeField, timeFormat, valueField, "rnStatus", textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(standalone);
 };
 
-var addErrorsOverTimeTpl = function(widgetsArray, entityName, timeField, timeFormat, valueField, groupby, textFilters, numericalFilters){
+var addErrorsOverTimeTpl = function(widgetsArray, entityName, timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	var summaryTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = [];\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            if(!serieskeys[j].includes(';PASSED') && !series.includes(serieskeys[j])){\r\n                series.push(serieskeys[j]);\r\n            }\r\n        }\r\n    }\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        for (j = 0; j < series.length; j++) {\r\n            var yval;\r\n            if(payload[payloadKeys[i]][series[j]] && payload[payloadKeys[i]][series[j]][metric]){\r\n              yval = payload[payloadKeys[i]][series[j]][metric];\r\n            }else{\r\n              //console.log('missing dot: x=' + payloadKeys[i] + '; series=' + series[j]);\r\n              yval = 0;\r\n            }\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: yval,\r\n                z: series[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState(entityName + " errors over time", false, 0, {}, new EffectiveChartOptions('stackedAreaChart'), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", summaryTransform, entityName,timeField, timeFormat, valueField, "name;rnStatus", textFilters, numericalFilters), new DefaultGuiClosed(), new DefaultInfo()));
+	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState(entityName + " errors over time", false, 0, {}, new EffectiveChartOptions('stackedAreaChart', null, timeFrame), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", summaryTransform, entityName,timeField, timeFormat, valueField, "name;rnStatus", textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(standalone);
 };
 
