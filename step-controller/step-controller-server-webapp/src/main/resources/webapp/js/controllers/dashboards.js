@@ -20,7 +20,6 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 
 .run(function(ViewRegistry) {
 	ViewRegistry.registerView('dashboards','partials/dashboards/dashboardsController.html');
-	ViewRegistry.registerCustomMenuEntry('Dashboards','dashboards');
 })
 
 .controller('DashboardsController', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService, $location, ViewRegistry, EntityRegistry, $element, $uibModal) {
