@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.functions.base.types.handler;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -76,12 +77,12 @@ public class BaseFunctionReflectionHelper {
 		return false;
 	}
 
-	public static List<String> getLocalKeywordList() throws Exception {
+	public static List<String> getLocalKeywordList(Class<? extends Annotation> annotation) throws Exception {
 
 		List<String> keywordList = new ArrayList<>();
 
 		try {
-			Set<Method> methods = getLocalFunctionBaseReflections().getMethodsAnnotatedWith(Keyword.class);
+			Set<Method> methods = getLocalFunctionBaseReflections().getMethodsAnnotatedWith(annotation);
 
 			for(Method method:methods) {
 				keywordList.add(method.getName());

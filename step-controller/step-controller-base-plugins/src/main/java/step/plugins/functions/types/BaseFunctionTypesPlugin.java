@@ -18,6 +18,7 @@ import step.functions.base.types.LocalFunctionType;
 import step.functions.base.types.handler.BaseFunctionReflectionHelper;
 import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
+import step.handlers.javahandler.Keyword;
 
 @Plugin(dependencies= {GridPlugin.class})
 public class BaseFunctionTypesPlugin extends AbstractControllerPlugin {
@@ -37,7 +38,7 @@ public class BaseFunctionTypesPlugin extends AbstractControllerPlugin {
 
 		List<String> keywordList = null;
 		try {
-			keywordList = BaseFunctionReflectionHelper.getLocalKeywordList();
+			keywordList = BaseFunctionReflectionHelper.getLocalKeywordList(Keyword.class);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
