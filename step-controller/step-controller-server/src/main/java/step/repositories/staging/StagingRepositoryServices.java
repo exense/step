@@ -99,7 +99,7 @@ public class StagingRepositoryServices extends AbstractServices {
 		} catch (IOException e) {
 			throw new RuntimeException("Error while saving file.");
 		} finally {
-			container.save();
+			container.save(null);
 		}
 		
 		String resourceId = container.getResource().getId().toString();

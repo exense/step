@@ -296,7 +296,7 @@ public class DataTableServices extends AbstractTableService {
 					}
 				} finally {
 					writer.close();
-					resourceContainer.save();
+					resourceContainer.save(null);
 				}
 
 				return resourceContainer.getResource();

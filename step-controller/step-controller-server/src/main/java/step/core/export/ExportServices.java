@@ -53,7 +53,7 @@ public class ExportServices extends AbstractServices {
 			public Resource runExport() throws IOException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "artefact_export.json");
 				exportManager.exportArtefactWithChildren(id, resourceContainer.getOutputStream());
-				resourceContainer.save();
+				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
 		});
@@ -70,7 +70,7 @@ public class ExportServices extends AbstractServices {
 			public Resource runExport() throws FileNotFoundException, IOException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "artefact_export.json");
 				exportManager.exportAllArtefacts(resourceContainer.getOutputStream());
-				resourceContainer.save();
+				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
 		});
