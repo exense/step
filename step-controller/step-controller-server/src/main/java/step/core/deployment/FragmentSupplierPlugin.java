@@ -16,20 +16,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.datatable;
+package step.core.deployment;
 
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class TablePlugin extends AbstractControllerPlugin {
+public class FragmentSupplierPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) {
-		TableManager tableManager = new TableManager();
-		context.put(TableManager.class, tableManager);
-		context.getServiceRegistrationCallback().registerService(TableService.class);
+		FragmentSupplier fragmentSupplier = new FragmentSupplier(context);
+		context.put(FragmentSupplier.class, fragmentSupplier);
+		context.getServiceRegistrationCallback().registerService(FragmentSupplier.class);
 	}
 
 }

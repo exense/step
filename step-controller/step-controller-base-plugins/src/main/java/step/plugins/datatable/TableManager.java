@@ -1,27 +1,21 @@
 package step.plugins.datatable;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 import org.bson.conversions.Bson;
 
+import step.core.deployment.FragmentSupplier;
 import step.core.deployment.Session;
 
-public class TableManager {
+public class TableManager{
 
-	protected List<Function<Session, List<Bson>>> additionalQueryFragmentSuppliers = new ArrayList<>();
+	private FragmentSupplier supplier;
 
-	public List<Function<Session, List<Bson>>> getAdditionalQueryFragmentSuppliers() {
-		return additionalQueryFragmentSuppliers;
+	public TableManager(FragmentSupplier supplier) {
+		this.supplier = supplier;
 	}
 
-	public void setAdditionalQueryFragmentSuppliers(List<Function<Session, List<Bson>>> additionalQueryFragmentSuppliers) {
-		this.additionalQueryFragmentSuppliers = additionalQueryFragmentSuppliers;
+	public List<Bson> getAdditionalQueryFragmentsFromContext(Session session, String collectionID, String ignoreContext) {
+		return this.supplier.getAdditionalQueryFragmentsFromContextAsBson(session, collectionID, ignoreContext);
 	}
-
-	public boolean add(Function<Session, List<Bson>> e) {
-		return additionalQueryFragmentSuppliers.add(e);
-	}
-	
 }
