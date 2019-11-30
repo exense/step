@@ -46,10 +46,10 @@ public class BaseFunctionTypesPlugin extends AbstractControllerPlugin {
 			for(String keyword : keywordList){
 				Map<String, String> attributes = new HashMap<>();
 				attributes.put("name", keyword);
+
 				Function function = functionAccessor.findByAttributes(attributes);
 				if(function == null) {
 					function = new LocalFunction();
-					attributes.put("project", AbstractControllerPlugin.systemProjectId);
 					function.setAttributes(attributes);
 					try {
 						function.setSchema(Json.createReader(
