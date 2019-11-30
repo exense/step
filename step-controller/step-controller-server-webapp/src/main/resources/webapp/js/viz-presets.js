@@ -1,3 +1,69 @@
+function getVizDashboardList(){
+	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"]];
+}
+function WikimediaDemo() {
+
+	var widgetsArray = [];
+	var wikimediaTransformFunction = function (response, args) {
+		var ret = [];
+		var items = response.data.items;
+		for(var i=0; i < items.length; i++){
+			ret.push({x: items[i].timestamp, y: items[i].views, z: 'views'});
+		}
+		return ret;
+	};
+
+	var wikimediaBaseQuery = new SimpleQuery(
+			"Raw", new Service(
+					"", "Get","",
+					new DefaultPreproc(),
+					new Postproc("", wikimediaTransformFunction.toString(), [], {}, "")
+			)
+	);
+	var wikimediaQueryTemplate = new TemplatedQuery(
+			"Template",
+			wikimediaBaseQuery,
+			new DefaultPaging(),
+			new Controls(new Template("","https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/all-agents/Foo/daily/__dayFrom__/__dayTo__",
+					[new Placeholder("__dayFrom__", "20151010", false), new Placeholder("__dayTo__", "20151030", false)]))
+	);
+	
+	var xAxisFn = function(d) {
+		   var str = d.toString();
+		   var year = str.substring(0,4);
+		   var month = str.substring(4, 6);
+		   var day = str.substring(6, 8);
+		   return year + '-' + month + '-' + day;
+		};
+	
+	var options = new EffectiveChartOptions('lineChart', xAxisFn);
+	options.showLegend = true;
+
+	var widget = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(" Daily wikimedia stats", false, 0, {}, options, new Config('Off', false, false, ''), wikimediaQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
+
+	widgetsArray.push(widget);
+
+	var dashboardObject = new Dashboard(
+			'Daily Stats',
+			new DashboardState(
+					new GlobalSettings(
+							[new Placeholder("__businessobjectid__", "", false)],
+							false,
+							false,
+							'Global Settings',
+							5000
+					),
+					widgetsArray,
+					'Wikimedia Dashboard',
+					'aggregated',
+					new DefaultDashboardGui()
+			)
+	);
+
+	return dashboardObject;
+}
+
+
 function RealtimePerformanceDashboard(executionId, measurementType, entity) {
 
 	var widgetsArray = [];
