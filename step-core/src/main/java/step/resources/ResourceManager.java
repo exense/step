@@ -2,6 +2,7 @@ package step.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 public interface ResourceManager {
 
@@ -20,11 +21,12 @@ public interface ResourceManager {
 	 * @param resourceStream the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
 	 * @param checkForDuplicates is duplicate should be checked
+	 * @param resourceAttributes 
 	 * @return the created {@link Resource}
 	 * @throws IOException an IOException occurs during the call
 	 * @throws SimilarResourceExistingException a similar resource exist
 	 */
-	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates) throws IOException, SimilarResourceExistingException;
+	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, Map<String, String> resourceAttributes) throws IOException, SimilarResourceExistingException;
 
 	/**
 	 * Save the content provided as stream to an existing resource. 

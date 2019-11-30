@@ -99,7 +99,7 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName,
-			boolean checkForDuplicates) throws IOException, SimilarResourceExistingException {
+			boolean checkForDuplicates, Map<String, String> sessionQueryFragments) throws IOException, SimilarResourceExistingException {
 		 StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 		ResourceUploadResponse upload = upload(bodyPart, resourceType, checkForDuplicates);
 		return upload.getResource();

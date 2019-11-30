@@ -2,6 +2,7 @@ package step.resources;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Map;
 
 public class ResourceRevisionContainer {
 
@@ -30,18 +31,18 @@ public class ResourceRevisionContainer {
 		return resourceRevision;
 	}
 
-	public void save(boolean checkForDuplicates) throws IOException, SimilarResourceExistingException {
+	public void save(boolean checkForDuplicates, Map<String, String> additionalAttributes) throws IOException, SimilarResourceExistingException {
 		try {
 			outputStream.close();
 		} catch (IOException e) {
 
 		}
-		resourceManagerImpl.closeResourceContainer(resource, resourceRevision, checkForDuplicates);
+		resourceManagerImpl.closeResourceContainer(resource, resourceRevision, checkForDuplicates, additionalAttributes);
 	}
 	
-	public void save() throws IOException {
+	public void save(Map<String, String> additionalAttributes) throws IOException {
 		try {
-			save(false);
+			save(false, additionalAttributes);
 		} catch (SimilarResourceExistingException e) {
 			throw new RuntimeException("This should never happen");
 		}

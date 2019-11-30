@@ -21,7 +21,7 @@ public class ResourceManagerImplTest {
 		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
 		
 		// Create a resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false);
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false, null);
 		Assert.assertNotNull(resource);
 		
 		// Assert that the resource has been persisted
@@ -87,12 +87,12 @@ public class ResourceManagerImplTest {
 		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
 		
 		// Create a resource
-		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
-		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource2.txt"), "TestResource2.txt", true);
-		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false);
+		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
+		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource2.txt"), "TestResource2.txt", true, null);
+		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false, null);
 		SimilarResourceExistingException actualException = null;
 		try {
-			resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
+			resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
 		} catch (SimilarResourceExistingException e) {
 			actualException = e;
 		}
@@ -110,7 +110,7 @@ public class ResourceManagerImplTest {
 		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
 		
 		// Create a resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
 		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/"+ResourceManager.RESOURCE_TYPE_FUNCTIONS+"/"+resource.getId().toString()+"/"+resource.getCurrentRevisionId().toString()+"/TestResource.txt");
 		resourceFileActual.delete();
 		
@@ -134,7 +134,7 @@ public class ResourceManagerImplTest {
 		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
 		
 		// Create a resource
-		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
+		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
 		
 		String resourceId = resource.getId().toString();
 		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
@@ -159,7 +159,7 @@ public class ResourceManagerImplTest {
 		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
 		
 		// Create a resource
-		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true);
+		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
 		
 		String resourceId = resource.getId().toString();
 		ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resourceId);
