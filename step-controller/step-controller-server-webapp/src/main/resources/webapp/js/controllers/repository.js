@@ -52,8 +52,8 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
 		$scope.prepareProjectSession = function(callback) {
 			
 			/**/
-			//TODO externalize default repository project name and pass via conf 
-			var repositoryProjectName = 'alm'
+			//TODO make configurable
+			var repositoryProjectName = 'repository'
 			/**/	
 				
 			$http.post('/rest/tenants/project/search', { 'name' : repositoryProjectName}, {headers : {'ignoreContext': 'true'}}).then(function(response){
