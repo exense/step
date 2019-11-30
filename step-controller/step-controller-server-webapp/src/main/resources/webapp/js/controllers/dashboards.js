@@ -116,7 +116,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 			appendTo: $ctrl.tableElementParent,
 			resolve: {
 				data: function () {
-					return [["PerformanceDashboard"], ["RealtimePerformanceDashboard"], ["Self-Monitoring"], ["Project Overview"]];
+					return getVizDashboardList();
 				},
 
 				tableElementParent: function () {
