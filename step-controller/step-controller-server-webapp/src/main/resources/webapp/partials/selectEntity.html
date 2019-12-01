@@ -6,7 +6,7 @@
 
 	<!--  if old school table -->
 	<select ng-model="selectedEntity"
-		ng-options="option as option.display for option in entities"
+		ng-options="option as option.displayName for option in entities"
 		class="form-control" />
 
 	<div ng-if="entityTableLoaded">

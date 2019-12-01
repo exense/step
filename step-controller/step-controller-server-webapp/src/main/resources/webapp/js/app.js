@@ -53,25 +53,26 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	var api = {};
 
 	var entities = [];
-	api.registerEntity = function(entityName, entityCollectionName, getUrl, postUrl, getAllUrl){
+	api.registerEntity = function(displayName, entityName, entityCollectionName, getUrl, postUrl, tableType){
 		entities.push({
+			displayName: displayName,
 			entityName:entityName,
 			entityCollectionName:entityCollectionName,
 			getUrl:getUrl,
 			postUrl:postUrl,
-			getAllUrl:getAllUrl
+			tableType: tableType
 		});
 	};
 
 	api.getEntities = function(){
 		return entities;  
 	};
-	
+
 
 	api.getEntityByName = function(name){
 		return entities[name];  
 	};
-	
+
 	return api;
 })
 
@@ -150,10 +151,14 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	ViewRegistry.registerView('admin','partials/admin.html');
 	ViewRegistry.registerView('myaccount','partials/myaccount.html');
 	ViewRegistry.registerView('login','partials/loginForm.html',true);
-	
-	EntityRegistry.registerEntity('artefact', 'artefacts', 'rest/controller/artefact/', 'rest/controller/artefact', 'rest/controller/artefacts');
-	EntityRegistry.registerEntity('keyword', 'keywords', 'rest/controller/keyword/', 'rest/controller/keyword', 'rest/controller/keywords');
-	EntityRegistry.registerEntity('execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'rest/controller/executions');
+
+	EntityRegistry.registerEntity('Plan', 'artefact', 'artefacts', 'rest/controller/artefact/', 'rest/controller/artefact', 'datatable');
+	EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/controller/function/', 'rest/controller/function', 'datatable');
+	EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'datatable');
+	EntityRegistry.registerEntity('Scheduler task', 'task', 'task', 'rest/controller/task/', 'rest/controller/task', 'st-table');
+	EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'datatable');
+	//TODO
+	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');
 })
 
 .controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, MaintenanceService, ViewRegistry) {
@@ -597,41 +602,53 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		if(!entity){
 			dialogs.showErrorMsg('Invalid entity:' + entity);
 		}
-		
+
 		//TODO
 	};
 
 	//Choose any kind of entity through a single selection modal
-	dialogs.selectEntity = function(){
+	dialogs.selectEntity = function(excludeArray){
 		var modalInstance = $uibModal.open(
 				{
 					templateUrl: 'partials/selectEntity.html',
 					controller: 'SelectEntityCtrl',
 					resolve: {
-						entities: function () {
-							//return EntityRegistry.getEntities();
-							return [
-								{ readUrl : 'rest/controller/artefact', writeUrl : 'rest/controller/artefact', collection : 'artefacts', display : 'Plans' },
-								{ readUrl : 'rest/functions', writeUrl : 'rest/functions', collection: 'functions', display : 'Keywords' },
-								{ readUrl : 'rest/parameters', writeUrl : 'rest/parameters', collection : 'parameters', display : 'Parameters' },
-								{ readUrl : 'rest/controller/execution', writeUrl : 'rest/controller/save/execution', collection : 'executions', display : 'Executions' },
-								];
+						excludeArray:function(){
+							return excludeArray;
 						}
 					}
 				});
 
+
 		return modalInstance.result;
-	}
-	
+	};
 	return dialogs;
 })
 
+.controller('SelectEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, EntityRegistry, excludeArray) {
 
-.controller('SelectEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, entities) {
+	$scope.excludeEntities = function (excludeArray){
+		var fullEntityList = EntityRegistry.getEntities();
+		if(excludeArray && excludeArray.length > 0){
+			var filtered = [];
+			$.each(fullEntityList, function(index, item){
+				if(!excludeArray.includes(item.entityName)){
+					filtered.push(item);
+				}
+			});
+			return filtered;
+		}else{
+			return fullEntityList;
+		}
+	};
 
-	$scope.entities = entities;
+	$scope.entities = $scope.excludeEntities(excludeArray);
+
 	$scope.result = {};
+
 	$scope.$watch('selectedEntity',function(newValue){
+
+		$scope.currentEntityType = newValue;
 
 		if($scope.table && $scope.table.Datatable){
 			$scope.table.Datatable.clear();
@@ -647,12 +664,12 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 
 	});
-	
+
 	$scope.loadTable = function(newValue){
 		if(newValue){
-			$scope.readUrl = newValue.readUrl;
-			$scope.writeUrl = newValue.writeUrl;
-			$scope.collection = newValue.collection;
+			$scope.readUrl = newValue.getUrl;
+			$scope.writeUrl = newValue.postUrl;
+			$scope.collection = newValue.entityCollectionName;
 			$scope.table = {};
 			$scope.tabledef = {uid:$scope.collection};
 			$scope.tabledef.columns = function(columns) {
@@ -692,7 +709,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 				resultArray.push(key);
 			}
 		});
-		$uibModalInstance.close({ readUrl: $scope.readUrl,  writeUrl: $scope.writeUrl, collection : $scope.collection, array: resultArray});
+		$uibModalInstance.close({ entity : $scope.currentEntityType, array: resultArray});
 	};
 
 
@@ -784,7 +801,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	service.responseError = function(response) {
 		if (response.status == 500) {
 			Dialogs = $injector.get('Dialogs');
-			if (response.data.metaMessage.indexOf("org.rtm.stream.UnknownStreamException")>=0) {
+			if (response.data && response.data.metaMessage && response.data.metaMessage.indexOf("org.rtm.stream.UnknownStreamException")>=0) {
 				console.log('genericErrorInterceptor for rtm: ' + response.data.metaMessage);
 			} else {
 				Dialogs.showErrorMsg(response.data);
