@@ -665,41 +665,73 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	});
 
-	$scope.loadTable = function(newValue){
-		if(newValue){
-			$scope.readUrl = newValue.getUrl;
-			$scope.writeUrl = newValue.postUrl;
-			$scope.collection = newValue.entityCollectionName;
-			$scope.table = {};
-			$scope.tabledef = {uid:$scope.collection};
-			$scope.tabledef.columns = function(columns) {
-				_.each(columns, function(col){col.visible=false});
-				_.each(_.where(columns,{'title':'ID'}),function(col){col.visible=true});
-				_.each(_.where(columns,{'title':'Name'}),function(col){col.visible=true});
-				_.each(_.where(columns,{'title':'Description'}),function(col){col.visible=true});
-				_.each(_.where(columns,{'title':'Key'}),function(col){col.visible=true});
-
-				columns.push({
-					visible: true,
-					title:"Selection",
-					searchmode:"none",
-					width:"160px",
-					render: function ( data, type, row ) {
-						var html ='<input type="checkbox" onclick="angular.element(\'#SelectEntityCtrl\').scope().toggle(this.parentNode.parentNode.children[0].textContent, this.checked)">';
-						return html;
-					}
-				});
-
-				return columns;
-			};
-
-			$scope.entityTableLoaded = true;
-			$scope.update();
+	$scope.loadTable = function(entity){
+		if(entity){
+			var type = entity.tableType;
+			if(type === 'datatable'){
+				$scope.loadDatatableTable(entity);
+			}else{
+				if(type === 'st-table'){
+					$scope.loadStTable(entity);
+				}else{
+					throw new Error('Unsupported table type: ' + type);
+				}	
+			}
 		}
 	};
 
+	$scope.loadStTable = function(entity){
+		$scope.readUrl = entity.getUrl;
+		$scope.writeUrl = entity.postUrl;
+		$scope.collection = entity.entityCollectionName;
+		$scope.table = {};
+		
+		function reload() {
+			$scope.tableHandle.reload();
+		}
+	};
+
+	$scope.loadDatatableTable = function(entity){
+		$scope.readUrl = entity.getUrl;
+		$scope.writeUrl = entity.postUrl;
+		$scope.collection = entity.entityCollectionName;
+		$scope.table = {};
+		$scope.tabledef = {uid:$scope.collection};
+		$scope.tabledef.columns = function(columns) {
+			_.each(columns, function(col){col.visible=false});
+			_.each(_.where(columns,{'title':'ID'}),function(col){col.visible=true});
+			_.each(_.where(columns,{'title':'Name'}),function(col){col.visible=true});
+			_.each(_.where(columns,{'title':'Description'}),function(col){col.visible=true});
+			_.each(_.where(columns,{'title':'Key'}),function(col){col.visible=true});
+
+			columns.push({
+				visible: true,
+				title:"Selection",
+				searchmode:"none",
+				width:"160px",
+				render: function ( data, type, row ) {
+					var html ='<input type="checkbox" onclick="angular.element(\'#SelectEntityCtrl\').scope().toggle(this.parentNode.parentNode.children[0].textContent, this.checked)">';
+					return html;
+				}
+			});
+
+			return columns;
+		};
+
+		$scope.entityTableLoaded = true;
+		$scope.update();
+	}
+
 	$scope.toggle = function(item,checked){
+		if(checked){
 		$scope.result[item] = checked;
+		}else{
+			if(!$scope.result[item]){
+				$scope.result[item] = true;
+			}else{
+				$scope.result[item] = false;
+			}
+		}
 	};
 
 	$scope.proceed = function () {

@@ -1,26 +1,80 @@
 <div id="SelectEntityCtrl" class="modal-header">
-	<h3 class="modal-title">Select entities</h3>
+    <h3 class="modal-title">Select entities</h3>
 </div>
 
 <div class="modal-body">
 
-	<!--  if old school table -->
-	<select ng-model="selectedEntity"
-		ng-options="option as option.displayName for option in entities"
-		class="form-control" />
+    <select ng-model="selectedEntity" ng-options="option as option.displayName for option in entities" class="form-control" />
 
-	<div ng-if="entityTableLoaded">
-		<datatable dataArray="data" handle="table" tabledef="tabledef"
-			columnsearch="true" serverside="{{collection}}" ignorecontext="true"
-			order="[[1, &quot;desc&quot;]]"> </datatable>
-	</div>
+    <div ng-if="currentEntityType.tableType === 'datatable'">
+        <div ng-if="entityTableLoaded">
+            <datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="{{collection}}" ignorecontext="true" order="[[1, &quot;desc&quot;]]"> </datatable>
+        </div>
+    </div>
 
-
-	<!--  if st-table -->
-	<!--  todo -->
-
+    <div ng-if="currentEntityType.tableType === 'st-table'">
+    <!-- ng-if on st-column does not work
+    so we 're forced to use an extra if here for objects which are not using attributes.name
+    (currently: functionPackage) -->
+    <div ng-if="currentEntityType.entityName !== 'functionPackage'">
+        <st-table collection="collection" handle="tableHandle" uid="'entityList'" persist-state="false">
+            <st-columns>
+                <st-column name="id">
+                    <header>ID</header>
+                    <second-header>
+                        <inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+                    </second-header>
+                   <cell><span>{{row._id.$oid}}</span></cell>
+                </st-column>
+                <st-column name="name">
+                    <header>Name</header>
+                    <second-header>
+                        <inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+                    </second-header>
+                    <cell><span>{{row.attributes.name}}</span></cell>
+                </st-column>
+                <st-column>
+                    <header>Actions</header>
+                    <cell>
+                        <div class="btn-group">
+                            <input type="checkbox" ng-click="toggle(row._id.$oid)" >
+                        </div>
+                    </cell>
+                </st-column>
+            </st-columns>
+        </st-table>
+		</div>
+		<div ng-if="currentEntityType.entityName === 'functionPackage'">
+        <st-table collection="collection" handle="tableHandle" uid="'entityList'" persist-state="false">
+            <st-columns>
+                <st-column name="id">
+                    <header>ID</header>
+                    <second-header>
+                        <inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+                    </second-header>
+                   <cell><span>{{row._id.$oid}}</span></cell>
+                </st-column>
+				<st-column name="packageLocation">
+					<header>Package file</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell>
+						<resource-label st-model="row.packageLocation" />
+					</cell>
+				</st-column>
+				<st-column>
+                    <header>Actions</header>
+                    <cell>
+                        <div class="btn-group">
+                            <input type="checkbox" ng-click="toggle(row._id.$oid)" >
+                        </div>
+                    </cell>
+                </st-column>
+            </st-columns>
+        </st-table>
+		</div>
+    </div>
 </div>
 <div class="modal-footer">
-	<button class="btn btn-primary" type="button" ng-click="proceed()">Proceed</button>
-	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+    <button class="btn btn-primary" type="button" ng-click="proceed()">Proceed</button>
+    <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
 </div>
