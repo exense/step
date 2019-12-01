@@ -113,33 +113,11 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 		.addArrayColumn("Attachments", "attachments").addTextWithDropdownColumn("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
 		.setQuery(new OQLFilter()).setExportColumns(leafReportNodesColumns.build());
 
-		BackendDataTable usersTable = new BackendDataTable(new Collection(database, "users"));
-		usersTable.addColumn("ID", "_id");
-		usersTable.addColumn("Username", "username");
-		
 		addTable("executions", executions);
 		addTable("reports", leafReportNodes);
 		addTable("reportsByOQL", leafReportNodesOQL);
 		addTable("artefacts", artefactTable);
 		addTable("functions", functionTable);
-		addTable("users", usersTable);
-		
-		//TODO Remove: replace with st-table only
-		
-		BackendDataTable projectsTable = new BackendDataTable(new Collection(database, "projects"));
-		projectsTable.addColumn("ID", "_id");
-		projectsTable.addColumn("Name", "attributes.name");
-		projectsTable.addColumn("Owner", "attributes.owner");
-		projectsTable.addRowAsJson("Actions");
-		
-		BackendDataTable parametersTable = new BackendDataTable(new Collection(database, "parameters"));
-		parametersTable.addColumn("ID", "_id");
-		parametersTable.addColumn("Key", "key");
-		
-		addTable("projects", projectsTable);
-		addTable("parameters", parametersTable);
-
-		//
 	}
 
 	public BackendDataTable addTable(String key, BackendDataTable value) {
