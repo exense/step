@@ -153,6 +153,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	ViewRegistry.registerView('login','partials/loginForm.html',true);
 
 	EntityRegistry.registerEntity('Plan', 'artefact', 'artefacts', 'rest/controller/artefact/', 'rest/controller/artefact', 'datatable');
+	EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'datatable');
 	EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/controller/function/', 'rest/controller/function', 'datatable');
 	EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'datatable');
 	EntityRegistry.registerEntity('Scheduler task', 'task', 'task', 'rest/controller/task/', 'rest/controller/task', 'st-table');
