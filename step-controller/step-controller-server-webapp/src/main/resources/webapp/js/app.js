@@ -156,7 +156,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table');
 	EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/controller/function/', 'rest/controller/function', 'datatable');
 	EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'datatable');
-	EntityRegistry.registerEntity('Scheduler task', 'task', 'task', 'rest/controller/task/', 'rest/controller/task', 'st-table');
+	EntityRegistry.registerEntity('Scheduler task', 'task', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table');
 	EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table');
 	//TODO
 	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');
@@ -598,7 +598,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	}
 
 	//Choose an entity of specific type through a modal which immediately displays the corresponding table
-	dialogs.selectEntityOfType = function(type){
+	dialogs.selectEntityOfType = function(type, ignoreContext){
 		var entity = EntityRegistry.getEntityByName(type);
 		if(!entity){
 			dialogs.showErrorMsg('Invalid entity:' + entity);
@@ -608,7 +608,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 
 	//Choose any kind of entity through a single selection modal
-	dialogs.selectEntity = function(excludeArray){
+	dialogs.selectEntity = function(excludeArray, ignoreContext){
 		var modalInstance = $uibModal.open(
 				{
 					templateUrl: 'partials/selectEntity.html',
@@ -616,6 +616,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 					resolve: {
 						excludeArray:function(){
 							return excludeArray;
+						},
+						ignoreContext:function(){
+							return ignoreContext;
 						}
 					}
 				});
@@ -626,7 +629,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	return dialogs;
 })
 
-.controller('SelectEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, EntityRegistry, excludeArray) {
+.controller('SelectEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, EntityRegistry, excludeArray, ignoreContext) {
 
 	$scope.excludeEntities = function (excludeArray){
 		var fullEntityList = EntityRegistry.getEntities();
@@ -650,6 +653,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	$scope.$watch('selectedEntity',function(newValue){
 
 		$scope.currentEntityType = newValue;
+		$scope.ignoreContext = ignoreContext;
 
 		if($scope.table && $scope.table.Datatable){
 			$scope.table.Datatable.clear();

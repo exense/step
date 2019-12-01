@@ -15,9 +15,9 @@
     <div ng-if="currentEntityType.tableType === 'st-table'">
     <!-- ng-if on st-column does not work
     so we 're forced to use an extra if here for objects which are not using attributes.name
-    (currently: functionPackage) -->
-    <div ng-if="currentEntityType.entityName !== 'functionPackage'">
-        <st-table collection="collection" handle="tableHandle" uid="'entityList'" persist-state="false">
+    (currently: functionPackage, user & parameter) -->
+    <div ng-if="currentEntityType.entityName !== 'functionPackage' && currentEntityType.entityName !== 'user' && currentEntityType.entityName !== 'parameter'">
+        <st-table collection="collection" handle="tableHandle" uid="'entityList'" persist-state="false" ignorecontext="ignoreContext">
             <st-columns>
                 <st-column name="id">
                     <header>ID</header>
@@ -45,7 +45,7 @@
         </st-table>
 		</div>
 		<div ng-if="currentEntityType.entityName === 'functionPackage'">
-        <st-table collection="collection" handle="tableHandle" uid="'entityList'" persist-state="false">
+        <st-table collection="collection" handle="tableHandle" uid="'entityList'" persist-state="false" ignorecontext="ignoreContext">
             <st-columns>
                 <st-column name="id">
                     <header>ID</header>
@@ -61,6 +61,62 @@
 						<resource-label st-model="row.packageLocation" />
 					</cell>
 				</st-column>
+				<st-column>
+                    <header>Actions</header>
+                    <cell>
+                        <div class="btn-group">
+                            <input type="checkbox" ng-click="toggle(row._id.$oid)" >
+                        </div>
+                    </cell>
+                </st-column>
+            </st-columns>
+        </st-table>
+		</div>
+		<div ng-if="currentEntityType.entityName === 'user'">
+        <st-table collection="collection" handle="tableHandle" uid="'entityList'" persist-state="false" ignorecontext="ignoreContext">
+            <st-columns>
+                <st-column name="id">
+                    <header>ID</header>
+                    <second-header>
+                        <inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+                    </second-header>
+                   <cell><span>{{row._id.$oid}}</span></cell>
+                </st-column>
+                <st-column name="name">
+                    <header>Name</header>
+                    <second-header>
+                        <inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+                    </second-header>
+                    <cell><span>{{row.username}}</span></cell>
+                </st-column>
+				<st-column>
+                    <header>Actions</header>
+                    <cell>
+                        <div class="btn-group">
+                            <input type="checkbox" ng-click="toggle(row._id.$oid)" >
+                        </div>
+                    </cell>
+                </st-column>
+            </st-columns>
+        </st-table>
+		</div>
+		<div ng-if="currentEntityType.entityName === 'parameter'">
+        <st-table collection="collection" handle="tableHandle" uid="'entityList'" persist-state="false" ignorecontext="ignoreContext">
+            <st-columns>
+                <st-column name="id">
+                    <header>ID</header>
+                    <second-header>
+                        <inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+                    </second-header>
+                   <cell><span>{{row._id.$oid}}</span></cell>
+                </st-column>
+                <st-column name="name">
+                    <header>Key</header>
+                    <second-header>
+                        <inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+                    </second-header>
+                    <cell><span>{{row.key}}</span></cell>
+                </st-column>
 				<st-column>
                     <header>Actions</header>
                     <cell>

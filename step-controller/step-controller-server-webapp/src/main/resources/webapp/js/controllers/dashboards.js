@@ -95,7 +95,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	};
 
 	$scope.popApplyEntity = function(){
-		Dialogs.selectEntity().then(function(result){
+		Dialogs.selectEntity([], false).then(function(result){
 			$scope.applyEntities(result.array[0]);
 		});
 	};
