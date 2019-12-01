@@ -587,12 +587,21 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				}
 			});
 			
+			$scope.init = false;
+			
+			// explicit first request trigger (could be done more elegantly by passing a "fireRequestUponStart" argument to viz)
 			$scope.$on('dashletinput-initialized', function () {
-				//console.log('-> dashletinput-initialized')
+				if(!$scope.init){
+					$scope.init = true;
+					
+					$(document).ready(function(){
+						$scope.$broadcast('fireQueryDependingOnContext');
+					});
+				}
 			});
 			
 			$scope.$on('manager-fully-loaded', function () {
-				//console.log('-> manager-fully-loaded')
+				//console.log('<- manager-fully-loaded')
 				
 				$scope.$watch('autorefresh',function(newStatus) {
 					$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': newStatus });

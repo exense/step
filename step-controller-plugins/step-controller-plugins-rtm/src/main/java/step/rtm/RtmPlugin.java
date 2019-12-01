@@ -93,13 +93,19 @@ public class RtmPlugin extends AbstractControllerPlugin {
 	public void afterReportNodeExecution(ReportNode node) {		
 		if(node instanceof CallFunctionReportNode) {
 			CallFunctionReportNode stepReport = (CallFunctionReportNode) node;
+			
+			Map<String, String> functionAttributes = stepReport.getFunctionAttributes();
+			
 			List<Object> measurements = new ArrayList<>();
 			
 			Map<String, Object> measurement;
 			if(measureReportNodes) {
 				measurement = new HashMap<>();
+
+				measurement.putAll(functionAttributes);
+				
 				measurement.put(ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
-				measurement.put("name", stepReport.getFunctionAttributes().get(Function.NAME));
+				//measurement.put("name", stepReport.getFunctionAttributes().get(Function.NAME));
 				measurement.put("value", (long)stepReport.getDuration());
 				measurement.put("begin", stepReport.getExecutionTime());
 				measurement.put("rnId", stepReport.getId().toString());
@@ -107,13 +113,18 @@ public class RtmPlugin extends AbstractControllerPlugin {
 				measurement.put("type", "keyword");
 				measurements.add(measurement);
 				
+				
 			}
 
 			if(stepReport.getMeasures()!=null) {
 				for(Measure measure:stepReport.getMeasures()) {
 					measurement = new HashMap<>();
+					
+					measurement.putAll(functionAttributes);
+					
 					measurement.put(ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
 					measurement.put("name", measure.getName());
+					measurement.put("origin", stepReport.getFunctionAttributes().get(Function.NAME));
 					measurement.put("value", measure.getDuration());
 					measurement.put("begin", measure.getBegin());
 					measurement.put("rnId", stepReport.getId().toString());

@@ -47,7 +47,7 @@ function WikimediaDemo() {
 			'Daily Stats',
 			new DashboardState(
 					new GlobalSettings(
-							[new Placeholder("__businessobjectid__", "", false)],
+							[],
 							false,
 							false,
 							'Global Settings',
