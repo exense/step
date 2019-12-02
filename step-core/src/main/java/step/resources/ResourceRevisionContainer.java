@@ -47,4 +47,8 @@ public class ResourceRevisionContainer {
 			throw new RuntimeException("This should never happen");
 		}
 	}
+
+	public void save() throws IOException {
+		save(null);
+	}
 }
