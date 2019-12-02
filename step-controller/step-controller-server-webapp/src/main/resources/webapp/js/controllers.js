@@ -572,12 +572,18 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 			$scope.dashboardsendpoint=[];
 
-
 			$scope.$watch('execution.status',function(newSatus, oldStatus) {
 				if(newSatus == 'ENDED'){
+					console.log('ENDED')
+					$scope.init = false;
+
+					$scope.isRealTime = '';
 					$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
 				}else{
-					$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
+					$scope.init = false;
+
+					$scope.isRealTime = 'Realtime';
+					$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, 'keyword', 'Keyword', false)];
 				}
 
 				if(newSatus=='ENDED') {
@@ -591,10 +597,12 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			
 			// explicit first request trigger (could be done more elegantly by passing a "fireRequestUponStart" argument to viz)
 			$scope.$on('dashletinput-initialized', function () {
+				console.log('<- dashletinput-initialized')
 				if(!$scope.init){
 					$scope.init = true;
 					
 					$(document).ready(function(){
+						console.log('-> fireQueryDependingOnContext')
 						$scope.$broadcast('fireQueryDependingOnContext');
 					});
 				}
