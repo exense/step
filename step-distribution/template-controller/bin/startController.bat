@@ -26,4 +26,8 @@ SET JAVA_PATH=
 
 SET JAVA_OPTS=-Dlogback.configurationFile=./logback.xml -Dhttp.keepAlive=true -Dhttp.maxConnections=100
 
-"%JAVA_PATH%java.exe" %JAVA_OPTS% -cp "..\lib\*;" step.controller.ControllerServer -config=../conf/step.properties
+rem the classpath should be absolute:
+SET BATFILE_PATH=%~dp0
+SET LIB_PATH=%BATFILE_PATH%\..\lib
+
+"%JAVA_PATH%java.exe" %JAVA_OPTS% -cp "%LIB_PATH%\*;" step.controller.ControllerServer -config=..\step.properties
