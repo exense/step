@@ -201,7 +201,7 @@ schedulerController.controller('newTaskModalCtrl', function ($scope, $uibModalIn
   $scope.name = executionParams.description;
   
   $scope.ok = function () {
-    var taskParams = {'name': $scope.name, 'cronExpression':$scope.cron, 'executionsParameters':executionParams};
+    var taskParams = {'name': $scope.name, 'cronExpression':$scope.cron, 'executionsParameters':executionParams, 'attributes' : { 'name' : $scope.name}};
     $uibModalInstance.close(taskParams);
   };
 
