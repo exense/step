@@ -53,14 +53,15 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	var api = {};
 
 	var entities = [];
-	api.registerEntity = function(displayName, entityName, entityCollectionName, getUrl, postUrl, tableType){
+	api.registerEntity = function(displayName, entityName, entityCollectionName, getUrl, postUrl, tableType, templateUrl){
 		entities.push({
 			displayName: displayName,
 			entityName:entityName,
 			entityCollectionName:entityCollectionName,
 			getUrl:getUrl,
 			postUrl:postUrl,
-			tableType: tableType
+			tableType: tableType,
+			templateUrl: templateUrl
 		});
 	};
 
@@ -152,12 +153,12 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	ViewRegistry.registerView('myaccount','partials/myaccount.html');
 	ViewRegistry.registerView('login','partials/loginForm.html',true);
 
-	EntityRegistry.registerEntity('Plan', 'artefact', 'artefacts', 'rest/controller/artefact/', 'rest/controller/artefact', 'datatable');
-	EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table');
-	EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/functions/', 'rest/functions/', 'datatable');
-	EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'datatable');
-	EntityRegistry.registerEntity('Scheduler task', 'task', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table');
-	EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table');
+	EntityRegistry.registerEntity('Plan', 'artefact', 'artefacts', 'rest/controller/artefact/', 'rest/controller/artefact', 'datatable', '/partials/selection/selectDatatableEntity.html');
+	EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table', '/partials/selection/parameterSelectionListModal.html');
+	EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/functions/', 'rest/functions/', 'datatable', '/partials/selection/selectDatatableEntity.html');
+	EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'datatable', '/partials/selection/selectDatatableEntity.html');
+	EntityRegistry.registerEntity('Scheduler task', 'task', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table', '/partials/selection/selectSttableEntity.html');
+	EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/selection/userSelectionListModal.html');
 	//TODO
 	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');
 })
@@ -601,15 +602,13 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	dialogs.selectEntityOfType = function(entityType, ignoreContext){
 		var tableType = entityType.tableType;
 		
-		var templateUrl = '';
+		var templateUrl = entityType.templateUrl;
 		var controller = ''; 
 		
 		if(tableType === 'datatable'){
-			templateUrl= 'partials/selectDatatableEntity.html';
 			controller= 'SelectDatatableEntityCtrl';
 		}else{
 			if (tableType === 'st-table'){
-				templateUrl= 'partials/selectSttableEntity.html';
 				controller= 'SelectSttableEntityCtrl';
 			}else{
 				throw new Error('Unsupported entity table type: ' + entityType);
@@ -638,7 +637,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	dialogs.selectEntityType = function(excludeArray, ignoreContext){
 		var modalInstance = $uibModal.open(
 				{
-					templateUrl: 'partials/selectEntityType.html',
+					templateUrl: 'partials/selection/selectEntityType.html',
 					controller: 'SelectEntityTypeCtrl',
 					resolve: {
 						excludeArray:function(){
