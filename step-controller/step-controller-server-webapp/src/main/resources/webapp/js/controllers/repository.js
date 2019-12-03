@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('repositoryControllers', [ 'step','dataTable' ])
+angular.module('repositoryControllers', [ 'step','dataTable'])
 
 //This controller is used to force reload of the following Controllers after location change. This is a trick but it works
 .controller('RepositoryLoadCtrl', function($scope, $location ,$timeout) {
@@ -34,40 +34,13 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
 	'$location',
 	'stateStorage',
 	'AuthService',
-	function($rootScope, $scope, $http, $location, $stateStorage, AuthService) {
+	'EntityRegistry',
+	function($rootScope, $scope, $http, $location, $stateStorage, AuthService, EntityRegistry) {
 
 		$scope.session = AuthService.getContext().session;
-
-		$scope.setRemoteProject = function(projectId) {
-			if(!$scope.session.attributes['step.controller.multitenancy.TenantContext']){
-				$scope.session.attributes['step.controller.multitenancy.TenantContext'] = {};
-			}
-			if(!$scope.session.attributes['step.controller.multitenancy.TenantContext'].contextValues){
-				$scope.session.attributes['step.controller.multitenancy.TenantContext'].contextValues = {};
-			}
-			$scope.session.attributes['step.controller.multitenancy.TenantContext'].contextValues.project = projectId;
-		};
-
 		$scope.reload = true;
-		$scope.prepareProjectSession = function(callback) {
-
-			var repositoryProjectName = $location.search().repositoryId;
-
-			if(repositoryProjectName && repositoryProjectName !== 'local'){
-				$http.post('/rest/tenants/project/search', { 'name' : repositoryProjectName}, {headers : {'ignoreContext': 'true'}}).then(function(response){
-					if(response.data.id){
-						$scope.setRemoteProject(response.data.id);
-						$http.post('rest/tenants/context', {contextValues:$scope.session.attributes['step.controller.multitenancy.TenantContext'].contextValues}).then(function(){
-							callback();
-						});
-					}else{
-						callback();
-					}
-				});
-			}else{
-				callback();
-			}
-		};
+		
+		$scope.entityProperties = EntityRegistry.getEntityByName('repository');
 
 		$scope.runController = function(){
 
@@ -96,7 +69,11 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
 			}
 		};
 
-		$scope.prepareProjectSession($scope.runController);
+		if($scope.entityProperties && $scope.entityProperties.callback){
+			$scope.entityProperties.callback($scope.runController);
+		}else{
+			$scope.runController();
+		}
 	}
 	])
 

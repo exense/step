@@ -53,7 +53,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	var api = {};
 
 	var entities = [];
-	api.registerEntity = function(displayName, entityName, entityCollectionName, getUrl, postUrl, tableType, templateUrl){
+	api.registerEntity = function(displayName, entityName, entityCollectionName, getUrl, postUrl, tableType, templateUrl, callback){
 		entities.push({
 			displayName: displayName,
 			entityName:entityName,
@@ -61,7 +61,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 			getUrl:getUrl,
 			postUrl:postUrl,
 			tableType: tableType,
-			templateUrl: templateUrl
+			templateUrl: templateUrl,
+			callback : callback
 		});
 	};
 
@@ -69,9 +70,11 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 		return entities;  
 	};
 
-
 	api.getEntityByName = function(name){
-		return entities[name];  
+		return _.filter(entities,  
+                function(item){  
+                    return item.entityName === name; 
+                })[0]; 
 	};
 
 	return api;
@@ -161,6 +164,12 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/selection/userSelectionListModal.html');
 	//TODO
 	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');
+
+	//can be pre-initialized by plugin
+	if(!EntityRegistry.getEntityByName('repository')){
+		EntityRegistry.registerEntity('Repository', 'repository', null, null, null, null, null, null);
+	}
+		
 })
 
 .controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, MaintenanceService, ViewRegistry) {
