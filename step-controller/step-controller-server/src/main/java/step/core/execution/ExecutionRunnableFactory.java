@@ -18,19 +18,25 @@
  *******************************************************************************/
 package step.core.execution;
 
+import org.bson.types.ObjectId;
+
 import step.core.GlobalContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.scheduler.ExecutionTaskAccessor;
+import step.core.scheduler.ExecutiontTaskParameters;
 import step.threadpool.ThreadPool;
 
 public class ExecutionRunnableFactory {
 		
 	private GlobalContext globalContext;
+	private ExecutionTaskAccessor taskAccessor;
 	
 	public ExecutionRunnableFactory(GlobalContext globalContext) {
 		super();
 		this.globalContext = globalContext;
+		taskAccessor = globalContext.getScheduleAccessor();
 	}
 	
 	public ExecutionRunnable newExecutionRunnable(Execution execution) {		
@@ -80,7 +86,11 @@ public class ExecutionRunnableFactory {
 		if(executionParameters.getAttributes() != null) {
 			execution.setAttributes(executionParameters.getAttributes());
 		}
-
+		
+		ExecutiontTaskParameters executiontTaskParameters = taskAccessor.get(new ObjectId(taskID));
+		if(executiontTaskParameters != null && executiontTaskParameters.getAttributes() != null)
+			execution.setAttributes(executiontTaskParameters.getAttributes());
+		
 		if(taskID!=null) {
 			execution.setExecutionTaskID(taskID);
 		}
