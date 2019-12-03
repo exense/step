@@ -3,19 +3,6 @@
 </div>
 
 <div class="modal-body">
-
-    <select ng-model="selectedEntity" ng-options="option as option.displayName for option in entities" class="form-control" />
-
-    <div ng-if="currentEntityType.tableType === 'datatable'">
-        <div ng-if="entityTableLoaded">
-            <datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="{{collection}}" ignorecontext="true" order="[[1, &quot;desc&quot;]]"> </datatable>
-        </div>
-    </div>
-
-    <div ng-if="currentEntityType.tableType === 'st-table'">
-    <!-- ng-if on st-column does not work
-    so we 're forced to use an extra if here for objects which are not using attributes.name
-    (currently: functionPackage, user & parameter) -->
     <div ng-if="currentEntityType.entityName !== 'functionPackage' && currentEntityType.entityName !== 'user' && currentEntityType.entityName !== 'parameter'">
         <st-table collection="collection" handle="tableHandle" uid="'entityList'" persist-state="false" ignorecontext="ignoreContext">
             <st-columns>
@@ -127,7 +114,6 @@
                 </st-column>
             </st-columns>
         </st-table>
-		</div>
     </div>
 </div>
 <div class="modal-footer">

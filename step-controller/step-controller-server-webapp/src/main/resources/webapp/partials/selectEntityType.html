@@ -1,0 +1,11 @@
+<div id="SelectEntityCtrl" class="modal-header">
+    <h3 class="modal-title">Select Entity Type</h3>
+</div>
+
+<div class="modal-body">
+    <select ng-model="selectedEntity" ng-options="option as option.displayName for option in entities" class="form-control" />
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" type="button" ng-click="proceed()">Proceed</button>
+    <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

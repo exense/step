@@ -91,13 +91,12 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	});
 
 	$scope.applyEntities = function(selected){
-		$scope.$broadcast('apply-global-setting', { key: '__businessobjectid__', value : selected, isDynamic : false});
+		$scope.$broadcast('apply-global-setting', { key: '__businessobjectid__', value : selected.array[0], isDynamic : false});
 	};
 
 	$scope.popApplyEntity = function(){
-		Dialogs.selectEntity([], false).then(function(result){
-			$scope.applyEntities(result.array[0]);
-		});
+		Dialogs.selectEntityTypeForEntities([], false, $scope.applyEntities);
+		//.then(function(result){ $scope.applyEntities(result.array[0]); });
 	};
 
 	$scope.pickPreset = function(){

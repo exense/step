@@ -597,22 +597,49 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		);
 	}
 
-	//Choose an entity of specific type through a modal which immediately displays the corresponding table
-	dialogs.selectEntityOfType = function(type, ignoreContext){
-		var entity = EntityRegistry.getEntityByName(type);
-		if(!entity){
-			dialogs.showErrorMsg('Invalid entity:' + entity);
+	//Select entities knowing type
+	dialogs.selectEntityOfType = function(entityType, ignoreContext){
+		var tableType = entityType.tableType;
+		
+		var templateUrl = '';
+		var controller = ''; 
+		
+		if(tableType === 'datatable'){
+			templateUrl= 'partials/selectDatatableEntity.html';
+			controller= 'SelectDatatableEntityCtrl';
+		}else{
+			if (tableType === 'st-table'){
+				templateUrl= 'partials/selectSttableEntity.html';
+				controller= 'SelectSttableEntityCtrl';
+			}else{
+				throw new Error('Unsupported entity table type: ' + entityType);
+			}
 		}
-
-		//TODO
-	};
-
-	//Choose any kind of entity through a single selection modal
-	dialogs.selectEntity = function(excludeArray, ignoreContext){
+		
 		var modalInstance = $uibModal.open(
 				{
-					templateUrl: 'partials/selectEntity.html',
-					controller: 'SelectEntityCtrl',
+					templateUrl: templateUrl,
+					controller: controller,
+					resolve: {
+						ignoreContext:function(){
+							return ignoreContext;
+						},
+						entity:function(){
+							return entityType;
+						}
+					}
+				});
+
+
+		return modalInstance.result;
+	};
+	
+	//Select entity type only
+	dialogs.selectEntityType = function(excludeArray, ignoreContext){
+		var modalInstance = $uibModal.open(
+				{
+					templateUrl: 'partials/selectEntityType.html',
+					controller: 'SelectEntityTypeCtrl',
 					resolve: {
 						excludeArray:function(){
 							return excludeArray;
@@ -626,10 +653,20 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 		return modalInstance.result;
 	};
+	
+	//Select Type and then entities immedately after
+	dialogs.selectEntityTypeForEntities = function(excludeArray, ignoreContext, callback, arg){
+		dialogs.selectEntityType(excludeArray, ignoreContext).then(function(result1){
+			dialogs.selectEntityOfType(result1.entity, result1.ignoreContext).then(function(result2){
+				callback(result2, arg);
+			});
+		});
+	};
+	
 	return dialogs;
 })
 
-.controller('SelectEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, EntityRegistry, excludeArray, ignoreContext) {
+.controller('SelectEntityTypeCtrl', function ($scope, $uibModalInstance, $uibModalStack, EntityRegistry, excludeArray, ignoreContext) {
 
 	$scope.excludeEntities = function (excludeArray){
 		var fullEntityList = EntityRegistry.getEntities();
@@ -647,59 +684,30 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 
 	$scope.entities = $scope.excludeEntities(excludeArray);
-
 	$scope.result = {};
 
 	$scope.$watch('selectedEntity',function(newValue){
-
 		$scope.currentEntityType = newValue;
-		$scope.ignoreContext = ignoreContext;
-
-		if($scope.table && $scope.table.Datatable){
-			$scope.table.Datatable.clear();
-			$scope.entityTableLoaded = false;
-			$scope.update();
-			// table seems to need multiple cycles to clean up
-			$(document).ready(function(){
-				$scope.loadTable(newValue);
-			});
-		}else{
-			$scope.loadTable(newValue);
-		}
-
-
 	});
 
-	$scope.loadTable = function(entity){
-		if(entity){
-			var type = entity.tableType;
-			if(type === 'datatable'){
-				$scope.loadDatatableTable(entity);
-			}else{
-				if(type === 'st-table'){
-					$scope.loadStTable(entity);
-				}else{
-					throw new Error('Unsupported table type: ' + type);
-				}	
-			}
-		}
+	$scope.proceed = function () {
+		$uibModalInstance.close({ entity : $scope.currentEntityType, ignoreContext: ignoreContext});
 	};
 
-	$scope.loadStTable = function(entity){
-		$scope.readUrl = entity.getUrl;
-		$scope.writeUrl = entity.postUrl;
-		$scope.collection = entity.entityCollectionName;
-		$scope.table = {};
-		
-		function reload() {
-			$scope.tableHandle.reload();
-		}
+	$scope.cancel = function () {
+		$uibModalInstance.dismiss('cancel');
 	};
+})
 
-	$scope.loadDatatableTable = function(entity){
-		$scope.readUrl = entity.getUrl;
-		$scope.writeUrl = entity.postUrl;
-		$scope.collection = entity.entityCollectionName;
+.controller('SelectDatatableEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, entity, ignoreContext) {
+
+	$scope.result = [];
+	$scope.entity = entity;
+	
+	$scope.loadDatatableTable = function(){
+		$scope.readUrl = $scope.entity.getUrl;
+		$scope.writeUrl = $scope.entity.postUrl;
+		$scope.collection = $scope.entity.entityCollectionName;
 		$scope.table = {};
 		$scope.tabledef = {uid:$scope.collection};
 		$scope.tabledef.columns = function(columns) {
@@ -746,7 +754,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 				resultArray.push(key);
 			}
 		});
-		$uibModalInstance.close({ entity : $scope.currentEntityType, array: resultArray});
+
+		$uibModalInstance.close({ entity : $scope.entity, array: resultArray});
 	};
 
 
@@ -759,8 +768,59 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 			$scope.table.Datatable.ajax.reload(null, false);
 		}
 	}
+	
+	$scope.loadDatatableTable();
 
 })
+
+
+.controller('SelectSttableEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, entity, ignoreContext) {
+
+	$scope.result = {};
+	$scope.entity = entity;
+
+	$scope.loadStTable = function(entity){
+		$scope.readUrl = $scope.entity.getUrl;
+		$scope.writeUrl = $scope.entity.postUrl;
+		$scope.collection = $scope.entity.entityCollectionName;
+		$scope.tableHandle = {};
+		
+		function reload() {
+			$scope.tableHandle.reload();
+		}
+	};
+
+	$scope.toggle = function(item,checked){
+		if(checked){
+		$scope.result[item] = checked;
+		}else{
+			if(!$scope.result[item]){
+				$scope.result[item] = true;
+			}else{
+				$scope.result[item] = false;
+			}
+		}
+	};
+
+	$scope.proceed = function () {
+		var resultArray = [];
+		_.each(Object.keys($scope.result), function(key, index){
+			if($scope.result[key] === true){
+				resultArray.push(key);
+			}
+		});
+		$uibModalInstance.close({ entity : $scope.entity, array: resultArray});
+	};
+
+
+	$scope.cancel = function () {
+		$uibModalInstance.dismiss('cancel');
+	};
+
+	$scope.loadStTable();
+
+})
+
 
 .controller('ExtentedDialogCtrl', function ($scope, $uibModalInstance, $uibModalStack, message, title) {
 	$scope.message = message;
