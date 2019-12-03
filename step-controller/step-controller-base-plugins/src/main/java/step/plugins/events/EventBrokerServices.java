@@ -34,6 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import step.core.deployment.AbstractServices;
+import step.core.deployment.Secured;
 
 @Singleton
 @Path("/eventbroker")
@@ -54,6 +55,7 @@ public class EventBrokerServices extends AbstractServices {
 	@GET
 	@Path("/events/asIdMap")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="broker-read")
 	//@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Event> getEventBrokerIdMap() {
 		return eb.getIdBasedEventMap();
@@ -61,6 +63,7 @@ public class EventBrokerServices extends AbstractServices {
 	
 	@GET
 	@Path("/events/asGroupMap")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	//@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Set<Event>> getEventBrokerGroupMap() {
@@ -69,6 +72,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@GET
 	@Path("/events/asIdMap/skip/{skip}/limit/{limit}")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	//@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Event> getEventBrokerIdMap(@PathParam("skip") int skip, @PathParam("limit") int limit) {
@@ -77,6 +81,7 @@ public class EventBrokerServices extends AbstractServices {
 	
 	@GET
 	@Path("/events/asGroupMap/skip/{skip}/limit/{limit}")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	//@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Set<Event>> getEventBrokerGroupMap(@PathParam("skip") int skip, @PathParam("limit") int limit) {
@@ -85,6 +90,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@POST
 	@Path("/event")
+	@Secured(right="broker-write")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Event putEvent(Event event) throws Exception {
@@ -93,6 +99,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@GET
 	@Path("/event/{id}")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event peekEvent(@PathParam("id") String id) {
@@ -101,6 +108,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@GET
 	@Path("/event/group/{group}/name/{name}")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event peekEventByGroupAndName(@PathParam("group") String group, @PathParam("name") String name) {
@@ -109,6 +117,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@GET
 	@Path("/events/group/{group}/skip/{skip}/limit/{limit}")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Set<Event> getGroupSkipLimit(@PathParam("group") String group, @PathParam("skip") int skip, @PathParam("limit") int limit) {
@@ -117,6 +126,7 @@ public class EventBrokerServices extends AbstractServices {
 	
 	@GET
 	@Path("/events/group/{group}")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Set<Event> getFullGroup(@PathParam("group") String group) {
@@ -125,6 +135,7 @@ public class EventBrokerServices extends AbstractServices {
 	
 	@GET
 	@Path("/events/groups")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Set<String> getGroups() {
@@ -133,6 +144,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@GET
 	@Path("/events/group/{group}/size")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public int getGroupSize(@PathParam("group") String group) {
@@ -142,6 +154,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@DELETE
 	@Path("/event/{id}")
+	@Secured(right="broker-delete")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event consumeEvent(@PathParam("id") String id) {
@@ -151,6 +164,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@DELETE
 	@Path("/event/group/{group}/name/{name}")
+	@Secured(right="broker-write")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Event consumeEventByGroupAndName(@PathParam("group") String group, @PathParam("name") String name) {
@@ -159,6 +173,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@DELETE
 	@Path("/events")
+	@Secured(right="broker-delete")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String, Object> clear() {
 		eb.clear();
@@ -169,6 +184,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@DELETE
 	@Path("/events/group/{group}")
+	@Secured(right="broker-delete")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Object> clearGroup(@PathParam("group") String group) {
@@ -180,6 +196,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@GET
 	@Path("/events/monitoring/global")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Object> getStats() {
@@ -188,6 +205,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@GET
 	@Path("/events/monitoring/group/{group}")
+	@Secured(right="broker-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Object> getGroupStats(@PathParam("group") String group) throws Exception {
@@ -196,6 +214,7 @@ public class EventBrokerServices extends AbstractServices {
 
 	@GET
 	@Path("/events/monitoring/clear")
+	@Secured(right="broker-delete")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Map<String, Object> clearStats() {
