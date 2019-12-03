@@ -720,7 +720,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		$scope.tabledef = {uid:$scope.collection};
 		$scope.tabledef.columns = function(columns) {
 			_.each(columns, function(col){col.visible=false});
-			_.each(_.where(columns,{'title':'ID'}),function(col){col.visible=false});
+			_.each(_.where(columns,{'title':'ID'}),function(col){col.visible=true});
 			_.each(_.where(columns,{'title':'Name'}),function(col){col.visible=true});
 			_.each(_.where(columns,{'title':'Description'}),function(col){col.visible=true});
 			_.each(_.where(columns,{'title':'Key'}),function(col){col.visible=true});
