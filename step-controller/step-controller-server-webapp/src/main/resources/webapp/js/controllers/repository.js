@@ -53,7 +53,7 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
 
 			var repositoryProjectName = $location.search().repositoryId;
 
-			if(repositoryProjectName !== 'local'){
+			if(repositoryProjectName && repositoryProjectName !== 'local'){
 				$http.post('/rest/tenants/project/search', { 'name' : repositoryProjectName}, {headers : {'ignoreContext': 'true'}}).then(function(response){
 					if(response.data.id){
 						$scope.setRemoteProject(response.data.id);
