@@ -21,7 +21,7 @@ public interface ResourceManager {
 	 * @param resourceStream the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
 	 * @param checkForDuplicates is duplicate should be checked
-	 * @param resourceAttributes 
+	 * @param resourceAttributes attributes to be used to tag the resource with
 	 * @return the created {@link Resource}
 	 * @throws IOException an IOException occurs during the call
 	 * @throws SimilarResourceExistingException a similar resource exist
@@ -44,7 +44,9 @@ public interface ResourceManager {
 	
 	/**
 	 * Saved the resource object only
-	 * @param resourceId the resource to be saved
+	 * @param resource the resource to be saved
+	 * @return the updated {@link Resource}
+	 * @throws IOException an IOException occurs during the call
 	 */
 	Resource saveResource(Resource resource)
 			throws IOException;
