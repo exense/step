@@ -18,9 +18,13 @@
  *******************************************************************************/
 package step.core.execution;
 
+import java.util.HashMap;
+
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
+import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.ArtefactAccessor;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
@@ -29,16 +33,18 @@ import step.core.scheduler.ExecutiontTaskParameters;
 import step.threadpool.ThreadPool;
 
 public class ExecutionRunnableFactory {
-		
+
 	private GlobalContext globalContext;
 	private ExecutionTaskAccessor taskAccessor;
-	
+	private ArtefactAccessor artefactAccessor;
+
 	public ExecutionRunnableFactory(GlobalContext globalContext) {
 		super();
 		this.globalContext = globalContext;
 		taskAccessor = globalContext.getScheduleAccessor();
+		artefactAccessor = globalContext.getArtefactAccessor();
 	}
-	
+
 	public ExecutionRunnable newExecutionRunnable(Execution execution) {		
 		ExecutionContext context = createExecutionContext(execution);
 		ExecutionRunnable task = new ExecutionRunnable(globalContext.getRepositoryObjectManager(), globalContext.getExecutionAccessor(), context);
@@ -54,7 +60,7 @@ public class ExecutionRunnableFactory {
 			context.setReportNodeAccessor(globalContext.getReportAccessor());
 			context.setEventManager(globalContext.getEventManager());
 			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
-			
+
 			ExecutionManager executionManager = new ExecutionManagerImpl(globalContext.getExecutionAccessor());
 			context.put(ExecutionManager.class, executionManager);
 		} else {
@@ -76,29 +82,34 @@ public class ExecutionRunnableFactory {
 		context.updateStatus(ExecutionStatus.INITIALIZING);
 		return context;
 	}
-	
+
 	public Execution createExecution(ExecutionParameters executionParameters, String taskID) {		
 		Execution execution = new Execution();
 		execution.setStartTime(System.currentTimeMillis());
 		execution.setExecutionParameters(executionParameters);
 		execution.setStatus(ExecutionStatus.INITIALIZING);
+		execution.setAttributes(new HashMap<>());
 		
 		if(executionParameters.getAttributes() != null) {
-			execution.setAttributes(executionParameters.getAttributes());
+			execution.getAttributes().putAll(executionParameters.getAttributes());
 		}
-		
-		ExecutiontTaskParameters executiontTaskParameters = taskAccessor.get(new ObjectId(taskID));
-		if(executiontTaskParameters != null && executiontTaskParameters.getAttributes() != null)
-			execution.setAttributes(executiontTaskParameters.getAttributes());
-		
-		if(taskID!=null) {
-			execution.setExecutionTaskID(taskID);
+
+		if(taskID != null) {
+			ExecutiontTaskParameters executiontTaskParameters = taskAccessor.get(new ObjectId(taskID));
+			if(executiontTaskParameters != null && executiontTaskParameters.getAttributes() != null)
+				execution.getAttributes().putAll(executiontTaskParameters.getAttributes());
+				execution.setExecutionTaskID(taskID);
+		}
+
+		AbstractArtefact abstractArtefact = artefactAccessor.get(executionParameters.getArtefact().getRepositoryParameters().get("artefactid"));
+		if(abstractArtefact != null && abstractArtefact.getAttributes() != null) {
+			execution.getAttributes().putAll(abstractArtefact.getAttributes());
 		}
 		
 		if(executionParameters.getDescription()!=null) {
 			execution.setDescription(executionParameters.getDescription());
 		}
-		
+
 		globalContext.getExecutionAccessor().save(execution);		
 		return execution;
 	}
