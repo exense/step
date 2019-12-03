@@ -18,7 +18,7 @@
 				<li ng-class="{ active: isViewActive(entry.viewId) }" ng-repeat="entry in viewRegistry.getCustomMainMenuEntries()" ><a ng-click="setView(entry.viewId)"><span class="{{entry.menuIconClass}}"></span> {{entry.label}}</a></li>
 				<li ng-class="{ active: isViewActive('grid') }"><a ng-click="setView('grid')"><span class="glyphicon glyphicon-th"></span> Grid</a></li>
 				<li ng-if="authService.hasRight('admin')" ng-class="{ active: isViewActive('admin') }"><a ng-click="setView('admin')"><span class="glyphicon glyphicon-cog"></span> Admin</a></li>
-				<li><a id="dropdownMenuHelp" data-toggle="dropdown"><span class="glyphicon glyphicon-question-sign"></span> Help</a>
+				<li><a id="dropdownMenuHelp" data-toggle="dropdown"><span class="glyphicon glyphicon-question-sign"></span></a>
 					<ul class="dropdown-menu" aria-labelledby="dropdownMenuHelp">
 						<li><a target="_blank" href="https://step.exense.ch/knowledgebase">Documentation</a></li>
 						<li><a target="_blank" href="http://step.exense.ch/">About</a></li>
