@@ -41,6 +41,13 @@ public interface ResourceManager {
 	 */
 	Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName)
 			throws IOException;
+	
+	/**
+	 * Saved the resource object only
+	 * @param resourceId the resource to be saved
+	 */
+	Resource saveResource(Resource resource)
+			throws IOException;
 
 	/**
 	 * Test if a given resource id exists
@@ -72,5 +79,7 @@ public interface ResourceManager {
 
 	ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException;
 
+	Resource getResource(String resourceId);
+	
 	Resource lookupResourceByName(String resourcename);
 }

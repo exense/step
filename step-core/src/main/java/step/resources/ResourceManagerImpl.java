@@ -188,7 +188,8 @@ public class ResourceManagerImpl implements ResourceManager {
 		return resourceRevision;
 	}
 
-	private Resource getResource(String resourceId) {
+	@Override
+	public Resource getResource(String resourceId) {
 		Resource resource = resourceAccessor.get(new ObjectId(resourceId));
 		if(resource == null) {
 			throw new RuntimeException("The resource with ID "+resourceId+" doesn't exist");
@@ -311,5 +312,10 @@ public class ResourceManagerImpl implements ResourceManager {
 	public boolean resourceExists(String resourceId) {
 		Resource resource = resourceAccessor.get(new ObjectId(resourceId));
 		return resource!=null;
+	}
+
+	@Override
+	public Resource saveResource(Resource resource) throws IOException {
+		return resourceAccessor.save(resource);
 	}
 }

@@ -204,4 +204,10 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	public boolean resourceExists(String resourceId) {
 		throw new RuntimeException("Not implemented");
 	}
+
+	@Override
+	public Resource saveResource(Resource resource) throws IOException {
+		throw new RuntimeException("Not implemented");
+	}
+
 }
