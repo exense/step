@@ -62,7 +62,7 @@ function RealtimeSelfMonitoring() {
 	var options = new EffectiveChartOptions('lineChart');
 	options.showLegend = true;
 
-	var widget1 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Free tokens per agent", false, 0, {}, options, new Config('On', false, false, '', 1000, 500, 'On', 20), agentQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
+	var widget1 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Free tokens per agent", false, 0, {}, options, new Config('Fire','On', false, false, '', 1000, 500, 'On', 20), agentQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(widget1);
 
 	var executionsTransform = function (response, args) {
@@ -75,7 +75,7 @@ function RealtimeSelfMonitoring() {
 	var options = new EffectiveChartOptions('lineChart');
 	options.showLegend = true;
 
-	var widget2 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Global number of on-going executions", false, 0, {}, options, new Config('On', false, false, '', 1000, 500, 'On', 20), execQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
+	var widget2 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Global number of on-going executions", false, 0, {}, options, new Config('Fire','On', false, false, '', 1000, 500, 'On', 20), execQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(widget2);
 
 	var dashboardObject = new Dashboard('Instance Activity',new DashboardState(new GlobalSettings([],false,false,'Global Settings',1000),
@@ -123,7 +123,7 @@ function WikimediaDemo() {
 	var options = new EffectiveChartOptions('lineChart', xAxisFn.toString());
 	options.showLegend = true;
 
-	var widget = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(" Daily wikimedia stats", false, 0, {}, options, new Config('Off', false, false, ''), wikimediaQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
+	var widget = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(" Daily wikimedia stats", false, 0, {}, options, new Config('Fire','Off', false, false, ''), wikimediaQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
 
 	widgetsArray.push(widget);
 
@@ -193,7 +193,7 @@ function ProjectOverview() {
 	var options = new EffectiveChartOptions('lineChart', xAxisFn.toString());
 	options.showLegend = true;
 
-	var widget1 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Executions per day over last week", false, 0, {}, options, new Config('Off', false, false, '', 1000, 500, 'Off', 20), execQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
+	var widget1 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Executions per day over last week", false, 0, {}, options, new Config('Fire','Off', false, false, '', 1000, 500, 'Off', 20), execQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(widget1);
 
 	var entityName = "keyword";
@@ -362,7 +362,7 @@ function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform, entityNam
 
 var addAggregatesSummaryTpl = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	var summaryTransform = "function (response) {\r\n    //var metrics = response.data.payload.metricList;\r\n    var metrics = [\"cnt\",\"avg\", \"min\", \"max\", \"tpm\", \"tps\", \"90th pcl\"];\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    if (payload && payloadKeys.length > 0) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[0]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            for (i = 0; i < metrics.length; i++) {\r\n                var metric = metrics[i];\r\n                if (payload[payloadKeys[0]][serieskeys[j]][metric]) {\r\n                    retData.push({\r\n                        x: metric,\r\n                        y: Math.round(payload[payloadKeys[0]][serieskeys[j]][metric]),\r\n                        z: serieskeys[j]\r\n                    });\r\n                }else{\r\n                    retData.push({ x: metric, y: 0, z: serieskeys[j]});\r\n               }\r\n            }\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var standalone = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(entityName + " stats summary", false, 0, {}, new EffectiveChartOptions('seriesTable', 'function(d) { return d; }', timeFrame), new Config('Off', false, false, '', 3000, 1000, 'Off', 8, 'On'), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+	var standalone = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(entityName + " stats summary", false, 0, {}, new EffectiveChartOptions('seriesTable', 'function(d) { return d; }', timeFrame), new Config('Fire','Off', false, false, '', 3000, 1000, 'Off', 8, 'On'), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(standalone);
 };
 
@@ -441,13 +441,13 @@ var addLastMeasurements = function(widgetsArray, entityName,timeField, timeForma
 
 var addErrorsSummary = function(widgetsArray, entityName, timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	var summaryTransform = "function (response) {\r\n    //var metrics = response.data.payload.metricList;\r\n    var metrics = [\"cnt\"];\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    if (payload && payloadKeys.length > 0) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[0]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            for (i = 0; i < metrics.length; i++) {\r\n                var metric = metrics[i];\r\n                if (payload[payloadKeys[0]][serieskeys[j]][metric]) {\r\n                    retData.push({\r\n                        x: metric,\r\n                        y: Math.round(payload[payloadKeys[0]][serieskeys[j]][metric]),\r\n                        z: '\u0020' + serieskeys[j].split('_')[0]\r\n                    });\r\n                }else{\r\n                    retData.push({ x: metric, y: 0, z: serieskeys[j]});\r\n               }\r\n                        }\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState(entityName + " status summary", false, 0, {}, new EffectiveChartOptions('singleValueTable', 'function(d) { return d; }', timeFrame), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("cnt", "max", summaryTransform, entityName,timeField, timeFormat, valueField, "rnStatus", textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState(entityName + " status summary", false, 0, {}, new EffectiveChartOptions('singleValueTable', 'function(d) { return d; }', timeFrame), new Config('Fire','Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("cnt", "max", summaryTransform, entityName,timeField, timeFormat, valueField, "rnStatus", textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(standalone);
 };
 
 var addErrorsOverTimeTpl = function(widgetsArray, entityName, timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	var summaryTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = [];\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            if(!serieskeys[j].includes(';PASSED') && !series.includes(serieskeys[j])){\r\n                series.push(serieskeys[j]);\r\n            }\r\n        }\r\n    }\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        for (j = 0; j < series.length; j++) {\r\n            var yval;\r\n            if(payload[payloadKeys[i]][series[j]] && payload[payloadKeys[i]][series[j]][metric]){\r\n              yval = payload[payloadKeys[i]][series[j]][metric];\r\n            }else{\r\n              //console.log('missing dot: x=' + payloadKeys[i] + '; series=' + series[j]);\r\n              yval = 0;\r\n            }\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: yval,\r\n                z: series[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState(entityName + " errors over time", false, 0, {}, new EffectiveChartOptions('stackedAreaChart', null, timeFrame), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", summaryTransform, entityName,timeField, timeFormat, valueField, "name;rnStatus", textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+	var standalone = new Widget(getUniqueId(), new DefaultWidgetState(), new DashletState(entityName + " errors over time", false, 0, {}, new EffectiveChartOptions('stackedAreaChart', null, timeFrame), new Config('Fire','Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", summaryTransform, entityName,timeField, timeFormat, valueField, "name;rnStatus", textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(standalone);
 };
 
@@ -465,8 +465,8 @@ var getMasterSlaveConfig = function(rawOrTransformed, masterTitle, slaveTitle){
 	masterId = random + "-master";
 	slaveId = random + "-slave";
 
-	masterConfig = new Config('Off', true, false, 'unnecessaryAsMaster');
-	slaveConfig = new Config('Off', false, true, datatype);
+	masterConfig = new Config('Fire','Off', true, false, 'unnecessaryAsMaster');
+	slaveConfig = new Config('Fire','Off', false, true, datatype);
 	slaveConfig.currentmaster = {
 			oid: masterId,
 			title: masterTitle
