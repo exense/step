@@ -1,6 +1,90 @@
 function getVizDashboardList(){
 	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"]];
 }
+
+var overtimeFillBlanksTransformFn = function(response, args) {
+    var metric = args.metric;
+    var retData = [], series = [];
+
+    var payload = response.data.payload.stream.streamData;
+    var payloadKeys = Object.keys(payload);
+
+    for (i = 0; i < payloadKeys.length; i++) {
+      var series_ = payload[payloadKeys[i]];
+        var serieskeys = Object.keys(series_ )
+        for (j = 0; j < serieskeys.length; j++) {
+            if(!series.includes(serieskeys[j])){
+                series.push(serieskeys[j]);
+            }
+        }
+    }
+
+    for (i = 0; i < payloadKeys.length; i++) {
+      var series_ = payload[payloadKeys[i]];
+        var serieskeys = Object.keys(series)
+        for (j = 0; j < serieskeys.length; j++) {
+            var key = series[serieskeys[j]];
+            var yval;
+            if(series_[key] && series_[key][metric]){
+              yval = series_[key][metric];
+            }else{
+              yval = 0;
+            }
+            retData.push({
+                x: payloadKeys[i],
+                y: yval,
+                z: key
+            });
+        }
+    }
+    return retData;
+};
+
+function RealtimeSelfMonitoring() {
+
+	var widgetsArray = [];
+
+	var freeTokenTransform = function (response, args) {
+		var array = [] 
+		$.each(response.data, function(index, item){
+			array.push({
+				x : new Date().getTime(),
+				y : item.tokensCapacity.countByState.FREE,
+				z : item.agentRef.agentUrl.split('http://')[1]
+			});
+		});
+		return array;
+	}
+
+	var baseAgentQuery = new SimpleQuery("Raw", new Service("", "Get","",new DefaultPreproc(),new Postproc("", freeTokenTransform.toString(), [], {}, "")));
+	var agentQueryTemplate = new TemplatedQuery("Plain",baseAgentQuery,new DefaultPaging(),new Controls(new Template("","/rest/grid/agent",[])));
+
+	var options = new EffectiveChartOptions('lineChart');
+	options.showLegend = true;
+
+	var widget1 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Free tokens per agent", false, 0, {}, options, new Config('On', false, false, '', 1000, 500, 'On', 20), agentQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
+	widgetsArray.push(widget1);
+
+	var executionsTransform = function (response, args) {
+		return [{x: new Date().getTime(), y:response.data.recordsFiltered, z:'Ongoing executions'}];
+	};
+
+	var baseExecQuery = new SimpleQuery("Raw", new Service("", "Get","",new DefaultPreproc(),new Postproc("", executionsTransform.toString(), [], {}, "")));
+	var execQueryTemplate = new TemplatedQuery("Plain",baseExecQuery,new DefaultPaging(),new Controls(new Template("","rest/datatable/executions/data?ignoreContext=true&draw=__draw__&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=true&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=true&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=true&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=true&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=true&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=true&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B6%5D%5Bdata%5D=6&columns%5B6%5D%5Bname%5D=&columns%5B6%5D%5Bsearchable%5D=true&columns%5B6%5D%5Borderable%5D=true&columns%5B6%5D%5Bsearch%5D%5Bvalue%5D=(INITIALIZING%7CIMPORTING%7CRUNNING%7CABORTING%7CEXPORTING)&columns%5B6%5D%5Bsearch%5D%5Bregex%5D=true&columns%5B7%5D%5Bdata%5D=7&columns%5B7%5D%5Bname%5D=&columns%5B7%5D%5Bsearchable%5D=true&columns%5B7%5D%5Borderable%5D=true&columns%5B7%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B7%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B8%5D%5Bdata%5D=8&columns%5B8%5D%5Bname%5D=&columns%5B8%5D%5Bsearchable%5D=true&columns%5B8%5D%5Borderable%5D=true&columns%5B8%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B8%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B9%5D%5Bdata%5D=9&columns%5B9%5D%5Bname%5D=&columns%5B9%5D%5Bsearchable%5D=true&columns%5B9%5D%5Borderable%5D=true&columns%5B9%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B9%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B10%5D%5Bdata%5D=10&columns%5B10%5D%5Bname%5D=&columns%5B10%5D%5Bsearchable%5D=true&columns%5B10%5D%5Borderable%5D=true&columns%5B10%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B10%5D%5Bsearch%5D%5Bregex%5D=false&order%5B0%5D%5Bcolumn%5D=2&order%5B0%5D%5Bdir%5D=desc&start=0&length=10&search%5Bvalue%5D=&search%5Bregex%5D=false&undefined",[new Placeholder("__dayFrom__", "20151010", false), new Placeholder("__draw__", "Math.random().toString().split('.')[1].substring(0,8)", true)])));
+
+	var options = new EffectiveChartOptions('lineChart');
+	options.showLegend = true;
+
+	var widget2 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Global number of on-going executions", false, 0, {}, options, new Config('On', false, false, '', 1000, 500, 'On', 20), execQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
+	widgetsArray.push(widget2);
+
+	var dashboardObject = new Dashboard('Instance Activity',new DashboardState(new GlobalSettings([],false,false,'Global Settings',1000),
+			widgetsArray,'SelfMonitoring Dashboard','aggregated',new DefaultDashboardGui())
+	);
+
+	return dashboardObject;
+}
+
 function WikimediaDemo() {
 
 	var widgetsArray = [];
@@ -21,22 +105,22 @@ function WikimediaDemo() {
 			)
 	);
 	var wikimediaQueryTemplate = new TemplatedQuery(
-			"Template",
+			"Plain",
 			wikimediaBaseQuery,
 			new DefaultPaging(),
 			new Controls(new Template("","https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/all-agents/Foo/daily/__dayFrom__/__dayTo__",
 					[new Placeholder("__dayFrom__", "20151010", false), new Placeholder("__dayTo__", "20151030", false)]))
 	);
-	
+
 	var xAxisFn = function(d) {
-		   var str = d.toString();
-		   var year = str.substring(0,4);
-		   var month = str.substring(4, 6);
-		   var day = str.substring(6, 8);
-		   return year + '-' + month + '-' + day;
-		};
-	
-	var options = new EffectiveChartOptions('lineChart', xAxisFn);
+		var str = d.toString();
+		var year = str.substring(0,4);
+		var month = str.substring(4, 6);
+		var day = str.substring(6, 8);
+		return year + '-' + month + '-' + day;
+	};
+
+	var options = new EffectiveChartOptions('lineChart', xAxisFn.toString());
 	options.showLegend = true;
 
 	var widget = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(" Daily wikimedia stats", false, 0, {}, options, new Config('Off', false, false, ''), wikimediaQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
@@ -47,11 +131,11 @@ function WikimediaDemo() {
 			'Daily Stats',
 			new DashboardState(
 					new GlobalSettings(
-							[],
+							[new Placeholder("__businessobjectid__", "", false)],
 							false,
 							false,
 							'Global Settings',
-							5000
+							3000
 					),
 					widgetsArray,
 					'Wikimedia Dashboard',
@@ -63,8 +147,79 @@ function WikimediaDemo() {
 	return dashboardObject;
 }
 
+function ProjectOverview() {
+	var widgetsArray = [];
 
-function RealtimePerformanceDashboard(executionId, measurementType, entity) {
+	var executionsTransform = function (response, args) {
+		var array = [];
+		var min = new Date().getTime() - 604800000;
+		var max = new Date().getTime();
+		var nbIntervals = 7;
+		var interval = Math.round((max - min -1) / nbIntervals);
+		var groupArray = [];
+		var groupStats = {};
+		for(i=0; i< nbIntervals; i++){
+			var from_ = min + (i * interval);
+			groupArray.push({from: from_, to: min + ((i+1)*interval)});
+			groupStats[from_] = 0;
+		}
+		$.each(response.data, function(index, item){
+			$.each(groupArray, function(index, item2){
+				if(item.startTime >= item2.from && item.startTime < item2.to){
+					groupStats[item2.from]+=1;
+				}
+			});
+		});
+		$.each(Object.keys(groupStats), function(index, item){
+			array.push({x: item, y: groupStats[item], z: 'Nb executions'});
+		});
+		return array;
+	};
+	
+	var xAxisFn = function (d) {
+	    var value;
+	    if ((typeof d) === "string") {
+	        value = parseInt(d);
+	    } else {
+	        value = d;
+	    }
+
+	    return d3.time.format("%Y-%m-%d")(new Date(value));
+	};
+
+	var baseExecQuery = new SimpleQuery("Raw", new Service("", "Post","",new DefaultPreproc(),new Postproc("", executionsTransform.toString(), [], {}, "")));
+	var execQueryTemplate = new TemplatedQuery("Plain",baseExecQuery,new DefaultPaging(),new Controls(new Template("{ \"criteria\": { \"attributes.project\": \"__businessobjectid__\"}, \"start\" : __from__, \"end\" : __to__}","/rest/controller/executions/findByCritera",[new Placeholder("__from__", "new Date().getTime()-604800000", true), new Placeholder("__to__", "new Date().getTime()", true)])));
+
+	var options = new EffectiveChartOptions('lineChart', xAxisFn.toString());
+	options.showLegend = true;
+
+	var widget1 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Executions per day over last week", false, 0, {}, options, new Config('Off', false, false, '', 1000, 500, 'Off', 20), execQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
+	widgetsArray.push(widget1);
+
+	var entityName = "keyword";
+	var timeFrame = 604800000;
+	var granularity_ = 86400000;
+	var timeField = "begin";
+	var timeFormat = "long";
+	var valueField = "value";
+	var groupby = "name";
+
+	var textFilters = "[{ \"key\": \"project\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"keyword\", \"regex\": \"false\" }]";
+	var numericalFilters = "[]";
+
+	var overtimeTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: payload[payloadKeys[i]][serieskeys[j]][metric],\r\n                z: serieskeys[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
+	var config = getMasterSlaveConfig("raw", "Nb Keyword executions per day over last week", "");
+
+	var widget2 = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('stackedAreaChart', xAxisFn.toString(), timeFrame), config.masterconfig, new RTMAggBaseTemplatedQueryTmpl("cnt", granularity_, overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+	widgetsArray.push(widget2);
+
+	var dashboardObject = new Dashboard('Weekly project overview',new DashboardState(new GlobalSettings([],false,false,'Global Settings',1000),
+			widgetsArray,'Project stats','aggregated',new DefaultDashboardGui())
+	);
+	return dashboardObject;
+}
+
+function RealtimePerformanceDashboard(executionId, measurementType, entity, autorefresh) {
 
 	var widgetsArray = [];
 	var entityName = '';
@@ -73,14 +228,14 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity) {
 	}else{
 		entityName = 'Custom Transaction';
 	}
-	
-	var timeFrame = 10000;
-	
+
+	var timeFrame = 30000;
+
 	var timeField = "begin";
 	var timeFormat = "long";
 	var valueField = "value";
 	var groupby = "name";
-	
+
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[{ \"key\": \"begin\", \"minValue\": \"__from__\", \"maxValue\": \"__to__\" }]";
 
@@ -96,10 +251,10 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity) {
 			new DashboardState(
 					new GlobalSettings(
 							[new Placeholder("__businessobjectid__", executionId, false), new Placeholder("__measurementType__", measurementType?measurementType:'custom', false),
-							new Placeholder("__from__", "new Date(new Date().getTime() - "+timeFrame+").getTime()", true),
-							new Placeholder("__to__", "new Date().getTime()", true)
+								new Placeholder("__from__", "new Date(new Date().getTime() - "+timeFrame+").getTime()", true),
+								new Placeholder("__to__", "new Date().getTime()", true)
 							],
-							false,
+							autorefresh?autorefresh:true,
 							false,
 							'Global Settings',
 							3000
@@ -111,7 +266,7 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity) {
 			)
 	);
 
-	dashboardObject.oid = "perfDashboardId";
+	dashboardObject.oid = "realTimePerfDashboardId";
 	return dashboardObject;
 };
 
@@ -124,14 +279,14 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 	}else{
 		entityName = 'Custom Transaction';
 	}
-	
+
 	var timeFrame = null;
-	
+
 	var timeField = "begin";
 	var timeFormat = "long";
 	var valueField = "value";
 	var groupby = "name";
-	
+
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[]";
 
@@ -163,11 +318,11 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 	return dashboardObject;
 };
 
-function EffectiveChartOptions(charType, xAxisOverride, timeFrame){
-	var opts = new ChartOptions(charType, false, false,
+function EffectiveChartOptions(charType, xAxisOverride, timeFrame, yAxisOverride){
+	var opts = new ChartOptions(charType, true, false,
 			xAxisOverride?xAxisOverride:'function (d) {\r\n    var value;\r\n    if ((typeof d) === \"string\") {\r\n        value = parseInt(d);\r\n    } else {\r\n        value = d;\r\n    }\r\n\r\n    return d3.time.format(\"%H:%M:%S\")(new Date(value));\r\n}', 
-					xAxisOverride?xAxisOverride:'function (d) { return d.toFixed(1); }',
-			timeFrame?'[new Date(new Date().getTime() - '+timeFrame+').getTime(), new Date().getTime()]':undefined
+					yAxisOverride?yAxisOverride:'function (d) { return d.toFixed(1); }',
+							timeFrame?'[new Date(new Date().getTime() - '+timeFrame+').getTime(), new Date().getTime()]':undefined
 	);
 	opts.margin.left = 75;
 	return opts;
@@ -192,7 +347,7 @@ function RTMAggBaseQueryTmpl(metric, transform){
 
 function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	return new TemplatedQuery(
-			"Template",
+			"Plain",
 			new RTMAggBaseQueryTmpl(metric, transform),
 			new DefaultPaging(),
 			new Controls(
@@ -207,18 +362,17 @@ function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform, entityNam
 
 var addAggregatesSummaryTpl = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	var summaryTransform = "function (response) {\r\n    //var metrics = response.data.payload.metricList;\r\n    var metrics = [\"cnt\",\"avg\", \"min\", \"max\", \"tpm\", \"tps\", \"90th pcl\"];\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    if (payload && payloadKeys.length > 0) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[0]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            for (i = 0; i < metrics.length; i++) {\r\n                var metric = metrics[i];\r\n                if (payload[payloadKeys[0]][serieskeys[j]][metric]) {\r\n                    retData.push({\r\n                        x: metric,\r\n                        y: Math.round(payload[payloadKeys[0]][serieskeys[j]][metric]),\r\n                        z: serieskeys[j]\r\n                    });\r\n                }else{\r\n                    retData.push({ x: metric, y: 0, z: serieskeys[j]});\r\n               }\r\n            }\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var standalone = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(entityName + " stats summary", false, 0, {}, new EffectiveChartOptions('seriesTable', 'function(d) { return d; }', timeFrame), new Config('Off', false, false, ''), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+	var standalone = new Widget(getUniqueId(), new WidgetState('col-md-12', false, true), new DashletState(entityName + " stats summary", false, 0, {}, new EffectiveChartOptions('seriesTable', 'function(d) { return d; }', timeFrame), new Config('Off', false, false, '', 3000, 1000, 'Off', 8, 'On'), new RTMAggBaseTemplatedQueryTmpl("sum", "max", summaryTransform, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 	widgetsArray.push(standalone);
 };
 
 var addAggregatesOverTimeTpl = function(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 	var overtimeTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: payload[payloadKeys[i]][serieskeys[j]][metric],\r\n                z: serieskeys[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var overtimeFillBlanksTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = [];\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            if(!series.includes(serieskeys[j])){\r\n                series.push(serieskeys[j]);\r\n            }\r\n        }\r\n    }\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < series.length; j++) {\r\n            var yval;\r\n            if(payload[payloadKeys[i]][serieskeys[j]] && payload[payloadKeys[i]][serieskeys[j]][metric]){\r\n              yval = payload[payloadKeys[i]][serieskeys[j]][metric];\r\n            }else{\r\n              //console.log('missing dot: x=' + payloadKeys[i] + '; series=' + series[j]);\r\n              yval = 0;\r\n            }\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: yval,\r\n                z: series[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
 	var config = getMasterSlaveConfig("raw", "Average "+entityName+" Duration (ms)", "Nb " + entityName + "s per second");
 
 	var master = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('lineChart', null, timeFrame), config.masterconfig, new RTMAggBaseTemplatedQueryTmpl("avg", "auto", overtimeTransform,  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 	//var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('lineChart'), config.slaveconfig, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeTransform,  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
-	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('stackedAreaChart', null, timeFrame), config.slaveconfig, new RTMAggBaseTemplatedQueryTmpl("tps", "auto", overtimeFillBlanksTransform,  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+	var slave = new Widget(config.slaveid, new DefaultWidgetState(), new DashletState(config.slavetitle, false, 0, {}, new EffectiveChartOptions('stackedAreaChart', null, timeFrame), config.slaveconfig, new RTMAggBaseTemplatedQueryTmpl("tps", "auto", overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 
 	widgetsArray.push(master);
 	widgetsArray.push(slave);
@@ -240,7 +394,7 @@ var addLastMeasurementsTpl = function(widgetsArray, entityName,timeField, timeFo
 
 	function RTMLatestMeasurementTemplatedQuery(entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame){
 		return new TemplatedQuery(
-				"Template",
+				"Plain",
 				new RTMLatestMeasurementBaseQueryTmpl(),
 				new DefaultPaging(),
 				//new Paging("On", new Offset("__FACTOR__", "return 0;", "return value + 1;", "if(value > 0){return value - 1;} else{return 0;}"), null),
