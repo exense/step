@@ -38,7 +38,7 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
 
 		$scope.session = AuthService.getContext().session;
 
-		$scope.setALMProject = function(projectId) {
+		$scope.setRemoteProject = function(projectId) {
 			if(!$scope.session.attributes['step.controller.multitenancy.TenantContext']){
 				$scope.session.attributes['step.controller.multitenancy.TenantContext'] = {};
 			}
@@ -50,22 +50,23 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
 
 		$scope.reload = true;
 		$scope.prepareProjectSession = function(callback) {
-			
-			/**/
-			//TODO make configurable
-			var repositoryProjectName = 'repository'
-			/**/	
-				
-			$http.post('/rest/tenants/project/search', { 'name' : repositoryProjectName}, {headers : {'ignoreContext': 'true'}}).then(function(response){
-				if(response.data.id){
-					$scope.setALMProject(response.data.id);
-					$http.post('rest/tenants/context', {contextValues:$scope.session.attributes['step.controller.multitenancy.TenantContext'].contextValues}).then(function(){
+
+			var repositoryProjectName = $location.search().repositoryId;
+
+			if(repositoryProjectName ==! 'local'){
+				$http.post('/rest/tenants/project/search', { 'name' : repositoryProjectName}, {headers : {'ignoreContext': 'true'}}).then(function(response){
+					if(response.data.id){
+						$scope.setRemoteProject(response.data.id);
+						$http.post('rest/tenants/context', {contextValues:$scope.session.attributes['step.controller.multitenancy.TenantContext'].contextValues}).then(function(){
+							callback();
+						});
+					}else{
 						callback();
-					});
-				}else{
-					callback();
-				}
-			});
+					}
+				});
+			}else{
+				callback();
+			}
 		};
 
 		$scope.runController = function(){
