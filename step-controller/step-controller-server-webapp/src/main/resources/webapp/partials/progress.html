@@ -76,7 +76,7 @@
 					<div class="panel-body" ng-show="isShowPanel('steps')">
 						<datatable serverside="reports" tabledef="stepsTable"
 							handle="stepsTable" params="eid={{eid}}" selectionmode="single"
-							columnsearch="true" order="[[1, &quot;desc&quot;]]">
+							columnsearch="true" order="[[1, &quot;desc&quot;]]"  ignorecontext="true" >
 						<table-actions>
 						<div class="btn-group btn-group-menu">
 							<button type="button" class="btn btn-default"

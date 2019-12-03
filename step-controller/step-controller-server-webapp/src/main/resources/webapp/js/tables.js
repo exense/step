@@ -358,9 +358,15 @@ angular.module('dataTable', ['export'])
           tableOptions.columns = columns;
         }));
         
-        var query = 'rest/datatable/' + attr.serverside + '/data?ignoreContext='+attr.ignorecontext;
+        var query = 'rest/datatable/' + attr.serverside + '/data';
+        var operator = '?';
+        if (attr.ignorecontext) {
+            query = query + '?ignoreContext='+attr.ignorecontext;
+            operator = '&';
+        }
+       
         if(attr.params) {
-          query = query + '?' + attr.params;
+          query = query + operator + attr.params;
         }
         tableOptions.ajax = {'url':query,'type':'POST',beforeSend:function(a,b) {
           b.data = b.data + "&" + attr.params;
