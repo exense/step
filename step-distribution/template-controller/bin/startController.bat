@@ -30,4 +30,4 @@ rem the classpath should be absolute:
 SET BATFILE_PATH=%~dp0
 SET LIB_PATH=%BATFILE_PATH%\..\lib
 
-"%JAVA_PATH%java.exe" %JAVA_OPTS% -cp "%LIB_PATH%\*;" step.controller.ControllerServer -config=..\step.properties
+"%JAVA_PATH%java.exe" %JAVA_OPTS% -cp "%LIB_PATH%\*;" step.controller.ControllerServer -config=..\conf\step.properties
