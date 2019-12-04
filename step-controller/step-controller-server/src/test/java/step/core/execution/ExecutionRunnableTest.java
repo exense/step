@@ -23,6 +23,8 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -85,7 +87,14 @@ public class ExecutionRunnableTest {
 		ExecutionRunnableFactory f = new ExecutionRunnableFactory(globalContext);
 		
 		ExecutionParameters p = new ExecutionParameters("user",null, ExecutionMode.RUN);
-		p.setArtefact(new RepositoryObjectReference());
+		
+		RepositoryObjectReference ref = new RepositoryObjectReference();
+		
+		Map<String, String> parameters = new HashMap<String, String>();
+		parameters.put("artefactid", artefact.getId().toString());
+		ref.setRepositoryParameters(parameters);
+		p.setArtefact(ref);
+		
 		p.setExports(new ArrayList<>());
 		Execution e = f.createExecution(p, null);
 		
