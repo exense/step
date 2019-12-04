@@ -101,7 +101,12 @@ public class ExecutionRunnableFactory {
 				execution.setExecutionTaskID(taskID);
 		}
 
-		AbstractArtefact abstractArtefact = artefactAccessor.get(executionParameters.getArtefact().getRepositoryParameters().get("artefactid"));
+		AbstractArtefact abstractArtefact = null;
+		if (executionParameters.getArtefact() != null &&
+			executionParameters.getArtefact().getRepositoryParameters().containsKey("artefactid")) {
+			abstractArtefact = artefactAccessor.get(executionParameters.getArtefact().getRepositoryParameters().get("artefactid"));	
+		}
+		
 		if(abstractArtefact != null && abstractArtefact.getAttributes() != null) {
 			execution.getAttributes().putAll(abstractArtefact.getAttributes());
 		}
