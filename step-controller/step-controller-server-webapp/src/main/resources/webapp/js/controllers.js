@@ -573,22 +573,22 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.dashboardsendpoint=[];
 
 			$scope.$watch('execution.status',function(newSatus, oldStatus) {
-				if(newSatus == 'ENDED'){
-					console.log('ENDED')
-					$scope.init = false;
-
-					$scope.isRealTime = '';
-					$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
-				}else{
-					$scope.init = false;
-
-					$scope.isRealTime = 'Realtime';
-					$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, 'keyword', 'Keyword', false)];
-				}
-
-				if(newSatus=='ENDED') {
-					if(oldStatus&&$scope.autorefresh) {
-						refreshAll();
+				if(newSatus) {
+					if(newSatus === 'ENDED'){
+						console.log('ENDED')
+						$scope.init = false;
+	
+						$scope.isRealTime = '';
+						$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
+						
+						if(oldStatus&&$scope.autorefresh) {
+							refreshAll();
+						}
+					}else{
+						$scope.init = false;
+	
+						$scope.isRealTime = 'Realtime';
+						$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, 'keyword', 'Keyword', false)];
 					}
 				}
 			});
