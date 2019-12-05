@@ -20,7 +20,6 @@ package step.functions.base.types.handler;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,13 +48,10 @@ public class BaseFunctionReflectionHelper {
 			Set<Method> methods = getLocalFunctionBaseReflections().getMethodsAnnotatedWith(Keyword.class);
 
 			for(Method method:methods) {
-				String schema = "{}";
-				if(isImplementsInterface(method.getDeclaringClass().getGenericInterfaces(), BaseFunctionSchema.class)){
-					BaseFunctionSchema keywordSchema = (BaseFunctionSchema)method.getDeclaringClass().newInstance();
-					Map<String, String> schemas = keywordSchema.getKeywordSchemas();
-					schema = schemas == null?"{}":schemas.get(method.getName());
-				}
-				keywordList.put(method.getName(), schema);
+				// schemas are no longer supported via BaseFunctionSchema, but annotation instead.
+				Keyword annotation = method.getAnnotation(Keyword.class);
+				String schemaStr = annotation.schema();
+				keywordList.put(method.getName(), schemaStr);
 			}
 
 			return keywordList;
@@ -67,14 +63,6 @@ public class BaseFunctionReflectionHelper {
 
 	private static Reflections getLocalFunctionBaseReflections() {
 		return new Reflections(LOCALFUNCTIONCLASSES_PREFIX, new MethodAnnotationsScanner());
-	}
-
-	private static boolean isImplementsInterface(Type[] genericInterfaces, Class<BaseFunctionSchema> class1) {
-		for(Type type : genericInterfaces){
-			if(type.getTypeName().equals(class1.getName()))
-				return true;
-		}
-		return false;
 	}
 
 	public static List<String> getLocalKeywordList(Class<? extends Annotation> annotation) throws Exception {

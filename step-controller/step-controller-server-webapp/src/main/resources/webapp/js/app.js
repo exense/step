@@ -724,6 +724,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 			_.each(_.where(columns,{'title':'Name'}),function(col){col.visible=true});
 			_.each(_.where(columns,{'title':'Description'}),function(col){col.visible=true});
 			_.each(_.where(columns,{'title':'Key'}),function(col){col.visible=true});
+			_.each(_.where(columns,{'title':'User'}),function(col){col.visible=true});
+			_.each(_.where(columns,{'title':'Result'}),function(col){col.visible=true});
 
 			columns.push({
 				visible: true,
