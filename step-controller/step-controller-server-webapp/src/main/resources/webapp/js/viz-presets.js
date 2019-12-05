@@ -211,7 +211,7 @@ function UserExecutionDashboard() {
 	};
 
 	var baseExecQuery = new SimpleQuery("Raw", new Service("", "Post","",new DefaultPreproc(),new Postproc("", userExecutionsTransform.toString(), [], {}, "")));
-	var execQueryTemplate = new TemplatedQuery("Plain",baseExecQuery,new DefaultPaging(),new Controls(new Template("{ \"criteria\": { \"attributes.project\": \"__businessobjectid__\"}, \"start\" : __from__, \"end\" : __to__}","/rest/controller/executions/findByCritera",[new Placeholder("__from__", "new Date().getTime()-604800000", true), new Placeholder("__to__", "new Date().getTime()", true)])));
+	var execQueryTemplate = new TemplatedQuery("Plain",baseExecQuery,new DefaultPaging(),new Controls(new Template("{ \"criteria\": {}, \"start\" : __from__, \"end\" : __to__}","/rest/controller/executions/findByCritera",[new Placeholder("__from__", "new Date().getTime()-604800000", true), new Placeholder("__to__", "new Date().getTime()", true)])));
 
 	var options = new EffectiveChartOptions('multiBarChart', xAxisFn.toString());
 	options.showLegend = true;
@@ -249,7 +249,7 @@ function UserExecutionDashboard() {
 	};
 	
 	var baseExecQueryTop = new SimpleQuery("Raw", new Service("", "Post","",new DefaultPreproc(),new Postproc("", useTopExecutionTransform.toString(), [], {}, "")));
-	var execQueryTemplateTop = new TemplatedQuery("Plain",baseExecQueryTop,new DefaultPaging(),new Controls(new Template("{ \"criteria\": { \"attributes.project\": \"__businessobjectid__\"}, \"start\" : __from__, \"end\" : __to__}","/rest/controller/executions/findByCritera",[new Placeholder("__from__", "new Date().getTime()-604800000", true), new Placeholder("__to__", "new Date().getTime()", true)])));
+	var execQueryTemplateTop = new TemplatedQuery("Plain",baseExecQueryTop,new DefaultPaging(),new Controls(new Template("{ \"criteria\": {}, \"start\" : __from__, \"end\" : __to__}","/rest/controller/executions/findByCritera",[new Placeholder("__from__", "new Date().getTime()-604800000", true), new Placeholder("__to__", "new Date().getTime()", true)])));
 
 	
 	var options = new EffectiveChartOptions('multiBarChart', xAxisTopFn.toString());
