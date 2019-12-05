@@ -469,8 +469,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.responseTimeByFunctionChart = {};
 
 			var refresh = function() {
-				//Not used anymore (using rtm data)
-				/*
+
 				$http.get('rest/views/statusDistributionForFunctionCalls/' + eId).then(function(response) {
 					$scope.progress = response.data;
 				});
@@ -490,7 +489,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						$scope.countByErrorCode.push({errorCode:key, errorCodeCount:val})
 					});
 				});
-				 */
+				 
 				$scope.errorDistributionToggleStates = ['message', 'code'];
 				$scope.selectedErrorDistirbutionToggle = 'message';
 
