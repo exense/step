@@ -2,6 +2,7 @@ package step.rtm;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +28,13 @@ import step.functions.Function;
 
 @Plugin
 public class RtmPlugin extends AbstractControllerPlugin {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(RtmPlugin.class);
 
 	public static final String ATTRIBUTE_EXECUTION_ID = "eId";
 
 	MeasurementAccessor accessor;
-	
+
 	boolean measureReportNodes;
 
 	@Override
@@ -42,20 +43,28 @@ public class RtmPlugin extends AbstractControllerPlugin {
 
 		Properties rtmProperties = Configuration.getInstance().getUnderlyingPropertyObject();
 		ch.exense.commons.app.Configuration stepProperties = context.getConfiguration();
-
+		
+		String[] propArray = {"db.host", "db.port", "db.database", "db.username", "db.password"};
+		List<String> props = Arrays.asList(propArray);
+		
 		if(stepProperties.getPropertyAsBoolean("plugins.rtm.useLocalDB", true) == true){
-		cloneProperty(rtmProperties, stepProperties, "db.host");
-		cloneProperty(rtmProperties, stepProperties, "db.port");
-		cloneProperty(rtmProperties, stepProperties, "db.database");
-		cloneProperty(rtmProperties, stepProperties, "db.username");
-		cloneProperty(rtmProperties, stepProperties, "db.password");
+			logger.info("Property 'plugins.rtm.useLocalDB' is set to true, overriding rtm db properties with step ones:");
+			for(String prop : props) {
+				logger.info("["+prop+"] "+rtmProperties.getProperty(prop) + "->" + stepProperties.getProperty(prop));
+				cloneProperty(rtmProperties, stepProperties, prop);
+			}
+		}else {
+			logger.info("Property 'plugins.rtm.useLocalDB' is set to false, rtm will use it's own database connection info:");
+			for(String prop : props) {
+				logger.info("["+prop+"] "+rtmProperties.getProperty(prop));
+			}
 		}
 		measureReportNodes = stepProperties.getPropertyAsBoolean("plugins.rtm.measurereportnodes", true);
-		
+
 		MongoCollection<Document> measurements = context.getMongoClientSession().getMongoDatabase().getCollection("measurements");
 		AbstractAccessor.createOrUpdateCompoundIndex(measurements,ATTRIBUTE_EXECUTION_ID, "begin");
 		AbstractAccessor.createOrUpdateIndex(measurements,"begin");
-		
+
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
 
@@ -93,17 +102,17 @@ public class RtmPlugin extends AbstractControllerPlugin {
 	public void afterReportNodeExecution(ReportNode node) {		
 		if(node instanceof CallFunctionReportNode) {
 			CallFunctionReportNode stepReport = (CallFunctionReportNode) node;
-			
+
 			Map<String, String> functionAttributes = stepReport.getFunctionAttributes();
-			
+
 			List<Object> measurements = new ArrayList<>();
-			
+
 			Map<String, Object> measurement;
 			if(measureReportNodes) {
 				measurement = new HashMap<>();
 
 				measurement.putAll(functionAttributes);
-				
+
 				measurement.put(ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
 				//measurement.put("name", stepReport.getFunctionAttributes().get(Function.NAME));
 				measurement.put("value", (long)stepReport.getDuration());
@@ -112,16 +121,16 @@ public class RtmPlugin extends AbstractControllerPlugin {
 				measurement.put("rnStatus", stepReport.getStatus().toString());
 				measurement.put("type", "keyword");
 				measurements.add(measurement);
-				
-				
+
+
 			}
 
 			if(stepReport.getMeasures()!=null) {
 				for(Measure measure:stepReport.getMeasures()) {
 					measurement = new HashMap<>();
-					
+
 					measurement.putAll(functionAttributes);
-					
+
 					measurement.put(ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
 					measurement.put("name", measure.getName());
 					measurement.put("origin", stepReport.getFunctionAttributes().get(Function.NAME));
@@ -154,14 +163,14 @@ public class RtmPlugin extends AbstractControllerPlugin {
 			}
 
 			accessor.saveManyMeasurements(measurements);
-			
+
 			if (logger.isTraceEnabled()) {
 				logMeasurements(measurements);
 			}
-			
+
 		}
 	}
-	
+
 	public static void logMeasurements(List<Object> measurements) {
 		for (Object o: measurements) {
 			logger.trace("RTM measure:" + o.toString());
