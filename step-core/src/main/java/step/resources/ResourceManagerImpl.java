@@ -6,9 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
+
+import com.google.common.hash.Hashing;
 
 import ch.exense.commons.io.FileHelper;
 
@@ -238,23 +237,8 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	private String getMD5Checksum(File file) throws IOException {
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("MD5");
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("Unable to find MD5 algorithm", e);
-		}
-		try (InputStream is = Files.newInputStream(file.toPath());
-				DigestInputStream dis = new DigestInputStream(is, md)) 
-		{}
-		byte[] digest = md.digest();
-
-		String result = "";
-
-		for (int i = 0; i < digest.length; i++) {
-			result += Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1);
-		}
-		return result;
+		String hash = com.google.common.io.Files.hash(file, Hashing.md5()).toString();
+		return hash;
 	}
 
 	private void updateResourceFileNameIfNecessary(String resourceFileName, Resource resource) {
