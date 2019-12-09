@@ -14,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.hash.Hashing;
 
@@ -26,6 +28,8 @@ public class ResourceManagerImpl implements ResourceManager {
 	protected final ResourceRevisionAccessor resourceRevisionAccessor;
 	protected final Map<String, ResourceType> resourceTypes;
 
+	protected static final Logger logger = LoggerFactory.getLogger(ResourceManagerImpl.class);
+	
 	public ResourceManagerImpl(File resourceRootFolder, ResourceAccessor resourceAccessor,
 			ResourceRevisionAccessor resourceRevisionAccessor) {
 		super();
@@ -115,14 +119,23 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceRevisionAccessor.getResourceRevisionsByChecksum(actualResourceRevision.getChecksum()).forEachRemaining(revision->{
 			if(!revision.getId().equals(actualResourceRevision.getId())) {
 				Resource resource = resourceAccessor.get(new ObjectId(revision.getResourceId()));
-				if(resource.getCurrentRevisionId().equals(revision.getId())) {
-					try {
-						if(FileUtils.contentEquals(getResourceRevisionFile(resource, revision), getResourceRevisionFile(actualResource, actualResourceRevision))) {
-							result.add(resource);
+				if(resource!=null) {
+					 if (resource.getCurrentRevisionId() != null) {
+						// ensure it is an active revision i.e a revision that is the current revision of a resource
+						if(resource.getCurrentRevisionId().equals(revision.getId())) {
+							try {
+								if(FileUtils.contentEquals(getResourceRevisionFile(resource, revision), getResourceRevisionFile(actualResource, actualResourceRevision))) {
+									result.add(resource);
+								}
+							} catch (IOException e) {
+								logger.warn("Error while comparing resource revisions "+revision.getId()+" and "+actualResourceRevision.getId(), e);
+							}
 						}
-					} catch (IOException e) {
-
+					} else {
+						logger.warn("Found resource without current revision: "+resource.getId());
 					}
+				} else {
+					logger.warn("Found orphan resource revision: "+revision.getId());
 				}
 			}
 		});
