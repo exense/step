@@ -159,11 +159,14 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.1.1</version>
+				<version>3.0.0</version>
 				<configuration>
 					<quiet>true</quiet>
-			      	<source>8</source>
-				</configuration>
+			    	<source>8</source>
+			    	<!--  required for Java11, remove the \ in \-\- when uncommenting
+			      	<additionalJOption>\-\-no-module-directories</additionalJOption> 
+			      	-->
+			    </configuration>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
