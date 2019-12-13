@@ -162,14 +162,9 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'datatable', '/partials/selection/selectDatatableEntity.html');
 	EntityRegistry.registerEntity('Scheduler task', 'task', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table', '/partials/selection/selectSttableEntity.html');
 	EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/selection/userSelectionListModal.html');
+	EntityRegistry.registerEntity('Repository', 'repository', null, null, null, null, null, null);
 	//TODO
-	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');
-
-	//can be pre-initialized by plugin
-	if(!EntityRegistry.getEntityByName('repository')){
-		EntityRegistry.registerEntity('Repository', 'repository', null, null, null, null, null, null);
-	}
-		
+	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');		
 })
 
 .controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, MaintenanceService, ViewRegistry) {

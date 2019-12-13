@@ -47,6 +47,7 @@ public class FragmentSupplier {
 	}
 	
 	public Map<String, String> getAdditionalQueryFragmentsFromContextAsAttributes(Session session, String collectionID, String ignoreContext){
+		System.out.println(session.getAttributes());
 		return computeFragments(session, collectionID, ignoreContext);
 	}
 	
