@@ -1,8 +1,8 @@
 <div id="DashboardsController" ng-controller="DashboardsController">
-	<div style="display: grid; float: right;">
-		<label>Entities</label>
+	<div style="display: grid; display: -ms-grid; float: right;">
+		<label style="-ms-grid-row :1;grid-row: 1;">Entities</label>
 		<ul
-			style="list-style-type: none !important; display: inline-flex; padding: 0;">
+			style="list-style-type: none !important; display: inline-flex; padding: 0;-ms-grid-row :2;grid-row: 2;">
 			<li><button class="btn btn-success btn-nav"
 					ng-click="popApplyEntity()" uib-tooltip="Apply entity"
 					tooltip-placement="bottom">
@@ -10,17 +10,17 @@
 				</button></li>
 		</ul>
 	</div>
-	<div style="display: grid; float: right;">
+	<div style="display: grid; display: -ms-grid; float: right;">
 		<label>&nbsp;</label>
 		<ul
 			style="list-style-type: none !important; display: inline-flex; padding: 0;">
 			<li>&nbsp;</li>
 		</ul>
 	</div>
-	<div style="display: grid; float: right;">
-		<label>Presets</label>
+	<div style="display: grid;display: -ms-grid; float: right;">
+		<label style="-ms-grid-row :1;grid-row: 1;">Presets</label>
 		<ul
-			style="list-style-type: none !important; display: inline-flex; padding: 0;">
+			style="list-style-type: none !important; display: inline-flex; padding: 0;-ms-grid-row :2;grid-row: 2;">
 			<li><button class="btn btn-success btn-nav"
 					ng-click="loadFromPresets()" uib-tooltip="Load preset"
 					tooltip-placement="bottom">
