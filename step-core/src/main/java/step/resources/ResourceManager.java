@@ -16,14 +16,12 @@ public interface ResourceManager {
 	public static final String RESOURCE_TYPE_TEMP = "temp";
 	
 	/**
-	 * Create a new resource and save the content provided as stream under a new {@link ResourceRevision}
-	 * 
 	 * @param resourceType the type of the resource
 	 * @param resourceStream the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
 	 * @param checkForDuplicates is duplicate should be checked
-	 * @param resourceAttributes attributes to be used to tag the resource with
-	 * @return the created {@link Resource}
+	 * @param objectEnricher the {@link ObjectEnricher} of the context
+	 * @return the created {@link Resource} 
 	 * @throws IOException an IOException occurs during the call
 	 * @throws SimilarResourceExistingException a similar resource exist
 	 */
