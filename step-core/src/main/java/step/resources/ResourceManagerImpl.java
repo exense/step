@@ -71,7 +71,9 @@ public class ResourceManagerImpl implements ResourceManager {
 
 		resource.setCurrentRevisionId(resourceRevision.getId());
 		
-		objectEnricher.accept(resource);
+		if(objectEnricher != null) {
+			objectEnricher.accept(resource);
+		}
 		resourceAccessor.save(resource);
 
 		if(checkForDuplicates) {
