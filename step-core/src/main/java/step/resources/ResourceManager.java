@@ -2,7 +2,8 @@ package step.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
+
+import step.core.objectenricher.ObjectEnricher;
 
 public interface ResourceManager {
 
@@ -26,7 +27,7 @@ public interface ResourceManager {
 	 * @throws IOException an IOException occurs during the call
 	 * @throws SimilarResourceExistingException a similar resource exist
 	 */
-	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, Map<String, String> resourceAttributes) throws IOException, SimilarResourceExistingException;
+	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException;
 
 	/**
 	 * Save the content provided as stream to an existing resource. 

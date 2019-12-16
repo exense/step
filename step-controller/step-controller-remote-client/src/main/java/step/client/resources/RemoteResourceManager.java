@@ -21,6 +21,7 @@ import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
+import step.core.objectenricher.ObjectEnricher;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.resources.Resource;
@@ -99,7 +100,7 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName,
-			boolean checkForDuplicates, Map<String, String> sessionQueryFragments) throws IOException, SimilarResourceExistingException {
+			boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
 		 StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 		ResourceUploadResponse upload = upload(bodyPart, resourceType, checkForDuplicates);
 		return upload.getResource();

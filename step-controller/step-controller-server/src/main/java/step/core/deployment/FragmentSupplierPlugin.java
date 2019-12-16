@@ -27,9 +27,12 @@ public class FragmentSupplierPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) {
-		FragmentSupplier fragmentSupplier = new FragmentSupplier(context);
+		FragmentSupplier fragmentSupplier = new FragmentSupplier();
 		context.put(FragmentSupplier.class, fragmentSupplier);
 		context.getServiceRegistrationCallback().registerService(FragmentSupplier.class);
+		
+		ObjectEnrichers objectEnrichers = new ObjectEnrichers();
+		context.put(ObjectEnrichers.class, objectEnrichers);
 	}
 
 }

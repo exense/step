@@ -2,7 +2,8 @@ package step.resources;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Map;
+
+import step.core.objectenricher.ObjectEnricher;
 
 public class ResourceRevisionContainer {
 
@@ -31,18 +32,18 @@ public class ResourceRevisionContainer {
 		return resourceRevision;
 	}
 
-	public void save(boolean checkForDuplicates, Map<String, String> additionalAttributes) throws IOException, SimilarResourceExistingException {
+	public void save(boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
 		try {
 			outputStream.close();
 		} catch (IOException e) {
 
 		}
-		resourceManagerImpl.closeResourceContainer(resource, resourceRevision, checkForDuplicates, additionalAttributes);
+		resourceManagerImpl.closeResourceContainer(resource, resourceRevision, checkForDuplicates, objectEnricher);
 	}
 	
-	public void save(Map<String, String> additionalAttributes) throws IOException {
+	public void save(ObjectEnricher objectEnricher) throws IOException {
 		try {
-			save(false, additionalAttributes);
+			save(false, objectEnricher);
 		} catch (SimilarResourceExistingException e) {
 			throw new RuntimeException("This should never happen");
 		}

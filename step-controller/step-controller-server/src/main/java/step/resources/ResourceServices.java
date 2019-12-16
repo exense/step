@@ -2,7 +2,6 @@ package step.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -19,7 +18,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -29,8 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.io.FileHelper;
 import step.core.deployment.AbstractServices;
-import step.core.deployment.FragmentSupplier;
+import step.core.deployment.ObjectEnrichers;
 import step.core.deployment.Secured;
+import step.core.objectenricher.ObjectEnricher;
 
 @Path("/resources")
 public class ResourceServices extends AbstractServices { 
@@ -39,14 +38,14 @@ public class ResourceServices extends AbstractServices {
 
 	protected ResourceManager resourceManager;
 	protected ResourceAccessor resourceAccessor;
-	private FragmentSupplier fragmentSupplier;
+	private ObjectEnrichers objectEnrichers;
 	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		resourceManager = getContext().get(ResourceManager.class);
 		resourceAccessor = getContext().get(ResourceAccessor.class);
-		fragmentSupplier = getContext().get(FragmentSupplier.class);
+		objectEnrichers = getContext().get(ObjectEnrichers.class);
 	}
 	
 	@POST
@@ -56,8 +55,8 @@ public class ResourceServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType, @QueryParam("duplicateCheck") Boolean checkForDuplicate,
-			@Context ContainerRequestContext crc, @QueryParam("ignoreContext") String ignoreContext) throws Exception {
-		Map<String, String> sessionQueryFragments = fragmentSupplier.getAdditionalQueryFragmentsFromContextAsAttributes(getSession(crc), "functionPackages", ignoreContext);
+			@Context ContainerRequestContext crc) throws Exception {
+		ObjectEnricher objectEnricher = objectEnrichers.getObjectEnricher(getSession(crc));
 		
 		if(checkForDuplicate == null) {
 			checkForDuplicate = true;
@@ -68,7 +67,7 @@ public class ResourceServices extends AbstractServices {
 			throw new RuntimeException("Missing resource type query parameter 'type'");
 		
 		try {
-			Resource resource = resourceManager.createResource(resourceType, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, sessionQueryFragments);//, sessionQueryFragments);
+			Resource resource = resourceManager.createResource(resourceType, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, objectEnricher);
 			return new ResourceUploadResponse(resource, null);
 		} catch (SimilarResourceExistingException e) {
 			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());
@@ -89,13 +88,11 @@ public class ResourceServices extends AbstractServices {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse saveResourceContent(@PathParam("id") String resourceId, @FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail, @Context ContainerRequestContext crc, @QueryParam("ignoreContext") String ignoreContext) throws Exception {
-		Map<String, String> sessionQueryFragments = fragmentSupplier.getAdditionalQueryFragmentsFromContextAsAttributes(getSession(crc), "functionPackages", ignoreContext);
-		
+			@FormDataParam("file") FormDataContentDisposition fileDetail, @Context ContainerRequestContext crc) throws Exception {
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
 		
-		Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName() );//, sessionQueryFragments);
+		Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName() );
 		return new ResourceUploadResponse(resource, null);
 	}
 	

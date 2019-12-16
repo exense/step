@@ -132,7 +132,7 @@ public class TableService extends AbstractTableService {
 		String sortDir = params.getFirst("order[0][dir]");
 		SearchOrder order = new SearchOrder(sortColumnName, sortDir.equals("asc")?1:-1);
 		
-		if(sessionQueryFragments != null) {
+		if(collection.isFiltered() && sessionQueryFragments != null) {
 			queryFragments.addAll(sessionQueryFragments);
 		}
 		

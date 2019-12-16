@@ -1,7 +1,6 @@
 package step.core.deployment;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,24 +10,9 @@ import java.util.function.Function;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import step.core.GlobalContext;
-
 public class FragmentSupplier {
 	
-	private List<String> excludedContexts;
-	private List<Function<Session, Map<String, String>>> additionalQueryFragmentSuppliers;
-	
-
-	public FragmentSupplier(GlobalContext context) {
-		additionalQueryFragmentSuppliers = new ArrayList<>();
-		String excludedContextsValue = context.getConfiguration().getProperty("plugins.MultitenancyPlugin.excludedContexts", "");
-		if(excludedContextsValue != null) {
-			String[] split = excludedContextsValue.split(",");
-			if(split.length > 0) {
-				excludedContexts = Arrays.asList(split);
-			}
-		}
-	}
+	private final List<Function<Session, Map<String, String>>> additionalQueryFragmentSuppliers = new ArrayList<>();
 
 	public List<Function<Session, Map<String, String>>> getAdditionalQueryFragmentSuppliers() {
 		return additionalQueryFragmentSuppliers;
@@ -47,7 +31,6 @@ public class FragmentSupplier {
 	}
 	
 	public Map<String, String> getAdditionalQueryFragmentsFromContextAsAttributes(Session session, String collectionID, String ignoreContext){
-		System.out.println(session.getAttributes());
 		return computeFragments(session, collectionID, ignoreContext);
 	}
 	
@@ -57,12 +40,10 @@ public class FragmentSupplier {
 	
 	private Map<String, String> computeFragments(Session session, String collectionID, String ignoreContext) {
 		Map<String, String> additionalQueryFragments = new HashMap<String, String>();
-		if(!excludedContexts.contains(collectionID)) {
-			if(ignoreContext == null || !ignoreContext.equals("true")) {
-				getAdditionalQueryFragmentSuppliers().forEach(s->{
-					additionalQueryFragments.putAll(s.apply(session));
-				});
-			}
+		if(ignoreContext == null || !ignoreContext.equals("true")) {
+			getAdditionalQueryFragmentSuppliers().forEach(s->{
+				additionalQueryFragments.putAll(s.apply(session));
+			});
 		}
 		return additionalQueryFragments;	
 	}

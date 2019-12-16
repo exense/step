@@ -181,7 +181,7 @@ public class DataTableServices extends AbstractTableService {
 			}
 		}
 
-		if(sessionQueryFragments != null) {
+		if(table.isFiltered() && sessionQueryFragments != null) {
 			queryFragments.addAll(sessionQueryFragments);
 		}
 

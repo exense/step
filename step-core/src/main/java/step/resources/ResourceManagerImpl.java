@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.hash.Hashing;
 
 import ch.exense.commons.io.FileHelper;
+import step.core.objectenricher.ObjectEnricher;
 
 public class ResourceManagerImpl implements ResourceManager {
 
@@ -62,16 +63,15 @@ public class ResourceManagerImpl implements ResourceManager {
 		return new ResourceRevisionContainer(resource, revision, fileOutputStream, this);
 	}
 
-	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, boolean checkForDuplicates, Map<String, String> additionalAttributes) throws IOException, SimilarResourceExistingException {
+	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
 		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
 		String checksum = getMD5Checksum(resourceRevisionFile);
 		resourceRevision.setChecksum(checksum);
 		resourceRevisionAccessor.save(resourceRevision);
 
 		resource.setCurrentRevisionId(resourceRevision.getId());
-		if(additionalAttributes != null) {
-			resource.getAttributes().putAll(additionalAttributes);
-		}
+		
+		objectEnricher.accept(resource);
 		resourceAccessor.save(resource);
 
 		if(checkForDuplicates) {
@@ -83,10 +83,10 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, Map<String, String> additionalAttributes) throws IOException, SimilarResourceExistingException {
+	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
 		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
-		resourceContainer.save(checkForDuplicates, additionalAttributes);
+		resourceContainer.save(checkForDuplicates, objectEnricher);
 		return resourceContainer.getResource();
 	}
 
