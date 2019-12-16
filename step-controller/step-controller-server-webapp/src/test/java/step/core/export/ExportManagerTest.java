@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
@@ -14,6 +15,7 @@ import step.core.GlobalContext;
 import step.core.GlobalContextBuilder;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.InMemoryArtefactAccessor;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.LocalPlanRepository;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -35,13 +37,27 @@ public class ExportManagerTest {
 			
 			InMemoryArtefactAccessor artefactAccessor = new InMemoryArtefactAccessor();
 			ImportManager importManager = new ImportManager(artefactAccessor);
-			importManager.importArtefacts(testExportFile);
+			importManager.importArtefacts(testExportFile, dummyObjectEnricher());
 			
 			Collection<? extends AbstractArtefact> artefacts = artefactAccessor.getCollection();
 			Assert.assertEquals(2, artefacts.size());			
 		} finally {
 			testExportFile.delete();
 		}
+	}
+
+	protected ObjectEnricher dummyObjectEnricher() {
+		return new ObjectEnricher() {
+			
+			@Override
+			public void accept(Object t) {
+			}
+			
+			@Override
+			public Map<String, String> getAdditionalAttributes() {
+				return null;
+			}
+		};
 	}
 	
 	@Test
@@ -60,7 +76,7 @@ public class ExportManagerTest {
 			
 			InMemoryArtefactAccessor artefactAccessor = new InMemoryArtefactAccessor();
 			ImportManager importManager = new ImportManager(artefactAccessor);
-			importManager.importArtefacts(testExportFile);
+			importManager.importArtefacts(testExportFile, dummyObjectEnricher());
 			
 			Collection<? extends AbstractArtefact> artefacts = artefactAccessor.getCollection();
 			Assert.assertEquals(2, artefacts.size());			
