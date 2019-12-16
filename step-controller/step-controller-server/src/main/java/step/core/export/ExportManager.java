@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.deployment.JacksonMapperProvider;
+import step.core.objectenricher.ObjectFilter;
 
 public class ExportManager {
 	
@@ -44,14 +45,16 @@ public class ExportManager {
 		return mapper;
 	}
 	
-	public void exportAllArtefacts(OutputStream outputStream) throws FileNotFoundException, IOException {
+	public void exportAllArtefacts(OutputStream outputStream, ObjectFilter objectFilter) throws FileNotFoundException, IOException {
 		ObjectMapper mapper = getMapper();
 		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
 			accessor.getRootArtefacts().forEachRemaining((a)->{
-				try {
-					exportArtefactRecursive(mapper, writer, new ObjectId(a.getId().toString()));
-				} catch (Exception e) {
-					logger.error("Error while exporting artfact "+a.getId().toString(), e);
+				if(objectFilter.test(a)) {
+					try {
+						exportArtefactRecursive(mapper, writer, new ObjectId(a.getId().toString()));
+					} catch (Exception e) {
+						logger.error("Error while exporting artfact "+a.getId().toString(), e);
+					}
 				}
 			});
 		}	

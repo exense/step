@@ -16,6 +16,7 @@ import step.core.GlobalContextBuilder;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectFilter;
 import step.core.plans.LocalPlanRepository;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -72,7 +73,7 @@ public class ExportManagerTest {
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = new ExportManager(c.getArtefactAccessor());
-			exportManager.exportAllArtefacts(outputStream);
+			exportManager.exportAllArtefacts(outputStream, dummyObjectFilter());
 			
 			InMemoryArtefactAccessor artefactAccessor = new InMemoryArtefactAccessor();
 			ImportManager importManager = new ImportManager(artefactAccessor);
@@ -83,5 +84,20 @@ public class ExportManagerTest {
 		} finally {
 			testExportFile.delete();
 		}
+	}
+
+	protected ObjectFilter dummyObjectFilter() {
+		return new ObjectFilter() {
+			
+			@Override
+			public boolean test(Object t) {
+				return true;
+			}
+			
+			@Override
+			public Map<String, String> getAdditionalAttributes() {
+				return null;
+			}
+		};
 	}
 }

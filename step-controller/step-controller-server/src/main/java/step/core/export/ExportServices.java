@@ -10,6 +10,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
@@ -17,7 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import step.core.artefacts.ArtefactAccessor;
 import step.core.deployment.AbstractServices;
+import step.core.deployment.FragmentSupplier;
 import step.core.deployment.Secured;
+import step.core.deployment.Session;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
 import step.resources.Resource;
@@ -34,11 +38,14 @@ public class ExportServices extends AbstractServices {
 	
 	ExportTaskManager exportTaskManager;
 	
+	FragmentSupplier fragmentSupplier;
+	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		ArtefactAccessor accessor = getContext().getArtefactAccessor();
 		exportTaskManager = getContext().get(ExportTaskManager.class);
+		fragmentSupplier = getContext().get(FragmentSupplier.class);
 		exportManager = new ExportManager(accessor);
 	}
 
@@ -64,12 +71,13 @@ public class ExportServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public ExportStatus exportAllArtefacts() {
+	public ExportStatus exportAllArtefacts(@Context ContainerRequestContext crc) {
+		Session session = getSession(crc);
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "artefact_export.json");
-				exportManager.exportAllArtefacts(resourceContainer.getOutputStream());
+				exportManager.exportAllArtefacts(resourceContainer.getOutputStream(), fragmentSupplier.getObjectFilter(session));
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}

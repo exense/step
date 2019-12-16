@@ -6,11 +6,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
 public class ExportTaskManager {
 	
+	private static final Logger logger = LoggerFactory.getLogger(ExportTaskManager.class);
+
 	protected ResourceManager resourceManager;
 	
 	protected Map<String, ExportStatus> exportStatusMap = new ConcurrentHashMap<>();
@@ -40,7 +45,7 @@ public class ExportTaskManager {
 				try {
 					resource = runnable.runExport();
 				} catch(Exception e) {
-					
+					logger.error("Error while running export task "+exportId, e);
 				} finally {
 					if(resource!=null) {
 						status.setAttachmentID(resource.getId().toString());
