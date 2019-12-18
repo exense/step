@@ -686,6 +686,8 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       $scope.localModel = {json:""}
       $scope.argumentAsTable = [];
       $scope.isFocusOnLastRow=false;
+      $scope.doCommitLastRow=false;
+      $scope.stillEditing=false;
       
       $scope.$watch('model', function(json) {
         if(json!=$scope.localModel.json) {
@@ -700,6 +702,23 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
           $timeout(function() {
             $("#lastRowKey").focus();
             $scope.isFocusOnLastRow=false;
+          });
+        }
+      })
+      
+      $scope.$watch('doCommitLastRow', function(value) {
+        if(value === true) { 
+          $timeout(function() {
+        	$scope.commitLastRow();
+            $scope.doCommitLastRow=false;
+          });
+        }
+      })
+      
+      $scope.$watch('stillEditing', function(value) {
+        if(value === true) { 
+          $timeout(function() {
+            $scope.stillEditing=false;
           });
         }
       })
@@ -771,6 +790,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       
       function initLastRow() {
       	// init last row as a static value
+      	$scope.stillEditing=true;
         $scope.lastRow = {key:"", value:{value:"",dynamic:false}}  
         var inputElt = document.getElementById("lastRowKey");
         if (inputElt !== null) {
@@ -796,29 +816,37 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       }
       
       $scope.onBlurFromLastRowKey = function() {
-        //Trigger commit from blur event of last key only if 
-        //not tabbed from last key to last value
-        if ($scope.tabbedLastKeyToLastValue) {
-          $scope.tabbedLastKeyToLastValue = false;
-          //or not clicked on last value
-        } else if ($scope.clickedOnLastValue) {
-          $scope.clickedOnLastValue=false;
-          //or key is not empty
-        } else if ($scope.lastRow.key !== "") {
-          $scope.commitLastRow();
+   	    //only save on the last key blur events if key is set 
+        if ($scope.lastRow.key !== "") {
+      	  $scope.saveLastRow();
         }
       }
       
-      $scope.onLastRowKeyPress = function(event) {
+      $scope.saveLastRow = function() {
+        if ($scope.stillEditing) {
+   	    } else {
+      	     $scope.doCommitLastRow=true;
+   	    }
+      }
+      
+      $scope.lastRowTabKeyToValue = function(event) {
         var x = event.which || event.keyCode;
-        if (x === 9) {
-          $scope.tabbedLastKeyToLastValue=true;
+        if (x === 9 && !event.shiftKey) {
+          $scope.stillEditing=true;
         }
       }
       
-      $scope.onClickOnLastRowValue = function () {
-        //catch click event on last value to properly handle the blur event on last key 
-        $scope.clickedOnLastValue=true;
+      $scope.lastRowTabValueToKey = function(event) {
+        var x = event.which || event.keyCode;
+        if (x === 9 && (event.shiftKey || 
+                event.target.attributes['title'] === undefined || 
+                event.target.attributes['title'].nodeValue!=='Use function')) {
+          $scope.stillEditing=true;
+        }
+      }
+      
+      $scope.onClickOnLastRow = function () {
+        $scope.stillEditing=true;
       }
       
       

@@ -39,6 +39,20 @@ function initDynamicFormsCtrl($scope) {
     delete $scope.dynamicValue.value;
     $scope.onSave();
   }
+  
+  $scope.keydownUseDynamicExpression = function(event) {
+    var x = event.which || event.keyCode;
+    if (x === 32 || x === 13 ){ 
+      $scope.useDynamicExpression();
+    }
+  }
+  
+  $scope.keydownUseConstantValue = function(event) {
+    var x = event.which || event.keyCode;
+    if (x === 32 || x === 13){ 
+      $scope.useConstantValue();
+    }
+  }
 } 
 
 dynamicForms.directive('dynamicCheckbox', function() {

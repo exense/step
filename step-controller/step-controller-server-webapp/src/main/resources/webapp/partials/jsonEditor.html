@@ -21,14 +21,14 @@
 						</tr>
 						<tr>
 							<td><input id="lastRowKey" type="text" class="form-control form-control-sm" ng-model="lastRow.key" 
-								ng-keydown="onLastRowKeyPress($event)" 
+								ng-keydown="lastRowTabKeyToValue($event)" ng-mousedown="onClickOnLastRow()" 
 								ng-blur="onBlurFromLastRowKey()"
 								placeholder="Unique key"/></td>
 							<td>
-								<dynamic-textfield dynamic-value="lastRow.value" on-save="commitLastRow()" 
-								ng-mousedown="onClickOnLastRowValue()"/>
+								<dynamic-textfield dynamic-value="lastRow.value" on-save="saveLastRow()" id="lastRowValue" 
+							ng-mousedown="onClickOnLastRow()" ng-keydown="lastRowTabValueToKey($event)"/>
 							</td>
-							<td></td>	
+							<td><!-- <button class="btn btn-default btn-xs" ng-click="commitLastRow()" type="button"><i class="glyphicon glyphicon-ok"></i></button>--></td>	
 						</tr>
 					</tbody>
 				</table>
