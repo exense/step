@@ -6,9 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,8 +14,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.hash.Hashing;
 
 import ch.exense.commons.io.FileHelper;
+import step.core.objectenricher.ObjectEnricher;
 
 public class ResourceManagerImpl implements ResourceManager {
 
@@ -27,6 +29,8 @@ public class ResourceManagerImpl implements ResourceManager {
 	protected final ResourceRevisionAccessor resourceRevisionAccessor;
 	protected final Map<String, ResourceType> resourceTypes;
 
+	protected static final Logger logger = LoggerFactory.getLogger(ResourceManagerImpl.class);
+	
 	public ResourceManagerImpl(File resourceRootFolder, ResourceAccessor resourceAccessor,
 			ResourceRevisionAccessor resourceRevisionAccessor) {
 		super();
@@ -59,15 +63,16 @@ public class ResourceManagerImpl implements ResourceManager {
 		return new ResourceRevisionContainer(resource, revision, fileOutputStream, this);
 	}
 
-	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, boolean checkForDuplicates, Map<String, String> additionalAttributes) throws IOException, SimilarResourceExistingException {
+	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
 		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
 		String checksum = getMD5Checksum(resourceRevisionFile);
 		resourceRevision.setChecksum(checksum);
 		resourceRevisionAccessor.save(resourceRevision);
 
 		resource.setCurrentRevisionId(resourceRevision.getId());
-		if(additionalAttributes != null) {
-			resource.getAttributes().putAll(additionalAttributes);
+		
+		if(objectEnricher != null) {
+			objectEnricher.accept(resource);
 		}
 		resourceAccessor.save(resource);
 
@@ -80,10 +85,10 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, Map<String, String> additionalAttributes) throws IOException, SimilarResourceExistingException {
+	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
 		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
-		resourceContainer.save(checkForDuplicates, additionalAttributes);
+		resourceContainer.save(checkForDuplicates, objectEnricher);
 		return resourceContainer.getResource();
 	}
 
@@ -116,14 +121,23 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceRevisionAccessor.getResourceRevisionsByChecksum(actualResourceRevision.getChecksum()).forEachRemaining(revision->{
 			if(!revision.getId().equals(actualResourceRevision.getId())) {
 				Resource resource = resourceAccessor.get(new ObjectId(revision.getResourceId()));
-				if(resource.getCurrentRevisionId().equals(revision.getId())) {
-					try {
-						if(FileUtils.contentEquals(getResourceRevisionFile(resource, revision), getResourceRevisionFile(actualResource, actualResourceRevision))) {
-							result.add(resource);
+				if(resource!=null) {
+					 if (resource.getCurrentRevisionId() != null) {
+						// ensure it is an active revision i.e a revision that is the current revision of a resource
+						if(resource.getCurrentRevisionId().equals(revision.getId())) {
+							try {
+								if(FileUtils.contentEquals(getResourceRevisionFile(resource, revision), getResourceRevisionFile(actualResource, actualResourceRevision))) {
+									result.add(resource);
+								}
+							} catch (IOException e) {
+								logger.warn("Error while comparing resource revisions "+revision.getId()+" and "+actualResourceRevision.getId(), e);
+							}
 						}
-					} catch (IOException e) {
-
+					} else {
+						logger.warn("Found resource without current revision: "+resource.getId());
 					}
+				} else {
+					logger.warn("Found orphan resource revision: "+revision.getId());
 				}
 			}
 		});
@@ -238,23 +252,8 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	private String getMD5Checksum(File file) throws IOException {
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("MD5");
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("Unable to find MD5 algorithm", e);
-		}
-		try (InputStream is = Files.newInputStream(file.toPath());
-				DigestInputStream dis = new DigestInputStream(is, md)) 
-		{}
-		byte[] digest = md.digest();
-
-		String result = "";
-
-		for (int i = 0; i < digest.length; i++) {
-			result += Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1);
-		}
-		return result;
+		String hash = com.google.common.io.Files.hash(file, Hashing.md5()).toString();
+		return hash;
 	}
 
 	private void updateResourceFileNameIfNecessary(String resourceFileName, Resource resource) {

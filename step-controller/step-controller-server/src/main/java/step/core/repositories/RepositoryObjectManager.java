@@ -18,6 +18,8 @@
  *******************************************************************************/
 package step.core.repositories;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,8 +27,14 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.artefacts.CallPlan;
+import step.artefacts.TestCase;
+import step.artefacts.TestSet;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
+import step.core.artefacts.ArtefactRegistry;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ReportExport;
 import step.core.execution.model.ReportExportStatus;
@@ -94,6 +102,7 @@ public class RepositoryObjectManager {
 				
 				ArtefactInfo info = new ArtefactInfo();
 				info.setName(artefact.getAttributes()!=null?artefact.getAttributes().get("name"):null);
+				info.setType(ArtefactRegistry.getArtefactName(artefact.getClass()));
 				return info;
 			} else {
 				String respositoryId = ref.getRepositoryID();
@@ -108,9 +117,37 @@ public class RepositoryObjectManager {
 	
 	
 	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
-		String respositoryId = report.getRepositoryID();
-		Repository repository = getRepository(respositoryId);
-		return repository.getTestSetStatusOverview(report.getRepositoryParameters());
+		if(!report.getRepositoryID().equals(LOCAL)) {
+			String respositoryId = report.getRepositoryID();
+			Repository repository = getRepository(respositoryId);
+			return repository.getTestSetStatusOverview(report.getRepositoryParameters());
+		}  else {
+			TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
+
+			String artefactid = report.getRepositoryParameters().get(ARTEFACT_ID);
+			AbstractArtefact artefact = artefactAccessor.get(new ObjectId(artefactid));
+
+			if(artefact instanceof TestSet) {
+				// Perform a very basic parsing of the artefact tree to get a list of test cases referenced 
+				// in this test set. Only direct children of the root node are considered 
+				Iterator<AbstractArtefact> children = artefactAccessor.getChildren(artefact);
+				children.forEachRemaining(child->{
+					if(child instanceof TestCase) {
+						addTestRunStatus(testSetStatusOverview.getRuns(), child);
+					} else if(child instanceof CallPlan) {
+						AbstractArtefact referencedArtefact = artefactAccessor.get(((CallPlan)child).getArtefactId());
+						if(referencedArtefact instanceof TestCase) {
+							addTestRunStatus(testSetStatusOverview.getRuns(), referencedArtefact);
+						}
+					}
+				});
+			}
+			return testSetStatusOverview;
+		}
+	}
+	
+	private void addTestRunStatus(List<TestRunStatus> testRunStatusList, AbstractArtefact artefact) {
+		testRunStatusList.add(new TestRunStatus(artefact.getAttributes().get(AbstractOrganizableObject.NAME), ReportNodeStatus.NORUN));
 	}
 	
 }

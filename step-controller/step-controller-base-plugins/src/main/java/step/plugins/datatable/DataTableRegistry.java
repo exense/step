@@ -78,7 +78,7 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 		reportSearchAttributes.add("error.msg");
 		reportSearchAttributes.add("name");
 		
-		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports"));
+		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports", false));
 		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step",reportSearchAttributes)
 		.addTextWithDropdownColumnOptimized("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
 		.setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());

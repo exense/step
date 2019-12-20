@@ -34,12 +34,29 @@ public class Collection {
 	protected MongoCollection<Document> collection;
 	
 	private static final int DEFAULT_LIMIT = 1000;
+	
+	private final boolean filtered;
 
 	public Collection(MongoDatabase mongoDatabase, String collectionName) {
-		super();
-		collection = mongoDatabase.getCollection(collectionName);
+		this(mongoDatabase, collectionName, true);
 	}
 	
+	/**
+	 * @param mongoDatabase
+	 * @param collectionName the name of the mongo collection
+	 * @param filtered if the {@link Collection} is subject to context filtering i.e. 
+	 * if the context parameters delivered by the FragmentSupplier may be appended to the queries 
+	 * run against this collection
+	 */
+	public Collection(MongoDatabase mongoDatabase, String collectionName, boolean filtered) {
+		this.filtered = filtered;
+		collection = mongoDatabase.getCollection(collectionName);
+	}
+
+	public boolean isFiltered() {
+		return filtered;
+	}
+
 	public List<String> distinct(String key) {
 		return collection.distinct(key, String.class).filter(new Document(key,new Document("$ne",null))).into(new ArrayList<String>());
 	}

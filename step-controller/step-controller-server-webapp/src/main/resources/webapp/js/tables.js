@@ -359,14 +359,8 @@ angular.module('dataTable', ['export'])
         }));
         
         var query = 'rest/datatable/' + attr.serverside + '/data';
-        var operator = '?';
-        if (attr.ignorecontext) {
-            query = query + '?ignoreContext='+attr.ignorecontext;
-            operator = '&';
-        }
-       
         if(attr.params) {
-          query = query + operator + attr.params;
+          query = query + '?' + attr.params;
         }
         tableOptions.ajax = {'url':query,'type':'POST',beforeSend:function(a,b) {
           b.data = b.data + "&" + attr.params;

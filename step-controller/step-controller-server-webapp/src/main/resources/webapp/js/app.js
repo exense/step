@@ -162,14 +162,9 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'datatable', '/partials/selection/selectDatatableEntity.html');
 	EntityRegistry.registerEntity('Scheduler task', 'task', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table', '/partials/selection/selectSttableEntity.html');
 	EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/selection/userSelectionListModal.html');
+	EntityRegistry.registerEntity('Repository', 'repository', null, null, null, null, null, null);
 	//TODO
-	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');
-
-	//can be pre-initialized by plugin
-	if(!EntityRegistry.getEntityByName('repository')){
-		EntityRegistry.registerEntity('Repository', 'repository', null, null, null, null, null, null);
-	}
-		
+	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');		
 })
 
 .controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, MaintenanceService, ViewRegistry) {
@@ -608,7 +603,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	}
 
 	//Select entities knowing type
-	dialogs.selectEntityOfType = function(entityType, ignoreContext){
+	dialogs.selectEntityOfType = function(entityType){
 		var tableType = entityType.tableType;
 		
 		var templateUrl = entityType.templateUrl;
@@ -629,9 +624,6 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 					templateUrl: templateUrl,
 					controller: controller,
 					resolve: {
-						ignoreContext:function(){
-							return ignoreContext;
-						},
 						entity:function(){
 							return entityType;
 						}
@@ -643,7 +635,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 	
 	//Select entity type only
-	dialogs.selectEntityType = function(excludeArray, ignoreContext){
+	dialogs.selectEntityType = function(excludeArray){
 		var modalInstance = $uibModal.open(
 				{
 					templateUrl: 'partials/selection/selectEntityType.html',
@@ -651,9 +643,6 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 					resolve: {
 						excludeArray:function(){
 							return excludeArray;
-						},
-						ignoreContext:function(){
-							return ignoreContext;
 						}
 					}
 				});
@@ -663,9 +652,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 	
 	//Select Type and then entities immedately after
-	dialogs.selectEntityTypeForEntities = function(excludeArray, ignoreContext, callback, arg){
-		dialogs.selectEntityType(excludeArray, ignoreContext).then(function(result1){
-			dialogs.selectEntityOfType(result1.entity, result1.ignoreContext).then(function(result2){
+	dialogs.selectEntityTypeForEntities = function(excludeArray, callback, arg){
+		dialogs.selectEntityType(excludeArray).then(function(result1){
+			dialogs.selectEntityOfType(result1.entity).then(function(result2){
 				callback(result2, arg);
 			});
 		});
@@ -674,7 +663,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	return dialogs;
 })
 
-.controller('SelectEntityTypeCtrl', function ($scope, $uibModalInstance, $uibModalStack, EntityRegistry, excludeArray, ignoreContext) {
+.controller('SelectEntityTypeCtrl', function ($scope, $uibModalInstance, $uibModalStack, EntityRegistry, excludeArray) {
 
 	$scope.excludeEntities = function (excludeArray){
 		var fullEntityList = EntityRegistry.getEntities();
@@ -699,7 +688,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	});
 
 	$scope.proceed = function () {
-		$uibModalInstance.close({ entity : $scope.currentEntityType, ignoreContext: ignoreContext});
+		$uibModalInstance.close({ entity : $scope.currentEntityType});
 	};
 
 	$scope.cancel = function () {
@@ -707,7 +696,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 })
 
-.controller('SelectDatatableEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, entity, ignoreContext) {
+.controller('SelectDatatableEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, entity) {
 
 	$scope.result = [];
 	$scope.entity = entity;
@@ -784,7 +773,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 })
 
 
-.controller('SelectSttableEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, entity, ignoreContext) {
+.controller('SelectSttableEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, entity) {
 
 	$scope.result = {};
 	$scope.entity = entity;

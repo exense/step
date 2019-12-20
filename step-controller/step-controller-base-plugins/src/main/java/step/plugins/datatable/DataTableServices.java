@@ -41,7 +41,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -109,8 +108,8 @@ public class DataTableServices extends AbstractTableService {
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context ContainerRequestContext crc, @QueryParam("ignoreContext") String ignoreContext) throws Exception {
-		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID, ignoreContext);
+	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context ContainerRequestContext crc) throws Exception {
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID);
 		return getTableData(collectionID, form, sessionQueryFragments);
 	}
 
@@ -118,8 +117,8 @@ public class DataTableServices extends AbstractTableService {
 	@Path("/{id}/data")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo, @Context ContainerRequestContext crc, @QueryParam("ignoreContext") String ignoreContext) throws Exception {
-		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID, ignoreContext);
+	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) throws Exception {
+		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(crc, collectionID);
 		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragments);
 	}
 
@@ -181,7 +180,7 @@ public class DataTableServices extends AbstractTableService {
 			}
 		}
 
-		if(sessionQueryFragments != null) {
+		if(table.isFiltered() && sessionQueryFragments != null) {
 			queryFragments.addAll(sessionQueryFragments);
 		}
 

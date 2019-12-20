@@ -40,6 +40,7 @@ import org.bson.types.ObjectId;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;
+import step.core.deployment.Unfiltered;
 
 @Singleton
 @Path("screens")
@@ -74,6 +75,7 @@ public class ScreenTemplateService extends AbstractServices {
 	
 	@GET
 	@Secured
+	@Unfiltered
 	@Path("/input/byscreen/{screenid}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<ScreenInput> getScreenInputsByScreenId(@PathParam("screenid") String screenId) {		
@@ -82,6 +84,7 @@ public class ScreenTemplateService extends AbstractServices {
 	
 	@GET
 	@Secured
+	@Unfiltered
 	@Path("/input/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ScreenInput getInput(@PathParam("id") String id) {
@@ -99,6 +102,7 @@ public class ScreenTemplateService extends AbstractServices {
 	
 	@POST
 	@Secured(right="admin")
+	@Unfiltered
 	@Path("/input")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void saveInput(ScreenInput screenInput) {

@@ -25,12 +25,15 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
@@ -48,7 +51,7 @@ import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.execution.ControllerSideExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionContextBindings;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.LocalPlanRepository;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -60,7 +63,6 @@ import step.functions.manager.FunctionManager;
 import step.grid.TokenWrapper;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.planbuilder.FunctionArtefacts;
-import step.plugins.parametermanager.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 
 @Singleton
@@ -72,6 +74,8 @@ public class InteractiveServices extends AbstractServices {
 	private Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
 	
 	private Timer sessionExpirationTimer; 
+	
+	private ObjectHookRegistry objectHookRegistry;
 	
 	private static class InteractiveSession {
 		
@@ -109,6 +113,12 @@ public class InteractiveServices extends AbstractServices {
 		}, 60000, 60000);
 	}
 	
+	@PostConstruct
+	public void init() throws Exception {
+		super.init();
+		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
+	}
+	
 	@PreDestroy
 	private void close() {
 		if(sessionExpirationTimer != null) {
@@ -120,9 +130,13 @@ public class InteractiveServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/start")
 	@Secured(right="interactive")
-	public String start() throws AgentCommunicationException {
+	public String start(@Context ContainerRequestContext crc) throws AgentCommunicationException {
 		InteractiveSession session = new InteractiveSession();
 		ExecutionContext  executionContext = ControllerSideExecutionContextBuilder.createExecutionContext(getContext());
+		
+		// Enrich the ExecutionParameters with the current context attributes as done by the TenantContextFilter when starting a normal execution
+		objectHookRegistry.getObjectEnricher(getSession(crc)).accept(executionContext.getExecutionParameters());
+		
 		session.c = executionContext;
 		session.lasttouch = System.currentTimeMillis();
 		session.root = new ReportNode();
@@ -187,7 +201,7 @@ public class InteractiveServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}/execute/{artefactid}")
 	@Secured(right="interactive")
-	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("artefactid") String artefactId, ExecutionParameters executionParameters) {
+	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("artefactid") String artefactId, ExecutionParameters executionParameters, @Context ContainerRequestContext crc) {
 		InteractiveSession session = getAndTouchSession(sessionId);
 		if(session!=null) {
 			ArtefactAccessor a = getContext().getArtefactAccessor();
@@ -195,11 +209,8 @@ public class InteractiveServices extends AbstractServices {
 
 			session.c.getArtefactCache().clear();
 
-			ParameterManager parameterManager = getContext().get(ParameterManager.class);
 			session.c.setCurrentReportNode(session.root);
 			ParameterManagerPlugin.putVariables(session.c, session.root, executionParameters.getExecutionParameters(), VariableType.IMMUTABLE);
-			Map<String, String> parameters = parameterManager.getAllParameterValues(ExecutionContextBindings.get(session.c));
-			ParameterManagerPlugin.putVariables(session.c, session.root, parameters, VariableType.IMMUTABLE);	
 			
 			ArtefactHandler.delegateCreateReportSkeleton(session.c, artefact, session.root);
 			ArtefactHandler.delegateExecute(session.c, artefact, session.root);

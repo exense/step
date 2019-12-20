@@ -55,6 +55,10 @@ public class BackendDataTable {
 		return this;
 	}
 
+	public boolean isFiltered() {
+		return collection.isFiltered();
+	}
+
 	public List<ColumnDef> getExportColumns() {
 		return exportColumns;
 	}
