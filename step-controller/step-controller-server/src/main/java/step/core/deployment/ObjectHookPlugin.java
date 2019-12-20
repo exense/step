@@ -22,6 +22,7 @@ public class ObjectHookPlugin extends AbstractControllerPlugin {
 	public void executionControllerStart(GlobalContext context) {
 		objectHookRegistry = new ObjectHookRegistry();
 		context.put(ObjectHookRegistry.class, objectHookRegistry);
+		context.getServiceRegistrationCallback().registerService(ObjectHookInterceptor.class);
 	}
 
 	@Override
