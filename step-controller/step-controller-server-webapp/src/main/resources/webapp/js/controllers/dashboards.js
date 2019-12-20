@@ -95,7 +95,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	};
 
 	$scope.popApplyEntity = function(){
-		Dialogs.selectEntityTypeForEntities(['repository'], false, $scope.applyEntities);
+		Dialogs.selectEntityTypeForEntities(['repository'], $scope.applyEntities);
 		//.then(function(result){ $scope.applyEntities(result.array[0]); });
 	};
 

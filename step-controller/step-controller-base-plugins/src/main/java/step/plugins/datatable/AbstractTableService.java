@@ -23,7 +23,7 @@ public abstract class AbstractTableService extends AbstractServices {
 		tableManager = new TableManager(getContext().get(ObjectHookRegistry.class));
 	}
 
-	protected List<Bson> getAdditionalQueryFragmentsFromContext(ContainerRequestContext crc, String collectionID, String ignoreContext) {
-		return tableManager.getAdditionalQueryFragmentsFromContext(getSession(crc), collectionID, ignoreContext);
+	protected List<Bson> getAdditionalQueryFragmentsFromContext(ContainerRequestContext crc, String collectionID) {
+		return tableManager.getAdditionalQueryFragmentsFromContext(getSession(crc), collectionID);
 	}
 }

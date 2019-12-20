@@ -110,8 +110,7 @@ angular.module('tables', ['export','dataTable'])
 			filter: '=?',
 			dom: '=?',
 			order: '=?',
-			persistState: '=',
-			ignorecontext: '=?'
+			persistState: '='
 		},
 		transclude : {
 			'stActions' : '?stActions',
@@ -167,25 +166,13 @@ angular.module('tables', ['export','dataTable'])
 
 			if(serverSide) {
 				var query = 'rest/table/' + scope.collection + '/data';
-				if(scope.filter) {
-					query += '?filter=' + encodeURIComponent(scope.filter);
-				}
-				
-				if(scope.ignorecontext) {
-					//tableOptions.ajax.headers = { 'ignoreContext': 'true' };
-					if(scope.filter) {
-						query += '&';
-					}else{
-						query += '?';
-					}
-					query += 'ignoreContext=true';
-				}
-				
-				tableOptions.ajax = {
-						'url' : query,
-						'type' : 'POST',
-				}
-
+        if(scope.filter) {
+          query += '?filter=' + encodeURIComponent(scope.filter);
+        }
+        tableOptions.ajax = {
+            'url' : query,
+            'type' : 'POST'
+        }
 
 				tableOptions.processing = false;
 				tableOptions.serverSide = true;
