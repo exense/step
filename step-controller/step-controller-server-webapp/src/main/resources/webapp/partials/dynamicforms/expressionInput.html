@@ -7,9 +7,7 @@
 		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.expression" />
 		<span class="input-group-btn">
 			<button class="btn btn-default btn-sm" type="button" ng-click="editDynamicExpression()"><span class="glyphicon glyphicon-pencil"></span></button>
-		</span>
-		<span class="input-group-btn">
-			<button class="btn btn-default btn-sm active" type="button" ng-click="useConstantValue()"><span class="glyphicon glyphicon-flash"></span></button>
+			<button class="btn btn-default btn-sm active" type="button" ng-click="useConstantValue()" ng-keydown="keydownUseConstantValue($event)"><span class="glyphicon glyphicon-flash"></span></button>
 		</span>
 	</div>
 </div>

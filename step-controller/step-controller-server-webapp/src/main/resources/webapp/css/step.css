@@ -479,6 +479,11 @@ table.executionTableResult td {
     border-radius: 3px
 }
 
+resource-input .input-group {
+	width:100%;
+	margin-top:5px;
+}
+
 .label-normal {
 	font-weight: normal;
 }
