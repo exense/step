@@ -8,7 +8,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import org.bson.conversions.Bson;
 
 import step.core.deployment.AbstractServices;
-import step.core.deployment.FragmentSupplier;
+import step.core.objectenricher.ObjectHookRegistry;
 
 public abstract class AbstractTableService extends AbstractServices {
 
@@ -20,7 +20,7 @@ public abstract class AbstractTableService extends AbstractServices {
 	}
 
 	public void init() throws Exception {
-		tableManager = new TableManager(getContext().get(FragmentSupplier.class));
+		tableManager = new TableManager(getContext().get(ObjectHookRegistry.class));
 	}
 
 	protected List<Bson> getAdditionalQueryFragmentsFromContext(ContainerRequestContext crc, String collectionID, String ignoreContext) {

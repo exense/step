@@ -30,6 +30,7 @@ import javax.script.SimpleBindings;
 
 import step.commons.activation.Activator;
 import step.core.accessors.CRUDAccessor;
+import step.core.objectenricher.ObjectFilter;
 
 public class ParameterManager {
 	
@@ -40,27 +41,29 @@ public class ParameterManager {
 		this.parameterAccessor = parameterAccessor;
 	}
 
-	public Map<String, String> getAllParameterValues(Map<String, Object> contextBindings) {
-		return getAllParameters(contextBindings).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().value));
+	public Map<String, String> getAllParameterValues(Map<String, Object> contextBindings, ObjectFilter objectFilter) {
+		return getAllParameters(contextBindings, objectFilter).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().value));
 	}
 	
-	public Map<String, Parameter> getAllParameters(Map<String, Object> contextBindings) {
+	public Map<String, Parameter> getAllParameters(Map<String, Object> contextBindings, ObjectFilter objectFilter) {
 		Map<String, Parameter> result = new HashMap<>();
 		Bindings bindings = contextBindings!=null?new SimpleBindings(contextBindings):null;
 
 		Map<String, List<Parameter>> parameterMap = new HashMap<String, List<Parameter>>();
 		parameterAccessor.getAll().forEachRemaining(p->{
-			List<Parameter> parameters = parameterMap.get(p.key);
-			if(parameters==null) {
-				parameters = new ArrayList<>();
-				parameterMap.put(p.key, parameters);
-			}
-			parameters.add(p);
-			try {
-				Activator.compileActivationExpression(p);
-			} catch (ScriptException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if(objectFilter == null || objectFilter.test(p)) {
+				List<Parameter> parameters = parameterMap.get(p.key);
+				if(parameters==null) {
+					parameters = new ArrayList<>();
+					parameterMap.put(p.key, parameters);
+				}
+				parameters.add(p);
+				try {
+					Activator.compileActivationExpression(p);
+				} catch (ScriptException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		});
 		

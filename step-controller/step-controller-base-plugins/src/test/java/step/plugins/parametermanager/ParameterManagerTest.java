@@ -36,6 +36,7 @@ import org.junit.Test;
 
 import step.commons.activation.Expression;
 import step.core.accessors.InMemoryCRUDAccessor;
+import step.core.objectenricher.ObjectFilter;
 
 public class ParameterManagerTest {
 
@@ -62,10 +63,24 @@ public class ParameterManagerTest {
 		Map<String, Object> bindings = new HashMap<String, Object>();
 		bindings.put("user", "poire");
 				
-		Map<String, String> params = m.getAllParameterValues(bindings);
+		Map<String, String> params = m.getAllParameterValues(bindings, null);
 		Assert.assertEquals(params.get("key1"),"poirier");
 		Assert.assertEquals(params.get("key2"),"defaultValue2");
 		Assert.assertEquals(params.get("key3"),"value3");
+		
+		params = m.getAllParameterValues(bindings, new ObjectFilter() {
+			
+			@Override
+			public boolean test(Object t) {
+				return false;
+			}
+			
+			@Override
+			public Map<String, String> getAdditionalAttributes() {
+				return null;
+			}
+		});
+		Assert.assertEquals(0, params.size());
 	}
 	
 	@Test
@@ -82,12 +97,12 @@ public class ParameterManagerTest {
 		bindings.put("user", "user"+nIt);
 		
 		long t1 = System.currentTimeMillis();
-		Map<String, String> params = m.getAllParameterValues(bindings);
+		Map<String, String> params = m.getAllParameterValues(bindings, null);
 		System.out.println("ms:"+(System.currentTimeMillis()-t1));
 		Assert.assertEquals(params.get("key1"),"value"+nIt);
 		
 		t1 = System.currentTimeMillis();
-		params = m.getAllParameterValues(bindings);
+		params = m.getAllParameterValues(bindings, null);
 		System.out.println("ms:"+(System.currentTimeMillis()-t1));
 		Assert.assertEquals(params.get("key1"),"value"+nIt);
 		
@@ -118,7 +133,7 @@ public class ParameterManagerTest {
 						Random r = new Random();
 						int userId = r.nextInt(nIt)+1;
 						bindings.put("user", "user"+userId);
-						Map<String, String> params = m.getAllParameterValues(bindings);
+						Map<String, String> params = m.getAllParameterValues(bindings, null);
 						Assert.assertEquals(params.get("key1"),"value"+userId);
 					}
 				}

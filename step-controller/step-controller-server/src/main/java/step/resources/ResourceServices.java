@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.io.FileHelper;
 import step.core.deployment.AbstractServices;
-import step.core.deployment.ObjectEnrichers;
 import step.core.deployment.Secured;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectHookRegistry;
 
 @Path("/resources")
 public class ResourceServices extends AbstractServices { 
@@ -38,14 +38,14 @@ public class ResourceServices extends AbstractServices {
 
 	protected ResourceManager resourceManager;
 	protected ResourceAccessor resourceAccessor;
-	private ObjectEnrichers objectEnrichers;
+	private ObjectHookRegistry objectHookRegistry;
 	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		resourceManager = getContext().get(ResourceManager.class);
 		resourceAccessor = getContext().get(ResourceAccessor.class);
-		objectEnrichers = getContext().get(ObjectEnrichers.class);
+		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 	}
 	
 	@POST
@@ -56,7 +56,7 @@ public class ResourceServices extends AbstractServices {
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType, @QueryParam("duplicateCheck") Boolean checkForDuplicate,
 			@Context ContainerRequestContext crc) throws Exception {
-		ObjectEnricher objectEnricher = objectEnrichers.getObjectEnricher(getSession(crc));
+		ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(getSession(crc));
 		
 		if(checkForDuplicate == null) {
 			checkForDuplicate = true;

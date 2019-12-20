@@ -19,13 +19,13 @@
 package step.plugins.datatable;
 
 import step.core.GlobalContext;
-import step.core.deployment.FragmentSupplierPlugin;
+import step.core.deployment.ObjectHookPlugin;
 import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
-@Plugin(dependencies= {ExecutionTypePlugin.class, ScreenTemplatePlugin.class, FragmentSupplierPlugin.class})
+@Plugin(dependencies= {ExecutionTypePlugin.class, ScreenTemplatePlugin.class, ObjectHookPlugin.class})
 public class DataTablePlugin extends AbstractControllerPlugin {
 
 	@Override

@@ -19,11 +19,11 @@
 package step.plugins.datatable;
 
 import step.core.GlobalContext;
-import step.core.deployment.FragmentSupplier;
+import step.core.deployment.ObjectHookPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
-@Plugin
+@Plugin(dependencies= {ObjectHookPlugin.class})
 public class TablePlugin extends AbstractControllerPlugin {
 
 	@Override
