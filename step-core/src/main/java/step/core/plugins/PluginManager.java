@@ -22,7 +22,10 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
@@ -73,6 +76,21 @@ public class PluginManager<T extends AbstractPlugin> implements InvocationHandle
 	 * @throws CircularDependencyException if a circular dependency is detected
 	 */
 	protected List<T> sortPluginsByDependencies(List<T> plugins) throws CircularDependencyException {
+		
+		
+		// Create a list of additional dependencies based on the attribute "runsBefore"
+		// The attribute "runsBefore" specifies a list of plugins before which a specific plugin should be executed.
+		// Specifying that "A has to be run before B" has the same meaning as "B is depending on A"
+		Map<Class<?>, List<Class<?>>> additionalDependencies = new HashMap<>();
+		for (T plugin : plugins) {
+			Class<? extends AbstractPlugin> pluginClass = plugin.getClass();
+			Class<?>[] runsBeforeList = pluginClass.getAnnotation(Plugin.class).runsBefore();
+			for (Class<?> runsBefore : runsBeforeList) {
+				// 
+				additionalDependencies.computeIfAbsent(runsBefore, c->new ArrayList<>()).add(pluginClass);
+			}
+		}
+		
 		List<T> result = new ArrayList<>(plugins);
 		
 		int iterationCount = 0;
@@ -87,11 +105,18 @@ public class PluginManager<T extends AbstractPlugin> implements InvocationHandle
 			hasModification = false;
 			List<T> clone = new ArrayList<>(result);
 			for (T plugin : result) {
-				Class<?>[] dependencies = plugin.getClass().getAnnotation(Plugin.class).dependencies();
+				Class<? extends AbstractPlugin> pluginClass = plugin.getClass();
+				Class<?>[] dependencies = pluginClass.getAnnotation(Plugin.class).dependencies();
+				
+				List<Class<?>> allDependencies = new ArrayList<>(Arrays.asList(dependencies));
+				if(additionalDependencies.containsKey(pluginClass)) {
+					allDependencies.addAll(additionalDependencies.get(pluginClass));
+				}
+				
 				int initialPosition = clone.indexOf(plugin);
 				int newPosition = -1;
-				if(dependencies.length>0) {
-					for (Class<?> dependency : dependencies) {
+				if(allDependencies.size()>0) {
+					for (Class<?> dependency : allDependencies) {
 						int positionOfDependencyInClone = IntStream.range(0, clone.size()).filter(i -> dependency.equals(clone.get(i).getClass())).findFirst().orElse(-1);
 						// if the dependency is located after the current plugin  
 						if(positionOfDependencyInClone>initialPosition) {

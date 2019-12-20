@@ -44,6 +44,21 @@ public class TestPlugins {
 		
 	}
 	
+	@Plugin(runsBefore= {TestPlugin3.class})
+	public static class TestPlugin9 extends AbstractTestPlugin {
+		
+	}
+	
+	@Plugin(runsBefore= {TestPlugin11.class, TestPlugin3.class}, dependencies= {TestPlugin9.class})
+	public static class TestPlugin10 extends AbstractTestPlugin {
+		
+	}
+	
+	@Plugin(runsBefore= {TestPlugin10.class})
+	public static class TestPlugin11 extends AbstractTestPlugin {
+		
+	}
+	
 	public static class AbstractTestPlugin extends AbstractPlugin {
 		@Override
 		public boolean equals(Object plugin) {
