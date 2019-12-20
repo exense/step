@@ -41,10 +41,13 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 	public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
 		Object proceed = context.proceed();
 
-		Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
-		if(annotation == null) {
-			Session session = getSession(context);
-			objectHookRegistry.getObjectEnricher(session).accept(proceed);
+		// TODO implement right validation to prevent malicious usage of this header
+		if(!context.getHeaders().containsKey("ignoreContext") || !context.getHeaders().get("ignoreContext").contains("true")) {
+			Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
+			if(annotation == null) {
+				Session session = getSession(context);
+				objectHookRegistry.getObjectEnricher(session).accept(proceed);
+			}
 		}
 
 		return proceed;
