@@ -81,6 +81,9 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
         _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
           col.visible = false
         });
+        _.each(_.where(columns, { 'title' : 'Package' }), function(col) {
+          col.visible = false
+        });
         _.each(_.where(columns,{'title':'Actions'}),function(col){
           col.render = function(data, type, row) {
             return '<button type="button" class="btn btn-default  btn-xs" aria-label="Left Align"' + 
