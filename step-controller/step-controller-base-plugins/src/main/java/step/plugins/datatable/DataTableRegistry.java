@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.json.JsonObject;
@@ -33,6 +34,8 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 	protected MongoDatabase database;
 	
 	protected ScreenTemplateManager screenTemplates;
+	
+	protected final List<Consumer<DataTableRegistry>> initializationScripts = new ArrayList<>();
 
 	public DataTableRegistry(GlobalContext context) {
 		super();
@@ -44,6 +47,11 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 		screenTemplates.registerListener(this);
 
 		init();
+	}
+	
+	public void registerInitializationScript(Consumer<DataTableRegistry> script) {
+		script.accept(this);
+		initializationScripts.add(script);
 	}
 	
 	protected void init() {
@@ -118,6 +126,8 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 		addTable("reportsByOQL", leafReportNodesOQL);
 		addTable("artefacts", artefactTable);
 		addTable("functions", functionTable);
+		
+		initializationScripts.forEach(s->s.accept(this));
 	}
 
 	public BackendDataTable addTable(String key, BackendDataTable value) {
