@@ -79,16 +79,6 @@ public class ExcelFunctionsTest {
 
 	}
 	
-//	@Test
-//	public void testReadBigExcel() {
-//		long t1 = System.currentTimeMillis();
-//		ExcelFunctions.getCell(getResourceFile("BigExcel.xlsx"), "Foglio1", "A::1");
-//		long t2 = System.currentTimeMillis();
-//		
-//		System.out.println(t2-t1);
-//		//Assert.assertTrue((t2-t1)<100);
-//	}
-	
 	@Test
 	public void testWriteExcel() throws IOException {
 		String value = UUID.randomUUID().toString();

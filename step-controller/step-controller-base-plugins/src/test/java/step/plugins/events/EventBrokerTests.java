@@ -29,6 +29,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author doriancransac
@@ -37,6 +39,8 @@ import org.junit.Test;
 public class EventBrokerTests {
 
 	private EventBroker eb;
+	
+	private static final Logger logger = LoggerFactory.getLogger(EventBrokerTests.class);
 
 	@Before
 	public void before(){
@@ -340,7 +344,7 @@ public class EventBrokerTests {
 						try {
 							Event e = eb.put(new Event().setGroup(group).setName(uuid));
 							Assert.assertEquals(true, e != null && e.getId() != null && !e.getId().isEmpty());
-						} catch (Exception e) {e.printStackTrace();}
+						} catch (Exception e) {logger.error("Error while putting event"+uuid,e);}
 						Event e = eb.get(group, uuid);
 						Assert.assertEquals(group, e.getGroup());
 						Assert.assertEquals(uuid, e.getName());
@@ -383,7 +387,7 @@ public class EventBrokerTests {
 						try {
 							Event e = eb.put(new Event().setId(uuid));
 							Assert.assertEquals(true, e == null);
-						} catch (Exception e) {e.printStackTrace();}
+						} catch (Exception e) {logger.error("Error while putting event"+uuid,e);}
 						Event e = eb.get(uuid);
 						Assert.assertEquals(uuid, e.getId());
 					}
@@ -425,7 +429,7 @@ public class EventBrokerTests {
 						try {
 							Event e = eb.put(new Event().setGroup(group).setName(identifier));
 							Assert.assertEquals(true, e != null && e.getId() != null && !e.getId().isEmpty());
-						} catch (Exception e) {e.printStackTrace();}
+						} catch (Exception e) {logger.error("Error while putting event"+identifier,e);}
 					}
 				}
 			});

@@ -62,7 +62,6 @@ public class GroovyPool {
 			pool.returnObject(entry.getKey(), entry);
 		} catch (Exception e) {
 			logger.error("An error occurred while returning script: " + (String)((entry!=null&&entry.key!=null)?entry.key.getScript():"N/A"), e);
-			e.printStackTrace();
 		}
 	}
 }

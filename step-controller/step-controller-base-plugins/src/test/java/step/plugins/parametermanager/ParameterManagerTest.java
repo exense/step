@@ -147,7 +147,6 @@ public class ParameterManagerTest {
 			try {
 				f.get();
 			} catch (ExecutionException e1) {
-				e1.printStackTrace();
 				throw e1;
 			}
 		}

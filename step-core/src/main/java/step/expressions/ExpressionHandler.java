@@ -92,7 +92,6 @@ public class ExpressionHandler {
 									"'. Please ensure that the groovy script containing your custom macros is available in the classpath.", e);
 						}
 					}
-					System.out.println(error.getClass());
 				}
 				throw e;
 			} catch (Exception e) {

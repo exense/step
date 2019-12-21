@@ -5,11 +5,16 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.attachments.FileResolver;
 import step.datapool.DataSet;
 
 public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 
+	private static final Logger logger = LoggerFactory.getLogger(FileReaderDataPool.class);
+	
 	public FileReaderDataPool(FileDataPool configuration) {
 		super(configuration);
 	}
@@ -39,7 +44,6 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		try {
 			in = new FileReader(filePath);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 			throw new RuntimeException("Could not open file :" + filePath + ". error was:" + e.getMessage());
 		}
 		br = new BufferedReader(in);
@@ -51,7 +55,7 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		try {
 			br.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("Error while closing reader", e);
 		}
 		
 		initReader();
@@ -74,7 +78,6 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 		try {
 			line = br.readLine();
 		} catch (IOException e) {
-			e.printStackTrace();
 			throw new RuntimeException("Could not read line from file " + this.filePath + ". Error was:" + e.getMessage());
 		}
 		this.lineNr++;
@@ -91,7 +94,6 @@ public abstract class FileReaderDataPool extends DataSet<FileDataPool> {
 				br.close();				
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
 			throw new RuntimeException("Could not close reader properly for file " +  this.filePath + ". Error was:" + e.getMessage());
 		}
 	}

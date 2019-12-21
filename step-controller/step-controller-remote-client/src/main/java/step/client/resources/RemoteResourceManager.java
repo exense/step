@@ -18,6 +18,8 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
@@ -39,7 +41,9 @@ import step.resources.SimilarResourceExistingException;
  *
  */
 public class RemoteResourceManager extends AbstractRemoteClient implements ResourceManager {
-
+	
+	private static final Logger logger = LoggerFactory.getLogger(RemoteResourceManager.class);
+	
 	public RemoteResourceManager() {
 		super();
 	}
@@ -163,8 +167,7 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 		try {
 			Files.copy(new ByteArrayInputStream(content), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Error while copying resource content to file "+file.getAbsolutePath(), e);
 		}
 		
 		return new ResourceRevisionFileHandle() {
