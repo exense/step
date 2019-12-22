@@ -19,6 +19,7 @@
 package step.functions.execution;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,7 +47,6 @@ import step.functions.type.FunctionExecutionException;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.TokenWrapper;
 import step.grid.TokenWrapperOwner;
-import step.grid.bootstrap.ResourceExtractor;
 import step.grid.client.AbstractGridClientImpl.AgentCallTimeoutException;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.grid.client.AbstractGridClientImpl.AgentSideException;
@@ -80,13 +80,13 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		this.functionTypeRegistry = functionTypeRegistry;
 		this.dynamicBeanResolver = dynamicBeanResolver;
 	
-		File functionHandlerJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "step-functions-handler.jar");
-		
+		String functionHandlerResourceName = "step-functions-handler.jar";
 		FileVersion functionHandlerPackageVersionId;
 		try {
-			functionHandlerPackageVersionId = gridClient.registerFile(functionHandlerJar);
+			InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(functionHandlerResourceName);
+			functionHandlerPackageVersionId = gridClient.registerFile(resourceAsStream, functionHandlerResourceName, false);
 		} catch (FileManagerException e) {
-			throw new FunctionExecutionServiceException("Error while registering file "+functionHandlerJar+" to the grid", e);
+			throw new FunctionExecutionServiceException("Error while registering file "+functionHandlerResourceName+" to the grid", e);
 		}
 		
 		functionHandlerPackage = functionHandlerPackageVersionId.getVersionId();

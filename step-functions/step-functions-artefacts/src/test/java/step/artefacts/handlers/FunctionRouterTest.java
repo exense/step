@@ -254,8 +254,7 @@ public class FunctionRouterTest {
 			@Override
 			public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory)
 					throws FileManagerException {
-				// TODO Auto-generated method stub
-				return null;
+				return new FileVersion(null, null, false);
 			}
 
 			@Override
