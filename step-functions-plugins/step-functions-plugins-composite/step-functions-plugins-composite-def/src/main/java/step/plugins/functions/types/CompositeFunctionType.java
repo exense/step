@@ -1,6 +1,5 @@
 package step.plugins.functions.types;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +10,6 @@ import step.core.artefacts.ArtefactManager;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
-import step.grid.bootstrap.ResourceExtractor;
 import step.grid.filemanager.FileVersionId;
 import step.plugins.functions.types.composite.ArtefactFunctionHandler;
 
@@ -20,7 +18,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	private final ArtefactAccessor artefactAccessor;
 	private final ArtefactManager artefactManager;
 	
-	protected File handlerJar;
+	protected FileVersionId handlerJar;
 	
 	public CompositeFunctionType(ArtefactAccessor artefactAccessor, ArtefactManager artefactManager) {
 		super();
@@ -31,7 +29,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	@Override
 	public void init() {
 		super.init();
-		handlerJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "step-functions-composite-handler.jar");
+		handlerJar = registerResource(getClass().getClassLoader(), "step-functions-composite-handler.jar", false);
 	}
 	
 	@Override
@@ -68,7 +66,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 
 	@Override
 	public FileVersionId getHandlerPackage(CompositeFunction function) {
-		return registerFile(handlerJar);
+		return handlerJar;
 	}
 
 	@Override

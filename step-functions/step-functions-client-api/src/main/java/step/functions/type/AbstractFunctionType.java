@@ -122,6 +122,14 @@ public abstract class AbstractFunctionType<T extends Function> {
 		}
 	}
 	
+	protected FileVersionId registerResource(ClassLoader cl, String resourceName, boolean isDirectory) {
+		try {
+			return gridFileServices.registerFile(cl.getResourceAsStream(resourceName), resourceName, isDirectory).getVersionId();
+		} catch (FileManagerException e) {
+			throw new RuntimeException("Error while registering resource "+resourceName, e);
+		}
+	}
+	
 	protected FileVersionId registerFile(String filepath) {
 		return registerFile(new File(filepath));
 	}

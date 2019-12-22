@@ -13,12 +13,11 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-import step.attachments.FileResolver;
 import ch.exense.commons.app.Configuration;
+import step.attachments.FileResolver;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
-import step.grid.bootstrap.ResourceExtractor;
 import step.grid.filemanager.FileVersionId;
 import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.java.handler.GeneralScriptHandler;
@@ -26,7 +25,7 @@ import step.plugins.js223.handler.ScriptHandler;
 
 public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction> extends AbstractFunctionType<T> {
 
-	protected File daemonJar;
+	protected FileVersionId daemonJar;
 	
 	protected Configuration configuration;
 	
@@ -38,7 +37,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	@Override
 	public void init() {
 		super.init();
-		daemonJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "java-plugin-handler.jar");
+		daemonJar = registerResource(getClass().getClassLoader(), "java-plugin-handler.jar", false);
 	}
 
 	public Map<String, String> getHandlerProperties(T function) {
@@ -70,7 +69,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 
 	@Override
 	public FileVersionId getHandlerPackage(GeneralScriptFunction function) {
-		return registerFile(daemonJar.getAbsoluteFile());
+		return daemonJar;
 	}
 	
 	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
