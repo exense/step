@@ -75,7 +75,6 @@ public class InMemoryEventBrokerClient implements EventBrokerClient{
 		try {
 			return eb.put(event);
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
 	}

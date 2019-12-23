@@ -12,10 +12,14 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Singleton
 @Path("rtm")
 public class RtmPluginServices {
 
+	private static final Logger logger = LoggerFactory.getLogger(RtmPluginServices.class);
 	
 	public class RTMLink {
 		String link;
@@ -32,7 +36,7 @@ public class RtmPluginServices {
 		try {
 			link.link = getAggregateViewByEid(executionID);
 		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
+			logger.error("Error while getting rtm link for execution "+executionID, e);
 		}
 		return link;
 	}	

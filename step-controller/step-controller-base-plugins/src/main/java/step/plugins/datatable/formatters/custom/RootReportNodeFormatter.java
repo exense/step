@@ -33,22 +33,24 @@ public class RootReportNodeFormatter implements Formatter {
 		String eid = row.get("_id").toString();
 		
 		ReportNode rootReportNode = reportNodeAccessor.getRootReportNode(eid);
-		Iterator<ReportNode> rootReportNodeChildren = reportNodeAccessor.getChildren(rootReportNode.getId());
-		if(rootReportNodeChildren.hasNext()) {
-			rootReportNode = rootReportNodeChildren.next();
-			if(rootReportNode != null) {
-				try {
-					return mapper.writeValueAsString(rootReportNode);
-				} catch (JsonProcessingException e) {
-					logger.error("Error while serializing report node "+rootReportNode, e);
+		if(rootReportNode!=null) {
+			Iterator<ReportNode> rootReportNodeChildren = reportNodeAccessor.getChildren(rootReportNode.getId());
+			if(rootReportNodeChildren.hasNext()) {
+				rootReportNode = rootReportNodeChildren.next();
+				if(rootReportNode != null) {
+					try {
+						return mapper.writeValueAsString(rootReportNode);
+					} catch (JsonProcessingException e) {
+						logger.error("Error while serializing report node "+rootReportNode, e);
+					}
+				} else {
+					logger.error("Error while getting root report node for execution. "
+							+ "Iterator.next() returned null although Iterator.hasNext() returned true. "
+							+ "This should not occur "+eid);
 				}
 			} else {
-				logger.error("Error while getting root report node for execution. "
-						+ "Iterator.next() returned null although Iterator.hasNext() returned true. "
-						+ "This should not occur "+eid);
+				logger.debug("No children found for report node with id "+rootReportNode.getId());
 			}
-		} else {
-			logger.debug("No children found for report node with id "+rootReportNode.getId());
 		}
 		return "{}";
 	}

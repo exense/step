@@ -20,6 +20,7 @@ package step.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.LogManager;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -41,6 +42,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import ch.exense.commons.app.ArgumentParser;
 import ch.exense.commons.app.Configuration;
@@ -86,7 +88,14 @@ public class ControllerServer {
 		
 		arguments.entrySet().forEach(e->configuration.putProperty(e.getKey(),e.getValue()));
 		
+		setupLogging();
+		
 		(new ControllerServer(configuration)).start();
+	}
+
+	protected static void setupLogging() {
+		LogManager.getLogManager().reset();
+		SLF4JBridgeHandler.install();
 	}
 	
 	public ControllerServer(Configuration configuration) {

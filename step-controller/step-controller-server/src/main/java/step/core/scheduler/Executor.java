@@ -203,7 +203,6 @@ public class Executor {
 							result.add(p);
 						}
 					}
-					System.out.println("Found job identified by: " + jobKey);
 				}
 			}
 

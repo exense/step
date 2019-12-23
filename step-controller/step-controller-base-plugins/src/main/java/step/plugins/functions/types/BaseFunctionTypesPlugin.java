@@ -7,6 +7,9 @@ import java.util.Map;
 
 import javax.json.Json;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
 import step.core.plugins.AbstractControllerPlugin;
@@ -23,6 +26,8 @@ import step.handlers.javahandler.Keyword;
 @Plugin(dependencies= {GridPlugin.class})
 public class BaseFunctionTypesPlugin extends AbstractControllerPlugin {
 
+	private static final Logger logger = LoggerFactory.getLogger(BaseFunctionTypesPlugin.class);
+	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		super.executionControllerStart(context);
@@ -40,7 +45,7 @@ public class BaseFunctionTypesPlugin extends AbstractControllerPlugin {
 		try {
 			keywordList = BaseFunctionReflectionHelper.getLocalKeywordList(Keyword.class);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Error while getting local keyword list", e);
 		}
 
 		if(keywordList != null){

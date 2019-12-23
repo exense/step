@@ -373,7 +373,7 @@ public class FunctionExecutionServiceImplTest {
 			@Override
 			public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory)
 					throws FileManagerException {
-				return null;
+				return new FileVersion(null, null, false);
 			}
 		};
 	}

@@ -6,12 +6,11 @@ import java.util.Map;
 
 import ch.exense.commons.app.Configuration;
 import step.functions.type.AbstractFunctionType;
-import step.grid.bootstrap.ResourceExtractor;
 import step.grid.filemanager.FileVersionId;
 
 public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 
-	File handlerJar;
+	FileVersionId handlerJar;
 	
 	protected final Configuration configuration;
 	
@@ -23,7 +22,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	@Override
 	public void init() {
 		super.init();
-		handlerJar = ResourceExtractor.extractResource(getClass().getClassLoader(), "jmeter-plugin-handler.jar");
+		handlerJar = registerResource(getClass().getClassLoader(), "jmeter-plugin-handler.jar", false);
 	}
 
 	@Override
@@ -33,7 +32,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 
 	@Override
 	public FileVersionId getHandlerPackage(JMeterFunction function) {
-		return registerFile(handlerJar.getAbsoluteFile());
+		return handlerJar;
 	}
 
 	@Override

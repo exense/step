@@ -28,13 +28,18 @@ import javax.script.Bindings;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.commons.activation.Activator;
 import step.core.accessors.CRUDAccessor;
 import step.core.objectenricher.ObjectFilter;
 
 public class ParameterManager {
 	
-	CRUDAccessor<Parameter> parameterAccessor;
+	private static Logger logger = LoggerFactory.getLogger(ParameterManager.class);
+	
+	private CRUDAccessor<Parameter> parameterAccessor;
 	
 	public ParameterManager(CRUDAccessor<Parameter> parameterAccessor) {
 		super();
@@ -61,8 +66,7 @@ public class ParameterManager {
 				try {
 					Activator.compileActivationExpression(p);
 				} catch (ScriptException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logger.error("Error while compilating activation expression of parameter "+p, e);
 				}
 			}
 		});

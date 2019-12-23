@@ -17,6 +17,8 @@ import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import step.client.credentials.ControllerCredentials;
 import step.client.credentials.SyspropCredendialsBuilder;
@@ -25,6 +27,8 @@ import step.core.deployment.JacksonMapperProvider;
 
 public class AbstractRemoteClient implements Closeable {
 
+	private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteClient.class);
+	
 	protected Client client;
 
 	protected Map<String, NewCookie> cookies;
@@ -58,7 +62,7 @@ public class AbstractRemoteClient implements Closeable {
 		c.setUsername(credentials.getUsername());
 		c.setPassword(credentials.getPassword());
 		Entity<Credentials> entity = Entity.entity(c, MediaType.APPLICATION_JSON);
-		System.out.println("Logging into:" + credentials.getServerUrl() + " with user " + credentials.getUsername());
+		logger.info("Logging into:" + credentials.getServerUrl() + " with user " + credentials.getUsername());
 		cookies = client.target(credentials.getServerUrl() + "/rest/access/login").request().post(entity).getCookies();
 	}
 	

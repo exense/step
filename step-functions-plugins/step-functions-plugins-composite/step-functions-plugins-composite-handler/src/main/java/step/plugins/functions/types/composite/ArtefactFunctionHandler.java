@@ -20,6 +20,9 @@ package step.plugins.functions.types.composite;
 
 import javax.json.JsonObject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.artefacts.handlers.FunctionRouter;
 import step.artefacts.handlers.LocalFunctionRouterImpl;
 import step.attachments.FileResolver;
@@ -55,6 +58,8 @@ import step.resources.ResourceManager;
 
 public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 
+	private static final Logger logger = LoggerFactory.getLogger(ArtefactFunctionHandler.class);
+	
 	// Key agreed upon to pass the artefact serving as root to the handler (via props)
 	public static final String ARTEFACTID_KEY = "$artefactid";
 	
@@ -90,8 +95,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 				ArtefactAccessor a = new RemoteArtefactAccessor(credentials);
 				executionContext.setArtefactAccessor(a);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error("Error while setting up execution context for composite keyword execution", e);
 			}
 			
 		}
