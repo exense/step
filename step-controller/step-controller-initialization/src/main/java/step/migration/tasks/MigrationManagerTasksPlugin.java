@@ -42,5 +42,6 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 		migrationManager.register(new MigrateFunctions());
 		migrationManager.register(new SetArtefactNamesIfEmpty());
 		migrationManager.register(new ScreenTemplateMigrationTask());
+		migrationManager.register(new SetSchedulerTaskAttributes());
 	}
 }
