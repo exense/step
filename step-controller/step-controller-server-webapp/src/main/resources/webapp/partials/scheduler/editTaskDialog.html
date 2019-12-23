@@ -5,8 +5,8 @@
 	<form ng-submit="save()">
 		<div ng-if="error">{{error}}</div>
 		<div class="form-group">
-			<label for="desc">Description</label> <input class="form-control"
-				id="desc" ng-model="task.name" placeholder="Description" autofocus>
+			<label for="desc">Name</label> <input class="form-control"
+				id="desc" ng-model="task.attributes.name" placeholder="Name" autofocus>
 		</div>
 		<div class="form-group">
 			<label for="desc">CRON Expression</label> <input class="form-control"

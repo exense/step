@@ -13,8 +13,8 @@
 					<cell><span>{{row.attributes.name}}</span></cell>
 				</st-column>
 				<st-column name="planLink">
-					<header>Plan link</header>
-					<cell><plan-link plan-ref="row.executionsParameters.artefact" description="row.name"/></cell>
+					<header>Plan</header>
+					<cell><plan-link plan-ref="row.executionsParameters.artefact" description="row.executionsParameters.description"/></cell>
 				</st-column>				
 				<st-column>
 					<header>Parameters</header>
