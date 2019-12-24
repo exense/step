@@ -32,11 +32,13 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 		
 		ApplicationContext context = getCurrentContext(FORKED_BRANCH);
 
-		String kwClassnames = (String) context.get(KW_CLASSNAMES_KEY);
-		if (kwClassnames == null) {
-			kwClassnames = getKeywordClassList((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader());
-			context.put(KW_CLASSNAMES_KEY, kwClassnames);
-		}
+		String kwClassnames = (String) context.computeIfAbsent(KW_CLASSNAMES_KEY, k->{
+			try {
+				return getKeywordClassList((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader());
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
 		input.getProperties().put(KeywordExecutor.KEYWORD_CLASSES, kwClassnames);
 		
 		// Using the forked to branch in order no to have the ClassLoader of java-plugin-handler.jar as parent.
