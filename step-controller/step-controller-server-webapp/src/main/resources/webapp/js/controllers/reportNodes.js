@@ -16,7 +16,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('reportNodes',['step','artefacts'])
+angular.module('reportNodes',['step','artefacts','screenConfigurationControllers'])
+
+.factory('ReportNodeCommons', function(ScreenTemplates) {
+  
+  var api = {};
+  
+  var functionAttributes = [];
+  
+  ScreenTemplates.getScreenInputsByScreenId('functionTable').then(function(attributes) {
+    functionAttributes = _.sortBy(attributes,function(value){return value.id});
+  })
+  
+  api.getFunctionAttributes = function() {
+    return functionAttributes;
+  } 
+  
+  return api;
+})
 
 .directive('reportnode', function() {
   return {
@@ -53,7 +70,7 @@ angular.module('reportNodes',['step','artefacts'])
   };
 })
 
-.directive('reportnodeShort', function() {
+.directive('reportnodeShort', function(ReportNodeCommons) {
   return {
     restrict: 'E',
     scope: {
@@ -69,9 +86,14 @@ angular.module('reportNodes',['step','artefacts'])
       $scope.artefactTypes = artefactTypes;
       $scope.concatenate = function(map) {
         var result = "";
-        _.each(_.keys(map).sort(),function(key){
-          result+=map[key]+".";
-        });
+        if(map) {
+          _.each(ReportNodeCommons.getFunctionAttributes(),function(key){
+            var attributeValue = map[key.id.replace('attributes.','')];
+            if(attributeValue) {
+              result+=attributeValue+".";
+            }
+          });
+        }
         return result.substring(0,result.length-1);
       };
       $scope.reportNodeId = $scope.node.id;
