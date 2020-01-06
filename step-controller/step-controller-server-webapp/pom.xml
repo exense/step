@@ -33,6 +33,12 @@
 			<groupId>ch.exense.viz</groupId>
 			<artifactId>viz-servlet</artifactId>
 			<version>${viz.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.mongodb</groupId>
+					<artifactId>mongodb-driver</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
