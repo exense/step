@@ -4,7 +4,7 @@
 	<div class="input-group">
 		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.value" />
 		<span class="input-group-btn">
-			<button class="btn btn-default btn-sm" type="button" ng-model="dynamicValue.value" ng-mousedown="editConstantValue()"><span class="glyphicon glyphicon-pencil"></span></button>
+			<button class="btn btn-default btn-sm" type="button" ng-model="dynamicValue.value" ng-mousedown="editConstantValue()" ng-keydown="keydownEditConstantValue($event)"><span class="glyphicon glyphicon-pencil"></span></button>
 			<button class="btn btn-default btn-sm" type="button" ng-blur="onSave()" title="Use function" ng-mousedown="useDynamicExpression()" ng-keydown="keydownUseDynamicExpression($event)"><span class="glyphicon glyphicon-flash"></span></button>
 		</span>
 	</div>

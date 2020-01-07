@@ -92,6 +92,20 @@ dynamicForms.directive('dynamicCheckbox', function() {
           $scope.onSave();
         });
       }
+      
+      $scope.keydownEditConstantValue= function(event) {
+        var x = event.which || event.keyCode;
+        if (x === 32 || x === 13 ){ 
+          $scope.editConstantValue();
+        }
+      }
+      
+      $scope.keydownEditDynamicExpression= function(event) {
+          var x = event.which || event.keyCode;
+          if (x === 32 || x === 13 ){ 
+            $scope.editDynamicExpression();
+          }
+        }
 
     },
     templateUrl: 'partials/dynamicforms/textfield.html'}
