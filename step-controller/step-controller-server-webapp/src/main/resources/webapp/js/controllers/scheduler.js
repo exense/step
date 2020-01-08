@@ -95,6 +95,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http', '$location',
 	  $http.get("rest/controller/task/"+id).then(function(response){
 	    var task = response.data;
       var modalInstance = $uibModal.open({
+        backdrop: 'static',
         templateUrl: 'partials/scheduler/editTaskDialog.html',
         controller: 'editSchedulerTaskModalCtrl',
         resolve: {
@@ -126,7 +127,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http', '$location',
 	$scope.loadTable($scope,$http);
   }]);
 
-schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $uibModalInstance, $uibModalStack, $http, $location, task) {
+schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $uibModalInstance, $http, $location, task) {
 	  
   $scope.task = task;
 
@@ -151,23 +152,6 @@ schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
-  
-  $scope.$watch(function() {
-    return $('.modal').length;
-  }, function(val) { // every time the number of modals changes
-    if (val > 0) {
-      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-      $('.modal').on('mousedown', function(e) {
-        if (e.which === 1) { // left click
-          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
-          $uibModalStack.getTop().key.dismiss();
-        }
-      });
-      $('.modal-content').on('mousedown', function(e) {
-        e.stopPropagation(); // avoid closing the modal when clicking its body
-      });
-    }
-  });
 });
 
 schedulerController.factory('schedulerServices', function($http, $location, $uibModal) {
@@ -175,6 +159,7 @@ schedulerController.factory('schedulerServices', function($http, $location, $uib
 
   factory.schedule = function(executionParams) {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
       templateUrl: 'partials/scheduler/newTaskDialog.html',
       controller: 'newTaskModalCtrl',
       resolve: {
@@ -196,7 +181,7 @@ schedulerController.factory('schedulerServices', function($http, $location, $uib
   return factory
 })
 
-schedulerController.controller('newTaskModalCtrl', function ($scope, $uibModalInstance, $uibModalStack, executionParams) {
+schedulerController.controller('newTaskModalCtrl', function ($scope, $uibModalInstance, executionParams) {
     
   $scope.name = executionParams.description;
   
@@ -212,23 +197,6 @@ schedulerController.controller('newTaskModalCtrl', function ($scope, $uibModalIn
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
-  
-  $scope.$watch(function() {
-    return $('.modal').length;
-  }, function(val) { // every time the number of modals changes
-    if (val > 0) {
-      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-      $('.modal').on('mousedown', function(e) {
-        if (e.which === 1) { // left click
-          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
-          $uibModalStack.getTop().key.dismiss();
-        }
-      });
-      $('.modal-content').on('mousedown', function(e) {
-        e.stopPropagation(); // avoid closing the modal when clicking its body
-      });
-    }
-  });
 });
     
 schedulerController.controller('SchedulerConfigurationCtrl', function ($scope, $http) {

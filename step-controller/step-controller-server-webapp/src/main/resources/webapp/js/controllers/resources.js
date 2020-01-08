@@ -55,6 +55,7 @@ angular.module('resourcesControllers',['tables','step'])
   
   function openModal(id) {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
         templateUrl: 'partials/resources/editResourceDialog.html',
         controller: 'editResourceCtrl',
         resolve: {id: function () {return id;}}
@@ -73,6 +74,7 @@ angular.module('resourcesControllers',['tables','step'])
   
   dialogs.searchResource = function(type) {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
       templateUrl: 'partials/resources/searchResourceDialog.html',
       controller: 'searchResourceCtrl',
       resolve: {type: function() {return type}}
@@ -83,6 +85,7 @@ angular.module('resourcesControllers',['tables','step'])
   
   dialogs.showFileAlreadyExistsWarning = function(similarResources) {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
       templateUrl: 'partials/resources/fileAlreadyExistsWarning.html',
       controller: 'fileAlreadyExistsWarningCtrl',
       resolve: {similarResources: function() {return similarResources}}
@@ -93,6 +96,7 @@ angular.module('resourcesControllers',['tables','step'])
   
   dialogs.showUpdateResourceWarning = function(resource) {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
       templateUrl: 'partials/resources/updateResourceWarning.html',
       controller: 'updateResourceWarningCtrl',
       resolve: {resource: function() {return resource}}
@@ -104,7 +108,7 @@ angular.module('resourcesControllers',['tables','step'])
   return dialogs;
 })
 
-.controller('editResourceCtrl', function ($scope, $uibModalInstance, $uibModalStack, $http, AuthService, Upload, id) {
+.controller('editResourceCtrl', function ($scope, $uibModalInstance, $http, AuthService, Upload, id) {
   
   function loadResource(id) {
     $http.get("rest/resources/"+id).then(function(response){
@@ -151,23 +155,6 @@ angular.module('resourcesControllers',['tables','step'])
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
-  
-  $scope.$watch(function() {
-    return $('.modal').length;
-  }, function(val) { // every time the number of modals changes
-    if (val > 0) {
-      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-      $('.modal').on('mousedown', function(e) {
-        if (e.which === 1) { // left click
-          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
-          $uibModalStack.getTop().key.dismiss();
-        }
-      });
-      $('.modal-content').on('mousedown', function(e) {
-        e.stopPropagation(); // avoid closing the modal when clicking its body
-      });
-    }
-  });
 })
 
 .controller('searchResourceCtrl', function ($scope, $uibModalInstance, $http, AuthService, type) {

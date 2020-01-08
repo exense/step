@@ -596,6 +596,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
   
   $scope.selectArtefact = function() {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
       templateUrl: 'partials/selectArtefact.html',
       controller: 'selectArtefactModalCtrl',
       resolve: {}
@@ -642,6 +643,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
   
   $scope.selectFunction = function() {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
       templateUrl: 'partials/selectFunction.html',
       controller: 'selectFunctionModalCtrl',
       resolve: {}

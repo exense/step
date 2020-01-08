@@ -105,6 +105,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 		$ctrl.tableElementParent = angular.element($element).find('presetparent');
 
 		var modalInstance = $uibModal.open({
+		  backdrop: 'static',
 			animation: $ctrl.animationsEnabled,
 			ariaLabelledBy: 'modal-title',
 			ariaDescribedBy: 'modal-body',

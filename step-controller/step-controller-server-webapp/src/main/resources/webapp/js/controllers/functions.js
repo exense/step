@@ -52,6 +52,7 @@ angular.module('functionsControllers',['dataTable','step'])
   
   function openModal(function_) {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
         templateUrl: 'partials/functions/functionConfigurationDialog.html',
         controller: 'newFunctionModalCtrl',
         resolve: {function_: function () {return function_;}}
@@ -208,8 +209,8 @@ angular.module('functionsControllers',['dataTable','step'])
       };
     }])
 
-.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$uibModalStack', '$http', '$location', 'function_', 'Dialogs', 'AuthService','FunctionTypeRegistry',
-function ($rootScope, $scope, $uibModalInstance, $uibModalStack, $http, $location, function_,Dialogs, AuthService, FunctionTypeRegistry) {
+.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'Dialogs', 'AuthService','FunctionTypeRegistry',
+function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dialogs, AuthService, FunctionTypeRegistry) {
   $scope.functionTypeRegistry = FunctionTypeRegistry;
   
   var newFunction = function_==null;
@@ -308,26 +309,9 @@ function ($rootScope, $scope, $uibModalInstance, $uibModalStack, $http, $locatio
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
-  
-  $scope.$watch(function() {
-    return $('.modal').length;
-  }, function(val) { // every time the number of modals changes
-    if (val > 0) {
-      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-      $('.modal').on('mousedown', function(e) {
-        if (e.which === 1) { // left click
-          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
-          $uibModalStack.getTop().key.dismiss();
-        }
-      });
-      $('.modal-content').on('mousedown', function(e) {
-        e.stopPropagation(); // avoid closing the modal when clicking its body
-      });
-    }
-  });
 }])
    
-.controller('selectFunctionModalCtrl', function ($scope, $uibModalInstance, $uibModalStack) {
+.controller('selectFunctionModalCtrl', function ($scope, $uibModalInstance) {
   
   $scope.selectFunction = function(id) {
     $uibModalInstance.close(id);
@@ -361,23 +345,6 @@ function ($rootScope, $scope, $uibModalInstance, $uibModalStack, $http, $locatio
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
-  
-  $scope.$watch(function() {
-    return $('.modal').length;
-  }, function(val) { // every time the number of modals changes
-    if (val > 0) {
-      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-      $('.modal').on('mousedown', function(e) {
-        if (e.which === 1) { // left click
-          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
-          $uibModalStack.getTop().key.dismiss();
-        }
-      });
-      $('.modal-content').on('mousedown', function(e) {
-        e.stopPropagation(); // avoid closing the modal when clicking its body
-      });
-    }
-  });
 })
 .controller('CompositeFunctionFormCtrl' , function($scope,$uibModal,$location,$http) {  
   $scope.gotoArtefact = function() {
@@ -387,6 +354,7 @@ function ($rootScope, $scope, $uibModalInstance, $uibModalStack, $http, $locatio
   
   $scope.selectArtefact = function() {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
       templateUrl: 'partials/selectArtefact.html',
       controller: 'selectArtefactModalCtrl',
       resolve: {}

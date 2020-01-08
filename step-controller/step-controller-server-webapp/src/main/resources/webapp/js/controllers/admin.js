@@ -101,6 +101,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
         
         $scope.showEditUserPopup = function(user) {
           var modalInstance = $uibModal.open({
+            backdrop: 'static',
             animation: $scope.animationsEnabled,
             templateUrl: 'editUserModalContent.html',
             controller: 'editUserModalCtrl',
@@ -163,7 +164,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
 
 })
 
-.controller('editUserModalCtrl', function ($scope, $uibModalInstance, $uibModalStack, $http, $location, AuthService, user) {
+.controller('editUserModalCtrl', function ($scope, $uibModalInstance, $http, $location, AuthService, user) {
    $scope.roles = AuthService.getConf().roles;
    $scope.user = user;
    
@@ -180,23 +181,6 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
    $scope.cancel = function() {
      $uibModalInstance.close();     
    }
-   
-   $scope.$watch(function() {
-     return $('.modal').length;
-   }, function(val) { // every time the number of modals changes
-     if (val > 0) {
-       $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-       $('.modal').on('mousedown', function(e) {
-         if (e.which === 1) { // left click
-           //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
-           $uibModalStack.getTop().key.dismiss();
-         }
-       });
-       $('.modal-content').on('mousedown', function(e) {
-         e.stopPropagation(); // avoid closing the modal when clicking its body
-       });
-     }
-   });
 })
 
 .controller('MyAccountCtrl',
@@ -204,7 +188,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
       $scope.$state = 'myaccount';
       
       $scope.changePwd=function() {
-        $uibModal.open({animation: false,templateUrl: 'partials/changePasswordForm.html',
+        $uibModal.open({backdrop: 'static',animation: false,templateUrl: 'partials/changePasswordForm.html',
           controller: 'ChangePasswordModalCtrl', resolve: {}});  
       }
       
@@ -238,7 +222,7 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
       }
     })
 
-.controller('ChangePasswordModalCtrl', function ($scope, $rootScope, $uibModalInstance, $uibModalStack, $http, $location) {
+.controller('ChangePasswordModalCtrl', function ($scope, $rootScope, $uibModalInstance, $http, $location) {
   
   $scope.model = {newPwd:""};
   $scope.repeatPwd = ""
@@ -258,21 +242,4 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
   $scope.cancel = function () {
     $uibModalInstance.close();
   };
-  
-  $scope.$watch(function() {
-    return $('.modal').length;
-  }, function(val) { // every time the number of modals changes
-    if (val > 0) {
-      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-      $('.modal').on('mousedown', function(e) {
-        if (e.which === 1) { // left click
-          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
-          $uibModalStack.getTop().key.dismiss();
-        }
-      });
-      $('.modal-content').on('mousedown', function(e) {
-        e.stopPropagation(); // avoid closing the modal when clicking its body
-      });
-    }
-  });
 });

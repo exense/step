@@ -545,7 +545,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	}
 
 	dialogs.showWarning = function(msg) {
-		var modalInstance = $uibModal.open({animation: false, templateUrl: 'partials/confirmationDialog.html',
+		var modalInstance = $uibModal.open({backdrop: 'static', animation: false, templateUrl: 'partials/confirmationDialog.html',
 			controller: 'DialogCtrl', 
 			resolve: {message:function(){
 				return msg
@@ -554,7 +554,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	}
 
 	dialogs.showErrorMsg = function(msg) {
-		var modalInstance = $uibModal.open({animation: false, templateUrl: 'partials/messageDialog.html',
+		var modalInstance = $uibModal.open({backdrop: 'static',animation: false, templateUrl: 'partials/messageDialog.html',
 			controller: 'DialogCtrl', 
 			resolve: {message:function(){return msg}}});
 		return modalInstance.result;
@@ -562,6 +562,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	dialogs.editTextField = function(scope) {
 		var modalInstance = $uibModal.open({
+		  backdrop: 'static',
 			animation: false,
 			templateUrl: 'partials/textFieldDialog.html',
 			size: 'lg',
@@ -582,6 +583,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	//templates: enterValueDialog or enterTextValueDialog
 	dialogs.enterValue = function(title,message,size,template,functionOnSuccess) {
 		var modalInstance = $uibModal.open({
+		  backdrop: 'static',
 			animation: false,
 			templateUrl: 'partials/'+template+'.html',
 			controller: 'ExtentedDialogCtrl',
@@ -621,6 +623,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		
 		var modalInstance = $uibModal.open(
 				{
+				  backdrop: 'static',
 					templateUrl: templateUrl,
 					controller: controller,
 					resolve: {
@@ -638,6 +641,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	dialogs.selectEntityType = function(excludeArray){
 		var modalInstance = $uibModal.open(
 				{
+				  backdrop: 'static',
 					templateUrl: 'partials/selection/selectEntityType.html',
 					controller: 'SelectEntityTypeCtrl',
 					resolve: {
@@ -661,9 +665,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 	
 	return dialogs;
-})
+})  
 
-.controller('SelectEntityTypeCtrl', function ($scope, $uibModalInstance, $uibModalStack, EntityRegistry, excludeArray) {
+.controller('SelectEntityTypeCtrl', function ($scope, $uibModalInstance, EntityRegistry, excludeArray) {
 
 	$scope.excludeEntities = function (excludeArray){
 		var fullEntityList = EntityRegistry.getEntities();
@@ -696,7 +700,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 })
 
-.controller('SelectDatatableEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, entity) {
+.controller('SelectDatatableEntityCtrl', function ($scope, $uibModalInstance, entity) {
 
 	$scope.result = [];
 	$scope.entity = entity;
@@ -773,7 +777,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 })
 
 
-.controller('SelectSttableEntityCtrl', function ($scope, $uibModalInstance, $uibModalStack, entity) {
+.controller('SelectSttableEntityCtrl', function ($scope, $uibModalInstance, entity) {
 
 	$scope.result = {};
 	$scope.entity = entity;
@@ -821,7 +825,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 })
 
 
-.controller('ExtentedDialogCtrl', function ($scope, $uibModalInstance, $uibModalStack, message, title) {
+.controller('ExtentedDialogCtrl', function ($scope, $uibModalInstance, message, title) {
 	$scope.message = message;
 	$scope.title = title;
 
@@ -837,27 +841,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		$uibModalInstance.close($scope.message);
 		//.replace(/\r?\n|\r/g,"")
 	};
-
-	$scope.$watch(function() {
-		return $('.modal').length;
-	}, function(val) { // every time the number of modals changes
-		if (val > 0) {
-			$uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-			$('.modal').on('mousedown', function(e) {
-				if (e.which === 1) { // left click
-					$uibModalStack.getTop().key.dismiss(); // close top modal when clicking
-					// anywhere, you can close all modals
-					// using $modalStack.dismissAll() instead
-				}
-			});
-			$('.modal-content').on('mousedown', function(e) {
-				e.stopPropagation(); // avoid closing the modal when clicking its body
-			});
-		}
-	});
 })
 
-.controller('DialogCtrl', function ($scope, $uibModalInstance, $uibModalStack, message) {
+.controller('DialogCtrl', function ($scope, $uibModalInstance, message) {
 	$scope.message = message;
 
 	$scope.ok = function() {
@@ -872,24 +858,6 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		$uibModalInstance.close($scope.message);
 		//.replace(/\r?\n|\r/g,"")
 	};
-
-	$scope.$watch(function() {
-		return $('.modal').length;
-	}, function(val) { // every time the number of modals changes
-		if (val > 0) {
-			$uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-			$('.modal').on('mousedown', function(e) {
-				if (e.which === 1) { // left click
-					$uibModalStack.getTop().key.dismiss(); // close top modal when clicking
-					// anywhere, you can close all modals
-					// using $modalStack.dismissAll() instead
-				}
-			});
-			$('.modal-content').on('mousedown', function(e) {
-				e.stopPropagation(); // avoid closing the modal when clicking its body
-			});
-		}
-	});
 })
 
 .service('genericErrorInterceptor', function($q, $injector) {

@@ -66,6 +66,7 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
   
   function openModal(id) {
     var modalInstance = $uibModal.open({
+      backdrop: 'static',
         templateUrl: 'partials/parameters/editParameterDialog.html',
         controller: 'editParameterCtrl',
         resolve: {id: function () {return id;}}
@@ -144,7 +145,7 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
   return api;
 })
 
-.controller('editParameterCtrl', function ($scope, $uibModalInstance, $uibModalStack, $http, AuthService, id, ParameterScopeRenderer, ScreenTemplates) {
+.controller('editParameterCtrl', function ($scope, $uibModalInstance, $http, AuthService, id, ParameterScopeRenderer, ScreenTemplates) {
   $scope.AuthService = AuthService;
   
   $scope.scopeLabel = ParameterScopeRenderer.scopeLabel
@@ -186,23 +187,6 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
-  
-  $scope.$watch(function() {
-    return $('.modal').length;
-  }, function(val) { // every time the number of modals changes
-    if (val > 0) {
-      $uibModalStack.getTop().value.backdrop = 'static'; // disable default close behaviour
-      $('.modal').on('mousedown', function(e) {
-        if (e.which === 1) { // left click
-          //close top modal when clicking anywhere, you can close all modals using $modalStack.dismissAll() instead
-          $uibModalStack.getTop().key.dismiss();
-        }
-      });
-      $('.modal-content').on('mousedown', function(e) {
-        e.stopPropagation(); // avoid closing the modal when clicking its body
-      });
-    }
-  });
 })
 
 .directive('parameterScope', function() {
