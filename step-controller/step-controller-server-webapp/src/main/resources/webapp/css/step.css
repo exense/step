@@ -643,3 +643,7 @@ resource-input .input-group {
 	overflow-wrap: break-word;
 	-ms-word-wrap: break-word;
 }
+
+tbody .form-group {
+	margin-bottom: 0px;
+}
