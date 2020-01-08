@@ -802,25 +802,3 @@ tecAdminControllers.controller('ExecutionListCtrl', ['$scope','$compile','$http'
 		}
 	};
 } ]);
-
-tecAdminControllers.controller('ArtefactListCtrl', [ '$scope', '$http', 'stateStorage', '$interval',
-	function($scope, $http, $stateStorage, $interval) {
-	$stateStorage.push($scope, 'artefacts', {});
-
-	$scope.autorefresh = true;
-
-	$scope.table = {};
-
-	$scope.tabledef = {}
-	$scope.tabledef.columns = function(columns) {
-		_.each(_.where(columns, { 'title' : 'ID' }), function(col) {
-			col.visible = false
-		});
-		_.each(_.where(columns, { 'title' : 'Name' }), function(col) {
-			col.render = function(data, type, row) {
-				return '<a href="#/root/executions/' + row[0] + '">' + data + '</a>'
-			};
-		});
-		return columns;
-	};
-} ]);
