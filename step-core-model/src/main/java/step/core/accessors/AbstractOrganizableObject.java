@@ -1,5 +1,6 @@
 package step.core.accessors;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -33,5 +34,19 @@ public class AbstractOrganizableObject extends AbstractIdentifiableObject {
 	 */
 	public void setAttributes(Map<String, String> attributes) {
 		this.attributes = attributes;
+	}
+	
+	/**
+	 * Add an attribute to the attribute. This will initialize the map if it is null
+	 * This method is not thread safe
+	 * 
+	 * @param key the name of the attribute
+	 * @param value the value
+	 */
+	public void addAttribute(String key, String value) {
+		if(attributes==null) {
+			attributes = new HashMap<>();
+		}
+		attributes.put(key, value);
 	}
 }
