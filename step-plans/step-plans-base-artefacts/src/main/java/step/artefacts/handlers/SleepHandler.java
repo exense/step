@@ -19,6 +19,7 @@
 package step.artefacts.handlers;
 
 import step.artefacts.Sleep;
+import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -32,11 +33,21 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 
 	@Override
 	protected void execute_(ReportNode node, Sleep testArtefact) {
+		long sleepDurationMs;
 		try {
-			Thread.sleep(((Number)testArtefact.getDuration().get()).longValue());
+			sleepDurationMs = ((Number)testArtefact.getDuration().get()).longValue();
 		} catch (NumberFormatException e) {
 			throw new RuntimeException("Unable to parse attribute 'ms' as long.",e);
-		} catch (InterruptedException e) {}
+		}
+
+		OperationManager.getInstance().enter("Sleep", sleepDurationMs);
+		try {
+			Thread.sleep(sleepDurationMs);
+		} catch (InterruptedException e) {
+		} finally {
+			OperationManager.getInstance().exit();
+		}
+		
 		node.setStatus(ReportNodeStatus.PASSED);		
 	}
 
