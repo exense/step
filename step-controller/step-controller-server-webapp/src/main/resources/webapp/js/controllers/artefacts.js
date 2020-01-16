@@ -185,7 +185,7 @@ angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export
         });
         _.each(_.where(columns, { 'title' : 'Name' }), function(col) {
           col.render = function(data, type, row) {
-            return '<a href="#/root/artefacteditor/' + row[0] + '">' + data + '</a>'
+            return '<a href="#" title="Edit plan" onclick="angular.element(\'#ArtefactListCtrl\').scope().editArtefact(\''+row[0]+'\');return false;">' + data + '</a>'
           };
         });
         _.each(_.where(columns,{'title':'Actions'}),function(col){

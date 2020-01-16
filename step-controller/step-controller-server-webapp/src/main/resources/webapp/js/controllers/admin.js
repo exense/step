@@ -40,8 +40,12 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
         };
 
         $scope.tabledef = {};
-        $scope.tabledef.columns = [ { "title" : "Username"}, { "title" : "Role" }, 
-                                    {"title":"Actions", "width":"120px", "render":function ( data, type, row ) {
+        $scope.tabledef.columns = [ 
+          { "title" : "Username", "min-width":"120px", "render":function ( data, type, row ) {
+            return '<a href="#" onclick="angular.element(\'#UserListCtrl\').scope().editUser(\''+row[0]+'\');return false;">' + data + '</a>'
+          }},
+          { "title" : "Role" }, 
+          {"title":"Actions", "width":"120px", "render":function ( data, type, row ) {
               var html = '<div class="input-group">' +
                 '<div class="btn-group">' +
                 '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#UserListCtrl\').scope().editUser(\''+row[0]+'\')">' +

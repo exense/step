@@ -21,7 +21,7 @@
 			<st-column name="key">
 				<header>Key</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><span>{{row.key}}</span></cell>
+				<cell><span><a href="#" ng-click="$event.preventDefault();$parent.editParameter(row.id)"  ng-disabled="!authService.hasRight('param-write') || ( (!row.scope || row.scope=='GLOBAL') && !authService.hasRight('param-global-write'))"  uib-tooltip="Edit parameter">{{row.key}}</a></span></cell>
 			</st-column>
 			<st-column name="value">
 				<header>Value</header>

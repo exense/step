@@ -13,7 +13,7 @@
 			<st-column name="label">
 				<header>Label</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><span>{{row.input.label}}</span></cell>
+				<cell><span><a href="#" ng-click="$event.preventDefault();editInput(row.id)" uib-tooltip="Edit input">{{row.input.label}}</a></span></cell>
 			</st-column>
 			<st-column name="id">
 				<header>ID</header>

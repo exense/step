@@ -8,7 +8,7 @@
 			<st-column name="resourceName">
 				<header>Name</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><span>{{row.resourceName}}</span></cell>
+				<cell><span><a href="#" ng-click="$event.preventDefault();$parent.editResource(row._id.$oid);" uib-tooltip="Edit resource">{{row.resourceName}}</a></span></cell>
 			</st-column>
 			<st-column name="resourceType">
 				<header>Type</header>

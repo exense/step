@@ -158,7 +158,11 @@ angular.module('functionsControllers',['dataTable','step'])
         });
         _.each(_.where(columns, { 'title' : 'Name' }), function(col) {
           col.render = function(data, type, row) {
-            return data
+            if(AuthService.hasRight('kw-write')) {
+              return '<a href="#" title="Edit keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().openFunctionEditor(\''+row[0]+'\');return false;">' + data + '</a>'
+            } else {
+              return data
+            }
           };
         });
         _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
