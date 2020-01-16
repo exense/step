@@ -14,9 +14,13 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
+import org.eclipse.jetty.util.AtomicBiInteger;
+import org.glassfish.hk2.utilities.AbstractActiveDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.commons.activation.AbstractActivableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
@@ -40,10 +44,12 @@ public class ExportServices extends AbstractServices {
 	
 	ObjectHookRegistry objectHookRegistry;
 	
+	ArtefactAccessor accessor;
+	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		ArtefactAccessor accessor = getContext().getArtefactAccessor();
+		accessor = getContext().getArtefactAccessor();
 		exportTaskManager = getContext().get(ExportTaskManager.class);
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 		exportManager = new ExportManager(accessor);
@@ -58,7 +64,8 @@ public class ExportServices extends AbstractServices {
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws IOException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "artefact_export.json");
+				String artefactName = accessor.get(id).getAttributes().get(AbstractOrganizableObject.NAME);
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, artefactName + ".json");
 				exportManager.exportArtefactWithChildren(id, resourceContainer.getOutputStream());
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
