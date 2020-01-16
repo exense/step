@@ -20,7 +20,6 @@ package step.core.artefacts.handlers;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,14 +38,13 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ArtefactCache;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionContextBindings;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
 import step.resources.ResourceManager;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 	
-	public static final String BINDING_RESOURCE_MANAGER = "resourceManager";
-
 	protected static Logger logger = LoggerFactory.getLogger(ArtefactHandler.class);
 	
 	protected ExecutionContext context;
@@ -166,12 +164,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 
 	protected Map<String, Object> getBindings() {
-		Map<String, Object> bindings = new HashMap<>();
-		bindings.putAll(context.getVariablesManager().getAllVariables());
-		bindings.put("context", context);
-		bindings.put("variables", context.getVariablesManager());
-		bindings.put(BINDING_RESOURCE_MANAGER, context.get(ResourceManager.class));
-		return bindings;
+		return ExecutionContextBindings.get(context);
 	}
 	
 	protected abstract void createReportSkeleton_(REPORT_NODE parentNode, ARTEFACT testArtefact);

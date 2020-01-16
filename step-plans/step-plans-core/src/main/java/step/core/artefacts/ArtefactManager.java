@@ -71,4 +71,13 @@ public class ArtefactManager {
 			accessor.remove(artefactId);
 		}
 	}
+	
+	public AbstractArtefact renameArtefact(String id, String name) {
+		AbstractArtefact artefact = accessor.get(id);
+		if(artefact!=null) {
+			artefact.getAttributes().put("name", name);
+			accessor.save(artefact);
+		}
+		return artefact;
+	}
 }

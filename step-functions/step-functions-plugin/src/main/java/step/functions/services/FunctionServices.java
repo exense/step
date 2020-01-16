@@ -40,9 +40,16 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
+import org.bson.types.ObjectId;
+
+import step.artefacts.CallFunction;
+import step.artefacts.handlers.FunctionLocator;
+import step.artefacts.handlers.SelectorHelper;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -68,6 +75,9 @@ public class FunctionServices extends AbstractServices {
 	
 	protected FunctionExecutionService functionExecutionService;
 	
+	protected SelectorHelper selectorHelper;
+	protected FunctionLocator functionLocator;
+	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -75,6 +85,9 @@ public class FunctionServices extends AbstractServices {
 		functionAccessor = getContext().get(FunctionAccessor.class);
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+		selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+		functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 	}
 
 	@POST
@@ -107,6 +120,32 @@ public class FunctionServices extends AbstractServices {
 	@Secured(right="kw-read")
 	public Function get(Map<String,String> attributes) {
 		return functionManager.getFunctionByAttributes(attributes);
+	}
+	
+	@POST
+	@Path("/lookup")
+	@Secured(right="kw-read")
+	public Function lookupCallFunction(CallFunction callFunction) {
+		Function function = null;
+		try {
+			function = functionLocator.getFunction(callFunction);
+		} catch (RuntimeException e) {}
+		return function;
+	}
+	
+	
+	@GET
+	@Path("/lookupByArtefact/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
+	public Function lookupByArtefactId(@PathParam("id") String id) {
+		CallFunction callFunction = (CallFunction) getContext().getArtefactAccessor().get(new ObjectId(id))	;
+		Function function = null;
+		try {
+			function = functionLocator.getFunction(callFunction);
+		} catch (RuntimeException e) {}
+		return function;
 	}
 	
 	@POST

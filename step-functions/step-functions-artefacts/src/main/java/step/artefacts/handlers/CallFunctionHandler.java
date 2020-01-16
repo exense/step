@@ -69,8 +69,6 @@ import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
-	
-	public static final String KEYWORD_ACTIVE_VERSIONS = "keyword.active.versions";
 
 	protected FunctionExecutionService functionExecutionService;
 	
@@ -85,6 +83,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	
 	private FunctionRouter functionRouter;
 	
+	protected FunctionLocator functionLocator;
+	
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
@@ -94,6 +94,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 		this.selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+		this.functionLocator = new FunctionLocator(functionAccessor, selectorHelper, context);
 	}
 
 	@Override
@@ -203,49 +204,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	private Function getFunction(CallFunction testArtefact) {
-		Function function = null;
-		if(testArtefact.getFunctionId()!=null) {
-			function = functionAccessor.get(new ObjectId(testArtefact.getFunctionId()));
-			if(function == null) {
-				throw new RuntimeException("Unable to find keyword with id "+testArtefact.getFunctionId());
-			}
-		} else {
-			String selectionAttributesJson = testArtefact.getFunction().get();
-			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, getBindings());
-			
-			List<Function> matchingFunctions = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
-			
-			Set<String> activeKeywordVersions = getActiveKeywordVersions();
-			if(activeKeywordVersions != null && activeKeywordVersions.size()>0) {
-				// First try to find a function matching one of the active versions
-				function = matchingFunctions.stream().filter(f->{
-					String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
-					return version != null && activeKeywordVersions.contains(version);
-				}).findFirst().orElse(null);
-				// if no function has been found with one of the active versions, return the first function WITHOUT version
-				if(function == null) {
-					function = matchingFunctions.stream().filter(f->{
-						String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
-						return version == null || version.trim().isEmpty();
-					}).findFirst().orElseThrow(()->new RuntimeException("Unable to find keyword with attributes "+selectionAttributesJson+" matching on of the versions: "+activeKeywordVersions));
-				}
-			} else {
-				// No active versions defined. Return the first function
-				function = matchingFunctions.stream().findFirst().orElseThrow(()->new RuntimeException("Unable to find keyword with attributes "+selectionAttributesJson));
-			}
-		}
-		
-		
-		return function;
-	}
-
-	private Set<String> getActiveKeywordVersions() {
-		String activeKeywordVersionsStr = context.getVariablesManager().getVariableAsString(KEYWORD_ACTIVE_VERSIONS,null);
-		Set<String> activeKeywordVersions = new HashSet<>();
-		if(activeKeywordVersionsStr != null) {
-			activeKeywordVersions.addAll(Arrays.asList(activeKeywordVersionsStr.split(",")));
-		}
-		return activeKeywordVersions;
+		return functionLocator.getFunction(testArtefact);
 	}
 
 	@SuppressWarnings("unchecked")

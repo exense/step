@@ -595,6 +595,17 @@ public class ControllerServices extends AbstractServices {
     }
 	
 	@POST
+	@Path("/artefact/{id}/rename")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
+	public ObjectId renameArtefact(@PathParam("id") String id, 
+			@QueryParam("name") String name) {
+		AbstractArtefact target = getContext().getArtefactManager().renameArtefact(id, name);
+		return target.getId();
+	}
+	
+	@POST
 	@Path("/artefact/{id}/copy")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)

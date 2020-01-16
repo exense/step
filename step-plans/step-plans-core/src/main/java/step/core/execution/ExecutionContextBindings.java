@@ -21,11 +21,18 @@ package step.core.execution;
 import java.util.HashMap;
 import java.util.Map;
 
+import step.resources.ResourceManager;
+
 public class ExecutionContextBindings {
+	
+	public static final String BINDING_RESOURCE_MANAGER = "resourceManager";
 
 	public static Map<String, Object> get(ExecutionContext context) {
 		Map<String, Object> bindings = new HashMap<String, Object>();
 		bindings.putAll(context.getVariablesManager().getAllVariables());
+		bindings.put("context", context);
+		bindings.put("variables", context.getVariablesManager());
+		bindings.put(BINDING_RESOURCE_MANAGER, context.get(ResourceManager.class));
 		return bindings;
 	}
 	

@@ -194,7 +194,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       
 })
 
-.directive('artefact', function(artefactTypes, $http,$timeout,$interval,stateStorage,$filter,$location) {
+.directive('artefact', function(artefactTypes, $http,$timeout,$interval,stateStorage,$filter,$location, Dialogs) {
   return {
     restrict: 'E',
     scope: {
@@ -281,7 +281,88 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
 					    }
 					  }
 					}, 
-					"plugins" : ["dnd"]
+					"plugins" : ["dnd","contextmenu"],
+					"contextmenu": {
+					  "items": function ($node) {
+					  //  var tree = $("#jstree_demo_div").jstree(true);
+					    return {
+					      "Rename": {
+					        "separator_before": false,
+					        "separator_after": true,
+					        "label": "Rename \u00A0\u00A0(F2)",
+					        "icon"       : false,
+					        "action": function (obj) {
+					          $scope.rename();
+					        }
+					      },
+					      "Move": {
+					        "separator_before": false,
+					        "separator_after": true,
+					        "label": "Move",
+					        "action": false,
+					        "submenu": {
+					          "Up": {
+					            "seperator_before": false,
+					            "seperator_after": false,
+					            "label": "Up \u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0(Ctrl+Up)",
+					            "icon"       : false,
+					            action: function (obj) {
+					              $scope.move(-1);
+					            }
+					          },
+					          "Down": {
+					            "seperator_before": false,
+					            "seperator_after": false,
+					            "label": "Down (Ctrl+Down)",
+					            "icon"       : false,
+					            action: function (obj) {
+					              $scope.move(1);
+					            }
+					          }
+					        }
+					      },
+					      "Copy": {
+                  "separator_before": false,
+                  "separator_after": false,
+                  "label": "Copy \u00A0\u00A0(Ctrl+c)",
+                  "icon"        : false,
+                  "action": function (obj) {
+                    $scope.copy();
+                  }
+                },
+                "Paste": {
+                  "separator_before": false,
+                  "separator_after": false,
+                  "label": "Paste \u00A0(Ctrl+v)",
+                  "icon"        : false,
+                  "action": function (obj) {
+                    $scope.paste();
+                  }
+                },
+					      "Delete": {
+					        "separator_before": false,
+					        "separator_after": true,
+					        "label": "Delete (Ctrl+d)",
+					        "icon"       : false,
+					        "action": function (obj) {
+					          $scope.remove();
+					        }
+					      },
+					      "Open": {
+                  "separator_before": false,
+                  "separator_after": false,
+                  "label": "Open \u00A0\u00A0(Ctrl+o)",
+                  "icon"        : false,
+                  "action": function (obj) {
+                    if ($node.original.planId || $node.original.callFunctionId) {
+                      $scope.openSelectedArtefact();
+                    }
+                  }
+                  ,"_disabled" : !($node.original.planId || $node.original.callFunctionId)
+                }
+					    }
+					  }
+					}
 				  });
       tree = $('#jstree_demo_div').jstree(true);
       
@@ -321,30 +402,43 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       })
 
       $('#jstree_demo_div').on('keydown.jstree', '.jstree-anchor', function (e, data) {
-        e.preventDefault(); 
-        if(e.which === 46) {
-          $scope.remove();
-        }
-        else if(e.which === 67 && (e.ctrlKey || e.metaKey)) {
-          $scope.copy();
-        }
-        else if(e.which === 86 && (e.ctrlKey || e.metaKey)) {
-          $scope.paste();
-        }
-        else if (e.which === 38 && (e.ctrlKey || e.metaKey)) {
-          $scope.move(-1);
-          e.stopImmediatePropagation();
-          e.preventDefault();
-        }
-        else if (e.which === 40 && (e.ctrlKey || e.metaKey)) {
-          $scope.move(1);
-          e.stopImmediatePropagation();
-          e.preventDefault();
-        }
-        else if (e.which === 13 && (e.ctrlKey || e.metaKey) && $scope.isInteractiveSessionActive()) {
-          $scope.execute();
-          e.stopImmediatePropagation();
-          e.preventDefault();
+        //Only react on keyboard while not renaming a node
+        if (!$scope.renaming) {
+          if(e.which === 68 && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault(); 
+            $scope.remove();
+          }
+          else if(e.which === 67 && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault(); 
+            $scope.copy();
+          }
+          else if(e.which === 86 && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault(); 
+            $scope.paste();
+          }
+          else if (e.which === 38 && (e.ctrlKey || e.metaKey)) {
+            $scope.move(-1);
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+          else if (e.which === 40 && (e.ctrlKey || e.metaKey)) {
+            $scope.move(1);
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+          else if (e.which === 79 && (e.ctrlKey || e.metaKey)) {
+            $scope.openSelectedArtefact();
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+          else if (e.which === 113) {
+            $scope.rename();
+          }
+          else if (e.which === 13 && (e.ctrlKey || e.metaKey) && $scope.isInteractiveSessionActive()) {
+            $scope.execute();
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
         }
       })
 
@@ -370,7 +464,15 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
 
         	  var icon = artefactTypes.getIcon(artefact._class);
         	  
-        	  return { "id" : artefact.id, "children" : children, "text" : getNodeLabel(artefact), icon:"glyphicon "+icon }
+        	  var node = { "id" : artefact.id, "children" : children, "text" : getNodeLabel(artefact), icon:"glyphicon "+icon }
+        	  
+        	  if (artefact._class === 'CallPlan') {
+        	    node.planId = artefact.artefactId;
+        	  } else if (artefact._class === 'CallKeyword') {
+        	    node.callFunctionId = artefact.id; 
+        	  }
+        	  
+        	  return node;
         	}
         	
         	var root = asJSTreeNode(data);
@@ -477,6 +579,49 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
           $http.post("rest/controller/artefact/"+selectedArtefact[0].id+"/children",newArtefact).then(function(response){
             reloadAfterArtefactInsertion(response.data);
           })
+        });
+      }
+      
+      $scope.openSelectedArtefact = function() {
+        var selectedArtefact = tree.get_selected(true)[0];
+        if (selectedArtefact.original.planId) {
+          openArtefact(selectedArtefact.original.planId)
+        } else if (selectedArtefact.original.callFunctionId) {
+          $http({url:"rest/functions/lookupByArtefact/"+selectedArtefact.original.callFunctionId,method:"GET"}).then(function(response) {
+            if (response.data) {
+              if (response.data.artefactId) {
+                openArtefact(response.data.artefactId);
+              } else {
+                Dialogs.showErrorMsg("No editor configured for this function type");
+              }
+            } else {
+              Dialogs.showErrorMsg("The related keyword was not found");
+            }
+          });
+        }
+      }
+      
+      openArtefact = function(artefactId) {
+        $timeout(function() {
+          $location.path('/root/artefacteditor/' + artefactId);
+        });
+      }
+      
+      $scope.rename = function() {
+        $scope.renaming=true;
+        var selectedArtefact = tree.get_selected(true)[0];
+        tree.edit(selectedArtefact.id, selectedArtefact.text, function (selectedArtefact, status, cancelled) {
+          if (!selectedArtefact.text || !status || cancelled) {
+            //skip
+          } else {
+            $http.post("rest/controller/artefact/"+selectedArtefact.id+"/rename?name="+selectedArtefact.text)
+            .then(function() {
+              load(function () {
+                focusOnNode(selectedArtefact.id);
+              });
+            });
+          }
+          $scope.renaming=false;
         });
       }
       
