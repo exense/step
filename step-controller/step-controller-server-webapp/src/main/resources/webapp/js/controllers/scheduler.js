@@ -148,6 +148,10 @@ schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $
         $scope.error = "Invalid CRON expression or server error.";
       });
   };
+  
+  $scope.applyPreset = function(preset) {
+	    $scope.task.cronExpression = preset;
+	  }
 
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
