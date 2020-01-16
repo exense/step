@@ -332,7 +332,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			var operationRenderer = {
 					'Keyword Call' : {
 						renderer: function (details) {
-							var html = "";
+							var html = ": ";
 							if(details[0]) {
 								html += details[0].name;
 							} 
@@ -357,7 +357,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 									icon: '' },
 									'Sleep' : {
 										renderer: function (details) {
-											var html = details + "ms";
+											var html = " " + details + "ms";
 											return html},
 											icon: '' },  
 											'Token selection' : {

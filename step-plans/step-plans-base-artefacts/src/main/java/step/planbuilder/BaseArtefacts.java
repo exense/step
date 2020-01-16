@@ -7,6 +7,7 @@ import step.artefacts.ForBlock;
 import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
 import step.artefacts.Set;
+import step.artefacts.Sleep;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.core.artefacts.AbstractArtefact;
@@ -80,5 +81,10 @@ public class BaseArtefacts {
 		return testCase;
 	}
 
+	public static Sleep sleep(long ms) {
+		Sleep sleep = new Sleep();
+		sleep.getDuration().setValue(ms);
+		return sleep;
+	}
 
 }
