@@ -37,6 +37,9 @@ angular.module('reportTree',['step','artefacts'])
       
       var treeDiv = angular.element($element[0]).find('#jstree_div');
       //console.log($scope.reportTreeSettings);
+      var treeScrollDiv = angular.element($element[0]).find('#jstree_scroll_div')[0];
+      var scrollTopPos;
+      var scrollLeftPos;
       var tree;
       treeDiv.jstree(
           {
@@ -78,11 +81,22 @@ angular.module('reportTree',['step','artefacts'])
         }
       })
       
+      treeDiv.on('refresh.jstree', function () { 
+        if (scrollTopPos && scrollTopPos > 0) {
+          treeScrollDiv.scrollTop = scrollTopPos;
+        }
+        if (scrollLeftPos && scrollLeftPos > 0) {
+          treeScrollDiv.scrollLeft = scrollLeftPos;
+        }
+      });
+      
       $scope.getDisplaiableProperties = function(node) {
         return _.without(_.keys(node),'id','_id','parentID','executionTime','duration','error','functionId','executionID','artefactID','customAttributes','_class','status','name','measures','attachments')
       }
       
       $scope.handle.refresh = function() {
+        scrollTopPos = treeScrollDiv.scrollTop;
+        scrollLeftPos = treeScrollDiv.scrollLeft;
         tree.refresh();
       }
       
