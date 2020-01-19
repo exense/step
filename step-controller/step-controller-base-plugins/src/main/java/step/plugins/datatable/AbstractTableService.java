@@ -3,8 +3,6 @@ package step.plugins.datatable;
 import java.util.Collection;
 import java.util.List;
 
-import javax.ws.rs.container.ContainerRequestContext;
-
 import org.bson.conversions.Bson;
 
 import step.core.deployment.AbstractServices;
@@ -23,7 +21,7 @@ public abstract class AbstractTableService extends AbstractServices {
 		tableManager = new TableManager(getContext().get(ObjectHookRegistry.class));
 	}
 
-	protected List<Bson> getAdditionalQueryFragmentsFromContext(ContainerRequestContext crc, String collectionID) {
-		return tableManager.getAdditionalQueryFragmentsFromContext(getSession(crc), collectionID);
+	protected List<Bson> getAdditionalQueryFragmentsFromContext(String collectionID) {
+		return tableManager.getAdditionalQueryFragmentsFromContext(getSession(), collectionID);
 	}
 }

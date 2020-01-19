@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.LogManager;
 
+import javax.servlet.http.HttpSession;
+
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -32,12 +34,14 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.process.internal.RequestScoped;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
@@ -51,12 +55,13 @@ import ch.exense.viz.persistence.mongodb.MongoClientSession;
 import ch.exense.viz.rest.VizServlet;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
+import step.core.controller.errorhandling.ErrorFilter;
 import step.core.deployment.AccessServices;
 import step.core.deployment.AdminServices;
 import step.core.deployment.ApplicationServices;
-import step.core.deployment.AuthenticationFilter;
+import step.core.deployment.SecurityFilter;
 import step.core.deployment.ControllerServices;
-import step.core.deployment.ErrorFilter;
+import step.core.deployment.HttpSessionFactory;
 import step.core.deployment.JacksonMapperProvider;
 import step.plugins.interactive.InteractiveServices;
 
@@ -207,7 +212,7 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ControllerServices.class);
 		resourceConfig.registerClasses(InteractiveServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
-		resourceConfig.registerClasses(AuthenticationFilter.class);
+		resourceConfig.registerClasses(SecurityFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
 		
@@ -215,6 +220,8 @@ public class ControllerServer {
 			@Override
 			protected void configure() {
 				bind(controller).to(Controller.class);
+				bindFactory(HttpSessionFactory.class).to(HttpSession.class)
+                .proxy(true).proxyForSameScope(false).in(RequestScoped.class);
 			}
 		});
 		
@@ -233,7 +240,14 @@ public class ControllerServer {
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/rest");
 		context.addServlet(sh, "/*");
-
+		
+		SessionHandler s = new SessionHandler();
+		Integer timeout = configuration.getPropertyAsInteger("ui.sessiontimeout.minutes", 180)*60;
+		s.setMaxInactiveInterval(timeout);
+        s.setUsingCookies(true);
+        s.setSessionCookie("sessionid");
+		context.setSessionHandler(s);
+        
 		addHandler(context);
 	}
 	

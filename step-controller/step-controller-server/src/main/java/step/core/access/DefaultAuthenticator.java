@@ -5,15 +5,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
+import step.core.GlobalContextAware;
 
-public class DefaultAuthenticator implements Authenticator {
+public class DefaultAuthenticator implements Authenticator, GlobalContextAware {
 	
 	private static Logger logger = LoggerFactory.getLogger(DefaultAuthenticator.class);
 	
 	private UserAccessor users;
 
 	@Override
-	public void init(GlobalContext context) {
+	public void setGlobalContext(GlobalContext context) {
 		users = context.getUserAccessor();
 	}
 

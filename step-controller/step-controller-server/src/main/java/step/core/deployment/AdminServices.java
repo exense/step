@@ -29,8 +29,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -38,8 +36,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import step.core.access.Preferences;
 import step.core.access.User;
 import step.core.access.UserAccessor;
-import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSetting;
+import step.core.controller.ControllerSettingAccessor;
 
 @Singleton
 @Path("admin")
@@ -170,37 +168,34 @@ public class AdminServices extends AbstractServices {
 	@POST
 	@Secured
 	@Path("/myaccount/changepwd")
-	public void resetMyPassword(@Context ContainerRequestContext crc, ChangePwdRequest request) {
-		Session session = (Session) crc.getProperty("session");
-		User user = getContext().getUserAccessor().getByUsername(session.username);
+	public void resetMyPassword(ChangePwdRequest request) {
+		User user = getCurrentUser();
 		if(user!=null) {
 			user.setPassword(encryptPwd(request.getNewPwd()));
 			getContext().getUserAccessor().save(user);			
 		}
+	}
+
+	protected User getCurrentUser() {
+		return getContext().getUserAccessor().get(getSession().getUser().getId());
 	}
 	
 	@GET
 	@Secured
 	@Path("/myaccount")
 	@Produces(MediaType.APPLICATION_JSON)
-	public User getMyUser(@Context ContainerRequestContext crc) {
-		Session session = (Session) crc.getProperty("session");
-		User user = getContext().getUserAccessor().getByUsername(session.username);
+	public User getMyUser() {
+		User user = getCurrentUser();
 		return user;
 	}
 		
 	@GET
 	@Secured
 	@Path("/myaccount/preferences")
-	public Preferences getPreferences(@Context ContainerRequestContext crc) {
-		Session session = (Session) crc.getProperty("session");
-		if(session!=null) {
-			User user = getContext().getUserAccessor().getByUsername(session.username);
-			if(user!=null) {
-				return user.getPreferences();			
-			} else {
-				return null;
-			}
+	public Preferences getPreferences() {
+		User user = getCurrentUser();
+		if(user!=null) {
+			return user.getPreferences();
 		} else {
 			return null;
 		}
@@ -209,32 +204,26 @@ public class AdminServices extends AbstractServices {
 	@POST
 	@Secured
 	@Path("/myaccount/preferences/{id}")
-	public void putPreference(@Context ContainerRequestContext crc, @PathParam("id") String preferenceName, Object value) {
-		Session session = (Session) crc.getProperty("session");
-		if(session!=null) {
-			User user = getContext().getUserAccessor().getByUsername(session.username);
-			if(user!=null) {
-				if(user.getPreferences()==null) {
-					Preferences prefs = new Preferences();
-					user.setPreferences(prefs);
-				}
-				user.getPreferences().put(preferenceName, value);
-				getContext().getUserAccessor().save(user);			
-			}			
+	public void putPreference(@PathParam("id") String preferenceName, Object value) {
+		User user = getCurrentUser();
+		if(user!=null) {
+			if(user.getPreferences()==null) {
+				Preferences prefs = new Preferences();
+				user.setPreferences(prefs);
+			}
+			user.getPreferences().put(preferenceName, value);
+			getContext().getUserAccessor().save(user);			
 		}
 	}
 	
 	@POST
 	@Secured
 	@Path("/myaccount/preferences")
-	public void putPreference(@Context ContainerRequestContext crc, Preferences preferences) {
-		Session session = (Session) crc.getProperty("session");
-		if(session!=null) {
-			User user = getContext().getUserAccessor().getByUsername(session.username);
-			if(user!=null) {
-				user.setPreferences(preferences);
-				getContext().getUserAccessor().save(user);			
-			}			
+	public void putPreference( Preferences preferences) {
+		User user = getCurrentUser();
+		if(user!=null) {
+			user.setPreferences(preferences);
+			getContext().getUserAccessor().save(user);			
 		}
 	}
 	

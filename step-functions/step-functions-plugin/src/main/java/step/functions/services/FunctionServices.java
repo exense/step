@@ -35,7 +35,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -192,11 +191,11 @@ public class FunctionServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/select")
 	@Secured(right="kw-execute")
-	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter, @Context ContainerRequestContext crc, @Context HttpServletRequest req) throws FunctionExecutionServiceException {
-		Session session = getSession(crc);
+	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter, @Context HttpServletRequest req) throws FunctionExecutionServiceException {
+		Session session = getSession();
 		if(!parameter.isLocal()) {
 			FunctionServiceTokenWrapperOwner tokenWrapperOwner = new FunctionServiceTokenWrapperOwner();
-			tokenWrapperOwner.setUsername(session.getUsername());
+			tokenWrapperOwner.setUsername(session.getUser().getUsername());
 			tokenWrapperOwner.setIpAddress(req.getRemoteAddr());
 			tokenWrapperOwner.setDescription(parameter.getReservationDescription());
 			return functionExecutionService.getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession, tokenWrapperOwner);

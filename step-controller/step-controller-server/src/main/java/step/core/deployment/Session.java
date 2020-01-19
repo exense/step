@@ -1,49 +1,31 @@
 package step.core.deployment;
 
 import step.core.AbstractContext;
-import step.core.access.Profile;
+import step.core.access.User;
 
 public class Session extends AbstractContext {
 	
-	protected String username;
+	protected boolean authenticated;
 	
-	protected Profile profile;
+	protected User user;
 	
-	protected String token;
-	
-	protected long lasttouch;
-
 	public Session() {
 		super();
-		touch();
 	}
 
-	public String getUsername() {
-		return username;
+	public boolean isAuthenticated() {
+		return authenticated;
 	}
 
-	public void setUsername(String username) {
-		this.username = username;
+	public void setAuthenticated(boolean authenticated) {
+		this.authenticated = authenticated;
 	}
 
-	public Profile getProfile() {
-		return profile;
+	public User getUser() {
+		return user;
 	}
 
-	public void setProfile(Profile profile) {
-		this.profile = profile;
+	public void setUser(User user) {
+		this.user = user;
 	}
-
-	public String getToken() {
-		return token;
-	}
-
-	public void setToken(String token) {
-		this.token = token;
-	}
-	
-	public void touch() {
-		lasttouch = System.currentTimeMillis();
-	}
-
 }

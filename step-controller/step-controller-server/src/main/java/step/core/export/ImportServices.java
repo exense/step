@@ -9,12 +9,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import step.attachments.FileResolver;
 import step.attachments.FileResolver.FileHandle;
@@ -27,8 +22,6 @@ import step.core.objectenricher.ObjectHookRegistry;
 @Path("import")
 public class ImportServices extends AbstractServices {
 	
-	private static final Logger logger = LoggerFactory.getLogger(ImportServices.class);
-		
 	FileResolver fileResolver;
 	
 	ImportManager importManager;
@@ -48,9 +41,9 @@ public class ImportServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public void importArtefact(@QueryParam("path") String path, @Context ContainerRequestContext crc) throws IOException {
+	public void importArtefact(@QueryParam("path") String path) throws IOException {
 		try (FileHandle file = fileResolver.resolveFileHandle(path)) {
-			importManager.importArtefacts(file.getFile(), objectHookRegistry.getObjectEnricher(getSession(crc)));
+			importManager.importArtefacts(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()));
 		}
 	}
 }

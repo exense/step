@@ -20,9 +20,7 @@ package step.core.deployment;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.ext.ReaderInterceptorContext;
-import javax.ws.rs.ext.WriterInterceptorContext;
+import javax.servlet.http.HttpSession;
 
 import ch.exense.commons.app.Configuration;
 import step.core.Controller;
@@ -36,6 +34,9 @@ public abstract class AbstractServices {
 
 	@Inject
 	protected Controller controller;
+	
+	@Inject 
+	private HttpSession httpSession;
 	
 	protected Configuration configuration;
 
@@ -64,19 +65,13 @@ public abstract class AbstractServices {
 		}
 		return null;
 	}
-
-	protected Session getSession(ContainerRequestContext crc) {
-		Session session = (Session) crc.getProperty(SESSION);
+	
+	protected Session getSession() {
+		Session session = (Session) httpSession.getAttribute(SESSION);
 		return session;
 	}
 	
-	protected Session getSession(ReaderInterceptorContext crc) {
-		Session session = (Session) crc.getProperty(SESSION);
-		return session;
-	}
-	
-	protected Session getSession(WriterInterceptorContext crc) {
-		Session session = (Session) crc.getProperty(SESSION);
-		return session;
+	protected void setSession(Session session) {
+		httpSession.setAttribute(SESSION, session);
 	}
 }

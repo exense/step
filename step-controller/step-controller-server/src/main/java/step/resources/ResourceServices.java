@@ -13,8 +13,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -34,8 +32,6 @@ import step.core.objectenricher.ObjectHookRegistry;
 @Path("/resources")
 public class ResourceServices extends AbstractServices { 
 
-	private static final Logger logger = LoggerFactory.getLogger(ResourceServices.class);
-
 	protected ResourceManager resourceManager;
 	protected ResourceAccessor resourceAccessor;
 	private ObjectHookRegistry objectHookRegistry;
@@ -54,9 +50,8 @@ public class ResourceServices extends AbstractServices {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType, @QueryParam("duplicateCheck") Boolean checkForDuplicate,
-			@Context ContainerRequestContext crc) throws Exception {
-		ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(getSession(crc));
+			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType, @QueryParam("duplicateCheck") Boolean checkForDuplicate) throws Exception {
+		ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(getSession());
 		
 		if(checkForDuplicate == null) {
 			checkForDuplicate = true;
@@ -88,7 +83,7 @@ public class ResourceServices extends AbstractServices {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse saveResourceContent(@PathParam("id") String resourceId, @FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail, @Context ContainerRequestContext crc) throws Exception {
+			@FormDataParam("file") FormDataContentDisposition fileDetail) throws Exception {
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
 		
@@ -105,7 +100,6 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@GET
-	@Secured
 	@Path("/{id}/content")
 	public Response getResourceContent(@PathParam("id") String resourceId, @QueryParam("inline") boolean inline) throws IOException {
 		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);

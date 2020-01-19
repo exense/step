@@ -2,6 +2,7 @@ package step.core.accessors;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.bson.types.ObjectId;
 
@@ -51,6 +52,24 @@ public class AbstractIdentifiableObject {
 	public Object getCustomField(String key) {
 		if(customFields!=null) {
 			return customFields.get(key);
+		} else {
+			return null;
+		}
+	}
+	
+	public Object computeCustomFieldIfAbsent(String key, Function<? super String, ? extends Object> mappingFunction) {
+		return customFields.computeIfAbsent(key, mappingFunction);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T getCustomField(String key, Class<T> valueClass) {
+		Object value = getCustomField(key);
+		if(value != null) {
+			if(valueClass.isInstance(value)) {
+				return (T) value;
+			} else {
+				throw new IllegalArgumentException("The value of the field "+key+" isn't an instance of "+valueClass.getCanonicalName());
+			}
 		} else {
 			return null;
 		}

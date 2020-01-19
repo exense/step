@@ -30,13 +30,15 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
 import org.bson.types.ObjectId;
 
+import step.core.access.AccessManager;
+import step.core.access.Role;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;
@@ -46,12 +48,14 @@ import step.core.deployment.Unfiltered;
 @Path("screens")
 public class ScreenTemplateService extends AbstractServices {
 	
+	protected AccessManager accessManager;
 	protected ScreenTemplateManager screenTemplateManager;
 	protected ScreenInputAccessor screenInputAccessor;
 	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
+		accessManager = getContext().get(AccessManager.class);
 		screenInputAccessor = getContext().get(ScreenInputAccessor.class);
 		screenTemplateManager = getContext().get(ScreenTemplateManager.class);
 	}
@@ -60,8 +64,8 @@ public class ScreenTemplateService extends AbstractServices {
 	@Secured
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<Input> getInputsForScreen(@PathParam("id") String screenId, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) {		
-		Map<String, Object> contextBindings = getContextBindings(uriInfo, crc);
+	public List<Input> getInputsForScreen(@PathParam("id") String screenId, @Context UriInfo uriInfo) {		
+		Map<String, Object> contextBindings = getContextBindings(uriInfo);
 		return screenTemplateManager.getInputsForScreen(screenId, contextBindings);
 	}
 	
@@ -69,8 +73,8 @@ public class ScreenTemplateService extends AbstractServices {
 	@Secured
 	@Path("/{screenid}/{inputid}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Input getInputForScreen(@PathParam("screenid") String screenId, @PathParam("inputid") String inputId, @Context UriInfo uriInfo, @Context ContainerRequestContext crc) {		
-		return getInputsForScreen(screenId, uriInfo, crc).stream().filter(i->i.getId().equals(inputId)).findFirst().orElse(null);
+	public Input getInputForScreen(@PathParam("screenid") String screenId, @PathParam("inputid") String inputId, @Context UriInfo uriInfo) {		
+		return getInputsForScreen(screenId, uriInfo).stream().filter(i->i.getId().equals(inputId)).findFirst().orElse(null);
 	}
 	
 	@GET
@@ -110,14 +114,17 @@ public class ScreenTemplateService extends AbstractServices {
 		screenTemplateManager.notifyChange();
 	}
 
-	private Map<String, Object> getContextBindings(UriInfo uriInfo, ContainerRequestContext crc) {
+	private Map<String, Object> getContextBindings(UriInfo uriInfo) {
 		Map<String, Object> contextBindings = new HashMap<>();
 		
-		Session session = (Session) crc.getProperty("session");
+		Session session = getSession();
 		if(session!=null) {
-			contextBindings.put("user", session.getUsername());
-			if(session.getProfile()!= null)
-				contextBindings.put("role", session.getProfile().getRole());
+			contextBindings.put("user", session.getUser().getUsername());
+			Role roleInContext = accessManager.getRoleInContext(session);
+			if(roleInContext!= null) {
+				String roleName = roleInContext.getAttributes().get(AbstractOrganizableObject.NAME);
+				contextBindings.put("role", roleName);
+			}
 		}
 		
 		for(String key:uriInfo.getQueryParameters().keySet()) {

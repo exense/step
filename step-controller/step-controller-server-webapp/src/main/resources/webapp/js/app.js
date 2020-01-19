@@ -397,7 +397,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	var serviceContext = {};
 
 	function setContext(session) {
-		$rootScope.context = {'userID':session.username, 'rights':session.profile.rights, 'role':session.profile.role, 'session': session};
+		$rootScope.context = {'userID':session.username, 'rights':session.role.rights, 'role':session.role.attributes.name, 'session': {}};
 		Preferences.load();
 	}
 
@@ -523,8 +523,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	}
 	$scope.login = function (credentials) {
 		AuthService.login(credentials).then(function (user) {
-		}, function () {
-			$scope.error = "Invalid username/password";
+		}, function (e) {
+			$scope.error = e.data;
 		});
 	};
 	$scope.logo = "images/logologin.png";

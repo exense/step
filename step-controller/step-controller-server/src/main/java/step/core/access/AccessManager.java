@@ -1,16 +1,13 @@
 package step.core.access;
 
-import java.util.List;
-
-import step.core.GlobalContext;
+import step.core.deployment.Session;
 
 public interface AccessManager {
 
-	public void init(GlobalContext context);
+	public void setRoleResolver(RoleResolver roleResolver);
 	
-	public List<String> getRights(String username);
+	public Role getRoleInContext(Session session);
 	
-	public String getRole(String username);
+	public boolean checkRightInContext(Session session, String right);
 	
-	public List<String> getRoles();
 }

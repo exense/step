@@ -30,13 +30,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.bson.types.ObjectId;
 
 import step.commons.activation.Expression;
+import step.core.GlobalContext;
+import step.core.access.AccessManager;
 import step.core.accessors.CRUDAccessor;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
@@ -44,13 +44,16 @@ import step.core.deployment.Secured;
 @Path("/parameters")
 public class ParameterServices extends AbstractServices {
 	
-	CRUDAccessor<Parameter> parameterAccessor;
+	private AccessManager accessManager;
+	private CRUDAccessor<Parameter> parameterAccessor;
 	
 	@PostConstruct
 	@SuppressWarnings("unchecked")
 	public void init() throws Exception {
 		super.init();
-		parameterAccessor = (CRUDAccessor<Parameter>) getContext().get("ParameterAccessor");
+		GlobalContext context = getContext();
+		parameterAccessor = (CRUDAccessor<Parameter>) context.get("ParameterAccessor");
+		accessManager = context.get(AccessManager.class);
 	}
 
 	@GET
@@ -58,10 +61,10 @@ public class ParameterServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	//@Path("/")
 	@Secured(right="param-write")
-	public Parameter newParameter(@Context ContainerRequestContext crc) {
+	public Parameter newParameter() {
 		Parameter parameter =  new Parameter(new Expression(""), "", "", "");
 		parameter.setPriority(1);
-		if(hasGlobalParamRight(crc)) {
+		if(hasGlobalParamRight()) {
 			parameter.setScope(ParameterScope.GLOBAL);
 		} else {
 			parameter.setScope(ParameterScope.FUNCTION);
@@ -74,8 +77,8 @@ public class ParameterServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	//@Path("/")
 	@Secured(right="param-write")
-	public Parameter save(Parameter newParameter, @Context ContainerRequestContext crc) {
-		assertRights(newParameter, crc);
+	public Parameter save(Parameter newParameter) {
+		assertRights(newParameter);
 		
 		Parameter oldParameter;
 		if(newParameter.getId()!=null) {
@@ -102,7 +105,7 @@ public class ParameterServices extends AbstractServices {
 			}
 		}
 
-		String lastModificationUser = getSession(crc).getUsername();
+		String lastModificationUser = getSession().getUser().getUsername();
 		Date lastModificationDate = new Date();
 		newParameter.setLastModificationDate(lastModificationDate);
 		newParameter.setLastModificationUser(lastModificationUser);
@@ -110,16 +113,16 @@ public class ParameterServices extends AbstractServices {
 		return parameterAccessor.save(newParameter);
 	}
 
-	protected void assertRights(Parameter newParameter, ContainerRequestContext crc) {
+	protected void assertRights(Parameter newParameter) {
 		if(newParameter.getScope() == null || newParameter.getScope()==ParameterScope.GLOBAL) {
-			if(!hasGlobalParamRight(crc)) {
+			if(!hasGlobalParamRight()) {
 				throw new RuntimeException("The user is missing the right 'param-global-write' to write global parameters.");
 			}
 		}
 	}
 
-	protected boolean hasGlobalParamRight(ContainerRequestContext crc) {
-		return getSession(crc).getProfile().getRights().contains("param-global-write");
+	protected boolean hasGlobalParamRight() {
+		return accessManager.checkRightInContext(getSession(), "param-global-write");
 	}
 
 	protected boolean isProtected(Parameter oldParameter) {
@@ -131,18 +134,18 @@ public class ParameterServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-write")
-	public Parameter copy(@PathParam("id") String id, @Context ContainerRequestContext crc) {	
+	public Parameter copy(@PathParam("id") String id) {	
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
 		parameter.setId(new ObjectId());
-		return save(parameter, crc);
+		return save(parameter);
 	}
 	
 	@DELETE
 	@Path("/{id}")
 	@Secured(right="param-delete")
-	public void delete(@PathParam("id") String id, @Context ContainerRequestContext crc) {
+	public void delete(@PathParam("id") String id) {
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
-		assertRights(parameter, crc);
+		assertRights(parameter);
 		
 		parameterAccessor.remove(new ObjectId(id));
 	}

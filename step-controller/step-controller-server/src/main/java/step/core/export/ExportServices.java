@@ -10,16 +10,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-import org.eclipse.jetty.util.AtomicBiInteger;
-import org.glassfish.hk2.utilities.AbstractActiveDescriptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import step.commons.activation.AbstractActivableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.deployment.AbstractServices;
@@ -36,8 +28,6 @@ import step.resources.ResourceRevisionContainer;
 @Path("export")
 public class ExportServices extends AbstractServices {
 	
-	private static final Logger logger = LoggerFactory.getLogger(ExportServices.class);
-		
 	ExportManager exportManager;
 	
 	ExportTaskManager exportTaskManager;
@@ -78,8 +68,8 @@ public class ExportServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public ExportStatus exportAllArtefacts(@Context ContainerRequestContext crc) {
-		Session session = getSession(crc);
+	public ExportStatus exportAllArtefacts() {
+		Session session = getSession();
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException {

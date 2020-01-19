@@ -130,12 +130,12 @@ public class InteractiveServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/start")
 	@Secured(right="interactive")
-	public String start(@Context ContainerRequestContext crc) throws AgentCommunicationException {
+	public String start() throws AgentCommunicationException {
 		InteractiveSession session = new InteractiveSession();
 		ExecutionContext  executionContext = ControllerSideExecutionContextBuilder.createExecutionContext(getContext());
 		
 		// Enrich the ExecutionParameters with the current context attributes as done by the TenantContextFilter when starting a normal execution
-		objectHookRegistry.getObjectEnricher(getSession(crc)).accept(executionContext.getExecutionParameters());
+		objectHookRegistry.getObjectEnricher(getSession()).accept(executionContext.getExecutionParameters());
 		
 		session.c = executionContext;
 		session.lasttouch = System.currentTimeMillis();

@@ -45,7 +45,7 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 		if(!context.getHeaders().containsKey("ignoreContext") || !context.getHeaders().get("ignoreContext").contains("true")) {
 			Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
 			if(annotation == null) {
-				Session session = getSession(context);
+				Session session = getSession();
 				objectHookRegistry.getObjectEnricher(session).accept(proceed);
 			}
 		}
@@ -61,7 +61,7 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 			Object entity = context.getEntity();
 			if(entity instanceof List) {
 				List<?> list = (List<?>)entity;
-				Session session = getSession(context);
+				Session session = getSession();
 				final List<?> newList = list.stream().filter(objectHookRegistry.getObjectFilter(session)).collect(Collectors.toList());
 				context.setEntity(newList);
 			}

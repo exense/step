@@ -1,114 +1,67 @@
 package step.core.deployment;
 
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ch.exense.commons.app.Configuration;
+import step.core.GlobalContext;
 import step.core.access.AccessConfiguration;
 import step.core.access.AccessManager;
-import step.core.access.Authenticator;
+import step.core.access.AuthenticationManager;
 import step.core.access.Credentials;
-import step.core.access.DefaultAccessManager;
-import step.core.access.DefaultAuthenticator;
-import step.core.access.Profile;
+import step.core.access.Role;
+import step.core.access.RoleProvider;
+import step.core.access.User;
+import step.core.accessors.AbstractOrganizableObject;
 
 @Singleton
 @Path("/access")
 public class AccessServices extends AbstractServices {
 	
-	private static Logger logger = LoggerFactory.getLogger(AccessServices.class);
-	
-	public static final String AUTHENTICATION_SERVICE = "AuthenticationService";
-		
-	private ConcurrentHashMap<String, Session> sessions;
-	
-	private Timer sessionExpirationTimer; 
-	
-	private Authenticator authenticator;
-	
+	private RoleProvider roleProvider;
+	private AuthenticationManager authenticationManager;
 	private AccessManager accessManager;
 	
 	public AccessServices() {
 		super();
-		sessions = new ConcurrentHashMap<>();
 	}
 	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		controller.getContext().put(AUTHENTICATION_SERVICE, this);
+		GlobalContext context = controller.getContext();
 		
-		configuration = controller.getContext().getConfiguration();
-		
-		initAuthenticator();
-		initAccessManager();
-		
-		sessionExpirationTimer = new Timer("Session expiration timer");
-		sessionExpirationTimer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				final int sessionTimeout = configuration.getPropertyAsInteger("ui.sessiontimeout.minutes", 180)*60000;
-				long time = System.currentTimeMillis();
-				sessions.entrySet().removeIf(entry->(entry.getValue().lasttouch+sessionTimeout)<time);
-			}
-		}, 60000, 60000);
+		roleProvider = context.get(RoleProvider.class);
+		authenticationManager = context.get(AuthenticationManager.class);
+		accessManager = context.get(AccessManager.class);
 	}
 	
-	@PreDestroy
-	private void close() {
-		if(sessionExpirationTimer != null) {
-			sessionExpirationTimer.cancel();			
+	public static class SessionResponse {
+		
+		private String username;
+		private Role role;
+		
+		public SessionResponse(String username, Role role) {
+			super();
+			this.username = username;
+			this.role = role;
 		}
-	}
 
-	private void initAuthenticator() throws Exception {
-		String authenticatorClass = configuration.getProperty("ui.authenticator",null);
-		if(authenticatorClass==null) {
-			authenticator = new DefaultAuthenticator();
-		} else {
-			try {
-				authenticator = (Authenticator) this.getClass().getClassLoader().loadClass(authenticatorClass).newInstance();
-			} catch (Exception e) {
-				logger.error("Error while initializing authenticator '"+authenticatorClass+"'",e);
-				throw e;
-			}
+		public String getUsername() {
+			return username;
 		}
-		authenticator.init(getContext());
-	}
-	
-	private void initAccessManager() throws Exception {
-		String accessManagerClass = configuration.getProperty("ui.accessmanager",null);
-		if(accessManagerClass==null) {
-			accessManager = new DefaultAccessManager();
-		} else {
-			try {
-				accessManager = (AccessManager) this.getClass().getClassLoader().loadClass(accessManagerClass).newInstance();
-			} catch (Exception e) {
-				logger.error("Error while initializing access manager '"+accessManagerClass+"'",e);
-				throw e;
-			}
+
+		public Role getRole() {
+			return role;
 		}
-		accessManager.init(getContext());
 	}
 
 	@POST
@@ -116,35 +69,47 @@ public class AccessServices extends AbstractServices {
     @Produces("application/json")
     @Consumes("application/json")
     public Response authenticateUser(Credentials credentials) {
-        boolean authenticated = authenticator.authenticate(credentials);
+		Session session = getSession();
+        boolean authenticated = authenticationManager.authenticate(session, credentials);
         if(authenticated) {
-        	Session session = issueToken(credentials.getUsername());
-        	NewCookie cookie = new NewCookie("sessionid", session.getToken(), "/", null, 1, null, -1, null, false, false);
-        	Profile profile = getProfile(credentials.getUsername());
-        	session.setProfile(profile);
-        	return Response.ok(session).cookie(cookie).build();            	
+        	SessionResponse sessionResponse = buildSessionResponse(session);
+        	return Response.ok(sessionResponse).build();            	
         } else {
-        	return Response.status(Response.Status.UNAUTHORIZED).build();            	
+        	return Response.status(Response.Status.UNAUTHORIZED.getStatusCode()).entity("Invalid username/password").type("text/plain").build();
         }    
     }
 	
-	@POST
+	@GET
 	@Secured
-	@Path("/logout")
-    public void logout(@Context ContainerRequestContext crc) {
-		Session session = (Session) crc.getProperty("session");
-		if(session != null) {
-			sessions.remove(session.getToken());
-		}
-    }
+	@Path("/session")
+	public SessionResponse getCurrentSession() {
+		Session session = getSession();
+		return buildSessionResponse(session);
+	}
+	
+	// TODO Reimplement this method as it isn't working anymore since the sessions are now managed by the web server
+	//Not "Secured" on purpose:
+	//we're allow third parties to loosely check the validity of a token in an SSO context
+//	@GET
+//	@Path("/checkToken")
+//	public Boolean isValidToken(@QueryParam("token") String token) {
+//		logger.debug("Token " + token + " is valid.");
+//		return true;
+//	}
+
+	protected SessionResponse buildSessionResponse(Session session) {
+		User user = session.getUser();
+		Role role = accessManager.getRoleInContext(session);
+		return new SessionResponse(user.getUsername(), role);
+	}
 	
 	@GET
 	@Path("/conf")
 	public AccessConfiguration getAccessConfiguration() {
 		AccessConfiguration conf = new AccessConfiguration();
 		conf.setDemo(isDemo());
-		conf.setAuthentication(useAuthentication());
-		conf.setRoles(accessManager.getRoles());
+		conf.setAuthentication(authenticationManager.useAuthentication());
+		conf.setRoles(roleProvider.getRoles().stream().map(r->r.getAttributes().get(AbstractOrganizableObject.NAME)).collect(Collectors.toList()));
 		
 		// conf should cover more than just AccessConfiguration but we'll store the info here for right now
 		Configuration ctrlConf = getContext().getConfiguration();
@@ -156,81 +121,14 @@ public class AccessServices extends AbstractServices {
 		return conf;
 	}
 	
-	public boolean useAuthentication() {
-		return configuration.getPropertyAsBoolean("authentication", true);
-	}
+	@POST
+	@Secured
+	@Path("/logout")
+    public void logout() {
+		setSession(null);
+    }
 	
 	public boolean isDemo() {
 		return configuration.getPropertyAsBoolean("demo", false);
 	}
-	
-	static Session ANONYMOUS_SESSION = new Session();
-	{
-		String username = "admin";
-		ANONYMOUS_SESSION.setUsername(username);
-		Profile profile = new Profile();
-		profile.setRole("default");
-		profile.setRights(DefaultAccessManager.defaultRights);
-		ANONYMOUS_SESSION.setProfile(profile);
-	}
-	
-	@GET
-	@Secured
-	@Path("/session")
-	public Session getSession(@Context ContainerRequestContext crc) {
-		boolean useAuthentication = configuration.getPropertyAsBoolean("authentication", true);
-		if(useAuthentication) {
-			Session session = (Session) crc.getProperty("session");
-			return session;			
-		} else {
-			return ANONYMOUS_SESSION;
-		}
-	}
-	
-	//Not "Secured" on purpose:
-	//we're allow third parties to loosely check the validity of a token in an SSO context
-	@GET
-	@Path("/checkToken")
-	public Boolean isValidToken(@QueryParam("token") String token) {
-		boolean useAuthentication = configuration.getPropertyAsBoolean("authentication", true);
-		if(useAuthentication) {
-			try {
-				validateAndTouchToken(token);
-			} catch (TokenValidationException e) {
-				logger.debug("Token " + token + " is invalid.");
-				return false;
-			}
-			logger.debug("Token " + token + " is valid.");
-			return true;
-		} else {
-			return true;
-		}
-	}
-
-	private Profile getProfile(String username) {
-		Profile profile = new Profile();
-		List<String> rights = accessManager.getRights(username);
-		profile.setRights(rights);
-		profile.setRole(accessManager.getRole(username));
-		return profile;
-	}
-
-    private Session issueToken(String username) {
-    	String token = UUID.randomUUID().toString();
-    	Session session = new Session();
-    	session.setToken(token);
-    	session.setUsername(username);
-    	sessions.put(token, session);
-    	return session;
-    }
-    
-    public Session validateAndTouchToken(String token) throws TokenValidationException {
-    	Session session = sessions.get(token);
-    	if(session != null)
-    		session.touch();
-    	else
-    		throw new TokenValidationException("Session with token '" + token + "' is invalid");
-
-    	return session;
-    }
 }

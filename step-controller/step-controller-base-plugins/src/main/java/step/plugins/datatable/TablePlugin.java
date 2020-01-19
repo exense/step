@@ -19,6 +19,8 @@
 package step.plugins.datatable;
 
 import step.core.GlobalContext;
+import step.core.accessors.Collection;
+import step.core.accessors.CollectionRegistry;
 import step.core.deployment.ObjectHookPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -29,6 +31,8 @@ public class TablePlugin extends AbstractControllerPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) {
 		context.getServiceRegistrationCallback().registerService(TableService.class);
+		
+		context.get(CollectionRegistry.class).register("users", new Collection(context.getMongoClientSession().getMongoDatabase(), "users", false));
 	}
 
 }
