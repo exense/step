@@ -19,7 +19,28 @@
 angular.module('adminControllers', [ 'dataTable', 'step' ])
 
 .controller('AdminCtrl', ['$scope', 'stateStorage',
-    function($scope) {
+    function($scope, stateStorage) {
+      // push this scope to the state stack
+      stateStorage.push($scope, 'admin', {});
+      
+      $scope.tabs = [
+          { id: 'users'},
+          { id: 'controller'}
+      ]
+      
+      // Select the "Users" tab per default
+      if($scope.$state == null) { $scope.$state = 'users' };
+      
+      // Returns the item number of the active tab
+      $scope.activeTab = function() {
+        return _.findIndex($scope.tabs,function(tab){return tab.id==$scope.$state});
+      }
+      
+      // Update the current $state and thus the browser location
+      $scope.onSelection = function(tabid) {
+        return $scope.$state=tabid;
+      }
+    
       $scope.autorefresh = true;
    }])   
 
@@ -122,16 +143,26 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
       })
       
 .run(function(ViewRegistry) {
-  ViewRegistry.registerDashlet('admin/controller','Maintenance','partials/maintenanceConfiguration.html');
+  ViewRegistry.registerDashlet('admin/controller','Maintenance','partials/maintenanceConfiguration.html','maintenance');
 })
 
-.controller('ControllerSettingsCtrl', function($scope, $http, ViewRegistry) {
+.controller('ControllerSettingsCtrl', function($scope, $http, stateStorage, ViewRegistry) {
   $scope.configurationItems = ViewRegistry.getDashlets("admin/controller");
+
+  stateStorage.push($scope, 'controller', {});
+  
+  $scope.$watch('$state',function() {
+    if($scope.$state!=null) {
+      $scope.currentConfigurationItem = _.find($scope.configurationItems,function(item) {
+        return item.id==$scope.$state})
+    }
+  });
 
   $scope.currentConfigurationItem = $scope.configurationItems[0];
   
   $scope.setCurrentConfigurationItem = function(item) {
-	$scope.currentConfigurationItem = item;
+    $scope.$state = item.id;
+    $scope.currentConfigurationItem = item;
   }
 })
 

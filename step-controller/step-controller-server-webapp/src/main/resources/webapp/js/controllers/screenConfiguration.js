@@ -19,7 +19,7 @@
 angular.module('screenConfigurationControllers',['tables','step'])
 
 .run(function(ViewRegistry) {
-  ViewRegistry.registerDashlet('admin/controller','Screens','partials/screenconfiguration/screenConfiguration.html');
+  ViewRegistry.registerDashlet('admin/controller','Screens','partials/screenconfiguration/screenConfiguration.html','screens');
 })
 
 .factory('ScreenTemplates', function($http, $q) {

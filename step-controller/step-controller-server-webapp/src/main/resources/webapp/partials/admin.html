@@ -1,6 +1,6 @@
 <div ng-controller="AdminCtrl">
-	<uib-tabset> 
-		<uib-tab heading="Users">
+	<uib-tabset active="activeTab()"> 
+		<uib-tab heading="Users" select="onSelection('users')">
 			<div class="panel-body" id="UserListCtrl" ng-controller="UserListCtrl">
 				<datatable tabledef="tabledef" handle="datatable" selectionmode="multiple" >
 					<table-actions>
@@ -19,7 +19,7 @@
 				</datatable>
 			</div>
 		</uib-tab>
-		<uib-tab heading="Settings">
+		<uib-tab heading="Settings" select="onSelection('controller')">
 			<div class="panel-body" id="ControllerSettingsCtrl" ng-controller="ControllerSettingsCtrl">
 				<div>
 					<div class="col-xs-2">

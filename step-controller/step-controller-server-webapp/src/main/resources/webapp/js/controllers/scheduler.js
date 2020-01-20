@@ -19,7 +19,7 @@
 var schedulerController = angular.module('schedulerControllers',['dataTable']);
 
 schedulerController.run(function(ViewRegistry) {
-  ViewRegistry.registerDashlet('admin/controller','Scheduler','partials/scheduler/schedulerConfiguration.html');
+  ViewRegistry.registerDashlet('admin/controller','Scheduler','partials/scheduler/schedulerConfiguration.html','scheduler');
 });
 
 schedulerController.controller('SchedulerCtrl', ['$scope', '$http', '$location', 'stateStorage', '$uibModal', 'AuthService','Dialogs', 
