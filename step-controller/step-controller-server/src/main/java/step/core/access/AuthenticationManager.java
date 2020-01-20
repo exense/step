@@ -51,10 +51,24 @@ public class AuthenticationManager {
 		session.setAuthenticated(false);
 	}
 
-	public void authenticateDefaultUserIfAuthenticationIsDisabled(Session session) {
+	public synchronized void authenticateDefaultUserIfAuthenticationIsDisabled(Session session) {
 		if (!session.isAuthenticated() && !useAuthentication()) {
+			User user = userAccessor.getByUsername("admin");
+			if(user == null) {
+				user = defaultAdminUser();
+				userAccessor.save(user);
+			}
+			
 			setUserToSession(session, "admin");
 		}
+	}
+	
+	public static User defaultAdminUser() {
+		User user = new User();
+		user.setUsername("admin");
+		user.setRole("admin");
+		user.setPassword(UserAccessorImpl.encryptPwd("init"));
+		return user;
 	}
 
 	public boolean registerListener(AuthenticationManagerListener e) {

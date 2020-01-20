@@ -22,8 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
+import step.core.access.AuthenticationManager;
 import step.core.access.User;
-import step.core.access.UserAccessorImpl;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.versionmanager.VersionManager;
@@ -48,10 +48,7 @@ public class InitializationPlugin extends AbstractControllerPlugin {
 	}
 
 	private void setupUsers(GlobalContext context) {
-		User user = new User();
-		user.setUsername("admin");
-		user.setRole("admin");
-		user.setPassword(UserAccessorImpl.encryptPwd("init"));
+		User user = AuthenticationManager.defaultAdminUser();
 		context.getUserAccessor().save(user);
 	}
 
