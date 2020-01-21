@@ -24,7 +24,7 @@
 		</div>			
 	</div>
 	<div ng-if="!isResource()" class="input-group" >
-		<input type="text" class="form-control" ng-model="stagingModel.value" ng-blur="blurStagingField()" uib-tooltip="Drag and drop your file here or enter the path to a file accessible from the controller" />
+		<input type="text" multi-line-input="" class="form-control" ng-model="stagingModel.value" ng-blur="blurStagingField()" uib-tooltip="Drag and drop your file here or enter the path to a file accessible from the controller" />
 		<div class="input-group-btn">
 			<button ng-if="showSaveButton()" ng-disabled="stagingModel.value==stModel" class="btn btn-default btn-auto-size" ng-click="commitChanges()">{{saveButtonLabel}}</button>
 			<button ng-disabled="uploadOnly" class="btn btn-default btn-auto-size" ng-click="selectResource()">

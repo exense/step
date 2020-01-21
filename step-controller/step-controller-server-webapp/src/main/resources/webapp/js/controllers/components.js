@@ -359,3 +359,21 @@ angular.module('components',['step'])
     }
   };
 })
+
+.directive('multiLineInput', function() {
+  return {
+    restrict: 'A',
+    scope: {},
+    link: function(scope, element, attrs) {
+      // workaround for IE as IE only pastes the first line 
+      if (window.clipboardData) {
+        element.bind('paste', function (e) {
+            var clipped = window.clipboardData.getData('Text');
+            clipped = clipped.replace(/(\r\n|\n|\r)/gm, " ");
+            $(this).val(clipped);
+            return false;
+        });
+      }
+    }
+  };
+})
