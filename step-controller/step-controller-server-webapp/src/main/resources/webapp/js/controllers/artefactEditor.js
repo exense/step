@@ -400,11 +400,15 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
         }
         $scope.nodesToMove.push(node);
       })
+      
+      $("#jstree_demo_div").delegate("a","dblclick", function(e) {
+        $scope.openSelectedArtefact();
+      });
 
       $('#jstree_demo_div').on('keydown.jstree', '.jstree-anchor', function (e, data) {
         //Only react on keyboard while not renaming a node
         if (!$scope.renaming) {
-          if(e.which === 68 && (e.ctrlKey || e.metaKey)) {
+          if(e.which === 46) {
             e.preventDefault(); 
             $scope.remove();
           }
