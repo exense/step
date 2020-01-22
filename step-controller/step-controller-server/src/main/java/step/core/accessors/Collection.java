@@ -20,16 +20,23 @@ package step.core.accessors;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
 
 public class Collection {
+	
+	private static final Logger logger = LoggerFactory.getLogger(Collection.class);
 
 	protected MongoCollection<Document> collection;
 	
@@ -60,8 +67,12 @@ public class Collection {
 	public List<String> distinct(String key) {
 		return collection.distinct(key, String.class).filter(new Document(key,new Document("$ne",null))).into(new ArrayList<String>());
 	}
-
+	
 	public CollectionFind<Document> find(Bson query, SearchOrder order, Integer skip, Integer limit) {
+		return this.find(query, order, skip, limit,0);
+	}
+
+	public CollectionFind<Document> find(Bson query, SearchOrder order, Integer skip, Integer limit, int maxTime) {
 //		StringBuilder query = new StringBuilder();
 //		List<Object> parameters = new ArrayList<>();
 //		if(queryFragments!=null&&queryFragments.size()>0) {
@@ -86,8 +97,8 @@ public class Collection {
 		CountOptions option = new CountOptions();
 		option.skip(0).limit(DEFAULT_LIMIT);
 		long countResults = collection.count(query, option);
-		
-		FindIterable<Document> find = collection.find(query);
+			
+		FindIterable<Document> find = collection.find(query).maxTime(maxTime, TimeUnit.SECONDS);
 		if(order!=null) {
 			Document sortDoc = new Document(order.getAttributeName(), order.getOrder());
 			find.sort(sortDoc);
@@ -98,7 +109,15 @@ public class Collection {
 		if(limit!=null) {
 			find.limit(limit);
 		}
-		return new CollectionFind<Document>(count, countResults, find.iterator());
+		MongoCursor<Document> iterator;
+		try {
+			iterator = find.iterator();
+		} catch (MongoExecutionTimeoutException e) {
+			logger.error("Query execution exceeded timeout of " + maxTime + " " + TimeUnit.SECONDS);
+			throw e;
+		}
+		CollectionFind<Document> collectionFind = new CollectionFind<Document>(count, countResults, iterator);
+		return collectionFind;
 	}
 	
 }

@@ -72,11 +72,14 @@ public class TableService extends AbstractTableService {
 	
 	protected MongoDatabase database;
 	
+	protected int maxTime;
+	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		database = getContext().getMongoClientSession().getMongoDatabase();
 		collectionRegistry = getContext().get(CollectionRegistry.class);
+		maxTime = controller.getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
 	}
 	
 	@PreDestroy
@@ -137,7 +140,7 @@ public class TableService extends AbstractTableService {
 		Bson query = queryFragments.size()>0?Filters.and(queryFragments):new Document();
 		
 		
-		CollectionFind<Document> find = collection.find(query, order, skip, limit);
+		CollectionFind<Document> find = collection.find(query, order, skip, limit, maxTime);
 		
 		Iterator<Document> it = find.getIterator();
 		List<Document> objects = new ArrayList<>();	

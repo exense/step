@@ -531,7 +531,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 })
 
-.factory('Dialogs', function ($rootScope, $uibModal, EntityRegistry) {
+.factory('Dialogs', function ($rootScope, $uibModal, EntityRegistry,$sce) {
 	var dialogs = {};
 
 	dialogs.showDeleteWarning = function(i) {
@@ -556,7 +556,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	dialogs.showErrorMsg = function(msg) {
 		var modalInstance = $uibModal.open({backdrop: 'static',animation: false, templateUrl: 'partials/messageDialog.html',
 			controller: 'DialogCtrl', 
-			resolve: {message:function(){return msg}}});
+			resolve: {message:function(){return  $sce.trustAsHtml(msg)}}});
 		return modalInstance.result;
 	}
 

@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('reportTable',['step','reportNodes'])
 
-.factory('reportTableFactory', ['$http', '$compile', function($http, $compile) {
+.factory('reportTableFactory', ['$http', '$compile','$timeout', function($http, $compile, $timeout) {
   var tableFactory = {};
 
   tableFactory.get = function (filterFactory, $scope, executionViewServices) {
@@ -57,6 +57,23 @@ angular.module('reportTable',['step','reportNodes'])
     };
     
     stepsTable.params = filterFactory;
+       
+    stepsTable.beforeRequest = function () {
+      var tableAPI = $scope.stepsTable.Datatable;
+      if (tableAPI && tableAPI.hasOwnProperty('settings') && tableAPI.settings()[0].jqXHR) {
+        tableAPI.settings()[0].jqXHR.abort();
+      }
+      
+      $timeout(function(){ 
+        $scope.reloadingTable=true;
+      });
+    }
+
+    stepsTable.afterRequest = function () {
+      $timeout(function(){ 
+        $scope.reloadingTable=false; 
+      });
+    }
     
     return stepsTable;
   };

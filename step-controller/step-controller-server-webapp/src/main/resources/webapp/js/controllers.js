@@ -420,6 +420,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 		},
 		link: function($scope, $element, $rootscope) {
 			var eId = $scope.eid;
+			$scope.reloadingTable=false;
+			$scope.isRefreshing=false;
 			$http.get('rest/rtm/rtmlink/' + eId).then(function(response) {
 				$scope.rtmlink = response.data.link;
 			})
@@ -498,8 +500,12 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$scope.stepsTable.columns[2].search(escapeRegExp(error));
 				}
 
-				if($scope.stepsTable && $scope.stepsTable.Datatable) {
-					$scope.stepsTable.Datatable.ajax.reload(null, false);
+				if($scope.stepsTable && $scope.stepsTable.Datatable && !$scope.reloadingTable) {
+				  $scope.isRefreshing=true;
+					$scope.stepsTable.Datatable.ajax.reload(function() {
+					  $timeout(function() {
+					    $scope.isRefreshing=false;}, false);
+					  });
 				}
 
 				viewFactory.getReportNodeStatisticCharts(eId).then(function(charts){

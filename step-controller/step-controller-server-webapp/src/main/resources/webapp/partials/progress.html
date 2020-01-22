@@ -57,6 +57,7 @@
 				<div ng-attr-id="{{getPanelId('steps')}}"
 					class="panel panel-default">
 					<div class="panel-heading">
+						<div class="loader" ng-if="reloadingTable && !isRefreshing"></div>
 						<a ng-click="toggleShowPanel('steps')">{{getPanelTitle('steps')}}</a>
 						<div class="pull-right">
 							<status-distribution progress="progress" />

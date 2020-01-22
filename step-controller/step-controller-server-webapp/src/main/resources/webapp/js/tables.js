@@ -114,7 +114,7 @@ angular.module('dataTable', ['export'])
   };
 }])
 
-.directive('datatable', ['$compile','$http','$timeout','$q','stateStorage','Preferences','ExportService','DataTableRegistry',function($compile,$http,$timeout,$q,stateStorage,Preferences,ExportService,DataTableRegistry) {
+.directive('datatable', ['$compile','$http','$timeout','$q','stateStorage','Preferences','ExportService','DataTableRegistry','Dialogs',function($compile,$http,$timeout,$q,stateStorage,Preferences,ExportService,DataTableRegistry,Dialogs) {
   return {
     restrict:'E',
     scope: {
@@ -363,6 +363,10 @@ angular.module('dataTable', ['export'])
           query = query + '?' + attr.params;
         }
         tableOptions.ajax = {'url':query,'type':'POST',beforeSend:function(a,b) {
+          if (scope.tabledef.beforeRequest) {
+            scope.tabledef.beforeRequest();
+          }
+     	
           b.data = b.data + "&" + attr.params;
           
           if(scope.tabledef.params) {
@@ -372,6 +376,20 @@ angular.module('dataTable', ['export'])
           if(scope.reportRequested) {
             b.data = b.data + "&export="+scope.reportID;
             scope.reportRequested = false;
+          }
+        }, complete:function (qXHR, textStatus ) {
+          if (scope.tabledef.afterRequest) {
+            scope.tabledef.afterRequest();
+          }
+        }, error: function(jqXHR, textStatus, errorThrown) {
+          if (textStatus === 'timeout') {
+            Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the query <Br/>(Timeout value: " + ajaxTimeout + " ms).");
+          } else if (textStatus !=='abort') {
+           if (jqXHR.responseText) {
+            Dialogs.showErrorMsg(jqXHR.responseText);
+           } else {
+            // Dialogs.showErrorMsg("An unexpected error occured while loading the table. <Br/>Error textStatus: " + textStatus + ", errorThrown: " + errorThrown);
+           }
           }
         }}
       } else {

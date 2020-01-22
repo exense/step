@@ -74,12 +74,15 @@ public class DataTableServices extends AbstractTableService {
 	protected ExportTaskManager exportTaskManager;
 
 	protected final ExecutorService reportExecutor = Executors.newFixedThreadPool(2);
+	
+	protected int maxTime; 
 
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		exportTaskManager = new ExportTaskManager(getContext().get(ResourceManager.class));
 		dataTableRegistry = getContext().get(DataTableRegistry.class);
+		maxTime = controller.getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
 	}
 
 	@PreDestroy
@@ -190,7 +193,7 @@ public class DataTableServices extends AbstractTableService {
 			exportTaskManager.createExportTask(reportID, new ExportTask(table, query, order));
 		}
 
-		CollectionFind<Document> find = table.getCollection().find(query, order, skip, limit);
+		CollectionFind<Document> find = table.getCollection().find(query, order, skip, limit, maxTime);
 
 		Iterator<Document> it = find.getIterator();
 		List<Document> objects = new ArrayList<>();	

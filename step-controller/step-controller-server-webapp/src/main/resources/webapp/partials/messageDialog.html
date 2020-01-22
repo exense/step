@@ -4,7 +4,7 @@
 
 <form name="MessageDialog" ng-submit="ok()">
 	<div class="modal-body">
-		<div class="alert alert-danger">{{message}}</div>
+		<div class="alert alert-danger"  ng-bind-html="message"></div>
 	</div>
 	<div class="modal-footer">
 		<button class="btn btn-primary" type="submit" ng-click="ok()">OK</button>
