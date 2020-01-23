@@ -6,6 +6,11 @@ public class CompositeFunction extends Function {
 
 	String artefactId;
 	
+	public CompositeFunction() {
+		super();
+		executeLocally = true;
+	}
+
 	public String getArtefactId() {
 		return artefactId;
 	}
