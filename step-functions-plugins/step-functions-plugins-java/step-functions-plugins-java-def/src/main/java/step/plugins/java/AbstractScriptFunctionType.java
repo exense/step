@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
-import step.functions.Function;
+import step.core.accessors.AbstractOrganizableObject;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
 import step.grid.filemanager.FileVersionId;
@@ -135,13 +135,13 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 				try {
 					Files.createDirectory(folder.toPath());
 				} catch (IOException e) {
-					throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get(Function.NAME), e);
+					throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get(AbstractOrganizableObject.NAME), e);
 				}
 			}
 			try {
 				scriptFile.createNewFile();
 			} catch (IOException e) {
-				throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get(Function.NAME), e);
+				throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get(AbstractOrganizableObject.NAME), e);
 			}
 			
 			if(templateStream!=null) {

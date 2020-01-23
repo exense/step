@@ -43,6 +43,7 @@ import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.artefacts.handlers.FunctionGroupHandler;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -260,7 +261,7 @@ public class InteractiveServices extends AbstractServices {
 		FunctionManager functionManager = getContext().get(FunctionManager.class);
 		Function function = functionManager.getFunctionById(keywordid);
 		Map<String, String> attributes = new HashMap<>();
-		attributes.put("name", function.getAttributes().get(Function.NAME));
+		attributes.put("name", function.getAttributes().get(AbstractOrganizableObject.NAME));
 		callFunction.setAttributes(attributes);
 		FunctionGroup functionGroup = new FunctionGroup();
 		attributes = new HashMap<>();

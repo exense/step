@@ -36,6 +36,7 @@ import junit.framework.Assert;
 import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -199,7 +200,7 @@ public class CallFunctionHandlerTest {
 		Function function = new Function();
 		
 		Map<String, String> attributes = new HashMap<>();
-		attributes.put(Function.NAME, name);
+		attributes.put(AbstractOrganizableObject.NAME, name);
 		function.setAttributes(attributes);
 		return function;
 	}

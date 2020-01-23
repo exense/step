@@ -39,8 +39,8 @@ import org.junit.Test;
 
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
-import step.functions.Function;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
 import step.functions.runner.FunctionRunner.Context;
@@ -189,7 +189,7 @@ public class ScriptHandlerTest {
 		f.setLibrariesFile(new DynamicValue<>());
 		f.setId(new ObjectId());
 		Map<String, String> attributes = new HashMap<>();
-		attributes.put(Function.NAME, "medor");
+		attributes.put(AbstractOrganizableObject.NAME, "medor");
 		f.setAttributes(attributes);
 
 		f.setScriptFile(new DynamicValue<String>(getScriptDir() + "/" + scriptFile));

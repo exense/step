@@ -30,8 +30,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ch.exense.commons.app.Configuration;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
-import step.functions.Function;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
 import step.functions.runner.FunctionRunner.Context;
@@ -120,7 +120,7 @@ public class JavaJarHandlerTest {
 		f.setLibrariesFile(new DynamicValue<>());
 		f.setId(new ObjectId());
 		Map<String, String> attributes = new HashMap<>();
-		attributes.put(Function.NAME, kwName);
+		attributes.put(AbstractOrganizableObject.NAME, kwName);
 		f.setAttributes(attributes);
 		File file = ResourceExtractor.extractResource(getClass().getClassLoader(), scriptFile);
 		f.setScriptFile(new DynamicValue<String>(file.getPath()));

@@ -9,6 +9,7 @@ import org.bson.types.ObjectId;
 import step.artefacts.CallFunction;
 import step.artefacts.CallPlan;
 import step.core.Version;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.ArtefactAccessor;
@@ -50,8 +51,8 @@ public class SetArtefactNamesIfEmpty extends MigrationTask {
 					CallFunction calllFunction = (CallFunction) artefact;
 					if(calllFunction.getFunctionId()!=null) {
 						Function function = functionRepository.get(new ObjectId(calllFunction.getFunctionId()));
-						if(function!=null && function.getAttributes()!=null && function.getAttributes().containsKey(Function.NAME)) {
-							name = function.getAttributes().get(Function.NAME);
+						if(function!=null && function.getAttributes()!=null && function.getAttributes().containsKey(AbstractOrganizableObject.NAME)) {
+							name = function.getAttributes().get(AbstractOrganizableObject.NAME);
 						}						
 					}
 				} else if(artefact instanceof CallPlan) {

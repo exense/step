@@ -20,11 +20,11 @@ import com.mongodb.client.MongoCollection;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractAccessor;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.reports.Measure;
-import step.functions.Function;
 
 @Plugin
 public class RtmPlugin extends AbstractControllerPlugin {
@@ -114,7 +114,7 @@ public class RtmPlugin extends AbstractControllerPlugin {
 				measurement.putAll(functionAttributes);
 
 				measurement.put(ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
-				//measurement.put("name", stepReport.getFunctionAttributes().get(Function.NAME));
+				//measurement.put("name", stepReport.getFunctionAttributes().get(AbstractOrganizableObject.NAME));
 				measurement.put("value", (long)stepReport.getDuration());
 				measurement.put("begin", stepReport.getExecutionTime());
 				measurement.put("rnId", stepReport.getId().toString());
@@ -133,7 +133,7 @@ public class RtmPlugin extends AbstractControllerPlugin {
 
 					measurement.put(ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
 					measurement.put("name", measure.getName());
-					measurement.put("origin", stepReport.getFunctionAttributes().get(Function.NAME));
+					measurement.put("origin", stepReport.getFunctionAttributes().get(AbstractOrganizableObject.NAME));
 					measurement.put("value", measure.getDuration());
 					measurement.put("begin", measure.getBegin());
 					measurement.put("rnId", stepReport.getId().toString());

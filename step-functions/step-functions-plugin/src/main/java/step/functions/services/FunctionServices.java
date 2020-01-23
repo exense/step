@@ -44,6 +44,7 @@ import org.bson.types.ObjectId;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;
@@ -182,7 +183,7 @@ public class FunctionServices extends AbstractServices {
 	public Function newFunctionTypeConf(@PathParam("id") String type) {
 		Function newFunction = functionManager.newFunction(type);
 		newFunction.setAttributes(new HashMap<>());
-		newFunction.getAttributes().put(Function.NAME, "");
+		newFunction.getAttributes().put(AbstractOrganizableObject.NAME, "");
 		newFunction.setSchema(Json.createObjectBuilder().build());
 		return newFunction;
 	}

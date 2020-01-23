@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
@@ -133,7 +134,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	public <IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass) {	
 		Input<IN> input = new Input<>();
 		input.setPayload(functionInput.getPayload());
-		input.setFunction(function.getAttributes().get(Function.NAME));
+		input.setFunction(function.getAttributes().get(AbstractOrganizableObject.NAME));
 		
 		// Build the property map used for the function layer
 		Map<String, String> properties = new HashMap<>();

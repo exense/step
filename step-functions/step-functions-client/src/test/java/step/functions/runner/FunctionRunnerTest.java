@@ -10,7 +10,7 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 
-import step.functions.Function;
+import step.core.accessors.AbstractOrganizableObject;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner.Context;
 
@@ -21,7 +21,7 @@ public class FunctionRunnerTest {
 		TestFunction f = new TestFunction();
 		f.setId(new ObjectId());
 		Map<String, String> attributes = new HashMap<>();
-		attributes.put(Function.NAME, "moustache");
+		attributes.put(AbstractOrganizableObject.NAME, "moustache");
 		f.setAttributes(attributes);
 		
 		try(Context context = FunctionRunner.getContext(new TestFunctionType())) {

@@ -72,8 +72,6 @@ public class Function extends AbstractOrganizableObject {
 	public void setExecuteLocally(boolean executeLocally) {
 		this.executeLocally = executeLocally;
 	}
-
-	public static final String NAME = "name";
 	
 	public DynamicValue<Integer> getCallTimeout() {
 		return callTimeout;

@@ -12,6 +12,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 import step.attachments.FileResolver;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.io.Input;
@@ -85,7 +86,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	public T copyFunction(T function) throws FunctionTypeException {
 		function.setId(null);
-		function.getAttributes().put(Function.NAME,function.getAttributes().get(Function.NAME)+"_Copy");
+		function.getAttributes().put(AbstractOrganizableObject.NAME,function.getAttributes().get(AbstractOrganizableObject.NAME)+"_Copy");
 		return function;
 	}
 	
