@@ -38,6 +38,8 @@ public class Function extends AbstractOrganizableObject {
 	
 	protected DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
 	protected JsonObject schema;
+	
+	protected boolean executeLocally;
 	protected Map<String, String> tokenSelectionCriteria;
 	
 	protected boolean managed;
@@ -53,6 +55,22 @@ public class Function extends AbstractOrganizableObject {
 	 */
 	public void setTokenSelectionCriteria(Map<String, String> tokenSelectionCriteria) {
 		this.tokenSelectionCriteria = tokenSelectionCriteria;
+	}
+
+	/**
+	 * @return if the function has to be executed on a local token
+	 */
+	public boolean isExecuteLocally() {
+		return executeLocally;
+	}
+
+	/**
+	 * Defines if the function has to be executed on a local token
+	 * 
+	 * @param executeLocally
+	 */
+	public void setExecuteLocally(boolean executeLocally) {
+		this.executeLocally = executeLocally;
 	}
 
 	public static final String NAME = "name";
@@ -82,7 +100,7 @@ public class Function extends AbstractOrganizableObject {
 	}
 	
 	public boolean requiresLocalExecution() {
-		return false;
+		return executeLocally;
 	}
 
 	public boolean isManaged() {
