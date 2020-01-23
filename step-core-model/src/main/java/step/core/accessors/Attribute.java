@@ -30,7 +30,7 @@ import java.lang.annotation.RetentionPolicy;
  * </p>
  * <p>
  * <tt>
- * @Attribute("name"="project", "value"="@system" <br>
+ * {@literal @}Attribute("name"="project", "value"="@system" <br>
  * public class MyKeywordLibrary extends AbstractKeyword {<br>
  * <br>
  * }
