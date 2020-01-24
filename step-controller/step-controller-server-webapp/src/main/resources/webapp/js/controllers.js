@@ -503,7 +503,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$scope.stepsTable.Datatable.ajax.reload(function() {
 					  $timeout(function() {
 					    $scope.isRefreshing=false;}, false);
-					  });
+					  },false);
 				}
 
 				viewFactory.getReportNodeStatisticCharts(eId).then(function(charts){

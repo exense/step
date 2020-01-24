@@ -132,6 +132,8 @@ angular.module('dataTable', ['export'])
       var tableOptions = {"data" : []};
       tableOptions.pageLength = Preferences.get("tables_itemsperpage",10);
       
+      scope.selectedPage = 0;
+      
       var tableInitializationPromises = [];
 
       scope.scopesTracker = new ScopeTracker();
@@ -166,6 +168,10 @@ angular.module('dataTable', ['export'])
         var tableAPI = table.DataTable();
         
         scope.$watchCollection('tabledef.data', function(value) {
+          if (tableAPI) {
+            scope.selectedPage = tableAPI.page.info().page;
+          }
+          
           var val = value || null;
           if (val) {
             tableElement.show();
@@ -185,6 +191,10 @@ angular.module('dataTable', ['export'])
                     } );
                   }
                 });
+              }
+              
+              if (scope.Datatable) {
+                scope.Datatable.page(scope.selectedPage).draw(false);
               }
             }
           }
