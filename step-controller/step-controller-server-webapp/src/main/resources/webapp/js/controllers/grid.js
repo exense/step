@@ -24,8 +24,6 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
       
       $scope.authService = AuthService;
       
-      $scope.autorefresh = true;
-
       if($scope.$state == null) { $scope.$state = 'agents' };
       
       $scope.tabs = [
@@ -90,15 +88,12 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
                 $scope.loadTable();
             });
         }
-          
-        var refreshTimer = $interval(function(){
-            if($scope.autorefresh){$scope.loadTable()}}, 5000);
-          
-          $scope.$on('$destroy', function() {
-            $interval.cancel(refreshTimer);
-          });
-
-      } ])
+        
+        var refresh = function() {
+            $scope.loadTable()
+        }
+        $scope.autorefresh = {enabled : true, interval : 5000, refreshFct: refresh};
+}])
 
 .controller('AdapterListCtrl', [
   	'$scope',
@@ -138,14 +133,12 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
     	};
   	  
   	  $scope.$watchCollection('keySelectioModel',function() {$scope.loadTable()});
-  	  
-  	  var refreshTimer = $interval(function(){
-        if($scope.autorefresh){$scope.loadTable();}}, 5000);
       
-      $scope.$on('$destroy', function() {
-        $interval.cancel(refreshTimer);
-      });
-  	} ])
+  	  var refresh = function() {
+        $scope.loadTable()
+  	  }
+  	  $scope.autorefresh = {enabled : true, interval : 5000, refreshFct: refresh};
+}])
 
 .controller('TokenListCtrl', [
 	'$scope',
@@ -192,12 +185,10 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
     }
 	  
 	  $scope.loadTable();
-      var refreshTimer = $interval(function(){
-        if($scope.autorefresh){$scope.loadTable()}}, 5000);
-      
-      $scope.$on('$destroy', function() {
-        $interval.cancel(refreshTimer);
-      });
+	  var refresh = function() {
+      $scope.loadTable()
+	  }
+	  $scope.autorefresh = {enabled : true, interval : 5000, refreshFct: refresh};
 	} ])
 
 .controller('QuotaManagerCtrl', [
@@ -215,14 +206,11 @@ angular.module('gridControllers', [ 'dataTable', 'step' ])
               $scope.statusText = "";
             });
       };
-      
-      var refreshTimer = $interval(function(){
-        if($scope.autorefresh){$scope.load();}}, 2000);
-      
-      $scope.$on('$destroy', function() {
-        $interval.cancel(refreshTimer);
-      });
-      
+          
+      var refresh = function() {
+        $scope.load()
+      }
+      $scope.autorefresh = {enabled : true, interval : 5000, refreshFct: refresh};
       $scope.load();
 
     } ]);

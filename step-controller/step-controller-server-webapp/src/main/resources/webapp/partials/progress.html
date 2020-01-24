@@ -1,16 +1,3 @@
-<div class="toolbar">
-	<button type="button" class="btn btn-default btn-xs"
-		ng-model="autorefresh" uib-btn-checkbox tooltip-placement="bottom"
-		uib-tooltip="Auto refresh">
-		<span class="glyphicon glyphicon-refresh" />
-	</button>
-	<button type="button" class="btn btn-default btn-xs"
-		ng-model="lockdisplay" uib-btn-checkbox tooltip-placement="bottom"
-		uib-tooltip="Unlock charts">
-		<span class="glyphicon glyphicon-lock" />
-	</button>
-</div>
-
 <div class="panel-body">
 	<div class="row"
 		ng-if="execution.importResult && !execution.importResult.successful">
@@ -25,6 +12,14 @@
 
 	<div class="row" ng-if="execution">
 		<div class="col-xs-9">
+			<div class="toolbar">
+				<auto-refresh-commands autorefresh="autorefresh" />
+				<button type="button" class="btn btn-default btn-xs"
+					ng-model="vizRelated.lockdisplay" uib-btn-checkbox tooltip-placement="bottom"
+					uib-tooltip="Unlock charts">
+					<span class="glyphicon glyphicon-lock" />
+				</button>
+			</div>
 			<uib-tabset active="tabs.selectedTab"> <uib-tab
 				heading="Execution steps">
 			<div class="panel-body">

@@ -67,7 +67,6 @@ form.form-signin {
 
 .navbar-right {
   float: right !important;
-  margin-right: 50px;
 }
 
 .navbar-nav > li > div {
@@ -110,7 +109,7 @@ a { cursor: pointer; }
 
 .toolbar {
 	position: absolute;
-	top: 15px;
+	margin-top: 15px;
 	right: 15px;
 }
 

@@ -1,0 +1,14 @@
+<button uib-popover-template="'autoRefreshCommandsPopover.html'" 
+	popover-placement="left" 
+	popover-trigger="'outsideClick'" class="btn btn-default btn-xs" ng-class="{active: autorefresh.enabled}">
+	<span class="glyphicon glyphicon-refresh" />
+</button>
+
+<script type="text/ng-template" id="autoRefreshCommandsPopover.html">
+	<form style='min-width: 120px;'>
+	<select 
+		 ng-model="autorefresh.interval" ng-change="changeRefreshInterval(autorefresh.interval)"
+		ng-options="autoRefreshPreset.value as autoRefreshPreset.label for autoRefreshPreset in autoRefreshPresets"
+		size="6" class="form-control" />
+	</form>
+</script>

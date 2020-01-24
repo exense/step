@@ -18,7 +18,7 @@
 		<tab-heading>
 		{{tab.id}} 		
 		<button type="button" class="close" ng-click="closeTab(tab.id)">
-	        <span aria-hidden="true">×</span>
+	        <span aria-hidden="true">ï¿½</span>
 	        <span class="sr-only">Close</span>
 	    </button>
 		</tab-heading>
@@ -40,7 +40,7 @@
 		<div class="tab-pane ng-scope" ng-repeat="tab in tabs track by tab.id" ng-class="{active: isTabActive(tab.id)}">
 			<div ng-if="tab.type=='list'" ng-controller="ExecutionListCtrl">
 				<div class="toolbar">
-					<button type="button" class="btn btn-default btn-xs" ng-model="autorefresh" uib-btn-checkbox tooltip-placement="bottom" uib-tooltip="Auto refresh" ><span class="glyphicon glyphicon-refresh"/></button>
+					<auto-refresh-commands autorefresh="autorefresh" />
 				</div>
 				<!-- <div class="panel-body">
 					<div class="pull-right">
@@ -62,7 +62,7 @@
 </div>
 
 <!-- 		<button type="button" class="close" ng-click="closeTab(tab.id)">
-	        <span aria-hidden="true">×</span>
+	        <span aria-hidden="true">ï¿½</span>
 	        <span class="sr-only">Close</span>
 	    </button>
 		</tab-heading>
