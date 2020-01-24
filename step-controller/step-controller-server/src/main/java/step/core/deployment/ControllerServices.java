@@ -43,6 +43,9 @@ import javax.ws.rs.core.Response;
 
 import org.bson.types.ObjectId;
 
+import step.artefacts.CallPlan;
+import step.artefacts.handlers.PlanLocator;
+import step.artefacts.handlers.SelectorHelper;
 import step.commons.datatable.DataTable;
 import step.commons.datatable.TableRow;
 import step.core.artefacts.AbstractArtefact;
@@ -50,6 +53,8 @@ import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionRunnable;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessorImpl;
@@ -392,6 +397,24 @@ public class ControllerServices extends AbstractServices {
 	@Secured(right="plan-read")
 	public AbstractArtefact searchArtefactByAttributes(Map<String, String> attributes) {
 		return getContext().getArtefactAccessor().findByAttributes(attributes);
+	}
+	
+	@GET
+	@Path("/artefact/lookupPlan/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
+	public AbstractArtefact lookupPlan(@PathParam("id") String id) {
+		AbstractArtefact planArtefact=null;
+		try {
+			ArtefactAccessor accessor = getContext().getArtefactAccessor();
+			CallPlan artefact = (CallPlan) accessor.get(id);
+			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+			SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+			PlanLocator planLocator = new PlanLocator(null,accessor,selectorHelper);
+			return planLocator.selectArtefact(artefact);
+		} catch (RuntimeException e) {}
+		return planArtefact;
 	}
 
 	

@@ -342,7 +342,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
 					      "Delete": {
 					        "separator_before": false,
 					        "separator_after": true,
-					        "label": "Delete (Ctrl+d)",
+					        "label": "Delete (del)",
 					        "icon"       : false,
 					        "action": function (obj) {
 					          $scope.remove();
@@ -471,7 +471,7 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
         	  var node = { "id" : artefact.id, "children" : children, "text" : getNodeLabel(artefact), icon:"glyphicon "+icon }
         	  
         	  if (artefact._class === 'CallPlan') {
-        	    node.planId = artefact.artefactId;
+        	    node.planId = artefact.id;
         	  } else if (artefact._class === 'CallKeyword') {
         	    node.callFunctionId = artefact.id; 
         	  }
@@ -589,7 +589,17 @@ angular.module('artefactEditor',['dataTable','step','artefacts','reportTable','d
       $scope.openSelectedArtefact = function() {
         var selectedArtefact = tree.get_selected(true)[0];
         if (selectedArtefact.original.planId) {
-          openArtefact(selectedArtefact.original.planId)
+          $http({url:"rest/controller/artefact/lookupPlan/"+selectedArtefact.original.planId,method:"GET"}).then(function(response) {
+            if (response.data) {
+              if (response.data.id) {
+                openArtefact(response.data.id);
+              } else {
+                Dialogs.showErrorMsg("No editor configured for this plan type");
+              }
+            } else {
+              Dialogs.showErrorMsg("The related plan was not found");
+            }
+          });
         } else if (selectedArtefact.original.callFunctionId) {
           $http({url:"rest/functions/lookupByArtefact/"+selectedArtefact.original.callFunctionId,method:"GET"}).then(function(response) {
             if (response.data) {

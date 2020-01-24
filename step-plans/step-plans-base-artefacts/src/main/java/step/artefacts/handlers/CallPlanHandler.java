@@ -19,14 +19,12 @@
 package step.artefacts.handlers;
 
 import java.io.StringReader;
-import java.util.Map;
 
 import javax.json.JsonObject;
 import javax.json.spi.JsonProvider;
 
 import step.artefacts.CallPlan;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -39,10 +37,13 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
+	protected PlanLocator planLocator;
+	
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+		planLocator = new PlanLocator(context, context.getArtefactAccessor(), new SelectorHelper(dynamicJsonObjectResolver));
 	}
 
 	
@@ -76,20 +77,7 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	}
 
 	protected AbstractArtefact selectArtefact(CallPlan testArtefact) {
-		AbstractArtefact a;
-		ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-		if(testArtefact.getArtefactId()!=null) {
-			a =  context.getArtefactAccessor().get(testArtefact.getArtefactId());
-		} else {
-			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-			SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(testArtefact.getSelectionAttributes().get(), getBindings());
-			a = artefactAccessor.findRootArtefactByAttributes(selectionAttributes);
-			if(a==null) {
-				throw new RuntimeException("Unable to find plan with attributes: "+selectionAttributes.toString());
-			}
-		}
-		return a;
+		return planLocator.selectArtefact(testArtefact);
 	}
 
 	@Override
