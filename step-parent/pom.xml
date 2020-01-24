@@ -166,6 +166,9 @@
 			    	<!--  required for Java11, remove the \ in \-\- when uncommenting
 			      	<additionalJOption>\-\-no-module-directories</additionalJOption> 
 			      	-->
+			      	<additionalOptions>
+                    	<additionalOption>-Xdoclint:none</additionalOption>
+                	</additionalOptions>
 			    </configuration>
 				<executions>
 					<execution>
