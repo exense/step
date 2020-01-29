@@ -21,11 +21,13 @@ package step.core.execution;
 import java.util.HashMap;
 import java.util.Map;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
+import step.core.plans.Plan;
 import step.core.repositories.ImportResult;
 
 public class ExecutionManagerImpl implements ExecutionManager {
@@ -60,11 +62,11 @@ public class ExecutionManagerImpl implements ExecutionManager {
 			execution.setEndTime(System.currentTimeMillis());
 		}
 		execution.setStatus(context.getStatus());
-		if(context.getArtefact()!=null) {
-			execution.setArtefactID(context.getArtefact().getId().toString());
+		Plan plan = context.getPlan();
+		if(plan!=null) {
+			execution.setPlanId(plan.getId().toString());
 			if(execution.getDescription()==null) {
-				AbstractArtefact artefact = context.getArtefact();
-				execution.setDescription(artefact.getAttributes()!=null?artefact.getAttributes().get("name"):null);
+				execution.setDescription(plan.getAttributes()!=null?plan.getAttributes().get(AbstractOrganizableObject.NAME):null);
 			}
 		}
 		saveExecution(execution);

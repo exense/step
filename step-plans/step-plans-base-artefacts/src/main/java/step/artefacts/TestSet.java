@@ -30,12 +30,15 @@ public class TestSet extends AbstractArtefact {
 	
 	public TestSet() {
 		super();
-		setCreateSkeleton(true);
 	}
 
 	public TestSet(int threads) {
 		this();
 		this.threads = new DynamicValue<Integer>(threads);
+	}
+	
+	public boolean isCreateSkeleton() {
+		return true;
 	}
 
 	public DynamicValue<Integer> getThreads() {

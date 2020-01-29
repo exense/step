@@ -37,10 +37,11 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 	public void testSuccess() {
 		setupContext();
 		
-		RetryIfFails block = add(new RetryIfFails());
+		RetryIfFails block = new RetryIfFails();
 		block.setMaxRetries(new DynamicValue<Integer>(2));
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED)), block);
+		CheckArtefact check1 = new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED));
+		block.addChild(check1);
 		
 		execute(block);
 		
@@ -54,12 +55,13 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 	public void testMaxRetry() {
 		setupContext();
 		
-		RetryIfFails block = add(new RetryIfFails());
+		RetryIfFails block = new RetryIfFails();
 		block.setMaxRetries(new DynamicValue<Integer>(2));
 		block.setGracePeriod(new DynamicValue<Integer>(1000));
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED)), block);
-				
+		CheckArtefact check1 = new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED));
+		block.addChild(check1);		
+		
 		execute(block);
 		
 		ReportNode child = getFirstReportNode();
@@ -73,18 +75,19 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 	public void testTimeout() {
 		setupContext();
 		
-		RetryIfFails block = add(new RetryIfFails());
+		RetryIfFails block = new RetryIfFails();
 		block.setTimeout(new DynamicValue<Integer>(200));
 		block.setGracePeriod(new DynamicValue<Integer>(50));
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c-> {
+		CheckArtefact check1 = new CheckArtefact(c-> {
 				try {
 					Thread.sleep(300);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-		}), block);
-				
+		});
+		block.addChild(check1);		
+		
 		execute(block);
 		
 		ReportNode child = getFirstReportNode();
@@ -96,8 +99,8 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 	public void testFalse() {
 		setupContext();
 		
-		IfBlock block = add(new IfBlock("false"));
-		addAsChildOf(new Set(), block);
+		IfBlock block = new IfBlock("false");
+		block.addChild(new Set());
 
 		execute(block);
 		

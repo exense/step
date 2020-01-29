@@ -558,12 +558,20 @@ resource-input .input-group {
 	flex: 0 1 600px;
 }
 
+.sectionViewPlanEditor.resizable {
+	flex: 0 1 600px;
+}
+
 .sectionResizableTree.resizable {
 	flex: 0 1 200px;
 }
 
 @media screen and (min-width: 1200px) {
 	.sectionArtefactEditor.resizable {
+		flex: 0 1 900px;
+	}
+	
+	.sectionViewPlanEditor.resizable {
 		flex: 0 1 900px;
 	}
 	
@@ -574,6 +582,10 @@ resource-input .input-group {
 
 @media screen and (min-width: 1600px) {
 	.sectionArtefactEditor.resizable {
+		flex: 0 1 1200px;
+	}
+	
+	.sectionViewPlanEditor.resizable {
 		flex: 0 1 1200px;
 	}
 	
@@ -665,4 +677,9 @@ tbody .form-group {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.autoRefreshSelect {
+	overflow-y: hidden;	
+	scrollbar-width: none;
 }

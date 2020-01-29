@@ -48,8 +48,8 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	private void test1Child(ReportNodeStatus status) {
 		setupContext();
 		
-		Sequence block = add(new Sequence());
-		addAsChildOf(newTestArtefact(status), block);
+		Sequence block = new Sequence();
+		block.addChild(newTestArtefact(status));
 
 		execute(block);
 		
@@ -61,9 +61,9 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	public void test2ChildrenFailed() {
 		setupContext();
 		
-		Sequence block = add(new Sequence());
-		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
-		addAsChildOf(newTestArtefact(ReportNodeStatus.FAILED), block);
+		Sequence block = new Sequence();
+		block.addChild(newTestArtefact(ReportNodeStatus.PASSED));
+		block.addChild(newTestArtefact(ReportNodeStatus.FAILED));
 
 		execute(block);
 		
@@ -75,9 +75,9 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	public void test2ChildrenTechError() {
 		setupContext();
 		
-		Sequence block = add(new Sequence());
-		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
-		addAsChildOf(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR), block);
+		Sequence block = new Sequence();
+		block.addChild(newTestArtefact(ReportNodeStatus.PASSED));
+		block.addChild(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR));
 
 		execute(block);
 		
@@ -89,9 +89,9 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	public void testDefaultContinueOnError() {
 		setupContext();
 		
-		Sequence block = add(new Sequence());
-		addAsChildOf(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR), block);
-		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
+		Sequence block = new Sequence();
+		block.addChild(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR));
+		block.addChild(newTestArtefact(ReportNodeStatus.PASSED));
 
 		execute(block);
 		
@@ -104,9 +104,9 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	public void testDefaultContinueOnError_2() {
 		setupContext();
 		
-		Sequence block = add(new Sequence());
-		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
-		addAsChildOf(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR), block);
+		Sequence block = new Sequence();
+		block.addChild(newTestArtefact(ReportNodeStatus.PASSED));
+		block.addChild(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR));
 
 		execute(block);
 		
@@ -119,10 +119,10 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	public void testContinueOnError() {
 		setupContext();
 		
-		Sequence block = add(new Sequence());
+		Sequence block = new Sequence();
 		block.setContinueOnError(new DynamicValue<>(true));
-		addAsChildOf(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR), block);
-		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
+		block.addChild(newTestArtefact(ReportNodeStatus.TECHNICAL_ERROR));
+		block.addChild(newTestArtefact(ReportNodeStatus.PASSED));
 
 		execute(block);
 		
@@ -135,10 +135,10 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	public void testContinueOnError_2() {
 		setupContext();
 		
-		Sequence block = add(new Sequence());
+		Sequence block = new Sequence();
 		block.setContinueOnError(new DynamicValue<>(true));
-		addAsChildOf(newTestArtefact(ReportNodeStatus.FAILED), block);
-		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
+		block.addChild(newTestArtefact(ReportNodeStatus.FAILED));
+		block.addChild(newTestArtefact(ReportNodeStatus.PASSED));
 
 		execute(block);
 		
@@ -151,10 +151,10 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	public void testNotContinueOnError() {
 		setupContext();
 		
-		Sequence block = add(new Sequence());
+		Sequence block = new Sequence();
 		block.setContinueOnError(new DynamicValue<>(false));
-		addAsChildOf(newTestArtefact(ReportNodeStatus.FAILED), block);
-		addAsChildOf(newTestArtefact(ReportNodeStatus.PASSED), block);
+		block.addChild(newTestArtefact(ReportNodeStatus.FAILED));
+		block.addChild(newTestArtefact(ReportNodeStatus.PASSED));
 
 		execute(block);
 		

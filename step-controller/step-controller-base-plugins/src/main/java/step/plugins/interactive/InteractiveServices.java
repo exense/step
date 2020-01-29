@@ -43,18 +43,18 @@ import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.artefacts.handlers.FunctionGroupHandler;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.execution.ControllerSideExecutionContextBuilder;
+import step.core.execution.ControllerExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectHookRegistry;
-import step.core.plans.LocalPlanRepository;
 import step.core.plans.Plan;
+import step.core.plans.PlanNavigator;
 import step.core.plans.builder.PlanBuilder;
 import step.core.variables.VariableType;
 import step.functions.Function;
@@ -77,6 +77,8 @@ public class InteractiveServices extends AbstractServices {
 	private Timer sessionExpirationTimer; 
 	
 	private ObjectHookRegistry objectHookRegistry;
+	
+	private ControllerExecutionContextBuilder executionContextBuilder;
 	
 	private static class InteractiveSession {
 		
@@ -117,7 +119,9 @@ public class InteractiveServices extends AbstractServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
+		GlobalContext context = getContext();
+		objectHookRegistry = context.get(ObjectHookRegistry.class);
+		executionContextBuilder = new ControllerExecutionContextBuilder(context);
 	}
 	
 	@PreDestroy
@@ -133,7 +137,7 @@ public class InteractiveServices extends AbstractServices {
 	@Secured(right="interactive")
 	public String start() throws AgentCommunicationException {
 		InteractiveSession session = new InteractiveSession();
-		ExecutionContext  executionContext = ControllerSideExecutionContextBuilder.createExecutionContext(getContext());
+		ExecutionContext  executionContext = executionContextBuilder.createExecutionContext();
 		
 		// Enrich the ExecutionParameters with the current context attributes as done by the TenantContextFilter when starting a normal execution
 		objectHookRegistry.getObjectEnricher(getSession()).accept(executionContext.getExecutionParameters());
@@ -200,15 +204,13 @@ public class InteractiveServices extends AbstractServices {
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Path("/{id}/execute/{artefactid}")
+	@Path("/{id}/execute/{planid}/{artefactid}")
 	@Secured(right="interactive")
-	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("artefactid") String artefactId, ExecutionParameters executionParameters, @Context ContainerRequestContext crc) {
+	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("planid") String planId, @PathParam("artefactid") String artefactId, ExecutionParameters executionParameters, @Context ContainerRequestContext crc) {
 		InteractiveSession session = getAndTouchSession(sessionId);
 		if(session!=null) {
-			ArtefactAccessor a = getContext().getArtefactAccessor();
-			AbstractArtefact artefact = a.get(artefactId);
-
-			session.c.getArtefactCache().clear();
+			Plan plan = session.c.getPlanAccessor().get(planId);
+			AbstractArtefact artefact = new PlanNavigator(plan).findArtefactById(artefactId);
 
 			session.c.setCurrentReportNode(session.root);
 			ParameterManagerPlugin.putVariables(session.c, session.root, executionParameters.getExecutionParameters(), VariableType.IMMUTABLE);
@@ -225,19 +227,19 @@ public class InteractiveServices extends AbstractServices {
 	
 	public static class FunctionTestingSession {
 		
-		private String rootArtefactId;
+		private String planId;
 		private String callFunctionId;
 		
 		public FunctionTestingSession() {
 			super();
 		}
 
-		public String getRootArtefactId() {
-			return rootArtefactId;
+		public String getPlanId() {
+			return planId;
 		}
 
-		public void setRootArtefactId(String rootArtefactId) {
-			this.rootArtefactId = rootArtefactId;
+		public void setPlanId(String planId) {
+			this.planId = planId;
 		}
 
 		public String getCallFunctionId() {
@@ -273,10 +275,9 @@ public class InteractiveServices extends AbstractServices {
 				.add(callFunction)
 				.endBlock()
 				.build();
-		LocalPlanRepository repo = new LocalPlanRepository(getContext().getArtefactAccessor());
-		repo.save(plan);
+		getContext().getPlanAccessor().save(plan);
 		FunctionTestingSession result = new FunctionTestingSession();
-		result.setRootArtefactId(plan.getRoot().getId().toString());
+		result.setPlanId(plan.getId().toString());
 		result.setCallFunctionId(callFunction.getId().toString());
 		return result;
 	}

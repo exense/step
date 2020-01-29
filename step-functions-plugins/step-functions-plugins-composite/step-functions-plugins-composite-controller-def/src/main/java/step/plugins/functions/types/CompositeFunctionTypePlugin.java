@@ -16,12 +16,12 @@ public class CompositeFunctionTypePlugin extends AbstractControllerPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		super.executionControllerStart(context);
 		FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);		
-		functionTypeRegistry.registerFunctionType(new CompositeFunctionType(context.getArtefactAccessor(), context.getArtefactManager()));
+		functionTypeRegistry.registerFunctionType(new CompositeFunctionType(context.getPlanAccessor()));
 
 		context.get(FunctionEditorRegistry.class).register(new FunctionEditor() {
 			@Override
 			public String getEditorPath(Function function) {
-				return "/root/artefacteditor/"+((CompositeFunction)function).getArtefactId();
+				return "/root/plans/editor/"+((CompositeFunction)function).getPlanId();
 			}
 
 			@Override

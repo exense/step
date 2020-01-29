@@ -26,7 +26,6 @@ import java.util.stream.StreamSupport;
 
 import step.artefacts.CheckArtefact;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
@@ -40,20 +39,6 @@ public class AbstractArtefactHandlerTest {
 	
 	protected void setupContext() {
 		context = ExecutionTestHelper.setupContext();
-	}
-	
-	protected <T extends AbstractArtefact> T add(T artefact) {
-		getArtefactAccessor().save(artefact);
-		return artefact;
-	}
-
-	private ArtefactAccessor getArtefactAccessor() {
-		return context.getArtefactAccessor();
-	}
-	
-	protected <T extends AbstractArtefact> T addAsChildOf(T artefact, AbstractArtefact parent) {
-		getArtefactAccessor().get(parent.getId()).addChild(artefact.getId());
-		return add(artefact);
 	}
 	
 	protected void createSkeleton(AbstractArtefact artefact) {

@@ -53,8 +53,7 @@ public class PlanBuilderTest {
 	@Test
 	public void test() {
 		Plan plan =PlanBuilder.create().startBlock(artefact("Root")).endBlock().build();
-		assertEquals(1, plan.getArtefacts().size());
-		assertEquals("Root", plan.getArtefacts().iterator().next().getDescription());
+		assertEquals("Root", plan.getRoot().getDescription());
 	}
 	
 	public static AbstractArtefact artefact(String description) {
@@ -82,9 +81,9 @@ public class PlanBuilderTest {
 
 		@Override
 		protected void execute_(ReportNode node, CustomArtefact testArtefact) throws Exception {
-			if(testArtefact.getChildrenIDs()!=null) {
-				testArtefact.getChildrenIDs().forEach(childId->{
-					ArtefactHandler.delegateExecute(context, context.getArtefactAccessor().get(childId), node);
+			if(testArtefact.getChildren()!=null) {
+				testArtefact.getChildren().forEach(child->{
+					ArtefactHandler.delegateExecute(context, child, node);
 				});
 			}
 			node.setStatus(ReportNodeStatus.PASSED);

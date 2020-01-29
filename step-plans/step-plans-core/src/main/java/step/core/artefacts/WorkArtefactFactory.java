@@ -2,7 +2,6 @@ package step.core.artefacts;
 
 import java.util.HashMap;
 
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +17,7 @@ public class WorkArtefactFactory {
 		try {
 			T artefact = artefactClass.newInstance();
 			if(copyChildren) {
-				for(ObjectId childId:parentArtefact.getChildrenIDs()) {
-					artefact.addChild(childId);
-				}
+				artefact.setChildren(parentArtefact.getChildren());
 			}
 			HashMap<String, String> attributes = new HashMap<>();
 			attributes.put("name", name);

@@ -3,25 +3,25 @@ package step.artefacts.handlers;
 import java.util.Map;
 
 import step.artefacts.CallPlan;
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 
 public class PlanLocator {
 	
 	protected ExecutionContext context;
-	protected ArtefactAccessor accessor;
+	protected PlanAccessor accessor;
 	protected SelectorHelper selectorHelper;
 	
-	public AbstractArtefact selectArtefact(CallPlan testArtefact) {
-		AbstractArtefact a;
+	public Plan selectPlan(CallPlan artefact) {
+		Plan a;
 		
-		if(testArtefact.getArtefactId()!=null) {
-			a =  accessor.get(testArtefact.getArtefactId());
+		if(artefact.getPlanId()!=null) {
+			a =  accessor.get(artefact.getPlanId());
 		} else {
-			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(testArtefact.getSelectionAttributes().get(), getBindings());
-			a = accessor.findRootArtefactByAttributes(selectionAttributes);
+			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(artefact.getSelectionAttributes().get(), getBindings());
+			a = accessor.findByAttributes(selectionAttributes);
 			if(a==null) {
 				throw new RuntimeException("Unable to find plan with attributes: "+selectionAttributes.toString());
 			}
@@ -37,7 +37,7 @@ public class PlanLocator {
 		}
 	}
 
-	public PlanLocator(ExecutionContext context, ArtefactAccessor accessor, SelectorHelper selectorHelper) {
+	public PlanLocator(ExecutionContext context, PlanAccessor accessor, SelectorHelper selectorHelper) {
 		super();
 		this.context = context;
 		this.accessor = accessor;

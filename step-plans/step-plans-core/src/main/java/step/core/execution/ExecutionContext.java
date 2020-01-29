@@ -20,14 +20,14 @@ package step.core.execution;
 
 import ch.exense.commons.app.Configuration;
 import step.core.AbstractContext;
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.variables.VariablesManager;
 import step.expressions.ExpressionHandler;
@@ -40,7 +40,7 @@ public class ExecutionContext extends AbstractContext  {
 	
 	private final String executionId;
 	
-	private AbstractArtefact artefact;
+	private Plan plan;
 
 	private ReportNode report;
 	
@@ -50,9 +50,7 @@ public class ExecutionContext extends AbstractContext  {
 				
 	private final ReportNodeCache reportNodeCache;
 	
-	private final ArtefactCache artefactCache;
-	
-	private ArtefactAccessor artefactAccessor;
+	private PlanAccessor planAccessor;
 	
 	private ReportNodeAccessor reportNodeAccessor;
 	
@@ -74,16 +72,15 @@ public class ExecutionContext extends AbstractContext  {
 		this.executionId = executionId;
 				
 		reportNodeCache = new ReportNodeCache();
-		artefactCache = new ArtefactCache();
 		variablesManager = new VariablesManager(this);
 	}
 
-	public AbstractArtefact getArtefact() {
-		return artefact;
+	public Plan getPlan() {
+		return plan;
 	}
 
-	public void setArtefact(AbstractArtefact artefact) {
-		this.artefact = artefact;
+	public void setPlan(Plan plan) {
+		this.plan = plan;
 	}
 
 	public ReportNode getReport() {
@@ -152,12 +149,12 @@ public class ExecutionContext extends AbstractContext  {
 		this.executionParameters = parameters;
 	}
 
-	public ArtefactCache getArtefactCache() {
-		return artefactCache;
+	public PlanAccessor getPlanAccessor() {
+		return planAccessor;
 	}
 
-	public ArtefactAccessor getArtefactAccessor() {
-		return artefactAccessor;
+	public void setPlanAccessor(PlanAccessor planAccessor) {
+		this.planAccessor = planAccessor;
 	}
 
 	public ReportNodeAccessor getReportNodeAccessor() {
@@ -186,10 +183,6 @@ public class ExecutionContext extends AbstractContext  {
 
 	public Configuration getConfiguration() {
 		return configuration;
-	}
-
-	public void setArtefactAccessor(ArtefactAccessor artefactAccessor) {
-		this.artefactAccessor = artefactAccessor;
 	}
 
 	protected void setReportNodeAccessor(ReportNodeAccessor reportNodeAccessor) {

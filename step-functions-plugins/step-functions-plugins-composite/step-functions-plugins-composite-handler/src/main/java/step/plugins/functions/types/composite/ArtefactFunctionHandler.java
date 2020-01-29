@@ -23,21 +23,21 @@ import javax.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.exense.commons.app.Configuration;
 import step.artefacts.handlers.FunctionRouter;
 import step.artefacts.handlers.LocalFunctionRouterImpl;
 import step.attachments.FileResolver;
-import step.client.accessors.RemoteArtefactAccessor;
 import step.client.accessors.RemoteFunctionAccessorImpl;
+import step.client.accessors.RemotePlanAccessorImpl;
 import step.client.credentials.ControllerCredentials;
 import step.client.resources.RemoteResourceManager;
-import ch.exense.commons.app.Configuration;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
+import step.core.plans.PlanAccessor;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.variables.VariableType;
@@ -61,7 +61,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 	private static final Logger logger = LoggerFactory.getLogger(ArtefactFunctionHandler.class);
 	
 	// Key agreed upon to pass the artefact serving as root to the handler (via props)
-	public static final String ARTEFACTID_KEY = "$artefactid";
+	public static final String PLANID_KEY = "$planid";
 	
 	@Override
 	protected Output<JsonObject> handle(Input<JsonObject> input) {
@@ -92,15 +92,15 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 				executionContext.put(FunctionExecutionService.class, functionExecutionService);
 				executionContext.put(FunctionRouter.class, new LocalFunctionRouterImpl(functionExecutionService));
 				
-				ArtefactAccessor a = new RemoteArtefactAccessor(credentials);
-				executionContext.setArtefactAccessor(a);
+				PlanAccessor planAccessor = new RemotePlanAccessorImpl(credentials);
+				executionContext.setPlanAccessor(planAccessor);
 			} catch (Exception e) {
 				logger.error("Error while setting up execution context for composite keyword execution", e);
 			}
 			
 		}
 		
-		String artefactId = input.getProperties().get(ARTEFACTID_KEY);
+		String planId = input.getProperties().get(PLANID_KEY);
 		String parentReportId = input.getProperties().get(AbstractFunctionHandler.PARENTREPORTID_KEY);
 		
 		ReportNode parentNode;
@@ -118,7 +118,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 		executionContext.setCurrentReportNode(parentNode);
 		executionContext.getReportNodeCache().put(parentNode);
 		
-		AbstractArtefact artefact = executionContext.getArtefactAccessor().get(artefactId);
+		AbstractArtefact artefact = executionContext.getPlanAccessor().get(planId).getRoot();
 		
 		executionContext.getVariablesManager().putVariable(parentNode, "input", input.getPayload());
 		OutputBuilder output = new OutputBuilder();

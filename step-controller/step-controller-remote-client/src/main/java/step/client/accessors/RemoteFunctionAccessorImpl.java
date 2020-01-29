@@ -1,5 +1,6 @@
 package step.client.accessors;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,11 @@ public class RemoteFunctionAccessorImpl extends AbstractRemoteClient implements 
 		Builder b = requestBuilder("/rest/functions/"+id);
 		return executeRequest(()->b.get(Function.class));
 	}
+	
+	@Override
+	public Function get(String id) {
+		return get(new ObjectId(id));
+	}
 
 	@Override
 	public Function findByAttributes(Map<String, String> attributes) {
@@ -59,7 +65,7 @@ public class RemoteFunctionAccessorImpl extends AbstractRemoteClient implements 
 	}
 
 	@Override
-	public void save(List<? extends Function> entities) {
+	public void save(Collection<? extends Function> entities) {
 		entities.forEach(f->save(f));
 	}
 

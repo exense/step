@@ -130,11 +130,11 @@ angular.module('functionsControllers',['dataTable','step'])
       $scope.executeFunction = function(id) {
         $http.post("rest/interactive/functiontest/"+id+"/start").then(function(response) {
           var result = response.data;
-          $rootScope.artefactEditorInitialState = {
+          $rootScope.planEditorInitialState = {
               interactive : true,
               selectedNode : result.callFunctionId
           }
-          $location.path('/root/artefacteditor/' + result.rootArtefactId);
+          $location.path('/root/plans/editor/' + result.planId);
         });
       }
       
@@ -349,22 +349,15 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
     $uibModalInstance.dismiss('cancel');
   };
 })
-.controller('CompositeFunctionFormCtrl' , function($scope,$uibModal,$location,$http) {  
+.controller('CompositeFunctionFormCtrl' , function($scope,PlanDialogs,$location,$http) {  
   $scope.gotoArtefact = function() {
     $scope.save(false);
     $location.path('/root/artefacteditor/' + $scope.function_.artefactId);
   }
   
-  $scope.selectArtefact = function() {
-    var modalInstance = $uibModal.open({
-      backdrop: 'static',
-      templateUrl: 'partials/selectArtefact.html',
-      controller: 'selectArtefactModalCtrl',
-      resolve: {}
-    });
-
-    modalInstance.result.then(function (artefact) {
-      $scope.function_.artefactId = artefact.id;
-    });
+  $scope.selectPlan = function() {
+    PlanDialogs.selectPlan(function(plan) {
+      $scope.function_.planId = plan.id;
+    })
   }
 })

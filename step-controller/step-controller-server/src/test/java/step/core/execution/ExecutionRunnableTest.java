@@ -31,13 +31,15 @@ import org.junit.Test;
 import step.artefacts.CheckArtefact;
 import step.core.GlobalContext;
 import step.core.GlobalContextBuilder;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
+import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
@@ -49,13 +51,13 @@ public class ExecutionRunnableTest {
 
 		private ImportResult result;
 		
-		public TestRepositoryObjectManager(ImportResult result, ArtefactAccessor artefactAccessor) {
-			super(artefactAccessor);
+		public TestRepositoryObjectManager(ImportResult result, PlanAccessor planAccessor) {
+			super(planAccessor);
 			this.result = result;
 		}
 
 		@Override
-		public ImportResult importArtefact(ExecutionContext context, RepositoryObjectReference artefact) throws Exception {
+		public ImportResult importPlan(ExecutionContext context, RepositoryObjectReference artefact) throws Exception {
 			return result;
 		}
 		
@@ -73,14 +75,17 @@ public class ExecutionRunnableTest {
 			}
 		});
 		
-		CheckArtefact artefact = new CheckArtefact(c->c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED));
-		globalContext.getArtefactAccessor().save(artefact);
+		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact(c->c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED)))
+				.endBlock().build();
+		String planId = plan.getId().toString();
+		
+		globalContext.getPlanAccessor().save(plan);
 		
 		ImportResult result = new ImportResult();
 		result.setSuccessful(true);
-		result.setArtefactId(artefact.getId().toString());
+		result.setPlanId(planId);
 		
-		RepositoryObjectManager repo = new TestRepositoryObjectManager(result, globalContext.getArtefactAccessor());
+		RepositoryObjectManager repo = new TestRepositoryObjectManager(result, globalContext.getPlanAccessor());
 		
 		globalContext.setRepositoryObjectManager(repo);
 		
@@ -91,10 +96,9 @@ public class ExecutionRunnableTest {
 		RepositoryObjectReference ref = new RepositoryObjectReference();
 		
 		Map<String, String> parameters = new HashMap<String, String>();
-		parameters.put("artefactid", artefact.getId().toString());
+		parameters.put(RepositoryObjectReference.PLAN_ID, planId);
 		ref.setRepositoryParameters(parameters);
-		p.setArtefact(ref);
-		
+		p.setRepositoryObject(ref);
 		p.setExports(new ArrayList<>());
 		Execution e = f.createExecution(p, null);
 		
@@ -109,7 +113,8 @@ public class ExecutionRunnableTest {
 		assertEquals(ExecutionStatus.ENDED,execution.getStatus());
 		assertNull(execution.getExecutionTaskID());
 		
-		ReportNode node = globalContext.getReportAccessor().getReportNodesByExecutionIDAndArtefactID(e.getId().toString(), artefact.getId().toString()).next();
+		
+		ReportNode node = globalContext.getReportAccessor().getRootReportNode(e.getId().toString());
 		assertNotNull(node);
 		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		

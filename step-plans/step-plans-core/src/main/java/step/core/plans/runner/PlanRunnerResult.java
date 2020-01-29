@@ -9,6 +9,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.artefacts.reports.ReportTreeVisitor;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
@@ -31,6 +32,12 @@ public class PlanRunnerResult {
 		this.executionId = executionId;
 		this.rootReportNodeId = rootReportNodeId;
 		this.reportTreeAccessor = reportTreeAccessor;
+	}
+	
+	public ReportNodeStatus getResult() {
+		ReportNode rootReportNode = reportTreeAccessor.get(rootReportNodeId);
+		ReportNodeStatus status = rootReportNode.getStatus();
+		return status;
 	}
 
 	public String getExecutionId() {

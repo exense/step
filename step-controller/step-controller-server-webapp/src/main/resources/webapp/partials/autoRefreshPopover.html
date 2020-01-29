@@ -9,6 +9,6 @@
 	<select 
 		 ng-model="autorefresh.interval" ng-change="changeRefreshInterval(autorefresh.interval)"
 		ng-options="autoRefreshPreset.value as autoRefreshPreset.label for autoRefreshPreset in autoRefreshPresets"
-		size="6" class="form-control" />
+		size="6" class="form-control autoRefreshSelect" />
 	</form>
 </script>

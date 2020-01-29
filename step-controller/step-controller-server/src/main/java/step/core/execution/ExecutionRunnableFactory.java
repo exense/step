@@ -23,64 +23,34 @@ import java.util.HashMap;
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
+import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
-import step.threadpool.ThreadPool;
 
 public class ExecutionRunnableFactory {
 
 	private GlobalContext globalContext;
+	private ControllerExecutionContextBuilder executionContextBuilder;
 	private ExecutionTaskAccessor taskAccessor;
-	private ArtefactAccessor artefactAccessor;
+	private PlanAccessor planAccessor;
 
 	public ExecutionRunnableFactory(GlobalContext globalContext) {
 		super();
 		this.globalContext = globalContext;
+		executionContextBuilder = new ControllerExecutionContextBuilder(globalContext);
 		taskAccessor = globalContext.getScheduleAccessor();
-		artefactAccessor = globalContext.getArtefactAccessor();
+		planAccessor = globalContext.getPlanAccessor();
 	}
 
 	public ExecutionRunnable newExecutionRunnable(Execution execution) {		
-		ExecutionContext context = createExecutionContext(execution);
+		ExecutionContext context = executionContextBuilder.createExecutionContext(execution.getId().toString(), execution.getExecutionParameters());
 		ExecutionRunnable task = new ExecutionRunnable(globalContext.getRepositoryObjectManager(), globalContext.getExecutionAccessor(), context);
 		return task;
-	}
-
-	private ExecutionContext createExecutionContext(Execution execution) {
-		boolean isolatedContext = execution.getExecutionParameters().isIsolatedExecution();
-		String executionId = execution.getId().toString();
-		ExecutionContext context;
-		if(isolatedContext) {
-			context = ContextBuilder.createLocalExecutionContext(executionId);
-			context.setReportNodeAccessor(globalContext.getReportAccessor());
-			context.setEventManager(globalContext.getEventManager());
-			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
-
-			ExecutionManager executionManager = new ExecutionManagerImpl(globalContext.getExecutionAccessor());
-			context.put(ExecutionManager.class, executionManager);
-		} else {
-			context = new ExecutionContext(executionId);
-			context.setExpressionHandler(globalContext.getExpressionHandler());
-			context.setDynamicBeanResolver(globalContext.getDynamicBeanResolver());
-			context.setConfiguration(globalContext.getConfiguration());
-			context.setArtefactAccessor(globalContext.getArtefactAccessor());
-			context.setReportNodeAccessor(globalContext.getReportAccessor());
-			context.setEventManager(globalContext.getEventManager());
-			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
-			ExecutionManager executionManager = new ExecutionManagerImpl(globalContext.getExecutionAccessor());
-			context.put(ExecutionManager.class, executionManager);
-			context.setExecutionTypeListener(executionManager);
-			context.put(ThreadPool.class, new ThreadPool(context));
-		}
-
-		context.setExecutionParameters(execution.getExecutionParameters());
-		context.updateStatus(ExecutionStatus.INITIALIZING);
-		return context;
 	}
 
 	public Execution createExecution(ExecutionParameters executionParameters, String taskID) {		
@@ -101,14 +71,15 @@ public class ExecutionRunnableFactory {
 				execution.setExecutionTaskID(taskID);
 		}
 
-		AbstractArtefact abstractArtefact = null;
-		if (executionParameters.getArtefact() != null &&
-			executionParameters.getArtefact().getRepositoryParameters().containsKey("artefactid")) {
-			abstractArtefact = artefactAccessor.get(executionParameters.getArtefact().getRepositoryParameters().get("artefactid"));	
+		Plan plan = null;
+		RepositoryObjectReference repositoryObject = executionParameters.getRepositoryObject();
+		if (repositoryObject != null &&
+			repositoryObject.getRepositoryParameters().containsKey(RepositoryObjectReference.PLAN_ID)) {
+			plan = planAccessor.get(new ObjectId(repositoryObject.getRepositoryParameters().get(RepositoryObjectReference.PLAN_ID)));
 		}
 		
-		if(abstractArtefact != null && abstractArtefact.getAttributes() != null) {
-			execution.getAttributes().putAll(abstractArtefact.getAttributes());
+		if(plan != null && plan.getAttributes() != null) {
+			execution.getAttributes().putAll(plan.getAttributes());
 		}
 		
 		if(executionParameters.getDescription()!=null) {

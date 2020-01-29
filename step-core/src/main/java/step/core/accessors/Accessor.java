@@ -15,6 +15,14 @@ public interface Accessor<T extends AbstractIdentifiableObject> {
 	 * @return the object
 	 */
 	T get(ObjectId id);
+	
+	/**
+	 * Get an object by id
+	 * 
+	 * @param id the UID of the object
+	 * @return the object
+	 */
+	T get(String id);
 
 	/**
 	 * Find an object by default attributes. If multiple objects match these attributes, the first one will be returned

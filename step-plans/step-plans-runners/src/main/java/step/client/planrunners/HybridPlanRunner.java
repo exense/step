@@ -1,6 +1,5 @@
 package step.client.planrunners;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
@@ -50,7 +49,6 @@ public class HybridPlanRunner implements PlanRunner {
 		context.put(FunctionAccessor.class, functionAccessor);
 		context.put(FunctionExecutionService.class, functionExecutionService);
 		context.put(FunctionRouter.class, new DefaultFunctionRouterImpl(functionExecutionService, null, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()))));
-		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
 		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
 		
 		return new PlanRunnerResult(context.getExecutionId(), context.getReport().getId().toString(), context.getReportNodeAccessor());

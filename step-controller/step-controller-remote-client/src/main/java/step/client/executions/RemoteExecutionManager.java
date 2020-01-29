@@ -52,10 +52,10 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	 */
 	public String execute(String planId, Map<String, String> parameters) {
 		Map<String, String> repositoryParameters = new HashMap<>();
-		repositoryParameters.put("artefactid", planId);
+		repositoryParameters.put(RepositoryObjectReference.PLAN_ID, planId);
 		RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference("local", repositoryParameters);
 		ExecutionParameters executionParameters = new ExecutionParameters();
-		executionParameters.setArtefact(repositoryObjectReference);
+		executionParameters.setRepositoryObject(repositoryObjectReference);
 		executionParameters.setUserID(credentials.getUsername());
 		executionParameters.setMode(ExecutionMode.RUN);
 		executionParameters.setIsolatedExecution(false);
@@ -73,7 +73,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	public String executeFromExternalRepository(String repositoryId, Map<String, String> repositoryParameters) {
 		RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference(repositoryId, repositoryParameters);
 		ExecutionParameters executionParameters = new ExecutionParameters();
-		executionParameters.setArtefact(repositoryObjectReference);
+		executionParameters.setRepositoryObject(repositoryObjectReference);
 		executionParameters.setUserID(credentials.getUsername());
 		executionParameters.setMode(ExecutionMode.RUN);
 		executionParameters.setIsolatedExecution(false);

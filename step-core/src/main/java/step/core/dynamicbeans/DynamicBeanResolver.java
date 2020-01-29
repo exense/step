@@ -108,7 +108,7 @@ public class DynamicBeanResolver {
 						if(writeMethod!=null) {
 							descriptor.getWriteMethod().invoke(out, newValue);							
 						} else {
-							throw new RuntimeException("Unable to clone object "+o.toString()+". No setter found for "+descriptor);
+							//throw new RuntimeException("Unable to clone object "+o.toString()+". No setter found for "+descriptor);
 						}
 					}
 				}

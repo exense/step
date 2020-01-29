@@ -14,28 +14,28 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.objectenricher.ObjectFilter;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 
 public class ExportManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ExportManager.class);
 	
-	ArtefactAccessor accessor;	
+	PlanAccessor accessor;	
 	
-	public ExportManager(ArtefactAccessor accessor) {
+	public ExportManager(PlanAccessor accessor) {
 		super();
 		this.accessor = accessor;
 	}
 
-	public void exportArtefactWithChildren(String artefactId, OutputStream outputStream) throws FileNotFoundException, IOException {
+	public void exportPlan(String planId, OutputStream outputStream) throws FileNotFoundException, IOException {
 		ObjectMapper mapper = getMapper();	
 		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
-			exportArtefactRecursive(mapper, writer, new ObjectId(artefactId));
+			exportPlan(mapper, writer, new ObjectId(planId));
 		} catch(Exception e) {
-			logger.error("Error while exporting artefact with id "+artefactId,e);
+			logger.error("Error while exporting artefact with id "+planId,e);
 		}
 	}
 
@@ -45,13 +45,13 @@ public class ExportManager {
 		return mapper;
 	}
 	
-	public void exportAllArtefacts(OutputStream outputStream, ObjectFilter objectFilter) throws FileNotFoundException, IOException {
+	public void exportAllPlans(OutputStream outputStream, ObjectFilter objectFilter) throws FileNotFoundException, IOException {
 		ObjectMapper mapper = getMapper();
 		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
-			accessor.getRootArtefacts().forEachRemaining((a)->{
+			accessor.getAll().forEachRemaining((a)->{
 				if(objectFilter.test(a)) {
 					try {
-						exportArtefactRecursive(mapper, writer, new ObjectId(a.getId().toString()));
+						exportPlan(mapper, writer, new ObjectId(a.getId().toString()));
 					} catch (Exception e) {
 						logger.error("Error while exporting artfact "+a.getId().toString(), e);
 					}
@@ -61,14 +61,9 @@ public class ExportManager {
 
 	}
 
-	private void exportArtefactRecursive(ObjectMapper mapper, Writer writer, ObjectId id) throws IOException {
-		AbstractArtefact artefact = accessor.get(id);
-		mapper.writeValue(writer, artefact);
+	private void exportPlan(ObjectMapper mapper, Writer writer, ObjectId id) throws IOException {
+		Plan plan = accessor.get(id);
+		mapper.writeValue(writer, plan);
 		writer.write("\n");
-		if(artefact.getChildrenIDs()!=null) {
-			for(ObjectId childId:artefact.getChildrenIDs()) {
-				exportArtefactRecursive(mapper, writer, childId);
-			}
-		}
 	}
 }

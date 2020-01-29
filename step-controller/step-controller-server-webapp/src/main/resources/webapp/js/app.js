@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','executionsControllers','parametersControllers','resourcesControllers','artefactsControllers','artefactEditor','reportBrowserControllers','adminControllers','screenConfigurationControllers', 'dashboardsControllers'])
+var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','plans','planEditor','artefacts','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','executionsControllers','parametersControllers','resourcesControllers','reportBrowserControllers','adminControllers','screenConfigurationControllers', 'dashboardsControllers'])
 
 .config(['$locationProvider', function($locationProvider) {
 	$locationProvider.hashPrefix('');
@@ -143,7 +143,6 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 })
 
 .run(function(ViewRegistry, EntityRegistry) {
-	ViewRegistry.registerView('artefacts','partials/artefactList.html');
 	ViewRegistry.registerView('parameters','partials/parameters/parameterList.html');
 	ViewRegistry.registerView('grid','partials/grid.html');
 	ViewRegistry.registerView('executions','partials/execution.html');
@@ -156,7 +155,6 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','s
 	ViewRegistry.registerView('myaccount','partials/myaccount.html');
 	ViewRegistry.registerView('login','partials/loginForm.html',true);
 
-	EntityRegistry.registerEntity('Plan', 'artefact', 'artefacts', 'rest/controller/artefact/', 'rest/controller/artefact', 'datatable', '/partials/selection/selectDatatableEntity.html');
 	EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table', '/partials/selection/parameterSelectionListModal.html');
 	EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/functions/', 'rest/functions/', 'datatable', '/partials/selection/selectDatatableEntity.html');
 	EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'datatable', '/partials/selection/selectDatatableEntity.html');
@@ -449,7 +447,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		if(serviceContext.conf && serviceContext.conf.defaultUrl) {
 			$location.path(serviceContext.conf.defaultUrl)
 		} else {
-			$location.path('/root/artefacts')
+			$location.path('/root/plans/list')
 		}
 	}
 

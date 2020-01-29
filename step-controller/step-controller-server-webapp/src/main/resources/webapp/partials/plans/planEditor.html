@@ -1,12 +1,12 @@
-<div id="ArtefactEditorCtrl" ng-controller="ArtefactEditorCtrl" class="container-fluid">
+<div id="PlanEditorCtrl" ng-controller="PlanEditorCtrl" class="container-fluid">
 	<div ng-if="isInteractiveSessionActive()" class="alert alert-info" role="alert">Welcome to the interactive mode. In this mode you can select tree nodes and run them directly by clicking the button 'Run interactively'</div>
 	<div class="row flex-l">
-		<div class="w-100 sectionResizable sectionArtefactEditor" resizable r-directions="['right']" r-flex="true">
+		<div class="w-100 sectionResizable sectionViewPlanEditor" resizable r-directions="['right']" r-flex="true">
 			<div class="panel panel-default overflow-x-auto overflow-y-hidden">
-				<div class="panel-heading">{{artefact._class}}{{artefact.root?(' - '+artefact.attributes.name):''}}
+				<div class="panel-heading">{{plan.root?plan.root._class:''}} - {{plan.attributes.name}}
 					<div class="pull-right">
-						<button type="submit" class="btn btn-default btn-xs" ng-click="cloneArtefact()">Clone</button>
-						<button type="submit" class="btn btn-default btn-xs" ng-click="exportArtefact()">Export</button>
+						<button type="submit" class="btn btn-default btn-xs" ng-click="clonePlan()">Clone</button>
+						<button type="submit" class="btn btn-default btn-xs" ng-click="exportPlan()">Export</button>
 						<div class="btn-group" style="margin-right:5px;">
 							<button ng-disabled="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="startInteractive()">Start interactive session</button>
 							<button ng-if="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="resetInteractive()">Reset</button>
@@ -19,12 +19,12 @@
 				  	</div>
 				 </div>
 				<div class="panel-body">
-					<div ng-if="artefact.root" class="panel panel-default">
+					<div class="panel panel-default">
 						<div class="panel-body">
-							<st-custom-form st-model="artefact" st-on-change="saveAttributes()" st-screen="artefactTable" st-inline="true" st-disabled="!authService.hasRight('plan-write')"/>
+							<st-custom-form st-model="plan" st-on-change="save()" st-screen="artefactTable" st-inline="true" st-disabled="!authService.hasRight('plan-write')"/>
 						</div>
 					</div>
-					<artefact handle="handle" artefactid="artefactId" interactive-session-handle="interactiveSession" />
+					<plan-tree-editor handle="handle" plan="plan" st-on-change="save()" interactive-session-handle="interactiveSession" />
 				</div>
 			</div>	
 		</div>
@@ -54,9 +54,31 @@
 							</uib-tab>
 							<uib-tab heading="Other plans">
 								<div class="row">
-									<div class="panel-body">	
-										<datatable handle="artefactTable" tabledef="artefactTable" columnsearch="true" serverside="artefacts" order="[[1, &quot;desc&quot;]]" />
-									</div>		
+									<div class="panel-body">
+										<st-table collection="'plans'" handle="otherPlansTable" uid="'planEditorOtherPlans'" persist-state="true">
+											<st-columns>
+												<st-column name="attributes.name">
+													<header>Name</header>
+													<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+													<cell>{{row.attributes.name}}</cell>
+												</st-column>
+												<st-column name="root._class">
+													<header>Type</header>
+													<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+													<cell>{{row.root._class}}</cell>
+												</st-column>
+												<st-column>
+													<header>Actions</header>
+													<cell>
+														<button type="button" class="btn btn-default  btn-xs" aria-label="Left Align" 
+													          ng-click="addPlan(row._id.$oid)">
+													    	<span class="glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>
+													    </button>
+									          		</cell>
+												</st-column>
+											</st-columns>
+										</st-table>
+									</div>
 								</div>				
 							</uib-tab>
 							<uib-tab heading="Console" ng-if="isInteractiveSessionActive()">
@@ -78,5 +100,5 @@
 <execution-parameters model="executionParameters" />
 </script>
 <script type="text/ng-template" id="executionCommandsPopover.html">
-<execution-commands description="artefact.attributes.name" artefact="artefactRef()" />
+<execution-commands description="plan.attributes.name" artefact="artefactRef()" />
 </script>

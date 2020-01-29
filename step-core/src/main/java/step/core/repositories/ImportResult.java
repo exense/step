@@ -7,9 +7,9 @@ public class ImportResult implements Serializable {
 	
 	private static final long serialVersionUID = 3711110316457339962L;
 
-	boolean successful = false;;
+	protected boolean successful = false;;
 	
-	String artefactId;
+	protected String planId;
 	
 	List<String> errors;
 
@@ -21,12 +21,12 @@ public class ImportResult implements Serializable {
 		this.successful = successful;
 	}
 
-	public String getArtefactId() {
-		return artefactId;
+	public String getPlanId() {
+		return planId;
 	}
 
-	public void setArtefactId(String artefactId) {
-		this.artefactId = artefactId;
+	public void setPlanId(String planId) {
+		this.planId = planId;
 	}
 
 	public List<String> getErrors() {

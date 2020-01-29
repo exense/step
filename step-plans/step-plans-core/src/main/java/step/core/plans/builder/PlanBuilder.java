@@ -1,10 +1,11 @@
 package step.core.plans.builder;
 
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.plans.Plan;
 
 /**
@@ -15,8 +16,6 @@ public class PlanBuilder {
 
 	protected AbstractArtefact root;
 
-	protected InMemoryArtefactAccessor localAccessor = new InMemoryArtefactAccessor();
-	
 	protected Stack<AbstractArtefact> stack = new Stack<>();
 	
 	public static PlanBuilder create() {
@@ -26,10 +25,16 @@ public class PlanBuilder {
 	/**
 	 * @return the {@link Plan} created by this builder
 	 */
-	@SuppressWarnings("unchecked")
 	public Plan build() {
 		if(stack.isEmpty()) {
-			return new Plan(root, (Collection<AbstractArtefact>) localAccessor.getCollection());
+			Plan plan = new Plan(root);
+			HashMap<String, String> attributes = new HashMap<String, String>();
+			Map<String, String> rootArtefactAttributes = root.getAttributes();
+			if(rootArtefactAttributes != null && rootArtefactAttributes.containsKey(AbstractOrganizableObject.NAME)) {
+				attributes.put(AbstractOrganizableObject.NAME, rootArtefactAttributes.get(AbstractOrganizableObject.NAME));
+			}
+			plan.setAttributes(attributes);
+			return plan;
 		} else {
 			throw new RuntimeException("Unbalanced block "+stack.peek());
 		}
@@ -44,7 +49,6 @@ public class PlanBuilder {
 		if(root==null) {
 			throw new RuntimeException("No root artefact defined. Please first call the method startBlock to define the root element");
 		}
-		localAccessor.save(artefact);
 		addToCurrentParent(artefact);
 		return this;
 	}
@@ -60,7 +64,6 @@ public class PlanBuilder {
 		} else {
 			root = artefact;
 		}
-		localAccessor.save(artefact);
 		stack.push(artefact);
 		return this;
 	}
@@ -80,6 +83,6 @@ public class PlanBuilder {
 
 	private void addToCurrentParent(AbstractArtefact artefact) {
 		AbstractArtefact parent = stack.peek();
-		localAccessor.get(parent.getId()).addChild(artefact.getId());
+		parent.addChild(artefact);
 	}
 }

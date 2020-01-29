@@ -35,6 +35,7 @@ import step.artefacts.reports.AssertReportNode;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.plans.builder.PlanBuilder;
 
 public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -42,7 +43,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void test() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("value1"));
 		a.setOperator(AssertOperator.EQUALS);
@@ -63,7 +64,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testNotEquals() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("value1"));
 		a.setOperator(AssertOperator.EQUALS);
@@ -83,7 +84,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testContains() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("val"));
 		a.setOperator(AssertOperator.CONTAINS);
@@ -102,7 +103,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testNotContains() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("2"));
 		a.setOperator(AssertOperator.CONTAINS);
@@ -122,7 +123,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testBegins() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("val"));
 		a.setOperator(AssertOperator.BEGINS_WITH);
@@ -138,7 +139,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testNotBegins() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("bal"));
 		a.setOperator(AssertOperator.BEGINS_WITH);
@@ -155,7 +156,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testEndWith() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("1"));
 		a.setOperator(AssertOperator.ENDS_WITH);
@@ -171,7 +172,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testMatch() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>(".*al.*"));
 		a.setOperator(AssertOperator.MATCHES);
@@ -187,7 +188,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testNotMatch() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>(".*al.*"));
 		a.setOperator(AssertOperator.MATCHES);
@@ -204,7 +205,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testKeyDoesntExist() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("notExistingKey"));
 		a.setExpected(new DynamicValue<String>(".*al.*"));
 		a.setOperator(AssertOperator.MATCHES);
@@ -223,7 +224,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testTechError() {
 		setupTechError();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		execute(a);
 		
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
@@ -237,7 +238,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testJsonpath() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("$.key2.key21"));
 		a.setExpected(new DynamicValue<String>("val21"));
 		a.setOperator(AssertOperator.EQUALS);
@@ -257,7 +258,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	public void testJsonpathNotFound() {
 		setupPassed();
 		
-		Assert a = add(new Assert());
+		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("$.key2.notexist"));
 		a.setExpected(new DynamicValue<String>("val21"));
 		a.setOperator(AssertOperator.EQUALS);

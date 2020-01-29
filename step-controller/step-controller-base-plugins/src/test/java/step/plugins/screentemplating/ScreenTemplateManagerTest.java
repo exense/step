@@ -20,6 +20,7 @@ package step.plugins.screentemplating;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -67,7 +68,7 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
-			public void save(List<? extends ScreenInput> entities) {
+			public void save(Collection<? extends ScreenInput> entities) {
 			}
 
 			@Override
@@ -99,6 +100,11 @@ public class ScreenTemplateManagerTest {
 			public Spliterator<ScreenInput> findManyByAttributes(Map<String, String> attributes,
 					String attributesMapKey) {
 				return null;
+			}
+
+			@Override
+			public ScreenInput get(String id) {
+				return get(new ObjectId(id));
 			}
 		};
 

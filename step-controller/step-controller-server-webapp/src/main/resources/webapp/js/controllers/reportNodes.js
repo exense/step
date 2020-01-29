@@ -60,9 +60,6 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
             $http.get('rest/controller/reportnode/'+node.id+"/children").then(function(response) {
               $scope.children = response.data;
             })
-            $http.get('rest/controller/artefact/'+node.artefactID).then(function(response) {
-              $scope.artefact = response.data;
-            })
           })
         }
       })

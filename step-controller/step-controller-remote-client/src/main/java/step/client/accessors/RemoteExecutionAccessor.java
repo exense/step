@@ -1,5 +1,6 @@
 package step.client.accessors;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,7 +50,7 @@ public class RemoteExecutionAccessor extends AbstractRemoteClient implements Exe
 	}
 
 	@Override
-	public void save(List<? extends Execution> entities) {
+	public void save(Collection<? extends Execution> entities) {
 		throw notImplemented();
 	}
 

@@ -1,6 +1,6 @@
 package step.core.accessors;
 
-import java.util.List;
+import java.util.Collection;
 
 import org.bson.types.ObjectId;
 
@@ -21,6 +21,6 @@ public interface CRUDAccessor<T extends AbstractIdentifiableObject> extends Acce
 	 * 
 	 * @param entities the list of entities to be saved
 	 */
-	void save(List<? extends T> entities);
+	void save(Collection<? extends T> entities);
 
 }

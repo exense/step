@@ -3,27 +3,25 @@ package step.plugins.functions.types;
 import java.util.HashMap;
 import java.util.Map;
 
-import step.artefacts.Sequence;
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
-import step.core.artefacts.ArtefactManager;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
+import step.core.plans.builder.PlanBuilder;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.filemanager.FileVersionId;
+import step.planbuilder.BaseArtefacts;
 import step.plugins.functions.types.composite.ArtefactFunctionHandler;
 
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
 	
-	private final ArtefactAccessor artefactAccessor;
-	private final ArtefactManager artefactManager;
-	
 	protected FileVersionId handlerJar;
 	
-	public CompositeFunctionType(ArtefactAccessor artefactAccessor, ArtefactManager artefactManager) {
+	protected final PlanAccessor planAccessor;
+	
+	public CompositeFunctionType(PlanAccessor planAccessor) {
 		super();
-		this.artefactAccessor = artefactAccessor;
-		this.artefactManager = artefactManager;
+		this.planAccessor = planAccessor;
 	}
 	
 	@Override
@@ -40,27 +38,25 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	@Override
 	public Map<String, String> getHandlerProperties(CompositeFunction function) {
 		Map<String, String> props = new HashMap<>();
-		props.put(ArtefactFunctionHandler.ARTEFACTID_KEY, function.getArtefactId());
+		props.put(ArtefactFunctionHandler.PLANID_KEY, function.getPlanId());
 		return props;
 	}
 
 	@Override
 	public void setupFunction(CompositeFunction function) throws SetupFunctionException {
 		super.setupFunction(function);
-  		Sequence sequence = new Sequence();
-  		artefactAccessor.save(sequence);
   		
-  		function.setArtefactId(sequence.getId().toString());		
+  		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
+  		planAccessor.save(plan);
+  		
+  		function.setPlanId(plan.getId().toString());		
 	}
 
 	@Override
 	public CompositeFunction copyFunction(CompositeFunction function) throws FunctionTypeException {
 		CompositeFunction copy = super.copyFunction(function);
 
-		String artefactId = function.getArtefactId();
-		AbstractArtefact artefactCopy = artefactManager.copyArtefact(artefactId);
-		
-		copy.setArtefactId(artefactCopy.getId().toString());
+		// TODO Copy plan
 		return copy;
 	}
 

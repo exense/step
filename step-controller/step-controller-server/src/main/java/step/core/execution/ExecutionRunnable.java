@@ -25,14 +25,15 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.ReportExport;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
+import step.core.plans.runner.PlanRunner;
+import step.core.plans.runner.PlanRunnerResult;
 import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
@@ -63,33 +64,24 @@ public class ExecutionRunnable implements Runnable {
 	@Override
 	public void run() {
 		try {
-			context.associateThread();
-
-			ReportNode rootReportNode = createAndPersistRootReportNode();
-
-			executionLifecycleManager.executionStarted();
-			
 			updateStatus(ExecutionStatus.IMPORTING);
-			ImportResult importResult = importArtefact();
+			ImportResult importResult = importPlan();
 			
 			executionLifecycleManager.afterImport(importResult);
 			
 			if(importResult.isSuccessful()) {
-				AbstractArtefact artefact = context.getArtefactAccessor().get(importResult.getArtefactId());
-				context.setArtefact(artefact);
+				PlanAccessor planAccessor = context.getPlanAccessor();
+				Plan plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
 				
 				logger.info("Starting test execution. Execution ID: " + context.getExecutionId());
 				updateStatus(ExecutionStatus.RUNNING);
 				
-				ArtefactHandler.delegateCreateReportSkeleton(context, artefact, rootReportNode);
-				ReportNode planReportNode = ArtefactHandler.delegateExecute(context, artefact, rootReportNode);
+				PlanRunner planRunner = new ControllerPlanRunner(executionLifecycleManager, context);
+				PlanRunnerResult result = planRunner.run(plan);
 				
-				if(planReportNode!=null && planReportNode.getStatus() != null) {
-					ReportNodeStatus resultStatus = planReportNode.getStatus();
-					executionLifecycleManager.updateExecutionResult(context, resultStatus);
-					rootReportNode.setStatus(resultStatus);
-					context.getReportNodeAccessor().save(rootReportNode);
-				}
+				result.waitForExecutionToTerminate();
+				ReportNodeStatus resultStatus = result.getResult();
+				executionLifecycleManager.updateExecutionResult(context, resultStatus);
 				
 				logger.debug("Test execution ended. Reporting result.... Execution ID: " + context.getExecutionId());
 				
@@ -112,45 +104,30 @@ public class ExecutionRunnable implements Runnable {
 			executionLifecycleManager.executionEnded();
 		}
 	}
-
-	private ReportNode createAndPersistRootReportNode() {
-		ReportNode resultNode = new ReportNode();
-		resultNode.setExecutionID(context.getExecutionId());
-		resultNode.setId(new ObjectId(context.getExecutionId()));
-		context.setReport(resultNode);
-		context.getReportNodeCache().put(resultNode);
-		context.getReportNodeAccessor().save(resultNode);
-		context.setCurrentReportNode(resultNode);
-		return resultNode;
-	}
 	
 	private void updateStatus(ExecutionStatus newStatus) {
 		executionLifecycleManager.updateStatus(newStatus);
 	}
 	
-	private ImportResult importArtefact() throws Exception {
+	private ImportResult importPlan() throws Exception {
 		ImportResult importResult;
-		if(context.getExecutionParameters().getArtefact()!=null) {
-			RepositoryObjectReference artefactPointer = context.getExecutionParameters().getArtefact();
-			if(artefactPointer!=null) {
-				if("local".equals(artefactPointer.getRepositoryID())) {
-					importResult = new ImportResult();
-					importResult.setArtefactId(artefactPointer.getRepositoryParameters().get("artefactid"));
-					importResult.setSuccessful(true);
-				} else {
-					try {
-						importResult = repositoryObjectManager.importArtefact(context, artefactPointer);											
-					} catch (Exception e) {
-						logger.error("Error while importing repository object "+artefactPointer.toString(), e);
-						importResult = new ImportResult();
-						String error = "Unexpected error while importing plan: "+e.getMessage();
-						List<String> errors = new ArrayList<>();
-						errors.add(error);
-						importResult.setErrors(errors);
-					}
-				}
+		RepositoryObjectReference repositoryObjectReference = context.getExecutionParameters().getRepositoryObject();
+		if(repositoryObjectReference!=null) {
+			if("local".equals(repositoryObjectReference.getRepositoryID())) {
+				importResult = new ImportResult();
+				importResult.setPlanId(repositoryObjectReference.getRepositoryParameters().get(RepositoryObjectReference.PLAN_ID));
+				importResult.setSuccessful(true);
 			} else {
-				throw new Exception("context.artefactID is null and no ArtefactPointer has been specified. This shouldn't happen.");
+				try {
+					importResult = repositoryObjectManager.importPlan(context, repositoryObjectReference);											
+				} catch (Exception e) {
+					logger.error("Error while importing repository object "+repositoryObjectReference.toString(), e);
+					importResult = new ImportResult();
+					String error = "Unexpected error while importing plan: "+e.getMessage();
+					List<String> errors = new ArrayList<>();
+					errors.add(error);
+					importResult.setErrors(errors);
+				}
 			}
 		} else {
 			// TODO
@@ -163,7 +140,7 @@ public class ExecutionRunnable implements Runnable {
 		Execution execution = executionAccessor.get(executionId);
 		
 		if(execution!=null) {
-			ReportExport report = repositoryObjectManager.exportTestExecutionReport(context, execution.getExecutionParameters().getArtefact());
+			ReportExport report = repositoryObjectManager.exportTestExecutionReport(context, execution.getExecutionParameters().getRepositoryObject());
 			List<ReportExport> exports = new ArrayList<>();
 			exports.add(report);
 			

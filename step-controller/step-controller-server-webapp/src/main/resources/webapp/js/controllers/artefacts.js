@@ -89,224 +89,307 @@ angular.module('artefacts',['step'])
   artefactTypes.register('Assert',{icon:'glyphicon-ok', form:'partials/artefacts/assert.html'});
   artefactTypes.register('Placeholder',{icon:'glyphicon-unchecked', form:'partials/artefacts/placeholder.html'});
   artefactTypes.register('Export',{icon:'glyphicon-export', form:'partials/artefacts/export.html'});
-});
+})
 
-angular.module('artefactsControllers',['dataTable','step','ngFileUpload','export'])
-.controller('ArtefactListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', '$location', 'AuthService', 'ExportService',
-    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, $location, AuthService, ExportService) {
-      $stateStorage.push($scope, 'artefacts', {});	
-
-      $scope.autorefresh = true;
+.directive('artefactDetails', function($http,$timeout,$interval,stateStorage,$filter,$location) {
+  return {
+    restrict: 'E',
+    scope: {
+      artefact: '=',
+      onSave: '&',
+      readonly: '=',
+      handle: '='
+    },
+    controller: function($scope,$location,artefactTypes,AuthService) {
       
       $scope.authService = AuthService;
       
-      $scope.editArtefact = function(id) {
-    	$scope.$apply(function() {
-    	  $location.path('/root/artefacteditor/' + id);
-    	});
-      }
-      
-      $scope.executeArtefact = function(id) {
-    	$scope.$apply(function() {
-    	  $location.path('/root/repository').search({repositoryId:'local',artefactid:id});
-    	});
-      }
-      
-      $scope.addArtefact = function() {
-    	$http.get("rest/controller/artefact/types").then(function(response){ 
-          $scope.artefactTypes = response.data;
-          var modalInstance = $uibModal.open({
-            backdrop: 'static',
-        	animation: $scope.animationsEnabled,
-        	templateUrl: 'newArtefactModalContent.html',
-        	controller: 'newArtefactModalCtrl',
-        	resolve: {
-        	  artefactTypes: function () {
-        		return $scope.artefactTypes;
-        	  }
-        	}
-          });
-          
-          modalInstance.result.then(function (functionParams) {
-            reload();
-          }, function () {}); 
-        });
-      }
-      
-      function reload() {
-        $scope.table.Datatable.ajax.reload(null, false);
-      }
-      
-      $scope.removeArtefact = function(id) {
-        Dialogs.showDeleteWarning().then(function() {
-          $http.delete("rest/controller/artefact/"+id).then(function() {
-            reload();
-          });
-        })
-      }
-      
-      $scope.copyArtefact = function(id) {
-        $rootScope.clipboard = {object:"artefact",id:id};
-      }
-      
-      $scope.pasteArtefact = function() {
-        if($rootScope.clipboard && $rootScope.clipboard.object=="artefact") {
-          $http.post("rest/controller/artefact/"+$rootScope.clipboard.id+"/copy")
-          .then(function() {
-            reload();
-          });
+      $scope.$watch('artefact', function() {
+        if($scope.artefact) {
+          var classname = $scope.artefact._class;
+          $scope.icon = artefactTypes.getIcon(classname);
+          $scope.label = artefactTypes.getLabel(classname);
+          $scope.editor = artefactTypes.getEditor(classname);
+        }
+      })
+
+      $scope.save = function() {
+        if(!$scope.readonly) {
+          if($scope.onSave) {
+            $scope.onSave({artefact:$scope.artefact});
+          }
         }
       }
-      
-      $scope.importArtefact = function() {
-        var modalInstance = $uibModal.open({
-          backdrop: 'static',
-          templateUrl: 'partials/artefactImportDialog.html',
-          controller: 'importArtefactModalCtrl',
-          resolve: {}
-        });
-
-        modalInstance.result.then(function () {
-          reload();
-        });
-      }
-      
-      $scope.exportArtefacts = function() {
-        ExportService.get("rest/export/artefacts")
-      }
-      
-      $scope.table = {};
-
-      $scope.tabledef = {uid:'artefacts'};
-      
-      $scope.tabledef.columns = function(columns) {
-        _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
-          col.visible = false
-        });
-        _.each(_.where(columns, { 'title' : 'Name' }), function(col) {
-          col.render = function(data, type, row) {
-            return '<a href="#" title="Edit plan" onclick="angular.element(\'#ArtefactListCtrl\').scope().editArtefact(\''+row[0]+'\');return false;">' + data + '</a>'
-          };
-        });
-        _.each(_.where(columns,{'title':'Actions'}),function(col){
-            col.title="Actions";
-            col.searchmode="none";
-            col.width="160px";
-            col.render = function ( data, type, row ) {
-            	var html = '<div class="input-group">' +
-	            	'<div class="btn-group">' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" title="Edit plan" onclick="angular.element(\'#ArtefactListCtrl\').scope().editArtefact(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
-	            	'<button type="button" class="btn btn-default" aria-label="Left Align" title="Execute plan" onclick="angular.element(\'#ArtefactListCtrl\').scope().executeArtefact(\''+row[0]+'\')">' +
-	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>';
-            	
-            	if(AuthService.hasRight('plan-write')) {
-                html+='<button type="button" class="btn btn-default" aria-label="Left Align" title="Copy plan"  onclick="angular.element(\'#ArtefactListCtrl\').scope().copyArtefact(\''+row[0]+'\')">' +
-                '<span class="glyphicon glyphicon glyphicon-copy" aria-hidden="true"></span>' +
-                '</button> ';
-              }
-            	
-            	if(AuthService.hasRight('plan-delete')) {
-            	  html+='<button type="button" class="btn btn-default" aria-label="Left Align" title="Delete plan" onclick="angular.element(\'#ArtefactListCtrl\').scope().removeArtefact(\''+row[0]+'\')">' +
-                '<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
-                '</button> ';
-            	}
-            	html+='</div></div>';
-            	return html;
-            }
-           });
-        return columns;
-      };
-    } ])
-    
-.controller('newArtefactModalCtrl', function ($scope, $uibModalInstance, $http, $location, artefactTypes) {
-  
-  $scope.artefactTypes = artefactTypes;
-  $scope.artefacttype = 'Sequence';
-	
-  $scope.attributes= {};
-  
-  $http.get("rest/screens/artefactTable").then(function(response){
-    $scope.inputs=response.data;
-  });	
-  
-  $scope.save = function (editAfterSave) {  
-	$http.get("rest/controller/artefact/types/"+$scope.artefacttype).then(function(response) {
-	  var artefact = response.data
-		artefact.root = true;
-		artefact.attributes = {};
-		_.mapObject($scope.attributes,function(value,key) {
-			  eval('artefact.'+key+"='"+value+"'");
-		})
-		$http.post("rest/controller/artefact", artefact).then(function(response) {
-		  var artefact = response.data;
-			$uibModalInstance.close(artefact);
-			
-			if(editAfterSave) {
-				$location.path('/root/artefacteditor/' + artefact.id)
-			}			
-		});
-	});
-  };
-
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss('cancel');
-  };
+    },
+    templateUrl: 'partials/artefacts/abstractArtefact.html'}
 })
-
-.controller('selectArtefactModalCtrl', function ($scope, $uibModalInstance, $http) {
-  
-  $scope.selectArtefact = function(id) {
-    $http({url:"rest/controller/artefact/"+id,method:"GET"}).then(function(response) {
-      $uibModalInstance.close(response.data);
-    }) 
+.controller('CallPlanCtrl' , function($scope,$location,$http, PlanDialogs) {  
+  $scope.gotoPlan = function() {
+    $location.path('/root/plans/editor/' + $scope.artefact.planId);
   }
   
-  $scope.table = {};
-
-  $scope.tabledef = {}      
+  $scope.$watch('artefact.planId', function(planId) {
+    if(planId) {
+      $http.get('rest/plans/'+planId).then(function(response) {
+        $scope.planName = response.data.attributes.name;
+      })
+    }
+  })
   
-  $scope.tabledef.columns = function(columns) {
-    _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
-      col.visible = false
-    });
-    _.each(_.where(columns,{'title':'Actions'}),function(col){
-        col.title="Actions";
-        col.searchmode="none";
-        col.width="160px";
-        col.render = function ( data, type, row ) {
-          var html = '<div class="input-group">' +
-            '<div class="btn-group">' +
-            '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#ArtefactListCtrl\').scope().selectArtefact(\''+row[0]+'\')">' +
-            '<span class="glyphicon glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>';
-          html+='</div></div>';
-          return html;
-        }
-       });
-    return columns;
-  };
-
-
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss('cancel');
-  };
+  $scope.selectPlan = function() {
+    PlanDialogs.selectPlan(function(plan) {
+      $scope.artefact.planId = plan.id;
+      $scope.artefact.attributes.name = plan.attributes.name;
+      $scope.save();
+    })
+  }
 })
+.controller('CallFunctionCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {
+  
+  showTokenSelectionParameters = false;
+  
+  function loadFunction(id, callback) {
+    $http({url:"rest/functions/"+id,method:"GET"}).then(function(response) {
+      $scope.targetFunction = response.data;
+      if(callback) {
+        callback();
+      }
+    })
+  }
+  
+  $scope.$watch('artefact.functionId', function(id) {
+    if(id!=null) {
+      loadFunction(id);
+    }
+  })
+  
+  $scope.gotoFunction = function() {
+    FunctionDialogs.editFunction($scope.targetFunction.id);
+  }
+  
+  $scope.openFunctionEditor = function(functionid) {
+    FunctionDialogs.openFunctionEditor($scope.targetFunction.id);
+  }
+  
+  $scope.setArgument = function(json) {
+    $scope.artefact.argument = json;
+    $scope.save();
+  }
+  
+  $scope.selectFunction = function() {
+    var modalInstance = $uibModal.open({
+      backdrop: 'static',
+      templateUrl: 'partials/selectFunction.html',
+      controller: 'selectFunctionModalCtrl',
+      resolve: {}
+    });
 
-.controller('importArtefactModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs) {
+    modalInstance.result.then(function (id) {
+      $scope.artefact.functionId = id;
+      loadFunction(id, function() {$scope.save()});
+    });
+  }
   
-  $scope.resourcePath; 
+})
+.controller('DataSourceCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {  
+  $scope.dataSourceTypes = [{name:"excel",label:"Excel"},{name:"csv",label:"CSV"},{name:"sql",label:"SQL"},
+                            {name:"file",label:"Flat file"},{name:"folder",label:"Directory"},{name:"sequence",label:"Integer sequence"},
+                            {name:"json",label:"Json String"}, {name:"gsheet",label:"Google Sheet v4"}]
   
-  $scope.save = function() {
-    if($scope.resourcePath) {
-      $http({url:"rest/import/artefact",method:"POST",params:{path:$scope.resourcePath}}).then(function(response) {
-        $uibModalInstance.close(response.data);
-      })      
-    } else {
-      Dialogs.showErrorMsg("Upload not completed.");
+  $scope.loadInitialDataSourceConfiguration = function() {
+    $http.get("rest/datapool/types/"+$scope.artefact.dataSourceType).then(function(response){
+      $scope.artefact.dataSource = response.data;
+      $scope.save();
+    })
+  }
+})
+.controller('DefaultArtefactFormCtrl' , function($scope) {
+  $scope.getEditableArtefactProperties = function() {
+    return _.without(_.keys($scope.artefact),'id','_id','root','attributes','childrenIDs','createSkeleton','_class','attachments')
+  }
+})
+.controller('AssertCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {  
+  $scope.operatorTypes = [{name:"EQUALS",label:"equals"},{name:"BEGINS_WITH",label:"begins with"},{name:"CONTAINS",label:"contains"},
+                            {name:"ENDS_WITH",label:"ends with"},{name:"MATCHES",label:"matches"}]
+  
+
+})
+.directive('jsonEditor', function($http,$timeout,$interval,stateStorage,$filter,$location,Dialogs) {
+  return {
+    restrict: 'E',
+    scope: {
+      model: '=',
+      onChange: '&'
+    },
+    templateUrl: 'partials/jsonEditor.html',
+    controller: function($scope,$location,$rootScope, AuthService) {
+      $scope.localModel = {json:""}
+      $scope.argumentAsTable = [];
+      $scope.isFocusOnLastRow=false;
+      $scope.doCommitLastRow=false;
+      $scope.stillEditing=false;
+      
+      $scope.$watch('model', function(json) {
+        if(json!=$scope.localModel.json) {
+          $scope.localModel.json = json;
+          $scope.updateEditors(false);
+          initLastRow();
+        }
+      })
+      
+      $scope.$watch('isFocusOnLastRow', function(value) {
+        if(value === true) { 
+          $timeout(function() {
+            $("#lastRowKey").focus();
+            $scope.isFocusOnLastRow=false;
+          });
+        }
+      })
+      
+      $scope.$watch('doCommitLastRow', function(value) {
+        if(value === true) { 
+          $timeout(function() {
+          $scope.commitLastRow();
+            $scope.doCommitLastRow=false;
+          });
+        }
+      })
+      
+      $scope.$watch('stillEditing', function(value) {
+        if(value === true) { 
+          $timeout(function() {
+            $scope.stillEditing=false;
+          });
+        }
+      })
+      
+      $scope.save = function() {
+        $scope.onChange({json:$scope.localModel.json});
+      }
+      
+      $scope.updateJsonFromTable = function() {
+        var json = {};
+        _.each($scope.argumentAsTable, function(entry) {
+          json[entry.key]=entry.value;
+        })
+        $scope.localModel.json = JSON.stringify(json);
+      }
+      
+      $scope.containsKeyInTable = function(newKey) {
+        var result=false;
+        _.each($scope.argumentAsTable, function(entry) {
+          if (newKey === entry.key) {
+            result = true;;
+          }
+        })
+        return result;
+      }
+      
+      $scope.addRowToTable = function(row) {
+        $scope.argumentAsTable.push(row)
+        $scope.updateJsonFromTable();
+        $scope.save();
+      }
+      
+      $scope.removeRowFromTable = function(key) {
+        $scope.argumentAsTable = _.reject($scope.argumentAsTable, function(entry){ return entry.key==key});
+        $scope.updateJsonFromTable();
+        $scope.save();
+      }
+      
+      $scope.onRowEdit = function() {
+        $scope.updateJsonFromTable();
+        $scope.save();
+      }
+      
+      $scope.onJsonFieldBlur = function() {
+        if($scope.updateEditors(true)) {
+          $scope.save();
+        }
+      }
+      
+      $scope.updateEditors = function(validateJson) {
+        try {
+          $scope.argumentAsTable = _.map(JSON.parse($scope.localModel.json), function(val, key) {
+            if(_.isObject(val) && _.has(val,'dynamic')) {
+              return {"key":key,"value":val};              
+            } else {
+              // support the static json format without dynamic expressions
+              return {"key":key,"value":{"value":val,dynamic:false}};              
+            }
+          });
+          return true;
+        }
+        catch(err) {
+          if(validateJson) {
+            Dialogs.showErrorMsg("Invalid JSON: " + err)            
+          }
+          return false;
+        }
+      }
+      
+      function initLastRow() {
+        // init last row as a static value
+        $scope.stillEditing=true;
+        $scope.lastRow = {key:"", value:{value:"",dynamic:false}}  
+        var inputElt = document.getElementById("lastRowKey");
+        if (inputElt !== null) {
+          inputElt.style.backgroundColor = "white";
+        }
+      }
+
+      $scope.commitLastRow = function() {
+        if ( $scope.lastRow !==  undefined && $scope.lastRow.key !== undefined) {
+          //avoid duplicates
+          if (!$scope.containsKeyInTable($scope.lastRow.key)) {
+            var row = $scope.lastRow;
+            $scope.addRowToTable({"key":row.key, "value":row.value});
+            initLastRow();
+            $scope.isFocusOnLastRow=true;
+          } else  {
+            if ($scope.lastRow.key !== "") {
+               Dialogs.showErrorMsg("The key must be unique!");
+            }
+            document.getElementById("lastRowKey").style.backgroundColor = "#faebd7";
+          }          
+        }
+      }
+      
+      $scope.onBlurFromLastRowKey = function() {
+        //only save on the last key blur events if key is set 
+        if ($scope.lastRow.key !== "") {
+          $scope.saveLastRow();
+        }
+      }
+      
+      $scope.saveLastRow = function() {
+        if ($scope.stillEditing) {
+        } else {
+             $scope.doCommitLastRow=true;
+        }
+      }
+      
+      $scope.lastRowTabKeyToValue = function(event) {
+        var x = event.which || event.keyCode;
+        if (x === 9 && !event.shiftKey) {
+          $scope.stillEditing=true;
+        }
+      }
+      
+      $scope.lastRowTabValueToKey = function(event) {
+        var x = event.which || event.keyCode;
+        if (x === 9 && (event.shiftKey || 
+                event.target.attributes['title'] === undefined || 
+                event.target.attributes['title'].nodeValue!=='Use function')) {
+          $scope.stillEditing=true;
+        }
+      }
+      
+      $scope.onClickOnLastRow = function () {
+        $scope.stillEditing=true;
+      }
+      
+      
     }
   }
-  
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss('cancel');
-  };
 })

@@ -7,28 +7,28 @@ import java.nio.file.Files;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 
 public class ImportManager {
 	
-	protected final ArtefactAccessor artefactAccessor;
-
-	public ImportManager(ArtefactAccessor artefactAccessor) {
+	protected final PlanAccessor planAccessor;
+	
+	public ImportManager(PlanAccessor planAccessor) {
 		super();
-		this.artefactAccessor = artefactAccessor;
+		this.planAccessor = planAccessor;
 	}
 
-	public void importArtefacts(File file, ObjectEnricher objectEnricher) throws IOException {
+	public void importPlans(File file, ObjectEnricher objectEnricher) throws IOException {
 		ObjectMapper mapper = JacksonMapperProvider.createMapper();
 		try(BufferedReader reader = Files.newBufferedReader(file.toPath())) {
 			String line;
 			while((line=reader.readLine())!=null) {
-				AbstractArtefact artefact = mapper.readValue(line, AbstractArtefact.class);
-				objectEnricher.accept(artefact);
-				artefactAccessor.save(artefact);
+				Plan plan = mapper.readValue(line, Plan.class);
+				objectEnricher.accept(plan);
+				planAccessor.save(plan);
 			}			
 		}
 	}

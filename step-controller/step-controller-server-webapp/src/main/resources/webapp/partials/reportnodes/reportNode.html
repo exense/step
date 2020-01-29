@@ -8,7 +8,7 @@
 	<div class="panel panel-default" style="margin-top:10px;">
 		<div class="panel-heading"><a ng-click="showArtefact = !showArtefact">Plan node</a></div>
 		<div class="panel-body" ng-if="showArtefact">			
-			<artefact-details artefactid="node.artefactID" readonly="false" />
+			<artefact-details artefact="node.resolvedArtefact" readonly="false" />
 		</div>
 	</div>
 </div>

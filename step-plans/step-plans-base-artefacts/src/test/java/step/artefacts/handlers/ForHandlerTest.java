@@ -21,7 +21,6 @@ package step.artefacts.handlers;
 import static junit.framework.Assert.assertEquals;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,7 +47,7 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		context.getVariablesManager().putVariable(
 				context.getReport(), "var", "val1");
 			
-		ForBlock f = add(new ForBlock());
+		ForBlock f = new ForBlock();
 		
 		IntSequenceDataPool conf = new IntSequenceDataPool();
 		conf.setEnd(new DynamicValue<Integer>(3));;
@@ -59,11 +58,13 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c->{
+		CheckArtefact check1 = new CheckArtefact(c->{
 				context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 				assertEquals(i.get(),(int)context.getVariablesManager().getVariableAsInteger("item"));
 				i.addAndGet(2);
-			}), f);
+			});
+		
+		f.addChild(check1);
 		
 		execute(f);
 		
@@ -88,7 +89,7 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 	public void testBreak() {
 		setupContext();
 			
-		ForBlock f = add(new ForBlock());
+		ForBlock f = new ForBlock();
 		IntSequenceDataPool conf = new IntSequenceDataPool();
 		conf.setEnd(new DynamicValue<Integer>(10));;
 		
@@ -96,14 +97,15 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c-> {
+		CheckArtefact check1 = new CheckArtefact(c-> {
 				if(i.get()==2) {
 					context.getVariablesManager().updateVariable("break", "true");
 				}
 				i.addAndGet(1);
 				context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
-			}), f);
+			});
 		
+		f.addChild(check1);
 		execute(f);
 		
 		ForBlockReportNode child = (ForBlockReportNode) getFirstReportNode();
@@ -116,7 +118,7 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 	public void testMaxFailedCount() {
 		setupContext();
 			
-		ForBlock f = add(new ForBlock());
+		ForBlock f = new ForBlock();
 		
 		IntSequenceDataPool conf = new IntSequenceDataPool();
 		conf.setEnd(new DynamicValue<Integer>(10));;
@@ -126,9 +128,11 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
-		CheckArtefact check1 = addAsChildOf(new CheckArtefact(c -> {
+		CheckArtefact check1 = new CheckArtefact(c -> {
 				context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED);
-			}), f);
+			});
+		
+		f.addChild(check1);
 		
 		execute(f);
 		

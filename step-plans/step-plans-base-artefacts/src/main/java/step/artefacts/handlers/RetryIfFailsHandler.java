@@ -20,7 +20,6 @@ package step.artefacts.handlers;
 
 import step.artefacts.RetryIfFails;
 import step.artefacts.Sequence;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -29,8 +28,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode, RetryIfFails testArtefact) {
-		ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-		Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+1, true);
+		Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+1, true);
 		delegateCreateReportSkeleton(iterationTestCase, parentNode);
 	}
 
@@ -42,8 +40,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 		long begin = System.currentTimeMillis();
 		
 		for(int count = 1; count<=testArtefact.getMaxRetries().get();count++) {
-			ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-			Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+count, true);
+			Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+count, true);
 			
 			ReportNode iterationReportNode = delegateExecute(iterationTestCase, node);
 			

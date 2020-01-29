@@ -30,6 +30,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
+import step.core.plans.Plan;
 
 public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
@@ -43,15 +44,17 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	public void init(ExecutionContext context) {
 		super.init(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		planLocator = new PlanLocator(context, context.getArtefactAccessor(), new SelectorHelper(dynamicJsonObjectResolver));
+		planLocator = new PlanLocator(context, context.getPlanAccessor(), new SelectorHelper(dynamicJsonObjectResolver));
 	}
 
 	
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode,	CallPlan testArtefact) {
 		beforeDelegation(parentNode, testArtefact);
-		AbstractArtefact a = selectArtefact(testArtefact);
-		delegateCreateReportSkeleton(a, parentNode);
+		Plan a = selectPlan(testArtefact);
+		
+		// TODO implement
+//		delegateCreateReportSkeleton(a, parentNode);
 	}
 
 	private void beforeDelegation(ReportNode parentNode, CallPlan testArtefact) {
@@ -70,14 +73,14 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	protected void execute_(ReportNode node, CallPlan testArtefact) {
 		beforeDelegation(node, testArtefact);
 
-		AbstractArtefact a = selectArtefact(testArtefact);
+		Plan a = selectPlan(testArtefact);
 		
-		ReportNode resultNode = delegateExecute(context, a, node);
+		ReportNode resultNode = delegateExecute(context, a.getRoot(), node);
 		node.setStatus(resultNode.getStatus());
 	}
 
-	protected AbstractArtefact selectArtefact(CallPlan testArtefact) {
-		return planLocator.selectArtefact(testArtefact);
+	protected Plan selectPlan(CallPlan testArtefact) {
+		return planLocator.selectPlan(testArtefact);
 	}
 
 	@Override

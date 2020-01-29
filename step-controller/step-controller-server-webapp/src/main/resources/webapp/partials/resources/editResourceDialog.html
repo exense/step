@@ -22,8 +22,12 @@
 					<a class="btn btn-default" href="rest/resources/{{resource.id}}/content">
 						<span class="glyphicon glyphicon-download-alt" aria-hidden="true" uib-tooltip="Download this file"></span>
 					</a>
+					<button type="button" class="btn btn-default" ng-click="openFileChooser()" uib-tooltip="Select from file system">
+						<span class="glyphicon glyphicon-folder-open"></span>
+					</button>
 				</div>
 			</div>
+			<input type="file" id="fileInput" style="display:none" ng-model="myFiles" ngf-select="upload($file)"/>
 			<uib-progressbar ng-if="uploading" max="100" value="progress"><b>{{progress}}%</b></uib-progressbar>
 		</div>
 		

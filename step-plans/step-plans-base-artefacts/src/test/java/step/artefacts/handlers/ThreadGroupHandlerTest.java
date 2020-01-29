@@ -105,10 +105,9 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 	
 	@Test
 	public void testMaxDurationExceeded() throws Exception {
-		long maxDuration = 50l;
 		AtomicInteger count = new AtomicInteger(0);
 
-		StringWriter writer = testMaxDuration(maxDuration, count);
+		StringWriter writer = testMaxDuration(50, 100, count);
 		
 		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
 		Assert.assertTrue(count.get()<10);
@@ -116,23 +115,22 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 	
 	@Test
 	public void testMaxDurationDefault() throws Exception {
-		long maxDuration = 0l;
 		AtomicInteger count = new AtomicInteger(0);
 
-		StringWriter writer = testMaxDuration(maxDuration, count);
+		StringWriter writer = testMaxDuration(0, 1000, count);
 		
 		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
-		Assert.assertTrue(count.get()==10);
+		Assert.assertEquals(10, count.get());
 	}
 
 
-	public StringWriter testMaxDuration(long maxDuration, AtomicInteger count) throws IOException {
+	public StringWriter testMaxDuration(long sleepTime, long maxDuration, AtomicInteger count) throws IOException {
 		ThreadGroup artefact = new ThreadGroup();
 		artefact.setMaxDuration(new DynamicValue<Integer>(100));
 		artefact.setIterations(new DynamicValue<Integer>(10));
 		
 		Sleep sleep = new Sleep();
-		sleep.setDuration(new DynamicValue<Long>(maxDuration));
+		sleep.setDuration(new DynamicValue<Long>(sleepTime));
 		
 		CheckArtefact check = new CheckArtefact(c-> {
 			count.incrementAndGet();

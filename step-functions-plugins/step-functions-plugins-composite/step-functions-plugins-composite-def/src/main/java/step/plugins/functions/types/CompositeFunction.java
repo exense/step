@@ -4,18 +4,18 @@ import step.functions.Function;
 
 public class CompositeFunction extends Function {
 
-	String artefactId;
+	protected String planId;
 	
 	public CompositeFunction() {
 		super();
 		executeLocally = true;
 	}
 
-	public String getArtefactId() {
-		return artefactId;
+	public String getPlanId() {
+		return planId;
 	}
 
-	public void setArtefactId(String artefactId) {
-		this.artefactId = artefactId;
+	public void setPlanId(String planId) {
+		this.planId = planId;
 	}
 }

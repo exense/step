@@ -162,6 +162,10 @@ angular.module('components',['step'])
         callOnChangeListener();
       }
       
+      $scope.openFileChooser = function() {
+        $("#fileInput").click();
+      }
+      
       function callOnChangeListener() {
         if($scope.stOnChange) {
           $timeout(function() {

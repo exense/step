@@ -2,48 +2,37 @@ package step.core.plans;
 
 import java.util.Collection;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.functions.Function;
 
-public class Plan {
+@JsonTypeInfo(use=Id.NAME,property="_class")
+public class Plan extends AbstractOrganizableObject {
 
 	protected AbstractArtefact root;
 	
-	protected Collection<AbstractArtefact> artefacts;
-	
 	protected Collection<Function> functions;
 	
-	public Plan(AbstractArtefact root, Collection<AbstractArtefact> artefacts) {
+	protected Collection<Plan> subPlans;
+	
+	public Plan(AbstractArtefact root) {
 		super();
 		this.root = root;
-		this.artefacts = artefacts;
 	}
 
 	public Plan() {
 		super();
 	}
 
-	@JsonIgnore
-	public String getId() {
-		return getRoot().getId().toString();
-	}
-	
 	public AbstractArtefact getRoot() {
 		return root;
 	}
 
 	public void setRoot(AbstractArtefact root) {
 		this.root = root;
-	}
-
-	public Collection<AbstractArtefact> getArtefacts() {
-		return artefacts;
-	}
-
-	public void setArtefacts(Collection<AbstractArtefact> artefacts) {
-		this.artefacts = artefacts;
 	}
 	
 	public Collection<Function> getFunctions() {
@@ -52,5 +41,13 @@ public class Plan {
 
 	public void setFunctions(Collection<Function> functions) {
 		this.functions = functions;
+	}
+
+	public Collection<Plan> getSubPlans() {
+		return subPlans;
+	}
+
+	public void setSubPlans(Collection<Plan> subPlans) {
+		this.subPlans = subPlans;
 	}
 }

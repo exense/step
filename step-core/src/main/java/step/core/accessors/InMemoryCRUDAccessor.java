@@ -1,7 +1,7 @@
 package step.core.accessors;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +15,11 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 	@Override
 	public T get(ObjectId id) {
 		return map.get(id);
+	}
+
+	@Override
+	public T get(String id) {
+		return get(new ObjectId(id));
 	}
 
 	@Override
@@ -67,7 +72,7 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 	}
 
 	@Override
-	public void save(List<? extends T> entities) {
+	public void save(Collection<? extends T> entities) {
 		entities.forEach(e->save(e));
 	}
 
@@ -100,5 +105,4 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 			}
 		}).spliterator();
 	}
-
 }

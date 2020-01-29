@@ -28,7 +28,6 @@ import step.artefacts.AbstractForBlock;
 import step.artefacts.Sequence;
 import step.artefacts.reports.ForBlockReportNode;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -62,10 +61,9 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					HashMap<String, Object> newVariable = new HashMap<>();
 					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 					
-					ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-					Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+rowCount);
+					Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+rowCount);
 					for(AbstractArtefact child:selectedChildren)
-						iterationTestCase.addChild(child.getId());
+						iterationTestCase.addChild(child);
 					
 					delegateCreateReportSkeleton(context, iterationTestCase, node, newVariable);
 				} finally {
@@ -127,10 +125,9 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 							HashMap<String, Object> newVariable = new HashMap<>();
 							newVariable.put(testArtefact.getItem().get(), workItem.getValue());
 							
-							ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-							Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration"+i);
+							Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+i);
 							for(AbstractArtefact child:selectedChildren) {
-								iterationTestCase.addChild(child.getId());
+								iterationTestCase.addChild(child);
 							}
 							
 							ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);

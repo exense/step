@@ -35,7 +35,7 @@ public class SetVarHandlerTest extends AbstractArtefactHandlerTest {
 	public void test() {
 		setupContext();
 		
-		Set set = add(new Set());
+		Set set = new Set();
 		set.setKey(new DynamicValue<String>("var"));
 		set.setValue(new DynamicValue<String>("val1"));
 
@@ -57,7 +57,7 @@ public class SetVarHandlerTest extends AbstractArtefactHandlerTest {
 	public void testObject() {
 		setupContext();
 		
-		Set set = add(new Set());
+		Set set = new Set();
 		set.setKey(new DynamicValue<String>("var"));
 		set.setValue(new DynamicValue<String>("2",""));
 
@@ -81,7 +81,7 @@ public class SetVarHandlerTest extends AbstractArtefactHandlerTest {
 	public void testNull() {
 		setupContext();
 		
-		Set set = add(new Set());
+		Set set = new Set();
 		set.setKey(new DynamicValue<String>("var"));
 		set.setValue(new DynamicValue<String>("null",""));
 

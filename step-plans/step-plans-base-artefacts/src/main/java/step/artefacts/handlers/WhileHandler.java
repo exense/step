@@ -27,7 +27,6 @@ import step.artefacts.Sequence;
 import step.artefacts.While;
 import step.artefacts.reports.WhileReportNode;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -66,8 +65,6 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 		DynamicValue<Boolean> condition = testArtefact.getCondition(); 
 		DynamicValue<Boolean> postCondition = testArtefact.getPostCondition();
 
-		ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-		
 		try {
 			while(reevaluateCondition(resolver, condition) && (condition.get()==null || condition.get()) 														// expression is true
 					&& 		  (timeout == 0 || System.currentTimeMillis() < maxTime)	// infinite Timeout or timeout not reached
@@ -77,10 +74,10 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 					break;
 				}
 				
-				Sequence iterationTestCase = artefactAccessor.createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+currIterationsCount);
+				Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+currIterationsCount);
 				iterationTestCase.setPacing(new DynamicValue<Long>(pacing));
 				for(AbstractArtefact child:selectedChildren)
-					iterationTestCase.addChild(child.getId());
+					iterationTestCase.addChild(child);
 
 				if(execution){
 					ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, new HashMap<>());

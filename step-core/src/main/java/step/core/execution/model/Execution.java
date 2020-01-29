@@ -44,7 +44,7 @@ public class Execution extends AbstractOrganizableObject {
 	
 	ReportNodeStatus result;
 	
-	String artefactID;
+	String planId;
 	
 	ImportResult importResult;
 	
@@ -102,12 +102,12 @@ public class Execution extends AbstractOrganizableObject {
 		this.status = status;
 	}
 
-	public String getArtefactID() {
-		return artefactID;
+	public String getPlanId() {
+		return planId;
 	}
 
-	public void setArtefactID(String artefactID) {
-		this.artefactID = artefactID;
+	public void setPlanId(String planId) {
+		this.planId = planId;
 	}
 
 	public ImportResult getImportResult() {
@@ -161,6 +161,6 @@ public class Execution extends AbstractOrganizableObject {
 	@Override
 	public String toString() {
 		return "Execution [startTime=" + startTime + ", endTime=" + endTime + ", description=" + description 
-				+ ", status=" + status + ", artefactID=" + artefactID + "]";
+				+ ", status=" + status + ", planID=" + planId + "]";
 	}
 }

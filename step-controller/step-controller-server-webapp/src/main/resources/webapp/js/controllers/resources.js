@@ -145,6 +145,10 @@ angular.module('resourcesControllers',['tables','step'])
       });
     }
   };
+  
+  $scope.openFileChooser = function() {
+    $("#fileInput").click();
+  }
 
   $scope.save = function () {
     $http.post("rest/resources",$scope.resource).then(function(response) {

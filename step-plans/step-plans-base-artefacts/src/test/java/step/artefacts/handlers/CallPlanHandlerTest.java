@@ -1,6 +1,5 @@
 package step.artefacts.handlers;
 
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
@@ -29,12 +28,12 @@ public class CallPlanHandlerTest extends AbstractArtefactHandlerTest {
 		
 		
 		Plan calledPlan = PlanBuilder.create().startBlock(check).endBlock().build();
-		context.getArtefactAccessor().save(new ArrayList<>(calledPlan.getArtefacts()));
+		context.getPlanAccessor().save(calledPlan);
 		
 		CallPlan callPlan = new CallPlan();
-		callPlan.setArtefactId(calledPlan.getRoot().getId().toString());
+		callPlan.setPlanId(calledPlan.getId().toString());
 		Plan plan = PlanBuilder.create().startBlock(callPlan).endBlock().build();
-		context.getArtefactAccessor().save(new ArrayList<>(plan.getArtefacts()));
+		context.getPlanAccessor().save(plan);
 		
 		ArtefactHandler.delegateCreateReportSkeleton(context, plan.getRoot(),context.getReport());
 		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());	

@@ -175,7 +175,7 @@
 			<div class="panel panel-default">
 				<div class="panel-body" ng-if="execution">
 					<execution-commands description="execution.description"
-						artefact="execution.executionParameters.artefact"
+						artefact="execution.executionParameters.repositoryObject"
 						included-testcases="getIncludedTestcases()"
 						on-execute="onTestExecutionStarted()" execution="execution" />
 				</div>
@@ -190,7 +190,7 @@
 				<div class="panel-body" ng-show="isShowPanel('executionDetails')">
 					<ul class="list-unstyled">
 						<li><strong>Plan</strong> <span><a
-								ng-href="#/root/artefacteditor/{{execution.artefactID}}">{{execution.description}}</a></span>
+								ng-href="#/root/plans/editor/{{execution.planId}}">{{execution.description}}</a></span>
 						</li>
 						<li
 							ng-repeat="(key, value) in execution.executionParameters.customParameters"><strong>{{key}}</strong>

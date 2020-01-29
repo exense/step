@@ -255,7 +255,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	protected void callChildrenArtefacts(CallFunctionReportNode node, CallFunction testArtefact) {
-		if(testArtefact.getChildrenIDs()!=null&&testArtefact.getChildrenIDs().size()>0) {
+		if(testArtefact.getChildren()!=null&&testArtefact.getChildren().size()>0) {
 			VariablesManager variableManager = context.getVariablesManager();
 			variableManager.putVariable(node, "callReport", node);
 			

@@ -2,20 +2,19 @@ package step.localrunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 
-import org.apache.poi.ss.formula.eval.NotImplementedException;
 import org.bson.types.ObjectId;
 
 import ch.exense.commons.app.Configuration;
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionRouter;
 import step.attachments.FileResolver;
-import step.core.artefacts.ArtefactManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -173,7 +172,7 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 			}
 
 			@Override
-			public void save(List<? extends Function> entities) {
+			public void save(Collection<? extends Function> entities) {
 				inMemoryFunctionAccessor.save(entities);
 			}
 
@@ -202,6 +201,11 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 				throw new UnsupportedOperationException("This method is currently not implemented");
 			}
 
+			@Override
+			public Function get(String id) {
+				return get(new ObjectId(id));
+			}
+
 		};	
 		
 		Configuration configuration = new Configuration();
@@ -210,7 +214,7 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(new LocalResourceManagerImpl()), gridClient);
 		functionTypeRegistry.registerFunctionType(type);
 		
-		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(context.getArtefactAccessor(), new ArtefactManager(context.getArtefactAccessor()));
+		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(context.getPlanAccessor());
 		functionTypeRegistry.registerFunctionType(compositeFunctionType);
 		
 		FunctionExecutionService functionExecutionService;

@@ -119,7 +119,7 @@ public class StagingRepositoryServices extends AbstractServices {
 		HashMap<String, String> repositoryParameters = new HashMap<>();
 		repositoryParameters.put("contextid", id);
 		
-		params.setArtefact(new RepositoryObjectReference(StagingRepositoryPlugin.STAGING_REPOSITORY, repositoryParameters));
+		params.setRepositoryObject(new RepositoryObjectReference(StagingRepositoryPlugin.STAGING_REPOSITORY, repositoryParameters));
 		params.setMode(ExecutionMode.RUN);
 		params.setDescription(context.plan.getRoot().getAttributes().get("name"));
 		params.setIsolatedExecution(isolate);

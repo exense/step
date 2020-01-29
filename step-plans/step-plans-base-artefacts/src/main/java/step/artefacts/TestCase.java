@@ -27,8 +27,9 @@ public class TestCase extends AbstractArtefact {
 
 	public TestCase() {
 		super();
-		setCreateSkeleton(true);
 	}
-	
-	
+
+	public boolean isCreateSkeleton() {
+		return true;
+	}
 }

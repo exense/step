@@ -4,15 +4,15 @@ import javax.json.JsonObject;
 
 import org.bson.types.ObjectId;
 
-import step.attachments.FileResolver;
 import ch.exense.commons.app.Configuration;
-import step.core.artefacts.InMemoryArtefactAccessor;
+import step.attachments.FileResolver;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.plans.InMemoryPlanAccessor;
 import step.core.plugins.ExecutionCallbacks;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
@@ -37,7 +37,7 @@ public class ContextBuilder {
 		context.setCurrentReportNode(root);
 		context.setExecutionParameters(new ExecutionParameters("dummy", null, ExecutionMode.RUN));
 		
-		context.setArtefactAccessor(new InMemoryArtefactAccessor());
+		context.setPlanAccessor(new InMemoryPlanAccessor());
 		context.setReportNodeAccessor(new InMemoryReportNodeAccessor());
 		
 		context.getReportNodeAccessor().save(root);

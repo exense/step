@@ -49,7 +49,7 @@ public class BaseArtefacts {
 	
 	public static CallPlan callPlan(String planId) {
 		CallPlan callPlan = new CallPlan();
-		callPlan.setArtefactId(planId);
+		callPlan.setPlanId(planId);
 		return callPlan;
 	}
 	

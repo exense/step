@@ -30,13 +30,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.artefacts.ArtefactFilter;
+import step.core.artefacts.WorkArtefactFactory;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicBeanResolver;
-import step.core.execution.ArtefactCache;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
@@ -57,6 +56,15 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public static String CONTINUE_EXECUTION = "tec.continueonerror";
 	public static String CONTINUE_EXECUTION_ONCE = "tec.continueonerror.once";
 
+	private WorkArtefactFactory workArtefactFactory = new WorkArtefactFactory();
+	
+	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {
+		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, false);
+	}
+
+	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name, boolean copyChildren) {
+		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, copyChildren);
+	}
 	
 	public ArtefactHandler() {
 		super();		
@@ -301,17 +309,11 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 	
 	public static List<AbstractArtefact> getChildren(AbstractArtefact artefact, ExecutionContext context) { 
-		ArtefactCache artefactCache = context.getArtefactCache();
 		DynamicBeanResolver dynamicBeanResolver = context.getDynamicBeanResolver();
-		ArtefactAccessor accessor = context.getArtefactAccessor();
 		List<AbstractArtefact> result = new ArrayList<>();
-		if(artefact.getChildrenIDs()!=null) {
-			for(ObjectId childrenID:artefact.getChildrenIDs()) {
-				AbstractArtefact child = artefactCache.get(childrenID.toString());
-				if(child==null) {
-					child = accessor.get(childrenID);
-					artefactCache.put(child);
-				}
+		List<AbstractArtefact> children = artefact.getChildren();
+		if(children!=null) {
+			for(AbstractArtefact child:children) {
 				result.add(dynamicBeanResolver.cloneDynamicValues(child));
 			}
 		}

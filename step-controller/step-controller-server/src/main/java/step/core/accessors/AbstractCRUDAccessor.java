@@ -19,7 +19,6 @@
 package step.core.accessors;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 
@@ -51,6 +50,7 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 		return entity;
 	}
 
+	@Override
 	public T get(String id) {
 		return get(new ObjectId(id));
 	}
@@ -110,7 +110,7 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 	}
 	
 	@Override
-	public void save(List<? extends T> entities) {
+	public void save(java.util.Collection<? extends T> entities) {
 		this.collection.insert(entities.toArray());
 	}
 }

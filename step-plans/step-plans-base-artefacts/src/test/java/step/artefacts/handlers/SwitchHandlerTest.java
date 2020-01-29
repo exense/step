@@ -43,19 +43,20 @@ public class SwitchHandlerTest extends AbstractArtefactHandlerTest {
 		
 		Switch select = new Switch();
 		select.setExpression(new DynamicValue<>("'val1'", ""));
-		add(select);
 		
 		Case c1 = new Case();
 		c1.setValue(new DynamicValue<String>("val1"));
-		addAsChildOf(c1, select);
+		select.addChild(c1);
 		
-		Set set1 = addAsChildOf(new Set(), c1);
+		Set set1 = new Set();
+		c1.addChild(set1);
 		
 		Case c2 = new Case();
 		c2.setValue(new DynamicValue<String>("val2"));
-		addAsChildOf(c1, select);
+		select.addChild(c2);
 		
-		Set set2 = addAsChildOf(new Set(), c1);
+		Set set2 = new Set();
+		c2.addChild(set2);
 		
 		execute(select);
 		
@@ -73,8 +74,8 @@ public class SwitchHandlerTest extends AbstractArtefactHandlerTest {
 	public void testFalse() {
 		setupContext();
 		
-		IfBlock block = add(new IfBlock("false"));
-		addAsChildOf(new Set(), block);
+		IfBlock block = new IfBlock("false");
+		block.addChild(new Set());
 
 		execute(block);
 		

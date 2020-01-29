@@ -29,8 +29,7 @@ import ch.exense.commons.app.Configuration;
 import step.core.access.UserAccessorImpl;
 import step.core.accessors.CollectionRegistry;
 import step.core.accessors.MongoClientSession;
-import step.core.artefacts.ArtefactAccessorImpl;
-import step.core.artefacts.ArtefactManager;
+import step.core.accessors.PlanAccessorImpl;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
@@ -92,12 +91,11 @@ public class Controller {
 		context.setMongoClientSession(mongoClientSession);
 		context.put(CollectionRegistry.class, new CollectionRegistry());
 		context.setExecutionAccessor(new ExecutionAccessorImpl(mongoClientSession));
-		context.setArtefactAccessor(new ArtefactAccessorImpl(mongoClientSession));
+		context.setPlanAccessor(new PlanAccessorImpl(mongoClientSession));
 		context.setReportAccessor(new ReportNodeAccessorImpl(mongoClientSession));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(mongoClientSession));
 		context.setUserAccessor(new UserAccessorImpl(mongoClientSession));
-		context.setArtefactManager(new ArtefactManager(context.getArtefactAccessor()));
-		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
+		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getPlanAccessor()));
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
 				configuration.getPropertyAsInteger("tec.expressions.warningthreshold"),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000),

@@ -33,9 +33,10 @@ public class IfBlockHandlerTest extends AbstractArtefactHandlerTest {
 	public void testTrue() {
 		setupContext();
 		
-		IfBlock block = add(new IfBlock("true"));
-		Set set = addAsChildOf(new Set(), block);
-
+		IfBlock block = new IfBlock("true");
+		Set set = new Set();
+		block.addChild(set);
+		
 		execute(block);
 		
 		ReportNode child = getFirstReportNode();
@@ -50,8 +51,9 @@ public class IfBlockHandlerTest extends AbstractArtefactHandlerTest {
 	public void testFalse() {
 		setupContext();
 		
-		IfBlock block = add(new IfBlock("false"));
-		addAsChildOf(new Set(), block);
+		IfBlock block = new IfBlock("false");
+		Set set = new Set();
+		block.addChild(set);
 
 		execute(block);
 		

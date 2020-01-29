@@ -145,7 +145,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 				var executionParams = {userID:$rootScope.context.userID};
 				executionParams.description = $scope.description;
 				executionParams.mode = simulate?'SIMULATION':'RUN';
-				executionParams.artefact = $scope.artefact();
+				executionParams.repositoryObject = $scope.artefact();
 				executionParams.exports = [];
 				executionParams.isolatedExecution = $scope.isolateExecution;
 				var includedTestcases = $scope.includedTestcases();
@@ -567,8 +567,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			  }
 			}
 				
-			$scope.initAutoRefresh = function (on, interval) {
-			  $scope.autorefresh = {enabled : on, interval : interval, refreshFct: refreshFct};
+			$scope.initAutoRefresh = function (on, interval, autoIncreaseTo) {
+			  $scope.autorefresh = {enabled : on, interval : interval, refreshFct: refreshFct, autoIncreaseTo: autoIncreaseTo};
 			}
 			$scope.autorefresh = {};
 			
@@ -590,7 +590,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						if(oldStatus && $scope.autorefresh.enabled) {
 							refreshAll();
 						} else if (oldStatus == null) {
-						  $scope.initAutoRefresh(false,0)
+						  $scope.initAutoRefresh(false,0,0)
 						}
 					}else{
 						$scope.init = false;
@@ -598,7 +598,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						$scope.isRealTime = 'Realtime';
 						$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, 'keyword', 'Keyword', false)];
 						if (oldStatus == null) {
-						  $scope.initAutoRefresh(true,5000)
+						  $scope.initAutoRefresh(true,100,5000)
 						}
 					}
 				}
@@ -828,7 +828,10 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
         {label:'30 seconds', value:30000}
       ];
       
+      var manuallyChanged = false;
+      
       $scope.changeRefreshInterval = function (newInterval){
+        manuallyChanged = true;
         $scope.autorefresh.interval = newInterval;
         if ($scope.autorefresh.interval > 0) {          
           $scope.autorefresh.enabled=true;
@@ -845,6 +848,10 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
         if($scope.autorefresh.enabled && $scope.autorefresh.interval > 0) {
           refreshTimer = $interval(function() {     
             $scope.autorefresh.refreshFct();
+            if ($scope.autorefresh.autoIncreaseTo && !manuallyChanged && $scope.autorefresh.interval < $scope.autorefresh.autoIncreaseTo) {
+              var newInterval = $scope.autorefresh.interval*2;
+              $scope.autorefresh.interval = (newInterval < $scope.autorefresh.autoIncreaseTo) ? newInterval : $scope.autorefresh.autoIncreaseTo;
+            }
           }, $scope.autorefresh.interval);
         }
       }
@@ -856,9 +863,9 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
         }
       }
       
-      $scope.$watch('autorefresh.interval',function(newStatus, oldStatus) {
-        $scope.stopTimer();  
-        $scope.startTimer();
+      $scope.$watch('autorefresh.interval',function(newInterval, oldInterval) {
+          $scope.stopTimer();  
+          $scope.startTimer();
       });
       
       //handle cases where parent disable autorefresh

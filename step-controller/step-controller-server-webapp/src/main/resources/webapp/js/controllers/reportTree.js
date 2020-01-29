@@ -101,7 +101,7 @@ angular.module('reportTree',['step','artefacts'])
       }
       
       function expandPath(path, callback) {
-        tree.open_node(path[0].reportNode.id, function() {
+        tree.open_node(path[0].id, function() {
           path.shift();
           if(path.length>0) { 
             $scope.handle.expandPath(path, callback);            
@@ -120,7 +120,7 @@ angular.module('reportTree',['step','artefacts'])
       
       $scope.handle.expandPath = function(path, reportTreeSettings) {
     	  expandPath(path.slice(0), function() {
-          selectNode(path[path.length-1].reportNode.id);
+          selectNode(path[path.length-1].id);
         })
       }
     },

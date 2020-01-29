@@ -10,11 +10,11 @@ import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 
-import step.client.AbstractRemoteClient;
-import step.client.credentials.ControllerCredentials;
-import step.client.planrepository.RemotePlanRepository;
-import step.client.reports.RemoteReportTreeAccessor;
 import ch.exense.commons.io.Poller;
+import step.client.AbstractRemoteClient;
+import step.client.accessors.RemotePlanAccessorImpl;
+import step.client.credentials.ControllerCredentials;
+import step.client.reports.RemoteReportTreeAccessor;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportTreeAccessor;
@@ -23,7 +23,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plans.Plan;
-import step.core.plans.PlanRepository;
+import step.core.plans.PlanAccessor;
 import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.repositories.RepositoryObjectReference;
@@ -36,16 +36,16 @@ import step.core.repositories.RepositoryObjectReference;
  */
 public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner {
 
-	private PlanRepository repository;
+	private PlanAccessor planAccessor;
 
 	public RemotePlanRunner() {
 		super();
-		repository = new RemotePlanRepository();
+		planAccessor = new RemotePlanAccessorImpl();
 	}
 
 	public RemotePlanRunner(ControllerCredentials credentials) {
 		super(credentials);
-		repository = new RemotePlanRepository(credentials);
+		planAccessor = new RemotePlanAccessorImpl(credentials);
 	}
 
 	@Override
@@ -55,20 +55,20 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
 
 	@Override
 	public PlanRunnerResult run(Plan plan, Map<String, String> executionParameters) {
-		repository.save(plan);
+		planAccessor.save(plan);
 		
-		String artefactId = plan.getRoot().getId().toString();
-		String name = plan.getRoot().getAttributes().get("name");
+		String planId = plan.getId().toString();
+		String name = plan.getAttributes().get("name");
 		
-		return runPlanById(executionParameters, artefactId, name);
+		return runPlanById(executionParameters, planId, name);
 	}
 	
-	public PlanRunnerResult runPlanById(Map<String, String> executionParameters, String artefactId, String name) {
+	public PlanRunnerResult runPlanById(Map<String, String> executionParameters, String planId, String name) {
 		ExecutionParameters params = new ExecutionParameters();
 		HashMap<String, String> repositoryParameters = new HashMap<>();
-		repositoryParameters.put("artefactid", artefactId);
+		repositoryParameters.put(RepositoryObjectReference.PLAN_ID, planId);
 		
-		params.setArtefact(new RepositoryObjectReference("local", repositoryParameters));
+		params.setRepositoryObject(new RepositoryObjectReference("local", repositoryParameters));
 		params.setMode(ExecutionMode.RUN);
 		params.setDescription(name);
 		params.setUserID(credentials.getUsername());

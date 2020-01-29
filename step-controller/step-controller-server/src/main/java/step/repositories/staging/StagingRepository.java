@@ -2,7 +2,6 @@ package step.repositories.staging;
 
 import java.util.Map;
 
-import step.core.artefacts.ArtefactAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.ImportResult;
@@ -33,11 +32,10 @@ public class StagingRepository implements Repository {
 	public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
 		StagingContext stagingContext = stagingContextAccessor.get(repositoryParameters.get("contextid"));
 		
-		ArtefactAccessor artefactAccessor = context.getArtefactAccessor();
-		stagingContext.plan.getArtefacts().forEach(a->artefactAccessor.save(a));
+		context.getPlanAccessor().save(stagingContext.plan);
 		
 		ImportResult result = new ImportResult();
-		result.setArtefactId(stagingContext.plan.getRoot().getId().toString());
+		result.setPlanId(stagingContext.plan.getId().toString());
 		
 		stagingContext.plan.getFunctions().iterator().forEachRemaining(f->((FunctionCRUDAccessor)context.get(FunctionAccessor.class)).save(f));
 		

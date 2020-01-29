@@ -1,25 +1,12 @@
 package step.migration.tasks;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import com.mongodb.Block;
 
-import step.artefacts.CallFunction;
-import step.artefacts.CallPlan;
 import step.core.Version;
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
-import step.core.artefacts.ArtefactAccessor;
-import step.core.scheduler.ExecutionTaskAccessor;
-import step.core.scheduler.ExecutionTaskAccessorImpl;
-import step.core.scheduler.ExecutiontTaskParameters;
-import step.functions.Function;
 import step.migration.MigrationTask;
 
 /**

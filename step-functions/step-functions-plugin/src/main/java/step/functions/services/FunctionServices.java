@@ -39,8 +39,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
-import org.bson.types.ObjectId;
-
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
@@ -134,19 +132,19 @@ public class FunctionServices extends AbstractServices {
 	}
 	
 	
-	@GET
-	@Path("/lookupByArtefact/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
-	public Function lookupByArtefactId(@PathParam("id") String id) {
-		CallFunction callFunction = (CallFunction) getContext().getArtefactAccessor().get(new ObjectId(id))	;
-		Function function = null;
-		try {
-			function = functionLocator.getFunction(callFunction);
-		} catch (RuntimeException e) {}
-		return function;
-	}
+//	@GET
+//	@Path("/lookupByArtefact/{id}")
+//	@Consumes(MediaType.APPLICATION_JSON)
+//	@Produces(MediaType.APPLICATION_JSON)
+//	@Secured(right="plan-read")
+//	public Function lookupByArtefactId(@PathParam("id") String id) {
+//		CallFunction callFunction = (CallFunction) getContext().getArtefactAccessor().get(new ObjectId(id))	;
+//		Function function = null;
+//		try {
+//			function = functionLocator.getFunction(callFunction);
+//		} catch (RuntimeException e) {}
+//		return function;
+//	}
 	
 	@POST
 	@Path("/find/many")

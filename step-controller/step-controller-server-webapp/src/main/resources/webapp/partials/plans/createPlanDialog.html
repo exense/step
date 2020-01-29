@@ -1,0 +1,19 @@
+<div class="modal-header">
+	<h3 class="modal-title">{{mode=='edit'?'Edit':'New'}} Plan</h3>
+</div>
+<div class="modal-body">
+	<strong>{{description}}</strong>
+	<form ng-submit="save()">
+		<st-custom-form st-model="plan" st-screen="artefactTable"/>
+		<div class="form-group">
+			<label>Type</label>
+			<select ng-model="type" ng-options="option as option for option in artefactTypes" class="form-control" />
+		</div>
+		<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
+	</form>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="save(true)">Save and edit</button>
+	<button class="btn btn-primary" type="button" ng-click="save(false)">Save</button>
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

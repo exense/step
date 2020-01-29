@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -41,7 +42,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	
 	protected String description;
 		
-	protected List<ObjectId> childrenIDs;
+	protected List<AbstractArtefact> children = new ArrayList<>();
 	 
 	@JsonSerialize(using = MapSerializer.class)
 	@JsonDeserialize(using = MapDeserializer.class) 
@@ -49,10 +50,6 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	
 	protected List<ObjectId> attachments;
 	
-	protected boolean createSkeleton = false;
-	
-	protected boolean root;
-		
 	public AbstractArtefact() {
 		super();
 		_id = new ObjectId();
@@ -75,46 +72,16 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		this.description = description;
 	}
 
-	public void addChild(ObjectId artefactID) {
-		createChildrenIDListIfNeeded();
-		childrenIDs.add(artefactID);
+	public List<AbstractArtefact> getChildren() {
+		return children;
 	}
 
-	private void createChildrenIDListIfNeeded() {
-		if(childrenIDs==null) {
-			childrenIDs = new ArrayList<>();
-		}
-	}
-	
-	public void removeChild(ObjectId artefactID) {
-		if(childrenIDs!=null) {
-			childrenIDs.remove(artefactID);
-		}
-	}
-	
-	public int indexOf(ObjectId artefactID) {
-		return childrenIDs!=null?childrenIDs.indexOf(artefactID):-1;
-	}
-	
-	public void add(int pos, ObjectId artefactID) {
-		createChildrenIDListIfNeeded();
-		childrenIDs.add(pos, artefactID);
+	public void setChildren(List<AbstractArtefact> children) {
+		this.children = children;
 	}
 
-	public List<ObjectId> getChildrenIDs() {
-		return childrenIDs;
-	}
-
-	public void setChildrenIDs(List<ObjectId> childrenIDs) {
-		this.childrenIDs = childrenIDs;
-	}
-
-	public boolean isRoot() {
-		return root;
-	}
-
-	public void setRoot(boolean root) {
-		this.root = root;
+	public boolean addChild(AbstractArtefact e) {
+		return children.add(e);
 	}
 
 	public Map<String, Object> getCustomAttributes() {
@@ -155,12 +122,9 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		return attachments;
 	}
 
+	@JsonIgnore
 	public boolean isCreateSkeleton() {
-		return createSkeleton;
-	}
-
-	public void setCreateSkeleton(boolean createSkeleton) {
-		this.createSkeleton = createSkeleton;
+		return false;
 	}
 
 	@Override

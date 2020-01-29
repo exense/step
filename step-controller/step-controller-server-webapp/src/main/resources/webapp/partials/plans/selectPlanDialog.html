@@ -1,0 +1,30 @@
+<div class="modal-body" id="ArtefactListCtrl">
+	<st-table collection="'plans'" handle="table" uid="'planListDialog'" persist-state="true">
+		<st-actions>
+		</st-actions>
+		<st-columns>
+			<st-column name="attributes.name">
+				<header>Name</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell>{{row.attributes.name}}</cell>
+			</st-column>
+			<st-column name="root._class">
+				<header>Type</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell>{{row.root._class}}</cell>
+			</st-column>
+			<st-column>
+				<header>Actions</header>
+				<cell>
+					<div class="btn-group">
+           				<button type="button" class="btn btn-default" aria-label="Left Align" ng-click="selectPlan(row._id.$oid)">
+           				<span class="glyphicon glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>
+          			</div>
+          		</cell>
+			</st-column>
+		</st-columns>
+	</st-table>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

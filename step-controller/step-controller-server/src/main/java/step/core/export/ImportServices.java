@@ -13,10 +13,10 @@ import javax.ws.rs.core.MediaType;
 
 import step.attachments.FileResolver;
 import step.attachments.FileResolver.FileHandle;
-import step.core.artefacts.ArtefactAccessor;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.plans.PlanAccessor;
 
 @Singleton
 @Path("import")
@@ -30,7 +30,7 @@ public class ImportServices extends AbstractServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		ArtefactAccessor accessor = getContext().getArtefactAccessor();
+		PlanAccessor accessor = getContext().getPlanAccessor();
 		importManager = new ImportManager(accessor);
 		fileResolver = getContext().get(FileResolver.class);
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
@@ -43,7 +43,7 @@ public class ImportServices extends AbstractServices {
 	@Secured(right="plan-write")
 	public void importArtefact(@QueryParam("path") String path) throws IOException {
 		try (FileHandle file = fileResolver.resolveFileHandle(path)) {
-			importManager.importArtefacts(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()));
+			importManager.importPlans(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()));
 		}
 	}
 }

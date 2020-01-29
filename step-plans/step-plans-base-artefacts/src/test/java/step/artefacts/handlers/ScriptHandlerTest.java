@@ -38,21 +38,21 @@ public class ScriptHandlerTest extends AbstractArtefactHandlerTest {
 	public void test() {
 		setupContext();
 		
-		Sequence s = add(new Sequence());
+		Sequence s = new Sequence();
 		
 		Set set1 = new Set();
 		set1.setKey(new DynamicValue<String>("var1"));
 		set1.setValue(new DynamicValue<>("[:]",""));
-		addAsChildOf(set1,s);
+		s.addChild(set1);
 
 		
 		Script g = new Script();
 		g.setScript("var1['test']='test'");
-		addAsChildOf(g, s);
+		s.addChild(g);
 		
 		Check c = new Check();
 		c.setExpression(new DynamicValue<>("var1['test']=='test'",""));
-		addAsChildOf(c	, s);
+		s.addChild(c);
 
 		execute(s);
 

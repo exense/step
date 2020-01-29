@@ -51,8 +51,8 @@ public class WhileHandlerTest extends AbstractArtefactHandlerTest {
 		
 		While block = new While("true");
 		block.setMaxIterations(new DynamicValue<>(2));
-		block = add(block);
-		Set set = addAsChildOf(new Set(), block);
+		Set set = new Set();
+		block.addChild(set);
 
 		execute(block);
 		
@@ -71,7 +71,6 @@ public class WhileHandlerTest extends AbstractArtefactHandlerTest {
 		
 		While block = new While("false");
 		block.setMaxIterations(new DynamicValue<>(1));
-		block = add(block);
 
 		execute(block);
 		

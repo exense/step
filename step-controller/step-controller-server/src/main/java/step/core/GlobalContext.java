@@ -22,12 +22,11 @@ import ch.exense.commons.app.Configuration;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoClientSession;
-import step.core.artefacts.ArtefactAccessor;
-import step.core.artefacts.ArtefactManager;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.EventManager;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.plans.PlanAccessor;
 import step.core.plugins.ControllerPluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
@@ -45,10 +44,8 @@ public class GlobalContext extends AbstractContext {
 	
 	private ExecutionAccessor executionAccessor;
 	
-	private ArtefactAccessor artefactAccessor;
-	
-	private ArtefactManager artefactManager;
-	
+	private PlanAccessor planAccessor;
+
 	private ReportNodeAccessor reportAccessor;
 	
 	private ExecutionTaskAccessor scheduleAccessor;
@@ -91,20 +88,12 @@ public class GlobalContext extends AbstractContext {
 		this.executionAccessor = executionAccessor;
 	}
 
-	public ArtefactAccessor getArtefactAccessor() {
-		return artefactAccessor;
+	public PlanAccessor getPlanAccessor() {
+		return planAccessor;
 	}
 
-	public void setArtefactAccessor(ArtefactAccessor artefactAccessor) {
-		this.artefactAccessor = artefactAccessor;
-	}
-
-	public ArtefactManager getArtefactManager() {
-		return artefactManager;
-	}
-
-	public void setArtefactManager(ArtefactManager artefactManager) {
-		this.artefactManager = artefactManager;
+	public void setPlanAccessor(PlanAccessor planAccessor) {
+		this.planAccessor = planAccessor;
 	}
 
 	public ReportNodeAccessor getReportAccessor() {

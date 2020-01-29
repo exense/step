@@ -26,7 +26,7 @@ import step.core.dynamicbeans.DynamicValue;
 @Artefact(handler = CallPlanHandler.class)
 public class CallPlan extends AbstractArtefact {
 	
-	private String artefactId;
+	private String planId;
 	
 	private DynamicValue<String> selectionAttributes = new DynamicValue<>("{}");
 		
@@ -34,15 +34,18 @@ public class CallPlan extends AbstractArtefact {
 	
 	public CallPlan() {
 		super();
-		setCreateSkeleton(true);
+	}
+	
+	public boolean isCreateSkeleton() {
+		return true;
 	}
 
-	public String getArtefactId() {
-		return artefactId;
+	public String getPlanId() {
+		return planId;
 	}
 
-	public void setArtefactId(String artefactId) {
-		this.artefactId = artefactId;
+	public void setPlanId(String planId) {
+		this.planId = planId;
 	}
 
 	public DynamicValue<String> getSelectionAttributes() {

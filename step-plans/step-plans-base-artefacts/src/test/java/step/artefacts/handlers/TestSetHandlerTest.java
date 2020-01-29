@@ -115,17 +115,16 @@ public class TestSetHandlerTest extends AbstractArtefactHandlerTest {
 		context.getVariablesManager().getVariable("var");
 		
 		TestSet set = new TestSet();
-		add(set);		
 		
 		int nChilds = 20;
 		
 		for(int j=0;j<nChilds;j++) {
-			addAsChildOf(new CheckArtefact(c-> {
+			set.addChild(new CheckArtefact(c-> {
 					synchronized (threadIdSet) {
 						threadIdSet.add(Thread.currentThread().getId());						
 					}
 					context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
-				}), set);			
+				}));
 		}
 		
 		createSkeleton(set);

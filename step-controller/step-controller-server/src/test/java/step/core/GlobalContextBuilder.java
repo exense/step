@@ -2,12 +2,12 @@ package step.core;
 
 import ch.exense.commons.app.Configuration;
 import step.core.accessors.CollectionRegistry;
-import step.core.artefacts.InMemoryArtefactAccessor;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.EventManager;
 import step.core.execution.InMemoryExecutionAccessor;
+import step.core.plans.InMemoryPlanAccessor;
 import step.core.plugins.ControllerPluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
@@ -29,10 +29,10 @@ public class GlobalContextBuilder {
 		
 		context.put(CollectionRegistry.class, new CollectionRegistry());
 		context.setExecutionAccessor(new InMemoryExecutionAccessor());
-		context.setArtefactAccessor(new InMemoryArtefactAccessor());
+		context.setPlanAccessor(new InMemoryPlanAccessor());
 		context.setReportAccessor(new InMemoryReportNodeAccessor());
 		context.setScheduleAccessor(new InMemoryExecutionTaskAccessor());
-		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getArtefactAccessor()));
+		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getPlanAccessor()));
 		
 		context.setEventManager(new EventManager());
 		

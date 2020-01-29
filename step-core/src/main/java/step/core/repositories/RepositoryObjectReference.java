@@ -25,6 +25,8 @@ public class RepositoryObjectReference {
 	String repositoryID;
 	
 	Map<String, String> repositoryParameters;
+	
+	public static final String PLAN_ID = "planid";
 
 	public RepositoryObjectReference() {
 		super();

@@ -32,7 +32,7 @@ import step.core.repositories.RepositoryObjectReference;
 
 public class ExecutionParameters extends AbstractOrganizableObject {
 	
-	RepositoryObjectReference artefact;
+	RepositoryObjectReference repositoryObject;
 	
 	List<RepositoryObjectReference> exports;
 	
@@ -59,6 +59,14 @@ public class ExecutionParameters extends AbstractOrganizableObject {
 		this.userID = userID;
 		this.artefactFilter = artefactFilter;
 		this.mode = mode;
+	}
+
+	public RepositoryObjectReference getRepositoryObject() {
+		return repositoryObject;
+	}
+
+	public void setRepositoryObject(RepositoryObjectReference respositoryObject) {
+		this.repositoryObject = respositoryObject;
 	}
 
 	public String getDescription() {
@@ -92,15 +100,7 @@ public class ExecutionParameters extends AbstractOrganizableObject {
 	public void setMode(ExecutionMode mode) {
 		this.mode = mode;
 	}
-
-	public RepositoryObjectReference getArtefact() {
-		return artefact;
-	}
-
-	public void setArtefact(RepositoryObjectReference artefact) {
-		this.artefact = artefact;
-	}
-
+	
 	public List<RepositoryObjectReference> getExports() {
 		return exports;
 	}

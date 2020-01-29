@@ -18,9 +18,12 @@
  *******************************************************************************/
 package step.core.artefacts;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import javax.annotation.PostConstruct;
 
 import org.reflections.Reflections;
 
@@ -56,7 +59,19 @@ public class ArtefactRegistry {
 	public Class<? extends AbstractArtefact> getArtefactType(String name) {
 		return register.get(name);
 	}
-	
+
+	public AbstractArtefact getArtefactTypeInstance(String type) throws Exception {
+		Class<? extends AbstractArtefact> clazz = getInstance().getArtefactType(type);		
+		AbstractArtefact sample = clazz.newInstance();
+		for(Method m:clazz.getMethods()) {
+			if(m.getAnnotation(PostConstruct.class)!=null) {
+				m.invoke(sample);
+			}
+		}
+		
+		return sample;
+	}
+
 	public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {
 		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
 		return annotation.name().length()>0?annotation.name():artefactClass.getSimpleName();
