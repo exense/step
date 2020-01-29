@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.plans.Plan;
 import step.core.repositories.ImportResult;
 
 
@@ -62,6 +63,9 @@ public class Execution extends AbstractOrganizableObject {
 		super();
 	}
 
+	/**
+	 * @return the start time of the execution in epoch format
+	 */
 	public long getStartTime() {
 		return startTime;
 	}
@@ -70,6 +74,9 @@ public class Execution extends AbstractOrganizableObject {
 		this.startTime = startTime;
 	}
 
+	/**
+	 * @return the end time of the execution in epoch format
+	 */
 	public Long getEndTime() {
 		return endTime;
 	}
@@ -78,6 +85,10 @@ public class Execution extends AbstractOrganizableObject {
 		this.endTime = endTime;
 	}
 
+	/**
+	 * @return the plain text description of the description as displayed 
+	 * in the column "Description" of the execution table 
+	 */
 	public String getDescription() {
 		return description;
 	}
@@ -86,6 +97,10 @@ public class Execution extends AbstractOrganizableObject {
 		this.description = description;
 	}
 
+	/**
+	 * @return the result (overall status) of the execution as displayed in
+	 * the column "Result" of the execution table
+	 */
 	public ReportNodeStatus getResult() {
 		return result;
 	}
@@ -94,6 +109,10 @@ public class Execution extends AbstractOrganizableObject {
 		this.result = result;
 	}
 
+	/**
+	 * @return the current status of the execution as displayed in the column
+	 * "Status" of the execution tbale
+	 */
 	public ExecutionStatus getStatus() {
 		return status;
 	}
@@ -102,6 +121,9 @@ public class Execution extends AbstractOrganizableObject {
 		this.status = status;
 	}
 
+	/**
+	 * @return the ID of the executed {@link Plan}
+	 */
 	public String getPlanId() {
 		return planId;
 	}
@@ -110,6 +132,9 @@ public class Execution extends AbstractOrganizableObject {
 		this.planId = planId;
 	}
 
+	/**
+	 * @return the result of the import phase from the external repository (ALM, Jira, etc)
+	 */
 	public ImportResult getImportResult() {
 		return importResult;
 	}
@@ -118,6 +143,9 @@ public class Execution extends AbstractOrganizableObject {
 		this.importResult = importResult;
 	}
 
+	/**
+	 * @return the result of export of the results to the external repository (ALM, Jira, etc)
+	 */
 	public List<ReportExport> getReportExports() {
 		return reportExports;
 	}
@@ -126,6 +154,9 @@ public class Execution extends AbstractOrganizableObject {
 		this.reportExports = reportExports;
 	}
 
+	/**
+	 * @return the ID of the scheduler task (if any) this execution has been triggered from 
+	 */
 	public String getExecutionTaskID() {
 		return executionTaskID;
 	}
@@ -134,6 +165,9 @@ public class Execution extends AbstractOrganizableObject {
 		this.executionTaskID = executionTaskID;
 	}
 
+	/**
+	 * @return the type of execution ("Default", "TestSet")
+	 */
 	public String getExecutionType() {
 		return executionType;
 	}
@@ -142,6 +176,10 @@ public class Execution extends AbstractOrganizableObject {
 		this.executionType = executionType;
 	}
 
+	/**
+	 * @return the list of parameters used by this execution as displayed in the tab "Execution parameters" of the 
+	 * Execution view
+	 */
 	public Map<String, String> getParameters() {
 		return parameters;
 	}
@@ -150,6 +188,9 @@ public class Execution extends AbstractOrganizableObject {
 		this.parameters = parameters;
 	}
 
+	/**
+	 * @return the {@link ExecutionParameters} used for this execution
+	 */
 	public ExecutionParameters getExecutionParameters() {
 		return executionParameters;
 	}
