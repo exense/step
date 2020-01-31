@@ -3,7 +3,17 @@
 		<form>
 			<div ng-include="'partials/artefacts/dataSourceConfiguration.html'"></div>
 			<dynamic-textfield label="'Number of threads'" on-save="save()" dynamic-value="artefact.threads" />
-			<dynamic-textfield label="'Row handle'" on-save="save()" dynamic-value="artefact.item" />
+			
+			<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="showHandles = !showHandles">Handles</a>
+			</div>
+			<div class="panel-body" ng-show="showHandles">
+				<dynamic-textfield label="'Row handle'" on-save="save()" dynamic-value="artefact.item" />
+				<dynamic-textfield label="'UserId variable (handle)'" on-save="save()" dynamic-value="artefact.userItem" />
+				<dynamic-textfield label="'Global counter variable (handle)'" on-save="save()" dynamic-value="artefact.globalCounter" />
+			</div>
+		</div>
 		</form>
 	</fieldset>
 </div>

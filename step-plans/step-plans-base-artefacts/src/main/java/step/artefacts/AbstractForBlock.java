@@ -39,6 +39,10 @@ public class AbstractForBlock extends AbstractArtefact {
 	
 	private DynamicValue<Integer> threads = new DynamicValue<Integer>(1);
 	
+	private DynamicValue<String> globalCounter = new DynamicValue<String>("gcounter");
+
+	private DynamicValue<String> userItem = new DynamicValue<String>("userId");
+	
 	@PostConstruct
 	public void init() {
 		dataSource = DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
@@ -83,5 +87,21 @@ public class AbstractForBlock extends AbstractArtefact {
 
 	public void setItem(DynamicValue<String> item) {
 		this.item = item;
+	}
+
+	public DynamicValue<String> getGlobalCounter() {
+		return globalCounter;
+	}
+	
+	public void setGlobalCounter(DynamicValue<String> globalCounter) {
+		this.globalCounter = globalCounter;
+	}
+
+	public DynamicValue<String> getUserItem() {
+		return userItem;
+	}
+
+	public void setUserItem(DynamicValue<String> userItem) {
+		this.userItem = userItem;
 	}
 }

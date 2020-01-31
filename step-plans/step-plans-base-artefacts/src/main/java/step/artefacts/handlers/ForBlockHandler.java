@@ -34,6 +34,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
+import step.threadpool.IntegerSequenceIterator;
 import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
@@ -60,6 +61,10 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					
 					HashMap<String, Object> newVariable = new HashMap<>();
 					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
+					//Adding new handles here to avoid the groovy eval exception while creating skeleton
+					//Need to check what this really implies
+					newVariable.put(testArtefact.getGlobalCounter().get(), 1);
+					newVariable.put(testArtefact.getUserItem().get(), 1);
 					
 					Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+rowCount);
 					for(AbstractArtefact child:selectedChildren)
@@ -113,41 +118,52 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 			AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
 			
 			Integer numberOfThreads = testArtefact.getThreads().get();
+			Iterator<Integer> groupIterator = new IntegerSequenceIterator(1,numberOfThreads,1);
 			
 			ThreadPool threadPool = context.get(ThreadPool.class);
-			threadPool.consumeWork(workItemIterator, new WorkerItemConsumerFactory<DataPoolRow>() {
+			threadPool.consumeWork(groupIterator, new WorkerItemConsumerFactory<Integer>() {
 				@Override
-				public Consumer<DataPoolRow> createWorkItemConsumer(WorkerController<DataPoolRow> control) {
-					return workItem -> {
-						try {
-							int i = loopsCounter.incrementAndGet();
-
-							HashMap<String, Object> newVariable = new HashMap<>();
-							newVariable.put(testArtefact.getItem().get(), workItem.getValue());
-							
-							Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+i);
-							for(AbstractArtefact child:selectedChildren) {
-								iterationTestCase.addChild(child);
+				public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> groupController) {
+					return groupID -> {
+						threadPool.consumeWork(workItemIterator, new WorkerItemConsumerFactory<DataPoolRow>() {
+							@Override
+							public Consumer<DataPoolRow> createWorkItemConsumer(WorkerController<DataPoolRow> control) {
+								return workItem -> {
+									try {
+										int i = loopsCounter.incrementAndGet();
+			
+										HashMap<String, Object> newVariable = new HashMap<>();
+										newVariable.put(testArtefact.getItem().get(), workItem.getValue());
+										//Update other handles
+										newVariable.put(testArtefact.getGlobalCounter().get(), i);
+										newVariable.put(testArtefact.getUserItem().get(), groupID);
+										
+										Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+i);
+										for(AbstractArtefact child:selectedChildren) {
+											iterationTestCase.addChild(child);
+										}
+										
+										ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
+										
+										reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
+										
+										if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
+											failedLoopsCounter.incrementAndGet();
+										}
+			
+										boolean forInterrupted = Boolean.parseBoolean((String)context.getVariablesManager().getVariable(node, BREAK_VARIABLE, false));
+										Integer maxFailedLoops = testArtefact.getMaxFailedLoops().get();
+										if(forInterrupted || (maxFailedLoops!=null&&failedLoopsCounter.get()>=maxFailedLoops)) {
+											control.interrupt();
+										}
+									} catch(Exception e) {
+										failWithException(node, e);
+									} finally {
+										workItem.commit();
+									}
+								};
 							}
-							
-							ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
-							
-							reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
-							
-							if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
-								failedLoopsCounter.incrementAndGet();
-							}
-
-							boolean forInterrupted = Boolean.parseBoolean((String)context.getVariablesManager().getVariable(node, BREAK_VARIABLE, false));
-							Integer maxFailedLoops = testArtefact.getMaxFailedLoops().get();
-							if(forInterrupted || (maxFailedLoops!=null&&failedLoopsCounter.get()>=maxFailedLoops)) {
-								control.interrupt();
-							}
-						} catch(Exception e) {
-							failWithException(node, e);
-						} finally {
-							workItem.commit();
-						}
+						}, 1);
 					};
 				}
 			}, numberOfThreads);
