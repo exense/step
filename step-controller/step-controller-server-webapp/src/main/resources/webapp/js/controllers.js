@@ -544,14 +544,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 			refreshAll();
 
-			$scope.$watch('autorefresh.enabled',function(newStatus, oldStatus) {
-				// if the timer has already been canceled and autorefresh has been clicked => refresh
-				if(newStatus) {
-					refreshAll();
-				}
-				$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': newStatus });
-			})
-
 			var refreshFct = function() {
 			  if ($scope.autorefresh.enabled) {
   			  refreshExecution();
@@ -618,20 +610,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					});
 				}
 			});
-			
-			$scope.$on('manager-fully-loaded', function () {
-				//console.log('<- manager-fully-loaded')
-				
-				$scope.$watch('autorefresh.enabled',function(newStatus) {
-					$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': newStatus });
-				});
-
-				$scope.$watch('execution.status',function(newStatus, oldStatus) {
-					if(newStatus=='ENDED') {
-						$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': false });
-					}
-				});
-			});
 
 			$scope.vizRelated = {lockdisplay: false};
 			$scope.unwatchlock = $scope.$watch('vizRelated.lockdisplay',function(newvalue) {
@@ -648,7 +626,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				//initializing dashboard only when hitting the performance tab
 				if(newvalue === 2){
 					if($scope.execution.status!=='ENDED') {
-						$scope.$broadcast('globalsettings-refreshToggle', { 'new': $scope.autorefresh.enabled });						
+					  //must handle this here until we have a dedicated controller per tab
+					  $scope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
+            $scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });						
 					}
 					
 					$(document).ready(function () {
@@ -864,14 +844,23 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
       }
       
       $scope.$watch('autorefresh.interval',function(newInterval, oldInterval) {
+        if (oldInterval != newInterval || !angular.isDefined(refreshTimer)){
           $scope.stopTimer();  
+          $rootScope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
           $scope.startTimer();
+        }
       });
       
-      //handle cases where parent disable autorefresh
       $scope.$watch('autorefresh.enabled',function(newStatus, oldStatus) {
-        if (angular.isDefined(newStatus) && !newStatus && newStatus != oldStatus) {
-          $scope.autorefresh.interval = 0;
+        if (angular.isDefined(newStatus) && newStatus != oldStatus) {
+          if (newStatus) {
+            //refresh as soon as autorefresh is re-activated
+            $scope.autorefresh.refreshFct();
+          } else {
+            //In case autorefresh is stopped by parent, we must set interval to 0 explicitly
+            $scope.autorefresh.interval = 0;
+          } 
+          $rootScope.$broadcast('globalsettings-globalRefreshToggle', { 'new': newStatus });
         }
       });
 
