@@ -35,18 +35,24 @@ public class FileDataPoolImpl extends DataSet<DirectoryDataPool> {
 	Iterator<File> fileIterator;
 	
 	File currentFile;
+
+	private File folder;
 	
 	@Override
 	public void init() {
 		super.init();
-		File folder = new File(configuration.getFolder().get());
+		folder = new File(configuration.getFolder().get());
+		initFileIterator();
+	}
+
+	private void initFileIterator() {
 		List<File> fileList = Arrays.asList(folder.listFiles());
 		fileIterator = fileList.iterator();
 	}
 	
 	@Override
 	public void reset() {
-		throw new RuntimeException("Reset method not implemented for this DataSet type");
+		initFileIterator();
 	}
 	
 	public class ExtendedFile {
