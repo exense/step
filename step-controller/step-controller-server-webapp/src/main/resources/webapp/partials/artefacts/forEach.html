@@ -3,6 +3,7 @@
 		<form>
 			<div ng-include="'partials/artefacts/dataSourceConfiguration.html'"></div>
 			<dynamic-textfield label="'Number of threads'" on-save="save()" dynamic-value="artefact.threads" />
+			<dynamic-textfield label="'Maximum number of failures'" on-save="save()" dynamic-value="artefact.maxFailedLoops" />
 			
 			<div class="panel panel-default">
 			<div class="panel-heading">
