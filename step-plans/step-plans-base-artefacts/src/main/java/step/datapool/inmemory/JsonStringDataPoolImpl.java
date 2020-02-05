@@ -75,7 +75,7 @@ public class JsonStringDataPoolImpl extends DataSet<JsonStringDataPoolConfigurat
 			throw new RuntimeException("Incorrect map content. Please follow the pattern { \"a\" : [\"va1\", \"va2\", \"va3\"], \"b\" : [\"vb1\", \"vb2\", \"vb3\"] }. Original exception=" + e.getMessage());
 		}
 		cursor++;
-		return row;
+		return row.size()>0?row:null;
 	}
 
 	@Override

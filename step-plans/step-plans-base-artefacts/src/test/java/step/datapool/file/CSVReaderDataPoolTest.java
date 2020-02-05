@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.datapool.file;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +38,15 @@ import step.datapool.DataSet;
 
 public class CSVReaderDataPoolTest {
 
+	@Test
+	public void testEmpty() {
+		
+		DataSet<?> pool = getDataPool("empty.csv");
+		Assert.assertNull(pool.next());
+		
+		pool.close();
+	}
+	
 	@Test
 	public void testCSVReaderDataPool() {		
 		DataSet<?> pool = getDataPool("File.csv");

@@ -32,7 +32,21 @@ import step.datapool.DataSet;
 
 public class JsonStringDataPoolTest{
 
+	@Test
+	public void testEmpty() {;
 
+		JsonStringDataPoolConfiguration poolConf = new JsonStringDataPoolConfiguration();
+		poolConf.setJson(new DynamicValue<String>("{}"));
+		
+		DataSet<?> pool = DataPoolFactory.getDataPool("json", poolConf, ContextBuilder.createLocalExecutionContext());
+
+		pool.init();
+
+		Assert.assertNull(pool.next());
+		
+		pool.close();
+	}
+	
 	@SuppressWarnings("rawtypes")
 	@Test
 	public void testJsonDataPool() {
@@ -50,6 +64,4 @@ public class JsonStringDataPoolTest{
 		
 		Assert.assertEquals("vb2", ((Map)row.getValue()).get("b"));
 	}
-	
-	
 }

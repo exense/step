@@ -53,6 +53,22 @@ public class DirectoryDataPoolTest {
 	public void after() {
 		pool.close();
 	}
+
+	@Test
+	public void testEmpty() {
+
+		File fileEmpty = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "emptyFolder");
+		
+		DirectoryDataPool conf = new DirectoryDataPool();
+		conf.setFolder(new DynamicValue<String>(fileEmpty.getAbsolutePath()));
+
+		DataSet<?> poolEmpty =  DataPoolFactory.getDataPool("folder", conf, ContextBuilder.createLocalExecutionContext());
+		poolEmpty.init();
+		
+		Assert.assertNull(poolEmpty.next());
+		
+		poolEmpty.close();
+	}
 	
 	@Test
 	public void testDirectoryDataPoolTestToString() {		

@@ -21,58 +21,62 @@ import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolRow;
 
 public class CSVReaderDataPool extends FileReaderDataPool {
-	
+
 	public static final Logger logger = LoggerFactory.getLogger(CSVReaderDataPool.class);
-	
+
 	protected Vector<String> headers;
 	protected String delimiter;
 
 	// indicates if a write operation using RowWrapper.put occurred
 	protected AtomicBoolean hasChanges = new AtomicBoolean(false);
-	// the temporary file in which the new file containing the write operations is written to
+	// the temporary file in which the new file containing the write operations is
+	// written to
 	protected File tempFile;
 	protected PrintWriter tempFileWriter;
-		
+
 	public CSVReaderDataPool(CSVDataPool configuration) {
 		super(configuration);
 		this.delimiter = configuration.getDelimiter().get();
 	}
-	
+
 	@Override
 	public void init() {
 		super.init();
-		
-		// Write operations to rows (RowWrapper.put) are written to a temporary file which 
+
+		// Write operations to rows (RowWrapper.put) are written to a temporary file
+		// which
 		// overrides the initial file when the data pool is closed
 		tempFile = new File(filePath + ".tmp");
 		try {
 			tempFileWriter = new PrintWriter(new BufferedWriter(new FileWriter(tempFile)));
-			
+
 			// write headers to the temporary file
-			Iterator<String> iterator = headers.iterator();
-			while(iterator.hasNext()) {
-				String header = iterator.next();
-				tempFileWriter.write(header);
-				if(iterator.hasNext()) {
-					tempFileWriter.write(delimiter);
+			if (headers!=null) {
+				Iterator<String> iterator = headers.iterator();
+				while (iterator.hasNext()) {
+					String header = iterator.next();
+					tempFileWriter.write(header);
+					if (iterator.hasNext()) {
+						tempFileWriter.write(delimiter);
+					}
 				}
 			}
 			tempFileWriter.println();
 		} catch (IOException e) {
-			logger.error("Error while creating temporary file "+tempFile.getAbsolutePath(), e);
+			logger.error("Error while creating temporary file " + tempFile.getAbsolutePath(), e);
 		}
 	}
 
 	@Override
 	public void close() {
 		super.close();
-		
+
 		try {
 			tempFileWriter.close();
 			// persist the changes if necessary
-			if(hasChanges.get()) {
+			if (hasChanges.get()) {
 				// move the initial file
-				File initialFile = new File(filePath+".initial");
+				File initialFile = new File(filePath + ".initial");
 				Files.move(new File(filePath), initialFile);
 				// replace the initial file by the temporary file containing the changes
 				Files.move(tempFile, new File(filePath));
@@ -88,16 +92,16 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 	@Override
 	public void writeRow(DataPoolRow row) throws IOException {
 		super.writeRow(row);
-		
+
 		Object value = row.getValue();
-		if(value != null && value instanceof CSVRowWrapper) {
+		if (value != null && value instanceof CSVRowWrapper) {
 			CSVRowWrapper csvRow = (CSVRowWrapper) value;
-			
+
 			Iterator<String> iterator = headers.iterator();
-			while(iterator.hasNext()) {
+			while (iterator.hasNext()) {
 				String header = iterator.next();
 				tempFileWriter.print(csvRow.rowData.get(header).toString());
-				if(iterator.hasNext()) {
+				if (iterator.hasNext()) {
 					tempFileWriter.print(delimiter);
 				}
 			}
@@ -107,15 +111,16 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 
 	@Override
 	public Object postProcess(String line) {
-		
+
 		HashMap<String, Object> map = new HashMap<String, Object>();
-		try{
-		Vector<String> csv = splitCSV(line); 
-		for(int i = 0; i< csv.size(); i++){
-			map.put(headers.get(i), csv.get(i));
-		}
-		}catch(ArrayIndexOutOfBoundsException e){
-			throw new RuntimeException(e.getMessage() + " : headers=" + headers + "; row=" + line + "; delimiter=" + delimiter);
+		try {
+			Vector<String> csv = splitCSV(line);
+			for (int i = 0; i < csv.size(); i++) {
+				map.put(headers.get(i), csv.get(i));
+			}
+		} catch (ArrayIndexOutOfBoundsException e) {
+			throw new RuntimeException(
+					e.getMessage() + " : headers=" + headers + "; row=" + line + "; delimiter=" + delimiter);
 		}
 
 		return new CSVRowWrapper(super.lineNr, map);
@@ -123,23 +128,24 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 
 	public class CSVRowWrapper extends SimpleStringMap {
 
-		private HashMap<String,Object> rowData;
+		private HashMap<String, Object> rowData;
 
-		public CSVRowWrapper(int rowNum, HashMap<String,Object> row) {
+		public CSVRowWrapper(int rowNum, HashMap<String, Object> row) {
 			super();
 
-			if(rowNum < 1)
+			if (rowNum < 1)
 				throw new RuntimeException("Invalid row number:" + rowNum);
-			this.rowData = row; 
+			this.rowData = row;
 		}
 
 		@Override
-		public String put(String key, String value){
-			if(isRowCommitEnabled) {
+		public String put(String key, String value) {
+			if (isRowCommitEnabled) {
 				rowData.put(key, value);
-				hasChanges.set(true);			
+				hasChanges.set(true);
 			} else {
-				throw new RuntimeException("Row commit disabled. Writing to CSV data sets is not supported in this mode.");
+				throw new RuntimeException(
+						"Row commit disabled. Writing to CSV data sets is not supported in this mode.");
 			}
 			return value;
 		}
@@ -158,27 +164,27 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 		public boolean isEmpty() {
 			return rowData.isEmpty();
 		}
-		
+
 		@Override
 		public Set<String> keySet() {
 			return new HashSet<>(headers);
 		}
 
-
 	}
 
 	public Vector<String> getHeaders(String readOneLine) {
-		return splitCSV(readOneLine);
+		return readOneLine == null ? null : splitCSV(readOneLine);
 	}
-	
+
 	public Vector<String> splitCSV(String readOneLine) {
+
 		Vector<String> v = new Vector<String>();
-		for(String s : readOneLine.split(this.delimiter,-1))
+		for (String s : readOneLine.split(this.delimiter, -1))
 			v.add(s);
-		
+
 		return v;
 	}
-	
+
 	@Override
 	public void doFirst_() {
 		this.headers = getHeaders(readOneLine());
