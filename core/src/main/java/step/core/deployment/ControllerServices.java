@@ -343,7 +343,7 @@ public class ControllerServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executions/findByCritera")
-	@Secured(right="execution-write")
+	@Secured(right="report-read")
 	public List<Execution> findByCritera(FindByCriteraParam param) {
 		return ((ExecutionAccessorImpl) getContext().getExecutionAccessor()).findByCritera(param.getCriteria(), 
 				param.getStart().getTime(), param.getEnd().getTime(), 
