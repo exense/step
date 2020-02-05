@@ -1,5 +1,6 @@
 package step.client.accessors;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -142,18 +143,34 @@ public class RemoteExecutionAccessor extends AbstractRemoteClient implements Exe
         		}); 
             } 
         };
-        
-		
 	}
 
 	@Override
 	public Iterable<Execution> findLastStarted(int limit) {
-		throw notImplemented();
+		List<Execution> allExec = getAllArray();
+		
+		allExec.sort((e1, e2) -> {
+			long e1T = e1.getStartTime();
+			long e2T = e2.getStartTime();
+				
+			if (e1T == e2T) {
+				return 0;
+			} else if (e1.getStartTime() < e2.getStartTime()) { 
+				return 1;
+			} else { 
+				return -1;
+			}
+		});
+
+		if (allExec.size() > limit)
+			return allExec.subList(0, limit);
+		else
+			return allExec;
 	}
 
 	@Override
 	public Iterable<Execution> findLastEnded(int limit) {
-		throw notImplemented();
+		return getAllArray(limit);
 	}
 
 	@Override
@@ -163,7 +180,7 @@ public class RemoteExecutionAccessor extends AbstractRemoteClient implements Exe
 
 	@Override
 	public Iterator<Execution> getAll() {
-		throw notImplemented();
+		return getAllArray().iterator();
 	}
 
 	@Override
@@ -184,5 +201,22 @@ public class RemoteExecutionAccessor extends AbstractRemoteClient implements Exe
 	@Override
 	public Spliterator<Execution> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
 		throw notImplemented();
+	}
+
+	private List<Execution> getAllArray() {
+		return getAllArray(-1);
+	}
+
+	private GenericType<ArrayList<Execution>> listType = new GenericType<ArrayList<Execution>>() {
+	};
+	
+	private List<Execution> getAllArray(int limit) {
+		Builder b;
+		if (limit < 0) {
+			b = requestBuilder("/rest/controller/executions");	
+		} else {
+			b = requestBuilder("/rest/controller/executions?limit="+limit);
+		}
+		return executeRequest(() -> b.get(listType));
 	}
 }
