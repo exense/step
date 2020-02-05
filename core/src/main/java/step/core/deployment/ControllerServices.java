@@ -54,6 +54,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionRunnable;
 import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.ArtefactInfo;
@@ -338,7 +339,17 @@ public class ControllerServices extends AbstractServices {
 		return result;
 	}
 	
-	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/executions/findByCritera")
+	@Secured(right="execution-write")
+	public List<Execution> findByCritera(FindByCriteraParam param) {
+		return ((ExecutionAccessorImpl) getContext().getExecutionAccessor()).findByCritera(param.getCriteria(), 
+				param.getStart().getTime(), param.getEnd().getTime(), 
+				param.getSkip(), param.getLimit());
+	}
+
 	@POST
 	@Path("/repository/artefact/info")
 	@Consumes(MediaType.APPLICATION_JSON)
