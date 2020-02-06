@@ -331,27 +331,6 @@ public class ControllerServices extends AbstractServices {
 		return getContext().getRepositoryObjectManager().getReport(report);
 	}
 	
-//	@GET
-//	@Path("/artefact/lookupPlan/{id}")
-//	@Consumes(MediaType.APPLICATION_JSON)
-//	@Produces(MediaType.APPLICATION_JSON)
-//	@Secured(right="plan-read")
-//	public AbstractArtefact lookupPlan(@PathParam("id") String id) {
-//		throw new RuntimeException();
-		// TODO implement
-//		AbstractArtefact planArtefact=null;
-//		try {
-//			ArtefactAccessor accessor = getContext().getPlanAccessor();
-//			CallPlan artefact = (CallPlan) accessor.get(id);
-//			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
-//			SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-//			PlanLocator planLocator = new PlanLocator(null,accessor,selectorHelper);
-//			return planLocator.selectPlan(artefact);
-//		} catch (RuntimeException e) {}
-//		return planArtefact;
-//	}
-
-	
 	@GET
 	@Path("/artefact/types")
 	@Consumes(MediaType.APPLICATION_JSON)
