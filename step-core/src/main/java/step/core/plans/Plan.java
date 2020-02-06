@@ -9,7 +9,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.functions.Function;
 
-@JsonTypeInfo(use=Id.NAME,property="_class")
+@JsonTypeInfo(use=Id.CLASS,property="_class")
 public class Plan extends AbstractOrganizableObject {
 
 	protected AbstractArtefact root;

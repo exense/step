@@ -23,6 +23,35 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
   EntityRegistry.registerEntity('Plan', 'artefact', 'artefacts', 'rest/controller/artefact/', 'rest/controller/artefact', 'datatable', '/partials/selection/selectDatatableEntity.html');
 })
 
+.factory('PlanTypeRegistry', function() {
+
+  var api = {};
+
+  var registry = {};
+  
+  api.register = function(type, label, editor) {
+    registry[type] = {
+      editor: editor,
+      label: label,
+      type: type
+    };
+  };
+  
+  api.getEditorView = function(type){
+    return registry[type].editor;
+  };
+  
+  api.getPlanTypes = function() {
+    return _.values(registry);
+  }
+  
+  api.getPlanType = function(typeName) {
+    return registry[typeName];
+  }
+
+  return api;
+})
+
 .controller('PlansCtrl', function($rootScope, $scope, stateStorage) {
   stateStorage.push($scope, 'plans', {}); 
 
@@ -31,11 +60,10 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       $scope.selectView = $scope.$state
     }
   });
-
 })
 
 .controller('PlanListCtrl', function($rootScope, $scope, $http, $location, $uibModal, stateStorage, ExportService, Dialogs, PlanDialogs, AuthService) {
-    stateStorage.push($scope, 'plans', {});	
+    stateStorage.push($scope, 'list', {});	
     $scope.authService = AuthService;
     
     $scope.tableHandle = {};
@@ -134,18 +162,22 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
   return dialogs;
 })
 
-.controller('createPlanCtrl', function ($scope, $uibModalInstance, $location, $http, AuthService, ScreenTemplates) {
+.controller('createPlanCtrl', function ($scope, $uibModalInstance, $location, $http, AuthService, ScreenTemplates, PlanTypeRegistry) {
   $scope.AuthService = AuthService;
   
-  $scope.type = 'Sequence';
+  $scope.template = 'Sequence';
   $scope.plan = {attributes:{}};
 
+  
+  $scope.planTypes = PlanTypeRegistry.getPlanTypes();
+  $scope.planType = PlanTypeRegistry.getPlanType('step.core.plans.Plan');
+  
   $http.get("rest/controller/artefact/types").then(function(response){ 
     $scope.artefactTypes = response.data;
   })
   
   $scope.save = function (editAfterSave) {
-    $http.get("rest/plans?type="+$scope.type).then(function(response){
+    $http.get("rest/plans?type="+$scope.planType.type+'&template='+$scope.template).then(function(response){
       var createdPlan = response.data;
       createdPlan.attributes = $scope.plan.attributes;
       $http.post("rest/plans", createdPlan).then(function(response) {

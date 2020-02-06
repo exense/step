@@ -59,11 +59,10 @@ import step.core.controller.errorhandling.ErrorFilter;
 import step.core.deployment.AccessServices;
 import step.core.deployment.AdminServices;
 import step.core.deployment.ApplicationServices;
-import step.core.deployment.SecurityFilter;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.HttpSessionFactory;
 import step.core.deployment.JacksonMapperProvider;
-import step.core.deployment.PlanServices;
+import step.core.deployment.SecurityFilter;
 import step.plugins.interactive.InteractiveServices;
 
 
@@ -211,7 +210,6 @@ public class ControllerServer {
 		
 		resourceConfig.registerClasses(ApplicationServices.class);
 		resourceConfig.registerClasses(ControllerServices.class);
-		resourceConfig.registerClasses(PlanServices.class);
 		resourceConfig.registerClasses(InteractiveServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
 		resourceConfig.registerClasses(SecurityFilter.class);

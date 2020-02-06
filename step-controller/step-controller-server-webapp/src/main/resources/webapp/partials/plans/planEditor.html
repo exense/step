@@ -3,7 +3,7 @@
 	<div class="row flex-l">
 		<div class="w-100 sectionResizable sectionViewPlanEditor" resizable r-directions="['right']" r-flex="true">
 			<div class="panel panel-default overflow-x-auto overflow-y-hidden">
-				<div class="panel-heading">{{plan.root?plan.root._class:''}} - {{plan.attributes.name}}
+				<div class="panel-heading">{{model.plan.root?model.plan.root._class:''}} - {{model.plan.attributes.name}}
 					<div class="pull-right">
 						<button type="submit" class="btn btn-default btn-xs" ng-click="clonePlan()">Clone</button>
 						<button type="submit" class="btn btn-default btn-xs" ng-click="exportPlan()">Export</button>
@@ -21,10 +21,10 @@
 				<div class="panel-body">
 					<div class="panel panel-default">
 						<div class="panel-body">
-							<st-custom-form st-model="plan" st-on-change="save()" st-screen="artefactTable" st-inline="true" st-disabled="!authService.hasRight('plan-write')"/>
+							<st-custom-form st-model="model.plan" st-on-change="save()" st-screen="artefactTable" st-inline="true" st-disabled="!authService.hasRight('plan-write')"/>
 						</div>
 					</div>
-					<plan-tree-editor handle="handle" plan="plan" st-on-change="save()" interactive-session-handle="interactiveSession" />
+					<div ng-include="getEditorView()"></div>
 				</div>
 			</div>	
 		</div>
@@ -100,5 +100,5 @@
 <execution-parameters model="executionParameters" />
 </script>
 <script type="text/ng-template" id="executionCommandsPopover.html">
-<execution-commands description="plan.attributes.name" artefact="artefactRef()" />
+<execution-commands description="model.plan.attributes.name" artefact="artefactRef()" />
 </script>

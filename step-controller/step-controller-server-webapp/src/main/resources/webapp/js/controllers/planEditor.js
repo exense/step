@@ -18,14 +18,17 @@
  *******************************************************************************/
 angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynamicForms','export'])
 
-.run(function(ViewRegistry, EntityRegistry) {  
+.run(function(ViewRegistry, EntityRegistry, PlanTypeRegistry) {  
   ViewRegistry.registerView('planeditor','partials/plans/planEditor.html');
+  PlanTypeRegistry.register('step.core.plans.Plan', 'Default', 'partials/plans/planTreeEditor.html');
 })
 
-.controller('PlanEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location,Dialogs,  AuthService, reportTableFactory, executionServices, ExportService) {
+.controller('PlanEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location,Dialogs, PlanTypeRegistry, AuthService, reportTableFactory, executionServices, ExportService) {
   $scope.authService = AuthService;
   stateStorage.push($scope, 'editor', {});
       
+  $scope.model = {}
+  
   $scope.$watch('$state',function() {
     if($scope.$state!=null) {
       loadPlan($scope.$state);
@@ -35,7 +38,7 @@ angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynam
   function loadPlan(id) {
     $scope.planId = id;
     $http.get('rest/plans/'+id).then(function(response){
-      $scope.plan = response.data;
+      $scope.model.plan = response.data
     })
   }
 
@@ -44,7 +47,7 @@ angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynam
   }
   
   $scope.save = function() {
-    savePlan($scope.plan);
+    savePlan($scope.model.plan);
   }
 
   $scope.exportPlan = function() {
@@ -52,7 +55,7 @@ angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynam
   }
   
   $scope.clonePlan = function() {
-    modalResult = Dialogs.enterValue('Clone plan as ',$scope.plan.attributes.name+'_Copy', 'md', 'enterValueDialog', function(value) {
+    modalResult = Dialogs.enterValue('Clone plan as ',$scope.model.plan.attributes.name+'_Copy', 'md', 'enterValueDialog', function(value) {
       $http.get("rest/plans/"+$scope.planId+"/clone").then(function(response){
         var clonePlan = response.data;
         clonePlan.attributes.name = value;
@@ -61,6 +64,14 @@ angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynam
         });
       })
     });
+  }
+  
+  $scope.getEditorView = function() {
+    if($scope.model.plan) {
+      return PlanTypeRegistry.getEditorView($scope.model.plan._class)
+    } else {
+      return null;
+    }
   }
 
   // ------------------------------------
@@ -146,7 +157,7 @@ angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynam
         var parameters = {executionParameters:$scope.executionParameters}
         var sessionId = $scope.interactiveSession.id;
         $scope.componentTabs.selectedTab = 3;
-        $http.post("rest/interactive/"+sessionId+"/execute/"+$scope.plan.id+"/"+artefact.id, parameters).then(function() {
+        $http.post("rest/interactive/"+sessionId+"/execute/"+$scope.model.plan.id+"/"+artefact.id, parameters).then(function() {
           $scope.stepsTable.Datatable.ajax.reload(null, false);
         });
       },
@@ -539,76 +550,80 @@ angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynam
         $scope.fireChangeEvent();
       }
       
-      $scope.handle.addFunction = function(id) {
-      	var selectedArtefact = tree.get_selected(true);
-      	
-      	$http.get("rest/functions/"+id).then(function(response) {
-      	  var function_ = response.data;
-          var remote = !(function_.type=="step.plugins.functions.types.CompositeFunction");
-  
-          $http.get("rest/controller/artefact/types/CallKeyword").then(function(response) {
-            var newArtefact = response.data;
-            newArtefact.attributes.name=function_.attributes.name;
-            newArtefact.functionId=function_.id;
-            
-            if(AuthService.getConf().miscParams.enforceschemas === 'true'){
-              var targetObject = {};
+      if($scope.handle) {
+        $scope.handle.addFunction = function(id) {
+          var selectedArtefact = tree.get_selected(true);
+          
+          $http.get("rest/functions/"+id).then(function(response) {
+            var function_ = response.data;
+    
+            $http.get("rest/controller/artefact/types/CallKeyword").then(function(response) {
+              var newArtefact = response.data;
+              newArtefact.attributes.name=function_.attributes.name;
+              newArtefact.functionId=function_.id;
               
-              if(function_.schema && function_.schema.required){
-                _.each(Object.keys(function_.schema.properties), function(prop) {
-                  var value = "notype";
-                  if(function_.schema.properties[prop].type){
-                    var propValue = {};
-                    value = function_.schema.properties[prop].type;
-                    if(value === 'number' || value === 'integer')
-                      propValue = {"expression" : "<" + value + ">", "dynamic" : true};
-                    else
-                      propValue = {"value" : "<" + value + ">", "dynamic" : false};
-                    
-                    targetObject[prop] = propValue;
+              if(AuthService.getConf().miscParams.enforceschemas === 'true'){
+                var targetObject = {};
+                
+                if(function_.schema && function_.schema.properties){
+                  _.each(Object.keys(function_.schema.properties), function(prop) {
+                    var value = "notype";
+                    if(function_.schema.properties[prop].type){
+                      var propValue = {};
+                      value = function_.schema.properties[prop].type;
+                      if(value === 'number' || value === 'integer')
+                        propValue = {"expression" : "<" + value + ">", "dynamic" : true};
+                      else
+                        propValue = {"value" : "<" + value + ">", "dynamic" : false};
+                      
+                      targetObject[prop] = propValue;
+                    }
+                  });
+                  
+                  if(function_.schema.required) {
+                    _.each(function_.schema.required, function(prop) {
+                      if(targetObject[prop] && targetObject[prop].value)
+                        targetObject[prop].value += " (REQ)";
+                      if(targetObject[prop] && targetObject[prop].expression)
+                        targetObject[prop].expression += " (REQ)";
+                    });
                   }
-                });
-                
-                _.each(function_.schema.required, function(prop) {
-                  if(targetObject[prop] && targetObject[prop].value)
-                    targetObject[prop].value += " (REQ)";
-                  if(targetObject[prop] && targetObject[prop].expression)
-                    targetObject[prop].expression += " (REQ)";
-                });
-                
-                newArtefact.argument = {  
-                    "dynamic":false,
-                    "value": JSON.stringify(targetObject),
-                    "expression":null,
-                    "expressionType":null
+                  
+                  newArtefact.argument = {  
+                      "dynamic":false,
+                      "value": JSON.stringify(targetObject),
+                      "expression":null,
+                      "expressionType":null
+                  }
                 }
               }
-            }
+              
+              addArtefactToCurrentNode(newArtefact)
+            });
+          });
+        }
+        
+        $scope.handle.addControl = function(id) {
+          $http.get("rest/controller/artefact/types/"+id).then(function(response) {
+            var artefact = response.data;
+            addArtefactToCurrentNode(artefact);
+          });
+        }
+        
+        $scope.handle.addPlan = function(id) {
+          $http.get("rest/plans/"+id).then(function(response) {
+            var plan = response.data;
+            $http.get("rest/controller/artefact/types/CallPlan").then(function(response) {
+              var newArtefact = response.data;
+              newArtefact.attributes.name=plan.attributes.name;
+              newArtefact.planId=id;
+              addArtefactToCurrentNode(newArtefact);
+            });
             
-            addArtefactToCurrentNode(newArtefact)
           });
-        });
+        }
       }
       
-      $scope.handle.addControl = function(id) {
-      	$http.get("rest/controller/artefact/types/"+id).then(function(response) {
-      	  var artefact = response.data;
-      	  addArtefactToCurrentNode(artefact);
-      	});
-      }
-      
-      $scope.handle.addPlan = function(id) {
-        $http.get("rest/plans/"+id).then(function(response) {
-          var plan = response.data;
-          $http.get("rest/controller/artefact/types/CallPlan").then(function(response) {
-            var newArtefact = response.data;
-            newArtefact.attributes.name=plan.attributes.name;
-            newArtefact.planId=id;
-            addArtefactToCurrentNode(newArtefact);
-          });
-          
-        });
-      }
       
       $scope.openSelectedArtefact = function() {
         var selectedArtefact = tree.get_selected(true)[0];

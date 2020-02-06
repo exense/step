@@ -1,4 +1,4 @@
-package step.core.deployment;
+package step.core.plans;
 
 import java.util.Map;
 
@@ -20,31 +20,37 @@ import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactRegistry;
+import step.core.deployment.AbstractServices;
+import step.core.deployment.Secured;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.plans.PlanCompiler;
+import step.core.plans.PlanCompilerException;
 import step.core.plans.PlanNavigator;
-import step.core.plans.builder.PlanBuilder;
+import step.core.plans.PlanType;
+import step.core.plans.PlanTypeRegistry;
 
 @Singleton
 @Path("plans")
 public class PlanServices extends AbstractServices {
 
-protected PlanAccessor planAccessor;
+	protected PlanAccessor planAccessor;
+	protected PlanTypeRegistry planTypeRegistry;
 	
 	@PostConstruct
 	public void init() {
 		planAccessor = getContext().getPlanAccessor();
+		planTypeRegistry = getContext().get(PlanTypeRegistry.class);
 	}
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public Plan newPlan(@QueryParam("type") String type) throws Exception {
-		AbstractArtefact artefact = ArtefactRegistry.getInstance().getArtefactTypeInstance(type);
-		Plan plan = PlanBuilder.create().startBlock(artefact).endBlock().build();
+	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
+		PlanType<Plan> planType = planTypeRegistry.getPlanType(type);
+		Plan plan = planType.newPlan(template);
 		return plan;
 	}
 	
@@ -62,6 +68,39 @@ protected PlanAccessor planAccessor;
 	@Secured(right="plan-read")
 	public Plan get(@PathParam("id") String id) {
 		return planAccessor.get(id);
+	}
+	
+	@GET
+	@Path("/{id}/compile")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
+	public PlanCompilationResult compilePlan(@PathParam("id") String id) throws Exception {
+		Plan plan = planAccessor.get(id);
+		PlanCompilationResult planCompilationResult = new PlanCompilationResult();
+		planCompilationResult = compilePlan(plan);
+		if(!planCompilationResult.isHasError()) {
+			save(plan);
+		}
+		return planCompilationResult;
+	}
+	
+	@POST
+	@Path("/compile")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
+	public PlanCompilationResult compilePlan(Plan plan) {
+		@SuppressWarnings("unchecked")
+		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
+		PlanCompiler<Plan> planCompiler = planType.getPlanCompiler();
+		PlanCompilationResult planCompilationResult = new PlanCompilationResult();
+		try {
+			plan = planCompiler.compile(plan);
+			planCompilationResult.setPlan(plan);
+		} catch(PlanCompilerException e) {
+			planCompilationResult.setHasError(true);
+			planCompilationResult.setErrors(e.getErrors());
+		}
+		return planCompilationResult;
 	}
 	
 	@GET
