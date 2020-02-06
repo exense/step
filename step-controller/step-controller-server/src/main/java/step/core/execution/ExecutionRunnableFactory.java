@@ -79,6 +79,7 @@ public class ExecutionRunnableFactory {
 		}
 		
 		if(plan != null && plan.getAttributes() != null) {
+			execution.setPlanId(plan.getId().toString());
 			execution.getAttributes().putAll(plan.getAttributes());
 		}
 		
