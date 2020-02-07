@@ -73,11 +73,15 @@ dynamicForms.directive('dynamicCheckbox', function() {
     restrict: 'E',
     scope: {
       dynamicValue: '=',
+      defaultValue: '=?',
       label: '=',
       tooltip: '=',
       onSave: '&'
     },
     controller: function($scope,Dialogs) {
+      if ($scope.defaultValue && angular.isUndefined($scope.dynamicValue)) {
+        $scope.dynamicValue = $scope.defaultValue
+      }
       initDynamicFormsCtrl($scope);
       $scope.editConstantValue = function() {
         Dialogs.enterValue('Free text editor', $scope.dynamicValue.value, 'lg','enterTextValueDialog',function(value) {

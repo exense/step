@@ -44,6 +44,9 @@ public class Function extends AbstractOrganizableObject {
 	
 	protected boolean managed;
 	
+	protected boolean useCustomTemplate=false;
+	protected String htmlTemplate;
+	
 	public Map<String, String> getTokenSelectionCriteria() {
 		return tokenSelectionCriteria;
 	}
@@ -107,5 +110,29 @@ public class Function extends AbstractOrganizableObject {
 
 	public void setManaged(boolean managed) {
 		this.managed = managed;
+	}
+
+	public boolean isUseCustomTemplate() {
+		return useCustomTemplate;
+	}
+
+	public void setUseCustomTemplate(boolean customTemplate) {
+		this.useCustomTemplate = customTemplate;
+	}
+
+	public String getHtmlTemplate() {
+		return htmlTemplate;
+	}
+
+	/**
+	 * Sets the HTML code to be used as template when editing the function in the plan editor
+	 * 
+	 * @param schema the JSON schema of the function. See https://json-schema.org/ for more details concerning JSON schema.
+	 */
+	public void setHtmlTemplate(String customTemplateContent) {
+		this.htmlTemplate = customTemplateContent;
+		if (htmlTemplate != null && !htmlTemplate.isBlank()) {
+			this.setUseCustomTemplate(true);
+		}
 	}
 }

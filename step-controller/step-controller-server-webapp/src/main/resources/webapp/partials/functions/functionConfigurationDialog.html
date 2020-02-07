@@ -16,6 +16,15 @@
 			<textarea ng-model="schemaStr" class="form-control form-control-sm"></textarea>
 		</div>
 		<div class="form-group">
+			<label></label> 
+			<label>
+				<input type="checkbox" ng-model="function_.useCustomTemplate"> 
+				<span class="ng-binding">Custom HTML template</span>
+			</label>
+			<span class="glyphicon glyphicon-question-sign pull-right" uib-tooltip="Used to overwrite the default HTML template."></span>
+			<textarea ng-model="function_.htmlTemplate" class="form-control form-control-sm"></textarea>
+		</div>
+		<div class="form-group">
 			<div class="form-group">
 				<label>
 					<input type="checkbox" ng-model="function_.executeLocally"> 
