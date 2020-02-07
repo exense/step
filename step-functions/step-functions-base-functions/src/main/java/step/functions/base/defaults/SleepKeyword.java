@@ -23,7 +23,7 @@ import step.handlers.javahandler.Keyword;
 
 public class SleepKeyword extends AbstractKeyword{
 	
-	@Keyword(htmlTemplate = "<label>Sleep time in ms</label><dynamic-textfield dynamic-value=\"inputs['sleepTime']\" on-save=\"save()\" />")
+	@Keyword(htmlTemplate = "<label>Sleep time in ms</label><dynamic-textfield dynamic-value=\"inputs.sleepTime\" default-value=\"{dynamic:false,value:0}\" on-save=\"save()\" />")
 	public void Sleep(){
 		int sleepDurationMs;
 		try {
