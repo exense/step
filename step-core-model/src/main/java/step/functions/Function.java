@@ -131,7 +131,7 @@ public class Function extends AbstractOrganizableObject {
 	 */
 	public void setHtmlTemplate(String customTemplateContent) {
 		this.htmlTemplate = customTemplateContent;
-		if (htmlTemplate != null && !htmlTemplate.isBlank()) {
+		if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
 			this.setUseCustomTemplate(true);
 		}
 	}
