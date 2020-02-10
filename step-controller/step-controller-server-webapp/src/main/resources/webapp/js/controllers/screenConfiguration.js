@@ -222,3 +222,20 @@ angular.module('screenConfigurationControllers',['tables','step'])
     }
   }
 })
+.directive('stCustomColumns', function(ScreenTemplates) {
+  return {
+    restrict: 'E',
+    scope: {
+      stScreen: '@',
+      stExcludeFields: '=?'
+    },
+    templateUrl: 'partials/screenconfiguration/customColumns.html',
+    controller: function($scope) {
+      ScreenTemplates.getScreenInputsByScreenId($scope.stScreen).then(function(attributes) {
+        $scope.attributes=_.reject(attributes, function(attribute) {
+          return $scope.stExcludeFields!=null && $scope.stExcludeFields.indexOf(attribute.id) >= 0;
+        });
+      })
+    }
+  }
+})

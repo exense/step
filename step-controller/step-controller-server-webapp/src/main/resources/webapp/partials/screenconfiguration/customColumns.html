@@ -1,0 +1,5 @@
+<st-column ng-repeat="input in attributes" name="{{input.id}}">
+	<header>{{input.label}}</header>
+	<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+	<cell>{{$eval('row.'+input.id)}}</cell>
+</st-column>
