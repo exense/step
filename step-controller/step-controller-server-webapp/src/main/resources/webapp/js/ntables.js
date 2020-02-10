@@ -33,7 +33,7 @@ angular.module('tables', ['export','dataTable'])
 
 	ctrl.dtColumns = [];
 
-	ctrl.addColumn = function(column) {
+	ctrl.addColumn = function(column, position) {
 		var colDef = {};
 
 		if (column.name) {
@@ -96,7 +96,7 @@ angular.module('tables', ['export','dataTable'])
 			scopesTracker.newCycle()
 		}
 
-		ctrl.dtColumns.push(colDef);
+		ctrl.dtColumns.splice(position, 0, colDef);
 	}
 
 })
@@ -120,121 +120,141 @@ angular.module('tables', ['export','dataTable'])
 		controller : 'StTableController',
 		controllerAs: 'table',
 		link : function(scope, element, attr, controller, transclude) {
-			var serverSide = scope.collection?true:false;
+		  var serverSide = scope.collection?true:false;
 
-			scope.$on('$destroy', function() {
-				if(scope.table) {
-					scope.table.destroy();
-				}
-			});
+		  var tableElement = angular.element(element).find('table');
 
-			var tableElement = angular.element(element).find('table');
-
-			var tableOptions = {}
-			tableOptions.pageLength = parseInt(Preferences.get("tables_itemsperpage", 10));
-			tableOptions.dom = scope.dom?scope.dom:'lrtip';
-			// disable autoWidth: the auto sizing of column widths seems to work better when calculated by the browser
-			tableOptions.autoWidth = false;
-			tableOptions.fnDrawCallback = function() {
-				controller.newCycle();
-			};
-			tableOptions.columns = controller.dtColumns;
-			if(scope.order) {
-				tableOptions.order = scope.order;        
-			}
-
-			if (scope.persistState) {
-				if (scope.uid) {
-					var uid = scope.uid;
-					tableOptions.stateSave = true;
-					tableOptions.stateSaveCallback = function(settings, data) {
-						var state = stateStorage.get(scope, uid);
-						if (!state) {
-							state = {};
-						}
-						state.tableState = data;
-						stateStorage.store(scope, state, uid);
-					};
-					tableOptions.stateLoadCallback = function(settings) {
-						var state = stateStorage.get(scope, uid);
-						return (state && state.tableState) ? state.tableState : null;
-					}
-				} else {
-					console.error("Unable to persist table state if the table uid isn't specified. Please set the attribute 'uid'")
-				}
-			}
-
-			if(serverSide) {
-				var query = 'rest/table/' + scope.collection + '/data';
-        if(scope.filter) {
-          query += '?filter=' + encodeURIComponent(scope.filter);
+		  controller.reload = function() {
+		    // First destroy the previous table if any
+		    if(scope.table && scope.table.destroy) {
+          scope.table.destroy()
+          // remove the headers added "manually" (see below)
+          tableElement.find('thead').empty();
         }
-        tableOptions.ajax = {
-            'url' : query,
-            'type' : 'POST'
+		    
+		    // Build the table options
+	      var tableOptions = {}
+	      tableOptions.pageLength = parseInt(Preferences.get("tables_itemsperpage", 10));
+	      tableOptions.dom = scope.dom?scope.dom:'lrtip';
+	      // disable autoWidth: the auto sizing of column widths seems to work better when calculated by the browser
+	      tableOptions.autoWidth = false;
+	      tableOptions.fnDrawCallback = function() {
+	        controller.newCycle();
+	      };
+	      tableOptions.columns = controller.dtColumns;
+	      if(scope.order) {
+	        tableOptions.order = scope.order;
+	      }
+
+	      if (scope.persistState) {
+	        if (scope.uid) {
+	          tableOptions.stateSave = true;
+	          tableOptions.stateSaveCallback = function(settings, data) {
+	            // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
+	            var uid = scope.uid + controller.dtColumns.length;
+	            var state = stateStorage.get(scope, uid);
+	            if (!state) {
+	              state = {};
+	            }
+	            state.tableState = data;
+	            
+	            stateStorage.store(scope, state, uid);
+	          };
+	          tableOptions.stateLoadCallback = function(settings) {
+	            // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
+	            var uid = scope.uid + controller.dtColumns.length;
+	            var state = stateStorage.get(scope, uid);
+	            return (state && state.tableState) ? state.tableState : null;
+	          }
+	        } else {
+	          console.error("Unable to persist table state if the table uid isn't specified. Please set the attribute 'uid'")
+	        }
+	      }
+
+	      if(serverSide) {
+	        var query = 'rest/table/' + scope.collection + '/data';
+	        if(scope.filter) {
+	          query += '?filter=' + encodeURIComponent(scope.filter);
+	        }
+	        tableOptions.ajax = {
+	            'url' : query,
+	            'type' : 'POST'
+	        }
+
+	        tableOptions.processing = false;
+	        tableOptions.serverSide = true;
+	        tableOptions.sProcessing = '';
+	      }
+
+	      // Initialize the DataTable with the built options
+	      var table = tableElement.DataTable(tableOptions);
+	      scope.table = table;
+
+	      // Table actions
+	      var tableActions = transclude(function() {}, null, 'stActions');
+	      var cmdDiv;
+	      if (element.find('div.dataTables_filter').length > 0) {
+	        cmdDiv = element.find('div.dataTables_filter');
+	        cmdDiv.parent().removeClass('col-sm-6').addClass('col-sm-9');
+	        element.find('div.dataTables_length').parent().removeClass('col-sm-6').addClass('col-sm-3');
+	      } else {
+	        cmdDiv = element.find('div.dataTables_length');
+	      }
+	      angular.element('<div class="pull-right"></div>').append(tableActions).appendTo(cmdDiv);
+
+	      if(!scope.handle) {
+	        scope.handle = {};
+	      }
+	      scope.handle.reload = function() {
+	        table.ajax.reload(null, false);
+	      }
+	      scope.handle.search = function(columnName, searchExpression) {
+	        var column = table.column(columnName+':name');
+	        column.search(searchExpression,true,false).draw();
+	      }
+
+	      // render first header
+	      table.columns().indexes().flatten().each(function(i) {
+	        table.settings()[0].aoColumns[i].headerRenderer(angular.element(table.column(i).header()),table.column(i),scope.handle);
+	      })
+
+	      // render second header
+	      tableElement.find('thead').append('<tr class="searchheader"/>');
+	      $('th',tableElement.find('thead tr[role="row"]').eq(0)).css({ 'border-bottom': '0' }).each( function (colIdx) {
+	        tableElement.find('thead tr.searchheader').append('<th style="border-top:0" />' );
+	      });
+	      table.columns().indexes().flatten().each(function(i) {
+	        var thIdx = $('th',tableElement.find('thead tr[role="row"]')).index(table.column(i).header());
+	        if(thIdx>=0) {
+	          var secondHeader = $('th',tableElement.find('thead tr.searchheader')).eq(thIdx);
+	          table.settings()[0].aoColumns[i].secondHeaderRenderer(secondHeader,table.column(i),scope.handle);
+	        }
+	      });
+		  }
+		  
+		  if(!serverSide) {
+		    // Listen to changes in the data collection
+        scope.$watchCollection('data', function(value) {
+          if(scope.table) {
+            scope.table.clear();
+            if (value && value.length > 0) {
+              scope.table.rows.add(value);
+              // perform the table draw after the current angular digest cycle in order to let angular render all the cells  (See comment in colDef.render above) 
+              $timeout(function() {
+                scope.table.draw(false)
+              })
+            }
+          }
+        }) 
+      }
+		  
+      scope.$on('$destroy', function() {
+        if(scope.table) {
+          scope.table.destroy();
         }
-
-				tableOptions.processing = false;
-				tableOptions.serverSide = true;
-				tableOptions.sProcessing = '';
-			} else {
-				scope.$watchCollection('data', function(value) {
-					if(scope.table) {
-						scope.table.clear();
-						if (value && value.length > 0) {
-							scope.table.rows.add(value);
-							// perform the table draw after the current angular digest cycle in order to let angular render all the cells  (See comment in colDef.render above) 
-							$timeout(function() {
-								scope.table.draw(false)
-							})
-						}
-					}
-				}) 
-			}
-
-			var table = tableElement.DataTable(tableOptions);
-			scope.table = table;
-
-			// Table actions
-			var tableActions = transclude(function() {}, null, 'stActions');
-			var cmdDiv;
-			if (element.find('div.dataTables_filter').length > 0) {
-				cmdDiv = element.find('div.dataTables_filter');
-				cmdDiv.parent().removeClass('col-sm-6').addClass('col-sm-9');
-				element.find('div.dataTables_length').parent().removeClass('col-sm-6').addClass('col-sm-3');
-			} else {
-				cmdDiv = element.find('div.dataTables_length');
-			}
-			angular.element('<div class="pull-right"></div>').append(tableActions).appendTo(cmdDiv);
-
-			if(!scope.handle) {
-				scope.handle = {};
-			}
-			scope.handle.reload = function() {
-				table.ajax.reload(null, false);
-			}
-			scope.handle.search = function(columnName, searchExpression) {
-				var column = table.column(columnName+':name');
-				column.search(searchExpression,true,false).draw();
-			}
-
-			// render first header
-			table.columns().indexes().flatten().each(function(i) {
-				table.settings()[0].aoColumns[i].headerRenderer(angular.element(table.column(i).header()),table.column(i),scope.handle);
-			})
-
-			// render second header
-			tableElement.find('thead').append('<tr class="searchheader"/>');
-			$('th',tableElement.find('thead tr[role="row"]').eq(0)).css({ 'border-bottom': '0' }).each( function (colIdx) {
-				tableElement.find('thead tr.searchheader').append('<th style="border-top:0" />' );
-			});
-			table.columns().indexes().flatten().each(function(i) {
-				var thIdx = $('th',tableElement.find('thead tr[role="row"]')).index(table.column(i).header());
-				if(thIdx>=0) {
-					var secondHeader = $('th',tableElement.find('thead tr.searchheader')).eq(thIdx);
-					table.settings()[0].aoColumns[i].secondHeaderRenderer(secondHeader,table.column(i),scope.handle);
-				}
-			});
+      });
+		  
+		  controller.reload();
 		},
 		templateUrl : 'partials/ntable.html'
 	};
@@ -255,6 +275,15 @@ angular.module('tables', ['export','dataTable'])
 		controller : function($scope) {
 		},
 		link : function(scope, elm, attrs, tableController, transclude) {
+			// Get the position of this column in the closest st-columns parent
+		  var parentsUntilStColumns = elm.parentsUntil("st-columns");
+		  var elementInStColumns = elm.parentsUntil("st-columns")[parentsUntilStColumns.length-1]
+		  if(!elementInStColumns) {
+		    elementInStColumns = elm;
+		  } else {
+		    elementInStColumns = $(elementInStColumns)
+		  }
+      var positionInParent = elementInStColumns.parent().children().index(elementInStColumns)
 			tableController.addColumn({
 				name:scope.name,
 				headerTransclude : function(callback) {
@@ -266,7 +295,10 @@ angular.module('tables', ['export','dataTable'])
 				cellTransclude : function(callback) {
 					return transclude(callback, null, 'cell')
 				},
-			})
+			}, positionInParent)
+			if(tableController.reload) {
+			  tableController.reload()
+			}
 
 		}
 	}
