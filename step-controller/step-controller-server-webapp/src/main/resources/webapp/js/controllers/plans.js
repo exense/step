@@ -20,7 +20,7 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
 
 .run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerView('plans','partials/plans/plans.html');
-  EntityRegistry.registerEntity('Plan', 'artefact', 'artefacts', 'rest/controller/artefact/', 'rest/controller/artefact', 'datatable', '/partials/selection/selectDatatableEntity.html');
+  EntityRegistry.registerEntity('Plan', 'plans', 'plans', 'rest/plans/', 'rest/plans/', 'st-table', '/partials/selection/selectSttableEntity.html');
 })
 
 .factory('PlanTypeRegistry', function() {
