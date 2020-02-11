@@ -104,6 +104,11 @@ public class ParameterServices extends AbstractServices {
 				newParameter.setProtectedValue(isPassword(newParameter));
 			}
 		}
+		
+		ParameterScope scope = newParameter.getScope();
+		if(scope != null && scope.equals(ParameterScope.GLOBAL)) {
+			newParameter.setScopeEntity(null);
+		}
 
 		String lastModificationUser = getSession().getUser().getUsername();
 		Date lastModificationDate = new Date();
