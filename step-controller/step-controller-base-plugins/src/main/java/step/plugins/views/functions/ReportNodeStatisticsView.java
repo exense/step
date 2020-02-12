@@ -1,5 +1,6 @@
 package step.plugins.views.functions;
 
+import java.util.Map;
 import java.util.Map.Entry;
 
 import step.artefacts.reports.CallFunctionReportNode;
@@ -21,8 +22,11 @@ public class ReportNodeStatisticsView extends AbstractTimeBasedView<ReportNodeSt
 			e.count = 1;
 			e.sum = node.getDuration();
 			Statistics stats = new Statistics(1, node.getDuration());
-			e.byFunctionName.put(((CallFunctionReportNode)node).getFunctionAttributes().get(AbstractOrganizableObject.NAME), stats);
-			addPoint(model, node.getExecutionTime(), e);
+			Map<String, String> functionAttributes = ((CallFunctionReportNode)node).getFunctionAttributes();
+			if(functionAttributes != null) {
+				e.byFunctionName.put(functionAttributes.get(AbstractOrganizableObject.NAME), stats);
+				addPoint(model, node.getExecutionTime(), e);
+			}
 		}
 	}
 	

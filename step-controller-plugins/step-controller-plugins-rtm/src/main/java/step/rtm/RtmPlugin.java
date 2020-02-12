@@ -111,7 +111,9 @@ public class RtmPlugin extends AbstractControllerPlugin {
 			if(measureReportNodes) {
 				measurement = new HashMap<>();
 
-				measurement.putAll(functionAttributes);
+				if(functionAttributes != null) {
+					measurement.putAll(functionAttributes);
+				}
 
 				measurement.put(ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
 				//measurement.put("name", stepReport.getFunctionAttributes().get(AbstractOrganizableObject.NAME));
