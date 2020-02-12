@@ -389,7 +389,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				if(selectionMode=='all') {
 					return null;
 				} else if (selectionMode=='custom' || selectionMode=='none') {
-					var includedTestCases = {"by":$scope.execution.executionParameters.artefact.repositoryID=="local"?"id":"name"};
+					var includedTestCases = {"by":$scope.execution.executionParameters.repositoryObject.repositoryID=="local"?"id":"name"};
 					var result = [];
 					if($scope.testCaseTable.getRows!=null) {
 						_.each($scope.testCaseTable.getRows(true),function(value){result.push(value[includedTestCases.by=="id"?0:1])});

@@ -51,6 +51,10 @@ public class ExecutionLifecycleManager {
 		executionCallbacks.beforeExecutionEnd(context);
 	}
 	
+	public void beforePlanImport() {
+		executionCallbacks.beforePlanImport(context);
+	}
+	
 	public void afterImport(ImportResult importResult) {
 		executionManager.persistImportResult(context, importResult);
 	}

@@ -1,6 +1,9 @@
 package step.core.plans;
 
+import org.bson.types.ObjectId;
+
 import step.core.GlobalContext;
+import step.core.accessors.CollectionRegistry;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactRegistry;
 import step.core.plans.builder.PlanBuilder;
@@ -36,8 +39,19 @@ public class PlanPlugin extends AbstractControllerPlugin {
 				Plan plan = PlanBuilder.create().startBlock(artefact).endBlock().build();
 				return plan;
 			}
+
+			@Override
+			public Plan clonePlan(Plan plan) {
+				Plan newPlan = plan;
+				newPlan.setId(new ObjectId());
+				newPlan.setCustomFields(null);
+				newPlan.setVisible(true);
+				return newPlan;
+			}
 		});
 		context.put(PlanTypeRegistry.class, planTypeRegistry);
 		context.getServiceRegistrationCallback().registerService(PlanServices.class);
+		
+		context.get(CollectionRegistry.class).register("plans", new PlanCollection(context.getMongoClientSession().getMongoDatabase()));
 	}
 }

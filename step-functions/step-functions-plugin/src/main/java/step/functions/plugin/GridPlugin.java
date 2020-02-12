@@ -160,7 +160,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 	}
 
 	@Override
-	public void executionStart(ExecutionContext context) {
+	public void beforePlanImport(ExecutionContext context) {
 		// Bindings needed for the execution
 		boolean isolatedExecution = context.getExecutionParameters().isIsolatedExecution();
 		if(isolatedExecution) {

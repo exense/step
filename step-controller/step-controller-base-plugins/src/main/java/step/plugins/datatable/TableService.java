@@ -137,6 +137,11 @@ public class TableService extends AbstractTableService {
 			queryFragments.addAll(sessionQueryFragments);
 		}
 		
+		List<Bson> additionalQueryFragments = collection.getAdditionalQueryFragments();
+		if(additionalQueryFragments != null) {
+			queryFragments.addAll(additionalQueryFragments);
+		}
+		
 		Bson query = queryFragments.size()>0?Filters.and(queryFragments):new Document();
 		
 		

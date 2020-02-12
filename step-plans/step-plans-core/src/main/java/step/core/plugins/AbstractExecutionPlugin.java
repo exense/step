@@ -14,6 +14,9 @@ public class AbstractExecutionPlugin extends AbstractPlugin implements Execution
 	}
 
 	@Override
+	public void beforePlanImport(ExecutionContext context) {}
+
+	@Override
 	public void executionStart(ExecutionContext context) {}
 
 	@Override

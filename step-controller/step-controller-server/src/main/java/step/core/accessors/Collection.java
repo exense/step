@@ -120,4 +120,7 @@ public class Collection {
 		return collectionFind;
 	}
 	
+	public List<Bson> getAdditionalQueryFragments() {
+		return null;
+	}
 }

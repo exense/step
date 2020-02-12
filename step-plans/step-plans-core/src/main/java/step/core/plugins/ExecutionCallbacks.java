@@ -57,6 +57,8 @@ public interface ExecutionCallbacks extends PluginCallbacks {
 	
 	public void unassociateThread(ExecutionContext context, Thread thread);
 	
+	public void beforePlanImport(ExecutionContext context);
+	
 	public void executionStart(ExecutionContext context);
 
 	public void beforeExecutionEnd(ExecutionContext context);

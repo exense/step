@@ -200,9 +200,9 @@
 						<li><strong>Start</strong> <date time="execution.startTime" /></li>
 						<li><strong>End</strong> <date time="execution.endTime" /></li>
 						<li><strong>Execution ID</strong> <span>{{execution.id}}</span></li>
-						<li><strong>Origin</strong> <span>Repository={{execution.executionParameters.artefact.repositoryID}}</span>
+						<li><strong>Origin</strong> <span>Repository={{execution.executionParameters.repositoryObject.repositoryID}}</span>
 							<span
-							ng-repeat="(key, value) in execution.executionParameters.artefact.repositoryParameters">
+							ng-repeat="(key, value) in execution.executionParameters.repositoryObject.repositoryParameters">
 								{{key}}={{value}} </span></li>
 					</ul>
 				</div>

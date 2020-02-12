@@ -18,6 +18,8 @@ public class Plan extends AbstractOrganizableObject {
 	
 	protected Collection<Plan> subPlans;
 	
+	protected boolean visible = true;
+	
 	public Plan(AbstractArtefact root) {
 		super();
 		this.root = root;
@@ -49,5 +51,13 @@ public class Plan extends AbstractOrganizableObject {
 
 	public void setSubPlans(Collection<Plan> subPlans) {
 		this.subPlans = subPlans;
+	}
+
+	public boolean isVisible() {
+		return visible;
+	}
+
+	public void setVisible(boolean visible) {
+		this.visible = visible;
 	}
 }

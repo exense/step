@@ -109,10 +109,9 @@ public class PlanServices extends AbstractServices {
 	@Secured(right="plan-write")
 	public Plan clonePlan(@PathParam("id") String id) {
 		Plan plan = planAccessor.get(id);
-		plan.setId(new ObjectId());
-		plan.setRoot(cloneArtefact(plan.getRoot()));
-		planAccessor.save(plan);
-		return plan;
+		@SuppressWarnings("unchecked")
+		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
+		return planType.clonePlan(plan);
 	}
 	
 	@POST

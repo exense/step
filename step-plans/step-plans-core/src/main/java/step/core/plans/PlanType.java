@@ -7,4 +7,6 @@ public interface PlanType<T extends Plan> {
  	public PlanCompiler<T> getPlanCompiler();
 	
  	public T newPlan(String template) throws Exception;
+ 	
+ 	public T clonePlan(T plan);
 }

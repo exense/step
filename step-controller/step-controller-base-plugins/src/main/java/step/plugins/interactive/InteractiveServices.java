@@ -52,6 +52,8 @@ import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.execution.ControllerExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionManager;
+import step.core.execution.MockedExecutionManagerImpl;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanNavigator;
@@ -138,6 +140,8 @@ public class InteractiveServices extends AbstractServices {
 	public String start() throws AgentCommunicationException {
 		InteractiveSession session = new InteractiveSession();
 		ExecutionContext  executionContext = executionContextBuilder.createExecutionContext();
+		// Replace the ExecutionManager as we don't have any Execution in this context
+		executionContext.put(ExecutionManager.class, new MockedExecutionManagerImpl());
 		
 		// Enrich the ExecutionParameters with the current context attributes as done by the TenantContextFilter when starting a normal execution
 		objectHookRegistry.getObjectEnricher(getSession()).accept(executionContext.getExecutionParameters());
@@ -154,6 +158,7 @@ public class InteractiveServices extends AbstractServices {
 		session.c.getVariablesManager().putVariable(session.root, FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY, 
 				session.functionGroupContext);
 
+		executionContext.getExecutionCallbacks().beforePlanImport(executionContext);
 		executionContext.getExecutionCallbacks().executionStart(executionContext);
 		sessions.put(id, session);
 		return id;

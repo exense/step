@@ -64,6 +64,8 @@ public class ExecutionRunnable implements Runnable {
 	@Override
 	public void run() {
 		try {
+			executionLifecycleManager.beforePlanImport();
+			
 			updateStatus(ExecutionStatus.IMPORTING);
 			ImportResult importResult = importPlan();
 			

@@ -94,6 +94,10 @@ public class ContextBuilder {
 			@Override
 			public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {
 			}
+
+			@Override
+			public void beforePlanImport(ExecutionContext context) {
+			}
 		});
 		
 		context.setExpressionHandler(new ExpressionHandler());
