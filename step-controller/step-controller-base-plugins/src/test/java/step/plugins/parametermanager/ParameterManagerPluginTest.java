@@ -39,23 +39,37 @@ public class ParameterManagerPluginTest {
 		declareParameter("MyFunctionParameter", "MyFunctionParameterValue1", ParameterScope.FUNCTION, "MyFunction1");
 		declareParameter("MyFunctionParameter2", "MyFunctionParameterValue2", ParameterScope.FUNCTION, "MyFunction2");
 		
+		declareParameter("MyApp.MyFunctionParameter3", "MyApp.MyFunctionParameter3Value1", ParameterScope.FUNCTION, "MyApp.MyFunction3");
+		declareParameter("MyFunctionParameter3", "MyFunctionParameter3Value1", ParameterScope.FUNCTION, "MyFunction3");
+		
 		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor);
 		ExecutionContext executionContext = ContextBuilder.createLocalExecutionContext();
-		
 		parameterManagerPlugin.executionStart(executionContext);
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyGlobalParameter"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyOldGlobalParameter"));
 		
+		executionContext = ContextBuilder.createLocalExecutionContext();
+		parameterManagerPlugin.executionStart(executionContext);
 		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction(null, "MyFunction1"));
 		
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter"));
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyAppParameter1"));
 		
+		executionContext = ContextBuilder.createLocalExecutionContext();
+		parameterManagerPlugin.executionStart(executionContext);
 		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction2"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyAppParameter1"));
+		
+		executionContext = ContextBuilder.createLocalExecutionContext();
+		parameterManagerPlugin.executionStart(executionContext);
+		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction3"));
+		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyApp.MyFunctionParameter3"));
+		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter3"));
+		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter1"));
+		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
 	}
 
 	protected void declareParameter(String key, String value, ParameterScope scope, String scopeEntity) {
