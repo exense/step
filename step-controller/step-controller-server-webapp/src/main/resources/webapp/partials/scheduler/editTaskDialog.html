@@ -24,6 +24,19 @@
 		<div class="form-group">
 			<label for="desc">User</label> <input class="form-control" id="desc" ng-model="task.executionsParameters.userID"	placeholder="User">
 		</div>
+		
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="showParameters = !showParameters">Advanced</a>
+			</div>
+			<div class="panel-body" ng-show="showParameters">
+				<div class="form-group">
+					<label for="desc">Parameters</label>
+					<textarea ng-model="executionsParameters" rows="7"
+						ng-model-options="{ getterSetter: true }" class="form-control"></textarea>
+				</div>
+			</div>
+		</div>
 	</form>
 </div>
 <div class="modal-footer">
