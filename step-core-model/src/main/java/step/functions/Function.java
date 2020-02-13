@@ -47,6 +47,8 @@ public class Function extends AbstractOrganizableObject {
 	protected boolean useCustomTemplate=false;
 	protected String htmlTemplate;
 	
+	public static final String APPLICATION = "application";
+	
 	public Map<String, String> getTokenSelectionCriteria() {
 		return tokenSelectionCriteria;
 	}

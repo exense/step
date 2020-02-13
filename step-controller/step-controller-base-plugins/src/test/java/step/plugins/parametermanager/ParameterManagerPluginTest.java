@@ -72,7 +72,7 @@ public class ParameterManagerPluginTest {
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put(AbstractOrganizableObject.NAME, name);
 		if(app != null) {
-			attributes.put("app", app);
+			attributes.put(Function.APPLICATION, app);
 		}
 		function.setAttributes(attributes);
 		return function;
