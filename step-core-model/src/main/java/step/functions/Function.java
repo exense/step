@@ -42,6 +42,8 @@ public class Function extends AbstractOrganizableObject {
 	
 	protected boolean managed;
 	
+	public static final String APPLICATION = "application";
+	
 	public Map<String, String> getTokenSelectionCriteria() {
 		return tokenSelectionCriteria;
 	}

@@ -158,7 +158,7 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
   }
   
   $scope.isApplicationScopeEnabled = false;
-  ScreenTemplates.getScreenInputByScreenId('functionTable','attributes.app').then(function(input) {
+  ScreenTemplates.getScreenInputByScreenId('functionTable','attributes.application').then(function(input) {
     if(input) {
       $scope.isApplicationScopeEnabled = true;
     }
