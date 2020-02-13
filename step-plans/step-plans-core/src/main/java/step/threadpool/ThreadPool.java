@@ -93,6 +93,21 @@ public class ThreadPool {
 
 	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
 			WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory, int numberOfThreads) {
+		// Wrapping the iterator to avoid concurrency issues as iterators aren't ThreadSafe 
+		Iterator<WORK_ITEM> threadSafeIterator = new Iterator<WORK_ITEM>() {
+			@Override
+			public boolean hasNext() {
+				throw new RuntimeException("This method shouldn't be called");
+			}
+
+			@Override
+			public WORK_ITEM next() {
+				synchronized (this) {
+					return workItemIterator.next();
+				}
+			}
+		};
+		
 		final BatchContext batchContext = new BatchContext(executionContext);
 		
 		Integer autoNumberOfThreads = getAutoNumberOfThreads();
@@ -113,14 +128,14 @@ public class ThreadPool {
 		
 		if(numberOfThreads == 1) {
 			// No parallelism, run the worker in the current thread
-			createWorkerAndRun(batchContext, workItemConsumer, workItemIterator);
+			createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator);
 		} else {
 			List<Future<?>> futures = new ArrayList<>();
 			// Create one worker for each "thread"
 			for (int i = 0; i < numberOfThreads; i++) {
 				futures.add(executorService.submit(() -> {
 					executionContext.associateThread();
-					createWorkerAndRun(batchContext, workItemConsumer, workItemIterator);
+					createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator);
 				}));
 			}
 			

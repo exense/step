@@ -1,5 +1,6 @@
 package step.threadpool;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.junit.Test;
@@ -94,24 +96,33 @@ public class ThreadPoolTest {
 		ThreadPool threadPool = new ThreadPool(context);
 		
 		List<String> itemList = new ArrayList<>();
-		for(int i=0; i<1000; i++) {
+		int iterations = 10000;
+		for(int i=0; i<iterations; i++) {
 			itemList.add("Item"+i);
 		}
 		
 		List<String> processedItems = new CopyOnWriteArrayList<>();
 		
+		AtomicInteger count = new AtomicInteger();
+		
 		threadPool.consumeWork(itemList.iterator(), new WorkerItemConsumerFactory<String>() {
 			@Override
 			public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
-				return item -> processedItems.add(item);
+				return item -> {
+					processedItems.add(item);
+					count.incrementAndGet();
+				};
 			}
-		}, 4);
+		}, 5);
 		
 		for (String item : itemList) {
 			if(!processedItems.contains(item)) {
 				fail("The item "+item+" hasn't been processed");
 			}
 		}
+		
+		// Ensure that each item has been processed exactly once
+		assertEquals(iterations, count.get());
 	}
 	
 	@Test
