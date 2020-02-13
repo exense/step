@@ -112,8 +112,14 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 		@SuppressWarnings("unchecked")
 		Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = (Map<ParameterScope, Map<String, List<Parameter>>>) context.get(PARAMETERS_BY_SCOPE);
 		
-		addScopeParametersToContext(context, node, parametersByScope, ParameterScope.FUNCTION, function.getAttributes().get(AbstractOrganizableObject.NAME));
-		addScopeParametersToContext(context, node, parametersByScope, ParameterScope.APPLICATION, function.getAttributes().get(Function.APPLICATION));
+		Map<String, String> attributes = function.getAttributes();
+		if(attributes != null) {
+			addScopeParametersToContext(context, node, parametersByScope, ParameterScope.FUNCTION, attributes.get(AbstractOrganizableObject.NAME));
+			if(attributes.containsKey(Function.APPLICATION)) {
+				addScopeParametersToContext(context, node, parametersByScope, ParameterScope.FUNCTION, attributes.get(Function.APPLICATION)+"."+attributes.get(AbstractOrganizableObject.NAME));
+				addScopeParametersToContext(context, node, parametersByScope, ParameterScope.APPLICATION, attributes.get(Function.APPLICATION));
+			}
+		}
 	}
 
 	protected void buildExecutionParametersMapAndUpdateExecution(ExecutionContext context,
