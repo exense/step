@@ -27,6 +27,7 @@ import step.core.dynamicbeans.DynamicValue;
 public class Sleep extends AbstractArtefact {
 
 	private DynamicValue<Long> duration = new DynamicValue<>(0L);
+	private DynamicValue<Boolean> releaseTokens = new DynamicValue<>(false);
 
 	public DynamicValue<Long> getDuration() {
 		return duration;
@@ -34,5 +35,13 @@ public class Sleep extends AbstractArtefact {
 
 	public void setDuration(DynamicValue<Long> duration) {
 		this.duration = duration;
+	}
+
+	public DynamicValue<Boolean> getReleaseTokens() {
+		return releaseTokens;
+	}
+
+	public void setReleaseTokens(DynamicValue<Boolean> releaseTokens) {
+		this.releaseTokens = releaseTokens;
 	}
 }

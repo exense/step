@@ -24,17 +24,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import step.artefacts.FunctionGroup;
+import step.core.AbstractContext;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
+import step.core.functions.FunctionGroupHandle;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
 
-public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportNode> {
+public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportNode> implements FunctionGroupHandle {
 	
 	public static final String FUNCTION_GROUP_CONTEXT_KEY = "##functionGroupContext##";
 
@@ -99,38 +101,51 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(testArtefact, getBindings());
 		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria);
 		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, handle);
+		context.put(FunctionGroupHandle.class, this);
 		try {
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.execute_(node, testArtefact);
 		} finally {
-			List<Exception> releaseExceptions = new ArrayList<>();
-			if(handle.getTokens()!=null) {
-				handle.getTokens().forEach(t->{
-					try {
-						functionExecutionService.returnTokenHandle(t.getID());
-					} catch (FunctionExecutionServiceException e) {
-						releaseExceptions.add(e);
-					}
-				});
-			}
-			if(handle.getLocalToken()!=null) {
+			releaseTokens(context, true);
+		}	
+	}
+	
+	@Override
+	public void releaseTokens(AbstractContext context, boolean local) throws Exception {
+		FunctionGroupContext handle = (FunctionGroupContext) ((ExecutionContext) context).getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
+		FunctionExecutionService functionExecutionService = context.get(FunctionExecutionService.class);
+		List<Exception> releaseExceptions = new ArrayList<>();
+		if(handle.getTokens()!=null) {
+			handle.getTokens().forEach(t->{
 				try {
-					functionExecutionService.returnTokenHandle(handle.getLocalToken().getID());
+					functionExecutionService.returnTokenHandle(t.getID());
 				} catch (FunctionExecutionServiceException e) {
 					releaseExceptions.add(e);
 				}
+			});
+			handle.getTokens().clear();
+		}
+		if(handle.getLocalToken()!=null && local) {
+			try {
+				functionExecutionService.returnTokenHandle(handle.getLocalToken().getID());
+			} catch (FunctionExecutionServiceException e) {
+				releaseExceptions.add(e);
+			} finally {
+				handle.setLocalToken(null);
 			}
-			
-			int exceptionCount = releaseExceptions.size();
-			if(exceptionCount > 0) {
-				if(exceptionCount == 1) {
-					throw releaseExceptions.get(0);
-				} else {
-					throw new Exception("Multiple errors occurred when releasing agent tokens: "+
-								releaseExceptions.stream().map(e->e.getMessage()).collect(Collectors.joining(", ")));
-				}
+		}
+		
+		int exceptionCount = releaseExceptions.size();
+		if(exceptionCount > 0) {
+			if(exceptionCount == 1) {
+				throw releaseExceptions.get(0);
+			} else {
+				throw new Exception("Multiple errors occurred when releasing agent tokens: "+
+							releaseExceptions.stream().map(e->e.getMessage()).collect(Collectors.joining(", ")));
 			}
-		}	
+		}
+	
+		
 	}
 
 	@Override

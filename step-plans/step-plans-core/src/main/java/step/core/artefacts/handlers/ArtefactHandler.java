@@ -38,6 +38,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
+import step.core.functions.FunctionGroupHandle;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
 import step.resources.ResourceManager;
@@ -366,5 +367,16 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 		result.setError(errorMsg!=null?errorMsg+":"+e.getMessage():e.getMessage(), 0, true);	
 		result.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+	}
+	
+	protected void releaseTokens( ARTEFACT testArtefact) {
+		FunctionGroupHandle handle = context.get(FunctionGroupHandle.class);
+		if (handle != null) {			
+			try {
+				handle.releaseTokens(context, false);
+			} catch (Exception e) {
+				logger.warn("Could not release tokens",e);
+			}
+		}
 	}
 }

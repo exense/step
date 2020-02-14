@@ -56,6 +56,10 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 			}
 			
 			try {
+				if (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0) {
+					releaseTokens(testArtefact);
+				}
+				
 				Thread.sleep(testArtefact.getGracePeriod().get());
 			} catch (InterruptedException e) {
 				lastStatus = ReportNodeStatus.INTERRUPTED;

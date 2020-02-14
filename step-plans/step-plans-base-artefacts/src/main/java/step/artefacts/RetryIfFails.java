@@ -32,6 +32,8 @@ public class RetryIfFails extends AbstractArtefact {
 
 	DynamicValue<Integer> timeout = new DynamicValue<Integer>(0);
 	
+	private DynamicValue<Boolean> releaseTokens = new DynamicValue<>(false);
+	
 	public DynamicValue<Integer> getMaxRetries() {
 		return maxRetries;
 	}
@@ -54,6 +56,14 @@ public class RetryIfFails extends AbstractArtefact {
 
 	public void setTimeout(DynamicValue<Integer> timeout) {
 		this.timeout = timeout;
+	}
+
+	public DynamicValue<Boolean> getReleaseTokens() {
+		return releaseTokens;
+	}
+
+	public void setReleaseTokens(DynamicValue<Boolean> releaseTokens) {
+		this.releaseTokens = releaseTokens;
 	}
 
 }

@@ -23,6 +23,7 @@ import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.functions.FunctionGroupHandle;
 
 public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 	
@@ -33,6 +34,9 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 
 	@Override
 	protected void execute_(ReportNode node, Sleep testArtefact) {
+		if (testArtefact.getReleaseTokens().get()) {
+			releaseTokens(testArtefact);
+		}
 		long sleepDurationMs;
 		try {
 			sleepDurationMs = ((Number)testArtefact.getDuration().get()).longValue();

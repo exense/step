@@ -2,6 +2,7 @@
 <fieldset ng-disabled="readonly">
 	<form>
 		<dynamic-textfield label="'Duration (ms)'" on-save="save()" dynamic-value="artefact.duration" />
+		<ng-include src="'partials/artefacts/waitingArtefactsAdvanced.html'"></ng-include>
 	</form>
 </fieldset>
 </div>
