@@ -18,12 +18,14 @@
  *******************************************************************************/
 package step.functions.base.defaults;
 
+import step.core.accessors.Attribute;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 
 public class SleepKeyword extends AbstractKeyword{
 	
-	@Keyword(htmlTemplate = "<label>Sleep time in ms</label><dynamic-textfield dynamic-value=\"inputs.sleepTime\" default-value=\"{dynamic:false,value:0}\" on-save=\"save()\" />")
+	//@Keyword
+	@Attribute(key="htmlTemplate", value="<label>Sleep time in ms</label><dynamic-textfield dynamic-value=\"inputs.sleepTime\" default-value=\"{dynamic:false,value:0}\" on-save=\"save()\" />")
 	public void Sleep(){
 		int sleepDurationMs;
 		try {

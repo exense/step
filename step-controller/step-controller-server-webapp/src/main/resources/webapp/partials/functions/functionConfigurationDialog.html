@@ -15,7 +15,7 @@
 			<label>Schema</label> 
 			<textarea ng-model="schemaStr" class="form-control form-control-sm"></textarea>
 		</div>
-		<div class="form-group">
+		<div ng-if="function_.htmlTemplate" class="form-group">
 			<label></label> 
 			<label>
 				<input type="checkbox" ng-model="function_.useCustomTemplate"> 

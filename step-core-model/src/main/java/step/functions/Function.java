@@ -45,7 +45,7 @@ public class Function extends AbstractOrganizableObject {
 	protected boolean managed;
 	
 	protected boolean useCustomTemplate=false;
-	protected String htmlTemplate;
+	protected String htmlTemplate="";
 	
 	public static final String APPLICATION = "application";
 	
@@ -133,8 +133,5 @@ public class Function extends AbstractOrganizableObject {
 	 */
 	public void setHtmlTemplate(String customTemplateContent) {
 		this.htmlTemplate = customTemplateContent;
-		if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
-			this.setUseCustomTemplate(true);
-		}
 	}
 }
