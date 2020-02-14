@@ -49,7 +49,7 @@ angular.module('planTree',['dataTable','step','artefacts','reportTable','dynamic
           if(initialState.interactive) {
             $scope.interactiveSessionHandle.start();
           }
-          delete $rootScope.artefactEditorInitialState;
+          delete $rootScope.planEditorInitialState;
         } else {
           tree.select_node(root.id);
         }
