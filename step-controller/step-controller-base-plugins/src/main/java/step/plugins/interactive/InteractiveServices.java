@@ -280,6 +280,7 @@ public class InteractiveServices extends AbstractServices {
 				.add(callFunction)
 				.endBlock()
 				.build();
+		plan.setVisible(false);
 		getContext().getPlanAccessor().save(plan);
 		FunctionTestingSession result = new FunctionTestingSession();
 		result.setPlanId(plan.getId().toString());
