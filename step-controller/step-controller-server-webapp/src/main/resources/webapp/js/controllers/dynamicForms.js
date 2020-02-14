@@ -70,7 +70,6 @@ dynamicForms.directive('dynamicCheckbox', function() {
     controller: function($scope) {
       initDynamicFormsCtrl($scope);
       $scope.updateConstantValue = function () {
-        console.log($scope.dynamicValue);
         if ($scope.dynamicValue.value === "false") {
           $scope.dynamicValue.value = false;
         } else if ($scope.dynamicValue.value === "true") {
