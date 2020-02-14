@@ -29,6 +29,9 @@ function initDynamicFormsCtrl($scope) {
   $scope.useConstantValue = function() {
     $scope.dynamicValue.dynamic = false;
     $scope.dynamicValue.value = $scope.dynamicValue.expression;
+    if ($scope.updateConstantValue) {
+      $scope.updateConstantValue();
+    }
     delete $scope.dynamicValue.expression;
     $scope.onSave();
   }
@@ -61,10 +64,19 @@ dynamicForms.directive('dynamicCheckbox', function() {
     scope: {
       dynamicValue: '=',
       label: '=',
+      tooltip: '=',
       onSave: '&'
     },
     controller: function($scope) {
       initDynamicFormsCtrl($scope);
+      $scope.updateConstantValue = function () {
+        console.log($scope.dynamicValue);
+        if ($scope.dynamicValue.value === "false") {
+          $scope.dynamicValue.value = false;
+        } else if ($scope.dynamicValue.value === "true") {
+          $scope.dynamicValue.value = true;
+        }
+      }
     },
     templateUrl: 'partials/dynamicforms/checkbox.html'}
 })
