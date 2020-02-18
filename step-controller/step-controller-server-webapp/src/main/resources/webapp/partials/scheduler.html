@@ -21,7 +21,7 @@
 					<header>Parameters</header>
 					<second-header></second-header>
 					<cell>
-						<execution-parameters model="row.executionsParameters.customParameters" st-on-change="saveTask(row)" st-inline="true" />
+						<st-custom-form st-model="row.executionsParameters.customParameters" st-screen="executionParameters" st-on-change="saveTask(row)" st-inline="true" />
 					</cell>
 				</st-column>
 				<st-column name="cronExpression">

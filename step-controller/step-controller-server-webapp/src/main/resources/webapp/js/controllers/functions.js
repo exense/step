@@ -238,10 +238,6 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
     $scope.function_.tokenSelectionCriteria = tokenSelectionCriteria;
   }
   
-  $http.get("rest/screens/functionTable").then(function(response){
-    $scope.inputs=response.data;
-  });
-  
   var loadTokenSelectionCriteria = function(function_) {
     $scope.criteria = [];
     if(function_ && function_.tokenSelectionCriteria) {

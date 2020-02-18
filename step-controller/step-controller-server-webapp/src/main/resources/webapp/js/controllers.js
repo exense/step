@@ -30,22 +30,12 @@ function escapeRegExp(string){
 	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 };
 
-tecAdminControllers.factory('executionServices', function($http,$q,$filter) {
-	var urlBase = 'rest/views';
+tecAdminControllers.factory('executionServices', function($http,$q,$filter,ScreenTemplates) {
 	var factory = {};
-
-	factory.getExecutionParameterInputs = function (previousParams) {
-		return $q(function(resolve, reject) {
-			$http({url:"rest/screens/executionParameters", method:"GET", params:previousParams}).then(function(response){
-				var data = response.data;
-				resolve(data);
-			})
-		})
-	};
 
 	factory.getDefaultExecutionParameters = function () {
 		return $q(function(resolve, reject) {
-			factory.getExecutionParameterInputs().then(function(inputs){
+		  ScreenTemplates.getScreenInputsByScreenId('executionParameters').then(function(inputs){
 				var result = {};
 				_.each(inputs, function(input) {
 					if(input.options && input.options.length>0) {
@@ -62,67 +52,8 @@ tecAdminControllers.factory('executionServices', function($http,$q,$filter) {
 	return factory
 })
 
-tecAdminControllers.directive('executionParameters', function($rootScope, $http, executionServices) {
-	return {
-		restrict: 'E',
-		scope: {
-			model: '=',
-			stOnChange: '&?',
-			stInline: '=?'
-		},
-		templateUrl: 'partials/executionParametersForm.html',
-		controller: function($scope) {
-			if(!$scope.model) {
-				$scope.model = {};        
-			}
-			$scope.$watch('model',function(newModel, oldModel) {
-				if(newModel) {
-					$scope.model=newModel;
-				}
-			})
-
-			$scope.updateForm = function() {
-				retrieveInputs();
-				if($scope.stOnChange) {
-					$scope.stOnChange($scope.model)
-				}
-			}
-
-			function retrieveInputs() {        
-				params =  _.clone($scope.model);
-				executionServices.getExecutionParameterInputs(params).then(function(data){
-					$scope.inputs=data;
-					var oldModel = $scope.model;
-					var newModel = {};
-					_.each($scope.inputs, function(input) {
-						if(oldModel[input.id] != null) {
-							newModel[input.id] = oldModel[input.id];                
-						} else {
-							if(input.options && input.options.length>0) {
-								newModel[input.id] = input.options[0].value;
-							} else {
-								newModel[input.id] = '';
-							}
-						}
-					});
-
-					_.each(_.keys($scope.model), function(prop) {
-						delete $scope.model[prop];
-					})
-					_.each(_.keys(newModel), function(prop) {
-						$scope.model[prop] = newModel[prop];
-					})
-				});
-
-			}
-
-			retrieveInputs();
-		}
-	};
-});
-
-tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','AuthService','schedulerServices',
-	function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,AuthService,schedulerServices) {
+tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','AuthService','schedulerServices','executionServices',
+	function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,AuthService,schedulerServices,executionServices) {
 	return {
 		restrict: 'E',
 		scope: {
@@ -138,7 +69,12 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 			$scope.model = {};
 
 			$scope.authService = AuthService;
-			$scope.executionParameters = $scope.execution?$scope.execution.executionParameters.customParameters:{};
+			if($scope.execution) {
+			  $scope.executionParameters = _.clone($scope.execution.executionParameters.customParameters);
+			} else {
+			  $scope.executionParameters = {};
+			  executionServices.getDefaultExecutionParameters().then(function(defaultParameters){$scope.executionParameters = defaultParameters});
+			}
 			$scope.isolateExecution = $scope.isolateExecution?$scope.isolateExecution:($scope.execution?$scope.execution.executionParameters.isolatedExecution:false);
 
 			function buildExecutionParams(simulate) {
