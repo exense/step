@@ -43,8 +43,13 @@ import step.core.plugins.Plugin;
 import step.core.variables.VariableType;
 import step.core.variables.VariablesManager;
 import step.functions.Function;
+import step.plugins.screentemplating.Input;
+import step.plugins.screentemplating.InputType;
+import step.plugins.screentemplating.ScreenInput;
+import step.plugins.screentemplating.ScreenInputAccessor;
+import step.plugins.screentemplating.ScreenTemplatePlugin;
 
-@Plugin(dependencies= {ObjectHookPlugin.class})
+@Plugin(dependencies= {ObjectHookPlugin.class, ScreenTemplatePlugin.class})
 public class ParameterManagerPlugin extends AbstractControllerPlugin {
 	
 	private static final String PARAMETER_SCOPE_VALUE_DEFAULT = "default";
@@ -65,7 +70,34 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 		context.put(ParameterManager.class, parameterManager);
 		this.parameterManager = parameterManager;
 		
+		createScreenInputDefinitionsIfNecessary(context);
+		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
+	}
+
+	private static final String PARAMETER_DIALOG = "parameterDialog";
+	private static final String PARAMETER_TABLE = "parameterTable";
+
+	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
+		// Parameter table
+		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
+		if(screenInputAccessor.getScreenInputsByScreenId(PARAMETER_TABLE).isEmpty()) {
+			screenInputAccessor.save(new ScreenInput(0, PARAMETER_TABLE, new Input(InputType.TEXT, "key", "Key", null, null)));
+			screenInputAccessor.save(new ScreenInput(1, PARAMETER_TABLE, new Input(InputType.TEXT, "value", "Value", null, null)));
+			screenInputAccessor.save(new ScreenInput(2, PARAMETER_TABLE, new Input(InputType.TEXT, "activationExpression.script", "Activation script", null, null)));
+			screenInputAccessor.save(new ScreenInput(3, PARAMETER_TABLE, new Input(InputType.TEXT, "priority", "	Priority", null, null)));
+		}
+		
+		// Edit parameter dialog
+		if(screenInputAccessor.getScreenInputsByScreenId(PARAMETER_DIALOG).isEmpty()) {
+			Input input = new Input(InputType.TEXT, "key", "Key", "Keys containing 'pwd' or 'password' will be automatically protected", null);
+			input.setValueHtmlTemplate("<parameter-key parameter=\"stBean\" />");
+			screenInputAccessor.save(new ScreenInput(0, PARAMETER_DIALOG, input));
+			screenInputAccessor.save(new ScreenInput(1, PARAMETER_DIALOG, new Input(InputType.TEXT, "value", "Value", null, null)));
+			screenInputAccessor.save(new ScreenInput(2, PARAMETER_DIALOG, new Input(InputType.TEXT, "description", "Description", null, null)));
+			screenInputAccessor.save(new ScreenInput(3, PARAMETER_DIALOG, new Input(InputType.TEXT, "activationExpression.script", "Activation script", null, null)));
+			screenInputAccessor.save(new ScreenInput(4, PARAMETER_DIALOG, new Input(InputType.TEXT, "priority", "	Priority", null, null)));
+		}
 	}
 
 	@Override

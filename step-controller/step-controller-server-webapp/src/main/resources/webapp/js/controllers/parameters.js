@@ -59,6 +59,10 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
       }
     }
     
+    $scope.$on("parameter.edited",function(evt,data){
+      reload();
+    });
+    
     $scope.tableHandle = {};
   })
 
@@ -186,6 +190,22 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
   
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
+  };
+})
+
+.directive('parameterKey', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      parameter: '='
+    },
+    templateUrl: 'partials/parameters/parameterKey.html',
+    controller: function($scope, AuthService, ParameterDialogs) {
+      $scope.authService = AuthService;
+      $scope.editParameter = function(id) {
+        ParameterDialogs.editParameter(id, function() {$scope.$emit("parameter.edited",$scope.parameter)});
+      }
+    }
   };
 })
 
