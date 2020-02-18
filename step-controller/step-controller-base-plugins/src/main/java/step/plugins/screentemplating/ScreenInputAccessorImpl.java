@@ -1,7 +1,9 @@
 package step.plugins.screentemplating;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.json.JsonObjectBuilder;
 
@@ -22,7 +24,9 @@ public class ScreenInputAccessorImpl extends AbstractCRUDAccessor<ScreenInput> i
 		List<ScreenInput> result = new ArrayList<>();
 		String query = builder.build().toString();
 		collection.find(query).as(ScreenInput.class).forEach(r->result.add(r));
-		return result;
+		
+		return result.stream().sorted(Comparator.comparingInt(ScreenInput::getPosition)
+				.thenComparing(Comparator.comparing(ScreenInput::getId))).collect(Collectors.toList());
 	}
 
 }

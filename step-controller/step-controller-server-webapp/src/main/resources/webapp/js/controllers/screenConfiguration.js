@@ -26,9 +26,17 @@ angular.module('screenConfigurationControllers',['tables','step'])
   
   var api = {};
   
-  api.getScreenInputsByScreenId = function(screenId) {
+  api.getScreens = function(screenId) {
     return $q(function(resolve, reject) {
-      $http.get("rest/screens/"+screenId).then(function(response){
+      $http.get("rest/screens").then(function(response){
+        resolve(response.data)
+      })
+    })
+  }
+  
+  api.getScreenInputsByScreenId = function(screenId, params) {
+    return $q(function(resolve, reject) {
+      $http({url:"rest/screens/"+screenId, method:"GET", params:params}).then(function(response){
         resolve(response.data)
       })
     })
@@ -42,14 +50,53 @@ angular.module('screenConfigurationControllers',['tables','step'])
     })
   }
   
+  function addPropertyChain(chain, val, obj) {
+    var propChain = chain.split(".");
+    if (propChain.length === 1) {
+      obj[propChain[0]] = val;
+      return;
+    }
+    var first = propChain.shift();
+    if (!obj[first]) {
+      obj[first] = {};
+    }    
+    addPropertyChain(propChain.join("."), val, obj[first] );
+  }
+
+  function getPropertyChain(chain, obj) {
+    var propChain = chain.split(".");
+    if (propChain.length === 1) {
+      return obj[propChain[0]];
+    }
+    var first = propChain.shift();
+    if (!obj[first]) {
+      return null;
+    }    
+    return getPropertyChain(propChain.join("."), obj[first] );
+  }
+
+  api.getScreenInputModel = function(bean, input) {
+    return function(value) {
+      if(angular.isDefined(value)) {
+        addPropertyChain(input.id,value,bean);
+      } else {
+        return getPropertyChain(input.id, bean);
+      }
+    }
+  }
+  
   return api;
 })
 
-.controller('ScreenConfigurationCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, InputDialogs, AuthService) {
+.controller('ScreenConfigurationCtrl', function($rootScope, $scope, $http, stateStorage, ScreenTemplates, Dialogs, InputDialogs, AuthService) {
     stateStorage.push($scope, 'screenconfiguration', {});	
     $scope.authService = AuthService;
     
     $scope.currentScreenId = 'executionParameters'
+      
+    ScreenTemplates.getScreens().then(function(res) {
+      $scope.screens = res;
+    })
       
     function reload() {
       $http.get("rest/screens/input/byscreen/"+$scope.currentScreenId).then(function(res) {
@@ -67,6 +114,12 @@ angular.module('screenConfigurationControllers',['tables','step'])
 
     $scope.editInput = function(id) {
       InputDialogs.editScreenInput(id, null, function() {reload()});
+    }
+    
+    $scope.moveInput = function(id, offset) {
+      $http.post("rest/screens/input/"+id+"/move",offset).then(function() {
+        reload();
+      });
     }
     
     $scope.deleteInput = function(id) {
@@ -159,13 +212,37 @@ angular.module('screenConfigurationControllers',['tables','step'])
     },
     templateUrl: 'partials/screenconfiguration/customForm.html',
     controller: function($scope) {
-      ScreenTemplates.getScreenInputsByScreenId($scope.stScreen).then(function(attributes) {
-        $scope.attributes=_.reject(attributes, function(attribute) {
-          return $scope.stExcludeFields!=null && $scope.stExcludeFields.indexOf(attribute.id) >= 0;
-        });
-      })
       
+      function retrieveInputs() {
+        var params =  _.clone($scope.stModel);
+        ScreenTemplates.getScreenInputsByScreenId($scope.stScreen, params).then(function(attributes) {
+          var newAttributes=_.reject(attributes, function(attribute) {
+            return $scope.stExcludeFields!=null && $scope.stExcludeFields.indexOf(attribute.id) >= 0;
+          });
+          if($scope.attributes) {
+            // If an input is deactivated due to its "activationExpression" returning false,
+            // the corresponding bean property has to be deleted
+            _.each($scope.attributes, function(input) {
+              if(!_.find(newAttributes, function(i) {
+                return i.id == input.id
+              })) {
+                eval('delete $scope.stModel.'+input.id)
+              }
+            })
+          }
+          $scope.attributes = newAttributes;
+        })
+      }
+      
+      $scope.$watch('stModel', function(value) {
+        if(value) {
+          retrieveInputs();
+        }
+      })
+
       $scope.saveAttributes = function() {
+      	// Retrieve the inputs again to force the reevaluation of the activationExpressions of the inputs
+        retrieveInputs();
         if($scope.stOnChange) {
           $scope.stOnChange();
         }
@@ -197,14 +274,10 @@ angular.module('screenConfigurationControllers',['tables','step'])
       }
       
       $scope.model = function() {
-        return function(value) {
-          if($scope.stBean) {
-            if(angular.isDefined(value)) {
-              eval('$scope.stBean.'+$scope.input.id+'=value');
-            } else {
-              return eval('$scope.stBean.'+$scope.input.id);
-            }
-          } else {
+        if($scope.stBean) {
+          return ScreenTemplates.getScreenInputModel($scope.stBean, $scope.input);
+        } else {
+          return function(value) {
             if(angular.isDefined(value)) {
               $scope.ngModel=value;
             } else {
@@ -219,6 +292,26 @@ angular.module('screenConfigurationControllers',['tables','step'])
           $scope.stOnChange();
         }
       }
+    }
+  }
+})
+.directive('stCustomFormValue', function(ScreenTemplates, $compile) {
+  return {
+    restrict: 'E',
+    scope: {
+      stBean: '=?',
+      stInput: '=?'
+    },
+    templateUrl: 'partials/screenconfiguration/customFormValue.html',
+    link: function($scope, $element, $attrs) {
+      if($scope.input.valueHtmlTemplate) {
+        var template = $compile($scope.input.valueHtmlTemplate)($scope)
+        $element.replaceWith(template)
+      }
+    },
+    controller: function ctrl($scope, $compile) {
+      $scope.input = $scope.stInput
+      $scope.model = ScreenTemplates.getScreenInputModel($scope.stBean, $scope.input);
     }
   }
 })

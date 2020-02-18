@@ -19,8 +19,10 @@
 package step.plugins.screentemplating;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -62,6 +64,20 @@ public class ScreenTemplateService extends AbstractServices {
 	
 	@GET
 	@Secured
+	@Produces(MediaType.APPLICATION_JSON)
+	public Set<String> getScreens() {		
+		HashSet<String> screens = new HashSet<>();
+		screenInputAccessor.getAll().forEachRemaining(s->{
+			String screenId = s.getScreenId();
+			if(screenId!=null) {
+				screens.add(screenId);
+			}
+		});
+		return screens;
+	}
+	
+	@GET
+	@Secured
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<Input> getInputsForScreen(@PathParam("id") String screenId, @Context UriInfo uriInfo) {		
@@ -93,6 +109,14 @@ public class ScreenTemplateService extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ScreenInput getInput(@PathParam("id") String id) {
 		return screenInputAccessor.get(new ObjectId(id));
+	}
+	
+	@POST
+	@Secured(right="admin")
+	@Path("/input/{id}/move")
+	@Produces(MediaType.APPLICATION_JSON)
+	public void moveInput(@PathParam("id") String id, int offset) {
+		screenTemplateManager.moveInput(id, offset);
 	}
 	
 	@DELETE

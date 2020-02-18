@@ -14,6 +14,10 @@
 			<input class="form-control"	ng-model="input.input.label">
 		</div>
 		<div class="form-group">
+			<label>Description</label> 
+			<input class="form-control"	ng-model="input.input.description">
+		</div>
+		<div class="form-group">
 			<label>Type</label> 
 			<select class="form-control" ng-model="input.input.type" ng-options="x for x in ['DROPDOWN','TEXT']"></select>
 		</div>
@@ -51,6 +55,20 @@
 			<label>Activation expression</label> 
 			<input class="form-control"	ng-model="input.input.activationExpression.script">
 		</div>
+		
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="showAdvanced = !showAdvanced">Advanced</a>
+			</div>
+			<div class="panel-body" ng-show="showAdvanced">
+				<div class="form-group">
+					<label>Value HTML Template</label> 
+					<span class="glyphicon glyphicon-question-sign" uib-tooltip="The HTML template to be used to display the value of the input (Optional)"></span>
+					<input class="form-control"	ng-model="input.input.valueHtmlTemplate">
+				</div>
+			</div>
+		</div>
+		
 		<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
 	</form>
 </div>

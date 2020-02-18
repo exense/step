@@ -33,6 +33,10 @@ public class Input extends AbstractActivableObject {
 	
 	String label;
 	
+	String description;
+	
+	String valueHtmlTemplate;
+	
 	List<Option> options;
 
 	public Input() {
@@ -55,12 +59,16 @@ public class Input extends AbstractActivableObject {
 		this.type = InputType.DROPDOWN;
 	}
 
-
-	public Input(InputType type, String id, String label, List<Option> options) {
+    public Input(InputType type, String id, String label, List<Option> options) {
+		this(type, id, label, null, options);
+	}
+    
+	public Input(InputType type, String id, String label, String description, List<Option> options) {
 		super();
 		this.type = type;
 		this.id = id;
 		this.label = label;
+		this.description = description;
 		this.options = options;
 	}
 
@@ -86,6 +94,22 @@ public class Input extends AbstractActivableObject {
 
 	public void setLabel(String label) {
 		this.label = label;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getValueHtmlTemplate() {
+		return valueHtmlTemplate;
+	}
+
+	public void setValueHtmlTemplate(String valueHtmlTemplate) {
+		this.valueHtmlTemplate = valueHtmlTemplate;
 	}
 
 	public List<Option> getOptions() {

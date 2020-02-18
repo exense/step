@@ -1,9 +1,12 @@
 package step.plugins.screentemplating;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.bson.types.ObjectId;
 
 import step.commons.activation.Activator;
 
@@ -29,10 +32,30 @@ public class ScreenTemplateManager {
 			if(options!=null) {
 				activeOptions = Activator.findAllMatches(contextBindings, options);
 			}
-			result.add(new Input(input.getType(), input.getId(), input.getLabel(), activeOptions));
+			Input clone = new Input(input.getType(), input.getId(), input.getLabel(), input.getDescription(), activeOptions);
+			clone.setValueHtmlTemplate(input.getValueHtmlTemplate());
+			result.add(clone);
 		}
 		
 		return result;
+	}
+	
+	public void moveInput(String inputId, int offset) {
+		ScreenInput screenInput = screenInputAccessor.get(new ObjectId(inputId));
+		
+		List<ScreenInput> screenInputs = screenInputAccessor.getScreenInputsByScreenId(screenInput.getScreenId());
+		
+		int indexOf = screenInputs.indexOf(screenInput);
+		int newIndex = indexOf+offset;
+		
+		if(newIndex>=0 && newIndex<screenInputs.size()) {
+			Collections.swap(screenInputs, indexOf, indexOf+offset);
+			for(int i=0;i<screenInputs.size();i++) {
+				ScreenInput input = screenInputs.get(i);
+				input.setPosition(i);
+				screenInputAccessor.save(input);
+			}
+		}
 	}
 	
 	public void registerListener(ScreenTemplateChangeListener listener) {

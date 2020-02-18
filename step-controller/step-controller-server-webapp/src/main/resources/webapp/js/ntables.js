@@ -31,7 +31,17 @@ angular.module('tables', ['export','dataTable'])
 		headerScopesTracker.destroy();
 	});
 
-	ctrl.dtColumns = [];
+	ctrl.dtColumns = {}
+	
+	ctrl.getDtColumns = function() {
+	  var result = [];
+	  _.each(_.keys(ctrl.dtColumns).sort(), function(key) {
+	    _.each(ctrl.dtColumns[key], function(value) {
+	      result.push(value);
+	    })
+	  })
+	  return result;
+	}
 
 	ctrl.addColumn = function(column, position) {
 		var colDef = {};
@@ -96,7 +106,12 @@ angular.module('tables', ['export','dataTable'])
 			scopesTracker.newCycle()
 		}
 
-		ctrl.dtColumns.splice(position, 0, colDef);
+		var slot = ctrl.dtColumns[position]
+		if(!slot) {
+		  slot = [];
+		  ctrl.dtColumns[position] = slot;
+		}
+		slot.push(colDef);
 	}
 
 })
@@ -124,12 +139,26 @@ angular.module('tables', ['export','dataTable'])
 
 		  var tableElement = angular.element(element).find('table');
 
+		  function loadTableData() {
+		    var value = scope.data;
+		    if(scope.table) {
+          scope.table.clear();
+          if (value && value.length > 0) {
+            scope.table.rows.add(value);
+            // perform the table draw after the current angular digest cycle in order to let angular render all the cells  (See comment in colDef.render above) 
+            $timeout(function() {
+              scope.table.draw(false)
+            })
+          }
+        }
+		  }
+		  
 		  controller.reload = function() {
 		    // First destroy the previous table if any
 		    if(scope.table && scope.table.destroy) {
           scope.table.destroy()
           // remove the headers added "manually" (see below)
-          tableElement.find('thead').empty();
+          tableElement.empty();
         }
 		    
 		    // Build the table options
@@ -141,7 +170,7 @@ angular.module('tables', ['export','dataTable'])
 	      tableOptions.fnDrawCallback = function() {
 	        controller.newCycle();
 	      };
-	      tableOptions.columns = controller.dtColumns;
+	      tableOptions.columns = controller.getDtColumns();
 	      if(scope.order) {
 	        tableOptions.order = scope.order;
 	      }
@@ -151,7 +180,7 @@ angular.module('tables', ['export','dataTable'])
 	          tableOptions.stateSave = true;
 	          tableOptions.stateSaveCallback = function(settings, data) {
 	            // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
-	            var uid = scope.uid + controller.dtColumns.length;
+	            var uid = scope.uid + tableOptions.columns.length;
 	            var state = stateStorage.get(scope, uid);
 	            if (!state) {
 	              state = {};
@@ -162,7 +191,7 @@ angular.module('tables', ['export','dataTable'])
 	          };
 	          tableOptions.stateLoadCallback = function(settings) {
 	            // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
-	            var uid = scope.uid + controller.dtColumns.length;
+	            var uid = scope.uid + tableOptions.columns.length;
 	            var state = stateStorage.get(scope, uid);
 	            return (state && state.tableState) ? state.tableState : null;
 	          }
@@ -230,21 +259,14 @@ angular.module('tables', ['export','dataTable'])
 	          table.settings()[0].aoColumns[i].secondHeaderRenderer(secondHeader,table.column(i),scope.handle);
 	        }
 	      });
+	      
+	      loadTableData();
 		  }
 		  
 		  if(!serverSide) {
 		    // Listen to changes in the data collection
         scope.$watchCollection('data', function(value) {
-          if(scope.table) {
-            scope.table.clear();
-            if (value && value.length > 0) {
-              scope.table.rows.add(value);
-              // perform the table draw after the current angular digest cycle in order to let angular render all the cells  (See comment in colDef.render above) 
-              $timeout(function() {
-                scope.table.draw(false)
-              })
-            }
-          }
+          loadTableData();
         }) 
       }
 		  

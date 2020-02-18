@@ -6,12 +6,21 @@ public class ScreenInput extends AbstractOrganizableObject {
 
 	protected String screenId;
 	
+	protected int position;
+	
 	protected Input input;
 
 	public ScreenInput() {
 		super();
 	}
 
+	public ScreenInput(int position, String screenId, Input input) {
+		super();
+		this.position = position;
+		this.screenId = screenId;
+		this.input = input;
+	}
+	
 	public ScreenInput(String screenId, Input input) {
 		super();
 		this.screenId = screenId;
@@ -24,6 +33,14 @@ public class ScreenInput extends AbstractOrganizableObject {
 
 	public void setScreenId(String screenId) {
 		this.screenId = screenId;
+	}
+
+	public int getPosition() {
+		return position;
+	}
+
+	public void setPosition(int position) {
+		this.position = position;
 	}
 
 	public Input getInput() {
