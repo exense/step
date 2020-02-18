@@ -9,6 +9,10 @@ import step.core.artefacts.ArtefactRegistry;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.plugins.screentemplating.Input;
+import step.plugins.screentemplating.InputType;
+import step.plugins.screentemplating.ScreenInput;
+import step.plugins.screentemplating.ScreenInputAccessor;
 
 @Plugin
 public class PlanPlugin extends AbstractControllerPlugin {
@@ -53,5 +57,17 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		context.getServiceRegistrationCallback().registerService(PlanServices.class);
 		
 		context.get(CollectionRegistry.class).register("plans", new PlanCollection(context.getMongoClientSession().getMongoDatabase()));
+		
+		createScreenInputDefinitionsIfNecessary(context);
+	}
+	
+	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
+		// Parameter table
+		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
+		if(screenInputAccessor.getScreenInputsByScreenId("planTable").isEmpty()) {
+			Input input = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
+			input.setValueHtmlTemplate("<plan-link plan-id=\"stBean._id.$oid\" description=\"stBean.attributes.name\" />");
+			screenInputAccessor.save(new ScreenInput(0, "planTable", input));
+		}
 	}
 }

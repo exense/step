@@ -1,2 +1,2 @@
-<a ng-if="planRef.repositoryID=='local'" ng-href="#/root/artefacteditor/{{planRef.repositoryParameters.artefactid}}">{{description}}</a>
-<span ng-if="planRef.repositoryID!='local'">{{description}}</span>
+<a ng-if="planId" ng-href="#/root/plans/editor/{{planId}}">{{description}}</a>
+<span ng-if="!planId">{{description}}</span>

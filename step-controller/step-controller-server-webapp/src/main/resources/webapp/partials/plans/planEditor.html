@@ -21,7 +21,7 @@
 				<div class="panel-body">
 					<div class="panel panel-default">
 						<div class="panel-body">
-							<st-custom-form st-model="model.plan" st-on-change="save()" st-screen="artefactTable" st-inline="true" st-disabled="!authService.hasRight('plan-write')"/>
+							<st-custom-form st-model="model.plan" st-on-change="save()" st-screen="planTable" st-inline="true" st-disabled="!authService.hasRight('plan-write')"/>
 						</div>
 					</div>
 					<div ng-include="getEditorView()"></div>

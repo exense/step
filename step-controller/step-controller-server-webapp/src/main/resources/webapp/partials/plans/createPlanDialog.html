@@ -4,7 +4,7 @@
 <div class="modal-body">
 	<strong>{{description}}</strong>
 	<form ng-submit="save()">
-		<st-custom-form st-model="plan" st-screen="artefactTable"/>
+		<st-custom-form st-model="plan" st-screen="planTable"/>
 		<div class="form-group">
 			<label>Type</label>
 			<select ng-model="planType" ng-options="option as option.label for option in planTypes" class="form-control" />

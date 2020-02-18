@@ -21,12 +21,7 @@
 			</div>
 		</st-actions>
 		<st-columns>
-			<st-column name="attributes.name">
-				<header>Name</header>
-				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><a href="#/root/plans/editor/{{row._id.$oid}}">{{row.attributes.name}}</a></cell>
-			</st-column>
-			<st-custom-columns st-screen="artefactTable" st-exclude-fields="['attributes.name']"/>
+			<st-custom-columns st-screen="planTable" st-exclude-fields="[]"/>
 			<st-column name="root._class">
 				<header>Type</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>

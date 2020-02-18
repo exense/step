@@ -52,12 +52,15 @@ angular.module('components',['step'])
   return {
     restrict: 'E',
     scope: {
-      planRef: '=',
+      planRef: '=?',
+      planId: '=?',
       description: '=?'
     },
     templateUrl: 'partials/components/planLink.html',
     controller: function($scope, $http) {
-      
+      if($scope.planRef && $scope.planRef.repositoryID=='local') {
+        $scope.planId = $scope.planRef.repositoryParameters.planid
+      }
     }
   };
 })
