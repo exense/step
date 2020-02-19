@@ -25,7 +25,7 @@
 	<parent>
 		<groupId>ch.exense.step</groupId>
 		<artifactId>step-controller</artifactId>
-		<version>3.12.3</version>
+		<version>3.12.4-SNAPSHOT</version>
 	</parent>
 	
 	<dependencies>
