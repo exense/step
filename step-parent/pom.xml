@@ -54,7 +54,7 @@
 		<!-- Exense projects -->
 		<exense-commons.version>1.1.0</exense-commons.version>
 		<step-grid.version>1.2.3</step-grid.version>
-		<step-api.version>2020.02.13-f864717</step-api.version>
+		<step-api.version>1.1.1</step-api.version>
 		<viz.version>1.0.0</viz.version>
 		<!--  -->
 		<junit.version>4.8.1</junit.version>
