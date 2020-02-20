@@ -87,9 +87,15 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 		reportSearchAttributes.add("name");
 		
 		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports", false));
+		String optionalReportNodesFilterStr = context.getConfiguration().getProperty("execution.reports.nodes.include", 
+				"_class:step.artefacts.reports.EchoReportNode,resolvedArtefact._class:Sleep,resolvedArtefact._class:RetryIfFails,_class:step.artefacts.reports.WaitForEventReportNode");
+		List<String[]> optionalReportNodesFilter = new ArrayList<String[]>();
+		for (String kv: optionalReportNodesFilterStr.split(",")) {
+			optionalReportNodesFilter.add(kv.split(":"));
+		}
 		leafReportNodes.addColumn("ID", "_id").addTimeColumn("Begin", "executionTime").addRowAsJson("Step",reportSearchAttributes)
 		.addTextWithDropdownColumnOptimized("Status", "status", Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList()))
-		.setQuery(new LeafReportNodesFilter()).setExportColumns(leafReportNodesColumns.build());
+		.setQuery(new LeafReportNodesFilter(optionalReportNodesFilter)).setExportColumns(leafReportNodesColumns.build());
 		
 		BackendDataTable artefactTable = new BackendDataTable(new Collection(database, "artefacts"));
 		artefactTable.addColumn("ID", "_id");

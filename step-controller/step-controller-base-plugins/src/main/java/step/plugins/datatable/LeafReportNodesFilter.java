@@ -32,6 +32,13 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 public class LeafReportNodesFilter implements CollectionQueryFactory {
+	
+	protected List<String[]> optionalReportNodesFilter = new ArrayList<String[]>() ;
+	
+	public LeafReportNodesFilter(List<String[]> optionalReportNodesFilter) {
+		super();
+		this.optionalReportNodesFilter = optionalReportNodesFilter;
+	}
 
 	public Bson buildAdditionalQuery(JsonObject filter) {		
 		List<Bson> fragments = new ArrayList<>();
@@ -39,9 +46,13 @@ public class LeafReportNodesFilter implements CollectionQueryFactory {
 			fragments.add(new Document("executionID", filter.getString("eid")));
 		}
 		
-		fragments.add(or(new Document("_class","step.artefacts.reports.CallFunctionReportNode"),
-				new Document("_class","step.artefacts.reports.EchoReportNode"),
-				new Document("error.root",true)));
+		List<Bson> nodeFilters = new ArrayList<Bson>();
+		nodeFilters.add(new Document("_class","step.artefacts.reports.CallFunctionReportNode"));
+		nodeFilters.add(new Document("error.root",true));
+		for (String[] kv: optionalReportNodesFilter) {
+			nodeFilters.add(new Document(kv[0], kv[1]));	
+		}
+		fragments.add(or(nodeFilters));
 		if(filter.containsKey("testcases")) {
 			//customAttributes.TestCase
 			List<String> testcaseIds = new ArrayList<>();
