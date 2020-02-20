@@ -3,6 +3,7 @@ package step.plugins.views.functions;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.reports.ReportNode;
 
@@ -16,6 +17,9 @@ public class ErrorRateViewTest {
 		for(int j=0;j<10;j++) {
 			for(int i=0;i<99;i++) {
 				ReportNode node = new CallFunctionReportNode();
+				CallFunction callFunction = new CallFunction();
+				node.setArtefactInstance(callFunction);
+				node.setResolvedArtefact(callFunction);
 				node.setExecutionTime(j*100+i);
 				node.setError("Error "+i%2, 0, true);
 				view.afterReportNodeExecution(model, node);

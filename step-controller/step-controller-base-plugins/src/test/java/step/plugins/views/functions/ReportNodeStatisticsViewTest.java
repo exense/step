@@ -5,6 +5,7 @@ import java.util.HashMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 
 public class ReportNodeStatisticsViewTest {
@@ -17,6 +18,9 @@ public class ReportNodeStatisticsViewTest {
 		for(int j=0;j<10;j++) {
 			for(int i=0;i<99;i++) {
 				CallFunctionReportNode node = new CallFunctionReportNode();
+				CallFunction callFunction = new CallFunction();
+				node.setArtefactInstance(callFunction);
+				node.setResolvedArtefact(callFunction);
 				HashMap<String,String> functionAttributes = new HashMap<>();
 				functionAttributes.put("name", "Function"+i%2);
 				node.setFunctionAttributes(functionAttributes);

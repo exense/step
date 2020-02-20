@@ -3,6 +3,7 @@ package step.plugins.views.functions;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.reports.ReportNode;
 
@@ -17,10 +18,15 @@ public class ErrorDistributionViewTest {
 		for(int j=0;j<10;j++) {
 			for(int i=0;i<100;i++) {
 				ReportNode nodePassed = new CallFunctionReportNode();
+				CallFunction callFunction = new CallFunction();
+				nodePassed.setArtefactInstance(callFunction);
+				nodePassed.setResolvedArtefact(callFunction);
 				nodePassed.setExecutionTime(j*100+i);
 				view.afterReportNodeExecution(model, nodePassed);
 				
 				ReportNode node = new CallFunctionReportNode();
+				node.setArtefactInstance(callFunction);
+				node.setResolvedArtefact(callFunction);
 				node.setExecutionTime(j*100+i);
 				node.setError("Error "+i%2, 0, true);
 				view.afterReportNodeExecution(model, node);
@@ -41,6 +47,9 @@ public class ErrorDistributionViewTest {
 		ErrorDistribution model = view.init();
 		for(int j=0;j<1000;j++) {
 			ReportNode node = new CallFunctionReportNode();
+			CallFunction callFunction = new CallFunction();
+			node.setArtefactInstance(callFunction);
+			node.setResolvedArtefact(callFunction);
 			node.setExecutionTime(j);
 			node.setError("Error "+j, 0, true);
 			view.afterReportNodeExecution(model, node);
