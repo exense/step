@@ -15,8 +15,9 @@ import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.InputType;
 import step.plugins.screentemplating.ScreenInput;
 import step.plugins.screentemplating.ScreenInputAccessor;
+import step.plugins.screentemplating.ScreenTemplatePlugin;
 
-@Plugin
+@Plugin(dependencies= {ScreenTemplatePlugin.class})
 public class PlanPlugin extends AbstractControllerPlugin {
 
 	@Override
