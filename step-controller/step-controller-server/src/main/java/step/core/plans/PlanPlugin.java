@@ -1,5 +1,7 @@
 package step.core.plans;
 
+import java.util.List;
+
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
@@ -64,7 +66,8 @@ public class PlanPlugin extends AbstractControllerPlugin {
 	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
 		// Parameter table
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		if(screenInputAccessor.getScreenInputsByScreenId("planTable").isEmpty()) {
+		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId("planTable");
+		if(screenInputsByScreenId == null || screenInputsByScreenId.isEmpty()) {
 			Input input = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
 			input.setValueHtmlTemplate("<plan-link plan-id=\"stBean._id.$oid\" description=\"stBean.attributes.name\" />");
 			screenInputAccessor.save(new ScreenInput(0, "planTable", input));
