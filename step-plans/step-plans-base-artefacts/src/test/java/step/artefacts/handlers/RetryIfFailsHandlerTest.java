@@ -56,7 +56,7 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		RetryIfFails block = new RetryIfFails();
-		block.setMaxRetries(new DynamicValue<Integer>(2));
+		block.setMaxRetries(new DynamicValue<Integer>(3));
 		block.setGracePeriod(new DynamicValue<Integer>(1000));
 		
 		CheckArtefact check1 = new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED));
@@ -68,7 +68,28 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 		Assert.assertTrue(child.getDuration()>=2000);
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		
-		assertEquals(2, getChildren(child).size());
+		assertEquals(3, getChildren(child).size());
+	}
+	
+	@Test
+	public void testReportLastNodeOnly() {
+		setupContext();
+		
+		RetryIfFails block = new RetryIfFails();
+		block.setMaxRetries(new DynamicValue<Integer>(3));
+		block.setGracePeriod(new DynamicValue<Integer>(1000));
+		block.setReportLastTryOnly(new DynamicValue<Boolean>(true));
+		
+		CheckArtefact check1 = new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED));
+		block.addChild(check1);		
+		
+		execute(block);
+		
+		ReportNode child = getFirstReportNode();
+		Assert.assertTrue(child.getDuration()>=2000);
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		
+		assertEquals(1, getChildren(child).size());
 	}
 	
 	@Test

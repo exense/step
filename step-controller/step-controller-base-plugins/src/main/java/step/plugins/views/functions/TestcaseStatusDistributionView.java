@@ -16,14 +16,14 @@ public class TestcaseStatusDistributionView extends AbstractView<ReportNodeStatu
 
 	@Override
 	public void afterReportNodeSkeletonCreation(ReportNodeStatusDistribution model, ReportNode node) {
-		if(node instanceof TestCaseReportNode) {
+		if(node instanceof TestCaseReportNode && node.getResolvedArtefact().isPersistNode()) {
 			model.countForecast++;
 		}
 	}
 
 	@Override
 	public void afterReportNodeExecution(ReportNodeStatusDistribution model, ReportNode node) {
-		if(node instanceof TestCaseReportNode) {
+		if(node instanceof TestCaseReportNode && node.getResolvedArtefact().isPersistNode()) {
 			model.distribution.get(node.getStatus()).count++;
 			model.count++;
 			if(model.countForecast<model.count) {

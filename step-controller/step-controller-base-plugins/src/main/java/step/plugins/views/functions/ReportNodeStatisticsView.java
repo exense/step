@@ -17,7 +17,7 @@ public class ReportNodeStatisticsView extends AbstractTimeBasedView<ReportNodeSt
 
 	@Override
 	public void afterReportNodeExecution(AbstractTimeBasedModel<ReportNodeStatisticsEntry> model, ReportNode node) {
-		if(node instanceof CallFunctionReportNode) {
+		if(node instanceof CallFunctionReportNode && node.getResolvedArtefact().isPersistNode()) {
 			ReportNodeStatisticsEntry e = new ReportNodeStatisticsEntry();
 			e.count = 1;
 			e.sum = node.getDuration();

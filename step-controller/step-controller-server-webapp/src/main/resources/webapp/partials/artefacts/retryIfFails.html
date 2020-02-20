@@ -4,7 +4,21 @@
 		<dynamic-textfield label="'Max tries'" on-save="save()" dynamic-value="artefact.maxRetries" />	
 		<dynamic-textfield label="'Grace period (ms)'" on-save="save()" dynamic-value="artefact.gracePeriod" />
 		<dynamic-textfield label="'Timeout'" on-save="save()" dynamic-value="artefact.timeout" />
-		<ng-include src="'partials/artefacts/waitingArtefactsAdvanced.html'"></ng-include>
+		<!-- <ng-include src="'partials/artefacts/waitingArtefactsAdvanced.html'"></ng-include> -->
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="showAdvancedAttributes = !showAdvancedAttributes">Advanced</a>
+			</div>
+			<div class="panel-body ng-hide" ng-show="showAdvancedAttributes">
+				<div class="form-group form-group-sm">
+					<dynamic-checkbox
+						tooltip="'Caution! When enabled this option releases all agent tokens before entering a waiting state. New Tokens will have to be reserved to continue the execution. This also means that the session context will be deleted, if any objects were stored in session, they will have to be recreated and stored again.'"
+						label="'Release Tokens'" on-save="save()"
+						dynamic-value="artefact.releaseTokens" />
+					<dynamic-checkbox tooltip="'If enabled, only the final iteration will be reported.'" label="'Report only last iteration'" on-save="save()" dynamic-value="artefact.reportLastTryOnly"/>
+				</div>
+			</div>
+		</div>
 	</form>
 </fieldset>
 </div>

@@ -62,6 +62,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {
 		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, false);
 	}
+	
+	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name, boolean copyChildren,boolean persistNode) {
+		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, copyChildren, persistNode);
+	}
 
 	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name, boolean copyChildren) {
 		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, copyChildren);
@@ -218,7 +222,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			if(filter!=null&&!filter.isSelected(artefact)) {
 				node.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
-				if(persistBefore) {
+				if(persistBefore && artefact.isPersistNode()) {
 					reportNodeAccessor.save(node);					
 				}
 				
@@ -231,7 +235,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		node.setDuration((int)duration);
 
-		if(persistAfter) {
+		if(persistAfter && artefact.isPersistNode()) {
 				if(!persistOnlyNonPassed){
 					reportNodeAccessor.save(node);
 				}else{

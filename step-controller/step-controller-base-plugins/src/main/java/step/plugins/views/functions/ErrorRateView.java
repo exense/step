@@ -13,7 +13,7 @@ public class ErrorRateView extends AbstractTimeBasedView<ErrorRateEntry> {
 
 	@Override
 	public void afterReportNodeExecution(AbstractTimeBasedModel<ErrorRateEntry> model, ReportNode node) {
-		if(node.getError()!=null) {
+		if(node.getError()!=null && node.getResolvedArtefact().isPersistNode()) {
 			ErrorRateEntry e = new ErrorRateEntry();
 			e.count = 1;
 			e.countByErrorMsg.put(node.getError().getMsg()==null?"":node.getError().getMsg(), 1);

@@ -40,7 +40,10 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 		long begin = System.currentTimeMillis();
 		
 		for(int count = 1; count<=testArtefact.getMaxRetries().get();count++) {
-			Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+count, true);
+			boolean persist = (!testArtefact.getReportLastTryOnly().get() || 
+					(testArtefact.getReportLastTryOnly().get() && count>=testArtefact.getMaxRetries().get()));
+			
+			Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+count, true, persist);
 			
 			ReportNode iterationReportNode = delegateExecute(iterationTestCase, node);
 			
@@ -55,6 +58,9 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 				break;
 			}
 			
+			if (count>=testArtefact.getMaxRetries().get()) {
+				break;
+			} 
 			try {
 				if (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0) {
 					releaseTokens(testArtefact);

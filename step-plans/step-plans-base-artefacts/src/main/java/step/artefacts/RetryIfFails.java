@@ -34,6 +34,8 @@ public class RetryIfFails extends AbstractArtefact {
 	
 	private DynamicValue<Boolean> releaseTokens = new DynamicValue<>(false);
 	
+	private DynamicValue<Boolean> reportLastTryOnly = new DynamicValue<>(false);
+	
 	public DynamicValue<Integer> getMaxRetries() {
 		return maxRetries;
 	}
@@ -64,6 +66,14 @@ public class RetryIfFails extends AbstractArtefact {
 
 	public void setReleaseTokens(DynamicValue<Boolean> releaseTokens) {
 		this.releaseTokens = releaseTokens;
+	}
+
+	public DynamicValue<Boolean> getReportLastTryOnly() {
+		return reportLastTryOnly;
+	}
+
+	public void setReportLastTryOnly(DynamicValue<Boolean> reportLastTryOnly) {
+		this.reportLastTryOnly = reportLastTryOnly;
 	}
 
 }

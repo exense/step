@@ -16,7 +16,7 @@ public class ErrorDistributionView extends AbstractView<ErrorDistribution> {
 
 	@Override
 	public void afterReportNodeExecution(ErrorDistribution model, ReportNode node) {
-		if(node instanceof CallFunctionReportNode) {
+		if(node instanceof CallFunctionReportNode && node.getResolvedArtefact().isPersistNode()) {
 			model.setCount(model.getCount()+1);
 			if(node.getError()!=null && node.getError().getMsg()!=null) {
 				model.setErrorCount(model.getErrorCount()+1);

@@ -50,6 +50,8 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	
 	protected List<ObjectId> attachments;
 	
+	protected boolean persistNode = true;
+	
 	public AbstractArtefact() {
 		super();
 		_id = new ObjectId();
@@ -57,6 +59,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		Map<String, String> defaultAttributes = new HashMap<>();
 		defaultAttributes.put("name", getDefaultArtefactName(this.getClass()));
 		attributes = defaultAttributes;
+		persistNode = true;
 	}
 	
 	private String getDefaultArtefactName(Class<? extends AbstractArtefact> artefactClass) {
@@ -125,6 +128,14 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	@JsonIgnore
 	public boolean isCreateSkeleton() {
 		return false;
+	}
+
+	public boolean isPersistNode() {
+		return persistNode;
+	}
+
+	public void setPersistNode(boolean persistNode) {
+		this.persistNode = persistNode;
 	}
 
 	@Override
