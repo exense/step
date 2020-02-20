@@ -48,12 +48,12 @@ angular.module('scriptEditor',['step'])
         $scope.save().then(function() {
           $http.post("rest/interactive/functiontest/"+$scope.functionid+"/start").then(function(response) {
             var result = response.data;
-            $rootScope.artefactEditorInitialState = {
+            $rootScope.planEditorInitialState = {
                 interactive : true,
                 selectedNode : result.callFunctionId
             }
-            $location.path('/root/artefacteditor/' + result.rootArtefactId);
-          });
+            $location.path('/root/plans/editor/' + result.planId);
+          }); 
         })
       }
 })
