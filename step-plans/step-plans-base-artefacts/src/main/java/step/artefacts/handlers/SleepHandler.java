@@ -19,11 +19,11 @@
 package step.artefacts.handlers;
 
 import step.artefacts.Sleep;
+import step.artefacts.reports.SleepReportNode;
 import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.functions.FunctionGroupHandle;
 
 public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 	
@@ -56,7 +56,7 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 	}
 
 	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, Sleep testArtefact) {
-		return new ReportNode();
+	public SleepReportNode createReportNode_(ReportNode parentNode, Sleep testArtefact) {
+		return new SleepReportNode();
 	}
 }

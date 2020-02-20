@@ -88,7 +88,10 @@ public class DataTableRegistry implements ScreenTemplateChangeListener {
 		
 		BackendDataTable leafReportNodes = new BackendDataTable(new Collection(database, "reports", false));
 		String optionalReportNodesFilterStr = context.getConfiguration().getProperty("execution.reports.nodes.include", 
-				"_class:step.artefacts.reports.EchoReportNode,resolvedArtefact._class:Sleep,resolvedArtefact._class:RetryIfFails,_class:step.artefacts.reports.WaitForEventReportNode");
+				"_class:step.artefacts.reports.EchoReportNode,"+
+				"_class:step.artefacts.reports.RetryIfFailsReportNode,"+
+				"_class:step.artefacts.reports.SleepReportNode,"+
+				"_class:step.artefacts.reports.WaitForEventReportNode");
 		List<String[]> optionalReportNodesFilter = new ArrayList<String[]>();
 		for (String kv: optionalReportNodesFilterStr.split(",")) {
 			optionalReportNodesFilter.add(kv.split(":"));

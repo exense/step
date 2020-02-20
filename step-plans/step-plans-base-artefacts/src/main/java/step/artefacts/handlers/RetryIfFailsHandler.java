@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import step.artefacts.RetryIfFails;
 import step.artefacts.Sequence;
+import step.artefacts.reports.RetryIfFailsReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -76,8 +77,8 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 	}
 
 	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, RetryIfFails testArtefact) {
-		return new ReportNode();
+	public RetryIfFailsReportNode createReportNode_(ReportNode parentNode, RetryIfFails testArtefact) {
+		return new RetryIfFailsReportNode();
 	}
 
 }
