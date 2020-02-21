@@ -14,14 +14,14 @@ public class ReportNodeStatusDistributionView extends AbstractView<ReportNodeSta
 
 	@Override
 	public void afterReportNodeSkeletonCreation(ReportNodeStatusDistribution model, ReportNode node) {
-		if(node instanceof CallFunctionReportNode && node.getResolvedArtefact().isPersistNode()) {
+		if(node instanceof CallFunctionReportNode && node.persistNode()) {
 			model.countForecast++;
 		}
 	}
 
 	@Override
 	public void afterReportNodeExecution(ReportNodeStatusDistribution model, ReportNode node) {
-		if(node instanceof CallFunctionReportNode && node.getResolvedArtefact().isPersistNode()) {
+		if(node instanceof CallFunctionReportNode && node.persistNode()) {
 			model.distribution.get(node.getStatus()).count++;
 			model.count++;
 			if(model.countForecast<model.count) {

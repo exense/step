@@ -145,6 +145,10 @@ public class ReportNode extends AbstractIdentifiableObject {
 	public void setResolvedArtefact(AbstractArtefact resolvedArtefact) {
 		this.resolvedArtefact = resolvedArtefact;
 	}
+	
+	public boolean persistNode() {
+		return (resolvedArtefact == null || resolvedArtefact.isPersistNode()); 
+	}
 
 	public void setError(String errorMessage, int errorCode, boolean isRoot) {
 		Error errorObject = new Error();
