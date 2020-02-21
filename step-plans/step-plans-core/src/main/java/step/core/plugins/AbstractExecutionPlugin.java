@@ -54,7 +54,13 @@ public class AbstractExecutionPlugin extends AbstractPlugin implements Execution
 
 	@Override
 	public void associateThread(ExecutionContext context, Thread thread) {}
-
+	
+	@Override
+	public void associateThread(ExecutionContext context, Thread thread, long parentThreadId) {}
+	
+	@Override
+	public void associateTestCase(ExecutionContext context, Thread thread, String testcase) {}
+	
 	@Override
 	public void unassociateThread(ExecutionContext context, Thread thread) {}
 
@@ -63,4 +69,5 @@ public class AbstractExecutionPlugin extends AbstractPlugin implements Execution
 
 	@Override
 	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {}
+
 }

@@ -19,7 +19,9 @@
 package step.plugins.threadmanager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -45,6 +47,19 @@ public class ThreadManagerServices extends AbstractServices {
 			return threadManager.getCurrentOperations(task.getContext());
 		} else {
 			return new ArrayList<Operation>();
+		}
+	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/operationsByTestCases")
+	public Map<String,List<Operation>> getCurrentOperationsByTestcases(@QueryParam("eid") String executionID) {
+		ThreadManager threadManager = (ThreadManager) getContext().get(ThreadManager.THREAD_MANAGER_INSTANCE_KEY);
+		ExecutionRunnable task = getExecutionRunnable(executionID);
+		if(task!=null) {
+			return threadManager.getCurrentOperationsByTestcases(task.getContext());
+		} else {
+			return new HashMap<String,List<Operation>>();
 		}
 	}
 }

@@ -131,10 +131,11 @@ public class ThreadPool {
 			createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator);
 		} else {
 			List<Future<?>> futures = new ArrayList<>();
+			long parentThreadId = Thread.currentThread().getId();
 			// Create one worker for each "thread"
 			for (int i = 0; i < numberOfThreads; i++) {
 				futures.add(executorService.submit(() -> {
-					executionContext.associateThread();
+					executionContext.associateThread(parentThreadId);
 					createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator);
 				}));
 			}

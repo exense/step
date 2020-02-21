@@ -127,7 +127,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 	};
 }]);
 
-tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry) {
+tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry',function($http,$q,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry) {
 	return {
 		restrict: 'E',
 		scope: {
@@ -191,8 +191,20 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					// no need to call the $apply here as we already in an angular "thread" in the case of 
 					// in memory tables like the testcases. The following is required for serverside tables
 					//rowScope.$apply();
-				}
-				},
+				}},
+				{ "title" : "Current Operations", "width":"60%", "searchmode":"select","render": function ( data, type, row ) {
+					if(data) {
+						var html = "";
+						var maxLentgth = 10;
+						for(let i = 0; i < data.length && i < maxLentgth; i++){
+							html = html + renderOperationsHtml(data[i]);
+						}
+						return html;
+					} 
+					else {
+						return "";
+					}
+				}},
 				{ "title" : "Status", "width":"80px", "searchmode":"select","render": function ( data, type, row ) {
 					return '<div class="text-center reportNodeStatus status-' + data +'">'  +data+ '</div>';
 				}} ];
@@ -314,15 +326,19 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			};
 
 			$scope.currentOperationsTable = {};
+			var renderOperationsHtml = function (data) {
+				var renderer = operationRenderer[data.name];
+				if(!renderer) {
+					renderer = operationRenderer['default'];
+				}
+				var html = "<div style='margin-top:5px'><strong>" + data.name + "</strong>";
+				html+=renderer.renderer(data.details);
+				html+="</div>";
+				return html;
+			}
 			$scope.currentOperationsTable.columns = [ 
 				{"title" : "Operation", "render": function ( data, type, row ) {
-					var renderer = operationRenderer[data.name];
-					if(!renderer) {
-						renderer = operationRenderer['default'];
-					}
-					var html = data.name;
-					html+=renderer.renderer(data.details);
-					return html;
+					return renderOperationsHtml(data);
 				}}];
 
 			$scope.getIncludedTestcases = function() {
@@ -366,22 +382,30 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			})
 
 			var refreshTestCaseTable = function() {        
-				$http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode').then(function(response) {
-					var data = response.data;
-					var dataSet = [];
-					if(data.length>0) {
-						if(data.length>1&&!$scope.isPanelEnabled('testCases')) {              
-							$scope.setShowPanel('steps', false);
-							$scope.setShowPanel('testCases', true);
+				$q.all([
+					$http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode'),
+					$http.get("rest/threadmanager/operationsByTestCases?eid=" + eId)
+					]).then(function (responses) {
+						var data = responses[0].data;
+						var operationsData = responses[1].data; 
+						var dataSet = [];
+						if(data.length>0) {
+							if(data.length>1&&!$scope.isPanelEnabled('testCases')) {              
+								$scope.setShowPanel('steps', false);
+								$scope.setShowPanel('testCases', true);
+							}
+							$scope.enablePanel('testCases', true);
 						}
-						$scope.enablePanel('testCases', true);
-					}
 
-					for (i = 0; i < data.length; i++) {
-						dataSet[i] = [ data[i].artefactID, data[i].name, data[i].status];
-					}
-					$scope.testCaseTable.data = dataSet;
-				});
+						for (i = 0; i < data.length; i++) {
+							var tcOperations = operationsData[data[i].artefactID];
+							if (tcOperations == null) {
+								tcOperations = [];
+							}
+							dataSet[i] = [ data[i].artefactID, data[i].name, tcOperations , data[i].status];
+						}
+						$scope.testCaseTable.data = dataSet;
+					});
 			}
 
 			var refreshExecution = function() {

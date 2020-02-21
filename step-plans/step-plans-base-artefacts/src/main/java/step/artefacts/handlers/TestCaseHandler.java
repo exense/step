@@ -36,6 +36,7 @@ public class TestCaseHandler extends ArtefactHandler<TestCase, ReportNode> {
 	@Override
 	public void execute_(ReportNode node, TestCase testArtefact) {
 		addTestCaseNameToCustomAttributes(testArtefact);
+		context.associateTestCase(testArtefact.getId().toString());
 		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.execute_(node, testArtefact);
 	}

@@ -111,6 +111,14 @@ public class ExecutionContext extends AbstractContext  {
 	public void associateThread() {
 		getExecutionCallbacks().associateThread(this, Thread.currentThread());
 	}
+	
+	public void associateThread(long parentThreadId) {
+		getExecutionCallbacks().associateThread(this, Thread.currentThread(),parentThreadId);
+	}
+	
+	public void associateTestCase(String testcase) {
+		getExecutionCallbacks().associateTestCase(this, Thread.currentThread(),testcase);
+	}
 
 	public String getExecutionId() {
 		return executionId;

@@ -98,6 +98,14 @@ public class ContextBuilder {
 			@Override
 			public void beforePlanImport(ExecutionContext context) {
 			}
+
+			@Override
+			public void associateTestCase(ExecutionContext context, Thread thread, String testcase) {
+			}
+
+			@Override
+			public void associateThread(ExecutionContext context, Thread thread, long parentThreadId) {
+			}
 		});
 		
 		context.setExpressionHandler(new ExpressionHandler());
