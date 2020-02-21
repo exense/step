@@ -127,7 +127,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 	};
 }]);
 
-tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry',function($http,$q,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry) {
+tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry) {
 	return {
 		restrict: 'E',
 		scope: {
@@ -192,18 +192,13 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 					// in memory tables like the testcases. The following is required for serverside tables
 					//rowScope.$apply();
 				}},
-				{ "title" : "Current Operations", "width":"60%", "searchmode":"select","render": function ( data, type, row ) {
-					if(data) {
-						var html = "";
-						var maxLentgth = 10;
-						for(let i = 0; i < data.length && i < maxLentgth; i++){
-							html = html + renderOperationsHtml(data[i]);
-						}
-						return html;
-					} 
-					else {
-						return "";
-					}
+				{ "title" : "Current Operations", "width":"60%", "searchmode":"select","createdCell" : function (td, cellData, rowData, row, col) {
+				  var rowScope = $scope.$new(false, $scope);
+          $scope.testCaseTable.trackScope(rowScope);
+          rowScope.id = cellData;
+          var content = $compile('<current-operations report-node-id="id"/>')(rowScope);
+          $(td).empty();
+          $(td).append(content);
 				}},
 				{ "title" : "Status", "width":"80px", "searchmode":"select","render": function ( data, type, row ) {
 					return '<div class="text-center reportNodeStatus status-' + data +'">'  +data+ '</div>';
@@ -382,30 +377,22 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 			})
 
 			var refreshTestCaseTable = function() {        
-				$q.all([
-					$http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode'),
-					$http.get("rest/threadmanager/operationsByTestCases?eid=" + eId)
-					]).then(function (responses) {
-						var data = responses[0].data;
-						var operationsData = responses[1].data; 
-						var dataSet = [];
-						if(data.length>0) {
-							if(data.length>1&&!$scope.isPanelEnabled('testCases')) {              
-								$scope.setShowPanel('steps', false);
-								$scope.setShowPanel('testCases', true);
-							}
-							$scope.enablePanel('testCases', true);
+				$http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode').then(function(response) {
+					var data = response.data;
+					var dataSet = [];
+					if(data.length>0) {
+						if(data.length>1&&!$scope.isPanelEnabled('testCases')) {              
+							$scope.setShowPanel('steps', false);
+							$scope.setShowPanel('testCases', true);
 						}
+						$scope.enablePanel('testCases', true);
+					}
 
-						for (i = 0; i < data.length; i++) {
-							var tcOperations = operationsData[data[i].artefactID];
-							if (tcOperations == null) {
-								tcOperations = [];
-							}
-							dataSet[i] = [ data[i].artefactID, data[i].name, tcOperations , data[i].status];
-						}
-						$scope.testCaseTable.data = dataSet;
-					});
+					for (i = 0; i < data.length; i++) {
+						dataSet[i] = [ data[i].artefactID, data[i].name, data[i].id, data[i].status];
+					}
+					$scope.testCaseTable.data = dataSet;
+				});
 			}
 
 			var refreshExecution = function() {
@@ -751,3 +738,19 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
     }
   };
 }]);
+
+tecAdminControllers.directive('currentOperations', function($http) {
+  return {
+    restrict: 'E',
+    scope: {
+      reportNodeId: '='
+    },
+    controller: function($scope) {
+      $http.get("rest/threadmanager/operations/"+$scope.reportNodeId).then(function(response) {
+        $scope.currentOperation = response.data;
+        
+      });          
+    },
+      
+    templateUrl: 'partials/operations/currentOperations.html'}
+})
