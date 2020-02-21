@@ -306,6 +306,11 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 													}
 													return html},
 													icon: '' },
+													'default' : {
+								            renderer: function (details) {
+								              var html = " " + details;
+								              return html},
+								              icon: '' },  
 			};
 
 			$scope.currentOperationsTable = {};
@@ -313,7 +318,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				{"title" : "Operation", "render": function ( data, type, row ) {
 					var renderer = operationRenderer[data.name];
 					if(!renderer) {
-						renderer = reportNodeRenderer['default'];
+						renderer = operationRenderer['default'];
 					}
 					var html = data.name;
 					html+=renderer.renderer(data.details);

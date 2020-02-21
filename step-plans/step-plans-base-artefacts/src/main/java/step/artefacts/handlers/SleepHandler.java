@@ -31,6 +31,18 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 	protected void createReportSkeleton_(ReportNode parentNode, Sleep testArtefact) {
 
 	}
+	
+	protected long getValueAsLong(Object value) {
+		long sleepDurationMs;
+		if (value instanceof java.lang.Long || value instanceof java.lang.Integer) {
+			sleepDurationMs = ((Number)value).longValue();
+		} else if (value instanceof java.lang.String) {
+			sleepDurationMs = Long.parseLong((String) value);
+		} else {
+			throw new RuntimeException("Unable to parse attribute 'ms' as long.");
+		}
+		return sleepDurationMs;
+	}
 
 	@Override
 	protected void execute_(ReportNode node, Sleep testArtefact) {
@@ -39,7 +51,15 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 		}
 		long sleepDurationMs;
 		try {
-			sleepDurationMs = ((Number)testArtefact.getDuration().get()).longValue();
+			sleepDurationMs = getValueAsLong(testArtefact.getDuration().get());
+			String unit = testArtefact.getUnit().get();
+			if (unit.equals("s")) {
+				sleepDurationMs*=1000;
+			} else if (unit.equals("m")) {
+				sleepDurationMs*=60000;
+			} else if (!unit.equals("ms")) {
+				throw new RuntimeException("Supported units are 'ms', 's' and 'm', respectively for milliseconds, seconds and minutes. Provided was " + unit);
+			}
 		} catch (NumberFormatException e) {
 			throw new RuntimeException("Unable to parse attribute 'ms' as long.",e);
 		}

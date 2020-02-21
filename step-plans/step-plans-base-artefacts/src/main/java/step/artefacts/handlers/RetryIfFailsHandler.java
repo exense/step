@@ -21,6 +21,7 @@ package step.artefacts.handlers;
 import step.artefacts.RetryIfFails;
 import step.artefacts.Sequence;
 import step.artefacts.reports.RetryIfFailsReportNode;
+import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -66,10 +67,14 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 				if (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0) {
 					releaseTokens(testArtefact);
 				}
+				long duration = testArtefact.getGracePeriod().get();
+				OperationManager.getInstance().enter("RetryIfFails", "Grace period " + duration + " ms");
 				
-				Thread.sleep(testArtefact.getGracePeriod().get());
+				Thread.sleep(duration);
 			} catch (InterruptedException e) {
 				lastStatus = ReportNodeStatus.INTERRUPTED;
+			} finally {
+				OperationManager.getInstance().exit();
 			}
 		}
 		
