@@ -43,8 +43,9 @@ angular.module('functionsControllers',['dataTable','step'])
   return api;
 })
 
-.run(function(FunctionTypeRegistry) {
+.run(function(FunctionTypeRegistry, EntityRegistry) {
   FunctionTypeRegistry.register('step.plugins.functions.types.CompositeFunction','Composite','partials/functions/forms/composite.html');
+  EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/functions/', 'rest/functions/', 'st-table', '/partials/functions/functionSelectionTable.html');
 })
 
 .factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {
@@ -90,127 +91,66 @@ angular.module('functionsControllers',['dataTable','step'])
   return dialogs;
 })
 
-.controller('FunctionListCtrl', [ '$scope', '$rootScope', '$compile', '$http', 'stateStorage', '$interval', '$uibModal', 'Dialogs', 'FunctionDialogs', '$location','AuthService','FunctionTypeRegistry',
-    function($scope, $rootScope, $compile, $http, $stateStorage, $interval, $uibModal, Dialogs, FunctionDialogs, $location, AuthService, FunctionTypeRegistry) {
-      $stateStorage.push($scope, 'functions', {});	
-
-      $scope.authService = AuthService;
-      
-      function reload() {
-        $scope.table.Datatable.ajax.reload(null, false);
+.controller('FunctionListCtrl', function($scope, $rootScope, $compile, $http, $interval, $uibModal, stateStorage, Dialogs, FunctionDialogs, $location, AuthService, FunctionTypeRegistry) {
+  stateStorage.push($scope, 'functions', {});	
+  
+  $scope.authService = AuthService;
+  $scope.tableHandle = {};
+  
+  function reload() {
+    $scope.tableHandle.reload();
+  }
+  
+  $scope.editFunction = function(id) {
+    FunctionDialogs.editFunction(id, function() {reload()});
+  }
+  
+  $scope.copyFunction = function(id) {
+    $rootScope.clipboard = {object:"function",id:id};
+  }
+  
+  $scope.pasteFunction = function() {
+    if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
+      $http.post("rest/functions/"+$rootScope.clipboard.id+"/copy")
+      .then(function() {
+        reload();
+      });
+    }
+  }
+  
+  $scope.openFunctionEditor = function(functionid) {
+    FunctionDialogs.openFunctionEditor(functionid);
+  }
+  
+  $scope.addFunction = function() {
+    FunctionDialogs.addFunction(function() {reload()});
+  }
+  
+  $scope.executeFunction = function(id) {
+    $http.post("rest/interactive/functiontest/"+id+"/start").then(function(response) {
+      var result = response.data;
+      $rootScope.planEditorInitialState = {
+          interactive : true,
+          selectedNode : result.callFunctionId
       }
-
-      $scope.editFunction = function(id) {
-        FunctionDialogs.editFunction(id, function() {reload()});
+      $location.path('/root/plans/editor/' + result.planId);
+    });
+  }
+  
+  $scope.deleteFunction = function(id) {
+    Dialogs.showDeleteWarning().then(function() {
+      $http.delete("rest/functions/"+id).then(function() {
+        if($scope.table) {
+          reload();
       }
-      
-      $scope.copyFunction = function(id) {
-        $rootScope.clipboard = {object:"function",id:id};
-      }
-      
-      $scope.pasteFunction = function() {
-        if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
-          $http.post("rest/functions/"+$rootScope.clipboard.id+"/copy")
-          .then(function() {
-            reload();
-          });
-        }
-      }
-      
-      $scope.openFunctionEditor = function(functionid) {
-        $scope.$apply(function() {
-          FunctionDialogs.openFunctionEditor(functionid);
-        })
-      }
-      
-      $scope.addFunction = function() {
-        FunctionDialogs.addFunction(function() {reload()});
-      }
-      
-      $scope.executeFunction = function(id) {
-        $http.post("rest/interactive/functiontest/"+id+"/start").then(function(response) {
-          var result = response.data;
-          $rootScope.planEditorInitialState = {
-              interactive : true,
-              selectedNode : result.callFunctionId
-          }
-          $location.path('/root/plans/editor/' + result.planId);
-        });
-      }
-      
-      $scope.deleteFunction = function(id) {
-        Dialogs.showDeleteWarning().then(function() {
-          $http.delete("rest/functions/"+id).then(function() {
-            if($scope.table) {
-              reload();
-          }
-          });
-        })
-      }
-      
-      $scope.table = {};
-
-      $scope.tabledef = {uid:'functions'}
-      $scope.tabledef.columns = function(columns) {
-        _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
-          col.visible = false
-        });
-        _.each(_.where(columns, { 'title' : 'Name' }), function(col) {
-          col.render = function(data, type, row) {
-            if(AuthService.hasRight('kw-write')) {
-              return '<a href="#" title="Edit keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().openFunctionEditor(\''+row[0]+'\');return false;">' + data + '</a>'
-            } else {
-              return data
-            }
-          };
-        });
-        _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
-          col.render = function(data, type, row) {
-            return FunctionTypeRegistry.getLabel(data);
-          };
-        });
-        _.each(_.where(columns,{'title':'Actions'}),function(col){
-            col.title="Actions";
-            col.searchmode="none";
-            col.width="200px";
-            col.render = function ( data, type, row ) {
-            	var html = '<div class="input-group"><div class="btn-group">';
-            	
-            	if(AuthService.hasRight('kw-write')) {
-              	html+='<button type="button" class="btn btn-default" aria-label="Left Align" title="Configure keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().editFunction(\''+row[0]+'\')">' +
-  	            	'<span class="glyphicon glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>'+
-              	  '</button> ';
-            	  html+= '<button type="button" class="btn btn-default" aria-label="Left Align" title="Edit keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().openFunctionEditor(\''+row[0]+'\')">' +
-                '<span class="glyphicon glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>'+
-                '</button> ';
-            	}
-            	
-            	if(AuthService.hasRight('kw-execute')) {
-              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" title="Execute keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().executeFunction(\''+row[0]+'\')">' +
-  	            	'<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>' +
-  	            	'</button> ';
-            	}
-            	
-              if(AuthService.hasRight('kw-write')) {
-                html+='<button type="button" class="btn btn-default" aria-label="Left Align" title="Copy keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().copyFunction(\''+row[0]+'\')">' +
-                '<span class="glyphicon glyphicon glyphicon-copy" aria-hidden="true"></span>' +
-                '</button> ';
-              }
-            	
-            	if(AuthService.hasRight('kw-delete')) {
-              	html+= '<button type="button" class="btn btn-default" aria-label="Left Align" title="Delete keyword" onclick="angular.element(\'#FunctionListCtrl\').scope().deleteFunction(\''+row[0]+'\')">' +
-  	            	'<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
-  	            	'</button> ';
-            	}
-            	
-            	html+='</div></div>';
-            	
-            	return html;
-            }
-           });
-        return columns;
-      };
-    }])
+      });
+    })
+  }
+  
+  $scope.functionTypeLabel = function(type) {
+    return FunctionTypeRegistry.getLabel(type);
+  }
+})
 
 .controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'Dialogs', 'AuthService','FunctionTypeRegistry',
 function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dialogs, AuthService, FunctionTypeRegistry) {
@@ -356,4 +296,19 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
       $scope.function_.planId = plan.id;
     })
   }
+})
+
+.directive('functionLink', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      function_: '='
+    },
+    templateUrl: 'partials/functions/functionLink.html',
+    controller: function($scope, FunctionDialogs) {
+      $scope.openFunctionEditor = function() {
+        FunctionDialogs.openFunctionEditor($scope.function_.id?$scope.function_.id:$scope.function_._id.$oid);
+      }
+    }
+  };
 })

@@ -41,43 +41,21 @@
 							<uib-tab heading="Controls">
 								<div class="panel-body">
 									<div class="row">
-										<datatable tabledef="controlsTable" handle="controlsTable" columnsearch="true" order="[[1, &quot;asc&quot;]]"/>
+										<select-entity type="'artefact'" on-selection="addControl" />
 									</div>								
 								</div>	
 							</uib-tab>
 							<uib-tab heading="Keywords">
 								<div class="row">
-									<div class="panel-body">	
-										<datatable handle="table" tabledef="tabledef" columnsearch="true" serverside="functions" order="[[1, &quot;desc&quot;]]" />
+									<div class="panel-body">
+										<select-entity type="'function'" on-selection="addFunction" />
 									</div>		
 								</div>				
 							</uib-tab>
 							<uib-tab heading="Other plans">
 								<div class="row">
 									<div class="panel-body">
-										<st-table collection="'plans'" handle="otherPlansTable" uid="'planEditorOtherPlans'" persist-state="true">
-											<st-columns>
-												<st-column name="attributes.name">
-													<header>Name</header>
-													<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-													<cell>{{row.attributes.name}}</cell>
-												</st-column>
-												<st-column name="root._class">
-													<header>Type</header>
-													<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-													<cell>{{row.root._class}}</cell>
-												</st-column>
-												<st-column>
-													<header>Actions</header>
-													<cell>
-														<button type="button" class="btn btn-default  btn-xs" aria-label="Left Align" 
-													          ng-click="addPlan(row._id.$oid)">
-													    	<span class="glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>
-													    </button>
-									          		</cell>
-												</st-column>
-											</st-columns>
-										</st-table>
+										<select-entity type="'plans'" on-selection="addPlan" />
 									</div>
 								</div>				
 							</uib-tab>

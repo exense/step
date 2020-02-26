@@ -59,6 +59,11 @@ SelectionModel = function(dataFunction, idAttribute) {
     me.getModel(id).selected = selected;
   }
   
+  this.setSelectionForObject = function(bean, selected) {
+    var id = me.getId(bean);
+    me.setSelection(id, selected);
+  }
+  
   this.setSelectionAll = function(value) {
     _.each(dataFunction(),function(dataRow){
       me.setSelection(me.getId(dataRow),value);
@@ -68,6 +73,11 @@ SelectionModel = function(dataFunction, idAttribute) {
   
   this.isSelected = function(id) {
     return me.getModel(id).selected;
+  }
+  
+  this.isObjectSelected = function(bean) {
+    var id = me.getId(bean);
+    return me.isSelected(id);
   }
   
   this.getSelectionMode = function() {
@@ -90,9 +100,17 @@ SelectionModel = function(dataFunction, idAttribute) {
       return selected?me.isSelected(me.getId(val)):!me.isSelected(me.getId(val))})
   };
   
+  this.getSelectedIds = function() {
+    return _.map(_.filter(_.pairs(me.selectionModel), function(pair) {return pair[1].selected}), function(pair) {return pair[0]});
+  }
+  
   this.getId = function(val) {
     if(idAttribute) {
-      return val[idAttribute];
+      if(idAttribute instanceof Function) {
+        return idAttribute(val);
+      } else {
+        return new Bean(val).getProperty(idAttribute);
+      }
     } else {
       return val[0];
     }
@@ -160,4 +178,42 @@ function ScopeTracker(destroyer) {
   return new ObjectTracker(function(scope) {
     scope.$destroy();
   });
+}
+
+function Bean(bean) {
+
+  var me = this;
+  
+  function addPropertyChain(chain, val, obj) {
+    var propChain = chain.split(".");
+    if (propChain.length === 1) {
+      obj[propChain[0]] = val;
+      return;
+    }
+    var first = propChain.shift();
+    if (!obj[first]) {
+      obj[first] = {};
+    }    
+    addPropertyChain(propChain.join("."), val, obj[first] );
+  }
+  
+  this.setProperty = function(chain, value) {
+    addPropertyChain(chain, value, bean);
+  }
+
+  function getPropertyChain(chain, obj) {
+    var propChain = chain.split(".");
+    if (propChain.length === 1) {
+      return obj[propChain[0]];
+    }
+    var first = propChain.shift();
+    if (!obj[first]) {
+      return null;
+    }    
+    return getPropertyChain(propChain.join("."), obj[first] );
+  }
+  
+  this.getProperty = function(chain) {
+    return getPropertyChain(chain, bean);
+  } 
 }

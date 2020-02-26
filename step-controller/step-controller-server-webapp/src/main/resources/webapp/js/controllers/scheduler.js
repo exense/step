@@ -18,8 +18,9 @@
  *******************************************************************************/
 var schedulerController = angular.module('schedulerControllers',['dataTable']);
 
-schedulerController.run(function(ViewRegistry) {
+schedulerController.run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerDashlet('admin/controller','Scheduler','partials/scheduler/schedulerConfiguration.html','scheduler');
+  EntityRegistry.registerEntity('Scheduler task', 'task', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table', '/partials/scheduler/schedulerTaskSelectionTable.html');
 });
 
 schedulerController.controller('SchedulerCtrl', ['$scope', '$http', '$location', 'stateStorage', '$uibModal', 'AuthService','Dialogs', 
@@ -212,4 +213,10 @@ schedulerController.controller('SchedulerConfigurationCtrl', function ($scope, $
   $scope.save = function () {
     $http.post("rest/settings/scheduler_execution_username", $scope.executionUser)
   };
+});
+
+schedulerController.controller('SchedulerTaskSelectionCtrl', function ($scope, $http) {
+  $http.get("rest/controller/task").then(function(response) {
+    $scope.schedulerTasks = response.data;
+  });
 });

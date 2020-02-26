@@ -112,6 +112,15 @@ public class TableService extends AbstractTableService {
 		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragments);
 	}
 	
+	@GET
+	@Path("/{id}/column/{column}/distinct")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
+	public List<String> getTableColumnDistinct(@PathParam("id") String collectionID, @PathParam("column") String column, @Context UriInfo uriInfo) throws Exception {
+		Collection collection = collectionRegistry.get(collectionID);
+		return collection.distinct(column);
+	}
+	
 	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, List<Bson> sessionQueryFragments) throws Exception {		
 		Collection collection = collectionRegistry.get(collectionID);
 		if(collection==null) {
@@ -121,7 +130,7 @@ public class TableService extends AbstractTableService {
 		
 		Map<Integer, String> columnNames = getColumnNamesMap(params);
 		
-		List<Bson> queryFragments = createQueryFragments(params, columnNames);
+		List<Bson> queryFragments = createQueryFragments(params, columnNames, collection);
 		
 		int draw = Integer.parseInt(params.getFirst("draw"));
 		int skip = Integer.parseInt(params.getFirst("start"));
@@ -165,7 +174,7 @@ public class TableService extends AbstractTableService {
 		return response;
 	}
 
-	private List<Bson> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames) {
+	private List<Bson> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames, Collection collection) {
 		List<Bson> queryFragments = new ArrayList<>();
 		for(String key:params.keySet()) {
 			Matcher m = columnSearchPattern.matcher(key);
@@ -176,7 +185,8 @@ public class TableService extends AbstractTableService {
 				String searchValue = params.getFirst(key);
 
 				if(searchValue!=null && searchValue.length()>0) {
-					queryFragments.add(Filters.regex(columnName, searchValue));
+					Bson columnQueryFragment = collection.getQueryFragment(columnName, searchValue);
+					queryFragments.add(columnQueryFragment);
 				}
 			} else if(searchMatcher.matches()) {
 				String searchValue = params.getFirst(key);

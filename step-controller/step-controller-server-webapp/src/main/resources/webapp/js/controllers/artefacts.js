@@ -18,6 +18,10 @@
  *******************************************************************************/
 angular.module('artefacts',['step'])
 
+.run(function(ViewRegistry, EntityRegistry) {
+  EntityRegistry.registerEntity('Control', 'artefact', 'artefacts', null, null, 'st-table', '/partials/artefacts/artefactSelectionTable.html');
+})
+
 .factory('artefactTypes', function() {
   
   var registry = {};
@@ -144,7 +148,7 @@ angular.module('artefacts',['step'])
     })
   }
 })
-.controller('CallFunctionCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs) {
+.controller('CallFunctionCtrl' , function($scope,$uibModal,$location,$http,FunctionDialogs, Dialogs) {
   
   showTokenSelectionParameters = false;
   
@@ -184,14 +188,8 @@ angular.module('artefacts',['step'])
   }
   
   $scope.selectFunction = function() {
-    var modalInstance = $uibModal.open({
-      backdrop: 'static',
-      templateUrl: 'partials/selectFunction.html',
-      controller: 'selectFunctionModalCtrl',
-      resolve: {}
-    });
-
-    modalInstance.result.then(function (id) {
+    Dialogs.selectEntityOfType('function', true).then(function(result) {
+      var id = result.item;
       $scope.artefact.functionId = id;
       loadFunction(id, function() {$scope.save()});
     });
@@ -454,4 +452,9 @@ angular.module('artefacts',['step'])
       
     }
   }
+})
+.controller('ArtefactSelectionCtrl' , function($scope,$http) {
+  $http.get("rest/controller/artefact/types").then(function(response){ 
+    $scope.artefacts = _.map(response.data, function(e) {return {name:e}});
+  })
 })

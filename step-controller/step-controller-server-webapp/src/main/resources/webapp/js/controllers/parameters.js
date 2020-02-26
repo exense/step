@@ -18,6 +18,10 @@
  *******************************************************************************/
 angular.module('parametersControllers',['tables','step','screenConfigurationControllers'])
 
+.run(function(FunctionTypeRegistry, EntityRegistry) {
+  EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table', '/partials/parameters/parameterSelectionTable.html');
+})
+
 .controller('ParameterListCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, ParameterDialogs, AuthService) {
     stateStorage.push($scope, 'parameters', {});	
     $scope.authService = AuthService;

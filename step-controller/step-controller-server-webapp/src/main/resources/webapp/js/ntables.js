@@ -52,6 +52,10 @@ angular.module('tables', ['export','dataTable'])
 		} else {
 			colDef['defaultContent'] = "";
 		}
+		
+		if(column.width) {
+		  colDef['width'] = column.width;
+		}
 
 		colDef.render = function ( data, type, row, meta ) {
 			if(type==='filter') {
@@ -72,6 +76,7 @@ angular.module('tables', ['export','dataTable'])
 				} else {
 					scope.row = rowData;
 				}
+				scope.tableScope = $scope;
 				rowScope = scope;
 			});
 
@@ -101,11 +106,7 @@ angular.module('tables', ['export','dataTable'])
 				}
 			}
 		}
-
-		ctrl.newCycle = function() {
-			scopesTracker.newCycle()
-		}
-
+		
 		var slot = ctrl.dtColumns[position]
 		if(!slot) {
 		  slot = [];
@@ -113,7 +114,10 @@ angular.module('tables', ['export','dataTable'])
 		}
 		slot.push(colDef);
 	}
-
+	
+  ctrl.newCycle = function() {
+    scopesTracker.newCycle()
+  }
 })
 .directive('stTable', function($compile, $http, Preferences, stateStorage, $timeout) {
 	return {
@@ -125,7 +129,18 @@ angular.module('tables', ['export','dataTable'])
 			filter: '=?',
 			dom: '=?',
 			order: '=?',
-			persistState: '='
+			persistState: '=?',
+			// set to true if the table should allow multiple selection
+			multipleSelection: '=?',
+			// per default no row is selected. The default selection can
+			// be defined by this parameter. Accepted value are: 'all', 'none', or a function 
+			// as default selector
+			defaultSelection: '=?',
+			// the field to be used as ID to track selection
+			selectionAttribute: '=?',
+			// a function that shoud be called when an element is selected. This function is 
+			// called only when multipleSelection = false
+			onSelection: '=?'
 		},
 		transclude : {
 			'stActions' : '?stActions',
@@ -139,6 +154,84 @@ angular.module('tables', ['export','dataTable'])
 
 		  var tableElement = angular.element(element).find('table');
 
+		  scope.selectionModel = new SelectionModel(function(){
+		    if(serverSide) {
+		      return _.map(scope.table.rows?scope.table.rows().data():[], function(row) {
+		        return JSON.parse(row[0]);
+		      })
+		    } else {
+		      return scope.data
+		    }
+		  }, scope.selectionAttribute);
+
+		  var defaultSelection = scope.defaultSelection;
+		  if(defaultSelection) {
+        if(_.isFunction(defaultSelection)) {
+          scope.selectionModel.setDefaultSelector(defaultSelection);
+        } else if (defaultSelection=='all') {
+          scope.selectionModel.setDefaultSelection(true);
+        } else {
+          scope.selectionModel.setDefaultSelection(false);
+        }
+      } else {
+        scope.selectionModel.setDefaultSelection(false);
+      }
+		  
+      function getFilteredData() {
+        return scope.table.rows({"filter":"applied"}).data();
+      }
+      
+      function isTableFiltered() {
+        var hasFilter = false;
+        scope.table.columns().eq(0).each(function(index) {
+          var col = scope.table.column(index);
+          if(!hasFilter && col.search().length>0) {
+            hasFilter = true;
+          }
+        });
+        return hasFilter;
+      }
+      
+      function sendSelectionChangeEvent() {
+        if(scope.onSelectionChange) {
+          scope.onSelectionChange();        
+        }
+      }
+
+      scope.setSelectionOnFilteredRows = function(value) {
+        if(!isTableFiltered()) {
+          scope.selectionModel.setDefaultSelection(value);
+          scope.selectionModel.setSelectionAll(value);
+        } else {
+          scope.selectionModel.setSelectionAll(false);
+          _.each(getFilteredData(),function(dataRow){
+            scope.selectionModel.setSelectionForObject(dataRow,value);
+          })
+        }
+        sendSelectionChangeEvent();
+      };
+      
+      controller.multipleSelection = scope.multipleSelection; 
+      controller.select = function(item) {
+        if(scope.onSelection) {
+          if(scope.selectionAttribute) {
+            var selectedId = new Bean(item).getProperty(scope.selectionAttribute);
+            scope.onSelection(selectedId);        
+          }
+        }
+      }
+      
+		  controller.selectionModelByInput = function(bean) {
+		    return function (value) {
+		      if (angular.isDefined(value)) {
+		        scope.selectionModel.setSelectionForObject(bean, value);
+		        sendSelectionChangeEvent();
+		      } else {
+		        return scope.selectionModel.isObjectSelected(bean);
+		      }
+		    }
+		  }
+		  
 		  function loadTableData() {
 		    var value = scope.data;
 		    if(scope.table) {
@@ -154,113 +247,120 @@ angular.module('tables', ['export','dataTable'])
 		  }
 		  
 		  controller.reload = function() {
-		    // First destroy the previous table if any
-		    if(scope.table && scope.table.destroy) {
-          scope.table.destroy()
-          // remove the headers added "manually" (see below)
-          tableElement.empty();
-        }
-		    
-		    // Build the table options
-	      var tableOptions = {}
-	      tableOptions.pageLength = parseInt(Preferences.get("tables_itemsperpage", 10));
-	      tableOptions.dom = scope.dom?scope.dom:'lrtip';
-	      // disable autoWidth: the auto sizing of column widths seems to work better when calculated by the browser
-	      tableOptions.autoWidth = false;
-	      tableOptions.fnDrawCallback = function() {
-	        controller.newCycle();
-	      };
-	      tableOptions.columns = controller.getDtColumns();
-	      if(scope.order) {
-	        tableOptions.order = scope.order;
-	      }
+		    var columns = controller.getDtColumns();
+		    if(columns && columns.length>0) {
+		      // First destroy the previous table if any
+	        if(scope.table && scope.table.destroy) {
+	          scope.table.destroy()
+	          // remove the headers added "manually" (see below)
+	          tableElement.empty();
+	        }
+	        
+	        // Build the table options
+	        var tableOptions = {}
+	        tableOptions.pageLength = parseInt(Preferences.get("tables_itemsperpage", 10));
+	        tableOptions.dom = scope.dom?scope.dom:'lrtip';
+	        // disable autoWidth: the auto sizing of column widths seems to work better when calculated by the browser
+	        tableOptions.autoWidth = false;
+	        tableOptions.fnDrawCallback = function() {
+	          controller.newCycle();
+	        };
+	        tableOptions.columns = columns;
+	        if(scope.order) {
+	          tableOptions.order = scope.order;
+	        }
 
-	      if (scope.persistState) {
-	        if (scope.uid) {
-	          tableOptions.stateSave = true;
-	          tableOptions.stateSaveCallback = function(settings, data) {
-	            // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
-	            var uid = scope.uid + tableOptions.columns.length;
-	            var state = stateStorage.get(scope, uid);
-	            if (!state) {
-	              state = {};
+	        if (scope.persistState == null || scope.persistState) {
+	          if (scope.uid) {
+	            tableOptions.stateSave = true;
+	            tableOptions.stateSaveCallback = function(settings, data) {
+	              // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
+	              var uid = scope.uid + tableOptions.columns.length;
+	              var state = stateStorage.get(scope, uid);
+	              if (!state) {
+	                state = {};
+	              }
+	              state.tableState = data;
+	              
+	              stateStorage.store(scope, state, uid);
+	            };
+	            tableOptions.stateLoadCallback = function(settings) {
+	              // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
+	              var uid = scope.uid + tableOptions.columns.length;
+	              var state = stateStorage.get(scope, uid);
+	              return (state && state.tableState) ? state.tableState : null;
 	            }
-	            state.tableState = data;
-	            
-	            stateStorage.store(scope, state, uid);
-	          };
-	          tableOptions.stateLoadCallback = function(settings) {
-	            // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
-	            var uid = scope.uid + tableOptions.columns.length;
-	            var state = stateStorage.get(scope, uid);
-	            return (state && state.tableState) ? state.tableState : null;
+	          } else {
+	            console.error("Unable to persist table state if the table uid isn't specified. Please set the attribute 'uid'")
 	          }
+	        }
+
+	        if(serverSide) {
+	          var query = 'rest/table/' + scope.collection + '/data';
+	          if(scope.filter) {
+	            query += '?filter=' + encodeURIComponent(scope.filter);
+	          }
+	          tableOptions.ajax = {
+	              'url' : query,
+	              'type' : 'POST'
+	          }
+
+	          tableOptions.processing = false;
+	          tableOptions.serverSide = true;
+	          tableOptions.sProcessing = '';
+	        }
+
+	        // Initialize the DataTable with the built options
+	        var table = tableElement.DataTable(tableOptions);
+	        scope.table = table;
+
+	        // Table actions
+	        var tableActions = transclude(function() {}, null, 'stActions');
+	        var cmdDiv;
+	        if (element.find('div.dataTables_filter').length > 0) {
+	          cmdDiv = element.find('div.dataTables_filter');
+	          cmdDiv.parent().removeClass('col-sm-6').addClass('col-sm-9');
+	          element.find('div.dataTables_length').parent().removeClass('col-sm-6').addClass('col-sm-3');
 	        } else {
-	          console.error("Unable to persist table state if the table uid isn't specified. Please set the attribute 'uid'")
+	          cmdDiv = element.find('div.dataTables_length');
 	        }
-	      }
+	        angular.element('<div class="pull-right"></div>').append(tableActions).appendTo(cmdDiv);
 
-	      if(serverSide) {
-	        var query = 'rest/table/' + scope.collection + '/data';
-	        if(scope.filter) {
-	          query += '?filter=' + encodeURIComponent(scope.filter);
+	        if(!scope.handle) {
+	          scope.handle = {};
 	        }
-	        tableOptions.ajax = {
-	            'url' : query,
-	            'type' : 'POST'
+	        scope.handle.reload = function() {
+	          table.ajax.reload(null, false);
 	        }
-
-	        tableOptions.processing = false;
-	        tableOptions.serverSide = true;
-	        tableOptions.sProcessing = '';
-	      }
-
-	      // Initialize the DataTable with the built options
-	      var table = tableElement.DataTable(tableOptions);
-	      scope.table = table;
-
-	      // Table actions
-	      var tableActions = transclude(function() {}, null, 'stActions');
-	      var cmdDiv;
-	      if (element.find('div.dataTables_filter').length > 0) {
-	        cmdDiv = element.find('div.dataTables_filter');
-	        cmdDiv.parent().removeClass('col-sm-6').addClass('col-sm-9');
-	        element.find('div.dataTables_length').parent().removeClass('col-sm-6').addClass('col-sm-3');
-	      } else {
-	        cmdDiv = element.find('div.dataTables_length');
-	      }
-	      angular.element('<div class="pull-right"></div>').append(tableActions).appendTo(cmdDiv);
-
-	      if(!scope.handle) {
-	        scope.handle = {};
-	      }
-	      scope.handle.reload = function() {
-	        table.ajax.reload(null, false);
-	      }
-	      scope.handle.search = function(columnName, searchExpression) {
-	        var column = table.column(columnName+':name');
-	        column.search(searchExpression,true,false).draw();
-	      }
-
-	      // render first header
-	      table.columns().indexes().flatten().each(function(i) {
-	        table.settings()[0].aoColumns[i].headerRenderer(angular.element(table.column(i).header()),table.column(i),scope.handle);
-	      })
-
-	      // render second header
-	      tableElement.find('thead').append('<tr class="searchheader"/>');
-	      $('th',tableElement.find('thead tr[role="row"]').eq(0)).css({ 'border-bottom': '0' }).each( function (colIdx) {
-	        tableElement.find('thead tr.searchheader').append('<th style="border-top:0" />' );
-	      });
-	      table.columns().indexes().flatten().each(function(i) {
-	        var thIdx = $('th',tableElement.find('thead tr[role="row"]')).index(table.column(i).header());
-	        if(thIdx>=0) {
-	          var secondHeader = $('th',tableElement.find('thead tr.searchheader')).eq(thIdx);
-	          table.settings()[0].aoColumns[i].secondHeaderRenderer(secondHeader,table.column(i),scope.handle);
+	        scope.handle.search = function(columnName, searchExpression) {
+	          var column = table.column(columnName+':name');
+	          column.search(searchExpression,true,false).draw();
 	        }
-	      });
-	      
-	      loadTableData();
+	        scope.handle.getRows = scope.selectionModel.getDataRowsBySelection.bind(scope.selectionModel);
+	        scope.handle.getSelectedIds = scope.selectionModel.getSelectedIds.bind(scope.selectionModel);
+	        scope.handle.getSelectionMode = scope.selectionModel.getSelectionMode.bind(scope.selectionModel);
+
+	        // render first header
+	        table.columns().indexes().flatten().each(function(i) {
+	          table.settings()[0].aoColumns[i].headerRenderer(angular.element(table.column(i).header()),table.column(i),scope.handle);
+	        })
+
+	        // render second header
+	        tableElement.find('thead').append('<tr class="searchheader"/>');
+	        $('th',tableElement.find('thead tr[role="row"]').eq(0)).css({ 'border-bottom': '0' }).each( function (colIdx) {
+	          tableElement.find('thead tr.searchheader').append('<th style="border-top:0" />' );
+	        });
+	        table.columns().indexes().flatten().each(function(i) {
+	          var thIdx = $('th',tableElement.find('thead tr[role="row"]')).index(table.column(i).header());
+	          if(thIdx>=0) {
+	            var secondHeader = $('th',tableElement.find('thead tr.searchheader')).eq(thIdx);
+	            table.settings()[0].aoColumns[i].secondHeaderRenderer(secondHeader,table.column(i),scope.handle);
+	          }
+	        });
+	        
+	        loadTableData();
+		    }
+		    
 		  }
 		  
 		  if(!serverSide) {
@@ -292,7 +392,8 @@ angular.module('tables', ['export','dataTable'])
 		},
 		require: '^stTable',
 		scope : {
-			'name':'@?'
+			'name':'@?',
+			'width':'=?'
 		},
 		controller : function($scope) {
 		},
@@ -308,6 +409,7 @@ angular.module('tables', ['export','dataTable'])
       var positionInParent = elementInStColumns.parent().children().index(elementInStColumns)
 			tableController.addColumn({
 				name:scope.name,
+				width:scope.width,
 				headerTransclude : function(callback) {
 					return transclude(callback, null, 'header')
 				},
@@ -326,6 +428,38 @@ angular.module('tables', ['export','dataTable'])
 	}
 })
 
+.directive('stSelectionColumn', function() {
+  return {
+    restrict: 'E',
+    scope: {},
+    require: '^stTable',
+    controller: function($scope) {
+    },
+    link : function(scope, element, attrs, tableController, transclude) {
+      scope.selectionModelByInput = tableController.selectionModelByInput;
+      scope.select = tableController.select;
+      scope.multipleSelection = tableController.multipleSelection;
+    },
+    templateUrl: 'partials/table/selectionColumn.html'}
+})
+
+.directive('stSelectionActions', function() {
+  return {
+    restrict: 'E',
+    scope: {},
+    controller: function($scope) {
+    },
+    link : function(scope, element, attrs, tableController, transclude) {
+      scope.selectAll = function() {
+        scope.$parent.$parent.setSelectionOnFilteredRows(true);
+      } 
+      
+      scope.unselectAll = function() {
+        scope.$parent.$parent.setSelectionOnFilteredRows(false);
+      }     
+    },
+    templateUrl: 'partials/table/selectionActions.html'}
+})
 
 //hack to suppress DataTable warning
 //see http://stackoverflow.com/questions/11941876/correctly-suppressing-warnings-in-datatables

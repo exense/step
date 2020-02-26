@@ -80,65 +80,16 @@ angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynam
   $scope.handle = {};
 
   // Controls
-  $scope.controlsTable = {uid:'planEditorControls'};
-  $scope.controlsTable.columns = [ { "title" : "ID", "visible" : false },
-                               {"title" : "Name"},
-                               { "title" : "Actions", "width":"80px", "render": function ( data, type, row ) {
-                            	 return '<button type="button" class="btn btn-default  btn-xs" aria-label="Left Align"' + 
-                                     	'onclick="angular.element(\'#PlanEditorCtrl\').scope().addControl(\''+row[0]+'\')">' +
-                         				'<span class="glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>' +
-                         				'</button> '
-                               }} ];
-  
-  
-  $http.get("rest/controller/artefact/types").then(function(response){ 
-    var data = response.data;
-    var dataSet = [];
-    for (i = 0; i < data.length; i++) {
-      dataSet[i] = [ data[i], data[i], ''];
-    }
-    $scope.controlsTable.data = dataSet;
-  })
-  
   $scope.addControl = function(id) {
     $scope.handle.addControl(id);
   }
       
   // Keywords
-  $scope.table = {};
-
-  $scope.tabledef = {uid:'planEditorFunctions'}
-  $scope.tabledef.columns = function(columns) {
-    _.each(_.where(columns, { 'title' : 'ID' }), function(col) {
-      col.visible = false
-    });
-    _.each(_.where(columns, { 'title' : 'Name' }), function(col) {
-
-    });
-    _.each(_.where(columns, { 'title' : 'Type' }), function(col) {
-      col.visible = false
-    });
-    _.each(_.where(columns, { 'title' : 'Package' }), function(col) {
-      col.visible = false
-    });
-    _.each(_.where(columns,{'title':'Actions'}),function(col){
-      col.render = function(data, type, row) {
-        return '<button type="button" class="btn btn-default  btn-xs" aria-label="Left Align"' + 
-        	'onclick="angular.element(\'#PlanEditorCtrl\').scope().addFunction(\''+row[0]+'\')">' +
-		'<span class="glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>' +
-		'</button> '
-      };  
-    });
-    return columns;
-  };
-  
   $scope.addFunction = function(id) {
     $scope.handle.addFunction(id);
   }
   
   // Other plans
-  $scope.otherPlansTable;
-  
   $scope.addPlan = function(id) {
     $scope.handle.addPlan(id);
   }

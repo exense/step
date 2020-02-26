@@ -18,6 +18,10 @@
  *******************************************************************************/
 angular.module('adminControllers', [ 'dataTable', 'step' ])
 
+.run(function(FunctionTypeRegistry, EntityRegistry) {
+  EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/users/userSelectionTable.html');
+})
+
 .controller('AdminCtrl', ['$scope', 'stateStorage',
     function($scope, stateStorage) {
       // push this scope to the state stack
@@ -44,103 +48,62 @@ angular.module('adminControllers', [ 'dataTable', 'step' ])
       $scope.autorefresh = true;
    }])   
 
-.controller('UserListCtrl',
-    function($scope, $interval, $http, helpers, $uibModal, Dialogs) {
-      $scope.datatable = {}
+.controller('UserListCtrl', function($scope, $interval, $http, helpers, $uibModal, Dialogs) {
+  
+  $scope.loadTable = function loadTable() {
+    $http.get("rest/admin/users").then(function(response) {
+      var data = response.data;
+      $scope.users = data;
+    });
+  };
+
+  $scope.loadTable();
+  
+  $scope.resetPwd = function(id) {
+    $http.post("rest/admin/user/"+id+"/resetpwd").then(function() {
+      $scope.loadTable();
+    });
+  }
+  
+  $scope.askAndRemoveUser = function(username) {
+    Dialogs.showDeleteWarning().then(function() {
+      $scope.removeUser(username)          
+    })
+  }
+  
+  $scope.removeUser = function(username) {
+    $http.delete("rest/admin/user/"+username).then(function() {
+      $scope.loadTable();
+    });
+  }
+  
+  $scope.addUser = function() {
+    $scope.showEditUserPopup({});
+  }
+  
+  $scope.editUser = function(username) {
+    $http.get("rest/admin/user/"+username).then(function(response) {
+      var user = response.data;
+      $scope.showEditUserPopup(user);
+    });
+  }
+  
+  $scope.showEditUserPopup = function(user) {
+    var modalInstance = $uibModal.open({
+      backdrop: 'static',
+      animation: $scope.animationsEnabled,
+      templateUrl: 'editUserModalContent.html',
+      controller: 'editUserModalCtrl',
+      resolve: {
+        user: function () {
+          return user;
+        }
+      }
+    });
       
-      $scope.loadTable = function loadTable() {
-        $http.get("rest/admin/users").then(
-          function(response) {
-            var data = response.data;
-            var dataSet = [];
-            for (i = 0; i < data.length; i++) {
-              dataSet[i] = [ data[i].username, data[i].role];
-            }
-            $scope.tabledef.data = dataSet;
-          });
-        };
-
-        $scope.tabledef = {};
-        $scope.tabledef.columns = [ 
-          { "title" : "Username", "min-width":"120px", "render":function ( data, type, row ) {
-            return '<a href="#" onclick="angular.element(\'#UserListCtrl\').scope().editUser(\''+row[0]+'\');return false;">' + data + '</a>'
-          }},
-          { "title" : "Role" }, 
-          {"title":"Actions", "width":"120px", "render":function ( data, type, row ) {
-              var html = '<div class="input-group">' +
-                '<div class="btn-group">' +
-                '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#UserListCtrl\').scope().editUser(\''+row[0]+'\')">' +
-                '<span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>' +
-                '<button type="button" class="btn btn-default" aria-label="Left Align" onclick="angular.element(\'#UserListCtrl\').scope().askAndRemoveUser(\''+row[0]+'\')">' +
-                '<span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>' +
-                '</button> '+
-                '</div></div>';
-              return html;
-            }}];
-
-        $scope.loadTable();
-        
-        $scope.forAllSelected = function(fctName) {
-          var rows = $scope.datatable.getSelection().selectedItems;
-          var itemCount = rows.length;
-          if(itemCount >= 1) {
-            var msg = itemCount == 1? 'Are you sure you want to perform this operation for this item?':'Are you sure you want to perform this operation for these ' + itemCount + ' items?';
-            Dialogs.showWarning(msg).then(function() {
-              for(i=0;i<rows.length;i++) {
-                $scope[fctName](rows[i][0]);       
-              }            
-            })            
-          } else {
-            Dialogs.showErrorMsg("You haven't selected any item");
-          }
-        };
-          
-        $scope.resetPwd = function(id) {
-          $http.post("rest/admin/user/"+id+"/resetpwd").then(function() {
-            $scope.loadTable();
-          });
-        }
-        
-        $scope.askAndRemoveUser = function(username) {
-          Dialogs.showDeleteWarning().then(function() {
-            $scope.removeUser(username)          
-          })
-        }
-        
-        $scope.removeUser = function(username) {
-          $http.delete("rest/admin/user/"+username).then(function() {
-            $scope.loadTable();
-          });
-        }
-        
-        $scope.addUser = function() {
-          $scope.showEditUserPopup({});
-        }
-        
-        $scope.editUser = function(username) {
-          $http.get("rest/admin/user/"+username).then(function(response) {
-            var user = response.data;
-            $scope.showEditUserPopup(user);
-          });
-        }
-        
-        $scope.showEditUserPopup = function(user) {
-          var modalInstance = $uibModal.open({
-            backdrop: 'static',
-            animation: $scope.animationsEnabled,
-            templateUrl: 'editUserModalContent.html',
-            controller: 'editUserModalCtrl',
-            resolve: {
-              user: function () {
-                return user;
-              }
-            }
-            });
-            
-            modalInstance.result.then(function() {$scope.loadTable()}, function () {}); 
-          }
-
-      })
+    modalInstance.result.then(function() {$scope.loadTable()}, function () {}); 
+  }
+})
       
 .run(function(ViewRegistry) {
   ViewRegistry.registerDashlet('admin/controller','Maintenance','partials/maintenanceConfiguration.html','maintenance');

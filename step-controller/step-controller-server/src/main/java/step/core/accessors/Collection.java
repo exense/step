@@ -33,6 +33,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.Filters;
 
 public class Collection {
 	
@@ -122,5 +123,9 @@ public class Collection {
 	
 	public List<Bson> getAdditionalQueryFragments() {
 		return null;
+	}
+
+	public Bson getQueryFragment(String columnName, String searchValue) {
+		return Filters.regex(columnName, searchValue);
 	}
 }

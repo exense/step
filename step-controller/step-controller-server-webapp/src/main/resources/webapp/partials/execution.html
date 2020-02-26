@@ -1,57 +1,14 @@
 <div ng-controller="ExecutionTabsCtrl">
-<!-- <uib-tabset>
-    <uib-tab heading="Execution list" ng-controller="ExecutionListCtrl">
-		<div class="panel-body">
-			<div class="pull-right">
-				<div class="btn-group">
-					<button type="button" ng-click="openExecutionProgressTabForSelection()" class="btn btn-default btn-xs">Progress</button>
-					<button type="button" ng-click="removeSelected()" class="btn btn-default btn-xs">Disable</button>
-				</div>
-			</div>			
-		</div>
-		<div class="panel-body">
-			<datatable dataArray="data" selectionmode="multiple" columns="columns" columnsearch="true" serverside="executions"/>
-		</div>
-	</uib-tab>
-
-	<uib-tab ng-repeat="tab in tabs track by tab.id" active="tab.active">
-		<tab-heading>
-		{{tab.id}} 		
-		<button type="button" class="close" ng-click="closeTab(tab.id)">
-	        <span aria-hidden="true">�</span>
-	        <span class="sr-only">Close</span>
-	    </button>
-		</tab-heading>
-		<div class="panel-body">
-      		<execution-progress eid="{{tab.id}}"/>
-      	</div>
-    </uib-tab>
-</uib-tabset>
-</div>	 -->
-	
 	<ul class="nav nav-tabs">
 	  <li role="presentation" ng-class="{active: isTabActive(tab.id)}" ng-repeat="tab in tabs track by tab.id">
 	  	<a ng-click="selectTab(tab.id)" ><execution-result ng-if="tab.id!='list'" execution="getTabExecution(tab.id)" /> {{tab.title}} <i class="glyphicon glyphicon-remove" ng-if="tab.id!='list'" ng-click="closeTab(tab.id)" aria-hidden="true"/> </a>
 	  </li>
 	</ul>
-	
-	
 	<div class="tab-content">
 		<div class="tab-pane ng-scope" ng-repeat="tab in tabs track by tab.id" ng-class="{active: isTabActive(tab.id)}">
 			<div ng-if="tab.type=='list'" ng-controller="ExecutionListCtrl">
-				<div class="toolbar">
-					<auto-refresh-commands autorefresh="autorefresh" />
-				</div>
-				<!-- <div class="panel-body">
-					<div class="pull-right">
-						<div class="bt	n-group">
-							<button type="button" ng-click="openExecutionProgressTabForSelection()" class="btn btn-default btn-xs">Progress</button>
-							<button type="button" ng-click="removeSelected()" class="btn btn-default btn-xs">Disable</button>
-						</div>
-					</div>
-				</div> -->
 				<div class="panel-body">
-					<datatable dataArray="data" handle="table" tabledef="tabledef" columnsearch="true" serverside="executions" order="[[2, &quot;desc&quot;]]" />
+					<div ng-include="'partials/executions/executionList.html'"></div>
 				</div>
 			</div>
 			<div class="panel-body" ng-if="tab.type=='progress'">
@@ -60,13 +17,3 @@
 		</div>
 	</div>
 </div>
-
-<!-- 		<button type="button" class="close" ng-click="closeTab(tab.id)">
-	        <span aria-hidden="true">�</span>
-	        <span class="sr-only">Close</span>
-	    </button>
-		</tab-heading>
-		<div class="panel-body">
-      		<execution-progress eid="{{tab.id}}"/>
-      	 -->
-	

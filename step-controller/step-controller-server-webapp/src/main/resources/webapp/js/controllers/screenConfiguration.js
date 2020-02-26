@@ -49,38 +49,14 @@ angular.module('screenConfigurationControllers',['tables','step'])
       })
     })
   }
-  
-  function addPropertyChain(chain, val, obj) {
-    var propChain = chain.split(".");
-    if (propChain.length === 1) {
-      obj[propChain[0]] = val;
-      return;
-    }
-    var first = propChain.shift();
-    if (!obj[first]) {
-      obj[first] = {};
-    }    
-    addPropertyChain(propChain.join("."), val, obj[first] );
-  }
 
-  function getPropertyChain(chain, obj) {
-    var propChain = chain.split(".");
-    if (propChain.length === 1) {
-      return obj[propChain[0]];
-    }
-    var first = propChain.shift();
-    if (!obj[first]) {
-      return null;
-    }    
-    return getPropertyChain(propChain.join("."), obj[first] );
-  }
-
-  api.getScreenInputModel = function(bean, input) {
+  api.getScreenInputModel = function(value, input) {
+    var bean = new Bean(value)
     return function(value) {
       if(angular.isDefined(value)) {
-        addPropertyChain(input.id,value,bean);
+        bean.setProperty(input.id,value);
       } else {
-        return getPropertyChain(input.id, bean);
+        return bean.getProperty(input.id);
       }
     }
   }

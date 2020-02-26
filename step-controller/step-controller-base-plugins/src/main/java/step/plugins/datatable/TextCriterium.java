@@ -22,6 +22,8 @@ import org.bson.conversions.Bson;
 
 import com.mongodb.client.model.Filters;
 
+import step.core.accessors.SearchQueryFactory;
+
 public class TextCriterium implements SearchQueryFactory {
 
 	@Override

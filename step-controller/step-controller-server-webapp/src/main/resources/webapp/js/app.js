@@ -155,11 +155,6 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','p
 	ViewRegistry.registerView('myaccount','partials/myaccount.html');
 	ViewRegistry.registerView('login','partials/loginForm.html',true);
 
-	EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table', '/partials/selection/parameterSelectionListModal.html');
-	EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/functions/', 'rest/functions/', 'datatable', '/partials/selection/selectDatatableEntity.html');
-	EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'datatable', '/partials/selection/selectDatatableEntity.html');
-	EntityRegistry.registerEntity('Scheduler task', 'task', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table', '/partials/selection/selectSttableEntity.html');
-	EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/selection/userSelectionListModal.html');
 	EntityRegistry.registerEntity('Repository', 'repository', null, null, null, null, null, null);
 	//TODO
 	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');		
@@ -603,34 +598,23 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	}
 
 	//Select entities knowing type
-	dialogs.selectEntityOfType = function(entityType){
-		var tableType = entityType.tableType;
-		
-		var templateUrl = entityType.templateUrl;
-		var controller = ''; 
-		
-		if(tableType === 'datatable'){
-			controller= 'SelectDatatableEntityCtrl';
-		}else{
-			if (tableType === 'st-table'){
-				controller= 'SelectSttableEntityCtrl';
-			}else{
-				throw new Error('Unsupported entity table type: ' + entityType);
-			}
-		}
-		
+	dialogs.selectEntityOfType = function(entityName, singleSelection){
+	  var entityType = EntityRegistry.getEntityByName(entityName);  
+	  
 		var modalInstance = $uibModal.open(
 				{
 				  backdrop: 'static',
-					templateUrl: templateUrl,
-					controller: controller,
+					templateUrl: 'partials/selection/selectEntityOfType.html',
+					controller: 'SelectSttableEntityCtrl',
 					resolve: {
-						entity:function(){
+					  entityType:function(){
 							return entityType;
+						}, 
+						singleSelection:function() {
+						  return singleSelection;
 						}
 					}
 				});
-
 
 		return modalInstance.result;
 	};
@@ -656,7 +640,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	//Select Type and then entities immedately after
 	dialogs.selectEntityTypeForEntities = function(excludeArray, callback, arg){
 		dialogs.selectEntityType(excludeArray).then(function(result1){
-			dialogs.selectEntityOfType(result1.entity).then(function(result2){
+			dialogs.selectEntityOfType(result1.entity.entityName).then(function(result2){
 				callback(result2, arg);
 			});
 		});
@@ -698,130 +682,59 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 })
 
-.controller('SelectDatatableEntityCtrl', function ($scope, $uibModalInstance, entity) {
-
-	$scope.result = [];
-	$scope.entity = entity;
+.controller('SelectSttableEntityCtrl', function ($scope, $uibModalInstance, entityType, singleSelection) {
+  $scope.type = entityType.entityName;
+	$scope.multipleSelection = !singleSelection;
+	$scope.selectEntityHandle = {};
 	
-	$scope.loadDatatableTable = function(){
-		$scope.readUrl = $scope.entity.getUrl;
-		$scope.writeUrl = $scope.entity.postUrl;
-		$scope.collection = $scope.entity.entityCollectionName;
-		$scope.table = {};
-		$scope.tabledef = {uid:$scope.collection};
-		$scope.tabledef.columns = function(columns) {
-			_.each(columns, function(col){col.visible=false});
-			_.each(_.where(columns,{'title':'ID'}),function(col){col.visible=true, col.searchmode="none"});
-			_.each(_.where(columns,{'title':'Name'}),function(col){col.visible=true});
-			_.each(_.where(columns,{'title':'Description'}),function(col){col.visible=true});
-			_.each(_.where(columns,{'title':'Key'}),function(col){col.visible=true});
-			_.each(_.where(columns,{'title':'User'}),function(col){col.visible=true});
-			_.each(_.where(columns,{'title':'Result'}),function(col){col.visible=true});
-
-			columns.push({
-				visible: true,
-				title:"Selection",
-				searchmode:"none",
-				width:"160px",
-				render: function ( data, type, row ) {
-					var html ='<input type="checkbox" onclick="angular.element(\'#SelectEntityCtrl\').scope().toggle(this.parentNode.parentNode.children[0].textContent, this.checked)">';
-					return html;
-				}
-			});
-
-			return columns;
-		};
-
-		$scope.entityTableLoaded = true;
-		$scope.update();
+	$scope.select = function(item) {
+	  $uibModalInstance.close({entity: entityType, item: item});
 	}
 
-	$scope.toggle = function(item,checked){
-		if(checked){
-		$scope.result[item] = checked;
-		}else{
-			if(!$scope.result[item]){
-				$scope.result[item] = true;
-			}else{
-				$scope.result[item] = false;
-			}
-		}
-	};
-
 	$scope.proceed = function () {
-		var resultArray = [];
-		_.each(Object.keys($scope.result), function(key, index){
-			if($scope.result[key] === true){
-				resultArray.push(key);
-			}
-		});
-
-		$uibModalInstance.close({ entity : $scope.entity, array: resultArray});
+	  var resultArray = [];
+	  _.each($scope.selectEntityHandle.getSelection(), function(key) {
+	    resultArray.push(key);
+	  });
+		$uibModalInstance.close({entity: entityType, array: resultArray});
 	};
-
 
 	$scope.cancel = function () {
 		$uibModalInstance.dismiss('cancel');
 	};
-
-	$scope.update = function(){
-		if($scope.table && $scope.table.Datatable){
-			$scope.table.Datatable.ajax.reload(null, false);
-		}
-	}
-	
-	$scope.loadDatatableTable();
-
 })
 
-
-.controller('SelectSttableEntityCtrl', function ($scope, $uibModalInstance, entity) {
-
-	$scope.result = {};
-	$scope.entity = entity;
-
-	$scope.loadStTable = function(entity){
-		$scope.readUrl = $scope.entity.getUrl;
-		$scope.writeUrl = $scope.entity.postUrl;
-		$scope.collection = $scope.entity.entityCollectionName;
-		$scope.tableHandle = {};
-		
-		function reload() {
-			$scope.tableHandle.reload();
-		}
-	};
-
-	$scope.toggle = function(item,checked){
-		if(checked){
-		$scope.result[item] = checked;
-		}else{
-			if(!$scope.result[item]){
-				$scope.result[item] = true;
-			}else{
-				$scope.result[item] = false;
-			}
-		}
-	};
-
-	$scope.proceed = function () {
-		var resultArray = [];
-		_.each(Object.keys($scope.result), function(key, index){
-			if($scope.result[key] === true){
-				resultArray.push(key);
-			}
-		});
-		$uibModalInstance.close({ entity : $scope.entity, array: resultArray});
-	};
-
-
-	$scope.cancel = function () {
-		$uibModalInstance.dismiss('cancel');
-	};
-
-	$scope.loadStTable();
-
+.directive('selectEntity', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      type: '=',
+      multipleSelection: '=?',
+      onSelection: '=?',
+      handle: '=?'
+    },
+    template: '<ng-include src="templateUrl" />',
+    controller: function($scope, EntityRegistry) {
+      var entityType = EntityRegistry.getEntityByName($scope.type);  
+      
+      $scope.tableHandle = {}
+      
+      $scope.templateUrl = entityType.templateUrl;
+      
+      $scope.notifySelection = function(selection) {
+        if($scope.onSelection) {
+          $scope.onSelection(selection);
+        }
+      }
+      
+      if($scope.handle) {
+        $scope.handle.getSelection = function() {
+          return $scope.tableHandle.getSelectedIds();
+        }
+      }
+    }
+  };
 })
-
 
 .controller('ExtentedDialogCtrl', function ($scope, $uibModalInstance, message, title) {
 	$scope.message = message;

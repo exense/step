@@ -1,0 +1,13 @@
+<div ng-controller="ArtefactSelectionCtrl">
+	<st-table data="artefacts" handle="tableHandle" uid="'artefactSelectionTable'" 
+				multiple-selection="multipleSelection" on-selection="notifySelection" selection-attribute="'name'">
+		<st-columns>
+			<st-column name="name">
+				<header>Name</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell>{{row.name}}</cell>
+			</st-column>
+			<st-selection-column />
+		</st-columns>
+	</st-table>
+</div>

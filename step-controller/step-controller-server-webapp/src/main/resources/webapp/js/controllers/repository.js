@@ -66,34 +66,23 @@ angular.module('repositoryControllers', [ 'step','dataTable' ])
     '$location',
     'stateStorage',
     function($scope, $http, $location, $stateStorage) {
-      $scope.testCaseTable = {};
-      $scope.testCaseTable.columns = [ { "title" : "ID", "visible" : false },
-                                   {"title" : "Name"},
-                                   { "title" : "Status", "width":"80px", "searchmode":"select","render": function ( data, type, row ) {
-                                     return '<div class="text-center reportNodeStatus status-' + data +'">'  +data+ '</div>';
-                                   }} ];
-      $scope.testCaseTable.defaultSelection = "all";
+      $scope.tableHandle = {};
       
       $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':$location.search()};
-      $http.post("rest/controller/repository/report",$scope.repoRef).then(
-          function(response) {
-            var data = response.data;
-            var dataSet = [];
-            var runs = data.runs;
-            for (i = 0; i < runs.length; i++) {
-              dataSet[i] = [ runs[i].testplanName, runs[i].testplanName, runs[i].status];
-            }
-            $scope.testCaseTable.data = dataSet;
-          });
+      $http.post("rest/controller/repository/report",$scope.repoRef).then(function(response) {
+        var data = response.data;
+        $scope.testCases = data.runs;
+        $scope.statusOptions = _.map(_.uniq(_.map(data.runs, function(e){return e.status})), function(e){return {text:e}});
+      });
       $scope.functions.getIncludedTestcases = function() {
-        var selectionMode = $scope.testCaseTable.getSelectionMode();
+        var selectionMode = $scope.tableHandle.getSelectionMode();
         if(selectionMode=='all') {
           return null;
         } else if (selectionMode=='custom' || selectionMode=='none') {
           var includedTestCases = {"by":"name"};
           var result = [];
-          if($scope.testCaseTable.getRows!=null) {
-            _.each($scope.testCaseTable.getRows(true),function(value){result.push(value[0])});
+          if($scope.tableHandle.getRows!=null) {
+            _.each($scope.tableHandle.getRows(true),function(value){result.push(value.testplanName)});
           }
           includedTestCases.list = result;
           return includedTestCases;          

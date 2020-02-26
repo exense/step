@@ -18,8 +18,31 @@
  *******************************************************************************/
 angular.module('executionsControllers',['step'])
 
-.run(function(ViewRegistry) {
+.run(function(FunctionTypeRegistry, EntityRegistry) {
+  EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'st-table', '/partials/executions/executionSelectionTable.html');
 //  ViewRegistry.registerDashlet('execution','History','partials/executions/latestExecutions.html','latestExecutions');
+})
+
+.controller('ExecutionListCtrl', function($scope, $compile, $http, stateStorage, $interval) {
+  stateStorage.push($scope, 'list',{});
+
+  $scope.tableHandle = {};
+
+  $scope.autorefresh = {enabled : true, interval : 5000, refreshFct: function() {
+    $scope.tableHandle.reload();
+  }};
+  
+  $http.get('/rest/table/executions/column/result/distinct').then(function(response) {
+    $scope.resultOptions = _.map(response.data, function(e) {
+      return {text: e};
+    });
+  })
+  
+  $http.get('/rest/table/executions/column/status/distinct').then(function(response) {
+    $scope.statusOptions = _.map(response.data, function(e) {
+      return {text: e};
+    });
+  })
 })
 
 .directive('executionHistory', function($http) {

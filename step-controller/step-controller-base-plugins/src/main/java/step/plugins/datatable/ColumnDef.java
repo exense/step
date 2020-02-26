@@ -20,6 +20,7 @@ package step.plugins.datatable;
 
 import java.util.List;
 
+import step.core.accessors.SearchQueryFactory;
 import step.plugins.datatable.formatters.Formatter;
 import step.plugins.screentemplating.InputType;
 

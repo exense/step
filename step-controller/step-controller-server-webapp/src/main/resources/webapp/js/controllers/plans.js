@@ -20,7 +20,7 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
 
 .run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerView('plans','partials/plans/plans.html');
-  EntityRegistry.registerEntity('Plan', 'plans', 'plans', 'rest/plans/', 'rest/plans/', 'st-table', '/partials/selection/selectSttableEntity.html');
+  EntityRegistry.registerEntity('Plan', 'plans', 'plans', 'rest/plans/', 'rest/plans/', 'st-table', '/partials/plans/planSelectionTable.html');
 })
 
 .factory('PlanTypeRegistry', function() {
@@ -147,16 +147,13 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
   }
   
   dialogs.selectPlan = function(callback) {
-    var modalInstance = $uibModal.open({
-      backdrop: 'static',
-      templateUrl: 'partials/plans/selectPlanDialog.html',
-      controller: 'selectPlanModalCtrl',
-      resolve: {}
+    Dialogs.selectEntityOfType('plans', true).then(function(result) {
+      var id = result.item;
+      $http.get('rest/plans/'+id).then(function(response) {
+        var plan = response.data;
+        if(callback){callback(plan)};
+      }) 
     });
-
-    modalInstance.result.then(function(plan) {
-      if(callback){callback(plan)};
-    })
   }
   
   return dialogs;
@@ -206,21 +203,6 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       Dialogs.showErrorMsg("Upload not completed.");
     }
   }
-  
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss('cancel');
-  };
-})
-
-.controller('selectPlanModalCtrl', function ($scope, $uibModalInstance, $http) {
-  $scope.selectPlan = function(id) {
-    $http.get('rest/plans/'+id).then(function(response) {
-      var plan = response.data;
-      $uibModalInstance.close(plan);
-    }) 
-  }
-  
-  $scope.table = {};
   
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');

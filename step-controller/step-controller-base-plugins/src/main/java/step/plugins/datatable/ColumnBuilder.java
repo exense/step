@@ -21,6 +21,7 @@ package step.plugins.datatable;
 import java.util.ArrayList;
 import java.util.List;
 
+import step.core.accessors.DateRangeCriterium;
 import step.plugins.datatable.formatters.ArrayFormatter;
 import step.plugins.datatable.formatters.DateFormatter;
 import step.plugins.datatable.formatters.JsonFormatter;

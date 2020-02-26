@@ -1,0 +1,51 @@
+<div id="ExecutionListCtrl" ng-controller="ExecutionListCtrl">
+	<st-table collection="'executions'" handle="tableHandle" uid="'executionList'" order="[[2, &quot;desc&quot;]]">
+		<st-actions>
+			<auto-refresh-commands autorefresh="autorefresh" />
+		</st-actions>
+		<st-columns>
+			<st-column name="description">
+				<header>Description</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell><report-node-icon node="row.RootReportNode" /> <a href="#/root/executions/{{row._id.$oid}}">{{row.description}}</a></cell>
+			</st-column>
+			<st-column name="startTime">
+				<header>Start time</header>
+				<second-header><dateinput action="search"/></second-header>
+				<cell><date time="row.startTime.$numberLong" /></cell>
+			</st-column>
+			<st-column name="endTime">
+				<header>End time</header>
+				<second-header><dateinput action="search"/></second-header>
+				<cell><date time="row.endTime.$numberLong" /></cell>
+			</st-column>
+			<st-column name="executionParameters.userID">
+				<header>User</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell>{{row.executionParameters.userID}}</cell>
+			</st-column>
+			<st-custom-columns st-screen="executionTable" st-exclude-fields="[]"/>
+			<st-column name="status" width="'80px'">
+				<header>Status</header>
+				<second-header><inputdropdown options="statusOptions" action="search" initial-value="initialValue" /></second-header>
+				<cell><span class="executionStatus status-{{row.status}}">{{row.status}}</span></cell>
+			</st-column>
+			<st-column name="result">
+				<header>Result</header>
+				<second-header><inputdropdown options="resultOptions" action="search" initial-value="initialValue" /></second-header>
+				<cell>
+					<table class="executionTableResult">
+						<tr>
+							<td>
+								<execution-result execution="row" />
+							</td>
+							<td>
+								<status-distribution progress="row.Summary" />
+							</td>
+						</tr>
+					</table>
+				</cell>
+			</st-column>
+		</st-columns>
+	</st-table>
+</div>
