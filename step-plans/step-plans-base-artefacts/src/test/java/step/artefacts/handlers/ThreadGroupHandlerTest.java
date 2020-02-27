@@ -34,7 +34,6 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
-import step.planbuilder.BaseArtefacts;
 
 public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -124,9 +123,9 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 	}
 
 
-	public StringWriter testMaxDuration(long sleepTime, long maxDuration, AtomicInteger count) throws IOException {
+	public StringWriter testMaxDuration(long sleepTime, int maxDuration, AtomicInteger count) throws IOException {
 		ThreadGroup artefact = new ThreadGroup();
-		artefact.setMaxDuration(new DynamicValue<Integer>(100));
+		artefact.setMaxDuration(new DynamicValue<Integer>(maxDuration));
 		artefact.setIterations(new DynamicValue<Integer>(10));
 		
 		Sleep sleep = new Sleep();
