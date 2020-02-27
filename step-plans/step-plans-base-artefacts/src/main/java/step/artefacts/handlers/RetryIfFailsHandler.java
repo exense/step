@@ -26,16 +26,16 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 
-public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNode> {
+public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFailsReportNode> {
 
 	@Override
-	protected void createReportSkeleton_(ReportNode parentNode, RetryIfFails testArtefact) {
+	protected void createReportSkeleton_(RetryIfFailsReportNode parentNode, RetryIfFails testArtefact) {
 		Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+1, true);
 		delegateCreateReportSkeleton(iterationTestCase, parentNode);
 	}
 
 	@Override
-	protected void execute_(ReportNode node, RetryIfFails testArtefact) {
+	protected void execute_(RetryIfFailsReportNode node, RetryIfFails testArtefact) {
 		
 		ReportNodeStatus lastStatus = ReportNodeStatus.NORUN;
 		
@@ -44,6 +44,11 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 		for(int count = 1; count<=testArtefact.getMaxRetries().get();count++) {
 			boolean persist = (!testArtefact.getReportLastTryOnly().get() || 
 					(testArtefact.getReportLastTryOnly().get() && count>=testArtefact.getMaxRetries().get()));
+			
+			if (!persist) {
+				node.incSkipped();
+			}
+			node.incTries();
 			
 			Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+count, true, persist);
 			
@@ -64,12 +69,12 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, ReportNod
 				break;
 			} 
 			try {
-				if (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0) {
-					releaseTokens(testArtefact);
-				}
 				long duration = testArtefact.getGracePeriod().get();
 				OperationManager.getInstance().enter("RetryIfFails", "Grace period " + duration + " ms");
-				
+				if (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0) {
+					releaseTokens(testArtefact);
+					node.setReleasedToken(true);
+				}
 				Thread.sleep(duration);
 			} catch (InterruptedException e) {
 				lastStatus = ReportNodeStatus.INTERRUPTED;
