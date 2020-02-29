@@ -127,7 +127,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 	};
 }]);
 
-tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry',function($http,$q,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry) {
+tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interval','stateStorage','$filter','$location','viewFactory','$window','reportTableFactory','ViewRegistry',function($http,$timeout,$interval,$stateStorage,$filter,$location,viewFactory,$window,reportTableFactory,ViewRegistry) {
 	return {
 		restrict: 'E',
 		scope: {
@@ -701,3 +701,19 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
     }
   };
 }]);
+
+tecAdminControllers.directive('currentOperations', function($http) {
+  return {
+    restrict: 'E',
+    scope: {
+      reportNodeId: '='
+    },
+    controller: function($scope) {
+      $http.get("rest/threadmanager/operations/"+$scope.reportNodeId).then(function(response) {
+        $scope.currentOperation = response.data;
+        
+      });          
+    },
+      
+    templateUrl: 'partials/operations/currentOperations.html'}
+})

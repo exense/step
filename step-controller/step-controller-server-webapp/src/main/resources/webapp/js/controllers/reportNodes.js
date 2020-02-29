@@ -47,7 +47,8 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
       var reportNodeTypes = {
           "step.artefacts.reports.CallFunctionReportNode":{template:"partials/reportnodes/callFunctionReportNode.html"},
           "step.artefacts.reports.EchoReportNode":{template:"partials/reportnodes/echo.html"},
-          "step.artefacts.reports.AssertReportNode":{template:"partials/reportnodes/assert.html"}
+          "step.artefacts.reports.AssertReportNode":{template:"partials/reportnodes/assert.html"},
+          "step.artefacts.reports.RetryIfFailsReportNode":{template:"partials/reportnodes/retryIfFail.html"},
       }
       
       $scope.children = [];

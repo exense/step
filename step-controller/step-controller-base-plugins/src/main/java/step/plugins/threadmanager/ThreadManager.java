@@ -19,13 +19,15 @@
 package step.plugins.threadmanager;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import step.common.managedoperations.Operation;
 import step.common.managedoperations.OperationManager;
 import step.core.GlobalContext;
+import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -69,10 +72,6 @@ public class ThreadManager extends AbstractControllerPlugin {
 
 	private static final String SET_KEY = "ThreadManagerPlugin_SetKey";
 	
-	private static final String TC_TID_KEY = "ThreadManagerPlugin_TestCasesByTID";
-	
-	private static final String TC_NAME_KEY = "ThreadManagerPlugin_TestCasesByName";
-	
 	@Override
 	public void executionControllerStart(GlobalContext context) {
 		context.getServiceRegistrationCallback().registerService(ThreadManagerServices.class);
@@ -88,25 +87,16 @@ public class ThreadManager extends AbstractControllerPlugin {
 		return (HashSet<Thread>) context.get(SET_KEY);
 	}
 	
-	@SuppressWarnings("unchecked")
-	private Map<Long,String> getRegisterTestCasesByTID(ExecutionContext context) {
-		return (Map<Long,String>) context.get(TC_TID_KEY);
-	}
-	
-	@SuppressWarnings("unchecked")
-	private Map<String,Set<Long>> getRegisterTestCasesByName(ExecutionContext context) {
-		return (Map<String,Set<Long>>) context.get(TC_NAME_KEY);
-	}
-	
 	@Override
 	public void associateThread(ExecutionContext context, Thread thread, long parentThreadId) {
 		logger.debug("associate Thread: " + thread.getId() + ", and parent thread id: " + parentThreadId);
+		
+		// associate the thread ID to all the report nodes associated to the parentThreadId 
+		reportNodeIdToThreadId.entrySet().stream().filter(e->{
+			return e.getValue().contains(parentThreadId);
+		}).forEach(e->e.getValue().add(thread.getId()));;
+		
 		associateThread(context, thread);
-		Map<Long,String> associatedTestcaseByID = getRegisterTestCasesByTID(context);
-		String testcase = (associatedTestcaseByID!=null) ? associatedTestcaseByID.get(parentThreadId) : null;
-		if (testcase != null) {
-			associateTestCase(context,thread,testcase);
-		}
 	}
 	
 	@Override
@@ -125,62 +115,46 @@ public class ThreadManager extends AbstractControllerPlugin {
 		}
 	}
 	
-	public void associateTestCase(ExecutionContext context, Thread thread, String id) {
-		logger.debug("associateTestCase: " + id + ", ThreadId: " + thread.getId());
-		Map<Long,String> associatedTestcaseByID = getRegisterTestCasesByTID(context);
-		Map<String,Set<Long>> associatedTestcaseByName = getRegisterTestCasesByName(context);
-		
-		synchronized (context) {
-			if(associatedTestcaseByID==null) {
-				associatedTestcaseByID = new HashMap<Long,String>();
-				context.put(TC_TID_KEY, associatedTestcaseByID);
-			}
-			if(associatedTestcaseByName==null) {
-				associatedTestcaseByName = new HashMap<String,Set<Long>>();
-				context.put(TC_NAME_KEY, associatedTestcaseByName);
-			}	
-		}
-		synchronized(associatedTestcaseByID) {
-			associatedTestcaseByID.put(thread.getId(),id);
-		}
-		synchronized(associatedTestcaseByName) {
-			if (associatedTestcaseByName.containsKey(id)) {
-				associatedTestcaseByName.get(id).add(thread.getId());
-			} else { 
-				HashSet<Long> threadIds = new HashSet<Long>();
-				threadIds.add(thread.getId());
-				associatedTestcaseByName.put(id,threadIds);
-			}
+	// Track all the threads (parent + children) associated to a report node
+	private Map<String, List<Long>> reportNodeIdToThreadId = new ConcurrentHashMap<>();
+	
+	@Override
+	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
+		// Associate the current thread ID to this report node
+		String reportNodeId = node.getId().toString();
+		long threadId = Thread.currentThread().getId();
+		List<Long> threads = reportNodeIdToThreadId.computeIfAbsent(reportNodeId, k->new CopyOnWriteArrayList<>());
+		threads.add(threadId);
+	}
+
+	@Override
+	public void afterReportNodeExecution(ExecutionContext context, ReportNode node) {
+		// Remove the list of threads for this report node
+		String reportNodeId = node.getId().toString();
+		reportNodeIdToThreadId.remove(reportNodeId);
+	}
+	
+	public List<Operation> getCurrentOperationsByReportNodeId(String reportNodeId) {
+		OperationManager operationManager = OperationManager.getInstance();
+		List<Long> threadIds = reportNodeIdToThreadId.get(reportNodeId);
+		if(threadIds!=null) {
+			return threadIds.stream().map(threadId->operationManager.getOperation(threadId)).filter(o->o!=null).collect(Collectors.toList());
+		} else {
+			return new ArrayList<>();
 		}
 	}
+	
 
 	@Override
 	public void unassociateThread(ExecutionContext context, Thread thread) {
 		Set<Thread> associatedThreads = getRegister(context);
-		
-		unassociateTestCase(context, thread.getId());
 
 		synchronized(associatedThreads) {
 			associatedThreads.remove(thread);
-		}		
-	}
-	
-	protected void unassociateTestCase(ExecutionContext context, long tid) {
-		logger.debug("in-associateTestCase for thread: " + tid);
-		Map<Long,String> associatedTestcaseByID = getRegisterTestCasesByTID(context);
-		Map<String,Set<Long>> associatedTestcaseByName = getRegisterTestCasesByName(context);
-
-		String testcase=null;
-		synchronized(associatedTestcaseByID) {
-			testcase = associatedTestcaseByID.remove(tid);
 		}
-		if (testcase != null) {
-			synchronized(associatedTestcaseByName) {
-				if (associatedTestcaseByName.containsKey(testcase)) {
-					associatedTestcaseByName.get(testcase).remove(tid);
-				} 
-			}
-		}
+		
+		long threadId = thread.getId();
+		reportNodeIdToThreadId.entrySet().forEach(e->e.getValue().remove(threadId));
 	}
 
 	@Override
@@ -209,24 +183,4 @@ public class ThreadManager extends AbstractControllerPlugin {
 		}
 		return operations;
 	}
-	
-	public Map<String,List<Operation>> getCurrentOperationsByTestcases(ExecutionContext context) {
-		Map<String,Set<Long>> associatedTestcaseByName = getRegisterTestCasesByName(context);
-		Map<String,List<Operation>> operationsMap = new HashMap<String,List<Operation>>();
-		if(associatedTestcaseByName!=null) {
-			for(String testcase : associatedTestcaseByName.keySet()) {
-				List<Operation> operations = new ArrayList<Operation>();
-				for (long tid: associatedTestcaseByName.get(testcase)) {
-					Operation op = OperationManager.getInstance().getOperation(tid);
-					if (op != null) {
-						operations.add(op);
-					}
-				}
-				operationsMap.put(testcase, operations);
-			}
-		}
-		return operationsMap;
-	}
-	
-
 }

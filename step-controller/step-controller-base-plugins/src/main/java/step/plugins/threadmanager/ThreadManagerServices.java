@@ -19,12 +19,11 @@
 package step.plugins.threadmanager;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -52,14 +51,9 @@ public class ThreadManagerServices extends AbstractServices {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/operationsByTestCases")
-	public Map<String,List<Operation>> getCurrentOperationsByTestcases(@QueryParam("eid") String executionID) {
+	@Path("/operations/{reportnodeid}")
+	public List<Operation> getOperationsByReportNodeId(@PathParam("reportnodeid") String reportNodeId) {
 		ThreadManager threadManager = (ThreadManager) getContext().get(ThreadManager.THREAD_MANAGER_INSTANCE_KEY);
-		ExecutionRunnable task = getExecutionRunnable(executionID);
-		if(task!=null) {
-			return threadManager.getCurrentOperationsByTestcases(task.getContext());
-		} else {
-			return new HashMap<String,List<Operation>>();
-		}
+		return threadManager.getCurrentOperationsByReportNodeId(reportNodeId);
 	}
 }

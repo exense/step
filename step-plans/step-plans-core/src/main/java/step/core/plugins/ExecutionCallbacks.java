@@ -57,8 +57,6 @@ public interface ExecutionCallbacks extends PluginCallbacks {
 	
 	public void associateThread(ExecutionContext context, Thread thread, long parentThreadId);
 	
-	public void associateTestCase(ExecutionContext context, Thread thread, String testcase);
-	
 	public void unassociateThread(ExecutionContext context, Thread thread);
 	
 	public void beforePlanImport(ExecutionContext context);

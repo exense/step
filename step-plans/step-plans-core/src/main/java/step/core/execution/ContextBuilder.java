@@ -100,10 +100,6 @@ public class ContextBuilder {
 			}
 
 			@Override
-			public void associateTestCase(ExecutionContext context, Thread thread, String testcase) {
-			}
-
-			@Override
 			public void associateThread(ExecutionContext context, Thread thread, long parentThreadId) {
 			}
 		});
