@@ -58,21 +58,6 @@ public class Collection<T> {
 	private MongoCollection<BasicDBObject> collection;
 
 	private Mapper dbLayerObjectMapper;
-
-	public Collection(MongoDatabase mongoDatabase, String collectionName) {
-		this(mongoDatabase, collectionName, true);
-	}
-	
-	/**
-	 * @param mongoDatabase
-	 * @param collectionName the name of the mongo collection
-	 * @param filtered if the {@link Collection} is subject to context filtering i.e. 
-	 * if the context parameters delivered by the {@link ObjectFilter}s of the {@link ObjectHookRegistry}
-	 * may be appended to the queries run against this collection
-	 */
-	public Collection(MongoDatabase mongoDatabase, String collectionName, boolean filtered) {
-		this(mongoDatabase, collectionName, null, filtered);
-	}
 	
 	/**
 	 * @param mongoDatabase
