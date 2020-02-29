@@ -2,9 +2,11 @@ package step.resources;
 
 import java.io.File;
 
-import step.attachments.FileResolver;
 import ch.exense.commons.app.Configuration;
+import step.attachments.FileResolver;
 import step.core.GlobalContext;
+import step.core.accessors.Collection;
+import step.core.accessors.CollectionRegistry;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -30,6 +32,9 @@ public class ResourcePlugin extends AbstractControllerPlugin {
 		
 		fileResolver = new FileResolver(resourceManager);
 		context.put(FileResolver.class, fileResolver);
+		
+		context.get(CollectionRegistry.class).register("resources", new Collection(context.getMongoClientSession().getMongoDatabase(), 
+				"resources", Resource.class, true));
 	}
 
 	public static String getResourceDir(Configuration configuration) {

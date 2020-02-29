@@ -62,7 +62,7 @@
 							<uib-tab heading="Console" ng-if="isInteractiveSessionActive()">
 								<div class="row">
 									<div class="panel-body">
-										<datatable serverside="reports" tabledef="stepsTable" handle="stepsTable" selectionmode="single" columnsearch="true" order="[[1, &quot;desc&quot;]]" />
+										<ng-include src="'partials/executions/keywordCalls.html'" />
 									</div>		
 								</div>				
 							</uib-tab>

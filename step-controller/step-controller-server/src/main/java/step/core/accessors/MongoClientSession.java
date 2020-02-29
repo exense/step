@@ -9,8 +9,6 @@ import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 import org.jongo.marshall.jackson.JacksonMapper;
 
-import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
@@ -64,11 +62,10 @@ public class MongoClientSession implements Closeable {
 		@SuppressWarnings("deprecation")
 		DB db = mongoClient.getDB(this.db);
 		
-		Jongo jongo = new Jongo(db,new JacksonMapper.Builder()
-			      .registerModule(new JSR353Module())
-			      .registerModule(new JsonOrgModule())
-			      .registerModule(new DefaultAccessorModule())
-			      .build());
+		JacksonMapper.Builder builder = new JacksonMapper.Builder();
+		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder.registerModule(m));
+		
+		Jongo jongo = new Jongo(db,builder.build());
 		MongoCollection collection = jongo.getCollection(collectionName);
 		
 		return collection;

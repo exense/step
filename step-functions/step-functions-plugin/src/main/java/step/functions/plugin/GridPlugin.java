@@ -26,16 +26,21 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mongodb.client.MongoDatabase;
+
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionRouter;
 import step.attachments.FileResolver;
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
+import step.core.accessors.Collection;
+import step.core.accessors.CollectionRegistry;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.accessor.FunctionCRUDAccessor;
@@ -138,6 +143,10 @@ public class GridPlugin extends AbstractControllerPlugin {
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
 		context.getServiceRegistrationCallback().registerService(FunctionServices.class);
+		
+		CollectionRegistry collectionRegistry = context.get(CollectionRegistry.class);
+		MongoDatabase mongoDatabase = context.getMongoClientSession().getMongoDatabase();
+		collectionRegistry.register("functions", new Collection(mongoDatabase, "functions", Function.class, true));
 	}
 
 	protected ConfigurableTokenLifecycleStrategy getTokenLifecycleStrategy(Configuration configuration) {

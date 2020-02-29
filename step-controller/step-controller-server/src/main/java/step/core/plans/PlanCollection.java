@@ -3,6 +3,8 @@ package step.core.plans;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.json.JsonObject;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -13,11 +15,11 @@ import step.core.accessors.Collection;
 public class PlanCollection extends Collection {
 
 	public PlanCollection(MongoDatabase mongoDatabase) {
-		super(mongoDatabase, "plans");
+		super(mongoDatabase, "plans", Plan.class, true);
 	}
 
 	@Override
-	public List<Bson> getAdditionalQueryFragments() {
+	public List<Bson> getAdditionalQueryFragments(JsonObject queryParameters) {
 		ArrayList<Bson> fragments = new ArrayList<Bson>();
 		fragments.add(new Document("visible", true));
 		return fragments;

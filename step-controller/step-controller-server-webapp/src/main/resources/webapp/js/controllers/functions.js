@@ -307,7 +307,7 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
     templateUrl: 'partials/functions/functionLink.html',
     controller: function($scope, FunctionDialogs) {
       $scope.openFunctionEditor = function() {
-        FunctionDialogs.openFunctionEditor($scope.function_.id?$scope.function_.id:$scope.function_._id.$oid);
+        FunctionDialogs.openFunctionEditor($scope.function_.id);
       }
     }
   };

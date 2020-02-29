@@ -20,6 +20,8 @@ package step.plugins.datatable.formatters;
 
 import org.bson.Document;
 
+import com.mongodb.DBObject;
+
 public class JsonFormatter implements Formatter {
 	
 	public JsonFormatter() {
@@ -27,7 +29,7 @@ public class JsonFormatter implements Formatter {
 	}
 
 	@Override
-	public String format(Object value, Document row) {
+	public String format(Object value, DBObject row) {
 		return value instanceof Document?((Document)value).toJson():value.toString();
 	}
 

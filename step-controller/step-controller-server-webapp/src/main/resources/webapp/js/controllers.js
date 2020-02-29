@@ -175,46 +175,14 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 			$scope.getPanelTitle = function(viewId) {return panels[viewId].label};
 			$scope.panels = _.map(_.keys(panels),function(viewId){return {id:viewId,label:panels[viewId].label}});
 
-			$scope.configParamTable = {};
-			$scope.configParamTable.columns = [ { "title" : "Key"}, {"title" : "Value"}];
-
 			$scope.testCaseTable = {};
-			$scope.testCaseTable.columns = [ { "title" : "ID", "visible" : false },
-				{"title" : "Name",
-				"createdCell" : function (td, cellData, rowData, row, col) {
-					var rowScope = $scope.$new(false, $scope);
-					$scope.testCaseTable.trackScope(rowScope);
-					rowScope.id = rowData[0];
-					var content = $compile('<a href uib-tooltip="Drilldown" ng-click="drillDownTestcase(id)">'+cellData+'</a>')(rowScope);
-					$(td).empty();
-					$(td).append(content);
-					// no need to call the $apply here as we already in an angular "thread" in the case of 
-					// in memory tables like the testcases. The following is required for serverside tables
-					//rowScope.$apply();
-				}},
-				{ "title" : "Current Operations", "width":"60%", "searchmode":"select","render": function ( data, type, row ) {
-					if(data) {
-						var html = "";
-						var maxLentgth = 10;
-						for(let i = 0; i < data.length && i < maxLentgth; i++){
-							html = html + renderOperationsHtml(data[i]);
-						}
-						return html;
-					} 
-					else {
-						return "";
-					}
-				}},
-				{ "title" : "Status", "width":"80px", "searchmode":"select","render": function ( data, type, row ) {
-					return '<div class="text-center reportNodeStatus status-' + data +'">'  +data+ '</div>';
-				}} ];
 			$scope.drillDownTestcase = function(id) {
 				$scope.testCaseTable.deselectAll();
 				$scope.testCaseTable.select(id);
 				$scope.enablePanel("steps",true);
 				$scope.scrollTo("steps");
 			}
-			$scope.testCaseTable.defaultSelection = function(value) {
+			$scope.testCaseTableDefaultSelection = function(value) {
 				var execution = $scope.execution;
 				if(execution) {
 					var artefactFilter = execution.executionParameters.artefactFilter;
@@ -232,6 +200,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 				}
 			}
 
+      $scope.testCaseTableOnSelectionChange = function() {
+        $scope.refresh();
+      };
+			
 			var executionViewServices = {
 					showNodeInTree : function(nodeId) {
 						$http.get('/rest/controller/reportnode/'+nodeId+'/path').then(function(response) {
@@ -245,9 +217,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 						$http.get('/rest/controller/reportnode/'+nodeId+'/path').then(function(response) {
 							var path = response.data;
 							_.each(path, function(node) {
-								if(node.artefact && node.artefact._class == 'TestCase') {
+								if(node.resolvedArtefact && node.resolvedArtefact._class == 'TestCase') {
 									$scope.testCaseTable.deselectAll();
-									$scope.testCaseTable.select(node.artefact.id);
+									$scope.testCaseTable.select(node.resolvedArtefact.id);
 									$scope.enablePanel("testCases",true);
 								}
 							}); 
@@ -267,7 +239,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 					// if not all items are selected
 					if(testCaseSelection.notSelectedItems.length>0) {
 						var testcases = [];
-						_.each(testCaseSelection.selectedItems, function(testCase) {testcases.push(testCase[0])})
+						_.each(testCaseSelection.selectedItems, function(testCase) {testcases.push(testCase.artefactID)})
 						filter.testcases = testcases;
 					}
 				}
@@ -349,7 +321,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 					var includedTestCases = {"by":$scope.execution.executionParameters.repositoryObject.repositoryID=="local"?"id":"name"};
 					var result = [];
 					if($scope.testCaseTable.getRows!=null) {
-						_.each($scope.testCaseTable.getRows(true),function(value){result.push(value[includedTestCases.by=="id"?0:1])});
+						_.each($scope.testCaseTable.getRows(true),function(value){result.push(includedTestCases.by=="id"?value.artefactID:value.name)});
 					}
 					includedTestCases.list = result;
 					return includedTestCases;
@@ -382,30 +354,18 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 			})
 
 			var refreshTestCaseTable = function() {        
-				$q.all([
-					$http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode'),
-					$http.get("rest/threadmanager/operationsByTestCases?eid=" + eId)
-					]).then(function (responses) {
-						var data = responses[0].data;
-						var operationsData = responses[1].data; 
-						var dataSet = [];
-						if(data.length>0) {
-							if(data.length>1&&!$scope.isPanelEnabled('testCases')) {              
-								$scope.setShowPanel('steps', false);
-								$scope.setShowPanel('testCases', true);
-							}
-							$scope.enablePanel('testCases', true);
+				$http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode').then(function(response) {
+					var data = response.data;
+					var dataSet = [];
+					if(data.length>0) {
+						if(data.length>1&&!$scope.isPanelEnabled('testCases')) {
+							$scope.setShowPanel('steps', false);
+							$scope.setShowPanel('testCases', true);
 						}
-
-						for (i = 0; i < data.length; i++) {
-							var tcOperations = operationsData[data[i].artefactID];
-							if (tcOperations == null) {
-								tcOperations = [];
-							}
-							dataSet[i] = [ data[i].artefactID, data[i].name, tcOperations , data[i].status];
-						}
-						$scope.testCaseTable.data = dataSet;
-					});
+						$scope.enablePanel('testCases', true);
+					}
+					$scope.testCases = data;
+				});
 			}
 
 			var refreshExecution = function() {
@@ -417,14 +377,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 						}
 					}
 					$scope.execution = data;
-					var dataSet = [];
-					var parameters = data.parameters;
-					if(parameters) {
-						for (i = 0; i < parameters.length; i++) {
-							dataSet[i] = [parameters[i].key, parameters[i].value];
-						}
-						$scope.configParamTable.data = dataSet;
-					}
 					// Set actual execution to the tab title
 					$scope.updateTabTitle()(eId,data);
 				});        
@@ -463,9 +415,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 					$scope.stepsTable.columns[2].search(escapeRegExp(error));
 				}
 
-				if($scope.stepsTable && $scope.stepsTable.Datatable && !$scope.reloadingTable) {
+				if($scope.stepsTable && $scope.stepsTable.reload && !$scope.reloadingTable) {
 				  $scope.isRefreshing=true;
-					$scope.stepsTable.Datatable.ajax.reload(function() {
+					$scope.stepsTable.reload(function() {
 					  $timeout(function() {
 					    $scope.isRefreshing=false;}, false);
 					  },false);
@@ -496,10 +448,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$q','$timeout','$in
 					$scope.reportTreeHandle.refresh();
 				}
 			};
-
-			$scope.testCaseTable.onSelectionChange = function() {
-				refresh();
-			};
+			
+			$scope.refresh = refresh;
 
 			function refreshAll() {
 				refreshExecution();

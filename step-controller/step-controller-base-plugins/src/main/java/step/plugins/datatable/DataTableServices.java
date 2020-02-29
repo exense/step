@@ -51,6 +51,7 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mongodb.DBObject;
 import com.mongodb.client.model.Filters;
 
 import step.core.accessors.CollectionFind;
@@ -193,17 +194,17 @@ public class DataTableServices extends AbstractTableService {
 			exportTaskManager.createExportTask(reportID, new ExportTask(table, query, order));
 		}
 
-		CollectionFind<Document> find = table.getCollection().find(query, order, skip, limit, maxTime);
+		CollectionFind<DBObject> find = table.getCollection().find(query, order, skip, limit, maxTime);
 
-		Iterator<Document> it = find.getIterator();
-		List<Document> objects = new ArrayList<>();	
+		Iterator<DBObject> it = find.getIterator();
+		List<DBObject> objects = new ArrayList<>();	
 		while(it.hasNext()) {
 			objects.add(it.next());
 		}
 
 		String[][] data = new String[objects.size()][table.getColumns().size()];
 		for(int i = 0; i<objects.size();i++) {
-			Document row = objects.get(i);
+			DBObject row = objects.get(i);
 			String[] rowFormatted = formatRow(table.getColumns(), row);
 			data[i] = rowFormatted;
 		}
@@ -212,7 +213,7 @@ public class DataTableServices extends AbstractTableService {
 		return response;
 	}
 
-	private static String[] formatRow(List<ColumnDef> columns, Document row) {
+	private static String[] formatRow(List<ColumnDef> columns, DBObject row) {
 		int columnID = 0;
 		String[] rowFormatted = new String[columns.size()];
 		for(ColumnDef column:columns) {
@@ -259,7 +260,7 @@ public class DataTableServices extends AbstractTableService {
 
 		protected Resource runExport() throws Exception {			
 			try {
-				CollectionFind<Document> find = table.getCollection().find(query, order, null, null);		
+				CollectionFind<DBObject> find = table.getCollection().find(query, order, null, null);		
 
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "export.csv");
 
@@ -278,12 +279,12 @@ public class DataTableServices extends AbstractTableService {
 
 					find.getRecordsFiltered();
 
-					Iterator<Document> it = find.getIterator();
+					Iterator<DBObject> it = find.getIterator();
 
 					int count = 0;
 					while(it.hasNext()) {
 						count++;
-						Document object = it.next();
+						DBObject object = it.next();
 						String[] formattedRow = DataTableServices.formatRow(columns, object);
 						for(String val:formattedRow) {
 							if(val.contains(CSV_DELIMITER)||val.contains("\n")||val.contains("\"")) {
@@ -323,7 +324,7 @@ public class DataTableServices extends AbstractTableService {
 		}
 	}
 
-	private static String format(Object value, Document row, ColumnDef column) {
+	private static String format(Object value, DBObject row, ColumnDef column) {
 		return column.format.format(value, row);
 	}
 }

@@ -23,19 +23,21 @@ import java.util.Iterator;
 
 import org.bson.Document;
 
+import com.mongodb.DBObject;
+
 public class ArrayFormatter implements Formatter {
 
 	protected DocumentToJsonFormatter documentToJsonFormatter = new DocumentToJsonFormatter();
 	
 	@Override
-	public String format(Object value, Document row) {
+	public String format(Object value, DBObject row) {
 		if(value!=null && value instanceof Collection) {
 			StringBuilder b = new StringBuilder();
 			b.append("[");
 			Iterator<?> i = ((Collection<?>)value).iterator();
 			while(i.hasNext()) {
 				Object next = i.next();
-				b.append(next instanceof Document?documentToJsonFormatter.format((Document)next):next.toString());
+				b.append(next instanceof Document?documentToJsonFormatter.format((DBObject)next):next.toString());
 				if(i.hasNext()) {
 					b.append(",");
 				}

@@ -7,17 +7,17 @@
 			<st-column name="description">
 				<header>Description</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><report-node-icon node="row.RootReportNode" /> <a href="#/root/executions/{{row._id.$oid}}">{{row.description}}</a></cell>
+				<cell><report-node-icon node="row.rootReportNode" /> <a href="#/root/executions/{{row.id}}">{{row.description}}</a></cell>
 			</st-column>
 			<st-column name="startTime">
 				<header>Start time</header>
 				<second-header><dateinput action="search"/></second-header>
-				<cell><date time="row.startTime.$numberLong" /></cell>
+				<cell><date time="row.startTime" /></cell>
 			</st-column>
 			<st-column name="endTime">
 				<header>End time</header>
 				<second-header><dateinput action="search"/></second-header>
-				<cell><date time="row.endTime.$numberLong" /></cell>
+				<cell><date time="row.endTime" /></cell>
 			</st-column>
 			<st-column name="executionParameters.userID">
 				<header>User</header>
@@ -40,7 +40,7 @@
 								<execution-result execution="row" />
 							</td>
 							<td>
-								<status-distribution progress="row.Summary" />
+								<status-distribution progress="row.executionSummary" />
 							</td>
 						</tr>
 					</table>

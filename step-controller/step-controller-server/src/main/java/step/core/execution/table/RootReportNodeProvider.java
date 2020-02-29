@@ -2,33 +2,27 @@ package step.core.execution.table;
 
 import java.util.Iterator;
 
-import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
-import step.core.deployment.JacksonMapperProvider;
+import step.core.execution.model.Execution;
 
-public class RootReportNodeFormatter {
+public class RootReportNodeProvider {
 				
 	protected ReportNodeAccessor reportNodeAccessor;
-	protected ObjectMapper mapper;
 	
-	private static final Logger logger = LoggerFactory.getLogger(RootReportNodeFormatter.class);
+	private static final Logger logger = LoggerFactory.getLogger(RootReportNodeProvider.class);
 
-	public RootReportNodeFormatter(GlobalContext context) {
+	public RootReportNodeProvider(GlobalContext context) {
 		super();
 		reportNodeAccessor = context.getReportAccessor();
-		mapper = JacksonMapperProvider.createMapper();
 	}
 
-	public String format(Document row) {
-		String eid = row.get("_id").toString();
+	public ReportNode getRootReportNode(Execution execution) {
+		String eid = execution.getId().toString();
 		
 		ReportNode rootReportNode = reportNodeAccessor.getRootReportNode(eid);
 		if(rootReportNode!=null) {
@@ -36,11 +30,7 @@ public class RootReportNodeFormatter {
 			if(rootReportNodeChildren.hasNext()) {
 				rootReportNode = rootReportNodeChildren.next();
 				if(rootReportNode != null) {
-					try {
-						return mapper.writeValueAsString(rootReportNode);
-					} catch (JsonProcessingException e) {
-						logger.error("Error while serializing report node "+rootReportNode, e);
-					}
+					return rootReportNode;
 				} else {
 					logger.error("Error while getting root report node for execution. "
 							+ "Iterator.next() returned null although Iterator.hasNext() returned true. "
@@ -50,6 +40,6 @@ public class RootReportNodeFormatter {
 				logger.debug("No children found for report node with id "+rootReportNode.getId());
 			}
 		}
-		return "{}";
+		return null;
 	}
 }

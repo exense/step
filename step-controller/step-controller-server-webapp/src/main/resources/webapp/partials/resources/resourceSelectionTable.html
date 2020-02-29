@@ -1,9 +1,9 @@
 <st-table collection="'resources'" handle="tableHandle" uid="'resourcesSelectionTable'" filter="'not(resourceType=attachment)'"
-			multiple-selection="multipleSelection" on-selection="notifySelection" selection-attribute="'_id.$oid'">
+			multiple-selection="multipleSelection" on-selection="notifySelection" selection-attribute="'id'">
 	<st-columns>
 		<st-column name="id">
 			<header>ID</header>
-			<cell><span>{{row._id.$oid}}</span></cell>
+			<cell><span>{{row.id}}</span></cell>
 		</st-column>
 		<st-column name="resourceName">
 			<header>Name</header>

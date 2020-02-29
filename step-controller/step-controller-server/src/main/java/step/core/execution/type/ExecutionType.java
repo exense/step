@@ -4,7 +4,7 @@ public abstract class ExecutionType {
 	
 	protected String name;
 	
-	public abstract String getExecutionSummary(String executionId);
+	public abstract Object getExecutionSummary(String executionId);
 
 	public ExecutionType(String name) {
 		super();	

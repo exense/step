@@ -23,40 +23,14 @@ angular.module('reportTable',['step','reportNodes'])
 
   tableFactory.get = function (filterFactory, $scope, executionViewServices) {
     var stepsTable = {};
-    stepsTable.columns = function(columns) {
-      _.each(_.where(columns,{'title':'ID'}),function(col){col.visible=false});
-      _.each(_.where(columns,{'title':'Begin'}),function(col){col.sClass = 'rowDetailsToggle';col.width="60px"});
-      _.each(_.where(columns,{'title':'Step'}),function(col){
-        col.sClass = 'rowDetailsToggle';
-        col.createdCell =  function (td, cellData, rowData, row, col) {
-          var rowScope = $scope.$new(true, $scope);
-          stepsTable.trackScope(rowScope);
-          rowScope.node = JSON.parse(cellData);
-          rowScope.executionViewServices = executionViewServices;
-          
-          var content = $compile("<reportnode-short node='node' execution-view-services='executionViewServices' />")(rowScope);
-          $(td).empty();
-          $(td).append(content);
-          rowScope.$apply();
-        };
-      });
-      _.each(_.where(columns,{'title':'Status'}),function(col){
-        col.searchmode="select";
-        col.width="80px";
-        col.createdCell =  function (td, cellData, rowData, row, col) {
-          var rowScope = $scope.$new(true, $scope);
-          stepsTable.trackScope(rowScope);
-          rowScope.status = cellData;
-          var content = $compile("<reportnode-status status='status' />")(rowScope);
-          $(td).empty();
-          $(td).append(content);
-          rowScope.$apply();
-        };
-      });
-      return columns;
-    };
+    $scope.stepsTableServerSideParameters = filterFactory;
+    $scope.executionViewServices = executionViewServices;
     
-    stepsTable.params = filterFactory;
+    $http.get('/rest/table/executions/column/result/distinct').then(function(response) {
+      $scope.reportNodeStatusOptions = _.map(response.data, function(e) {
+        return {text: e};
+      });
+    })
        
     stepsTable.beforeRequest = function () {
       var tableAPI = $scope.stepsTable.Datatable;

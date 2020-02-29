@@ -110,7 +110,7 @@ angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynam
         var sessionId = $scope.interactiveSession.id;
         $scope.componentTabs.selectedTab = 3;
         $http.post("rest/interactive/"+sessionId+"/execute/"+$scope.model.plan.id+"/"+artefact.id, parameters).then(function() {
-          $scope.stepsTable.Datatable.ajax.reload(null, false);
+          $scope.stepsTable.reload();
         });
       },
       start: function() {

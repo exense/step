@@ -2,9 +2,10 @@ package step.plugins.parametermanager;
 
 import java.util.Iterator;
 
-import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.client.MongoDatabase;
 
 import step.core.accessors.Collection;
@@ -14,15 +15,15 @@ import step.core.accessors.SearchOrder;
 public class ParameterCollection extends Collection {
 
 	public ParameterCollection(MongoDatabase mongoDatabase) {
-		super(mongoDatabase, "parameters");
+		super(mongoDatabase, "parameters", Parameter.class, true);
 	}
 
 	@Override
-	public CollectionFind<Document> find(Bson query, SearchOrder order, Integer skip, Integer limit) {
-		CollectionFind<Document> find = super.find(query, order, skip, limit);
+	public CollectionFind<DBObject> find(Bson query, SearchOrder order, Integer skip, Integer limit) {
+		CollectionFind<DBObject> find = super.find(query, order, skip, limit);
 		
-		Iterator<Document> iterator = find.getIterator();
-		Iterator<Document> filteredIterator = new Iterator<Document>() {
+		Iterator<DBObject> iterator = find.getIterator();
+		Iterator<DBObject> filteredIterator = new Iterator<DBObject>() {
 
 			@Override
 			public boolean hasNext() {
@@ -30,8 +31,8 @@ public class ParameterCollection extends Collection {
 			}
 
 			@Override
-			public Document next() {
-				Document next = iterator.next();
+			public DBObject next() {
+				BasicDBObject next = (BasicDBObject) iterator.next();
 				if(next.containsKey("protectedValue")&&next.getBoolean("protectedValue")) {
 					next.put("value", ParameterServices.PROTECTED_VALUE);					
 				}
@@ -39,7 +40,7 @@ public class ParameterCollection extends Collection {
 			}
 			
 		};
-		CollectionFind<Document> filteredFind = new CollectionFind<>(find.getRecordsTotal(), find.getRecordsFiltered(), filteredIterator);
+		CollectionFind<DBObject> filteredFind = new CollectionFind<>(find.getRecordsTotal(), find.getRecordsFiltered(), filteredIterator);
 		return filteredFind;
 	}
 

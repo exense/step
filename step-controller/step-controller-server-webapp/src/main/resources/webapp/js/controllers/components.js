@@ -77,6 +77,18 @@ angular.module('components',['step'])
   };
 })
 
+.directive('time', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      time: '='
+    },
+    template: "<span>{{ time | date:'HH:mm:ss'}}</span>",
+    controller: function() {  
+    }
+  };
+})
+
 .directive('jsonViewer', function() {
   return {
     restrict: 'E',

@@ -22,6 +22,7 @@ import javax.json.JsonObject;
 
 import org.bson.conversions.Bson;
 
+import step.core.accessors.collections.CollectionQueryFactory;
 import step.core.ql.OQLMongoDBBuilder;
 
 public class OQLFilter implements CollectionQueryFactory {

@@ -19,14 +19,21 @@
 package step.core.accessors;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.json.JsonObject;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.jongo.Mapper;
+import org.jongo.marshall.Unmarshaller;
+import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -35,15 +42,22 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.Filters;
 
-public class Collection {
+import step.core.objectenricher.ObjectFilter;
+import step.core.objectenricher.ObjectHookRegistry;
+
+public class Collection<T> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(Collection.class);
 
-	protected MongoCollection<Document> collection;
-	
 	private static final int DEFAULT_LIMIT = 1000;
 	
 	private final boolean filtered;
+	
+	private final Class<T> entityClass;
+
+	private MongoCollection<BasicDBObject> collection;
+
+	private Mapper dbLayerObjectMapper;
 
 	public Collection(MongoDatabase mongoDatabase, String collectionName) {
 		this(mongoDatabase, collectionName, true);
@@ -53,53 +67,61 @@ public class Collection {
 	 * @param mongoDatabase
 	 * @param collectionName the name of the mongo collection
 	 * @param filtered if the {@link Collection} is subject to context filtering i.e. 
-	 * if the context parameters delivered by the FragmentSupplier may be appended to the queries 
-	 * run against this collection
+	 * if the context parameters delivered by the {@link ObjectFilter}s of the {@link ObjectHookRegistry}
+	 * may be appended to the queries run against this collection
 	 */
 	public Collection(MongoDatabase mongoDatabase, String collectionName, boolean filtered) {
+		this(mongoDatabase, collectionName, null, filtered);
+	}
+	
+	/**
+	 * @param mongoDatabase
+	 * @param collectionName the name of the mongo collection
+	 * @param entityClass the 
+	 * @param filtered if the {@link Collection} is subject to context filtering i.e. 
+	 * if the context parameters delivered by the {@link ObjectFilter}s of the {@link ObjectHookRegistry}
+	 * may be appended to the queries run against this collection
+	 */
+	public Collection(MongoDatabase mongoDatabase, String collectionName, Class<T> entityClass, boolean filtered) {
 		this.filtered = filtered;
-		collection = mongoDatabase.getCollection(collectionName);
+		this.entityClass = entityClass;
+		
+		collection = mongoDatabase.getCollection(collectionName, BasicDBObject.class);
+
+		JacksonMapper.Builder builder2 = new JacksonMapper.Builder();
+		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
+		dbLayerObjectMapper = builder2.build();
+		
 	}
 
+	/**
+	 * @return true if the filter defined by the {@link ObjectFilter} of the {@link ObjectHookRegistry} have to be applied 
+	 * when performing a search
+	 */
 	public boolean isFiltered() {
 		return filtered;
 	}
 
-	public List<String> distinct(String key) {
-		return collection.distinct(key, String.class).filter(new Document(key,new Document("$ne",null))).into(new ArrayList<String>());
+	/**
+	 * @param columnName the name of the column (field)
+	 * @return the distinct values of the column 
+	 */
+	public List<String> distinct(String columnName) {
+		return collection.distinct(columnName, String.class).filter(new Document(columnName,new Document("$ne",null))).into(new ArrayList<String>());
 	}
 	
-	public CollectionFind<Document> find(Bson query, SearchOrder order, Integer skip, Integer limit) {
+	public CollectionFind<T> find(Bson query, SearchOrder order, Integer skip, Integer limit) {
 		return this.find(query, order, skip, limit,0);
 	}
 
-	public CollectionFind<Document> find(Bson query, SearchOrder order, Integer skip, Integer limit, int maxTime) {
-//		StringBuilder query = new StringBuilder();
-//		List<Object> parameters = new ArrayList<>();
-//		if(queryFragments!=null&&queryFragments.size()>0) {
-//			query.append("{$and:[");
-//			Iterator<String> it = queryFragments.iterator();
-//			while(it.hasNext()) {
-//				String criterium = it.next();
-//				query.append("{"+criterium+"}");
-//				if(it.hasNext()) {
-//					query.append(",");
-//				}
-//			}
-//			query.append("]}");
-//		}
-		
-//		StringBuilder sort = new StringBuilder();
-//		sort.append("{").append(order.getAttributeName()).append(":")
-//			.append(Integer.toString(order.getOrder())).append("}");
-		
-		long count = collection.count();
+	public CollectionFind<T> find(Bson query, SearchOrder order, Integer skip, Integer limit, int maxTime) {
+		long count = collection.estimatedDocumentCount();
 		
 		CountOptions option = new CountOptions();
 		option.skip(0).limit(DEFAULT_LIMIT);
-		long countResults = collection.count(query, option);
+		long countResults = collection.countDocuments(query, option);
 			
-		FindIterable<Document> find = collection.find(query).maxTime(maxTime, TimeUnit.SECONDS);
+		FindIterable<BasicDBObject> find = collection.find(query).maxTime(maxTime, TimeUnit.SECONDS);
 		if(order!=null) {
 			Document sortDoc = new Document(order.getAttributeName(), order.getOrder());
 			find.sort(sortDoc);
@@ -110,22 +132,63 @@ public class Collection {
 		if(limit!=null) {
 			find.limit(limit);
 		}
-		MongoCursor<Document> iterator;
+		MongoCursor<BasicDBObject> iterator;
 		try {
 			iterator = find.iterator();
 		} catch (MongoExecutionTimeoutException e) {
 			logger.error("Query execution exceeded timeout of " + maxTime + " " + TimeUnit.SECONDS);
 			throw e;
 		}
-		CollectionFind<Document> collectionFind = new CollectionFind<Document>(count, countResults, iterator);
+		
+		Unmarshaller unmarshaller = dbLayerObjectMapper.getUnmarshaller();
+		Iterator<T> enrichedIterator = new Iterator<T>() {
+			@Override
+			public boolean hasNext() {
+				return iterator.hasNext();
+			}
+
+			@Override
+			public T next() {
+				BasicDBObject next = iterator.next();
+				T entity = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(next), entityClass);
+				entity = enrichEntity(entity);
+				return entity;
+			}
+		};
+		
+		CollectionFind<T> collectionFind = new CollectionFind<>(count, countResults, enrichedIterator);
 		return collectionFind;
 	}
 	
-	public List<Bson> getAdditionalQueryFragments() {
+	/**
+	 * @param queryParameters some context parameters that might be required to generate the additional query fragments
+	 * @return a list of query fragments to be appended to the queries when calling the method find()
+	 */
+	public List<Bson> getAdditionalQueryFragments(JsonObject queryParameters) {
 		return null;
 	}
 
-	public Bson getQueryFragment(String columnName, String searchValue) {
+	/**
+	 * @param columnName the name of the column on which the search is applied
+	 * @param searchValue the value entered by the end user 
+	 * @return a list of query fragments to be appended to the queries when performing a column search
+	 */
+	public Bson getQueryFragmentForColumnSearch(String columnName, String searchValue) {
 		return Filters.regex(columnName, searchValue);
+	}
+	
+	public Class<?> getEntityClass() {
+		return entityClass;
+	}
+
+	/**
+	 * This hook can be called for each element returned by the find() methods and
+	 * allows enrichment of the returned objects
+	 *  
+	 * @param element the element to be modified
+	 * @return the modified element
+	 */
+	protected T enrichEntity(T element) {
+		return element;
 	}
 }

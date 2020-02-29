@@ -1,6 +1,5 @@
 package step.plugins.executiontypes;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.GlobalContext;
@@ -20,17 +19,9 @@ public class DefaultExecutionType extends ExecutionType {
 	}
 
 	@Override
-	public String getExecutionSummary(String executionId) {
+	public Object getExecutionSummary(String executionId) {
 		ReportNodeStatusDistribution distribution = (ReportNodeStatusDistribution) viewPlugin.query("statusDistributionForFunctionCalls", executionId);
-		if(distribution!=null) {
-			try {
-				return mapper.writeValueAsString(distribution);
-			} catch (JsonProcessingException e1) {
-				throw new RuntimeException("Error while writing distribution",e1);
-			}			
-		} else {
-			return null;
-		}
+		return distribution;
 	}
 
 }

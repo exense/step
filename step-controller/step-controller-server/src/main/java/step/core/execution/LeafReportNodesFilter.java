@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.datatable;
+package step.core.execution;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.in;
@@ -31,6 +31,8 @@ import javax.json.JsonString;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import step.core.accessors.collections.CollectionQueryFactory;
+
 public class LeafReportNodesFilter implements CollectionQueryFactory {
 	
 	protected List<String[]> optionalReportNodesFilter = new ArrayList<String[]>() ;
@@ -42,18 +44,20 @@ public class LeafReportNodesFilter implements CollectionQueryFactory {
 
 	public Bson buildAdditionalQuery(JsonObject filter) {		
 		List<Bson> fragments = new ArrayList<>();
-		if(filter.containsKey("eid")) {
+		if(filter != null && filter.containsKey("eid")) {
 			fragments.add(new Document("executionID", filter.getString("eid")));
 		}
 		
 		List<Bson> nodeFilters = new ArrayList<Bson>();
 		nodeFilters.add(new Document("_class","step.artefacts.reports.CallFunctionReportNode"));
 		nodeFilters.add(new Document("error.root",true));
-		for (String[] kv: optionalReportNodesFilter) {
-			nodeFilters.add(new Document(kv[0], kv[1]));	
+		if(optionalReportNodesFilter != null) {
+			for (String[] kv: optionalReportNodesFilter) {
+				nodeFilters.add(new Document(kv[0], kv[1]));	
+			}
 		}
 		fragments.add(or(nodeFilters));
-		if(filter.containsKey("testcases")) {
+		if(filter != null && filter.containsKey("testcases")) {
 			//customAttributes.TestCase
 			List<String> testcaseIds = new ArrayList<>();
 			filter.getJsonArray("testcases").forEach(v->testcaseIds.add(((JsonString)v).getString()));

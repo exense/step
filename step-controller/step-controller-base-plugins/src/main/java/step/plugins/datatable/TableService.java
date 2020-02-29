@@ -18,19 +18,21 @@
  *******************************************************************************/
 package step.plugins.datatable;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -47,6 +49,7 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
@@ -54,8 +57,8 @@ import step.core.accessors.Collection;
 import step.core.accessors.CollectionFind;
 import step.core.accessors.CollectionRegistry;
 import step.core.accessors.SearchOrder;
+import step.core.deployment.JacksonMapperProvider;
 import step.core.deployment.Secured;
-import step.core.export.ExportTaskManager;
 import step.core.ql.OQLMongoDBBuilder;
 
 @Singleton
@@ -65,14 +68,14 @@ public class TableService extends AbstractTableService {
 	private static final Logger logger = LoggerFactory.getLogger(TableService.class);
 	
 	protected CollectionRegistry collectionRegistry;
-	
-	protected ExportTaskManager exportTaskManager;
-	
-	ExecutorService reportExecutor = Executors.newFixedThreadPool(2);
-	
 	protected MongoDatabase database;
-	
 	protected int maxTime;
+
+	private ObjectMapper webLayerObjectMapper = JacksonMapperProvider.createMapper();
+	
+	private Pattern columnSearchPattern = Pattern.compile("columns\\[([0-9]+)\\]\\[search\\]\\[value\\]");
+	private Pattern searchPattern = Pattern.compile("search\\[value\\]");
+	private Pattern namePattern = Pattern.compile("columns\\[([0-9]+)\\]\\[name\\]");
 	
 	@PostConstruct
 	public void init() throws Exception {
@@ -85,10 +88,6 @@ public class TableService extends AbstractTableService {
 	@PreDestroy
 	public void destroy() {
 	}
-	
-	Pattern columnSearchPattern = Pattern.compile("columns\\[([0-9]+)\\]\\[search\\]\\[value\\]");
-	Pattern searchPattern = Pattern.compile("search\\[value\\]");
-	Pattern namePattern = Pattern.compile("columns\\[([0-9]+)\\]\\[name\\]");
 	
 	@POST
 	@Path("/{id}/data")
@@ -117,17 +116,16 @@ public class TableService extends AbstractTableService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
 	public List<String> getTableColumnDistinct(@PathParam("id") String collectionID, @PathParam("column") String column, @Context UriInfo uriInfo) throws Exception {
-		Collection collection = collectionRegistry.get(collectionID);
+		Collection<?> collection = collectionRegistry.get(collectionID);
 		return collection.distinct(column);
 	}
 	
 	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, List<Bson> sessionQueryFragments) throws Exception {		
-		Collection collection = collectionRegistry.get(collectionID);
-		if(collection==null) {
-			// no custom collection. use default collection
-			collection = new Collection(database, collectionID);
+		Collection<?> collection = collectionRegistry.get(collectionID);
+		if(collection == null) {
+			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
 		}
-		
+
 		Map<Integer, String> columnNames = getColumnNamesMap(params);
 		
 		List<Bson> queryFragments = createQueryFragments(params, columnNames, collection);
@@ -146,27 +144,34 @@ public class TableService extends AbstractTableService {
 			queryFragments.addAll(sessionQueryFragments);
 		}
 		
-		List<Bson> additionalQueryFragments = collection.getAdditionalQueryFragments();
+		JsonObject queryParameters = null;
+		if(params.containsKey("params")) {
+			JsonReader reader = Json.createReader(new StringReader(params.getFirst("params")));
+			queryParameters = reader.readObject();
+		}
+		List<Bson> additionalQueryFragments = collection.getAdditionalQueryFragments(queryParameters);
 		if(additionalQueryFragments != null) {
 			queryFragments.addAll(additionalQueryFragments);
 		}
 		
 		Bson query = queryFragments.size()>0?Filters.and(queryFragments):new Document();
 		
-		
-		CollectionFind<Document> find = collection.find(query, order, skip, limit, maxTime);
-		
-		Iterator<Document> it = find.getIterator();
-		List<Document> objects = new ArrayList<>();	
-		while(it.hasNext()) {
-			objects.add(it.next());
+		CollectionFind<?> find = collection.find(query, order, skip, limit, maxTime);
+
+		List<Object> objects = new ArrayList<>();	
+		Iterator<?> iterator = find.getIterator();
+		while(iterator.hasNext()) {
+			objects.add(iterator.next());
 		}
 		
 		String[][] data = new String[objects.size()][1];
-		for(int i = 0; i<objects.size();i++) {
-			Document row = objects.get(i);
+		for(int i = 0; i<objects.size(); i++) {
+			Object row = objects.get(i);
+			
 			String[] rowFormatted = new String[columnNames.size()];
-			rowFormatted[0] = row.toJson();
+			String rowAsString = webLayerObjectMapper.writeValueAsString(row);
+			
+			rowFormatted[0] = rowAsString;
 			data[i] = rowFormatted;
 		}
 		BackendDataTableDataResponse response = new BackendDataTableDataResponse(draw, find.getRecordsTotal(), find.getRecordsFiltered(), data);
@@ -174,7 +179,7 @@ public class TableService extends AbstractTableService {
 		return response;
 	}
 
-	private List<Bson> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames, Collection collection) {
+	private List<Bson> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames, Collection<?> collection) {
 		List<Bson> queryFragments = new ArrayList<>();
 		for(String key:params.keySet()) {
 			Matcher m = columnSearchPattern.matcher(key);
@@ -185,7 +190,7 @@ public class TableService extends AbstractTableService {
 				String searchValue = params.getFirst(key);
 
 				if(searchValue!=null && searchValue.length()>0) {
-					Bson columnQueryFragment = collection.getQueryFragment(columnName, searchValue);
+					Bson columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
 					queryFragments.add(columnQueryFragment);
 				}
 			} else if(searchMatcher.matches()) {

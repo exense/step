@@ -119,7 +119,7 @@ angular.module('tables', ['export','dataTable'])
     scopesTracker.newCycle()
   }
 })
-.directive('stTable', function($compile, $http, Preferences, stateStorage, $timeout) {
+.directive('stTable', function($compile, $http, Preferences, stateStorage, $timeout, Dialogs) {
 	return {
 		scope : {
 			uid: '=',
@@ -140,7 +140,9 @@ angular.module('tables', ['export','dataTable'])
 			selectionAttribute: '=?',
 			// a function that shoud be called when an element is selected. This function is 
 			// called only when multipleSelection = false
-			onSelection: '=?'
+			onSelection: '=?',
+			onSelectionChange: '=?',
+			serverSideParameters: '=?'
 		},
 		transclude : {
 			'stActions' : '?stActions',
@@ -296,14 +298,28 @@ angular.module('tables', ['export','dataTable'])
 	        }
 
 	        if(serverSide) {
-	          var query = 'rest/table/' + scope.collection + '/data';
-	          if(scope.filter) {
-	            query += '?filter=' + encodeURIComponent(scope.filter);
-	          }
-	          tableOptions.ajax = {
-	              'url' : query,
-	              'type' : 'POST'
-	          }
+	          var query = 'rest/table/' + scope.collection + '/data?';
+
+	          tableOptions.ajax = {'url':query,'type':'POST',beforeSend:function(a,b) {
+	            if(scope.filter) {
+	              b.data += '&filter=' + encodeURIComponent(scope.filter);
+	            }
+	            if(scope.serverSideParameters) {
+	              b.data += "&params=" + encodeURIComponent(JSON.stringify(scope.serverSideParameters()))
+	            }
+	          }, complete:function (qXHR, textStatus ) {
+
+	          }, error: function(jqXHR, textStatus, errorThrown) {
+	            if (textStatus === 'timeout') {
+	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the query <Br/>(Timeout value: " + ajaxTimeout + " ms).");
+	            } else if (textStatus !=='abort') {
+	             if (jqXHR.responseText) {
+	              Dialogs.showErrorMsg(jqXHR.responseText);
+	             } else {
+	              // Dialogs.showErrorMsg("An unexpected error occured while loading the table. <Br/>Error textStatus: " + textStatus + ", errorThrown: " + errorThrown);
+	             }
+	            }
+	          }}
 
 	          tableOptions.processing = false;
 	          tableOptions.serverSide = true;
@@ -338,7 +354,22 @@ angular.module('tables', ['export','dataTable'])
 	        }
 	        scope.handle.getRows = scope.selectionModel.getDataRowsBySelection.bind(scope.selectionModel);
 	        scope.handle.getSelectedIds = scope.selectionModel.getSelectedIds.bind(scope.selectionModel);
+	        scope.handle.getSelection = scope.selectionModel.getSelection.bind(scope.selectionModel);
 	        scope.handle.getSelectionMode = scope.selectionModel.getSelectionMode.bind(scope.selectionModel);
+	        
+	        scope.handle.setSelection = scope.selectionModel.setSelection.bind(scope.selectionModel);
+	        scope.handle.select = function(id) {
+	          scope.handle.setSelection(id, true);
+	        }
+	        scope.handle.deselect = function(id) {
+	          scope.handle.setSelection(id, false);
+	        }
+	        scope.handle.selectAll = function() {
+	          scope.setSelectionOnFilteredRows(true);
+	        }
+	        scope.handle.deselectAll = function() {
+	          scope.setSelectionOnFilteredRows(false);
+	        }
 
 	        // render first header
 	        table.columns().indexes().flatten().each(function(i) {

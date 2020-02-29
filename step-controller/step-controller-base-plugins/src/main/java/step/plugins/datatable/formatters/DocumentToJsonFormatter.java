@@ -1,17 +1,15 @@
 package step.plugins.datatable.formatters;
 
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Field;
 
 import org.bson.BSONException;
-import org.bson.Document;
-import org.bson.codecs.DocumentCodec;
-import org.bson.codecs.EncoderContext;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 import org.bson.json.StrictCharacterStreamJsonWriter;
 import org.bson.types.ObjectId;
+
+import com.mongodb.DBObject;
 
 public class DocumentToJsonFormatter {
 
@@ -68,11 +66,7 @@ public class DocumentToJsonFormatter {
 		}
 	}
 	
-	public String format(Document row) {
-		// Code from Document.toJson()
-		JsonWriter writer = new CustomJsonWriter(new StringWriter(), new JsonWriterSettings());
-		new DocumentCodec().encode(writer, row, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
-        String json =  writer.getWriter().toString();
-		return json;
+	public String format(DBObject row) {
+		throw new RuntimeException("NOT IMPLEMENTED ANYMORE");
 	}
 }

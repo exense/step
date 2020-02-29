@@ -1,0 +1,28 @@
+<st-table collection="'reports'" handle="stepsTable" uid="'functionCallList'" server-side-parameters="stepsTableServerSideParameters" >
+	<st-actions>
+		<div class="btn-group btn-group-menu">
+			<button type="button" class="btn btn-default" ng-click="$parent.exportAsCSV()" uib-tooltip="Export as CSV">
+				<span class="glyphicon glyphicon-export"></span>
+			</button>
+		</div>
+	</st-actions>
+	<st-columns>
+		<st-column name="excutionTime" width="'60px'">
+			<header>Begin</header>
+			<second-header></second-header>
+			<cell><time time="row.executionTime" /></cell>
+		</st-column>
+		<st-column name="step">
+			<header>Step</header>
+			<second-header><inputdropdown action="search" initial-value="initialValue" /></second-header>
+			<cell>
+				<reportnode-short node="row" execution-view-services="executionViewServices" />
+			</cell>
+		</st-column>
+		<st-column name="status" width="'80px'">
+			<header>Status</header>
+			<second-header><inputdropdown options="reportNodeStatusOptions" action="search" initial-value="initialValue" /></second-header>
+			<cell><reportnode-status status="row.status" /></cell>
+		</st-column>
+	</st-columns>
+</st-table>

@@ -26,7 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
+import step.core.access.User;
 import step.core.access.UserAccessorImpl;
+import step.core.accessors.Collection;
 import step.core.accessors.CollectionRegistry;
 import step.core.accessors.MongoClientSession;
 import step.core.accessors.PlanAccessorImpl;
@@ -89,12 +91,14 @@ public class Controller {
 		
 		context.setConfiguration(configuration);
 		context.setMongoClientSession(mongoClientSession);
-		context.put(CollectionRegistry.class, new CollectionRegistry());
+		CollectionRegistry collectionRegistry = new CollectionRegistry();
+		context.put(CollectionRegistry.class, collectionRegistry);
 		context.setExecutionAccessor(new ExecutionAccessorImpl(mongoClientSession));
 		context.setPlanAccessor(new PlanAccessorImpl(mongoClientSession));
 		context.setReportAccessor(new ReportNodeAccessorImpl(mongoClientSession));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(mongoClientSession));
 		context.setUserAccessor(new UserAccessorImpl(mongoClientSession));
+		collectionRegistry.register("users", new Collection(mongoClientSession.getMongoDatabase(), "users", User.class, false));
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getPlanAccessor()));
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
 				configuration.getPropertyAsInteger("tec.expressions.warningthreshold"),

@@ -23,6 +23,8 @@ import java.util.List;
 
 import step.core.accessors.Collection;
 import step.core.accessors.DateRangeCriterium;
+import step.core.accessors.collections.CollectionQueryFactory;
+import step.core.accessors.collections.MultiTextCriterium;
 import step.plugins.datatable.formatters.ArrayFormatter;
 import step.plugins.datatable.formatters.DateFormatter;
 import step.plugins.datatable.formatters.Formatter;
