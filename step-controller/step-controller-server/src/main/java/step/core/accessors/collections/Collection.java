@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.core.accessors;
+package step.core.accessors.collections;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -42,6 +42,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.Filters;
 
+import step.core.accessors.AccessorLayerJacksonMapperProvider;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
 

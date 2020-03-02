@@ -1,7 +1,7 @@
 package step.core;
 
 import ch.exense.commons.app.Configuration;
-import step.core.accessors.CollectionRegistry;
+import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;

@@ -49,6 +49,7 @@ public class ReportNodeAccessorImpl extends AbstractCRUDAccessor<ReportNode> imp
 	@Override
 	public void createIndexesIfNeeded(Long ttl) {
 		createOrUpdateIndex(reports_, "parentID");
+		createOrUpdateIndex(reports_, "executionTime");
 		createOrUpdateCompoundIndex(reports_, "executionID", "status", "executionTime");
 		createOrUpdateCompoundIndex(reports_, "executionID", "executionTime");
 		createOrUpdateCompoundIndex(reports_, "executionID", "_class");

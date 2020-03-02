@@ -16,20 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.datatable.formatters;
+package step.core.accessors.collections;
 
-import com.mongodb.DBObject;
+import org.bson.conversions.Bson;
 
-public class StringFormatter implements Formatter {
+public interface CollectionColumnSearchQueryFactory {
 
-	@Override
-	public String format(Object value, DBObject row) {
-		return value.toString();
-	}
-
-	@Override
-	public Object parse(String formattedValue) {
-		return formattedValue;
-	}
-
+	public Bson createQuery(String attributeName, String expression);
 }

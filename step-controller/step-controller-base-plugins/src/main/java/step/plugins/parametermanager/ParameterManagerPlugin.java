@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.CollectionRegistry;
+import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.ObjectHookPlugin;
 import step.core.execution.ExecutionContext;

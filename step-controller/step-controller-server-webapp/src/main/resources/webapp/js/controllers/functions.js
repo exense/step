@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('functionsControllers',['dataTable','step'])
+angular.module('functionsControllers',['step'])
 
 .factory('FunctionTypeRegistry', function() {
   

@@ -396,3 +396,82 @@ angular.module('components',['step'])
     }
   };
 })
+
+.directive('dateinput', ['$http',function($http) {
+  return {
+    restrict: 'E',
+    scope: {action:'='},
+    link: function(scope, element, attr, tabsCtrl) { 
+      scope.onEnter = function(event) {
+        var inputValue = element.find('input').val();
+        scope.action(inputValue);
+      }
+    },
+    controller: function($scope){
+      $scope.maxDate = new Date();
+      $scope.open = false;
+      
+      
+      
+    },
+    templateUrl: 'partials/datepicker.html'
+  };
+}])
+
+.directive('inputdropdown', ['$http',function($http) {
+  return {
+    restrict: 'E',
+    scope: {options:'=',action:'=',initialValue:'=',handle:'='},
+    controller: function($scope){
+      $scope.model = {};
+      $scope.model.inputtext = $scope.initialValue?$scope.initialValue:'';
+      
+      $scope.createRegexpForSelection = function(selection) {
+        regexp = '';
+        if(selection.length>1) {
+          regexp = '(';
+          _.each(selection,function(value){regexp+=value.text+'|'});
+          regexp=regexp.slice(0, -1)+')';
+        } else if (selection.length==1){
+          regexp=selection[0].text;
+        }
+        return regexp;
+      }
+      
+      if($scope.handle) {
+        $scope.handle.set = function(value) {
+          $scope.model.inputtext = value;
+          $scope.action($scope.model.inputtext);
+        }
+      }
+      
+      $scope.$watchCollection('options', function(newOptions, oldOptions) {
+        _.each(newOptions,function(option) {
+          var oldOption = _.findWhere($scope.options, {text: option.text});
+          if(oldOption) {
+            option.selected = oldOption.selected;
+          }
+        })
+        $scope.options = newOptions;
+      })
+//      $scope.handle.updateOptions = function(options) {
+//        if($scope.options) {
+//          _.each(options,function(option) {
+//            var currentOption = _.findWhere($scope.options, {text: option.text});
+//            if(currentOption) {
+//              option.selected = currentOption.selected;
+//            }
+//          })
+//        }
+//        $scope.options = options;
+//      }
+
+      $scope.selectionChanged = function() {
+        var selection = _.where($scope.options, { selected : true });
+        $scope.model.inputtext = $scope.createRegexpForSelection(selection);
+        $scope.action($scope.model.inputtext);
+      };
+    },
+    templateUrl: 'partials/inputdropdown.html'
+  };
+}])

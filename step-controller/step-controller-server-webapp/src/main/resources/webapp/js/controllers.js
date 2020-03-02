@@ -18,7 +18,7 @@
  *******************************************************************************/
 var initTestDashboard = false;
 
-var tecAdminControllers = angular.module('tecAdminControllers',['components','dataTable','chart.js','step', 'views','ui.bootstrap','reportTree','reportTable','schedulerControllers', 'viz-dashboard-manager']);
+var tecAdminControllers = angular.module('tecAdminControllers',['components','chart.js','step', 'views','ui.bootstrap','reportTree','reportTable','schedulerControllers', 'viz-dashboard-manager']);
 
 function escapeHtml(str) {
 	var div = document.createElement('div');
@@ -297,7 +297,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 								              icon: '' },  
 			};
 
-			$scope.currentOperationsTable = {};
 			var renderOperationsHtml = function (data) {
 				var renderer = operationRenderer[data.name];
 				if(!renderer) {
@@ -308,10 +307,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				html+="</div>";
 				return html;
 			}
-			$scope.currentOperationsTable.columns = [ 
-				{"title" : "Operation", "render": function ( data, type, row ) {
-					return renderOperationsHtml(data);
-				}}];
 
 			$scope.getIncludedTestcases = function() {
 				var selectionMode = $scope.testCaseTable.getSelectionMode?$scope.testCaseTable.getSelectionMode():'all';
@@ -434,14 +429,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				$http.get("rest/threadmanager/operations?eid=" + eId)
 				.then(
 						function(response) {
-							var data = response.data;
-							var dataSet = [];
-							for (i = 0; i < data.length; i++) {
-								if(data[i]) {
-									dataSet.push([data[i]]);
-								}
-							}
-							$scope.currentOperationsTable.data = dataSet;
+							$scope.currentOperations = response.data;
 						});
 
 				if($scope.reportTreeHandle.refresh) {

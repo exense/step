@@ -1,8 +1,9 @@
 package step.core.execution;
 
 import step.core.GlobalContext;
-import step.core.accessors.CollectionRegistry;
+import step.core.accessors.collections.CollectionRegistry;
 import step.core.execution.table.ExecutionCollection;
+import step.core.execution.table.LeafReportNodeCollection;
 import step.core.execution.table.ReportNodeCollection;
 import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.AbstractControllerPlugin;
@@ -16,6 +17,7 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		CollectionRegistry collectionRegistry = context.get(CollectionRegistry.class);
 		collectionRegistry.register("executions", new ExecutionCollection(context));
+		collectionRegistry.register("leafReports", new LeafReportNodeCollection(context));
 		collectionRegistry.register("reports", new ReportNodeCollection(context));
 	}
 }

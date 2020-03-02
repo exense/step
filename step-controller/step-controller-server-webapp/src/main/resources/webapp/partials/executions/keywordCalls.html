@@ -1,4 +1,4 @@
-<st-table collection="'reports'" handle="stepsTable" uid="'functionCallList'" server-side-parameters="stepsTableServerSideParameters" >
+<st-table collection="'leafReports'" handle="stepsTable" uid="'functionCallList'" server-side-parameters="stepsTableServerSideParameters">
 	<st-actions>
 		<div class="btn-group btn-group-menu">
 			<button type="button" class="btn btn-default" ng-click="$parent.exportAsCSV()" uib-tooltip="Export as CSV">
@@ -7,7 +7,7 @@
 		</div>
 	</st-actions>
 	<st-columns>
-		<st-column name="excutionTime" width="'60px'">
+		<st-column name="executionTime" width="'60px'">
 			<header>Begin</header>
 			<second-header></second-header>
 			<cell><time time="row.executionTime" /></cell>

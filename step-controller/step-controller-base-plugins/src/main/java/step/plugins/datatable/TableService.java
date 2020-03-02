@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,20 +54,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
-import step.core.accessors.Collection;
-import step.core.accessors.CollectionFind;
-import step.core.accessors.CollectionRegistry;
-import step.core.accessors.SearchOrder;
+import step.core.accessors.collections.Collection;
+import step.core.accessors.collections.CollectionFind;
+import step.core.accessors.collections.CollectionRegistry;
+import step.core.accessors.collections.SearchOrder;
+import step.core.deployment.ApplicationServices;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.deployment.Secured;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.ql.OQLMongoDBBuilder;
 
 @Singleton
 @Path("table")
-public class TableService extends AbstractTableService {
+public class TableService extends ApplicationServices {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TableService.class);
 	
+	private ObjectHookRegistry objectHookRegistry;
 	protected CollectionRegistry collectionRegistry;
 	protected MongoDatabase database;
 	protected int maxTime;
@@ -83,6 +87,7 @@ public class TableService extends AbstractTableService {
 		database = getContext().getMongoClientSession().getMongoDatabase();
 		collectionRegistry = getContext().get(CollectionRegistry.class);
 		maxTime = controller.getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
+		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 	}
 	
 	@PreDestroy
@@ -94,7 +99,7 @@ public class TableService extends AbstractTableService {
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context UriInfo uriInfo) throws Exception {
+	public DataTableResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context UriInfo uriInfo) throws Exception {
 		if(uriInfo.getQueryParameters()!=null) {
 			form.putAll(uriInfo.getQueryParameters());
 		}
@@ -106,7 +111,7 @@ public class TableService extends AbstractTableService {
 	@Path("/{id}/data")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public BackendDataTableDataResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
+	public DataTableResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
 		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(collectionID);
 		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragments);
 	}
@@ -120,7 +125,7 @@ public class TableService extends AbstractTableService {
 		return collection.distinct(column);
 	}
 	
-	private BackendDataTableDataResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, List<Bson> sessionQueryFragments) throws Exception {		
+	private DataTableResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, List<Bson> sessionQueryFragments) throws Exception {		
 		Collection<?> collection = collectionRegistry.get(collectionID);
 		if(collection == null) {
 			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
@@ -174,7 +179,7 @@ public class TableService extends AbstractTableService {
 			rowFormatted[0] = rowAsString;
 			data[i] = rowFormatted;
 		}
-		BackendDataTableDataResponse response = new BackendDataTableDataResponse(draw, find.getRecordsTotal(), find.getRecordsFiltered(), data);
+		DataTableResponse response = new DataTableResponse(draw, find.getRecordsTotal(), find.getRecordsFiltered(), data);
 		
 		return response;
 	}
@@ -219,5 +224,18 @@ public class TableService extends AbstractTableService {
 			}
 		}
 		return columnNames;
+	}
+	
+
+	private List<Bson> getAdditionalQueryFragmentsFromContext(String collectionID) {
+		return toBson(objectHookRegistry.getObjectFilter(getSession()).getAdditionalAttributes());
+	}
+	
+	private List<Bson> toBson(Map<String, String> additionalQueryFragmentSuppliers) {
+		List<Bson> bson = new ArrayList<>();
+		for( Entry<String, String> e : additionalQueryFragmentSuppliers.entrySet()) {
+			bson.add(new Document("attributes."+e.getKey(), e.getValue()));
+		}
+		return bson;
 	}
 }

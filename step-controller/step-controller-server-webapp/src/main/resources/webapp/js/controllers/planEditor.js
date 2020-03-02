@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('planEditor',['dataTable','step','artefacts','reportTable','dynamicForms','export'])
+angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','export'])
 
 .run(function(ViewRegistry, EntityRegistry, PlanTypeRegistry) {  
   PlanTypeRegistry.register('step.core.plans.Plan', 'Default', 'partials/plans/planTreeEditor.html');

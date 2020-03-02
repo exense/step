@@ -5,7 +5,7 @@ import java.util.List;
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
-import step.core.accessors.CollectionRegistry;
+import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactRegistry;
 import step.core.plans.builder.PlanBuilder;

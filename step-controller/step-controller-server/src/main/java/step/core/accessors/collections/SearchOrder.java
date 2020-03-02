@@ -16,22 +16,33 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.datatable;
+package step.core.accessors.collections;
 
-import step.core.GlobalContext;
-import step.core.deployment.ObjectHookPlugin;
-import step.core.execution.type.ExecutionTypePlugin;
-import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.Plugin;
-import step.plugins.screentemplating.ScreenTemplatePlugin;
+public class SearchOrder {
 
-@Plugin(dependencies= {ExecutionTypePlugin.class, ScreenTemplatePlugin.class, ObjectHookPlugin.class})
-public class DataTablePlugin extends AbstractControllerPlugin {
-
-	@Override
-	public void executionControllerStart(GlobalContext context) {
-		context.put(DataTableRegistry.class, new DataTableRegistry(context));
-		context.getServiceRegistrationCallback().registerService(DataTableServices.class);
+	private String attributeName;
+	
+	private int order;
+	
+	public SearchOrder(String attributeName, int order) {
+		super();
+		this.attributeName = attributeName;
+		this.order = order;
 	}
 
+	public String getAttributeName() {
+		return attributeName;
+	}
+
+	public void setAttributeName(String attributeName) {
+		this.attributeName = attributeName;
+	}
+
+	public int getOrder() {
+		return order;
+	}
+
+	public void setOrder(int order) {
+		this.order = order;
+	}
 }

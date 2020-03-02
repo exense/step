@@ -16,19 +16,35 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.datatable;
+package step.core.accessors.collections;
 
-import org.bson.conversions.Bson;
+import java.util.Iterator;
 
-import com.mongodb.client.model.Filters;
+public class CollectionFind<T> {
 
-import step.core.accessors.SearchQueryFactory;
-
-public class TextCriterium implements SearchQueryFactory {
-
-	@Override
-	public Bson createQuery(String attributeName, String expression) {
-		return Filters.regex(attributeName, expression);
+	long recordsTotal;
+	
+	long recordsFiltered;
+	
+	public CollectionFind(long recordsTotal, long recordsFiltered,
+			Iterator<T> iterator) {
+		super();
+		this.recordsTotal = recordsTotal;
+		this.recordsFiltered = recordsFiltered;
+		this.iterator = iterator;
 	}
 
+	Iterator<T> iterator;
+
+	public long getRecordsTotal() {
+		return recordsTotal;
+	}
+
+	public long getRecordsFiltered() {
+		return recordsFiltered;
+	}
+
+	public Iterator<T> getIterator() {
+		return iterator;
+	}
 }

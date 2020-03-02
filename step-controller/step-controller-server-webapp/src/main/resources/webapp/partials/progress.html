@@ -247,8 +247,15 @@
 					<a ng-click="toggleShowPanel('currentOperations')">{{getPanelTitle('currentOperations')}}</a>
 				</div>
 				<div class="panel-body" ng-show="isShowPanel('currentOperations')">
-					<datatable tabledef="currentOperationsTable"
-						handle="currentOperationsTable" order="[[0, &quot;asc&quot;]]" />
+					<st-table data="currentOperations" uid="'currentOperations'">
+						<st-columns>
+							<st-column name="operation">
+								<header>Operation</header>
+								<second-header></second-header>
+								<cell></cell>
+							</st-column>
+						</st-columns>
+					</st-table>
 				</div>
 			</div>
 

@@ -10,9 +10,9 @@ import org.bson.conversions.Bson;
 
 import com.mongodb.client.MongoDatabase;
 
-import step.core.accessors.Collection;
+import step.core.accessors.collections.Collection;
 
-public class PlanCollection extends Collection {
+public class PlanCollection extends Collection<Plan> {
 
 	public PlanCollection(MongoDatabase mongoDatabase) {
 		super(mongoDatabase, "plans", Plan.class, true);

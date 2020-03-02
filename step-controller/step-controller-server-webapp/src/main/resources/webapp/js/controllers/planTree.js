@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('planTree',['dataTable','step','artefacts','reportTable','dynamicForms','export'])
+angular.module('planTree',['step','artefacts','reportTable','dynamicForms','export'])
 
 .directive('planTree', function(artefactTypes, $http,$timeout,$interval,stateStorage,$filter,$location, Dialogs) {
   return {

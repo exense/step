@@ -16,26 +16,57 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.datatable.formatters;
+package step.plugins.datatable;
 
-import org.bson.Document;
 
-import com.mongodb.DBObject;
+public class DataTableResponse {
 
-public class JsonFormatter implements Formatter {
+	int draw;
 	
-	public JsonFormatter() {
+	long recordsTotal;
+	
+	long recordsFiltered;
+	
+	String[][] data;
+
+	public DataTableResponse(int draw, long recordsTotal,
+			long recordsFiltered, String[][] data) {
 		super();
+		this.draw = draw;
+		this.recordsTotal = recordsTotal;
+		this.recordsFiltered = recordsFiltered;
+		this.data = data;
 	}
 
-	@Override
-	public String format(Object value, DBObject row) {
-		return value instanceof Document?((Document)value).toJson():value.toString();
+	public int getDraw() {
+		return draw;
 	}
 
-	@Override
-	public Object parse(String formattedValue) {
-		throw new RuntimeException("not implemented");
+	public void setDraw(int draw) {
+		this.draw = draw;
 	}
 
+	public long getRecordsTotal() {
+		return recordsTotal;
+	}
+
+	public void setRecordsTotal(long recordsTotal) {
+		this.recordsTotal = recordsTotal;
+	}
+
+	public long getRecordsFiltered() {
+		return recordsFiltered;
+	}
+
+	public void setRecordsFiltered(long recordsFiltered) {
+		this.recordsFiltered = recordsFiltered;
+	}
+
+	public String[][] getData() {
+		return data;
+	}
+
+	public void setData(String[][] data) {
+		this.data = data;
+	}
 }

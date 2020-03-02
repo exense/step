@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('adminControllers', [ 'dataTable', 'step' ])
+angular.module('adminControllers', ['step' ])
 
 .run(function(FunctionTypeRegistry, EntityRegistry) {
   EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/users/userSelectionTable.html');

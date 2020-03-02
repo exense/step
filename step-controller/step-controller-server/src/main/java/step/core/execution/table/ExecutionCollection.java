@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.bson.conversions.Bson;
 
 import step.core.GlobalContext;
-import step.core.accessors.Collection;
-import step.core.accessors.DateRangeCriterium;
+import step.core.accessors.collections.Collection;
+import step.core.accessors.collections.DateRangeCriterium;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.ExecutionStatus;
 

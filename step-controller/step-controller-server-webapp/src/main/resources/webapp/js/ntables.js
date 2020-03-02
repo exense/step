@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('tables', ['export','dataTable'])
+angular.module('tables', ['export'])
 
 .controller('StTableController', function ($scope) {
 	var ctrl = this;

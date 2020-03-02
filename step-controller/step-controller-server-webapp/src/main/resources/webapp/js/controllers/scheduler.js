@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var schedulerController = angular.module('schedulerControllers',['dataTable']);
+var schedulerController = angular.module('schedulerControllers',[]);
 
 schedulerController.run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerDashlet('admin/controller','Scheduler','partials/scheduler/schedulerConfiguration.html','scheduler');

@@ -28,11 +28,9 @@ import java.util.List;
 
 import org.bson.conversions.Bson;
 
-import step.core.accessors.SearchQueryFactory;
 
 
-
-public class MultiTextCriterium implements SearchQueryFactory {
+public class MultiTextCriterium implements CollectionColumnSearchQueryFactory {
 
 	List<String> attributes;
 	

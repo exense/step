@@ -16,32 +16,45 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.datatable.formatters;
+package step.core.accessors.collections;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
-import com.mongodb.DBObject;
+import org.bson.conversions.Bson;
 
-public class DateFormatter implements Formatter {
+import com.mongodb.client.model.Filters;
 
-	SimpleDateFormat format;
+public class DateRangeCriterium implements CollectionColumnSearchQueryFactory {
 	
-	public DateFormatter(String format) {
-		this.format = new SimpleDateFormat(format);
+	private SimpleDateFormat DATE_FORMAT;
+	
+	public DateRangeCriterium(String dateFormat) {
+		super();
+		
+		DATE_FORMAT = new SimpleDateFormat(dateFormat);
 	}
-	
+
 	@Override
-	public String format(Object value, DBObject row) {
-		synchronized (format) {
-			return format.format(new Date((long) value));
+	public Bson createQuery(String attributeName, String expression) {
+		try {
+			Date from;
+			synchronized (DATE_FORMAT) {
+				from = DATE_FORMAT.parse(expression);				
+			}
+			
+			Calendar c = Calendar.getInstance();
+			c.setTime(from);
+			c.add(Calendar.DATE, 1);
+			
+			Date to = c.getTime();
+			
+			return Filters.and(Filters.lt(attributeName, to.getTime()), Filters.gte(attributeName, from.getTime()));
+		} catch (ParseException e) {
+			return null;
 		}
-	}
-
-	@Override
-	public Object parse(String formattedValue) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

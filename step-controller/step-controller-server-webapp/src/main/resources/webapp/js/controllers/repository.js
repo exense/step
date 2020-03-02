@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('repositoryControllers', [ 'step','dataTable' ])
+angular.module('repositoryControllers', ['step'])
 
 // This controller is used to force reload of the following Controllers after location change. This is a trick but it works
 .controller('RepositoryLoadCtrl', function($scope, $location ,$timeout) {
