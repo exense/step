@@ -2,8 +2,8 @@
 	<header></header>
 	<second-header></second-header>
 	<cell>
-		<input ng-if="multipleSelection" type="checkbox" ng-model="selectionModelByInput()(row)" ng-model-options="{getterSetter: true}" />
-		<button ng-if="!multipleSelection" type="button" class="btn btn-xs btn-default" aria-label="Left Align" ng-click="select(row)">
+		<input ng-if="multipleSelection()" type="checkbox" ng-model="selectionModelByInput()(row)" ng-model-options="{getterSetter: true}" />
+		<button ng-if="!multipleSelection()" type="button" class="btn btn-xs btn-default" aria-label="Left Align" ng-click="select()(row)">
 			<span class="glyphicon glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>
 		</button>
 	</cell>
