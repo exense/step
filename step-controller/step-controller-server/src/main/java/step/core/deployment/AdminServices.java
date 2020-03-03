@@ -124,7 +124,6 @@ public class AdminServices extends AbstractServices {
 	}
 	
 	@GET
-	@Secured
 	@Path("/maintenance/message")
 	public String getMaintenanceMessage() {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_MESSAGE_KEY);
@@ -145,7 +144,6 @@ public class AdminServices extends AbstractServices {
 	}
 	
 	@GET
-	@Secured
 	@Path("/maintenance/message/toggle")
 	public boolean getMaintenanceMessageToggle() {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_TOGGLE_KEY);
