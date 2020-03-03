@@ -113,9 +113,7 @@ angular.module('functionsControllers',['step'])
   $scope.pasteFunction = function() {
     if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
       $http.post("rest/functions/"+$rootScope.clipboard.id+"/copy")
-      .then(function() {
-        reload();
-      });
+      .then(function() {reload()});
     }
   }
   
@@ -140,11 +138,7 @@ angular.module('functionsControllers',['step'])
   
   $scope.deleteFunction = function(id) {
     Dialogs.showDeleteWarning().then(function() {
-      $http.delete("rest/functions/"+id).then(function() {
-        if($scope.table) {
-          reload();
-      }
-      });
+      $http.delete("rest/functions/"+id).then(function() {reload()});
     })
   }
   
