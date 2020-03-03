@@ -321,8 +321,21 @@ angular.module('tables', ['export'])
 	            if(scope.serverSideParameters) {
 	              b.data += "&params=" + encodeURIComponent(JSON.stringify(scope.serverSideParameters()))
 	            }
+	            
+	            // avoid stacking of request
+	            var tableAPI = scope.table;
+	            if (tableAPI && tableAPI.hasOwnProperty('settings') && tableAPI.settings()[0].jqXHR) {
+	              tableAPI.settings()[0].jqXHR.abort();
+	            }
+	            
+	            // track table loading
+	            $timeout(function(){
+	              scope.loadingTable=true;
+	            });
 	          }, complete:function (qXHR, textStatus ) {
-
+	            $timeout(function(){
+                scope.loadingTable=false;
+              });
 	          }, error: function(jqXHR, textStatus, errorThrown) {
 	            if (textStatus === 'timeout') {
 	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the query <Br/>(Timeout value: " + ajaxTimeout + " ms).");
@@ -359,8 +372,13 @@ angular.module('tables', ['export'])
 	        if(!scope.handle) {
 	          scope.handle = {};
 	        }
-	        scope.handle.reload = function() {
-	          table.ajax.reload(null, false);
+	        scope.handle.reload = function(showSpin) {
+	          scope.isExternalReload=!showSpin;
+	          table.ajax.reload(function() {
+	            $timeout(function() {
+	              scope.isExternalReload=false;
+	            })
+	          }, false);
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
 	          var column = table.column(columnName+':name');

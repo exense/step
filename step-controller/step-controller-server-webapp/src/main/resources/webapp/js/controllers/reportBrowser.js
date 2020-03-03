@@ -35,7 +35,7 @@ angular.module('reportBrowserControllers', ['step' ])
   }
   
   $scope.search = function() {
-    $scope.tableHandle.reload();
+    $scope.tableHandle.reload(true);
   }
   
   $scope.stepsTableServerSideParameters = function() {
