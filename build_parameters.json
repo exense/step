@@ -1,0 +1,52 @@
+{
+	"NAME": "Step OSS",
+	"OS": "LINUX",
+	
+	"SUBPROJECTS":
+	{
+		"TYPE":
+		["POM", "NPM"],
+		
+		"FOLDER":
+		["step-parent/", "step-node/step-node-agent/"],
+		
+		"URL_STAGING":
+		[ 
+      "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/",
+			"nexus-staging https://nexus-enterprise.exense.ch/repository/staging-npm/"
+		],
+		"URL_PROD":
+		[
+			"sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2",
+			"TODO https://TODO/"
+		],
+		
+		"CONFIG_STAGING":
+		[ "DefaultBuild", "" ],
+		"CONFIG_PROD":
+		[ "DefaultBuild", "" ],
+	},
+	"DISTRIBUTIONS":
+	{
+		"TYPE": ["FTP","GITHUB","FTP","GITHUB"],
+		
+		"ORIGIN_FILE": [
+      "step-distribution/target/step-controller-${VERSION}.zip",
+      "step-distribution/target/step-controller-${VERSION}.zip",
+      "step-distribution/target/step-agent-${VERSION}.zip",
+      "step-distribution/target/step-agent-${VERSION}.zip",
+    ],
+		"DESTINATION_NAME": [
+      "step-controller-${VERSION}.zip",
+      "step-controller-${VERSION}.zip",
+      "step-agent-${VERSION}.zip",
+      "step-agent-${VERSION}.zip",
+    ],
+		
+		"URL_STAGING":  ["build@ftps.exense.ch","NOT_USED","build@ftps.exense.ch","NOT_USED"],
+		"URL_PROD":     ["build@ftps.exense.ch","NOT_USED","build@ftps.exense.ch","NOT_USED"],
+		
+		"OS":["NOT_USED","NOT_USED","NOT_USED","NOT_USED"],
+		"CONFIG":["public","NOT_USED","public","NOT_USED"]
+	}
+}

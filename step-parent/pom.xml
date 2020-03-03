@@ -46,7 +46,6 @@
 		<connection>scm:git:https://github.com/exense/step.git</connection>
 		<developerConnection>scm:git:[push=]https://github.com/exense/step.git[fetch=]https://github.com/exense/step.git</developerConnection>
 		<url>https://github.com/exense/step.git</url>
-	  <tag>HEAD</tag>
   </scm>
 
 	<properties>
@@ -68,12 +67,12 @@
 	</properties>
 
 	<repositories>
-		<!-- nexus staging -->
-		<repository>
-			<id>nexus-staging</id>
-			<url>https://nexus-enterprise.exense.ch/repository/staging-maven/</url>
-		</repository>
-	</repositories>
+		<!-- private nexus -->
+    <repository>
+      <id>nexus-exense</id>
+      <url>https://nexus-enterprise.exense.ch/repository/exense/</url>
+    </repository>
+  </repositories>
 
 	<distributionManagement>
 		<snapshotRepository>
@@ -119,28 +118,12 @@
 	</modules>
 
 	<build>
-		<plugins>
-			<!-- Deployment -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<configuration>
-					<tagNameFormat>@{project.version}</tagNameFormat>
-				</configuration>
-			</plugin>
-			<!--  Release -->
-			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.7</version>
-				<extensions>true</extensions>
-				<configuration>
-					<serverId>ossrh</serverId>
-					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<!--  Switch to true once next release process has been validated -->
-					<autoReleaseAfterClose>false</autoReleaseAfterClose>
-				</configuration>
-			</plugin>
+		<plugins>		
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>3.0.0-M1</version>
+      </plugin>
 			<!-- Source -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -163,9 +146,6 @@
 				<configuration>
 					<quiet>true</quiet>
 			    	<source>8</source>
-			    	<!--  required for Java11, remove the \ in \-\- when uncommenting
-			      	<additionalJOption>\-\-no-module-directories</additionalJOption> 
-			      	-->
 			      	<additionalOptions>
                     	<additionalOption>-Xdoclint:none</additionalOption>
                 	</additionalOptions>
@@ -191,13 +171,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<!-- <dependencies> -->
-				<!-- <dependency> -->
-				<!-- <groupId>org.apache.maven.surefire</groupId> -->
-				<!-- <artifactId>surefire-junit47</artifactId> -->
-				<!-- <version>3.0.0</version> -->
-				<!-- </dependency> -->
-				<!-- </dependencies> -->
 				<configuration>
 					<systemPropertyVariables>
 						<logback.configurationFile>${basedir}/../parent/logback-maven.xml</logback.configurationFile>
@@ -220,11 +193,6 @@
 							<goal>report</goal>
 						</goals>
 					</execution>
-					<!-- <execution> <id>default-check</id> <goals> <goal>check</goal> </goals> 
-						<configuration> <rules> <rule implementation="org.jacoco.maven.RuleConfiguration"> 
-						<element>BUNDLE</element> <limits> <limit implementation="org.jacoco.report.check.Limit"> 
-						<counter>COMPLEXITY</counter> <value>COVEREDRATIO</value> <minimum>0.50</minimum> 
-						</limit> </limits> </rule> </rules> </configuration> </execution> -->
 				</executions>
 			</plugin>
 		</plugins>
@@ -320,7 +288,7 @@
 			<!-- Local compilation - no signature -->
 		</profile>
 		<profile>
-			<id>Jenkins</id>
+			<id>DefaultBuild</id>
 			<activation>
 				<activeByDefault>false</activeByDefault>
 			</activation>
