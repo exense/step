@@ -203,6 +203,11 @@ angular.module('tables', ['export'])
         }
       }
 
+      scope.setSelection = function(id, selected) {
+        scope.selectionModel.setSelection(id, selected);
+        sendSelectionChangeEvent();
+      }
+      
       scope.setSelectionOnFilteredRows = function(value) {
         if(!isTableFiltered()) {
           scope.selectionModel.setDefaultSelection(value);
@@ -388,8 +393,8 @@ angular.module('tables', ['export'])
 	        scope.handle.getSelectedIds = scope.selectionModel.getSelectedIds.bind(scope.selectionModel);
 	        scope.handle.getSelection = scope.selectionModel.getSelection.bind(scope.selectionModel);
 	        scope.handle.getSelectionMode = scope.selectionModel.getSelectionMode.bind(scope.selectionModel);
-	        
-	        scope.handle.setSelection = scope.selectionModel.setSelection.bind(scope.selectionModel);
+
+	        scope.handle.setSelection = scope.setSelection;
 	        scope.handle.select = function(id) {
 	          scope.handle.setSelection(id, true);
 	        }

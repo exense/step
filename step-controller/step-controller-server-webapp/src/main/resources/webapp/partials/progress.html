@@ -44,7 +44,7 @@
 					</div>
 					<div class="panel-body" ng-show="isShowPanel('testCases')">
 						<st-table data="testCases" handle="testCaseTable" uid="'testCaseList'" persist-state="true" 
-							selection-attribute="'id'" default-selection="testCaseTableDefaultSelection" multiple-selection="true" on-selection-change="testCaseTableOnSelectionChange">
+							selection-attribute="'artefactID'" default-selection="testCaseTableDefaultSelection" multiple-selection="true" on-selection-change="testCaseTableOnSelectionChange">
 							<st-actions>
 								<st-selection-actions />
 							</st-actions>
@@ -52,7 +52,7 @@
 								<st-column name="name">
 									<header>Name</header>
 									<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-									<cell><a href uib-tooltip="Drilldown" ng-click="drillDownTestcase(row.id)">{{row.name}}</a></cell>
+									<cell><a href uib-tooltip="Drilldown" ng-click="drillDownTestcase(row.artefactID)">{{row.name}}</a></cell>
 								</st-column>
 								<st-column name="currentOperations">
 									<header>Current operations</header>
