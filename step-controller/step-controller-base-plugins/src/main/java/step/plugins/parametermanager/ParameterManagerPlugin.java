@@ -82,7 +82,9 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 		// Parameter table
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
 		if(screenInputAccessor.getScreenInputsByScreenId(PARAMETER_TABLE).isEmpty()) {
-			screenInputAccessor.save(new ScreenInput(0, PARAMETER_TABLE, new Input(InputType.TEXT, "key", "Key", null, null)));
+			Input input = new Input(InputType.TEXT, "key", "Key", "Keys containing 'pwd' or 'password' will be automatically protected", null);
+			input.setValueHtmlTemplate("<parameter-key parameter=\"stBean\" />");
+			screenInputAccessor.save(new ScreenInput(0, PARAMETER_TABLE, input));
 			screenInputAccessor.save(new ScreenInput(1, PARAMETER_TABLE, new Input(InputType.TEXT, "value", "Value", null, null)));
 			screenInputAccessor.save(new ScreenInput(2, PARAMETER_TABLE, new Input(InputType.TEXT, "activationExpression.script", "Activation script", null, null)));
 			screenInputAccessor.save(new ScreenInput(3, PARAMETER_TABLE, new Input(InputType.TEXT, "priority", "	Priority", null, null)));
@@ -91,7 +93,6 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 		// Edit parameter dialog
 		if(screenInputAccessor.getScreenInputsByScreenId(PARAMETER_DIALOG).isEmpty()) {
 			Input input = new Input(InputType.TEXT, "key", "Key", "Keys containing 'pwd' or 'password' will be automatically protected", null);
-			input.setValueHtmlTemplate("<parameter-key parameter=\"stBean\" />");
 			screenInputAccessor.save(new ScreenInput(0, PARAMETER_DIALOG, input));
 			screenInputAccessor.save(new ScreenInput(1, PARAMETER_DIALOG, new Input(InputType.TEXT, "value", "Value", null, null)));
 			screenInputAccessor.save(new ScreenInput(2, PARAMETER_DIALOG, new Input(InputType.TEXT, "description", "Description", null, null)));

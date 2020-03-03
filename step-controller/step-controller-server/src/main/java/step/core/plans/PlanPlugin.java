@@ -70,7 +70,7 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId("planTable");
 		if(screenInputsByScreenId == null || screenInputsByScreenId.isEmpty()) {
 			Input input = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-			input.setValueHtmlTemplate("<plan-link plan-id=\"stBean._id.$oid\" description=\"stBean.attributes.name\" />");
+			input.setValueHtmlTemplate("<plan-link plan-id=\"stBean.id\" description=\"stBean.attributes.name\" />");
 			screenInputAccessor.save(new ScreenInput(0, "planTable", input));
 		}
 	}
