@@ -736,6 +736,26 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   };
 })
 
+.directive('autofocus', function($timeout) {
+  return {
+    restrict: 'A',
+    link : function($scope, $element, attr) {
+      if(attr.autofocus=="" || $scope.$eval(attr.autofocus)) {
+        $timeout(function() {
+          function focusChild(el) {
+            if(el.hasChildNodes()) {
+              focusChild(el.children[0])
+            } else {
+              el.focus();
+            }
+          }
+          focusChild($element[0])
+        });
+      }
+    }
+  }
+})
+
 .controller('ExtentedDialogCtrl', function ($scope, $uibModalInstance, message, title) {
 	$scope.message = message;
 	$scope.title = title;
