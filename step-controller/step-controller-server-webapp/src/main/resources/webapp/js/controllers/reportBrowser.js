@@ -18,6 +18,10 @@
  *******************************************************************************/
 angular.module('reportBrowserControllers', ['step' ])
 
+.run(function(ViewRegistry, EntityRegistry) {
+  ViewRegistry.registerView('reportBrowser','partials/reportBrowser.html');
+})
+
 .controller('ReportNodeBrowserCtrl', function($scope, stateStorage, $http, $location) {
   stateStorage.push($scope, 'reportBrowser', {});
   

@@ -18,6 +18,10 @@
  *******************************************************************************/
 angular.module('gridControllers', ['step' ])
 
+.run(function(ViewRegistry, EntityRegistry) {
+  ViewRegistry.registerView('grid','partials/grid.html');
+})
+
 .controller('GridCtrl', ['$scope', 'stateStorage', 'AuthService',
     function($scope, $stateStorage, AuthService) {
       $stateStorage.push($scope, 'grid');

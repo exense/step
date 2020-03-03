@@ -18,7 +18,8 @@
  *******************************************************************************/
 angular.module('adminControllers', ['step' ])
 
-.run(function(FunctionTypeRegistry, EntityRegistry) {
+.run(function(ViewRegistry, EntityRegistry) {
+  ViewRegistry.registerView('admin','partials/admin.html');
   EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/users/userSelectionTable.html');
 })
 

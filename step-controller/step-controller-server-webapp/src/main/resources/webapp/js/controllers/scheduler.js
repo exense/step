@@ -19,6 +19,7 @@
 var schedulerController = angular.module('schedulerControllers',[]);
 
 schedulerController.run(function(ViewRegistry, EntityRegistry) {
+  ViewRegistry.registerView('scheduler','partials/scheduler.html');  
   ViewRegistry.registerDashlet('admin/controller','Scheduler','partials/scheduler/schedulerConfiguration.html','scheduler');
   EntityRegistry.registerEntity('Scheduler task', 'task', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table', '/partials/scheduler/schedulerTaskSelectionTable.html');
 });

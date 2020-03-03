@@ -18,6 +18,11 @@
  *******************************************************************************/
 angular.module('repositoryControllers', ['step'])
 
+.run(function(ViewRegistry, EntityRegistry) {
+  ViewRegistry.registerView('repository','partials/repository.html');
+  EntityRegistry.registerEntity('Repository', 'repository', null, null, null, null, null, null);
+})
+
 // This controller is used to force reload of the following Controllers after location change. This is a trick but it works
 .controller('RepositoryLoadCtrl', function($scope, $location ,$timeout) {
   $scope.reload = true;

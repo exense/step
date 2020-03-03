@@ -18,7 +18,8 @@
  *******************************************************************************/
 angular.module('parametersControllers',['tables','step','screenConfigurationControllers'])
 
-.run(function(FunctionTypeRegistry, EntityRegistry) {
+.run(function(ViewRegistry, EntityRegistry) {
+  ViewRegistry.registerView('parameters','partials/parameters/parameterList.html');  
   EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table', '/partials/parameters/parameterSelectionTable.html');
 })
 

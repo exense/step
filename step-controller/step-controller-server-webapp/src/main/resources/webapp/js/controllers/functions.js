@@ -18,6 +18,12 @@
  *******************************************************************************/
 angular.module('functionsControllers',['step'])
 
+.run(function(FunctionTypeRegistry, ViewRegistry, EntityRegistry) {
+  ViewRegistry.registerView('functions','partials/functionList.html');  
+  FunctionTypeRegistry.register('step.plugins.functions.types.CompositeFunction','Composite','partials/functions/forms/composite.html');
+  EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/functions/', 'rest/functions/', 'st-table', '/partials/functions/functionSelectionTable.html');
+})
+
 .factory('FunctionTypeRegistry', function() {
   
   var registry = {};
@@ -41,11 +47,6 @@ angular.module('functionsControllers',['step'])
   }
   
   return api;
-})
-
-.run(function(FunctionTypeRegistry, EntityRegistry) {
-  FunctionTypeRegistry.register('step.plugins.functions.types.CompositeFunction','Composite','partials/functions/forms/composite.html');
-  EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/functions/', 'rest/functions/', 'st-table', '/partials/functions/functionSelectionTable.html');
 })
 
 .factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {

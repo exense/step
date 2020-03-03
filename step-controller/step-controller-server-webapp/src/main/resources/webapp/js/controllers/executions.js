@@ -18,7 +18,8 @@
  *******************************************************************************/
 angular.module('executionsControllers',['step'])
 
-.run(function(FunctionTypeRegistry, EntityRegistry) {
+.run(function(ViewRegistry, EntityRegistry) {
+  ViewRegistry.registerView('executions','partials/execution.html');
   EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'st-table', '/partials/executions/executionSelectionTable.html');
 //  ViewRegistry.registerDashlet('execution','History','partials/executions/latestExecutions.html','latestExecutions');
 })

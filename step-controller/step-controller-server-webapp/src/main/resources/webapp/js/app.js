@@ -143,21 +143,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','p
 })
 
 .run(function(ViewRegistry, EntityRegistry) {
-	ViewRegistry.registerView('parameters','partials/parameters/parameterList.html');
-	ViewRegistry.registerView('grid','partials/grid.html');
-	ViewRegistry.registerView('executions','partials/execution.html');
-	ViewRegistry.registerView('scheduler','partials/scheduler.html');
-	ViewRegistry.registerView('repository','partials/repository.html');
-	ViewRegistry.registerView('functions','partials/functionList.html');
-	ViewRegistry.registerView('artefacteditor','partials/artefactEditor.html');
-	ViewRegistry.registerView('reportBrowser','partials/reportBrowser.html');
-	ViewRegistry.registerView('admin','partials/admin.html');
 	ViewRegistry.registerView('myaccount','partials/myaccount.html');
 	ViewRegistry.registerView('login','partials/loginForm.html',true);
-
-	EntityRegistry.registerEntity('Repository', 'repository', null, null, null, null, null, null);
-	//TODO
-	//EntityRegistry.registerEntity('Agent', 'agent', 'agents', '?', '?', '?');		
 })
 
 .controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, MaintenanceService, ViewRegistry) {
@@ -198,11 +185,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','p
 
 })
 
-.directive('ngCompiledInclude', [
-	'$compile',
-	'$templateCache',
-	'$http',
-	function($compile, $templateCache, $http) {
+.directive('ngCompiledInclude', function($compile, $templateCache, $http) {
 		return {
 			restrict: 'A',
 			priority: 400,
@@ -217,7 +200,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','p
 			}
 		};
 	}
-	]);
+);
 
 
 angular.module('step',['ngStorage','ngCookies','angularResizable'])
