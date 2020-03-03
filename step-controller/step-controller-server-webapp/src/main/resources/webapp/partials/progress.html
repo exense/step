@@ -49,7 +49,7 @@
 								<st-selection-actions />
 							</st-actions>
 							<st-columns>
-								<st-column name="testplanName">
+								<st-column name="name">
 									<header>Name</header>
 									<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 									<cell><a href uib-tooltip="Drilldown" ng-click="drillDownTestcase(row.id)">{{row.name}}</a></cell>
@@ -231,8 +231,7 @@
 				</div>
 			</div>
 
-			<div ng-repeat="entry in customPanels" ng-attr-id="{{entry.id}}"
-				class="panel panel-default">
+			<div ng-repeat="entry in customPanels" ng-attr-id="{{entry.id}}" class="panel panel-default">
 				<div class="panel-heading">
 					<a ng-click="toggleShowPanel(entry.id)">{{entry.label}}</a>
 				</div>
@@ -241,8 +240,7 @@
 				</div>
 			</div>
 
-			<div ng-attr-id="{{getPanelId('currentOperations')}}"
-				ng-if="execution.status != 'ENDED'" class="panel panel-default">
+			<div ng-attr-id="{{getPanelId('currentOperations')}}" ng-if="execution.status != 'ENDED'" class="panel panel-default">
 				<div class="panel-heading">
 					<a ng-click="toggleShowPanel('currentOperations')">{{getPanelTitle('currentOperations')}}</a>
 				</div>
@@ -259,8 +257,7 @@
 				</div>
 			</div>
 
-			<div ng-attr-id="{{getPanelId('throughput')}}"
-				ng-if="progress.count>1">
+			<div ng-attr-id="{{getPanelId('throughput')}}" ng-if="progress.count>1">
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<a ng-click="toggleShowPanel('throughput')">{{getPanelTitle('throughput')}}</a>

@@ -26,6 +26,12 @@ angular.module('screenConfigurationControllers',['tables','step'])
   
   var api = {};
   
+  var screensCache = {};
+  
+  api.clearCache = function() {
+    screensCache = {};
+  }
+  
   api.getScreens = function(screenId) {
     return $q(function(resolve, reject) {
       $http.get("rest/screens").then(function(response){
@@ -36,9 +42,15 @@ angular.module('screenConfigurationControllers',['tables','step'])
   
   api.getScreenInputsByScreenId = function(screenId, params) {
     return $q(function(resolve, reject) {
-      $http({url:"rest/screens/"+screenId, method:"GET", params:params}).then(function(response){
-        resolve(response.data)
-      })
+      if(!params && screensCache[screenId]) {
+        return resolve(screensCache[screenId]);
+      } else {
+        $http({url:"rest/screens/"+screenId, method:"GET", params:params}).then(function(response){
+          var screenInputs = response.data;
+          screensCache[screenId] = screenInputs;
+          resolve(screenInputs);
+        })
+      }
     })
   }
   
@@ -77,6 +89,7 @@ angular.module('screenConfigurationControllers',['tables','step'])
     function reload() {
       $http.get("rest/screens/input/byscreen/"+$scope.currentScreenId).then(function(res) {
         $scope.screenInputs = res.data;
+        ScreenTemplates.clearCache();
       });
     }
     

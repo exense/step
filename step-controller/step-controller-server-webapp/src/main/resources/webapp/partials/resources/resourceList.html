@@ -20,10 +20,9 @@
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell><span>{{row.id}}</span></cell>
 			</st-column>
-			<st-column>
-				<header>Actions</header>
+			<st-column width="'150px'">
 				<cell>
-					<div class="btn-group">
+					<div class="btn-group btn-group-sm">
 						<a class="btn btn-default" href="rest/resources/{{row.id}}/content">
 							<span class="glyphicon glyphicon-download-alt" aria-hidden="true" uib-tooltip="Download this file"></span>
 						</a>

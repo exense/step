@@ -118,6 +118,7 @@ public class AccessServices extends AbstractServices {
 		if(ctrlConf.hasProperty("ui.default.url")) {
 			conf.setDefaultUrl(ctrlConf.getProperty("ui.default.url"));
 		}
+		conf.setDebug(ctrlConf.getPropertyAsBoolean("ui.debug", false));
 		return conf;
 	}
 	

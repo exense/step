@@ -5,11 +5,8 @@
 				<div class="toolbar">
 					<auto-refresh-commands autorefresh="autorefresh" />
 				</div>
-		
 				<div class="panel-body">
-					<st-table data="agents" uid="'agentList'" persist-state="true">
-						<st-actions>
-						</st-actions>
+					<st-table data="agents" uid="'agentList'">
 						<st-columns>
 							<st-column name="url">
 								<header>Url</header>
@@ -30,11 +27,9 @@
 									<grid-status-distribution token-group="row.tokensCapacity" />
 								</cell>
 							</st-column>
-							<st-column>
-								<header>Actions</header>
-								<second-header></second-header>
+							<st-column width="'150px'">
 								<cell>
-									<div class="btn-group btn-group-xs">
+									<div class="btn-group btn-group-sm">
 										<button type="button" class="btn btn-default" ng-disabled="!authService.hasRight('token-manage')" ng-click="interrupt(row.id)" uib-tooltip="Pause agent and enter maintenance mode" >
 											<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
 										</button>
@@ -58,7 +53,7 @@
 					<auto-refresh-commands autorefresh="autorefresh" />
 				</div>
 				<div class="panel-body">
-					<st-table data="tokens" uid="'tokenList'" persist-state="true">
+					<st-table data="tokens" uid="'tokenList'">
 						<st-actions>
 						</st-actions>
 						<st-columns>
@@ -111,11 +106,9 @@
 									</div>
 								</cell>
 							</st-column>
-							<st-column>
-								<header></header>
-								<second-header></second-header>
+							<st-column width="'150px'">
 								<cell>
-									<div class="btn-group btn-group-xs">
+									<div class="btn-group btn-group-sm">
 										<button type="button" class="btn btn-default" ng-disabled="!authService.hasRight('token-manage')" ng-if="row.state=='ERROR'" ng-click="removeTokenError(row.id)" uib-tooltip="Remove token error and set state to 'FREE'">
 											<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
 										</button>

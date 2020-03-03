@@ -10,6 +10,8 @@ public class AccessConfiguration {
 	
 	boolean demo;
 	
+	boolean debug;
+	
 	List<String> roles;
 	
 	Map<String,String> miscParams;
@@ -27,6 +29,14 @@ public class AccessConfiguration {
 
 	public void setDemo(boolean demo) {
 		this.demo = demo;
+	}
+
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
 	}
 
 	public boolean isAuthentication() {

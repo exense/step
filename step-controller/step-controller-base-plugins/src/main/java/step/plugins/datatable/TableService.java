@@ -143,7 +143,12 @@ public class TableService extends ApplicationServices {
 		String sortColumnName = columnNames.get(sortColumnID);
 		
 		String sortDir = params.getFirst("order[0][dir]");
-		SearchOrder order = new SearchOrder(sortColumnName, sortDir.equals("asc")?1:-1);
+		SearchOrder order;
+		if(sortColumnName != null && !sortColumnName.isEmpty()) {
+			order = new SearchOrder(sortColumnName, sortDir.equals("asc")?1:-1);
+		} else {
+			order = null;
+		}
 		
 		if(collection.isFiltered() && sessionQueryFragments != null) {
 			queryFragments.addAll(sessionQueryFragments);

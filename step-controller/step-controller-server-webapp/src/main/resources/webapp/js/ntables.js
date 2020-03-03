@@ -68,6 +68,9 @@ angular.module('tables', ['export'])
 			}
 		}
 
+		// Set default content to avoid datatable warning:  'Requested unknown parameter...'
+		colDef.sDefaultContent = "";
+		
 		colDef.createdCell = function(td, cellData, rowData, row, col) {
 			var rowScope;
 			var content = column.cellTransclude(function(clone, scope) {
@@ -247,6 +250,17 @@ angular.module('tables', ['export'])
           }
         }
 		  }
+		  
+		  controller.scheduleReload = function() {
+		    scope.dirty = true;
+		  }
+		  
+		  scope.$watch(function() {
+		    if(scope.dirty) {
+		      scope.dirty = false;
+		      controller.reload();
+		    }
+		  })
 		  
 		  controller.reload = function() {
 		    var columns = controller.getDtColumns();
@@ -451,8 +465,8 @@ angular.module('tables', ['export'])
 					return transclude(callback, null, 'cell')
 				},
 			}, positionInParent)
-			if(tableController.reload) {
-			  tableController.reload()
+			if(tableController.scheduleReload) {
+			  tableController.scheduleReload()
 			}
 
 		}
@@ -467,9 +481,15 @@ angular.module('tables', ['export'])
     controller: function($scope) {
     },
     link : function(scope, element, attrs, tableController, transclude) {
-      scope.selectionModelByInput = tableController.selectionModelByInput;
-      scope.select = tableController.select;
-      scope.multipleSelection = tableController.multipleSelection;
+      scope.selectionModelByInput = function() {
+        return tableController.selectionModelByInput;
+      }
+      scope.select = function() {
+        return tableController.select;
+      }
+      scope.multipleSelection = function() {
+        return tableController.multipleSelection;
+      }
     },
     templateUrl: 'partials/table/selectionColumn.html'}
 })

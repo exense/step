@@ -138,8 +138,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 		},
 		controller: function($scope,$location,$anchorScroll,$compile, $element) {
 			var eId = $scope.eid;
-			console.log('Execution Controller. ID:' + eId);
-
 			$stateStorage.push($scope, eId,{});
 
 			$scope.tabs = {selectedTab:0};
@@ -188,9 +186,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					var artefactFilter = execution.executionParameters.artefactFilter;
 					if(artefactFilter) {
 						if(artefactFilter.class=='step.artefacts.filters.TestCaseFilter') {
-							return _.contains(artefactFilter.includedNames,value[1]);
+							return _.contains(artefactFilter.includedNames,value.name);
 						} else if(artefactFilter.class=='step.artefacts.filters.TestCaseIdFilter') {
-							return _.contains(artefactFilter.includedIds,value[0]);
+							return _.contains(artefactFilter.includedIds,value.artefactID);
 						}
 					} else {
 						return true;
@@ -476,7 +474,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.$watch('execution.status',function(newStatus, oldStatus) {
 				if(newStatus) {
 					if(newStatus === 'ENDED'){
-						console.log('ENDED')
 						$scope.init = false;
 	
 						$scope.isRealTime = '';
