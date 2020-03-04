@@ -41,7 +41,7 @@
 			<div>
 				<div ng-show="!testCases" class="row"><div class="col-md-6"><i class="glyphicon glyphicon-refresh icon-refresh-animate"/> Loading...</div></div>
 				<div ng-show="testCases">
-					<st-table data="testCases" handle="tableHandle" uid="'testCaseList'" persist-state="true" selection-attribute="'testplanName'" default-selection="'all'" multiple-selection="true">
+					<st-table data="testCases" handle="tableHandle" uid="'testCaseList'" persist-state="true" selection-attribute="trackTestcasesBy" default-selection="'all'" multiple-selection="true">
 						<st-actions>
 							<st-selection-actions />
 						</st-actions>

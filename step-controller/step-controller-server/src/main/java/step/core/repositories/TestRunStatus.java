@@ -25,6 +25,8 @@ import step.core.artefacts.reports.ReportNodeStatus;
 @SuppressWarnings("serial")
 public class TestRunStatus implements Serializable {
 	
+	String id;
+	
 	String testplanName;
 	
 	ReportNodeStatus status;
@@ -33,10 +35,25 @@ public class TestRunStatus implements Serializable {
 		super();
 	}
 
+	public TestRunStatus(String id, String testplanName, ReportNodeStatus status) {
+		super();
+		this.id = id;
+		this.testplanName = testplanName;
+		this.status = status;
+	}
+
 	public TestRunStatus(String testplanName, ReportNodeStatus status) {
 		super();
 		this.testplanName = testplanName;
 		this.status = status;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public String getTestplanName() {

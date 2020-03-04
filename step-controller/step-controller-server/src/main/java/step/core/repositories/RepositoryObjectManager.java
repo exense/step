@@ -133,11 +133,12 @@ public class RepositoryObjectManager {
 				List<AbstractArtefact> children = rootArtefact.getChildren();
 				children.forEach(child->{
 					if(child instanceof TestCase) {
-						addTestRunStatus(testSetStatusOverview.getRuns(), child.getAttributes().get(AbstractOrganizableObject.NAME));
+						addTestRunStatus(testSetStatusOverview.getRuns(), child);
 					} else if(child instanceof CallPlan) {
 						Plan referencedPlan = planAccessor.get(((CallPlan)child).getPlanId());
-						if(referencedPlan.getRoot() instanceof TestCase) {
-							addTestRunStatus(testSetStatusOverview.getRuns(), referencedPlan.getAttributes().get(AbstractOrganizableObject.NAME));
+						AbstractArtefact root = referencedPlan.getRoot();
+						if(root instanceof TestCase) {
+							addTestRunStatus(testSetStatusOverview.getRuns(), root);
 						}
 					}
 				});
@@ -146,8 +147,9 @@ public class RepositoryObjectManager {
 		}
 	}
 	
-	private void addTestRunStatus(List<TestRunStatus> testRunStatusList, String name) {
-		testRunStatusList.add(new TestRunStatus(name, ReportNodeStatus.NORUN));
+	private void addTestRunStatus(List<TestRunStatus> testRunStatusList, AbstractArtefact abstractArtefact) {
+		testRunStatusList.add(new TestRunStatus(abstractArtefact.getId().toString(), 
+				abstractArtefact.getAttributes().get(AbstractOrganizableObject.NAME), ReportNodeStatus.NORUN));
 	}
 	
 }

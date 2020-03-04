@@ -74,6 +74,7 @@ angular.module('repositoryControllers', ['step'])
       $scope.tableHandle = {};
       
       $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':$location.search()};
+      $scope.trackTestcasesBy = $scope.repoRef.repositoryID=="local"?"id":"testplanName";
       $http.post("rest/controller/repository/report",$scope.repoRef).then(function(response) {
         var data = response.data;
         $scope.testCases = data.runs;
@@ -84,10 +85,11 @@ angular.module('repositoryControllers', ['step'])
         if(selectionMode=='all') {
           return null;
         } else if (selectionMode=='custom' || selectionMode=='none') {
-          var includedTestCases = {"by":"name"};
+          var trackBy = $scope.trackTestcasesBy=='id'?'id':'name'
+          var includedTestCases = {"by":trackBy};
           var result = [];
           if($scope.tableHandle.getRows!=null) {
-            _.each($scope.tableHandle.getRows(true),function(value){result.push(value.testplanName)});
+            _.each($scope.tableHandle.getRows(true),function(value){result.push(trackBy=='id'?value.id:value.testplanName)});
           }
           includedTestCases.list = result;
           return includedTestCases;          
