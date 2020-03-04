@@ -1,0 +1,9 @@
+FROM exense/step:base-java-8
+MAINTAINER jonathan.rubiero@exense.ch
+RUN useradd -m -U -u 1000 agent 
+RUN mkdir /home/agent/log && chown -R agent:agent /home/agent/log
+USER agent:agent
+COPY --chown=agent:agent . /home/agent/
+WORKDIR /home/agent/bin/
+CMD "./startAgent.sh" 
+

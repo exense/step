@@ -1,0 +1,5 @@
+FROM exense/step:base-java-8
+MAINTAINER jonathan.rubiero@exense.ch
+COPY . /home/controller/
+WORKDIR /home/controller/bin/
+CMD "./startController.sh"

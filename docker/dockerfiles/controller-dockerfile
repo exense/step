@@ -1,0 +1,7 @@
+FROM exense/step:base-latest
+MAINTAINER jonathan.rubiero@exense.ch
+COPY . /home/controller/
+RUN MYSQL_CONNECTOR_VERSION=8.0.18 && \
+    wget "ftp://ftps.exense.ch/mysql-connector/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar" -O /home/controller/lib/mysql-connector-java-${MYSQL_CONNECTOR_VERSION}.jar 
+WORKDIR /home/controller/bin/
+CMD "./startController.sh"

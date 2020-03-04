@@ -28,25 +28,43 @@
 	},
 	"DISTRIBUTIONS":
 	{
-		"TYPE": ["FTP","GITHUB","FTP","GITHUB"],
+		"TYPE": ["FTP","GITHUB", "DOCKER", "FTP","GITHUB", "DOCKER"],
 		
 		"ORIGIN_FILE": [
       "step-distribution/target/step-controller-${VERSION}.zip",
       "step-distribution/target/step-controller-${VERSION}.zip",
+      "step-distribution/target/step-controller-${VERSION}.zip",
       "step-distribution/target/step-agent-${VERSION}.zip",
       "step-distribution/target/step-agent-${VERSION}.zip",
+      "step-distribution/target/step-agent-${VERSION}.zip"
     ],
 		"DESTINATION_NAME": [
       "step-controller-${VERSION}.zip",
       "step-controller-${VERSION}.zip",
+      "step:controller-${VERSION}",
+      
       "step-agent-${VERSION}.zip",
       "step-agent-${VERSION}.zip",
+      "step:agent-${VERSION}",
     ],
 		
-		"URL_STAGING":  ["build@ftps.exense.ch","NOT_USED","build@ftps.exense.ch","NOT_USED"],
-		"URL_PROD":     ["build@ftps.exense.ch","NOT_USED","build@ftps.exense.ch","NOT_USED"],
+		"URL_STAGING":  [
+      "build@ftps.exense.ch","NOT_USED","docker.exense.ch",
+      "build@ftps.exense.ch","NOT_USED","docker.exense.ch"
+    ],
+      
+		"URL_PROD":     [
+      "build@ftps.exense.ch","NOT_USED","docker.exense.ch",
+      "build@ftps.exense.ch","NOT_USED","docker.exense.ch"
+    ],
 		
-		"OS":["NOT_USED","NOT_USED","NOT_USED","NOT_USED"],
-		"CONFIG":["public","NOT_USED","public","NOT_USED"]
+		"OS":[
+      "NOT_USED","NOT_USED", "LINUX",
+      "NOT_USED","NOT_USED", "LINUX"
+    ],
+		"CONFIG":[
+      "public","NOT_USED","controller-dockerfile",
+      "public","NOT_USED","agent-dockerfile"
+    ]
 	}
 }
