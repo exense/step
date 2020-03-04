@@ -30,10 +30,15 @@ public class OperationManager {
 	public static OperationManager getInstance() {
 		return INSTANCE;
 	}
-
+	
 	public void enter(String name, Object details) {
-		Operation operation = new Operation(name, new Date(), details);
-		operations.put(Thread.currentThread().getId(), operation);
+		enter(name,details,null);
+	}
+
+	public void enter(String name, Object details, String reportNodeId) {
+		long tid = Thread.currentThread().getId();
+		Operation operation = new Operation(name, new Date(), details, reportNodeId, tid);
+		operations.put(tid, operation);
 		
 	}
 	

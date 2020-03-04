@@ -19,6 +19,7 @@
 package step.plugins.threadmanager;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.ws.rs.GET;
@@ -29,11 +30,48 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import step.common.managedoperations.Operation;
+import step.common.managedoperations.OperationDetails;
+import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
+import step.core.deployment.Secured;
 import step.core.execution.ExecutionRunnable;
 
 @Path("/threadmanager")
 public class ThreadManagerServices extends AbstractServices {
+
+	@GET
+	@Secured(right="admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/operations/list")
+	public List<OperationDetails> getCurrentOperationsList() {
+		ThreadManager threadManager = (ThreadManager) getContext().get(ThreadManager.THREAD_MANAGER_INSTANCE_KEY);
+		List<OperationDetails> operationListDetails = new ArrayList<OperationDetails>(); 
+		for(ExecutionRunnable task:getScheduler().getCurrentExecutions()) {
+			if(task!=null) {
+				String executionId = task.getContext().getExecutionId();
+				String planId = task.getContext().getPlan().getId().toString();
+				String planName = task.getContext().getPlan().getAttributes().get("name");
+				Iterator<ReportNode> iterator = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionId, 
+						"step.artefacts.reports.TestCaseReportNode");
+				//in case of test case, get operations by test case
+				if (iterator.hasNext()) {
+					iterator.forEachRemaining(e->{
+						String testcase = e.getName();
+						threadManager.getCurrentOperationsByReportNodeId(e.getId().toString()).forEach(op->{
+							operationListDetails.add(new OperationDetails(executionId, planId, planName, testcase, op));
+						});
+					});
+				}
+				//else get operation by eid
+				else {
+					threadManager.getCurrentOperations(task.getContext()).forEach(op->{
+						operationListDetails.add(new OperationDetails(executionId, planId, planName, "", op));
+					});
+				}
+			}
+		}
+		return operationListDetails;
+	}	
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)

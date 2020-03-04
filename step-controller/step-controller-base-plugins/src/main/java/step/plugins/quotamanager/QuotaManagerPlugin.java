@@ -59,7 +59,7 @@ public class QuotaManagerPlugin extends AbstractControllerPlugin {
 			bindings.putAll(context.getVariablesManager().getAllVariables());
 			bindings.put("node", node);
 			
-			operationManager.enter("Waiting for quota", new Object());
+			operationManager.enter("Waiting for quota", new Object(), node.getId().toString());
 			UUID permit;
 			try {
 				permit = quotaManager.acquirePermit(bindings);

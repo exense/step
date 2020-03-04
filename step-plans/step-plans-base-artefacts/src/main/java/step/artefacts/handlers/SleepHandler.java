@@ -64,7 +64,7 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 			throw new RuntimeException("Unable to parse attribute 'ms' as long.",e);
 		}
 
-		OperationManager.getInstance().enter("Sleep", sleepDurationMs);
+		OperationManager.getInstance().enter("Sleep", sleepDurationMs, node.getId().toString());
 		try {
 			Thread.sleep(sleepDurationMs);
 		} catch (InterruptedException e) {

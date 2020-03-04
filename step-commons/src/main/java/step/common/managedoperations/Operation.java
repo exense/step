@@ -27,12 +27,18 @@ public class Operation {
 	private Date start;
 	
 	private Object details;
-
-	public Operation(String name, Date start, Object details) {
+	
+	private String reportNodeId;
+	
+	private long tid;
+	
+	public Operation(String name, Date start, Object details, String reportNodeId, long tid) {
 		super();
 		this.name = name;
 		this.start = start;
 		this.details = details;
+		this.reportNodeId = reportNodeId;
+		this.tid = tid;
 	}
 
 	public String getName() {
@@ -57,5 +63,21 @@ public class Operation {
 
 	public void setDetails(Object details) {
 		this.details = details;
+	}
+
+	public String getReportNodeId() {
+		return reportNodeId;
+	}
+
+	public void setReportNodeId(String reportNodeId) {
+		this.reportNodeId = reportNodeId;
+	}
+
+	public long getTid() {
+		return tid;
+	}
+
+	public void setTid(long tid) {
+		this.tid = tid;
 	}
 }

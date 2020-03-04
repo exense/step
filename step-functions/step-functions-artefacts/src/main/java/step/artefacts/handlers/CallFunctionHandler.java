@@ -135,7 +135,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setAgentUrl(token.getAgent().getAgentUrl());
 				node.setTokenId(token.getID());
 				
-				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()});
+				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
+						node.getId().toString());
 				
 				try {
 					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class);

@@ -94,10 +94,13 @@ angular.module('reportTree',['step','artefacts'])
         return _.without(_.keys(node),'id','_id','parentID','executionTime','duration','error','functionId','executionID','artefactID','customAttributes','_class','status','name','measures','attachments')
       }
       
+      $scope.skipRefesh=false;
       $scope.handle.refresh = function() {
-        scrollTopPos = treeScrollDiv.scrollTop;
-        scrollLeftPos = treeScrollDiv.scrollLeft;
-        tree.refresh();
+        if (!$scope.skipRefesh) {
+          scrollTopPos = treeScrollDiv.scrollTop;
+          scrollLeftPos = treeScrollDiv.scrollLeft;
+          tree.refresh();
+        }
       }
       
       function expandPath(path, callback) {
@@ -116,11 +119,20 @@ angular.module('reportTree',['step','artefacts'])
       function selectNode(id) {
         tree.deselect_all();
         tree.select_node(id);
+        var el = document.getElementById( id );
+        if (el && el.offsetTop) {
+          treeScrollDiv.scrollTop = el.offsetTop;
+        }
+        if (el && el.offsetLeft) {
+          treeScrollDiv.scrollLeft = el.offsetLeft;
+        }
       }
       
       $scope.handle.expandPath = function(path, reportTreeSettings) {
+        $scope.skipRefesh=true;
     	  expandPath(path.slice(0), function() {
           selectNode(path[path.length-1].id);
+          $scope.skipRefesh=false;
         })
       }
     },

@@ -70,7 +70,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 			} 
 			try {
 				long duration = testArtefact.getGracePeriod().get();
-				OperationManager.getInstance().enter("RetryIfFails", "Grace period " + duration + " ms");
+				OperationManager.getInstance().enter("RetryIfFails", "Grace period " + duration + " ms", node.getId().toString());
 				if (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0) {
 					releaseTokens(testArtefact);
 					node.setReleasedToken(true);

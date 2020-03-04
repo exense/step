@@ -201,6 +201,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       $scope.testCaseTableOnSelectionChange = function() {
         $scope.refresh();
       };
+      
+      $scope.operationOptions = {'showAll':false};
 			
 			var executionViewServices = {
 					showNodeInTree : function(nodeId) {
@@ -244,67 +246,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 				return filter;   
 			},$scope, executionViewServices);
-
-			var operationRenderer = {
-					'Keyword Call' : {
-						renderer: function (details) {
-							var html = ": ";
-							if(details[0]) {
-								html += details[0].name;
-							} 
-							if(details[1]) {
-								html += '<div><small>' + details[1].id + '</small></div>';
-							}
-							if(details[2]) {
-								html += '<div><small>' + details[2].agentUrl + '</small></div>';
-							}
-							// html += '<div>Input: <small><em>' + addWordBreakingPoints(escapeHtml(reportNode.input)) + '</em></small></div>';
-							return html},
-							icon: '' },
-							'Quota acquisition' : {
-								renderer: function (details) {
-									var html = "";
-									if(details) {
-										html += '<div><small>ID: ' + details.id + '(' + details.permits + ')</small></div>';
-										if(details.description)
-											html += '<div><small>' + details.description + '</small></div>';
-									} 
-									return html},
-									icon: '' },
-									'Sleep' : {
-										renderer: function (details) {
-											var html = " " + details + "ms";
-											return html},
-											icon: '' },  
-											'Token selection' : {
-												renderer: function (details) {
-													var html = "";
-													if(details && Object.keys(details).length) {
-														html += '<div><small><label>Criteria: </label>';
-														_.mapObject(details,function(value, key) {
-															html += key + '=' + value.selectionPattern + ","
-														})
-														html += '</small></div>'
-													}
-													return html},
-													icon: '' },
-													'default' : {
-								            renderer: function (details) {
-								              var html = " " + details;
-								              return html},
-								              icon: '' },  
-			};
-
-			var renderOperationsHtml = function (data) {
-				var renderer = operationRenderer[data.name];
-				if(!renderer) {
-					renderer = operationRenderer['default'];
-				}
-				var html = "<div style='margin-top:5px'><strong>" + data.name + "</strong>";
-				html+=renderer.renderer(data.details);
-				html+="</div>";
-				return html;
-			}
 
 			$scope.getIncludedTestcases = function() {
 				var selectionMode = $scope.testCaseTable.getSelectionMode?$scope.testCaseTable.getSelectionMode():'all';
@@ -686,19 +627,3 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
     }
   };
 }]);
-
-tecAdminControllers.directive('currentOperations', function($http) {
-  return {
-    restrict: 'E',
-    scope: {
-      reportNodeId: '='
-    },
-    controller: function($scope) {
-      $http.get("rest/threadmanager/operations/"+$scope.reportNodeId).then(function(response) {
-        $scope.currentOperation = response.data;
-        
-      });          
-    },
-      
-    templateUrl: 'partials/operations/currentOperations.html'}
-})

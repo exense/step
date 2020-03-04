@@ -53,7 +53,7 @@ public abstract class AbstractServices {
 		return controller.getContext();
 	}
 
-	 ExecutionScheduler getScheduler() {
+	protected ExecutionScheduler getScheduler() {
 		return controller.getScheduler();
 	}
 	

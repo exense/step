@@ -1,0 +1,7 @@
+<div ng-if="operation.details">
+	<small><label>Criteria: </label>
+		<span ng-repeat="(name,detail) in operation.details">
+			<strong>{{name}}=</strong>{{detail.selectionPattern}}
+		</span>
+	</small>
+</div>
