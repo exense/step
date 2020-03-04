@@ -18,7 +18,7 @@
 		"URL_PROD":
 		[
 			"sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2",
-			"TODO https://TODO/"
+			"exense https://registry.npmjs.org/"
 		],
 		
 		"CONFIG_STAGING":
