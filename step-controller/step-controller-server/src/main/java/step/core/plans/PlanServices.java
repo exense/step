@@ -111,7 +111,9 @@ public class PlanServices extends AbstractServices {
 		Plan plan = planAccessor.get(id);
 		@SuppressWarnings("unchecked")
 		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
-		return planType.clonePlan(plan);
+		Plan clonePlan = planType.clonePlan(plan);
+		assignNewId(clonePlan.getRoot());
+		return clonePlan;
 	}
 	
 	@POST
