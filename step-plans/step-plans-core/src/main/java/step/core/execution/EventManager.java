@@ -26,6 +26,17 @@ public class EventManager {
 		}
 	}
 	
+	public void notifyReportNodeUpdated(ReportNode node) {
+		List<ReportNodeEventListener> listenerList = listeners.get(node.getId());
+		if(listenerList!=null) {
+			synchronized (listenerList) {
+				for(ReportNodeEventListener listener:listenerList) {
+					listener.onUpdate();
+				}
+			}
+		}
+	}
+	
 	public void notifyReportNodeDestroyed(ReportNode node) {
 		List<ReportNodeEventListener> listenerList = listeners.remove(node.getId());
 		if(listenerList!=null) {

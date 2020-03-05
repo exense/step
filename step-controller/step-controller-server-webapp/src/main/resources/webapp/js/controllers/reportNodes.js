@@ -49,6 +49,7 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
           "step.artefacts.reports.EchoReportNode":{template:"partials/reportnodes/echo.html"},
           "step.artefacts.reports.AssertReportNode":{template:"partials/reportnodes/assert.html"},
           "step.artefacts.reports.RetryIfFailsReportNode":{template:"partials/reportnodes/retryIfFail.html"},
+          "step.artefacts.reports.WaitForEventReportNode":{template:"partials/reportnodes/waitForEvent.html"}
       }
       
       $scope.children = [];

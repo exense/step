@@ -1,0 +1,20 @@
+<div ng-if="node.loopCount">Number of polling: <small><em>{{node.loopCount}}</em></small></div>
+<div ng-if="node.waitDuration">Wait duration (ms): <small><em>{{node.waitDuration}}</em></small></div>
+<div ng-if="node.criteriaEventId || node.criteriaGroup">
+	<span>Criteria:</span>
+	<span ng-if="!node.criteriaEventId && !node.criteriaGroup"><small>Not available</small></span>
+	<span ng-if="node.criteriaEventId"><small><strong>id=</strong>{{node.criteriaEventId}}</small></span>
+	<span ng-if="!node.criteriaEventId && node.criteriaGroup">
+		<small><Strong>Group=</Strong>{{node.criteriaGroup}}<strong>,Name=</strong>{{node.criteriaName}}</small>
+	</span>
+</div>
+<div ng-if="node.event">
+	<span>Event:</span>
+	<ul>
+		<li><small>ID: {{node.event.id}}</small></li>
+		<li><small>Group: {{node.event.group}}</small></li>
+		<li><small>Name: {{node.event.name}}</small></li>
+		<li><small>Payload: {{node.event.payload}}</small></li>
+	</ul>
+</div>
+<br/>

@@ -38,6 +38,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
+import step.core.execution.ReportNodeEventListener;
 import step.core.functions.FunctionGroupHandle;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
@@ -129,7 +130,23 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		addCustomReportNodeAttributes(node);
 		
+		if(executionPhase==Phase.EXECUTION) {
+			addReportNodeUpdateListener(node,context.getReportNodeAccessor());
+		}
+		
 		return node;
+	}
+	
+	protected void addReportNodeUpdateListener(REPORT_NODE node, ReportNodeAccessor reportNodeAccessor) {
+		context.getEventManager().addReportNodeEventListener(node, new ReportNodeEventListener() {
+			@Override
+			public void onUpdate() {
+				saveReportNode(node, reportNodeAccessor);
+			}
+			@Override
+			public void onDestroy() {}
+		});
+		
 	}
 
 	private void addCustomReportNodeAttributes(REPORT_NODE node) {

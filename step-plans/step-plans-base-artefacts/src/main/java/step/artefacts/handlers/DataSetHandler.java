@@ -84,6 +84,8 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 			
 			context.getEventManager().addReportNodeEventListener(parentNode, new ReportNodeEventListener() {
 				@Override
+				public void onUpdate() {}
+				@Override
 				public void onDestroy() {
 					try {
 						dataSet.save();
