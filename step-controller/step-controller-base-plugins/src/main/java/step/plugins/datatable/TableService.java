@@ -179,9 +179,14 @@ public class TableService extends ApplicationServices {
 			Object row = objects.get(i);
 			
 			String[] rowFormatted = new String[columnNames.size()];
-			String rowAsString = webLayerObjectMapper.writeValueAsString(row);
+			try {
+				String rowAsString = webLayerObjectMapper.writeValueAsString(row);
+				rowFormatted[0] = rowAsString;
+			} catch (Exception e) {
+				logger.error("Error while serializing "+row, e);
+				throw e;
+			}
 			
-			rowFormatted[0] = rowAsString;
 			data[i] = rowFormatted;
 		}
 		DataTableResponse response = new DataTableResponse(draw, find.getRecordsTotal(), find.getRecordsFiltered(), data);
