@@ -62,8 +62,15 @@ public class QuotaHandler {
 		if(quotaKey!=null) {
 			QuotaSemaphore semaphore = getOrCreateSemaphore(quotaKey);
 			
-			if(config.getAcquireTimeoutMs()!=null) {
-				boolean acquired = semaphore.tryAcquire(config.getAcquireTimeoutMs(), TimeUnit.MILLISECONDS);				
+			Long acquireTimeoutMs = config.getAcquireTimeoutMs();
+			if(acquireTimeoutMs!=null) {
+				boolean acquired;
+				if(acquireTimeoutMs==0) {
+					 semaphore.acquire();
+					 acquired = true;
+				} else {
+					 acquired = semaphore.tryAcquire(acquireTimeoutMs, TimeUnit.MILLISECONDS);
+				}
 				if(!acquired) {
 					throw new TimeoutException("A timeout occurred while trying to acquire permit for quota: " + config.toString());
 				} else {

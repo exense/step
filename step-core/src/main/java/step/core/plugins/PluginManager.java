@@ -19,6 +19,7 @@
 package step.core.plugins;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -33,6 +34,8 @@ import java.util.stream.IntStream;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import step.core.plugins.exceptions.PluginCriticalException;
 
 public class PluginManager<T extends AbstractPlugin> implements InvocationHandler{
 	
@@ -167,8 +170,12 @@ public class PluginManager<T extends AbstractPlugin> implements InvocationHandle
 			try {
 				method.invoke(plugin, args);
 			} catch (Throwable e) {
-				logger.error("Error invoking method #" + method.getName() + " of plugin '" + plugin.getClass().getName() + "'" + "(" + e.toString() + ")", e);
-			}
+				if (e instanceof InvocationTargetException && ((InvocationTargetException) e).getTargetException() instanceof PluginCriticalException) {
+					throw ((InvocationTargetException) e).getTargetException();
+				} else {
+					logger.error("Error invoking method #" + method.getName() + " of plugin '" + plugin.getClass().getName() + "'" + "(" + e.toString() + ")", e);
+				}
+			} 
 		}
 		return null;
 	}

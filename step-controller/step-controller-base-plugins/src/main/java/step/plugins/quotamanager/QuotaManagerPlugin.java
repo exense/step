@@ -35,6 +35,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.plugins.exceptions.PluginCriticalException;
 
 @Plugin
 public class QuotaManagerPlugin extends AbstractControllerPlugin {
@@ -59,14 +60,12 @@ public class QuotaManagerPlugin extends AbstractControllerPlugin {
 			bindings.putAll(context.getVariablesManager().getAllVariables());
 			bindings.put("node", node);
 			
-			operationManager.enter("Waiting for quota", new Object(), node.getId().toString());
 			UUID permit;
 			try {
 				permit = quotaManager.acquirePermit(bindings);
 			} catch (Exception e) {
-				throw new RuntimeException("Error while getting permit from quota manager", e);
+				throw new PluginCriticalException("Error while getting permit from quota manager", e);
 			} finally {
-				operationManager.exit();
 			}
 			permits.put(node.getId().toString(), permit);			
 		}

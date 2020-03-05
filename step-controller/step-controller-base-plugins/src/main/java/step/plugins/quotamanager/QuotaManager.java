@@ -105,9 +105,9 @@ public class QuotaManager {
 				try {
 					
 					long t1 = System.currentTimeMillis();
+					OperationManager.getInstance().enter("Quota acquisition", quotaHandler.getConfig());
 					String quotaKey = quotaHandler.acquirePermit(bindingVariables);
 					if (quotaKey != null) {
-						OperationManager.getInstance().enter("Quota acquisition", quotaHandler.getConfig());
 						long duration = System.currentTimeMillis()-t1;
 						logger.debug("Permit acquired in " + duration + "ms. QuotaKey: " + quotaKey);
 						
