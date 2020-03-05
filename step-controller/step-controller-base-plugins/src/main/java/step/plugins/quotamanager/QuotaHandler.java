@@ -65,7 +65,7 @@ public class QuotaHandler {
 			Long acquireTimeoutMs = config.getAcquireTimeoutMs();
 			if(acquireTimeoutMs!=null) {
 				boolean acquired;
-				if(acquireTimeoutMs==0) {
+				if(acquireTimeoutMs<0) {
 					 semaphore.acquire();
 					 acquired = true;
 				} else {
