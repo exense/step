@@ -1,6 +1,7 @@
 {
 	"NAME": "Step OSS",
 	"OS": "WINDOWS",
+  "JAVA_VERSION": "JDK11",
 	
 	"SUBPROJECTS":
 	{
@@ -41,11 +42,11 @@
 		"DESTINATION_NAME": [
       "step-controller-${VERSION}.zip",
       "step-controller-${VERSION}.zip",
-      "step:controller-${VERSION}",
+      "step:k8s-step-controller-${VERSION}-java-11",
       
       "step-agent-${VERSION}.zip",
       "step-agent-${VERSION}.zip",
-      "step:agent-${VERSION}",
+      "step:k8s-step-agent-${VERSION}-java-11",
     ],
 		
 		"URL_STAGING":  [
