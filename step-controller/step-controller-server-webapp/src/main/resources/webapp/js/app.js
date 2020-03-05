@@ -743,10 +743,12 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
       if(attr.autofocus=="" || $scope.$eval(attr.autofocus)) {
         $timeout(function() {
           function focusChild(el) {
-            if(el.hasChildNodes()) {
-              focusChild(el.children[0])
-            } else {
-              el.focus();
+            if(el) {
+              if(el.hasChildNodes()) {
+                focusChild(el.children[0])
+              } else {
+                el.focus();
+              }
             }
           }
           focusChild($element[0])
