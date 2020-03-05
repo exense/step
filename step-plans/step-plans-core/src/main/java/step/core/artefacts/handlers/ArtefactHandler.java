@@ -168,7 +168,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		if(artefact.isCreateSkeleton()) {
 			ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
-			reportNodeAccessor.save(node);
+			saveReportNode(node, reportNodeAccessor);
 		}
 		
 		context.getExecutionCallbacks().afterReportNodeSkeletonCreation(context, node);
@@ -223,7 +223,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				node.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
 				if(persistBefore && artefact.isPersistNode()) {
-					reportNodeAccessor.save(node);					
+					saveReportNode(node, reportNodeAccessor);					
 				}
 				
 				execute_(node, artefact);
@@ -236,13 +236,13 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setDuration((int)duration);
 
 		if(persistAfter && artefact.isPersistNode()) {
-				if(!persistOnlyNonPassed){
-					reportNodeAccessor.save(node);
-				}else{
-					if(!node.getStatus().equals(ReportNodeStatus.PASSED)){
-						reportNodeAccessor.save(node);
-					}
+			if(!persistOnlyNonPassed){
+				saveReportNode(node, reportNodeAccessor);
+			} else {
+				if(!node.getStatus().equals(ReportNodeStatus.PASSED)){
+					saveReportNode(node, reportNodeAccessor);
 				}
+			}
 		}
 		
 		
@@ -251,6 +251,22 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		afterDelegation(node, parentNode, artefact);
 		
 		return node;
+	}
+
+	protected ReportNode saveReportNode(REPORT_NODE node, ReportNodeAccessor reportNodeAccessor) {
+		AbstractArtefact resolvedArtefact = node.getResolvedArtefact();
+		if(resolvedArtefact != null) {
+			List<AbstractArtefact> children = resolvedArtefact.getChildren();
+			// save the resolved artefact without children to save space
+			resolvedArtefact.setChildren(null);
+			try {
+				return reportNodeAccessor.save(node);
+			} finally {
+				resolvedArtefact.setChildren(children);
+			}
+		} else {
+			return reportNodeAccessor.save(node);
+		}
 	}
 	
 	protected abstract void execute_(REPORT_NODE node, ARTEFACT testArtefact) throws Exception;
