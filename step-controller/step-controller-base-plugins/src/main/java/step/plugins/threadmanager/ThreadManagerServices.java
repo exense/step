@@ -74,6 +74,7 @@ public class ThreadManagerServices extends AbstractServices {
 	}	
 	
 	@GET
+	@Secured(right="report-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/operations")
 	public List<Operation> getCurrentOperations(@QueryParam("eid") String executionID) {
@@ -88,6 +89,7 @@ public class ThreadManagerServices extends AbstractServices {
 	}
 	
 	@GET
+	@Secured(right="report-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/operations/{reportnodeid}")
 	public List<Operation> getOperationsByReportNodeId(@PathParam("reportnodeid") String reportNodeId) {

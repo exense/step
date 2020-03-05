@@ -1,11 +1,8 @@
-<div id="OperationListCtrl" ng-controller="OperationListCtrl">
+<div id="OperationListCtrl" ng-controller="OperationListCtrl" class="panel panel-default">
 	<div class="toolbar">
 		<auto-refresh-commands autorefresh="autorefresh" />
 	</div>
-	<div class="panel-heading">
-		<p>Current operations</p>
-	</div>
-	
+	<div class="panel-heading">Current operations</div>	
 	<div class="panel-body">
 		<st-table data="operationList" handle="tableHandle" uid="'operationsList'" persist-state="true">
 			<st-columns>
@@ -14,10 +11,15 @@
 					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 					<cell>{{row.operation.tid}}</cell>
 				</st-column>
-				<st-column name="name">
-					<header>Plan Name - executionID</header>
+				<st-column name="planName">
+					<header>Plan Name</header>
 					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-					<cell><a href="#/root/executions/{{row.execId}}">{{row.planName}} - {{row.execId}}</a></cell>
+					<cell><a href="#/root/plans/editor/{{row.planId}}">{{row.planName}}</a></cell>
+				</st-column>
+				<st-column name="execution">
+					<header>Execution</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell><a href="#/root/executions/{{row.execId}}">{{row.execId}}</a></cell>
 				</st-column>
 				<st-column name="testcase">
 					<header>Testcase</header>

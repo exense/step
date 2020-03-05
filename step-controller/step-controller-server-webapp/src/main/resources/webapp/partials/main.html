@@ -28,7 +28,7 @@
 					<a id="otherDropdown" data-toggle="dropdown"><span class="glyphicon glyphicon-menu-hamburger"></span></a>
 					<ul class="dropdown-menu" aria-labelledby="otherDropdown">
 						<li><a ui-sref="reportBrowser" ng-click="setView('reportBrowser')">Reports</a></li>
-						<li ng-repeat="entry in viewRegistry.getCustomMenuEntries()" ><a ng-click="setView(entry.viewId)">{{entry.label}}</a></li>
+						<li ng-repeat="entry in viewRegistry.getCustomMenuEntries()" ng-if="!(entry.right && !authService.hasRight(entry.right))" ><a ng-click="setView(entry.viewId)">{{entry.label}}</a></li>
 					</ul>
 				</li>
 			</ul>

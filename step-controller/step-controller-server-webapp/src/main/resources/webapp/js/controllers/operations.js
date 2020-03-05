@@ -20,7 +20,7 @@ angular.module('operationsControllers',['step'])
 
 .run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerView('operations','partials/operations/operationsList.html');
-  ViewRegistry.registerCustomMenuEntry('Current Operations','operations');
+  ViewRegistry.registerCustomMenuEntry('Current Operations','operations', null, null, 'admin');
 })
 
 .controller('OperationListCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService) {

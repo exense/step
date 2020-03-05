@@ -112,8 +112,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','p
 		customViews[viewId] = {template:template, isPublicView:isPublicView}
 	}
 
-	api.registerCustomMenuEntry = function(label, viewId, mainMenu, menuIconClass) {
-		customMenuEntries.push({label: label, viewId: viewId, mainMenu: mainMenu, menuIconClass: menuIconClass})
+	api.registerCustomMenuEntry = function(label, viewId, mainMenu, menuIconClass, right) {
+		customMenuEntries.push({label: label, viewId: viewId, mainMenu: mainMenu, menuIconClass: menuIconClass, right: right})
 	}
 
 	api.getCustomMenuEntries = function() {
