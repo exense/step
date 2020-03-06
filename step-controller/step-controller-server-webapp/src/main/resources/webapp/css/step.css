@@ -683,3 +683,8 @@ tbody .form-group {
 	overflow-y: hidden;	
 	scrollbar-width: none;
 }
+
+/* temporary fix: override class of viz.css */
+st-table table.dataTable tbody > tr {
+    cursor: auto;
+}
