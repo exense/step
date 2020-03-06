@@ -75,6 +75,9 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	
 	private final ObjectMapper mapper;
 	
+	private static final String KEYWORD_NAME_PROP = "$keywordName";
+	private static final String KEYWORD_TIMEOUT_PROP = "$keywordTimeout";
+	
 	public FunctionExecutionServiceImpl(GridClient gridClient, FunctionTypeRegistry functionTypeRegistry, DynamicBeanResolver dynamicBeanResolver) throws FunctionExecutionServiceException {
 		super();
 		this.gridClient = gridClient;
@@ -168,6 +171,10 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			input.setProperties(properties);
 
 			int callTimeout = function.getCallTimeout().get();
+			
+			//expose additional properties to the keyword  
+			properties.put(KEYWORD_NAME_PROP, input.getFunction());
+			properties.put(KEYWORD_TIMEOUT_PROP, Integer.toString(callTimeout));
 
 			// Calculate the call timeout of the function. The offset is required to ensure that the call timeout of the function,
 			// if used in the function handler, occurs before the agent timeout that will interrupt the thread
