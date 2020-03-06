@@ -177,6 +177,9 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
     $http.get("rest/plans?type="+$scope.planType.type+'&template='+$scope.template).then(function(response){
       var createdPlan = response.data;
       createdPlan.attributes = $scope.plan.attributes;
+      if(createdPlan.root) {
+        createdPlan.root.attributes = createdPlan.attributes;
+      }
       $http.post("rest/plans", createdPlan).then(function(response) {
         $uibModalInstance.close(response.data);
         if(editAfterSave) {
