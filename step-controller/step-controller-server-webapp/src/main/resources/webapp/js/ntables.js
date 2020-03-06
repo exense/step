@@ -342,15 +342,9 @@ angular.module('tables', ['export'])
                 scope.loadingTable=false;
               });
 	          }, error: function(jqXHR, textStatus, errorThrown) {
-	            if (textStatus === 'timeout') {
-	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the query <Br/>(Timeout value: " + ajaxTimeout + " ms).");
-	            } else if (textStatus !=='abort') {
-	             if (jqXHR.responseText) {
-	              Dialogs.showErrorMsg(jqXHR.responseText);
-	             } else {
-	              // Dialogs.showErrorMsg("An unexpected error occured while loading the table. <Br/>Error textStatus: " + textStatus + ", errorThrown: " + errorThrown);
-	             }
-	            }
+	            if (jqXHR.status === 500 && jqXHR.responseText.indexOf("MongoExecutionTimeoutException") >= 0) {
+	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the DB query.");
+	            } 
 	          }}
 
 	          tableOptions.processing = false;

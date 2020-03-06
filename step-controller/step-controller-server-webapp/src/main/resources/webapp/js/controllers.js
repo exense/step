@@ -349,7 +349,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$scope.stepsTable.columns[2].search(escapeRegExp(error));
 				}
 
-				if($scope.stepsTable && $scope.stepsTable.reload && !$scope.reloadingTable) {
+				if($scope.stepsTable && $scope.stepsTable.reload && !$scope.isRefreshing) {
 				  $scope.isRefreshing=true;
 					$scope.stepsTable.reload(function() {
 					  $timeout(function() {
