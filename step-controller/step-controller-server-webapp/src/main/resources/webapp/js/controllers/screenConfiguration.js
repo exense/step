@@ -219,7 +219,10 @@ angular.module('screenConfigurationControllers',['tables','step'])
               }
             })
           }
-          $scope.attributes = newAttributes;
+          // Reload attributes only if necessary to avoid focus lost on forms
+          if(!angular.equals($scope.attributes, newAttributes)) {
+            $scope.attributes = newAttributes;
+          }
         })
       }
       
