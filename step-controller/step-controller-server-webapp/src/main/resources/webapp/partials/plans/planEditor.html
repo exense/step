@@ -11,10 +11,10 @@
 							<button ng-disabled="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="startInteractive()">Start interactive session</button>
 							<button ng-if="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="resetInteractive()">Reset</button>
 							<button ng-if="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="stopInteractive()">Stop</button>						
-							<button ng-if="isInteractiveSessionActive()" type="button" class="btn btn-default btn-xs" uib-popover-template="'executionParametersPopover.html'" popover-placement="bottom" popover-trigger="'outsideClick'">Session parameters</button>					
+							<button ng-if="isInteractiveSessionActive()" type="button" class="btn btn-default btn-xs" uib-popover-template="'executionParametersPopover.html'" popover-placement="bottom" popover-trigger="'outsideClick'" popover-append-to-body="true">Session parameters</button>					
 						</div>
 						<div class="btn-group">
-							<button uib-popover-template="'executionCommandsPopover.html'" popover-placement="bottom-right" popover-trigger="'outsideClick'" type="submit" class="btn btn-default btn-xs btn-run" title="Execute this plan" ng-click="execute()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
+							<button uib-popover-template="'executionCommandsPopover.html'" popover-placement="bottom-right" popover-trigger="'outsideClick'" popover-append-to-body="true" type="submit" class="btn btn-default btn-xs btn-run" title="Execute this plan" ng-click="execute()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
 				  		</div>
 				  	</div>
 				 </div>
