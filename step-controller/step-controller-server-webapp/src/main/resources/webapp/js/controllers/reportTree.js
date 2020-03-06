@@ -41,6 +41,18 @@ angular.module('reportTree',['step','artefacts'])
       var scrollTopPos;
       var scrollLeftPos;
       var tree;
+      var paging = {};
+      var limit=1000;
+      getPreviousNodeLabel = function (node) {
+        var cSkip = (paging[node.id]) ? paging[node.id].skip : 0;
+        var newSkip = (cSkip>=limit) ? cSkip-limit:0;
+        return "Previous Nodes " +  ((cSkip > 0) ? "("+ newSkip + ".." + cSkip +")" : ""); 
+      }
+      getNextNodeLabel = function (node) {
+        var nbChidlren = node.children.length;
+        var cSkip = (paging[node.id]) ? paging[node.id].skip : 0;
+        return "Next Nodes " + ((nbChidlren >= limit) ? "("+ (cSkip+limit) + ".." + (cSkip+limit*2) +")" : "");
+      }
       treeDiv.jstree(
           {
           'core' : {
@@ -49,22 +61,50 @@ angular.module('reportTree',['step','artefacts'])
             },
             'data' : function (obj, cb) {
               var id = obj.id==='#'?nodeid:obj.id;
-              //console.log($scope.reportTreeSettings);
-              $http.get("rest/controller/reportnode/"+id+"/children?skip="+$scope.reportTreeSettings.skip+"&limit="+$scope.reportTreeSettings.limit).then(function(response) {
-              //$http.get("rest/controller/reportnode/"+id+"/children").then(function(response) {
+              var skip=0;
+              if (paging[id]) {
+                skip = paging[id].skip;
+              }
+              $http.get("rest/controller/reportnode/"+id+"/children?skip="+skip+"&limit="+limit).then(function(response) {
                 var nodes = response.data;
-               var children=_.map(nodes,function(node){
-                 // node.resolvedArtefact has been introduced with 3.6.0. We're checking it here for retrocompatibility. Remove this check has soon as possible
-                 var cssClass = node.resolvedArtefact?artefactTypes.getIcon(node.resolvedArtefact._class):artefactTypes.getDefaultIcon();
-               return {id:node.id, text:node.name, children:true, icon:"glyphicon "+cssClass+" status-"+node.status};
+                var children=_.map(nodes,function(node){
+                  // node.resolvedArtefact has been introduced with 3.6.0. We're checking it here for retrocompatibility. Remove this check has soon as possible
+                  var cssClass = node.resolvedArtefact?artefactTypes.getIcon(node.resolvedArtefact._class):artefactTypes.getDefaultIcon();
+                  return {id:node.id, text:node.name, children:true, icon:"glyphicon "+cssClass+" status-"+node.status};
                 })
-                cb.call(this,children);               
+                cb.call(this,children);
               })
             }
           }, 
-          "plugins" : []
-          });
-
+          "plugins" : ["contextmenu"],
+          "contextmenu": {
+            "items": function ($node) {
+            //  var tree = $("#jstree_demo_div").jstree(true);
+              return {
+                "PagingBefore": {
+                  "separator_before": false,
+                  "separator_after": false,
+                  "label": getPreviousNodeLabel($node),
+                  "icon"       : false,
+                  "action": function (obj) {
+                    $scope.pagingBefore(obj);
+                  },
+                  "_disabled" : !(paging[$node.id] && paging[$node.id].skip > 0) 
+                },
+                "PagingNext": {
+                  "separator_before": false,
+                  "separator_after": false,
+                  "label": getNextNodeLabel($node),
+                  "icon"       : false,
+                  "action": function (obj) {
+                    $scope.pagingNext(obj);
+                  },
+                  "_disabled" : ($node.children.length<limit)
+                }
+              }
+            }
+          }
+          });    
       tree = treeDiv.jstree(true);
       
       treeDiv.on('changed.jstree', function (e, data) {
@@ -89,6 +129,25 @@ angular.module('reportTree',['step','artefacts'])
           treeScrollDiv.scrollLeft = scrollLeftPos;
         }
       });
+      
+      $scope.pagingBefore = function() {
+        var node = tree.get_selected(true)[0];
+        if (paging[node.id]) {
+          var newSkip = paging[node.id].skip - limit;
+          paging[node.id] = {skip: (newSkip>0)?newSkip:0};
+          $scope.handle.refresh();
+        }
+      }
+      
+      $scope.pagingNext = function(obj) {
+        var node = tree.get_selected(true)[0];
+        if (paging[node.id]) {
+          paging[node.id] = {skip: paging[node.id].skip + limit};
+        } else {
+          paging[node.id] = {skip: limit};
+        }
+        $scope.handle.refresh();
+      }
       
       $scope.getDisplaiableProperties = function(node) {
         return _.without(_.keys(node),'id','_id','parentID','executionTime','duration','error','functionId','executionID','artefactID','customAttributes','_class','status','name','measures','attachments')
