@@ -10,6 +10,9 @@
 		
 		"FOLDER":
 		["step-parent/", "step-node/step-node-agent/"],
+    
+		"AFTER":
+		["step-oss-java-after-compile", ""],
 		
 		"URL_STAGING":
 		[ 
