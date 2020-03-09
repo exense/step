@@ -10,9 +10,7 @@ import step.core.repositories.RepositoryObjectReference;
 public interface ExecutionAccessor extends CRUDAccessor<Execution> {
 
 	void createIndexesIfNeeded(Long ttl);
-
-	Execution get(String nodeId);
-
+	
 	List<Execution> getActiveTests();
 
 	List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference);

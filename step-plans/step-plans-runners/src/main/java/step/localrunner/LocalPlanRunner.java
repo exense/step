@@ -206,6 +206,11 @@ public class LocalPlanRunner extends DefaultPlanRunner implements PlanRunner {
 				return get(new ObjectId(id));
 			}
 
+			@Override
+			public List<Function> getRange(int skip, int limit) {
+				throw new UnsupportedOperationException("This method is currently not implemented");
+			}
+
 		};	
 		
 		Configuration configuration = new Configuration();

@@ -35,6 +35,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -88,10 +89,69 @@ public class FunctionServices extends AbstractServices {
 		functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 	}
 
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public List<Function> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+		if(skip != null && limit != null) {
+			return functionAccessor.getRange(skip, limit);
+		} else {
+			return getAll(0, 1000);
+		}
+	}
+	
+	@GET
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public Function get(@PathParam("id") String functionId) {
+		return functionManager.getFunctionById(functionId);
+	}
+	
+	@POST
+	@Path("/search")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public Function get(Map<String,String> attributes) {
+		return functionManager.getFunctionByAttributes(attributes);
+	}
+	
+	@POST
+	@Path("/find")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public List<Function> findMany(Map<String,String> attributes) {
+		return StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+	}
+	
+	@POST
+	@Path("/lookup")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public Function lookupCallFunction(CallFunction callFunction) {
+		Function function = null;
+		try {
+			function = functionLocator.getFunction(callFunction);
+		} catch (RuntimeException e) {}
+		return function;
+	}
+	
+	@GET
+	@Path("/{id}/editor")
+	@Secured(right="kw-read")
+	public String getFunctionEditor(@PathParam("id") String functionId) {
+		Function function = functionManager.getFunctionById(functionId);
+		FunctionEditor editor = getContext().get(FunctionEditorRegistry.class).getFunctionEditor(function);
+		if(editor!=null) {
+			return editor.getEditorPath(function);
+		} else {
+			return null;
+		}
+	}
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	//@Path("/")
 	@Secured(right="kw-write")
 	public Function save(Function function) throws SetupFunctionException, FunctionTypeException {
 		return functionManager.saveFunction(function);
@@ -111,66 +171,6 @@ public class FunctionServices extends AbstractServices {
 	@Secured(right="kw-delete")
 	public void delete(@PathParam("id") String functionId) throws FunctionTypeException {
 		functionManager.deleteFunction(functionId);
-	}
-	
-	@POST
-	@Path("/search")
-	@Secured(right="kw-read")
-	public Function get(Map<String,String> attributes) {
-		return functionManager.getFunctionByAttributes(attributes);
-	}
-	
-	@POST
-	@Path("/lookup")
-	@Secured(right="kw-read")
-	public Function lookupCallFunction(CallFunction callFunction) {
-		Function function = null;
-		try {
-			function = functionLocator.getFunction(callFunction);
-		} catch (RuntimeException e) {}
-		return function;
-	}
-	
-	
-//	@GET
-//	@Path("/lookupByArtefact/{id}")
-//	@Consumes(MediaType.APPLICATION_JSON)
-//	@Produces(MediaType.APPLICATION_JSON)
-//	@Secured(right="plan-read")
-//	public Function lookupByArtefactId(@PathParam("id") String id) {
-//		CallFunction callFunction = (CallFunction) getContext().getArtefactAccessor().get(new ObjectId(id))	;
-//		Function function = null;
-//		try {
-//			function = functionLocator.getFunction(callFunction);
-//		} catch (RuntimeException e) {}
-//		return function;
-//	}
-	
-	@POST
-	@Path("/find/many")
-	@Secured(right="kw-read")
-	public List<Function> findMany(Map<String,String> attributes) {
-		return StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
-	}
-	
-	@GET
-	@Path("/{id}")
-	@Secured(right="kw-read")
-	public Function get(@PathParam("id") String functionId) {
-		return functionManager.getFunctionById(functionId);
-	}
-	
-	@GET
-	@Path("/{id}/editor")
-	@Secured(right="kw-read")
-	public String getFunctionEditor(@PathParam("id") String functionId) {
-		Function function = functionManager.getFunctionById(functionId);
-		FunctionEditor editor = getContext().get(FunctionEditorRegistry.class).getFunctionEditor(function);
-		if(editor!=null) {
-			return editor.getEditorPath(function);
-		} else {
-			return null;
-		}
 	}
 	
 	@GET

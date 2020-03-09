@@ -20,7 +20,7 @@ angular.module('executionsControllers',['step'])
 
 .run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerView('executions','partials/execution.html');
-  EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/controller/execution/', 'rest/controller/save/execution', 'st-table', '/partials/executions/executionSelectionTable.html');
+  EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/executions/', 'rest/executions/', 'st-table', '/partials/executions/executionSelectionTable.html');
 //  ViewRegistry.registerDashlet('execution','History','partials/executions/latestExecutions.html','latestExecutions');
 })
 
@@ -55,7 +55,7 @@ angular.module('executionsControllers',['step'])
     templateUrl: 'partials/executions/executionHistory.html',
     controller: function($scope) {
       function loadLatestExecutions() {
-        $http.post('rest/controller/executions/byref', $scope.artefactRef).then(function(response) {
+        $http.post('rest/executions/search/by/ref', $scope.artefactRef).then(function(response) {
           $scope.executions = response.data;
         });
       }

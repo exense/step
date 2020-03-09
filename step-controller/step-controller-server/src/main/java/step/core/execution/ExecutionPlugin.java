@@ -19,5 +19,6 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 		collectionRegistry.register("executions", new ExecutionCollection(context));
 		collectionRegistry.register("leafReports", new LeafReportNodeCollection(context));
 		collectionRegistry.register("reports", new ReportNodeCollection(context));
+		context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
 	}
 }

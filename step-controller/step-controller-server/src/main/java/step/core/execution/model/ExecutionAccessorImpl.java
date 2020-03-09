@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.jongo.MongoCursor;
 
 import step.commons.iterators.SkipLimitIterator;
@@ -50,11 +49,6 @@ public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> imple
 		createOrUpdateIndex(executions_, "description");
 		createOrUpdateIndex(executions_, "executionParameters.userID");
 		createOrUpdateIndex(executions_, "executionTaskID");
-	}
-
-	@Override
-	public Execution get(String nodeId) {
-		return get(new ObjectId(nodeId));
 	}
 		
 	@Override

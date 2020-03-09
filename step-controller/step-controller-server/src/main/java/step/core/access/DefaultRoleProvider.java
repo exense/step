@@ -14,7 +14,7 @@ public class DefaultRoleProvider implements RoleProvider {
 	{
 		DEFAULT_ROLE = new Role();
 		DEFAULT_ROLE.addAttribute(AbstractOrganizableObject.NAME, "admin");
-		DEFAULT_ROLE.setRights(Arrays.asList(new String[]{"interactive","plan-read","plan-write","plan-delete","plan-execute","kw-read","kw-write","kw-delete","kw-execute","report-read","execution-write","execution-delete","user-write","user-read","task-read","task-write","task-delete","admin","param-read","param-write","param-delete","param-global-write","token-manage"}));
+		DEFAULT_ROLE.setRights(Arrays.asList(new String[]{"interactive","plan-read","plan-write","plan-delete","plan-execute","kw-read","kw-write","kw-delete","kw-execute","execution-read","execution-write","execution-delete","user-write","user-read","task-read","task-write","task-delete","admin","param-read","param-write","param-delete","param-global-write","token-manage"}));
 		
 		DEFAULT_ROLES.add(DEFAULT_ROLE);
 	}

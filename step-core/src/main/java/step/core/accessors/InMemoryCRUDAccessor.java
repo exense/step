@@ -1,7 +1,10 @@
 package step.core.accessors;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -104,5 +107,15 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 				}
 			}
 		}).spliterator();
+	}
+
+	@Override
+	public List<T> getRange(int skip, int limit) {
+		List<T> list = new ArrayList<>(map.values());
+		if(skip<list.size()) {
+			return list.subList(skip, Math.min(list.size(), skip+limit));
+		} else {
+			return new ArrayList<>();
+		}
 	}
 }

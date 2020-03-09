@@ -1,18 +1,25 @@
 package step.client.accessors;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 
 import org.bson.types.ObjectId;
 
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
+import step.commons.iterators.SkipLimitIterator;
+import step.commons.iterators.SkipLimitProvider;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.CRUDAccessor;
 
@@ -53,12 +60,50 @@ public class AbstractRemoteCRUDAccessorImpl<T extends AbstractIdentifiableObject
 
 	@Override
 	public Spliterator<T> findManyByAttributes(Map<String, String> attributes) {
-		throw notImplemented();
+		Builder b = requestBuilder(path+"find");
+		Entity<Map<String, String>> entity = Entity.entity(attributes, MediaType.APPLICATION_JSON);
+		return executeRequest(()->b.post(entity, genericEntity)).spliterator();
 	}
 
 	@Override
 	public Iterator<T> getAll() {
-		throw notImplemented();
+		SkipLimitIterator<T> skipLimitIterator = new SkipLimitIterator<T>(new SkipLimitProvider<T>() {
+			@Override
+			public List<T> getBatch(int skip, int limit) {
+				return getRange(skip, limit);
+			}
+		});
+		return skipLimitIterator;			
+	}
+	
+	protected ParameterizedType parameterizedGenericType = new ParameterizedType() {
+        public Type[] getActualTypeArguments() {
+            return new Type[] { entityClass };
+        }
+
+        public Type getRawType() {
+            return List.class;
+        }
+
+        public Type getOwnerType() {
+            return List.class;
+        }
+    };
+    
+    protected GenericType<List<T>> genericEntity = new GenericType<List<T>>(
+			parameterizedGenericType) {
+    };
+	
+	@Override
+	public List<T> getRange(int skip, int limit) {
+		Map<String, String> queryParams = new HashMap<>();
+		queryParams.put("skip", Integer.toString(skip));
+		queryParams.put("limit", Integer.toString(limit));
+		GenericType<List<T>> genericEntity = new GenericType<List<T>>(
+				parameterizedGenericType) {
+	    };
+		Builder b = requestBuilder(path, queryParams);
+		return executeRequest(()->b.get(genericEntity));
 	}
 
 	@Override
@@ -88,5 +133,4 @@ public class AbstractRemoteCRUDAccessorImpl<T extends AbstractIdentifiableObject
 	public void save(Collection<? extends T> entities) {
 		entities.forEach(e->save(e));
 	}
-
 }

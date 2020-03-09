@@ -37,7 +37,7 @@ angular.module('components',['step'])
     controller: function($scope, $http) {
       $scope.$watch('executionId', function() {
         if($scope.executionId && !$scope.executionDescription) {
-          $http.get('rest/controller/execution/' + $scope.executionId).then(function(response) {
+          $http.get('rest/executions/' + $scope.executionId).then(function(response) {
             var data = response.data;
             $scope.executionDescription = data.description;
           })

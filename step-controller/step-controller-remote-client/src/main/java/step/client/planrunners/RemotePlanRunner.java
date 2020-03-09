@@ -1,13 +1,11 @@
 package step.client.planrunners;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 
 import ch.exense.commons.io.Poller;
@@ -16,7 +14,6 @@ import step.client.accessors.RemotePlanAccessorImpl;
 import step.client.credentials.ControllerCredentials;
 import step.client.reports.RemoteReportTreeAccessor;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
@@ -101,7 +98,7 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
 	}
 	
 	public Execution getExecution(String executionID) {
-		Builder b = requestBuilder("/rest/controller/execution/"+executionID);
+		Builder b = requestBuilder("/rest/executions/"+executionID);
 		return executeRequest(()->b.get(Execution.class));
 	}
 	
@@ -113,43 +110,5 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
 	public AbstractArtefact getArtefact(String artefactId) {
 		Builder b = requestBuilder("/rest/controller/artefact/"+artefactId);
 		return executeRequest(()->b.get(AbstractArtefact.class));
-	}
-	
-	/**
-	 * @param reportNodeId the report node id
-	 * @return the report node
-	 * @deprecated Use RemoteReportTreeAccessor instead. 
-	 */
-	@Deprecated 
-	public ReportNode getReportNode(String reportNodeId) {
-		Builder b = requestBuilder("/rest/controller/reportnode/"+reportNodeId);
-		return executeRequest(()->b.get(ReportNode.class));
-	}
-	
-	/**
-	 * @param executionID the execution id
-	 * @return the list of nodes from this execution
-	 * @deprecated Use PlanRunnerResult.visitReportNodes instead 
-	 */
-	@Deprecated 
-	public List<ReportNode> getReportNodesByExecutionID(String executionID) {
-		// TODO implement streaming for this REST service and make the "limit" param mandatory
-		Builder b = requestBuilder("/rest/controller/execution/"+executionID+"/reportnodes?limit="+Integer.MAX_VALUE);
-		GenericType<List<ReportNode>> genericEntity = new GenericType<List<ReportNode>>() {};
-		return executeRequest(()->b.get(genericEntity));
-	}
-	
-	/**
-	 * @param executionID the execution Id
-	 * @param reportNodeClass type name of the nodes
-	 * @param limit maximum number of nodes
-	 * @return the list of nodes
-	 * @deprecated Use PlanRunnerResult.visitReportNodes instead 
-	 */
-	@Deprecated 
-	public List<ReportNode> getReportNodesByExecutionID(String executionID, String reportNodeClass, int limit) {
-		Builder b = requestBuilder("/rest/controller/execution/"+executionID+"/reportnodes?class="+reportNodeClass+"&limit="+limit);
-		GenericType<List<ReportNode>> genericEntity = new GenericType<List<ReportNode>>() {};
-		return executeRequest(()->b.get(genericEntity));
 	}
 }

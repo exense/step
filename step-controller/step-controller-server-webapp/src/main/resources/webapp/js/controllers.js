@@ -288,7 +288,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			})
 
 			var refreshTestCaseTable = function() {        
-				$http.get('rest/controller/execution/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode').then(function(response) {
+				$http.get('rest/executions/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode').then(function(response) {
 					var data = response.data;
 					var dataSet = [];
 					if(data.length>0) {
@@ -303,7 +303,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			}
 
 			var refreshExecution = function() {
-				$http.get('rest/controller/execution/' + eId).then(function(response) {
+				$http.get('rest/executions/' + eId).then(function(response) {
 					var data = response.data;
 					if($scope.execution==null) {
 						if($scope.testCaseTable.resetSelection) {

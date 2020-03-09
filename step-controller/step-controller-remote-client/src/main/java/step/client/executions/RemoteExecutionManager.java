@@ -101,7 +101,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	 * @return the {@link Execution}
 	 */
 	public Execution get(String executionId) {
-		Builder b = requestBuilder("/rest/controller/execution/"+executionId);
+		Builder b = requestBuilder("/rest/executions/"+executionId);
 		return executeRequest(()->b.get(Execution.class));
 	}
 
@@ -116,7 +116,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		if(reportNodeClass != null) {
 			params.put("class", reportNodeClass);
 		}
-		Builder b = requestBuilder("/rest/controller/execution/"+executionId+"/statusdistribution", params);
+		Builder b = requestBuilder("/rest/executions/"+executionId+"/statusdistribution", params);
 		return executeRequest(()->b.get(Map.class));
 	}
 	

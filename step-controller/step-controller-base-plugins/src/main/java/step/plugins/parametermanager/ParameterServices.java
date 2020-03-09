@@ -59,7 +59,6 @@ public class ParameterServices extends AbstractServices {
 	@GET
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	//@Path("/")
 	@Secured(right="param-write")
 	public Parameter newParameter() {
 		Parameter parameter =  new Parameter(new Expression(""), "", "", "");
@@ -75,7 +74,6 @@ public class ParameterServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	//@Path("/")
 	@Secured(right="param-write")
 	public Parameter save(Parameter newParameter) {
 		assertRights(newParameter);

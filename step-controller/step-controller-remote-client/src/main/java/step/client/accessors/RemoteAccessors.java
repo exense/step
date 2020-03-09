@@ -23,7 +23,7 @@ public class RemoteAccessors {
 	}
 	
 	public ExecutionAccessor getExecutionAccessor() {
-		return new RemoteExecutionAccessor(credentials);
+		return new RemoteExecutionAccessorImpl(credentials);
 	}
 	
 }

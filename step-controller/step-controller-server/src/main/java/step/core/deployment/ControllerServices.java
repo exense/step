@@ -19,10 +19,8 @@
 package step.core.deployment;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Singleton;
@@ -41,17 +39,11 @@ import javax.ws.rs.core.Response;
 
 import org.bson.types.ObjectId;
 
-import step.commons.datatable.DataTable;
-import step.commons.datatable.TableRow;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionRunnable;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionParameters;
-import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
@@ -130,17 +122,6 @@ public class ControllerServices extends AbstractServices {
 		}
 		return result;
 	}
-	
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/executions/findByCritera")
-	@Secured(right="execution-write")
-	public List<Execution> findByCritera(FindByCriteraParam param) {
-		return ((ExecutionAccessorImpl) getContext().getExecutionAccessor()).findByCritera(param.getCriteria(), 
-				param.getStart().getTime(), param.getEnd().getTime(), 
-				param.getSkip(), param.getLimit());
-	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -149,107 +130,6 @@ public class ControllerServices extends AbstractServices {
 	public String execute(ExecutionParameters executionParams) {
 		String executionID = getScheduler().execute(executionParams);
 		return executionID;
-	}
-	
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Path("/save/execution")
-	@Secured(right="plan-execute")
-	public void saveExecution(Execution execution) {
-		getContext().getExecutionAccessor().save(execution);
-	}
-	
-	@GET
-	@Path("/execution/{id}")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
-	public Execution getExecution(@PathParam("id") String executionID) {
-		return getContext().getExecutionAccessor().get(executionID);
-	}	
-	
-	public class RTMLink {
-		String link;
-		public String getLink() {
-			return link;
-		}
-	}
-		
-	@GET
-	@Path("/execution/{id}/rtmlink")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
-	public RTMLink getRtmLink(@PathParam("id") String executionID) {
-		RTMLink link = new RTMLink();
-//		link.link = RTMLinkGenerator.getAggregateViewByEid(executionID);
-		return link;
-	}	
-	
-	@POST
-	@Path("/executions/byref")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
-	public List<Execution> getExecutionsByRepositoryObjectReference(RepositoryObjectReference objectReference) {
-		List<Execution> executionsByArtefactURL = getContext().getExecutionAccessor().getTestExecutionsByArtefactURL(objectReference);
-		return executionsByArtefactURL;
-	}
-	
-	@GET
-	@Path("/execution/{id}/statusdistribution")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
-	public Map<ReportNodeStatus, Integer> getStatusReport(@PathParam("id") String executionID, @QueryParam("class") String reportNodeClass) {
-		return getContext().getReportAccessor().getLeafReportNodesStatusDistribution(executionID, reportNodeClass);
-	}
-	
-	@GET
-	@Path("/execution/{id}/throughput")
-	@Produces({"application/json;response-pass-through=true"})
-	@Secured(right="report-read")
-	public DataTable getStatusReport(@PathParam("id") String executionID, @QueryParam("resolution") Integer nInterval)  {
-		Execution e = getContext().getExecutionAccessor().get(executionID);
-		
-		long t2;
-		if(e.getStatus()==ExecutionStatus.ENDED) {
-			t2=e.getEndTime();
-		} else {
-			t2=System.currentTimeMillis();
-		}
-		
-		long duration = t2 - e.getStartTime();
-	
-		int resolution = (int) (1.0*duration/nInterval);
-		
-		DataTable t = getContext().getReportAccessor().getTimeBasedReport(executionID, resolution);
-		
-		if(t.getRows().size()<resolution) {
-			long time = t.getRows().size()>0?t.getRows().get(t.getRows().size()-1).getDate().getTime():e.getStartTime();
-			for(int i=t.getRows().size();i<nInterval;i++) {
-				time+=resolution;
-				t.addRow(new TableRow(new Date(time), 0.0));
-			}
-		}
-		
-		return t;
-	}
-	
-	@GET
-	@Path("/execution/{id}/reportnodes")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
-	public List<ReportNode> getReportNodesByExecutionID(@PathParam("id") String executionID, @QueryParam("class") String reportNodeClass, @QueryParam("limit") int limit) {
-		List<ReportNode> result = new ArrayList<>();
-		Iterator<ReportNode> iterator;
-		if(reportNodeClass!=null) {
-			iterator =  getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionID, reportNodeClass);
-		} else {
-			iterator =  getContext().getReportAccessor().getReportNodesByExecutionID(executionID);
-		}
-		int i = 0;
-		while(iterator.hasNext()&&i<limit) {
-			i++;
-			result.add(iterator.next());
-		}
-		return result;
 	}
 	
 	@GET
@@ -262,18 +142,18 @@ public class ControllerServices extends AbstractServices {
 		}
 		return null;
 	}
-	
+
 	@GET
 	@Path("/reportnode/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
+	@Secured(right="execution-read")
 	public ReportNode getReportNode(@PathParam("id") String reportNodeId) {
 		return getContext().getReportAccessor().get(new ObjectId(reportNodeId));
 	}
 	
 	@GET
 	@Path("/reportnode/{id}/path")
-	@Secured(right="report-read")
+	@Secured(right="execution-read")
 	public List<ReportNode> getReportNodePath(@PathParam("id") String reportNodeId) {
 		List<ReportNode> result = new ArrayList<>();
 		List<ReportNode> path = getContext().getReportAccessor().getReportNodePath(new ObjectId(reportNodeId));
@@ -284,7 +164,7 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/reportnode/{id}/children")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
+	@Secured(right="execution-read")
 	public List<ReportNode> getReportNodeChildren(@PathParam("id") String reportNodeId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
 		skip = skip!=null?skip:0;
 		limit = limit!=null?limit:1000;
@@ -297,23 +177,11 @@ public class ControllerServices extends AbstractServices {
 		return result;
 	}
 
-	@GET
-	@Path("/executions")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
-	public List<Execution> getExecutions(@QueryParam("limit") int limit) {		
-		List<Execution> result = new ArrayList<>();
-		for(Execution e:getContext().getExecutionAccessor().findLastStarted(limit)) {
-			result.add(e);
-		}
-		return result;
-	}
-	
 	@POST
 	@Path("/repository/artefact/info")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
+	@Secured(right="execution-read")
 	public ArtefactInfo getArtefactInfo(RepositoryObjectReference ref) {
 		try {
 			return getContext().getRepositoryObjectManager().getArtefactInfo(ref);
@@ -326,7 +194,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/repository/report")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="report-read")
+	@Secured(right="execution-read")
 	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
 		return getContext().getRepositoryObjectManager().getReport(report);
 	}

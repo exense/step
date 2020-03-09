@@ -1,22 +1,16 @@
 package step.client.accessors;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Spliterator;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 
-import org.bson.types.ObjectId;
-
-import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.commons.iterators.SkipLimitIterator;
 import step.commons.iterators.SkipLimitProvider;
@@ -24,40 +18,14 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.repositories.RepositoryObjectReference;
 
-public class RemoteExecutionAccessor extends AbstractRemoteClient implements ExecutionAccessor {
+public class RemoteExecutionAccessorImpl extends AbstractRemoteCRUDAccessorImpl<Execution> implements ExecutionAccessor {
 
-	public RemoteExecutionAccessor(ControllerCredentials credentials){
-		super(credentials);
+	public RemoteExecutionAccessorImpl() {
+		super("/rest/executions/", Execution.class);
 	}
 	
-	public RemoteExecutionAccessor(){
-		super();
-	}
-
-	@Override
-	public Execution get(ObjectId id) {
-		Builder b = requestBuilder("/rest/controller/execution/"+id.toString());
-		return executeRequest(()->b.get(Execution.class));
-	}
-	
-	@Override
-	public Execution get(String executionId) {
-		return get(new ObjectId(executionId));
-	}
-
-	@Override
-	public Execution save(Execution entity) {
-		throw notImplemented();
-	}
-
-	@Override
-	public void save(Collection<? extends Execution> entities) {
-		throw notImplemented();
-	}
-
-	@Override
-	public Execution findByAttributes(Map<String, String> attributes) {
-		throw notImplemented();
+	public RemoteExecutionAccessorImpl(ControllerCredentials credentials) {
+		super(credentials, "/rest/executions/", Execution.class);
 	}
 
 	@Override
@@ -137,7 +105,7 @@ public class RemoteExecutionAccessor extends AbstractRemoteClient implements Exe
         				
         				Entity<FindByCriteraParam> entity = Entity.entity(param, MediaType.APPLICATION_JSON);
         				
-        				Builder b = requestBuilder("/rest/controller/executions/findByCritera");
+        				Builder b = requestBuilder("/rest/executions/search/by/critera");
         				return executeRequest(()->b.post(entity,new GenericType<List<Execution>>() {}));
         			}
         		}); 
@@ -147,76 +115,16 @@ public class RemoteExecutionAccessor extends AbstractRemoteClient implements Exe
 
 	@Override
 	public Iterable<Execution> findLastStarted(int limit) {
-		List<Execution> allExec = getAllArray();
-		
-		allExec.sort((e1, e2) -> {
-			long e1T = e1.getStartTime();
-			long e2T = e2.getStartTime();
-				
-			if (e1T == e2T) {
-				return 0;
-			} else if (e1.getStartTime() < e2.getStartTime()) { 
-				return 1;
-			} else { 
-				return -1;
-			}
-		});
-
-		if (allExec.size() > limit)
-			return allExec.subList(0, limit);
-		else
-			return allExec;
+		return getRange(0, limit);
 	}
 
 	@Override
 	public Iterable<Execution> findLastEnded(int limit) {
-		return getAllArray(limit);
-	}
-
-	@Override
-	public void remove(ObjectId id) {
 		throw notImplemented();
-	}
-
-	@Override
-	public Iterator<Execution> getAll() {
-		return getAllArray().iterator();
 	}
 
 	@Override
 	public List<Execution> getLastExecutionsBySchedulerTaskID(String schedulerTaskID, int limit) {
 		throw notImplemented();
-	}
-
-	@Override
-	public Spliterator<Execution> findManyByAttributes(Map<String, String> attributes) {
-		throw notImplemented();
-	}
-
-	@Override
-	public Execution findByAttributes(Map<String, String> attributes, String attributesMapKey) {
-		throw notImplemented();
-	}
-
-	@Override
-	public Spliterator<Execution> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
-		throw notImplemented();
-	}
-
-	private List<Execution> getAllArray() {
-		return getAllArray(-1);
-	}
-
-	private GenericType<ArrayList<Execution>> listType = new GenericType<ArrayList<Execution>>() {
-	};
-	
-	private List<Execution> getAllArray(int limit) {
-		Builder b;
-		if (limit < 0) {
-			b = requestBuilder("/rest/controller/executions");	
-		} else {
-			b = requestBuilder("/rest/controller/executions?limit="+limit);
-		}
-		return executeRequest(() -> b.get(listType));
 	}
 }

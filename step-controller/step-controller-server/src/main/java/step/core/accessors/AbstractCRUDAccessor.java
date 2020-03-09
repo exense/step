@@ -18,7 +18,9 @@
  *******************************************************************************/
 package step.core.accessors;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 
@@ -112,5 +114,12 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 	@Override
 	public void save(java.util.Collection<? extends T> entities) {
 		this.collection.insert(entities.toArray());
+	}
+
+	@Override
+	public List<T> getRange(int skip, int limit) {
+		ArrayList<T> result = new ArrayList<T>();
+		collection.find().sort("{_id:-1}").skip(skip).limit(limit).as(entityClass).forEachRemaining(e->result.add(e));
+		return result;
 	}
 }

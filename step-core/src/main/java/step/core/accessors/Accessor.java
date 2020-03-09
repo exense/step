@@ -1,6 +1,7 @@
 package step.core.accessors;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 
@@ -59,4 +60,14 @@ public interface Accessor<T extends AbstractIdentifiableObject> {
 	 * @return an {@link Iterator} for the objects found
 	 */
 	Spliterator<T> findManyByAttributes(Map<String, String> attributes, String attributesMapKey);
+	
+	/**
+	 * Get the range of objects specified by the skip/limit parameters browsing the collection 
+	 * sorted by ID in the descending order  
+	 * 
+	 * @param skip the start index (inclusive) of the range
+	 * @param limit the size of the range
+	 * @return a {@link List} containing the objects of the specified range
+	 */
+	List<T> getRange(int skip, int limit);
 }

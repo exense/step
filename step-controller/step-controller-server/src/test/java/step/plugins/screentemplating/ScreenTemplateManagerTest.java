@@ -106,6 +106,11 @@ public class ScreenTemplateManagerTest {
 			public ScreenInput get(String id) {
 				return get(new ObjectId(id));
 			}
+
+			@Override
+			public List<ScreenInput> getRange(int skip, int limit) {
+				return null;
+			}
 		};
 
 		ScreenTemplateManager s = new ScreenTemplateManager(a);
