@@ -1,5 +1,7 @@
-FROM exense/step:base-java-8
+FROM exense/step:k8s-base-latest-java-8
 MAINTAINER jonathan.rubiero@exense.ch
 COPY . /home/controller/
+ENV STEP_KV ""
+ENV STEP_DP ""
 WORKDIR /home/controller/bin/
-CMD "./startController.sh"
+CMD ../mergeProperties.sh ../conf/step.properties && ../installDependencies.sh && ./startController.sh
