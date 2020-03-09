@@ -9,4 +9,5 @@ ENV STEP_KV ""
 ENV STEP_DP ""
 USER agent
 WORKDIR /home/agent/bin/
+RUN chmod +x ../mergeProperties.sh ../installDependencies.sh startAgent.sh
 CMD ../mergeProperties.sh ../conf/AgentConf.json && ../installDependencies.sh && ./startAgent.sh

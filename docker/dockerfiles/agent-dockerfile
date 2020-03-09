@@ -8,5 +8,6 @@ RUN chmod 440 /etc/sudoers.d/agent
 ENV STEP_KV ""
 ENV STEP_DP ""
 USER agent
+RUN chmod +x /home/agent/mergeProperties.sh /home/agent/installDependencies.sh /home/agent/bin/startAgent.sh
 WORKDIR /home/agent/bin/
 CMD ../mergeProperties.sh ../conf/AgentConf.json && ../installDependencies.sh && ./startAgent.sh
