@@ -51,7 +51,7 @@
       "step-agent-${VERSION}.zip",
       "step:k8s-step-agent-${VERSION}-java-11",
     ],
-		
+    
 		"URL_STAGING":  [
       "build@ftps.exense.ch","NOT_USED","docker.exense.ch",
       "build@ftps.exense.ch","NOT_USED","docker.exense.ch"
@@ -70,5 +70,14 @@
       "public","NOT_USED","controller-dockerfile",
       "public","NOT_USED","agent-dockerfile"
     ]
-	}
+	},
+  "ENVIRONEMENTS":
+  {
+    "":
+    [ "", "" ],
+    
+    "":
+    [ "", "" ],
+    
+  }
 }
