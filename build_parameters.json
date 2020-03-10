@@ -28,7 +28,7 @@
 		"CONFIG_STAGING":
 		[ "DefaultBuild", "" ],
 		"CONFIG_PROD":
-		[ "DefaultBuild", "" ],
+		[ "DefaultBuild", "" ]
 	},
 	"DISTRIBUTIONS":
 	{
