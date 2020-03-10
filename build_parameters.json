@@ -71,10 +71,13 @@
       "public","NOT_USED","agent-dockerfile"
     ]
 	},
-  "ENVIRONEMENTS":
+  "STACKS":
   {
-    "NAME":
-    [ "nhy" ]
-    
+    "ENVIRONMENT":  [ "bld" ],
+    "INSTANCE":     [ "nhy" ], 
+    "APPLICATION":  [ "stepos" ],
+    "DOMAIN":       [ "exense.ch" ],
+    "PERSISTENCE":  [ "false" ],
+    "WHEN"          [ "STAGING" ]
   }
 }
