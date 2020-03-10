@@ -74,7 +74,7 @@
   "STACKS":
   {
     "ENVIRONMENT":  [ "bld" ],
-    "INSTANCE":     [ "nhy" ], 
+    "INSTANCE":     [ "lst" ], 
     "APPLICATION":  [ "stepos" ],
     "DOMAIN":       [ "exense.ch" ],
     "PERSISTENCE":  [ "false" ],
