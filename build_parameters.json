@@ -78,6 +78,6 @@
     "APPLICATION":  [ "stepos" ],
     "DOMAIN":       [ "exense.ch" ],
     "PERSISTENCE":  [ "false" ],
-    "WHEN"          [ "STAGING" ]
+    "WHEN":          [ "STAGING" ]
   }
 }
