@@ -336,12 +336,21 @@ angular.module('tables', ['export'])
 	            // track table loading
 	            $timeout(function(){
 	              scope.loadingTable=true;
+	              if (!scope.isExternalReload) {
+	                scope.showSpin=true;//enable spin for internal reload (searches...)
+	              }
+	              scope.isExternalReload=false;//remove flag for next requests
 	            });
 	          }, complete:function (qXHR, textStatus ) {
 	            $timeout(function(){
                 scope.loadingTable=false;
+                scope.showSpin=false;
               });
 	          }, error: function(jqXHR, textStatus, errorThrown) {
+	            $timeout(function(){
+                scope.loadingTable=false;
+                scope.showSpin=false;
+              });
 	            if (jqXHR.status === 500 && jqXHR.responseText.indexOf("MongoExecutionTimeoutException") >= 0) {
 	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the DB query.");
 	            } 
@@ -372,12 +381,11 @@ angular.module('tables', ['export'])
 	          scope.handle = {};
 	        }
 	        scope.handle.reload = function(showSpin) {
-	          scope.isExternalReload=!showSpin;
-	          table.ajax.reload(function() {
-	            $timeout(function() {
-	              scope.isExternalReload=false;
-	            })
-	          }, false);
+	          if (!scope.loadingTable) {
+	            scope.showSpin=showSpin;
+	            scope.isExternalReload=true;
+	            table.ajax.reload(null, false);
+	          }
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
 	          var column = table.column(columnName+':name');
