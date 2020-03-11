@@ -1,0 +1,19 @@
+{
+  "agentPort": "8082",
+  "gridHost": "http://localhost:8081",
+  "registrationPeriod": 1000,
+  "tokenGroups": [
+    {
+      "capacity": 10,
+      "tokenConf": {
+        "attributes": {},
+        "properties": {"myProp1":"myProp1"}
+      }
+    }
+  ],
+  "properties": {
+    "myProp1":"myDefaultValue",
+    "myProp2":"myValue2",
+    "keywords": "keywords/keywords.js;"
+  }
+}
