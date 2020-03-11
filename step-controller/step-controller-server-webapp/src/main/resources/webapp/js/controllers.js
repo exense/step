@@ -334,6 +334,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$scope.countByErrorMsg = [];
 					$scope.countByErrorCode = [];
 					_.map($scope.errorDistribution.countByErrorMsg, function(val, key) {
+					  var r = /\\\\u([\d\w]{4})/gi;
+					  key = key.replace(r, function (match, grp) {
+					    return String.fromCharCode(parseInt(grp, 16)); });
+					  key = decodeURIComponent(key);
 						$scope.countByErrorMsg.push({errorMessage:key, errorCount:val})
 					});
 					_.map($scope.errorDistribution.countByErrorCode, function(val, key) {
