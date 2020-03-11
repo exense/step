@@ -74,9 +74,9 @@ public class ThreadManagerServices extends AbstractServices {
 	}	
 	
 	@GET
-	@Secured(right="report-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/operations")
+	@Secured(right="execution-read")
 	public List<Operation> getCurrentOperations(@QueryParam("eid") String executionID) {
 		ThreadManager threadManager = (ThreadManager) getContext().get(ThreadManager.THREAD_MANAGER_INSTANCE_KEY);
 
@@ -89,9 +89,9 @@ public class ThreadManagerServices extends AbstractServices {
 	}
 	
 	@GET
-	@Secured(right="report-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/operations/{reportnodeid}")
+	@Secured(right="execution-read")
 	public List<Operation> getOperationsByReportNodeId(@PathParam("reportnodeid") String reportNodeId) {
 		ThreadManager threadManager = (ThreadManager) getContext().get(ThreadManager.THREAD_MANAGER_INSTANCE_KEY);
 		return threadManager.getCurrentOperationsByReportNodeId(reportNodeId);
