@@ -71,13 +71,14 @@
       "public","NOT_USED","agent-dockerfile"
     ]
 	},
-  "STACKS":
+  "INSTANCES":
   {
     "ENVIRONMENT":  [ "bld" ],
     "INSTANCE":     [ "lst" ], 
     "APPLICATION":  [ "stepos" ],
     "DOMAIN":       [ "exense.ch" ],
     "PERSISTENCE":  [ "false" ],
-    "WHEN":          [ "STAGING" ]
+    "WHEN":         [ "STAGING" ],
+    "AFTER":        [ "Basic Test - LST" ]
   }
 }
