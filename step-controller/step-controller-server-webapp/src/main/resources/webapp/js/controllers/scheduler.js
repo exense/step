@@ -24,8 +24,8 @@ schedulerController.run(function(ViewRegistry, EntityRegistry) {
   EntityRegistry.registerEntity('Scheduler task', 'task', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table', '/partials/scheduler/schedulerTaskSelectionTable.html');
 });
 
-schedulerController.controller('SchedulerCtrl', ['$scope', '$http', '$location', 'stateStorage', '$uibModal', 'AuthService','Dialogs', 
-  function($scope, $http, $location, $stateStorage, $uibModal,AuthService, Dialogs) {
+schedulerController.controller('SchedulerCtrl', ['$rootScope','$scope', '$http', '$location', 'stateStorage', '$uibModal', 'AuthService','Dialogs', 
+  function($rootScope,$scope, $http, $location, $stateStorage, $uibModal,AuthService, Dialogs) {
     $stateStorage.push($scope, 'scheduler', {});
     
     $scope.authService = AuthService;
@@ -92,25 +92,35 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http', '$location',
           $location.path('/root/executions/'+eId);
         });
     };
+    
+	var editTaskCallback = function(response){
+    var task = response.data;
+    var modalInstance = $uibModal.open({
+      backdrop: 'static',
+      templateUrl: 'partials/scheduler/editTaskDialog.html',
+      controller: 'editSchedulerTaskModalCtrl',
+      resolve: {
+        task: function () {
+          $rootScope
+        return task;
+        }
+      }
+      });
+      
+    modalInstance.result.then(function (functionParams) {
+      $scope.loadTable()}, 
+    function (task) {});
+  }
+	
+  $scope.addSchedulerEntry = function() {
+    $http.get("rest/controller/task/new").then(function(response) {
+      response.data.executionsParameters.userID = $rootScope.context.userID;
+      editTaskCallback(response);
+    });
+  }
 	
 	$scope.editTask = function(id) {
-	  $http.get("rest/controller/task/"+id).then(function(response){
-	    var task = response.data;
-      var modalInstance = $uibModal.open({
-        backdrop: 'static',
-        templateUrl: 'partials/scheduler/editTaskDialog.html',
-        controller: 'editSchedulerTaskModalCtrl',
-        resolve: {
-          task: function () {
-          return task;
-          }
-        }
-        });
-        
-      modalInstance.result.then(function (functionParams) {
-        $scope.loadTable()}, 
-      function (task) {});
-    }); 
+	  $http.get("rest/controller/task/"+id).then(editTaskCallback); 
 	}
 	
 	$scope.askAndDeleteTask = function(id, remove) {
@@ -129,7 +139,7 @@ schedulerController.controller('SchedulerCtrl', ['$scope', '$http', '$location',
 	$scope.loadTable($scope,$http);
   }]);
 
-schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $uibModalInstance, $http, $location, task) {
+schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $uibModalInstance, $http, $location, task, PlanDialogs) {
 	  
   $scope.task = task;
 
@@ -158,6 +168,13 @@ schedulerController.controller('editSchedulerTaskModalCtrl', function ($scope, $
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
+  
+  $scope.selectPlan = function() {
+    PlanDialogs.selectPlan(function(plan) {
+      $scope.task.executionsParameters.repositoryObject.repositoryParameters.planid = plan.id;
+      $scope.task.executionsParameters.description = plan.attributes.name;
+    })
+  }
 });
 
 schedulerController.factory('schedulerServices', function($http, $location, $uibModal) {

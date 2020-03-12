@@ -19,6 +19,7 @@
 package step.core.deployment;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -43,6 +44,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionRunnable;
+import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
@@ -110,6 +112,21 @@ public class ControllerServices extends AbstractServices {
 	}
 	
 	@GET
+	@Path("/task/new")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="task-write")
+	public ExecutiontTaskParameters createExecutionTask(@PathParam("id") String executionTaskID) {
+		ExecutiontTaskParameters taskParameters = new ExecutiontTaskParameters();
+		taskParameters.setActive(true);
+		ExecutionParameters executionsParameters = new ExecutionParameters();
+		HashMap<String, String> repositoryParameters = new HashMap<>();
+		executionsParameters.setRepositoryObject(new RepositoryObjectReference("local", repositoryParameters));
+		executionsParameters.setMode(ExecutionMode.RUN);
+		taskParameters.setExecutionsParameters(executionsParameters);
+		return taskParameters;
+	}
+	
+	@GET
 	@Path("/task")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="task-read")
@@ -122,7 +139,7 @@ public class ControllerServices extends AbstractServices {
 		}
 		return result;
 	}
-
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/execution")
