@@ -14,6 +14,7 @@ import step.artefacts.CallFunction;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
+import step.core.objectenricher.ObjectPredicate;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 
@@ -47,7 +48,8 @@ public class FunctionLocator {
 			String selectionAttributesJson = testArtefact.getFunction().get();
 			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, getBindings());
 			
-			List<Function> matchingFunctions = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+			ObjectPredicate objectPredicate = context.get(ObjectPredicate.class);
+			List<Function> matchingFunctions = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).filter(objectPredicate).collect(Collectors.toList());
 			
 			Set<String> activeKeywordVersions = getActiveKeywordVersions();
 			if(activeKeywordVersions != null && activeKeywordVersions.size()>0) {
