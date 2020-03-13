@@ -1,5 +1,5 @@
 <div id="ParameterListCtrl" ng-controller="ParameterListCtrl">
-	<st-table data="parameters" handle="tableHandle" uid="'parameterList'" persist-state="true">
+	<st-table data="parameters" handle="tableHandle" uid="'parameterList'" persist-state="true" order="[[1, &quot;asc&quot;]]">
 		<st-actions>
 			<div class="btn-group btn-group-menu">
 				<button type="button" ng-disabled="!authService.hasRight('param-write')" class="btn btn-default" ng-click="pasteParameter()" uib-tooltip="Paste parameter">
