@@ -58,7 +58,7 @@ angular.module('tables', ['export'])
 		}
 
 		colDef.render = function ( data, type, row, meta ) {
-			if(type==='filter') {
+			if(type==='filter' || type==='sort') {
 				// get the HTML content of the cell after it has been rendered (digested) by angular
 				var htmlContent = $($scope.table.cell(meta.row, meta.col).node()).text()
 				// return the HTML content after rendering as base for the column searches (type='filter')
@@ -125,6 +125,10 @@ angular.module('tables', ['export'])
   ctrl.newCycle = function() {
     scopesTracker.newCycle()
   }
+  
+  ctrl.scheduleReload = function() {
+    $scope.dirty = true;
+  }
 })
 .directive('stTable', function($compile, $http, Preferences, stateStorage, $timeout, Dialogs) {
 	return {
@@ -157,7 +161,7 @@ angular.module('tables', ['export'])
 		},
 		replace: false,    
 		controller : 'StTableController',
-		controllerAs: 'table',
+		controllerAs: 'tableCtrl',
 		link : function(scope, element, attr, controller, transclude) {
 		  var serverSide = scope.collection?true:false;
 
@@ -172,19 +176,6 @@ angular.module('tables', ['export'])
 		      return scope.data
 		    }
 		  }, scope.selectionAttribute);
-
-		  var defaultSelection = scope.defaultSelection;
-		  if(defaultSelection) {
-        if(_.isFunction(defaultSelection)) {
-          scope.selectionModel.setDefaultSelector(defaultSelection);
-        } else if (defaultSelection=='all') {
-          scope.selectionModel.setDefaultSelection(true);
-        } else {
-          scope.selectionModel.setDefaultSelection(false);
-        }
-      } else {
-        scope.selectionModel.setDefaultSelection(false);
-      }
 		  
       function getFilteredData() {
         return scope.table.rows({"filter":"applied"}).data();
@@ -254,14 +245,18 @@ angular.module('tables', ['export'])
             scope.table.rows.add(value);
             // perform the table draw after the current angular digest cycle in order to let angular render all the cells  (See comment in colDef.render above) 
             $timeout(function() {
-              scope.table.draw(false)
+              //scope.table.draw(false)
+              // Very ugly workound: when using angular directives in a cell that require an aynchron operation
+              // to load (HTTP call to retrieve the template for instance), the cell cannot be rendered in the current angular digest cycle
+              // and the data returned by colDef.render (See above) used for ordering and filtering are wrong
+              // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
+              // Waiting 100ms however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
+              $timeout(function() {
+                scope.table.draw(false)
+              },100)
             })
           }
         }
-		  }
-		  
-		  controller.scheduleReload = function() {
-		    scope.dirty = true;
 		  }
 		  
 		  scope.$watch(function() {
@@ -432,6 +427,19 @@ angular.module('tables', ['export'])
 	          }
 	        });
 	        
+	        var defaultSelection = scope.defaultSelection;
+	        if(defaultSelection) {
+	          if(_.isFunction(defaultSelection)) {
+	            scope.selectionModel.setDefaultSelector(defaultSelection);
+	          } else if (defaultSelection=='all') {
+	            scope.selectionModel.setDefaultSelection(true);
+	          } else {
+	            scope.selectionModel.setDefaultSelection(false);
+	          }
+	        } else {
+	          scope.selectionModel.setDefaultSelection(false);
+	        }
+	        
 	        loadTableData();
 		    }
 		    
@@ -449,8 +457,6 @@ angular.module('tables', ['export'])
           scope.table.destroy();
         }
       });
-		  
-		  controller.reload();
 		},
 		templateUrl : 'partials/ntable.html'
 	};
