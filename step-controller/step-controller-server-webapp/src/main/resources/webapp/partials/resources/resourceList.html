@@ -3,6 +3,9 @@
 	</div>
 	<st-table collection="'resources'" handle="tableHandle" uid="'resourceList'" persist-state="true" filter="'not(resourceType=attachment)'">
 		<st-actions>
+			<div class="btn-group btn-group-menu">
+				<button type="button" class="btn btn-success" ng-click="addResource()">New resource</button>
+			</div>
 		</st-actions>
 		<st-columns>
 			<st-column name="resourceName">

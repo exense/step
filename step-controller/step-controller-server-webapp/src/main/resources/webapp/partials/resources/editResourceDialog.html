@@ -4,19 +4,44 @@
 <div class="modal-body">
 	<strong>{{description}}</strong>
 	<form ng-submit="save()">
-		<div class="form-group">
+		<div class="form-group" ng-if="mode==='new'">
+			<label for="desc">Resource type</label> 			
+			<div class="input-group">
+				<input class="form-control" id="desc" ng-model="newResource.resourceType" placeholder="resource type" autofocus>
+				<div class="input-group-btn" uib-dropdown>
+					<button type="button" class="btn btn-primary" uib-dropdown-toggle>Types <span class="caret"></span></button>
+					<ul class="dropdown-menu" uib-dropdown-menu role="menu">
+						<li role="menuitem"><a ng-click="applyResourceType('attachment')">attachment</a></li>
+						<li role="menuitem"><a ng-click="applyResourceType('datasource')">datasource</a></li>
+						<li role="menuitem"><a ng-click="applyResourceType('functions')">functions</a></li>
+						<li role="menuitem"><a ng-click="applyResourceType('pdfTestScenarioFile')">pdfTestScenarioFile</a></li>
+						<li role="menuitem"><a ng-click="applyResourceType('secret')">secret</a></li>
+						<li role="menuitem"><a ng-click="applyResourceType('stagingContextFiles')">stagingContextFiles</a></li>
+						<li role="menuitem"><a ng-click="applyResourceType('temp')">temp</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="form-group" ng-if="mode==='new'">
+			<fieldset style="padding:0px;" ng-disabled="newResource.resourceType == null">
+				<label>Content</label>
+				<resource-input  st-type="newResource.resourceType" st-model="newResource.id" st-on-change="newResourceUpdate()" 
+					upload-only="true"/>
+			</fieldset>
+		</div>
+		<div class="form-group" ng-if="mode==='edit'">
 			<label>Name</label> 
 			<input class="form-control"	ng-model="resource.resourceName" autofocus>
 		</div>
-		<div class="form-group">
+		<div class="form-group" ng-if="mode==='edit'">
 			<label>Type</label> 
 			<input disabled class="form-control"	ng-model="resource.resourceType">
 		</div>
-		<div class="form-group" >
+		<div class="form-group" ng-if="mode==='edit'">
 			<label>Content</label>
 			<div class="input-group">
 				<div ngf-drop="upload($file)" uib-tooltip="Drag and drop the resource file here">
-					<input readonly="readonly" type="text" class="disabled form-control" ng-model="resource.resourceName" />
+					<input readonly="readonly" type="text" class="disabled form-control" ng-model="resource.attributes.name" />
 				</div>
 				<div class="input-group-btn">
 					<a class="btn btn-default" href="rest/resources/{{resource.id}}/content">

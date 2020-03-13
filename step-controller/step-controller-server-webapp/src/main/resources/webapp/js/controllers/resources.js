@@ -33,7 +33,7 @@ angular.module('resourcesControllers',['tables','step'])
     }
     
     $scope.addResource = function() {
-      //ParameterDialogs.editParameter(null, function() {reload()});
+      ResourceDialogs.editResource(null, function() {reload()});
     }
 
     $scope.editResource = function(id) {
@@ -117,9 +117,9 @@ angular.module('resourcesControllers',['tables','step'])
   }
   
   if(id==null) {
-    $http.get("rest/resources").then(function(response){
-      $scope.resource = response.data;
-    })  
+    $scope.resource={};
+    $scope.mode = 'new';
+    $scope.newResource={id:"",resourceType:"attachment"};
   } else {
     $scope.mode = 'edit';
     loadResource(id);
@@ -159,6 +159,18 @@ angular.module('resourcesControllers',['tables','step'])
   $scope.cancel = function () {
     $uibModalInstance.dismiss('cancel');
   };
+  
+  $scope.applyResourceType = function(type) {
+    $scope.newResource.resourceType=type;
+  }
+  
+  
+  $scope.newResourceUpdate = function() {
+    if ($scope.newResource.id){
+      $scope.mode = 'edit';
+      loadResource($scope.newResource.id.replace("resource:",""));
+    }
+  }
 })
 
 .controller('searchResourceCtrl', function ($scope, $uibModalInstance, $http, AuthService, type) {
