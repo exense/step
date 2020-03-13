@@ -36,7 +36,7 @@ import org.junit.Test;
 
 import step.commons.activation.Expression;
 import step.core.accessors.InMemoryCRUDAccessor;
-import step.core.objectenricher.ObjectFilter;
+import step.core.objectenricher.ObjectPredicate;
 
 public class ParameterManagerTest {
 
@@ -68,16 +68,10 @@ public class ParameterManagerTest {
 		Assert.assertEquals(params.get("key2"),"defaultValue2");
 		Assert.assertEquals(params.get("key3"),"value3");
 		
-		params = m.getAllParameterValues(bindings, new ObjectFilter() {
-			
+		params = m.getAllParameterValues(bindings, new ObjectPredicate() {
 			@Override
 			public boolean test(Object t) {
 				return false;
-			}
-			
-			@Override
-			public Map<String, String> getAdditionalAttributes() {
-				return null;
 			}
 		});
 		Assert.assertEquals(0, params.size());

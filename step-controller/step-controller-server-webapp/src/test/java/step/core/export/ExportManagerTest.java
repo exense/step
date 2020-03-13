@@ -13,7 +13,7 @@ import step.artefacts.Sequence;
 import step.core.GlobalContext;
 import step.core.GlobalContextBuilder;
 import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectFilter;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -68,7 +68,7 @@ public class ExportManagerTest {
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = new ExportManager(c.getPlanAccessor());
-			exportManager.exportAllPlans(outputStream, dummyObjectFilter());
+			exportManager.exportAllPlans(outputStream, dummyObjectPredicate());
 			
 			InMemoryPlanAccessor planAccessor = new InMemoryPlanAccessor();
 			ImportManager importManager = new ImportManager(planAccessor);
@@ -82,17 +82,11 @@ public class ExportManagerTest {
 		}
 	}
 
-	protected ObjectFilter dummyObjectFilter() {
-		return new ObjectFilter() {
-			
+	protected ObjectPredicate dummyObjectPredicate() {
+		return new ObjectPredicate() {
 			@Override
 			public boolean test(Object t) {
 				return true;
-			}
-			
-			@Override
-			public Map<String, String> getAdditionalAttributes() {
-				return null;
 			}
 		};
 	}

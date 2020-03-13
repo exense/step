@@ -37,7 +37,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.execution.ExecutionManager;
 import step.core.execution.model.ExecutionParameters;
-import step.core.objectenricher.ObjectFilter;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.variables.VariableType;
@@ -120,8 +120,8 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 			
 			// Resolve the active parameters
 			Map<String, Object> contextBindings = ExecutionContextBindings.get(context);
-			ObjectFilter objectFilter = context.get(ObjectFilter.class);
-			Map<String, Parameter> allParameters = parameterManager.getAllParameters(contextBindings, objectFilter);
+			ObjectPredicate objectPredicate = context.get(ObjectPredicate.class);
+			Map<String, Parameter> allParameters = parameterManager.getAllParameters(contextBindings, objectPredicate);
 
 			// Add all the active parameters to the execution parameter map of the Execution object
 			buildExecutionParametersMapAndUpdateExecution(context, globalParametersFromExecutionParameters, allParameters);

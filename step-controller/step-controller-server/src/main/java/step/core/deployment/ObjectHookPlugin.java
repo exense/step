@@ -8,8 +8,12 @@ import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.ql.Filter;
+import step.core.ql.OQLFilterBuilder;
 
 @Plugin
 public class ObjectHookPlugin extends AbstractControllerPlugin {
@@ -22,6 +26,10 @@ public class ObjectHookPlugin extends AbstractControllerPlugin {
 	public void executionControllerStart(GlobalContext context) {
 		objectHookRegistry = new ObjectHookRegistry();
 		context.put(ObjectHookRegistry.class, objectHookRegistry);
+		
+		ObjectPredicateFactory objectPredicateFactory = new ObjectPredicateFactory(objectHookRegistry);
+		context.put(ObjectPredicateFactory.class, objectPredicateFactory);
+		
 		context.getServiceRegistrationCallback().registerService(ObjectHookInterceptor.class);
 	}
 
@@ -41,6 +49,15 @@ public class ObjectHookPlugin extends AbstractControllerPlugin {
 		
 		// Add the composed object enricher and filters to the execution context
 		executionContext.put(ObjectEnricher.class, objectHookRegistry.getObjectEnricher(session));
-		executionContext.put(ObjectFilter.class, objectHookRegistry.getObjectFilter(session));
+		ObjectFilter objectFilter = objectHookRegistry.getObjectFilter(session);
+		executionContext.put(ObjectFilter.class, objectFilter);
+		
+		Filter<Object> filter = OQLFilterBuilder.getFilter(objectFilter.getOQLFilter());
+		executionContext.put(ObjectPredicate.class, new ObjectPredicate() {
+			@Override
+			public boolean test(Object t) {
+				return filter.test(t);
+			}
+		});
 	}
 }

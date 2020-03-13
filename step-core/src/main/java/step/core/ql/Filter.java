@@ -19,11 +19,8 @@
  *******************************************************************************/
 package step.core.ql;
 
+import java.util.function.Predicate;
 
-public interface FilterFactory<T> {
-
-	public Filter<T> createFullTextFilter(String expression);
-	
-	public Filter<T> createAttributeFilter(String operator, String attribute, String value);
+public interface Filter<T> extends Predicate<T> {
 
 }

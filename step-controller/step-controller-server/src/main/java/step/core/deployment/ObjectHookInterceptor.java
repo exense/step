@@ -2,6 +2,7 @@ package step.core.deployment;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -17,7 +18,10 @@ import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.ql.Filter;
+import step.core.ql.OQLFilterBuilder;
 
 @Secured
 @Provider
@@ -52,6 +56,8 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 
 		return proceed;
 	}
+	
+	private Predicate<Object> isNotAbstractOrganizableObject = e->!(e instanceof AbstractOrganizableObject);
 
 	@Override
 	public void aroundWriteTo(WriterInterceptorContext context) 
@@ -62,7 +68,9 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 			if(entity instanceof List) {
 				List<?> list = (List<?>)entity;
 				Session session = getSession();
-				final List<?> newList = list.stream().filter(objectHookRegistry.getObjectFilter(session)).collect(Collectors.toList());
+				String oqlFilter = objectHookRegistry.getObjectFilter(session).getOQLFilter();
+				Filter<Object> filter = OQLFilterBuilder.getFilter(oqlFilter);
+				final List<?> newList = list.stream().filter(isNotAbstractOrganizableObject.or(filter)).collect(Collectors.toList());
 				context.setEntity(newList);
 			}
 		}

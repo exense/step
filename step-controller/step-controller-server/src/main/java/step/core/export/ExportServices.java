@@ -18,7 +18,7 @@ import step.core.deployment.Secured;
 import step.core.deployment.Session;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
-import step.core.objectenricher.ObjectHookRegistry;
+import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.PlanAccessor;
 import step.resources.Resource;
 import step.resources.ResourceManager;
@@ -32,7 +32,7 @@ public class ExportServices extends AbstractServices {
 	
 	ExportTaskManager exportTaskManager;
 	
-	ObjectHookRegistry objectHookRegistry;
+	ObjectPredicateFactory objectPredicateFactory;
 	
 	PlanAccessor accessor;
 	
@@ -41,7 +41,7 @@ public class ExportServices extends AbstractServices {
 		super.init();
 		accessor = getContext().getPlanAccessor();
 		exportTaskManager = getContext().get(ExportTaskManager.class);
-		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
+		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
 		exportManager = new ExportManager(accessor);
 	}
 
@@ -73,8 +73,8 @@ public class ExportServices extends AbstractServices {
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "artefact_export.json");
-				exportManager.exportAllPlans(resourceContainer.getOutputStream(), objectHookRegistry.getObjectFilter(session));
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "Plans.json");
+				exportManager.exportAllPlans(resourceContainer.getOutputStream(), objectPredicateFactory.getObjectPredicate(session));
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}

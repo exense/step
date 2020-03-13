@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,8 +102,8 @@ public class TableService extends ApplicationServices {
 		if(uriInfo.getQueryParameters()!=null) {
 			form.putAll(uriInfo.getQueryParameters());
 		}
-		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(collectionID);
-		return getTableData(collectionID, form, sessionQueryFragments);
+		Bson sessionQueryFragment = getAdditionalQueryFragmentFromContext(collectionID);
+		return getTableData(collectionID, form, sessionQueryFragment);
 	}
 	
 	@GET
@@ -112,8 +111,8 @@ public class TableService extends ApplicationServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
 	public DataTableResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
-		List<Bson> sessionQueryFragments = getAdditionalQueryFragmentsFromContext(collectionID);
-		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragments);
+		Bson sessionQueryFragment = getAdditionalQueryFragmentFromContext(collectionID);
+		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragment);
 	}
 	
 	@GET
@@ -125,7 +124,7 @@ public class TableService extends ApplicationServices {
 		return collection.distinct(column);
 	}
 	
-	private DataTableResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, List<Bson> sessionQueryFragments) throws Exception {		
+	private DataTableResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, Bson sessionQueryFragment) throws Exception {		
 		Collection<?> collection = collectionRegistry.get(collectionID);
 		if(collection == null) {
 			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
@@ -150,8 +149,8 @@ public class TableService extends ApplicationServices {
 			order = null;
 		}
 		
-		if(collection.isFiltered() && sessionQueryFragments != null) {
-			queryFragments.addAll(sessionQueryFragments);
+		if(collection.isFiltered() && sessionQueryFragment != null) {
+			queryFragments.add(sessionQueryFragment);
 		}
 		
 		JsonObject queryParameters = null;
@@ -235,17 +234,9 @@ public class TableService extends ApplicationServices {
 		}
 		return columnNames;
 	}
-	
 
-	private List<Bson> getAdditionalQueryFragmentsFromContext(String collectionID) {
-		return toBson(objectHookRegistry.getObjectFilter(getSession()).getAdditionalAttributes());
-	}
-	
-	private List<Bson> toBson(Map<String, String> additionalQueryFragmentSuppliers) {
-		List<Bson> bson = new ArrayList<>();
-		for( Entry<String, String> e : additionalQueryFragmentSuppliers.entrySet()) {
-			bson.add(new Document("attributes."+e.getKey(), e.getValue()));
-		}
-		return bson;
+	private Bson getAdditionalQueryFragmentFromContext(String collectionID) {
+		Bson query = OQLMongoDBBuilder.build(objectHookRegistry.getObjectFilter(getSession()).getOQLFilter());
+		return query;
 	}
 }

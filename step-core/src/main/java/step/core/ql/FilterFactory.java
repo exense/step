@@ -19,8 +19,12 @@
  *******************************************************************************/
 package step.core.ql;
 
-public interface Filter<T> {
+import step.core.ql.Filter;
 
-	boolean isValid(T input);
+public interface FilterFactory<T> {
+
+	public Filter<T> createFullTextFilter(String expression);
 	
+	public Filter<T> createAttributeFilter(String operator, String attribute, String value);
+
 }

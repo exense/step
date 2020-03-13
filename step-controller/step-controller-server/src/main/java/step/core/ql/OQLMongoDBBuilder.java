@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.bson.conversions.Bson;
 
+import step.core.ql.OQLLexer;
+import step.core.ql.OQLParser;
 import step.core.ql.OQLParser.ParseContext;
 
 public class OQLMongoDBBuilder {

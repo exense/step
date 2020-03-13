@@ -15,7 +15,7 @@ import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.deployment.JacksonMapperProvider;
-import step.core.objectenricher.ObjectFilter;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 
@@ -45,11 +45,11 @@ public class ExportManager {
 		return mapper;
 	}
 	
-	public void exportAllPlans(OutputStream outputStream, ObjectFilter objectFilter) throws FileNotFoundException, IOException {
+	public void exportAllPlans(OutputStream outputStream, ObjectPredicate objectPredicate) throws FileNotFoundException, IOException {
 		ObjectMapper mapper = getMapper();
 		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
 			accessor.getAll().forEachRemaining((a)->{
-				if(objectFilter.test(a)) {
+				if(objectPredicate.test(a)) {
 					try {
 						exportPlan(mapper, writer, new ObjectId(a.getId().toString()));
 					} catch (Exception e) {
@@ -58,7 +58,6 @@ public class ExportManager {
 				}
 			});
 		}	
-
 	}
 
 	private void exportPlan(ObjectMapper mapper, Writer writer, ObjectId id) throws IOException {

@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import step.commons.activation.Activator;
 import step.core.accessors.CRUDAccessor;
-import step.core.objectenricher.ObjectFilter;
+import step.core.objectenricher.ObjectPredicate;
 
 public class ParameterManager {
 	
@@ -46,17 +46,17 @@ public class ParameterManager {
 		this.parameterAccessor = parameterAccessor;
 	}
 
-	public Map<String, String> getAllParameterValues(Map<String, Object> contextBindings, ObjectFilter objectFilter) {
-		return getAllParameters(contextBindings, objectFilter).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().value));
+	public Map<String, String> getAllParameterValues(Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
+		return getAllParameters(contextBindings, objectPredicate).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().value));
 	}
 	
-	public Map<String, Parameter> getAllParameters(Map<String, Object> contextBindings, ObjectFilter objectFilter) {
+	public Map<String, Parameter> getAllParameters(Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
 		Map<String, Parameter> result = new HashMap<>();
 		Bindings bindings = contextBindings!=null?new SimpleBindings(contextBindings):null;
 
 		Map<String, List<Parameter>> parameterMap = new HashMap<String, List<Parameter>>();
 		parameterAccessor.getAll().forEachRemaining(p->{
-			if(objectFilter == null || objectFilter.test(p)) {
+			if(objectPredicate==null || objectPredicate.test(p)) {
 				List<Parameter> parameters = parameterMap.get(p.key);
 				if(parameters==null) {
 					parameters = new ArrayList<>();

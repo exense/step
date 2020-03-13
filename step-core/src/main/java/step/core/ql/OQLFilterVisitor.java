@@ -1,5 +1,8 @@
 package step.core.ql;
 
+import step.core.ql.Filter;
+import step.core.ql.FilterFactory;
+import step.core.ql.OQLBaseVisitor;
 import step.core.ql.OQLParser.AndExprContext;
 import step.core.ql.OQLParser.EqualityExprContext;
 import step.core.ql.OQLParser.NonQuotedStringAtomContext;
@@ -23,15 +26,24 @@ public class OQLFilterVisitor <T> extends OQLBaseVisitor<Filter<T>>{
 		final Filter<T> right = this.visit(ctx.expr(1));
         return new Filter<T>() {
 			@Override
-			public boolean isValid(T input) {
-				return left.isValid(input)&&right.isValid(input);
+			public boolean test(T input) {
+				return left.test(input)&&right.test(input);
 			}
         };
 	}
 
 	@Override
 	public Filter<T> visitEqualityExpr(EqualityExprContext ctx) {
-		return factory.createAttributeFilter(ctx.op.getText(), ctx.expr(0).getText(), ctx.expr(1).getText());
+		String text0 = unescapeStringIfNecessary(ctx.expr(0).getText());
+		String text1 = unescapeStringIfNecessary(ctx.expr(1).getText());
+		return factory.createAttributeFilter(ctx.op.getText(), text0, text1);
+	}
+
+	protected String unescapeStringIfNecessary(String text1) {
+		if(text1.startsWith("\"") && text1.endsWith("\"")) {
+			text1 = unescapeStringAtom(text1);
+		}
+		return text1;
 	}
 
 	@Override
@@ -40,8 +52,8 @@ public class OQLFilterVisitor <T> extends OQLBaseVisitor<Filter<T>>{
 		final Filter<T> right = this.visit(ctx.expr(1));
         return new Filter<T>() {
 			@Override
-			public boolean isValid(T input) {
-				return left.isValid(input)||right.isValid(input);
+			public boolean test(T input) {
+				return left.test(input)||right.test(input);
 			}
         };
 	}
@@ -51,8 +63,8 @@ public class OQLFilterVisitor <T> extends OQLBaseVisitor<Filter<T>>{
 		final Filter<T> expr = this.visit(ctx.expr());
         return new Filter<T>() {
 			@Override
-			public boolean isValid(T input) {
-				return !expr.isValid(input);
+			public boolean test(T input) {
+				return !expr.test(input);
 			}
         };
 	}
@@ -62,8 +74,8 @@ public class OQLFilterVisitor <T> extends OQLBaseVisitor<Filter<T>>{
 		final Filter<T> expr = this.visit(ctx.expr());
 		return new Filter<T>() {
 			@Override
-			public boolean isValid(T input) {
-				return expr.isValid(input);
+			public boolean test(T input) {
+				return expr.test(input);
 			}
         };
 	}
@@ -75,10 +87,14 @@ public class OQLFilterVisitor <T> extends OQLBaseVisitor<Filter<T>>{
 
 	@Override
 	public Filter<T> visitStringAtom(StringAtomContext ctx) {
-		String str = ctx.getText();
+		String str = unescapeStringAtom(ctx.getText());
+        return factory.createFullTextFilter(str);
+	}
+
+	protected String unescapeStringAtom(String str) {
         // strip quotes
         str = str.substring(1, str.length() - 1).replace("\"\"", "\"");
-        return factory.createFullTextFilter(str);
+		return str;
 	}
 
 

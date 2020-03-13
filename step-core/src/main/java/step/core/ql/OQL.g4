@@ -1,7 +1,7 @@
 grammar OQL;
 
 @header {
-    package io.djigger.ql;
+    package step.core.ql;
 }
 
 parse

@@ -1,16 +1,15 @@
 package step.core.objectenricher;
 
-import java.util.Map;
-import java.util.function.Predicate;
+import step.core.ql.OQLParser;
 
 /**
  * Instances of this classes are responsible for the context filtering of objects
  *
  */
-public interface ObjectFilter extends Predicate<Object> {
+public interface ObjectFilter {
 
 	/**
-	 * @return the list of attributes required by the current context when filtering a collection of objects
+	 * @return the OQL Query fragment specifying this filter. See {@link OQLParser} 
 	 */
-	public Map<String, String> getAdditionalAttributes();
+	public String getOQLFilter();
 }

@@ -1,29 +1,23 @@
 package step.core.objectenricher;
 
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class ObjectFilterComposer {
 
 	public static ObjectFilter compose(List<ObjectFilter> list) {
 		return new ObjectFilter() {
-			
 			@Override
-			public boolean test(Object t) {
-				for (ObjectFilter objectFilter : list) {
-					if(!objectFilter.test(t)) {
-						return false;
+			public String getOQLFilter() {
+				String filter = "";
+				Iterator<ObjectFilter> iterator = list.iterator();
+				while(iterator.hasNext()) {
+					filter += iterator.next().getOQLFilter();
+					if(iterator.hasNext()) {
+						filter += " and ";
 					}
 				}
-				return true;
-			}
-			
-			@Override
-			public Map<String, String> getAdditionalAttributes() {
-				Map<String, String> result = new HashMap<>();
-				list.forEach(f->result.putAll(f.getAdditionalAttributes()));
-				return result;
+				return filter;
 			}
 		};
 	}
