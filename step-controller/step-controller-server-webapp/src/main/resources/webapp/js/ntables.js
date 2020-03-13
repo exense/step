@@ -85,10 +85,14 @@ angular.module('tables', ['export'])
 
 			angular.element(td).empty();
 			angular.element(td).append(content);
-			if(serverSide) {
-				rowScope.$digest();
+			if (rowScope) {
+  			if(serverSide) {
+  				rowScope.$digest();
+  			}
+  			scopesTracker.track(rowScope);
+			}else {
+			  console.log("Error while transcluding cell " + column.name);
 			}
-			scopesTracker.track(rowScope);
 		};
 
 		colDef.headerRenderer = createHeaderRenderer(column.headerTransclude);

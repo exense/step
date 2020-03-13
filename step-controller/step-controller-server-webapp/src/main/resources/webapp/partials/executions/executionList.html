@@ -27,12 +27,12 @@
 			<st-custom-columns st-screen="executionTable" st-exclude-fields="[]"/>
 			<st-column name="status" width="'80px'">
 				<header>Status</header>
-				<second-header><inputdropdown options="statusOptions" action="search" initial-value="initialValue" /></second-header>
+				<second-header><inputdropdown options="statusOptions" action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell><span class="executionStatus status-{{row.status}}">{{row.status}}</span></cell>
 			</st-column>
 			<st-column name="result" width="'160px'">
 				<header>Result</header>
-				<second-header><inputdropdown options="resultOptions" action="search" initial-value="initialValue" /></second-header>
+				<second-header><inputdropdown options="resultOptions" action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell>
 					<table class="executionTableResult">
 						<tr>
