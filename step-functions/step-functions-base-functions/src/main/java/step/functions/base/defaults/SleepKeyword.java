@@ -20,8 +20,8 @@ package step.functions.base.defaults;
 
 import step.core.accessors.Attribute;
 import step.handlers.javahandler.AbstractKeyword;
-import step.handlers.javahandler.Keyword;
 
+@Attribute(key="project", value="@Common")
 public class SleepKeyword extends AbstractKeyword{
 	
 	//@Keyword

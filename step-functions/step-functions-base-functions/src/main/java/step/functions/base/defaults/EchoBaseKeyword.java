@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.functions.base.defaults;
 
+import step.core.accessors.Attribute;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 
@@ -25,6 +26,7 @@ import step.handlers.javahandler.Keyword;
  * @author doriancransac
  *
  */
+@Attribute(key="project", value="@Common")
 public class EchoBaseKeyword extends AbstractKeyword{
 	
 	@Keyword
