@@ -17,7 +17,7 @@ public class ReportNodeCollection extends Collection<ReportNode> {
 	private final List<String> reportSearchAttributes;
 
 	public ReportNodeCollection(GlobalContext context) {
-		super(context.getMongoClientSession().getMongoDatabase(), "reports", ReportNode.class, true);
+		super(context.getMongoClientSession().getMongoDatabase(), "reports", ReportNode.class, false);
 		
 		reportSearchAttributes = new ArrayList<>();
 		ScreenTemplateManager screenTemplateManager = context.get(ScreenTemplateManager.class);
