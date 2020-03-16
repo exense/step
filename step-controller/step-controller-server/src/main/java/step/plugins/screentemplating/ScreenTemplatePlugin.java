@@ -43,9 +43,6 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 	}
 
 	private void initializeScreenInputsIfNecessary() {
-		if(screenInputAccessor.getScreenInputsByScreenId("artefactTable").isEmpty()) {
-			screenInputAccessor.save(new ScreenInput("artefactTable", new Input(InputType.TEXT, "attributes.name", "Name", null)));
-		}
 		if(screenInputAccessor.getScreenInputsByScreenId("functionTable").isEmpty()) {
 			screenInputAccessor.save(new ScreenInput("functionTable", new Input(InputType.TEXT, "attributes.name", "Name", null)));
 		}

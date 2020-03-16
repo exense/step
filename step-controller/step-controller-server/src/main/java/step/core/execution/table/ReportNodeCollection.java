@@ -22,7 +22,7 @@ public class ReportNodeCollection extends Collection<ReportNode> {
 		reportSearchAttributes = new ArrayList<>();
 		ScreenTemplateManager screenTemplateManager = context.get(ScreenTemplateManager.class);
 		if(screenTemplateManager!=null) {
-			for(Input input:screenTemplateManager.getInputsForScreen("functionTable", null)) {
+			for(Input input:screenTemplateManager.getInputsForScreen("functionTable", null, null)) {
 				reportSearchAttributes.add("functionAttributes."+input.getId());
 			}
 		}

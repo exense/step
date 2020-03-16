@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.commons.activation.Expression;
+import step.core.objectenricher.ObjectPredicate;
 
 public class ScreenTemplateManagerTest {
 
@@ -115,7 +116,7 @@ public class ScreenTemplateManagerTest {
 
 		ScreenTemplateManager s = new ScreenTemplateManager(a);
 		
-		List<Input> inputs = s.getInputsForScreen("testScreen1", new HashMap<String, Object>());
+		List<Input> inputs = s.getInputsForScreen("testScreen1", new HashMap<String, Object>(), newPredicate());
 		Assert.assertEquals(3, inputs.size());
 		Assert.assertEquals(inputs.get(0), new Input(InputType.TEXT, "Param1", "Param1",null));
 		
@@ -126,11 +127,20 @@ public class ScreenTemplateManagerTest {
 		
 		HashMap<String, Object> ctx = new HashMap<String, Object>();
 		ctx.put("user", "user1");
-		inputs = s.getInputsForScreen("testScreen1", ctx);
+		inputs = s.getInputsForScreen("testScreen1", ctx, newPredicate());
 		Assert.assertEquals(5, inputs.size());
 		Assert.assertEquals(inputs.get(2), new Input(InputType.TEXT, "Param3", "LabelParam3",getOptionListForUser1()));
 		Assert.assertEquals(inputs.get(3), new Input(InputType.TEXT, "Param4", "LabelParam4",options));
 		Assert.assertEquals(inputs.get(4), new Input(InputType.DROPDOWN, "Param5", "Param5",options));
+	}
+
+	protected ObjectPredicate newPredicate() {
+		return new ObjectPredicate() {
+			@Override
+			public boolean test(Object t) {
+				return true;
+			}
+		};
 	}
 
 	private List<Option> getDefaultOptionList() {

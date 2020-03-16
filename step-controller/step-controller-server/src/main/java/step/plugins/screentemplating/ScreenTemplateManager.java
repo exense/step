@@ -5,10 +5,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.bson.types.ObjectId;
 
 import step.commons.activation.Activator;
+import step.core.objectenricher.ObjectPredicate;
 
 public class ScreenTemplateManager {
 
@@ -21,8 +23,12 @@ public class ScreenTemplateManager {
 		this.screenInputAccessor = screenInputAccessor;
 	}
 
-	public List<Input> getInputsForScreen(String screenId, Map<String,Object> contextBindings) {
-		List<Input> screenInputs = screenInputAccessor.getScreenInputsByScreenId(screenId).stream().map(i->i.getInput()).collect(Collectors.toList());
+	public List<Input> getInputsForScreen(String screenId, Map<String,Object> contextBindings, ObjectPredicate objectPredicate) {
+		Stream<ScreenInput> stream = screenInputAccessor.getScreenInputsByScreenId(screenId).stream();
+		if(objectPredicate != null) {
+			stream = stream.filter(objectPredicate);
+		}
+		List<Input> screenInputs = stream.map(i->i.getInput()).collect(Collectors.toList());
 		
 		List<Input> result = new ArrayList<>();
 		List<Input> inputs =  Activator.findAllMatches(contextBindings, screenInputs);

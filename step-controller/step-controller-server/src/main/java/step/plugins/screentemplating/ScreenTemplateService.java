@@ -38,13 +38,15 @@ import javax.ws.rs.core.UriInfo;
 
 import org.bson.types.ObjectId;
 
+import step.core.GlobalContext;
 import step.core.access.AccessManager;
 import step.core.access.Role;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;
-import step.core.deployment.Unfiltered;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectPredicateFactory;
 
 @Singleton
 @Path("screens")
@@ -53,13 +55,16 @@ public class ScreenTemplateService extends AbstractServices {
 	protected AccessManager accessManager;
 	protected ScreenTemplateManager screenTemplateManager;
 	protected ScreenInputAccessor screenInputAccessor;
+	protected ObjectPredicateFactory objectPredicateFactory;
 	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		accessManager = getContext().get(AccessManager.class);
-		screenInputAccessor = getContext().get(ScreenInputAccessor.class);
-		screenTemplateManager = getContext().get(ScreenTemplateManager.class);
+		GlobalContext context = getContext();
+		accessManager = context.get(AccessManager.class);
+		screenInputAccessor = context.get(ScreenInputAccessor.class);
+		screenTemplateManager = context.get(ScreenTemplateManager.class);
+		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 	}
 	
 	@GET
@@ -82,7 +87,8 @@ public class ScreenTemplateService extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<Input> getInputsForScreen(@PathParam("id") String screenId, @Context UriInfo uriInfo) {		
 		Map<String, Object> contextBindings = getContextBindings(uriInfo);
-		return screenTemplateManager.getInputsForScreen(screenId, contextBindings);
+		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+		return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
 	}
 	
 	@GET
@@ -95,7 +101,6 @@ public class ScreenTemplateService extends AbstractServices {
 	
 	@GET
 	@Secured
-	@Unfiltered
 	@Path("/input/byscreen/{screenid}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<ScreenInput> getScreenInputsByScreenId(@PathParam("screenid") String screenId) {		
@@ -104,7 +109,6 @@ public class ScreenTemplateService extends AbstractServices {
 	
 	@GET
 	@Secured
-	@Unfiltered
 	@Path("/input/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ScreenInput getInput(@PathParam("id") String id) {
@@ -130,7 +134,6 @@ public class ScreenTemplateService extends AbstractServices {
 	
 	@POST
 	@Secured(right="admin")
-	@Unfiltered
 	@Path("/input")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void saveInput(ScreenInput screenInput) {
