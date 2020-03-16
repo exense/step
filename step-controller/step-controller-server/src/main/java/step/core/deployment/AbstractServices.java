@@ -67,8 +67,11 @@ public abstract class AbstractServices {
 	}
 	
 	protected Session getSession() {
-		Session session = (Session) httpSession.getAttribute(SESSION);
-		return session;
+		if(httpSession != null) {
+			return (Session) httpSession.getAttribute(SESSION);
+		} else {
+			return null;
+		}
 	}
 	
 	protected void setSession(Session session) {
