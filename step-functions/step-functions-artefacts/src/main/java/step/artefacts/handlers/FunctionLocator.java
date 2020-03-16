@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.bson.types.ObjectId;
@@ -49,7 +50,11 @@ public class FunctionLocator {
 			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, getBindings());
 			
 			ObjectPredicate objectPredicate = context.get(ObjectPredicate.class);
-			List<Function> matchingFunctions = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).filter(objectPredicate).collect(Collectors.toList());
+			Stream<Function> stream = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false);
+			if(objectPredicate != null) {
+				stream = stream.filter(objectPredicate);
+			}
+			List<Function> matchingFunctions = stream.collect(Collectors.toList());
 			
 			Set<String> activeKeywordVersions = getActiveKeywordVersions();
 			if(activeKeywordVersions != null && activeKeywordVersions.size()>0) {
