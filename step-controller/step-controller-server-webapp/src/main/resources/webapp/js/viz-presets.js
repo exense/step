@@ -1,6 +1,6 @@
 
 function getVizDashboardList(){
-	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"]];
+	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"], ["RTMDashboard"]];
 }
 
 var overtimeFillBlanksTransformFn = function(response, args) {
