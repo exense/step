@@ -47,6 +47,8 @@ public class Function extends AbstractOrganizableObject {
 	protected boolean useCustomTemplate=false;
 	protected String htmlTemplate="";
 	
+	protected String description;
+	
 	public static final String APPLICATION = "application";
 	
 	public Map<String, String> getTokenSelectionCriteria() {
@@ -133,5 +135,13 @@ public class Function extends AbstractOrganizableObject {
 	 */
 	public void setHtmlTemplate(String customTemplateContent) {
 		this.htmlTemplate = customTemplateContent;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 }

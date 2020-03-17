@@ -1,1 +1,4 @@
-<a title="Edit keyword" ng-click="openFunctionEditor()">{{function_.attributes.name}}</a>
+<span>
+	<a title="Edit keyword" ng-click="openFunctionEditor()">{{function_.attributes.name}}</a>
+	<span class="glyphicon glyphicon-question-sign" ng-if="function_.description" uib-tooltip="{{function_.description}}"></span>
+</span>
