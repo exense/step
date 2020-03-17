@@ -1,6 +1,6 @@
 {
 	"NAME": "Step OSS",
-	"OS": "WINDOWS",
+	"OS": "LINUX",
   "JAVA_VERSION": "JDK11",
 	
 	"SUBPROJECTS":
