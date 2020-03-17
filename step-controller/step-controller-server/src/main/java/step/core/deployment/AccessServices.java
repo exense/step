@@ -119,6 +119,7 @@ public class AccessServices extends AbstractServices {
 			conf.setDefaultUrl(ctrlConf.getProperty("ui.default.url"));
 		}
 		conf.setDebug(ctrlConf.getPropertyAsBoolean("ui.debug", false));
+		conf.setTitle(ctrlConf.getProperty("ui.title", "STEP"));
 		return conf;
 	}
 	

@@ -17,6 +17,8 @@ public class AccessConfiguration {
 	Map<String,String> miscParams;
 	
 	String defaultUrl;
+	
+	String title;
 
 	public AccessConfiguration() {
 		super();
@@ -69,5 +71,13 @@ public class AccessConfiguration {
 
 	public void setDefaultUrl(String defaultUrl) {
 		this.defaultUrl = defaultUrl;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
 	}
 }

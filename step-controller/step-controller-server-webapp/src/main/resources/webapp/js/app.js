@@ -380,7 +380,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	return service;
 })
 
-.factory('AuthService', function ($http, $rootScope, $location, Preferences) {
+.factory('AuthService', function ($http, $rootScope, $location, $window, Preferences) {
 	var authService = {};
 	var serviceContext = {};
 
@@ -397,6 +397,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		return $http.get('rest/access/conf')
 		.then(function(res) {
 			serviceContext.conf = res.data;
+			$window.document.title = serviceContext.conf.title;
 		})
 	}
 
