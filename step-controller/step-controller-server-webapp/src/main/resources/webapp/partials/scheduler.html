@@ -9,8 +9,8 @@
 			<st-column name="attributes.name">
 				<header>Name</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><span><a href="#" ng-click="$event.preventDefault();$parent.editTask(row.id)" ng-disabled="!authService.hasRight('task-write')" uib-tooltip="Edit">{{row.attributes.name}}</a></span></cell>
 			</st-column>
+				<cell><span><entity-icon entity="row" entity-name="'parameter'"/> <a href="#" ng-click="$event.preventDefault();$parent.editTask(row.id)" ng-disabled="!authService.hasRight('task-write')" uib-tooltip="Edit">{{row.attributes.name}}</a></span></cell>
 			<st-column name="executionsParameters.description">
 				<header>Plan</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>

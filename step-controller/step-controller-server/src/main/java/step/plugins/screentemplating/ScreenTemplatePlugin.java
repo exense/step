@@ -21,6 +21,8 @@ package step.plugins.screentemplating;
 import java.util.Arrays;
 
 import step.core.GlobalContext;
+import step.core.accessors.collections.Collection;
+import step.core.accessors.collections.CollectionRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
@@ -40,6 +42,8 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 		context.put(ScreenInputAccessor.class, screenInputAccessor);
 		context.put(ScreenTemplateManager.class, screenTemplateManager);
 		context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
+		
+		context.get(CollectionRegistry.class).register("screenInputs", new Collection<ScreenInput>(context.getMongoClientSession().getMongoDatabase(), "screenInputs", ScreenInput.class, true));
 	}
 
 	private void initializeScreenInputsIfNecessary() {

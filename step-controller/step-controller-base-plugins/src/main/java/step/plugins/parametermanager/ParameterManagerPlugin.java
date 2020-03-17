@@ -81,14 +81,24 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
 		// Parameter table
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		if(screenInputAccessor.getScreenInputsByScreenId(PARAMETER_TABLE).isEmpty()) {
-			Input input = new Input(InputType.TEXT, "key", "Key", "Keys containing 'pwd' or 'password' will be automatically protected", null);
-			input.setValueHtmlTemplate("<parameter-key parameter=\"stBean\" />");
-			screenInputAccessor.save(new ScreenInput(0, PARAMETER_TABLE, input));
+		List<ScreenInput> parameterTable = screenInputAccessor.getScreenInputsByScreenId(PARAMETER_TABLE);
+		Input keyInput = new Input(InputType.TEXT, "key", "Key", "Keys containing 'pwd' or 'password' will be automatically protected", null);
+		keyInput.setValueHtmlTemplate("<entity-icon entity=\"stBean\" entity-name=\"'parameter'\"/> <parameter-key parameter=\"stBean\" />");
+		if(parameterTable.isEmpty()) {
+			screenInputAccessor.save(new ScreenInput(0, PARAMETER_TABLE, keyInput));
 			screenInputAccessor.save(new ScreenInput(1, PARAMETER_TABLE, new Input(InputType.TEXT, "value", "Value", null, null)));
 			screenInputAccessor.save(new ScreenInput(2, PARAMETER_TABLE, new Input(InputType.TEXT, "activationExpression.script", "Activation script", null, null)));
 			screenInputAccessor.save(new ScreenInput(3, PARAMETER_TABLE, new Input(InputType.TEXT, "priority", "	Priority", null, null)));
 		}
+		
+		// Ensure the key input is always up to date
+		parameterTable.forEach(i->{
+			Input input = i.getInput();
+			if(input.getId().equals("key")) {
+				i.setInput(keyInput);
+				screenInputAccessor.save(i);
+			}
+		});
 		
 		// Edit parameter dialog
 		if(screenInputAccessor.getScreenInputsByScreenId(PARAMETER_DIALOG).isEmpty()) {

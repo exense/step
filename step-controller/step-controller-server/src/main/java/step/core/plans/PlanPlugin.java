@@ -65,12 +65,12 @@ public class PlanPlugin extends AbstractControllerPlugin {
 	}
 	
 	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
-		// Parameter table
+		// Plan table
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
 		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId("planTable");
 		if(screenInputsByScreenId == null || screenInputsByScreenId.isEmpty()) {
 			Input input = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-			input.setValueHtmlTemplate("<plan-link plan-id=\"stBean.id\" description=\"stBean.attributes.name\" />");
+			input.setValueHtmlTemplate("<entity-icon entity=\"stBean\" entity-name=\"'plans'\"/> <plan-link plan-id=\"stBean.id\" description=\"stBean.attributes.name\" />");
 			screenInputAccessor.save(new ScreenInput(0, "planTable", input));
 		}
 	}

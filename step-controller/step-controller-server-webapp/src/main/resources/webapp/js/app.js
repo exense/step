@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','plans','planEditor','planTree','artefacts','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','executionsControllers','parametersControllers','resourcesControllers','reportBrowserControllers','adminControllers','screenConfigurationControllers', 'dashboardsControllers','operationsControllers'])
+var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminControllers','plans','planEditor','planTree','artefacts','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','executionsControllers','parametersControllers','resourcesControllers','reportBrowserControllers','adminControllers','screenConfigurationControllers', 'dashboardsControllers','operationsControllers'])
 
 .config(['$locationProvider', function($locationProvider) {
 	$locationProvider.hashPrefix('');
@@ -47,38 +47,6 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','tecAdminControllers','p
 	$httpProvider.interceptors.push('authInterceptor');
 	$httpProvider.interceptors.push('genericErrorInterceptor');
 }])
-
-.factory('EntityRegistry', function() {
-
-	var api = {};
-
-	var entities = [];
-	api.registerEntity = function(displayName, entityName, entityCollectionName, getUrl, postUrl, tableType, templateUrl, callback){
-		entities.push({
-			displayName: displayName,
-			entityName:entityName,
-			entityCollectionName:entityCollectionName,
-			getUrl:getUrl,
-			postUrl:postUrl,
-			tableType: tableType,
-			templateUrl: templateUrl,
-			callback : callback
-		});
-	};
-
-	api.getEntities = function(){
-		return entities;  
-	};
-
-	api.getEntityByName = function(name){
-		return _.filter(entities,  
-                function(item){  
-                    return item.entityName === name; 
-                })[0]; 
-	};
-
-	return api;
-})
 
 .factory('ViewRegistry', function() {
 

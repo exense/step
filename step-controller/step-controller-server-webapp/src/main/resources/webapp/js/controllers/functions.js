@@ -21,7 +21,7 @@ angular.module('functionsControllers',['step'])
 .run(function(FunctionTypeRegistry, ViewRegistry, EntityRegistry) {
   ViewRegistry.registerView('functions','partials/functionList.html');  
   FunctionTypeRegistry.register('step.plugins.functions.types.CompositeFunction','Composite','partials/functions/forms/composite.html');
-  EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/functions/', 'rest/functions/', 'st-table', '/partials/functions/functionSelectionTable.html');
+  EntityRegistry.registerEntity('Keyword', 'function', 'functions', 'rest/functions/', 'rest/functions/', 'st-table', '/partials/functions/functionSelectionTable.html', null, 'glyphicon glyphicon-record');
 })
 
 .factory('FunctionTypeRegistry', function() {
