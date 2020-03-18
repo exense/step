@@ -1,6 +1,7 @@
 package step.core.plans;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bson.types.ObjectId;
 
@@ -68,10 +69,21 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		// Plan table
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
 		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId("planTable");
-		if(screenInputsByScreenId == null || screenInputsByScreenId.isEmpty()) {
-			Input input = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-			input.setValueHtmlTemplate("<entity-icon entity=\"stBean\" entity-name=\"'plans'\"/> <plan-link plan-id=\"stBean.id\" description=\"stBean.attributes.name\" />");
-			screenInputAccessor.save(new ScreenInput(0, "planTable", input));
+		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
+		nameInput.setValueHtmlTemplate("<entity-icon entity=\"stBean\" entity-name=\"'plans'\"/> <plan-link plan-id=\"stBean.id\" description=\"stBean.attributes.name\" />");
+		AtomicBoolean inputExists = new AtomicBoolean(false);
+		// Force content of input 'attributes.name'
+		screenInputsByScreenId.forEach(i->{
+			Input input = i.getInput();
+			if(input.getId().equals("attributes.name")) {
+				i.setInput(nameInput);
+				screenInputAccessor.save(i);
+				inputExists.set(true);
+			}
+		});
+		// Create it if not existing
+		if(!inputExists.get()) {
+			screenInputAccessor.save(new ScreenInput(0, "planTable", nameInput));
 		}
 	}
 }
