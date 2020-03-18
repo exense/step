@@ -20,6 +20,7 @@ package step.functions;
 
 import java.util.Map;
 
+import javax.json.Json;
 import javax.json.JsonObject;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -37,7 +38,7 @@ import step.core.dynamicbeans.DynamicValue;
 public class Function extends AbstractOrganizableObject {
 	
 	protected DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
-	protected JsonObject schema;
+	protected JsonObject schema = Json.createObjectBuilder().build();
 	
 	protected boolean executeLocally;
 	protected Map<String, String> tokenSelectionCriteria;
