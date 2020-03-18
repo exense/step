@@ -27,7 +27,12 @@ public class ControllerCredentials {
 	private final String password;
 		
 	public ControllerCredentials(String hostname, int port, String username, String password) {
-		this.serverUrl = "http://"+hostname+":"+port;
+		if (hostname.startsWith("https://") || hostname.startsWith("http://"))
+		{
+			this.serverUrl = hostname+":"+port;
+		} else {
+			this.serverUrl = "http://"+hostname+":"+port;
+		}
 		this.username = username;
 		this.password = password;
 	}
@@ -37,7 +42,7 @@ public class ControllerCredentials {
 		
 		if(serverUrl == null || serverUrl.isEmpty()) {
 			throw new RuntimeException("Incorrect serverURL: " + serverUrl);
-		}			
+		}
 		
 		if (serverUrl.endsWith("/")) {
 			serverUrl = serverUrl.substring(0,serverUrl.length()-1);

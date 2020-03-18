@@ -21,7 +21,7 @@ package step.client.credentials;
 public class DefaultLocalCredentials extends ControllerCredentials{
 
 	public DefaultLocalCredentials() {
-		super("localhost", 8080, "admin", "init");
+		super("http://localhost", 8080, "admin", "init");
 	}
 
 }
