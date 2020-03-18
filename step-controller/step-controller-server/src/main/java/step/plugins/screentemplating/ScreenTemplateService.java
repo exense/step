@@ -91,6 +91,20 @@ public class ScreenTemplateService extends AbstractServices {
 		return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
 	}
 	
+	@SuppressWarnings("unchecked")
+	@POST
+	@Secured
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<Input> getInputsForScreen(@PathParam("id") String screenId, Object params) {		
+		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+		Map<String, Object> contextBindings = getContextBindings(null);
+		if(params != null && params instanceof Map) {
+			contextBindings.putAll((Map<String, Object>) params);
+		}
+		return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
+	}
+	
 	@GET
 	@Secured
 	@Path("/{screenid}/{inputid}")
@@ -154,8 +168,10 @@ public class ScreenTemplateService extends AbstractServices {
 			}
 		}
 		
-		for(String key:uriInfo.getQueryParameters().keySet()) {
-			contextBindings.put(key, uriInfo.getQueryParameters().getFirst(key));
+		if(uriInfo != null) {
+			for(String key:uriInfo.getQueryParameters().keySet()) {
+				contextBindings.put(key, uriInfo.getQueryParameters().getFirst(key));
+			}
 		}
 		return contextBindings;
 	}

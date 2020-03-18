@@ -46,7 +46,7 @@ angular.module('screenConfigurationControllers',['tables','step'])
       if(!params && screensCache[screenId]) {
         return resolve(screensCache[screenId]);
       } else {
-        $http({url:"rest/screens/"+screenId, method:"GET", params:params}).then(function(response){
+        $http({url:"rest/screens/"+screenId, method:"POST", data:params}).then(function(response){
           var screenInputs = response.data;
           screensCache[screenId] = screenInputs;
           resolve(screenInputs);
