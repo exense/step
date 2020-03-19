@@ -70,9 +70,12 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 		context.put(ParameterManager.class, parameterManager);
 		this.parameterManager = parameterManager;
 		
-		createScreenInputDefinitionsIfNecessary(context);
-		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
+	}
+
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+		createScreenInputDefinitionsIfNecessary(context);
 	}
 
 	private static final String PARAMETER_DIALOG = "parameterDialog";

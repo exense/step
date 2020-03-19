@@ -29,6 +29,12 @@ public abstract class AbstractControllerPlugin extends AbstractExecutionPlugin i
 	public void executionControllerStart(GlobalContext context)  throws Exception {}
 
 	@Override
+	public void initializeData(GlobalContext context) throws Exception {}
+	
+	@Override
+	public void afterInitializeData(GlobalContext context) throws Exception {}
+	
+	@Override
 	public void executionControllerDestroy(GlobalContext context) {}
 
 	public WebPlugin getWebPlugin() {

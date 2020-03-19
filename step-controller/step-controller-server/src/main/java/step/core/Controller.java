@@ -40,6 +40,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionStatus;
+import step.core.plugins.ControllerPluginCallbacks;
 import step.core.plugins.ControllerPluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionScheduler;
@@ -77,8 +78,14 @@ public class Controller {
 		
 		recover();
 		
-		pluginManager.getProxy().executionControllerStart(context);
-
+		ControllerPluginCallbacks pluginProxy = pluginManager.getProxy();
+		logger.info("Starting controller...");
+		pluginProxy.executionControllerStart(context);
+		logger.info("Initializing data...");
+		pluginProxy.initializeData(context);
+		logger.info("Calling post data initialization scripts...");
+		pluginProxy.afterInitializeData(context);
+		
 		scheduler = new ExecutionScheduler(context);
 		scheduler.start();
 	}

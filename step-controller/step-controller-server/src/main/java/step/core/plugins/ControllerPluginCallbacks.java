@@ -24,6 +24,10 @@ public interface ControllerPluginCallbacks extends ExecutionCallbacks {
 
 	public void executionControllerStart(GlobalContext context) throws Exception;
 	
+	public void initializeData(GlobalContext context) throws Exception;
+	
+	public void afterInitializeData(GlobalContext context) throws Exception;
+	
 	public void executionControllerDestroy(GlobalContext context);
 
 }

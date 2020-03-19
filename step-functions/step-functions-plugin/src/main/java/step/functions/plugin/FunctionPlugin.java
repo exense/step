@@ -33,9 +33,13 @@ public class FunctionPlugin extends AbstractControllerPlugin {
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		createScreenInputsIfNecessary(context);
 	}
 	
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+		createScreenInputsIfNecessary(context);
+	}
+
 	protected void createScreenInputsIfNecessary(GlobalContext context) {
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
 		List<ScreenInput> functionTableInputs = screenInputAccessor.getScreenInputsByScreenId("functionTable");

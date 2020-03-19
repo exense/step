@@ -61,10 +61,13 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		context.getServiceRegistrationCallback().registerService(PlanServices.class);
 		
 		context.get(CollectionRegistry.class).register("plans", new PlanCollection(context.getMongoClientSession().getMongoDatabase()));
-		
-		createScreenInputDefinitionsIfNecessary(context);
 	}
 	
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+		createScreenInputDefinitionsIfNecessary(context);
+	}
+
 	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
 		// Plan table
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
