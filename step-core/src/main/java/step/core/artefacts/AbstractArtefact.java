@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.MapDeserializer;
 import step.core.accessors.MapSerializer;
+import step.core.dynamicbeans.DynamicValue;
 
 @JsonTypeInfo(use=Id.CUSTOM,property="_class")
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)
@@ -51,6 +52,8 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	protected List<ObjectId> attachments;
 	
 	protected boolean persistNode = true;
+	
+	private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
 	
 	public AbstractArtefact() {
 		super();
@@ -136,6 +139,14 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
 	public void setPersistNode(boolean persistNode) {
 		this.persistNode = persistNode;
+	}
+
+	public DynamicValue<Boolean> getSkipNode() {
+		return skipNode;
+	}
+
+	public void setSkipNode(DynamicValue<Boolean> skipNode) {
+		this.skipNode = skipNode;
 	}
 
 	@Override

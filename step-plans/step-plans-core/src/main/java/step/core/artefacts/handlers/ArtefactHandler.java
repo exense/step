@@ -236,7 +236,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			node.setResolvedArtefact(artefact);
 			
 			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
-			if(filter!=null&&!filter.isSelected(artefact)) {
+			if((filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get()) {
 				node.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
 				if(persistBefore && artefact.isPersistNode()) {

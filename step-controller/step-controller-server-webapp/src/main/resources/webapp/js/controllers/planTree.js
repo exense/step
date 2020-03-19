@@ -174,7 +174,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
 					        }
 					      },
 					      "Open": {
-                  "separator_before": false,
+                  "separator_before": true,
                   "separator_after": false,
                   "label": "Open \u00A0\u00A0(Ctrl+o)",
                   "icon"        : false,
@@ -184,6 +184,15 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
                     }
                   }
                   ,"_disabled" : !($node.original.planId || $node.original.callFunctionId)
+                },
+                "SwitchDisable": {
+                  "separator_before": true,
+                  "separator_after": false,
+                  "label": ($scope.isNodeDisabled()) ? "Enable \u00A0(Ctrl+s)" : "Disable \u00A0(Ctrl+s)",
+                  "icon"        : false,
+                  "action": function (obj) {
+                      $scope.switchDisable();
+                  }
                 }
 					    }
 					  }
@@ -285,6 +294,10 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             $scope.openSelectedArtefact();
             e.stopImmediatePropagation();
             e.preventDefault();
+          } else if (e.which === 83 && (e.ctrlKey || e.metaKey)) {
+            $scope.switchDisable();
+            e.stopImmediatePropagation();
+            e.preventDefault();
           }
           else if (e.which === 113) {
             $scope.rename();
@@ -318,6 +331,9 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       	  var icon = artefactTypes.getIcon(artefact._class);
       	  
       	  var node = { "id" : artefact.id, "children" : children, "text" : getNodeLabel(artefact), icon:"glyphicon "+icon, data: {"artefact": artefact} }
+      	  if (artefact.skipNode.value) {
+      	    node.li_attr = { "class" : "text-muted" }
+      	  }
       	  
       	  if (artefact._class === 'CallPlan') {
       	    node.planId = artefact.id;
@@ -472,6 +488,21 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         }
       }
       
+      $scope.isNodeDisabled = function() {
+        var selectedNode = tree.get_selected(true)[0];
+        var selectedArtefact = getArtefactById($scope.plan.root, selectedNode.id);
+        return selectedArtefact.skipNode.value;
+      }
+      
+      $scope.switchDisable = function() {
+        var selectedNode = tree.get_selected(true)[0];
+        var selectedArtefact = getArtefactById($scope.plan.root, selectedNode.id);
+        selectedArtefact.skipNode.value = !selectedArtefact.skipNode.value;
+        selectedNode.li_attr = (selectedArtefact.skipNode.value) ? { "class" : "text-muted" } : {"class" : ""}
+        $scope.fireChangeEvent();
+        tree.redraw(true);
+      }
+      
       function getSelectedArtefact() {
         var selectedNode = tree.get_selected(true)[0];
         var selectedArtefact = getArtefactById($scope.plan.root, selectedNode.id);
@@ -580,7 +611,9 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
           var newLabel = getNodeLabel(artefact);
           if(newLabel!=currentLabel) {
             tree.rename_node(currentNode,newLabel);
-          }
+          } 
+          currentNode.li_attr = (artefact.skipNode.value) ? { "class" : "text-muted" } : {"class" : ""}
+          tree.redraw(true);
           $scope.fireChangeEvent();
         } else {
           console.error("Unable to find not with id: "+artefact.id);
