@@ -128,6 +128,7 @@ angular.module('reportTree',['step','artefacts'])
         if (scrollLeftPos && scrollLeftPos > 0) {
           treeScrollDiv.scrollLeft = scrollLeftPos;
         }
+        $scope.reloading = false;
       });
       
       $scope.pagingBefore = function() {
@@ -154,8 +155,10 @@ angular.module('reportTree',['step','artefacts'])
       }
       
       $scope.skipRefesh=false;
+      $scope.reloading=false;
       $scope.handle.refresh = function() {
-        if (!$scope.skipRefesh) {
+        if (!$scope.skipRefesh && !$scope.reloading) {
+          $scope.reloading = true;
           scrollTopPos = treeScrollDiv.scrollTop;
           scrollLeftPos = treeScrollDiv.scrollLeft;
           tree.refresh();

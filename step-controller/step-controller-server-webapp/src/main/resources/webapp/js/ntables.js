@@ -243,19 +243,19 @@ angular.module('tables', ['export'])
           scope.table.clear();
           if (value && value.length > 0) {
             scope.table.rows.add(value);
-            // perform the table draw after the current angular digest cycle in order to let angular render all the cells  (See comment in colDef.render above) 
-            $timeout(function() {
-              //scope.table.draw(false)
-              // Very ugly workound: when using angular directives in a cell that require an aynchron operation
-              // to load (HTTP call to retrieve the template for instance), the cell cannot be rendered in the current angular digest cycle
-              // and the data returned by colDef.render (See above) used for ordering and filtering are wrong
-              // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
-              // Waiting 100ms however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
-              $timeout(function() {
-                scope.table.draw(false)
-              },100)
-            })
           }
+          // perform the table draw after the current angular digest cycle in order to let angular render all the cells  (See comment in colDef.render above)
+          $timeout(function() {
+            //scope.table.draw(false)
+            // Very ugly workound: when using angular directives in a cell that require an aynchron operation
+            // to load (HTTP call to retrieve the template for instance), the cell cannot be rendered in the current angular digest cycle
+            // and the data returned by colDef.render (See above) used for ordering and filtering are wrong
+            // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
+            // Waiting 100ms however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
+            $timeout(function() {
+              scope.table.draw(false)
+            },100)
+          })
         }
 		  }
 		  

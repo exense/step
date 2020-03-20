@@ -18,6 +18,11 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.time.DurationFormatUtils;
+
 import step.artefacts.Sleep;
 import step.artefacts.reports.SleepReportNode;
 import step.common.managedoperations.OperationManager;
@@ -46,7 +51,8 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 
 	@Override
 	protected void execute_(ReportNode node, Sleep testArtefact) {
-		if (testArtefact.getReleaseTokens().get()) {
+		boolean releaseToken = testArtefact.getReleaseTokens().get(); 
+		if (releaseToken) {
 			releaseTokens(testArtefact);
 		}
 		long sleepDurationMs;
@@ -63,8 +69,11 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 		} catch (NumberFormatException e) {
 			throw new RuntimeException("Unable to parse attribute 'ms' as long.",e);
 		}
-
-		OperationManager.getInstance().enter("Sleep", sleepDurationMs, node.getId().toString());
+		
+		Map<String,String> details = new LinkedHashMap<String,String> ();
+		details.put("Sleep time", DurationFormatUtils.formatDuration(sleepDurationMs, "HH:mm:ss.SSS"));
+		details.put("Release token", Boolean.toString(releaseToken));
+		OperationManager.getInstance().enter("Sleep", details, node.getId().toString());
 		try {
 			Thread.sleep(sleepDurationMs);
 		} catch (InterruptedException e) {

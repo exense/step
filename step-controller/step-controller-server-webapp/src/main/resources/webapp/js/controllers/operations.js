@@ -77,7 +77,7 @@ angular.module('operationsControllers',['step'])
     	var templates = {
     			'Keyword Call':'keywordCallOperation.html',
     			'Quota acquisition':'quotaAcquisitionOperation.html',
-    			'Sleep':'sleepOperation.html',
+    		//	'Sleep':'sleepOperation.html',
     			'Token selection':'tokenSelection.html',
     			'default':'defaultOperation.html'
     	}
@@ -98,6 +98,10 @@ angular.module('operationsControllers',['step'])
     	  opDetails[newKey]=prop;
     	}
     	$scope.operation.details=opDetails;*/
+    	$scope.isObject = function (value) {
+    	  return (value && typeof value === 'object');
+    	};
+    	
       $scope.detailsTemplate = 'partials/operations/' + getTemplate($scope.operation.name); 
     },
       
