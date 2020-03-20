@@ -20,9 +20,27 @@ package step.artefacts;
 
 import step.artefacts.handlers.SynchronizedHandler;
 import step.core.artefacts.Artefact;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(handler = SynchronizedHandler.class)
 public class Synchronized extends Sequence {
 	
-
+	private DynamicValue<String> lockName = new DynamicValue<String>("");
+	private DynamicValue<Boolean> globalLock = new DynamicValue<Boolean>(false);
+	
+	public DynamicValue<String> getLockName() {
+		return lockName;
+	}
+	
+	public void setLockName(DynamicValue<String> lockName) {
+		this.lockName = lockName;
+	}
+	
+	public DynamicValue<Boolean> getGlobalLock() {
+		return globalLock;
+	}
+	
+	public void setGlobalLock(DynamicValue<Boolean> globalLock) {
+		this.globalLock = globalLock;
+	}
 }

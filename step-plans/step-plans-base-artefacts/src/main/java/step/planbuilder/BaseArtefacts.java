@@ -8,8 +8,11 @@ import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
 import step.artefacts.Set;
 import step.artefacts.Sleep;
+import step.artefacts.Synchronized;
 import step.artefacts.TestCase;
+import step.artefacts.TestScenario;
 import step.artefacts.TestSet;
+import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.excel.ExcelDataPool;
@@ -86,5 +89,22 @@ public class BaseArtefacts {
 		sleep.getDuration().setValue(ms);
 		return sleep;
 	}
+	
+	public static Synchronized synchronized_(String lockName, boolean globalLock) {
+		Synchronized synchronized1 = new Synchronized();
+		synchronized1.setGlobalLock(new DynamicValue<Boolean>(globalLock));
+		synchronized1.setLockName(new DynamicValue<String>(lockName));
+		return synchronized1;
+	}
 
+	public static ThreadGroup threadGroup(int numberOfThreads, int numberOfIterationsPerThread) {
+		ThreadGroup threadGroup = new ThreadGroup();
+		threadGroup.setIterations(new DynamicValue<Integer>(numberOfThreads));
+		threadGroup.setUsers(new DynamicValue<Integer>(numberOfIterationsPerThread));
+		return threadGroup;
+	}
+	
+	public static TestScenario testScenario() {
+		return new TestScenario();
+	}
 }

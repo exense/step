@@ -79,6 +79,8 @@ angular.module('operationsControllers',['step'])
     			'Quota acquisition':'quotaAcquisitionOperation.html',
     		//	'Sleep':'sleepOperation.html',
     			'Token selection':'tokenSelection.html',
+    			'Waiting for lock':'waitingForLock.html',
+    			'Waiting for global lock':'waitingForLock.html',
     			'default':'defaultOperation.html'
     	}
     	

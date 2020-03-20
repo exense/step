@@ -18,23 +18,27 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import step.artefacts.Synchronized;
+import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 
 public class SynchronizedHandler extends ArtefactHandler<Synchronized, ReportNode> {
 	
-	private static final String LOCK_OBJECT_KEY = "$synchronizedHandlerLockObject";
+	private static final String LOCK_MAP_KEY = "$synchronizedHandlerLockMap";
+	private static final ConcurrentHashMap<String, Lock> globalLockMap = new ConcurrentHashMap<>();
 	
 	private SequenceHandler sh = new SequenceHandler();
 	
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		synchronized (LOCK_OBJECT_KEY) {
-			if(context.get(LOCK_OBJECT_KEY)==null) {
-				context.put(LOCK_OBJECT_KEY, new Object());
+		synchronized (LOCK_MAP_KEY) {
+			if(context.get(LOCK_MAP_KEY)==null) {
+				context.put(LOCK_MAP_KEY, new ConcurrentHashMap<>());
 			}
 		}
 	}
@@ -47,9 +51,46 @@ public class SynchronizedHandler extends ArtefactHandler<Synchronized, ReportNod
 	@Override
 	public void execute_(ReportNode node, Synchronized testArtefact) {
 		sh.init(context);
-		Object lock = context.get(LOCK_OBJECT_KEY);
+		Lock lock = getLock(testArtefact);
+		
+		String operation = lock.global?"Waiting for global lock":"Waiting for lock";
+		OperationManager.getInstance().enter(operation, lock.name);
 		synchronized(lock) {
 			sh.execute_(node, testArtefact);
+		}
+		OperationManager.getInstance().exit();
+	}
+
+	@SuppressWarnings("unchecked")
+	protected Lock getLock(Synchronized testArtefact) {
+		ConcurrentHashMap<String, Lock> lockMap;
+		boolean global;
+		if(testArtefact.getGlobalLock().get()) {
+			lockMap = globalLockMap;
+			global = true;
+		} else {
+			lockMap = (ConcurrentHashMap<String, Lock>) context.get(LOCK_MAP_KEY);
+			global = false;
+		}
+		String lockId;
+		String lockName = testArtefact.getLockName().get();
+		if(lockName == null || lockName.isEmpty()) {
+			lockId = testArtefact.getId().toString();
+		} else {
+			lockId = lockName;
+		}
+		Lock lock = lockMap.computeIfAbsent(lockId, o->new Lock(lockId, global));
+		return lock;
+	}
+	
+	private static class Lock {
+		String name;
+		boolean global;
+
+		public Lock(String name, boolean global) {
+			super();
+			this.name = name;
+			this.global = global;
 		}
 	}
 
