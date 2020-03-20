@@ -45,4 +45,14 @@ public class ReportNodeStatusDistributionView extends AbstractView<ReportNodeSta
 	public String getViewId() {
 		return "statusDistributionForFunctionCalls";
 	}
+
+	@Override
+	public void rollbackReportNode(ReportNodeStatusDistribution model, ReportNode node) {
+		if(node instanceof CallFunctionReportNode && node.persistNode()) {
+			model.distribution.get(node.getStatus()).count--;
+			model.count--;
+			model.countForecast--;
+		}
+		
+	}
 }

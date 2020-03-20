@@ -111,6 +111,11 @@ public class ViewPlugin extends AbstractControllerPlugin {
 		invokeViewHooks(node, (model, view)->view.afterReportNodeExecution(model, node));
 	}
 	
+	@Override
+	public void rollbackReportNode(ReportNode node) {
+		invokeViewHooks(node, (model, view)->view.rollbackReportNode(model, node));
+	}
+	
 	protected void invokeViewHooks(ReportNode node, BiConsumer<ViewModel, AbstractView<ViewModel>> consumer) {
 		for(AbstractView<ViewModel> view:register.values()) {
 			ViewModel model = view.getModel(node.getExecutionID());

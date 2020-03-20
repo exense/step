@@ -28,4 +28,6 @@ public abstract class AbstractView<V extends ViewModel> {
 	public abstract void afterReportNodeSkeletonCreation(V model, ReportNode node);
 	
 	public abstract void afterReportNodeExecution(V model, ReportNode node);
+	
+	public abstract void rollbackReportNode(V model, ReportNode node);
 }

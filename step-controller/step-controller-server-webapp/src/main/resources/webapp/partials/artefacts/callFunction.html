@@ -15,7 +15,9 @@
 				</span>
 			</div>
 		</div>
-		<dynamic-json-editor ng-if="!artefact.functionId" label="'Keyword'" dynamic-value="artefact.function" on-save="save()" />
+		<fieldset ng-disabled="readonly">
+			<dynamic-json-editor ng-if="!artefact.functionId" label="'Keyword'" dynamic-value="artefact.function" on-save="save()" />
+		</fieldset>
 		
 		<fieldset ng-disabled="readonly">
 			<dynamic-json-editor label="'Input'" dynamic-value="artefact.argument" on-save="save()" />

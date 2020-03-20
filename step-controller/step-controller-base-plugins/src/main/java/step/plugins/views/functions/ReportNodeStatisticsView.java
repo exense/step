@@ -14,19 +14,27 @@ public class ReportNodeStatisticsView extends AbstractTimeBasedView<ReportNodeSt
 
 	@Override
 	public void afterReportNodeSkeletonCreation(AbstractTimeBasedModel<ReportNodeStatisticsEntry> model, ReportNode node) {}
-
-	@Override
-	public void afterReportNodeExecution(AbstractTimeBasedModel<ReportNodeStatisticsEntry> model, ReportNode node) {
+	
+	private ReportNodeStatisticsEntry createPoint(ReportNode node) {
+		ReportNodeStatisticsEntry e = null;
 		if(node instanceof CallFunctionReportNode && node.persistNode()) {
-			ReportNodeStatisticsEntry e = new ReportNodeStatisticsEntry();
+			e = new ReportNodeStatisticsEntry();
 			e.count = 1;
 			e.sum = node.getDuration();
 			Statistics stats = new Statistics(1, node.getDuration());
 			Map<String, String> functionAttributes = ((CallFunctionReportNode)node).getFunctionAttributes();
 			if(functionAttributes != null) {
 				e.byFunctionName.put(functionAttributes.get(AbstractOrganizableObject.NAME), stats);
-				addPoint(model, node.getExecutionTime(), e);
 			}
+		}
+		return e;
+	}
+
+	@Override
+	public void afterReportNodeExecution(AbstractTimeBasedModel<ReportNodeStatisticsEntry> model, ReportNode node) {
+		ReportNodeStatisticsEntry e = createPoint(node);
+		if (e != null) {
+			addPoint(model, node.getExecutionTime(), e);
 		}
 	}
 	
@@ -45,9 +53,31 @@ public class ReportNodeStatisticsView extends AbstractTimeBasedView<ReportNodeSt
 			target.byFunctionName.put(e.getKey(), stats);
 		}
 	}
+	
+	@Override
+	protected void unMergePoints(ReportNodeStatisticsEntry target, ReportNodeStatisticsEntry source) {
+		target.count-=source.count;
+		target.sum-=source.sum;
+		for(Entry<String, Statistics> e:source.byFunctionName.entrySet()) {
+			Statistics stats = target.byFunctionName.get(e.getKey());
+			if(stats!=null) {
+				stats.count-=e.getValue().count;
+				stats.sum-=e.getValue().sum;
+				target.byFunctionName.put(e.getKey(), stats);
+			}
+		}
+	}
 
 	@Override
 	public String getViewId() {
 		return "ReportNodeStatistics";
+	}
+
+	@Override
+	public void rollbackReportNode(AbstractTimeBasedModel<ReportNodeStatisticsEntry> model, ReportNode node) {
+		ReportNodeStatisticsEntry e = createPoint(node);
+		if (e != null) {
+			removePoint(model, node.getExecutionTime(), e);
+		}
 	}
 }

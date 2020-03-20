@@ -84,6 +84,9 @@ public class ContextBuilder {
 			}
 			
 			@Override
+			public void rollbackReportNode(ExecutionContext context, ReportNode node) {}
+			
+			@Override
 			public void afterExecutionEnd(ExecutionContext context) {
 			}
 

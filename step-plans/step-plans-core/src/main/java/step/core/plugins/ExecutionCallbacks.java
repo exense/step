@@ -53,6 +53,8 @@ public interface ExecutionCallbacks extends PluginCallbacks {
 	
 	public void afterReportNodeExecution(ExecutionContext context, ReportNode node);
 	
+	public void rollbackReportNode(ExecutionContext context, ReportNode node);
+	
 	public void associateThread(ExecutionContext context, Thread thread);
 	
 	public void associateThread(ExecutionContext context, Thread thread, long parentThreadId);

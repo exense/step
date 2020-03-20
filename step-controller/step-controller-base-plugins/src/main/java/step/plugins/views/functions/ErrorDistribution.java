@@ -55,6 +55,14 @@ public class ErrorDistribution extends ViewModel {
 	public void incrementByCode(String code){
 		this.countByErrorCode.incrementForKey(code);
 	}
+	
+	public void decrementByMsg(String message){
+		this.countByErrorMsg.decrementForKey(message);
+	}
+
+	public void decrementByCode(String code){
+		this.countByErrorCode.decrementForKey(code);
+	}
 
 	public ViewCounterMap getCountByErrorCode() {
 		return countByErrorCode;

@@ -289,6 +289,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected void removeReportNode(ReportNode node, ReportNodeAccessor reportNodeAccessor) {
 		reportNodeAccessor.getChildren(node.getId()).forEachRemaining(e->removeReportNode(e, reportNodeAccessor));
 		reportNodeAccessor.remove(node.getId());
+		context.getExecutionCallbacks().rollbackReportNode(context, node);
 	}
 	
 	protected abstract void execute_(REPORT_NODE node, ARTEFACT testArtefact) throws Exception;

@@ -47,4 +47,13 @@ public class TestcaseStatusDistributionView extends AbstractView<ReportNodeStatu
 	public String getViewId() {
 		return "statusDistributionForTestcases";
 	}
+
+	@Override
+	public void rollbackReportNode(ReportNodeStatusDistribution model, ReportNode node) {
+		if(node instanceof TestCaseReportNode && node.persistNode()) {
+			model.distribution.get(node.getStatus()).count++;
+			model.count++;
+			model.countForecast--;
+		}
+	}
 }

@@ -36,6 +36,10 @@ public class AbstractExecutionPlugin extends AbstractPlugin implements Execution
 	@Deprecated()
 	public void afterReportNodeExecution(ReportNode node) {
 	}
+	
+	@Deprecated()
+	public void rollbackReportNode(ReportNode node) {
+	}
 
 	@Override
 	public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node) {
@@ -50,6 +54,11 @@ public class AbstractExecutionPlugin extends AbstractPlugin implements Execution
 	@Override
 	public void afterReportNodeExecution(ExecutionContext context, ReportNode node) {
 		afterReportNodeExecution(node);
+	}
+	
+	@Override
+	public void rollbackReportNode(ExecutionContext context, ReportNode node) {
+		rollbackReportNode(node);
 	}
 
 	@Override

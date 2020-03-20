@@ -25,7 +25,8 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       plan: '=',
       stOnChange: '&',
       handle: '=',
-      interactiveSessionHandle: '='
+      interactiveSessionHandle: '=',
+      readonly: '=',
     },
     controller: function($scope,$location,$rootScope, AuthService) {
       
@@ -95,7 +96,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
 					'core' : {
 					  'data' : [],
 					  'check_callback' : function (operation, node, node_parent, node_position, more) {
-					    if(AuthService.hasRight('plan-write')) {
+					    if(AuthService.hasRight('plan-write') && !$scope.readonly) {
 					      if(operation=='move_node') {
 					        return node_parent.parent?true:false;
 					      } else {
@@ -119,12 +120,14 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
 					        "action": function (obj) {
 					          $scope.rename();
 					        }
+					        ,"_disabled" : $scope.readonly
 					      },
 					      "Move": {
 					        "separator_before": false,
 					        "separator_after": true,
 					        "label": "Move",
 					        "action": false,
+					        "_disabled" : $scope.readonly,
 					        "submenu": {
 					          "Up": {
 					            "seperator_before": false,
@@ -134,6 +137,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
 					            action: function (obj) {
 					              $scope.move(-1);
 					            }
+					            ,"_disabled" : $scope.readonly
 					          },
 					          "Down": {
 					            "seperator_before": false,
@@ -143,6 +147,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
 					            action: function (obj) {
 					              $scope.move(1);
 					            }
+					            ,"_disabled" : $scope.readonly
 					          }
 					        }
 					      },
@@ -154,6 +159,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
                   "action": function (obj) {
                     $scope.copy();
                   }
+					        ,"_disabled" : $scope.readonly
                 },
                 "Paste": {
                   "separator_before": false,
@@ -163,6 +169,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
                   "action": function (obj) {
                     $scope.paste();
                   }
+                  ,"_disabled" : $scope.readonly
                 },
 					      "Delete": {
 					        "separator_before": false,
@@ -172,6 +179,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
 					        "action": function (obj) {
 					          $scope.remove();
 					        }
+                  ,"_disabled" : $scope.readonly
 					      },
 					      "Open": {
                   "separator_before": true,
@@ -268,24 +276,24 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       $('#jstree_demo_div').on('keydown.jstree', '.jstree-anchor', function (e, data) {
         //Only react on keyboard while not renaming a node
         if (!$scope.renaming) {
-          if(e.which === 46) {
+          if(e.which === 46 && !$scope.readonly) {
             e.preventDefault(); 
             $scope.remove();
           }
-          else if(e.which === 67 && (e.ctrlKey || e.metaKey)) {
+          else if(e.which === 67 && (e.ctrlKey || e.metaKey) && !$scope.readonly) {
             e.preventDefault(); 
             $scope.copy();
           }
-          else if(e.which === 86 && (e.ctrlKey || e.metaKey)) {
+          else if(e.which === 86 && (e.ctrlKey || e.metaKey) && !$scope.readonly) {
             e.preventDefault(); 
             $scope.paste();
           }
-          else if (e.which === 38 && (e.ctrlKey || e.metaKey)) {
+          else if (e.which === 38 && (e.ctrlKey || e.metaKey) && !$scope.readonly) {
             $scope.move(-1);
             e.stopImmediatePropagation();
             e.preventDefault();
           }
-          else if (e.which === 40 && (e.ctrlKey || e.metaKey)) {
+          else if (e.which === 40 && (e.ctrlKey || e.metaKey) && !$scope.readonly) {
             $scope.move(1);
             e.stopImmediatePropagation();
             e.preventDefault();
@@ -299,7 +307,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             e.stopImmediatePropagation();
             e.preventDefault();
           }
-          else if (e.which === 113) {
+          else if (e.which === 113 && !$scope.readonly) {
             $scope.rename();
           }
           else if (e.which === 13 && (e.ctrlKey || e.metaKey) && $scope.isInteractiveSessionActive()) {

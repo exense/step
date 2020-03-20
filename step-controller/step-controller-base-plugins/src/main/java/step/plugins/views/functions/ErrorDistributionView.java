@@ -35,4 +35,16 @@ public class ErrorDistributionView extends AbstractView<ErrorDistribution> {
 	public String getViewId() {
 		return "errorDistribution";
 	}
+
+	@Override
+	public void rollbackReportNode(ErrorDistribution model, ReportNode node) {
+		if(node instanceof CallFunctionReportNode && node.persistNode()) {
+			model.setCount(model.getCount()-1);
+			if(node.getError()!=null && node.getError().getMsg()!=null) {
+				model.setErrorCount(model.getErrorCount()-1);
+				model.decrementByMsg(node.getError().getMsg());
+				model.decrementByCode(node.getError().getCode() == null?"default":node.getError().getCode().toString()); //temporary due to Integer type
+			}
+		}
+	}
 }

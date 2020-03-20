@@ -9,7 +9,9 @@
 			</span>
 		</div>
 	</div>
-	<dynamic-json-editor ng-if="!artefact.planId" label="'Plan attributes'" dynamic-value="artefact.selectionAttributes" on-save="save()" />
+	<fieldset ng-disabled="readonly">
+		<dynamic-json-editor ng-if="!artefact.planId" label="'Plan attributes'" dynamic-value="artefact.selectionAttributes" on-save="save()" />
+	</fieldset>
 	<fieldset ng-disabled="readonly">
 		<dynamic-json-editor label="'Input'" dynamic-value="artefact.input" on-save="save()" />
 	</fieldset>

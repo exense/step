@@ -30,6 +30,12 @@ public abstract class AbstractTimeBasedView<T> extends AbstractView<AbstractTime
 		addPointToInterval(model.getIntervals(), time, model.getResolution(), point);
 		updateMinAndMaxTime(model, time);
 	}
+	
+	protected void removePoint(AbstractTimeBasedModel<T> model, long time, T point) {
+		//increaseResolutionIfNeeded(model);
+		removePointFromInterval(model.getIntervals(), time, model.getResolution(), point);
+		//updateMinAndMaxTime(model, time);
+	}
 
 	private void updateMinAndMaxTime(AbstractTimeBasedModel<T> model, long time) {
 		if(model.getMinTime()>time) {
@@ -74,7 +80,17 @@ public abstract class AbstractTimeBasedView<T> extends AbstractView<AbstractTime
 		}
 	}
 	
+	private void removePointFromInterval(Map<Long, T> intervals, long time, int resolution, T point) {
+		long interval = timeToInterval(time,resolution);
+		T entry = intervals.get(interval);
+		if(entry != null) {
+			unMergePoints(entry, point);
+		}
+	}
+	
 	protected abstract void mergePoints(T target, T source);
+	
+	protected abstract void unMergePoints(T target, T source);
 	
 	private long timeToInterval(long time, long resolution) {
 		return time-time%resolution;

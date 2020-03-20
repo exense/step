@@ -21,4 +21,11 @@ public class ViewCounterMap  extends ThresholdMap<String, Integer> {
 			put(key, current + 1);
 		}
 	}
+	
+	public void decrementForKey(String key){
+		Integer current = get(key);
+		if(current != null){
+			put(key, current - 1);
+		}
+	}
 }
