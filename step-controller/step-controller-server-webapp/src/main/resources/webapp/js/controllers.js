@@ -411,9 +411,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
 
 			$scope.dashboardsendpoint=[];
-			
+
 			$scope.initTimelineWidget = function(){
-				
+
 				// Timeline widget
 				$scope.globalsettingsPh =[
 					new Placeholder("__businessobjectid__", eId, false),
@@ -422,8 +422,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 				$scope.timelinewidget = new TimelineWidget();
 				// 
-				
-				
+
+
 				$scope.timelinewidget.state.options.innercontainer.height = 90;
 				$scope.timelinewidget.state.options.chart = {
 						type: 'linePlusBarChart',
@@ -441,51 +441,48 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 								console.log(e);
 								$scope.$broadcast('apply-global-setting', new Placeholder('__from__', Math.round(e.extent[0]), 'Off'));
 								$scope.$broadcast('apply-global-setting', new Placeholder('__to__', Math.round(e.extent[1]), 'Off'));
-								
+
 							},
-		                    changeState: function(e){ console.log(" -------------------changeState"); },
-		                    renderEnd: function(e){ console.log(" -------------------renderEnd"); }
-		                    
+							changeState: function(e){ console.log(" -------------------changeState"); },
+							renderEnd: function(e){ console.log(" -------------------renderEnd"); }
+
 						},
 						showLegend: false, forceY: 0, showControls: false,
-						 xAxis: {
-					            tickFormat: {},
-					            strTickFormat: function (d) {
-					                var value;
-					                if ((typeof d) === "string") {
-					                    value = parseInt(d);
-					                } else {
-					                    value = d;
-					                }
+						xAxis: {
+							tickFormat: {},
+							strTickFormat: function (d) {
+								var value;
+								if ((typeof d) === "string") {
+									value = parseInt(d);
+								} else {
+									value = d;
+								}
 
-					                return d3.time.format("%H:%M:%S")(new Date(value));
-					            }
-					            //, rotateLabels: -23
-					        },
+								return d3.time.format("%H:%M:%S")(new Date(value));
+							}
+							//, rotateLabels: -23
+						},
 						callback: function(scope, element){
 							var chartScope = $scope.timelinewidget.state.api.getScope();
-							
-							if($scope.timelinewidget.state.api.getScope().svg && $scope.timelinewidget.state.api.getScope().svg[0]){
-							 $($scope.timelinewidget.state.api.getScope().svg[0]).find(".nv-focus").first().remove();
-							 console.log('update')
-							 $scope.timelinewidget.state.api.update();
+
+							if(chartScope && chartScope.svg && chartScope.svg[0]){
+								$(chartScope.svg[0]).find(".nv-focus").first().remove();
+								$scope.timelinewidget.state.api.update();
 							}
-							
-							 
 						},
 						zoom: {
-					            enabled: false
-					    }
+							enabled: false
+						}
 				};
-				
+
 			}
 
 			$scope.initTimelineWidget();
-			
+
 			$scope.$watch('execution.status',function(newStatus, oldStatus) {
 				if(newStatus) {
 					$scope.init = false;
-					
+
 					if(newStatus === 'ENDED'){
 						$scope.isRealTime = '';
 						$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
@@ -531,35 +528,33 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				}
 			});
 
-			$scope.updateTimelineWidget = function(){
-				$(document).ready(function () {
-					$scope.timelinewidget.state.options.chart.width = $element[0].parentNode.offsetWidth * 0.7;
-				});
-		};
+			$scope.$watch('tabs.selectedTab', function(newvalue, oldvalue){
+				//initializing dashboard only when hitting the performance tab
+				if(newvalue === 2){
+					if($scope.execution.status!=='ENDED') {
+						//must handle this here until we have a dedicated controller per tab
+						$scope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
+						$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });						
+					}
 
-		$scope.$watch('tabs.selectedTab', function(newvalue, oldvalue){
-			//initializing dashboard only when hitting the performance tab
-			if(newvalue === 2){
-				if($scope.execution.status!=='ENDED') {
-					//must handle this here until we have a dedicated controller per tab
-					$scope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
-					$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });						
+					$(document).ready(function () {
+						$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
+						//$scope.$broadcast('resize-widget');
+						
+						$(document).ready(function () {
+							$scope.timelinewidget.state.options.chart.width = 0;
+							window.dispatchEvent(new Event('resize'));
+						});
+					});
+
+				}else{
+					//turning off refresh when clicking other views
+					$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
 				}
-
-				$(document).ready(function () {
-					$scope.updateTimelineWidget();
-					$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
-					$scope.$broadcast('resize-widget');
-				});
-
-			}else{
-				//turning off refresh when clicking other views
-				$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
-			}
-		});
-	},
-	templateUrl: 'partials/progress.html'
-};
+			});
+		},
+		templateUrl: 'partials/progress.html'
+	};
 }]);
 
 tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStorage',
