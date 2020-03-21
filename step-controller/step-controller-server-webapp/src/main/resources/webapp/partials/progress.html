@@ -15,8 +15,8 @@
 			<div class="toolbar">
 				<auto-refresh-commands autorefresh="autorefresh" />
 				<button type="button" class="btn btn-default btn-xs"
-					ng-model="vizRelated.lockdisplay" uib-btn-checkbox tooltip-placement="bottom"
-					uib-tooltip="Unlock charts">
+					ng-model="vizRelated.lockdisplay" uib-btn-checkbox
+					tooltip-placement="bottom" uib-tooltip="Unlock charts">
 					<span class="glyphicon glyphicon-lock" />
 				</button>
 			</div>
@@ -43,30 +43,29 @@
 						</div>
 					</div>
 					<div class="panel-body" ng-show="isShowPanel('testCases')">
-						<st-table data="testCases" handle="testCaseTable" uid="'testCaseList'" persist-state="true" 
-							selection-attribute="'artefactID'" default-selection="testCaseTableDefaultSelection" multiple-selection="true" on-selection-change="testCaseTableOnSelectionChange">
-							<st-actions>
-								<st-selection-actions />
-							</st-actions>
-							<st-columns>
-								<st-column name="name">
-									<header>Name</header>
-									<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-									<cell><a href uib-tooltip="Drilldown" ng-click="drillDownTestcase(row.artefactID)">{{row.name}}</a></cell>
-								</st-column>
-								<st-column name="currentOperations">
-									<header>Current operations</header>
-									<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-									<cell><current-operations report-node-id="row.id" operation-options="operationOptions" execution-view-services="executionViewServices"/></cell>
-								</st-column>
-								<st-column name="status" width="'80px'">
-									<header>Status</header>
-									<second-header><inputdropdown options="statusOptions" action="search" initial-value="initialValue"></inputdropdown></second-header>
-									<cell><div class="text-center reportNodeStatus status-{{row.status}}">{{row.status}}</div></cell>
-								</st-column>
-								<st-selection-column />
-							</st-columns>
-						</st-table>
+						<st-table data="testCases" handle="testCaseTable"
+							uid="'testCaseList'" persist-state="true"
+							selection-attribute="'artefactID'"
+							default-selection="testCaseTableDefaultSelection"
+							multiple-selection="true"
+							on-selection-change="testCaseTableOnSelectionChange">
+						<st-actions> <st-selection-actions /> </st-actions> <st-columns>
+						<st-column name="name"> <header>Name</header> <second-header>
+						<inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+						<cell> <a href uib-tooltip="Drilldown"
+							ng-click="drillDownTestcase(row.artefactID)">{{row.name}}</a></cell> </st-column> <st-column
+							name="currentOperations"> <header>Current
+							operations</header> <second-header> <inputdropdown
+							action="search" initial-value="initialValue"></inputdropdown></second-header> <cell>
+						<current-operations report-node-id="row.id"
+							operation-options="operationOptions"
+							execution-view-services="executionViewServices" /></cell> </st-column> <st-column
+							name="status" width="'80px'"> <header>Status</header>
+						<second-header> <inputdropdown
+							options="statusOptions" action="search"
+							initial-value="initialValue"></inputdropdown></second-header> <cell>
+						<div class="text-center reportNodeStatus status-{{row.status}}">{{row.status}}</div>
+						</cell> </st-column> <st-selection-column /> </st-columns> </st-table>
 					</div>
 				</div>
 
@@ -100,20 +99,14 @@
 						<a ng-click="toggleShowPanel('parameters')">{{getPanelTitle('parameters')}}</a>
 					</div>
 					<div class="panel-body" ng-show="isShowPanel('parameters')">
-						<st-table data="execution.parameters" uid="'executionParameterList'">
-							<st-columns>
-								<st-column name="key">
-									<header>Key</header>
-									<second-header><inputdropdown action="search" initial-value="initialValue" ></inputdropdown></second-header>
-									<cell>{{row.key}}</cell>
-								</st-column>
-								<st-column name="value">
-									<header>Value</header>
-									<second-header><inputdropdown action="search" initial-value="initialValue" ></inputdropdown></second-header>
-									<cell>{{row.value}}</cell>
-								</st-column>
-							</st-columns>
-						</st-table>
+						<st-table data="execution.parameters"
+							uid="'executionParameterList'"> <st-columns>
+						<st-column name="key"> <header>Key</header> <second-header>
+						<inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+						<cell>{{row.key}}</cell> </st-column> <st-column name="value"> <header>Value</header>
+						<second-header> <inputdropdown action="search"
+							initial-value="initialValue"></inputdropdown></second-header> <cell>{{row.value}}</cell>
+						</st-column> </st-columns> </st-table>
 					</div>
 				</div>
 			</div>
@@ -133,11 +126,11 @@
 			<div class="panel-body">
 				<div class="row" style="display: flex;" style>
 					<div>
-						<button class="btn btn-default btn-xs" type="button" 
+						<button class="btn btn-default btn-xs" type="button"
 							ng-click="openLink('/#/root/dashboards/__pp__'+isRealTime+'PerformanceDashboard?__businessobjectid__=' + eid + '&__measurementType__=custom','_blank')">
-								Transaction dashboard <span
+							Transaction dashboard <span
 								class="glyphicon glyphicon-new-window"></span>
-							
+
 						</button>
 					</div>
 					<div>
@@ -148,9 +141,26 @@
 						</button>
 					</div>
 				</div>
-				<div class="row">
+				<div class="row" ng-if="tabs.selectedTab === 2">
+					
+					<viz-dashlet state="timelinewidget.state"
+						widgetid="timelinewidget.oid" displaytype="'aggregated'"
+						displaymode="'readonly'" presets="presets" restprefix="restprefix"
+						inputsettingscol="globalsettingsPh"></viz-dashlet>
+
+					<!-- 
+					<viz-mgd-widget displaymode="readonly"
+						state="timelinewidget.state" wstate="timelinewidget.wstate"
+						widgetid="timelinewidget.state.oid"
+						headersheightinput="'250'" charttocontainerinput=""
+						presets="presets" restprefix="restprefix"
+						inputsettingscol="globalsettingsPh">
+						     -->
+					
+				</div>
+				<div class="row" ng-if="tabs.selectedTab === 2">
 					<div>
-						<viz-dashboard-manager ng-if="tabs.selectedTab === 2"
+						<viz-dashboard-manager
 							displaymode="displaymode" presets="staticPresets"
 							dashboards="dashboardsendpoint" headermargin="200"
 							restprefix="'/rest'"></viz-dashboard-manager>
@@ -231,7 +241,8 @@
 				</div>
 			</div>
 
-			<div ng-repeat="entry in customPanels" ng-attr-id="{{entry.id}}" class="panel panel-default">
+			<div ng-repeat="entry in customPanels" ng-attr-id="{{entry.id}}"
+				class="panel panel-default">
 				<div class="panel-heading">
 					<a ng-click="toggleShowPanel(entry.id)">{{entry.label}}</a>
 				</div>
@@ -240,23 +251,21 @@
 				</div>
 			</div>
 
-			<div ng-attr-id="{{getPanelId('currentOperations')}}" ng-if="execution.status != 'ENDED'" class="panel panel-default">
+			<div ng-attr-id="{{getPanelId('currentOperations')}}"
+				ng-if="execution.status != 'ENDED'" class="panel panel-default">
 				<div class="panel-heading">
 					<a ng-click="toggleShowPanel('currentOperations')">{{getPanelTitle('currentOperations')}}</a>
 				</div>
 				<div class="panel-body" ng-show="isShowPanel('currentOperations')">
 					<st-table data="currentOperations" uid="'currentOperations'">
-						<st-columns>
-							<st-column name="operation">
-								<header></header>
-								<cell><operation operation="row" execution-view-services="executionViewServices"/></cell>
-							</st-column>
-						</st-columns>
-					</st-table>
+					<st-columns> <st-column name="operation">
+					<header></header> <cell> <operation operation="row"
+						execution-view-services="executionViewServices" /></cell> </st-column> </st-columns> </st-table>
 				</div>
 			</div>
 
-			<div ng-attr-id="{{getPanelId('throughput')}}" ng-if="progress.count>1">
+			<div ng-attr-id="{{getPanelId('throughput')}}"
+				ng-if="progress.count>1">
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<a ng-click="toggleShowPanel('throughput')">{{getPanelTitle('throughput')}}</a>

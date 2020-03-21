@@ -35,7 +35,7 @@ tecAdminControllers.factory('executionServices', function($http,$q,$filter,Scree
 
 	factory.getDefaultExecutionParameters = function () {
 		return $q(function(resolve, reject) {
-		  ScreenTemplates.getScreenInputsByScreenId('executionParameters').then(function(inputs){
+			ScreenTemplates.getScreenInputsByScreenId('executionParameters').then(function(inputs){
 				var result = {};
 				_.each(inputs, function(input) {
 					if(input.options && input.options.length>0) {
@@ -70,10 +70,10 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 
 			$scope.authService = AuthService;
 			if($scope.execution) {
-			  $scope.executionParameters = _.clone($scope.execution.executionParameters.customParameters);
+				$scope.executionParameters = _.clone($scope.execution.executionParameters.customParameters);
 			} else {
-			  $scope.executionParameters = {};
-			  executionServices.getDefaultExecutionParameters().then(function(defaultParameters){$scope.executionParameters = defaultParameters});
+				$scope.executionParameters = {};
+				executionServices.getDefaultExecutionParameters().then(function(defaultParameters){$scope.executionParameters = defaultParameters});
 			}
 			$scope.isolateExecution = $scope.isolateExecution?$scope.isolateExecution:($scope.execution?$scope.execution.executionParameters.isolatedExecution:false);
 
@@ -198,12 +198,12 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				}
 			}
 
-      $scope.testCaseTableOnSelectionChange = function() {
-        $scope.refresh();
-      };
-      
-      $scope.operationOptions = {'showAll':false};
-			
+			$scope.testCaseTableOnSelectionChange = function() {
+				$scope.refresh();
+			};
+
+			$scope.operationOptions = {'showAll':false};
+
 			var executionViewServices = {
 					showNodeInTree : function(nodeId) {
 						$http.get('/rest/controller/reportnode/'+nodeId+'/path').then(function(response) {
@@ -273,11 +273,11 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.openRtm = function() {
 				$window.open($scope.rtmlink, '_blank');
 			}
-			
+
 			$scope.openLink = function(link,target) {
 				$window.open(link, target);
 			}
-		
+
 		},
 		link: function($scope, $element, $rootscope) {
 			var eId = $scope.eid;
@@ -334,17 +334,17 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$scope.countByErrorMsg = [];
 					$scope.countByErrorCode = [];
 					_.map($scope.errorDistribution.countByErrorMsg, function(val, key) {
-					  var r = /\\\\u([\d\w]{4})/gi;
-					  key = key.replace(r, function (match, grp) {
-					    return String.fromCharCode(parseInt(grp, 16)); });
-					  key = decodeURIComponent(key);
+						var r = /\\\\u([\d\w]{4})/gi;
+						key = key.replace(r, function (match, grp) {
+							return String.fromCharCode(parseInt(grp, 16)); });
+						key = decodeURIComponent(key);
 						$scope.countByErrorMsg.push({errorMessage:key, errorCount:val})
 					});
 					_.map($scope.errorDistribution.countByErrorCode, function(val, key) {
 						$scope.countByErrorCode.push({errorCode:key, errorCodeCount:val})
 					});
 				});
-				 
+
 				$scope.errorDistributionToggleStates = ['message', 'code'];
 				$scope.selectedErrorDistirbutionToggle = 'message';
 
@@ -375,7 +375,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$scope.reportTreeHandle.refresh();
 				}
 			};
-			
+
 			$scope.refresh = refresh;
 
 			function refreshAll() {
@@ -387,64 +387,132 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			refreshAll();
 
 			var refreshFct = function() {
-			  if ($scope.autorefresh.enabled) {
-  			  refreshExecution();
-  			  if($scope.active()) { 
-  			    if ($scope.execution==null || $scope.execution.status!='ENDED') {
-  			      refresh();
-  			      refreshTestCaseTable();
-  			    }
-  			    else {
-    			    $scope.autorefresh.enabled=false;
-    			  }
-  			  }
-			  }
+				if ($scope.autorefresh.enabled) {
+					refreshExecution();
+					if($scope.active()) { 
+						if ($scope.execution==null || $scope.execution.status!='ENDED') {
+							refresh();
+							refreshTestCaseTable();
+						}
+						else {
+							$scope.autorefresh.enabled=false;
+						}
+					}
+				}
 			}
-				
+
 			$scope.initAutoRefresh = function (on, interval, autoIncreaseTo) {
-			  $scope.autorefresh = {enabled : on, interval : interval, refreshFct: refreshFct, autoIncreaseTo: autoIncreaseTo};
+				$scope.autorefresh = {enabled : on, interval : interval, refreshFct: refreshFct, autoIncreaseTo: autoIncreaseTo};
 			}
 			$scope.autorefresh = {};
-			
+
 			/* Viz Perf Dashboard */
 			$scope.displaymode = 'managed';
 			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
 
 			$scope.dashboardsendpoint=[];
+			
+			$scope.initTimelineWidget = function(){
+				
+				// Timeline widget
+				$scope.globalsettingsPh =[
+					new Placeholder("__businessobjectid__", eId, false),
+					new Placeholder("__measurementType__", "keyword", false)
+					];
 
+				$scope.timelinewidget = new TimelineWidget();
+				// 
+				
+				
+				$scope.timelinewidget.state.options.innercontainer.height = 90;
+				$scope.timelinewidget.state.options.chart = {
+						type: 'linePlusBarChart',
+						height: 60,
+						margin: {
+							top: 0, right: 30, bottom: 0, left: 30
+						},
+						tooltip: {
+							enabled: false
+						},
+						dispatch: {
+							stateChange: function(e){console.log(' ----------------- stateChange -------------------')},
+							brush: function(e){
+								console.log(' ----------------- brush -------------------');
+								console.log(e);
+								$scope.$broadcast('apply-global-setting', new Placeholder('__from__', Math.round(e.extent[0]), 'Off'));
+								$scope.$broadcast('apply-global-setting', new Placeholder('__to__', Math.round(e.extent[1]), 'Off'));
+								
+							},
+		                    changeState: function(e){ console.log(" -------------------changeState"); },
+		                    renderEnd: function(e){ console.log(" -------------------renderEnd"); }
+		                    
+						},
+						showLegend: false, forceY: 0, showControls: false,
+						 xAxis: {
+					            tickFormat: {},
+					            strTickFormat: function (d) {
+					                var value;
+					                if ((typeof d) === "string") {
+					                    value = parseInt(d);
+					                } else {
+					                    value = d;
+					                }
+
+					                return d3.time.format("%H:%M:%S")(new Date(value));
+					            }
+					            //, rotateLabels: -23
+					        },
+						callback: function(scope, element){
+							var chartScope = $scope.timelinewidget.state.api.getScope();
+							
+							if($scope.timelinewidget.state.api.getScope().svg && $scope.timelinewidget.state.api.getScope().svg[0]){
+							 $($scope.timelinewidget.state.api.getScope().svg[0]).find(".nv-focus").first().remove();
+							 console.log('update')
+							 $scope.timelinewidget.state.api.update();
+							}
+							
+							 
+						},
+						zoom: {
+					            enabled: false
+					    }
+				};
+				
+			}
+
+			$scope.initTimelineWidget();
+			
 			$scope.$watch('execution.status',function(newStatus, oldStatus) {
 				if(newStatus) {
+					$scope.init = false;
+					
 					if(newStatus === 'ENDED'){
-						$scope.init = false;
-	
 						$scope.isRealTime = '';
 						$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
-						
+
 						if(oldStatus && $scope.autorefresh.enabled) {
 							refreshAll();
 						} else if (oldStatus == null) {
-						  $scope.initAutoRefresh(false,0,0)
+							$scope.initAutoRefresh(false,0,0)
 						}
 					}else{
-						$scope.init = false;
-	
 						$scope.isRealTime = 'Realtime';
 						$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, 'keyword', 'Keyword', false)];
 						if (oldStatus == null) {
-						  $scope.initAutoRefresh(true,100,5000)
+							$scope.initAutoRefresh(true,100,5000)
 						}
 					}
 				}
 			});
-			
+
 			$scope.init = false;
-			
+
 			// explicit first request trigger (could be done more elegantly by passing a "fireRequestUponStart" argument to viz)
 			$scope.$on('dashletinput-initialized', function () {
 				console.log('<- dashletinput-initialized')
 				if(!$scope.init){
 					$scope.init = true;
-					
+
 					$(document).ready(function(){
 						console.log('-> fireQueryDependingOnContext')
 						$scope.$broadcast('fireQueryDependingOnContext');
@@ -463,27 +531,35 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				}
 			});
 
-			$scope.$watch('tabs.selectedTab', function(newvalue, oldvalue){
-				//initializing dashboard only when hitting the performance tab
-				if(newvalue === 2){
-					if($scope.execution.status!=='ENDED') {
-					  //must handle this here until we have a dedicated controller per tab
-					  $scope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
-            $scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });						
-					}
-					
-					$(document).ready(function () {
-						$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
-						$scope.$broadcast('resize-widget');
-					});
-				}else{
-					//turning off refresh when clicking other views
-					$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
+			$scope.updateTimelineWidget = function(){
+				$(document).ready(function () {
+					$scope.timelinewidget.state.options.chart.width = $element[0].parentNode.offsetWidth * 0.7;
+				});
+		};
+
+		$scope.$watch('tabs.selectedTab', function(newvalue, oldvalue){
+			//initializing dashboard only when hitting the performance tab
+			if(newvalue === 2){
+				if($scope.execution.status!=='ENDED') {
+					//must handle this here until we have a dedicated controller per tab
+					$scope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
+					$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });						
 				}
-			});
-		},
-		templateUrl: 'partials/progress.html'
-	};
+
+				$(document).ready(function () {
+					$scope.updateTimelineWidget();
+					$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
+					$scope.$broadcast('resize-widget');
+				});
+
+			}else{
+				//turning off refresh when clicking other views
+				$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
+			}
+		});
+	},
+	templateUrl: 'partials/progress.html'
+};
 }]);
 
 tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStorage',
@@ -542,88 +618,88 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
 }]);
 
 tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','$interval',
-  function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,$interval) {
-  return {
-    restrict: 'E',
-    scope: {
-      autorefresh: '=',
-      stInline: '=?'
-    },
-    templateUrl: 'partials/autoRefreshPopover.html',
-    controller: function($scope) {
-  
-      $scope.autoRefreshPresets = [
-        {label:'OFF', value:0},
-        {label:'1 second', value:1000},
-        {label:'2 seconds', value:2000},
-        {label:'5 seconds', value:5000},
-        {label:'10 seconds', value:10000},
-        {label:'30 seconds', value:30000}
-      ];
-      
-      var manuallyChanged = false;
-      
-      $scope.changeRefreshInterval = function (newInterval){
-        manuallyChanged = true;
-        $scope.autorefresh.interval = newInterval;
-        if ($scope.autorefresh.interval > 0) {          
-          $scope.autorefresh.enabled=true;
-        } else {
-          $scope.autorefresh.enabled=false;
-        }
-      }
-      
-      var refreshTimer;
-      
-      $scope.startTimer = function() {
-        if (angular.isDefined(refreshTimer)) { return; }
-      
-        if($scope.autorefresh.enabled && $scope.autorefresh.interval > 0) {
-          refreshTimer = $interval(function() {     
-            $scope.autorefresh.refreshFct();
-            if ($scope.autorefresh.autoIncreaseTo && !manuallyChanged && $scope.autorefresh.interval < $scope.autorefresh.autoIncreaseTo) {
-              var newInterval = $scope.autorefresh.interval*2;
-              $scope.autorefresh.interval = (newInterval < $scope.autorefresh.autoIncreaseTo) ? newInterval : $scope.autorefresh.autoIncreaseTo;
-            }
-          }, $scope.autorefresh.interval);
-        }
-      }
-      
-      $scope.stopTimer = function () {
-        if (angular.isDefined(refreshTimer)) {
-          $interval.cancel(refreshTimer);
-          refreshTimer = undefined;
-        }
-      }
-      
-      $scope.$watch('autorefresh.interval',function(newInterval, oldInterval) {
-        if (oldInterval != newInterval || !angular.isDefined(refreshTimer)){
-          $scope.stopTimer();  
-          $rootScope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
-          $scope.startTimer();
-        }
-      });
-      
-      $scope.$watch('autorefresh.enabled',function(newStatus, oldStatus) {
-        if (angular.isDefined(newStatus) && newStatus != oldStatus) {
-          if (newStatus) {
-            //refresh as soon as autorefresh is re-activated
-            $scope.autorefresh.refreshFct();
-          } else {
-            //In case autorefresh is stopped by parent, we must set interval to 0 explicitly
-            $scope.autorefresh.interval = 0;
-          } 
-          $rootScope.$broadcast('globalsettings-globalRefreshToggle', { 'new': newStatus });
-        }
-      });
+	function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,$interval) {
+	return {
+		restrict: 'E',
+		scope: {
+			autorefresh: '=',
+			stInline: '=?'
+		},
+		templateUrl: 'partials/autoRefreshPopover.html',
+		controller: function($scope) {
 
-      $scope.$on('$destroy', function() {
-        if (angular.isDefined(refreshTimer)) {
-          $interval.cancel(refreshTimer);
-        }
-      });
+			$scope.autoRefreshPresets = [
+				{label:'OFF', value:0},
+				{label:'1 second', value:1000},
+				{label:'2 seconds', value:2000},
+				{label:'5 seconds', value:5000},
+				{label:'10 seconds', value:10000},
+				{label:'30 seconds', value:30000}
+				];
+
+			var manuallyChanged = false;
+
+			$scope.changeRefreshInterval = function (newInterval){
+				manuallyChanged = true;
+				$scope.autorefresh.interval = newInterval;
+				if ($scope.autorefresh.interval > 0) {          
+					$scope.autorefresh.enabled=true;
+				} else {
+					$scope.autorefresh.enabled=false;
+				}
+			}
+
+			var refreshTimer;
+
+			$scope.startTimer = function() {
+				if (angular.isDefined(refreshTimer)) { return; }
+
+				if($scope.autorefresh.enabled && $scope.autorefresh.interval > 0) {
+					refreshTimer = $interval(function() {     
+						$scope.autorefresh.refreshFct();
+						if ($scope.autorefresh.autoIncreaseTo && !manuallyChanged && $scope.autorefresh.interval < $scope.autorefresh.autoIncreaseTo) {
+							var newInterval = $scope.autorefresh.interval*2;
+							$scope.autorefresh.interval = (newInterval < $scope.autorefresh.autoIncreaseTo) ? newInterval : $scope.autorefresh.autoIncreaseTo;
+						}
+					}, $scope.autorefresh.interval);
+				}
+			}
+
+			$scope.stopTimer = function () {
+				if (angular.isDefined(refreshTimer)) {
+					$interval.cancel(refreshTimer);
+					refreshTimer = undefined;
+				}
+			}
+
+			$scope.$watch('autorefresh.interval',function(newInterval, oldInterval) {
+				if (oldInterval != newInterval || !angular.isDefined(refreshTimer)){
+					$scope.stopTimer();  
+					$rootScope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
+					$scope.startTimer();
+				}
+			});
+
+			$scope.$watch('autorefresh.enabled',function(newStatus, oldStatus) {
+				if (angular.isDefined(newStatus) && newStatus != oldStatus) {
+					if (newStatus) {
+						//refresh as soon as autorefresh is re-activated
+						$scope.autorefresh.refreshFct();
+					} else {
+						//In case autorefresh is stopped by parent, we must set interval to 0 explicitly
+						$scope.autorefresh.interval = 0;
+					} 
+					$rootScope.$broadcast('globalsettings-globalRefreshToggle', { 'new': newStatus });
+				}
+			});
+
+			$scope.$on('$destroy', function() {
+				if (angular.isDefined(refreshTimer)) {
+					$interval.cancel(refreshTimer);
+				}
+			});
 
 
-    }
-  };
+		}
+	};
 }]);

@@ -3,6 +3,36 @@ function getVizDashboardList(){
 	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"], ["RTMDashboard"]];
 }
 
+
+
+
+function TimelineWidget() {
+
+	//new RTMMasterWidget(getUniqueId());
+	//$scope.timelinewidget.state.options.innercontainer.height = '200px';
+	//$scope.timelinewidget.state.query = new RTMAggregatesMasterQuery();
+	
+	var widgetsArray = [];
+	var entityName = 'Keyword';
+	var measurementType = 'keyword';
+
+	var timeFrame = null;
+
+	var timeField = "begin";
+	var timeFormat = "long";
+	var valueField = "value";
+	var groupby = "rnStatus";
+
+	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
+	var numericalFilters = "[]";
+
+	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	
+	var timelinewidget = widgetsArray[0];
+	return timelinewidget;
+}
+	
+
 var overtimeFillBlanksTransformFn = function(response, args) {
     var metric = args.metric;
     var retData = [], series = [];
@@ -460,7 +490,7 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 	var groupby = "name";
 
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
-	var numericalFilters = "[]";
+	var numericalFilters = "[{ \"key\": \"begin\", \"minValue\": \"__from__\", \"maxValue\": \"__to__\" }]";
 
 	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
