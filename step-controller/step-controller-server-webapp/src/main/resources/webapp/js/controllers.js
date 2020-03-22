@@ -584,6 +584,10 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
 
 	$scope.selectTab = function(eid) {
 		$scope.$state = eid;
+		$(document).ready(function(){
+			window.dispatchEvent(new Event('resize'));
+		})
+		
 	}
 
 	$scope.updateTabTitle = function(eid, execution) {

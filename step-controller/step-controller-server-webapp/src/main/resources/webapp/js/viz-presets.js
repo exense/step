@@ -7,12 +7,7 @@ function getVizDashboardList(){
 
 
 function TimelineWidget() {
-
-	//new RTMMasterWidget(getUniqueId());
-	//$scope.timelinewidget.state.options.innercontainer.height = '200px';
-	//$scope.timelinewidget.state.query = new RTMAggregatesMasterQuery();
 	
-	var widgetsArray = [];
 	var entityName = 'Keyword';
 	var measurementType = 'keyword';
 
@@ -26,10 +21,49 @@ function TimelineWidget() {
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[]";
 
-	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	var overtimeFillBlanksTransformFn = function(response, args) {
+	    var metric = args.metric;
+	    var retData = [], series = [];
+
+	    var payload = response.data.payload.stream.streamData;
+	    var payloadKeys = Object.keys(payload);
+
+	    for (i = 0; i < payloadKeys.length; i++) {
+	      var series_ = payload[payloadKeys[i]];
+	        var serieskeys = Object.keys(series_ )
+	        for (j = 0; j < serieskeys.length; j++) {
+	            if(!series.includes(serieskeys[j])){
+	                series.push(serieskeys[j]);
+	            }
+	        }
+	    }
+
+	    for (i = 0; i < payloadKeys.length; i++) {
+	      var series_ = payload[payloadKeys[i]];
+	        var serieskeys = Object.keys(series)
+	        for (j = 0; j < serieskeys.length; j++) {
+	            var key = series[serieskeys[j]];
+	            var yval;
+	            if(series_[key] && series_[key][metric]){
+	              yval = series_[key][metric];
+	            }else{
+	              yval = 0;
+	            }
+	            retData.push({
+	                x: payloadKeys[i],
+	                y: yval,
+	                z: key
+	            });
+	        }
+	    }
+	    return retData;
+	};
+	var config = new Config('Fire','Off', true, false, 'unnecessaryAsMaster');
+	var wId = 'timelineWidget-' + getUniqueId();
 	
-	var timelinewidget = widgetsArray[0];
-	return timelinewidget;
+	var timelineWidget = new Widget(wId, new DefaultWidgetState(), new DashletState(wId, false, 0, {}, new EffectiveChartOptions('lineChart', null, timeFrame), config, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+
+	return timelineWidget;
 }
 	
 
