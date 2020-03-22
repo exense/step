@@ -424,28 +424,15 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				// 
 
 
-				$scope.timelinewidget.state.options.innercontainer.height = 90;
+				$scope.timelinewidget.state.options.innercontainer.height = 100;
 				$scope.timelinewidget.state.options.chart = {
-						type: 'linePlusBarChart',
-						height: 60,
+						type: 'stackedAreaWithFocusChart',
+						height: 75,
 						margin: {
 							top: 0, right: 30, bottom: 0, left: 30
 						},
 						tooltip: {
 							enabled: false
-						},
-						dispatch: {
-							stateChange: function(e){console.log(' ----------------- stateChange -------------------')},
-							brush: function(e){
-								console.log(' ----------------- brush -------------------');
-								console.log(e);
-								$scope.$broadcast('apply-global-setting', new Placeholder('__from__', Math.round(e.extent[0]), 'Off'));
-								$scope.$broadcast('apply-global-setting', new Placeholder('__to__', Math.round(e.extent[1]), 'Off'));
-
-							},
-							changeState: function(e){ console.log(" -------------------changeState"); },
-							renderEnd: function(e){ console.log(" -------------------renderEnd"); }
-
 						},
 						showLegend: false, forceY: 0, showControls: false,
 						xAxis: {
@@ -465,13 +452,33 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						callback: function(scope, element){
 							var chartScope = $scope.timelinewidget.state.api.getScope();
 
+							console.log(chartScope);
+
 							if(chartScope && chartScope.svg && chartScope.svg[0]){
+								
+								chartScope.chart.focus.xAxis.tickFormat(function (d) {
+									var value;
+									if ((typeof d) === "string") {
+										value = parseInt(d);
+									} else {
+										value = d;
+									}
+
+									return d3.time.format("%H:%M:%S")(new Date(value));
+								});
+
+								var existing = chartScope.chart.focus.dispatch.onBrush.on;
+								var newBrush = function(e){
+									$scope.$broadcast('apply-global-setting', new Placeholder('__from__', Math.round(e[0]), 'Off'));
+									$scope.$broadcast('apply-global-setting', new Placeholder('__to__', Math.round(e[1]), 'Off'));
+								}
+								newBrush.on = existing;
+								chartScope.chart.focus.dispatch.onBrush = newBrush;
+
 								$(chartScope.svg[0]).find(".nv-focus").first().remove();
+								//console.log($(chartScope.svg[0]).find(".nv-focus"));
 								$scope.timelinewidget.state.api.update();
 							}
-						},
-						zoom: {
-							enabled: false
 						}
 				};
 
@@ -540,7 +547,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$(document).ready(function () {
 						$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
 						//$scope.$broadcast('resize-widget');
-						
+
 						$(document).ready(function () {
 							$scope.timelinewidget.state.options.chart.width = 0;
 							window.dispatchEvent(new Event('resize'));
