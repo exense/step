@@ -427,12 +427,24 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				$scope.timelinewidget.state.options.innercontainer.height = 100;
 				$scope.timelinewidget.state.options.chart = {
 						type: 'stackedAreaWithFocusChart',
+						colorFunction : function(str) {
+							if (str === 'PASSED') {
+								return "rgb(23,216,33)";
+							}
+							if (str === 'FAILED') {
+								return "red";
+							}
+							if (str === 'TECHNICAL_ERROR') {
+								return "black";
+							}
+							return "blue";
+						},
 						height: 75,
 						margin: {
 							top: 0, right: 30, bottom: 0, left: 30
 						},
 						tooltip: {
-							enabled: false
+							enabled: true
 						},
 						showLegend: false, forceY: 0, showControls: false,
 						xAxis: {
@@ -452,10 +464,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						callback: function(scope, element){
 							var chartScope = $scope.timelinewidget.state.api.getScope();
 
-							console.log(chartScope);
+							//console.log(chartScope);
 
 							if(chartScope && chartScope.svg && chartScope.svg[0]){
-								
+
 								chartScope.chart.focus.xAxis.tickFormat(function (d) {
 									var value;
 									if ((typeof d) === "string") {
@@ -476,15 +488,12 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 								chartScope.chart.focus.dispatch.onBrush = newBrush;
 
 								$(chartScope.svg[0]).find(".nv-focus").first().remove();
-								//console.log($(chartScope.svg[0]).find(".nv-focus"));
 								$scope.timelinewidget.state.api.update();
 							}
 						}
 				};
 
 			}
-
-			$scope.initTimelineWidget();
 
 			$scope.$watch('execution.status',function(newStatus, oldStatus) {
 				if(newStatus) {
@@ -493,7 +502,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					if(newStatus === 'ENDED'){
 						$scope.isRealTime = '';
 						$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
-
+						$scope.initTimelineWidget();
+						
 						if(oldStatus && $scope.autorefresh.enabled) {
 							refreshAll();
 						} else if (oldStatus == null) {
@@ -513,12 +523,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 			// explicit first request trigger (could be done more elegantly by passing a "fireRequestUponStart" argument to viz)
 			$scope.$on('dashletinput-initialized', function () {
-				console.log('<- dashletinput-initialized')
 				if(!$scope.init){
 					$scope.init = true;
 
 					$(document).ready(function(){
-						console.log('-> fireQueryDependingOnContext')
 						$scope.$broadcast('fireQueryDependingOnContext');
 					});
 				}
@@ -587,7 +595,7 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
 		$(document).ready(function(){
 			window.dispatchEvent(new Event('resize'));
 		})
-		
+
 	}
 
 	$scope.updateTabTitle = function(eid, execution) {

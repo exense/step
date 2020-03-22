@@ -141,7 +141,7 @@
 						</button>
 					</div>
 				</div>
-				<div class="row" ng-if="tabs.selectedTab === 2">
+				<div class="row" ng-if="tabs.selectedTab === 2 && execution.status === 'ENDED'">
 					
 					<viz-dashlet state="timelinewidget.state"
 						widgetid="timelinewidget.oid" displaytype="'aggregated'"

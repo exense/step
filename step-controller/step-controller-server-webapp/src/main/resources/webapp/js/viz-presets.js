@@ -4,7 +4,43 @@ function getVizDashboardList(){
 }
 
 
+var overtimeFillBlanksTransformFn = function(response, args) {
+    var metric = args.metric;
+    var retData = [], series = [];
 
+    var payload = response.data.payload.stream.streamData;
+    var payloadKeys = Object.keys(payload);
+
+    for (i = 0; i < payloadKeys.length; i++) {
+      var series_ = payload[payloadKeys[i]];
+        var serieskeys = Object.keys(series_ )
+        for (j = 0; j < serieskeys.length; j++) {
+            if(!series.includes(serieskeys[j])){
+                series.push(serieskeys[j]);
+            }
+        }
+    }
+
+    for (i = 0; i < payloadKeys.length; i++) {
+      var series_ = payload[payloadKeys[i]];
+        var serieskeys = Object.keys(series)
+        for (j = 0; j < serieskeys.length; j++) {
+            var key = series[serieskeys[j]];
+            var yval;
+            if(series_[key] && series_[key][metric]){
+              yval = series_[key][metric];
+            }else{
+              yval = 0;
+            }
+            retData.push({
+                x: payloadKeys[i],
+                y: yval,
+                z: key
+            });
+        }
+    }
+    return retData;
+};
 
 function TimelineWidget() {
 	
@@ -20,7 +56,7 @@ function TimelineWidget() {
 
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[]";
-
+	
 	var overtimeFillBlanksTransformFn = function(response, args) {
 	    var metric = args.metric;
 	    var retData = [], series = [];
@@ -61,50 +97,13 @@ function TimelineWidget() {
 	var config = new Config('Fire','Off', true, false, 'unnecessaryAsMaster');
 	var wId = 'timelineWidget-' + getUniqueId();
 	
-	var timelineWidget = new Widget(wId, new DefaultWidgetState(), new DashletState(wId, false, 0, {}, new EffectiveChartOptions('lineChart', null, timeFrame), config, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
-
+	var wOptions = new EffectiveChartOptions('doesntMatter-overriden', null, timeFrame);
+		
+	var timelineWidget = new Widget(wId, new DefaultWidgetState(), new DashletState(wId, false, 0, {}, wOptions, config, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
+		
 	return timelineWidget;
 }
 	
-
-var overtimeFillBlanksTransformFn = function(response, args) {
-    var metric = args.metric;
-    var retData = [], series = [];
-
-    var payload = response.data.payload.stream.streamData;
-    var payloadKeys = Object.keys(payload);
-
-    for (i = 0; i < payloadKeys.length; i++) {
-      var series_ = payload[payloadKeys[i]];
-        var serieskeys = Object.keys(series_ )
-        for (j = 0; j < serieskeys.length; j++) {
-            if(!series.includes(serieskeys[j])){
-                series.push(serieskeys[j]);
-            }
-        }
-    }
-
-    for (i = 0; i < payloadKeys.length; i++) {
-      var series_ = payload[payloadKeys[i]];
-        var serieskeys = Object.keys(series)
-        for (j = 0; j < serieskeys.length; j++) {
-            var key = series[serieskeys[j]];
-            var yval;
-            if(series_[key] && series_[key][metric]){
-              yval = series_[key][metric];
-            }else{
-              yval = 0;
-            }
-            retData.push({
-                x: payloadKeys[i],
-                y: yval,
-                z: key
-            });
-        }
-    }
-    return retData;
-};
-
 function RealtimeSelfMonitoring() {
 
 	var widgetsArray = [];
