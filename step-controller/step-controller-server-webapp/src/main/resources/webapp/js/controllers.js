@@ -423,6 +423,16 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				$scope.timelinewidget = new TimelineWidget();
 				// 
 
+				$scope.resizeTimeline = function(){
+					var chartScope = $scope.timelinewidget.state.api.getScope();
+					$(document).ready(function(){
+						chartScope.api.updateWithOptions();										
+					});
+				};
+				
+				$scope.$on('resize-timeline', function(){
+					$scope.resizeTimeline();
+				});
 
 				$scope.timelinewidget.state.options.innercontainer.height = 100;
 				$scope.timelinewidget.state.options.chart = {
@@ -489,10 +499,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 								$scope.timelinewidget.state.api.update();
 								
 								window.addEventListener("resize", function(){
-									var chartScope = $scope.timelinewidget.state.api.getScope();
-									$(document).ready(function(){
-										chartScope.api.updateWithOptions();										
-									});
+									$scope.resizeTimeline();
 								});
 
 							}
@@ -598,6 +605,7 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
 		$scope.$state = eid;
 		$(document).ready(function(){
 			$scope.$broadcast('resize-widget');
+			$scope.$broadcast('resize-timeline');
 		})
 
 	}
