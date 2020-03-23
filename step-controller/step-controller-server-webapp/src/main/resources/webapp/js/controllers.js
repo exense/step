@@ -462,13 +462,11 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 							//, rotateLabels: -23
 						},
 						callback: function(scope, element){
-							var chartScope = $scope.timelinewidget.state.api.getScope();
+							$scope.chartScope = $scope.timelinewidget.state.api.getScope();
 
-							//console.log(chartScope);
+							if($scope.chartScope && $scope.chartScope.svg && $scope.chartScope.svg[0]){
 
-							if(chartScope && chartScope.svg && chartScope.svg[0]){
-
-								chartScope.chart.focus.xAxis.tickFormat(function (d) {
+								$scope.chartScope.chart.focus.xAxis.tickFormat(function (d) {
 									var value;
 									if ((typeof d) === "string") {
 										value = parseInt(d);
@@ -479,16 +477,24 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 									return d3.time.format("%H:%M:%S")(new Date(value));
 								});
 
-								var existing = chartScope.chart.focus.dispatch.onBrush.on;
+								var existing = $scope.chartScope.chart.focus.dispatch.onBrush.on;
 								var newBrush = function(e){
 									$scope.$broadcast('apply-global-setting', new Placeholder('__from__', Math.round(e[0]), 'Off'));
 									$scope.$broadcast('apply-global-setting', new Placeholder('__to__', Math.round(e[1]), 'Off'));
 								}
 								newBrush.on = existing;
-								chartScope.chart.focus.dispatch.onBrush = newBrush;
+								$scope.chartScope.chart.focus.dispatch.onBrush = newBrush;
 
-								$(chartScope.svg[0]).find(".nv-focus").first().remove();
+								$($scope.chartScope.svg[0]).find(".nv-focus").first().remove();
 								$scope.timelinewidget.state.api.update();
+								
+								window.addEventListener("resize", function(){
+									var chartScope = $scope.timelinewidget.state.api.getScope();
+									$(document).ready(function(){
+										chartScope.api.updateWithOptions();										
+									});
+								});
+
 							}
 						}
 				};
@@ -503,7 +509,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						$scope.isRealTime = '';
 						$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
 						$scope.initTimelineWidget();
-						
+
 						if(oldStatus && $scope.autorefresh.enabled) {
 							refreshAll();
 						} else if (oldStatus == null) {
@@ -554,11 +560,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 					$(document).ready(function () {
 						$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
-						//$scope.$broadcast('resize-widget');
-
 						$(document).ready(function () {
 							$scope.timelinewidget.state.options.chart.width = 0;
-							window.dispatchEvent(new Event('resize'));
+							$scope.$broadcast('resize-widget');
 						});
 					});
 
@@ -593,7 +597,7 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
 	$scope.selectTab = function(eid) {
 		$scope.$state = eid;
 		$(document).ready(function(){
-			window.dispatchEvent(new Event('resize'));
+			$scope.$broadcast('resize-widget');
 		})
 
 	}
