@@ -420,92 +420,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					new Placeholder("__measurementType__", "keyword", false)
 					];
 
-				$scope.timelinewidget = new TimelineWidget();
+				$scope.timelinewidget = new TimelineWidget($scope);
 				// 
-
-				$scope.resizeTimeline = function(){
-					var chartScope = $scope.timelinewidget.state.api.getScope();
-					$(document).ready(function(){
-						chartScope.api.updateWithOptions();										
-					});
-				};
-				
-				$scope.$on('resize-timeline', function(){
-					$scope.resizeTimeline();
-				});
-
-				$scope.timelinewidget.state.options.innercontainer.height = 100;
-				$scope.timelinewidget.state.options.chart = {
-						type: 'stackedAreaWithFocusChart',
-						colorFunction : function(str) {
-							if (str === 'PASSED') {
-								return "rgb(23,216,33)";
-							}
-							if (str === 'FAILED') {
-								return "red";
-							}
-							if (str === 'TECHNICAL_ERROR') {
-								return "black";
-							}
-							return "blue";
-						},
-						height: 75,
-						margin: {
-							top: 0, right: 30, bottom: 0, left: 30
-						},
-						tooltip: {
-							enabled: true
-						},
-						showLegend: false, forceY: 0, showControls: false,
-						xAxis: {
-							tickFormat: {},
-							strTickFormat: function (d) {
-								var value;
-								if ((typeof d) === "string") {
-									value = parseInt(d);
-								} else {
-									value = d;
-								}
-
-								return d3.time.format("%H:%M:%S")(new Date(value));
-							}
-							//, rotateLabels: -23
-						},
-						callback: function(scope, element){
-							$scope.chartScope = $scope.timelinewidget.state.api.getScope();
-
-							if($scope.chartScope && $scope.chartScope.svg && $scope.chartScope.svg[0]){
-
-								$scope.chartScope.chart.focus.xAxis.tickFormat(function (d) {
-									var value;
-									if ((typeof d) === "string") {
-										value = parseInt(d);
-									} else {
-										value = d;
-									}
-
-									return d3.time.format("%H:%M:%S")(new Date(value));
-								});
-
-								var existing = $scope.chartScope.chart.focus.dispatch.onBrush.on;
-								var newBrush = function(e){
-									$scope.$broadcast('apply-global-setting', new Placeholder('__from__', Math.round(e[0]), 'Off'));
-									$scope.$broadcast('apply-global-setting', new Placeholder('__to__', Math.round(e[1]), 'Off'));
-								}
-								newBrush.on = existing;
-								$scope.chartScope.chart.focus.dispatch.onBrush = newBrush;
-
-								$($scope.chartScope.svg[0]).find(".nv-focus").first().remove();
-								$scope.timelinewidget.state.api.update();
-								
-								window.addEventListener("resize", function(){
-									$scope.resizeTimeline();
-								});
-
-							}
-						}
-				};
-
 			}
 
 			$scope.$watch('execution.status',function(newStatus, oldStatus) {
@@ -568,7 +484,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$(document).ready(function () {
 						$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
 						$(document).ready(function () {
-							$scope.timelinewidget.state.options.chart.width = 0;
 							$scope.$broadcast('resize-widget');
 						});
 					});

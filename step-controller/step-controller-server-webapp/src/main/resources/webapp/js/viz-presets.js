@@ -1,6 +1,6 @@
 
 function getVizDashboardList(){
-	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"], ["RTMDashboard"]];
+	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"], ["RTMDashboard"], ["TimelineSlaveDashboard"]];
 }
 
 
@@ -42,7 +42,7 @@ var overtimeFillBlanksTransformFn = function(response, args) {
     return retData;
 };
 
-function TimelineWidget() {
+function TimelineWidget(scope) {
 	
 	var entityName = 'Keyword';
 	var measurementType = 'keyword';
@@ -57,43 +57,6 @@ function TimelineWidget() {
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[]";
 	
-	var overtimeFillBlanksTransformFn = function(response, args) {
-	    var metric = args.metric;
-	    var retData = [], series = [];
-
-	    var payload = response.data.payload.stream.streamData;
-	    var payloadKeys = Object.keys(payload);
-
-	    for (i = 0; i < payloadKeys.length; i++) {
-	      var series_ = payload[payloadKeys[i]];
-	        var serieskeys = Object.keys(series_ )
-	        for (j = 0; j < serieskeys.length; j++) {
-	            if(!series.includes(serieskeys[j])){
-	                series.push(serieskeys[j]);
-	            }
-	        }
-	    }
-
-	    for (i = 0; i < payloadKeys.length; i++) {
-	      var series_ = payload[payloadKeys[i]];
-	        var serieskeys = Object.keys(series)
-	        for (j = 0; j < serieskeys.length; j++) {
-	            var key = series[serieskeys[j]];
-	            var yval;
-	            if(series_[key] && series_[key][metric]){
-	              yval = series_[key][metric];
-	            }else{
-	              yval = 0;
-	            }
-	            retData.push({
-	                x: payloadKeys[i],
-	                y: yval,
-	                z: key
-	            });
-	        }
-	    }
-	    return retData;
-	};
 	var config = new Config('Fire','Off', true, false, 'unnecessaryAsMaster');
 	var wId = 'timelineWidget-' + getUniqueId();
 	
@@ -101,6 +64,90 @@ function TimelineWidget() {
 		
 	var timelineWidget = new Widget(wId, new DefaultWidgetState(), new DashletState(wId, false, 0, {}, wOptions, config, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 		
+
+	var resizeTimeline = function(){
+		var chartScope = timelineWidget.state.api.getScope();
+		$(document).ready(function(){
+			chartScope.api.updateWithOptions();										
+		});
+	};
+	
+	scope.$on('resize-timeline', function(){
+		resizeTimeline();
+	});
+
+	timelineWidget.state.options.innercontainer.height = 100;
+	timelineWidget.state.options.chart = {
+			type: 'stackedAreaWithFocusChart',
+			colorFunction : function(str) {
+				if (str === 'PASSED') {
+					return "rgb(23,216,33)";
+				}
+				if (str === 'FAILED') {
+					return "red";
+				}
+				if (str === 'TECHNICAL_ERROR') {
+					return "black";
+				}
+				return "blue";
+			},
+			height: 75,
+			margin: {
+				top: 0, right: 30, bottom: 0, left: 30
+			},
+			tooltip: {
+				enabled: true
+			},
+			showLegend: false, forceY: 0, showControls: false,
+			xAxis: {
+				tickFormat: {},
+				strTickFormat: function (d) {
+					var value;
+					if ((typeof d) === "string") {
+						value = parseInt(d);
+					} else {
+						value = d;
+					}
+
+					return d3.time.format("%H:%M:%S")(new Date(value));
+				}
+				//, rotateLabels: -23
+			},
+			callback: function(iscope, element){
+				scope.chartScope = timelineWidget.state.api.getScope();
+
+				if(scope.chartScope && scope.chartScope.svg && scope.chartScope.svg[0]){
+
+					scope.chartScope.chart.focus.xAxis.tickFormat(function (d) {
+						var value;
+						if ((typeof d) === "string") {
+							value = parseInt(d);
+						} else {
+							value = d;
+						}
+
+						return d3.time.format("%H:%M:%S")(new Date(value));
+					});
+
+					var existing = scope.chartScope.chart.focus.dispatch.onBrush.on;
+					var newBrush = function(e){
+						scope.$broadcast('apply-global-setting', new Placeholder('__from__', Math.round(e[0]), 'Off'));
+						scope.$broadcast('apply-global-setting', new Placeholder('__to__', Math.round(e[1]), 'Off'));
+					}
+					newBrush.on = existing;
+					scope.chartScope.chart.focus.dispatch.onBrush = newBrush;
+
+					$(scope.chartScope.svg[0]).find(".nv-focus").first().remove();
+					timelineWidget.state.api.update();
+					
+					window.addEventListener("resize", function(){
+						resizeTimeline();
+					});
+
+				}
+			}
+	};
+	
 	return timelineWidget;
 }
 	
