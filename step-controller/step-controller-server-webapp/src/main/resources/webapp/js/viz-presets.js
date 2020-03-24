@@ -64,13 +64,25 @@ function TimelineWidget(scope) {
 		
 	var timelineWidget = new Widget(wId, new DefaultWidgetState(), new DashletState(wId, false, 0, {}, wOptions, config, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
 		
-
+	var rtime;
+	var timeout = false;
+	var delta = 200;
+	
 	var resizeTimeline = function(){
 		var chartScope = timelineWidget.state.api.getScope();
 		$(document).ready(function(){
 			chartScope.api.updateWithOptions();										
 		});
 	};
+	
+	var resizeend = function() {
+	    if (new Date() - rtime < delta) {
+	        setTimeout(resizeend, delta);
+	    } else {
+	    	timeout = false;
+	        resizeTimeline();
+	    }               
+	}
 	
 	scope.$on('resize-timeline', function(){
 		resizeTimeline();
@@ -141,7 +153,11 @@ function TimelineWidget(scope) {
 					timelineWidget.state.api.update();
 					
 					window.addEventListener("resize", function(){
-						resizeTimeline();
+					    rtime = new Date();
+					    if (timeout === false) {
+					        timeout = true;
+					        setTimeout(resizeend, delta);
+					    }
 					});
 
 				}
