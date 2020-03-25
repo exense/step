@@ -80,6 +80,10 @@ angular.module('schedulerControllers',[])
   
   $scope.task = task;
 
+  //Init customParameters if it doesn't exist yet
+  if (!$scope.task.executionsParameters.customParameters) {
+    $scope.task.executionsParameters.customParameters = {};
+  }
   $scope.executionsParameters = function(value) {
     if(arguments.length) {
       $scope.task.executionsParameters = JSON.parse(value);
@@ -113,7 +117,7 @@ angular.module('schedulerControllers',[])
       if(!$scope.task.attributes) {
         $scope.task.attributes = {}
       }
-      $scope.task.attributes.name = plan.attributes.name;
+      //Do not overwrite task name, $scope.task.attributes.name = plan.attributes.name;
     })
   }
 })
