@@ -422,4 +422,13 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 	}
+	
+	protected boolean isInSession() {
+		boolean result=false;
+		FunctionGroupHandle handle = context.get(FunctionGroupHandle.class);
+		if (handle != null) {
+			return handle.isInSession(context);
+		}
+		return result;
+	}
 }

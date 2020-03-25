@@ -30,6 +30,7 @@ import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.functions.FunctionGroupHandle;
 
 public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFailsReportNode> {
 
@@ -45,7 +46,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 		ReportNodeStatus lastStatus = ReportNodeStatus.NORUN;
 		
 		long begin = System.currentTimeMillis();
-		
+		boolean inSession = isInSession();
 		for(int count = 1; count<=testArtefact.getMaxRetries().get();count++) {
 			boolean persistFail = (!testArtefact.getReportLastTryOnly().get() || 
 					(testArtefact.getReportLastTryOnly().get() && count>=testArtefact.getMaxRetries().get()));
@@ -81,9 +82,11 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 				boolean releaseToken = (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0); 
 				Map<String,String> details = new LinkedHashMap<String,String> ();
 				details.put("Grace period", DurationFormatUtils.formatDuration(duration, "HH:mm:ss.SSS"));
-				details.put("Release token", Boolean.toString(releaseToken));
+				if (inSession) {
+					details.put("Release token", Boolean.toString(releaseToken));
+				}
 				OperationManager.getInstance().enter("RetryIfFails", details , node.getId().toString());
-				if (releaseToken) {
+				if (releaseToken && inSession) {
 					releaseTokens(testArtefact);
 					node.setReleasedToken(true);
 				}

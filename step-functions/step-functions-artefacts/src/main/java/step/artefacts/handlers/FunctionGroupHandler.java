@@ -147,6 +147,11 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	
 		
 	}
+	
+	@Override
+	public boolean isInSession(AbstractContext context) {
+		return ((ExecutionContext) context).getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY) != null;
+	}
 
 	@Override
 	public ReportNode createReportNode_(ReportNode parentNode, FunctionGroup testArtefact) {

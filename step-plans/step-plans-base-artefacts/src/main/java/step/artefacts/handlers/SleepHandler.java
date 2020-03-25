@@ -51,8 +51,9 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 
 	@Override
 	protected void execute_(ReportNode node, Sleep testArtefact) {
-		boolean releaseToken = testArtefact.getReleaseTokens().get(); 
-		if (releaseToken) {
+		boolean releaseToken = testArtefact.getReleaseTokens().get();
+		boolean inSession = isInSession();
+		if (releaseToken && inSession) {
 			releaseTokens(testArtefact);
 		}
 		long sleepDurationMs;
@@ -72,7 +73,9 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 		
 		Map<String,String> details = new LinkedHashMap<String,String> ();
 		details.put("Sleep time", DurationFormatUtils.formatDuration(sleepDurationMs, "HH:mm:ss.SSS"));
-		details.put("Release token", Boolean.toString(releaseToken));
+		if (inSession) {
+			details.put("Release token", Boolean.toString(releaseToken));
+		}
 		OperationManager.getInstance().enter("Sleep", details, node.getId().toString());
 		try {
 			Thread.sleep(sleepDurationMs);
