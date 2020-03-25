@@ -101,6 +101,12 @@ angular.module('functionsControllers',['step'])
   function reload() {
     $scope.tableHandle.reload();
   }
+
+  $scope.reload = reload;
+
+  $scope.$on('functions.collection.change', function(evt, data){
+    reload();
+  })
   
   $scope.editFunction = function(id) {
     FunctionDialogs.editFunction(id, function() {reload()});
