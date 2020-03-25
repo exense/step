@@ -54,7 +54,8 @@ angular.module('components',['step'])
     scope: {
       planRef: '=?',
       planId: '=?',
-      description: '=?'
+      description: '=?',
+      linkOnly: '=?'
     },
     templateUrl: 'partials/components/planLink.html',
     controller: function($scope, $http) {

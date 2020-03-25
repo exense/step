@@ -6,21 +6,7 @@
 			</div>
 		</st-actions>
 		<st-columns>
-			<st-column name="attributes.name">
-				<header>Name</header>
-				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-			</st-column>
-				<cell><span><entity-icon entity="row" entity-name="'parameter'"/> <a href="#" ng-click="$event.preventDefault();$parent.editTask(row.id)" ng-disabled="!authService.hasRight('task-write')" uib-tooltip="Edit">{{row.attributes.name}}</a></span></cell>
-			<st-column name="executionsParameters.description">
-				<header>Plan</header>
-				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><plan-link plan-ref="row.executionsParameters.repositoryObject" description="row.executionsParameters.description"/></cell>
-			</st-column>
-			<st-column name="executionsParameters.customParameters.env">
-				<header>Environment</header>
-				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><span>{{row.executionsParameters.customParameters.env}}</span></cell>
-				</st-column>
+			<st-custom-columns st-screen="schedulerTable" st-exclude-fields="[]"/>
 			<st-column name="cronExpression">
 				<header>CRON Expression</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>

@@ -1,2 +1,5 @@
-<a ng-if="planId" ng-href="#/root/plans/editor/{{planId}}">{{description}}</a>
-<span ng-if="!planId">{{description}}</span>
+<a ng-if="planId" ng-href="#/root/plans/editor/{{planId}}">
+	<span ng-if="!linkOnly">{{description}}</span>
+	<span ng-if="linkOnly" uib-tooltip="Go to plan" class="glyphicon glyphicon-file" aria-hidden="true"></span>
+</a>
+<span ng-if="!planId && !linkOnly">{{description}}</span>
