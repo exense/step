@@ -1,5 +1,4 @@
-
-function getVizDashboardList(){
+function getVizDashboardCommonsList(){
 	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"], ["RTMDashboard"], ["TimelineSlaveDashboard"]];
 }
 
@@ -69,9 +68,14 @@ function TimelineWidget(scope) {
 	var delta = 200;
 	
 	var resizeTimeline = function(){
-		var chartScope = timelineWidget.state.api.getScope();
+		var chartScope = {};
+		if(timelineWidget && timelineWidget.state && timelineWidget.state.api){
+			chartScope = timelineWidget.state.api.getScope();
+		}
 		$(document).ready(function(){
-			chartScope.api.updateWithOptions();										
+			if(chartScope && chartScope.api){
+				chartScope.api.updateWithOptions();										
+			}
 		});
 	};
 	
@@ -167,51 +171,6 @@ function TimelineWidget(scope) {
 	return timelineWidget;
 }
 	
-function RealtimeSelfMonitoring() {
-
-	var widgetsArray = [];
-
-	var freeTokenTransform = function (response, args) {
-		var array = [] 
-		$.each(response.data, function(index, item){
-			array.push({
-				x : new Date().getTime(),
-				y : item.tokensCapacity.countByState.FREE,
-				z : item.agentRef.agentUrl.split('http://')[1]
-			});
-		});
-		return array;
-	}
-
-	var baseAgentQuery = new SimpleQuery("Raw", new Service("", "Get","",new DefaultPreproc(),new Postproc("", freeTokenTransform.toString(), [], {}, "")));
-	var agentQueryTemplate = new TemplatedQuery("Plain",baseAgentQuery,new DefaultPaging(),new Controls(new Template("","/rest/grid/agent",[])));
-
-	var options = new EffectiveChartOptions('lineChart');
-	options.showLegend = true;
-
-	var widget1 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Free tokens per agent", false, 0, {}, options, new Config('Fire','On', false, false, '', 1000, 500, 'On', 20), agentQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
-	widgetsArray.push(widget1);
-
-	var executionsTransform = function (response, args) {
-		return [{x: new Date().getTime(), y:response.data.recordsFiltered, z:'Ongoing executions'}];
-	};
-
-	var baseExecQuery = new SimpleQuery("Raw", new Service("", "Get","",new DefaultPreproc(),new Postproc("", executionsTransform.toString(), [], {}, "")));
-	var execQueryTemplate = new TemplatedQuery("Plain",baseExecQuery,new DefaultPaging(),new Controls(new Template("","rest/table/executions/data?draw=28&columns%5B0%5D%5Bdata%5D=description&columns%5B0%5D%5Bname%5D=description&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=true&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=startTime&columns%5B1%5D%5Bname%5D=startTime&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=true&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=endTime&columns%5B2%5D%5Bname%5D=endTime&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=true&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=executionParameters.userID&columns%5B3%5D%5Bname%5D=executionParameters.userID&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=true&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=executionParameters.customParameters.env&columns%5B4%5D%5Bname%5D=executionParameters.customParameters.env&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=true&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=status&columns%5B5%5D%5Bname%5D=status&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=true&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=RUNNING&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=true&columns%5B6%5D%5Bdata%5D=result&columns%5B6%5D%5Bname%5D=result&columns%5B6%5D%5Bsearchable%5D=true&columns%5B6%5D%5Borderable%5D=true&columns%5B6%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B6%5D%5Bsearch%5D%5Bregex%5D=true&order%5B0%5D%5Bcolumn%5D=1&order%5B0%5D%5Bdir%5D=desc&start=0&length=10&search%5Bvalue%5D=&search%5Bregex%5D=false",[new Placeholder("__dayFrom__", "20151010", false), new Placeholder("__draw__", "Math.random().toString().split('.')[1].substring(0,8)", true)])));
-
-	var options = new EffectiveChartOptions('lineChart');
-	options.showLegend = true;
-
-	var widget2 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Global number of on-going executions", false, 0, {}, options, new Config('Fire','On', false, false, '', 1000, 500, 'On', 20), execQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
-	widgetsArray.push(widget2);
-
-	var dashboardObject = new Dashboard('Instance Activity',new DashboardState(new GlobalSettings([],false,false,'Global Settings',1000),
-			widgetsArray,'SelfMonitoring Dashboard','aggregated',new DefaultDashboardGui())
-	);
-
-	return dashboardObject;
-}
-
 function WikimediaDemo() {
 
 	var widgetsArray = [];
@@ -274,247 +233,6 @@ function WikimediaDemo() {
 	return dashboardObject;
 }
 
-function UserExecutionDashboard() {
-	var widgetsArray = [];
-
-	var userExecutionsTransform = function (response, args) {
-		var array = [];
-	    var userList = [];
-	    var min = new Date().getTime() - 604800000;
-	    var max = new Date().getTime();
-	    var nbIntervals = 7;
-	    var interval = Math.round((max - min - 1) / nbIntervals);
-	    var groupArray = [];
-	    var groupStats = {};
-	    for (i = 0; i < nbIntervals; i++) {
-	        var from_ = min + (i * interval);
-	        groupArray.push({ from: from_, to: min + ((i + 1) * interval) });
-	        groupStats[from_] = {};
-	    }
-
-	    $.each(response.data, function (index, item) {
-	        if (!userList.includes(item.executionParameters.userID)) {
-	            userList.push(item.executionParameters.userID);
-	        }
-	    });
-
-	    $.each(groupArray, function (index, interval) {
-	        $.each(userList, function (index, user) {
-	            groupStats[interval.from][user] = 0;
-	        });
-	    });
-
-	    $.each(response.data, function (index, execution) {
-	        $.each(groupArray, function (index, interval) {
-	            if (execution.startTime >= interval.from && execution.startTime < interval.to) {
-	                if(execution.executionParameters.userID){
-	                    groupStats[interval.from][execution.executionParameters.userID]++;
-	                }else{
-	                    console.log('An execution without user was found :' + execution.id);
-	                }
-	            }
-	        });
-	    });
-
-	    $.each(Object.keys(groupStats), function (index, item) {
-	        $.each(Object.keys(groupStats[item]), function (index2, item2) {
-	            array.push({ x: item, y: groupStats[item][item2], z: item2 });
-	        });
-	    });
-
-	    return array;
-	};
-	
-	var xAxisFn = function (d) {
-	    var value;
-	    if ((typeof d) === "string") {
-	        value = parseInt(d);
-	    } else {
-	        value = d;
-	    }
-
-	    return d3.time.format("%Y-%m-%d")(new Date(value));
-	};
-
-	var baseExecQuery = new SimpleQuery("Raw", new Service("", "Post","",new DefaultPreproc(),new Postproc("", userExecutionsTransform.toString(), [], {}, "")));
-	var execQueryTemplate = new TemplatedQuery("Plain",baseExecQuery,new DefaultPaging(),new Controls(new Template("{ \"criteria\": {}, \"start\" : __from__, \"end\" : __to__}","/rest/executions/search/by/critera",[new Placeholder("__from__", "new Date().getTime()-604800000", true), new Placeholder("__to__", "new Date().getTime()", true)])));
-
-	var options = new EffectiveChartOptions('multiBarChart', xAxisFn.toString());
-	options.showLegend = true;
-
-	var widget1 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Executions per day per user over last week", false, 0, {}, options, new Config('Fire','Off', false, false, '', 1000, 500, 'Off', 20), execQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
-	widgetsArray.push(widget1);
-
-	
-	var useTopExecutionTransform = function (response, args) {
-	    var array = [];
-	    var userList = {};
-	    $.each(response.data, function (index, execution) {
-	        if (execution.executionParameters.userID) {
-	            userList[execution.executionParameters.userID] = 0;
-	        }
-	    });
-
-	    $.each(response.data, function (index, execution) {
-	                if(execution.executionParameters.userID){
-	                    userList[execution.executionParameters.userID]++;
-	                }else{
-	                    console.log('An execution without user was found :' + execution.id);
-	                }
-	    });
-
-	    $.each(Object.keys(userList), function (index, user) {
-	            array.push({ x: '', y: userList[user], z: user });
-	    });
-
-	    return array;
-	}
-	
-	var xAxisTopFn = function (d) {
-		return d;		
-	};
-	
-	var baseExecQueryTop = new SimpleQuery("Raw", new Service("", "Post","",new DefaultPreproc(),new Postproc("", useTopExecutionTransform.toString(), [], {}, "")));
-	var execQueryTemplateTop = new TemplatedQuery("Plain",baseExecQueryTop,new DefaultPaging(),new Controls(new Template("{ \"criteria\": {}, \"start\" : __from__, \"end\" : __to__}","/rest/executions/search/by/critera",[new Placeholder("__from__", "new Date().getTime()-604800000", true), new Placeholder("__to__", "new Date().getTime()", true)])));
-
-	
-	var options = new EffectiveChartOptions('multiBarChart', xAxisTopFn.toString());
-	options.showLegend = true;
-
-	var widget2 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Executions per user over last week", false, 0, {}, options, new Config('Fire','Off', false, false, '', 1000, 500, 'Off', 20), execQueryTemplateTop, new DefaultGuiClosed(), new DefaultInfo()));
-	widgetsArray.push(widget2);
-
-	var dashboardObject = new Dashboard('User execution stats',new DashboardState(new GlobalSettings([],false,false,'Global Settings',1000),
-			widgetsArray,'User execution stats','aggregated',new DefaultDashboardGui())
-	);
-	return dashboardObject;
-	
-}
-
-function ProjectOverview() {
-	var widgetsArray = [];
-
-	/*var executionsTransform = function (response, args) {
-		var array = [];
-		var min = new Date().getTime() - 604800000;
-		var max = new Date().getTime();
-		var nbIntervals = 7;
-		var interval = Math.round((max - min -1) / nbIntervals);
-		var groupArray = [];
-		var groupStats = {};
-		for(i=0; i< nbIntervals; i++){
-			var from_ = min + (i * interval);
-			groupArray.push({from: from_, to: min + ((i+1)*interval)});
-			groupStats[from_] = 0;
-		}
-		$.each(response.data, function(index, item){
-			$.each(groupArray, function(index, item2){
-				if(item.startTime >= item2.from && item.startTime < item2.to){
-					groupStats[item2.from]+=1;
-				}
-			});
-		});
-		$.each(Object.keys(groupStats), function(index, item){
-			array.push({x: item, y: groupStats[item], z: 'Nb executions'});
-		});
-		return array;
-	};*/
-	
-	var executionsTransform = function (response, args) {
-	    var array = [];
-	    var planList = [];
-	    var min = new Date().getTime() - 604800000;
-	    var max = new Date().getTime();
-	    var nbIntervals = 7;
-	    var interval = Math.round((max - min - 1) / nbIntervals);
-	    var groupArray = [];
-	    var groupStats = {};
-	    for (i = 0; i < nbIntervals; i++) {
-	        var from_ = min + (i * interval);
-	        groupArray.push({ from: from_, to: min + ((i + 1) * interval) });
-	        groupStats[from_] = {};
-	    }
-
-	    $.each(response.data, function (index, item) {
-	        if (!planList.includes(item.attributes.name)) {
-	            planList.push(item.attributes.name);
-	        }
-	    });
-
-	    $.each(groupArray, function (index, interval) {
-	        $.each(planList, function (index, plan) {
-	            groupStats[interval.from][plan] = 0;
-	        });
-	    });
-	    console.log(groupStats);
-
-	    $.each(response.data, function (index, execution) {
-	        $.each(groupArray, function (index, interval) {
-	            if (execution.startTime >= interval.from && execution.startTime < interval.to) {
-	                if (execution.attributes.name) {
-	                    groupStats[interval.from][execution.attributes.name]++;
-	                } else {
-	                    console.log('An execution without name was found :' + execution.attributes.name);
-	                }
-	            }
-	        });
-	    });
-
-	    $.each(Object.keys(groupStats), function (index, item) {
-	        $.each(Object.keys(groupStats[item]), function (index2, item2) {
-	            array.push({ x: item, y: groupStats[item][item2], z: item2 });
-	        });
-	    });
-	    return array;
-	}
-	
-	var xAxisFn = function (d) {
-	    var value;
-	    if ((typeof d) === "string") {
-	        value = parseInt(d);
-	    } else {
-	        value = d;
-	    }
-
-	    return d3.time.format("%Y-%m-%d")(new Date(value));
-	};
-
-	var baseExecQuery = new SimpleQuery("Raw", new Service("", "Post","",new DefaultPreproc(),new Postproc("", executionsTransform.toString(), [], {}, "")));
-	var execQueryTemplate = new TemplatedQuery("Plain",baseExecQuery,new DefaultPaging(),new Controls(new Template("{ \"criteria\": { \"attributes.project\": \"__businessobjectid__\"}, \"start\" : __from__, \"end\" : __to__}","/rest/executions/search/by/critera",[new Placeholder("__from__", "new Date().getTime()-604800000", true), new Placeholder("__to__", "new Date().getTime()", true)])));
-
-	var options = new EffectiveChartOptions('lineChart', xAxisFn.toString());
-	options.showLegend = true;
-
-	var widget1 = new Widget(getUniqueId(), new WidgetState('col-md-6', false, true), new DashletState("Executions per day over last week", false, 0, {}, options, new Config('Fire','Off', false, false, '', 1000, 500, 'Off', 20), execQueryTemplate, new DefaultGuiClosed(), new DefaultInfo()));
-	widgetsArray.push(widget1);
-
-	var entityName = "keyword";
-	var timeFrame = 604800000;
-	var granularity_ = 86400000;
-	var timeField = "begin";
-	var timeFormat = "long";
-	var valueField = "value";
-	var groupby = "name";
-
-	var textFilters = "[{ \"key\": \"project\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"keyword\", \"regex\": \"false\" }]";
-	//var numericalFilters = "[]";
-	var numericalFilters = "[{\"key\":\"begin\",\"minValue\":__from__,\"maxValue\":__to__}]"; 
-	
-	var overtimeTransform = "function (response, args) {\r\n    var metric = args.metric;\r\n    var retData = [], series = {};\r\n\r\n    var payload = response.data.payload.stream.streamData;\r\n    var payloadKeys = Object.keys(payload);\r\n\r\n    for (i = 0; i < payloadKeys.length; i++) {\r\n        var serieskeys = Object.keys(payload[payloadKeys[i]])\r\n        for (j = 0; j < serieskeys.length; j++) {\r\n            retData.push({\r\n                x: payloadKeys[i],\r\n                y: payload[payloadKeys[i]][serieskeys[j]][metric],\r\n                z: serieskeys[j]\r\n            });\r\n        }\r\n    }\r\n    return retData;\r\n}";
-	var config = getMasterSlaveConfig("raw", "Nb Keyword executions per day over last week", "");
-
-	//var widget2 = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('stackedAreaChart', xAxisFn.toString(), timeFrame), config.masterconfig, new RTMAggBaseTemplatedQueryTmpl("cnt", granularity_, overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
-	
-	var widget2 = new Widget(config.masterid, new DefaultWidgetState(), new DashletState(config.mastertitle, false, 0, {}, new EffectiveChartOptions('stackedAreaChart', xAxisFn.toString(), timeFrame), config.masterconfig, 
-			new RTMAggTimeFrameTemplatedQueryTmpl("cnt", granularity_, overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
-		
-	widgetsArray.push(widget2);
-
-	var dashboardObject = new Dashboard('Weekly project overview',new DashboardState(new GlobalSettings([],false,false,'Global Settings',1000),
-			widgetsArray,'Project stats','aggregated',new DefaultDashboardGui())
-	);
-	return dashboardObject;
-}
 
 function RealtimePerformanceDashboard(executionId, measurementType, entity, autorefresh) {
 
@@ -586,7 +304,7 @@ function PerformanceDashboard(executionId, measurementType, entity) {
 	var groupby = "name";
 
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
-	var numericalFilters = "[]";
+	var numericalFilters = "[{ \"key\": \"begin\", \"minValue\": \"__from__\", \"maxValue\": \"__to__\" }]";
 
 	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
