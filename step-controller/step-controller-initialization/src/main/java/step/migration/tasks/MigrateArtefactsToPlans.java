@@ -29,7 +29,10 @@ import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.plans.Plan;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.functions.accessor.FunctionAccessorImpl;
+import step.functions.accessor.FunctionCRUDAccessor;
 import step.migration.MigrationTask;
+import step.plugins.functions.types.CompositeFunction;
 
 /**
  * This task migrates the collection 'artefacts' to the collection 'plans' which has been introduced in 3.13 
@@ -39,11 +42,13 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 
 	private static final String CHILDREN_ID_FIELD = "childrenIDs";
 	private com.mongodb.client.MongoCollection<Document> artefactCollection;
+	private com.mongodb.client.MongoCollection<Document> functionCollection;
 	private com.mongodb.client.MongoCollection<Document> executionCollection;
 	private com.mongodb.client.MongoCollection<Document> tasksCollection;
 	private PlanAccessorImpl planAccessor;
 	private ExecutionAccessorImpl executionAccessor;
 	private ExecutionTaskAccessorImpl executionTaskAccessor;
+	private FunctionCRUDAccessor functionAccessor;
 	private Mapper dbLayerObjectMapper;
 	private Map<ObjectId, ObjectId> artefactIdToPlanId;
 	private Unmarshaller unmarshaller;
@@ -61,6 +66,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 	protected void init(MongoClientSession mongoClientSession) {
 		artefactCollection = mongoClientSession.getMongoDatabase().getCollection("artefacts");
 		executionCollection = mongoClientSession.getMongoDatabase().getCollection("executions");
+		functionCollection = mongoClientSession.getMongoDatabase().getCollection("functions");
 		tasksCollection = mongoClientSession.getMongoDatabase().getCollection("tasks");
 		
 		JacksonMapper.Builder builder2 = new JacksonMapper.Builder();
@@ -71,6 +77,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		planAccessor = new PlanAccessorImpl(mongoClientSession);
 		executionAccessor = new ExecutionAccessorImpl(mongoClientSession);
 		executionTaskAccessor = new ExecutionTaskAccessorImpl(mongoClientSession);
+		functionAccessor = new FunctionAccessorImpl(mongoClientSession);
 
 		artefactIdToPlanId = new HashMap<>();
 	}
@@ -81,6 +88,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		logger.info("Found "+count+" root artefacts to be migrated. Starting migration...");
 		
 		migrateArtefactsToPlans();
+		migrateCompositeFunctionsFunctions();
 		migrateExecutions();
 		migrateSchedulerTasks();
 	}
@@ -172,6 +180,40 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		}
 		
 		return artefact;
+	}
+	
+	private void migrateCompositeFunctionsFunctions() {
+		AtomicInteger successCount = new AtomicInteger();
+		AtomicInteger errorCount = new AtomicInteger();
+		
+		Document filterCompositeFunction = new Document("type", CompositeFunction.class.getName());
+		functionCollection.find(filterCompositeFunction, BasicDBObject.class).iterator().forEachRemaining(t -> {
+			try {
+				if(t.containsField("artefactId")) {
+					String artefactId = t.getString("artefactId");
+					ObjectId planId = artefactIdToPlanId.get(new ObjectId(artefactId));
+					t.put("planId", planId);
+					t.remove("artefactId");
+					CompositeFunction compositeFunction = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(t), CompositeFunction.class);
+					functionAccessor.save(compositeFunction);
+					
+					if(planId != null) {
+						successCount.incrementAndGet();
+					} else {
+						errorCount.incrementAndGet();
+						logger.error("Unable to find plan for composite function " + compositeFunction.getId().toString() + " with artefactId "+artefactId+". Saving composite function without plan...");
+					}
+				}
+			} catch (Exception e) {
+				errorCount.incrementAndGet();
+				logger.error("Error while migrating execution " + t, e);
+			}
+		});
+		
+		logger.info("Migrated "+successCount.get()+" composite functions successfully.");
+		if(errorCount.get()>0) {
+			logger.error("Got "+errorCount+" errors while migrating composite functions. See previous error logs for details.");
+		}
 	}
 
 	private void migrateExecutions() {
