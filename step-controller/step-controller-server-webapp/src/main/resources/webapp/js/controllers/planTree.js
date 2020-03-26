@@ -302,7 +302,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             $scope.openSelectedArtefact();
             e.stopImmediatePropagation();
             e.preventDefault();
-          } else if (e.which === 83 && (e.ctrlKey || e.metaKey)) {
+          } else if (e.which === 69 && (e.ctrlKey || e.metaKey)) {
             $scope.switchDisable();
             e.stopImmediatePropagation();
             e.preventDefault();

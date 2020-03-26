@@ -11,13 +11,6 @@
 			<label>Description</label>
 			<textarea ng-blur="save()" ng-model="artefact.description" class="form-control" rows="5"></textarea>
 		</div>
-	</div>
-</div>
-<div class="panel panel-default">
-	<div class="panel-heading">
-		<a ng-click="showNodeOptions = !showNodeOptions">Node options</a>
-	</div>
-	<div class="panel-body" ng-show="showNodeOptions">
 		<div class="form-group form-group-sm">
 			<dynamic-checkbox tooltip="'Switch to disable or enable the execution of this node.'" label="'Skip node execution'" on-save="save()" dynamic-value="artefact.skipNode"/>
 		</div>
