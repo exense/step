@@ -111,30 +111,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 
 		Document filterRootArtefacts = new Document("root", true);
 		artefactCollection.find(filterRootArtefacts, BasicDBObject.class).iterator().forEachRemaining(t -> {
-			Map<String, String> attributes = new HashMap<>();
-			try {
-				BasicDBObject document = (BasicDBObject)t.get("attributes");
-				document.keySet().forEach(key->{
-					attributes.put(key, document.getString(key));
-				});
-				
-				AbstractArtefact artefact = unmarshallArtefact(t);
-				
-				Plan plan = new Plan();
-				
-				plan.setId(artefactIdToPlanId.get(artefact.getId()));
-				plan.setAttributes(attributes);
-				plan.setRoot(artefact);
-				plan.setVisible(true);
-				
-				logger.info("Migrated plan "+attributes);
-				
-				planAccessor.save(plan);
-				successCount.incrementAndGet();
-			} catch(Exception e) {
-				logger.error("Error while migrating plan "+attributes, e);
-				errorCount.incrementAndGet();
-			}
+			migrateArtefactToPlan(successCount, errorCount, t);
 		});
 		
 		logger.info("Migrated "+successCount.get()+" artefacts successfully.");
@@ -145,6 +122,43 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		successCount.set(0);
 		errorCount.set(0);
 		
+	}
+
+	protected Plan migrateArtefactToPlan(BasicDBObject t) {
+		return migrateArtefactToPlan(null, null, t);
+	}
+	
+	protected Plan migrateArtefactToPlan(AtomicInteger successCount, AtomicInteger errorCount, BasicDBObject t) {
+		Map<String, String> attributes = new HashMap<>();
+		try {
+			BasicDBObject document = (BasicDBObject)t.get("attributes");
+			document.keySet().forEach(key->{
+				attributes.put(key, document.getString(key));
+			});
+			
+			AbstractArtefact artefact = unmarshallArtefact(t);
+			
+			Plan plan = new Plan();
+			
+			plan.setId(artefactIdToPlanId.get(artefact.getId()));
+			plan.setAttributes(attributes);
+			plan.setRoot(artefact);
+			plan.setVisible(true);
+			
+			logger.info("Migrated plan "+attributes);
+			
+			plan = planAccessor.save(plan);
+			if(successCount != null) {
+				successCount.incrementAndGet();
+			}
+			return plan;
+		} catch(Exception e) {
+			logger.error("Error while migrating plan "+attributes, e);
+			if(errorCount != null) {
+				errorCount.incrementAndGet();
+			}
+			return null;
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -190,23 +204,30 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		functionCollection.find(filterCompositeFunction, BasicDBObject.class).iterator().forEachRemaining(t -> {
 			try {
 				if(t.containsField("artefactId")) {
+					String id = t.getString("_id");
 					String artefactId = t.getString("artefactId");
-					ObjectId planId = artefactIdToPlanId.get(new ObjectId(artefactId));
-					t.put("planId", planId);
-					t.remove("artefactId");
-					CompositeFunction compositeFunction = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(t), CompositeFunction.class);
-					functionAccessor.save(compositeFunction);
 					
-					if(planId != null) {
-						successCount.incrementAndGet();
+					BasicDBObject rootArtefact = artefactCollection.find(new Document("_id", new ObjectId(artefactId)), BasicDBObject.class).first();
+					if(rootArtefact != null) {
+						Plan plan = migrateArtefactToPlan(rootArtefact);
+						if(plan != null) {
+							ObjectId planId = plan.getId();
+							t.put("planId", planId);
+							t.remove("artefactId");
+							CompositeFunction compositeFunction = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(t), CompositeFunction.class);
+							functionAccessor.save(compositeFunction);
+						} else {
+							errorCount.incrementAndGet();
+							logger.error("Error while migrating plan for composite function " + id + " with artefactId "+artefactId);
+						}
 					} else {
 						errorCount.incrementAndGet();
-						logger.error("Unable to find plan for composite function " + compositeFunction.getId().toString() + " with artefactId "+artefactId+". Saving composite function without plan...");
+						logger.error("Unable to find root artefact for composite function " + id + " with artefactId "+artefactId);
 					}
 				}
 			} catch (Exception e) {
 				errorCount.incrementAndGet();
-				logger.error("Error while migrating execution " + t, e);
+				logger.error("Unexpected error while migrating composite function " + t, e);
 			}
 		});
 		
