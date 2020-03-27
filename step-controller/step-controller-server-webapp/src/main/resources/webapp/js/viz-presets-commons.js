@@ -254,12 +254,12 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity, auto
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[{ \"key\": \"begin\", \"minValue\": \"__from__\", \"maxValue\": \"__to__\" }]";
 
-	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
-	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
+	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 	
-	//addErrorsSummary(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
-	addAggregatesSummaryTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
-	addLastMeasurementsTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
+	//addErrorsSummary(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	addAggregatesSummaryTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
+	addLastMeasurementsTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 
 
 	var dashboardObject = new Dashboard(
