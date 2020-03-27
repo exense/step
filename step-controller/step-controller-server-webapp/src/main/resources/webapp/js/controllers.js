@@ -411,7 +411,27 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
 
 			$scope.dashboardsendpoint=[];
-
+			
+			// default buttons
+			$scope.measurementtypemodel = 'keyword';
+			$scope.timeframe = '30s';
+			
+			$scope.setTimeframe = function(timeframe){
+				if(timeframe === 'max'){
+					$scope.$broadcast('apply-global-setting', { key: '__from__', value : '0', isDynamic : false});	
+					$scope.$broadcast('apply-global-setting', { key: '__to__', value : '4078304655000', isDynamic : false});
+					
+					$scope.$broadcast('reload-scales', { xAxis: ''});
+				}else{
+					var from = 'new Date(new Date().getTime() - '+timeframe+').getTime()';
+					var to= 'new Date().getTime()';
+					$scope.$broadcast('apply-global-setting', { key: '__from__', value : from, isDynamic : true});	
+					$scope.$broadcast('apply-global-setting', { key: '__to__', value : to, isDynamic : true});
+					
+					$scope.$broadcast('reload-scales', { xAxis: '['+from+', '+to+']'});
+				}
+			};
+			
 			$scope.initTimelineWidget = function(){
 
 				// Timeline widget
@@ -423,14 +443,21 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				$scope.timelinewidget = new TimelineWidget($scope);
 				// 
 			}
-
+			
+			$scope.setMeasurementType = function(input){
+				$scope.measurementtypemodel = input;
+				$scope.$broadcast('apply-global-setting', { key: '__measurementType__', value : input, isDynamic : false});	
+			}
+			
 			$scope.$watch('execution.status',function(newStatus, oldStatus) {
 				if(newStatus) {
 					$scope.init = false;
 
 					if(newStatus === 'ENDED'){
 						$scope.isRealTime = '';
-						$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, 'keyword', 'Keyword')];
+						console.log('$scope.measurementtypemodel')
+						console.log($scope.measurementtypemodel)
+						$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel)];
 						$scope.initTimelineWidget();
 
 						if(oldStatus && $scope.autorefresh.enabled) {
@@ -440,7 +467,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						}
 					}else{
 						$scope.isRealTime = 'Realtime';
-						$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, 'keyword', 'Keyword', false)];
+						$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel, false)];
 						if (oldStatus == null) {
 							$scope.initAutoRefresh(true,100,5000)
 						}
@@ -549,6 +576,12 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
 			$scope.$state=tabs[tabs.length-1].id;
 		}
 		$stateStorag.store($scope,{tabs: $scope.tabs});
+		
+		$(document).ready(function(){
+			$scope.$broadcast('resize-widget');
+			$scope.$broadcast('resize-timeline');
+		})
+
 	}
 
 	$scope.$watch('$state',function() {

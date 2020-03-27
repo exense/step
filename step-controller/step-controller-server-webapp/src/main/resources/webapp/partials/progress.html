@@ -124,31 +124,56 @@
 			</div>
 			</uib-tab> <uib-tab heading="Performance">
 			<div class="panel-body">
-				<div class="row" style="display: flex;" style>
-					<div>
+				<div class="row">
+					<div class="col-md-4" tyle="display: inline;">
 						<button class="btn btn-default btn-xs" type="button"
 							ng-click="openLink('/#/root/dashboards/__pp__'+isRealTime+'PerformanceDashboard?__businessobjectid__=' + eid + '&__measurementType__=custom','_blank')">
-							Transaction dashboard <span
-								class="glyphicon glyphicon-new-window"></span>
+							Transaction session <span class="glyphicon glyphicon-new-window"></span>
 
 						</button>
-					</div>
-					<div>
 						<button class="btn btn-default btn-xs" type="button"
 							ng-click="openLink('/#/root/dashboards/__pp__RTMDashboard?__filter1__=text,eId,'+eid+',Off&__filter2__=text,type,keyword,Off','_blank')">
-							Interactive analytics <span
-								class="glyphicon glyphicon-new-window"></span>
+							Interactive session <span class="glyphicon glyphicon-new-window"></span>
 						</button>
 					</div>
-				</div>
-				<div class="row" ng-if="tabs.selectedTab === 2 && execution.status === 'ENDED'">
-					
-					<viz-dashlet state="timelinewidget.state"
-						widgetid="timelinewidget.oid" displaytype="'aggregated'"
-						displaymode="'readonly'" presets="presets" restprefix="restprefix"
-						inputsettingscol="globalsettingsPh"></viz-dashlet>
+					<div class="col-md-4"></div>
+					<div class="col-md-4">
 
-					<!-- 
+						<div class="btn-group viz-btn-group form-radio" ng-if="execution.status !== 'ENDED'" style="float: right;">
+							<label class="btn btn-success viz-btn-success"
+								ng-model="timeframe" uib-btn-radio="'5s'"
+								ng-click="setTimeframe('5000')">5s</label> <label
+								class="btn btn-success viz-btn-success" ng-model="timeframe"
+								uib-btn-radio="'30s'" ng-click="setTimeframe('30000')">30s</label>
+							<label class="btn btn-success viz-btn-success"
+								ng-model="timeframe" uib-btn-radio="'5m'"
+								ng-click="setTimeframe('300000')">5m</label> <label
+								class="btn btn-success viz-btn-success" ng-model="timeframe"
+								uib-btn-radio="'1h'" ng-click="setTimeframe('1800000')">30m</label>
+								<label
+								class="btn btn-success viz-btn-success" ng-model="timeframe"
+								uib-btn-radio="'max'" ng-click="setTimeframe('max')">max</label>
+						</div>
+						<div class="btn-group viz-btn-group form-radio"
+							style="float: right;">&nbsp;</div>
+						<div class="btn-group viz-btn-group form-radio"
+							style="float: right;">
+							<label class="btn btn-success viz-btn-success" ng-model="measurementtypemodel" uib-btn-radio="'keyword'" ng-click="setMeasurementType('keyword')">Keywords</label>
+							<label class="btn btn-success viz-btn-success" ng-model="measurementtypemodel" uib-btn-radio="'custom'" ng-click="setMeasurementType('custom')">Custom</label>
+						</div>
+					</div>
+				</div>
+				<div class="row" style="display: flex;"
+					ng-if="tabs.selectedTab === 2 && execution.status === 'ENDED'">
+					<div class="col-md-12">
+
+						<hr style="margin-top: 5px; margin-bottom: -15px; background: black; height: 2px;" />
+						<viz-dashlet state="timelinewidget.state"
+							widgetid="timelinewidget.oid" displaytype="'aggregated'"
+							displaymode="'readonly'" presets="presets"
+							restprefix="restprefix" inputsettingscol="globalsettingsPh"></viz-dashlet>
+						<hr style="margin-bottom: 0; margin-top: -15px; background: black; height: 2px;" />
+						<!-- 
 					<viz-mgd-widget displaymode="readonly"
 						state="timelinewidget.state" wstate="timelinewidget.wstate"
 						widgetid="timelinewidget.state.oid"
@@ -156,14 +181,14 @@
 						presets="presets" restprefix="restprefix"
 						inputsettingscol="globalsettingsPh">
 						     -->
-					
+
+					</div>
 				</div>
 				<div class="row" ng-if="tabs.selectedTab === 2">
 					<div>
-						<viz-dashboard-manager
-							displaymode="displaymode" presets="staticPresets"
-							dashboards="dashboardsendpoint" headermargin="200"
-							restprefix="'/rest'"></viz-dashboard-manager>
+						<viz-dashboard-manager displaymode="displaymode"
+							presets="staticPresets" dashboards="dashboardsendpoint"
+							headermargin="200" restprefix="'/rest'"></viz-dashboard-manager>
 					</div>
 				</div>
 			</div>

@@ -43,7 +43,7 @@ var overtimeFillBlanksTransformFn = function(response, args) {
 
 function TimelineWidget(scope) {
 	
-	var entityName = 'Keyword';
+	var entityName = 'Measurement';
 	var measurementType = 'keyword';
 
 	var timeFrame = null;
@@ -116,7 +116,6 @@ function TimelineWidget(scope) {
 			},
 			showLegend: false, forceY: 0, showControls: false,
 			xAxis: {
-				tickFormat: {},
 				strTickFormat: function (d) {
 					var value;
 					if ((typeof d) === "string") {
@@ -126,8 +125,7 @@ function TimelineWidget(scope) {
 					}
 
 					return d3.time.format("%H:%M:%S")(new Date(value));
-				}
-				//, rotateLabels: -23
+				}.toString()
 			},
 			callback: function(iscope, element){
 				scope.chartScope = timelineWidget.state.api.getScope();
@@ -237,12 +235,7 @@ function WikimediaDemo() {
 function RealtimePerformanceDashboard(executionId, measurementType, entity, autorefresh) {
 
 	var widgetsArray = [];
-	var entityName = '';
-	if(measurementType && measurementType === 'keyword'){
-		entityName = 'Keyword';
-	}else{
-		entityName = 'Custom Transaction';
-	}
+	var entityName = 'Measurement';
 
 	var timeFrame = 30000;
 
@@ -289,12 +282,7 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity, auto
 function PerformanceDashboard(executionId, measurementType, entity, from, to) {
 
 	var widgetsArray = [];
-	var entityName = '';
-	if(measurementType && measurementType === 'keyword'){
-		entityName = 'Keyword';
-	}else{
-		entityName = 'Custom Transaction';
-	}
+	var entityName = 'Measurement';
 	
 	var __from__;
 	var __to__;
