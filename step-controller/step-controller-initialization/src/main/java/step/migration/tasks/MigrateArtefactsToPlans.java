@@ -61,6 +61,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 	protected void setContext(GlobalContext context) {
 		super.setContext(context);
 		init(context.getMongoClientSession());
+		context.put(MigrateArtefactsToPlans.class, this);
 	}
 
 	protected void init(MongoClientSession mongoClientSession) {
@@ -132,9 +133,11 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		Map<String, String> attributes = new HashMap<>();
 		try {
 			BasicDBObject document = (BasicDBObject)t.get("attributes");
-			document.keySet().forEach(key->{
-				attributes.put(key, document.getString(key));
-			});
+			if(document != null) {
+				document.keySet().forEach(key->{
+					attributes.put(key, document.getString(key));
+				});
+			}
 			
 			AbstractArtefact artefact = unmarshallArtefact(t);
 			
@@ -216,6 +219,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 							t.remove("artefactId");
 							CompositeFunction compositeFunction = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(t), CompositeFunction.class);
 							functionAccessor.save(compositeFunction);
+							successCount.incrementAndGet();
 						} else {
 							errorCount.incrementAndGet();
 							logger.error("Error while migrating plan for composite function " + id + " with artefactId "+artefactId);
@@ -264,34 +268,42 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		}
 	}
 	
-	private static class ExecutionParametersMigrationResult {
+	protected static class ExecutionParametersMigrationResult {
 		boolean executionParametersUpdated;
 		String planId;
 	}
-	private ExecutionParametersMigrationResult migrateExecutionParameter(BasicDBObject object) {
+	
+	protected ExecutionParametersMigrationResult migrateExecutionParameter(BasicDBObject object) {
 		ExecutionParametersMigrationResult result = new ExecutionParametersMigrationResult();
 		if(object != null) {
 			BasicDBObject artefact = (BasicDBObject) object.get("artefact");
 			if(artefact != null) {
-				ObjectId planId = null;
 				// Rename the field "repositoryParameters.artefactid" to "repositoryParameters.planid"
-				BasicDBObject repositoryParameters = (BasicDBObject) artefact.get("repositoryParameters");
-				if(repositoryParameters != null) {
-					String artefactId = repositoryParameters.getString("artefactid");
-					planId = artefactIdToPlanId.get(new ObjectId(artefactId));
-					if(planId != null) {
-						String planIdString = planId.toString();
-						repositoryParameters.put("planid", planIdString);
-						result.planId = planIdString;
-					}
-					repositoryParameters.remove("artefactid");
-				}
+				String planIdString = migrateRepositoryObjectReference(artefact);
+				result.planId = planIdString;
 				
 				// Rename the field "artefact" to "repositoryObject"
 				object.put("repositoryObject", artefact);
 				object.remove("artefact");
 				result.executionParametersUpdated = true;
 			}
+		}
+		return result;
+	}
+
+	protected String migrateRepositoryObjectReference(BasicDBObject artefact) {
+		String result = null;
+		ObjectId planId;
+		BasicDBObject repositoryParameters = (BasicDBObject) artefact.get("repositoryParameters");
+		if(repositoryParameters != null) {
+			String artefactId = repositoryParameters.getString("artefactid");
+			planId = artefactIdToPlanId.get(new ObjectId(artefactId));
+			if(planId != null) {
+				String planIdString = planId.toString();
+				repositoryParameters.put("planid", planIdString);
+				result = planIdString;
+			}
+			repositoryParameters.remove("artefactid");
 		}
 		return result;
 	}

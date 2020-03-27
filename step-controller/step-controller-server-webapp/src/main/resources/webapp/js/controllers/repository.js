@@ -48,7 +48,8 @@ angular.module('repositoryControllers', ['step'])
   	  $scope.isolateExecution = $location.search().isolate?$location.search().isolate:false;
   	  
   	  if($location.search().repositoryId) {
-  	    $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':$location.search()};
+  	    $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':
+  	      _.omit($location.search(), 'repositoryId')};
   	    $scope.loading = true;
   	    $http.post("rest/controller/repository/artefact/info",$scope.repoRef).then(
   	        function(response) {
@@ -73,7 +74,8 @@ angular.module('repositoryControllers', ['step'])
     function($scope, $http, $location, $stateStorage) {
       $scope.tableHandle = {};
       
-      $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':$location.search()};
+      $scope.repoRef = {'repositoryID':$location.search().repositoryId,'repositoryParameters':
+        _.omit($location.search(), 'repositoryId')};
       $scope.trackTestcasesBy = $scope.repoRef.repositoryID=="local"?"id":"testplanName";
       $http.post("rest/controller/repository/report",$scope.repoRef).then(function(response) {
         var data = response.data;
