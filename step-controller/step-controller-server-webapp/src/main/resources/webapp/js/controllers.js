@@ -455,8 +455,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 					if(newStatus === 'ENDED'){
 						$scope.isRealTime = '';
-						console.log('$scope.measurementtypemodel')
-						console.log($scope.measurementtypemodel)
 						$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel)];
 						$scope.initTimelineWidget();
 

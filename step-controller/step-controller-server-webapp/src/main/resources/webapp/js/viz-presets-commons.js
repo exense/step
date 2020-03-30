@@ -91,6 +91,12 @@ function TimelineWidget(scope) {
 	scope.$on('resize-timeline', function(){
 		resizeTimeline();
 	});
+	
+	scope.sendExtent = function (from, to){
+
+		scope.$broadcast('apply-global-setting', new Placeholder('__from__', from, 'Off'));
+		scope.$broadcast('apply-global-setting', new Placeholder('__to__', to, 'Off'));
+	};
 
 	timelineWidget.state.options.innercontainer.height = 100;
 	timelineWidget.state.options.chart = {
@@ -131,7 +137,7 @@ function TimelineWidget(scope) {
 				scope.chartScope = timelineWidget.state.api.getScope();
 
 				if(scope.chartScope && scope.chartScope.svg && scope.chartScope.svg[0]){
-
+					scope.extent = {};
 					scope.chartScope.chart.focus.xAxis.tickFormat(function (d) {
 						var value;
 						if ((typeof d) === "string") {
@@ -145,8 +151,8 @@ function TimelineWidget(scope) {
 
 					var existing = scope.chartScope.chart.focus.dispatch.onBrush.on;
 					var newBrush = function(e){
-						scope.$broadcast('apply-global-setting', new Placeholder('__from__', Math.round(e[0]), 'Off'));
-						scope.$broadcast('apply-global-setting', new Placeholder('__to__', Math.round(e[1]), 'Off'));
+						scope.extent.from =  Math.round(e[0]);
+						scope.extent.to =  Math.round(e[1]);
 					}
 					newBrush.on = existing;
 					scope.chartScope.chart.focus.dispatch.onBrush = newBrush;
@@ -154,6 +160,13 @@ function TimelineWidget(scope) {
 					$(scope.chartScope.svg[0]).find(".nv-focus").first().remove();
 					timelineWidget.state.api.update();
 					
+					var focusg = d3.select("viz-dashlet.timelinewidget .nvd3.nv-focus");
+						
+						focusg.on('click', function(){
+							scope.sendExtent(scope.extent.from, scope.extent.to)
+//							console.log('sending ' + scope.extent.from + ' ; ' + scope.extent.to);
+						})
+											
 					window.addEventListener("resize", function(){
 					    rtime = new Date();
 					    if (timeout === false) {
