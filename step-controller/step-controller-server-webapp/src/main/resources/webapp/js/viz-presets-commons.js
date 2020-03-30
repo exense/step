@@ -74,6 +74,7 @@ function TimelineWidget(scope) {
 		}
 		$(document).ready(function(){
 			if(chartScope && chartScope.api){
+				$(scope.chartScope.svg[0]).find(".nv-focus").first().remove();
 				chartScope.api.updateWithOptions();										
 			}
 		});
