@@ -21,6 +21,8 @@ package step.artefacts.handlers;
 import static junit.framework.Assert.assertEquals;
 
 import java.io.IOException;
+import java.io.StringWriter;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,23 +32,18 @@ import org.junit.Test;
 import step.artefacts.CheckArtefact;
 import step.artefacts.ForBlock;
 import step.artefacts.reports.ForBlockReportNode;
-import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
 import step.datapool.sequence.IntSequenceDataPool;
+import step.planbuilder.BaseArtefacts;
 
-public class ForHandlerTest extends AbstractArtefactHandlerTest {
+public class ForHandlerTest {
 	
 	@Test
 	public void testSuccess() {
-		setupContext();
-		
-		context.getVariablesManager().putVariable(
-				context.getReport(), "var", "val1");
-			
 		ForBlock f = new ForBlock();
 		
 		IntSequenceDataPool conf = new IntSequenceDataPool();
@@ -55,40 +52,31 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		
 		f.setDataSource(conf);
 		f.setItem(new DynamicValue<String>("item"));
+		f.setGlobalCounter(new DynamicValue<String>("globalCounter"));
+		f.setUserItem(new DynamicValue<String>("userId"));
 		
 		AtomicInteger i = new AtomicInteger(1);
+		AtomicInteger count = new AtomicInteger(1);
 		
-		CheckArtefact check1 = new CheckArtefact(c->{
+		CheckArtefact check1 = new CheckArtefact(context->{
 				context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 				assertEquals(i.get(),(int)context.getVariablesManager().getVariableAsInteger("item"));
+				assertEquals(count.get(),(int)context.getVariablesManager().getVariableAsInteger("globalCounter"));
+				assertEquals(0,(int)context.getVariablesManager().getVariableAsInteger("userId"));
 				i.addAndGet(2);
+				count.incrementAndGet();
 			});
 		
-		f.addChild(check1);
-		
-		execute(f);
-		
-		ForBlockReportNode child = (ForBlockReportNode) getFirstReportNode();
-		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
-		assertEquals(2, child.getCount());
-		assertEquals(0, child.getErrorCount());
+		Plan plan = PlanBuilder.create().startBlock(f).add(check1).endBlock().build();
+		DefaultPlanRunner runner = new DefaultPlanRunner();
 
-		
-		assertEquals(getChildren(child).size(), 2);
-		
-		for(ReportNode node:getChildren(child)) {
-			assertEquals(node.getStatus(), ReportNodeStatus.PASSED);		
-			assertEquals(getChildren(node).size(), 1);
-			assertEquals(check1.getId(),getChildren(node).get(0).getArtefactID());
-			
-		}
-		
+		runner.run(plan).visitReportNodes(node->{
+			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		});
 	}
 	
 	@Test
 	public void testBreak() {
-		setupContext();
-			
 		ForBlock f = new ForBlock();
 		IntSequenceDataPool conf = new IntSequenceDataPool();
 		conf.setEnd(new DynamicValue<Integer>(10));;
@@ -97,7 +85,7 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		
 		AtomicInteger i = new AtomicInteger(1);
 		
-		CheckArtefact check1 = new CheckArtefact(c-> {
+		CheckArtefact check1 = new CheckArtefact(context-> {
 				if(i.get()==2) {
 					context.getVariablesManager().updateVariable("break", "true");
 				}
@@ -105,19 +93,16 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 				context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 			});
 		
-		f.addChild(check1);
-		execute(f);
-		
-		ForBlockReportNode child = (ForBlockReportNode) getFirstReportNode();
-		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
-		assertEquals(2, child.getCount());
-		assertEquals(0, child.getErrorCount());		
+		Plan plan = PlanBuilder.create().startBlock(f).add(check1).endBlock().build();
+		DefaultPlanRunner runner = new DefaultPlanRunner();
+
+		runner.run(plan).visitReportNodes(node->{
+			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		});
 	}
 	
 	@Test
-	public void testMaxFailedCount() {
-		setupContext();
-			
+	public void testMaxFailedCount() throws IOException {
 		ForBlock f = new ForBlock();
 		
 		IntSequenceDataPool conf = new IntSequenceDataPool();
@@ -126,20 +111,17 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 		f.setDataSource(conf);
 		f.setMaxFailedLoops(new DynamicValue<Integer>(2));
 		
-		AtomicInteger i = new AtomicInteger(1);
-		
-		CheckArtefact check1 = new CheckArtefact(c -> {
+		CheckArtefact check1 = new CheckArtefact(context -> {
 				context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED);
 			});
 		
-		f.addChild(check1);
+		Plan plan = PlanBuilder.create().startBlock(f).add(check1).endBlock().build();
+		DefaultPlanRunner runner = new DefaultPlanRunner();
+
+		StringWriter writer = new StringWriter();
+		runner.run(plan).printTree(writer);
 		
-		execute(f);
-		
-		ForBlockReportNode child = (ForBlockReportNode) getFirstReportNode();
-		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
-		assertEquals(2, child.getCount());
-		assertEquals(2, child.getErrorCount());		
+		Assert.assertEquals("For:FAILED:\n Iteration1:FAILED:\n  CheckArtefact:FAILED:\n Iteration2:FAILED:\n  CheckArtefact:FAILED:\n" ,writer.toString());		
 	}
 	
 	@Test
@@ -168,6 +150,112 @@ public class ForHandlerTest extends AbstractArtefactHandlerTest {
 			}
 		});
 		
+	}
+	
+	@Test
+	public void testParallel() throws IOException {
+		ForBlock f = new ForBlock();
+		
+		IntSequenceDataPool conf = new IntSequenceDataPool();
+		int iterations = 100;
+		conf.setEnd(new DynamicValue<Integer>(iterations));;
+		
+		f.setDataSource(conf);
+		f.setThreads(new DynamicValue<Integer>(2));
+		
+		ConcurrentHashMap<Integer, AtomicInteger> globalCounter = new ConcurrentHashMap<>();
+		ConcurrentHashMap<Integer, AtomicInteger> threadIdMap = new ConcurrentHashMap<>();
+		
+		CheckArtefact check1 = new CheckArtefact(context->{
+				context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+				threadIdMap.computeIfAbsent(context.getVariablesManager().getVariableAsInteger("userId"), k->new AtomicInteger()).incrementAndGet();
+				globalCounter.computeIfAbsent(context.getVariablesManager().getVariableAsInteger("gcounter"), k->new AtomicInteger()).incrementAndGet();
+			});
+		
+		Plan plan = PlanBuilder.create().startBlock(f).add(check1).endBlock().build();
+		DefaultPlanRunner runner = new DefaultPlanRunner();
+
+		runner.run(plan).visitReportNodes(node->{
+			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		}).printTree();
+		
+		Assert.assertTrue(threadIdMap.get(0).get()>0);
+		Assert.assertTrue(threadIdMap.get(1).get()>0);
+		
+		Assert.assertEquals(iterations, globalCounter.mappingCount());
+		Assert.assertEquals(iterations, threadIdMap.get(0).get() + threadIdMap.get(1).get());
+	}
+	
+	@Test
+	public void testParallelAuto() throws IOException {
+		int iterations = 100;
+		ForBlock f = BaseArtefacts.for_(1, iterations);
+		
+		ConcurrentHashMap<Integer, AtomicInteger> globalCounter = new ConcurrentHashMap<>();
+		ConcurrentHashMap<Integer, AtomicInteger> threadIdMap = new ConcurrentHashMap<>();
+		
+		CheckArtefact check1 = new CheckArtefact(context->{
+				context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+				threadIdMap.computeIfAbsent(context.getVariablesManager().getVariableAsInteger("userId"), k->new AtomicInteger()).incrementAndGet();
+				globalCounter.computeIfAbsent(context.getVariablesManager().getVariableAsInteger("gcounter"), k->new AtomicInteger()).incrementAndGet();
+			});
+		
+		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence())
+											.add(BaseArtefacts.set("execution_threads_auto", "2"))
+											.startBlock(f)
+												.add(check1)
+											.endBlock()
+										.endBlock()
+									.build();
+		DefaultPlanRunner runner = new DefaultPlanRunner();
+
+		
+		runner.run(plan).visitReportNodes(node->{
+			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		});
+		
+		Assert.assertTrue(threadIdMap.get(0).get()>0);
+		Assert.assertTrue(threadIdMap.get(1).get()>0);
+		
+		Assert.assertEquals(iterations, globalCounter.mappingCount());
+		Assert.assertEquals(iterations, threadIdMap.get(0).get() + threadIdMap.get(1).get());
+	}
+	
+	@Test
+	public void testParallelAutoReentrant() throws IOException {
+		int iterations = 10;
+		ForBlock f = BaseArtefacts.for_(1, iterations);
+		ForBlock for2 = BaseArtefacts.for_(1, iterations);
+		// the following should be overridden by the ThreadPool as the second for is in a reentrant parallelism 
+		for2.setThreads(new DynamicValue<Integer>(2));
+		
+		ConcurrentHashMap<Integer, AtomicInteger> globalCounter = new ConcurrentHashMap<>();
+		ConcurrentHashMap<Integer, AtomicInteger> threadIdMap = new ConcurrentHashMap<>();
+		
+		CheckArtefact check1 = new CheckArtefact(context->{
+				context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+				threadIdMap.computeIfAbsent(context.getVariablesManager().getVariableAsInteger("userId"), k->new AtomicInteger()).incrementAndGet();
+				globalCounter.computeIfAbsent(context.getVariablesManager().getVariableAsInteger("gcounter"), k->new AtomicInteger()).incrementAndGet();
+			});
+		
+		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence())
+											.add(BaseArtefacts.set("execution_threads_auto", "2"))
+											.startBlock(f)
+												.startBlock(for2)
+													.add(check1)
+												.endBlock()
+											.endBlock()
+										.endBlock()
+									.build();
+		DefaultPlanRunner runner = new DefaultPlanRunner();
+
+		
+		runner.run(plan).visitReportNodes(node->{
+			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		});
+		
+		globalCounter.forEach((k,v)->Assert.assertEquals(iterations, v.get()));
+		Assert.assertEquals(iterations*iterations, threadIdMap.get(0).get());
 	}
 }
 

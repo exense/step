@@ -15,7 +15,6 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 
 public class ThreadPool {
@@ -39,7 +38,8 @@ public class ThreadPool {
 
 		private final ExecutionContext executionContext;
 		private final AtomicBoolean isInterrupted = new AtomicBoolean(false);
-
+		private final ThreadLocal<Integer> workerIds = new ThreadLocal<>();
+		
 		public BatchContext(ExecutionContext context) {
 			super();
 			this.executionContext = context;
@@ -89,6 +89,10 @@ public class ThreadPool {
 		public void interrupt() {
 			batchContext.isInterrupted.set(true);
 		}
+		
+		public int getWorkerId() {
+			return batchContext.workerIds.get();
+		}
 	}
 
 	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
@@ -128,15 +132,16 @@ public class ThreadPool {
 		
 		if(numberOfThreads == 1) {
 			// No parallelism, run the worker in the current thread
-			createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator);
+			createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, 0);
 		} else {
 			List<Future<?>> futures = new ArrayList<>();
 			long parentThreadId = Thread.currentThread().getId();
 			// Create one worker for each "thread"
 			for (int i = 0; i < numberOfThreads; i++) {
+				int workerId = i;
 				futures.add(executorService.submit(() -> {
 					executionContext.associateThread(parentThreadId);
-					createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator);
+					createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, workerId);
 				}));
 			}
 			
@@ -160,8 +165,7 @@ public class ThreadPool {
 	}
 
 	protected Integer getAutoNumberOfThreads() {
-		ReportNode rootReport = executionContext.getReport();
-		Object autoNumberOfThreads = executionContext.getVariablesManager().getVariable(rootReport, EXECUTION_THREADS_AUTO, true);
+		Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO, null);
 		if(autoNumberOfThreads != null && autoNumberOfThreads.toString().trim().length() > 0) {
 			return Integer.parseInt(autoNumberOfThreads.toString());
 		} else {
@@ -170,9 +174,10 @@ public class ThreadPool {
 		
 	}
 	
-	private <WORK_ITEM> void createWorkerAndRun(BatchContext batchContext, Consumer<WORK_ITEM> workItemConsumer, Iterator<WORK_ITEM> workItemIterator) {
+	private <WORK_ITEM> void createWorkerAndRun(BatchContext batchContext, Consumer<WORK_ITEM> workItemConsumer, Iterator<WORK_ITEM> workItemIterator, int workerId) {
 		Stack<BatchContext> stack = pushBatchContextToStack(batchContext);
 		try {
+			batchContext.workerIds.set(workerId);
 			new Worker<WORK_ITEM>(batchContext, workItemConsumer, workItemIterator).run();
 		} finally {
 			stack.pop();

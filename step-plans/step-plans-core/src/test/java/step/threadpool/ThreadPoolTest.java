@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionStatus;
@@ -128,7 +129,8 @@ public class ThreadPoolTest {
 	@Test
 	public void testAutoMode() {
 		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
-		context.getVariablesManager().putVariable(context.getReport(), "execution_threads_auto", 2);
+		ReportNode rootReportNode = context.getReport();
+		context.getVariablesManager().putVariable(rootReportNode, "execution_threads_auto", 2);
 		
 		ThreadPool threadPool = new ThreadPool(context);
 		
@@ -152,6 +154,7 @@ public class ThreadPoolTest {
 			@Override
 			public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
 				return item1 -> {
+					context.setCurrentReportNode(rootReportNode);
 					threadIdLevel1.put(Thread.currentThread().getName(),"");
 					waitForOtherWorkersToStart(countDownLatch);
 					threadPool.consumeWork(itemList2.iterator(), new WorkerItemConsumerFactory<String>() {
@@ -192,7 +195,8 @@ public class ThreadPoolTest {
 	public void testAutoModeDisabled() {
 		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
 		// Empty string => disabled
-		context.getVariablesManager().putVariable(context.getReport(), "execution_threads_auto", "");
+		ReportNode rootReportNode = context.getReport();
+		context.getVariablesManager().putVariable(rootReportNode, "execution_threads_auto", "");
 		
 		ThreadPool threadPool = new ThreadPool(context);
 		
@@ -217,6 +221,7 @@ public class ThreadPoolTest {
 			@Override
 			public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
 				return item1 -> {
+					context.setCurrentReportNode(rootReportNode);
 					threadIdLevel1.put(Thread.currentThread().getName(),"");
 					waitForOtherWorkersToStart(countDownLatch);
 					threadPool.consumeWork(itemList2.iterator(), new WorkerItemConsumerFactory<String>() {
