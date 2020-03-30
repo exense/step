@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 
 public class ThreadPool {
@@ -134,13 +135,14 @@ public class ThreadPool {
 			// No parallelism, run the worker in the current thread
 			createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, 0);
 		} else {
+			ReportNode currentReportNode = executionContext.getCurrentReportNode();
 			List<Future<?>> futures = new ArrayList<>();
 			long parentThreadId = Thread.currentThread().getId();
 			// Create one worker for each "thread"
 			for (int i = 0; i < numberOfThreads; i++) {
 				int workerId = i;
 				futures.add(executorService.submit(() -> {
-					executionContext.associateThread(parentThreadId);
+					executionContext.associateThread(parentThreadId, currentReportNode);
 					createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, workerId);
 				}));
 			}

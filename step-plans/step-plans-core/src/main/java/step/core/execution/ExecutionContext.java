@@ -112,7 +112,10 @@ public class ExecutionContext extends AbstractContext  {
 		getExecutionCallbacks().associateThread(this, Thread.currentThread());
 	}
 	
-	public void associateThread(long parentThreadId) {
+	public void associateThread(long parentThreadId, ReportNode currentReportNode) {
+		// TODO refactor the handling of current report node. It shouldn't be the responsability of the 
+		// caller of this method to get the currentReportNode. We should be able to get it based on the parentThreadId
+		setCurrentReportNode(currentReportNode);
 		getExecutionCallbacks().associateThread(this, Thread.currentThread(),parentThreadId);
 	}
 
