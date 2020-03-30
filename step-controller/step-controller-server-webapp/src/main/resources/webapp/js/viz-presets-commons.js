@@ -4,45 +4,45 @@ function getVizDashboardCommonsList(){
 
 
 var overtimeFillBlanksTransformFn = function(response, args) {
-    var metric = args.metric;
-    var retData = [], series = [];
+	var metric = args.metric;
+	var retData = [], series = [];
 
-    var payload = response.data.payload.stream.streamData;
-    var payloadKeys = Object.keys(payload);
+	var payload = response.data.payload.stream.streamData;
+	var payloadKeys = Object.keys(payload);
 
-    for (i = 0; i < payloadKeys.length; i++) {
-      var series_ = payload[payloadKeys[i]];
-        var serieskeys = Object.keys(series_ )
-        for (j = 0; j < serieskeys.length; j++) {
-            if(!series.includes(serieskeys[j])){
-                series.push(serieskeys[j]);
-            }
-        }
-    }
+	for (i = 0; i < payloadKeys.length; i++) {
+		var series_ = payload[payloadKeys[i]];
+		var serieskeys = Object.keys(series_ )
+		for (j = 0; j < serieskeys.length; j++) {
+			if(!series.includes(serieskeys[j])){
+				series.push(serieskeys[j]);
+			}
+		}
+	}
 
-    for (i = 0; i < payloadKeys.length; i++) {
-      var series_ = payload[payloadKeys[i]];
-        var serieskeys = Object.keys(series)
-        for (j = 0; j < serieskeys.length; j++) {
-            var key = series[serieskeys[j]];
-            var yval;
-            if(series_[key] && series_[key][metric]){
-              yval = series_[key][metric];
-            }else{
-              yval = 0;
-            }
-            retData.push({
-                x: payloadKeys[i],
-                y: yval,
-                z: key
-            });
-        }
-    }
-    return retData;
+	for (i = 0; i < payloadKeys.length; i++) {
+		var series_ = payload[payloadKeys[i]];
+		var serieskeys = Object.keys(series)
+		for (j = 0; j < serieskeys.length; j++) {
+			var key = series[serieskeys[j]];
+			var yval;
+			if(series_[key] && series_[key][metric]){
+				yval = series_[key][metric];
+			}else{
+				yval = 0;
+			}
+			retData.push({
+				x: payloadKeys[i],
+				y: yval,
+				z: key
+			});
+		}
+	}
+	return retData;
 };
 
 function TimelineWidget(scope) {
-	
+
 	var entityName = 'Measurement';
 	var measurementType = 'keyword';
 
@@ -55,18 +55,18 @@ function TimelineWidget(scope) {
 
 	var textFilters = "[{ \"key\": \"eId\", \"value\": \"__businessobjectid__\", \"regex\": \"false\" }, { \"key\": \"type\", \"value\": \"__measurementType__\", \"regex\": \"false\" }]";
 	var numericalFilters = "[]";
-	
+
 	var config = new Config('Fire','Off', true, false, 'unnecessaryAsMaster');
 	var wId = 'timelineWidget-' + getUniqueId();
-	
+
 	var wOptions = new EffectiveChartOptions('doesntMatter-overriden', null, timeFrame);
-		
+
 	var timelineWidget = new Widget(wId, new DefaultWidgetState(), new DashletState(wId, false, 0, {}, wOptions, config, new RTMAggBaseTemplatedQueryTmpl("cnt", "auto", overtimeFillBlanksTransformFn.toString(),  entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame), new DefaultGuiClosed(), new DefaultInfo()));
-		
+
 	var rtime;
 	var timeout = false;
 	var delta = 200;
-	
+
 	var resizeTimeline = function(){
 		var chartScope = {};
 		if(timelineWidget && timelineWidget.state && timelineWidget.state.api){
@@ -78,20 +78,20 @@ function TimelineWidget(scope) {
 			}
 		});
 	};
-	
+
 	var resizeend = function() {
-	    if (new Date() - rtime < delta) {
-	        setTimeout(resizeend, delta);
-	    } else {
-	    	timeout = false;
-	        resizeTimeline();
-	    }               
+		if (new Date() - rtime < delta) {
+			setTimeout(resizeend, delta);
+		} else {
+			timeout = false;
+			resizeTimeline();
+		}               
 	}
-	
+
 	scope.$on('resize-timeline', function(){
 		resizeTimeline();
 	});
-	
+
 	scope.sendExtent = function (from, to){
 
 		scope.$broadcast('apply-global-setting', new Placeholder('__from__', from, 'Off'));
@@ -137,6 +137,7 @@ function TimelineWidget(scope) {
 				scope.chartScope = timelineWidget.state.api.getScope();
 
 				if(scope.chartScope && scope.chartScope.svg && scope.chartScope.svg[0]){
+					console.log(scope.chartScope);
 					scope.extent = {};
 					scope.chartScope.chart.focus.xAxis.tickFormat(function (d) {
 						var value;
@@ -159,29 +160,36 @@ function TimelineWidget(scope) {
 
 					$(scope.chartScope.svg[0]).find(".nv-focus").first().remove();
 					timelineWidget.state.api.update();
+
+
+					var brushC = d3.select("viz-dashlet.timelinewidget svg g");
+
+					var existingBrush = scope.chartScope.chart.focus.brush;
+					var existingBrushOn = scope.chartScope.chart.focus.brush.on;
+
+					//hijacked listener
+					scope.chartScope.chart.focus.brush.on('brushend', function(type, listener){
+						scope.sendExtent(scope.extent.from, scope.extent.to)
+						if(type && typeof(type) === 'string'){
+							existingBrushOn(type, listener);
+						}
+					})
 					
-					var focusg = d3.select("viz-dashlet.timelinewidget .nvd3.nv-focus");
-						
-						focusg.on('click', function(){
-							scope.sendExtent(scope.extent.from, scope.extent.to)
-//							console.log('sending ' + scope.extent.from + ' ; ' + scope.extent.to);
-						})
-											
 					window.addEventListener("resize", function(){
-					    rtime = new Date();
-					    if (timeout === false) {
-					        timeout = true;
-					        setTimeout(resizeend, delta);
-					    }
+						rtime = new Date();
+						if (timeout === false) {
+							timeout = true;
+							setTimeout(resizeend, delta);
+						}
 					});
 
 				}
 			}
 	};
-	
+
 	return timelineWidget;
 }
-	
+
 function WikimediaDemo() {
 
 	var widgetsArray = [];
@@ -262,7 +270,7 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity, auto
 
 	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
-	
+
 	//addErrorsSummary(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 	addAggregatesSummaryTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 	addLastMeasurementsTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
@@ -277,9 +285,9 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity, auto
 								new Placeholder("__to__", "new Date().getTime()", true)
 							],
 							autorefresh?autorefresh:true,
-							false,
-							'Global Settings',
-							3000
+									false,
+									'Global Settings',
+									3000
 					),
 					widgetsArray,
 					entityName + ' Dashboard',
@@ -296,16 +304,16 @@ function PerformanceDashboard(executionId, measurementType, entity, from, to) {
 
 	var widgetsArray = [];
 	var entityName = 'Measurement';
-	
+
 	var __from__;
 	var __to__;
-	
+
 	if(!from){
 		__from__ = 0;
 	}else{
 		__from__ = from;
 	}
-	
+
 	if(!to){
 		__to__ = 4078218676000;
 	}else{
@@ -324,8 +332,8 @@ function PerformanceDashboard(executionId, measurementType, entity, from, to) {
 
 	addAggregatesOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
 	addErrorsOverTimeTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
-	
-	
+
+
 	//addErrorsSummary(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
 	addAggregatesSummaryTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
 	//addLastMeasurementsTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame, __from__, __to__);
@@ -389,8 +397,8 @@ function RTMAggBaseTemplatedQueryTmpl(metric, pGranularity, transform, entityNam
 							"{ \"selectors1\": [{ \"textFilters\": "+textFilters+", \"numericalFilters\": "+numericalFilters+" }], \"serviceParams\": { \"measurementService.nextFactor\": \"0\", \"aggregateService.timeField\" : \""+timeField+"\", \"aggregateService.timeFormat\" : \""+timeFormat+"\", \"aggregateService.valueField\" : \""+valueField+"\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"__granularity__\", \"aggregateService.groupby\": \""+groupby+"\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
 							"",
 							[new Placeholder("__granularity__", pGranularity, false),
-								 new Placeholder("__from__", __from__, true),
-								 new Placeholder("__to__", __to__, true)]
+								new Placeholder("__from__", __from__, true),
+								new Placeholder("__to__", __to__, true)]
 					)
 			)
 	);
@@ -406,8 +414,8 @@ function RTMAggTimeFrameTemplatedQueryTmpl(metric, pGranularity, transform, enti
 							"{ \"selectors1\": [{ \"textFilters\": "+textFilters+", \"numericalFilters\": "+numericalFilters+" }], \"serviceParams\": { \"measurementService.nextFactor\": \"0\", \"aggregateService.timeField\" : \""+timeField+"\", \"aggregateService.timeFormat\" : \""+timeFormat+"\", \"aggregateService.valueField\" : \""+valueField+"\", \"aggregateService.sessionId\": \"defaultSid\", \"aggregateService.granularity\": \"__granularity__\", \"aggregateService.groupby\": \""+groupby+"\", \"aggregateService.cpu\": \"1\", \"aggregateService.partition\": \"8\", \"aggregateService.timeout\": \"600\" } }",
 							"",
 							[new Placeholder("__granularity__", pGranularity, false),
-							 new Placeholder("__from__", "new Date().getTime() - "+timeFrame, true),
-							 new Placeholder("__to__", "new Date().getTime()", true)]
+								new Placeholder("__from__", "new Date().getTime() - "+timeFrame, true),
+								new Placeholder("__to__", "new Date().getTime()", true)]
 					)
 			)
 	);
