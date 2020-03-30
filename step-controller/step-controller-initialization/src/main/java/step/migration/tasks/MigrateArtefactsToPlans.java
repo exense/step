@@ -297,13 +297,15 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		BasicDBObject repositoryParameters = (BasicDBObject) artefact.get("repositoryParameters");
 		if(repositoryParameters != null) {
 			String artefactId = repositoryParameters.getString("artefactid");
-			planId = artefactIdToPlanId.get(new ObjectId(artefactId));
-			if(planId != null) {
-				String planIdString = planId.toString();
-				repositoryParameters.put("planid", planIdString);
-				result = planIdString;
+			if(artefactId != null) {
+				planId = artefactIdToPlanId.get(new ObjectId(artefactId));
+				if(planId != null) {
+					String planIdString = planId.toString();
+					repositoryParameters.put("planid", planIdString);
+					result = planIdString;
+				}
+				repositoryParameters.remove("artefactid");
 			}
-			repositoryParameters.remove("artefactid");
 		}
 		return result;
 	}
