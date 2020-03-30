@@ -74,7 +74,6 @@ function TimelineWidget(scope) {
 		}
 		$(document).ready(function(){
 			if(chartScope && chartScope.api){
-				$(scope.chartScope.svg[0]).find(".nv-focus").first().remove();
 				chartScope.api.updateWithOptions();										
 			}
 		});
@@ -138,7 +137,7 @@ function TimelineWidget(scope) {
 				scope.chartScope = timelineWidget.state.api.getScope();
 
 				if(scope.chartScope && scope.chartScope.svg && scope.chartScope.svg[0]){
-					console.log(scope.chartScope);
+					//console.log(scope.chartScope);
 					scope.extent = {};
 					scope.chartScope.chart.focus.xAxis.tickFormat(function (d) {
 						var value;
@@ -155,6 +154,16 @@ function TimelineWidget(scope) {
 					var newBrush = function(e){
 						scope.extent.from =  Math.round(e[0]);
 						scope.extent.to =  Math.round(e[1]);
+						
+						if(!timelineWidget.state.maxExtentInit || timelineWidget.state.maxExtentInit === false){
+							timelineWidget.state.maxExtentInit = true;
+							timelineWidget.state.minExtent = scope.extent.from;
+							timelineWidget.state.maxExtent = scope.extent.to;
+							timelineWidget.state.granularity = (Math.round(scope.extent.to) - Math.round(scope.extent.from)) / 29;
+						}else{
+							scope.extent.to += timelineWidget.state.granularity + 1; 
+						}
+						
 					}
 					newBrush.on = existing;
 					scope.chartScope.chart.focus.dispatch.onBrush = newBrush;
@@ -168,7 +177,7 @@ function TimelineWidget(scope) {
 					var existingBrush = scope.chartScope.chart.focus.brush;
 					var existingBrushOn = scope.chartScope.chart.focus.brush.on;
 
-					//hijacked listener
+					//hijacked
 					scope.chartScope.chart.focus.brush.on('brushend', function(type, listener){
 						scope.sendExtent(scope.extent.from, scope.extent.to)
 						if(type && typeof(type) === 'string'){
