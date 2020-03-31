@@ -67,19 +67,15 @@ function TimelineWidget(outerScope) {
 	var timeout = false;
 	var delta = 200;
 
-	var resizeTimeline = function(){
-		var chartScope = {};
-		if(timelineWidget && timelineWidget.state && timelineWidget.state.api){
-			chartScope = timelineWidget.state.api.getScope();
-		}
+	outerScope.resizeTimeline = function(){
 		$(document).ready(function(){
-			if(chartScope && chartScope.api){
-				chartScope.api.updateWithOptions();										
+			if(outerScope.chartScope && outerScope.chartScope.api){
+				outerScope.chartScope.api.updateWithOptions();										
 			}
 		});
 	};
 
-	var resizeend = function() {
+	outerScope.resizeend = function() {
 		if (new Date() - rtime < delta) {
 			setTimeout(resizeend, delta);
 		} else {
@@ -89,14 +85,75 @@ function TimelineWidget(outerScope) {
 	}
 
 	outerScope.$on('resize-timeline', function(){
-		resizeTimeline();
+		outerScope.resizeTimeline();
 	});
 
-	outerScope.sendExtent = function (from, to){
+	outerScope.$on('async-query-cycle-complete', function(event, arg){
+		if(arg.startsWith('timeline')){
+			$(document).ready(function(){
+				if(!outerScope.timelineReady){
+					outerScope.timelineReady = true;
+					
+					if(!outerScope.listenerSetup){
+						console.log('timeline data was loaded after chart was configured: listener setup by timeline data complete.');
+						outerScope.setupListener();
+					}
+				}
+			})
+		}
+	});
 
+	outerScope.extent = {};
+
+	outerScope.timelineReady = false;
+	outerScope.listenerSetup = false;
+
+	outerScope.sendExtent = function (from, to){
+		console.log('sendExtent: ['+from+', '+to+']');
 		outerScope.$broadcast('apply-global-setting', new Placeholder('__from__', from, 'Off'));
 		outerScope.$broadcast('apply-global-setting', new Placeholder('__to__', to, 'Off'));
 	};
+
+	outerScope.setupListener = function(){
+		console.log('setting up timeline listener');
+		if(outerScope.chartScope){
+		var existing = outerScope.chartScope.focus.dispatch.onBrush.on;
+		var newBrush = function(e){
+			outerScope.extent.from =  Math.round(e[0]);
+			outerScope.extent.to =  Math.round(e[1]);
+
+			if(!timelineWidget.state.maxExtentInit || timelineWidget.state.maxExtentInit === false){
+				timelineWidget.state.maxExtentInit = true;
+				timelineWidget.state.minExtent = outerScope.extent.from;
+				timelineWidget.state.maxExtent = outerScope.extent.to;
+				timelineWidget.state.granularity = Math.round(
+						(Math.round(outerScope.extent.to) - Math.round(outerScope.extent.from)) / 29
+				);
+				//console.log(timelineWidget.state.granularity)
+			}else{
+				outerScope.extent.to += timelineWidget.state.granularity + 1; 
+			}
+
+		}
+		newBrush.on = existing;
+		outerScope.chartScope.focus.dispatch.onBrush = newBrush;
+
+		var brushC = d3.select("viz-dashlet.timelinewidget svg g");
+		var existingBrushOn = outerScope.chartScope.focus.brush.on;
+
+		//hijacked
+		outerScope.chartScope.focus.brush.on('brushend', function(type, listener){
+			outerScope.sendExtent(outerScope.extent.from, outerScope.extent.to)
+			if(type && typeof(type) === 'string'){
+				existingBrushOn(type, listener);
+			}
+		});
+
+		outerScope.listenerSetup = true;
+		}else{
+			console.log('Warning: setupListener() was invoked before chartScope was set.');
+		}
+	}
 
 	timelineWidget.state.options.innercontainer.height = 100;
 	timelineWidget.state.options.chart = {
@@ -134,12 +191,14 @@ function TimelineWidget(outerScope) {
 				}.toString()
 			},
 			callback: function(scope, element){
-				scope.chartScope = timelineWidget.state.api.getScope();
+				console.log('callback')
+				console.log(scope)
+				outerScope.chartScope = scope;
 
-				if(scope.chartScope && scope.chartScope.svg && scope.chartScope.svg[0]){
-					//console.log(scope.chartScope);
-					scope.extent = {};
-					scope.chartScope.chart.focus.xAxis.tickFormat(function (d) {
+				if(outerScope.chartScope){
+					//console.log(outerScope.chartScope);
+					outerScope.extent = {};
+					outerScope.chartScope.focus.xAxis.tickFormat(function (d) {
 						var value;
 						if ((typeof d) === "string") {
 							value = parseInt(d);
@@ -150,57 +209,11 @@ function TimelineWidget(outerScope) {
 						return d3.time.format("%H:%M:%S")(new Date(value));
 					});
 
-					var existing = scope.chartScope.chart.focus.dispatch.onBrush.on;
-					var newBrush = function(e){
-						scope.extent.from =  Math.round(e[0]);
-						scope.extent.to =  Math.round(e[1]);
-						
-						if(!timelineWidget.state.maxExtentInit || timelineWidget.state.maxExtentInit === false){
-							timelineWidget.state.maxExtentInit = true;
-							timelineWidget.state.minExtent = scope.extent.from;
-							timelineWidget.state.maxExtent = scope.extent.to;
-							timelineWidget.state.granularity = (Math.round(scope.extent.to) - Math.round(scope.extent.from)) / 29;
-						}else{
-							scope.extent.to += timelineWidget.state.granularity + 1; 
-						}
-						
-					}
-					newBrush.on = existing;
-					scope.chartScope.chart.focus.dispatch.onBrush = newBrush;
+					$(".timelinewidget .nv-focus").first().remove();
+					$(".timelinewidget .nv-y.nv-axis").first().remove();
 
-					$(scope.chartScope.svg[0]).find(".nv-focus").first().remove();
 					timelineWidget.state.api.update();
 
-
-					var brushC = d3.select("viz-dashlet.timelinewidget svg g");
-
-					var existingBrush = scope.chartScope.chart.focus.brush;
-					var existingBrushOn = scope.chartScope.chart.focus.brush.on;
-
-					//hijacked
-					console.log('[DEBUG] -- setting up listener --');
-					console.log('[DEBUG]' + scope.chartScope.chart.focus.brush);
-					console.log(scope.chartScope.chart.focus.brush);
-					console.log('[DEBUG] ----------------------- ');
-					
-					scope.chartScope.chart.focus.brush.on('brushend', function(type, listener){
-						console.log('[DEBUG] -- listener called --');
-						console.log('[DEBUG] '+scope.extent.from + ';' + scope.extent.to);
-						//console.log('[DEBUG]' + scope.chartScope.chart.focus.brush);
-						console.log('[DEBUG] ----------------------- ');
-						console.log(scope.chartScope.chart.focus.brush);
-						outerScope.sendExtent(scope.extent.from, scope.extent.to)
-						if(type && typeof(type) === 'string'){
-							existingBrushOn(type, listener);
-						}
-					})
-					
-					console.log('[DEBUG] -- post listener setup --');
-					console.log('[DEBUG]' + scope.chartScope.chart.focus.brush);
-					console.log(scope.chartScope.chart.focus.brush);
-					console.log('[DEBUG] ----------------------- ');
-					
-					
 					window.addEventListener("resize", function(){
 						rtime = new Date();
 						if (timeout === false) {
@@ -208,7 +221,15 @@ function TimelineWidget(outerScope) {
 							setTimeout(resizeend, delta);
 						}
 					});
-
+					
+					if(!outerScope.listenerSetup){
+						if(outerScope.timelineReady){
+							console.log('timeline data was loaded before chart was configured: listener setup by callback');
+							outerScope.setupListener();
+						}
+					}
+					
+					console.log('callback complete')
 				}
 			}
 	};
