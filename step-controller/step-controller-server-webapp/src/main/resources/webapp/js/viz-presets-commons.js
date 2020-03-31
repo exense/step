@@ -69,8 +69,17 @@ function TimelineWidget(outerScope) {
 
 	outerScope.resizeTimeline = function(){
 		$(document).ready(function(){
-			if(outerScope.chartScope && outerScope.chartScope.api){
-				outerScope.chartScope.api.updateWithOptions();										
+			
+			if(timelineWidget && timelineWidget.state && timelineWidget.state.api){
+				console.log('resizing timeline...')
+				/*
+				var chartsvgScope = timelineWidget.state.api.getScope();
+				$(chartsvgScope.svg[0]).find('.nv-focus').first().remove()
+				$(chartsvgScope.svg[0]).find('.nv-y.nv-axis').first().remove()
+				 */
+				//timelineWidget.state.api.updateWithOptions();
+			}else{
+				console.log('Warning: timeline could not be resized')
 			}
 		});
 	};
@@ -80,11 +89,12 @@ function TimelineWidget(outerScope) {
 			setTimeout(resizeend, delta);
 		} else {
 			timeout = false;
-			resizeTimeline();
+			outerScope.resizeTimeline();
 		}               
 	}
-
+	
 	outerScope.$on('resize-timeline', function(){
+		console.log('resize-timeline event received');
 		outerScope.resizeTimeline();
 	});
 
@@ -209,11 +219,15 @@ function TimelineWidget(outerScope) {
 						return d3.time.format("%H:%M:%S")(new Date(value));
 					});
 
-					$(".timelinewidget .nv-focus").first().remove();
-					$(".timelinewidget .nv-y.nv-axis").first().remove();
+					//$(document).ready(function(){
+						var chartsvgScope = timelineWidget.state.api.getScope()
+						console.log(chartsvgScope);
+						$(chartsvgScope.svg[0]).find('.nv-focus').first().remove()
+						$(chartsvgScope.svg[0]).find('.nv-y.nv-axis').first().remove()
+						//});
 
 					timelineWidget.state.api.update();
-
+					
 					window.addEventListener("resize", function(){
 						rtime = new Date();
 						if (timeout === false) {
@@ -222,17 +236,18 @@ function TimelineWidget(outerScope) {
 						}
 					});
 					
-					if(!outerScope.listenerSetup){
+					//if(!outerScope.listenerSetup){
 						if(outerScope.timelineReady){
 							console.log('timeline data was loaded before chart was configured: listener setup by callback');
 							outerScope.setupListener();
 						}
-					}
+					//}
 					
 					console.log('callback complete')
 				}
 			}
 	};
+	
 
 	return timelineWidget;
 }
