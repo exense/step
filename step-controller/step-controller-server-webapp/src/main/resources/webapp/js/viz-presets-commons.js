@@ -78,6 +78,7 @@ function TimelineWidget(outerScope) {
 				$(chartsvgScope.svg[0]).find('.nv-y.nv-axis').first().remove()
 				 */
 				//timelineWidget.state.api.updateWithOptions();
+				
 			}else{
 				console.log('Warning: timeline could not be resized')
 			}
