@@ -41,7 +41,7 @@ var overtimeFillBlanksTransformFn = function(response, args) {
 	return retData;
 };
 
-function TimelineWidget(scope) {
+function TimelineWidget(outerScope) {
 
 	var entityName = 'Measurement';
 	var measurementType = 'keyword';
@@ -88,14 +88,14 @@ function TimelineWidget(scope) {
 		}               
 	}
 
-	scope.$on('resize-timeline', function(){
+	outerScope.$on('resize-timeline', function(){
 		resizeTimeline();
 	});
 
-	scope.sendExtent = function (from, to){
+	outerScope.sendExtent = function (from, to){
 
-		scope.$broadcast('apply-global-setting', new Placeholder('__from__', from, 'Off'));
-		scope.$broadcast('apply-global-setting', new Placeholder('__to__', to, 'Off'));
+		outerScope.$broadcast('apply-global-setting', new Placeholder('__from__', from, 'Off'));
+		outerScope.$broadcast('apply-global-setting', new Placeholder('__to__', to, 'Off'));
 	};
 
 	timelineWidget.state.options.innercontainer.height = 100;
@@ -133,7 +133,7 @@ function TimelineWidget(scope) {
 					return d3.time.format("%H:%M:%S")(new Date(value));
 				}.toString()
 			},
-			callback: function(iscope, element){
+			callback: function(scope, element){
 				scope.chartScope = timelineWidget.state.api.getScope();
 
 				if(scope.chartScope && scope.chartScope.svg && scope.chartScope.svg[0]){
@@ -179,7 +179,7 @@ function TimelineWidget(scope) {
 
 					//hijacked
 					scope.chartScope.chart.focus.brush.on('brushend', function(type, listener){
-						scope.sendExtent(scope.extent.from, scope.extent.to)
+						outerScope.sendExtent(scope.extent.from, scope.extent.to)
 						if(type && typeof(type) === 'string'){
 							existingBrushOn(type, listener);
 						}
