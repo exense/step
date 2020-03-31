@@ -178,12 +178,28 @@ function TimelineWidget(outerScope) {
 					var existingBrushOn = scope.chartScope.chart.focus.brush.on;
 
 					//hijacked
+					console.log('[DEBUG] -- setting up listener --');
+					console.log('[DEBUG]' + scope.chartScope.chart.focus.brush);
+					console.log(scope.chartScope.chart.focus.brush);
+					console.log('[DEBUG] ----------------------- ');
+					
 					scope.chartScope.chart.focus.brush.on('brushend', function(type, listener){
+						console.log('[DEBUG] -- listener called --');
+						console.log('[DEBUG] '+scope.extent.from + ';' + scope.extent.to);
+						//console.log('[DEBUG]' + scope.chartScope.chart.focus.brush);
+						console.log('[DEBUG] ----------------------- ');
+						console.log(scope.chartScope.chart.focus.brush);
 						outerScope.sendExtent(scope.extent.from, scope.extent.to)
 						if(type && typeof(type) === 'string'){
 							existingBrushOn(type, listener);
 						}
 					})
+					
+					console.log('[DEBUG] -- post listener setup --');
+					console.log('[DEBUG]' + scope.chartScope.chart.focus.brush);
+					console.log(scope.chartScope.chart.focus.brush);
+					console.log('[DEBUG] ----------------------- ');
+					
 					
 					window.addEventListener("resize", function(){
 						rtime = new Date();
