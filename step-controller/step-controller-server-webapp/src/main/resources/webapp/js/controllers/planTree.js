@@ -196,7 +196,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
                 "SwitchDisable": {
                   "separator_before": true,
                   "separator_after": false,
-                  "label": ($scope.isNodeDisabled()) ? "Enable \u00A0(Ctrl+s)" : "Disable \u00A0(Ctrl+s)",
+                  "label": ($scope.isNodeDisabled()) ? "Enable \u00A0(Ctrl+e)" : "Disable \u00A0(Ctrl+e)",
                   "icon"        : false,
                   "action": function (obj) {
                       $scope.switchDisable();
