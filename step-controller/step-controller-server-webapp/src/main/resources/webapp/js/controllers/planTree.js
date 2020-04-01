@@ -201,6 +201,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
                   "action": function (obj) {
                       $scope.switchDisable();
                   }
+                  ,"_disabled" : $scope.readonly
                 }
 					    }
 					  }
@@ -302,7 +303,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             $scope.openSelectedArtefact();
             e.stopImmediatePropagation();
             e.preventDefault();
-          } else if (e.which === 69 && (e.ctrlKey || e.metaKey)) {
+          } else if (e.which === 69 && (e.ctrlKey || e.metaKey) && !$scope.readonly) {
             $scope.switchDisable();
             e.stopImmediatePropagation();
             e.preventDefault();

@@ -2,18 +2,18 @@
 	<div class="sectionResizable sectionResizableTree" resizable r-directions="['right']" r-flex="true">
 		<div class="panel panel-default overflow-x-auto h-100">
 			<div class="panel-body">
-				<div class="input-group" style="margin-bottom:10px;" ng-show="!readonly">
-					<div class="btn-group">
+				<div class="input-group" style="margin-bottom:10px;">
+					<div class="btn-group" ng-show="!readonly">
 						<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="move(-1)" data-toggle="tooltip" data-placement="bottom" title="Move seleted node upward (ctrl+up)">
 						<span class="glyphicon glyphicon glyphicon-chevron-up" aria-hidden="true"></span></button>
 			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="move(1)" data-toggle="tooltip" data-placement="bottom" title="Move seleted node downward (ctrl+down)">
 			    		<span class="glyphicon glyphicon glyphicon-chevron-down" aria-hidden="true"></span></button>
 			  		</div>
-			  		<div class="btn-group">
+			  		<div class="btn-group" ng-show="!readonly">
 			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="copy()" data-toggle="tooltip" data-placement="bottom" title="Copy selected node (ctrl+c)">Copy</button>
 			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="paste()" data-toggle="tooltip" data-placement="bottom" title="Paste selected node (ctrl+v)">Paste</button>
 		    		</div>
-			  		<div class="btn-group">
+			  		<div class="btn-group" ng-show="!readonly">
 			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="remove()" data-toggle="tooltip" data-placement="bottom" title="Delete selected node (del)">Delete</button>
 		    		</div>
 		    		<div ng-if="isInteractiveSessionActive()" class="btn-group">
