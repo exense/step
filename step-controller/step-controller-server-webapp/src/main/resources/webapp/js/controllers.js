@@ -629,14 +629,11 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
 					$scope.autorefresh.enabled=false;
 				}
 			}
-			
-      $scope.closePopOver = function() {
-        $scope.popOverIsOpen=false;
-      }
 
-		      $scope.closePopOver = function() {
-		        $scope.popOverIsOpen=false;
-		      }
+
+			$scope.closePopOver = function() {
+				$scope.popOverIsOpen=false;
+			}
 
 			var refreshTimer;
 
