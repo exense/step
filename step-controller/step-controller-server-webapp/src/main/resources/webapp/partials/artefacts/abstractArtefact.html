@@ -4,16 +4,18 @@
 		<a ng-click="showAttributes = !showAttributes">Step</a>
 	</div>
 	<div class="panel-body" ng-show="showAttributes">
-		<div class="form-group form-group-sm">
-			<label>Name</label> <input type="text" class="form-control" ng-blur="save()" ng-model="artefact.attributes.name" />
-		</div>
-		<div class="form-group">
-			<label>Description</label>
-			<textarea ng-blur="save()" ng-model="artefact.description" class="form-control" rows="5"></textarea>
-		</div>
-		<div class="form-group form-group-sm">
-			<dynamic-checkbox tooltip="'Switch to disable or enable the execution of this node.'" label="'Skip node execution'" on-save="save()" dynamic-value="artefact.skipNode"/>
-		</div>
+		<fieldset ng-disabled="readonly">
+			<div class="form-group form-group-sm">
+				<label>Name</label> <input type="text" class="form-control" ng-blur="save()" ng-model="artefact.attributes.name" />
+			</div>
+			<div class="form-group">
+				<label>Description</label>
+				<textarea ng-blur="save()" ng-model="artefact.description" class="form-control" rows="5"></textarea>
+			</div>
+			<div class="form-group form-group-sm">
+				<dynamic-checkbox tooltip="'Switch to disable or enable the execution of this node.'" label="'Skip node execution'" on-save="save()" dynamic-value="artefact.skipNode"/>
+			</div>
+		</fieldset>
 	</div>
 </div>
 <hr />
