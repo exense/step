@@ -630,7 +630,6 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
 				}
 			}
 
-
 			$scope.closePopOver = function() {
 				$scope.popOverIsOpen=false;
 			}
