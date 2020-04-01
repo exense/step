@@ -684,8 +684,6 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
 					$interval.cancel(refreshTimer);
 				}
 			});
-
-
 		}
 	};
 }]);
