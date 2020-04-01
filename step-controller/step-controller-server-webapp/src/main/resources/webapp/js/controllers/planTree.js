@@ -622,7 +622,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             tree.rename_node(currentNode,newLabel);
           } 
           currentNode.li_attr = (artefact.skipNode.value) ? { "class" : "text-muted" } : {"class" : ""}
-          tree.redraw(true);
+          $timeout(function(){tree.redraw(true)});
           $scope.fireChangeEvent();
         } else {
           console.error("Unable to find not with id: "+artefact.id);
