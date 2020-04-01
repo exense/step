@@ -338,14 +338,21 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity, auto
 	addAggregatesSummaryTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 	addLastMeasurementsTpl(widgetsArray, entityName,timeField, timeFormat, valueField, groupby, textFilters, numericalFilters, timeFrame);
 
+	// currently applying an offset of 10% to take in account the query execution time and make sure to visually "frame" the data
+	// this a temporary workaround to the fact that new Date() is called at different times for the scale & query input
+	var offset = Math.round(timeFrame * 0.08);
+	var adjustedFrom = (timeFrame * 1) + offset;
+	
+	var effectiveFrom = 'new Date().getTime() - '+ timeFrame;
+	var effectiveTo = 'new Date().getTime()';
 
 	var dashboardObject = new Dashboard(
 			entityName + ' Performance',
 			new DashboardState(
 					new GlobalSettings(
 							[new Placeholder("__businessobjectid__", executionId, false), new Placeholder("__measurementType__", measurementType?measurementType:'custom', false),
-								new Placeholder("__from__", "new Date(new Date().getTime() - "+timeFrame+").getTime()", true),
-								new Placeholder("__to__", "new Date().getTime()", true)
+								new Placeholder("__from__", effectiveFrom, true),
+								new Placeholder("__to__", effectiveTo, true)
 							],
 							autorefresh?autorefresh:true,
 									false,
@@ -424,10 +431,19 @@ function PerformanceDashboard(executionId, measurementType, entity, from, to) {
 };
 
 function EffectiveChartOptions(charType, xAxisOverride, timeFrame, yAxisOverride){
+	
+	// currently applying an offset of 10% to take in account the query execution time and make sure to visually "frame" the data
+	// this a temporary workaround to the fact that new Date() is called at different times for the scale & query input
+	var offset = Math.round(timeFrame * 0.08);
+	var adjustedFrom = (timeFrame * 1) + offset;
+	
+	var axisFrom = 'new Date().getTime() - '+ adjustedFrom;
+	var axisTo = 'new Date().getTime() - '+ offset;
+	
 	var opts = new ChartOptions(charType, true, false,
 			xAxisOverride?xAxisOverride:'function (d) {\r\n    var value;\r\n    if ((typeof d) === \"string\") {\r\n        value = parseInt(d);\r\n    } else {\r\n        value = d;\r\n    }\r\n\r\n    return d3.time.format(\"%H:%M:%S\")(new Date(value));\r\n}', 
 					yAxisOverride?yAxisOverride:'function (d) { return d.toFixed(1); }',
-							timeFrame?'[new Date(new Date().getTime() - '+timeFrame+').getTime(), new Date().getTime()]':undefined
+							timeFrame?'['+axisFrom+','+axisTo+']':undefined
 	);
 	opts.margin.left = 75;
 	return opts;

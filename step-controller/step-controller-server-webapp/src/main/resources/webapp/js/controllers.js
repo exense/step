@@ -411,27 +411,36 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
 
 			$scope.dashboardsendpoint=[];
-			
+
 			// default buttons
 			$scope.measurementtypemodel = 'keyword';
 			$scope.timeframe = '30s';
-			
+
 			$scope.setTimeframe = function(timeframe){
 				if(timeframe === 'max'){
 					$scope.$broadcast('apply-global-setting', { key: '__from__', value : '0', isDynamic : false});	
 					$scope.$broadcast('apply-global-setting', { key: '__to__', value : '4078304655000', isDynamic : false});
-					
+
 					$scope.$broadcast('reload-scales', { xAxis: ''});
 				}else{
-					var from = 'new Date(new Date().getTime() - '+timeframe+').getTime()';
-					var to= 'new Date().getTime()';
-					$scope.$broadcast('apply-global-setting', { key: '__from__', value : from, isDynamic : true});	
-					$scope.$broadcast('apply-global-setting', { key: '__to__', value : to, isDynamic : true});
-					
-					$scope.$broadcast('reload-scales', { xAxis: '['+from+', '+to+']'});
+					// currently applying an offset of 10% to take in account the query execution time and make sure to visually "frame" the data
+					// this a temporary workaround to the fact that new Date() is called at different times for the scale & query input
+					var offset = Math.round(timeframe * 0.08);
+					var adjustedFrom = (timeframe * 1) + offset;
+
+					var effectiveFrom = 'new Date().getTime() - '+ timeframe;
+					var axisFrom = 'new Date().getTime() - '+ adjustedFrom;
+
+					var effectiveTo = 'new Date().getTime()';
+					var axisTo = 'new Date().getTime() - '+ offset;
+
+					$scope.$broadcast('apply-global-setting', { key: '__from__', value : effectiveFrom, isDynamic : true});	
+					$scope.$broadcast('apply-global-setting', { key: '__to__', value : effectiveTo, isDynamic : true});
+
+					$scope.$broadcast('reload-scales', { xAxis: '['+axisFrom+', '+axisTo+']'});
 				}
 			};
-			
+
 			$scope.initTimelineWidget = function(){
 
 				// Timeline widget
@@ -443,12 +452,12 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				$scope.timelinewidget = new TimelineWidget($scope);
 				// 
 			}
-			
+
 			$scope.setMeasurementType = function(input){
 				$scope.measurementtypemodel = input;
 				$scope.$broadcast('apply-global-setting', { key: '__measurementType__', value : input, isDynamic : false});	
 			}
-			
+
 			$scope.$watch('execution.status',function(newStatus, oldStatus) {
 				if(newStatus) {
 					$scope.init = false;
@@ -574,7 +583,7 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
 			$scope.$state=tabs[tabs.length-1].id;
 		}
 		$stateStorag.store($scope,{tabs: $scope.tabs});
-		
+
 		$(document).ready(function(){
 			$scope.$broadcast('resize-widget');
 			$scope.$broadcast('resize-timeline');
@@ -624,6 +633,10 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
       $scope.closePopOver = function() {
         $scope.popOverIsOpen=false;
       }
+
+		      $scope.closePopOver = function() {
+		        $scope.popOverIsOpen=false;
+		      }
 
 			var refreshTimer;
 
