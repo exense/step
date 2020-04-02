@@ -18,12 +18,14 @@
  *******************************************************************************/
 package step.plugins.datatable;
 
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,11 +59,18 @@ import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionFind;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.accessors.collections.SearchOrder;
+import step.core.accessors.collections.field.CollectionField;
 import step.core.deployment.ApplicationServices;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.deployment.Secured;
+import step.core.export.ExportTaskManager;
+import step.core.export.ExportTaskManager.ExportRunnable;
+import step.core.export.ExportTaskManager.ExportStatus;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.ql.OQLMongoDBBuilder;
+import step.resources.Resource;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevisionContainer;
 
 @Singleton
 @Path("table")
@@ -73,6 +82,8 @@ public class TableService extends ApplicationServices {
 	protected CollectionRegistry collectionRegistry;
 	protected MongoDatabase database;
 	protected int maxTime;
+	
+	protected ExportTaskManager exportTaskManager;
 
 	private ObjectMapper webLayerObjectMapper = JacksonMapperProvider.createMapper();
 	
@@ -87,6 +98,7 @@ public class TableService extends ApplicationServices {
 		collectionRegistry = getContext().get(CollectionRegistry.class);
 		maxTime = controller.getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
+		exportTaskManager = new ExportTaskManager(getContext().get(ResourceManager.class));
 	}
 	
 	@PreDestroy
@@ -192,6 +204,42 @@ public class TableService extends ApplicationServices {
 		
 		return response;
 	}
+	
+	@GET
+	@Path("/{id}/export")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
+	public String createExport(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
+		MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
+	
+		Collection<?> collection = collectionRegistry.get(collectionID);
+		if(collection == null) {
+			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
+		}
+		
+		JsonObject queryParameters = null;
+		if(params.containsKey("params")) {
+			JsonReader reader = Json.createReader(new StringReader(params.getFirst("params")));
+			queryParameters = reader.readObject();
+		}
+		
+		List<Bson> queryFragments = collection.getAdditionalQueryFragments(queryParameters);
+		Bson query = queryFragments.size()>0?Filters.and(queryFragments):new Document();
+		
+		String exportID = UUID.randomUUID().toString();
+		exportTaskManager.createExportTask(exportID, new ExportTask(collection, null, query));
+		
+		return "{\"exportID\":\"" + exportID + "\"}";
+	}
+	
+	@GET
+	@Path("/exports/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured
+	public ExportStatus getExport(@PathParam("id") String reportID) throws Exception {
+		return exportTaskManager.getExportStatus(reportID);
+	}
+	
 
 	private List<Bson> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames, Collection<?> collection) {
 		List<Bson> queryFragments = new ArrayList<>();
@@ -239,4 +287,39 @@ public class TableService extends ApplicationServices {
 		Bson query = OQLMongoDBBuilder.build(objectHookRegistry.getObjectFilter(getSession()).getOQLFilter());
 		return query;
 	}
+
+	public static class ExportTask extends ExportRunnable {
+
+		protected Collection<?> collection;
+		protected Map<String, CollectionField> columns;
+		protected Bson query;
+
+		public ExportTask(Collection<?> collection, Map<String, CollectionField> columns, Bson query) {
+			super();
+			this.collection = collection;
+			this.columns = columns;
+			this.query = query;
+		}
+
+		protected Resource runExport() throws Exception {
+			try {
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "export.csv");
+				PrintWriter writer = new PrintWriter(resourceContainer.getOutputStream());
+
+				try {
+					collection.export(query, columns,writer);
+				} finally {
+					writer.close();
+					resourceContainer.save(null);
+				}
+
+				return resourceContainer.getResource();
+
+			} catch (Exception e) {
+				logger.error("An error occurred while generating report", e);
+				throw e;
+			}
+		}
+	}
+	
 }

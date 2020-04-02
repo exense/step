@@ -130,7 +130,7 @@ angular.module('tables', ['export'])
     $scope.dirty = true;
   }
 })
-.directive('stTable', function($compile, $http, Preferences, stateStorage, $timeout, Dialogs) {
+.directive('stTable', function($compile, $http, Preferences, stateStorage, $timeout, Dialogs, ExportService) {
 	return {
 		scope : {
 			uid: '=',
@@ -444,6 +444,16 @@ angular.module('tables', ['export'])
 		    }
 		    
 		  }
+		  
+      scope.exportAsCSV = function() {
+        var requestURI='rest/table/' + scope.collection + '/export?';
+        if(scope.serverSideParameters) {
+          requestURI += "&params=" + encodeURIComponent(JSON.stringify(scope.serverSideParameters()))
+        }
+        $http.get(requestURI).then(function(response) {
+          ExportService.pollUrl('rest/table/exports/' + response.data.exportID);
+        });
+      }
 		  
 		  if(!serverSide) {
 		    // Listen to changes in the data collection

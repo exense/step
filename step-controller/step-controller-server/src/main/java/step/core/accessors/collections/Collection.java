@@ -18,9 +18,12 @@
  *******************************************************************************/
 package step.core.accessors.collections;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.json.JsonObject;
@@ -43,6 +46,8 @@ import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.Filters;
 
 import step.core.accessors.AccessorLayerJacksonMapperProvider;
+import step.core.accessors.collections.field.CollectionField;
+import step.core.accessors.collections.field.formatter.StringFormatter;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
 
@@ -51,6 +56,8 @@ public class Collection<T> {
 	private static final Logger logger = LoggerFactory.getLogger(Collection.class);
 
 	private static final int DEFAULT_LIMIT = 1000;
+	
+	protected static final String CSV_DELIMITER = ";";
 	
 	private final boolean filtered;
 	
@@ -177,4 +184,68 @@ public class Collection<T> {
 	protected T enrichEntity(T element) {
 		return element;
 	}
+	
+	/**
+	 * Export data to CSV
+	 * @param query
+	 * @param columns
+	 * @param writer
+	 */
+	public void export(Bson query, Map<String, CollectionField> columns, PrintWriter writer) {
+		FindIterable<BasicDBObject> find = collection.find(query);
+		MongoCursor<BasicDBObject> iterator;
+		iterator = find.iterator();
+		if (!iterator.hasNext()) {
+			return;
+		}
+		BasicDBObject basicDBObject = iterator.next();
+		//if column names not provided by the caller, get them from the collection
+		if (columns == null || columns.size() == 0) {
+			columns = getExportFields();
+		}
+		//if the collection has also no specification, dump all keys found in first object
+		if (columns == null || columns.size() == 0 && iterator.hasNext()) {
+			columns = getExportFields();		
+			for (String key : basicDBObject.keySet()) {
+				columns.put(key, new CollectionField(key,key));			
+			}
+		}
+		//write headers
+		columns.values().forEach((v)->{
+			String title = v.getTitle().replaceAll("^ID", "id");
+			writer.print(title);
+			writer.print(CSV_DELIMITER);
+		});
+		writer.println();
+		//Dump first row (required when writting all keys found in 1st object)
+		dumpRow(basicDBObject,columns,writer);
+
+		int count = 1;
+		while(iterator.hasNext()) {
+			count++;
+			basicDBObject = iterator.next();
+			dumpRow(basicDBObject,columns,writer);
+		}
+	}
+	
+	private void dumpRow(BasicDBObject basicDBObject, Map<String, CollectionField> fields, PrintWriter writer) {
+		fields.forEach((key,field)->{
+			Object value = basicDBObject.get(key);
+			if (value != null) {
+				String valueStr = field.getFormat().format(value);
+				if(valueStr.contains(CSV_DELIMITER)||valueStr.contains("\n")||valueStr.contains("\"")) {
+					valueStr = "\"" + valueStr.replaceAll("\"", "\"\"") + "\"";
+				}
+				writer.print(valueStr);
+			}
+			writer.print(CSV_DELIMITER);
+		});
+		writer.println();
+	}
+
+	protected Map<String, CollectionField> getExportFields() {
+		Map<String, CollectionField> result = new HashMap<String,CollectionField> ();
+		return result;
+	}
+	
 }
