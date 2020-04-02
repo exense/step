@@ -348,9 +348,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				$scope.errorDistributionToggleStates = ['message', 'code'];
 				$scope.selectedErrorDistirbutionToggle = 'message';
 
+				$scope.stepColumnHandle={};
 				$scope.searchStepByError = function(error) {
 					$scope.tabs.selectedTab = 0;
-					$scope.stepsTable.columns[2].search(escapeRegExp(error));
+					$scope.stepColumnHandle.set(escapeRegExp(error));
 				}
 
 				if($scope.stepsTable && $scope.stepsTable.reload) {
