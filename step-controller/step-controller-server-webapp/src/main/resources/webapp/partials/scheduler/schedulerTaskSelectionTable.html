@@ -5,7 +5,7 @@
 			<st-column name="attributes.name">
 					<header>Name</header>
 					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-					<cell><span><a href="#" ng-click="$parent.editTask(row.id)" ng-disabled="!authService.hasRight('task-write')" uib-tooltip="Edit">{{row.attributes.name}}</a></span></cell>
+					<cell><span>{{row.attributes.name}}</span></cell>
 				</st-column>
 			<st-column name="executionsParameters.customParameters.env">
 				<header>Environment</header>

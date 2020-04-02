@@ -47,25 +47,6 @@ angular.module('components',['step'])
   };
 })
 
-
-.directive('planLink', function() {
-  return {
-    restrict: 'E',
-    scope: {
-      planRef: '=?',
-      planId: '=?',
-      description: '=?',
-      linkOnly: '=?'
-    },
-    templateUrl: 'partials/components/planLink.html',
-    controller: function($scope, $http) {
-      if($scope.planRef && $scope.planRef.repositoryID=='local') {
-        $scope.planId = $scope.planRef.repositoryParameters.planid
-      }
-    }
-  };
-})
-
 .directive('date', function() {
   return {
     restrict: 'E',

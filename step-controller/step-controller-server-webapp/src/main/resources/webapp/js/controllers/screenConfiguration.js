@@ -293,7 +293,8 @@ angular.module('screenConfigurationControllers',['tables','step'])
     restrict: 'E',
     scope: {
       stBean: '=?',
-      stInput: '=?'
+      stInput: '=?',
+      stOptions: '=?'
     },
     templateUrl: 'partials/screenconfiguration/customFormValue.html',
     link: function($scope, $element, $attrs) {
@@ -313,7 +314,8 @@ angular.module('screenConfigurationControllers',['tables','step'])
     restrict: 'E',
     scope: {
       stScreen: '@',
-      stExcludeFields: '=?'
+      stExcludeFields: '=?',
+      stOptions: '=?'
     },
     templateUrl: 'partials/screenconfiguration/customColumns.html',
     controller: function($scope) {

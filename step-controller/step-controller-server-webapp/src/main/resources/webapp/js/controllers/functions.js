@@ -303,10 +303,12 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
   return {
     restrict: 'E',
     scope: {
-      function_: '='
+      function_: '=',
+      stOptions: '=?'
     },
     templateUrl: 'partials/functions/functionLink.html',
     controller: function($scope, FunctionDialogs) {
+      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
       $scope.openFunctionEditor = function() {
         FunctionDialogs.openFunctionEditor($scope.function_.id);
       }

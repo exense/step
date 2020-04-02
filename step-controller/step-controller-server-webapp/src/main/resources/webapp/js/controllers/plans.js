@@ -211,3 +211,23 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
     $uibModalInstance.dismiss('cancel');
   };
 })
+
+.directive('planLink', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      planRef: '=?',
+      planId: '=?',
+      description: '=?',
+      linkOnly: '=?',
+      stOptions: '=?'
+    },
+    templateUrl: 'partials/components/planLink.html',
+    controller: function($scope, $http) {
+      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
+      if($scope.planRef && $scope.planRef.repositoryID=='local') {
+        $scope.planId = $scope.planRef.repositoryParameters.planid
+      }
+    }
+  };
+})

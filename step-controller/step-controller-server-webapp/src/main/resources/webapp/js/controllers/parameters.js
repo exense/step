@@ -202,11 +202,13 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
   return {
     restrict: 'E',
     scope: {
-      parameter: '='
+      parameter: '=',
+      stOptions: '=?'
     },
     templateUrl: 'partials/parameters/parameterKey.html',
     controller: function($scope, AuthService, ParameterDialogs) {
       $scope.authService = AuthService;
+      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
       $scope.editParameter = function(id) {
         ParameterDialogs.editParameter(id, function() {$scope.$emit("parameter.edited",$scope.parameter)});
       }

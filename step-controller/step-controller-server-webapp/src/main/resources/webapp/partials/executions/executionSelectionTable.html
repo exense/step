@@ -4,7 +4,7 @@
 		<st-column name="description">
 			<header>Description</header>
 			<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-			<cell><report-node-icon node="row.RootReportNode" /> <a href="#/root/executions/{{id}}">{{row.description}}</a></cell>
+			<cell><report-node-icon node="row.RootReportNode" /> {{row.description}}</cell>
 		</st-column>
 		<st-column name="startTime">
 			<header>Start time</header>
