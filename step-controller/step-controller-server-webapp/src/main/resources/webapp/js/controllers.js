@@ -459,23 +459,27 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				$scope.$broadcast('apply-global-setting', { key: '__measurementType__', value : input, isDynamic : false});	
 			}
 
+			$scope.switchToPermanent = function(){
+				$scope.isRealTime = '';
+				$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel)];
+				$scope.initTimelineWidget();
+			};
+
+			$scope.switchToRealtime = function(){
+				$scope.isRealTime = 'Realtime';
+				$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel, false)];
+			};
+
+			$scope.init = false;
+
 			$scope.$watch('execution.status',function(newStatus, oldStatus) {
 				if(newStatus) {
 					$scope.init = false;
 
 					if(newStatus === 'ENDED'){
-						$scope.isRealTime = '';
-						$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel)];
-						$scope.initTimelineWidget();
-
-						if(oldStatus && $scope.autorefresh.enabled) {
-							refreshAll();
-						} else if (oldStatus == null) {
-							$scope.initAutoRefresh(false,0,0)
-						}
+						$scope.switchToPermanent();
 					}else{
-						$scope.isRealTime = 'Realtime';
-						$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel, false)];
+						$scope.switchToRealtime();
 						if (oldStatus == null) {
 							$scope.initAutoRefresh(true,100,5000)
 						}
@@ -483,16 +487,27 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				}
 			});
 
-			$scope.init = false;
+			$scope.$watch('autorefresh.enabled', function(newValue, oldStatus){
+				if($scope.init){
+					if(newValue){
+						$scope.switchToRealtime();
+					}else{
+						//already ended
+						if($scope.execution.status!=='ENDED'){
+							$scope.switchToPermanent();
+						}
+						if(oldStatus && $scope.autorefresh.enabled) {
+							refreshAll();
+						} else if (oldStatus == null) {
+							$scope.initAutoRefresh(false,0,0)
+						}
+					}
+				}
+			});
 
-			// explicit first request trigger (could be done more elegantly by passing a "fireRequestUponStart" argument to viz)
-			$scope.$on('dashletinput-initialized', function () {
+			$scope.$on('dashboard-ready', function () {
 				if(!$scope.init){
 					$scope.init = true;
-
-					$(document).ready(function(){
-						$scope.$broadcast('fireQueryDependingOnContext');
-					});
 				}
 			});
 
@@ -612,11 +627,11 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
 
 			$scope.autoRefreshPresets = [
 				{label:'OFF', value:0},
-				{label:'1 second', value:1000},
-				{label:'2 seconds', value:2000},
 				{label:'5 seconds', value:5000},
 				{label:'10 seconds', value:10000},
-				{label:'30 seconds', value:30000}
+				{label:'30 seconds', value:30000},
+				{label:'1 minute', value:60000},
+				{label:'5 minutes', value:300000}
 				];
 
 			var manuallyChanged = false;
@@ -675,6 +690,7 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
 						//In case autorefresh is stopped by parent, we must set interval to 0 explicitly
 						$scope.autorefresh.interval = 0;
 					} 
+
 					$rootScope.$broadcast('globalsettings-globalRefreshToggle', { 'new': newStatus });
 				}
 			});
