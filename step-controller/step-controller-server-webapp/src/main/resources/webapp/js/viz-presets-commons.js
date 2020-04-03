@@ -1,5 +1,5 @@
 function getVizDashboardCommonsList(){
-	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"], ["RTMDashboard"], ["TimelineSlaveDashboard"]];
+	return [["WikimediaDemo"], ["PerformanceDashboard"], ["RealtimePerformanceDashboard"], ["RTMDashboard"]];
 }
 
 
