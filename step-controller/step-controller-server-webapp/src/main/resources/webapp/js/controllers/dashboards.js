@@ -28,10 +28,32 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	$scope.staticPresets = new StaticPresets();
 	$scope.dashboardsendpoint = [];
 
+	$scope.getDynInputs = function(){
+		var inputs = [];
+		if($location.$$search){
+			var keys = Object.keys($location.$$search);
+			_.each(keys, function(item, index){
+				var dyn = false;
+				if(item.startsWith('__dyn__')){
+					dyn = true;
+				}
+				inputs.push({ key: item, value : $location.$$search[item], isDynamic : dyn});
+			});
+		}
+		
+		return inputs;
+	};
+	
 	$scope.initFromLocation = function(){
 		if($scope.$state.startsWith('__pp__')){
 			var dashboardClass = $scope.$state.split('__pp__')[1];
-			$scope.dashboardsendpoint.push(window[dashboardClass]());
+			var dashboardInst = window[dashboardClass]();
+			
+			console.log(dashboardInst.dstate.globalsettings.placeholders);
+			// apply inputs
+			dashboardInst.dstate.globalsettings.placeholders = $scope.getDynInputs();
+			
+			$scope.dashboardsendpoint.push(dashboardInst);
 		}else{// custom (load from db)
 			$scope.sessionName = $scope.$state;
 			$http.get('/rest/viz/crud/sessions?name=' + $scope.$state)
@@ -74,22 +96,6 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 
 	var init = false;
 
-	$scope.$on('dashboard-ready', function(event, arg){
-		if(!init){
-			init = true;
-			if($location.$$search){
-				var keys = Object.keys($location.$$search);
-				_.each(keys, function(item, index){
-					var dyn = false;
-					if(item.startsWith('__dyn__')){
-						dyn = true;
-					}
-					$scope.$broadcast('apply-global-setting', { key: item, value : $location.$$search[item], isDynamic : dyn});
-				});
-			}
-		}
-	});
-
 	$scope.applyEntities = function(selected){
 		$scope.$broadcast('apply-global-setting', { key: '__businessobjectid__', value : selected.array[0], isDynamic : false});
 	};
@@ -105,7 +111,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 		$ctrl.tableElementParent = angular.element($element).find('presetparent');
 
 		var modalInstance = $uibModal.open({
-		  backdrop: 'static',
+			backdrop: 'static',
 			animation: $ctrl.animationsEnabled,
 			ariaLabelledBy: 'modal-title',
 			ariaDescribedBy: 'modal-body',

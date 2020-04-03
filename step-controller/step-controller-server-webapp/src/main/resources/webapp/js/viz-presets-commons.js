@@ -202,8 +202,7 @@ function TimelineWidget(outerScope) {
 				}.toString()
 			},
 			callback: function(scope, element){
-				console.log('callback')
-				console.log(scope)
+				//console.log(scope)
 				outerScope.chartScope = scope;
 
 				if(outerScope.chartScope){
@@ -222,7 +221,7 @@ function TimelineWidget(outerScope) {
 
 					//$(document).ready(function(){
 						var chartsvgScope = timelineWidget.state.api.getScope()
-						console.log(chartsvgScope);
+						//console.log(chartsvgScope);
 						$(chartsvgScope.svg[0]).find('.nv-focus').first().remove()
 						$(chartsvgScope.svg[0]).find('.nv-y.nv-axis').first().remove()
 						//});
@@ -244,7 +243,7 @@ function TimelineWidget(outerScope) {
 						}
 					//}
 					
-					console.log('callback complete')
+					//console.log('callback complete')
 				}
 			}
 	};
