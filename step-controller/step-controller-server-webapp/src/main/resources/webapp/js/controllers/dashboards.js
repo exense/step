@@ -48,11 +48,8 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 		if($scope.$state.startsWith('__pp__')){
 			var dashboardClass = $scope.$state.split('__pp__')[1];
 			var dashboardInst = window[dashboardClass]();
-			
-			console.log(dashboardInst.dstate.globalsettings.placeholders);
 			// apply inputs
 			dashboardInst.dstate.globalsettings.placeholders = $scope.getDynInputs();
-			
 			$scope.dashboardsendpoint.push(dashboardInst);
 		}else{// custom (load from db)
 			$scope.sessionName = $scope.$state;
