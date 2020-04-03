@@ -137,12 +137,21 @@ function TimelineWidget(outerScope) {
 				timelineWidget.state.maxExtentInit = true;
 				timelineWidget.state.minExtent = outerScope.extent.from;
 				timelineWidget.state.maxExtent = outerScope.extent.to;
+				console.log('timelineWidget.state.maxExtent')
+				console.log(timelineWidget.state.maxExtent)
 				timelineWidget.state.granularity = Math.round(
 						(Math.round(outerScope.extent.to) - Math.round(outerScope.extent.from)) / 29
 				);
 				//console.log(timelineWidget.state.granularity)
 			}else{
-				outerScope.extent.to += timelineWidget.state.granularity + 1; 
+				// offset always present
+				//outerScope.extent.to += timelineWidget.state.granularity + 1;
+
+				// adding offset only if the ruler "hits the border"
+				if(outerScope.extent.to == timelineWidget.state.maxExtent){
+					outerScope.extent.to += timelineWidget.state.granularity + 1;
+				}
+
 			}
 
 		}
