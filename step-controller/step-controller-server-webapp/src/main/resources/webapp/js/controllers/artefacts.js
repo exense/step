@@ -453,8 +453,11 @@ angular.module('artefacts',['step'])
     }
   }
 })
-.controller('ArtefactSelectionCtrl' , function($scope,$http) {
+.controller('ArtefactSelectionCtrl' , function($scope, $http, artefactTypes) {
   $http.get("rest/controller/artefact/types").then(function(response){ 
     $scope.artefacts = _.map(response.data, function(e) {return {name:e}});
   })
+  $scope.artefactIcon = function(class_) { 
+    return 'glyphicon '+artefactTypes.getIcon(class_)
+  };
 })

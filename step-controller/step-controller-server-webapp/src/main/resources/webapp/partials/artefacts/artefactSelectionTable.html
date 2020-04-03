@@ -5,7 +5,7 @@
 			<st-column name="name">
 				<header>Name</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell>{{row.name}}</cell>
+				<cell><i style="display:inline-block" ng-class="artefactIcon(row.name)" /> {{row.name}}</cell>
 			</st-column>
 			<st-selection-column />
 		</st-columns>
