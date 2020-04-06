@@ -1,6 +1,6 @@
 {
   "name": "step-node-agent",
-  "version": "3.12.2",
+  "version": "0.0.0",
   "description": "The official STEP Agent implementation for Node.js",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "git@github.com:exense/step-node.git"
+    "url": "git@github.com:exense/step.git"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
@@ -30,8 +30,8 @@
     "body-parser": "^1.18.2",
     "express": "^4.16.2",
     "http": "0.0.0",
-    "minimist": "^1.2.0",
-    "npm": "^6.9.0",
+    "minimist": "^1.2.5",
+    "npm": "^6.14.4",
     "request": "^2.85.0",
     "shelljs": "^0.8.1",
     "underscore": "^1.8.3",
