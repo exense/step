@@ -133,7 +133,10 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 
 	$scope.loadFromPresets = function(){
 		$scope.pickPreset().then(function(result){
-			$scope.dashboardsendpoint = [(window[result[0]]())];
+			var newDashboard = (window[result[0]]());
+			// prevent id collision
+			newDashboard.oid += getUniqueId();
+			$scope.dashboardsendpoint.push(newDashboard);
 		});
 	};
 })
