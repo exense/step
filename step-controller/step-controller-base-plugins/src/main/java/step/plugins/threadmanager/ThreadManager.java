@@ -174,10 +174,12 @@ public class ThreadManager extends AbstractControllerPlugin {
 		Set<Thread> associatedThreads = getRegister(context);
 		List<Operation> operations = new ArrayList<Operation>();
 		if(associatedThreads!=null) {
-			for(Thread thread:associatedThreads) {
-				Operation op = OperationManager.getInstance().getOperation(thread.getId());
-				if (op != null) {
-					operations.add(op);
+			synchronized(associatedThreads) {
+				for(Thread thread:associatedThreads) {
+					Operation op = OperationManager.getInstance().getOperation(thread.getId());
+					if (op != null) {
+						operations.add(op);
+					}
 				}
 			}
 		}
