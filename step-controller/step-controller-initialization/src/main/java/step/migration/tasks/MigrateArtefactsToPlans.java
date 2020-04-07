@@ -14,6 +14,8 @@ import org.jongo.marshall.Unmarshaller;
 import org.jongo.marshall.jackson.JacksonMapper;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.MongoNamespace;
+import com.mongodb.client.MongoDatabase;
 
 import ch.exense.commons.app.ArgumentParser;
 import ch.exense.commons.app.Configuration;
@@ -41,6 +43,7 @@ import step.plugins.functions.types.CompositeFunction;
 public class MigrateArtefactsToPlans extends MigrationTask {
 
 	private static final String CHILDREN_ID_FIELD = "childrenIDs";
+	private MongoDatabase mongoDatabase;
 	private com.mongodb.client.MongoCollection<Document> artefactCollection;
 	private com.mongodb.client.MongoCollection<Document> functionCollection;
 	private com.mongodb.client.MongoCollection<Document> executionCollection;
@@ -65,10 +68,11 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 	}
 
 	protected void init(MongoClientSession mongoClientSession) {
-		artefactCollection = mongoClientSession.getMongoDatabase().getCollection("artefacts");
-		executionCollection = mongoClientSession.getMongoDatabase().getCollection("executions");
-		functionCollection = mongoClientSession.getMongoDatabase().getCollection("functions");
-		tasksCollection = mongoClientSession.getMongoDatabase().getCollection("tasks");
+		mongoDatabase = mongoClientSession.getMongoDatabase();
+		artefactCollection = mongoDatabase.getCollection("artefacts");
+		executionCollection = mongoDatabase.getCollection("executions");
+		functionCollection = mongoDatabase.getCollection("functions");
+		tasksCollection = mongoDatabase.getCollection("tasks");
 		
 		JacksonMapper.Builder builder2 = new JacksonMapper.Builder();
 		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
@@ -92,6 +96,13 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		migrateCompositeFunctionsFunctions();
 		migrateExecutions();
 		migrateSchedulerTasks();
+		renameArtefactCollection();
+	}
+
+	protected void renameArtefactCollection() {
+		String newArtefactsCollectionName = "artefacts_migrated";
+		logger.info("Renaming collection 'artefacts' to '"+newArtefactsCollectionName+"'. This collection won't be used by step anymore. You can drop it if all your plans have been migrated without error.");
+		artefactCollection.renameCollection(new MongoNamespace(mongoDatabase.getName(), newArtefactsCollectionName));
 	}
 	
 	private int generatePlanIds() {
