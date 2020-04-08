@@ -6,7 +6,7 @@
 	</ul>
 	<div class="tab-content">
 		<div class="tab-pane ng-scope" ng-repeat="tab in tabs track by tab.id" ng-class="{active: isTabActive(tab.id)}">
-			<div ng-if="tab.type=='list'" ng-controller="ExecutionListCtrl">
+			<div ng-if="tab.type=='list'" >
 				<div class="panel-body">
 					<div ng-include="'partials/executions/executionList.html'"></div>
 				</div>
