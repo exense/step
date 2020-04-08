@@ -390,14 +390,16 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			var refreshFct = function() {
 				if ($scope.autorefresh.enabled) {
 					refreshExecution();
-					if($scope.active()) { 
-						if ($scope.execution==null || $scope.execution.status!='ENDED') {
+					if ($scope.execution==null || $scope.execution.status!='ENDED') { 
+					  if($scope.active()) {
 							refresh();
 							refreshTestCaseTable();
 						}
-						else {
-							$scope.autorefresh.enabled=false;
-						}
+					}
+					else {
+						$scope.autorefresh.enabled=false;
+						refresh();
+						refreshTestCaseTable();
 					}
 				}
 			}
