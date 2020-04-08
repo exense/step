@@ -338,7 +338,6 @@ angular.module('tables', ['export'])
 	              if (!scope.isExternalReload) {
 	                scope.showSpin=true;//enable spin for internal reload (searches...)
 	              }
-	              scope.isExternalReload=false;//remove flag for next requests
 	            });
 	          }, complete:function (qXHR, textStatus ) {
 	            $timeout(function(){
@@ -383,7 +382,7 @@ angular.module('tables', ['export'])
 	          if (!scope.loadingTable) {
 	            scope.showSpin=showSpin;
 	            scope.isExternalReload=true;
-	            table.ajax.reload(null, false);
+	            table.ajax.reload(function() {scope.isExternalReload=false}, false);
 	          }
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
