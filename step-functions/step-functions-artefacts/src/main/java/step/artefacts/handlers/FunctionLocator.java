@@ -49,7 +49,7 @@ public class FunctionLocator {
 			String selectionAttributesJson = testArtefact.getFunction().get();
 			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, getBindings());
 			
-			ObjectPredicate objectPredicate = context.get(ObjectPredicate.class);
+			ObjectPredicate objectPredicate = (context!=null) ? context.get(ObjectPredicate.class) : null;
 			Stream<Function> stream = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false);
 			if(objectPredicate != null) {
 				stream = stream.filter(objectPredicate);
