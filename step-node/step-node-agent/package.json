@@ -6,7 +6,6 @@
   "scripts": {
     "debug": "node --inspect-brk server.js",
     "eslint": "node_modules/.bin/eslint .",
-    "precommit": "npm run eslint",
     "start": "node server.js",
     "test": "node test/test.js"
   },
