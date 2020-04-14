@@ -2,6 +2,7 @@
 	"NAME": "Step OSS",
 	"OS": "LINUX",
   "JAVA_VERSION": "JDK11",
+  "LOCK": "STEP",
 	
 	"SUBPROJECTS":
 	{
