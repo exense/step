@@ -7,27 +7,29 @@
 	"SUBPROJECTS":
 	{
 		"TYPE":
-		["POM"],
+		["POM", "NPM"],
 		
 		"FOLDER":
-		["step-parent/"],
+		["step-parent/", "step-node/step-node-agent/"],
     
 		"AFTER":
-		["step-oss-java-after-compile"],
+		["step-oss-java-after-compile", ""],
 		
 		"URL_STAGING":
 		[ 
-      "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/"
+      "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/",
+			"nexus-staging https://nexus-enterprise.exense.ch/repository/staging-npm/"
 		],
 		"URL_PROD":
 		[
-			"sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			"sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2",
+			"exense https://registry.npmjs.org/"
 		],
 		
 		"CONFIG_STAGING":
-		[ "DefaultBuild"],
+		[ "DefaultBuild", "" ],
 		"CONFIG_PROD":
-		[ "DefaultBuild"]
+		[ "DefaultBuild", "" ]
 	},
 	"DISTRIBUTIONS":
 	{
