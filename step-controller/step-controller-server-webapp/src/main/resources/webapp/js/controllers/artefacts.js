@@ -135,7 +135,11 @@ angular.module('artefacts',['step'])
   $scope.$watch('artefact.planId', function(planId) {
     if(planId) {
       $http.get('rest/plans/'+planId).then(function(response) {
-        $scope.planName = response.data.attributes.name;
+    	if (response.data) {
+            $scope.planName = response.data.attributes.name;
+    	} else {
+    		$scope.planName = "";
+    	}
       })
     }
   })
