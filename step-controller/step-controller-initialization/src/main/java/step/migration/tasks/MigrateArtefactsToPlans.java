@@ -110,9 +110,13 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		AtomicInteger count = new AtomicInteger();
 		Document filterRootArtefacts = new Document("root", true);
 		artefactCollection.find(filterRootArtefacts, BasicDBObject.class).iterator().forEachRemaining(t -> {
-			ObjectId objectId = t.getObjectId("_id");
-			artefactIdToPlanId.put(objectId, new ObjectId());
-			count.incrementAndGet();
+			try {
+				ObjectId objectId = t.getObjectId("_id");
+				artefactIdToPlanId.put(objectId, new ObjectId());
+				count.incrementAndGet();
+			} catch (Exception e) {
+				logger.error("Invalid object id found for the root artefact",e);
+			}
 		});
 		return count.get();
 	}
