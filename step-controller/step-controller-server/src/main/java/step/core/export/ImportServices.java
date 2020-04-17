@@ -11,6 +11,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.attachments.FileResolver.FileHandle;
 import step.core.deployment.AbstractServices;
@@ -21,6 +24,8 @@ import step.core.plans.PlanAccessor;
 @Singleton
 @Path("import")
 public class ImportServices extends AbstractServices {
+	
+	private static final Logger logger = LoggerFactory.getLogger(ImportServices.class);
 	
 	FileResolver fileResolver;
 	
@@ -44,6 +49,9 @@ public class ImportServices extends AbstractServices {
 	public void importArtefact(@QueryParam("path") String path) throws IOException {
 		try (FileHandle file = fileResolver.resolveFileHandle(path)) {
 			importManager.importPlans(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()));
+		} catch (Exception e) {
+			logger.error("Import failed",e);
+			throw e;
 		}
 	}
 }
