@@ -78,7 +78,9 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 		}
 		OperationManager.getInstance().enter("Sleep", details, node.getId().toString());
 		try {
-			Thread.sleep(sleepDurationMs);
+			if(!context.isSimulation()) {
+				Thread.sleep(sleepDurationMs);
+			}
 		} catch (InterruptedException e) {
 		} finally {
 			OperationManager.getInstance().exit();
