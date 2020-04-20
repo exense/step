@@ -33,7 +33,9 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 	@Override
 	protected void execute_(ReportNode node, Sleep testArtefact) {
 		try {
-			Thread.sleep(((Number)testArtefact.getDuration().get()).longValue());
+			if(!context.isSimulation()) {
+				Thread.sleep(((Number)testArtefact.getDuration().get()).longValue());
+			}
 		} catch (NumberFormatException e) {
 			throw new RuntimeException("Unable to parse attribute 'ms' as long.",e);
 		} catch (InterruptedException e) {}
