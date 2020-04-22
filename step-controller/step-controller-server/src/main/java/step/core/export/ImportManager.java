@@ -76,7 +76,7 @@ public class ImportManager {
 				String artefactIdStr = artefact.getId().toString();
 				artefacts.put(artefactIdStr, artefact);
 				if (line.contains("\"root\":true")) {
-					rootsToPlanIds.put(artefactIdStr,new ObjectId());
+					rootsToPlanIds.put(artefactIdStr,new ObjectId(artefactIdStr));
 				}
 				Matcher matcher = pattern.matcher(line);
 				if (matcher.find() && !matcher.group(1).isEmpty() )
@@ -93,7 +93,6 @@ public class ImportManager {
 				Plan plan = new Plan();
 				plan.setId(rootsToPlanIds.get(rootId));
 				plan.setAttributes(root.getAttributes());
-				postProcessArtefact(root, rootsToPlanIds);
 				addChilds(root,artefacts,artefactsChilds,rootsToPlanIds);
 				plan.setRoot(root);
 				plan.setVisible(true);
@@ -104,21 +103,12 @@ public class ImportManager {
 		}
 	}
 
-	private void postProcessArtefact(AbstractArtefact artefact, Map<String,ObjectId> rootsToPlanIds) {
-		if (artefact instanceof CallPlan) {
-			CallPlan callPlan = (CallPlan) artefact;
-			String oldArtefactId = callPlan.getPlanId();
-			String newPlanId = (rootsToPlanIds.containsKey(oldArtefactId)) ? rootsToPlanIds.get(oldArtefactId).toHexString() : null;
-			callPlan.setPlanId(newPlanId);
-		}
-	}
 
 	private void addChilds(AbstractArtefact artefact, Map<String, AbstractArtefact> artefacts,
 			Map<String, String[]> artefactsChilds, Map<String,ObjectId> rootsToPlanIds) {
 		if (artefactsChilds.containsKey(artefact.getId().toString())) {
 			for (String key: artefactsChilds.get(artefact.getId().toString())) {
 				AbstractArtefact child = artefacts.get(key);
-				postProcessArtefact(child, rootsToPlanIds);
 				artefact.addChild(child);
 				addChilds(child,artefacts,artefactsChilds,rootsToPlanIds);
 			}
