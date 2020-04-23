@@ -315,7 +315,8 @@ angular.module('screenConfigurationControllers',['tables','step'])
     scope: {
       stScreen: '@',
       stExcludeFields: '=?',
-      stOptions: '=?'
+      stOptions: '=?',
+      stSearchDisable: '=?'
     },
     templateUrl: 'partials/screenconfiguration/customColumns.html',
     controller: function($scope) {
