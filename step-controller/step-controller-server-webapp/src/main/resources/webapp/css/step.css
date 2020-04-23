@@ -20,7 +20,7 @@ form.form-signin {
 
 .navbar-default {
   background-color: #000000;
-  border-color: #828282;
+  border-color: var(--main-bg-color);
 }
 .navbar-default .navbar-brand {
   color: #d8d9da;
@@ -43,20 +43,20 @@ form.form-signin {
 .navbar-default .navbar-nav > .active > a:hover,
 .navbar-default .navbar-nav > .active > a:focus {
   color: #f0f6f0;
-  background-color: #828282;
+  background-color: var(--main-bg-color);
 }
 .navbar-default .navbar-nav > .open > a,
 .navbar-default .navbar-nav > .open > a:hover,
 .navbar-default .navbar-nav > .open > a:focus {
   color: #f0f6f0;
-  background-color: #828282;
+  background-color: var(--main-bg-color);
 }
 .navbar-default .navbar-toggle {
-  border-color: #828282;
+  border-color: var(--main-bg-color);
 }
 .navbar-default .navbar-toggle:hover,
 .navbar-default .navbar-toggle:focus {
-  background-color: #828282;
+  background-color: var(--main-bg-color);
 }
 .navbar-default .navbar-toggle .icon-bar {
   background-color: #d8d9da;
@@ -93,23 +93,23 @@ form.form-signin {
   .navbar-default .navbar-nav .open .dropdown-menu > .active > a:hover,
   .navbar-default .navbar-nav .open .dropdown-menu > .active > a:focus {
     color: #f0f6f0;
-    background-color: #828282;
+    background-color: var(--main-bg-color);
   }
 }
 
 .btn-success, .btn-success:focus{
-    background-color: #17d821 !important;
-    border-color: #17d821 !important;
+    background-color: var(--button-color) !important;
+    border-color: var(--button-color) !important;
 }
 
 .btn-success:hover, .btn-success.active:hover{
-	background-color:#13b91c !important;
-	border-color: #13b91c !important;
+	background-color:var(--button-hover-color) !important;
+	border-color: var(--button-hover-color) !important;
 }
 
 .btn-success.active, .btn-success.active:focus{
-	background-color: #0c7311 !important;
-	border-color: #0c7311 !important;
+	background-color: var(--button-active-color) !important;
+	border-color: var(--button-active-color) !important;
 }
 
 a { cursor: pointer; }
@@ -673,8 +673,8 @@ tbody .form-group {
   left: 50%;
   margin-left: -20px;
   border: 8px solid #e0e0e0; /* Light grey */
-  border-top: 8px solid #17d821; /* oss button color */
-  border-bottom: 8px solid #17d821; /* oss button color */
+  border-top: 8px solid var(--button-color); /* oss button color */
+  border-bottom: 8px solid var(--button-color); /* oss button color */
   border-radius: 50%;
   width: 40px;
   height: 40px;
