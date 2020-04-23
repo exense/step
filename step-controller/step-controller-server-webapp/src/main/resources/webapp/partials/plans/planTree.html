@@ -1,8 +1,8 @@
 <div class="rowResizable">
-	<div class="sectionResizable sectionResizableTree" resizable r-directions="['right']" r-flex="true">
-		<div class="panel panel-default overflow-x-auto h-100">
-			<div class="panel-body">
-				<div class="input-group" style="margin-bottom:10px;">
+	<div class="flex sectionResizable sectionResizableTree" resizable r-directions="['right']" r-flex="true">
+		<div class="panel panel-default st-flex-column ma0">
+			<div class="panel-body st-flex-column">
+				<div class="st-flex-fixed input-group" style="margin-bottom:10px;">
 					<div class="btn-group" ng-show="!readonly">
 						<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="move(-1)" data-toggle="tooltip" data-placement="bottom" title="Move seleted node upward (ctrl+up)">
 						<span class="glyphicon glyphicon glyphicon-chevron-up" aria-hidden="true"></span></button>
@@ -20,14 +20,14 @@
 			    		<button type="submit" ng-disabled="!authService.hasRight('interactive')" class="btn btn-default btn-sm btn-info" ng-click="execute()" data-toggle="tooltip" data-placement="bottom" title="Executes the selected node in the interactive session (ctrl+enter)">Run interactively</button>
 		    		</div>
 		  		</div>
-		  		<div id="jstree_demo_div"></div>
+		  		<div class="st-flex-auto" id="jstree_demo_div"></div>
 			</div>
 		</div>
 	</div>
-	<div class="sectionResizable resizable-panel-right minw-300">
-		<div class="panel panel-default overflow-x-auto h-100">
-			<div class="panel-body">
-				<artefact-details artefact="selectedArtefact" on-save="onSelectedArtefactSave(artefact)" readonly="readonly"/>
+	<div class="flex sectionResizable resizable-panel-right">
+		<div class="panel panel-default st-flex-column ma0">
+			<div class="panel-body st-flex-column">
+				<artefact-details artefact="selectedArtefact" on-save="onSelectedArtefactSave(artefact)" readonly="readonly" class="st-flex-auto"/>
 			</div>
 		</div>
 	</div>

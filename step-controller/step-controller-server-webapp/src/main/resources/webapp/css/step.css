@@ -1,5 +1,12 @@
+html,body {
+	height: 100%;
+	margin: 0;
+}
+
 body {
-	background-color: #f9f9f9;	
+	min-height: 100vh;
+	min-height: 100%;;
+	background-color: #f9f9f9;
 }
 
 form.form-signin {
@@ -288,7 +295,7 @@ table.stacktrace td {
     padding-bottom: 2px;
 }
 
-footer {
+footer, header {
 	width: 100%;
 }
 .wrapper {
@@ -529,7 +536,7 @@ resource-input .input-group {
 }
 
 .contentResizable {
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
     flex-flow: column nowrap;
     justify-content: space-around;
@@ -538,7 +545,7 @@ resource-input .input-group {
 
 .rowResizable {
     min-height: 200px;
-   /* flex: 1; cause issue in IE*/
+    flex: 1 1 auto;
     display: flex;
     flex-flow: row nowrap;
     justify-content: space-around;
@@ -546,51 +553,52 @@ resource-input .input-group {
 }
 
 .rowResizable.resizable {
-	flex: 0 0 400px;
+	flex: 0 0 auto;
 }
 
 .sectionResizable {
     box-sizing: border-box;
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0px;
-}
-.sectionArtefactEditor.resizable {
-	flex: 0 1 600px;
 }
 
 .sectionViewPlanEditor.resizable {
-	flex: 0 1 600px;
+	flex: 0 0 70%;
 }
 
 .sectionResizableTree.resizable {
-	flex: 0 1 200px;
+	flex: 0 0 33%;
+}
+
+.sectionDualPlanEditor {
+	flex: 0 0 40%;
 }
 
 @media screen and (min-width: 1200px) {
-	.sectionArtefactEditor.resizable {
-		flex: 0 1 900px;
-	}
-	
 	.sectionViewPlanEditor.resizable {
-		flex: 0 1 900px;
+		flex: 0 0 70%;
 	}
 	
 	.sectionResizableTree.resizable {
-		flex: 0 1 300px;
+		flex: 0 0 33%;
+	}
+	
+	.sectionDualPlanEditor {
+		flex: 0 0 40%;
 	}
 }
 
 @media screen and (min-width: 1600px) {
-	.sectionArtefactEditor.resizable {
-		flex: 0 1 1200px;
-	}
-	
 	.sectionViewPlanEditor.resizable {
-		flex: 0 1 1200px;
+		flex: 0 0 75%;
 	}
 	
 	.sectionResizableTree.resizable {
-		flex: 0 1 400px;
+		flex: 0 0 33%;
+	}
+	
+	.sectionDualPlanEditor {
+		flex: 0 0 40%;
 	}
 }
 
@@ -659,7 +667,6 @@ tbody .form-group {
 	margin-bottom: 0px;
 }
 
-
 .loader {
   position: absolute;
   top: 122px;
@@ -687,4 +694,48 @@ tbody .form-group {
 /* temporary fix: override class of viz.css */
 st-table table.dataTable tbody > tr {
     cursor: auto;
+}
+
+.main-page {
+	min-height: 100%;
+	height:100%;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+ 	overflow: hidden;
+}
+
+.main-header, .main-footer {
+  width: 100%;
+  flex: 0 0 auto;
+  margin : 0;
+  padding : 0;
+}
+
+.st-flex-row {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+}
+
+.st-flex-column {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	overflow-y: auto;
+}
+
+plan-tree.st-flex-column {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	overflow-y: hidden;
+}
+
+.st-flex-fixed {
+	flex: 0 0 auto;
+}
+
+.st-flex-auto {
+	flex: 1 1 auto;
 }

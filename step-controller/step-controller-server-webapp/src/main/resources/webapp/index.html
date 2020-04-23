@@ -24,7 +24,7 @@ window.console.log = window.console.log || function(){};
 <script src="bower_components/jstree/dist/jstree.js"></script>
 <script src="bower_components/jquery-file-download/src/Scripts/jquery.fileDownload.js"></script>
 <script src="bower_components/ng-file-upload/ng-file-upload.js"></script>
-<script src="bower_components/angular-resizable/src/angular-resizable.js"></script>
+<script src="js/angular-resizable.js"></script>
 
 <script src="bower_components/d3/d3.js"></script>
 <script src="bower_components/nvd3/build/nv.d3.js"></script>
@@ -88,20 +88,22 @@ window.console.log = window.console.log || function(){};
 
 <body>
 <script>step.bootstrap();</script>
-<div ng-controller="AppController">
-	<div ng-if="isInitialized && (authService.isAuthenticated() || isPublicView())" ng-include="'partials/main.html'">
+<div class="main-page" ng-controller="AppController">
+	
+	<header class="main-header" ng-if-start="isInitialized && (authService.isAuthenticated() || isPublicView())"><div ng-include="'partials/nav.html'" class="container main-header"></div></header>
+	<div ng-if-end ng-include="'partials/main.html'" class="st-flex-row"></div>
+	
+	<div ng-if="isInitialized && !(authService.isAuthenticated() || isPublicView())" ng-include="'partials/loginForm.html'" class="st-flex-row">
 	</div>
-	<div ng-if="isInitialized && !(authService.isAuthenticated() || isPublicView())" ng-include="'partials/loginForm.html'">
-	</div>
-</div>
 
-<footer>
-<div class="container">
-<p style="text-align: center;">
-STEP ${project.version} - Copyright (c) 2013 - 2019
-</p>
+	<footer class="main-footer">
+		<div class="container main-footer">
+			<p style="text-align: center;margin-top:10px;">
+			STEP ${project.version} - Copyright (c) 2013 - 2019
+			</p>
+		</div>
+	</footer>
+	
 </div>
-</footer>
-
 </body>
 </html>

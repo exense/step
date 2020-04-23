@@ -1,9 +1,9 @@
-<div id="PlanEditorCtrl" ng-controller="PlanEditorCtrl" class="container-fluid">
+<div id="PlanEditorCtrl" ng-controller="PlanEditorCtrl" class="container-fluid st-flex-column">
 	<div ng-if="isInteractiveSessionActive()" class="alert alert-info" role="alert">Welcome to the interactive mode. In this mode you can select tree nodes and run them directly by clicking the button 'Run interactively'</div>
-	<div class="row flex-l">
-		<div class="w-100 sectionResizable sectionViewPlanEditor" resizable r-directions="['right']" r-flex="true">
-			<div class="panel panel-default overflow-x-auto overflow-y-hidden">
-				<div class="panel-heading">{{model.plan.root?model.plan.root._class:''}} - {{model.plan.attributes.name}}
+	<div class="row st-flex-row">
+		<div class="flex sectionResizable sectionViewPlanEditor" resizable r-directions="['right']" r-flex="true">
+			<div class="st-flex-column panel panel-default overflow-x-auto overflow-y-hidden">
+				<div class="panel-heading st-flex-fixed">{{model.plan.root?model.plan.root._class:''}} - {{model.plan.attributes.name}}
 					<div class="pull-right">
 						<button type="submit" class="btn btn-default btn-xs" ng-click="clonePlan()">Clone</button>
 						<button type="submit" class="btn btn-default btn-xs" ng-click="exportPlan()">Export</button>
@@ -18,20 +18,20 @@
 				  		</div>
 				  	</div>
 				 </div>
-				<div class="panel-body">
-					<div class="panel panel-default">
+				<div class="panel-body st-flex-column">
+					<div class="panel panel-default st-flex-fixed">
 						<div class="panel-body">
 							<st-custom-form st-model="model.plan" st-on-change="save()" st-screen="planTable" st-inline="true" st-disabled="!authService.hasRight('plan-write')"/>
 						</div>
 					</div>
-					<div ng-include="getEditorView()"></div>
+					<div ng-include="getEditorView()" class="st-flex-row"></div>
 				</div>
 			</div>	
 		</div>
-		<div class="minw-450 sectionResizable resizable-panel-right">
-			<div class="panel panel-default overflow-x-auto h-100">
+		<div class="st-flex-column sectionResizable resizable-panel-right">
+			<div class="panel panel-default">
 				<div class="panel-heading flex flex-row p1">
-					<div class="w-100 auto-margin">Available components</div>
+					<div class="auto-margin">Available components</div>
 				</div>
 				<div class="panel-body">
 						<uib-tabset  active="componentTabs.selectedTab">
