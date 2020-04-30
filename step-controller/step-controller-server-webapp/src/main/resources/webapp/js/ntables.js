@@ -459,7 +459,10 @@ angular.module('tables', ['export'])
 	          scope.selectionModel.setDefaultSelection(false);
 	        }
 	        
-	        loadTableData();
+	        //only called for none server side tables
+	        if (!serverSide) {
+	          loadTableData();
+		      }
 		    }
 		    
 		  }
