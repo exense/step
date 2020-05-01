@@ -66,6 +66,11 @@
 					<span class="glyphicon glyphicon-question-sign" uib-tooltip="The HTML template to be used to display the value of the input (Optional)"></span>
 					<input class="form-control"	ng-model="input.input.valueHtmlTemplate">
 				</div>
+				<div class="form-group">
+					<label>Search service mapper</label> 
+					<span class="glyphicon glyphicon-question-sign" uib-tooltip="When the input is used in a table, this service will be used to resolve the column filter to actual input values. The filter is passed in the body, a list of string is expected as a result (Optional)"></span>
+					<input class="form-control"	ng-model="input.input.searchMapperService">
+				</div>
 			</div>
 		</div>
 		

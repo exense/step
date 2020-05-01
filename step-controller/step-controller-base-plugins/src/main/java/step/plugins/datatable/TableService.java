@@ -136,6 +136,17 @@ public class TableService extends ApplicationServices {
 		return collection.distinct(column);
 	}
 	
+	@POST
+	@Path("/{id}/searchIdsBy/{column}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured
+	public List<String> searchIdsBy(@PathParam("id") String collectionID, @PathParam("column") String columnName, String searchValue) throws Exception {
+		Collection<?> collection = collectionRegistry.get(collectionID);
+		Bson columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
+		return collection.distinct("_id",columnQueryFragment);
+	}
+	
 	private DataTableResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, Bson sessionQueryFragment) throws Exception {		
 		Collection<?> collection = collectionRegistry.get(collectionID);
 		if(collection == null) {

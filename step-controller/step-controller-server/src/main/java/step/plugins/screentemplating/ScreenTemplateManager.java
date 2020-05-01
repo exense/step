@@ -40,6 +40,7 @@ public class ScreenTemplateManager {
 			}
 			Input clone = new Input(input.getType(), input.getId(), input.getLabel(), input.getDescription(), activeOptions);
 			clone.setValueHtmlTemplate(input.getValueHtmlTemplate());
+			clone.setSearchMapperService(input.getSearchMapperService());
 			result.add(clone);
 		}
 		

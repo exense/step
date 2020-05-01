@@ -37,6 +37,8 @@ public class Input extends AbstractActivableObject {
 	
 	String valueHtmlTemplate;
 	
+	String searchMapperService;
+	
 	List<Option> options;
 
 	public Input() {
@@ -110,6 +112,14 @@ public class Input extends AbstractActivableObject {
 
 	public void setValueHtmlTemplate(String valueHtmlTemplate) {
 		this.valueHtmlTemplate = valueHtmlTemplate;
+	}
+
+	public String getSearchMapperService() {
+		return searchMapperService;
+	}
+
+	public void setSearchMapperService(String searchMapperService) {
+		this.searchMapperService = searchMapperService;
 	}
 
 	public List<Option> getOptions() {

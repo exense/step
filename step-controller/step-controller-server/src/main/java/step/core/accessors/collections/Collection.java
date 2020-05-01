@@ -30,6 +30,7 @@ import javax.json.JsonObject;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 import org.jongo.Mapper;
 import org.jongo.marshall.Unmarshaller;
 import org.jongo.marshall.jackson.JacksonMapper;
@@ -47,7 +48,6 @@ import com.mongodb.client.model.Filters;
 
 import step.core.accessors.AccessorLayerJacksonMapperProvider;
 import step.core.accessors.collections.field.CollectionField;
-import step.core.accessors.collections.field.formatter.StringFormatter;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
 
@@ -93,6 +93,19 @@ public class Collection<T> {
 	 */
 	public boolean isFiltered() {
 		return filtered;
+	}
+	
+	/**
+	 * @param columnName the name of the column (field)
+	 * @param query: the query filter
+	 * @return the distinct values of the column 
+	 */
+	public List<String> distinct(String columnName, Bson query) {
+		if (columnName.equals("_id")) {
+			return collection.distinct(columnName, query, ObjectId.class).map(ObjectId::toString).into(new ArrayList<String>());
+		} else {
+			return collection.distinct(columnName, query, String.class).into(new ArrayList<String>());
+		}
 	}
 
 	/**

@@ -288,6 +288,47 @@ angular.module('screenConfigurationControllers',['tables','step'])
     }
   }
 })
+.directive('stCustomFormInputdropdown', function(ScreenTemplates, $compile, $http) {
+  return {
+    restrict: 'E',
+    scope: {
+      options:'=?',action:'=?',initialValue:'=?',handle:'=?',
+      stSearchDisable: '=?',
+      stBean: '=?',
+      stInput: '=?',
+    },
+    templateUrl: 'partials/screenconfiguration/customFormInputDropdown.html',
+    link: function($scope, $element, $attrs, $http) {
+
+    },
+    controller: function ctrl($scope, $compile) {
+      $scope.input = $scope.stInput
+      $scope.model = ScreenTemplates.getScreenInputModel($scope.stBean, $scope.input);
+      $scope.actionWrapper = function (value){
+        if ($scope.input.searchMapperService) {
+          $http.post($scope.input.searchMapperService,value).then(function(response) {
+            $scope.action(createRegexp(response.data));
+          });
+        } else {
+          $scope.action(value);
+        }
+        
+      }
+      
+      createRegexp = function(selection) {
+        regexp = '';
+        if(selection.length>1) {
+          regexp = '(';
+          _.each(selection,function(value){regexp+=value+'|'});
+          regexp=regexp.slice(0, -1)+')';
+        } else if (selection.length==1){
+          regexp=selection[0];
+        }
+        return regexp;
+      }
+    }
+  }
+})
 .directive('stCustomFormValue', function(ScreenTemplates, $compile) {
   return {
     restrict: 'E',
