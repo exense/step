@@ -305,7 +305,7 @@ angular.module('screenConfigurationControllers',['tables','step'])
       $scope.input = $scope.stInput
       $scope.model = ScreenTemplates.getScreenInputModel($scope.stBean, $scope.input);
       $scope.actionWrapper = function (value){
-        if ($scope.input.searchMapperService) {
+        if ($scope.input.searchMapperService && value) {
           $http.post($scope.input.searchMapperService,value).then(function(response) {
             $scope.action(createRegexp(response.data));
           });
@@ -323,6 +323,8 @@ angular.module('screenConfigurationControllers',['tables','step'])
           regexp=regexp.slice(0, -1)+')';
         } else if (selection.length==1){
           regexp=selection[0];
+        } else {
+          regexp="no mapping found";
         }
         return regexp;
       }

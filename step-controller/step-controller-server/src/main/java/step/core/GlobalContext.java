@@ -172,7 +172,7 @@ public class GlobalContext extends AbstractContext {
 	
 	public Version getCurrentVersion() {
 		// TODO read this from manifest
-		return new Version(3,13,0);
+		return new Version(3,14,0);
 	}
 	
 }
