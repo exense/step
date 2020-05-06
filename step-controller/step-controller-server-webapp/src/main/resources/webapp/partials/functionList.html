@@ -2,7 +2,7 @@
 	<st-table collection="'functions'" handle="tableHandle" uid="'functionList'">
 		<st-actions>
 			<div class="btn-group btn-group-menu">
-				<button type="button" ng-disabled="!authService.hasRight('kw-write')" class="btn btn-default" ng-click="pasteFunction()" uib-tooltip="Paste keyword">
+				<button type="button" ng-disabled="!authService.hasRight('kw-write')" class="btn btn-default" ng-click="pasteFunction()" uib-tooltip="Paste keyword" tooltip-append-to-body="true" tooltip-placement="bottom">
 					<span class="glyphicon glyphicon-paste"></span>
 				</button>
 			</div>
