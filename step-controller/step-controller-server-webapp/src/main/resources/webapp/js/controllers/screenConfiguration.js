@@ -362,11 +362,16 @@ angular.module('screenConfigurationControllers',['tables','step'])
       stSearchDisable: '=?'
     },
     templateUrl: 'partials/screenconfiguration/customColumns.html',
-    controller: function($scope) {
+    controller: function($scope,$timeout) {
       ScreenTemplates.getScreenInputsByScreenId($scope.stScreen).then(function(attributes) {
-        $scope.attributes=_.reject(attributes, function(attribute) {
+        var localAttributes=_.reject(attributes, function(attribute) {
           return $scope.stExcludeFields!=null && $scope.stExcludeFields.indexOf(attribute.id) >= 0;
         });
+        //make sure the scope.attributes change is applied once this callback complete
+        //in some cases the attributes were not available when ng-repeat was evaluated 
+        $timeout(function() {
+          $scope.attributes = localAttributes;
+        },0,true,localAttributes);
       })
     }
   }
