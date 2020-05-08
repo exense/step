@@ -275,13 +275,28 @@ angular.module('tables', ['export'])
         }
 		  }
 		  
+		  //defer & group reload when building the table columns
+		  scope.deferredCount=0;
+		  scope.$watch("deferredCount", function(newValue,oldValue){
+		    var localDeferredCount = scope.deferredCount;
+		    $timeout(function(){
+		      //avoid reload if preceding one is still on-going (abort in this case create IOException)
+		      if (localDeferredCount >= scope.deferredCount) {
+		        if (scope.loadingTable) {
+		          scope.deferredCount++;
+		        } else {
+		          controller.reload();
+		        }
+		      }
+		    },10,true,localDeferredCount);
+		  });
 		  scope.$watch(function() {
 		    if(scope.dirty) {
 		      scope.dirty = false;
-		      controller.reload();
+		      scope.deferredCount++;
 		    }
 		  })
-		  
+    
 		  controller.reload = function() {
 		    var columns = controller.getDtColumns();
 		    if(columns && columns.length>0) {
@@ -351,9 +366,6 @@ angular.module('tables', ['export'])
 	            // track table loading
 	            $timeout(function(){
 	              scope.loadingTable=true;
-	              if (!scope.isExternalReload) {
-	                scope.showSpin=true;//enable spin for internal reload (searches...)
-	              }
 	            });
 	          }, complete:function (qXHR, textStatus ) {
 	            $timeout(function(){
@@ -402,6 +414,7 @@ angular.module('tables', ['export'])
 	          }
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
+	          scope.showSpin = true;
 	          var column = table.column(columnName+':name');
 	          column.search(searchExpression,true,false).draw();
 	        }
