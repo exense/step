@@ -342,10 +342,9 @@ angular.module('tables', ['export'])
 	              b.data += "&params=" + encodeURIComponent(JSON.stringify(scope.serverSideParameters()))
 	            }
 	            
-	            // avoid stacking of request when searching
+	            // avoid stacking of request
 	            var tableAPI = scope.table;
-	            if (tableAPI && tableAPI.hasOwnProperty('settings') && tableAPI.settings()[0].jqXHR &&
-	                scope.searching) {
+	            if (tableAPI && tableAPI.hasOwnProperty('settings') && tableAPI.settings()[0].jqXHR) {
 	              tableAPI.settings()[0].jqXHR.abort();
 	            }
 	            
@@ -360,13 +359,11 @@ angular.module('tables', ['export'])
 	            $timeout(function(){
                 scope.loadingTable=false;
                 scope.showSpin=false;
-                scope.searching=false;
               });
 	          }, error: function(jqXHR, textStatus, errorThrown) {
 	            $timeout(function(){
                 scope.loadingTable=false;
                 scope.showSpin=false;
-                scope.searching=false;
               });
 	            if (jqXHR.status === 500 && jqXHR.responseText.indexOf("MongoExecutionTimeoutException") >= 0) {
 	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the DB query.");
@@ -405,7 +402,6 @@ angular.module('tables', ['export'])
 	          }
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
-	          scope.searching = true;
 	          var column = table.column(columnName+':name');
 	          column.search(searchExpression,true,false).draw();
 	        }
