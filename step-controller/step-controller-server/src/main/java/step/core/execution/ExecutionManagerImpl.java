@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
@@ -96,6 +95,7 @@ public class ExecutionManagerImpl implements ExecutionManager {
 	
 	@Override
 	public void updateExecutionType(ExecutionContext context, String newType) {
+		context.setExecutionType(newType);
 		Execution execution = getExecution(context);
 		execution.setExecutionType(newType);
 		saveExecution(execution);

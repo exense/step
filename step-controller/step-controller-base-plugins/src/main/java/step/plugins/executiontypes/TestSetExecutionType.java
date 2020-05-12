@@ -9,12 +9,14 @@ import step.plugins.views.functions.ReportNodeStatusDistribution;
 
 public class TestSetExecutionType extends ExecutionType {
 
+	public static final String NAME = "TestSet";
+
 	ViewPlugin viewPlugin;
 	
 	ObjectMapper mapper = new ObjectMapper();
 	
 	public TestSetExecutionType(GlobalContext context) {
-		super("TestSet");
+		super(NAME);
 		this.viewPlugin = (ViewPlugin) context.get(ViewPlugin.VIEW_PLUGIN_KEY);
 	}
 
