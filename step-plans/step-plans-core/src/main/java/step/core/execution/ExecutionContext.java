@@ -40,6 +40,8 @@ public class ExecutionContext extends AbstractContext  {
 	
 	private final String executionId;
 	
+	private String executionType;
+	
 	private Plan plan;
 
 	private ReportNode report;
@@ -73,6 +75,14 @@ public class ExecutionContext extends AbstractContext  {
 				
 		reportNodeCache = new ReportNodeCache();
 		variablesManager = new VariablesManager(this);
+	}
+
+	public String getExecutionType() {
+		return executionType;
+	}
+
+	public void setExecutionType(String executionType) {
+		this.executionType = executionType;
 	}
 
 	public Plan getPlan() {

@@ -29,12 +29,17 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import step.artefacts.reports.TestCaseReportNode;
 import step.common.managedoperations.Operation;
 import step.common.managedoperations.OperationDetails;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionRunnable;
+import step.core.plans.Plan;
+import step.plugins.executiontypes.TestSetExecutionType;
 
 @Path("/threadmanager")
 public class ThreadManagerServices extends AbstractServices {
@@ -48,25 +53,29 @@ public class ThreadManagerServices extends AbstractServices {
 		List<OperationDetails> operationListDetails = new ArrayList<OperationDetails>(); 
 		for(ExecutionRunnable task:getScheduler().getCurrentExecutions()) {
 			if(task!=null) {
-				String executionId = task.getContext().getExecutionId();
-				String planId = task.getContext().getPlan().getId().toString();
-				String planName = task.getContext().getPlan().getAttributes().get("name");
-				Iterator<ReportNode> iterator = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionId, 
-						"step.artefacts.reports.TestCaseReportNode");
-				//in case of test case, get operations by test case
-				if (iterator.hasNext()) {
-					iterator.forEachRemaining(e->{
-						String testcase = e.getName();
-						threadManager.getCurrentOperationsByReportNodeId(e.getId().toString()).forEach(op->{
-							operationListDetails.add(new OperationDetails(executionId, planId, planName, testcase, op));
+				ExecutionContext executionContext = task.getContext();
+				String executionId = executionContext.getExecutionId();
+				Plan plan = executionContext.getPlan();
+				if(plan != null) {
+					String planId = plan.getId().toString();
+					String planName = plan.getAttributes().get(AbstractOrganizableObject.NAME);
+					String executionType = executionContext.getExecutionType();
+					// TODO implement this in a generic way
+					if(TestSetExecutionType.NAME.equals(executionType)) {
+						// in case of test set, get operations by test case
+						Iterator<ReportNode> iterator = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionId, 
+								TestCaseReportNode.class.getName());
+						iterator.forEachRemaining(e->{
+							String testcase = e.getName();
+							threadManager.getCurrentOperationsByReportNodeId(e.getId().toString()).forEach(op->{
+								operationListDetails.add(new OperationDetails(executionId, planId, planName, testcase, op));
+							});
 						});
-					});
-				}
-				//else get operation by eid
-				else {
-					threadManager.getCurrentOperations(task.getContext()).forEach(op->{
-						operationListDetails.add(new OperationDetails(executionId, planId, planName, "", op));
-					});
+					} else {
+						threadManager.getCurrentOperations(executionContext).forEach(op->{
+							operationListDetails.add(new OperationDetails(executionId, planId, planName, "", op));
+						});
+					}
 				}
 			}
 		}
