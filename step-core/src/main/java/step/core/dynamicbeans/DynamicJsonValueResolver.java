@@ -24,7 +24,13 @@ public class DynamicJsonValueResolver {
 			try {
 				return expressionHandler.evaluateGroovyExpression(expression, bindings);
 			} catch (Exception e) {
-				throw new RuntimeException("Error evaluating "+expression, e);
+				Throwable cause = e.getCause();
+				String errorMsg = e.getMessage();
+				if (cause != null) {
+					errorMsg = errorMsg + ". Groovy error: >>> " + cause.getMessage() + " <<<";
+				}
+				throw new RuntimeException(errorMsg, e);
+				//throw new RuntimeException("Error evaluating "+expression, e);
 			}
 		} else {
 			return dynamicValueAsJson.get("value");

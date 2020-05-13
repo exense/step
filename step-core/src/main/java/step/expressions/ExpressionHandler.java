@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import groovy.lang.Binding;
+import groovy.lang.MissingPropertyException;
 import groovy.lang.Script;
 
 public class ExpressionHandler {
@@ -116,10 +117,13 @@ public class ExpressionHandler {
 			return result;
 		} catch (CompilationFailedException cfe) {
 			throw new RuntimeException(
-					"Error in while compilating groovy expression: " + expression, cfe);
+					"Error while compiling groovy expression: '" + expression + "'", cfe);
+		} catch (MissingPropertyException mpe) {
+			throw new RuntimeException(
+					"Error while resolving groovy properties in expression: '" + expression + "'. The property '" + mpe.getProperty() + "' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accesible in current scope.", mpe);
 		} catch (Exception e){
 			throw new RuntimeException(
-					"Error in while running groovy expression: " + expression, e);
+					"Error while running groovy expression: '" + expression + "'", e);
 		}
 	}
 
