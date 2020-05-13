@@ -94,7 +94,7 @@ public class LocalPlanRunnerTest {
 		runner.run(plan).printTree(tree);
 		
 		Assert.assertEquals("Sequence:TECHNICAL_ERROR:\n" + 
-				" Script:TECHNICAL_ERROR:Error in while running groovy expression: throw new Exception()\n", tree.toString());
+				" Script:TECHNICAL_ERROR:Error while running groovy expression: 'throw new Exception()'\n", tree.toString());
 	}
 	
 	@Test
