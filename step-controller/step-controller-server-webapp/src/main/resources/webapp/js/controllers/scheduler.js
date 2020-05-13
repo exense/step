@@ -267,7 +267,9 @@ angular.module('schedulerControllers',[])
     controller: function($scope, AuthService, SchedulerTaskDialogs) {
       $scope.authService = AuthService;
       $scope.editSchedulerTask = function() {
-        SchedulerTaskDialogs.editSchedulerTask($scope.schedulerTask.id);
+      	var elScope = angular.element(document.getElementById('SchedulerCtrl')).scope();
+      	var callback = (elScope) ? elScope.loadTable : null; 
+        SchedulerTaskDialogs.editSchedulerTask($scope.schedulerTask.id, callback);
       }
     }
   };
