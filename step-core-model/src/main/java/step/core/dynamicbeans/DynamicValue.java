@@ -39,7 +39,12 @@ public class DynamicValue<T> {
 		} else {
 			if(evalutationResult!=null) {
 				if(evalutationResult.evaluationException!=null) {
-					throw new RuntimeException("Error while evaluating expression '"+expression+"'", evalutationResult.evaluationException);
+					Throwable cause = evalutationResult.evaluationException.getCause();
+					String errorMsg = evalutationResult.evaluationException.getMessage();
+					if (cause != null) {
+						errorMsg = errorMsg + ". Groovy error: >>> " + cause.getMessage() + " <<<";
+					}
+					throw new RuntimeException(errorMsg, evalutationResult.evaluationException);
 				} else {
 					Object result = evalutationResult.getResultValue();
 					return (T) result;					
