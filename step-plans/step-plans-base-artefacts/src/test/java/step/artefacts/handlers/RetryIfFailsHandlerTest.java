@@ -119,6 +119,30 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 	}
 	
 	@Test
+	public void testReportLastNodeOnlyTimeout() {
+		setupContext();
+		
+		RetryIfFails block = new RetryIfFails();
+		block.setMaxRetries(new DynamicValue<Integer>(3));
+		block.setGracePeriod(new DynamicValue<Integer>(1000));
+		block.setReportLastTryOnly(new DynamicValue<Boolean>(true));
+		block.setTimeout(new DynamicValue<Integer>(500));
+		
+		CheckArtefact check1 = new CheckArtefact(c->{
+			context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED);
+		});
+		block.addChild(check1);		
+		
+		execute(block);
+		
+		ReportNode child = getFirstReportNode();
+		Assert.assertTrue(child.getDuration()<=1100);
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		
+		assertEquals(1, getChildren(child).size());
+	}
+	
+	@Test
 	public void testTimeout() {
 		setupContext();
 		
