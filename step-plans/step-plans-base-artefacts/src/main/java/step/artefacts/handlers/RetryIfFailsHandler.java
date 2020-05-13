@@ -62,21 +62,21 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 			
 			if(iterationReportNode.getStatus()==ReportNodeStatus.PASSED || context.isInterrupted()) {
 				break;
-			} else if (!persistFail){
+			} 
+			if(testArtefact.getTimeout().get() > 0 && System.currentTimeMillis() > (begin + testArtefact.getTimeout().get())){
+				lastStatus = ReportNodeStatus.FAILED;
+				break;
+			}
+			if (count>=testArtefact.getMaxRetries().get()) {
+				break;
+			}
+			if (!persistFail){
 				//Cleanup intermediate results if persist only last results is ON
 				node.incSkipped();
 				context.getEventManager().notifyReportNodeUpdated(node);
 				removeReportNode(iterationReportNode, context.getReportNodeAccessor());
 			}
 			
-			if(testArtefact.getTimeout().get() > 0 && System.currentTimeMillis() > (begin + testArtefact.getTimeout().get())){
-				lastStatus = ReportNodeStatus.FAILED;
-				break;
-			}
-			
-			if (count>=testArtefact.getMaxRetries().get()) {
-				break;
-			} 
 			try {
 				long duration = testArtefact.getGracePeriod().get();
 				boolean releaseToken = (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0); 
