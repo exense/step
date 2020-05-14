@@ -24,7 +24,7 @@ rem if java.exe isn't on your path or is too old, then set your own as follows (
 rem SET JAVA_PATH=C:\Program Files\Java\jdk1.8.0_101\bin\
 SET JAVA_PATH=
 
-SET JAVA_OPTS=-Dlogback.configurationFile=./logback.xml -Dhttp.keepAlive=true -Dhttp.maxConnections=100
+SET JAVA_OPTS=-Dlogback.configurationFile=./logback.xml -Dhttp.keepAlive=true -Dhttp.maxConnections=100 -Dnashorn.args="--no-deprecation-warning"
 
 rem the classpath should be absolute:
 SET BATFILE_PATH=%~dp0
