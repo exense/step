@@ -44,6 +44,9 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 			// The function requires a local execution => get a local token
 			if(functionGroupContext!=null) {
 				synchronized (functionGroupContext) {
+					if(!functionGroupContext.isOwner(Thread.currentThread().getId())) {
+						throw new RuntimeException("Tokens from this sesssion are already reserved by another thread. This usually means that you're spawning threads from wihtin a session control without creating new sessions for the new threads.");
+					}
 					if(functionGroupContext.getLocalToken()!=null) {
 						token = functionGroupContext.getLocalToken();
 					} else {
@@ -57,6 +60,9 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 		} else {
 			if(functionGroupContext!=null) {
 				synchronized (functionGroupContext) {
+					if(!functionGroupContext.isOwner(Thread.currentThread().getId())) {
+						throw new RuntimeException("Tokens from this sesssion are already reserved by another thread. This usually means that you're spawning threads from wihtin a session control without creating new sessions for the new threads.");
+					}
 					Map<String, Interest> selectionCriteria = buildSelectionCriteriaMap(callFunction, function,	functionGroupContext, bindings);
 					
 					// Find a token matching the selection criteria in the context
