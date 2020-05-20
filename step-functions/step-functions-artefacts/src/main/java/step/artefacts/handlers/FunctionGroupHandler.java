@@ -41,7 +41,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	public static final String FUNCTION_GROUP_CONTEXT_KEY = "##functionGroupContext##";
 
 	private FunctionExecutionService functionExecutionService;
-	private TokenSelectorHelper tokenSelectorHelper;
+	private TokenSelectorHelper tokenSelectorHelper;	
 	
 	public FunctionGroupHandler() {
 		super();
@@ -68,6 +68,8 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		TokenWrapper localToken;
 		
 		final Map<String, Interest> additionalSelectionCriteria;
+		
+		private long ownerThreadId = 0; 
 
 		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria) {
 			super();
@@ -92,6 +94,15 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 
 		public Map<String, Interest> getAdditionalSelectionCriteria() {
 			return additionalSelectionCriteria;
+		}
+
+		public boolean isOwner(long id) {
+			if (ownerThreadId == 0) {
+				ownerThreadId = id;
+				return true;
+			} else {
+				return (ownerThreadId == id);
+			}
 		}
 		
 	}
