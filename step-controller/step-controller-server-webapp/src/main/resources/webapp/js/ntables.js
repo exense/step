@@ -125,10 +125,6 @@ angular.module('tables', ['export'])
   ctrl.newCycle = function() {
     scopesTracker.newCycle()
   }
-  
-  ctrl.scheduleReload = function() {
-    $scope.dirty = true;
-  }
 })
 .directive('stTable', function($compile, $http, Preferences, stateStorage, $timeout, Dialogs, ExportService) {
 	return {
@@ -237,6 +233,17 @@ angular.module('tables', ['export'])
 		    }
 		  }
 		  
+		  // Execute the function fn after n cycles
+		  function performInNCycles(fn, n) {
+		    if(n <= 0) {
+		      fn();
+		    } else {
+		      $timeout(function() {
+		        performInNCycles(fn, n-1)
+		      });
+		    }
+		  }
+		  
 		  function loadTableData() {
 		    var value = scope.data;
 		    if(scope.table) {
@@ -244,58 +251,22 @@ angular.module('tables', ['export'])
           if (value && value.length > 0) {
             scope.table.rows.add(value);
           }
-          // perform the table draw after the current angular digest cycle in order to let angular render all the cells  (See comment in colDef.render above)
-          $timeout(function() {
-            //scope.table.draw(false)
-            // Very ugly workound: when using angular directives in a cell that require an aynchron operation
-            // to load (HTTP call to retrieve the template for instance), the cell cannot be rendered in the current angular digest cycle
-            // and the data returned by colDef.render (See above) used for ordering and filtering are wrong
-            // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
-            // Waiting 100ms however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
-            
-            
-            $timeout(function() {
-              $timeout(function() {  
-                $timeout(function() {
-                  $timeout(function() {
-                    $timeout(function() {
-                      $timeout(function() {
-                        $timeout(function() {
-                          $timeout(function() {
-                            scope.table.draw(false)
-                          });
-                        });
-                      });
-                    });
-                  });
-                });
-              });
-            });
-          })
+          // Ugly workound: Perform the table draw after 10 angular digest cycles in order to let angular render all the cells  (See comment in colDef.render above)
+          // When using angular directives in a cell that require an aynchron operation
+          // to load (HTTP call to retrieve the template for instance), the cell cannot be rendered in the current angular digest cycle
+          // and the data returned by colDef.render (See above) used for ordering and filtering are wrong
+          // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
+          // Waiting 100ms however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
+          performInNCycles(function() {
+            scope.table.draw(false)
+          }, 10)
         }
 		  }
 		  
-		  //defer & group reload when building the table columns
-		  scope.deferredCount=0;
-		  scope.$watch("deferredCount", function(newValue,oldValue){
-		    var localDeferredCount = scope.deferredCount;
-		    $timeout(function(){
-		      //avoid reload if preceding one is still on-going (abort in this case create IOException)
-		      if (localDeferredCount >= scope.deferredCount) {
-		        if (scope.loadingTable) {
-		          scope.deferredCount++;
-		        } else {
-		          controller.reload();
-		        }
-		      }
-		    },10,true,localDeferredCount);
-		  });
-		  scope.$watch(function() {
-		    if(scope.dirty) {
-		      scope.dirty = false;
-		      scope.deferredCount++;
-		    }
-		  })
+		  // Load the table in 10 cycles
+		  performInNCycles(function() {
+		    controller.reload();
+      }, 10)
     
 		  controller.reload = function() {
 		    var columns = controller.getDtColumns();
@@ -541,10 +512,6 @@ angular.module('tables', ['export'])
 					return transclude(callback, null, 'cell')
 				},
 			}, positionInParent)
-			if(tableController.scheduleReload) {
-			  tableController.scheduleReload()
-			}
-
 		}
 	}
 })
