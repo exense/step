@@ -7,6 +7,6 @@ ABSPATH=$(cd "$(dirname "$0")"; pwd)
 
 cd $ABSPATH
 
-JAVA_OPTS=-Dlogback.configurationFile=./logback.xml -Dnashorn.args="--no-deprecation-warning"
+JAVA_OPTS=-Dlogback.configurationFile=./logback.xml
 
 ${JAVA_PATH}java ${JAVA_OPTS} -cp ${ABSPATH}/../lib/*: step.grid.agent.AgentRunner -config=${ABSPATH}/../conf/AgentConf.json
