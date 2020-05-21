@@ -258,18 +258,19 @@ angular.module('tables', ['export'])
           // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
           // Waiting 100ms however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
           performInNCycles(function() {
-            scope.table.draw(false)
-          }, 10)
+        	  scope.table.draw(false);
+          }, 50)
         }
 		  }
 		  
 		  // Load the table in 10 cycles
 		  performInNCycles(function() {
-		    controller.reload();
-      }, 10)
+			  controller.reload();
+      }, 50)
     
 		  controller.reload = function() {
 		    var columns = controller.getDtColumns();
+		    console.log('nb columns: ' + columns.length);
 		    if(columns && columns.length>0) {
 		      // First destroy the previous table if any
 	        if(scope.table && scope.table.destroy) {
