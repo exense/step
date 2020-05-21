@@ -444,7 +444,7 @@ angular.module('artefacts',['step'])
         var x = event.which || event.keyCode;
         if (x === 9 && (event.shiftKey || 
                 event.target.attributes['title'] === undefined || 
-                event.target.attributes['title'].nodeValue!=='Use function')) {
+                event.target.attributes['title'].nodeValue!=='Use a dynamic expression to set this attribute')) {
           $scope.stillEditing=true;
         }
       }
