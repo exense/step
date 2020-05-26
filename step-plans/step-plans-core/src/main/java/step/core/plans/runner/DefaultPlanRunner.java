@@ -2,6 +2,7 @@ package step.core.plans.runner;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -20,6 +21,8 @@ import step.functions.accessor.FunctionCRUDAccessor;
  */
 public class DefaultPlanRunner implements PlanRunner {
 
+	private Map<String, String> executionParameters = new HashMap<String, String>();
+
 	@Override
 	public PlanRunnerResult run(Plan plan) {
 		ExecutionContext context = buildExecutionContext();
@@ -37,13 +40,19 @@ public class DefaultPlanRunner implements PlanRunner {
 		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
 		return new PlanRunnerResult(context.getExecutionId(), context.getReport().getId().toString(), context.getReportNodeAccessor());
 	}
+	
+	protected ExecutionContext buildExecutionContext() {
+		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		
+		executionParameters.forEach((k, v) -> {
+			context.getVariablesManager().putVariable(context.getReport(), k, v);
+		});
+		return context;
+	}
 
 	@Override
 	public PlanRunnerResult run(Plan plan, Map<String, String> executionParameters) {
-		throw new UnsupportedOperationException("Running a plan with execution parameters isn't support by this runner.");
-	}
-	
-	protected ExecutionContext buildExecutionContext() {
-		return ContextBuilder.createLocalExecutionContext();
+		this.executionParameters = executionParameters;
+		return run(plan);
 	}
 }
