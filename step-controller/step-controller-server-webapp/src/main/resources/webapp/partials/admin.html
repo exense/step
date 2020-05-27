@@ -42,14 +42,14 @@
 						<ul class="nav nav-pills nav-stacked">
 							<li ng-repeat="entry in configurationItems" ng-class="{'active': entry && entry == currentConfigurationItem}"><a ng-click="setCurrentConfigurationItem(entry)">{{entry.label}}</a></li>
 						</ul>
-						<br><hr>
-						<div>
-							Compiled with:
-							<br><span class="small"><b>Exense Commons</b>: ${exense-commons.version}</span>
-							<br><span class="small"><b>Step API</b>: ${step-api.version}</span>
-							<br><span class="small"><b>Step Grid</b>: ${step-grid.version}</span>
-							<br><span class="small"><b>Viz</b>: ${viz.version}</span>
-						</div>
+<!-- 						<br><hr> -->
+<!-- 						<div> -->
+<!-- 							Compiled with: -->
+<!-- 							<br><span class="small"><b>Exense Commons</b>: ${exense-commons.version}</span> -->
+<!-- 							<br><span class="small"><b>Step API</b>: ${step-api.version}</span> -->
+<!-- 							<br><span class="small"><b>Step Grid</b>: ${step-grid.version}</span> -->
+<!-- 							<br><span class="small"><b>Viz</b>: ${viz.version}</span> -->
+<!-- 						</div> -->
 					</div>
 					<div class="col-xs-10">
 						<div ng-include="currentConfigurationItem.template">
