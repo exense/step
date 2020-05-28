@@ -3,6 +3,7 @@ package step.core.export;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.artefacts.CallPlan;
 import step.core.artefacts.AbstractArtefact;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.objectenricher.ObjectEnricher;
@@ -35,7 +35,7 @@ public class ImportManager {
 
 	public void importPlans(File file, ObjectEnricher objectEnricher) throws IOException {
 		ObjectMapper mapper = JacksonMapperProvider.createMapper();
-		try(BufferedReader reader = Files.newBufferedReader(file.toPath())) {
+		try(BufferedReader reader = Files.newBufferedReader(file.toPath(),StandardCharsets.UTF_8)) {
 			String line;
 			while((line=reader.readLine())!=null) {
 				Plan plan = mapper.readValue(line, Plan.class);
@@ -57,7 +57,7 @@ public class ImportManager {
 	
 	public void importArtefacts(File file, ObjectEnricher objectEnricher) throws IOException {
 		ObjectMapper mapper = JacksonMapperProvider.createMapper();
-		try(BufferedReader reader = Files.newBufferedReader(file.toPath())) {
+		try(BufferedReader reader = Files.newBufferedReader(file.toPath(),StandardCharsets.UTF_8)) {
 			String line;
 			Map<String,AbstractArtefact> artefacts = new HashMap<String,AbstractArtefact>();
 			Map<String,String[]> artefactsChilds = new HashMap<String,String[]>();

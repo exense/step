@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ public class ExportManager {
 
 	public void exportPlan(String planId, OutputStream outputStream) throws FileNotFoundException, IOException {
 		ObjectMapper mapper = getMapper();	
-		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
+		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream,StandardCharsets.UTF_8))) {
 			exportPlan(mapper, writer, new ObjectId(planId));
 		} catch(Exception e) {
 			logger.error("Error while exporting artefact with id "+planId,e);
@@ -47,7 +48,7 @@ public class ExportManager {
 	
 	public void exportAllPlans(OutputStream outputStream, ObjectPredicate objectPredicate) throws FileNotFoundException, IOException {
 		ObjectMapper mapper = getMapper();
-		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
+		try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream,StandardCharsets.UTF_8))) {
 			accessor.getAll().forEachRemaining((a)->{
 				if(objectPredicate.test(a)) {
 					try {
