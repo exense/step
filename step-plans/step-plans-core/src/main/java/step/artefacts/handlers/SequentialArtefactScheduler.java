@@ -43,7 +43,8 @@ public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefac
 	}
 	
 	public void execute_(ReportNode node, AbstractArtefact testArtefact, Boolean continueOnError) {
-		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
+		//AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
+		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
 		
 		try {			
 			for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact, context)) {
