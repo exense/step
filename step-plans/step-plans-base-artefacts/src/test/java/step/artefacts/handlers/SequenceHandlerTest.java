@@ -41,7 +41,9 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	@Test
 	public void test1ChildPassed() {		
 		for(ReportNodeStatus status:ReportNodeStatus.values()) {
-			test1Child(status);			
+			if (status!=ReportNodeStatus.RUNNING) {
+				test1Child(status);
+			}
 		};
 	}
 
