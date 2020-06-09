@@ -18,6 +18,8 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import java.util.List;
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
@@ -25,58 +27,68 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.variables.UndefinedVariableException;
 
-public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefact, ReportNode>{
-	
+public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefact, ReportNode> {
+
 	public SequentialArtefactScheduler(ExecutionContext context) {
 		super();
 		init(context);
 	}
 
-	public void createReportSkeleton_(ReportNode node, AbstractArtefact testArtefact) {		
-		for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact, context)) {
+	public void createReportSkeleton_(ReportNode node, AbstractArtefact testArtefact) {
+		for (AbstractArtefact child : ArtefactHandler.getChildren(testArtefact, context)) {
 			ArtefactHandler.delegateCreateReportSkeleton(context, child, node);
 		}
 	}
-	
+
 	public void execute_(ReportNode node, AbstractArtefact testArtefact) {
 		execute_(node, testArtefact, null);
 	}
-	
+
 	public void execute_(ReportNode node, AbstractArtefact testArtefact, Boolean continueOnError) {
-		//AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
-		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
-		
-		try {			
-			for(AbstractArtefact child:ArtefactHandler.getChildren(testArtefact, context)) {
-				if(context.isInterrupted()) {
+
+		List<AbstractArtefact> childs = ArtefactHandler.getChildren(testArtefact, context);
+		AtomicReportNodeStatusComposer reportNodeStatusComposer;
+		if (childs.isEmpty()) {
+			reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
+		} else {
+			reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
+		}
+
+		try {
+			for (AbstractArtefact child : childs) {
+				if (context.isInterrupted()) {
 					break;
 				}
 				ReportNode resultNode = ArtefactHandler.delegateExecute(context, child, node);
-				
+
 				reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
-				
+
 				Boolean continueOnce = null;
 				try {
-					continueOnce = context.getVariablesManager().getVariableAsBoolean(ArtefactHandler.CONTINUE_EXECUTION_ONCE);
-				} catch (UndefinedVariableException e) {} finally {
-					context.getVariablesManager().removeVariable(node, ArtefactHandler.CONTINUE_EXECUTION_ONCE);												
+					continueOnce = context.getVariablesManager()
+							.getVariableAsBoolean(ArtefactHandler.CONTINUE_EXECUTION_ONCE);
+				} catch (UndefinedVariableException e) {
+				} finally {
+					context.getVariablesManager().removeVariable(node, ArtefactHandler.CONTINUE_EXECUTION_ONCE);
 				}
-				
-				if(resultNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || resultNode.getStatus()==ReportNodeStatus.FAILED) {
-					if(!context.isSimulation()) {
-						if(continueOnce!=null) {
-							if(!continueOnce) {
+
+				if (resultNode.getStatus() == ReportNodeStatus.TECHNICAL_ERROR
+						|| resultNode.getStatus() == ReportNodeStatus.FAILED) {
+					if (!context.isSimulation()) {
+						if (continueOnce != null) {
+							if (!continueOnce) {
 								break;
 							}
 						} else {
-							if(continueOnError!=null) {
-								if(!continueOnError) {
+							if (continueOnError != null) {
+								if (!continueOnError) {
 									break;
 								}
 							} else {
-								if (!context.getVariablesManager().getVariableAsBoolean(ArtefactHandler.CONTINUE_EXECUTION, false)) {
+								if (!context.getVariablesManager()
+										.getVariableAsBoolean(ArtefactHandler.CONTINUE_EXECUTION, false)) {
 									break;
-								}								
+								}
 							}
 						}
 					}
@@ -86,13 +98,13 @@ public class SequentialArtefactScheduler extends ArtefactHandler<AbstractArtefac
 			failWithException(node, e);
 		} finally {
 			Object forcedStatus = context.getVariablesManager().getVariable("tec.forceparentstatus");
-			if(forcedStatus!=null) {
+			if (forcedStatus != null) {
 				node.setStatus(ReportNodeStatus.valueOf(forcedStatus.toString()));
 			} else {
-				if(context.isInterrupted()) {
+				if (context.isInterrupted()) {
 					node.setStatus(ReportNodeStatus.INTERRUPTED);
 				} else {
-					node.setStatus(reportNodeStatusComposer.getParentStatus());					
+					node.setStatus(reportNodeStatusComposer.getParentStatus());
 				}
 			}
 		}
