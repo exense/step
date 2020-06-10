@@ -159,10 +159,6 @@ angular.module('components',['step'])
         callOnChangeListener();
       }
       
-      $scope.openFileChooser = function() {
-        $("#fileInput").click();
-      }
-      
       function callOnChangeListener() {
         if($scope.stOnChange) {
           $timeout(function() {
@@ -275,6 +271,11 @@ angular.module('components',['step'])
         return $scope.stModel.replace("resource:","");
       }
     },
+    link: function($scope, element, attrs) {            
+      $scope.openFileChooser = function() {
+      	element[0].querySelector('#fileInput').click();
+      }
+   },
     templateUrl: 'partials/components/resourceInput.html'}
 })
 
