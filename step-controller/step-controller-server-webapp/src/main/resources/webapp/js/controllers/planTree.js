@@ -556,8 +556,8 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             load(function () {
               focusOnNode(clone.id);
             });
+            $scope.fireChangeEvent();
           });
-          $scope.fireChangeEvent();
         }
       }
       
