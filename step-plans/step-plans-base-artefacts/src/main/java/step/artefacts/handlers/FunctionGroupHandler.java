@@ -21,10 +21,12 @@ package step.artefacts.handlers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import step.artefacts.FunctionGroup;
 import step.core.AbstractContext;
+import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -40,7 +42,6 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	
 	public static final String FUNCTION_GROUP_CONTEXT_KEY = "##functionGroupContext##";
 
-	private FunctionExecutionService functionExecutionService;
 	private TokenSelectorHelper tokenSelectorHelper;	
 	
 	public FunctionGroupHandler() {
@@ -50,7 +51,6 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		functionExecutionService = context.get(FunctionExecutionService.class);
 		tokenSelectorHelper = new TokenSelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler())));
 
 	}
@@ -114,8 +114,13 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, handle);
 		context.put(FunctionGroupHandle.class, this);
 		try {
-			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-			scheduler.execute_(node, testArtefact);
+			BiConsumer<AbstractArtefact, ReportNode> consumer = testArtefact.getConsumer();
+			if(consumer == null) {
+				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+				scheduler.execute_(node, testArtefact);
+			} else {
+				consumer.accept(testArtefact, node);
+			}
 		} finally {
 			releaseTokens(context, true);
 		}	

@@ -34,11 +34,6 @@
 			<artifactId>step-controller-server</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-functions-artefacts</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 	</dependencies>
 	
 	<build>

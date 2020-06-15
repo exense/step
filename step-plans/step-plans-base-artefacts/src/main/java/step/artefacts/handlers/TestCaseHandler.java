@@ -20,24 +20,28 @@ package step.artefacts.handlers;
 
 import step.artefacts.TestCase;
 import step.artefacts.reports.TestCaseReportNode;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.ReportNodeAttributesManager;
 import step.core.artefacts.reports.ReportNode;
 
-public class TestCaseHandler extends ArtefactHandler<TestCase, ReportNode> {
+public class TestCaseHandler extends AbstractSessionArtefactHandler<TestCase, ReportNode> {
 	
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestCase testArtefact) {
 		addTestCaseNameToCustomAttributes(testArtefact);
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-		scheduler.createReportSkeleton_(node, testArtefact);
+		createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
+			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
+		});
 	}
 	
 	@Override
 	public void execute_(ReportNode node, TestCase testArtefact) {
 		addTestCaseNameToCustomAttributes(testArtefact);
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-		scheduler.execute_(node, testArtefact);
+		ReportNode resultNode = executeInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
+			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+			scheduler.execute_(sessionReportNode, sessionArtefact);
+		});
+		node.setStatus(resultNode.getStatus());
 	}
 	
 	private void addTestCaseNameToCustomAttributes(TestCase testArtefact) {

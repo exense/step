@@ -23,9 +23,12 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import step.artefacts.Sequence;
 import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
@@ -77,56 +80,22 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 						final long localStartOffset = testArtefact.getStartOffset().get()+(long)((1.0*groupID)/numberOfUsers*rampup);
 
 						try {
-							Thread.sleep(localStartOffset);
+							java.lang.Thread.sleep(localStartOffset);
 						} catch (InterruptedException e1) {
 							throw new RuntimeException(e1);
 						}
 						
-						IntegerSequenceIterator iterationIterator = new IntegerSequenceIterator(1, numberOfIterations, 1);
-						threadPool.consumeWork(iterationIterator, new WorkerItemConsumerFactory<Integer>() {
-							@Override
-							public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> iterationController) {
-								return i -> {
-									ReportNode iterationReportNode = null;
-									try {
-										gcounter.increment();
-										
-										Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Group_"+groupID+"_Iteration_"+i);
-										
-										if(pacing!=0) {
-											iterationTestCase.setPacing(new DynamicValue<Long>((long)pacing));
-										}
-										
-										for(AbstractArtefact child:getChildren(testArtefact)) {
-											iterationTestCase.addChild(child);
-										}
-										
-										HashMap<String, Object> newVariable = new HashMap<>();
-										newVariable.put(testArtefact.getLocalItem().get(), i);
-										newVariable.put(testArtefact.getUserItem().get(), groupID);
-										//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
-										newVariable.put(testArtefact.getItem().get(), gcounter.intValue());
-		
-										iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
-										reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
-																		
-										DynamicValue<Integer> maxDurationProp = testArtefact.getMaxDuration();
-										if(maxDurationProp != null) {
-											Integer maxDuration = maxDurationProp.get();
-											if(maxDuration > 0 && System.currentTimeMillis()>groupStartTime+maxDuration) {
-												iterationController.interrupt();
-												groupController.interrupt();
-											}
-										}
-									} catch (Exception e) {
-										if(iterationReportNode!=null) {
-											failWithException(iterationReportNode, e);
-											reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
-										}
-									}
-								};
-							}
-						}, 1);
+						Thread thread = createWorkArtefact(Thread.class, testArtefact, "Thread "+groupID, true);
+						thread.setGcounter(gcounter);
+						thread.setGroupController(groupController);
+						thread.setGroupId(groupID);
+						thread.setGroupStartTime(groupStartTime);
+						thread.setNumberOfIterations(numberOfIterations);
+						thread.setPacing(pacing);
+						thread.setThreadGroup(testArtefact);
+						
+						ReportNode threadReportNode = delegateExecute(context, thread, node, new HashMap<>());
+						reportNodeStatusComposer.addStatusAndRecompose(threadReportNode.getStatus());
 					} catch (Exception e) {
 						failWithException(node, e);
 						reportNodeStatusComposer.addStatusAndRecompose(node.getStatus());
@@ -141,5 +110,154 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 	@Override
 	public ReportNode createReportNode_(ReportNode parentNode, ThreadGroup testArtefact) {
 		return new ReportNode();
+	}
+	
+	@Artefact(handler = ThreadHandler.class)
+	public static class Thread extends AbstractArtefact {
+		
+		@JsonIgnore
+		int groupId;
+		@JsonIgnore
+		int numberOfIterations;
+		@JsonIgnore
+		int pacing;
+		@JsonIgnore
+		long groupStartTime;
+		@JsonIgnore
+		ThreadGroup threadGroup;
+		@JsonIgnore
+		WorkerController<Integer> groupController;
+		@JsonIgnore
+		LongAdder gcounter;
+		
+		public Thread() {
+			super();
+		}
+		
+		public int getGroupId() {
+			return groupId;
+		}
+
+		public void setGroupId(int groupId) {
+			this.groupId = groupId;
+		}
+
+		public int getNumberOfIterations() {
+			return numberOfIterations;
+		}
+
+		public void setNumberOfIterations(int numberOfIterations) {
+			this.numberOfIterations = numberOfIterations;
+		}
+
+		public int getPacing() {
+			return pacing;
+		}
+
+		public void setPacing(int pacing) {
+			this.pacing = pacing;
+		}
+
+		public long getGroupStartTime() {
+			return groupStartTime;
+		}
+
+		public void setGroupStartTime(long groupStartTime) {
+			this.groupStartTime = groupStartTime;
+		}
+
+		public ThreadGroup getThreadGroup() {
+			return threadGroup;
+		}
+
+		public void setThreadGroup(ThreadGroup threadGroup) {
+			this.threadGroup = threadGroup;
+		}
+
+		public WorkerController<Integer> getGroupController() {
+			return groupController;
+		}
+
+		public void setGroupController(WorkerController<Integer> groupController) {
+			this.groupController = groupController;
+		}
+
+		public LongAdder getGcounter() {
+			return gcounter;
+		}
+
+		public void setGcounter(LongAdder gcounter) {
+			this.gcounter = gcounter;
+		}
+	}
+	
+	public static class ThreadHandler extends AbstractSessionArtefactHandler<Thread, ReportNode> {
+
+		@Override
+		protected void createReportSkeleton_(ReportNode parentNode, Thread testArtefact) {
+			
+		}
+
+		@Override
+		protected void execute_(ReportNode node, Thread thread) throws Exception {
+			ThreadPool threadPool = context.get(ThreadPool.class);
+			
+			ReportNode reportNode = executeInSession(thread, node, (sessionArtefact, sessionReportNode)->{
+				AtomicReportNodeStatusComposer sessionReportNodeStatusComposer = new AtomicReportNodeStatusComposer(sessionReportNode.getStatus());
+				IntegerSequenceIterator iterationIterator = new IntegerSequenceIterator(1, thread.numberOfIterations, 1);
+				threadPool.consumeWork(iterationIterator, new WorkerItemConsumerFactory<Integer>() {
+					@Override
+					public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> iterationController) {
+						return i -> {
+							ReportNode iterationReportNode = null;
+							try {
+								thread.gcounter.increment();
+								
+								Sequence iterationTestCase = createWorkArtefact(Sequence.class, sessionArtefact, "Iteration "+i);
+								
+								if(thread.pacing!=0) {
+									iterationTestCase.setPacing(new DynamicValue<Long>((long)thread.pacing));
+								}
+								
+								for(AbstractArtefact child:getChildren(thread)) {
+									iterationTestCase.addChild(child);
+								}
+								
+								HashMap<String, Object> newVariable = new HashMap<>();
+								newVariable.put(thread.threadGroup.getLocalItem().get(), i);
+								newVariable.put(thread.threadGroup.getUserItem().get(), thread.groupId);
+								//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
+								newVariable.put(thread.threadGroup.getItem().get(), thread.gcounter.intValue());
+
+								iterationReportNode = delegateExecute(context, iterationTestCase, sessionReportNode, newVariable);
+								sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
+																
+								DynamicValue<Integer> maxDurationProp = thread.threadGroup.getMaxDuration();
+								if(maxDurationProp != null) {
+									Integer maxDuration = maxDurationProp.get();
+									if(maxDuration > 0 && System.currentTimeMillis()>thread.groupStartTime+maxDuration) {
+										iterationController.interrupt();
+										thread.groupController.interrupt();
+									}
+								}
+							} catch (Exception e) {
+								if(iterationReportNode!=null) {
+									failWithException(iterationReportNode, e);
+									sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
+								}
+							}
+						};
+					}
+				}, 1);
+				sessionReportNode.setStatus(sessionReportNodeStatusComposer.getParentStatus());
+			});
+			
+			node.setStatus(reportNode.getStatus());
+		}
+
+		@Override
+		public ReportNode createReportNode_(ReportNode parentNode, Thread testArtefact) {
+			return new ReportNode();
+		}
 	}
 }

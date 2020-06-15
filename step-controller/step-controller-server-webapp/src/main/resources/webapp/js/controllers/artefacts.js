@@ -40,6 +40,9 @@ angular.module('artefacts',['step'])
     if(!typeInfo.label) {
       typeInfo.label = typeName;
     }
+    if(!('isSelectable' in typeInfo)) {
+      typeInfo.isSelectable = true;
+    }
     registry[typeName] = typeInfo;
   }
   
@@ -61,6 +64,10 @@ angular.module('artefacts',['step'])
   
   api.getTypes = function() {
     return _.keys(registry);
+  }
+  
+  api.isSelectable = function(typeName) {
+    return getType(typeName).isSelectable;
   }
   
   return api;
@@ -86,6 +93,7 @@ angular.module('artefacts',['step'])
   artefactTypes.register('Sleep',{icon:'glyphicon-hourglass', form:'partials/artefacts/sleep.html'});
   artefactTypes.register('Script',{icon:'glyphicon-align-left', form:'partials/artefacts/script.html'});
   artefactTypes.register('ThreadGroup',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html'});
+  artefactTypes.register('Thread',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html', isSelectable:false});
   artefactTypes.register('Switch',{icon:'glyphicon-option-vertical', form:'partials/artefacts/switch.html'});
   artefactTypes.register('Case',{icon:'glyphicon-minus', form:'partials/artefacts/case.html'});
   artefactTypes.register('RetryIfFails',{icon:'glyphicon-retweet', form:'partials/artefacts/retryIfFails.html'});
@@ -459,7 +467,9 @@ angular.module('artefacts',['step'])
 })
 .controller('ArtefactSelectionCtrl' , function($scope, $http, artefactTypes) {
   $http.get("rest/controller/artefact/types").then(function(response){ 
-    $scope.artefacts = _.map(response.data, function(e) {return {name:e}});
+    $scope.artefacts = _.filter(_.map(response.data, function(e) {return {name:e}}), function(artefact) {
+      return artefactTypes.isSelectable(artefact.name)
+    });
   })
   $scope.artefactIcon = function(class_) { 
     return 'glyphicon '+artefactTypes.getIcon(class_)

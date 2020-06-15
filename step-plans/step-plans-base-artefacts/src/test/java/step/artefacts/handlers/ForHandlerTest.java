@@ -121,7 +121,7 @@ public class ForHandlerTest {
 		StringWriter writer = new StringWriter();
 		runner.run(plan).printTree(writer);
 		
-		Assert.assertEquals("For:FAILED:\n Iteration1:FAILED:\n  CheckArtefact:FAILED:\n Iteration2:FAILED:\n  CheckArtefact:FAILED:\n" ,writer.toString());		
+		Assert.assertEquals("For:FAILED:\n Iteration 1:FAILED:\n  CheckArtefact:FAILED:\n Iteration 2:FAILED:\n  CheckArtefact:FAILED:\n" ,writer.toString());		
 	}
 	
 	@Test

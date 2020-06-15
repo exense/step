@@ -30,6 +30,11 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-client</artifactId>
+			<version>${project.version}</version>
+		</dependency>		
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-plans-core</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
@@ -65,6 +70,16 @@
 			<groupId>javax.annotation</groupId>
 			<artifactId>javax.annotation-api</artifactId>
 			<version>${annotation.version}</version>
+		</dependency>
+				<dependency>
+		    <groupId>com.jayway.jsonpath</groupId>
+		    <artifactId>json-path</artifactId>
+		    <version>2.3.0</version>
+		</dependency>
+		<dependency>
+    		<groupId>org.everit.json</groupId>
+    		<artifactId>org.everit.json.schema</artifactId>
+    		<version>1.5.1</version>
 		</dependency>
 	</dependencies>
 

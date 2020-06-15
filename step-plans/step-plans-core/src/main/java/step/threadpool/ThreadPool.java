@@ -40,10 +40,16 @@ public class ThreadPool {
 		private final ExecutionContext executionContext;
 		private final AtomicBoolean isInterrupted = new AtomicBoolean(false);
 		private final ThreadLocal<Integer> workerIds = new ThreadLocal<>();
+		private final boolean isParallel;
 		
-		public BatchContext(ExecutionContext context) {
+		public BatchContext(ExecutionContext executionContext, boolean isParallel) {
 			super();
-			this.executionContext = context;
+			this.executionContext = executionContext;
+			this.isParallel = isParallel;
+		}
+
+		public boolean isParallel() {
+			return isParallel;
 		}
 	}
 
@@ -94,6 +100,13 @@ public class ThreadPool {
 		public int getWorkerId() {
 			return batchContext.workerIds.get();
 		}
+
+		/**
+		 * @return true if the current batch is running in parallel i.e with more than one worker
+		 */
+		public boolean isParallel() {
+			return batchContext.isParallel();
+		}
 	}
 
 	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
@@ -113,8 +126,6 @@ public class ThreadPool {
 			}
 		};
 		
-		final BatchContext batchContext = new BatchContext(executionContext);
-		
 		Integer autoNumberOfThreads = getAutoNumberOfThreads();
 		if (autoNumberOfThreads != null) {
 			if(!isReentrantThread()) {
@@ -127,6 +138,8 @@ public class ThreadPool {
 				numberOfThreads = 1;
 			}
 		}
+		
+		final BatchContext batchContext = new BatchContext(executionContext, numberOfThreads>1);
 		
 		WorkerController<WORK_ITEM> workerController = new WorkerController<>(batchContext);
 		Consumer<WORK_ITEM> workItemConsumer = workItemConsumerFactory.createWorkItemConsumer(workerController);

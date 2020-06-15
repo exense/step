@@ -20,31 +20,27 @@ package step.artefacts.handlers;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import step.artefacts.AbstractForBlock;
 import step.artefacts.Sequence;
 import step.artefacts.reports.ForBlockReportNode;
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
 import step.threadpool.ThreadPool;
-import step.threadpool.WorkerItemConsumerFactory;
 import step.threadpool.ThreadPool.WorkerController;
+import step.threadpool.WorkerItemConsumerFactory;
 
-public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockReportNode> {
+public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForBlock, ForBlockReportNode> {
 	
 	private static final String BREAK_VARIABLE = "break";
 	
 	@Override
 	public void createReportSkeleton_(ForBlockReportNode node, AbstractForBlock testArtefact) {		
-		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 		DataSet<?> dataSet = null;
 		try {
 			dataSet = getDataPool(testArtefact);
@@ -63,11 +59,10 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 					newVariable.put(testArtefact.getGlobalCounter().get(), rowCount);
 					newVariable.put(testArtefact.getUserItem().get(), 1);
 					
-					Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+rowCount);
-					for(AbstractArtefact child:selectedChildren)
-						iterationTestCase.addChild(child);
-					
-					delegateCreateReportSkeleton(context, iterationTestCase, node, newVariable);
+					createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
+						SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+						scheduler.execute_(sessionReportNode, sessionArtefact);
+					}, "Iteration "+rowCount, newVariable);
 				} finally {
 					nextValue.commit();
 				}
@@ -93,8 +88,6 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 	public void execute_(ForBlockReportNode node, AbstractForBlock testArtefact) {
 		final DataSet<?> dataSet = getDataPool(testArtefact);
 		try {
-			List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
-			
 			Iterator<DataPoolRow> workItemIterator = new Iterator<DataPoolRow>() {
 
 				@Override
@@ -129,12 +122,16 @@ public class ForBlockHandler extends ArtefactHandler<AbstractForBlock, ForBlockR
 							newVariable.put(testArtefact.getGlobalCounter().get(), i);
 							newVariable.put(testArtefact.getUserItem().get(), control.getWorkerId());
 							
-							Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration"+i);
-							for(AbstractArtefact child:selectedChildren) {
-								iterationTestCase.addChild(child);
+							ReportNode iterationReportNode;
+							if(control.isParallel()) {
+								iterationReportNode = executeInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
+									SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+									scheduler.execute_(sessionReportNode, sessionArtefact);
+								}, "Iteration "+i, newVariable);
+							} else {
+								Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration "+i, true);
+								iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
 							}
-							
-							ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
 							
 							reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
 							
