@@ -106,34 +106,34 @@ public class LocalPlanRunnerTest {
 		
 		String expectedTree = 
 				"For:PASSED:\n" + 
-				" Iteration1:PASSED:\n" + 
+				" Iteration 1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
-				" Iteration2:PASSED:\n" + 
+				" Iteration 2:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
-				" Iteration3:PASSED:\n" + 
+				" Iteration 3:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
-				" Iteration4:PASSED:\n" + 
+				" Iteration 4:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
-				" Iteration5:PASSED:\n" + 
+				" Iteration 5:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
-				" Iteration6:PASSED:\n" + 
+				" Iteration 6:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
-				" Iteration7:PASSED:\n" + 
+				" Iteration 7:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
-				" Iteration8:PASSED:\n" + 
+				" Iteration 8:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
-				" Iteration9:PASSED:\n" + 
+				" Iteration 9:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
-				" Iteration10:PASSED:\n" + 
+				" Iteration 10:PASSED:\n" + 
 				"  keyword1:PASSED:\n" + 
 				"  keyword1:PASSED:\n";
 		
