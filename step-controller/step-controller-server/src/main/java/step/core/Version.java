@@ -19,6 +19,20 @@ public class Version implements Comparable<Version> {
 		this.minor = minor;
 		this.revision = revision;
 	}
+	
+	public Version(String version) {
+		String[] a = version.split("\\.");
+		if (a.length != 3) {
+			throw new IllegalArgumentException("Invalid version format. Exepcted 3 numbers delimited by a dot but got: '" + version + "'");
+		}
+		try { 
+			this.major = Integer.parseInt(a[0]);
+			this.minor = Integer.parseInt(a[1]);
+			this.revision = Integer.parseInt(a[2]);
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Invalid version format. Exepcted 3 numbers delimited by a dot but got: '" + version + "'");
+		}
+	}
 
 	public int getMajor() {
 		return major;

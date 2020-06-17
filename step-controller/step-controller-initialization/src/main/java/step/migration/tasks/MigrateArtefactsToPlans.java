@@ -3,7 +3,6 @@ package step.migration.tasks;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,15 +18,14 @@ import com.mongodb.client.MongoDatabase;
 
 import ch.exense.commons.app.ArgumentParser;
 import ch.exense.commons.app.Configuration;
-import step.artefacts.CallPlan;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AccessorLayerJacksonMapperProvider;
 import step.core.accessors.MongoClientSession;
 import step.core.accessors.PlanAccessorImpl;
-import step.core.artefacts.AbstractArtefact;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessorImpl;
+import step.core.imports.converter.ArtefactsToPlans;
 import step.core.plans.Plan;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
@@ -42,19 +40,18 @@ import step.plugins.functions.types.CompositeFunction;
  */
 public class MigrateArtefactsToPlans extends MigrationTask {
 
-	private static final String CHILDREN_ID_FIELD = "childrenIDs";
 	private MongoDatabase mongoDatabase;
 	private com.mongodb.client.MongoCollection<Document> artefactCollection;
 	private com.mongodb.client.MongoCollection<Document> functionCollection;
 	private com.mongodb.client.MongoCollection<Document> executionCollection;
 	private com.mongodb.client.MongoCollection<Document> tasksCollection;
-	private PlanAccessorImpl planAccessor;
 	private ExecutionAccessorImpl executionAccessor;
 	private ExecutionTaskAccessorImpl executionTaskAccessor;
 	private FunctionCRUDAccessor functionAccessor;
 	private Mapper dbLayerObjectMapper;
 	private Map<ObjectId, ObjectId> artefactIdToPlanId;
 	private Unmarshaller unmarshaller;
+	private ArtefactsToPlans artefactsToPlans;
 
 	public MigrateArtefactsToPlans() {
 		super(new Version(3,13,0));
@@ -79,20 +76,21 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		dbLayerObjectMapper = builder2.build();
 		unmarshaller = dbLayerObjectMapper.getUnmarshaller();
 		
-		planAccessor = new PlanAccessorImpl(mongoClientSession);
 		executionAccessor = new ExecutionAccessorImpl(mongoClientSession);
 		executionTaskAccessor = new ExecutionTaskAccessorImpl(mongoClientSession);
 		functionAccessor = new FunctionAccessorImpl(mongoClientSession);
 
 		artefactIdToPlanId = new HashMap<>();
+		artefactsToPlans = new ArtefactsToPlans(artefactCollection,
+				new PlanAccessorImpl(mongoClientSession));
 	}
 
 	@Override
 	public void runUpgradeScript() {
-		int count = generatePlanIds();
+		int count = artefactsToPlans.getNbPlans();
 		logger.info("Found "+count+" root artefacts to be migrated. Starting migration...");
 		
-		migrateArtefactsToPlans();
+		artefactsToPlans.migrateArtefactsToPlans();
 		migrateCompositeFunctionsFunctions();
 		migrateExecutions();
 		migrateSchedulerTasks();
@@ -103,115 +101,6 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		String newArtefactsCollectionName = "artefacts_migrated";
 		logger.info("Renaming collection 'artefacts' to '"+newArtefactsCollectionName+"'. This collection won't be used by step anymore. You can drop it if all your plans have been migrated without error.");
 		artefactCollection.renameCollection(new MongoNamespace(mongoDatabase.getName(), newArtefactsCollectionName));
-	}
-	
-	private int generatePlanIds() {
-		logger.info("Searching for root artefacts to be migrated...");
-		AtomicInteger count = new AtomicInteger();
-		Document filterRootArtefacts = new Document("root", true);
-		artefactCollection.find(filterRootArtefacts, BasicDBObject.class).iterator().forEachRemaining(t -> {
-			try {
-				ObjectId objectId = t.getObjectId("_id");
-				artefactIdToPlanId.put(objectId, new ObjectId());
-				count.incrementAndGet();
-			} catch (Exception e) {
-				logger.error("Invalid object id found for the root artefact",e);
-			}
-		});
-		return count.get();
-	}
-	
-	private void migrateArtefactsToPlans() {
-		AtomicInteger successCount = new AtomicInteger();
-		AtomicInteger errorCount = new AtomicInteger();
-
-		Document filterRootArtefacts = new Document("root", true);
-		artefactCollection.find(filterRootArtefacts, BasicDBObject.class).iterator().forEachRemaining(t -> {
-			migrateArtefactToPlan(successCount, errorCount, t);
-		});
-		
-		logger.info("Migrated "+successCount.get()+" artefacts successfully.");
-		if(errorCount.get()>0) {
-			logger.error(errorCount.get() + " artefacts couldn't be migrated. See error logs for details");
-		}
-		
-		successCount.set(0);
-		errorCount.set(0);
-		
-	}
-
-	protected Plan migrateArtefactToPlan(BasicDBObject t) {
-		return migrateArtefactToPlan(null, null, t);
-	}
-	
-	protected Plan migrateArtefactToPlan(AtomicInteger successCount, AtomicInteger errorCount, BasicDBObject t) {
-		Map<String, String> attributes = new HashMap<>();
-		try {
-			BasicDBObject document = (BasicDBObject)t.get("attributes");
-			if(document != null) {
-				document.keySet().forEach(key->{
-					attributes.put(key, document.getString(key));
-				});
-			}
-			
-			AbstractArtefact artefact = unmarshallArtefact(t);
-			
-			Plan plan = new Plan();
-			
-			plan.setId(artefactIdToPlanId.get(artefact.getId()));
-			plan.setAttributes(attributes);
-			plan.setRoot(artefact);
-			plan.setVisible(true);
-			
-			logger.info("Migrated plan "+attributes);
-			
-			plan = planAccessor.save(plan);
-			if(successCount != null) {
-				successCount.incrementAndGet();
-			}
-			return plan;
-		} catch(Exception e) {
-			logger.error("Error while migrating plan "+attributes, e);
-			if(errorCount != null) {
-				errorCount.incrementAndGet();
-			}
-			return null;
-		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	private AbstractArtefact unmarshallArtefact(BasicDBObject t) {
-		List<ObjectId> childrendIDs = null;
-		if(t.containsField(CHILDREN_ID_FIELD)) {
-			childrendIDs = (List<ObjectId>) t.get(CHILDREN_ID_FIELD);
-		}
-		t.remove(CHILDREN_ID_FIELD);
-		
-		AbstractArtefact artefact = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(t), AbstractArtefact.class);
-		
-		if(artefact instanceof CallPlan) {
-			String artefactId = t.getString("artefactId");
-			if(artefactId!=null) {
-				ObjectId referencedPlanId = artefactIdToPlanId.get(new ObjectId(artefactId));
-				if(referencedPlanId != null) {
-					((CallPlan) artefact).setPlanId(referencedPlanId.toString());
-				} else {
-					logger.warn("The artefact "+artefactId+" referenced by the artefact (call plan) "+t.getObjectId("_id").toString()+" doesn't exist");
-				}
-			} else {
-				// Call by attributes => nothing to do as we're assigning the attributes of the root artefact to the plan
-			}
-		}
-		
-		if(childrendIDs!=null) {
-			childrendIDs.forEach(childID->{
-				BasicDBObject child = artefactCollection.find(new Document("_id", childID), BasicDBObject.class).first();
-				AbstractArtefact artefactChild = unmarshallArtefact(child);
-				artefact.getChildren().add(artefactChild);
-			});
-		}
-		
-		return artefact;
 	}
 	
 	private void migrateCompositeFunctionsFunctions() {
@@ -227,7 +116,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 					
 					BasicDBObject rootArtefact = artefactCollection.find(new Document("_id", new ObjectId(artefactId)), BasicDBObject.class).first();
 					if(rootArtefact != null) {
-						Plan plan = migrateArtefactToPlan(rootArtefact);
+						Plan plan = artefactsToPlans.migrateArtefactToPlan(rootArtefact);
 						if(plan != null) {
 							ObjectId planId = plan.getId();
 							t.put("planId", planId);

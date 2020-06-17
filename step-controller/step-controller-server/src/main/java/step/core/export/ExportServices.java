@@ -2,6 +2,8 @@ package step.core.export;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -42,7 +44,7 @@ public class ExportServices extends AbstractServices {
 		accessor = getContext().getPlanAccessor();
 		exportTaskManager = getContext().get(ExportTaskManager.class);
 		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
-		exportManager = new ExportManager(accessor);
+		exportManager = new ExportManager(getContext());
 	}
 
 	@GET
@@ -51,16 +53,25 @@ public class ExportServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public ExportStatus exportArtefact(@PathParam("id") String id) {
+		Map<String,String> metadata = getMetadata();
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws IOException {
 				String planName = accessor.get(id).getAttributes().get(AbstractOrganizableObject.NAME);
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, planName + ".json");
-				exportManager.exportPlan(id, resourceContainer.getOutputStream());
+				exportManager.exportById(resourceContainer.getOutputStream(), metadata, id, "plans");
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
 		});
+	}
+	
+	private Map<String,String> getMetadata() {
+		Map<String,String> metadata = new HashMap<String,String>();
+		metadata.put("user",getSession().getUser().getUsername());
+		metadata.put("version",getContext().getCurrentVersion().toString());
+		metadata.put("export-time",String.valueOf(System.currentTimeMillis()));
+		return metadata;
 	}
 	
 	@GET
@@ -70,11 +81,12 @@ public class ExportServices extends AbstractServices {
 	@Secured(right="plan-read")
 	public ExportStatus exportAllArtefacts() {
 		Session session = getSession();
+		Map<String,String> metadata = getMetadata();
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "Plans.json");
-				exportManager.exportAllPlans(resourceContainer.getOutputStream(), objectPredicateFactory.getObjectPredicate(session));
+				exportManager.exportAll(resourceContainer.getOutputStream(), metadata, objectPredicateFactory.getObjectPredicate(session),"plans");
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}

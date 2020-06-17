@@ -1,6 +1,6 @@
-package step.core.export;
+package step.core.imports;
 
-import java.io.IOException;
+import java.util.Arrays;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -11,15 +11,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import step.attachments.FileResolver;
 import step.attachments.FileResolver.FileHandle;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.objectenricher.ObjectHookRegistry;
-import step.core.plans.PlanAccessor;
 
 @Singleton
 @Path("import")
@@ -35,8 +34,7 @@ public class ImportServices extends AbstractServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		PlanAccessor accessor = getContext().getPlanAccessor();
-		importManager = new ImportManager(accessor);
+		importManager = new ImportManager(getContext());
 		fileResolver = getContext().get(FileResolver.class);
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 	}
@@ -46,9 +44,9 @@ public class ImportServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public void importArtefact(@QueryParam("path") String path) throws IOException {
+	public void importArtefact(@QueryParam("path") String path) throws Exception {
 		try (FileHandle file = fileResolver.resolveFileHandle(path)) {
-			importManager.importPlans(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()));
+			importManager.importAll(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()),Arrays.asList("plans"));
 		} catch (Exception e) {
 			logger.error("Import failed",e);
 			throw e;
