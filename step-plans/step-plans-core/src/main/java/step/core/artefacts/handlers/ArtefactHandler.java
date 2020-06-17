@@ -55,8 +55,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected ReportNodeAttributesManager reportNodeAttributesManager;
 	
 	public static String FILE_VARIABLE_PREFIX = "file:";
-	public static String CONTINUE_EXECUTION = "tec.continueonerror";
-	public static String CONTINUE_EXECUTION_ONCE = "tec.continueonerror.once";
 
 	private WorkArtefactFactory workArtefactFactory = new WorkArtefactFactory();
 	

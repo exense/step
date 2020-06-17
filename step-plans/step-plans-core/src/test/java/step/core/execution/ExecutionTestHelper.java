@@ -27,7 +27,6 @@ public class ExecutionTestHelper {
 		ExecutionContext c = createContext();
 		
 		c.getVariablesManager().putVariable(c.getReport(), ReportNodeAttachmentManager.QUOTA_VARNAME, 100);
-		c.getVariablesManager().putVariable(c.getReport(), ArtefactHandler.CONTINUE_EXECUTION, "false");
 		
 		c.associateThread();
 		return c;

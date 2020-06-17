@@ -29,7 +29,6 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
-import step.core.variables.UndefinedVariableException;
 
 public class SequentialArtefactScheduler {
 
@@ -124,44 +123,24 @@ public class SequentialArtefactScheduler {
 					ReportNode resultNode = ArtefactHandler.delegateExecute(context, child, reportNode);
 					reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
 	
-					Boolean continueOnce = null;
-					try {
-						continueOnce = context.getVariablesManager()
-								.getVariableAsBoolean(ArtefactHandler.CONTINUE_EXECUTION_ONCE);
-					} catch (UndefinedVariableException e) {
-					} finally {
-						context.getVariablesManager().removeVariable(reportNode, ArtefactHandler.CONTINUE_EXECUTION_ONCE);
-					}
-	
 					if (resultNode.getStatus() == ReportNodeStatus.TECHNICAL_ERROR
 							|| resultNode.getStatus() == ReportNodeStatus.FAILED) {
 						if (!context.isSimulation()) {
-							if (continueOnce != null) {
-								if (!continueOnce) {
+							if (continueOnError != null) {
+								if (!continueOnError) {
 									break;
 								}
 							} else {
-								if (continueOnError != null) {
-									if (!continueOnError) {
-										break;
-									}
-								} else {
-									break;
-								}
+								break;
 							}
 						}
 					}
 				}
 			} finally {
-				Object forcedStatus = context.getVariablesManager().getVariable("tec.forceparentstatus");
-				if (forcedStatus != null) {
-					reportNode.setStatus(ReportNodeStatus.valueOf(forcedStatus.toString()));
+				if (context.isInterrupted()) {
+					reportNode.setStatus(ReportNodeStatus.INTERRUPTED);
 				} else {
-					if (context.isInterrupted()) {
-						reportNode.setStatus(ReportNodeStatus.INTERRUPTED);
-					} else {
-						reportNode.setStatus(reportNodeStatusComposer.getParentStatus());
-					}
+					reportNode.setStatus(reportNodeStatusComposer.getParentStatus());
 				}
 			}
 			return reportNode;
