@@ -60,14 +60,30 @@ public class SequentialArtefactScheduler {
 	 * @return the {@link ReportNode} of the provided artefact
 	 */
 	public ReportNode executeWithinBeforeAndAfter(AbstractArtefact artefact, ReportNode reportNode, Function<List<AbstractArtefact>, ReportNode> consumer) {
+		return executeWithinBeforeAndAfter(artefact, reportNode, consumer, BeforeSequence.class, AfterSequence.class);
+	}
+	
+	/**
+	 * Delegates the execution of the children artefacts of the provided artefact within the Before and After artefacts
+	 * of the provided artefact.
+	 * 
+	 * @param artefact the artefact to be executed
+	 * @param reportNode the {@link ReportNode} corresponding to the provided artefact
+	 * @param consumer the consumer to delegate the execution of the children artefacts without Before and AfterSequence artefacts
+	 * @param beforeClass the class of the before artefacts
+	 * @param afterClass the class of the after artefacts
+	 * @return
+	 */
+	public ReportNode executeWithinBeforeAndAfter(AbstractArtefact artefact, ReportNode reportNode, Function<List<AbstractArtefact>, ReportNode> consumer, 
+			Class<? extends AbstractArtefact> beforeClass, Class<? extends AbstractArtefact> afterClass) {
 		List<AbstractArtefact> children = ArtefactHandler.getChildren(artefact, context);
 		
 		// get the list of BeforeSequence artefacts that have to be executed before the sequence 
-		List<AbstractArtefact> beforeArtefacts = children.stream().filter(c->c instanceof BeforeSequence).collect(Collectors.toList());
+		List<AbstractArtefact> beforeArtefacts = children.stream().filter(c->beforeClass.isInstance(c)).collect(Collectors.toList());
 		// get the list of AfterSequence artefacts that have to be executed after the sequence
-		List<AbstractArtefact> afterArtefacts = children.stream().filter(c->c instanceof AfterSequence).collect(Collectors.toList());
+		List<AbstractArtefact> afterArtefacts = children.stream().filter(c->afterClass.isInstance(c)).collect(Collectors.toList());
 		// get the list of children artefacts without Before- and AfterSequence artefacts
-		List<AbstractArtefact> newChildren = children.stream().filter(c->!(c instanceof AfterSequence) && !(c instanceof BeforeSequence)).collect(Collectors.toList());
+		List<AbstractArtefact> newChildren = children.stream().filter(c->!(beforeClass.isInstance(c)) && !(afterClass.isInstance(c))).collect(Collectors.toList());
 		
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode.getStatus());
 		try {

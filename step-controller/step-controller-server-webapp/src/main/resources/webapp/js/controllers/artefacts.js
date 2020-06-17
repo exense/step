@@ -95,6 +95,8 @@ angular.module('artefacts',['step'])
   artefactTypes.register('Sleep',{icon:'glyphicon-hourglass', form:'partials/artefacts/sleep.html'});
   artefactTypes.register('Script',{icon:'glyphicon-align-left', form:'partials/artefacts/script.html'});
   artefactTypes.register('ThreadGroup',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html'});
+  artefactTypes.register('BeforeThread',{icon:'glyphicon-arrow-left', form:'partials/artefacts/sequence.html'});
+  artefactTypes.register('AfterThread',{icon:'glyphicon-arrow-right', form:'partials/artefacts/sequence.html'});
   artefactTypes.register('Thread',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html', isSelectable:false});
   artefactTypes.register('Switch',{icon:'glyphicon-option-vertical', form:'partials/artefacts/switch.html'});
   artefactTypes.register('Case',{icon:'glyphicon-minus', form:'partials/artefacts/case.html'});

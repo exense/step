@@ -18,6 +18,8 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
+import static step.planbuilder.BaseArtefacts.*;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,6 +36,8 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
+import step.core.plans.runner.PlanRunner;
+import step.core.plans.runner.PlanRunnerResult;
 
 public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -142,6 +146,97 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		StringWriter writer = new StringWriter();
 		runner.run(plan).printTree(writer);
 		return writer;
+	}
+	
+	@Test
+	public void testBeforeAndAfterThread() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(threadGroup(1, 2))
+					.startBlock(beforeThread())
+						.add(echo("'Before...'"))
+					.endBlock()
+					.add(echo("'Iteration'"))
+					.startBlock(afterThread())
+					.add(echo("'After...'"))
+				.endBlock()
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		Assert.assertEquals("ThreadGroup:PASSED:\n" + 
+				" Thread 1:PASSED:\n" + 
+				"  Session:PASSED:\n" + 
+				"   BeforeThread:PASSED:\n" + 
+				"    Echo:PASSED:\n" + 
+				"   Iteration 1:PASSED:\n" + 
+				"    Echo:PASSED:\n" + 
+				"   Iteration 2:PASSED:\n" + 
+				"    Echo:PASSED:\n" + 
+				"   AfterThread:PASSED:\n" + 
+				"    Echo:PASSED:\n" , writer.toString());	
+	}
+	
+	@Test
+	public void testBeforeAndAfterThreadCombinedWithBeforeAndAfterSequence() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(threadGroup(1, 2))
+					.startBlock(beforeThread())
+						.add(echo("'Before...'"))
+					.endBlock()
+					.startBlock(beforeSequence())
+						.add(echo("'Before...'"))
+					.endBlock()
+					.add(echo("'Iteration'"))
+					.add(check("false"))
+					.startBlock(afterSequence())
+						.add(echo("'After...'"))
+					.endBlock()
+					.startBlock(afterThread())
+						.add(echo("'After...'"))
+					.endBlock()
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		Assert.assertEquals("ThreadGroup:FAILED:\n" + 
+				" Thread 1:FAILED:\n" + 
+				"  Session:FAILED:\n" + 
+				"   BeforeThread:PASSED:\n" + 
+				"    Echo:PASSED:\n" + 
+				"   Iteration 1:FAILED:\n" + 
+				"    BeforeSequence:PASSED:\n" + 
+				"     Echo:PASSED:\n" + 
+				"    Echo:PASSED:\n" + 
+				"    Check:FAILED:\n" + 
+				"    AfterSequence:PASSED:\n" + 
+				"     Echo:PASSED:\n" + 
+				"   Iteration 2:FAILED:\n" + 
+				"    BeforeSequence:PASSED:\n" + 
+				"     Echo:PASSED:\n" + 
+				"    Echo:PASSED:\n" + 
+				"    Check:FAILED:\n" + 
+				"    AfterSequence:PASSED:\n" + 
+				"     Echo:PASSED:\n" + 
+				"   AfterThread:PASSED:\n" + 
+				"    Echo:PASSED:\n" , writer.toString());	
 	}
 }
 

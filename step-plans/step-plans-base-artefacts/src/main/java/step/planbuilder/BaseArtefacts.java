@@ -3,7 +3,9 @@ package step.planbuilder;
 import java.io.File;
 
 import step.artefacts.AfterSequence;
+import step.artefacts.AfterThread;
 import step.artefacts.BeforeSequence;
+import step.artefacts.BeforeThread;
 import step.artefacts.CallPlan;
 import step.artefacts.Check;
 import step.artefacts.Echo;
@@ -111,9 +113,17 @@ public class BaseArtefacts {
 
 	public static ThreadGroup threadGroup(int numberOfThreads, int numberOfIterationsPerThread) {
 		ThreadGroup threadGroup = new ThreadGroup();
-		threadGroup.setIterations(new DynamicValue<Integer>(numberOfThreads));
-		threadGroup.setUsers(new DynamicValue<Integer>(numberOfIterationsPerThread));
+		threadGroup.setIterations(new DynamicValue<Integer>(numberOfIterationsPerThread));
+		threadGroup.setUsers(new DynamicValue<Integer>(numberOfThreads));
 		return threadGroup;
+	}
+	
+	public static BeforeThread beforeThread() {
+		return new BeforeThread();
+	}
+	
+	public static AfterThread afterThread() {
+		return new AfterThread();
 	}
 	
 	public static TestScenario testScenario() {
