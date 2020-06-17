@@ -2,7 +2,11 @@ package step.planbuilder;
 
 import java.io.File;
 
+import step.artefacts.AfterSequence;
+import step.artefacts.BeforeSequence;
 import step.artefacts.CallPlan;
+import step.artefacts.Check;
+import step.artefacts.Echo;
 import step.artefacts.ForBlock;
 import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
@@ -22,6 +26,14 @@ public class BaseArtefacts {
 	
 	public static Sequence sequence() {
 		return new Sequence();
+	}
+	
+	public static BeforeSequence beforeSequence() {
+		return new BeforeSequence();
+	}
+	
+	public static AfterSequence afterSequence() {
+		return new AfterSequence();
 	}
 	
 	public static Set set(String key, String valueExpression) {
@@ -106,5 +118,17 @@ public class BaseArtefacts {
 	
 	public static TestScenario testScenario() {
 		return new TestScenario();
+	}
+	
+	public static Echo echo(String expression) {
+		Echo echo = new Echo();
+		echo.setText(new DynamicValue<>(expression, ""));
+		return echo;
+	}
+	
+	public static Check check(String expression) {
+		Check check = new Check();
+		check.setExpression(new DynamicValue<>(expression, ""));
+		return check;
 	}
 }

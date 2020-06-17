@@ -85,6 +85,8 @@ angular.module('artefacts',['step'])
   artefactTypes.register('DataSet',{icon:'glyphicon-th-large', form:'partials/artefacts/dataSet.html'});
   artefactTypes.register('Synchronized',{icon:'glyphicon-align-justify', form:'partials/artefacts/synchronized.html'});
   artefactTypes.register('Sequence',{icon:'glyphicon-align-justify', form:'partials/artefacts/sequence.html'});
+  artefactTypes.register('BeforeSequence',{icon:'glyphicon-arrow-up', form:'partials/artefacts/sequence.html'});
+  artefactTypes.register('AfterSequence',{icon:'glyphicon-arrow-down', form:'partials/artefacts/sequence.html'});
   artefactTypes.register('Return',{icon:'glyphicon-share-alt', form:'partials/artefacts/return.html'});
   artefactTypes.register('Echo',{icon:'glyphicon-zoom-in', form:'partials/artefacts/echo.html'});
   artefactTypes.register('If',{icon:'glyphicon-unchecked', form:'partials/artefacts/if.html'});

@@ -5,7 +5,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
@@ -37,8 +40,16 @@ public class DefaultPlanRunner implements PlanRunner {
 			PlanAccessor planAccessor = context.getPlanAccessor();
 			planAccessor.save(subPlans);
 		}
-		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
-		return new PlanRunnerResult(context.getExecutionId(), context.getReport().getId().toString(), context.getReportNodeAccessor());
+		ReportNode rootReportNode = context.getReport();
+		AbstractArtefact rootArtefact = plan.getRoot();
+		ReportNode planReportNode = ArtefactHandler.delegateExecute(context, rootArtefact, rootReportNode);
+		
+		if(planReportNode != null && planReportNode.getStatus() != null) {
+			ReportNodeStatus resultStatus = planReportNode.getStatus();
+			rootReportNode.setStatus(resultStatus);
+		}
+		
+		return new PlanRunnerResult(context.getExecutionId(), rootReportNode.getId().toString(), context.getReportNodeAccessor());
 	}
 	
 	protected ExecutionContext buildExecutionContext() {

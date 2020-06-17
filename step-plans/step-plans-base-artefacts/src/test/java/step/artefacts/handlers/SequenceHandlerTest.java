@@ -19,22 +19,33 @@
 package step.artefacts.handlers;
 
 import static junit.framework.Assert.assertEquals;
+import static step.planbuilder.BaseArtefacts.afterSequence;
+import static step.planbuilder.BaseArtefacts.beforeSequence;
+import static step.planbuilder.BaseArtefacts.check;
+import static step.planbuilder.BaseArtefacts.echo;
+import static step.planbuilder.BaseArtefacts.sequence;
 
+import java.io.IOException;
 import java.io.StringWriter;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.CheckArtefact;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.model.ExecutionMode;
+import step.core.execution.model.ExecutionStatus;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
 import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResult;
+import step.planbuilder.FunctionArtefacts;
 
 public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -260,4 +271,242 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 				" Echo:PASSED:\n" +
 				"" , writer.toString());				
 	}	
+	
+	@Test
+	public void testDefaultContinueOnErrorDuringSimulation() throws TimeoutException, InterruptedException, IOException {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence())
+					.add(new CheckArtefact(c->{
+						c.getExecutionParameters().setMode(ExecutionMode.SIMULATION);
+					}))
+					.add(echo("'Echo 1'"))
+					.add(new CheckArtefact(c->{
+						c.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED);
+					}))
+					.add(echo("'Echo 2'"))
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		Assert.assertEquals("Sequence:FAILED:\n" + 
+				" CheckArtefact:RUNNING:\n" + 
+				" Echo:PASSED:\n" + 
+				" CheckArtefact:FAILED:\n" + 
+				" Echo:PASSED:\n", writer.toString());	
+	}
+	
+	@Test
+	public void testInterrupt() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence())
+					.add(echo("'Echo 1'"))
+					.add(new CheckArtefact(c->{
+						c.updateStatus(ExecutionStatus.ABORTING);
+						c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+					}))
+					.add(echo("'Echo 2'"))
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		Assert.assertEquals("Sequence:INTERRUPTED:\n" + 
+				" Echo:PASSED:\n" + 
+				" CheckArtefact:PASSED:\n", writer.toString());	
+	}
+	
+	@Test
+	public void testExceptionInArtefact() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence())
+					.add(new CheckArtefact(c->{
+						throw new RuntimeException("My error");
+					}))
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		Assert.assertEquals("Sequence:TECHNICAL_ERROR:\n" + 
+				" CheckArtefact:TECHNICAL_ERROR:My error\n", writer.toString());	
+	}
+	
+	@Test
+	public void testContinueOnErrorWithinSessions() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(FunctionArtefacts.session())
+					.add(new CheckArtefact(c->{
+						throw new RuntimeException("My error");
+					}))
+					.add(echo("'Echo 1'"))
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		Assert.assertEquals("Session:TECHNICAL_ERROR:\n" + 
+				" CheckArtefact:TECHNICAL_ERROR:My error\n", writer.toString());	
+	}
+	
+	@Test
+	public void testEmptySequence() throws Exception {
+		Sequence sequence = new Sequence();
+	
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence)
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		Assert.assertEquals(ReportNodeStatus.PASSED, result.getResult());				
+	}
+	
+	@Test
+	public void testBeforeAndAfterSequenceHappyPath() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence())
+					.startBlock(beforeSequence())
+						.add(echo("'Before 1'"))
+					.endBlock()
+					.startBlock(beforeSequence())
+						.add(echo("'Before 2'"))
+					.endBlock()
+					.startBlock(afterSequence())
+						.add(echo("'After 1'"))
+					.endBlock()
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		Assert.assertEquals("Sequence:PASSED:\n" + 
+				" BeforeSequence:PASSED:\n" + 
+				"  Echo:PASSED:\n" + 
+				" BeforeSequence:PASSED:\n" + 
+				"  Echo:PASSED:\n" + 
+				" AfterSequence:PASSED:\n" + 
+				"  Echo:PASSED:\n", writer.toString());	
+		
+		Assert.assertEquals(ReportNodeStatus.PASSED, result.getResult());				
+	}
+	
+	@Test
+	public void testBeforeAndAfterSequenceErrorInChildren() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence())
+					.startBlock(beforeSequence())
+						.add(echo("'Before 1'"))
+					.endBlock()
+					.startBlock(beforeSequence())
+						.add(echo("'Before 2'"))
+					.endBlock()
+					.startBlock(beforeSequence())
+						.add(check("false"))
+					.endBlock()
+					.startBlock(afterSequence())
+						.add(echo("'After 1'"))
+					.endBlock()
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		Assert.assertEquals("Sequence:FAILED:\n" + 
+				" BeforeSequence:PASSED:\n" + 
+				"  Echo:PASSED:\n" + 
+				" BeforeSequence:PASSED:\n" + 
+				"  Echo:PASSED:\n" + 
+				" BeforeSequence:FAILED:\n" + 
+				"  Check:FAILED:\n" + 
+				" AfterSequence:PASSED:\n" + 
+				"  Echo:PASSED:\n" , writer.toString());	
+	}
+	
+	@Test
+	public void testBeforeAndAfterSequenceErrorInAfter() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence())
+					.startBlock(beforeSequence())
+					.endBlock()
+					.startBlock(beforeSequence())
+						.add(check("true"))
+					.endBlock()
+					.startBlock(afterSequence())
+						.add(check("false"))
+					.endBlock()
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		Assert.assertEquals("Sequence:FAILED:\n" + 
+				" BeforeSequence:PASSED:\n" + 
+				" BeforeSequence:PASSED:\n" + 
+				"  Check:PASSED:\n" + 
+				" AfterSequence:FAILED:\n" + 
+				"  Check:FAILED:\n" , writer.toString());	
+	}
 }
