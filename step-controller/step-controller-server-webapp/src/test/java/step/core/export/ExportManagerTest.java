@@ -39,7 +39,7 @@ public class ExportManagerTest {
 			metadata.put("version", c.getCurrentVersion().toString());
 			metadata.put("export-time" , "1589542872475");
 			metadata.put("user", "admin");
-			exportManager.exportById(outputStream, metadata,plan.getId().toString(), "plans");
+			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata,plan.getId().toString(), "plans");
 			
 			//DEBUG
 			/*try (BufferedReader br = new BufferedReader(
@@ -91,7 +91,7 @@ public class ExportManagerTest {
 			ExportManager exportManager = new ExportManager(c);
 			Map<String,String> metadata = new HashMap<String,String>();
 			metadata.put("version", c.getCurrentVersion().toString());
-			exportManager.exportAll(outputStream, metadata, dummyObjectPredicate(), "plans");
+			exportManager.exportAll(outputStream, dummyObjectEnricher(), metadata, dummyObjectPredicate(), "plans");
 			
 			//create a new context to test the import
 			c = GlobalContextBuilder.createGlobalContext();
@@ -123,7 +123,7 @@ public class ExportManagerTest {
 			metadata.put("version", c.getCurrentVersion().toString());
 			metadata.put("export-time" , "1589542872475");
 			metadata.put("user", "admin");
-			exportManager.exportById(outputStream, metadata,plan.getId().toString(), "plans");
+			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata,plan.getId().toString(), "plans");
 			
 			//DEBUG
 			/*try (BufferedReader br = new BufferedReader(

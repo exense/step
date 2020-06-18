@@ -7,6 +7,16 @@
 				</button>
 			</div>
 			<div class="btn-group btn-group-menu">
+				<button type="button" ng-disabled="!authService.hasRight('param-write')" class="btn btn-default" ng-click="importParameters()" uib-tooltip="Import parameters"
+					tooltip-append-to-body="true" tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-import"></span>
+				</button>
+				<button type="button" ng-disabled="!authService.hasRight('param-read')" class="btn btn-default" ng-click="exportParameters()" uib-tooltip="Export parameters"
+					tooltip-append-to-body="true" tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-export"></span>
+				</button>
+			</div>
+			<div class="btn-group btn-group-menu">
 				<button type="button" ng-disabled="!authService.hasRight('param-write')" class="btn btn-success" ng-click="addParameter()">New parameter</button>
 			</div>
 		</st-actions>

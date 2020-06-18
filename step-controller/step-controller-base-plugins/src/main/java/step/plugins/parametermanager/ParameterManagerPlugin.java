@@ -30,13 +30,16 @@ import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.CRUDAccessor;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.ObjectHookPlugin;
+import step.core.entities.Entity;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.execution.ExecutionManager;
 import step.core.execution.model.ExecutionParameters;
+import step.core.imports.GenericDBImporter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -54,6 +57,7 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 	
 	private static final String PARAMETER_SCOPE_VALUE_DEFAULT = "default";
 	private static final String PARAMETERS_BY_SCOPE = "$parametersByScope";
+	private static final String entityName = "parameters";
 
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerPlugin.class);
 		
@@ -69,6 +73,12 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 		ParameterManager parameterManager = new ParameterManager(parameterAccessor);
 		context.put(ParameterManager.class, parameterManager);
 		this.parameterManager = parameterManager;
+		
+		context.getEntityManager().register(new Entity<Parameter, CRUDAccessor<Parameter>> (
+				ParameterManagerPlugin.entityName, 
+				parameterAccessor,
+				Parameter.class,
+				new GenericDBImporter<Parameter, CRUDAccessor<Parameter>>(context)));
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
 	}

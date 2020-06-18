@@ -92,7 +92,7 @@ angular.module('functionsControllers',['step'])
   return dialogs;
 })
 
-.controller('FunctionListCtrl', function($scope, $rootScope, $compile, $http, $interval, $uibModal, stateStorage, Dialogs, FunctionDialogs, $location, AuthService, FunctionTypeRegistry) {
+.controller('FunctionListCtrl', function($scope, $rootScope, $compile, $http, $interval, $uibModal, stateStorage, Dialogs, FunctionDialogs, ImportDialogs, ExportService, $location, AuthService, FunctionTypeRegistry) {
   stateStorage.push($scope, 'functions', {});	
   
   $scope.authService = AuthService;
@@ -146,6 +146,16 @@ angular.module('functionsControllers',['step'])
     Dialogs.showDeleteWarning().then(function() {
       $http.delete("rest/functions/"+id).then(function() {reload()});
     })
+  }
+  
+  $scope.importFunctions = function() {
+    ImportDialogs.displayImportDialog('Keyword import','functions').then(function () {
+      reload();
+    });
+  }
+  
+  $scope.exportFunctions = function() {
+    ExportService.get("rest/export/functions")
   }
   
   $scope.functionTypeLabel = function(type) {

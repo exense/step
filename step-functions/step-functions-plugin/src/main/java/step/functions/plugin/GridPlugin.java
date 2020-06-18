@@ -28,16 +28,20 @@ import org.slf4j.LoggerFactory;
 
 import com.mongodb.client.MongoDatabase;
 
+import ch.exense.commons.app.Configuration;
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionRouter;
 import step.attachments.FileResolver;
-import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.CRUDAccessor;
 import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.entities.Entity;
 import step.core.execution.ExecutionContext;
+import step.core.imports.GenericDBImporter;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
@@ -71,6 +75,8 @@ import step.resources.ResourcePlugin;
 public class GridPlugin extends AbstractControllerPlugin {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
+	
+	private static final String functionEntityName = "functions";
 
 	private GridImpl grid;
 	private GridClient client;
@@ -134,6 +140,9 @@ public class GridPlugin extends AbstractControllerPlugin {
 		context.put(GridClient.class, client);
 				
 		context.put(FunctionAccessor.class, functionAccessor);
+		context.getEntityManager().register(new Entity<Function, FunctionAccessorImpl>(
+				GridPlugin.functionEntityName, (FunctionAccessorImpl) functionAccessor, Function.class, 
+				new GenericDBImporter<Function,FunctionAccessorImpl>(context)));
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
 		

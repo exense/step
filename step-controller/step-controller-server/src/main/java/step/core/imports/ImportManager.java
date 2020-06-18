@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.GlobalContext;
 import step.core.Version;
+import step.core.entities.EntityManager;
 import step.core.export.ImportExportMapper;
 import step.core.objectenricher.ObjectEnricher;
 
@@ -82,7 +83,7 @@ public class ImportManager {
 	private void importEntitiesByType(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, List<String> entitiesFilter, Version version) throws IOException, InstantiationException, IllegalAccessException {
 		String name = jParser.getCurrentName();
 		boolean skip = skipEntityType(entitiesFilter, name);
-		Importer importer = ImportExportMapper.createImporter(name, context);
+		Importer importer = context.getEntityManager().getEntityByName(name).getImporter();
 		if (!skip) {
 			if (importer==null) {
 				throw new RuntimeException("The entity type with name '" + name + "' is unsupported.");
@@ -101,8 +102,8 @@ public class ImportManager {
 	}
 	
 	private void importOlderPlans(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter, String firstKey, String firstValue) throws InstantiationException, IllegalAccessException, IOException {
-		if (firstKey.equals("_class") && !skipEntityType(entitiesFilter,"plans")) {
-			Importer importer = ImportExportMapper.createImporter("plans", context);
+		if (firstKey.equals("_class") && !skipEntityType(entitiesFilter,EntityManager.plans)) {
+			Importer importer = context.getEntityManager().getEntityByName(EntityManager.plans).getImporter();
 			Version version = new Version(3,12,0);
 			//3.13
 			if (firstValue.startsWith("step.")) {

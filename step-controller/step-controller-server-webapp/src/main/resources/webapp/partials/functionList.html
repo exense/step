@@ -7,6 +7,16 @@
 				</button>
 			</div>
 			<div class="btn-group btn-group-menu">
+				<button type="button" ng-disabled="!authService.hasRight('kw-write')" class="btn btn-default" ng-click="importFunctions()" uib-tooltip="Import Keywords"
+					tooltip-append-to-body="true" tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-import"></span>
+				</button>
+				<button type="button" ng-disabled="!authService.hasRight('kw-write')" class="btn btn-default" ng-click="exportFunctions()" uib-tooltip="Export Keywords"
+					tooltip-append-to-body="true" tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-export"></span>
+				</button>
+			</div>
+			<div class="btn-group btn-group-menu">
 				<button type="button" ng-disabled="!authService.hasRight('kw-write')" class="btn btn-success" ng-click="addFunction()">New keyword</button>
 			</div>
 			<div class="btn-group btn-group-menu" ng-repeat="entry in viewRegistry.getDashlets('/functions/actions')" >

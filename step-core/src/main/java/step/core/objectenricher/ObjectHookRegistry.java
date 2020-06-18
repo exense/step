@@ -25,5 +25,14 @@ public class ObjectHookRegistry extends ArrayList<ObjectHook> {
 		return ObjectEnricherComposer
 				.compose(stream().map(hook -> hook.getObjectEnricher(context)).collect(Collectors.toList()));
 	}
+	
+	/**
+	 * @param context
+	 * @return the composed {@link ObjectEnricher} based on all the registered hooks
+	 */
+	public ObjectEnricher getObjectDrainer(AbstractContext context) {
+		return ObjectEnricherComposer
+				.compose(stream().map(hook -> hook.getObjectDrainer(context)).collect(Collectors.toList()));
+	}
 
 }

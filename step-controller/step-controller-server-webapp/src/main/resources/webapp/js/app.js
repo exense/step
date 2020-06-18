@@ -493,6 +493,43 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 })
 
+.factory('ImportDialogs', function ($rootScope, $uibModal, EntityRegistry,$sce) {
+  var dialogs = {};
+  
+  dialogs.displayImportDialog = function(title,path) {
+    var modalInstance = $uibModal.open({
+      backdrop: 'static',
+      templateUrl: 'partials/plans/importPlansDialog.html',
+      controller: 'importModalCtrl',
+      resolve: {
+        title: function() {return title;},
+        path: function() {return path;}}
+    });
+    return modalInstance.result;
+  }
+
+  return dialogs;
+})
+
+.controller('importModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs, title, path) {
+  $scope.title = title;
+  $scope.resourcePath; 
+  
+  $scope.save = function() {
+    if($scope.resourcePath) {
+      $http({url:"rest/import/" + path,method:"POST",params:{path:$scope.resourcePath}}).then(function(response) {
+        $uibModalInstance.close(response.data);
+      })      
+    } else {
+      Dialogs.showErrorMsg("Upload not completed.");
+    }
+  }
+  
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+})
+
 .factory('Dialogs', function ($rootScope, $uibModal, EntityRegistry,$sce) {
 	var dialogs = {};
 

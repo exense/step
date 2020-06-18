@@ -62,7 +62,7 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
   });
 })
 
-.controller('PlanListCtrl', function($rootScope, $scope, $http, $location, $uibModal, stateStorage, ExportService, Dialogs, PlanDialogs, AuthService) {
+.controller('PlanListCtrl', function($rootScope, $scope, $http, $location, $uibModal, stateStorage, ExportService, Dialogs, PlanDialogs, ImportDialogs, AuthService) {
     stateStorage.push($scope, 'list', {});	
     $scope.authService = AuthService;
     
@@ -111,14 +111,7 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
     }
     
     $scope.importPlans = function() {
-      var modalInstance = $uibModal.open({
-        backdrop: 'static',
-        templateUrl: 'partials/plans/importPlansDialog.html',
-        controller: 'importPlansModalCtrl',
-        resolve: {}
-      });
-
-      modalInstance.result.then(function () {
+      ImportDialogs.displayImportDialog('Plans import','plans').then(function () {
         reload();
       });
     }
@@ -187,24 +180,6 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
         }
       })
     })
-  }
-  
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss('cancel');
-  };
-})
-
-.controller('importPlansModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs) {
-  $scope.resourcePath; 
-  
-  $scope.save = function() {
-    if($scope.resourcePath) {
-      $http({url:"rest/import/artefact",method:"POST",params:{path:$scope.resourcePath}}).then(function(response) {
-        $uibModalInstance.close(response.data);
-      })      
-    } else {
-      Dialogs.showErrorMsg("Upload not completed.");
-    }
   }
   
   $scope.cancel = function () {

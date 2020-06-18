@@ -15,7 +15,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.GlobalContext;
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.Accessor;
+import step.core.accessors.CRUDAccessor;
+import step.core.entities.Entity;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 
 public class ExportManager {	
@@ -29,19 +31,23 @@ public class ExportManager {
 		this.context = context;
 	}
 	
-	public void exportById(OutputStream outputStream, Map<String, String> metadata, String id, String entityType) throws FileNotFoundException, IOException {
-		export(outputStream, metadata, id, null, entityType);
+	public void exportById(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, String id, String entityType) throws FileNotFoundException, IOException {
+		export(outputStream, objectEnricher, metadata, id, null, entityType);
 	}
 	
-	public void exportAll(OutputStream outputStream, Map<String, String> metadata, ObjectPredicate objectPredicate, String entityType) throws FileNotFoundException, IOException {
-		export(outputStream, metadata, null, objectPredicate, entityType);
+	public void exportAll(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, ObjectPredicate objectPredicate, String entityType) throws FileNotFoundException, IOException {
+		export(outputStream, objectEnricher, metadata, null, objectPredicate, entityType);
 	}
 
-	private void export(OutputStream outputStream, Map<String, String> metadata, String id, ObjectPredicate objectPredicate, String entityType)
+	private void export(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, String id, ObjectPredicate objectPredicate, String entityType)
 			throws FileNotFoundException, IOException {
 		ObjectMapper mapper = ImportExportMapper.getMapper(context.getCurrentVersion());
 		try (JsonGenerator jGen = mapper.getFactory().createGenerator(outputStream, JsonEncoding.UTF8)) {
-			Accessor<? extends AbstractIdentifiableObject> accessor = ImportExportMapper.getAccessorByName(context, entityType);
+			Entity<?, ?> entity = context.getEntityManager().getEntityByName(entityType);
+			if (entity == null ) {
+				throw new RuntimeException("Entity of type " + entityType + " is not supported");
+			}
+			CRUDAccessor<? extends AbstractIdentifiableObject> accessor = entity.getAccessor();
 			// pretty print
 			jGen.useDefaultPrettyPrinter();
 			jGen.writeStartObject();
@@ -49,11 +55,14 @@ public class ExportManager {
 			jGen.writeArrayFieldStart(entityType);
 			//entity by id
 			if (id != null) {
-				jGen.writeObject(accessor.get(id));
+				AbstractIdentifiableObject a = accessor.get(id);
+				objectEnricher.accept(a);
+				jGen.writeObject(a);
 			} else if (objectPredicate != null) {
 				accessor.getAll().forEachRemaining(a -> {
 					if (objectPredicate.test(a)) {
 						try {
+							objectEnricher.accept(a);
 							jGen.writeObject(a);
 						} catch (Exception e) {
 							logger.error("Error while exporting entity " + a.getId().toString(), e);

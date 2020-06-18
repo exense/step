@@ -25,6 +25,7 @@ import step.core.accessors.MongoClientSession;
 import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.entities.EntityManager;
 import step.core.execution.EventManager;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plans.PlanAccessor;
@@ -60,6 +61,8 @@ public class GlobalContext extends AbstractContext {
 	private DynamicBeanResolver dynamicBeanResolver;
 	
 	private EventManager eventManager;
+	
+	private EntityManager entityManager;
 	
 	private ArtefactRegistry artefactRegistry;
 	
@@ -184,6 +187,14 @@ public class GlobalContext extends AbstractContext {
 	public Version getCurrentVersion() {
 		// TODO read this from manifest
 		return new Version(3,14,0);
+	}
+
+	public EntityManager getEntityManager() {
+		return entityManager;
+	}
+
+	public void setEntityManager(EntityManager entityManager) {
+		this.entityManager = entityManager;
 	}
 	
 }

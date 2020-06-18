@@ -20,6 +20,8 @@ import step.core.deployment.Secured;
 import step.core.deployment.Session;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
+import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.PlanAccessor;
 import step.resources.Resource;
@@ -38,6 +40,8 @@ public class ExportServices extends AbstractServices {
 	
 	PlanAccessor accessor;
 	
+	ObjectHookRegistry objectHookRegistry;
+	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -45,6 +49,7 @@ public class ExportServices extends AbstractServices {
 		exportTaskManager = getContext().get(ExportTaskManager.class);
 		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
 		exportManager = new ExportManager(getContext());
+		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 	}
 
 	@GET
@@ -52,14 +57,15 @@ public class ExportServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public ExportStatus exportArtefact(@PathParam("id") String id) {
+	public ExportStatus exportPlan(@PathParam("id") String id) {
 		Map<String,String> metadata = getMetadata();
+		ObjectEnricher objectDrainer = objectHookRegistry.getObjectDrainer(getSession());
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws IOException {
 				String planName = accessor.get(id).getAttributes().get(AbstractOrganizableObject.NAME);
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, planName + ".json");
-				exportManager.exportById(resourceContainer.getOutputStream(), metadata, id, "plans");
+				exportManager.exportById(resourceContainer.getOutputStream(),objectDrainer , metadata, id, "plans");
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
@@ -75,18 +81,19 @@ public class ExportServices extends AbstractServices {
 	}
 	
 	@GET
-	@Path("/plans")
+	@Path("/{entity}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public ExportStatus exportAllArtefacts() {
+	public ExportStatus exportAllArtefacts(@PathParam("entity") String entity) {
 		Session session = getSession();
 		Map<String,String> metadata = getMetadata();
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "Plans.json");
-				exportManager.exportAll(resourceContainer.getOutputStream(), metadata, objectPredicateFactory.getObjectPredicate(session),"plans");
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, entity + ".json");
+				exportManager.exportAll(resourceContainer.getOutputStream(), objectHookRegistry.getObjectDrainer(session), 
+						metadata, objectPredicateFactory.getObjectPredicate(session),entity);
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
