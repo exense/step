@@ -3,6 +3,8 @@ package step.core.execution;
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
+import step.core.artefacts.handlers.ArtefactHandlerManager;
+import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
@@ -39,6 +41,7 @@ public class ControllerExecutionContextBuilder {
 			context.put(ExecutionManager.class, executionManager);
 		} else {
 			context = new ExecutionContext(executionId);
+			context.setArtefactHandlerManager(new ArtefactHandlerManager(context, ArtefactHandlerRegistry.getInstance()));
 			context.setExpressionHandler(globalContext.getExpressionHandler());
 			context.setDynamicBeanResolver(globalContext.getDynamicBeanResolver());
 			context.setConfiguration(globalContext.getConfiguration());

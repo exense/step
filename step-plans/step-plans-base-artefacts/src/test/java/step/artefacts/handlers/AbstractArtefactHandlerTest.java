@@ -26,7 +26,6 @@ import java.util.stream.StreamSupport;
 
 import step.artefacts.CheckArtefact;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -42,11 +41,19 @@ public class AbstractArtefactHandlerTest {
 	}
 	
 	protected void createSkeleton(AbstractArtefact artefact) {
-		ArtefactHandler.delegateCreateReportSkeleton(context, artefact,context.getReport());
+		createSkeleton(artefact,context.getReport());
 	}
 	
-	protected void execute(AbstractArtefact artefact) {
-		ArtefactHandler.delegateExecute(context, artefact,context.getReport());
+	protected void createSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
+		context.getArtefactHandlerManager().createReportSkeleton(artefact, parentNode);
+	}
+	
+	protected ReportNode execute(AbstractArtefact artefact) {
+		return execute(artefact,context.getReport());
+	}
+	
+	protected ReportNode execute(AbstractArtefact artefact, ReportNode parentNode) {
+		return context.getArtefactHandlerManager().execute(artefact, parentNode);
 	}
 	
 	protected ReportNode getFirstReportNode() {

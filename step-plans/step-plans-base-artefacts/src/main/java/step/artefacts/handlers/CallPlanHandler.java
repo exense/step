@@ -75,7 +75,7 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
 		Plan a = selectPlan(testArtefact);
 		
-		ReportNode resultNode = delegateExecute(context, a.getRoot(), node);
+		ReportNode resultNode = delegateExecute(a.getRoot(), node);
 		node.setStatus(resultNode.getStatus());
 	}
 

@@ -5,7 +5,7 @@ import java.util.Map;
 import org.bson.types.ObjectId;
 
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.plans.Plan;
@@ -41,8 +41,9 @@ public class ControllerPlanRunner implements PlanRunner {
 		
 		executionLifecycleManager.executionStarted();
 		
-		ArtefactHandler.delegateCreateReportSkeleton(executionContext, root, rootReportNode);
-		ReportNode planReportNode = ArtefactHandler.delegateExecute(executionContext, root, rootReportNode);
+		ArtefactHandlerManager artefactHandlerManager = executionContext.getArtefactHandlerManager();
+		artefactHandlerManager.createReportSkeleton(root, rootReportNode);
+		ReportNode planReportNode = artefactHandlerManager.execute(root, rootReportNode);
 		
 		if(planReportNode!=null && planReportNode.getStatus() != null) {
 			ReportNodeStatus resultStatus = planReportNode.getStatus();

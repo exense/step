@@ -83,7 +83,7 @@ public class PlanBuilderTest {
 		protected void execute_(ReportNode node, CustomArtefact testArtefact) throws Exception {
 			if(testArtefact.getChildren()!=null) {
 				testArtefact.getChildren().forEach(child->{
-					ArtefactHandler.delegateExecute(context, child, node);
+					delegateExecute(child, node);
 				});
 			}
 			node.setStatus(ReportNodeStatus.PASSED);

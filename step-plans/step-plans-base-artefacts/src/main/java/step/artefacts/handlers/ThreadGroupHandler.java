@@ -96,7 +96,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 						thread.setPacing(pacing);
 						thread.setThreadGroup(testArtefact);
 						
-						ReportNode threadReportNode = delegateExecute(context, thread, node, new HashMap<>());
+						ReportNode threadReportNode = delegateExecute(thread, node, new HashMap<>());
 						reportNodeStatusComposer.addStatusAndRecompose(threadReportNode.getStatus());
 					} catch (Exception e) {
 						failWithException(node, e);
@@ -233,7 +233,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 									//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
 									newVariable.put(thread.threadGroup.getItem().get(), thread.gcounter.intValue());
 									
-									iterationReportNode = delegateExecute(context, iterationTestCase, sessionReportNode, newVariable);
+									iterationReportNode = delegateExecute(iterationTestCase, sessionReportNode, newVariable);
 									sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
 									
 									DynamicValue<Integer> maxDurationProp = thread.threadGroup.getMaxDuration();

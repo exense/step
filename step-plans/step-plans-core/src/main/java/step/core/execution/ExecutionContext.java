@@ -20,6 +20,7 @@ package step.core.execution;
 
 import ch.exense.commons.app.Configuration;
 import step.core.AbstractContext;
+import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
@@ -34,6 +35,8 @@ import step.expressions.ExpressionHandler;
 
 public class ExecutionContext extends AbstractContext  {
 		
+	private ArtefactHandlerManager artefactHandlerManager;
+	
 	private ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
 
 	private ExecutionParameters executionParameters;
@@ -75,6 +78,14 @@ public class ExecutionContext extends AbstractContext  {
 				
 		reportNodeCache = new ReportNodeCache();
 		variablesManager = new VariablesManager(this);
+	}
+
+	public ArtefactHandlerManager getArtefactHandlerManager() {
+		return artefactHandlerManager;
+	}
+
+	public void setArtefactHandlerManager(ArtefactHandlerManager artefactHandlerManager) {
+		this.artefactHandlerManager = artefactHandlerManager;
 	}
 
 	public String getExecutionType() {

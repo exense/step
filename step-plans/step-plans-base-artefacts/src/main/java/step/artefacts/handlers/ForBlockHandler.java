@@ -130,7 +130,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 								}, "Iteration "+i, newVariable);
 							} else {
 								Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration "+i, true);
-								iterationReportNode = delegateExecute(context, iterationTestCase, node, newVariable);
+								iterationReportNode = delegateExecute(iterationTestCase, node, newVariable);
 							}
 							
 							reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());

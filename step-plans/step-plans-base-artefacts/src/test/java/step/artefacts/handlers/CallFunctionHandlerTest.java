@@ -37,8 +37,6 @@ import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -67,7 +65,7 @@ import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.tokenpool.Interest;
 
-public class CallFunctionHandlerTest {
+public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 	
 	private static final ObjectId FUNCTION_ID_ERROR = new ObjectId();
 	private static final ObjectId FUNCTION_ID_SUCCESS = new ObjectId();
@@ -92,7 +90,7 @@ public class CallFunctionHandlerTest {
 		CallFunction callFunction = new CallFunction();
 		callFunction.setFunctionId(function.getId().toString());
 		
-		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
+		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 
 		Assert.assertEquals(1, node.getAttachments().size());
 		AttachmentMeta attachment = node.getAttachments().get(0);
@@ -117,7 +115,7 @@ public class CallFunctionHandlerTest {
 		CallFunction callFunction = new CallFunction();
 		callFunction.setFunction(new DynamicValue<String>("{\"name\":\"MyFunction\"}"));
 		
-		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
+		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 
 		Assert.assertEquals(1, node.getAttachments().size());
 		AttachmentMeta attachment = node.getAttachments().get(0);
@@ -146,7 +144,7 @@ public class CallFunctionHandlerTest {
 		callFunction.setFunctionId(function.getId().toString());
 		callFunction.setResultMap(new DynamicValue<String>("map"));
 		
-		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
+		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 
 		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		
@@ -183,7 +181,7 @@ public class CallFunctionHandlerTest {
 		callFunction.setFunctionId(function.getId().toString());
 		callFunction.setResultMap(new DynamicValue<String>("dataSet"));
 		
-		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
+		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 
 		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		
@@ -219,7 +217,7 @@ public class CallFunctionHandlerTest {
 		CallFunction callFunction = new CallFunction();
 		callFunction.setFunctionId(function.getId().toString());
 		
-		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, executionContext.getReport());
+		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 		
 		Assert.assertEquals("My Error", node.getError().getMsg());
 	}
@@ -238,7 +236,7 @@ public class CallFunctionHandlerTest {
 		CallFunction callFunction = new CallFunction();
 		callFunction.setFunctionId(function.getId().toString());
 		
-		CallFunctionReportNode node = (CallFunctionReportNode) ArtefactHandler.delegateExecute(executionContext, callFunction, new ReportNode());
+		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 		
 		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		Assert.assertEquals("{}", node.getOutput());
@@ -257,6 +255,9 @@ public class CallFunctionHandlerTest {
 		executionContext.put(FunctionAccessor.class, funcitonAccessor);
 		executionContext.put(FunctionRouter.class, functionRouter);
 		executionContext.put(FunctionExecutionService.class, functionExecutionService);
+		
+		context = executionContext;
+		
 		return executionContext;
 	}
 

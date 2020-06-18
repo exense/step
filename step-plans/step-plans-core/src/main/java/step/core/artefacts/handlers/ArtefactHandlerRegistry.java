@@ -57,26 +57,6 @@ public class ArtefactHandlerRegistry {
 	public static ArtefactHandlerRegistry getInstance() {
 		if(instance == null) {
 			instance = new ArtefactHandlerRegistry();
-//			instance.register(ForEachBlock.class, ForBlockHandler.class);
-//			instance.register(ForBlock.class, ForBlockHandler.class);
-//			instance.register(Session.class, SessionHandler.class);
-//			instance.register(TestCase.class, TestCaseHandler.class);
-//			instance.register(TestSet.class, TestSetHandler.class);
-//			instance.register(SetVar.class, SetVarHandler.class);
-//			instance.register(TestStep.class, TestStepHandler.class);
-//			instance.register(ManualTestStep.class, ManualTestStepHandler.class);
-//			instance.register(ErrorMessenger.class, ErrorMessengerHandler.class);
-//			instance.register(IfBlock.class, IfBlockHandler.class);
-//			instance.register(TestGroup.class, TestGroupHandler.class);
-//			instance.register(TestScenario.class, TestScenarioHandler.class);
-//			instance.register(Select.class, SelectHandler.class);
-//			instance.register(Case.class, CaseHandler.class);
-//			instance.register(Call.class, CallHandler.class);
-//			instance.register(Sequence.class, SequenceHandler.class);
-//			instance.register(Check.class, CheckHandler.class);
-//			instance.register(Set.class, SetHandler.class);
-//			instance.register(RetryIfFails.class, RetryIfFailsHandler.class);
-
 		}
 		return instance;
 	}

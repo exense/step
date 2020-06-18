@@ -30,7 +30,6 @@ import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.functions.FunctionGroupHandle;
 
 public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFailsReportNode> {
 
@@ -74,7 +73,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 				//Cleanup intermediate results if persist only last results is ON
 				node.incSkipped();
 				context.getEventManager().notifyReportNodeUpdated(node);
-				removeReportNode(iterationReportNode, context.getReportNodeAccessor());
+				removeReportNode(iterationReportNode);
 			}
 			
 			try {
@@ -87,7 +86,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 				}
 				OperationManager.getInstance().enter("RetryIfFails", details , node.getId().toString());
 				if (releaseToken && inSession) {
-					releaseTokens(testArtefact);
+					releaseTokens();
 					node.setReleasedToken(true);
 				}
 				context.getEventManager().notifyReportNodeUpdated(node);

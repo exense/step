@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ContextBuilder;
@@ -42,7 +41,7 @@ public class DefaultPlanRunner implements PlanRunner {
 		}
 		ReportNode rootReportNode = context.getReport();
 		AbstractArtefact rootArtefact = plan.getRoot();
-		ReportNode planReportNode = ArtefactHandler.delegateExecute(context, rootArtefact, rootReportNode);
+		ReportNode planReportNode = context.getArtefactHandlerManager().execute(rootArtefact, rootReportNode);
 		
 		if(planReportNode != null && planReportNode.getStatus() != null) {
 			ReportNodeStatus resultStatus = planReportNode.getStatus();

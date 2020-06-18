@@ -26,6 +26,7 @@ import step.artefacts.AfterSequence;
 import step.artefacts.BeforeSequence;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
@@ -33,15 +34,17 @@ import step.core.execution.ExecutionContext;
 public class SequentialArtefactScheduler {
 
 	private final ExecutionContext context;
+	private ArtefactHandlerManager artefactHandlerManager;
 	
 	public SequentialArtefactScheduler(ExecutionContext context) {
 		super();
 		this.context = context;
+		artefactHandlerManager = context.getArtefactHandlerManager();
 	}
 
 	public void createReportSkeleton_(ReportNode node, AbstractArtefact testArtefact) {
 		for (AbstractArtefact child : ArtefactHandler.getChildren(testArtefact, context)) {
-			ArtefactHandler.delegateCreateReportSkeleton(context, child, node);
+			artefactHandlerManager.createReportSkeleton(child, node);
 		}
 	}
 
@@ -88,7 +91,7 @@ public class SequentialArtefactScheduler {
 		try {
 			// Execute the BeforeSequence artefacts
 			for (AbstractArtefact beforeArtefact : beforeArtefacts) {
-				ReportNode resultNode = ArtefactHandler.delegateExecute(context, beforeArtefact, reportNode);
+				ReportNode resultNode = artefactHandlerManager.execute(beforeArtefact, reportNode);
 				reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
 			}
 			
@@ -98,7 +101,7 @@ public class SequentialArtefactScheduler {
 		} finally {
 			// Execute the AfterSequence artefacts
 			for (AbstractArtefact afterArtefact : afterArtefacts) {
-				ReportNode resultNode = ArtefactHandler.delegateExecute(context, afterArtefact, reportNode);
+				ReportNode resultNode = artefactHandlerManager.execute(afterArtefact, reportNode);
 				reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
 			}
 		}
@@ -120,7 +123,7 @@ public class SequentialArtefactScheduler {
 					if (context.isInterrupted()) {
 						break;
 					}
-					ReportNode resultNode = ArtefactHandler.delegateExecute(context, child, reportNode);
+					ReportNode resultNode = artefactHandlerManager.execute(child, reportNode);
 					reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
 	
 					if (resultNode.getStatus() == ReportNodeStatus.TECHNICAL_ERROR

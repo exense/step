@@ -38,46 +38,45 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
+import step.core.execution.ReportNodeCache;
 import step.core.execution.ReportNodeEventListener;
 import step.core.functions.FunctionGroupHandle;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
+import step.core.variables.VariablesManager;
 import step.resources.ResourceManager;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 	
 	protected static Logger logger = LoggerFactory.getLogger(ArtefactHandler.class);
 	
-	protected ExecutionContext context;
-	
-	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
-	
-	protected ReportNodeAttributesManager reportNodeAttributesManager;
-	
 	public static String FILE_VARIABLE_PREFIX = "file:";
 
+	protected ExecutionContext context;
+	private ArtefactHandlerManager artefactHandlerManager;
+	private ReportNodeAttachmentManager reportNodeAttachmentManager;
+	private ReportNodeAttributesManager reportNodeAttributesManager;
 	private WorkArtefactFactory workArtefactFactory = new WorkArtefactFactory();
 	
-	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {
-		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, false);
-	}
-	
-	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name, boolean copyChildren,boolean persistNode) {
-		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, copyChildren, persistNode);
-	}
-
-	public <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name, boolean copyChildren) {
-		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, copyChildren);
-	}
-	
+	private ReportNodeAccessor reportNodeAccessor;
+	private VariablesManager variablesManager;
+	private ReportNodeCache reportNodeCache;
+	private DynamicBeanResolver dynamicBeanResolver;
+		
 	public ArtefactHandler() {
 		super();		
 	}
 	
 	public void init(ExecutionContext context) {
 		this.context = context;
+		artefactHandlerManager = context.getArtefactHandlerManager();
+		reportNodeAccessor = context.getReportNodeAccessor();
+		reportNodeCache = context.getReportNodeCache();
+		variablesManager = context.getVariablesManager();
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		reportNodeAttributesManager = new ReportNodeAttributesManager(context);
+		dynamicBeanResolver = context.getDynamicBeanResolver();
+		resourceManager = context.get(ResourceManager.class);
 	}
 	
 	private enum Phase {
@@ -86,65 +85,170 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		EXECUTION;
 	}
+	
+	public void createReportSkeleton(ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {		
+		REPORT_NODE reportNode = beforeDelegation(Phase.SKELETON_CREATION, parentReportNode, artefact, newVariables);
+		
+		try {
+			dynamicBeanResolver.evaluate(artefact, getBindings());
+			
+			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
+			if(filter!=null&&!filter.isSelected(artefact)) {
+				reportNode.setStatus(ReportNodeStatus.SKIPPED);
+			} else {
+				createReportSkeleton_(reportNode, artefact);
+			}
+		} catch (Exception e) {
+			getListOfArtefactsNotInitialized().add(artefact.getId().toString());
+			failWithException(reportNode, e, false);
+		}
+		
+		if(artefact.isCreateSkeleton()) {
+			saveReportNode(reportNode);
+		}
+		
+		context.getExecutionCallbacks().afterReportNodeSkeletonCreation(context, reportNode);
+		
+		afterDelegation(reportNode, parentReportNode, artefact);
+	}
+	
+	protected abstract void createReportSkeleton_(REPORT_NODE parentNode, ARTEFACT testArtefact);
+	
+	public ReportNode execute(REPORT_NODE parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {		
+		// If the artefact hasn't been initialized during createReportSkeleton phase, relaunch the skeleton creation phase for this node
+		if(getListOfArtefactsNotInitialized().contains(artefact.getId().toString())) {
+			createReportSkeleton(parentReportNode, artefact, newVariables);
+		}
+		
+		REPORT_NODE reportNode = beforeDelegation(Phase.EXECUTION, parentReportNode, artefact, newVariables);
+		
+		long t1 = System.currentTimeMillis();
+		reportNode.setExecutionTime(t1);
+		reportNode.setStatus(ReportNodeStatus.RUNNING);
+		
+		boolean persistBefore = variablesManager.getVariableAsBoolean("tec.execution.reportnodes.persistbefore",true);		
+		boolean persistAfter = variablesManager.getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
+		boolean persistOnlyNonPassed = variablesManager.getVariableAsBoolean("tec.execution.reportnodes.persistonlynonpassed",false);
+		
+		try {
+			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
+			
+			dynamicBeanResolver.evaluate(artefact, getBindings());
+			reportNode.setArtefactInstance(artefact);
+			reportNode.setResolvedArtefact(artefact);
+			
+			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
+			if((filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get()) {
+				reportNode.setStatus(ReportNodeStatus.SKIPPED);
+			} else {
+				if(persistBefore && artefact.isPersistNode()) {
+					saveReportNode(reportNode);					
+				}
+				
+				execute_(reportNode, artefact);
+			}
+		} catch (Exception e) {
+			failWithException(reportNode, e);
+		}
+		long duration = System.currentTimeMillis() - t1;
+		
+		reportNode.setDuration((int)duration);
+
+		if(persistAfter && artefact.isPersistNode()) {
+			if(!persistOnlyNonPassed){
+				saveReportNode(reportNode);
+			} else {
+				if(!reportNode.getStatus().equals(ReportNodeStatus.PASSED)){
+					saveReportNode(reportNode);
+				}
+			}
+		}
+		
+		context.getExecutionCallbacks().afterReportNodeExecution(context, reportNode);
+		
+		afterDelegation(reportNode, parentReportNode, artefact);
+		
+		return reportNode;
+	}
+	
+	/**
+	 * Execute the provided artefact and report the execution to the provided report node
+	 * @param reportNode the {@link ReportNode} corresponding to the artefact
+	 * @param artefact the {@link AbstractArtefact} to be executed
+	 * @throws Exception
+	 */
+	protected abstract void execute_(REPORT_NODE reportNode, ARTEFACT artefact) throws Exception;
 		
 	@SuppressWarnings("unchecked")
-	private REPORT_NODE beforeDelegation(Phase executionPhase, ReportNode parentNode, ARTEFACT testArtefact,  Map<String, Object> newVariables) {
-		REPORT_NODE node;
+	private REPORT_NODE beforeDelegation(Phase executionPhase, ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {
+		REPORT_NODE reportNode;
 		
-		if(executionPhase==Phase.EXECUTION && testArtefact.isCreateSkeleton()) {
-			ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
-			
+		if(executionPhase==Phase.EXECUTION && artefact.isCreateSkeleton()) {
 			// search for the report node that has been created during skeleton phase
-			node = (REPORT_NODE) reportNodeAccessor.getReportNodeByParentIDAndArtefactID(parentNode.getId(), testArtefact.getId());
-			if(node == null) {
+			reportNode = (REPORT_NODE) reportNodeAccessor.getReportNodeByParentIDAndArtefactID(parentReportNode.getId(), artefact.getId());
+			if(reportNode == null) {
 				// the report node created during the createSkeleton phase couldn't be found.
 				// the reason might be that at least one report node in the path to the current report node hasn't been persisted
 				// if one node gets persisted or not depends on the ArtefactType: AbstractArtefact.isCreateSkeleton()
 				// It is therefore depending on the Plan if all the nodes of the path are persisted.
 				// We use to throw an exception in that case but it seems to be a better option to just ignore this
 				// and create the node again instead of throwing an error
-				node = createReportNode(parentNode, testArtefact);
+				reportNode = createReportNode(parentReportNode, artefact);
 				//throw new RuntimeException("Unable to find report node during execution phase. "
 				//		+ "The report node should have been created during skeleton creation phase as the artefact has createSkeleton flag enabled. AbstractArtefact="+testArtefact.toString()+ ". ParentNode:"+ parentNode.toString());
 			}
 		} else {
-			node = createReportNode(parentNode, testArtefact);			
+			reportNode = createReportNode(parentReportNode, artefact);			
 		}
 
-		context.setCurrentReportNode(node);
-		
-		context.getReportNodeCache().put(node);
+		context.setCurrentReportNode(reportNode);
+		reportNodeCache.put(reportNode);
 		
 		if(newVariables!=null) {
 			for(Entry<String, Object> var:newVariables.entrySet()) {
-				context.getVariablesManager().putVariable(node, var.getKey(), var.getValue());
+				variablesManager.putVariable(reportNode, var.getKey(), var.getValue());
 			}
 		}
 		
-		handleAttachments(testArtefact, node);
+		handleAttachments(artefact, reportNode);
 		
-		context.getVariablesManager().putVariable(parentNode, "currentArtefact", testArtefact);
-		context.getVariablesManager().putVariable(parentNode, "currentReport", node);
+		variablesManager.putVariable(parentReportNode, "currentArtefact", artefact);
+		variablesManager.putVariable(parentReportNode, "currentReport", reportNode);
 		
-		addCustomReportNodeAttributes(node);
+		addCustomReportNodeAttributes(reportNode);
 		
 		if(executionPhase==Phase.EXECUTION) {
-			addReportNodeUpdateListener(node,context.getReportNodeAccessor());
+			addReportNodeUpdateListener(reportNode);
 		}
 		
-		return node;
+		return reportNode;
+	}
+
+	protected void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
+		artefactHandlerManager.createReportSkeleton(artefact, parentNode, null);
 	}
 	
-	protected void addReportNodeUpdateListener(REPORT_NODE node, ReportNodeAccessor reportNodeAccessor) {
+	protected void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
+		artefactHandlerManager.createReportSkeleton(artefact, parentNode, newVariables);
+	}
+
+	protected ReportNode delegateExecute(AbstractArtefact artefact, ReportNode parentNode) {
+		return artefactHandlerManager.execute(artefact, parentNode, null);
+	}
+	
+	protected ReportNode delegateExecute(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
+		return artefactHandlerManager.execute(artefact, parentNode, newVariables);
+	}
+	
+	private void addReportNodeUpdateListener(REPORT_NODE node) {
 		context.getEventManager().addReportNodeEventListener(node, new ReportNodeEventListener() {
 			@Override
 			public void onUpdate() {
-				saveReportNode(node, reportNodeAccessor);
+				saveReportNode(node);
 			}
 			@Override
 			public void onDestroy() {}
 		});
-		
 	}
 
 	private void addCustomReportNodeAttributes(REPORT_NODE node) {
@@ -153,181 +257,66 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 	}
 	
-	private void afterDelegation(REPORT_NODE node, ReportNode parentNode, ARTEFACT testArtefact) {
-		context.getReportNodeCache().remove(node);
-		context.setCurrentReportNode(context.getReportNodeCache().get(node.getParentID().toString()));
+	private void afterDelegation(REPORT_NODE reportNode, ReportNode parentReportNode, ARTEFACT artefact) {
+		reportNodeCache.remove(reportNode);
+		variablesManager.releaseVariables(reportNode.getId().toString());
+
+		context.setCurrentReportNode(parentReportNode);
+		variablesManager.putVariable(parentReportNode, "report", reportNode);
 		
-		context.getVariablesManager().releaseVariables(node.getId().toString());
-		
-		context.getVariablesManager().putVariable(parentNode, "report", node);
-		
-		context.getEventManager().notifyReportNodeDestroyed(node);
-	}
-	
-	public void createReportSkeleton(ReportNode parentNode, ARTEFACT artefact,  Map<String, Object> newVariables) {		
-		REPORT_NODE node = beforeDelegation(Phase.SKELETON_CREATION, parentNode, artefact, newVariables);
-		
-		try {
-			context.getDynamicBeanResolver().evaluate(artefact, getBindings());
-			
-			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
-			if(filter!=null&&!filter.isSelected(artefact)) {
-				node.setStatus(ReportNodeStatus.SKIPPED);
-			} else {
-				createReportSkeleton_(node, artefact);
-			}
-		} catch (Exception e) {
-			getListOfArtefactsNotInitialized().add(artefact.getId().toString());
-			failWithException(node, e, false);
-		}
-		
-		if(artefact.isCreateSkeleton()) {
-			ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
-			saveReportNode(node, reportNodeAccessor);
-		}
-		
-		context.getExecutionCallbacks().afterReportNodeSkeletonCreation(context, node);
-		
-		afterDelegation(node, parentNode, artefact);
+		context.getEventManager().notifyReportNodeDestroyed(reportNode);
 	}
 
 	protected Map<String, Object> getBindings() {
 		return ExecutionContextBindings.get(context);
 	}
-	
-	protected abstract void createReportSkeleton_(REPORT_NODE parentNode, ARTEFACT testArtefact);
 
+	private static final String SKELETON_NOT_INIT = "SKELETON_NOT_INIT";
+
+	private ResourceManager resourceManager;
+	
 	@SuppressWarnings("unchecked")
 	private HashSet<String> getListOfArtefactsNotInitialized() {
-		Object o = context.get("SKELETON_NOT_INIT");
+		Object o = context.get(SKELETON_NOT_INIT);
 		HashSet<String> result;
-		if(o==null) {
+		if(o == null) {
 			result = new HashSet<String>();
-			context.put("SKELETON_NOT_INIT", result);
+			context.put(SKELETON_NOT_INIT, result);
 		} else {
 			result = (HashSet<String>) o;
 		}
 		return result;
 	}
-	
-	public ReportNode execute(REPORT_NODE parentNode, ARTEFACT artefact, Map<String, Object> newVariables) {		
-		if(getListOfArtefactsNotInitialized().contains(artefact.getId().toString())) {
-			createReportSkeleton(parentNode, artefact, newVariables);
-		}
-		
-		REPORT_NODE node = beforeDelegation(Phase.EXECUTION, parentNode, artefact, newVariables);
-		ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
-		
-		long t1 = System.currentTimeMillis();
-		node.setExecutionTime(t1);
-		node.setStatus(ReportNodeStatus.RUNNING);
-		
-		boolean persistBefore = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistbefore",true);		
-		boolean persistAfter = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
-		boolean persistOnlyNonPassed = context.getVariablesManager().getVariableAsBoolean("tec.execution.reportnodes.persistonlynonpassed",false);
-		
-		try {
-			context.getExecutionCallbacks().beforeReportNodeExecution(context, node);
-			
-			context.getDynamicBeanResolver().evaluate(artefact, getBindings());
-			node.setArtefactInstance(artefact);
-			node.setResolvedArtefact(artefact);
-			
-			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
-			if((filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get()) {
-				node.setStatus(ReportNodeStatus.SKIPPED);
-			} else {
-				if(persistBefore && artefact.isPersistNode()) {
-					saveReportNode(node, reportNodeAccessor);					
-				}
-				
-				execute_(node, artefact);
-			}
-		} catch (Exception e) {
-			failWithException(node, e);
-		}
-		long duration = System.currentTimeMillis() - t1;
-		
-		node.setDuration((int)duration);
 
-		if(persistAfter && artefact.isPersistNode()) {
-			if(!persistOnlyNonPassed){
-				saveReportNode(node, reportNodeAccessor);
-			} else {
-				if(!node.getStatus().equals(ReportNodeStatus.PASSED)){
-					saveReportNode(node, reportNodeAccessor);
-				}
-			}
-		}
-		
-		
-		context.getExecutionCallbacks().afterReportNodeExecution(context, node);
-		
-		afterDelegation(node, parentNode, artefact);
-		
-		return node;
-	}
 
-	protected ReportNode saveReportNode(REPORT_NODE node, ReportNodeAccessor reportNodeAccessor) {
-		AbstractArtefact resolvedArtefact = node.getResolvedArtefact();
+	private ReportNode saveReportNode(REPORT_NODE reportNode) {
+		AbstractArtefact resolvedArtefact = reportNode.getResolvedArtefact();
 		if(resolvedArtefact != null) {
 			List<AbstractArtefact> children = resolvedArtefact.getChildren();
 			// save the resolved artefact without children to save space
 			resolvedArtefact.setChildren(null);
 			try {
-				return reportNodeAccessor.save(node);
+				return reportNodeAccessor.save(reportNode);
 			} finally {
 				resolvedArtefact.setChildren(children);
 			}
 		} else {
-			return reportNodeAccessor.save(node);
+			return reportNodeAccessor.save(reportNode);
 		}
 	}
 	
-	protected void removeReportNode(ReportNode node, ReportNodeAccessor reportNodeAccessor) {
-		reportNodeAccessor.getChildren(node.getId()).forEachRemaining(e->removeReportNode(e, reportNodeAccessor));
+	protected void removeReportNode(ReportNode node) {
+		reportNodeAccessor.getChildren(node.getId()).forEachRemaining(e->removeReportNode(e));
 		reportNodeAccessor.remove(node.getId());
 		context.getExecutionCallbacks().rollbackReportNode(context, node);
 	}
-	
-	protected abstract void execute_(REPORT_NODE node, ARTEFACT testArtefact) throws Exception;
 
-	@SuppressWarnings("unchecked")
-	public static void delegateCreateReportSkeleton(ExecutionContext context, AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
-		ArtefactHandler<AbstractArtefact, ReportNode> testArtefactHandler = ArtefactHandlerRegistry.getInstance()
-				.getArtefactHandler((Class<AbstractArtefact>) artefact.getClass(), context);
-		testArtefactHandler.createReportSkeleton(parentNode, artefact, newVariables);
-	}
-	
-	public static void delegateCreateReportSkeleton(ExecutionContext context, AbstractArtefact artefact, ReportNode parentNode) {
-		delegateCreateReportSkeleton(context, artefact, parentNode, null);
-	}
-	
-	public void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
-		delegateCreateReportSkeleton(context, artefact, parentNode, null);
-	}
-	
-	public static ReportNode delegateExecute(ExecutionContext context, AbstractArtefact artefact, ReportNode parentNode) {
-		return delegateExecute(context, artefact, parentNode, null);
-	}
-	
-	public ReportNode delegateExecute(AbstractArtefact artefact, ReportNode parentNode) {
-		return delegateExecute(context, artefact, parentNode, null);
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static ReportNode delegateExecute(ExecutionContext context, AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
-		ArtefactHandler<AbstractArtefact, ReportNode> testArtefactHandler = ArtefactHandlerRegistry.getInstance()
-				.getArtefactHandler((Class<AbstractArtefact>) artefact.getClass(), context);
-		return testArtefactHandler.execute(parentNode, artefact, newVariables);
-	}
-	
-	private REPORT_NODE createReportNode(ReportNode parentNode, ARTEFACT testArtefact) {
-		REPORT_NODE node = createReportNode_(parentNode, testArtefact);
+	private REPORT_NODE createReportNode(ReportNode parentReportNode, ARTEFACT artefact) {
+		REPORT_NODE node = createReportNode_(parentReportNode, artefact);
 		node.setId(new ObjectId());
-		node.setName(getReportNodeName(testArtefact));
-		node.setParentID(parentNode.getId());
-		node.setArtefactID(testArtefact.getId());
+		node.setName(getReportNodeName(artefact));
+		node.setParentID(parentReportNode.getId());
+		node.setArtefactID(artefact.getId());
 		node.setExecutionID(context.getExecutionId().toString());
 		node.setStatus(ReportNodeStatus.NORUN);
 		return node;
@@ -336,7 +325,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private String getReportNodeName(ARTEFACT artefact) {
 		Map<String, String> attributes = artefact.getAttributes();
 		if (attributes != null) {
-			String name = attributes.get("name");
+			String name = attributes.get(AbstractArtefact.NAME);
 			if (name != null) {
 				return name;
 			}
@@ -344,7 +333,13 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return "Unnamed";
 	}
 	
-	public abstract REPORT_NODE createReportNode_(ReportNode parentNode, ARTEFACT testArtefact);	
+	/**
+	 * Creates the {@link ReportNode} corresponding to the provided artefact
+	 * @param parentReportNode the parent {@link ReportNode}
+	 * @param artefact the artefact to create the node for
+	 * @return 
+	 */
+	protected abstract REPORT_NODE createReportNode_(ReportNode parentReportNode, ARTEFACT artefact);	
 	
 	public List<AbstractArtefact> getChildren(AbstractArtefact artefact) { 
 		return getChildren(artefact, context);
@@ -362,27 +357,26 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return result;
 	}
 	
+	protected <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {
+		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, false);
+	}
+	
+	protected <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name, boolean copyChildren,boolean persistNode) {
+		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, copyChildren, persistNode);
+	}
+
+	protected <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name, boolean copyChildren) {
+		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, copyChildren);
+	}
+
 	private void handleAttachments(AbstractArtefact artefact, ReportNode report) {
 		List<ObjectId> attachments = artefact.getAttachments();
 		if(attachments!=null) {
 			for(ObjectId attachmentId:attachments) {
-				ResourceManager attachmentManager = context.get(ResourceManager.class);
-				File file = attachmentManager.getResourceFile(attachmentId.toString()).getResourceFile();
-				context.getVariablesManager().putVariable(report, FILE_VARIABLE_PREFIX+file.getName(), file);
+				File file = resourceManager.getResourceFile(attachmentId.toString()).getResourceFile();
+				variablesManager.putVariable(report, FILE_VARIABLE_PREFIX+file.getName(), file);
 			}
 		}
-	}
-	
-	protected static Integer asInteger(String string, Integer defaultValue) {
-		return string!=null&&string.length()>0?Integer.decode(string):defaultValue;
-	}
-	
-	protected static Integer asInteger(String string) {
-		return asInteger(string, null);
-	}
-	
-	protected static Boolean asBoolean(String string, Boolean defaultValue) {
-		return string!=null&&string.length()>0?Boolean.valueOf(string):defaultValue;
 	}
 	
 	protected void fail(ReportNode node, String error) {
@@ -410,8 +404,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		result.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 	}
 	
-	protected void releaseTokens( ARTEFACT testArtefact) {
-		FunctionGroupHandle handle = context.get(FunctionGroupHandle.class);
+	protected void releaseTokens() {
+		FunctionGroupHandle handle = getFunctionGroupHandle();
 		if (handle != null) {			
 			try {
 				handle.releaseTokens(context, false);
@@ -423,10 +417,14 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	protected boolean isInSession() {
 		boolean result=false;
-		FunctionGroupHandle handle = context.get(FunctionGroupHandle.class);
+		FunctionGroupHandle handle = getFunctionGroupHandle();
 		if (handle != null) {
 			return handle.isInSession(context);
 		}
 		return result;
+	}
+
+	private FunctionGroupHandle getFunctionGroupHandle() {
+		return context.get(FunctionGroupHandle.class);
 	}
 }

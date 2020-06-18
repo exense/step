@@ -46,7 +46,7 @@ import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
@@ -214,14 +214,16 @@ public class InteractiveServices extends AbstractServices {
 	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("planid") String planId, @PathParam("artefactid") String artefactId, ExecutionParameters executionParameters, @Context ContainerRequestContext crc) {
 		InteractiveSession session = getAndTouchSession(sessionId);
 		if(session!=null) {
-			Plan plan = session.c.getPlanAccessor().get(planId);
+			ExecutionContext context = session.c;
+			Plan plan = context.getPlanAccessor().get(planId);
 			AbstractArtefact artefact = new PlanNavigator(plan).findArtefactById(artefactId);
 
-			session.c.setCurrentReportNode(session.root);
-			ParameterManagerPlugin.putVariables(session.c, session.root, executionParameters.getExecutionParameters(), VariableType.IMMUTABLE);
+			context.setCurrentReportNode(session.root);
+			ParameterManagerPlugin.putVariables(context, session.root, executionParameters.getExecutionParameters(), VariableType.IMMUTABLE);
 			
-			ArtefactHandler.delegateCreateReportSkeleton(session.c, artefact, session.root);
-			ArtefactHandler.delegateExecute(session.c, artefact, session.root);
+			ArtefactHandlerManager artefactHandlerManager = context.getArtefactHandlerManager();
+			artefactHandlerManager.createReportSkeleton(artefact, session.root);
+			artefactHandlerManager.execute(artefact, session.root);
 
 			return null;			
 		} else {

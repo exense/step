@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import step.artefacts.CallPlan;
 import step.artefacts.CheckArtefact;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ContextBuilder;
 import step.core.plans.Plan;
@@ -35,8 +34,8 @@ public class CallPlanHandlerTest extends AbstractArtefactHandlerTest {
 		Plan plan = PlanBuilder.create().startBlock(callPlan).endBlock().build();
 		context.getPlanAccessor().save(plan);
 		
-		ArtefactHandler.delegateCreateReportSkeleton(context, plan.getRoot(),context.getReport());
-		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());	
+		createSkeleton(plan.getRoot());
+		execute(plan.getRoot());	
 		
 		Assert.assertTrue(executed.get());
 		Assert.assertTrue(getChildren(context.getReport()).get(0).getStatus().equals(ReportNodeStatus.PASSED));

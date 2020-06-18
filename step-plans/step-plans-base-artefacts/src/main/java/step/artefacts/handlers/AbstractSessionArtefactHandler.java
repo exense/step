@@ -23,7 +23,7 @@ public abstract class AbstractSessionArtefactHandler<ARTEFACT extends AbstractAr
 	protected void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer, String artefactName, Map<String, Object> newVariables) {
 		FunctionGroup functionGroup = createWorkArtefact(FunctionGroup.class, artefact, artefactName, true);
 		functionGroup.setConsumer(consumer);
-		delegateCreateReportSkeleton(context, functionGroup, node, newVariables);
+		delegateCreateReportSkeleton(functionGroup, node, newVariables);
 	}
 	
 	protected void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer) {
@@ -48,7 +48,7 @@ public abstract class AbstractSessionArtefactHandler<ARTEFACT extends AbstractAr
 	protected ReportNode executeInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer, String sessionArtefactName, Map<String, Object> newVariables) {
 		FunctionGroup functionGroup = createWorkArtefact(FunctionGroup.class, artefact, sessionArtefactName, true);
 		functionGroup.setConsumer(consumer);
-		ReportNode sessionReportNode = delegateExecute(context, functionGroup, node, newVariables);
+		ReportNode sessionReportNode = delegateExecute(functionGroup, node, newVariables);
 		return sessionReportNode;
 	}
 	

@@ -79,14 +79,14 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 				for(AbstractArtefact child:selectedChildren)
 					iterationTestCase.addChild(child);
 
-				if(execution){
-					ReportNode iterationReportNode = delegateExecute(context, iterationTestCase, node, new HashMap<>());
+				if(execution) {
+					ReportNode iterationReportNode = delegateExecute(iterationTestCase, node, new HashMap<>());
 
 					if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
 						failedLoops++;
 					}
-				}else{
-					ArtefactHandler.delegateCreateReportSkeleton(context, iterationTestCase, node);
+				} else {
+					delegateCreateReportSkeleton(iterationTestCase, node);
 				}
 				
 				currIterationsCount++;

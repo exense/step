@@ -54,7 +54,7 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 		boolean releaseToken = testArtefact.getReleaseTokens().get();
 		boolean inSession = isInSession();
 		if (releaseToken && inSession) {
-			releaseTokens(testArtefact);
+			releaseTokens();
 		}
 		long sleepDurationMs;
 		try {

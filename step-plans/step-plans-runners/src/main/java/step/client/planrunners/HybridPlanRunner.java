@@ -8,7 +8,6 @@ import step.client.accessors.RemoteFunctionAccessorImpl;
 import step.client.credentials.ControllerCredentials;
 import step.client.credentials.SyspropCredendialsBuilder;
 import step.client.functions.RemoteFunctionExecutionService;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ContextBuilder;
@@ -49,7 +48,7 @@ public class HybridPlanRunner implements PlanRunner {
 		context.put(FunctionAccessor.class, functionAccessor);
 		context.put(FunctionExecutionService.class, functionExecutionService);
 		context.put(FunctionRouter.class, new DefaultFunctionRouterImpl(functionExecutionService, null, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()))));
-		ArtefactHandler.delegateExecute(context, plan.getRoot(),context.getReport());
+		context.getArtefactHandlerManager().execute(plan.getRoot(),context.getReport());
 		
 		return new PlanRunnerResult(context.getExecutionId(), context.getReport().getId().toString(), context.getReportNodeAccessor());
 	}

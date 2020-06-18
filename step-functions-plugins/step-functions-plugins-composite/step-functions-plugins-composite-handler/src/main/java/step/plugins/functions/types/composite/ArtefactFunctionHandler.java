@@ -32,7 +32,6 @@ import step.client.accessors.RemotePlanAccessorImpl;
 import step.client.credentials.ControllerCredentials;
 import step.client.resources.RemoteResourceManager;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ContextBuilder;
@@ -125,7 +124,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 		executionContext.getVariablesManager().putVariable(parentNode, VariableType.IMMUTABLE, "output", output);
 		
 		try {
-			ReportNode node = ArtefactHandler.delegateExecute(executionContext, artefact,parentNode);
+			ReportNode node = executionContext.getArtefactHandlerManager().execute(artefact, parentNode);
 			if(node.getStatus()== ReportNodeStatus.TECHNICAL_ERROR || node.getStatus()== ReportNodeStatus.FAILED) {
 				Error error = new Error();
 				error.setCode(0);
