@@ -8,7 +8,6 @@ import org.bson.types.ObjectId;
 import step.core.GlobalContext;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactRegistry;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -43,7 +42,7 @@ public class PlanPlugin extends AbstractControllerPlugin {
 
 			@Override
 			public Plan newPlan(String template) throws Exception {
-				AbstractArtefact artefact = ArtefactRegistry.getInstance().getArtefactTypeInstance(template);
+				AbstractArtefact artefact = context.getArtefactRegistry().getArtefactTypeInstance(template);
 				Plan plan = PlanBuilder.create().startBlock(artefact).endBlock().build();
 				return plan;
 			}

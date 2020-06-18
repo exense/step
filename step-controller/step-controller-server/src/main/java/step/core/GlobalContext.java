@@ -22,6 +22,7 @@ import ch.exense.commons.app.Configuration;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoClientSession;
+import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.EventManager;
@@ -59,6 +60,8 @@ public class GlobalContext extends AbstractContext {
 	private DynamicBeanResolver dynamicBeanResolver;
 	
 	private EventManager eventManager;
+	
+	private ArtefactRegistry artefactRegistry;
 	
 	public GlobalContext() {
 		super();
@@ -170,6 +173,14 @@ public class GlobalContext extends AbstractContext {
 		this.eventManager = eventManager;
 	}
 	
+	public ArtefactRegistry getArtefactRegistry() {
+		return artefactRegistry;
+	}
+
+	public void setArtefactRegistry(ArtefactRegistry artefactRegistry) {
+		this.artefactRegistry = artefactRegistry;
+	}
+
 	public Version getCurrentVersion() {
 		// TODO read this from manifest
 		return new Version(3,14,0);

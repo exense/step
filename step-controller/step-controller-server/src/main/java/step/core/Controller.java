@@ -32,6 +32,7 @@ import step.core.accessors.MongoClientSession;
 import step.core.accessors.PlanAccessorImpl;
 import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
+import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
@@ -113,6 +114,7 @@ public class Controller {
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		context.setEventManager(new EventManager());
+		context.setArtefactRegistry(new ArtefactRegistry());
 		
 		createOrUpdateIndexes();
 	}

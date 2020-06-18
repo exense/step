@@ -222,7 +222,7 @@ public class ControllerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public Set<String> getArtefactTypes() {
-		return ArtefactRegistry.getInstance().getArtefactNames();
+		return getContext().getArtefactRegistry().getArtefactNames();
 	}
 	
 	@GET
@@ -231,6 +231,6 @@ public class ControllerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
-		return ArtefactRegistry.getInstance().getArtefactTypeInstance(type);
+		return getContext().getArtefactRegistry().getArtefactTypeInstance(type);
 	}
 }

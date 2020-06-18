@@ -3,18 +3,17 @@ package step.core.artefacts.handlers;
 import java.util.Map;
 
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 
 public class ArtefactHandlerManager {
 	
 	private final ExecutionContext context;
-	private final ArtefactHandlerRegistry artefactHandlerRegistry;
 	
-	public ArtefactHandlerManager(ExecutionContext context, ArtefactHandlerRegistry artefactHandlerRegistry) {
+	public ArtefactHandlerManager(ExecutionContext context) {
 		super();
 		this.context = context;
-		this.artefactHandlerRegistry = artefactHandlerRegistry;
 	}
 
 	public void createReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
@@ -38,7 +37,31 @@ public class ArtefactHandlerManager {
 	@SuppressWarnings("unchecked")
 	private ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(AbstractArtefact artefact) {
 		Class<AbstractArtefact> artefactClass = (Class<AbstractArtefact>) artefact.getClass();
-		ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = artefactHandlerRegistry.getArtefactHandler(artefactClass, context);
+		ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = getArtefactHandler(artefactClass, context);
 		return artefactHandler;
 	}
+	
+	private ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(Class<AbstractArtefact> artefactClass, ExecutionContext context) {
+		Artefact artefact = artefactClass.getAnnotation(Artefact.class);
+		if(artefact!=null) {
+			@SuppressWarnings("unchecked")
+			Class<ArtefactHandler<AbstractArtefact, ReportNode>> artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) artefact.handler();
+			if(artefactHandlerClass!=null) {
+				ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler;
+				try {
+					artefactHandler = artefactHandlerClass.newInstance();
+				} catch (InstantiationException | IllegalAccessException e) {
+					throw new RuntimeException("Unable to instanciate artefact handler for the artefact class " + artefactClass, e);
+				}
+				
+				artefactHandler.init(context);
+				return artefactHandler;
+			} else {
+				throw new RuntimeException("No artefact handler found for the artefact class " + artefactClass);			
+			}	
+		} else {
+			throw new RuntimeException("The class " + artefactClass + " is not annotated as artefact!");	
+		}
+	}
+	
 }

@@ -6,8 +6,6 @@ import org.bson.types.ObjectId;
 
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
-import step.core.artefacts.handlers.ArtefactHandlerManager;
-import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicBeanResolver;
@@ -31,7 +29,6 @@ public class ContextBuilder {
 	
 	public static ExecutionContext createLocalExecutionContext(String executionId) {
 		ExecutionContext context = new ExecutionContext(executionId);
-		context.setArtefactHandlerManager(new ArtefactHandlerManager(context, ArtefactHandlerRegistry.getInstance()));
 		
 		ReportNode root = new ReportNode();
 		root.setId(new ObjectId(context.getExecutionId()));

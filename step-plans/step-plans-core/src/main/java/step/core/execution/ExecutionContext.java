@@ -35,7 +35,7 @@ import step.expressions.ExpressionHandler;
 
 public class ExecutionContext extends AbstractContext  {
 		
-	private ArtefactHandlerManager artefactHandlerManager;
+	private final ArtefactHandlerManager artefactHandlerManager;
 	
 	private ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
 
@@ -78,14 +78,11 @@ public class ExecutionContext extends AbstractContext  {
 				
 		reportNodeCache = new ReportNodeCache();
 		variablesManager = new VariablesManager(this);
+		artefactHandlerManager = new ArtefactHandlerManager(this);
 	}
 
 	public ArtefactHandlerManager getArtefactHandlerManager() {
 		return artefactHandlerManager;
-	}
-
-	public void setArtefactHandlerManager(ArtefactHandlerManager artefactHandlerManager) {
-		this.artefactHandlerManager = artefactHandlerManager;
 	}
 
 	public String getExecutionType() {

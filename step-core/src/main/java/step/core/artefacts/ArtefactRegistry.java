@@ -19,9 +19,9 @@
 package step.core.artefacts;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
 
@@ -31,6 +31,8 @@ public class ArtefactRegistry {
 	
 	private static ArtefactRegistry instance;
 
+	private Map<String, Class<? extends AbstractArtefact>> register = new ConcurrentHashMap<>();
+	
 	@SuppressWarnings("unchecked")
 	public static synchronized ArtefactRegistry getInstance() {
 		if(instance == null) {
@@ -45,8 +47,6 @@ public class ArtefactRegistry {
 		
 		return instance;
 	}
-
-	Map<String, Class<? extends AbstractArtefact>> register = new HashMap<>();
 	
 	public void register(Class<? extends AbstractArtefact> artefact) {
 		register.put(getArtefactName(artefact), artefact);
@@ -61,7 +61,7 @@ public class ArtefactRegistry {
 	}
 
 	public AbstractArtefact getArtefactTypeInstance(String type) throws Exception {
-		Class<? extends AbstractArtefact> clazz = getInstance().getArtefactType(type);		
+		Class<? extends AbstractArtefact> clazz = getArtefactType(type);		
 		AbstractArtefact sample = clazz.newInstance();
 		for(Method m:clazz.getMethods()) {
 			if(m.getAnnotation(PostConstruct.class)!=null) {
