@@ -16,7 +16,7 @@
 	<parent>
 		<groupId>ch.exense.step</groupId>
 		<artifactId>step-functions-plugins-java</artifactId>
-		<version>0.0.0</version>
+		<version>3.13.3</version>
 	</parent>
 
 	<dependencies>
