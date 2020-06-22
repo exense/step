@@ -133,7 +133,7 @@ public class ControllerServices extends AbstractServices {
 	public List<ExecutiontTaskParameters> getScheduledExecutions() {
 		List<ExecutiontTaskParameters> result = new ArrayList<ExecutiontTaskParameters>();
 		Iterator<ExecutiontTaskParameters> it = getScheduler().getActiveAndInactiveExecutionTasks();
-		int maxSize = 50;
+		int maxSize = getContext().getConfiguration().getPropertyAsInteger("tec.services.tasks.maxsize", 500);
 		while(it.hasNext() && result.size()<maxSize) {
 			result.add(it.next());
 		}
