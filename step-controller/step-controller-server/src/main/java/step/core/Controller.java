@@ -125,7 +125,7 @@ public class Controller {
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		context.setEventManager(new EventManager());
-		context.setArtefactRegistry(new ArtefactRegistry());
+		context.setArtefactRegistry(ArtefactRegistry.getInstance());
 		
 		context.setEntityManager(new EntityManager());
 		context.getEntityManager()
