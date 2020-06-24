@@ -14,6 +14,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.artefacts.CallFunction;
 import step.artefacts.Sequence;
 import step.core.GlobalContext;
 import step.core.GlobalContextBuilder;
@@ -22,6 +23,9 @@ import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.FunctionCRUDAccessor;
 import step.planbuilder.BaseArtefacts;
 
 public class ExportManagerTest {
@@ -146,6 +150,57 @@ public class ExportManagerTest {
 			testExportFile.delete();
 		}
 	}
+	
+	@Test
+	public void testExportPlanRecursively() throws Exception {
+		GlobalContext c = GlobalContextBuilder.createGlobalContext();
+		Sequence rootSequence = BaseArtefacts.sequence();
+		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
+		c.getPlanAccessor().save(plan);
+		Function function = new Function();
+		FunctionCRUDAccessor functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
+		functionAccessor.save(function);
+		Sequence sequence = BaseArtefacts.sequence();
+		sequence.addChild(BaseArtefacts.callPlan(plan.getId().toString()));
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunctionId(function.getId().toString());
+		sequence.addChild(callFunction);
+		Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(sequence).endBlock().build();
+		c.getPlanAccessor().save(plan2);
+		
+		File testExportFile = new File("testExport.json");
+		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
+			ExportManager exportManager = new ExportManager(c);
+			Map<String,String> metadata = new HashMap<String,String>();
+			metadata.put("version", c.getCurrentVersion().toString());
+			exportManager.exportPlanRecursively(outputStream, dummyObjectEnricher(), metadata,plan2.getId().toString());
+			
+			try (BufferedReader br = new BufferedReader(
+					new InputStreamReader(new FileInputStream(testExportFile), StandardCharsets.UTF_8));) {
+				String line;
+				while ((line = br.readLine()) != null) {
+					System.out.println(line);
+				}
+			}
+			
+			//create a new context to test the import
+			c = GlobalContextBuilder.createGlobalContext();
+			ImportManager importManager = new ImportManager(c);
+			importManager.importAll(testExportFile, dummyObjectEnricher());
+			
+			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
+			Plan actualPlan2 = c.getPlanAccessor().get(plan2.getId());
+			functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
+			Function actualFunction = functionAccessor.get(function.getId());
+			Assert.assertEquals(plan.getId(), actualPlan.getId());
+			Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
+			Assert.assertEquals(plan2.getId(), actualPlan2.getId());
+			Assert.assertEquals(function.getId(), actualFunction.getId());
+		} finally {
+			testExportFile.delete();
+		}
+	}
+
 
 	protected ObjectPredicate dummyObjectPredicate() {
 		return new ObjectPredicate() {

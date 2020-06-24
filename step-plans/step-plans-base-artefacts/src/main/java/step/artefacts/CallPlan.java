@@ -22,10 +22,13 @@ import step.artefacts.handlers.CallPlanHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 
 @Artefact(handler = CallPlanHandler.class)
 public class CallPlan extends AbstractArtefact {
 	
+	@EntityReference(type=EntityManager.plans)
 	private String planId;
 	
 	private DynamicValue<String> selectionAttributes = new DynamicValue<>("{}");

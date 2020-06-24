@@ -40,6 +40,7 @@ import step.core.accessors.collections.CollectionRegistry;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.Entity;
+import step.core.entities.EntityManager;
 import step.core.execution.ExecutionContext;
 import step.core.imports.GenericDBImporter;
 import step.core.plugins.AbstractControllerPlugin;
@@ -75,8 +76,6 @@ import step.resources.ResourcePlugin;
 public class GridPlugin extends AbstractControllerPlugin {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
-	
-	private static final String functionEntityName = "functions";
 
 	private GridImpl grid;
 	private GridClient client;
@@ -141,7 +140,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 				
 		context.put(FunctionAccessor.class, functionAccessor);
 		context.getEntityManager().register(new Entity<Function, FunctionAccessorImpl>(
-				GridPlugin.functionEntityName, (FunctionAccessorImpl) functionAccessor, Function.class, 
+				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class, 
 				new GenericDBImporter<Function,FunctionAccessorImpl>(context)));
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);

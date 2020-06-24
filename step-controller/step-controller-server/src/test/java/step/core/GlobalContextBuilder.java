@@ -27,6 +27,10 @@ import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.expressions.ExpressionHandler;
+import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.FunctionCRUDAccessor;
+import step.functions.accessor.InMemoryFunctionAccessorImpl;
 
 public class GlobalContextBuilder {
 
@@ -50,6 +54,9 @@ public class GlobalContextBuilder {
 		context.setUserAccessor(new InMemoryUserAccessor());
 		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getPlanAccessor()));
 		
+		FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
+		context.put(FunctionAccessor.class, functionAccessor);
+		
 		context.setEntityManager(new EntityManager());
 		context.getEntityManager().register( new Entity<Execution, ExecutionAccessor>(
 				EntityManager.executions, context.getExecutionAccessor(), Execution.class, 
@@ -64,7 +71,10 @@ public class GlobalContextBuilder {
 					new GenericDBImporter<ExecutiontTaskParameters, ExecutionTaskAccessor>(context)))
 			.register(new Entity<User,UserAccessor>(
 					EntityManager.users, context.getUserAccessor(), User.class, 
-					new GenericDBImporter<User, UserAccessor>(context)));
+					new GenericDBImporter<User, UserAccessor>(context)))
+			.register(new Entity<Function, FunctionCRUDAccessor>(
+				EntityManager.functions, (FunctionCRUDAccessor) functionAccessor, Function.class, 
+				new GenericDBImporter<Function,FunctionCRUDAccessor>(context)));
 		
 		context.setEventManager(new EventManager());
 		

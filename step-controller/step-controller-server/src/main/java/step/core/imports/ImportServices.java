@@ -47,7 +47,8 @@ public class ImportServices extends AbstractServices {
 	@Secured(right="plan-write")
 	public void importEntity(@PathParam("entity") String entity, @QueryParam("path") String path) throws Exception {
 		try (FileHandle file = fileResolver.resolveFileHandle(path)) {
-			importManager.importAll(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()),Arrays.asList(entity));
+			//used to import plan only (not recursively) importManager.importAll(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()),Arrays.asList(entity));
+			importManager.importAll(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()),null);
 		} catch (Exception e) {
 			logger.error("Import failed",e);
 			throw e;
