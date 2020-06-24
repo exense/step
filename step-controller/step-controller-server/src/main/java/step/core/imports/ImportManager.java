@@ -29,13 +29,8 @@ public class ImportManager {
 		super();
 		this.context = globalContext;
 	}
-	
-	
-	public void importAll(File file, ObjectEnricher objectEnricher) throws Exception {
-		importAll(file, objectEnricher, null);
-	}
-	
-	public void importAll(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter) throws Exception {
+
+	public void importAll(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter, boolean overwrite) throws Exception {
 		ObjectMapper mapper = ImportExportMapper.getMapper(context.getCurrentVersion());
 		Version version=null;
 		try (JsonParser jParser = mapper.getFactory().createParser(file)) {
@@ -54,15 +49,16 @@ public class ImportManager {
 					//Read next field which must be an entity type
 					//Change mapper for given version
 					mapper = ImportExportMapper.getMapper(version);
+					Map<String, String> refMapping = new HashMap<String,String> ();
 					while (jParser.nextToken() != JsonToken.END_OBJECT) { 
-						importEntitiesByType(jParser, mapper, objectEnricher, entitiesFilter, version);
+						importEntitiesByType(jParser, mapper, objectEnricher, entitiesFilter, version, refMapping, overwrite);
 					}
 				//File without metadata are older plan export (plans for 3.13, arterfacts for previous versions)
 				} else {
 					jParser.nextToken();
 					String value = jParser.getValueAsString();
 					jParser.close();
-					importOlderPlans(file, objectEnricher, entitiesFilter, name, value);
+					importOlderPlans(file, objectEnricher, entitiesFilter, name, value, overwrite);
 				}
 			} else {
 				logger.error("Import failed, the root element of the file is not a json oject");
@@ -80,10 +76,10 @@ public class ImportManager {
 		return (entitiesFilter!=null && !entitiesFilter.contains(entityName));
 	}
 
-	private void importEntitiesByType(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, List<String> entitiesFilter, Version version) throws IOException, InstantiationException, IllegalAccessException {
+	private void importEntitiesByType(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, List<String> entitiesFilter, Version version, Map<String, String> refMapping, boolean overwrite) throws IOException, InstantiationException, IllegalAccessException {
 		String name = jParser.getCurrentName();
 		boolean skip = skipEntityType(entitiesFilter, name);
-		Importer importer = context.getEntityManager().getEntityByName(name).getImporter();
+		Importer<?,?> importer = context.getEntityManager().getEntityByName(name).getImporter();
 		if (!skip) {
 			if (importer==null) {
 				throw new RuntimeException("The entity type with name '" + name + "' is unsupported.");
@@ -93,7 +89,7 @@ public class ImportManager {
 		if (jParser.nextToken().equals(JsonToken.START_ARRAY)) {
 			while (!jParser.nextToken().equals(JsonToken.END_ARRAY)) {
 				if (!skip) {
-					importer.importOne(jParser, mapper, objectEnricher, version);
+					importer.importOne(jParser, mapper, objectEnricher, version, refMapping, overwrite);
 				}
 			}
 		} else {
@@ -101,9 +97,9 @@ public class ImportManager {
 		}
 	}
 	
-	private void importOlderPlans(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter, String firstKey, String firstValue) throws InstantiationException, IllegalAccessException, IOException {
+	private void importOlderPlans(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter, String firstKey, String firstValue, boolean overwrite) throws InstantiationException, IllegalAccessException, IOException {
 		if (firstKey.equals("_class") && !skipEntityType(entitiesFilter,EntityManager.plans)) {
-			Importer importer = context.getEntityManager().getEntityByName(EntityManager.plans).getImporter();
+			Importer<?,?> importer = context.getEntityManager().getEntityByName(EntityManager.plans).getImporter();
 			Version version = new Version(3,12,0);
 			//3.13
 			if (firstValue.startsWith("step.")) {
@@ -112,7 +108,7 @@ public class ImportManager {
 			logger.info("Importing file: " + file.getName() + ". The file has no metadata, version detected: " + version.toString());
 			//Change mapper for given version
 			ObjectMapper mapper = ImportExportMapper.getMapper(version);
-			importer.importMany(file, mapper, objectEnricher, version);
+			importer.importMany(file, mapper, objectEnricher, version, overwrite);
 		} else {
 			logger.error("Import failed, the first property was unexepected '" + firstKey + "':'" + firstValue + "'");
 			throw new RuntimeException("Import failed, the first property was unexepected '" + firstKey + "':'" + firstValue + "'"

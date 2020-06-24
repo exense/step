@@ -1,0 +1,39 @@
+<div class="modal-header">
+	<h3 class="modal-title">{{title}}</h3>
+</div>
+
+<div class="modal-body">
+	<div class="form-group form-group-sm">
+		<from class="form-inline">
+			<label ng-class="{'label-normal': stInline}">File name</label>
+			<input class="form-control" type="text" ng-model="filename" >
+		</form>
+	</div>
+
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<a ng-click="showAttributes = !showAttributes">Advanced Options</a>
+		</div>
+		<div class="panel-body" ng-show="showAttributes">
+			<fieldset>
+			<div class="form-group form-group-sm">
+				<label>
+					<input type="checkbox" ng-model="recursively">
+					<span class="ng-binding">Export all entities recursively</span>
+				</label>
+				<span class="glyphicon glyphicon-question-sign pull-right"
+					uib-tooltip="Defines if all referenced entities get exported as well."></span>
+			</div>	
+			</fieldset>
+		</div>
+	</div>
+
+
+	
+		
+	
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="save()">Export</button>
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

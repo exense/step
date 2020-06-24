@@ -2,6 +2,7 @@ package step.core.imports;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -18,7 +19,7 @@ public interface Importer<A extends AbstractIdentifiableObject, T extends CRUDAc
 	
 	public void init(Entity<A, T> entity);
 	
-	public void importOne(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version)  throws JsonParseException, JsonMappingException, IOException;
+	public void importOne(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, Map<String, String> references, boolean overwrite)  throws JsonParseException, JsonMappingException, IOException;
 	
-	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version) throws IOException; 
+	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, boolean overwrite) throws IOException; 
 }

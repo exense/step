@@ -2,6 +2,7 @@ package step.core.imports;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 import org.bson.Document;
@@ -16,7 +17,6 @@ import com.mongodb.client.MongoCollection;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.CRUDAccessor;
 import step.core.entities.Entity;
 import step.core.objectenricher.ObjectEnricher;
@@ -39,14 +39,27 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 		}
 	}
 	
-	public void importOne(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version) throws JsonParseException, JsonMappingException, IOException {
+	public void importOne(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, Map<String, String> references, boolean overwrite) throws JsonParseException, JsonMappingException, IOException {
 		if (version.compareTo(new Version(3,13,0)) >= 0) {
 			A aObj = mapper.readValue(jParser, entity.getEntityClass());
 			objectEnricher.accept(aObj);
-			entity.getAccessor().save(aObj);
+			if (overwrite) {
+				entity.getAccessor().save(aObj);
+			} else {
+				saveWithNewId(aObj,references);
+			}
+			
 		} else {
 			saveToTmpCollection(mapper.readValue(jParser, Document.class));			
 		}
+	}
+	
+	protected void saveWithNewId(A aObj, Map<String, String> references) {
+		String origId = aObj.getId().toHexString();
+		aObj.setId(new ObjectId());
+		references.put(origId, aObj.getId().toHexString());
+		context.getEntityManager().updateReferences(aObj, references);
+		entity.getAccessor().save(aObj);
 	}
 	
 	protected MongoCollection<Document> getOrInitTmpCollection() {
@@ -71,7 +84,7 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 	}
 
 	@Override
-	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version)
+	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, boolean overwrite)
 			throws IOException {
 		// TODO Auto-generated method stub
 		

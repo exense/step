@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,7 +44,7 @@ public class ExportManagerTest {
 			metadata.put("version", c.getCurrentVersion().toString());
 			metadata.put("export-time" , "1589542872475");
 			metadata.put("user", "admin");
-			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata,plan.getId().toString(), "plans");
+			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata,plan.getId().toString(), "plans", false);
 			
 			//DEBUG
 			/*try (BufferedReader br = new BufferedReader(
@@ -57,7 +58,7 @@ public class ExportManagerTest {
 			//create a new context to test the import
 			c = GlobalContextBuilder.createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"));
+			importManager.importAll(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true);
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Assert.assertEquals(plan.getId(), actualPlan.getId());
@@ -95,12 +96,12 @@ public class ExportManagerTest {
 			ExportManager exportManager = new ExportManager(c);
 			Map<String,String> metadata = new HashMap<String,String>();
 			metadata.put("version", c.getCurrentVersion().toString());
-			exportManager.exportAll(outputStream, dummyObjectEnricher(), metadata, dummyObjectPredicate(), "plans");
+			exportManager.exportAll(outputStream, dummyObjectEnricher(), metadata, dummyObjectPredicate(), "plans", false);
 			
 			//create a new context to test the import
 			c = GlobalContextBuilder.createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"));
+			importManager.importAll(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true);
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Plan actualPlan2 = c.getPlanAccessor().get(plan2.getId());
@@ -127,7 +128,7 @@ public class ExportManagerTest {
 			metadata.put("version", c.getCurrentVersion().toString());
 			metadata.put("export-time" , "1589542872475");
 			metadata.put("user", "admin");
-			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata,plan.getId().toString(), "plans");
+			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata,plan.getId().toString(), "plans", false);
 			
 			//DEBUG
 			/*try (BufferedReader br = new BufferedReader(
@@ -141,7 +142,7 @@ public class ExportManagerTest {
 			//create a new context to test the import
 			c = GlobalContextBuilder.createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"));
+			importManager.importAll(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true);
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Assert.assertEquals(plan.getId(), actualPlan.getId());
@@ -153,6 +154,15 @@ public class ExportManagerTest {
 	
 	@Test
 	public void testExportPlanRecursively() throws Exception {
+		testExportPlansRecursively(true);
+	}
+	
+	@Test
+	public void testExportPlanRecursivelyNewReferences() throws Exception {
+		testExportPlansRecursively(false);
+	}
+	
+	private void testExportPlansRecursively(boolean overwrite) throws Exception {
 		GlobalContext c = GlobalContextBuilder.createGlobalContext();
 		Sequence rootSequence = BaseArtefacts.sequence();
 		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
@@ -173,29 +183,34 @@ public class ExportManagerTest {
 			ExportManager exportManager = new ExportManager(c);
 			Map<String,String> metadata = new HashMap<String,String>();
 			metadata.put("version", c.getCurrentVersion().toString());
-			exportManager.exportPlanRecursively(outputStream, dummyObjectEnricher(), metadata,plan2.getId().toString());
-			
-			try (BufferedReader br = new BufferedReader(
-					new InputStreamReader(new FileInputStream(testExportFile), StandardCharsets.UTF_8));) {
-				String line;
-				while ((line = br.readLine()) != null) {
-					System.out.println(line);
-				}
-			}
-			
+			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata, plan2.getId().toString(), "plans", true);
+						
 			//create a new context to test the import
 			c = GlobalContextBuilder.createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(testExportFile, dummyObjectEnricher());
+			importManager.importAll(testExportFile, dummyObjectEnricher(), null, overwrite);
+			
+			AtomicInteger nbPlans = new AtomicInteger(0);
+			c.getPlanAccessor().getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
+			AtomicInteger nbFunctions = new AtomicInteger(0);
+			functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
+			functionAccessor.getAll().forEachRemaining(f->nbFunctions.incrementAndGet());
+			Assert.assertEquals(2, nbPlans.intValue());
+			Assert.assertEquals(1, nbFunctions.intValue());
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Plan actualPlan2 = c.getPlanAccessor().get(plan2.getId());
-			functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
 			Function actualFunction = functionAccessor.get(function.getId());
-			Assert.assertEquals(plan.getId(), actualPlan.getId());
-			Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
-			Assert.assertEquals(plan2.getId(), actualPlan2.getId());
-			Assert.assertEquals(function.getId(), actualFunction.getId());
+			if (overwrite) {
+				Assert.assertEquals(plan.getId(), actualPlan.getId());
+				Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
+				Assert.assertEquals(plan2.getId(), actualPlan2.getId());
+				Assert.assertEquals(function.getId(), actualFunction.getId());
+			} else {
+				Assert.assertNull(actualPlan);
+				Assert.assertNull(actualPlan2);
+				Assert.assertNull(actualFunction);
+			}
 		} finally {
 			testExportFile.delete();
 		}
@@ -240,7 +255,7 @@ public class ExportManagerTest {
 		//create a new context to test the import
 		c = GlobalContextBuilder.createGlobalContext();
 		ImportManager importManager = new ImportManager(c);
-		importManager.importAll(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"));
+		importManager.importAll(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), true);
 		
 		Plan actualPlan = c.getPlanAccessor().get(originPlanId);
 		Assert.assertEquals(originPlanId, actualPlan.getId().toString());

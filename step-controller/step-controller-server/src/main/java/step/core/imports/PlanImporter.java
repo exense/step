@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,13 +29,14 @@ public class PlanImporter extends GenericDBImporter<Plan, PlanAccessor> {
 	private static final Logger logger = LoggerFactory.getLogger(ImportServices.class);
 
 	//Import plans exported with versions 3.13 and before (line by line)
-	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version) throws IOException {
+	@Override
+	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, boolean overwrite) throws IOException {
 		try(BufferedReader reader = Files.newBufferedReader(file.toPath())) {
 			String line;
 			while((line=reader.readLine())!=null) {
 				try (JsonParser jParser = mapper.getFactory().createParser(line)){
 					jParser.nextToken();
-					importOne(jParser, mapper, objectEnricher, version);		
+					importOne(jParser, mapper, objectEnricher, version, new HashMap<String,String>(),overwrite);		
 				} catch (Exception e) {
 					throw e;
 				}

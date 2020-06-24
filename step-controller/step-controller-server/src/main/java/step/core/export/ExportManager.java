@@ -33,13 +33,16 @@ public class ExportManager {
 		this.context = context;
 	}
 	
-	public void exportById(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, String id, String entityType) throws FileNotFoundException, IOException {
+	public void exportById(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, String id, String entityType, boolean recursively) throws FileNotFoundException, IOException {
 		EntityReferencesMap refs = new EntityReferencesMap();
 		refs.addElementTo(entityType, id);
+		if (recursively) {
+			context.getEntityManager().getAllEntities(entityType,id,refs);	
+		}
 		export(outputStream, objectEnricher, metadata, refs);
 	}
 	
-	public void exportAll(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, ObjectPredicate objectPredicate, String entityType) throws FileNotFoundException, IOException {
+	public void exportAll(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, ObjectPredicate objectPredicate, String entityType, boolean recursively) throws FileNotFoundException, IOException {
 		Entity<?, ?> entity = context.getEntityManager().getEntityByName(entityType);
 		if (entity == null ) {
 			throw new RuntimeException("Entity of type " + entityType + " is not supported");
@@ -48,17 +51,12 @@ public class ExportManager {
 		entity.getAccessor().getAll().forEachRemaining(a -> {
 			if (objectPredicate.test(a)) {
 				refs.addElementTo(entityType, a.getId().toHexString());
+				if (recursively) {
+					context.getEntityManager().getAllEntities(entityType, a.getId().toHexString(), refs);	
+				}
 			}
 		});
 		export(outputStream, objectEnricher, metadata, refs);
-	}
-	
-	public void exportPlanRecursively(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, String id)
-			throws FileNotFoundException, IOException {
-		EntityReferencesMap references = new EntityReferencesMap();
-		references.addElementTo(EntityManager.plans, id);
-		context.getEntityManager().getAllEntities(EntityManager.plans,id,references);
-		export(outputStream, objectEnricher, metadata, references);
 	}
 	
 	private void exportEntityByIds(Entity<?, ?> entity, JsonGenerator jGen, List<String> ids, ObjectEnricher objectEnricher) {
@@ -96,7 +94,6 @@ public class ExportManager {
 			jGen.writeStartObject();
 			jGen.writeObjectField("metadata", metadata);
 			//start a json array for each entity type
-			//TODO sort entity types in import order (resources first,keywords and plans (order of plans might import as well) )
 			references.getTypes().forEach(e-> {
 				try {
 					jGen.writeArrayFieldStart(e);			

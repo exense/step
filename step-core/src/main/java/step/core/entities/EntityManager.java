@@ -31,13 +31,14 @@ public class EntityManager  {
 	}
 
 	public void getAllEntities (String entityName, String id, EntityReferencesMap references) {
-		Entity<?, ?> entityByName = getEntityByName(entityName);
-		CRUDAccessor<?> accessor = entityByName.getAccessor();
-		AbstractIdentifiableObject a = accessor.get(id);
-		if (a == null ) {
-			throw new RuntimeException("Entity with id '" + id + "' could not be found in entities of type '" + entityName + "'");
-		}
 		if (entityName.equals(plans)) {
+			Entity<?, ?> entityByName = getEntityByName(entityName);
+			CRUDAccessor<?> accessor = entityByName.getAccessor();
+			AbstractIdentifiableObject a = accessor.get(id);
+			if (a == null ) {
+				throw new RuntimeException("Entity with id '" + id + "' could not be found in entities of type '" + entityName + "'");
+			}
+		
 			AbstractArtefact root = ((Plan) a).getRoot();
 			getArtefactReferences(root, references);
 		}
@@ -62,6 +63,31 @@ public class EntityManager  {
 			}
 		}
 		artefact.getChildren().forEach(c->getArtefactReferences(c,references));
+	}
+	
+	public void updateReferences(AbstractIdentifiableObject object, Map<String, String> references) {
+		for (Field field : object.getClass().getDeclaredFields()) {
+			if (field.isAnnotationPresent(EntityReference.class)) {
+				try {
+					field.setAccessible(true);
+					String origRefId = (String) field.get(object);
+					if (references.containsKey(origRefId)) {
+						field.set(object,references.get(origRefId));
+					}
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					throw new RuntimeException("Export failed, unabled to get references by reflections",e);
+				}
+			}
+		}
+		if (object instanceof Plan) {
+			Plan p = (Plan) object;
+			updateReferences(p.getRoot(),references);
+		}
+		if (object instanceof AbstractArtefact) {
+			AbstractArtefact artefact = (AbstractArtefact) object;
+			artefact.getChildren().forEach(c->updateReferences(c,references));
+		}
+		
 	}
 	
 

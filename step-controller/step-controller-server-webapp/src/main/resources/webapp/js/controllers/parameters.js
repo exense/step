@@ -23,7 +23,7 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
   EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table', '/partials/parameters/parameterSelectionTable.html', null, 'glyphicon glyphicon-list-alt');
 })
 
-.controller('ParameterListCtrl', function($rootScope, $scope, $http, $uibModal, stateStorage, ExportService, Dialogs, ParameterDialogs, ImportDialogs, AuthService) {
+.controller('ParameterListCtrl', function($rootScope, $scope, $http, $uibModal, stateStorage, ExportDialogs, Dialogs, ParameterDialogs, ImportDialogs, AuthService) {
     stateStorage.push($scope, 'parameters', {});	
     $scope.authService = AuthService;
     
@@ -65,13 +65,13 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
     }
     
     $scope.importParameters = function() {
-      ImportDialogs.displayImportDialog('Parameters import','parameters').then(function () {
+      ImportDialogs.displayImportDialog('Parameters import','parameters',true).then(function () {
         reload();
       });
     }
     
     $scope.exportParameters = function() {
-      ExportService.get("rest/export/parameters")
+      ExportDialogs.displayExportDialog('Parameters export','parameters', 'allParameters.json', true).then(function () {})
     }
     
     $scope.$on("parameter.edited",function(evt,data){
