@@ -43,11 +43,11 @@
       		"step-distribution/target/step-agent-${VERSION}.zip"
     	],
 		"DESTINATION_NAME": [
-      		"step/step-controller-${VERSION}.zip",
+      		"step/${VERSION}/step-controller-${VERSION}.zip",
       		"step-controller-${VERSION}.zip",
       		"step:k8s-step-controller-${VERSION}-java-11",
       
-			"step/step-agent-${VERSION}.zip",
+			"step/${VERSION}/step-agent-${VERSION}.zip",
       		"step-agent-${VERSION}.zip",
       		"step:k8s-step-agent-${VERSION}-java-11"
     	],
