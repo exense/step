@@ -10,7 +10,7 @@ import step.client.credentials.SyspropCredendialsBuilder;
 import step.client.functions.RemoteFunctionExecutionService;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.execution.ContextBuilder;
+import step.core.execution.ExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunner;
@@ -40,7 +40,7 @@ public class HybridPlanRunner implements PlanRunner {
 
 	@Override
 	public PlanRunnerResult run(Plan plan) {
-		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
 		
 		FunctionAccessor functionAccessor = new RemoteFunctionAccessorImpl(credentials);
 		FunctionExecutionService functionExecutionService = new RemoteFunctionExecutionService(credentials);

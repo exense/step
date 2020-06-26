@@ -25,7 +25,7 @@ import org.junit.Test;
 import junit.framework.Assert;
 import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ContextBuilder;
+import step.core.execution.ExecutionContextBuilder;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataSet;
 
@@ -40,7 +40,7 @@ public class FlatFileReaderDataPoolTest {
 	
 	protected DataSet<?> getDataPool(String file, String type) {
 		FileDataPool conf = getDataSourceConf(file);
-		DataSet<?> pool =  DataPoolFactory.getDataPool(type, conf, ContextBuilder.createLocalExecutionContext());
+		DataSet<?> pool =  DataPoolFactory.getDataPool(type, conf, new ExecutionContextBuilder().configureForlocalExecution().build());
 		pool.init();
 		return pool;
 	}

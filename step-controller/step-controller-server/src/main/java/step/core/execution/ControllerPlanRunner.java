@@ -2,8 +2,6 @@ package step.core.execution;
 
 import java.util.Map;
 
-import org.bson.types.ObjectId;
-
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
@@ -34,10 +32,10 @@ public class ControllerPlanRunner implements PlanRunner {
 	public PlanRunnerResult run(Plan plan) {
 		executionContext.associateThread();
 		
-		executionContext.setPlan(plan);
-		
 		AbstractArtefact root = plan.getRoot();
-		ReportNode rootReportNode = createAndPersistRootReportNode();
+		ReportNode rootReportNode = executionContext.getReport();
+		
+		persistReportNode(rootReportNode);
 		
 		executionLifecycleManager.executionStarted();
 		
@@ -60,14 +58,7 @@ public class ControllerPlanRunner implements PlanRunner {
 	}
 
 
-	private ReportNode createAndPersistRootReportNode() {
-		ReportNode resultNode = new ReportNode();
-		resultNode.setExecutionID(executionContext.getExecutionId());
-		resultNode.setId(new ObjectId(executionContext.getExecutionId()));
-		executionContext.setReport(resultNode);
-		executionContext.getReportNodeCache().put(resultNode);
-		executionContext.getReportNodeAccessor().save(resultNode);
-		executionContext.setCurrentReportNode(resultNode);
-		return resultNode;
+	private void persistReportNode(ReportNode reportNode) {
+		executionContext.getReportNodeAccessor().save(reportNode);
 	}
 }

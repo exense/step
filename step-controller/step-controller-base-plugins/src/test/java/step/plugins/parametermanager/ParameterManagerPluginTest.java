@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryCRUDAccessor;
-import step.core.execution.ContextBuilder;
+import step.core.execution.ExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.functions.Function;
 
@@ -19,7 +19,7 @@ public class ParameterManagerPluginTest {
 	@Test
 	public void testEmptyParameterList() {
 		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor);
-		ExecutionContext executionContext = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
 		
 		parameterManagerPlugin.executionStart(executionContext);
 		
@@ -43,13 +43,13 @@ public class ParameterManagerPluginTest {
 		declareParameter("MyFunctionParameter3", "MyFunctionParameter3Value1", ParameterScope.FUNCTION, "MyFunction3");
 		
 		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor);
-		ExecutionContext executionContext = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
 		parameterManagerPlugin.executionStart(executionContext);
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyGlobalParameter"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyOldGlobalParameter"));
 		
-		executionContext = ContextBuilder.createLocalExecutionContext();
+		executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
 		parameterManagerPlugin.executionStart(executionContext);
 		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction(null, "MyFunction1"));
 		
@@ -57,13 +57,13 @@ public class ParameterManagerPluginTest {
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyAppParameter1"));
 		
-		executionContext = ContextBuilder.createLocalExecutionContext();
+		executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
 		parameterManagerPlugin.executionStart(executionContext);
 		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction2"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyAppParameter1"));
 		
-		executionContext = ContextBuilder.createLocalExecutionContext();
+		executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
 		parameterManagerPlugin.executionStart(executionContext);
 		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction3"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyApp.MyFunctionParameter3"));

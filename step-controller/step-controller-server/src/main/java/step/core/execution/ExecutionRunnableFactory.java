@@ -35,20 +35,18 @@ import step.core.scheduler.ExecutiontTaskParameters;
 public class ExecutionRunnableFactory {
 
 	private GlobalContext globalContext;
-	private ControllerExecutionContextBuilder executionContextBuilder;
 	private ExecutionTaskAccessor taskAccessor;
 	private PlanAccessor planAccessor;
 
 	public ExecutionRunnableFactory(GlobalContext globalContext) {
 		super();
 		this.globalContext = globalContext;
-		executionContextBuilder = new ControllerExecutionContextBuilder(globalContext);
 		taskAccessor = globalContext.getScheduleAccessor();
 		planAccessor = globalContext.getPlanAccessor();
 	}
 
 	public ExecutionRunnable newExecutionRunnable(Execution execution) {		
-		ExecutionContext context = executionContextBuilder.createExecutionContext(execution.getId().toString(), execution.getExecutionParameters());
+		ExecutionContext context =  new ControllerExecutionContextBuilder(execution.getId().toString(), execution.getExecutionParameters()).configureForControllerExecution(globalContext).build();
 		ExecutionRunnable task = new ExecutionRunnable(globalContext.getRepositoryObjectManager(), globalContext.getExecutionAccessor(), context);
 		return task;
 	}

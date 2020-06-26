@@ -33,7 +33,7 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ContextBuilder;
+import step.core.execution.ExecutionContextBuilder;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolRow;
 import step.datapool.Utils;
@@ -52,7 +52,7 @@ public class ExcelDataPoolTest {
 	}
 
 	private void initPool(ExcelDataPoolImpl pool) {
-		pool.setContext(ContextBuilder.createLocalExecutionContext());
+		pool.setContext(new ExecutionContextBuilder().configureForlocalExecution().build());
 		pool.init();
 	}
 	

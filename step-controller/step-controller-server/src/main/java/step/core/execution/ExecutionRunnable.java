@@ -74,6 +74,7 @@ public class ExecutionRunnable implements Runnable {
 			if(importResult.isSuccessful()) {
 				PlanAccessor planAccessor = context.getPlanAccessor();
 				Plan plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
+				context.setPlan(plan);
 				
 				logger.info("Starting test execution. Execution ID: " + context.getExecutionId());
 				updateStatus(ExecutionStatus.RUNNING);

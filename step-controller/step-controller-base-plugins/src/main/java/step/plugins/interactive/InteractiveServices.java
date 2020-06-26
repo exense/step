@@ -80,8 +80,6 @@ public class InteractiveServices extends AbstractServices {
 	
 	private ObjectHookRegistry objectHookRegistry;
 	
-	private ControllerExecutionContextBuilder executionContextBuilder;
-	
 	private static class InteractiveSession {
 		
 		ExecutionContext c;
@@ -123,7 +121,6 @@ public class InteractiveServices extends AbstractServices {
 		super.init();
 		GlobalContext context = getContext();
 		objectHookRegistry = context.get(ObjectHookRegistry.class);
-		executionContextBuilder = new ControllerExecutionContextBuilder(context);
 	}
 	
 	@PreDestroy
@@ -139,7 +136,7 @@ public class InteractiveServices extends AbstractServices {
 	@Secured(right="interactive")
 	public String start() throws AgentCommunicationException {
 		InteractiveSession session = new InteractiveSession();
-		ExecutionContext  executionContext = executionContextBuilder.createExecutionContext();
+		ExecutionContext  executionContext = new ControllerExecutionContextBuilder().configureForControllerExecution(getContext()).build();
 		// Replace the ExecutionManager as we don't have any Execution in this context
 		executionContext.put(ExecutionManager.class, new MockedExecutionManagerImpl());
 		
@@ -152,9 +149,6 @@ public class InteractiveServices extends AbstractServices {
 		session.functionGroupContext = new FunctionGroupContext(null);
 		String id = executionContext.getExecutionId();
 		
-		executionContext.getReportNodeCache().put(session.root);
-		executionContext.setReport(session.root);
-		executionContext.setCurrentReportNode(session.root);
 		session.c.getVariablesManager().putVariable(session.root, FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY, 
 				session.functionGroupContext);
 

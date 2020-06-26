@@ -8,11 +8,13 @@ import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.InMemoryPlanAccessor;
+import step.core.plans.PlanAccessor;
 import step.core.plugins.ExecutionCallbacks;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
@@ -21,39 +23,56 @@ import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceManager;
 import step.threadpool.ThreadPool;
 
-public class ContextBuilder {
+public class ExecutionContextBuilder {
 	
-	public static ExecutionContext createLocalExecutionContext() {
-		return createLocalExecutionContext(new ObjectId().toString());
+	protected final ExecutionContext executionContext;
+
+	public ExecutionContextBuilder() {
+		this(new ObjectId().toString());
 	}
 	
-	public static ExecutionContext createLocalExecutionContext(String executionId) {
-		ExecutionContext context = new ExecutionContext(executionId);
+	public ExecutionContextBuilder(String executionId) {
+		this(executionId, new ExecutionParameters("dummy", null, ExecutionMode.RUN));
+	}
+	
+	public ExecutionContextBuilder(String executionId, ExecutionParameters executionParameters) {
+		super();
+		executionContext = new ExecutionContext(executionId, executionParameters);
+	}
+
+	public ExecutionContextBuilder withPlanAccessor(PlanAccessor planAccessor) {
+		executionContext.setPlanAccessor(planAccessor);
+		return this;
+	}
+	
+	public ExecutionContextBuilder withReportNodeAccessor(ReportNodeAccessor reportNodeAccessor) {
+		executionContext.setReportNodeAccessor(reportNodeAccessor);
+		return this;
+	}
+	
+	/**
+	 * Configures an {@link ExecutionContext} for local executions (in opposition to 
+	 * controller executions performed on a controller server) with in memory accessors.
+	 *  
+	 * @return the {@link ExecutionContextBuilder}
+	 */
+	public ExecutionContextBuilder configureForlocalExecution() {
+		executionContext.setPlanAccessor(new InMemoryPlanAccessor());
+		InMemoryReportNodeAccessor reportNodeAccessor = new InMemoryReportNodeAccessor();
+		executionContext.setReportNodeAccessor(reportNodeAccessor);
+
+		reportNodeAccessor.save(executionContext.getReport());
 		
-		ReportNode root = new ReportNode();
-		root.setId(new ObjectId(context.getExecutionId()));
-		context.getReportNodeCache().put(root);
-		context.setReport(root);
-		context.setCurrentReportNode(root);
-		context.setExecutionParameters(new ExecutionParameters("dummy", null, ExecutionMode.RUN));
-		
-		context.setPlanAccessor(new InMemoryPlanAccessor());
-		context.setReportNodeAccessor(new InMemoryReportNodeAccessor());
-		
-		context.getReportNodeAccessor().save(root);
-		
-		Configuration configuration = new Configuration();
-		context.setConfiguration(configuration);
-		
-		context.setEventManager(new EventManager());
-		context.put(ThreadPool.class, new ThreadPool(context));
-		context.setExecutionTypeListener(new ExecutionTypeListener() {
+		executionContext.setConfiguration(new Configuration());
+		executionContext.setEventManager(new EventManager());
+		executionContext.put(ThreadPool.class, new ThreadPool(executionContext));
+		executionContext.setExecutionTypeListener(new ExecutionTypeListener() {
 			@Override
 			public void updateExecutionType(ExecutionContext context, String newType) {
 			}
 		});
 		
-		context.setExecutionCallbacks(new ExecutionCallbacks() {
+		executionContext.setExecutionCallbacks(new ExecutionCallbacks() {
 			
 			@Override
 			public void unassociateThread(ExecutionContext context, Thread thread) {
@@ -107,13 +126,18 @@ public class ContextBuilder {
 			}
 		});
 		
-		context.setExpressionHandler(new ExpressionHandler());
-		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
+		ExpressionHandler expressionHandler = new ExpressionHandler();
+		executionContext.setExpressionHandler(expressionHandler);
+		executionContext.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(expressionHandler)));
 		
 		LocalResourceManagerImpl resourceManager = new LocalResourceManagerImpl();
-		context.put(ResourceManager.class, resourceManager);
-		context.put(FileResolver.class, new FileResolver(resourceManager));
+		executionContext.put(ResourceManager.class, resourceManager);
+		executionContext.put(FileResolver.class, new FileResolver(resourceManager));
 		
-		return context;
+		return this;
+	}
+	
+	public ExecutionContext build() {
+		return executionContext;
 	}
 }

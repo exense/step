@@ -27,7 +27,7 @@ import org.junit.Test;
 import junit.framework.Assert;
 import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ContextBuilder;
+import step.core.execution.ExecutionContextBuilder;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataSet;
 import step.datapool.file.FileDataPoolImpl.ExtendedFile;
@@ -45,7 +45,7 @@ public class DirectoryDataPoolTest {
 		DirectoryDataPool conf = new DirectoryDataPool();
 		conf.setFolder(new DynamicValue<String>(file.getAbsolutePath()));
 
-		pool =  DataPoolFactory.getDataPool("folder", conf, ContextBuilder.createLocalExecutionContext());
+		pool =  DataPoolFactory.getDataPool("folder", conf, new ExecutionContextBuilder().configureForlocalExecution().build());
 		pool.init();
 	}
 	
@@ -62,7 +62,7 @@ public class DirectoryDataPoolTest {
 		DirectoryDataPool conf = new DirectoryDataPool();
 		conf.setFolder(new DynamicValue<String>(fileEmpty.getAbsolutePath()));
 
-		DataSet<?> poolEmpty =  DataPoolFactory.getDataPool("folder", conf, ContextBuilder.createLocalExecutionContext());
+		DataSet<?> poolEmpty =  DataPoolFactory.getDataPool("folder", conf, new ExecutionContextBuilder().configureForlocalExecution().build());
 		poolEmpty.init();
 		
 		Assert.assertNull(poolEmpty.next());

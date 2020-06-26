@@ -41,7 +41,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ContextBuilder;
+import step.core.execution.ExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.reports.Error;
@@ -244,7 +244,7 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 	}
 
 	protected ExecutionContext buildExecutionContext() {
-		ExecutionContext executionContext = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
 		InMemoryFunctionAccessorImpl funcitonAccessor = new InMemoryFunctionAccessorImpl();
 		
 		FunctionTypeRegistry functionTypeRegistry = getFunctionTypeRepository();

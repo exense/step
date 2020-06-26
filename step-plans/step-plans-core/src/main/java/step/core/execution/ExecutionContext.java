@@ -18,6 +18,8 @@
  *******************************************************************************/
 package step.core.execution;
 
+import org.bson.types.ObjectId;
+
 import ch.exense.commons.app.Configuration;
 import step.core.AbstractContext;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
@@ -34,51 +36,43 @@ import step.core.variables.VariablesManager;
 import step.expressions.ExpressionHandler;
 
 public class ExecutionContext extends AbstractContext  {
-		
-	private final ArtefactHandlerManager artefactHandlerManager;
-	
-	private ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
 
-	private ExecutionParameters executionParameters;
-	
+	// Immutable fields
 	private final String executionId;
-	
-	private String executionType;
-	
-	private Plan plan;
-
-	private ReportNode report;
-	
-	private volatile ExecutionStatus status;
-	
+	private final ExecutionParameters executionParameters;
+	private final ArtefactHandlerManager artefactHandlerManager;
+	private final ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
+	private final ReportNode reportNode;
 	private final VariablesManager variablesManager;
-				
 	private final ReportNodeCache reportNodeCache;
-	
 	private PlanAccessor planAccessor;
-	
 	private ReportNodeAccessor reportNodeAccessor;
-	
 	private ExpressionHandler expressionHandler;
-	
 	private DynamicBeanResolver dynamicBeanResolver;
-	
 	private EventManager eventManager;
-	
 	private ExecutionTypeListener executionTypeListener;
-	
 	private ExecutionCallbacks executionCallbacks;
-	
 	private Configuration configuration;
+
+	// Mutable fields
+	private volatile ExecutionStatus status;
+	private String executionType;
+	private Plan plan;
 	
-	public ExecutionContext(String executionId) {
+	protected ExecutionContext(String executionId, ExecutionParameters executionParameters) {
 		super();
-				
 		this.executionId = executionId;
-				
+		this.executionParameters = executionParameters;
+		
 		reportNodeCache = new ReportNodeCache();
 		variablesManager = new VariablesManager(this);
 		artefactHandlerManager = new ArtefactHandlerManager(this);
+		
+		reportNode = new ReportNode();
+		reportNode.setExecutionID(executionId);
+		reportNode.setId(new ObjectId(executionId));
+		reportNodeCache.put(reportNode);
+		setCurrentReportNode(reportNode);
 	}
 
 	public ArtefactHandlerManager getArtefactHandlerManager() {
@@ -102,11 +96,7 @@ public class ExecutionContext extends AbstractContext  {
 	}
 
 	public ReportNode getReport() {
-		return report;
-	}
-
-	public void setReport(ReportNode report) {
-		this.report = report;
+		return reportNode;
 	}
 	
 	public ReportNodeCache getReportNodeCache() {
@@ -170,16 +160,8 @@ public class ExecutionContext extends AbstractContext  {
 		return executionParameters;
 	}
 
-	public void setExecutionParameters(ExecutionParameters parameters) {
-		this.executionParameters = parameters;
-	}
-
 	public PlanAccessor getPlanAccessor() {
 		return planAccessor;
-	}
-
-	public void setPlanAccessor(PlanAccessor planAccessor) {
-		this.planAccessor = planAccessor;
 	}
 
 	public ReportNodeAccessor getReportNodeAccessor() {
@@ -212,6 +194,10 @@ public class ExecutionContext extends AbstractContext  {
 
 	protected void setReportNodeAccessor(ReportNodeAccessor reportNodeAccessor) {
 		this.reportNodeAccessor = reportNodeAccessor;
+	}
+	
+	protected void setPlanAccessor(PlanAccessor planAccessor) {
+		this.planAccessor = planAccessor;
 	}
 
 	protected void setExpressionHandler(ExpressionHandler expressionHandler) {

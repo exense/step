@@ -8,7 +8,7 @@ import java.util.Map;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ContextBuilder;
+import step.core.execution.ExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -52,7 +52,7 @@ public class DefaultPlanRunner implements PlanRunner {
 	}
 	
 	protected ExecutionContext buildExecutionContext() {
-		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
 		
 		executionParameters.forEach((k, v) -> {
 			context.getVariablesManager().putVariable(context.getReport(), k, v);

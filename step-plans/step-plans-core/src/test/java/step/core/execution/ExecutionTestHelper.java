@@ -34,7 +34,7 @@ public class ExecutionTestHelper {
 	}
 
 	public static ExecutionContext createContext() {
-		ExecutionContext c = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext c = new ExecutionContextBuilder().configureForlocalExecution().build();
 		return c;
 	}
 	

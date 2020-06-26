@@ -14,7 +14,7 @@ import step.artefacts.Return;
 import step.artefacts.Script;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ContextBuilder;
+import step.core.execution.ExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -32,7 +32,7 @@ public class ArtefactFunctionHandlerTest {
 
 	@Test
 	public void test() {
-		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
 
 		Return r = new Return();
 		r.setOutput(new DynamicValue<String>("{\"Result\":{\"dynamic\":true,\"expression\":\"input.Input1\"}}"));
@@ -73,7 +73,7 @@ public class ArtefactFunctionHandlerTest {
 	
 	@Test
 	public void testError() {
-		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
 
 		Script script = new Script();
 		script.setScript("output.setError('MyError'");

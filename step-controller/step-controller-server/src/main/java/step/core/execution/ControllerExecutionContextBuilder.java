@@ -1,59 +1,49 @@
 package step.core.execution;
 
-import org.bson.types.ObjectId;
-
 import step.core.GlobalContext;
-import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.threadpool.ThreadPool;
 
-public class ControllerExecutionContextBuilder {
+public class ControllerExecutionContextBuilder extends ExecutionContextBuilder {
 
-	private final GlobalContext globalContext;
-	
-	public ControllerExecutionContextBuilder(GlobalContext globalContext) {
+	public ControllerExecutionContextBuilder() {
 		super();
-		this.globalContext = globalContext;
 	}
 
-	public ExecutionContext createExecutionContext() {
-		return createExecutionContext(new ObjectId().toString());
+	public ControllerExecutionContextBuilder(String executionId) {
+		super(executionId);
+	}
+
+	public ControllerExecutionContextBuilder(String executionId, ExecutionParameters executionParameters) {
+		super(executionId, executionParameters);
 	}
 	
-	public ExecutionContext createExecutionContext(String executionId) {
-		return createExecutionContext(executionId, new ExecutionParameters("dummy", null, ExecutionMode.RUN));
-	}
-	
-	public ExecutionContext createExecutionContext(String executionId, ExecutionParameters executionParameters) {
+	public ControllerExecutionContextBuilder configureForControllerExecution(GlobalContext globalContext) {
+		ExecutionParameters executionParameters = executionContext.getExecutionParameters();
 		boolean isolatedContext = executionParameters.isIsolatedExecution();
-		
-		ExecutionContext context;
 		if(isolatedContext) {
-			context = ContextBuilder.createLocalExecutionContext(executionId);
-			context.setReportNodeAccessor(globalContext.getReportAccessor());
-			context.setEventManager(globalContext.getEventManager());
-			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
-
+			configureForlocalExecution();
+			executionContext.setReportNodeAccessor(globalContext.getReportAccessor());
+			executionContext.setEventManager(globalContext.getEventManager());
+			executionContext.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
 			ExecutionManager executionManager = new ExecutionManagerImpl(globalContext.getExecutionAccessor());
-			context.put(ExecutionManager.class, executionManager);
+			executionContext.put(ExecutionManager.class, executionManager);
 		} else {
-			context = new ExecutionContext(executionId);
-			context.setExpressionHandler(globalContext.getExpressionHandler());
-			context.setDynamicBeanResolver(globalContext.getDynamicBeanResolver());
-			context.setConfiguration(globalContext.getConfiguration());
-			context.setPlanAccessor(globalContext.getPlanAccessor());
-			context.setReportNodeAccessor(globalContext.getReportAccessor());
-			context.setEventManager(globalContext.getEventManager());
-			context.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
+			executionContext.setExpressionHandler(globalContext.getExpressionHandler());
+			executionContext.setDynamicBeanResolver(globalContext.getDynamicBeanResolver());
+			executionContext.setConfiguration(globalContext.getConfiguration());
+			executionContext.setPlanAccessor(globalContext.getPlanAccessor());
+			executionContext.setReportNodeAccessor(globalContext.getReportAccessor());
+			executionContext.setEventManager(globalContext.getEventManager());
+			executionContext.setExecutionCallbacks(globalContext.getPluginManager().getProxy());
 			ExecutionManager executionManager = new ExecutionManagerImpl(globalContext.getExecutionAccessor());
-			context.put(ExecutionManager.class, executionManager);
-			context.put(ThreadPool.class, new ThreadPool(context));
-			context.setExecutionTypeListener(executionManager);
+			executionContext.put(ExecutionManager.class, executionManager);
+			executionContext.put(ThreadPool.class, new ThreadPool(executionContext));
+			executionContext.setExecutionTypeListener(executionManager);
 			
 		}
-		context.setExecutionParameters(executionParameters);
-		context.updateStatus(ExecutionStatus.INITIALIZING);
-		return context;
+		executionContext.updateStatus(ExecutionStatus.INITIALIZING);
+		return this;
 	}
 }
