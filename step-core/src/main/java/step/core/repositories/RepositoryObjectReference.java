@@ -26,6 +26,7 @@ public class RepositoryObjectReference {
 	
 	Map<String, String> repositoryParameters;
 	
+	public static final String LOCAL_REPOSITORY_ID = "local";
 	public static final String PLAN_ID = "planid";
 
 	public RepositoryObjectReference() {
