@@ -47,6 +47,9 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 		super.setupFunction(function);
   		
   		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
+  		// hide the plan of the composite keyword
+  		plan.setVisible(false);
+
   		planAccessor.save(plan);
   		
   		function.setPlanId(plan.getId().toString());		
