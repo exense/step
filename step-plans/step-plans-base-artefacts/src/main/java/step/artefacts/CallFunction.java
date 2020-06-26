@@ -28,7 +28,6 @@ import step.core.entities.EntityReference;
 @Artefact(name="CallKeyword", handler = CallFunctionHandler.class, report = CallFunctionReportNode.class)
 public class CallFunction extends TokenSelector {
 	
-	@EntityReference(type=EntityManager.functions)
 	String functionId;
 	
 	DynamicValue<String> function = new DynamicValue<>("{}");
@@ -45,6 +44,7 @@ public class CallFunction extends TokenSelector {
 		this.function = function;
 	}
 
+	@EntityReference(type=EntityManager.functions)
 	public String getFunctionId() {
 		return functionId;
 	}

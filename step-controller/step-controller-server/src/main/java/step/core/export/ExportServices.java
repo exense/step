@@ -65,7 +65,6 @@ public class ExportServices extends AbstractServices {
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws IOException {
-				String planName = accessor.get(id).getAttributes().get(AbstractOrganizableObject.NAME);
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);//planName + ".json");
 				exportManager.exportById(resourceContainer.getOutputStream(),objectDrainer , metadata, id, EntityManager.plans,recursively);
 				resourceContainer.save(null);

@@ -23,6 +23,8 @@ import javax.annotation.PostConstruct;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.ContainsDynamicValues;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
 
@@ -57,6 +59,7 @@ public class AbstractForBlock extends AbstractArtefact {
 	}
 	
 	@ContainsDynamicValues
+	@EntityReference(type=EntityManager.recursive)
 	public DataPoolConfiguration getDataSource() {
 		return dataSource;
 	}

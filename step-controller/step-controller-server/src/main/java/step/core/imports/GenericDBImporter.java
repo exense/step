@@ -56,7 +56,14 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 	
 	protected void saveWithNewId(A aObj, Map<String, String> references) {
 		String origId = aObj.getId().toHexString();
-		aObj.setId(new ObjectId());
+		ObjectId objectId;
+		//if the origId was already replaced, use the new one
+		if (references.containsKey(origId)) {
+			objectId = new ObjectId(references.get(origId));
+		} else {
+			objectId = new ObjectId();
+		}
+		aObj.setId(objectId);
 		references.put(origId, aObj.getId().toHexString());
 		context.getEntityManager().updateReferences(aObj, references);
 		entity.getAccessor().save(aObj);

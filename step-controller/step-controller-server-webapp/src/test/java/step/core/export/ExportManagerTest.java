@@ -12,22 +12,37 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 
+import ch.exense.commons.io.FileHelper;
 import step.artefacts.CallFunction;
+import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
+import step.attachments.FileResolver;
 import step.core.GlobalContext;
 import step.core.GlobalContextBuilder;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.imports.ImportManager;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.datapool.excel.ExcelDataPool;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionCRUDAccessor;
 import step.planbuilder.BaseArtefacts;
+import step.plugins.functions.types.CompositeFunction;
+import step.plugins.functions.types.CompositeFunctionType;
+import step.resources.InMemoryResourceAccessor;
+import step.resources.InMemoryResourceRevisionAccessor;
+import step.resources.Resource;
+import step.resources.ResourceAccessor;
+import step.resources.ResourceManager;
+import step.resources.ResourceManagerImpl;
+import step.resources.ResourceRevisionAccessor;
 
 public class ExportManagerTest {
 
@@ -184,6 +199,16 @@ public class ExportManagerTest {
 			Map<String,String> metadata = new HashMap<String,String>();
 			metadata.put("version", c.getCurrentVersion().toString());
 			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata, plan2.getId().toString(), "plans", true);
+			
+			/*DEBUG
+			  try (BufferedReader br = new BufferedReader(
+			 
+					new InputStreamReader(new FileInputStream(testExportFile), StandardCharsets.UTF_8));) {
+				String line;
+				while ((line = br.readLine()) != null) {
+					System.out.println(line);
+				}
+			}*/
 						
 			//create a new context to test the import
 			c = GlobalContextBuilder.createGlobalContext();
@@ -215,7 +240,143 @@ public class ExportManagerTest {
 			testExportFile.delete();
 		}
 	}
+	
+	@Test
+	public void testExportPlansWithCompo() throws Exception {
+		testExportPlansWithCompoFct(true);
+	}
+	
+	@Test
+	public void testExportPlansWithCompoNewReferences() throws Exception {
+		testExportPlansWithCompoFct(false);
+	}
+	
+	
+	private void testExportPlansWithCompoFct(boolean overwrite) throws Exception {
+		GlobalContext c = GlobalContextBuilder.createGlobalContext();
+		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(c.getPlanAccessor());
+		CompositeFunction function = compositeFunctionType.newFunction();
+		compositeFunctionType.setupFunction(function);
+		String compositePlanId = function.getPlanId();
+		FunctionCRUDAccessor functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
+		functionAccessor.save(function);
+		
+		Sequence sequence = BaseArtefacts.sequence();
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunctionId(function.getId().toString());
+		sequence.addChild(callFunction);
+		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(sequence).endBlock().build();
+		c.getPlanAccessor().save(plan);
+		
+		File testExportFile = new File("testExport.json");
+		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
+			ExportManager exportManager = new ExportManager(c);
+			Map<String,String> metadata = new HashMap<String,String>();
+			metadata.put("version", c.getCurrentVersion().toString());
+			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata, plan.getId().toString(), "plans", true);
+						
+			//create a new context to test the import
+			c = GlobalContextBuilder.createGlobalContext();
+			functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
+			ImportManager importManager = new ImportManager(c);
+			importManager.importAll(testExportFile, dummyObjectEnricher(), null, overwrite);
+			
+			AtomicInteger nbPlans = new AtomicInteger(0);
+			c.getPlanAccessor().getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
+			AtomicInteger nbFunctions = new AtomicInteger(0);
+			functionAccessor.getAll().forEachRemaining(f->nbFunctions.incrementAndGet());
+			Assert.assertEquals(2, nbPlans.intValue());
+			Assert.assertEquals(1, nbFunctions.intValue());
+			
+			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
+			Plan actualCompositePlan = c.getPlanAccessor().get(compositePlanId);
+			Function actualFunction = functionAccessor.get(function.getId());
 
+			if (overwrite) {
+				Assert.assertEquals(plan.getId(), actualPlan.getId());
+				Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
+				Assert.assertEquals(compositePlanId, actualCompositePlan.getId().toHexString());
+				Assert.assertEquals(function.getId(), actualFunction.getId());
+			} else {
+				Assert.assertNull(actualPlan);
+				Assert.assertNull(actualCompositePlan);
+				Assert.assertNull(actualFunction);
+			}
+		} finally {
+			testExportFile.delete();
+		}
+	}
+	
+	@Test
+	public void testExportPlansWithResource() throws Exception {
+		testExportPlansWithResourceFct(true);
+	}
+	
+	@Test
+	public void testExportPlansWithResourceNewReferences() throws Exception {
+		testExportPlansWithResourceFct(false);
+	}
+	
+	public void testExportPlansWithResourceFct(boolean overwrite) throws Exception {
+		GlobalContext c = GlobalContextBuilder.createGlobalContext();
+		
+		File rootFolder = FileHelper.createTempFolder();
+		ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
+		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, c.get(ResourceAccessor.class), resourceRevisionAccessor);	
+		// Create a resource
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_DATASOURCE, this.getClass().getResourceAsStream("dummyExcel.xls"), "TestResource.txt", false, null);
+		Assert.assertNotNull(resource);
+			
+		ForEachBlock f = new ForEachBlock();
+		ExcelDataPool p = new ExcelDataPool();
+		p.setFile(new DynamicValue<String> (FileResolver.RESOURCE_PREFIX + resource.getId().toHexString()));
+		p.getHeaders().setValue(true);
+		f.setDataSource(p);
+		f.setDataSourceType("excel");
+		
+		Sequence sequence = BaseArtefacts.sequence();
+		sequence.addChild(f);
+		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(sequence).endBlock().build();
+		c.getPlanAccessor().save(plan);
+		
+		File testExportFile = new File("testExport.json");
+		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
+			ExportManager exportManager = new ExportManager(c);
+			Map<String,String> metadata = new HashMap<String,String>();
+			metadata.put("version", c.getCurrentVersion().toString());
+			exportManager.exportById(outputStream, dummyObjectEnricher(), metadata, plan.getId().toString(), "plans", true);
+						
+			//create a new context to test the import
+			c = GlobalContextBuilder.createGlobalContext();
+
+			ImportManager importManager = new ImportManager(c);
+			importManager.importAll(testExportFile, dummyObjectEnricher(), null, overwrite);
+			
+			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
+			Resource actualResource = c.get(ResourceAccessor.class).get(resource.getId());
+
+			AtomicInteger nbPlans = new AtomicInteger(0);
+			c.getPlanAccessor().getAll().forEachRemaining(pp->{nbPlans.incrementAndGet();});
+			AtomicInteger nbResources = new AtomicInteger(0);
+			c.get(ResourceAccessor.class).getAll().forEachRemaining(r->nbResources.incrementAndGet());
+			Assert.assertEquals(1, nbPlans.intValue());
+			Assert.assertEquals(1, nbResources.intValue());
+
+			if (overwrite) {
+				Assert.assertEquals(plan.getId(), actualPlan.getId());
+				Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
+				Assert.assertEquals(resource.getId(), actualResource.getId());
+				
+			} else {
+				Assert.assertNull(actualPlan);
+				Assert.assertNull(actualResource);
+			}
+			
+		} finally {
+			testExportFile.delete();
+			resourceManager.deleteResource(resource.getId().toHexString());
+		}
+	}
 
 	protected ObjectPredicate dummyObjectPredicate() {
 		return new ObjectPredicate() {

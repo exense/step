@@ -7,7 +7,10 @@ import step.attachments.FileResolver;
 import step.core.GlobalContext;
 import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
+import step.core.entities.Entity;
+import step.core.entities.EntityManager;
 import step.core.execution.ExecutionContext;
+import step.core.imports.GenericDBImporter;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
@@ -35,6 +38,12 @@ public class ResourcePlugin extends AbstractControllerPlugin {
 		
 		context.get(CollectionRegistry.class).register("resources", new Collection(context.getMongoClientSession().getMongoDatabase(), 
 				"resources", Resource.class, true));
+		
+		context.getEntityManager()
+			.register( new Entity<Resource, ResourceAccessor>(
+			EntityManager.resources, resourceAccessor, Resource.class, 
+			new GenericDBImporter<Resource, ResourceAccessor>(context) {
+			}));
 	}
 
 	public static String getResourceDir(Configuration configuration) {

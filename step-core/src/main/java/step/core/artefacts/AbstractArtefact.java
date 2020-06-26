@@ -36,6 +36,8 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.MapDeserializer;
 import step.core.accessors.MapSerializer;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 
 @JsonTypeInfo(use=Id.CUSTOM,property="_class")
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)
@@ -78,6 +80,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		this.description = description;
 	}
 
+	@EntityReference(type=EntityManager.recursive)
 	public List<AbstractArtefact> getChildren() {
 		return children;
 	}

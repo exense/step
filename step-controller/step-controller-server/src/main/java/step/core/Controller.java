@@ -127,7 +127,7 @@ public class Controller {
 		context.setEventManager(new EventManager());
 		context.setArtefactRegistry(ArtefactRegistry.getInstance());
 		
-		context.setEntityManager(new EntityManager());
+		context.setEntityManager(new EntityManager(context));
 		context.getEntityManager()
 			.register( new Entity<Execution, ExecutionAccessor>(
 				EntityManager.executions, context.getExecutionAccessor(), Execution.class, 

@@ -28,7 +28,6 @@ import step.core.entities.EntityReference;
 @Artefact(handler = CallPlanHandler.class)
 public class CallPlan extends AbstractArtefact {
 	
-	@EntityReference(type=EntityManager.plans)
 	private String planId;
 	
 	private DynamicValue<String> selectionAttributes = new DynamicValue<>("{}");
@@ -43,6 +42,7 @@ public class CallPlan extends AbstractArtefact {
 		return true;
 	}
 
+	@EntityReference(type=EntityManager.plans)
 	public String getPlanId() {
 		return planId;
 	}

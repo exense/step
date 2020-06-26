@@ -1,5 +1,7 @@
 package step.plugins.functions.types;
 
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 import step.functions.Function;
 
 public class CompositeFunction extends Function {
@@ -11,6 +13,7 @@ public class CompositeFunction extends Function {
 		executeLocally = true;
 	}
 
+	@EntityReference(type=EntityManager.plans)
 	public String getPlanId() {
 		return planId;
 	}
