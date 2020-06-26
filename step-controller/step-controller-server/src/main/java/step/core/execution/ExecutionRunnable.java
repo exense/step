@@ -116,7 +116,7 @@ public class ExecutionRunnable implements Runnable {
 		ImportResult importResult;
 		RepositoryObjectReference repositoryObjectReference = context.getExecutionParameters().getRepositoryObject();
 		if(repositoryObjectReference!=null) {
-			if("local".equals(repositoryObjectReference.getRepositoryID())) {
+			if(RepositoryObjectReference.LOCAL_REPOSITORY_ID.equals(repositoryObjectReference.getRepositoryID())) {
 				importResult = new ImportResult();
 				importResult.setPlanId(repositoryObjectReference.getRepositoryParameters().get(RepositoryObjectReference.PLAN_ID));
 				importResult.setSuccessful(true);

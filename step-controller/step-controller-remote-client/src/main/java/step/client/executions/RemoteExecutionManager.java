@@ -36,7 +36,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	/**
 	 * Executes a plan located on the controller
 	 *  
-	 * @param planId the ID of the plan to be executed. The plan should execute on the controller
+	 * @param planId the ID of the plan to be executed.
 	 * @return the execution ID of the execution
 	 */
 	public String execute(String planId) {
@@ -46,21 +46,14 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	/**
 	 * Executes a plan located on the controller
 	 * 
-	 * @param planId the ID of the plan to be executed. The plan should execute on the controller
-	 * @param parameters the execution parameters (the drop-downs that are set on the execution screen in the UI)
+	 * @param planId the ID of the plan to be executed.
+	 * @param executionParameters the execution parameters (the drop-downs that are set on the execution screen in the UI)
 	 * @return the execution ID of the execution
 	 */
-	public String execute(String planId, Map<String, String> parameters) {
+	public String execute(String planId, Map<String, String> executionParameters) {
 		Map<String, String> repositoryParameters = new HashMap<>();
 		repositoryParameters.put(RepositoryObjectReference.PLAN_ID, planId);
-		RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference("local", repositoryParameters);
-		ExecutionParameters executionParameters = new ExecutionParameters();
-		executionParameters.setRepositoryObject(repositoryObjectReference);
-		executionParameters.setUserID(credentials.getUsername());
-		executionParameters.setMode(ExecutionMode.RUN);
-		executionParameters.setIsolatedExecution(false);
-		executionParameters.setCustomParameters(parameters);
-		return execute(executionParameters);
+		return executeFromExternalRepository(RepositoryObjectReference.LOCAL_REPOSITORY_ID, repositoryParameters, executionParameters);
 	}
 
 	/**
@@ -71,18 +64,39 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	 * @return the execution ID of the execution
 	 */
 	public String executeFromExternalRepository(String repositoryId, Map<String, String> repositoryParameters) {
-		RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference(repositoryId, repositoryParameters);
-		ExecutionParameters executionParameters = new ExecutionParameters();
-		executionParameters.setRepositoryObject(repositoryObjectReference);
-		executionParameters.setUserID(credentials.getUsername());
-		executionParameters.setMode(ExecutionMode.RUN);
-		executionParameters.setIsolatedExecution(false);
-		return execute(executionParameters);
+		return executeFromExternalRepository(repositoryId, repositoryParameters, new HashMap<>());
 	}
 	
-	public String execute(ExecutionParameters executionParams) {
+	/**
+	 * Executes a plan located on an external repository
+	 * 
+	 * @param repositoryId the ID of the repository the Plan is located on
+	 * @param repositoryParameters the parameters to be passed to the repository to locate the plan 
+	 * @param executionParameters the execution parameters (the drop-downs that are set on the execution screen in the UI)
+	 * @return the execution ID of the execution
+	 */
+	public String executeFromExternalRepository(String repositoryId, Map<String, String> repositoryParameters, Map<String, String> executionParameters) {
+		RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference(repositoryId, repositoryParameters);
+
+		ExecutionParameters executionParameterObject = new ExecutionParameters();
+		executionParameterObject.setRepositoryObject(repositoryObjectReference);
+		executionParameterObject.setUserID(credentials.getUsername());
+		executionParameterObject.setMode(ExecutionMode.RUN);
+		executionParameterObject.setIsolatedExecution(false);
+		executionParameterObject.setCustomParameters(executionParameters);
+		
+		return execute(executionParameterObject);
+	}
+	
+	/**
+	 * (Advanced) Executes a plan located on the controller using the provided {@link ExecutionParameters} object
+	 * 
+	 * @param executionParameterObject the {@link ExecutionParameters} 
+	 * @return the execution ID of the execution
+	 */
+	public String execute(ExecutionParameters executionParameterObject) {
 		Builder b = requestBuilder("/rest/controller/execution/");
-		Entity<?> entity = Entity.entity(executionParams, MediaType.APPLICATION_JSON);
+		Entity<?> entity = Entity.entity(executionParameterObject, MediaType.APPLICATION_JSON);
 		return executeRequest(()->b.post(entity, String.class));
 	}
 	
