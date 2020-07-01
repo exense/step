@@ -1,8 +1,0 @@
-FROM exense/step:k8s-base-latest
-MAINTAINER jonathan.rubiero@exense.ch
-COPY . /home/controller/
-ENV STEP_KV ""
-ENV STEP_DP ""
-WORKDIR /home/controller/bin/
-RUN chmod +x ../mergeProperties.sh ../installDependencies.sh startController.sh
-CMD ../mergeProperties.sh ../conf/step.properties && ../installDependencies.sh && ./startController.sh
