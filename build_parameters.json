@@ -2,6 +2,7 @@
 	"NAME": "Step OSS",
 	"OS": "WINDOWS",
  	"JAVA_VERSION": "JDK11",
+	"LOCK": "STEP",
 	
 	"SUBPROJECTS":
 	{
