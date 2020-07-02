@@ -41,7 +41,6 @@ import javax.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionRunnable;
 import step.core.execution.model.ExecutionMode;
