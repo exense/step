@@ -12,7 +12,7 @@
 
 	<groupId>ch.exense.step</groupId>
 	<artifactId>step-parent</artifactId>
-	<version>0.0.0</version>
+	<version>3.13.4</version>
 	<packaging>pom</packaging>
 
 	<name>Step</name>
