@@ -9,9 +9,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.GlobalContext;
-import step.core.Version;
 import step.core.imports.GenericDBImporter;
-import step.core.objectenricher.ObjectEnricher;
+import step.core.imports.ImportConfiguration;
 
 
 public class ResourceRevisionsImporter extends GenericDBImporter<ResourceRevision, ResourceRevisionAccessor> {
@@ -21,11 +20,11 @@ public class ResourceRevisionsImporter extends GenericDBImporter<ResourceRevisio
 	}
 
 	@Override
-	public ResourceRevision importOne(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, 
-			Map<String, String> references, ResourceManager localResourceMgr, boolean overwrite) throws JsonParseException, JsonMappingException, IOException {
+	public ResourceRevision importOne(ImportConfiguration importConfig, JsonParser jParser, ObjectMapper mapper,
+			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
 		ResourceRevision resourceRevision = mapper.readValue(jParser, entity.getEntityClass());
-		objectEnricher.accept(resourceRevision);
-		resourceRevision = localResourceMgr.saveResourceRevision(resourceRevision);
+		importConfig.getObjectEnricher().accept(resourceRevision);
+		resourceRevision = importConfig.getLocalResourceMgr().saveResourceRevision(resourceRevision);
 		return resourceRevision;
 	}
 }

@@ -52,7 +52,8 @@ public class ImportServices extends AbstractServices {
 			if (!importAll) {
 				filter = Arrays.asList(entity);
 			}
-			importManager.importAll(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()),filter,overwrite);
+			ImportConfiguration importConfiguration = new ImportConfiguration(file.getFile(), objectHookRegistry.getObjectEnricher(getSession()),filter,overwrite);
+			importManager.importAll(importConfiguration);
 		} catch (Exception e) {
 			logger.error("Import failed",e);
 			throw e;

@@ -11,9 +11,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.GlobalContext;
-import step.core.Version;
 import step.core.imports.GenericDBImporter;
-import step.core.objectenricher.ObjectEnricher;
+import step.core.imports.ImportConfiguration;
 
 
 public class ResourceImpoter extends GenericDBImporter<Resource, ResourceAccessor> {
@@ -23,22 +22,22 @@ public class ResourceImpoter extends GenericDBImporter<Resource, ResourceAccesso
 	}
 
 	@Override
-	public Resource importOne(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, 
-			Map<String, String> references, ResourceManager localResourceMgr, boolean overwrite) throws JsonParseException, JsonMappingException, IOException {
+	public Resource importOne(ImportConfiguration importConfig, JsonParser jParser, ObjectMapper mapper,
+			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
 		ResourceManager resourceManager = context.get(ResourceManager.class);
 		Resource resource = mapper.readValue(jParser, entity.getEntityClass());
-		objectEnricher.accept(resource);
-		resource = localResourceMgr.saveResource(resource);
+		importConfig.getObjectEnricher().accept(resource);
+		resource = importConfig.getLocalResourceMgr().saveResource(resource);
 		String origResourceId = resource.getId().toHexString();
-		ResourceRevision revision = localResourceMgr.getResourceRevisionByResourceId(origResourceId);
+		ResourceRevision revision = importConfig.getLocalResourceMgr().getResourceRevisionByResourceId(origResourceId);
 		String origRevisionId = revision.getId().toHexString();
-		File resourceFile = localResourceMgr.getResourceFile(resource.getId().toHexString()).getResourceFile();
+		File resourceFile = importConfig.getLocalResourceMgr().getResourceFile(resource.getId().toHexString()).getResourceFile();
 		try (FileInputStream fileInputStream = new FileInputStream(resourceFile)){
-			if (! overwrite) {
+			if (! importConfig.isOverwrite()) {
 				//copy resource to target resource manager with new Id and new revision id,			
 				try {
 					Resource newResouce = resourceManager.createResource(resource.getResourceType(), fileInputStream,
-							resourceFile.getName(), false, objectEnricher);
+							resourceFile.getName(), false, importConfig.getObjectEnricher());
 					references.put(origResourceId, newResouce.getId().toHexString());
 					references.put(origRevisionId, newResouce.getCurrentRevisionId().toHexString());	
 				} catch (SimilarResourceExistingException e) {

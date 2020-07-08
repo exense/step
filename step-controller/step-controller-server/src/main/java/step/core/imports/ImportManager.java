@@ -20,9 +20,7 @@ import step.core.GlobalContext;
 import step.core.Version;
 import step.core.entities.EntityManager;
 import step.core.export.ImportExportMapper;
-import step.core.objectenricher.ObjectEnricher;
 import step.resources.LocalResourceManagerImpl;
-import step.resources.ResourceManagerImpl;
 
 public class ImportManager {
 	
@@ -41,12 +39,12 @@ public class ImportManager {
 	 * @param overwrite define whether to keep exported ids (i.e. will overwrite if re-imported in same controller)
 	 * @throws Exception
 	 */
-	public void importAll(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter, boolean overwrite) throws Exception {
-		File jsonFile = file;
-		if (FileHelper.isArchive(file)) {
+	public void importAll(ImportConfiguration importConfig) throws Exception {
+		File jsonFile = importConfig.file;
+		if (FileHelper.isArchive(importConfig.file)) {
 			File tmpFolder = new File("import"+ UUID.randomUUID());
-			LocalResourceManagerImpl localResourceMgr = new LocalResourceManagerImpl(tmpFolder);
-			FileHelper.unzip(file,tmpFolder);
+			importConfig.setLocalResourceMgr(new LocalResourceManagerImpl(tmpFolder));
+			FileHelper.unzip(importConfig.file,tmpFolder);
 			jsonFile = new File(tmpFolder.getPath()+"/export.json");
 			ObjectMapper mapper = ImportExportMapper.getMapper(context.getCurrentVersion());
 			Version version=null;
@@ -62,13 +60,15 @@ public class ImportManager {
 						if (metadata.containsKey("version")) {
 							version = new Version(metadata.get("version"));
 						} 
-						logger.info("Importing json from file: " + file.getName() + " with following metadata: " + metadata);
+						logger.info("Importing json from file: " + importConfig.file.getName() + " with following metadata: " + metadata);
+						importConfig.setVersion(version);
+						importConfig.setMetadata(metadata);
 						//Read next field which must be an entity type
 						//Change mapper for given version
 						mapper = ImportExportMapper.getMapper(version);
 						Map<String, String> refMapping = new HashMap<String,String> ();
 						while (jParser.nextToken() != JsonToken.END_OBJECT) { 
-							importEntitiesByType(jParser, mapper, objectEnricher, entitiesFilter, version, refMapping, localResourceMgr, overwrite);
+							importEntitiesByType(importConfig, jParser, mapper, refMapping);
 						}
 					} else {
 						throw new RuntimeException("Missing metadata in json file");
@@ -80,16 +80,16 @@ public class ImportManager {
 				}
 
 			} catch (Exception e) {
-				logger.error("Import failed for file: " + file.getName(), e);
+				logger.error("Import failed for file: " + importConfig.file.getName(), e);
 				throw e;
 			} finally {
-				if (localResourceMgr != null) {
-					localResourceMgr.cleanup();
+				if (importConfig.localResourceMgr != null) {
+					importConfig.localResourceMgr.cleanup();
 				}
 			}
 		//json files are older plan export (plans for 3.13, arterfacts for previous versions)
 		} else {
-			importOlderPlans(file, objectEnricher, entitiesFilter, overwrite);
+			importOlderPlans(importConfig);
 		}
 	}
 
@@ -97,9 +97,10 @@ public class ImportManager {
 		return (entitiesFilter!=null && !entitiesFilter.contains(entityName));
 	}
 
-	private void importEntitiesByType(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, List<String> entitiesFilter, Version version, Map<String, String> refMapping, ResourceManagerImpl localResourceMgr, boolean overwrite) throws IOException, InstantiationException, IllegalAccessException {
+	private void importEntitiesByType(ImportConfiguration importConfig, JsonParser jParser, ObjectMapper mapper, 
+			Map<String, String> refMapping) throws IOException, InstantiationException, IllegalAccessException {
 		String name = jParser.getCurrentName();
-		boolean skip = skipEntityType(entitiesFilter, name);
+		boolean skip = skipEntityType(importConfig.entitiesFilter, name);
 		Importer<?,?> importer = context.getEntityManager().getEntityByName(name).getImporter();
 		if (!skip) {
 			if (importer==null) {
@@ -110,7 +111,7 @@ public class ImportManager {
 		if (jParser.nextToken().equals(JsonToken.START_ARRAY)) {
 			while (!jParser.nextToken().equals(JsonToken.END_ARRAY)) {
 				if (!skip) {
-					importer.importOne(jParser, mapper, objectEnricher, version, refMapping, localResourceMgr, overwrite);
+					importer.importOne(importConfig, jParser, mapper, refMapping);
 				}
 			}
 		} else {
@@ -119,29 +120,30 @@ public class ImportManager {
 	}
 	
 	
-	private void importOlderPlans(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter, boolean overwrite) throws InstantiationException, IllegalAccessException, IOException {
+	private void importOlderPlans(ImportConfiguration importConfig) throws InstantiationException, IllegalAccessException, IOException {
 		ObjectMapper mapper = ImportExportMapper.getMapper(context.getCurrentVersion());
 		String firstKey="undef";
 		String firstValue="undef";
 		//Extract class to determine version
-		try (JsonParser jParser = mapper.getFactory().createParser(file)) {
+		try (JsonParser jParser = mapper.getFactory().createParser(importConfig.file)) {
 			if (jParser.nextToken() == JsonToken.START_OBJECT && jParser.nextToken() == JsonToken.FIELD_NAME) {
 				firstKey = jParser.getCurrentName();
 				jParser.nextToken();
 				firstValue = jParser.getValueAsString();
 			}
 		}
-		if (firstKey.equals("_class") && !skipEntityType(entitiesFilter,EntityManager.plans)) {
+		if (firstKey.equals("_class") && !skipEntityType(importConfig.entitiesFilter,EntityManager.plans)) {
 			Importer<?,?> importer = context.getEntityManager().getEntityByName(EntityManager.plans).getImporter();
 			Version version = new Version(3,12,0);
 			//3.13
 			if (firstValue.startsWith("step.")) {
 				version = new Version(3,13,0);
 			}
-			logger.info("Importing file: " + file.getName() + ". The file has no metadata, version detected: " + version.toString());
+			importConfig.setVersion(version);
+			logger.info("Importing file: " + importConfig.file.getName() + ". The file has no metadata, version detected: " + version.toString());
 			//Change mapper for given version
 			mapper = ImportExportMapper.getMapper(version);
-			importer.importMany(file, mapper, objectEnricher, version, null, overwrite);
+			importer.importMany(importConfig, mapper);
 		} else {
 			logger.error("Import failed, the first property was unexepected '" + firstKey + "':'" + firstValue + "'");
 			throw new RuntimeException("Import failed, the first property was unexepected '" + firstKey + "':'" + firstValue + "'"

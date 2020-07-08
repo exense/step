@@ -79,11 +79,12 @@ public class EntityManager  {
 		CRUDAccessor<?> accessor = entity.getAccessor();
 		AbstractIdentifiableObject a = accessor.get(id);
 		if (a == null ) {
-			logger.error("Entities of type '" + entityName + "' are not supported");
-			throw new RuntimeException("Entity with id '" + id + "' could not be found in entities of type '" + entityName + "'");
+			logger.warn("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");
+			references.addReferenceNotFoundWarning("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");
+		} else {
+			resolveReferences(a, references);
+			entity.getReferencesHook().forEach(h->h.accept(a,references));
 		}
-		resolveReferences(a, references);
-		entity.getReferencesHook().forEach(h->h.accept(a,references));
 	}
 	
 	private void resolveReferences(Object object, EntityReferencesMap references) {

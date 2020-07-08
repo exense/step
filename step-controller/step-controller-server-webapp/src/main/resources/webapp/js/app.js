@@ -614,6 +614,13 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 			resolve: {message:function(){return  $sce.trustAsHtml(msg)}}});
 		return modalInstance.result;
 	}
+	
+	 dialogs.showListOfMsgs = function(messages) {
+	    var modalInstance = $uibModal.open({backdrop: 'static',animation: false, templateUrl: 'partials/messagesListDialog.html',
+	      controller: 'DialogCtrl', 
+	      resolve: {message:function(){return  messages}}});
+	    return modalInstance.result;
+	  }
 
 	dialogs.editTextField = function(scope) {
 		var modalInstance = $uibModal.open({

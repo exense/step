@@ -5,9 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipOutputStream;
 
 import org.slf4j.Logger;
@@ -24,12 +23,11 @@ import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReferencesMap;
 import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectPredicate;
 import step.resources.ResourceManager;
 
-public class ExportManager {	
-
-	private static final Logger logger = LoggerFactory.getLogger(ExportManager.class);
+public class ExportManager {
+	
+	private static Logger logger = LoggerFactory.getLogger(ExportManager.class);
 
 	private GlobalContext context;
 
@@ -38,43 +36,53 @@ public class ExportManager {
 		this.context = context;
 	}
 	
-	public void exportById(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, ObjectPredicate objectPredicate, String id, String entityType, boolean recursively, List<String> additionalEntities) throws FileNotFoundException, IOException {
+	public Set<String> exportById(ExportConfiguration exportConfig, String id) throws FileNotFoundException, IOException {
 		EntityReferencesMap refs = new EntityReferencesMap();
-		refs.addElementTo(entityType, id);
-		if (recursively) {
-			context.getEntityManager().getAllEntities(entityType,id,refs);	
+		refs.addElementTo(exportConfig.entityType, id);
+		if (exportConfig.recursively) {
+			context.getEntityManager().getAllEntities(exportConfig.entityType, id, refs);	
 		}
-		if (additionalEntities != null && additionalEntities.size()>0) {
-			additionalEntities.forEach(e-> context.getEntityManager().getEntitiesReferences(e, objectPredicate, false, refs));
+		if (exportConfig.additionalEntities != null && exportConfig.additionalEntities.size()>0) {
+			exportConfig.additionalEntities.forEach(e-> 
+				context.getEntityManager().getEntitiesReferences(e, exportConfig.objectPredicate, false, refs)
+			);
 		}
-		export(outputStream, objectEnricher, metadata, refs);
+		export(exportConfig, refs);
+		return refs.getRefNotFoundWarnings();
 	}
 	
-	public void exportAll(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, ObjectPredicate objectPredicate, String entityType, boolean recursively, List<String> additionalEntities) throws FileNotFoundException, IOException {
+	public Set<String> exportAll(ExportConfiguration exportConfig) throws FileNotFoundException, IOException {
 		EntityReferencesMap refs = new EntityReferencesMap();
-		context.getEntityManager().getEntitiesReferences(entityType, objectPredicate, recursively, refs);
-		if (additionalEntities != null) {
-			additionalEntities.forEach(e-> context.getEntityManager().getEntitiesReferences(e, objectPredicate, false, refs));
+		context.getEntityManager().getEntitiesReferences(exportConfig.entityType, exportConfig.objectPredicate, exportConfig.recursively, refs);
+		if (exportConfig.additionalEntities != null) {
+			exportConfig.additionalEntities.forEach(e-> context.getEntityManager().getEntitiesReferences(e, exportConfig.objectPredicate, false, refs));
 		}
-		export(outputStream, objectEnricher, metadata, refs);
+		export(exportConfig, refs);
+		return refs.getRefNotFoundWarnings();
 	}
 	
-	private void exportEntityByIds(Entity<?, ?> entity, JsonGenerator jGen, List<String> ids, ObjectEnricher objectEnricher) {
-		ids.forEach(id -> {
+	private void exportEntityByIds(String entityName, JsonGenerator jGen, EntityReferencesMap references, ObjectEnricher objectEnricher) {
+		Entity<?, ?> entity = context.getEntityManager().getEntityByName(entityName);
+		if (entity == null ) {
+			throw new RuntimeException("Entity of type " + entityName + " is not supported");
+		}
+		references.getReferencesByType(entityName).forEach(id -> {
 			AbstractIdentifiableObject a = entity.getAccessor().get(id);
 			if ( a == null) {
-				throw new RuntimeException("Referenced entity does not exists: entity of type " + entity.getName() + " with id " + id);
-			}
-			objectEnricher.accept(a);
-			try {
-				jGen.writeObject(a);
-			} catch (IOException e) {
-				throw new RuntimeException("Error while exporting entity of type " + entity.getName() + " with id:" + id ,e);
+				logger.warn("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");
+				references.addReferenceNotFoundWarning("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");
+			} else {
+				objectEnricher.accept(a);
+				try {
+					jGen.writeObject(a);
+				} catch (IOException e) {
+					throw new RuntimeException("Error while exporting entity of type " + entity.getName() + " with id:" + id ,e);
+				}
 			}
 		});
 	}
 
-	private void export(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata, EntityReferencesMap references)
+	private void export(ExportConfiguration exportConfig, EntityReferencesMap references)
 			throws FileNotFoundException, IOException {
 		
 		ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
@@ -86,16 +94,12 @@ public class ExportManager {
 			// pretty print
 			jGen.useDefaultPrettyPrinter();
 			jGen.writeStartObject();
-			jGen.writeObjectField("metadata", metadata);
+			jGen.writeObjectField("metadata", exportConfig.metadata);
 			//start a json array for each entity type
 			references.getTypes().forEach(e-> {
 				try {
 					jGen.writeArrayFieldStart(e);			
-					Entity<?, ?> entity = context.getEntityManager().getEntityByName(e);
-					if (entity == null ) {
-						throw new RuntimeException("Entity of type " + e + " is not supported");
-					}
-					exportEntityByIds(entity, jGen, references.getReferencesByType(e), objectEnricher);
+					exportEntityByIds(e, jGen, references, exportConfig.objectEnricher);
 					jGen.writeEndArray();	
 				} catch (IOException e1) {
 					throw new RuntimeException("Error while exporting entity of type " + e,e1);
@@ -103,7 +107,7 @@ public class ExportManager {
 			});
 			jGen.writeEndObject();//end export object
 		}
-		try (ZipOutputStream zos = new ZipOutputStream(outputStream)){
+		try (ZipOutputStream zos = new ZipOutputStream(exportConfig.outputStream)){
 			FileHelper.zipFile(zos, jsonStream, "export.json");
 			//Export resources (files)
 			List<String> resourceRef = references.getReferencesByType(EntityManager.resources);

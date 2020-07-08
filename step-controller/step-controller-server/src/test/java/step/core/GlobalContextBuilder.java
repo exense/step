@@ -12,7 +12,6 @@ import step.attachments.FileResolver;
 import step.core.access.InMemoryUserAccessor;
 import step.core.access.User;
 import step.core.access.UserAccessor;
-import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;

@@ -1,6 +1,6 @@
 angular.module('export',[])
 
-.factory('ExportService', function($http,$timeout) {  
+.factory('ExportService', function($http,$timeout, Dialogs) {  
   var factory = {};
 
   factory.pollUrl = function(exportUrl) {
@@ -11,11 +11,15 @@ angular.module('export',[])
         var status = response.data;
         if(status.ready) {
           var attachmentID = status.attachmentID;
-          $.fileDownload('rest/resources/'+attachmentID+'/content')
-          .done(function () { 
-            
-          })
-          .fail(function () { alert('File download failed!'); });
+          if (status.warnings !== undefined && status.warnings.length>0) {
+            Dialogs.showListOfMsgs(status.warnings).then(function() {
+              download(attachmentID);          
+            })
+          } else {
+            download(attachmentID);
+          }
+          
+          
         } else {
           if(pollCount==4) {
           }
@@ -23,6 +27,13 @@ angular.module('export',[])
         }
       });
     })();
+  }
+  
+  var download = function(attachmentID){
+    $.fileDownload('rest/resources/'+attachmentID+'/content')
+    .done(function () { 
+    })
+    .fail(function () { alert('File download failed!'); });
   }
   
   factory.poll = function(exportId) {

@@ -1,6 +1,7 @@
 package step.core.export;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -103,6 +104,8 @@ public class ExportTaskManager {
 		volatile boolean ready = false;
 				
 		volatile float progress = 0;
+		
+		Set<String> warnings;
 
 		public ExportStatus() {
 			super();
@@ -143,6 +146,14 @@ public class ExportTaskManager {
 
 		public void setProgress(float progress) {
 			this.progress = progress;
+		}
+
+		public Set<String> getWarnings() {
+			return warnings;
+		}
+
+		public void setWarnings(Set<String> warnings) {
+			this.warnings = warnings;
 		}
 	}
 }

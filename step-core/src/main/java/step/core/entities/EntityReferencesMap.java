@@ -2,14 +2,17 @@ package step.core.entities;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class EntityReferencesMap {
 	
 	private Map<String, List<String>> references;
+	Set<String> refNotFoundWarnings = new HashSet<String>();
 
 	public EntityReferencesMap() {
 		super();
@@ -25,6 +28,14 @@ public class EntityReferencesMap {
 			return true;
 		}
 		return false;
+	}
+	
+	public void addReferenceNotFoundWarning(String warning) {
+		refNotFoundWarnings.add(warning);
+	}
+	
+	public Set<String> getRefNotFoundWarnings(){
+		return refNotFoundWarnings;
 	}
 	
 	public List<String> getTypes() {

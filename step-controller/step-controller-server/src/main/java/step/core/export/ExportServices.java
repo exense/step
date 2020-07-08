@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -68,8 +69,10 @@ public class ExportServices extends AbstractServices {
 			@Override
 			public Resource runExport() throws IOException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);//planName + ".json");
-				exportManager.exportById(resourceContainer.getOutputStream(),objectDrainer , metadata,objectPredicateFactory.getObjectPredicate(session), id, 
+				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),objectDrainer , metadata,objectPredicateFactory.getObjectPredicate(session), 
 						EntityManager.plans, recursively, additionalEntities);
+				Set<String> refMissingWarning = exportManager.exportById(exportConfig, id);
+				status.setWarnings(refMissingWarning);
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
@@ -97,8 +100,10 @@ public class ExportServices extends AbstractServices {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
-				exportManager.exportAll(resourceContainer.getOutputStream(), objectHookRegistry.getObjectDrainer(session), 
+				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), objectHookRegistry.getObjectDrainer(session),
 						metadata, objectPredicateFactory.getObjectPredicate(session), entity, recursively, additionalEntities);
+				Set<String> refMissingWarning = exportManager.exportAll(exportConfig);
+				status.setWarnings(refMissingWarning);
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
