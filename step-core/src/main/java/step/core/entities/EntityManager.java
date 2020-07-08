@@ -211,13 +211,13 @@ public class EntityManager  {
 						}
 					}
 				}
-			} catch (IntrospectionException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			} catch (IntrospectionException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | InstantiationException e) {
 				throw new RuntimeException("Import failed, unabled to updates references by reflections",e);
 			}
 		}
 	}
 	
-	private Object getNewValue(Object value, Class<?> returnType, Map<String, String> references, String entityType) {
+	private Object getNewValue_(Object value, Class<?> returnType, Map<String, String> references, String entityType) {
 		FileResolver fileResolver = context.get(FileResolver.class);
 		Object newValue = null;
 		String origRefId = null;
@@ -227,6 +227,8 @@ public class EntityManager  {
 			origRefId = ((DynamicValue<?>) value).get().toString();
 		} else if (returnType.equals(String.class)) {
 			origRefId = (String) value;
+		} else if (returnType.equals(ObjectId.class)) {
+			origRefId = ((ObjectId) value).toHexString();
 		}
 		if (entityType.equals(resources)) {
 			origRefId = fileResolver.resolveResourceId(origRefId);
@@ -249,8 +251,24 @@ public class EntityManager  {
 			newValue = new DynamicValue<String> (newRefId);
 		} else if (returnType.equals(String.class)) {
 			newValue = newRefId;
+		} else if (returnType.equals(ObjectId.class)) {
+			newValue = new ObjectId(newRefId);
 		}
 		return newValue;
+	}
+	
+	private Object getNewValue(Object value, Class<?> returnType, Map<String, String> references, String entityType) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		if (value instanceof Collection) {
+			Collection<Object> c = (Collection<Object>) value;
+			Collection<Object> newCol = c.getClass().getConstructor().newInstance();
+			c.forEach(e-> {
+				newCol.add(getNewValue_(e,e.getClass(),references, entityType));
+			});
+			return newCol;
+		} else {
+			return getNewValue_(value,returnType,references, entityType);
+		}
+		
 	}
 	
 }
