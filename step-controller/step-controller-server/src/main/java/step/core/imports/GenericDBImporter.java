@@ -20,6 +20,7 @@ import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.CRUDAccessor;
 import step.core.entities.Entity;
 import step.core.objectenricher.ObjectEnricher;
+import step.resources.ResourceManager;
 
 public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends CRUDAccessor<A>> implements Importer<A, T> {
 	
@@ -39,7 +40,8 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 		}
 	}
 	
-	public void importOne(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, Map<String, String> references, boolean overwrite) throws JsonParseException, JsonMappingException, IOException {
+	public A importOne(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, 
+			Map<String, String> references, ResourceManager localResourceMgr, boolean overwrite) throws JsonParseException, JsonMappingException, IOException {
 		if (version.compareTo(new Version(3,13,0)) >= 0) {
 			A aObj = mapper.readValue(jParser, entity.getEntityClass());
 			objectEnricher.accept(aObj);
@@ -48,9 +50,11 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 			} else {
 				saveWithNewId(aObj,references);
 			}
+			return aObj;
 			
 		} else {
-			saveToTmpCollection(mapper.readValue(jParser, Document.class));			
+			saveToTmpCollection(mapper.readValue(jParser, Document.class));
+			return null;
 		}
 	}
 	
@@ -91,10 +95,9 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 	}
 
 	@Override
-	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, boolean overwrite)
+	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, 
+			ResourceManager localResourceMgr, boolean overwrite)
 			throws IOException {
-		// TODO Auto-generated method stub
-		
+		throw new RuntimeException("Not implemented");
 	}
-
 }

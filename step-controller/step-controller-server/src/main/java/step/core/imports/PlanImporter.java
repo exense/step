@@ -18,6 +18,7 @@ import step.core.imports.converter.ArtefactsToPlans;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.resources.ResourceManager;
 
 public class PlanImporter extends GenericDBImporter<Plan, PlanAccessor> {
 	
@@ -30,13 +31,14 @@ public class PlanImporter extends GenericDBImporter<Plan, PlanAccessor> {
 
 	//Import plans exported with versions 3.13 and before (line by line)
 	@Override
-	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, boolean overwrite) throws IOException {
+	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version, 
+			ResourceManager localResourceMgr, boolean overwrite) throws IOException {
 		try(BufferedReader reader = Files.newBufferedReader(file.toPath())) {
 			String line;
 			while((line=reader.readLine())!=null) {
 				try (JsonParser jParser = mapper.getFactory().createParser(line)){
 					jParser.nextToken();
-					importOne(jParser, mapper, objectEnricher, version, new HashMap<String,String>(),overwrite);		
+					importOne(jParser, mapper, objectEnricher, version, new HashMap<String,String>(), localResourceMgr, overwrite);		
 				} catch (Exception e) {
 					throw e;
 				}

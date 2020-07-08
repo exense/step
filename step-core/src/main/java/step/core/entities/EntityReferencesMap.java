@@ -33,7 +33,9 @@ public class EntityReferencesMap {
 	
 	public List<String> getReferencesByType(String entityType) {
 		List<String> list = references.get(entityType);
-		Collections.reverse(list);
+		if (list != null && list.size() > 0) {
+			Collections.reverse(list);
+		}
 		return list;
 	}
 	
@@ -43,9 +45,10 @@ public class EntityReferencesMap {
 		
 		public EntityTypeComparator() {
 			entityWeight = new HashMap<String,Integer>();
-			entityWeight.put(EntityManager.resources, 1);
-			entityWeight.put(EntityManager.functions, 2);
-			entityWeight.put(EntityManager.plans, 3);
+			entityWeight.put(EntityManager.resourceRevisions, 1);
+			entityWeight.put(EntityManager.resources, 2);
+			entityWeight.put(EntityManager.functions, 3);
+			entityWeight.put(EntityManager.plans, 4);
 		}
 
 		@Override

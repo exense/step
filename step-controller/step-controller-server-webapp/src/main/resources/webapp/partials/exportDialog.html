@@ -22,8 +22,16 @@
 					<span class="ng-binding">Export all entities recursively</span>
 				</label>
 				<span class="glyphicon glyphicon-question-sign pull-right"
-					uib-tooltip="Defines if all referenced entities get exported as well."></span>
-			</div>	
+					uib-tooltip="Defines if all referenced entities get exported as well (note that indirect references are not supported, this includes parameters in dynamic expression, call plan and call keyword by attributes...)."></span>
+			</div>
+			<div ng-show="parameters!==undefined" class="form-group form-group-sm">
+				<label>
+					<input type="checkbox" ng-model="parameters">
+					<span class="ng-binding">Include an export of all parameters</span>
+				</label>
+				<span class="glyphicon glyphicon-question-sign pull-right"
+					uib-tooltip="Defines if all parameters should be exported as well."></span>
+			</div>		
 			</fieldset>
 		</div>
 	</div>

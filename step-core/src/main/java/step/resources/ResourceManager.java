@@ -83,4 +83,11 @@ public interface ResourceManager {
 	Resource getResource(String resourceId);
 	
 	Resource lookupResourceByName(String resourcename);
+	
+	String getResourcesRootPath();
+
+	Resource updateResourceContent(Resource resource, InputStream resourceStream, String resourceFileName,
+			ResourceRevision revision) throws IOException;
+
+	ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException;
 }

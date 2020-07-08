@@ -538,7 +538,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 .factory('ExportDialogs', function ($rootScope, $uibModal, EntityRegistry,$sce) {
   var dialogs = {};
   
-  dialogs.displayExportDialog = function(title, path, filename, recursively) {
+  dialogs.displayExportDialog = function(title, path, filename, recursively, parameters) {
     var modalInstance = $uibModal.open({
       backdrop: 'static',
       templateUrl: 'partials/exportDialog.html',
@@ -547,7 +547,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
         title: function() {return title;},
         path: function() {return path;},
         filename: function() {return filename;},
-        recursively: function() {return recursively;}}
+        recursively: function() {return recursively;},
+        parameters: function() {return parameters;}}
     });
     return modalInstance.result;
   }
@@ -555,15 +556,20 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   return dialogs;
 })
 
-.controller('exportModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs, ExportService, title, path, filename, recursively) {
+.controller('exportModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs, ExportService, title, path, filename, recursively, parameters) {
   $scope.title = title;
   $scope.path = path;
   $scope.filename = filename;
   $scope.recursively = recursively;
+  $scope.parameters = parameters;
   
   $scope.save = function() {
     if($scope.filename) {
-      ExportService.get("rest/export/" + $scope.path + "?recursively=" + $scope.recursively + "&filename=" + $scope.filename);
+      urlParams = "?recursively=" + $scope.recursively + "&filename=" + $scope.filename;
+      if ($scope.parameters) {
+        urlParams += "&additionalEntities=parameters"
+      }
+      ExportService.get("rest/export/" + $scope.path + urlParams);
       $uibModalInstance.close();
       
       

@@ -19,6 +19,8 @@ import step.core.AbstractContext;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.CRUDAccessor;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.objectenricher.ObjectPredicate;
+import step.resources.ResourceManager;
 
 public class EntityManager  {
 	
@@ -31,9 +33,11 @@ public class EntityManager  {
 	public final static String tasks = "tasks";
 	public final static String users = "users";
 	public final static String resources = "resources";
+	public final static String resourceRevisions = "resourceRevisions";
 	public final static String recursive = "recursive";
 	
 	private Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
+	private Map<Class<?>, Entity<?,?>> entitiesByClass = new ConcurrentHashMap<Class<?>, Entity<?,?>>();
 	private AbstractContext context;
 	Map<Class<?>,BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 	
@@ -43,30 +47,46 @@ public class EntityManager  {
 
 	public EntityManager register(Entity<?,?> entity) {
 		entities.put(entity.getName(), entity);
+		entitiesByClass.put(entity.getEntityClass(), entity);
 		return this;
 	}
 	
 	public Entity<?,?> getEntityByName(String entityName) {
 		return entities.get(entityName);
 	}
+	
+	public void getEntitiesReferences(String entityType, ObjectPredicate objectPredicate, boolean recursively, EntityReferencesMap refs) {
+		Entity<?, ?> entity = getEntityByName(entityType);
+		if (entity == null ) {
+			throw new RuntimeException("Entity of type " + entityType + " is not supported");
+		}
+		entity.getAccessor().getAll().forEachRemaining(a -> {
+			if (objectPredicate.test(a)) {
+				refs.addElementTo(entityType, a.getId().toHexString());
+				if (recursively) {
+					getAllEntities(entityType, a.getId().toHexString(), refs);	
+				}
+			}
+		});
+	}
 
 	public void getAllEntities (String entityName, String id, EntityReferencesMap references) {
-		Entity<?, ?> entityByName = getEntityByName(entityName);
-		if (entityByName == null) {
+		Entity<?, ?> entity = getEntityByName(entityName);
+		if (entity == null) {
 			logger.error("Entities of type '" + entityName + "' are not supported");
 			throw new RuntimeException("Entities of type '" + entityName + "' are not supported");
 		}
-		CRUDAccessor<?> accessor = entityByName.getAccessor();
+		CRUDAccessor<?> accessor = entity.getAccessor();
 		AbstractIdentifiableObject a = accessor.get(id);
 		if (a == null ) {
 			logger.error("Entities of type '" + entityName + "' are not supported");
 			throw new RuntimeException("Entity with id '" + id + "' could not be found in entities of type '" + entityName + "'");
 		}
 		resolveReferences(a, references);
+		entity.getReferencesHook().forEach(h->h.accept(a,references));
 	}
 	
 	private void resolveReferences(Object object, EntityReferencesMap references) {
-		FileResolver fileResolver = context.get(FileResolver.class);
 		if(object!=null) {
 			Class<?> clazz = object.getClass();
 			try {
@@ -93,22 +113,11 @@ public class EntityManager  {
 								}
 							}
 							else {	
-								String refId = null;
-								if (method.getReturnType().equals(DynamicValue.class) && value!=null) {
-									Object dValue = ((DynamicValue<?>) value).get();
-									refId = (dValue!=null) ? dValue.toString() : null;
-									if (entityType.equals(resources)) {
-										refId = fileResolver.resolveResourceId(refId);
-									}
-								} else if (method.getReturnType().equals(String.class)) {
-									refId = (String) value;
-								}
-								if (refId != null && ObjectId.isValid(refId)) {
-									boolean added = references.addElementTo(entityType, refId);
-									//avoid circular references issue
-									if (added) { 
-										getAllEntities(entityType, refId, references);
-									}
+								if (value instanceof Collection) {
+									Collection<?> c = (Collection<?>) value;
+									c.forEach(r->resolveReference(r, references, entityType, r.getClass()));
+								} else {
+									resolveReference(value, references, entityType, method.getReturnType());
 								}
 							}
 						}						
@@ -119,9 +128,50 @@ public class EntityManager  {
 			}			
 		}
 	}
+	
+	private void resolveReference(Object value, EntityReferencesMap references, String entityType, Class<?> type) {
+		FileResolver fileResolver = context.get(FileResolver.class);
+		String refId = null;
+		if (type.equals(DynamicValue.class) && value!=null) {
+			Object dValue = ((DynamicValue<?>) value).get();
+			refId = (dValue!=null) ? dValue.toString() : null;
+			if (entityType.equals(resources)) {
+				refId = fileResolver.resolveResourceId(refId);
+			}
+		} else if (type.equals(String.class)) {
+			refId = (String) value;
+		} else if (type.equals(ObjectId.class)) {
+			refId = ((ObjectId) value).toHexString();
+		}
+		if (refId != null && ObjectId.isValid(refId)) {
+			boolean added = references.addElementTo(entityType, refId);
+			//hack for resource revisions (no explicit references for now)
+			if (entityType.equals(resources)) {
+				String revisionId = context.get(ResourceManager.class).getResourceRevisionByResourceId(refId).getId().toHexString();
+				references.addElementTo(EntityManager.resourceRevisions, revisionId);
+			}
+			//avoid circular references issue
+			if (added) { 
+				getAllEntities(entityType, refId, references);
+			}
+		}
+	}
+	
+	public Entity<?,?> getEntitiesByClass(Class<?> c) {
+		Entity<?,?> result = entitiesByClass.get(c);
+		while (result == null && !c.equals(Object.class)) {
+			c = c.getSuperclass();
+			result = entitiesByClass.get(c);
+		}
+		return result;
+		
+	}
 
 	public void updateReferences(Object object, Map<String, String> references) {
-		
+		Entity<?,?> entity = getEntitiesByClass(object.getClass());
+		if (entity != null) {
+			entity.getUpdateReferencesHook().forEach(r->r.accept(object, references));
+		}
 		if(object!=null) {
 			Class<?> clazz = object.getClass();
 			try {
@@ -174,16 +224,16 @@ public class EntityManager  {
 		//Get original id
 		if (returnType.equals(DynamicValue.class) && value != null && ((DynamicValue<?>) value).get() != null) {
 			origRefId = ((DynamicValue<?>) value).get().toString();
-			if (entityType.equals(resources)) {
-				origRefId = fileResolver.resolveResourceId(origRefId);
-			}
 		} else if (returnType.equals(String.class)) {
 			origRefId = (String) value;
+		}
+		if (entityType.equals(resources)) {
+			origRefId = fileResolver.resolveResourceId(origRefId);
 		}
 		if (origRefId == null || !ObjectId.isValid(origRefId)) {
 			return null;
 		}
-		//get new ref
+		//get or create new ref
 		if (references.containsKey(origRefId)) {
 			newRefId = references.get(origRefId);
 		} else {
@@ -191,10 +241,10 @@ public class EntityManager  {
 			references.put(origRefId, newRefId);
 		}
 		//build new value
+		if (entityType.equals(resources)) {
+			newRefId = FileResolver.RESOURCE_PREFIX + references.get(origRefId);
+		}
 		if (returnType.equals(DynamicValue.class)) {
-			if (entityType.equals(resources)) {
-				newRefId = FileResolver.RESOURCE_PREFIX + references.get(origRefId);
-			}
 			newValue = new DynamicValue<String> (newRefId);
 		} else if (returnType.equals(String.class)) {
 			newValue = newRefId;

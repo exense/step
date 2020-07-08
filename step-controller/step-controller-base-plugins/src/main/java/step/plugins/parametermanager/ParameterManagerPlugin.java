@@ -57,7 +57,7 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 	
 	private static final String PARAMETER_SCOPE_VALUE_DEFAULT = "default";
 	private static final String PARAMETERS_BY_SCOPE = "$parametersByScope";
-	private static final String entityName = "parameters";
+	public static final String entityName = "parameters";
 
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerPlugin.class);
 		

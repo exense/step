@@ -12,6 +12,7 @@ import step.attachments.FileResolver;
 import step.core.access.InMemoryUserAccessor;
 import step.core.access.User;
 import step.core.access.UserAccessor;
+import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;
@@ -45,7 +46,9 @@ import step.resources.Resource;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
 import step.resources.ResourceManagerImpl;
+import step.resources.ResourceRevision;
 import step.resources.ResourceRevisionAccessor;
+import step.resources.ResourceRevisionsImporter;
 
 public class GlobalContextBuilder {
 	
@@ -75,9 +78,9 @@ public class GlobalContextBuilder {
 		context.put(FunctionAccessor.class, functionAccessor);
 		
 		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
+		InMemoryResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
 		try {
 			File rootFolder = FileHelper.createTempFolder();
-			ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
 			ResourceManager resourceManager = new ResourceManagerImpl(rootFolder,resourceAccessor, resourceRevisionAccessor);
 			FileResolver fileResolver = new FileResolver(resourceManager);
 			context.put(ResourceAccessor.class, resourceAccessor);
@@ -108,7 +111,10 @@ public class GlobalContextBuilder {
 			.register( new Entity<Resource, ResourceAccessor>(
 				EntityManager.resources, resourceAccessor, Resource.class, 
 				new GenericDBImporter<Resource, ResourceAccessor>(context) {
-				}));;
+				}))
+			.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(
+					EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class,
+					new ResourceRevisionsImporter(context)));
 		
 		context.setEventManager(new EventManager());
 		

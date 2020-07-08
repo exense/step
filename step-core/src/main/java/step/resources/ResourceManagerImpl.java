@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -97,6 +98,13 @@ public class ResourceManagerImpl implements ResourceManager {
 		Resource resource = getResource(resourceId);
 		createResourceRevisionAndSaveContent(resourceStream, resourceFileName, resource);
 		updateResourceFileNameIfNecessary(resourceFileName, resource);
+		return resource;
+	}
+	
+	@Override
+	public Resource updateResourceContent(Resource resource, InputStream resourceStream, String resourceFileName, ResourceRevision revision) throws IOException {
+		saveResource(resource);
+		updateContent(resourceStream, resourceFileName, resource, revision);
 		return resource;
 	}
 
@@ -250,6 +258,19 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceAccessor.save(resource);
 		return revision;
 	}
+	
+	private ResourceRevision updateContent(InputStream resourceStream, String resourceFileName,
+			Resource resource, ResourceRevision revision) throws IOException {
+		File resourceFile =  updateResourceRevisionContent(resourceStream, resource, revision);
+		String checksum = getMD5Checksum(resourceFile);
+		revision.setChecksum(checksum);
+		resourceRevisionAccessor.save(revision);
+
+		resource.setCurrentRevisionId(revision.getId());
+
+		resourceAccessor.save(resource);
+		return revision;
+	}
 
 	private String getMD5Checksum(File file) throws IOException {
 		String hash = com.google.common.io.Files.hash(file, Hashing.md5()).toString();
@@ -299,6 +320,13 @@ public class ResourceManagerImpl implements ResourceManager {
 
 		return resourceFile;
 	}
+	
+	private File updateResourceRevisionContent(InputStream resourceStream, Resource resource, ResourceRevision revision) throws IOException {
+		File resourceFile = getResourceRevisionFile(resource, revision);
+		Files.copy(resourceStream, resourceFile.toPath(),StandardCopyOption.REPLACE_EXISTING);
+
+		return resourceFile;
+	}
 
 	@Override
 	public Resource lookupResourceByName(String resourceName) {
@@ -316,5 +344,15 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public Resource saveResource(Resource resource) throws IOException {
 		return resourceAccessor.save(resource);
+	}
+	
+	@Override
+	public ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException {
+		return resourceRevisionAccessor.save(resourceRevision);
+	}
+
+	@Override
+	public String getResourcesRootPath() {
+		return resourceRootFolder.getPath();
 	}
 }
