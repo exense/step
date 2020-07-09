@@ -142,10 +142,14 @@ angular.module('reportTree',['step','artefacts'])
       
       $scope.pagingNext = function(obj) {
         var node = tree.get_selected(true)[0];
-        if (paging[node.id]) {
-          paging[node.id] = {skip: paging[node.id].skip + limit};
+        pagingNextById(node.id);
+      }
+
+      $scope.pagingNextById = function(id) {
+        if (paging[id]) {
+          paging[id] = {skip: paging[id].skip + limit};
         } else {
-          paging[node.id] = {skip: limit};
+          paging[id] = {skip: limit};
         }
         $scope.handle.refresh();
       }
@@ -165,17 +169,45 @@ angular.module('reportTree',['step','artefacts'])
         }
       }
       
-      function expandPath(path, callback) {
-        tree.open_node(path[0].id, function() {
+      function expandPath(path, callback, prev) {
+        var result = tree.open_node(path[0].id, function() {
+          prev = path[0].id;
           path.shift();
           if(path.length>0) { 
-            $scope.handle.expandPath(path, callback);            
+            $scope.handle.expandPath(path, callback, prev);
           } else {
             if(callback) {
               callback();
             }
           }
         });
+        //if the current node could not be opened
+        if (result === false && prev !== undefined) {
+            console.log('node was not found: ' + path[0].id);
+            var node = tree.get_node(prev);
+            //if number of siblings is higher than the limit of nodes displayed, paginate and retry to open the node
+            if (node && node.children.length >= limit) {
+              $scope.skipRefesh=false;
+              $scope.pagingNextById(prev)
+              //need to wait until the tree is refreshed
+              performOnceLoadedTrue(function() {
+                $scope.handle.expandPath(path, callback, prev);
+              }, 1000);
+            }
+        }
+      }
+
+      // Execute the function fn when tree is reloaded with a maximum of n cycles
+      function performOnceLoadedTrue(fn, n) {
+        if(n > 0) {
+          if (!$scope.reloading) {
+            fn();
+          } else {
+            $timeout(function() {
+              performOnceLoadedTrue(fn, n-1)
+            });
+          }
+        }
       }
       
       function selectNode(id) {
@@ -190,12 +222,12 @@ angular.module('reportTree',['step','artefacts'])
         }
       }
       
-      $scope.handle.expandPath = function(path, reportTreeSettings) {
+      $scope.handle.expandPath = function(path, reportTreeSettings, prev) {
         $scope.skipRefesh=true;
     	  expandPath(path.slice(0), function() {
           selectNode(path[path.length-1].id);
           $scope.skipRefesh=false;
-        })
+        }, prev)
       }
     },
     templateUrl: 'partials/reportTree.html'}
