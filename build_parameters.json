@@ -36,49 +36,46 @@
 		"TYPE": ["FTP","GITHUB", "DOCKER", "FTP","GITHUB", "DOCKER"],
 		
 		"ORIGIN_FILE": [
-      		"step-distribution/target/step-controller-${VERSION}.zip",
-      		"step-distribution/target/step-controller-${VERSION}.zip",
-      		"step-distribution/target/step-controller-${VERSION}.zip",
-      		"step-distribution/target/step-agent-${VERSION}.zip",
-      		"step-distribution/target/step-agent-${VERSION}.zip",
-      		"step-distribution/target/step-agent-${VERSION}.zip"
-    	],
+			"step-distribution/target/step-controller-${VERSION}.zip",
+			"step-distribution/target/step-controller-${VERSION}.zip",
+			"step-distribution/target/step-controller-${VERSION}.zip",
+			"step-distribution/target/step-agent-${VERSION}.zip",
+			"step-distribution/target/step-agent-${VERSION}.zip",
+			"step-distribution/target/step-agent-${VERSION}.zip"
+		],
 		"DESTINATION_NAME": [
 			"step/${VERSION}/step-controller-${VERSION}.zip",
-      		"step-controller-${VERSION}.zip",
+			"step-controller-${VERSION}.zip",
 			"step:k8s-step-controller-${VERSION}-java-11",
-      
-	      	"step/${VERSION}/step-agent-${VERSION}.zip",
-      		"step-agent-${VERSION}.zip",
-      		"step:k8s-step-agent-${VERSION}-java-11"
-    	],
-    
-		"URL_STAGING":  [
-      		"build@ftps.exense.ch","NOT_USED","docker.exense.ch",
-      		"build@ftps.exense.ch","NOT_USED","docker.exense.ch"
-    	],
-      
-		"URL_PROD":     [
+			"step/${VERSION}/step-agent-${VERSION}.zip",
+			"step-agent-${VERSION}.zip",
+			"step:k8s-step-agent-${VERSION}-java-11"
+		],
+		"URL_STAGING": [
+			"build@ftps.exense.ch","NOT_USED","docker-dev.exense.ch",
+			"build@ftps.exense.ch","NOT_USED","docker-dev.exense.ch"
+		],
+		"URL_PROD": [
 			"build@ftps.exense.ch","NOT_USED","docker.exense.ch",
 			"build@ftps.exense.ch","NOT_USED","docker.exense.ch"
-    	],
+		],
 		
 		"OS":[
 			"NOT_USED","NOT_USED", "LINUX",
-      		"NOT_USED","NOT_USED", "LINUX"
-    	],
+			"NOT_USED","NOT_USED", "LINUX"
+		],
 		"CONFIG":[
 			"public","NOT_USED","controller-dockerfile",
 			"public","NOT_USED","agent-dockerfile"
-    	]
+		]
 	},
 	"INSTANCES":
 	{
-		"ENVIRONMENT":  [ "bld" ],
-	    "INSTANCE":     [ "lst" ], 
-	    "APPLICATION":  [ "stepos" ],
-	    "DOMAIN":       [ "exense.ch" ],
-	    "PERSISTENCE":  [ "false" ],
-	    "WHEN":         [ "STAGING" ]
-  	}
+		"ENVIRONMENT":		[ "bld" ],
+		"INSTANCE":			[ "lst" ], 
+		"APPLICATION":		[ "stepos" ],
+		"DOMAIN":			[ "exense.ch" ],
+		"PERSISTENCE":		[ "false" ],
+		"WHEN":				[ "STAGING" ]
+	}
 }
