@@ -270,7 +270,6 @@ angular.module('tables', ['export'])
     
 		  controller.reload = function() {
 		    var columns = controller.getDtColumns();
-		    console.log('nb columns: ' + columns.length);
 		    if(columns && columns.length>0) {
 		      // First destroy the previous table if any
 	        if(scope.table && scope.table.destroy) {
