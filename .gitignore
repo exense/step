@@ -6,6 +6,7 @@ target/
 *.bak
 .classpath
 .project
+*.iml
 node_modules/
 bower_components/
 .DS_Store
