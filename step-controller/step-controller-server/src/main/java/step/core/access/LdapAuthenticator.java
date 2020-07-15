@@ -32,13 +32,18 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 		String ldapTechuser = configuration.getProperty("ui.authenticator.ldap.techuser",null);
 		String ldapTechpwd = configuration.getProperty("ui.authenticator.ldap.techpwd",null);
 		
+		// Ldap over SSL case
+		String pathToJks = configuration.getProperty("ui.authenticator.ldap.ssl.pathToJks",null);
+		String jksPassword = configuration.getProperty("ui.authenticator.ldap.ssl.jksPassword",null);
+		
 		try {
-			directory = new LDAPClient(ldapUrl,ldapBaseDn,ldapTechuser,ldapTechpwd);
+			directory = new LDAPClient(ldapUrl,ldapBaseDn,ldapTechuser,ldapTechpwd, pathToJks, jksPassword);
 			logger.info("LdapAuthenticator is active.");
+			authenticator = new CypherAuthenticator(directory);
 		} catch (NamingException e) {
 			e.printStackTrace();
 		}
-		authenticator = new CypherAuthenticator(directory);
+		
 	}
 
 	@Override
