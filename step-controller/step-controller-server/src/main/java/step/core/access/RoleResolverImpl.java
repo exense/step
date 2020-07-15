@@ -14,6 +14,13 @@ public class RoleResolverImpl implements RoleResolver {
 	@Override
 	public String getRoleInContext(Session session) {
 		User user = userAccessor.get(session.getUser().getId());
+		
+		//For compatibility with external user management
+		if(user == null) {
+			user = new ExternalUser();
+			user.setUsername(session.getUser().getUsername());
+		}
+		
 		return user.getRole();
 	}
 

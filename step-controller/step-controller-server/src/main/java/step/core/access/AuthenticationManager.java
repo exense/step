@@ -45,6 +45,12 @@ public class AuthenticationManager {
 	protected void setUserToSession(Session session, String username) {
 		session.setAuthenticated(true);
 		User user = userAccessor.getByUsername(username);
+
+		//For compatibility with external user management
+		if(user == null) {
+			user = new ExternalUser();
+			user.setUsername(username);
+		}
 		session.setUser(user);
 	}
 	

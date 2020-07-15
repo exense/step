@@ -78,6 +78,7 @@ public class AccessServices extends AbstractServices {
 		try {
 			authenticated = authenticationManager.authenticate(session, credentials);
 		}catch(Exception e) {
+			e.printStackTrace();
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed. Check the server logs for more details.").type("text/plain").build();
 		}
         if(authenticated) {

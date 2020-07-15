@@ -26,6 +26,16 @@
 			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.commons</groupId>
+			<artifactId>exense-auth-cyphers</artifactId>
+			<version>0.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.commons</groupId>
+			<artifactId>exense-auth-ldap</artifactId>
+			<version>0.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-controller-api</artifactId>
 			<version>${project.version}</version>
