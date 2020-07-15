@@ -149,7 +149,7 @@ public class InteractiveServices extends AbstractServices {
 		session.c = executionContext;
 		session.lasttouch = System.currentTimeMillis();
 		session.root = new ReportNode();
-		session.functionGroupContext = new FunctionGroupContext(null);
+		session.functionGroupContext = new FunctionGroupContext(null, false);
 		String id = executionContext.getExecutionId();
 		
 		executionContext.getReportNodeCache().put(session.root);

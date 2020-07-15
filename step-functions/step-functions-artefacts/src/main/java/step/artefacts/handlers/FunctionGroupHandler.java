@@ -69,10 +69,18 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		
 		final Map<String, Interest> additionalSelectionCriteria;
 		
-		private long ownerThreadId = 0; 
+		private long ownerThreadId = 0;
+
+		private boolean threadAware = true;
 
 		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria) {
 			super();
+			this.additionalSelectionCriteria = additionalSelectionCriteria;
+		}
+
+		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria, boolean threadAware) {
+			super();
+			this.threadAware = threadAware;
 			this.additionalSelectionCriteria = additionalSelectionCriteria;
 		}
 		
@@ -103,6 +111,14 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 			} else {
 				return (ownerThreadId == id);
 			}
+		}
+
+		public boolean isThreadAware() {
+			return threadAware;
+		}
+
+		public void setThreadAware(boolean threadAware) {
+			this.threadAware = threadAware;
 		}
 		
 	}
