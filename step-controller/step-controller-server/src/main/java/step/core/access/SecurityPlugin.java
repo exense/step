@@ -3,6 +3,7 @@ package step.core.access;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.commons.auth.Authenticator;
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.GlobalContextAware;

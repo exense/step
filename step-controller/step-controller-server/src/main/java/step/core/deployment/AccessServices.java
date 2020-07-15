@@ -11,12 +11,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.access.AccessConfiguration;
 import step.core.access.AccessManager;
 import step.core.access.AuthenticationManager;
-import step.core.access.Credentials;
 import step.core.access.Role;
 import step.core.access.RoleProvider;
 import step.core.access.User;
@@ -25,6 +28,7 @@ import step.core.accessors.AbstractOrganizableObject;
 @Singleton
 @Path("/access")
 public class AccessServices extends AbstractServices {
+	private static Logger logger = LoggerFactory.getLogger(AccessServices.class);
 	
 	private RoleProvider roleProvider;
 	private AuthenticationManager authenticationManager;
@@ -70,7 +74,12 @@ public class AccessServices extends AbstractServices {
     @Consumes("application/json")
     public Response authenticateUser(Credentials credentials) {
 		Session session = getSession();
-        boolean authenticated = authenticationManager.authenticate(session, credentials);
+		boolean authenticated = false;
+		try {
+			authenticated = authenticationManager.authenticate(session, credentials);
+		}catch(Exception e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed. Check the server logs for more details.").type("text/plain").build();
+		}
         if(authenticated) {
         	SessionResponse sessionResponse = buildSessionResponse(session);
         	return Response.ok(sessionResponse).build();            	

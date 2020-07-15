@@ -3,6 +3,8 @@ package step.core.access;
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.commons.auth.Authenticator;
+import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
 import step.core.deployment.Session;
 
@@ -24,7 +26,7 @@ public class AuthenticationManager {
 		return configuration.getPropertyAsBoolean("authentication", true);
 	}
 
-	public boolean authenticate(Session session, Credentials credentials) {
+	public boolean authenticate(Session session, Credentials credentials) throws Exception {
 		boolean authenticated = authenticator.authenticate(credentials);
 		if (authenticated) {
 			setUserToSession(session, credentials.getUsername());
