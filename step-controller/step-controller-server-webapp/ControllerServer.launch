@@ -15,5 +15,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-config=&quot;src/test/resources/step.properties&quot;"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="step-controller-server-webapp"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dhttp.keepAlive=true -Dhttp.maxConnections=50"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dhttp.keepAlive=true -Dhttp.maxConnections=50 -Djavax.net.debug=ssl -Djavax.net.debug=ssl:record -Djavax.net.debug=ssl:handshake -Djavax.net.ssl.trustStore=src/test/resources/ldap.jks"/>
 </launchConfiguration>
