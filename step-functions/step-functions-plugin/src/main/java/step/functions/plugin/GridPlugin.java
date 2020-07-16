@@ -33,8 +33,6 @@ import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionRouter;
 import step.attachments.FileResolver;
 import step.core.GlobalContext;
-import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.CRUDAccessor;
 import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -69,9 +67,9 @@ import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
 import step.grid.io.AgentErrorCode;
-import step.resources.ResourcePlugin;
+import step.resources.ResourceManagerControllerPlugin;
 
-@Plugin(dependencies= {ResourcePlugin.class})
+@Plugin(dependencies= {ResourceManagerControllerPlugin.class})
 public class GridPlugin extends AbstractControllerPlugin {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);

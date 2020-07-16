@@ -50,15 +50,16 @@ import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.execution.ControllerExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionManager;
-import step.core.execution.MockedExecutionManagerImpl;
+import step.core.execution.ExecutionEngine;
+import step.core.execution.OperationMode;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanNavigator;
 import step.core.plans.builder.PlanBuilder;
 import step.core.variables.VariableType;
+import step.engine.execution.ExecutionManager;
+import step.engine.execution.MockedExecutionManagerImpl;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
@@ -136,7 +137,9 @@ public class InteractiveServices extends AbstractServices {
 	@Secured(right="interactive")
 	public String start() throws AgentCommunicationException {
 		InteractiveSession session = new InteractiveSession();
-		ExecutionContext  executionContext = new ControllerExecutionContextBuilder().configureForControllerExecution(getContext()).build();
+		
+		ExecutionEngine executionEngine = new ExecutionEngine(OperationMode.CONTROLLER, getContext());
+		ExecutionContext executionContext = executionEngine.newExecutionContext();
 		// Replace the ExecutionManager as we don't have any Execution in this context
 		executionContext.put(ExecutionManager.class, new MockedExecutionManagerImpl());
 		

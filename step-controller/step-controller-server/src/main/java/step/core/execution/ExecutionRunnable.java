@@ -25,9 +25,11 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.ReportExport;
 import step.core.plans.Plan;
@@ -37,24 +39,27 @@ import step.core.plans.runner.PlanRunnerResult;
 import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
+import step.engine.execution.ExecutionLifecycleManager;
 
 public class ExecutionRunnable implements Runnable {
 	
-	private  final static Logger logger = LoggerFactory.getLogger(ExecutionRunnable.class);
+	private final static Logger logger = LoggerFactory.getLogger(ExecutionRunnable.class);
 
+	final ExecutionContext context;
+	final ExecutionEngine executionEngine;
+	
 	final RepositoryObjectManager repositoryObjectManager;
 	final ExecutionAccessor executionAccessor; 
 	
-	final ExecutionContext context;
-	
 	final ExecutionLifecycleManager executionLifecycleManager;
 						
-	public ExecutionRunnable(RepositoryObjectManager repositoryObjectManager, ExecutionAccessor executionAccessor, ExecutionContext context) {
+	public ExecutionRunnable(String executionId, ExecutionParameters executionParameters, GlobalContext globalContext, ExecutionEngine executionEngine) {
 		super();
-		this.repositoryObjectManager = repositoryObjectManager;
-		this.executionAccessor = executionAccessor;
-		this.context = context;
-		this.executionLifecycleManager = new ExecutionLifecycleManager(context.get(ExecutionManager.class), context);
+		context = executionEngine.newExecutionContext(executionId, executionParameters);
+		this.repositoryObjectManager = globalContext.getRepositoryObjectManager();
+		this.executionAccessor = globalContext.getExecutionAccessor();
+		this.executionEngine = executionEngine;
+		this.executionLifecycleManager = new ExecutionLifecycleManager(context);
 	}
 
 	public ExecutionContext getContext() {
@@ -63,11 +68,12 @@ public class ExecutionRunnable implements Runnable {
 	
 	@Override
 	public void run() {
+		String executionId = context.getExecutionId();
 		try {
 			executionLifecycleManager.beforePlanImport();
 			
 			updateStatus(ExecutionStatus.IMPORTING);
-			ImportResult importResult = importPlan();
+			ImportResult importResult = importPlan(context);
 			
 			executionLifecycleManager.afterImport(importResult);
 			
@@ -76,24 +82,24 @@ public class ExecutionRunnable implements Runnable {
 				Plan plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
 				context.setPlan(plan);
 				
-				logger.info("Starting test execution. Execution ID: " + context.getExecutionId());
+				logger.info("Starting test execution. Execution ID: " + executionId);
 				updateStatus(ExecutionStatus.RUNNING);
 				
-				PlanRunner planRunner = new ControllerPlanRunner(executionLifecycleManager, context);
+				PlanRunner planRunner = executionEngine.getPlanRunner(context);
 				PlanRunnerResult result = planRunner.run(plan);
 				
 				result.waitForExecutionToTerminate();
 				ReportNodeStatus resultStatus = result.getResult();
 				executionLifecycleManager.updateExecutionResult(context, resultStatus);
 				
-				logger.debug("Test execution ended. Reporting result.... Execution ID: " + context.getExecutionId());
+				logger.debug("Test execution ended. Reporting result.... Execution ID: " + executionId);
 				
 				if(!context.isSimulation()) {
 					updateStatus(ExecutionStatus.EXPORTING);
-					exportExecution(context.getExecutionId());				
-					logger.info("Test execution ended and reported. Execution ID: " + context.getExecutionId());
+					exportExecution(context);				
+					logger.info("Test execution ended and reported. Execution ID: " + executionId);
 				} else {
-					logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + context.getExecutionId());
+					logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + executionId);
 				}				
 			} else {
 				updateStatus(ExecutionStatus.ENDED);
@@ -101,7 +107,7 @@ public class ExecutionRunnable implements Runnable {
 						
 			
 		} catch (Throwable e) {
-			logger.error("An error occurred while running test. Execution ID: " + context.getExecutionId(), e);
+			logger.error("An error occurred while running test. Execution ID: " + executionId, e);
 		} finally {
 			updateStatus(ExecutionStatus.ENDED);
 			executionLifecycleManager.executionEnded();
@@ -112,7 +118,7 @@ public class ExecutionRunnable implements Runnable {
 		executionLifecycleManager.updateStatus(newStatus);
 	}
 	
-	private ImportResult importPlan() throws Exception {
+	private ImportResult importPlan(ExecutionContext context) throws Exception {
 		ImportResult importResult;
 		RepositoryObjectReference repositoryObjectReference = context.getExecutionParameters().getRepositoryObject();
 		if(repositoryObjectReference!=null) {
@@ -139,7 +145,8 @@ public class ExecutionRunnable implements Runnable {
 		return importResult;
 	}
 	
-	private void exportExecution(String executionId) {		
+	private void exportExecution(ExecutionContext context) {	
+		String executionId = context.getExecutionId();
 		Execution execution = executionAccessor.get(executionId);
 		
 		if(execution!=null) {

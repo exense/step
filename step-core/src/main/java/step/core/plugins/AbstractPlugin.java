@@ -1,11 +1,12 @@
 package step.core.plugins;
 
-public class AbstractPlugin {
+public class AbstractPlugin implements OptionalPlugin {
 
 	public AbstractPlugin() {
 		super();
 	}
 
+	@Override
 	public boolean validate() {
 		return true;
 	}

@@ -1,5 +1,7 @@
 package step.core.plugins;
 
+import step.core.plugins.exceptions.PluginCriticalException;
+
 public class TestPlugins {
 
 	@Plugin(dependencies= {})
@@ -59,10 +61,64 @@ public class TestPlugins {
 		
 	}
 	
-	public static class AbstractTestPlugin extends AbstractPlugin {
+	@Plugin()
+	public static class TestPluginWithError extends AbstractTestPlugin {
+		
+		@Override
+		public void myMethod(StringBuilder builder) {
+			throw new RuntimeException("Test error");
+		}
+	}
+	
+	@Plugin()
+	public static class TestPluginWithCriticalException extends AbstractTestPlugin {
+		
+		@Override
+		public void myMethod(StringBuilder builder) {
+			throw new PluginCriticalException("Test", new Exception());
+		}
+	}
+	
+	@Plugin()
+	public static class TestOptionalPlugin extends AbstractTestPlugin implements OptionalPlugin {
+
+		@Override
+		public boolean validate() {
+			return false;
+		}
+	}
+	
+	@Plugin()
+	public static class TestPlugin extends AbstractTestPlugin2 {
+		
+	}
+	
+	public static class AbstractTestPlugin implements TestPluginInterface {
 		@Override
 		public boolean equals(Object plugin) {
 			return getClass().equals(plugin.getClass());
 		}
+
+		@Override
+		public void myMethod(StringBuilder builder) {
+			builder.append(getClass());
+		}
 	}
+	
+	public static class AbstractTestPlugin2 extends AbstractTestPlugin implements TestPluginInterface2 {
+
+	}
+	
+	public interface TestPluginInterface {
+		
+		public void myMethod(StringBuilder builder);
+		
+	}
+	
+	public interface TestPluginInterface2 extends TestPluginInterface {
+		
+		public void myMethod(StringBuilder builder);
+		
+	}
+	
 }

@@ -7,12 +7,11 @@ import step.attachments.FileResolver;
 import step.core.GlobalContext;
 import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
-import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin()
-public class ResourcePlugin extends AbstractControllerPlugin {
+public class ResourceManagerControllerPlugin extends AbstractControllerPlugin {
 
 	protected ResourceAccessor resourceAccessor;
 	protected ResourceRevisionAccessor resourceRevisionAccessor;
@@ -41,11 +40,4 @@ public class ResourcePlugin extends AbstractControllerPlugin {
 		String resourceRootDir = configuration.getProperty("resources.dir","resources");
 		return resourceRootDir;
 	}
-
-	@Override
-	public void executionStart(ExecutionContext context) {
-		context.put(FileResolver.class, fileResolver);
-		context.put(ResourceManager.class, resourceManager);
-	}
-
 }

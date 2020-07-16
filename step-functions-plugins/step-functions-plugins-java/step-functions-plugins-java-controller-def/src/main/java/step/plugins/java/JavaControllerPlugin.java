@@ -8,7 +8,7 @@ import step.functions.plugin.GridPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(dependencies= {GridPlugin.class})
-public class JavaPlugin extends AbstractControllerPlugin {
+public class JavaControllerPlugin extends AbstractControllerPlugin {
 	
 	@Override
 	public WebPlugin getWebPlugin() {

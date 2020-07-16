@@ -20,7 +20,7 @@ package step.core.plugins;
 
 import step.core.GlobalContext;
 
-public interface ControllerPluginCallbacks extends ExecutionCallbacks {
+public interface ControllerPlugin extends ExecutionCallbacks {
 
 	public void executionControllerStart(GlobalContext context) throws Exception;
 	
@@ -30,4 +30,6 @@ public interface ControllerPluginCallbacks extends ExecutionCallbacks {
 	
 	public void executionControllerDestroy(GlobalContext context);
 
+	public WebPlugin getWebPlugin();
+	
 }

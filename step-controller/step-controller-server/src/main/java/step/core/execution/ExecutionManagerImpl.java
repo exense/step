@@ -28,6 +28,7 @@ import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plans.Plan;
 import step.core.repositories.ImportResult;
+import step.engine.execution.ExecutionManager;
 
 public class ExecutionManagerImpl implements ExecutionManager {
 	

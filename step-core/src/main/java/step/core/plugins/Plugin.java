@@ -27,7 +27,7 @@ public @interface Plugin {
 	/**
 	 * @return the list of plugins this plugin is depending on
 	 */
-	 Class<? extends AbstractPlugin>[] dependencies() default {};
+	 Class<?>[] dependencies() default {};
 	 
 	/**
 	 * @return the list of plugins before which this plugin should be executed. 
@@ -35,5 +35,5 @@ public @interface Plugin {
 	 * we prefer specify that "A has to be run before B" instead of "B is depending on A".
 	 * This is for example the case when B doesn't know A
 	 */
-	Class<? extends AbstractPlugin>[] runsBefore() default {};	 
+	Class<?>[] runsBefore() default {};	 
 }

@@ -5,9 +5,9 @@ import step.core.imports.ImportServices;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.resources.ResourceManager;
-import step.resources.ResourcePlugin;
+import step.resources.ResourceManagerControllerPlugin;
 
-@Plugin(dependencies= {ResourcePlugin.class})
+@Plugin(dependencies= {ResourceManagerControllerPlugin.class})
 public class ExportManagerPlugin extends AbstractControllerPlugin {
 
 	@Override

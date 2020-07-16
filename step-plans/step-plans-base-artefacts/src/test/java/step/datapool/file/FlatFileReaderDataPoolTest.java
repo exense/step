@@ -22,14 +22,14 @@ import java.io.File;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
 import ch.exense.commons.io.FileHelper;
+import junit.framework.Assert;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ExecutionContextBuilder;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataSet;
+import step.datapool.excel.AbstractArtefactTest;
 
-public class FlatFileReaderDataPoolTest {
+public class FlatFileReaderDataPoolTest extends AbstractArtefactTest {
 
 	@Test
 	public void testFlatFileReaderDataPool() {		
@@ -40,7 +40,7 @@ public class FlatFileReaderDataPoolTest {
 	
 	protected DataSet<?> getDataPool(String file, String type) {
 		FileDataPool conf = getDataSourceConf(file);
-		DataSet<?> pool =  DataPoolFactory.getDataPool(type, conf, new ExecutionContextBuilder().configureForlocalExecution().build());
+		DataSet<?> pool =  DataPoolFactory.getDataPool(type, conf, newExecutionContext());
 		pool.init();
 		return pool;
 	}

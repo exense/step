@@ -22,8 +22,13 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 
 import step.core.GlobalContext;
+import step.core.execution.ExecutionEngineContext;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
 
-public abstract class AbstractControllerPlugin extends AbstractExecutionPlugin implements ControllerPluginCallbacks {
+public abstract class AbstractControllerPlugin extends AbstractExecutionEnginePlugin implements ControllerPlugin {
+
+	@Override
+	public void initialize(ExecutionEngineContext context) {}
 
 	@Override
 	public void executionControllerStart(GlobalContext context)  throws Exception {}

@@ -4,37 +4,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.exense.commons.app.Configuration;
+import step.core.plugins.PluginManager.Builder;
+import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 
-public class ControllerPluginManager extends PluginManager<AbstractControllerPlugin> {
+public class ControllerPluginManager {
 	
 	protected Configuration configuration;
 	
-	public ControllerPluginManager(Configuration configuration) {
-		super();
-		this.configuration = configuration;
-	}
+	protected PluginManager<ExecutionCallbacks> pluginManager;
 	
-	public ControllerPluginCallbacks getProxy() {
-		return super.getProxy(ControllerPluginCallbacks.class);
+	public ControllerPluginManager(Configuration configuration) throws CircularDependencyException, InstantiationException, IllegalAccessException {
+		this.configuration = configuration;
+		Builder<ExecutionCallbacks> builder = new PluginManager.Builder<ExecutionCallbacks>(ExecutionCallbacks.class);
+		this.pluginManager = builder.withPluginsFromClasspath().withPluginFilter(p->isPluginEnabled(p)).build();
 	}
 
+	public ControllerPlugin getProxy() {
+		return pluginManager.getProxy(ControllerPlugin.class);
+	}
 
 	public List<WebPlugin> getWebPlugins() {
 		List<WebPlugin> webPlugins = new ArrayList<>();
-		for(AbstractControllerPlugin plugin:plugins) {
-			WebPlugin webPlugin = plugin.getWebPlugin();
-			if(webPlugin!=null) {
-				webPlugins.add(webPlugin);
+		for (ExecutionCallbacks plugin : pluginManager.getPlugins()) {
+			if(plugin instanceof ControllerPlugin) {
+				ControllerPlugin controllerPlugin = (ControllerPlugin) plugin;
+				WebPlugin webPlugin = controllerPlugin.getWebPlugin();
+				if(webPlugin != null) {
+					webPlugins.add(webPlugin);
+				}
 			}
 		}
 		return webPlugins;
 	}
 
-	@Override
-	public void register(AbstractControllerPlugin plugin) {
-		boolean isPluginEnabled = configuration.getPropertyAsBoolean("plugins."+plugin.getClass().getSimpleName()+".enabled", true);
-		if(isPluginEnabled) {
-			super.register(plugin);
-		}
+	private boolean isPluginEnabled(Object plugin) {
+		return configuration.getPropertyAsBoolean("plugins."+plugin.getClass().getSimpleName()+".enabled", true);
 	}
 }

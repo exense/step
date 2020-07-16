@@ -30,14 +30,14 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionTestHelper;
+import step.datapool.excel.AbstractArtefactTest;
 
-public class AbstractArtefactHandlerTest {
+public class AbstractArtefactHandlerTest extends AbstractArtefactTest {
 	
 	protected ExecutionContext context;
 	
 	protected void setupContext() {
-		context = ExecutionTestHelper.setupContext();
+		context = newExecutionContext();
 	}
 	
 	protected void createSkeleton(AbstractArtefact artefact) {

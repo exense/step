@@ -37,14 +37,13 @@ import step.core.deployment.ObjectHookPlugin;
 import step.core.entities.Entity;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
-import step.core.execution.ExecutionManager;
-import step.core.execution.model.ExecutionParameters;
 import step.core.imports.GenericDBImporter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.variables.VariableType;
 import step.core.variables.VariablesManager;
+import step.engine.execution.ExecutionManager;
 import step.functions.Function;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.InputType;
@@ -130,24 +129,13 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 		if(parameterManager!=null) {
 			ReportNode rootNode = context.getReport();
 			
-			// Create the contextual global parameters 
-			Map<String, String> globalParametersFromExecutionParameters = new HashMap<>();
-			ExecutionParameters executionParameters = context.getExecutionParameters();
-			if(executionParameters.getUserID() != null) {
-				globalParametersFromExecutionParameters.put("user", executionParameters.getUserID());
-			}
-			if(executionParameters.getCustomParameters() != null) {
-				globalParametersFromExecutionParameters.putAll(executionParameters.getCustomParameters());			
-			}
-			putVariables(context, rootNode, globalParametersFromExecutionParameters, VariableType.IMMUTABLE);
-			
 			// Resolve the active parameters
 			Map<String, Object> contextBindings = ExecutionContextBindings.get(context);
 			ObjectPredicate objectPredicate = context.get(ObjectPredicate.class);
 			Map<String, Parameter> allParameters = parameterManager.getAllParameters(contextBindings, objectPredicate);
 
 			// Add all the active parameters to the execution parameter map of the Execution object
-			buildExecutionParametersMapAndUpdateExecution(context, globalParametersFromExecutionParameters, allParameters);
+			buildExecutionParametersMapAndUpdateExecution(context, allParameters);
 			
 			// Build the map of parameters by scope
 			Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = getAllParametersByScope(allParameters);
@@ -178,14 +166,12 @@ public class ParameterManagerPlugin extends AbstractControllerPlugin {
 		}
 	}
 
-	protected void buildExecutionParametersMapAndUpdateExecution(ExecutionContext context,
-			Map<String, String> additionalGlobalParameters, Map<String, Parameter> allParameters) {
+	protected void buildExecutionParametersMapAndUpdateExecution(ExecutionContext context, Map<String, Parameter> allParameters) {
 		ExecutionManager executionManager = context.get(ExecutionManager.class);
 		if(executionManager != null) {
 			// This map corresponds to the parameters displayed in the panel "Execution Parameters" of the execution view
 			// which lists the parameters available in the plan after activation (evaluation of the activation expressions)
 			Map<String, String> executionParameters = new HashMap<>();
-			executionParameters.putAll(additionalGlobalParameters);
 			executionParameters.putAll(allParameters.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e->e.getValue().getValue())));
 			executionManager.updateParameters(context, executionParameters);
 		}

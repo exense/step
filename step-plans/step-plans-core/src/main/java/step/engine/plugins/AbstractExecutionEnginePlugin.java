@@ -1,18 +1,20 @@
-package step.core.plugins;
+package step.engine.plugins;
 
 import javax.json.JsonObject;
 
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngineContext;
+import step.core.plugins.AbstractPlugin;
 import step.functions.Function;
 import step.functions.io.Output;
 
-public class AbstractExecutionPlugin extends AbstractPlugin implements ExecutionCallbacks {
+public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin implements ExecutionEnginePlugin {
 
-	public AbstractExecutionPlugin() {
+	public AbstractExecutionEnginePlugin() {
 		super();
 	}
-
+	
 	@Override
 	public void beforePlanImport(ExecutionContext context) {}
 
@@ -76,4 +78,5 @@ public class AbstractExecutionPlugin extends AbstractPlugin implements Execution
 	@Override
 	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {}
 
+	public abstract void initialize(ExecutionEngineContext context);
 }

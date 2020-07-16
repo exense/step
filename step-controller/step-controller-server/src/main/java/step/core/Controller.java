@@ -41,7 +41,7 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
-import step.core.execution.EventManager;
+import step.core.execution.ExecutionManagerImpl;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
@@ -50,7 +50,7 @@ import step.core.imports.GenericDBImporter;
 import step.core.imports.PlanImporter;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
-import step.core.plugins.ControllerPluginCallbacks;
+import step.core.plugins.ControllerPlugin;
 import step.core.plugins.ControllerPluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionScheduler;
@@ -83,14 +83,13 @@ public class Controller {
 	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
 		pluginManager = new ControllerPluginManager(configuration);
-		pluginManager.initialize();
 		
 		initContext();
 		context.setServiceRegistrationCallback(serviceRegistrationCallback);
 		
 		recover();
 		
-		ControllerPluginCallbacks pluginProxy = pluginManager.getProxy();
+		ControllerPlugin pluginProxy = pluginManager.getProxy();
 		logger.info("Starting controller...");
 		pluginProxy.executionControllerStart(context);
 		logger.info("Initializing data...");
@@ -112,9 +111,11 @@ public class Controller {
 		context.setMongoClientSession(mongoClientSession);
 		CollectionRegistry collectionRegistry = new CollectionRegistry();
 		context.put(CollectionRegistry.class, collectionRegistry);		
-		context.setExecutionAccessor(new ExecutionAccessorImpl(mongoClientSession));		
+		ExecutionAccessorImpl executionAccessor = new ExecutionAccessorImpl(mongoClientSession);
+		context.setExecutionAccessor(executionAccessor);		
+		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
 		context.setPlanAccessor(new PlanAccessorImpl(mongoClientSession));		
-		context.setReportAccessor(new ReportNodeAccessorImpl(mongoClientSession));
+		context.setReportNodeAccessor(new ReportNodeAccessorImpl(mongoClientSession));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(mongoClientSession));
 		context.setUserAccessor(new UserAccessorImpl(mongoClientSession));
 		collectionRegistry.register("users", new Collection(mongoClientSession.getMongoDatabase(), "users", User.class, false));
@@ -124,7 +125,6 @@ public class Controller {
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
-		context.setEventManager(new EventManager());
 		context.setArtefactRegistry(ArtefactRegistry.getInstance());
 		
 		context.setEntityManager(new EntityManager());

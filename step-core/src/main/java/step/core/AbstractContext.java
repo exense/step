@@ -19,13 +19,40 @@
 package step.core;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public abstract class AbstractContext {
+	
+	private final ConcurrentHashMap<String, Object> attributes;
 
-	private ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
+	public AbstractContext() {
+		this(null);
+	}
+
+	public AbstractContext(AbstractContext parentContext) {
+		super();
+		this.attributes = new ConcurrentHashMap<String, Object>();
+		if(parentContext != null) {
+			this.attributes.putAll(parentContext.attributes);
+		}
+	}
 
 	public Object get(Object key) {
 		return attributes.get(key);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T>T get(Class<T> class_) {
+		return (T) get(key(class_));
+	}
+	
+	public <T> T computeIfAbsent(Class<T> class_, Function<Class<T>, T> mappingFunction) {
+		T value = get(class_);
+		if(value == null) {
+			value = mappingFunction.apply(class_);
+			put(class_, value);
+		}
+		return value;
 	}
 
 	public Object put(String key, Object value) {
@@ -33,20 +60,10 @@ public abstract class AbstractContext {
 	}
 	
 	public <T> Object put(Class<T> class_, T value) {
-		return attributes.put(class_.getName(), value);
-	}
-	
-	@SuppressWarnings("unchecked")
-	public <T>T get(Class<T> class_) {
-		return (T) attributes.get(class_.getName());
+		return attributes.put(key(class_), value);
 	}
 
-	public ConcurrentHashMap<String, Object> getAttributes() {
-		return attributes;
+	private <T> String key(Class<T> class_) {
+		return class_.getName();
 	}
-
-	public void setAttributes(ConcurrentHashMap<String, Object> attributes) {
-		this.attributes = attributes;
-	}
-	
 }

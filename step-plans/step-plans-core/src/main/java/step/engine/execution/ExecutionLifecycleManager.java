@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.core.execution;
+package step.engine.execution;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.repositories.ImportResult;
@@ -36,11 +37,10 @@ public class ExecutionLifecycleManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionLifecycleManager.class);
 	
-	public ExecutionLifecycleManager(ExecutionManager executionManager, ExecutionContext context) {
+	public ExecutionLifecycleManager(ExecutionContext context) {
 		super();
 		this.context = context;
-		
-		this.executionManager = executionManager;
+		this.executionManager = context.getExecutionManager();
 		this.executionCallbacks = context.getExecutionCallbacks();
 	}
 

@@ -1,4 +1,4 @@
-package step.core.execution;
+package step.engine;
 
 import java.util.Map;
 
@@ -6,9 +6,11 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResult;
+import step.engine.execution.ExecutionLifecycleManager;
 
 /**
  * A runner that runs plans on a controller instance
@@ -16,16 +18,15 @@ import step.core.plans.runner.PlanRunnerResult;
  * @author Jérôme Comte
  *
  */
-public class ControllerPlanRunner implements PlanRunner {
+public class PlanRunnerImpl implements PlanRunner {
 
-	private final ExecutionLifecycleManager executionLifecycleManager;
 	private final ExecutionContext executionContext;
+	private final ExecutionLifecycleManager executionLifecycleManager;
 
-	public ControllerPlanRunner(ExecutionLifecycleManager executionLifecycleManager,
-			ExecutionContext executionContext) {
+	public PlanRunnerImpl(ExecutionContext executionContext) {
 		super();
-		this.executionLifecycleManager = executionLifecycleManager;
 		this.executionContext = executionContext;
+		this.executionLifecycleManager = new ExecutionLifecycleManager(executionContext);
 	}
 
 	@Override
@@ -56,7 +57,6 @@ public class ControllerPlanRunner implements PlanRunner {
 	public PlanRunnerResult run(Plan plan, Map<String, String> executionParameters) {
 		throw new UnsupportedOperationException("Running a plan with execution parameters isn't support by this runner.");
 	}
-
 
 	private void persistReportNode(ReportNode reportNode) {
 		executionContext.getReportNodeAccessor().save(reportNode);
