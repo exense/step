@@ -5,6 +5,14 @@
 			<div class="st-flex-column panel panel-default overflow-x-auto overflow-y-hidden">
 				<div class="panel-heading st-flex-fixed">{{model.plan.root?model.plan.root._class:''}} - {{model.plan.attributes.name}}
 					<div class="pull-right">
+						<div class="btn-group btn-group-menu">
+							<button type="button" ng-disabled="!hasUndo()" ng-type="submit" class="btn btn-default btn-xs" ng-click="undo()" uib-tooltip="Undo (ctrl+z)" tooltip-append-to-body="true" tooltip-placement="bottom">
+								<span class="icon-flipped glyphicon glyphicon-repeat"></span>
+							</button>
+							<button type="button" ng-disabled="!hasRedo()" ng-type="submit" class="btn btn-default btn-xs" ng-click="redo()" uib-tooltip="Redo (ctrl+y)" tooltip-append-to-body="true" tooltip-placement="bottom">
+								<span class="glyphicon glyphicon-repeat"></span>
+							</button>
+						</div>
 						<button type="submit" class="btn btn-default btn-xs" ng-click="clonePlan()">Clone</button>
 						<button type="submit" class="btn btn-default btn-xs" ng-click="exportPlan()">Export</button>
 						<div class="btn-group" style="margin-right:5px;">

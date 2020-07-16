@@ -87,9 +87,9 @@ window.console.log = window.console.log || function(){};
  <title>STEP</title>
 </head>
 
-<body>
+<body ng-controller="AppController" ng-keydown="handleKeys($event)">
 <script>step.bootstrap();</script>
-<div class="main-page" ng-controller="AppController">
+<div class="main-page">
 	
 	<header class="main-header" ng-if-start="isInitialized && (authService.isAuthenticated() || isPublicView())"><div ng-include="'partials/nav.html'" class="container main-header"></div></header>
 	<div ng-if-end ng-include="'partials/main.html'" class="st-flex-row"></div>

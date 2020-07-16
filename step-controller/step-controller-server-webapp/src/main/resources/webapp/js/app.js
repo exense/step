@@ -151,6 +151,13 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 	$scope.maintenanceService = MaintenanceService;
 	$scope.viewRegistry = ViewRegistry;
 
+   $scope.handleKeys = function(e) {
+    if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+      $rootScope.$broadcast('undo-requested');
+    } else if (e.key === 'y' && (e.ctrlKey || e.metaKey)) {
+      $rootScope.$broadcast('redo-requested');
+    }
+  }
 })
 
 .directive('ngCompiledInclude', function($compile, $templateCache, $http) {

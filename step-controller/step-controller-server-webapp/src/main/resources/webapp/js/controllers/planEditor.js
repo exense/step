@@ -25,7 +25,7 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
 .controller('PlanEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location,Dialogs, PlanTypeRegistry, AuthService, reportTableFactory, executionServices, ExportService) {
   $scope.authService = AuthService;
   stateStorage.push($scope, 'editor', {});
-      
+
   $scope.model = {}
   
   $scope.$watch('$state',function() {
@@ -48,6 +48,38 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
   $scope.save = function() {
     savePlan($scope.model.plan);
   }
+
+  $scope.undo = function() {
+    $scope.handle.undo();
+  }
+
+  $scope.redo = function() {
+    $scope.handle.redo();
+  }
+
+  $scope.hasUndo = function() {
+    var result = false;
+    if ($scope.handle.hasUndo !== undefined) {
+      result = $scope.handle.hasUndo();
+    }
+    return result;
+  }
+
+  $scope.hasRedo = function() {
+  var result = false;
+    if ($scope.handle.hasRedo !== undefined) {
+      result = $scope.handle.hasRedo();
+    }
+    return result;
+  }
+
+  $scope.$on('undo-requested', function(event, args) {
+    $scope.undo();
+  });
+
+  $scope.$on('redo-requested', function(event, args) {
+    $scope.redo();
+  });
 
   $scope.exportPlan = function() {
     ExportService.get("rest/export/plan/"+$scope.planId);
