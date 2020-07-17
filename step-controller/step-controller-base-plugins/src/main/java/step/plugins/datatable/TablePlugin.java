@@ -22,11 +22,11 @@ import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
-import step.core.deployment.ObjectHookPlugin;
+import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
-@Plugin(dependencies= {ObjectHookPlugin.class})
+@Plugin(dependencies= {ObjectHookControllerPlugin.class})
 public class TablePlugin extends AbstractControllerPlugin {
 
 	@Override

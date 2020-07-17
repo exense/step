@@ -88,8 +88,18 @@ public class TestPlugins {
 		}
 	}
 	
+	public static class TestPluginWithoutAnnotation extends AbstractTestPlugin {
+		
+	}
+	
 	@Plugin()
 	public static class TestPlugin extends AbstractTestPlugin2 {
+		
+	}
+	
+	@Plugin()
+	@IgnoreDuringAutoDiscovery
+	public static class TestIgnoredPlugin extends AbstractTestPlugin2 {
 		
 	}
 	

@@ -44,7 +44,7 @@ public class ExecutionRunnableFactory {
 		this.globalContext = globalContext;
 		taskAccessor = globalContext.getScheduleAccessor();
 		planAccessor = globalContext.getPlanAccessor();
-		engine = new ExecutionEngine(OperationMode.CONTROLLER, globalContext);
+		engine = new ExecutionEngine(OperationMode.CONTROLLER, globalContext, globalContext.getPluginManager().getExecutionEnginePlugins());
 	}
 
 	public ExecutionRunnable newExecutionRunnable(Execution execution) {		

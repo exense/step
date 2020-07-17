@@ -99,8 +99,7 @@ public class ParameterManagerPluginTest {
 	public static class LocalParameterManagerPlugin extends ParameterManagerPlugin {
 
 		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor) {
-			super();
-			parameterManager = new ParameterManager(parameterAccessor);
+			super(new ParameterManager(parameterAccessor));
 		}
 		
 		

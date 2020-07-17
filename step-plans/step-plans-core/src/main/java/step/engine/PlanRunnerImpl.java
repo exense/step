@@ -33,14 +33,15 @@ public class PlanRunnerImpl implements PlanRunner {
 	public PlanRunnerResult run(Plan plan) {
 		executionContext.associateThread();
 		
-		AbstractArtefact root = plan.getRoot();
 		ReportNode rootReportNode = executionContext.getReport();
-		
+		executionContext.setCurrentReportNode(rootReportNode);
 		persistReportNode(rootReportNode);
 		
 		executionLifecycleManager.executionStarted();
 		
 		ArtefactHandlerManager artefactHandlerManager = executionContext.getArtefactHandlerManager();
+		
+		AbstractArtefact root = plan.getRoot();
 		artefactHandlerManager.createReportSkeleton(root, rootReportNode);
 		ReportNode planReportNode = artefactHandlerManager.execute(root, rootReportNode);
 		

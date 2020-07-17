@@ -26,6 +26,7 @@ import step.core.plugins.TestPlugins.TestPluginInterface;
 import step.core.plugins.TestPlugins.TestPluginInterface2;
 import step.core.plugins.TestPlugins.TestPluginWithCriticalException;
 import step.core.plugins.TestPlugins.TestPluginWithError;
+import step.core.plugins.TestPlugins.TestPluginWithoutAnnotation;
 
 public class PluginManagerTest {
 
@@ -110,6 +111,12 @@ public class PluginManagerTest {
 	public void testCircularDependencyToItself() throws CircularDependencyException {
 		PluginManager<TestPluginInterface> pluginManager = pluginManager().withPlugins(plugins(new TestPlugin1(),new TestPlugin8())).build();
 		assertOrder(pluginManager, new TestPlugin1(), new TestPlugin8());
+	}
+	
+	@Test
+	public void testPluginWithoutAnnotation() throws CircularDependencyException {
+		PluginManager<TestPluginInterface> pluginManager = pluginManager().withPlugins(plugins(new TestPluginWithoutAnnotation())).build();
+		assertOrder(pluginManager, new TestPluginWithoutAnnotation());
 	}
 	
 	@Test

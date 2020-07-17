@@ -80,6 +80,8 @@ public class InteractiveServices extends AbstractServices {
 	private Timer sessionExpirationTimer; 
 	
 	private ObjectHookRegistry objectHookRegistry;
+
+	private ExecutionEngine executionEngine;
 	
 	private static class InteractiveSession {
 		
@@ -122,6 +124,7 @@ public class InteractiveServices extends AbstractServices {
 		super.init();
 		GlobalContext context = getContext();
 		objectHookRegistry = context.get(ObjectHookRegistry.class);
+		executionEngine = new ExecutionEngine(OperationMode.CONTROLLER, getContext());
 	}
 	
 	@PreDestroy
@@ -138,7 +141,6 @@ public class InteractiveServices extends AbstractServices {
 	public String start() throws AgentCommunicationException {
 		InteractiveSession session = new InteractiveSession();
 		
-		ExecutionEngine executionEngine = new ExecutionEngine(OperationMode.CONTROLLER, getContext());
 		ExecutionContext executionContext = executionEngine.newExecutionContext();
 		// Replace the ExecutionManager as we don't have any Execution in this context
 		executionContext.put(ExecutionManager.class, new MockedExecutionManagerImpl());

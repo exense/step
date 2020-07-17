@@ -16,8 +16,8 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 	}
 	
 	@Override
-	public void beforePlanImport(ExecutionContext context) {}
-
+	public void initialize(ExecutionEngineContext context) {}
+	
 	@Override
 	public void executionStart(ExecutionContext context) {}
 
@@ -71,12 +71,13 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 	
 	@Override
 	public void unassociateThread(ExecutionContext context, Thread thread) {}
+	
+	@Override
+	public void beforePlanImport(ExecutionContext context) {}
 
 	@Override
 	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {}
 
 	@Override
 	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {}
-
-	public abstract void initialize(ExecutionEngineContext context);
 }

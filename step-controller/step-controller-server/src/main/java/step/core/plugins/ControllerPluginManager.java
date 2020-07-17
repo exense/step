@@ -1,40 +1,36 @@
 package step.core.plugins;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import ch.exense.commons.app.Configuration;
 import step.core.plugins.PluginManager.Builder;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
+import step.engine.plugins.ExecutionEnginePlugin;
 
 public class ControllerPluginManager {
 	
 	protected Configuration configuration;
 	
-	protected PluginManager<ExecutionCallbacks> pluginManager;
+	protected PluginManager<ControllerPlugin> pluginManager;
 	
 	public ControllerPluginManager(Configuration configuration) throws CircularDependencyException, InstantiationException, IllegalAccessException {
 		this.configuration = configuration;
-		Builder<ExecutionCallbacks> builder = new PluginManager.Builder<ExecutionCallbacks>(ExecutionCallbacks.class);
-		this.pluginManager = builder.withPluginsFromClasspath().withPluginFilter(p->isPluginEnabled(p)).build();
+		Builder<ControllerPlugin> builder = new PluginManager.Builder<ControllerPlugin>(ControllerPlugin.class);
+		this.pluginManager = builder.withPluginsFromClasspath().withPluginFilter(this::isPluginEnabled).build();
 	}
 
 	public ControllerPlugin getProxy() {
 		return pluginManager.getProxy(ControllerPlugin.class);
 	}
 
+	public List<ExecutionEnginePlugin> getExecutionEnginePlugins() {
+		return pluginManager.getPlugins().stream().map(ControllerPlugin::getExecutionEnginePlugin).filter(Objects::nonNull).collect(Collectors.toList());
+	}
+	
 	public List<WebPlugin> getWebPlugins() {
-		List<WebPlugin> webPlugins = new ArrayList<>();
-		for (ExecutionCallbacks plugin : pluginManager.getPlugins()) {
-			if(plugin instanceof ControllerPlugin) {
-				ControllerPlugin controllerPlugin = (ControllerPlugin) plugin;
-				WebPlugin webPlugin = controllerPlugin.getWebPlugin();
-				if(webPlugin != null) {
-					webPlugins.add(webPlugin);
-				}
-			}
-		}
-		return webPlugins;
+		return pluginManager.getPlugins().stream().map(ControllerPlugin::getWebPlugin).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	private boolean isPluginEnabled(Object plugin) {

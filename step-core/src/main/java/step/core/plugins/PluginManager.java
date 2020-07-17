@@ -46,10 +46,12 @@ public class PluginManager<T> {
 	private final Class<T> pluginClass;
 	private final List<T> plugins;
 	
-	public PluginManager(Class<T> pluginClass, List<T> plugins) {
+	private PluginManager(Class<T> pluginClass, List<T> plugins) {
 		super();
 		this.pluginClass = pluginClass;
 		this.plugins = plugins;
+		
+		logger.info("Starting plugin manager with following plugins: "+Arrays.toString(plugins.toArray()));
 	}
 	
 	public T getProxy() {
@@ -137,7 +139,7 @@ public class PluginManager<T> {
 			
 			List<T> plugins = new ArrayList<>();
 			for(Class<?> pluginClass:pluginClasses) {
-				if(this.pluginClass.isAssignableFrom(pluginClass)) {
+				if(this.pluginClass.isAssignableFrom(pluginClass) && pluginClass.getAnnotation(IgnoreDuringAutoDiscovery.class) == null) {
 					@SuppressWarnings("unchecked")
 					T plugin = newPluginInstance((Class<T>) pluginClass);
 					plugins.add(plugin);
@@ -166,10 +168,13 @@ public class PluginManager<T> {
 			Map<Class<?>, List<Class<?>>> additionalDependencies = new HashMap<>();
 			for (T plugin : plugins) {
 				Class<?> pluginClass = plugin.getClass();
-				Class<?>[] runsBeforeList = pluginClass.getAnnotation(Plugin.class).runsBefore();
-				for (Class<?> runsBefore : runsBeforeList) {
-					// 
-					additionalDependencies.computeIfAbsent(runsBefore, c->new ArrayList<>()).add(pluginClass);
+				Plugin annotation = pluginClass.getAnnotation(Plugin.class);
+				if(annotation != null) {
+					Class<?>[] runsBeforeList = annotation.runsBefore();
+					for (Class<?> runsBefore : runsBeforeList) {
+						// 
+						additionalDependencies.computeIfAbsent(runsBefore, c->new ArrayList<>()).add(pluginClass);
+					}
 				}
 			}
 			
@@ -188,9 +193,15 @@ public class PluginManager<T> {
 				List<T> clone = new ArrayList<>(result);
 				for (T plugin : result) {
 					Class<?> pluginClass = plugin.getClass();
-					Class<?>[] dependencies = pluginClass.getAnnotation(Plugin.class).dependencies();
+					Plugin annotation = pluginClass.getAnnotation(Plugin.class);
 					
-					List<Class<?>> allDependencies = new ArrayList<>(Arrays.asList(dependencies));
+					final List<Class<?>> allDependencies = new ArrayList<>();
+
+					if(annotation != null) {
+						Class<?>[] dependencies = annotation.dependencies();
+						allDependencies.addAll(Arrays.asList(dependencies));
+					}
+					
 					if(additionalDependencies.containsKey(pluginClass)) {
 						allDependencies.addAll(additionalDependencies.get(pluginClass));
 					}

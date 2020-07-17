@@ -18,20 +18,10 @@
  *******************************************************************************/
 package step.core.plugins;
 
-import step.core.GlobalContext;
-import step.engine.plugins.ExecutionEnginePlugin;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-public interface ControllerPlugin {
-
-	public ExecutionEnginePlugin getExecutionEnginePlugin();
-
-	public WebPlugin getWebPlugin();
-
-	public void executionControllerStart(GlobalContext context) throws Exception;
-
-	public void initializeData(GlobalContext context) throws Exception;
-
-	public void afterInitializeData(GlobalContext context) throws Exception;
-
-	public void executionControllerDestroy(GlobalContext context);
+@Retention(RetentionPolicy.RUNTIME)
+public @interface IgnoreDuringAutoDiscovery {
+		 
 }

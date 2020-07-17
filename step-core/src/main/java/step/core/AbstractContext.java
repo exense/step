@@ -46,6 +46,16 @@ public abstract class AbstractContext {
 		return (T) get(key(class_));
 	}
 	
+	@SuppressWarnings("unchecked")
+	public <T>T require(Class<T> class_) {
+		Object object = get(key(class_));
+		if(object == null) {
+			throw new IllegalStateException("Missing required session object of type "+class_.toString());
+		} else {
+			return (T) object;
+		}
+	}
+	
 	public <T> T computeIfAbsent(Class<T> class_, Function<Class<T>, T> mappingFunction) {
 		T value = get(class_);
 		if(value == null) {

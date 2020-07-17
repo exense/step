@@ -1,11 +1,14 @@
 package step.core.execution;
 
+import java.util.List;
+
 import org.bson.types.ObjectId;
 
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.runner.PlanRunner;
 import step.core.plugins.PluginManager;
+import step.core.plugins.PluginManager.Builder;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 import step.engine.PlanRunnerImpl;
 import step.engine.plugins.ExecutionEnginePlugin;
@@ -21,10 +24,18 @@ public class ExecutionEngine {
 	}
 	
 	public ExecutionEngine(OperationMode operationMode, AbstractExecutionEngineContext parentContext) {
+		this(operationMode, parentContext, null);
+	}
+	
+	public ExecutionEngine(OperationMode operationMode, AbstractExecutionEngineContext parentContext, List<ExecutionEnginePlugin> addtionalPlugins) {
 		super();
 		
+		Builder<ExecutionEnginePlugin> build = PluginManager.builder(ExecutionEnginePlugin.class);
+		if(addtionalPlugins != null) {
+			build.withPlugins(addtionalPlugins);
+		}
 		try {
-			pluginManager = PluginManager.builder(ExecutionEnginePlugin.class).withPluginsFromClasspath().build();
+			pluginManager = build.withPluginsFromClasspath().build();
 		} catch (InstantiationException | IllegalAccessException | CircularDependencyException e) {
 			throw new ExecutionEngineException(e);
 		}

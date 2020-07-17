@@ -16,54 +16,52 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.quotamanager;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+package step.plugins.threadmanager;
 
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
-import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
 @Plugin
 @IgnoreDuringAutoDiscovery
-public class QuotaManagerPlugin extends AbstractExecutionEnginePlugin {
+public class ThreadManagerPlugin extends AbstractExecutionEnginePlugin {
 
-	private final QuotaManager quotaManager;
-	private final ConcurrentHashMap<String, UUID> permits = new ConcurrentHashMap<>();
+	private final ThreadManager threadManager;
 
-	public QuotaManagerPlugin(QuotaManager quotaManager) {
+	public ThreadManagerPlugin(ThreadManager threadManager) {
 		super();
-		this.quotaManager = quotaManager;
+		this.threadManager = threadManager;
+	}
+
+	@Override
+	public void associateThread(ExecutionContext context, Thread thread, long parentThreadId) {
+		threadManager.associateThread(context, thread, parentThreadId);
+	}
+
+	@Override
+	public void associateThread(ExecutionContext context, Thread thread) {
+		threadManager.associateThread(context, thread);
 	}
 
 	@Override
 	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
-		Map<String, Object> bindings = new HashMap<>();
-
-		bindings.putAll(context.getVariablesManager().getAllVariables());
-		bindings.put("node", node);
-
-		UUID permit;
-		try {
-			permit = quotaManager.acquirePermit(bindings);
-		} catch (Exception e) {
-			throw new PluginCriticalException("Error while getting permit from quota manager", e);
-		} finally {
-		}
-		permits.put(node.getId().toString(), permit);
+		threadManager.beforeReportNodeExecution(context, node);
 	}
 
 	@Override
-	public void afterReportNodeExecution(ReportNode node) {
-		UUID permit = permits.remove(node.getId().toString());
-		if (permit != null) {
-			quotaManager.releasePermit(permit);
-		}
+	public void afterReportNodeExecution(ExecutionContext context, ReportNode node) {
+		threadManager.afterReportNodeExecution(context, node);
+	}
+
+	@Override
+	public void unassociateThread(ExecutionContext context, Thread thread) {
+		threadManager.unassociateThread(context, thread);
+	}
+
+	@Override
+	public void beforeExecutionEnd(ExecutionContext context) {
+		threadManager.beforeExecutionEnd(context);
 	}
 }

@@ -16,22 +16,30 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.core.plugins;
+package step.plugins.threadmanager;
 
 import step.core.GlobalContext;
+import step.core.plugins.AbstractControllerPlugin;
+import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 
-public interface ControllerPlugin {
+@Plugin
+public class ThreadManagerControllerPlugin extends AbstractControllerPlugin {
 
-	public ExecutionEnginePlugin getExecutionEnginePlugin();
+	private ThreadManager threadManager;
 
-	public WebPlugin getWebPlugin();
+	@Override
+	public void executionControllerStart(GlobalContext context) {
+		threadManager = new ThreadManager();
+		context.put(ThreadManager.class, threadManager);
+		context.getServiceRegistrationCallback().registerService(ThreadManagerServices.class);
+//		registerPattern(Pattern.compile(".*\\.sleep$"));
+//		registerClass(GridClient.class);
+//		registerClass(QuotaManager.class);
+	}
 
-	public void executionControllerStart(GlobalContext context) throws Exception;
-
-	public void initializeData(GlobalContext context) throws Exception;
-
-	public void afterInitializeData(GlobalContext context) throws Exception;
-
-	public void executionControllerDestroy(GlobalContext context);
+	@Override
+	public ExecutionEnginePlugin getExecutionEnginePlugin() {
+		return new ThreadManagerPlugin(threadManager);
+	}
 }
