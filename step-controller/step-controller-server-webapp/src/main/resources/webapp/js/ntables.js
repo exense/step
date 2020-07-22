@@ -262,11 +262,6 @@ angular.module('tables', ['export'])
           }, 50)
         }
 		  }
-		  
-		  // Load the table in 10 cycles
-		  performInNCycles(function() {
-			  controller.reload();
-      }, 50)
     
 		  controller.reload = function() {
 		    var columns = controller.getDtColumns();
@@ -446,6 +441,15 @@ angular.module('tables', ['export'])
 		    }
 
 		  }
+
+      controller.reload();
+
+      scope.$on('newColumn', function(event, args) {
+        $timeout(function() {
+          controller.reload();
+        });
+
+      });
 		  
       scope.exportAsCSV = function() {
         var requestURI='rest/table/' + scope.collection + '/export?';
@@ -512,6 +516,8 @@ angular.module('tables', ['export'])
 					return transclude(callback, null, 'cell')
 				},
 			}, positionInParent)
+
+			scope.$emit('newColumn');
 		}
 	}
 })
