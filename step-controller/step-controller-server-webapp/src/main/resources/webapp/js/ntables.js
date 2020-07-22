@@ -256,7 +256,7 @@ angular.module('tables', ['export'])
           // to load (HTTP call to retrieve the template for instance), the cell cannot be rendered in the current angular digest cycle
           // and the data returned by colDef.render (See above) used for ordering and filtering are wrong
           // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
-          // Waiting 100ms however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
+          // Waiting Xms or n cycles however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
           performInNCycles(function() {
         	  scope.table.draw(false);
           }, 50)
@@ -444,7 +444,7 @@ angular.module('tables', ['export'])
 	          loadTableData();
 		      }
 		    }
-		    
+
 		  }
 		  
       scope.exportAsCSV = function() {
