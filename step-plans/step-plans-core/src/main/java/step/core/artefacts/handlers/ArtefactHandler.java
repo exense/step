@@ -88,7 +88,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	public void createReportSkeleton(ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {		
 		REPORT_NODE reportNode = beforeDelegation(Phase.SKELETON_CREATION, parentReportNode, artefact, newVariables);
-		
+		if(parentReportNode != null && parentReportNode.isOrphan()) {
+			reportNode.setOrphan(true);
+		} else {
+			reportNode.setOrphan(!artefact.isCreateSkeleton());
+		}
+
 		try {
 			dynamicBeanResolver.evaluate(artefact, getBindings());
 			
@@ -103,7 +108,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			failWithException(reportNode, e, false);
 		}
 		
-		if(artefact.isCreateSkeleton()) {
+		if(artefact.isCreateSkeleton() && !reportNode.isOrphan()) {
 			saveReportNode(reportNode);
 		}
 		

@@ -52,9 +52,8 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	protected void createReportSkeleton_(ReportNode parentNode,	CallPlan testArtefact) {
 		beforeDelegation(parentNode, testArtefact);
 		Plan a = selectPlan(testArtefact);
-		
-		// TODO implement
-//		delegateCreateReportSkeleton(a, parentNode);
+
+		delegateCreateReportSkeleton(a.getRoot(), parentNode);
 	}
 
 	private void beforeDelegation(ReportNode parentNode, CallPlan testArtefact) {

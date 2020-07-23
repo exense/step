@@ -59,6 +59,9 @@ public class ReportNode extends AbstractIdentifiableObject {
 	
 	@JsonIgnore
 	protected AbstractArtefact artefactInstance;
+
+	@JsonIgnore
+	protected boolean isOrphan;
 	
 	protected AbstractArtefact resolvedArtefact;
 
@@ -193,6 +196,15 @@ public class ReportNode extends AbstractIdentifiableObject {
 
 	public void setArtefactInstance(AbstractArtefact artefactInstance) {
 		this.artefactInstance = artefactInstance;
+	}
+
+
+	public boolean isOrphan() {
+		return isOrphan;
+	}
+
+	public void setOrphan(boolean orphan) {
+		isOrphan = orphan;
 	}
 
 //	@Override
