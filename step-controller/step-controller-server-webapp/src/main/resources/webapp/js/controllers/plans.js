@@ -155,14 +155,14 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
 .controller('createPlanCtrl', function ($scope, $uibModalInstance, $location, $http, AuthService, ScreenTemplates, PlanTypeRegistry) {
   $scope.AuthService = AuthService;
   
-  $scope.template = 'Sequence';
+  $scope.template = 'TestCase';
   $scope.plan = {attributes:{}};
 
   
   $scope.planTypes = PlanTypeRegistry.getPlanTypes();
   $scope.planType = PlanTypeRegistry.getPlanType('step.core.plans.Plan');
   
-  $http.get("rest/controller/artefact/types").then(function(response){ 
+  $http.get("rest/controller/artefact/templates").then(function(response){
     $scope.artefactTypes = response.data;
   })
   

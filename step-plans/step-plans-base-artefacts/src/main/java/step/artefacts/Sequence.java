@@ -23,7 +23,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = SequenceHandler.class)
+@Artefact(handler = SequenceHandler.class, useAsTemplate = true)
 public class Sequence extends AbstractArtefact {
 	
 	DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);

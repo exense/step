@@ -18,11 +18,8 @@
  *******************************************************************************/
 package step.core.deployment;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
@@ -222,6 +219,15 @@ public class ControllerServices extends AbstractServices {
 	@Secured(right="plan-read")
 	public Set<String> getArtefactTypes() {
 		return getContext().getArtefactRegistry().getArtefactNames();
+	}
+
+	@GET
+	@Path("/artefact/templates")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
+	public Set<String> getArtefactTemplates() {
+		return new TreeSet<>(getContext().getArtefactRegistry().getArtefactTemplateNames());
 	}
 	
 	@GET

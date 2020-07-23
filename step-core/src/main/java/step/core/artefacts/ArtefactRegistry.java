@@ -19,6 +19,7 @@
 package step.core.artefacts;
 
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,6 +71,16 @@ public class ArtefactRegistry {
 		}
 		
 		return sample;
+	}
+
+	public Set<String> getArtefactTemplateNames() {
+		Set<String> templateArtefacts = new HashSet<String>();
+		register.keySet().forEach(k-> {
+			if (register.get(k).getAnnotation(Artefact.class).useAsTemplate()) {
+				templateArtefacts.add(k);
+			}
+		});
+		return templateArtefacts;
 	}
 
 	public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {

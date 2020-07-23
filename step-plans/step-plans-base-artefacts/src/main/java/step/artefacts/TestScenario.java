@@ -22,7 +22,7 @@ import step.artefacts.handlers.TestScenarioHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 
-@Artefact(handler = TestScenarioHandler.class)
+@Artefact(handler = TestScenarioHandler.class, useAsTemplate = true)
 public class TestScenario extends AbstractArtefact {
 	
 }
