@@ -17,8 +17,6 @@ import step.engine.plugins.ExecutionEnginePlugin;
 
 public class ExecutionEngine {
 
-	private static final String PLUGIN_PACKAGE_PREFIX = "step";
-
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionEngine.class);
 	
 	private final ExecutionEngineContext executionEngineContext;
@@ -41,7 +39,7 @@ public class ExecutionEngine {
 			build.withPlugins(addtionalPlugins);
 		}
 		try {
-			pluginManager = build.withPluginsFromClasspath(PLUGIN_PACKAGE_PREFIX).build();
+			pluginManager = build.withPluginsFromClasspath().build();
 		} catch (InstantiationException | IllegalAccessException | CircularDependencyException e) {
 			throw new ExecutionEngineException(e);
 		}
