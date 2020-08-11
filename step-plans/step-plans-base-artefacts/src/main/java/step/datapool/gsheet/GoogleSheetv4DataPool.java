@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -145,7 +146,7 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 
 		@Override
 		public Set<String> keySet() {
-			return new HashSet<>(headers);
+			return new LinkedHashSet<>(headers);
 		}
 
 	}
