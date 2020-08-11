@@ -27,38 +27,69 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.serialization.EscapingDottedKeysMapDeserializer;
 import step.core.accessors.serialization.EscapingDottedKeysMapSerializer;
+import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
+import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
 
 public class ExecutionParameters extends AbstractOrganizableObject {
 	
-	RepositoryObjectReference repositoryObject;
-	
-	List<RepositoryObjectReference> exports;
-	
-	String description;
-	
-	String userID;
-		
-	ArtefactFilter artefactFilter;
+	private static final String DEFAULT_USERID = "dummy";
 	
 	ExecutionMode mode;
-	
+
+	Plan plan;
+	RepositoryObjectReference repositoryObject;
+
 	@JsonSerialize(using = EscapingDottedKeysMapSerializer.class)
 	@JsonDeserialize(using = EscapingDottedKeysMapDeserializer.class)
 	Map<String, String> customParameters;
 	
+	String description;
+	String userID;
+		
+	ArtefactFilter artefactFilter;
 	boolean isolatedExecution = false;
+	
+	List<RepositoryObjectReference> exports;
 
 	public ExecutionParameters() {
-		super();
+		this((RepositoryObjectReference) null, null);
 	}
 
-	public ExecutionParameters(String userID, ArtefactFilter artefactFilter, ExecutionMode mode) {
+	public ExecutionParameters(RepositoryObjectReference repositoryObjectReference, Map<String, String> customParameters) {
+		this(ExecutionMode.RUN, null, repositoryObjectReference, customParameters, null, DEFAULT_USERID, null, false, null);
+	}
+	
+	public ExecutionParameters(Plan plan, Map<String, String> customParameters) {
+		this(ExecutionMode.RUN, plan, null, customParameters, plan.getAttributes().get(AbstractArtefact.NAME), DEFAULT_USERID, null, false, null);
+	}
+
+	public ExecutionParameters(ExecutionMode mode) {
+		this(mode, null, null, null, null, DEFAULT_USERID, null, false, null);
+	}
+
+	public ExecutionParameters(ExecutionMode mode, Plan plan, RepositoryObjectReference repositoryObject,
+			Map<String, String> customParameters, String description, String userID, ArtefactFilter artefactFilter,
+			boolean isolatedExecution, List<RepositoryObjectReference> exports) {
 		super();
+		this.mode = mode;
+		this.plan = plan;
+		this.repositoryObject = repositoryObject;
+		this.customParameters = customParameters;
+		this.description = description;
 		this.userID = userID;
 		this.artefactFilter = artefactFilter;
-		this.mode = mode;
+		this.isolatedExecution = isolatedExecution;
+		this.exports = exports;
+	}
+
+	public Plan getPlan() {
+		return plan;
+	}
+
+	public void setPlan(Plan plan) {
+		this.plan = plan;
 	}
 
 	public RepositoryObjectReference getRepositoryObject() {

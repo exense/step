@@ -4,21 +4,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import step.core.execution.ExecutionEngineRunner;
 import step.core.plans.runner.DefaultPlanRunner;
-import step.engine.PlanRunnerImpl;
 
 /**
  * A runner that runs plans and functions locally.
  * The list of classes containing functions has to be passed to the constructor
  * 
- * @deprecated Use {@link PlanRunnerImpl} instead
+ * @deprecated Use {@link ExecutionEngineRunner} instead
  * @author Jérôme Comte
  *
  */
 public class LocalPlanRunner extends DefaultPlanRunner {
-	
-	protected List<Class<?>> functionClasses;
-	protected Map<String, String> properties;
 	
 	/**
 	 * @param functionClasses functionClasses the list of Classes containing the functions (aka Keywords)
@@ -39,7 +36,7 @@ public class LocalPlanRunner extends DefaultPlanRunner {
 	 * @param functionClasses the list of Classes containing the functions (aka Keywords)
 	 */
 	public LocalPlanRunner(Map<String, String> properties, Class<?>... functionClasses) {
-		this(properties, Arrays.asList(functionClasses));
+		super(null, properties);
 	}
 	
 	/**
@@ -47,8 +44,6 @@ public class LocalPlanRunner extends DefaultPlanRunner {
 	 * @param functionClasses the list of Classes containing the functions (aka Keywords)
 	 */
 	public LocalPlanRunner(Map<String, String> properties, List<Class<?>> functionClasses) {
-		super();
-		this.properties = properties;
-		this.functionClasses = functionClasses;
+		super(null, properties);
 	}
 }

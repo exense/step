@@ -10,6 +10,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryCRUDAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.functions.Function;
 
 public class ParameterManagerPluginTest {
@@ -96,6 +97,7 @@ public class ParameterManagerPluginTest {
 		return function;
 	}
 	
+	@IgnoreDuringAutoDiscovery
 	public static class LocalParameterManagerPlugin extends ParameterManagerPlugin {
 
 		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor) {

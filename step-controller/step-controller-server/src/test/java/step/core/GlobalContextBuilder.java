@@ -12,9 +12,10 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
-import step.core.execution.InMemoryExecutionAccessor;
+import step.core.execution.ExecutionManagerImpl;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.imports.GenericDBImporter;
 import step.core.imports.PlanImporter;
 import step.core.plans.InMemoryPlanAccessor;
@@ -43,12 +44,14 @@ public class GlobalContextBuilder {
 		context.setConfiguration(configuration);
 		
 		context.put(CollectionRegistry.class, new CollectionRegistry());
-		context.setExecutionAccessor(new InMemoryExecutionAccessor());
+		InMemoryExecutionAccessor executionAccessor = new InMemoryExecutionAccessor();
+		context.setExecutionAccessor(executionAccessor);
+		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
 		context.setPlanAccessor(new InMemoryPlanAccessor());
 		context.setReportNodeAccessor(new InMemoryReportNodeAccessor());
 		context.setScheduleAccessor(new InMemoryExecutionTaskAccessor());
 		context.setUserAccessor(new InMemoryUserAccessor());
-		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getPlanAccessor()));
+		context.setRepositoryObjectManager(new RepositoryObjectManager());
 		
 		context.setEntityManager(new EntityManager());
 		context.getEntityManager().register( new Entity<Execution, ExecutionAccessor>(

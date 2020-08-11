@@ -1,7 +1,6 @@
 package step.core.accessors;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -118,4 +117,9 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 			return new ArrayList<>();
 		}
 	}
+	
+	protected RuntimeException notImplemented(){
+		return new RuntimeException("Not implemented");
+	}
+
 }

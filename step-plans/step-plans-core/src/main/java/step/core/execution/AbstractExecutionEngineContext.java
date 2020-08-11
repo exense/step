@@ -6,8 +6,11 @@ import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
+import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.PlanAccessor;
+import step.core.repositories.RepositoryObjectManager;
 import step.engine.execution.ExecutionManager;
 import step.engine.execution.MockedExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
@@ -19,7 +22,9 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 	private DynamicBeanResolver dynamicBeanResolver;
 	private PlanAccessor planAccessor;
 	private ReportNodeAccessor reportNodeAccessor;
+	private ExecutionAccessor executionAccessor;
 	private ExecutionManager executionManager;
+	private RepositoryObjectManager repositoryObjectManager;
 	
 	public AbstractExecutionEngineContext() {
 		super();
@@ -40,7 +45,9 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 		dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
 		planAccessor = new InMemoryPlanAccessor();
 		reportNodeAccessor = new InMemoryReportNodeAccessor();
+		executionAccessor = new InMemoryExecutionAccessor();
 		executionManager = new MockedExecutionManagerImpl();
+		repositoryObjectManager = new RepositoryObjectManager();
 	}
 	
 	protected void setAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
@@ -49,7 +56,9 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 		dynamicBeanResolver = parentContext.getDynamicBeanResolver();
 		planAccessor = parentContext.getPlanAccessor();
 		reportNodeAccessor = parentContext.getReportNodeAccessor();
+		executionAccessor = parentContext.getExecutionAccessor();
 		executionManager = parentContext.getExecutionManager();
+		repositoryObjectManager = parentContext.getRepositoryObjectManager();
 	}
 
 	public Configuration getConfiguration() {
@@ -96,11 +105,27 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 		this.reportNodeAccessor = reportNodeAccessor;
 	}
 
+	public ExecutionAccessor getExecutionAccessor() {
+		return executionAccessor;
+	}
+
+	public void setExecutionAccessor(ExecutionAccessor executionAccessor) {
+		this.executionAccessor = executionAccessor;
+	}
+
 	public ExecutionManager getExecutionManager() {
 		return executionManager;
 	}
 
 	public void setExecutionManager(ExecutionManager executionManager) {
 		this.executionManager = executionManager;
+	}
+
+	public RepositoryObjectManager getRepositoryObjectManager() {
+		return repositoryObjectManager;
+	}
+
+	public void setRepositoryObjectManager(RepositoryObjectManager repositoryObjectManager) {
+		this.repositoryObjectManager = repositoryObjectManager;
 	}
 }

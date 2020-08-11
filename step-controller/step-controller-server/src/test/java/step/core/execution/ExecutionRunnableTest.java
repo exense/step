@@ -34,11 +34,9 @@ import step.core.GlobalContextBuilder;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
@@ -50,8 +48,8 @@ public class ExecutionRunnableTest {
 
 		private ImportResult result;
 		
-		public TestRepositoryObjectManager(ImportResult result, PlanAccessor planAccessor) {
-			super(planAccessor);
+		public TestRepositoryObjectManager(ImportResult result) {
+			super();
 			this.result = result;
 		}
 
@@ -75,13 +73,13 @@ public class ExecutionRunnableTest {
 		result.setSuccessful(true);
 		result.setPlanId(planId);
 		
-		RepositoryObjectManager repo = new TestRepositoryObjectManager(result, globalContext.getPlanAccessor());
+		RepositoryObjectManager repo = new TestRepositoryObjectManager(result);
 		
 		globalContext.setRepositoryObjectManager(repo);
 		
 		ExecutionRunnableFactory f = new ExecutionRunnableFactory(globalContext);
 		
-		ExecutionParameters p = new ExecutionParameters("user",null, ExecutionMode.RUN);
+		ExecutionParameters p = new ExecutionParameters();
 		
 		RepositoryObjectReference ref = new RepositoryObjectReference();
 		

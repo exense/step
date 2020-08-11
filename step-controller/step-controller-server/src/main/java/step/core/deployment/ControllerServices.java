@@ -49,6 +49,7 @@ import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.engine.execution.ExecutionLifecycleManager;
 
 @Singleton
 @Path("controller")
@@ -154,7 +155,7 @@ public class ControllerServices extends AbstractServices {
 	public Void abort(@PathParam("id") String executionID) {
 		ExecutionRunnable task = getExecutionRunnable(executionID);
 		if(task!=null) {
-			task.getExecutionLifecycleManager().abort();
+			new ExecutionLifecycleManager(task.getContext()).abort();
 		}
 		return null;
 	}

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.core.execution;
+package step.core.execution.model;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -24,11 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.bson.types.ObjectId;
-
 import step.core.accessors.InMemoryCRUDAccessor;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionAccessor;
 import step.core.repositories.RepositoryObjectReference;
 
 public class InMemoryExecutionAccessor extends InMemoryCRUDAccessor<Execution> implements ExecutionAccessor {
@@ -38,33 +34,28 @@ public class InMemoryExecutionAccessor extends InMemoryCRUDAccessor<Execution> i
 	}
 
 	@Override
-	public Execution get(String nodeId) {
-		return get(new ObjectId(nodeId));
-	}
-
-	@Override
 	public List<Execution> getActiveTests() {
-		throw new RuntimeException("Not implemented");
+		throw notImplemented();
 	}
 
 	@Override
 	public List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference) {
-		throw new RuntimeException("Not implemented");
+		throw notImplemented();
 	}
 
 	@Override
 	public Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end) {
-		throw new RuntimeException("Not implemented");
+		throw notImplemented();
 	}
 
 	@Override
 	public Iterable<Execution> findLastStarted(int limit) {
-		throw new RuntimeException("Not implemented");
+		throw notImplemented();
 	}
 
 	@Override
 	public Iterable<Execution> findLastEnded(int limit) {
-		throw new RuntimeException("Not implemented");
+		throw notImplemented();
 	}
 
 	@Override

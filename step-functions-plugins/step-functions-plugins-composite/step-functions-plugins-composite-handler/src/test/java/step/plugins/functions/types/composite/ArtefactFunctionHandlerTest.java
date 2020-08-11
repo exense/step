@@ -56,7 +56,7 @@ public class ArtefactFunctionHandlerTest {
 		
 		AtomicInteger count = new AtomicInteger(0);
 		context.getReportNodeAccessor().getAll().forEachRemaining(n->count.incrementAndGet());
-		Assert.assertEquals(4, count.get());
+		Assert.assertEquals(3, count.get());
 	}
 
 	protected ExecutionContext newExecutionContext() {

@@ -119,7 +119,7 @@ public class Controller {
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(mongoClientSession));
 		context.setUserAccessor(new UserAccessorImpl(mongoClientSession));
 		collectionRegistry.register("users", new Collection(mongoClientSession.getMongoDatabase(), "users", User.class, false));
-		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getPlanAccessor()));
+		context.setRepositoryObjectManager(new RepositoryObjectManager());
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
 				configuration.getPropertyAsInteger("tec.expressions.warningthreshold"),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000),

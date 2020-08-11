@@ -25,6 +25,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineException;
+import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
@@ -59,7 +60,7 @@ public class FunctionGroupHandlerTest {
 			functionGroupContext.addToken(token);
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
-		ExecutionContext context = newExecutionContext();
+		ExecutionContext context = newExecutionContext(plan);
 		context.put(FunctionExecutionService.class, new FunctionExecutionService() {
 
 			@Override
@@ -103,8 +104,8 @@ public class FunctionGroupHandlerTest {
 				" Echo:PASSED:\n" ,writer.toString());
 	}
 
-	protected ExecutionContext newExecutionContext() throws ExecutionEngineException {
-		return new ExecutionEngine().newExecutionContext();
+	protected ExecutionContext newExecutionContext(Plan plan) throws ExecutionEngineException {
+		return new ExecutionEngine().newExecutionContext(new ExecutionParameters(plan, null));
 	}
 	
 	@Test
@@ -122,7 +123,7 @@ public class FunctionGroupHandlerTest {
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
 		
-		ExecutionContext context = newExecutionContext();
+		ExecutionContext context = newExecutionContext(plan);
 		context.put(FunctionExecutionService.class, new FunctionExecutionService() {
 
 			@Override
@@ -182,7 +183,7 @@ public class FunctionGroupHandlerTest {
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
 		
-		ExecutionContext context = newExecutionContext();
+		ExecutionContext context = newExecutionContext(plan);
 		context.put(FunctionExecutionService.class, new FunctionExecutionService() {
 
 			@Override
@@ -263,7 +264,7 @@ public class FunctionGroupHandlerTest {
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(sequence).endBlock().build();
 		
-		ExecutionContext context = newExecutionContext();
+		ExecutionContext context = newExecutionContext(plan);
 		CheckArtefact check1 = new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED));
 		retryIfFail.addChild(check1);	
 		FunctionTypeRegistry functionTypeRegistry = getFunctionTypeRepository();

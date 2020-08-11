@@ -26,14 +26,11 @@ import step.core.entities.EntityManager;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.ControllerPluginManager;
-import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
 
 public class GlobalContext extends AbstractExecutionEngineContext {
 	
 	private ControllerPluginManager pluginManager;
-	
-	private RepositoryObjectManager repositoryObjectManager;
 	
 	private MongoClientSession mongoClientSession;
 	
@@ -91,15 +88,6 @@ public class GlobalContext extends AbstractExecutionEngineContext {
 
 	public void setPluginManager(ControllerPluginManager pluginManager) {
 		this.pluginManager = pluginManager;
-	}
-
-	public RepositoryObjectManager getRepositoryObjectManager() {
-		return repositoryObjectManager;
-	}
-
-	public void setRepositoryObjectManager(
-			RepositoryObjectManager repositoryObjectManager) {
-		this.repositoryObjectManager = repositoryObjectManager;
 	}
 	
 	public ServiceRegistrationCallback getServiceRegistrationCallback() {

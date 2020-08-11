@@ -1,23 +1,27 @@
 package step.core.execution;
 
 import java.util.List;
+import java.util.Map;
 
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
-import step.core.plans.runner.PlanRunner;
+import step.core.plans.Plan;
+import step.core.plans.runner.PlanRunnerResult;
 import step.core.plugins.PluginManager;
 import step.core.plugins.PluginManager.Builder;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
-import step.engine.PlanRunnerImpl;
 import step.engine.plugins.ExecutionEnginePlugin;
 
 public class ExecutionEngine {
 
-	private ExecutionEngineContext executionEngineContext;
+	private static final Logger logger = LoggerFactory.getLogger(ExecutionEngine.class);
+	
+	private final ExecutionEngineContext executionEngineContext;
 	private final PluginManager<ExecutionEnginePlugin> pluginManager;
-	private ExecutionEnginePlugin plugins;
+	private final ExecutionEnginePlugin plugins;
 
 	public ExecutionEngine() {
 		this(OperationMode.LOCAL, null);
@@ -61,14 +65,21 @@ public class ExecutionEngine {
 	}
 	
 	public ExecutionContext newExecutionContext() {
-		return newExecutionContext(new ExecutionParameters("dummy", null, ExecutionMode.RUN));
+		return newExecutionContext(new ExecutionParameters());
 	}
 	
-	public PlanRunner getPlanRunner() {
-		return getPlanRunner(newExecutionContext());
+	public PlanRunnerResult execute(Plan plan) {
+		return execute(plan, null);
 	}
 	
-	public PlanRunner getPlanRunner(ExecutionContext executionContext) {
-		return new PlanRunnerImpl(executionContext);
+	public PlanRunnerResult execute(Plan plan, Map<String, String> executionParameters) {
+		ExecutionParameters executionParameterObject = new ExecutionParameters(plan, executionParameters);
+		ExecutionContext executionContext = newExecutionContext(executionParameterObject);
+		return new ExecutionEngineRunner(executionContext).execute();
+	}
+	
+	public PlanRunnerResult execute(ExecutionContext context) {
+		ExecutionEngineRunner executionEngineRunner = new ExecutionEngineRunner(context);
+		return executionEngineRunner.execute(); 
 	}
 }
