@@ -130,7 +130,7 @@ public class PluginManager<T> {
 		}
 		
 		private List<T> getPluginsFromClassLoader(String packagePrefix) throws InstantiationException, IllegalAccessException {
-			ConfigurationBuilder configurationBuilder = ConfigurationBuilder.build(this.getClass().getClassLoader(), packagePrefix);
+			ConfigurationBuilder configurationBuilder = ConfigurationBuilder.build(Thread.currentThread().getContextClassLoader(), packagePrefix);
 			Set<Class<?>> pluginClasses = new Reflections(configurationBuilder).getTypesAnnotatedWith(Plugin.class);
 			logger.debug("Found plugins classes: "+pluginClasses);
 			
