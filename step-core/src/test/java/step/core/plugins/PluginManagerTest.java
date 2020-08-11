@@ -38,7 +38,7 @@ public class PluginManagerTest {
 	
 	@Test
 	public void testBuilderWithPluginsFromClassLoader2() throws CircularDependencyException, InstantiationException, IllegalAccessException {
-		PluginManager<TestPluginInterface2> pluginManager = new PluginManager.Builder<TestPluginInterface2>(TestPluginInterface2.class).withPluginsFromClasspath(".").build();
+		PluginManager<TestPluginInterface2> pluginManager = new PluginManager.Builder<TestPluginInterface2>(TestPluginInterface2.class).withPluginsFromClasspath("").build();
 		assertOrder(pluginManager, TestPlugin.class);
 	}
 	
