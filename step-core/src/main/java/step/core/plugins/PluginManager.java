@@ -120,7 +120,7 @@ public class PluginManager<T> {
 		}
 		
 		public Builder<T> withPluginsFromClasspath() throws InstantiationException, IllegalAccessException {
-			return withPluginsFromClasspath(".");
+			return withPluginsFromClasspath("");
 		}
 		
 		public Builder<T> withPluginsFromClasspath(String packagePrefix) throws InstantiationException, IllegalAccessException {
