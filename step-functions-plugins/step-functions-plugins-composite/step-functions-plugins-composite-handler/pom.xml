@@ -16,7 +16,7 @@
 	<parent>
 		<groupId>ch.exense.step</groupId>
 		<artifactId>step-functions-plugins-composite</artifactId>
-		<version>0.0.0</version>
+		<version>3.13.6</version>
 	</parent>
 
 	<dependencies>
