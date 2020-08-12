@@ -79,10 +79,15 @@
 		    <version>${mongodb.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>29.0-jre</version>
+		</dependency>
+		<dependency>
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
-			<version>0.9.9</version>
-		</dependency>	
+			<version>0.9.12</version>
+		</dependency>
 		<dependency>
 			<groupId>javax.annotation</groupId>
 			<artifactId>javax.annotation-api</artifactId>
