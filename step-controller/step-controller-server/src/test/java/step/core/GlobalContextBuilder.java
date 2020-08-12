@@ -31,7 +31,7 @@ import step.expressions.ExpressionHandler;
 
 public class GlobalContextBuilder {
 
-	public static GlobalContext createGlobalContext() throws CircularDependencyException, InstantiationException, IllegalAccessException {
+	public static GlobalContext createGlobalContext() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		GlobalContext context = new GlobalContext();
 
 		context.setExpressionHandler(new ExpressionHandler());

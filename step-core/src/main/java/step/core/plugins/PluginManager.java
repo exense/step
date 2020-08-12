@@ -27,16 +27,16 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.reflections.Reflections;
-import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfoList;
+import io.github.classgraph.ScanResult;
 import step.core.plugins.exceptions.PluginCriticalException;
 
 public class PluginManager<T> {
@@ -119,20 +119,14 @@ public class PluginManager<T> {
 			return this;
 		}
 		
-		public Builder<T> withPluginsFromClasspath() throws InstantiationException, IllegalAccessException {
-			return withPluginsFromClasspath("");
-		}
-		
-		public Builder<T> withPluginsFromClasspath(String packagePrefix) throws InstantiationException, IllegalAccessException {
-			List<T> pluginsFromClassLoader = getPluginsFromClassLoader(packagePrefix);
+		public Builder<T> withPluginsFromClasspath(String... packagePrefixes) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+			List<T> pluginsFromClassLoader = getPluginsFromClassLoader(packagePrefixes);
 			plugins.addAll(pluginsFromClassLoader);
 			return this;
 		}
 		
-		private List<T> getPluginsFromClassLoader(String packagePrefix) throws InstantiationException, IllegalAccessException {
-			ConfigurationBuilder configurationBuilder = ConfigurationBuilder.build(Thread.currentThread().getContextClassLoader(), packagePrefix);
-			Set<Class<?>> pluginClasses = new Reflections(configurationBuilder).getTypesAnnotatedWith(Plugin.class);
-			logger.debug("Found plugins classes: "+pluginClasses);
+		private List<T> getPluginsFromClassLoader(String... packagePrefixes) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+			List<Class<?>> pluginClasses = getClassesAnnotatedByPluginAnnotation(packagePrefixes);
 			
 			List<T> plugins = new ArrayList<>();
 			for(Class<?> pluginClass:pluginClasses) {
@@ -143,6 +137,27 @@ public class PluginManager<T> {
 				}
 			}
 			return plugins;
+		}
+
+		private List<Class<?>> getClassesAnnotatedByPluginAnnotation(String... packagePrefixes) throws ClassNotFoundException {
+			long t1 = System.currentTimeMillis();
+			logger.info("Searching for plugins classes...");
+			ClassGraph classGraph = new ClassGraph().whitelistPackages(packagePrefixes).enableClassInfo().enableAnnotationInfo();
+			
+			List<String> classNames;
+			try (ScanResult result = classGraph.scan()) {
+				ClassInfoList classInfos = result.getClassesWithAnnotation(Plugin.class.getName());
+				classNames = classInfos.getNames();
+			}
+			
+			ClassLoader cl = Thread.currentThread().getContextClassLoader();
+			List<Class<?>> pluginClasses = new ArrayList<>();
+			for (String className : classNames) {
+				pluginClasses.add(cl.loadClass(className));
+			}
+			
+			logger.info("Found following plugins classes in "+(System.currentTimeMillis()-t1)+"ms: "+pluginClasses);
+			return pluginClasses;
 		}
 		
 		private T newPluginInstance(Class<T> _class) throws InstantiationException, IllegalAccessException  {

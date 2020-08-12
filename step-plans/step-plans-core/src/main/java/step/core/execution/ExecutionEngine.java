@@ -40,7 +40,7 @@ public class ExecutionEngine {
 		}
 		try {
 			pluginManager = build.withPluginsFromClasspath().build();
-		} catch (InstantiationException | IllegalAccessException | CircularDependencyException e) {
+		} catch (InstantiationException | IllegalAccessException | CircularDependencyException | ClassNotFoundException e) {
 			throw new ExecutionEngineException(e);
 		}
 	

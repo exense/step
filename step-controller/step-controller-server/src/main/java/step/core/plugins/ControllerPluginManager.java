@@ -15,7 +15,7 @@ public class ControllerPluginManager {
 	
 	protected PluginManager<ControllerPlugin> pluginManager;
 	
-	public ControllerPluginManager(Configuration configuration) throws CircularDependencyException, InstantiationException, IllegalAccessException {
+	public ControllerPluginManager(Configuration configuration) throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		this.configuration = configuration;
 		Builder<ControllerPlugin> builder = new PluginManager.Builder<ControllerPlugin>(ControllerPlugin.class);
 		this.pluginManager = builder.withPluginsFromClasspath().withPluginFilter(this::isPluginEnabled).build();

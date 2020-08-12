@@ -47,6 +47,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 	
 	public List<Function> getLocalFunctions() {
 		List<Function> functions = new ArrayList<Function>();
+		// TODO migrate Refelections to io.github.classgraph
 		Reflections reflections = new Reflections(new ConfigurationBuilder().forPackages("step")
 				.setScanners(new MethodAnnotationsScanner()));
 		

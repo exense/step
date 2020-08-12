@@ -31,13 +31,13 @@ import step.core.plugins.TestPlugins.TestPluginWithoutAnnotation;
 public class PluginManagerTest {
 
 	@Test
-	public void testBuilderWithPluginsFromClassLoader() throws CircularDependencyException, InstantiationException, IllegalAccessException {
+	public void testBuilderWithPluginsFromClassLoader() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		PluginManager<TestPluginInterface2> pluginManager = new PluginManager.Builder<TestPluginInterface2>(TestPluginInterface2.class).withPluginsFromClasspath().build();
 		assertOrder(pluginManager, TestPlugin.class);
 	}
 	
 	@Test
-	public void testBuilderWithPluginsFromClassLoader2() throws CircularDependencyException, InstantiationException, IllegalAccessException {
+	public void testBuilderWithPluginsFromClassLoader2() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		PluginManager<TestPluginInterface2> pluginManager = new PluginManager.Builder<TestPluginInterface2>(TestPluginInterface2.class).withPluginsFromClasspath("").build();
 		assertOrder(pluginManager, TestPlugin.class);
 	}
