@@ -8,8 +8,9 @@ import org.junit.Test;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryCRUDAccessor;
-import step.core.execution.ExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
+import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.functions.Function;
 
 public class ParameterManagerPluginTest {
@@ -19,7 +20,7 @@ public class ParameterManagerPluginTest {
 	@Test
 	public void testEmptyParameterList() {
 		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor);
-		ExecutionContext executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
+		ExecutionContext executionContext = newExecutionContext();
 		
 		parameterManagerPlugin.executionStart(executionContext);
 		
@@ -43,13 +44,13 @@ public class ParameterManagerPluginTest {
 		declareParameter("MyFunctionParameter3", "MyFunctionParameter3Value1", ParameterScope.FUNCTION, "MyFunction3");
 		
 		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor);
-		ExecutionContext executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
+		ExecutionContext executionContext = newExecutionContext();
 		parameterManagerPlugin.executionStart(executionContext);
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyGlobalParameter"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyOldGlobalParameter"));
 		
-		executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
+		executionContext = newExecutionContext();
 		parameterManagerPlugin.executionStart(executionContext);
 		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction(null, "MyFunction1"));
 		
@@ -57,19 +58,23 @@ public class ParameterManagerPluginTest {
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyAppParameter1"));
 		
-		executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
+		executionContext = newExecutionContext();
 		parameterManagerPlugin.executionStart(executionContext);
 		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction2"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyAppParameter1"));
 		
-		executionContext = new ExecutionContextBuilder().configureForlocalExecution().build();
+		executionContext = newExecutionContext();
 		parameterManagerPlugin.executionStart(executionContext);
 		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction3"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyApp.MyFunctionParameter3"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter3"));
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter1"));
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
+	}
+
+	protected ExecutionContext newExecutionContext() {
+		return new ExecutionEngine().newExecutionContext();
 	}
 
 	protected void declareParameter(String key, String value, ParameterScope scope, String scopeEntity) {
@@ -92,11 +97,11 @@ public class ParameterManagerPluginTest {
 		return function;
 	}
 	
+	@IgnoreDuringAutoDiscovery
 	public static class LocalParameterManagerPlugin extends ParameterManagerPlugin {
 
 		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor) {
-			super();
-			parameterManager = new ParameterManager(parameterAccessor);
+			super(new ParameterManager(parameterAccessor));
 		}
 		
 		

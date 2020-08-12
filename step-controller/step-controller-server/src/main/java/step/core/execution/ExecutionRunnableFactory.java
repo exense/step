@@ -34,6 +34,7 @@ import step.core.scheduler.ExecutiontTaskParameters;
 
 public class ExecutionRunnableFactory {
 
+	private ExecutionEngine engine;
 	private GlobalContext globalContext;
 	private ExecutionTaskAccessor taskAccessor;
 	private PlanAccessor planAccessor;
@@ -43,11 +44,11 @@ public class ExecutionRunnableFactory {
 		this.globalContext = globalContext;
 		taskAccessor = globalContext.getScheduleAccessor();
 		planAccessor = globalContext.getPlanAccessor();
+		engine = new ExecutionEngine(OperationMode.CONTROLLER, globalContext, globalContext.getPluginManager().getExecutionEnginePlugins());
 	}
 
 	public ExecutionRunnable newExecutionRunnable(Execution execution) {		
-		ExecutionContext context =  new ControllerExecutionContextBuilder(execution.getId().toString(), execution.getExecutionParameters()).configureForControllerExecution(globalContext).build();
-		ExecutionRunnable task = new ExecutionRunnable(globalContext.getRepositoryObjectManager(), globalContext.getExecutionAccessor(), context);
+		ExecutionRunnable task = new ExecutionRunnable(execution.getId().toString(), execution.getExecutionParameters(), globalContext, engine);
 		return task;
 	}
 

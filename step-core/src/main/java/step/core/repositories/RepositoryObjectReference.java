@@ -22,12 +22,11 @@ import java.util.Map;
 
 public class RepositoryObjectReference {
 
-	String repositoryID;
-	
-	Map<String, String> repositoryParameters;
-	
-	public static final String LOCAL_REPOSITORY_ID = "local";
 	public static final String PLAN_ID = "planid";
+	public static final String LOCAL_REPOSITORY_ID = "local";
+
+	private String repositoryID;
+	private Map<String, String> repositoryParameters;
 
 	public RepositoryObjectReference() {
 		super();

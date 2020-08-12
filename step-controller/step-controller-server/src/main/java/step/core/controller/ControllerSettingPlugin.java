@@ -5,6 +5,8 @@ import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.variables.VariableType;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.ExecutionEnginePlugin;
 
 @Plugin
 public class ControllerSettingPlugin extends AbstractControllerPlugin {
@@ -18,11 +20,16 @@ public class ControllerSettingPlugin extends AbstractControllerPlugin {
 	}
 
 	@Override
-	public void executionStart(ExecutionContext context) {
-		context.getVariablesManager().putVariable(context.getCurrentReportNode(), VariableType.IMMUTABLE, "controllerSettings", 
-				new ControllerSettingsService(controllerSettingAccessor));
+	public ExecutionEnginePlugin getExecutionEnginePlugin() {
+		return new AbstractExecutionEnginePlugin() {			
+			@Override
+			public void executionStart(ExecutionContext context) {
+				context.getVariablesManager().putVariable(context.getCurrentReportNode(), VariableType.IMMUTABLE, "controllerSettings", 
+						new ControllerSettingsService(controllerSettingAccessor));
+			}
+		};
 	}
-	
+
 	public static class ControllerSettingsService {
 		
 		private ControllerSettingAccessor controllerSettingAccessor;
@@ -36,5 +43,4 @@ public class ControllerSettingPlugin extends AbstractControllerPlugin {
 			return controllerSettingAccessor.getSettingByKey(key);
 		}
 	}
-
 }

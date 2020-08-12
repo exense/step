@@ -13,24 +13,19 @@ import step.core.deployment.AbstractServices;
 @Singleton
 @Path("/views")
 public class ViewPluginServices extends AbstractServices {
-	
-	ViewPlugin plugin;
 
-	public ViewPluginServices() {
-		super();
-	}
-	
+	private ViewManager viewManager;
+
 	@PostConstruct
-	public void init() throws Exception {	
+	public void init() throws Exception {
 		super.init();
-		plugin = (ViewPlugin) controller.getContext().get(ViewPlugin.VIEW_PLUGIN_KEY);
+		viewManager = getContext().get(ViewManager.class);
 	}
 
 	@GET
 	@Path("/{id}/{executionId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ViewModel getView(@PathParam("id") String viewId, @PathParam("executionId") String executionId) {
-		return plugin.query(viewId, executionId);
-		
+		return viewManager.queryView(viewId, executionId);
 	}
 }

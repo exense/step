@@ -25,12 +25,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ExecutionContextBuilder;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
+import step.datapool.excel.AbstractArtefactTest;
 
-public class JsonStringDataPoolTest{
+public class JsonStringDataPoolTest extends AbstractArtefactTest {
 
 	@Test
 	public void testEmpty() {;
@@ -38,7 +38,7 @@ public class JsonStringDataPoolTest{
 		JsonStringDataPoolConfiguration poolConf = new JsonStringDataPoolConfiguration();
 		poolConf.setJson(new DynamicValue<String>("{}"));
 		
-		DataSet<?> pool = DataPoolFactory.getDataPool("json", poolConf, new ExecutionContextBuilder().configureForlocalExecution().build());
+		DataSet<?> pool = DataPoolFactory.getDataPool("json", poolConf, newExecutionContext());
 
 		pool.init();
 
@@ -55,7 +55,7 @@ public class JsonStringDataPoolTest{
 		JsonStringDataPoolConfiguration poolConf = new JsonStringDataPoolConfiguration();
 		poolConf.setJson(new DynamicValue<String>("{ \"a\" : [\"va1\", \"va2\", \"va3\"], \"b\" : [\"vb1\", \"vb2\", \"vb3\"] }"));
 
-		DataSet<?> pool = DataPoolFactory.getDataPool("json", poolConf, new ExecutionContextBuilder().configureForlocalExecution().build());
+		DataSet<?> pool = DataPoolFactory.getDataPool("json", poolConf, newExecutionContext());
 
 		pool.init();
 		pool.next();

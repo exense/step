@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -44,12 +45,19 @@ import step.plugins.executiontypes.TestSetExecutionType;
 @Path("/threadmanager")
 public class ThreadManagerServices extends AbstractServices {
 
+	private ThreadManager threadManager;
+
+	@PostConstruct
+	public void init() throws Exception {
+		super.init();
+		threadManager = getContext().get(ThreadManager.class);
+	}
+
 	@GET
 	@Secured(right="admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/operations/list")
 	public List<OperationDetails> getCurrentOperationsList() {
-		ThreadManager threadManager = (ThreadManager) getContext().get(ThreadManager.THREAD_MANAGER_INSTANCE_KEY);
 		List<OperationDetails> operationListDetails = new ArrayList<OperationDetails>(); 
 		for(ExecutionRunnable task:getScheduler().getCurrentExecutions()) {
 			if(task!=null) {
@@ -87,8 +95,6 @@ public class ThreadManagerServices extends AbstractServices {
 	@Path("/operations")
 	@Secured(right="execution-read")
 	public List<Operation> getCurrentOperations(@QueryParam("eid") String executionID) {
-		ThreadManager threadManager = (ThreadManager) getContext().get(ThreadManager.THREAD_MANAGER_INSTANCE_KEY);
-
 		ExecutionRunnable task = getExecutionRunnable(executionID);
 		if(task!=null) {
 			return threadManager.getCurrentOperations(task.getContext());
@@ -102,7 +108,6 @@ public class ThreadManagerServices extends AbstractServices {
 	@Path("/operations/{reportnodeid}")
 	@Secured(right="execution-read")
 	public List<Operation> getOperationsByReportNodeId(@PathParam("reportnodeid") String reportNodeId) {
-		ThreadManager threadManager = (ThreadManager) getContext().get(ThreadManager.THREAD_MANAGER_INSTANCE_KEY);
 		return threadManager.getCurrentOperationsByReportNodeId(reportNodeId);
 	}
 }

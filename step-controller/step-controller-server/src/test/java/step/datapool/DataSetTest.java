@@ -6,7 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.core.execution.ExecutionContextBuilder;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
 
 public class DataSetTest {
 
@@ -29,10 +30,14 @@ public class DataSetTest {
 				
 			}
 		};
-		dataSet.setContext(new ExecutionContextBuilder().configureForlocalExecution().build());
+		dataSet.setContext(newExecutionContext());
 		dataSet.init();
 		// Test that the data set can be closed without error
 		dataSet.close();
+	}
+
+	protected ExecutionContext newExecutionContext() {
+		return new ExecutionEngine().newExecutionContext();
 	}
 	
 	@Test
@@ -60,7 +65,7 @@ public class DataSetTest {
 				
 			}
 		};
-		dataSet.setContext(new ExecutionContextBuilder().configureForlocalExecution().build());
+		dataSet.setContext(newExecutionContext());
 		dataSet.init();
 		dataSet.next().commit();
 		dataSet.next().commit();

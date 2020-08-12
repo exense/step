@@ -2,7 +2,8 @@ package step.localrunner;
 
 
 import static org.junit.Assert.assertEquals;
-import static step.planbuilder.BaseArtefacts.*;
+import static step.planbuilder.BaseArtefacts.for_;
+import static step.planbuilder.BaseArtefacts.sequence;
 import static step.planbuilder.FunctionArtefacts.keyword;
 import static step.planbuilder.FunctionArtefacts.keywordWithDynamicInput;
 import static step.planbuilder.FunctionArtefacts.keywordWithDynamicKeyValues;
@@ -47,6 +48,23 @@ public class LocalPlanRunnerTest {
 		
 		runner = new LocalPlanRunner(properties, LocalRunnerTestLibrary.class);
 		runner.run(plan).visitReportNodes(node->{
+			if(node instanceof EchoReportNode) {
+				Assert.assertEquals("MyProp1",((EchoReportNode) node).getEcho());
+			}
+		});
+	}
+	
+	@Test
+	public void testProperties2() throws IOException {
+		Map<String, String> properties = new HashMap<>();
+		properties.put("prop1", "MyProp1");
+		
+		Echo echo = new Echo();
+		echo.setText(new DynamicValue<>("prop1", ""));
+		Plan plan = PlanBuilder.create().startBlock(new Sequence()).add(echo).endBlock().build();
+		
+		runner = new LocalPlanRunner(properties, LocalRunnerTestLibrary.class);
+		runner.run(plan, properties).visitReportNodes(node->{
 			if(node instanceof EchoReportNode) {
 				Assert.assertEquals("MyProp1",((EchoReportNode) node).getEcho());
 			}

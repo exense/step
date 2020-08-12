@@ -17,16 +17,16 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.core.artefacts.reports.ReportNode;
-import step.core.execution.ExecutionContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionStatus;
+import step.datapool.excel.AbstractArtefactTest;
 import step.threadpool.ThreadPool.WorkerController;
 
-public class ThreadPoolTest {
+public class ThreadPoolTest extends AbstractArtefactTest {
 
 	@Test
 	public void test() {
-		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
+		ExecutionContext context = newExecutionContext();
 		ThreadPool threadPool = new ThreadPool(context);
 		
 		List<String> itemList = Arrays.asList("item1", "item2", "item3");
@@ -45,7 +45,7 @@ public class ThreadPoolTest {
 	
 	@Test
 	public void testInterrupt() {
-		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
+		ExecutionContext context = newExecutionContext();
 		ThreadPool threadPool = new ThreadPool(context);
 		
 		List<String> itemList = Arrays.asList("item1", "item2", "item3");
@@ -69,7 +69,7 @@ public class ThreadPoolTest {
 	
 	@Test
 	public void testContextInterrupt() {
-		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
+		ExecutionContext context = newExecutionContext();
 		ThreadPool threadPool = new ThreadPool(context);
 		
 		List<String> itemList = Arrays.asList("item1", "item2", "item3");
@@ -93,7 +93,7 @@ public class ThreadPoolTest {
 
 	@Test
 	public void testParallel() {
-		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
+		ExecutionContext context = newExecutionContext();
 		ThreadPool threadPool = new ThreadPool(context);
 		
 		List<String> itemList = new ArrayList<>();
@@ -128,7 +128,7 @@ public class ThreadPoolTest {
 	
 	@Test
 	public void testAutoMode() {
-		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
+		ExecutionContext context = newExecutionContext();
 		ReportNode rootReportNode = context.getReport();
 		context.getVariablesManager().putVariable(rootReportNode, "execution_threads_auto", 2);
 		
@@ -193,7 +193,7 @@ public class ThreadPoolTest {
 	
 	@Test
 	public void testAutoModeDisabled() {
-		ExecutionContext context = new ExecutionContextBuilder().configureForlocalExecution().build();
+		ExecutionContext context = newExecutionContext();
 		// Empty string => disabled
 		ReportNode rootReportNode = context.getReport();
 		context.getVariablesManager().putVariable(rootReportNode, "execution_threads_auto", "");

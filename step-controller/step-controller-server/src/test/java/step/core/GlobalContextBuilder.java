@@ -12,16 +12,17 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
-import step.core.execution.EventManager;
-import step.core.execution.InMemoryExecutionAccessor;
+import step.core.execution.ExecutionManagerImpl;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.imports.GenericDBImporter;
 import step.core.imports.PlanImporter;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plugins.ControllerPluginManager;
+import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
@@ -30,7 +31,7 @@ import step.expressions.ExpressionHandler;
 
 public class GlobalContextBuilder {
 
-	public static GlobalContext createGlobalContext() {
+	public static GlobalContext createGlobalContext() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		GlobalContext context = new GlobalContext();
 
 		context.setExpressionHandler(new ExpressionHandler());
@@ -43,12 +44,14 @@ public class GlobalContextBuilder {
 		context.setConfiguration(configuration);
 		
 		context.put(CollectionRegistry.class, new CollectionRegistry());
-		context.setExecutionAccessor(new InMemoryExecutionAccessor());
+		InMemoryExecutionAccessor executionAccessor = new InMemoryExecutionAccessor();
+		context.setExecutionAccessor(executionAccessor);
+		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
 		context.setPlanAccessor(new InMemoryPlanAccessor());
-		context.setReportAccessor(new InMemoryReportNodeAccessor());
+		context.setReportNodeAccessor(new InMemoryReportNodeAccessor());
 		context.setScheduleAccessor(new InMemoryExecutionTaskAccessor());
 		context.setUserAccessor(new InMemoryUserAccessor());
-		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getPlanAccessor()));
+		context.setRepositoryObjectManager(new RepositoryObjectManager());
 		
 		context.setEntityManager(new EntityManager());
 		context.getEntityManager().register( new Entity<Execution, ExecutionAccessor>(
@@ -65,8 +68,6 @@ public class GlobalContextBuilder {
 			.register(new Entity<User,UserAccessor>(
 					EntityManager.users, context.getUserAccessor(), User.class, 
 					new GenericDBImporter<User, UserAccessor>(context)));
-		
-		context.setEventManager(new EventManager());
 		
 		return context;
 	}

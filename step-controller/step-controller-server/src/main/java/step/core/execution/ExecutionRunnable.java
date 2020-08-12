@@ -18,43 +18,18 @@
  *******************************************************************************/
 package step.core.execution;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.bson.types.ObjectId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionAccessor;
-import step.core.execution.model.ExecutionStatus;
-import step.core.execution.model.ReportExport;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.core.plans.runner.PlanRunner;
-import step.core.plans.runner.PlanRunnerResult;
-import step.core.repositories.ImportResult;
-import step.core.repositories.RepositoryObjectManager;
-import step.core.repositories.RepositoryObjectReference;
+import step.core.GlobalContext;
+import step.core.execution.model.ExecutionParameters;
 
 public class ExecutionRunnable implements Runnable {
 	
-	private  final static Logger logger = LoggerFactory.getLogger(ExecutionRunnable.class);
-
-	final RepositoryObjectManager repositoryObjectManager;
-	final ExecutionAccessor executionAccessor; 
+	private final ExecutionContext context;
+	private final ExecutionEngine executionEngine;
 	
-	final ExecutionContext context;
-	
-	final ExecutionLifecycleManager executionLifecycleManager;
-						
-	public ExecutionRunnable(RepositoryObjectManager repositoryObjectManager, ExecutionAccessor executionAccessor, ExecutionContext context) {
+	public ExecutionRunnable(String executionId, ExecutionParameters executionParameters, GlobalContext globalContext, ExecutionEngine executionEngine) {
 		super();
-		this.repositoryObjectManager = repositoryObjectManager;
-		this.executionAccessor = executionAccessor;
-		this.context = context;
-		this.executionLifecycleManager = new ExecutionLifecycleManager(context.get(ExecutionManager.class), context);
+		this.context = executionEngine.newExecutionContext(executionId, executionParameters);
+		this.executionEngine = executionEngine;
 	}
 
 	public ExecutionContext getContext() {
@@ -63,108 +38,6 @@ public class ExecutionRunnable implements Runnable {
 	
 	@Override
 	public void run() {
-		try {
-			executionLifecycleManager.beforePlanImport();
-			
-			updateStatus(ExecutionStatus.IMPORTING);
-			ImportResult importResult = importPlan();
-			
-			executionLifecycleManager.afterImport(importResult);
-			
-			if(importResult.isSuccessful()) {
-				PlanAccessor planAccessor = context.getPlanAccessor();
-				Plan plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
-				context.setPlan(plan);
-				
-				logger.info("Starting test execution. Execution ID: " + context.getExecutionId());
-				updateStatus(ExecutionStatus.RUNNING);
-				
-				PlanRunner planRunner = new ControllerPlanRunner(executionLifecycleManager, context);
-				PlanRunnerResult result = planRunner.run(plan);
-				
-				result.waitForExecutionToTerminate();
-				ReportNodeStatus resultStatus = result.getResult();
-				executionLifecycleManager.updateExecutionResult(context, resultStatus);
-				
-				logger.debug("Test execution ended. Reporting result.... Execution ID: " + context.getExecutionId());
-				
-				if(!context.isSimulation()) {
-					updateStatus(ExecutionStatus.EXPORTING);
-					exportExecution(context.getExecutionId());				
-					logger.info("Test execution ended and reported. Execution ID: " + context.getExecutionId());
-				} else {
-					logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + context.getExecutionId());
-				}				
-			} else {
-				updateStatus(ExecutionStatus.ENDED);
-			}
-						
-			
-		} catch (Throwable e) {
-			logger.error("An error occurred while running test. Execution ID: " + context.getExecutionId(), e);
-		} finally {
-			updateStatus(ExecutionStatus.ENDED);
-			executionLifecycleManager.executionEnded();
-		}
+		executionEngine.execute(context);
 	}
-	
-	private void updateStatus(ExecutionStatus newStatus) {
-		executionLifecycleManager.updateStatus(newStatus);
-	}
-	
-	private ImportResult importPlan() throws Exception {
-		ImportResult importResult;
-		RepositoryObjectReference repositoryObjectReference = context.getExecutionParameters().getRepositoryObject();
-		if(repositoryObjectReference!=null) {
-			if(RepositoryObjectReference.LOCAL_REPOSITORY_ID.equals(repositoryObjectReference.getRepositoryID())) {
-				importResult = new ImportResult();
-				importResult.setPlanId(repositoryObjectReference.getRepositoryParameters().get(RepositoryObjectReference.PLAN_ID));
-				importResult.setSuccessful(true);
-			} else {
-				try {
-					importResult = repositoryObjectManager.importPlan(context, repositoryObjectReference);											
-				} catch (Exception e) {
-					logger.error("Error while importing repository object "+repositoryObjectReference.toString(), e);
-					importResult = new ImportResult();
-					String error = "Unexpected error while importing plan: "+e.getMessage();
-					List<String> errors = new ArrayList<>();
-					errors.add(error);
-					importResult.setErrors(errors);
-				}
-			}
-		} else {
-			// TODO
-			importResult = null;
-		}
-		return importResult;
-	}
-	
-	private void exportExecution(String executionId) {		
-		Execution execution = executionAccessor.get(executionId);
-		
-		if(execution!=null) {
-			ReportExport report = repositoryObjectManager.exportTestExecutionReport(context, execution.getExecutionParameters().getRepositoryObject());
-			List<ReportExport> exports = new ArrayList<>();
-			exports.add(report);
-			
-			execution.setReportExports(exports);
-			executionAccessor.save(execution);
-		} else {
-			throw new RuntimeException("Unable to find execution with id "+executionId);
-		}
-		
-	}
-	
-	public ExecutionLifecycleManager getExecutionLifecycleManager() {
-		return executionLifecycleManager;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return ((ExecutionRunnable)obj).getContext().getExecutionId().equals(getContext().getExecutionId());
-	}
-	
-	public void cleanUp() {
-	}
-	
 }

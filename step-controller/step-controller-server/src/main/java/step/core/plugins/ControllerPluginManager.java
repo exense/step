@@ -1,40 +1,39 @@
 package step.core.plugins;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import ch.exense.commons.app.Configuration;
+import step.core.plugins.PluginManager.Builder;
+import step.core.plugins.PluginManager.Builder.CircularDependencyException;
+import step.engine.plugins.ExecutionEnginePlugin;
 
-public class ControllerPluginManager extends PluginManager<AbstractControllerPlugin> {
+public class ControllerPluginManager {
 	
 	protected Configuration configuration;
 	
-	public ControllerPluginManager(Configuration configuration) {
-		super();
+	protected PluginManager<ControllerPlugin> pluginManager;
+	
+	public ControllerPluginManager(Configuration configuration) throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		this.configuration = configuration;
+		Builder<ControllerPlugin> builder = new PluginManager.Builder<ControllerPlugin>(ControllerPlugin.class);
+		this.pluginManager = builder.withPluginsFromClasspath().withPluginFilter(this::isPluginEnabled).build();
+	}
+
+	public ControllerPlugin getProxy() {
+		return pluginManager.getProxy(ControllerPlugin.class);
+	}
+
+	public List<ExecutionEnginePlugin> getExecutionEnginePlugins() {
+		return pluginManager.getPlugins().stream().map(ControllerPlugin::getExecutionEnginePlugin).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 	
-	public ControllerPluginCallbacks getProxy() {
-		return super.getProxy(ControllerPluginCallbacks.class);
-	}
-
-
 	public List<WebPlugin> getWebPlugins() {
-		List<WebPlugin> webPlugins = new ArrayList<>();
-		for(AbstractControllerPlugin plugin:plugins) {
-			WebPlugin webPlugin = plugin.getWebPlugin();
-			if(webPlugin!=null) {
-				webPlugins.add(webPlugin);
-			}
-		}
-		return webPlugins;
+		return pluginManager.getPlugins().stream().map(ControllerPlugin::getWebPlugin).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
-	@Override
-	public void register(AbstractControllerPlugin plugin) {
-		boolean isPluginEnabled = configuration.getPropertyAsBoolean("plugins."+plugin.getClass().getSimpleName()+".enabled", true);
-		if(isPluginEnabled) {
-			super.register(plugin);
-		}
+	private boolean isPluginEnabled(Object plugin) {
+		return configuration.getPropertyAsBoolean("plugins."+plugin.getClass().getSimpleName()+".enabled", true);
 	}
 }

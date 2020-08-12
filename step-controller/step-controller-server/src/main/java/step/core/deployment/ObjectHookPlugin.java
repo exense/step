@@ -1,36 +1,25 @@
 package step.core.deployment;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import step.core.GlobalContext;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicate;
-import step.core.objectenricher.ObjectPredicateFactory;
-import step.core.plugins.AbstractControllerPlugin;
+import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.ql.Filter;
 import step.core.ql.OQLFilterBuilder;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
 
 @Plugin
-public class ObjectHookPlugin extends AbstractControllerPlugin {
-
-	private ObjectHookRegistry objectHookRegistry;
+@IgnoreDuringAutoDiscovery
+public class ObjectHookPlugin extends AbstractExecutionEnginePlugin {
 	
-	private static final Logger logger = LoggerFactory.getLogger(ObjectHookPlugin.class);
-
-	@Override
-	public void executionControllerStart(GlobalContext context) {
-		objectHookRegistry = new ObjectHookRegistry();
-		context.put(ObjectHookRegistry.class, objectHookRegistry);
-		
-		ObjectPredicateFactory objectPredicateFactory = new ObjectPredicateFactory(objectHookRegistry);
-		context.put(ObjectPredicateFactory.class, objectPredicateFactory);
-		
-		context.getServiceRegistrationCallback().registerService(ObjectHookInterceptor.class);
+	private final ObjectHookRegistry objectHookRegistry;
+	
+	public ObjectHookPlugin(ObjectHookRegistry objectHookRegistry) {
+		super();
+		this.objectHookRegistry = objectHookRegistry;
 	}
 
 	@Override
@@ -43,7 +32,7 @@ public class ObjectHookPlugin extends AbstractControllerPlugin {
 			try {
 				hook.rebuildContext(session, executionContext.getExecutionParameters());
 			} catch (Exception e) {
-				logger.error("Error while rebuilding context for execution "+executionContext.getExecutionId(), e);
+				ObjectHookControllerPlugin.logger.error("Error while rebuilding context for execution "+executionContext.getExecutionId(), e);
 			}
 		});
 		

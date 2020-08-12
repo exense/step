@@ -23,13 +23,12 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ExecutionContextBuilder;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
+import step.datapool.excel.AbstractArtefactTest;
 
-public class IntSequenceDataPoolTest {
-
+public class IntSequenceDataPoolTest extends AbstractArtefactTest {
 	@Test
 	public void testIntSequenceDataPool() {
 		
@@ -42,7 +41,7 @@ public class IntSequenceDataPoolTest {
 		poolConf.setInc(new DynamicValue<Integer>(1));
 		
 
-		DataSet<?> pool = DataPoolFactory.getDataPool("sequence", poolConf, new ExecutionContextBuilder().configureForlocalExecution().build());
+		DataSet<?> pool = DataPoolFactory.getDataPool("sequence", poolConf, newExecutionContext());
 
 		pool.init();
 		Integer value = incrementNtimes(pool, nbIncrementsWanted);
@@ -62,7 +61,7 @@ public class IntSequenceDataPoolTest {
 		poolConf.setEnd(new DynamicValue<Integer>(maxIntWanted));
 		poolConf.setInc(new DynamicValue<Integer>(1));
 
-		DataSet<?> pool = DataPoolFactory.getDataPool("sequence", poolConf, new ExecutionContextBuilder().configureForlocalExecution().build());
+		DataSet<?> pool = DataPoolFactory.getDataPool("sequence", poolConf, newExecutionContext());
 
 		pool.init();
 		Integer value = incrementNtimes(pool, nbIncrementsWanted);
