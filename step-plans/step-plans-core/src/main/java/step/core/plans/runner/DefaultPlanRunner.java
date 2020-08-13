@@ -5,13 +5,13 @@ import java.util.Map;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.execution.ExecutionEngineRunner;
+import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
 
 /**
  * A simple runner that runs plans locally and doesn't support functions
  * 
- * @deprecated Use {@link ExecutionEngineRunner} instead
+ * @deprecated Use {@link ExecutionEngine} instead
  * @author Jérôme Comte
  *
  */
@@ -46,8 +46,10 @@ public class DefaultPlanRunner implements PlanRunner {
 			executionParameters = buildExecutionParametersIfNull(executionParameters);
 			return engine.execute(plan, executionParameters);
 		} else {
-			Map<String, String> customParameters = buildExecutionParametersIfNull(executionContext.getExecutionParameters().getCustomParameters());
-			executionContext.getExecutionParameters().setCustomParameters(customParameters);
+			ExecutionParameters executionParametersObject = executionContext.getExecutionParameters();
+			Map<String, String> customParameters = buildExecutionParametersIfNull(executionParametersObject.getCustomParameters());
+			executionParametersObject.setCustomParameters(customParameters);
+			executionParametersObject.setPlan(plan);
 			return engine.execute(executionContext);
 		}
 	}

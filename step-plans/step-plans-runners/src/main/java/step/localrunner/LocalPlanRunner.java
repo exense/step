@@ -4,14 +4,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import step.core.execution.ExecutionEngineRunner;
+import step.core.execution.ExecutionEngine;
 import step.core.plans.runner.DefaultPlanRunner;
 
 /**
  * A runner that runs plans and functions locally.
  * The list of classes containing functions has to be passed to the constructor
  * 
- * @deprecated Use {@link ExecutionEngineRunner} instead
+ * @deprecated Use {@link ExecutionEngine} instead
  * @author Jérôme Comte
  *
  */
