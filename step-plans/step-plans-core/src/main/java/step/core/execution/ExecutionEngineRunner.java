@@ -1,6 +1,7 @@
 package step.core.execution;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.bson.types.ObjectId;
@@ -23,6 +24,8 @@ import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.engine.execution.ExecutionLifecycleManager;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.FunctionCRUDAccessor;
 
 public class ExecutionEngineRunner {
 
@@ -115,6 +118,18 @@ public class ExecutionEngineRunner {
 	}
 
 	protected ReportNode execute(Plan plan, ReportNode rootReportNode) {
+		if(plan.getFunctions()!=null) {
+			FunctionAccessor functionAccessor = executionContext.get(FunctionAccessor.class);
+			if(functionAccessor!=null && functionAccessor instanceof FunctionCRUDAccessor) {
+				((FunctionCRUDAccessor)functionAccessor).save(new ArrayList<>(plan.getFunctions()));
+			}
+		}
+		Collection<Plan> subPlans = plan.getSubPlans();
+		if(subPlans!=null) {
+			PlanAccessor planAccessor = executionContext.getPlanAccessor();
+			planAccessor.save(subPlans);
+		}
+		
 		ArtefactHandlerManager artefactHandlerManager = executionContext.getArtefactHandlerManager();
 		AbstractArtefact root = plan.getRoot();
 		artefactHandlerManager.createReportSkeleton(root, rootReportNode);

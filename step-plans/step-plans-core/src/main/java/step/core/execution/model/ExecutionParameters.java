@@ -34,6 +34,7 @@ import step.core.repositories.RepositoryObjectReference;
 
 public class ExecutionParameters extends AbstractOrganizableObject {
 	
+	private static final String DEFAULT_DESCRIPTION = "Unnamed";
 	private static final String DEFAULT_USERID = "dummy";
 	
 	ExecutionMode mode;
@@ -56,17 +57,17 @@ public class ExecutionParameters extends AbstractOrganizableObject {
 	public ExecutionParameters() {
 		this((RepositoryObjectReference) null, null);
 	}
+	
+	public ExecutionParameters(ExecutionMode mode) {
+		this(mode, null, null, null, null, DEFAULT_USERID, null, false, null);
+	}
 
 	public ExecutionParameters(RepositoryObjectReference repositoryObjectReference, Map<String, String> customParameters) {
 		this(ExecutionMode.RUN, null, repositoryObjectReference, customParameters, null, DEFAULT_USERID, null, false, null);
 	}
 	
 	public ExecutionParameters(Plan plan, Map<String, String> customParameters) {
-		this(ExecutionMode.RUN, plan, null, customParameters, plan.getAttributes().get(AbstractArtefact.NAME), DEFAULT_USERID, null, false, null);
-	}
-
-	public ExecutionParameters(ExecutionMode mode) {
-		this(mode, null, null, null, null, DEFAULT_USERID, null, false, null);
+		this(ExecutionMode.RUN, plan, null, customParameters, defaultDescription(plan), DEFAULT_USERID, null, false, null);
 	}
 
 	public ExecutionParameters(ExecutionMode mode, Plan plan, RepositoryObjectReference repositoryObject,
@@ -82,6 +83,27 @@ public class ExecutionParameters extends AbstractOrganizableObject {
 		this.artefactFilter = artefactFilter;
 		this.isolatedExecution = isolatedExecution;
 		this.exports = exports;
+	}
+	
+	public static String defaultDescription(Plan plan) {
+		String description;
+		Map<String, String> attributes = plan.getAttributes();
+		if(attributes != null && attributes.containsKey(AbstractArtefact.NAME)) {
+			description = attributes.get(AbstractArtefact.NAME);
+		} else {
+			AbstractArtefact root = plan.getRoot();
+			if(root != null) {
+				attributes = root.getAttributes();
+				if(attributes != null && attributes.containsKey(AbstractArtefact.NAME)) {
+					description = attributes.get(AbstractArtefact.NAME);
+				} else {
+					description = DEFAULT_DESCRIPTION;
+				}
+			} else {
+				description = DEFAULT_DESCRIPTION;
+			}
+		}
+		return description;
 	}
 
 	public Plan getPlan() {
