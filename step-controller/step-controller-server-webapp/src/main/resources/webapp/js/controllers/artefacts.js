@@ -36,6 +36,10 @@ angular.module('artefacts',['step'])
     }
   }
   
+  function typeExist(typeName) {
+    return registry[typeName] != null;
+  }
+  
   api.register = function(typeName,typeInfo) {
     if(!typeInfo.label) {
       typeInfo.label = typeName;
@@ -67,7 +71,7 @@ angular.module('artefacts',['step'])
   }
   
   api.isSelectable = function(typeName) {
-    return getType(typeName).isSelectable;
+    return typeExist(typeName) && getType(typeName).isSelectable;
   }
   
   return api;
