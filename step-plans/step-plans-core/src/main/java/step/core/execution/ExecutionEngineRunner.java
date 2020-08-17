@@ -24,6 +24,7 @@ import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.engine.execution.ExecutionLifecycleManager;
+import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionCRUDAccessor;
 
@@ -118,14 +119,15 @@ public class ExecutionEngineRunner {
 	}
 
 	protected ReportNode execute(Plan plan, ReportNode rootReportNode) {
-		if(plan.getFunctions()!=null) {
+		Collection<Function> planInnerFunctions = plan.getFunctions();
+		if(planInnerFunctions!=null && planInnerFunctions.size()>0) {
 			FunctionAccessor functionAccessor = executionContext.get(FunctionAccessor.class);
 			if(functionAccessor!=null && functionAccessor instanceof FunctionCRUDAccessor) {
-				((FunctionCRUDAccessor)functionAccessor).save(new ArrayList<>(plan.getFunctions()));
+				((FunctionCRUDAccessor)functionAccessor).save(new ArrayList<>(planInnerFunctions));
 			}
 		}
 		Collection<Plan> subPlans = plan.getSubPlans();
-		if(subPlans!=null) {
+		if(subPlans!=null && subPlans.size()>0) {
 			PlanAccessor planAccessor = executionContext.getPlanAccessor();
 			planAccessor.save(subPlans);
 		}

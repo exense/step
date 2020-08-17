@@ -28,15 +28,7 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 	
 	public AbstractExecutionEngineContext() {
 		super();
-	}
-
-	public AbstractExecutionEngineContext(AbstractExecutionEngineContext parentContext) {
-		super(parentContext);
-		if(parentContext != null) {
-			setAttributesFromParentContext(parentContext);
-		} else {
-			setDefaultAttributes();
-		}
+		setDefaultAttributes();
 	}
 
 	protected void setDefaultAttributes() {
@@ -50,15 +42,27 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 		repositoryObjectManager = new RepositoryObjectManager();
 	}
 	
-	protected void setAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
+	protected void useAllAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
+		useStandardAttributesFromParentContext(parentContext);
+		useSourceAttributesFromParentContext(parentContext);
+		useReportingAttributesFromParentContext(parentContext);
+	}
+	
+	protected void useStandardAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
 		configuration = parentContext.getConfiguration();
 		expressionHandler = parentContext.getExpressionHandler();
 		dynamicBeanResolver = parentContext.getDynamicBeanResolver();
+		repositoryObjectManager = parentContext.getRepositoryObjectManager();
+	}
+	
+	protected void useSourceAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
 		planAccessor = parentContext.getPlanAccessor();
+	}
+	
+	protected void useReportingAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
 		reportNodeAccessor = parentContext.getReportNodeAccessor();
 		executionAccessor = parentContext.getExecutionAccessor();
 		executionManager = parentContext.getExecutionManager();
-		repositoryObjectManager = parentContext.getRepositoryObjectManager();
 	}
 
 	public Configuration getConfiguration() {

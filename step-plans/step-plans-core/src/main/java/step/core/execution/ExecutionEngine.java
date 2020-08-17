@@ -43,11 +43,11 @@ public class ExecutionEngine {
 		} catch (InstantiationException | IllegalAccessException | CircularDependencyException | ClassNotFoundException e) {
 			throw new ExecutionEngineException(e);
 		}
-	
-		executionEngineContext = new ExecutionEngineContext(operationMode, parentContext);
-		
 		plugins = pluginManager.getProxy();
-		plugins.initialize(executionEngineContext);
+	
+		executionEngineContext = new ExecutionEngineContext(operationMode);
+		executionEngineContext.useAllAttributesFromParentContext(parentContext);
+		plugins.initializeExecutionEngineContext(parentContext, executionEngineContext);
 	}
 	
 	public ExecutionEngineContext getExecutionEngineContext() {
@@ -55,8 +55,14 @@ public class ExecutionEngine {
 	}
 
 	public ExecutionContext newExecutionContext(String executionId, ExecutionParameters executionParameters) {
-		ExecutionContext executionContext = new ExecutionContext(executionEngineContext, executionId, executionParameters);
+		ExecutionContext executionContext = new ExecutionContext(executionId, executionParameters);
+		executionContext.useStandardAttributesFromParentContext(executionEngineContext);
+		executionContext.useReportingAttributesFromParentContext(executionEngineContext);
+		if(!executionParameters.isIsolatedExecution()) {
+			executionContext.useSourceAttributesFromParentContext(executionEngineContext);
+		}
 		executionContext.setExecutionCallbacks(plugins);
+		plugins.initializeExecutionContext(executionEngineContext, executionContext);
 		return executionContext;
 	}
 

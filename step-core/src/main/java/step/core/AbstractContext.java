@@ -26,15 +26,8 @@ public abstract class AbstractContext {
 	private final ConcurrentHashMap<String, Object> attributes;
 
 	public AbstractContext() {
-		this(null);
-	}
-
-	public AbstractContext(AbstractContext parentContext) {
 		super();
 		this.attributes = new ConcurrentHashMap<String, Object>();
-		if(parentContext != null) {
-			this.attributes.putAll(parentContext.attributes);
-		}
 	}
 
 	public Object get(Object key) {
@@ -69,11 +62,25 @@ public abstract class AbstractContext {
 		return attributes.put(key, value);
 	}
 	
-	public <T> Object put(Class<T> class_, T value) {
-		return attributes.put(key(class_), value);
+	@SuppressWarnings("unchecked")
+	public <T> T put(Class<T> class_, T value) {
+		return (T) attributes.put(key(class_), value);
 	}
 
 	private <T> String key(Class<T> class_) {
 		return class_.getName();
+	}
+	
+	public <T> T inheritFromParentOrComputeIfAbsent(AbstractContext parentContext, Class<T> class_,
+			Function<Class<T>, T> mappingFunction) {
+		T parentAttribute = parentContext != null ? parentContext.get(class_) : null;
+		T value;
+		if (parentAttribute == null) {
+			value = mappingFunction.apply(class_);
+		} else {
+			value = parentAttribute;
+		}
+		put(class_, value);
+		return value;
 	}
 }

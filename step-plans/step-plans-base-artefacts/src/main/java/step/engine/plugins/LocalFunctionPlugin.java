@@ -15,6 +15,7 @@ import org.reflections.util.ConfigurationBuilder;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Attribute;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
@@ -34,10 +35,10 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 	private FunctionTypeRegistry functionTypeRegistry;
 
 	@Override
-	public void initialize(ExecutionEngineContext context) {
+	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
 		if(context.getOperationMode() == OperationMode.LOCAL) {
-			functionAccessor = (FunctionCRUDAccessor) context.get(FunctionAccessor.class);
-			functionTypeRegistry = context.get(FunctionTypeRegistry.class);
+			functionAccessor = (FunctionCRUDAccessor) context.require(FunctionAccessor.class);
+			functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 			
 			functionTypeRegistry.registerFunctionType(new LocalFunctionType());
 			List<Function> localFunctions = getLocalFunctions();

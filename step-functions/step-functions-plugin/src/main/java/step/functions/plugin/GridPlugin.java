@@ -38,21 +38,16 @@ import step.core.accessors.collections.CollectionRegistry;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.Entity;
-import step.core.execution.ExecutionContext;
 import step.core.imports.GenericDBImporter;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.engine.plugins.ExecutionEnginePlugin;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.accessor.FunctionCRUDAccessor;
-import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.execution.ConfigurableTokenLifecycleStrategy;
 import step.functions.execution.FunctionExecutionService;
-import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.manager.FunctionManager;
 import step.functions.manager.FunctionManagerImpl;
@@ -175,36 +170,6 @@ public class GridPlugin extends AbstractControllerPlugin {
 		gridClientConfiguration.setReserveSessionTimeout(configuration.getPropertyAsInteger("grid.client.token.reserve.timeout.ms", gridClientConfiguration.getReserveSessionTimeout()));
 		gridClientConfiguration.setReleaseSessionTimeout(configuration.getPropertyAsInteger("grid.client.token.release.timeout.ms", gridClientConfiguration.getReleaseSessionTimeout()));
 		return gridClientConfiguration;
-	}
-
-	@Override
-	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new AbstractExecutionEnginePlugin() {
-			@Override
-			public void beforePlanImport(ExecutionContext context) {
-				// Bindings needed for the execution
-				boolean isolatedExecution = context.getExecutionParameters().isIsolatedExecution();
-				if(isolatedExecution) {
-					FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
-					FunctionExecutionService functionExecutionService;
-					try {
-						functionExecutionService = new FunctionExecutionServiceImpl(client, functionTypeRegistry, context.getDynamicBeanResolver());
-					} catch (FunctionExecutionServiceException e) {
-						throw new RuntimeException("Error while creating function execution service", e);
-					}
-					DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-					FunctionRouter functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
-					
-					context.put(FunctionAccessor.class, functionAccessor);
-					context.put(FunctionExecutionService.class, functionExecutionService);
-					context.put(FunctionRouter.class, functionRouter);
-				} else {
-					context.put(FunctionAccessor.class, functionAccessor);
-					context.put(FunctionExecutionService.class, functionExecutionService);
-					context.put(FunctionRouter.class, functionRouter);
-				}
-			}
-		};
 	}
 
 	@Override

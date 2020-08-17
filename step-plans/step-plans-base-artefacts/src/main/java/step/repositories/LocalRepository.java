@@ -77,8 +77,13 @@ public class LocalRepository implements Repository {
 	public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters)
 			throws Exception {
 		ImportResult importResult = new ImportResult();
-		importResult.setPlanId(context.getExecutionParameters().getRepositoryObject().getRepositoryParameters().get(RepositoryObjectReference.PLAN_ID));
+		String planId = context.getExecutionParameters().getRepositoryObject().getRepositoryParameters().get(RepositoryObjectReference.PLAN_ID);
+		importResult.setPlanId(planId);
 		importResult.setSuccessful(true);
+		PlanAccessor contextPlanAccessor = context.getPlanAccessor();
+		if(contextPlanAccessor.get(planId) == null) {
+			contextPlanAccessor.save(planAccessor.get(planId));
+		}
 		return importResult;
 	}
 

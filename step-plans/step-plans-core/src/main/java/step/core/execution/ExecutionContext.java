@@ -47,8 +47,8 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 	private String executionType;
 	private Plan plan;
 	
-	protected ExecutionContext(AbstractExecutionEngineContext parentContext, String executionId, ExecutionParameters executionParameters) {
-		super(parentContext);
+	protected ExecutionContext(String executionId, ExecutionParameters executionParameters) {
+		super();
 		this.executionId = executionId;
 		this.executionParameters = executionParameters;
 		

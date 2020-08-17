@@ -3,6 +3,7 @@ package step.engine.plugins;
 import javax.json.JsonObject;
 
 import step.core.artefacts.reports.ReportNode;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractPlugin;
@@ -16,7 +17,10 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 	}
 	
 	@Override
-	public void initialize(ExecutionEngineContext context) {}
+	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {}
+	
+	@Override
+	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {}
 	
 	@Override
 	public void executionStart(ExecutionContext context) {}
