@@ -46,7 +46,9 @@ public class ExecutionEngine {
 		plugins = pluginManager.getProxy();
 	
 		executionEngineContext = new ExecutionEngineContext(operationMode);
-		executionEngineContext.useAllAttributesFromParentContext(parentContext);
+		if(parentContext != null) {
+			executionEngineContext.useAllAttributesFromParentContext(parentContext);
+		}
 		plugins.initializeExecutionEngineContext(parentContext, executionEngineContext);
 	}
 	
