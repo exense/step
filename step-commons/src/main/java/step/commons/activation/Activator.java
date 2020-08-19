@@ -36,25 +36,25 @@ import org.slf4j.LoggerFactory;
 
 public class Activator {
 
-	private static final String DEFAULT_SCRIPT_ENGINE = "nashorn";
+	public static final String DEFAULT_SCRIPT_ENGINE = "groovy";
 
 	public static final Logger logger = LoggerFactory.getLogger(Activator.class);
 	
-	public static <T extends ActivableObject> List<T> compileActivationExpressions(List<T> objects) throws ScriptException {
+	public static <T extends ActivableObject> List<T> compileActivationExpressions(List<T> objects, String defaultScriptEngine) throws ScriptException {
 		for(ActivableObject object:objects) {
-			compileActivationExpression(object);
+			compileActivationExpression(object, defaultScriptEngine);
 		}
 		return objects; 
 	}
 	
-	public static void compileActivationExpression(ActivableObject object) throws ScriptException {
+	public static void compileActivationExpression(ActivableObject object, String defaultScriptEngine) throws ScriptException {
 		Expression expression = object.getActivationExpression();
-		compileExpression(expression);
+		compileExpression(expression, defaultScriptEngine);
 	}
 
-	protected static void compileExpression(Expression expression) throws ScriptException {
+	protected static void compileExpression(Expression expression, String defaultScriptEngine) throws ScriptException {
 		if(expression!=null && expression.compiledScript==null) {
-			String scriptEngine = expression.scriptEngine!=null?expression.scriptEngine:DEFAULT_SCRIPT_ENGINE;
+			String scriptEngine = expression.scriptEngine!=null?expression.scriptEngine:defaultScriptEngine;
 
 			if(expression.script!=null && expression.script.trim().length()>0) {
 				ScriptEngineManager manager = new ScriptEngineManager();
@@ -68,11 +68,11 @@ public class Activator {
 		}
 	}
 	
-	public static Boolean evaluateActivationExpression(Bindings bindings, Expression activationExpression) {
+	public static Boolean evaluateActivationExpression(Bindings bindings, Expression activationExpression, String defaultScriptEngine) {
 		Boolean expressionResult; 
 		if(activationExpression!=null) {
 			try {
-				compileExpression(activationExpression);
+				compileExpression(activationExpression, defaultScriptEngine);
 			} catch (ScriptException e1) {
 				logger.error("Error while evaluating expression "+activationExpression, e1);
 			}
@@ -97,11 +97,11 @@ public class Activator {
 		return expressionResult;
 	}
 	
-	public static <T extends ActivableObject> T findBestMatch(Map<String, Object> bindings, List<T> objects) {
-		return findBestMatch(bindings!=null?new SimpleBindings(bindings):null, objects);
+	public static <T extends ActivableObject> T findBestMatch(Map<String, Object> bindings, List<T> objects,String defaultScriptEngine) {
+		return findBestMatch(bindings!=null?new SimpleBindings(bindings):null, objects, defaultScriptEngine);
 	}
 	
-	private static <T extends ActivableObject> T findBestMatch(Bindings bindings, List<T> objects) {
+	private static <T extends ActivableObject> T findBestMatch(Bindings bindings, List<T> objects, String defaultScriptEngine) {
 		
 		List<T> matchingObjects = new ArrayList<>(objects);
 		matchingObjects.sort(new Comparator<T>() {
@@ -116,17 +116,17 @@ public class Activator {
 		});
 		
 		for(T object:matchingObjects) {
-			if(evaluateActivationExpression(bindings, object.getActivationExpression())) {
+			if(evaluateActivationExpression(bindings, object.getActivationExpression(), defaultScriptEngine)) {
 				return object;
 			}
 		}
 		return null;
 	}
 	
-	public static <T extends ActivableObject> List<T> findAllMatches(Map<String, Object> bindings, List<T> objects) {
+	public static <T extends ActivableObject> List<T> findAllMatches(Map<String, Object> bindings, List<T> objects, String defaultScriptEngine) {
 		List<T> result = new ArrayList<>();
 		for(T object:objects) {
-			Boolean expressionResult = evaluateActivationExpression(bindings!=null?new SimpleBindings(bindings):null, object.getActivationExpression());
+			Boolean expressionResult = evaluateActivationExpression(bindings!=null?new SimpleBindings(bindings):null, object.getActivationExpression(), defaultScriptEngine);
 			
 			if(expressionResult) {
 				result.add(object);
