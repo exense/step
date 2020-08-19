@@ -47,6 +47,11 @@ public class ExecutionEngine {
 			pluginBuilder.withPlugin(plugin);
 			return this;
 		}
+		
+		public Builder withPlugins(List<ExecutionEnginePlugin> plugins) {
+			pluginBuilder.withPlugins(plugins);
+			return this;
+		}
 	
 		public Builder withPluginsFromClasspath() {
 			try {

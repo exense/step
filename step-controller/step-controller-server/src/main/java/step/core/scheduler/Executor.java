@@ -44,6 +44,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
+import step.engine.plugins.ExecutionEnginePlugin;
 
 public class Executor {
 	
@@ -59,8 +60,10 @@ public class Executor {
 		
 		configuration = globalContext.getConfiguration();
 		
+		List<ExecutionEnginePlugin> additionalPlugins = globalContext.getPluginManager().getExecutionEnginePlugins();
+		
 		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
-				.withParentContext(globalContext).withPluginsFromClasspath().build();
+				.withParentContext(globalContext).withPluginsFromClasspath().withPlugins(additionalPlugins).build();
 		
 		try {
 			Properties props = getProperties();
