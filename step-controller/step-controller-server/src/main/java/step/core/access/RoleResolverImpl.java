@@ -17,7 +17,7 @@ public class RoleResolverImpl implements RoleResolver {
 		User user = userAccessor.get(session.getUser().getId());
 		
 		if(user == null) {
-			throw new ApplicationException(100, "Unknow user '"+session.getUser()+"': this user should be defined in step", null);
+			throw new ApplicationException(100, "Unknow user '"+session.getUser()+"': this user is not defined in step", null);
 		}
 		
 		return user.getRole();
