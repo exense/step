@@ -40,7 +40,11 @@ import step.core.dynamicbeans.DynamicValue;
 @JsonTypeInfo(use=Id.CUSTOM,property="_class")
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)
 public abstract class AbstractArtefact extends AbstractOrganizableObject {
-	
+
+	protected DynamicValue<String> dynamicName;
+
+	protected boolean useDynamicName;
+
 	protected String description;
 		
 	protected List<AbstractArtefact> children = new ArrayList<>();
@@ -63,6 +67,8 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		defaultAttributes.put("name", getDefaultArtefactName(this.getClass()));
 		attributes = defaultAttributes;
 		persistNode = true;
+		dynamicName = new DynamicValue<String>("");
+		dynamicName.setDynamic(true);
 	}
 	
 	private String getDefaultArtefactName(Class<? extends AbstractArtefact> artefactClass) {
@@ -147,6 +153,31 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
 	public void setSkipNode(DynamicValue<Boolean> skipNode) {
 		this.skipNode = skipNode;
+	}
+
+	public DynamicValue<String> getDynamicName() {
+		return dynamicName;
+	}
+
+	public void setDynamicName(DynamicValue<String> dynamicName) {
+		this.dynamicName = dynamicName;
+	}
+
+	public boolean isUseDynamicName() {
+		return useDynamicName;
+	}
+
+	public void setUseDynamicName(boolean useDynamicName) {
+		this.useDynamicName = useDynamicName;
+	}
+
+	public void setNameDynamically() {
+		if (isUseDynamicName()) {
+			String value = getDynamicName().get();
+			if (value != null && !value.equals("")) {
+				addAttribute(AbstractOrganizableObject.NAME, value);
+			}
+		}
 	}
 
 	@Override

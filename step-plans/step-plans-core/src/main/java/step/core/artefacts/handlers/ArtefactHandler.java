@@ -29,6 +29,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
 import step.core.artefacts.WorkArtefactFactory;
@@ -96,7 +97,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
 		try {
 			dynamicBeanResolver.evaluate(artefact, getBindings());
-			
+			artefact.setNameDynamically();
 			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
@@ -139,6 +140,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 			
 			dynamicBeanResolver.evaluate(artefact, getBindings());
+			artefact.setNameDynamically();
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
 			
