@@ -162,7 +162,9 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
   }
   
   $scope.$watchCollection('executionParameters', function(val) {
-    $scope.resetInteractive();
+    if ($scope.isInteractiveSessionActive()) {
+      $scope.resetInteractive();
+    }
   })
   
   $scope.resetInteractive = function() {
