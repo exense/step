@@ -69,6 +69,8 @@ import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.manager.FunctionManager;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.planbuilder.FunctionArtefacts;
+import step.plugins.parametermanager.ParameterManager;
+import step.plugins.parametermanager.ParameterManagerPlugin;
 
 @Singleton
 @Path("interactive")
@@ -147,7 +149,7 @@ public class InteractiveServices extends AbstractServices {
 							ExecutionEngineContext executionEngineContext) {
 						executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
 					}
-				}).build();
+				}).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class))).build();
 	}
 	
 	@PreDestroy
