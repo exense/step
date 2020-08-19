@@ -10,11 +10,15 @@
 		<version>0.0.0</version>
 	</parent>
 
+	<properties>
+		<ldap-exense-commons.version>2020.08.19-a080fd5</ldap-exense-commons.version>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.commons</groupId>
 			<artifactId>exense-auth-core</artifactId>
-			<version>0.0.0-SNAPSHOT</version>
+			<version>${ldap-exense-commons.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
