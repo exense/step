@@ -11,7 +11,7 @@
 	</parent>
 
 	<properties>
-		<ldap-exense-commons.version>2020.08.19-a080fd5</ldap-exense-commons.version>
+		<ldap-exense-commons.version>2020.08.19-9ac9523</ldap-exense-commons.version>
 	</properties>
 
 	<dependencies>
