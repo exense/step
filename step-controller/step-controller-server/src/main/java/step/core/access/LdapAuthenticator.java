@@ -29,6 +29,7 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 		
 		String ldapUrl = configuration.getProperty("ui.authenticator.ldap.url",null);
 		String ldapBaseDn = configuration.getProperty("ui.authenticator.ldap.base",null);
+		String ldapFilter = configuration.getProperty("ui.authenticator.ldap.filter",null);
 		String ldapTechuser = configuration.getProperty("ui.authenticator.ldap.techuser",null);
 		String ldapTechpwd = configuration.getProperty("ui.authenticator.ldap.techpwd",null);
 		
@@ -37,7 +38,7 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 		String jksPassword = configuration.getProperty("ui.authenticator.ldap.ssl.jksPassword",null);
 		
 		try {
-			directory = new LDAPClient(ldapUrl,ldapBaseDn,ldapTechuser,ldapTechpwd, pathToJks, jksPassword);
+			directory = new LDAPClient(ldapUrl,ldapBaseDn,ldapFilter, ldapTechuser,ldapTechpwd, pathToJks, jksPassword);
 			logger.info("LdapAuthenticator is active.");
 			authenticator = new CypherAuthenticator(directory);
 		} catch (NamingException e) {
