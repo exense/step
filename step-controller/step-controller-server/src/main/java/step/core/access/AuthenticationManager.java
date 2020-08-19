@@ -50,6 +50,7 @@ public class AuthenticationManager {
 		if(user == null) {
 			user = new ExternalUser();
 			user.setUsername(username);
+			userAccessor.save(user);
 		}
 		session.setUser(user);
 	}
