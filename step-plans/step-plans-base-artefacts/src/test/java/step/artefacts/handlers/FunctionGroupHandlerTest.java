@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;
@@ -24,11 +25,12 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
 import step.core.execution.ExecutionEngineException;
-import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.DefaultPlanRunner;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.base.ResourceManagerPlugin;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -60,41 +62,18 @@ public class FunctionGroupHandlerTest {
 			functionGroupContext.addToken(token);
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
-		ExecutionContext context = newExecutionContext(plan);
-		context.put(FunctionExecutionService.class, new FunctionExecutionService() {
-
-			@Override
-			public TokenWrapper getLocalTokenHandle() {
-				return null;
+		
+		ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id->{
+			if(localToken.getID().equals(id)) {
+				localTokenReturned.set(true);
 			}
-
-			@Override
-			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
-				return null;
+			if(token.getID().equals(id)) {
+				tokenReturned.set(true);
 			}
-
-			@Override
-			public void returnTokenHandle(String id) throws FunctionExecutionServiceException {
-				if(localToken.getID().equals(id)) {
-					localTokenReturned.set(true);
-				}
-				if(token.getID().equals(id)) {
-					tokenReturned.set(true);
-				}
-			}
-
-			@Override
-			public <IN, OUT> Output<OUT> callFunction(String id, Function function,
-					FunctionInput<IN> input, Class<OUT> outputClass) {
-				return null;
-			}
-			
 		});
-		DefaultPlanRunner runner = new DefaultPlanRunner(context);
 		
 		StringWriter writer = new StringWriter();
-		runner.run(plan).printTree(writer);
+		engine.execute(plan).printTree(writer);
 		
 		// Assert that the token have been returned after Session execution
 		Assert.assertTrue(localTokenReturned.get());
@@ -103,9 +82,45 @@ public class FunctionGroupHandlerTest {
 				" CheckArtefact:PASSED:\n" + 
 				" Echo:PASSED:\n" ,writer.toString());
 	}
+	
+	private ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction) {
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ResourceManagerPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 
-	protected ExecutionContext newExecutionContext(Plan plan) throws ExecutionEngineException {
-		return new ExecutionEngine().newExecutionContext(new ExecutionParameters(plan, null));
+			@Override
+			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
+					ExecutionContext executionContext) {
+				executionContext.put(FunctionExecutionService.class, new FunctionExecutionService() {
+
+					@Override
+					public TokenWrapper getLocalTokenHandle() {
+						return null;
+					}
+
+					@Override
+					public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
+							boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+						return null;
+					}
+
+					@Override
+					public void returnTokenHandle(String id) throws FunctionExecutionServiceException {
+						try {
+							tokenReleaseFunction.accept(id);
+						} catch(Exception e) {
+							throw new FunctionExecutionServiceException(e.getMessage());
+						}
+					}
+
+					@Override
+					public <IN, OUT> Output<OUT> callFunction(String id, Function function,
+							FunctionInput<IN> input, Class<OUT> outputClass) {
+						return null;
+					}
+					
+				});
+			}
+		}).build();
+		return engine;
 	}
 	
 	@Test
@@ -123,42 +138,18 @@ public class FunctionGroupHandlerTest {
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
 		
-		ExecutionContext context = newExecutionContext(plan);
-		context.put(FunctionExecutionService.class, new FunctionExecutionService() {
-
-			@Override
-			public TokenWrapper getLocalTokenHandle() {
-				return null;
+		ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id->{
+			if(localToken.getID().equals(id)) {
+				localTokenReturned.set(true);
 			}
-
-			@Override
-			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
-				return null;
+			if(token.getID().equals(id)) {
+				tokenReturned.set(true);
 			}
-
-			@Override
-			public void returnTokenHandle(String id) throws FunctionExecutionServiceException {
-				if(localToken.getID().equals(id)) {
-					localTokenReturned.set(true);
-				}
-				if(token.getID().equals(id)) {
-					tokenReturned.set(true);
-				}
-				throw new FunctionExecutionServiceException("Test error");
-			}
-
-			@Override
-			public <IN, OUT> Output<OUT> callFunction(String id, Function function,
-					FunctionInput<IN> input, Class<OUT> outputClass) {
-				return null;
-			}
-			
+			throw new RuntimeException("Test error");
 		});
 		
-		DefaultPlanRunner runner = new DefaultPlanRunner(context);		
 		StringWriter writer = new StringWriter();
-		runner.run(plan).printTree(writer);
+		engine.execute(plan).printTree(writer);
 		
 		// Assert that the token have been returned after Session execution
 		Assert.assertTrue(localTokenReturned.get());
@@ -183,43 +174,18 @@ public class FunctionGroupHandlerTest {
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
 		
-		ExecutionContext context = newExecutionContext(plan);
-		context.put(FunctionExecutionService.class, new FunctionExecutionService() {
-
-			@Override
-			public TokenWrapper getLocalTokenHandle() {
-				return null;
+		ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id->{
+			if(localToken.getID().equals(id)) {
+				localTokenReturned.set(true);
 			}
-
-			@Override
-			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
-				return null;
+			if(token.getID().equals(id)) {
+				tokenReturned.set(true);
+				throw new RuntimeException("Test error");
 			}
-
-			@Override
-			public void returnTokenHandle(String id) throws FunctionExecutionServiceException {
-				if(localToken.getID().equals(id)) {
-					localTokenReturned.set(true);
-				}
-				if(token.getID().equals(id)) {
-					tokenReturned.set(true);
-					throw new FunctionExecutionServiceException("Test error");
-				}
-			}
-
-			@Override
-			public <IN, OUT> Output<OUT> callFunction(String id, Function function,
-					FunctionInput<IN> input, Class<OUT> outputClass) {
-				return null;
-			}
-			
 		});
 		
-		DefaultPlanRunner runner = new DefaultPlanRunner(context);
-		
 		StringWriter writer = new StringWriter();
-		runner.run(plan).printTree(writer);
+		engine.execute(plan).printTree(writer);
 		
 		// Assert that the token have been returned after Session execution
 		Assert.assertTrue(localTokenReturned.get());
@@ -264,50 +230,57 @@ public class FunctionGroupHandlerTest {
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(sequence).endBlock().build();
 		
-		ExecutionContext context = newExecutionContext(plan);
-		CheckArtefact check1 = new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED));
+		CheckArtefact check1 = new CheckArtefact(c->c.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED));
 		retryIfFail.addChild(check1);	
-		FunctionTypeRegistry functionTypeRegistry = getFunctionTypeRepository();
-		InMemoryFunctionAccessorImpl funcitonAccessor = new InMemoryFunctionAccessorImpl();
-		context.put(FunctionAccessor.class, funcitonAccessor);
-		((InMemoryFunctionAccessorImpl) context.get(FunctionAccessor.class)).save(function);			
-		FunctionExecutionService fctExecSvc = new FunctionExecutionService() {
-			@Override
-			public TokenWrapper getLocalTokenHandle() {
-				return null;
-			}
-
-			@Override
-			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
-				return token("remote");
-			}
-
-			@Override
-			public void returnTokenHandle(String id) throws FunctionExecutionServiceException {
-				if(localToken.getID().equals(id)) {
-					localTokenReturned.incrementAndGet();
-				}
-				if(token.getID().equals(id)) {
-					tokenReturned.incrementAndGet();
-				}
-			}
-
-			@Override
-			public <IN, OUT> Output<OUT> callFunction(String id, Function function,
-					FunctionInput<IN> input, Class<OUT> outputClass) {
-				return null;
-			}
-			
-		};
-		context.put(FunctionExecutionService.class, fctExecSvc);
-		DefaultFunctionRouterImpl functionRouter = new DefaultFunctionRouterImpl(fctExecSvc, functionTypeRegistry, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler())));
-		context.put(FunctionRouter.class, functionRouter);
+		InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
+		functionAccessor.save(function);			
 		
-		DefaultPlanRunner runner = new DefaultPlanRunner(context);
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ResourceManagerPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+
+			@Override
+			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
+					ExecutionContext executionContext) {
+				FunctionTypeRegistry functionTypeRegistry = getFunctionTypeRepository();
+
+				executionContext.put(FunctionAccessor.class, functionAccessor);
+				FunctionExecutionService functionExecutionService = new FunctionExecutionService() {
+
+							@Override
+							public TokenWrapper getLocalTokenHandle() {
+								return null;
+							}
+
+							@Override
+							public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
+									boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+								return token("remote");
+							}
+
+							@Override
+							public void returnTokenHandle(String id) throws FunctionExecutionServiceException {
+								if(localToken.getID().equals(id)) {
+									localTokenReturned.incrementAndGet();
+								}
+								if(token.getID().equals(id)) {
+									tokenReturned.incrementAndGet();
+								}
+							}
+
+							@Override
+							public <IN, OUT> Output<OUT> callFunction(String id, Function function,
+									FunctionInput<IN> input, Class<OUT> outputClass) {
+								return null;
+							}
+							
+						};
+				executionContext.put(FunctionExecutionService.class, functionExecutionService);
+				DefaultFunctionRouterImpl functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(executionContext.getExpressionHandler())));
+				executionContext.put(FunctionRouter.class, functionRouter);
+			}
+		}).build();
 		
 		StringWriter writer = new StringWriter();
-		runner.run(plan).printTree(writer);
+		engine.execute(plan).printTree(writer);
 		
 		// Assert that the token have been returned after Session execution
 		Assert.assertEquals(1,localTokenReturned.get());

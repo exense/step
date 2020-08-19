@@ -12,7 +12,6 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
-import step.core.execution.ExecutionManagerImpl;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.InMemoryExecutionAccessor;
@@ -27,6 +26,7 @@ import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
+import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 
 public class GlobalContextBuilder {

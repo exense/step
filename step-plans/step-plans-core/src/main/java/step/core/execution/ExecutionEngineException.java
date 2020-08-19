@@ -6,4 +6,12 @@ public class ExecutionEngineException extends RuntimeException {
 		super(e);
 	}
 
+	public ExecutionEngineException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public ExecutionEngineException(String message) {
+		super(message);
+	}
+
 }

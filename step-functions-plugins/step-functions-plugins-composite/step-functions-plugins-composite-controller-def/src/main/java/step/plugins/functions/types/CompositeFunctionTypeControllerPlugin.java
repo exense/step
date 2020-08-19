@@ -6,9 +6,9 @@ import step.core.plugins.Plugin;
 import step.functions.Function;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
-import step.functions.plugin.GridPlugin;
+import step.functions.plugin.FunctionControllerPlugin;
 
-@Plugin(dependencies= {GridPlugin.class})
+@Plugin(dependencies= {FunctionControllerPlugin.class})
 public class CompositeFunctionTypeControllerPlugin extends AbstractControllerPlugin {
 
 	@Override

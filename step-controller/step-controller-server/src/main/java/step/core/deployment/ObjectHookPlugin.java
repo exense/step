@@ -1,6 +1,7 @@
 package step.core.deployment;
 
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngineContext;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
@@ -23,7 +24,8 @@ public class ObjectHookPlugin extends AbstractExecutionEnginePlugin {
 	}
 
 	@Override
-	public void executionStart(ExecutionContext executionContext) {
+	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
+			ExecutionContext executionContext) {
 		// Rebuild the session based on the ExecutionParameters of the execution context
 		// This has to be done because the Session is not always available when running an execution
 		// (by Scheduled tasks for instance) 

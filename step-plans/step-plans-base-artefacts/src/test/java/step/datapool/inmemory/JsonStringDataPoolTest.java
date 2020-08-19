@@ -24,11 +24,11 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.artefacts.AbstractArtefactTest;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
-import step.datapool.excel.AbstractArtefactTest;
 
 public class JsonStringDataPoolTest extends AbstractArtefactTest {
 

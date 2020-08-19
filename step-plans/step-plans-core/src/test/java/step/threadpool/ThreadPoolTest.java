@@ -16,10 +16,10 @@ import java.util.function.Consumer;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.AbstractArtefactTest;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionStatus;
-import step.datapool.excel.AbstractArtefactTest;
 import step.threadpool.ThreadPool.WorkerController;
 
 public class ThreadPoolTest extends AbstractArtefactTest {
@@ -194,6 +194,7 @@ public class ThreadPoolTest extends AbstractArtefactTest {
 	@Test
 	public void testAutoModeDisabled() {
 		ExecutionContext context = newExecutionContext();
+		
 		// Empty string => disabled
 		ReportNode rootReportNode = context.getReport();
 		context.getVariablesManager().putVariable(rootReportNode, "execution_threads_auto", "");

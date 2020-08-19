@@ -28,13 +28,13 @@ import org.junit.Test;
 
 import ch.exense.commons.io.FileHelper;
 import junit.framework.Assert;
+import step.artefacts.AbstractArtefactTest;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.runner.PlanRunnerResultAssert;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
-import step.datapool.excel.AbstractArtefactTest;
 
 public class CSVReaderDataPoolTest extends AbstractArtefactTest {
 

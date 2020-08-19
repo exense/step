@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.functions.plugin;
+package step.controller.grid;
 
 import java.io.File;
 import java.util.Arrays;
@@ -26,36 +26,12 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.client.MongoDatabase;
-
 import ch.exense.commons.app.Configuration;
-import step.artefacts.handlers.DefaultFunctionRouterImpl;
-import step.artefacts.handlers.FunctionRouter;
-import step.attachments.FileResolver;
+import step.controller.grid.services.GridServices;
 import step.core.GlobalContext;
-import step.core.accessors.collections.Collection;
-import step.core.accessors.collections.CollectionRegistry;
-import step.core.dynamicbeans.DynamicJsonObjectResolver;
-import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.entities.Entity;
-import step.core.imports.GenericDBImporter;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.functions.Function;
-import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.FunctionAccessorImpl;
-import step.functions.accessor.FunctionCRUDAccessor;
-import step.functions.editors.FunctionEditorRegistry;
 import step.functions.execution.ConfigurableTokenLifecycleStrategy;
-import step.functions.execution.FunctionExecutionService;
-import step.functions.execution.FunctionExecutionServiceImpl;
-import step.functions.manager.FunctionManager;
-import step.functions.manager.FunctionManagerImpl;
-import step.functions.services.FunctionServices;
-import step.functions.services.GridServices;
-import step.functions.type.FunctionTypeConfiguration;
-import step.functions.type.FunctionTypeRegistry;
-import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.Grid;
 import step.grid.GridImpl;
 import step.grid.GridImpl.GridImplConfig;
@@ -71,19 +47,8 @@ public class GridPlugin extends AbstractControllerPlugin {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
 	
-	private static final String functionEntityName = "functions";
-
 	private GridImpl grid;
 	private GridClient client;
-	
-	private FunctionEditorRegistry editorRegistry;
-	private FunctionTypeRegistry functionTypeRegistry;
-
-	private FunctionCRUDAccessor functionAccessor;
-	private FunctionManager functionManager;
-	
-	private FunctionExecutionService functionExecutionService;
-	private FunctionRouter functionRouter;
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
@@ -113,44 +78,12 @@ public class GridPlugin extends AbstractControllerPlugin {
 		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration);
 		client = new LocalGridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
 
-		editorRegistry = new FunctionEditorRegistry();
-		
-		FunctionTypeConfiguration functionTypeConfiguration = new FunctionTypeConfiguration();
-		functionTypeConfiguration.setFileResolverCacheConcurrencyLevel(configuration.getPropertyAsInteger("functions.fileresolver.cache.concurrencylevel", 4));
-		functionTypeConfiguration.setFileResolverCacheMaximumsize(configuration.getPropertyAsInteger("functions.fileresolver.cache.maximumsize", 1000));
-		functionTypeConfiguration.setFileResolverCacheExpireAfter(configuration.getPropertyAsInteger("functions.fileresolver.cache.expireafter.ms", 500));
-		functionTypeRegistry = new FunctionTypeRegistryImpl(context.get(FileResolver.class), client, functionTypeConfiguration);
-
-		functionAccessor = new FunctionAccessorImpl(context.getMongoClientSession());
-		functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
-		
-		functionExecutionService = new FunctionExecutionServiceImpl(client, functionTypeRegistry, context.getDynamicBeanResolver());
-		
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
-
 		context.put(TokenLifecycleStrategy.class, tokenLifecycleStrategy);
 		context.put(Grid.class, grid);
 		context.put(GridImpl.class, grid);
 		context.put(GridClient.class, client);
-				
-		context.put(FunctionAccessor.class, functionAccessor);
-		context.getEntityManager().register(new Entity<Function, FunctionAccessorImpl>(
-				GridPlugin.functionEntityName, (FunctionAccessorImpl) functionAccessor, Function.class, 
-				new GenericDBImporter<Function,FunctionAccessorImpl>(context)));
-		context.put(FunctionManager.class, functionManager);
-		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
-		
-		context.put(FunctionEditorRegistry.class, editorRegistry);
-		context.put(FunctionExecutionService.class, functionExecutionService);
-		context.put(FunctionRouter.class, functionRouter);
 		
 		context.getServiceRegistrationCallback().registerService(GridServices.class);
-		context.getServiceRegistrationCallback().registerService(FunctionServices.class);
-		
-		CollectionRegistry collectionRegistry = context.get(CollectionRegistry.class);
-		MongoDatabase mongoDatabase = context.getMongoClientSession().getMongoDatabase();
-		collectionRegistry.register("functions", new Collection(mongoDatabase, "functions", Function.class, true));
 	}
 
 	protected ConfigurableTokenLifecycleStrategy getTokenLifecycleStrategy(Configuration configuration) {

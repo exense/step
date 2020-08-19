@@ -7,10 +7,10 @@ import step.core.plugins.WebPlugin;
 import step.functions.Function;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
-import step.functions.plugin.GridPlugin;
+import step.functions.plugin.FunctionControllerPlugin;
 import step.plugins.java.GeneralScriptFunction;
 
-@Plugin(dependencies= {GridPlugin.class})
+@Plugin(dependencies= {FunctionControllerPlugin.class})
 public class ScriptEditorPlugin extends AbstractControllerPlugin {
 
 	@Override

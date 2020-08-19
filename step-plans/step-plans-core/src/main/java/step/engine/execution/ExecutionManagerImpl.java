@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.core.execution;
+package step.engine.execution;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,12 +24,12 @@ import java.util.function.Consumer;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.ExecutionContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plans.Plan;
 import step.core.repositories.ImportResult;
-import step.engine.execution.ExecutionManager;
 
 public class ExecutionManagerImpl implements ExecutionManager {
 	

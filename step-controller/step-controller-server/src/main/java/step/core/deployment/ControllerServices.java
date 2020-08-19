@@ -18,8 +18,12 @@
  *******************************************************************************/
 package step.core.deployment;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
@@ -39,7 +43,7 @@ import org.bson.types.ObjectId;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
-import step.core.execution.ExecutionRunnable;
+import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.ArtefactInfo;
@@ -150,9 +154,9 @@ public class ControllerServices extends AbstractServices {
 	@Path("/execution/{id}/stop")
 	@Secured(right="plan-execute")
 	public Void abort(@PathParam("id") String executionID) {
-		ExecutionRunnable task = getExecutionRunnable(executionID);
-		if(task!=null) {
-			new ExecutionLifecycleManager(task.getContext()).abort();
+		ExecutionContext context = getExecutionRunnable(executionID);
+		if(context!=null) {
+			new ExecutionLifecycleManager(context).abort();
 		}
 		return null;
 	}

@@ -1,7 +1,8 @@
-package step.datapool.excel;
+package step.artefacts;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.engine.plugins.base.ResourceManagerPlugin;
 
 public class AbstractArtefactTest {
 
@@ -10,7 +11,7 @@ public class AbstractArtefactTest {
 	}
 
 	protected ExecutionContext newExecutionContext() {
-		return new ExecutionEngine().newExecutionContext();
+		return ExecutionEngine.builder().withPlugin(new ResourceManagerPlugin()).build().newExecutionContext();
 	}
 
 }

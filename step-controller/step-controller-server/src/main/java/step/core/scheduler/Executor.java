@@ -27,7 +27,6 @@ import org.quartz.CronTrigger;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -41,9 +40,9 @@ import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
-import step.core.execution.ExecutionRunnable;
-import step.core.execution.ExecutionRunnableFactory;
-import step.core.execution.model.Execution;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
+import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
 
 public class Executor {
@@ -51,11 +50,8 @@ public class Executor {
 	private final Logger logger = LoggerFactory.getLogger(Executor.class);
 			
 	private Scheduler scheduler;
-
 	private SchedulerFactory schedulerFactory;
-	
-	private ExecutionRunnableFactory executionRunnableFactory;
-	
+	private ExecutionEngine executionEngine;
 	private Configuration configuration;
 	
 	public Executor(GlobalContext globalContext) {
@@ -63,12 +59,14 @@ public class Executor {
 		
 		configuration = globalContext.getConfiguration();
 		
+		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
+				.withParentContext(globalContext).withPluginsFromClasspath().build();
+		
 		try {
 			Properties props = getProperties();
-			executionRunnableFactory = new ExecutionRunnableFactory(globalContext);
 			schedulerFactory = new StdSchedulerFactory(props);
 			scheduler = schedulerFactory.getScheduler();
-			scheduler.setJobFactory(new ExecutionJobFactory(globalContext, executionRunnableFactory));
+			scheduler.setJobFactory(new ExecutionJobFactory(globalContext, executionEngine));
 		} catch (SchedulerException e) {
 			throw new RuntimeException(e);
 		}
@@ -131,11 +129,10 @@ public class Executor {
 	}
 	
 	public String execute(ExecutionParameters executionParameters, String executionTaskId) {
-		Execution execution = executionRunnableFactory.createExecution(executionParameters, executionTaskId);
+		String executionID = executionEngine.initializeExecution(executionParameters, executionTaskId);
 		
 		Trigger trigger = TriggerBuilder.newTrigger().startNow().build();
 
-		String executionID = execution.getId().toString();
 		JobDetail job = buildSingleJob(executionID);
 		
 		scheduleJob(trigger, job);
@@ -171,18 +168,8 @@ public class Executor {
 		return JobBuilder.newJob().ofType(ExecutionJob.class).withIdentity(task.getId().toString()).usingJobData(data).build();
 	}
 	
-	public List<ExecutionRunnable> getCurrentExecutions() {
-		List<JobExecutionContext> excutingJobs;
-		try {
-			excutingJobs = scheduler.getCurrentlyExecutingJobs();
-		} catch (SchedulerException e) {
-			throw new RuntimeException("Unexepected error occurred while getting executing jobs", e);
-		}
-		List<ExecutionRunnable> result = new ArrayList<ExecutionRunnable>(excutingJobs.size());
-		for(JobExecutionContext jobContext:excutingJobs) {
-			result.add(((ExecutionJob) jobContext.getJobInstance()).getRunnable());
-		}
-		return result;
+	public List<ExecutionContext> getCurrentExecutions() {
+		return executionEngine.getCurrentExecutions();
 	}
 	
 	public List<ExecutiontTaskParameters> getScheduledExecutions() {

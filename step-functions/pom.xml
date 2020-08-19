@@ -33,7 +33,6 @@
 		<module>step-functions-handler</module>
 		<module>step-functions-client</module>
 		<module>step-functions-client-api</module>
-		<module>step-functions-plugin</module>
 		<module>step-functions-base-functions</module>
 	</modules>
 

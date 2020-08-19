@@ -8,7 +8,6 @@ import step.core.repositories.ImportResult;
 import step.core.repositories.Repository;
 import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.FunctionCRUDAccessor;
 
 public class StagingRepository implements Repository {
 
@@ -37,7 +36,7 @@ public class StagingRepository implements Repository {
 		ImportResult result = new ImportResult();
 		result.setPlanId(stagingContext.plan.getId().toString());
 		
-		stagingContext.plan.getFunctions().iterator().forEachRemaining(f->((FunctionCRUDAccessor)context.get(FunctionAccessor.class)).save(f));
+		stagingContext.plan.getFunctions().iterator().forEachRemaining(f->(context.get(FunctionAccessor.class)).save(f));
 		
 		result.setSuccessful(true);
 	

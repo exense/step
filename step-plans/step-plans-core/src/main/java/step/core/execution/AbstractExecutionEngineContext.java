@@ -12,7 +12,7 @@ import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectManager;
 import step.engine.execution.ExecutionManager;
-import step.engine.execution.MockedExecutionManagerImpl;
+import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 
 public abstract class AbstractExecutionEngineContext extends AbstractContext {
@@ -38,7 +38,7 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 		planAccessor = new InMemoryPlanAccessor();
 		reportNodeAccessor = new InMemoryReportNodeAccessor();
 		executionAccessor = new InMemoryExecutionAccessor();
-		executionManager = new MockedExecutionManagerImpl();
+		executionManager = new ExecutionManagerImpl(executionAccessor);
 		repositoryObjectManager = new RepositoryObjectManager();
 	}
 	

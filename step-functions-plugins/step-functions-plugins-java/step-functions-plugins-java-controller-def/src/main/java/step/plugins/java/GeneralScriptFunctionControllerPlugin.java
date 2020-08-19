@@ -4,10 +4,10 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
-import step.functions.plugin.GridPlugin;
+import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
-@Plugin(dependencies= {GridPlugin.class})
+@Plugin(dependencies= {FunctionControllerPlugin.class})
 public class GeneralScriptFunctionControllerPlugin extends AbstractControllerPlugin {
 	
 	@Override

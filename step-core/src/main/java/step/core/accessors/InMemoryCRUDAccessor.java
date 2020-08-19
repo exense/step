@@ -75,7 +75,9 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 
 	@Override
 	public void save(Collection<? extends T> entities) {
-		entities.forEach(e->save(e));
+		if(entities != null && entities.size()>0) {
+			entities.forEach(e->save(e));
+		}
 	}
 
 	@Override

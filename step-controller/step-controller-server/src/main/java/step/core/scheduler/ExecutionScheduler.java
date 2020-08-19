@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
-import step.core.execution.ExecutionRunnable;
+import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionParameters;
 
 public class ExecutionScheduler {
@@ -128,7 +128,7 @@ public class ExecutionScheduler {
 		context.getScheduleAccessor().remove(schedule.getId());
 	}
 	
-	public List<ExecutionRunnable> getCurrentExecutions() {
+	public List<ExecutionContext> getCurrentExecutions() {
 		return executor.getCurrentExecutions();
 	}
 }

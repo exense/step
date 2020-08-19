@@ -26,7 +26,6 @@ import step.core.repositories.RepositoryObjectReference;
 import step.engine.execution.ExecutionLifecycleManager;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.FunctionCRUDAccessor;
 
 public class ExecutionEngineRunner {
 
@@ -34,13 +33,17 @@ public class ExecutionEngineRunner {
 	protected final ExecutionContext executionContext;
 	protected final ExecutionLifecycleManager executionLifecycleManager;
 	protected final RepositoryObjectManager repositoryObjectManager;
-	protected final ExecutionAccessor executionAccessor; 
+	protected final PlanAccessor planAccessor; 
+	protected final FunctionAccessor functionAccessor;
+	protected final ExecutionAccessor executionAccessor;
 
 	protected ExecutionEngineRunner(ExecutionContext executionContext) {
 		super();
 		this.executionContext = executionContext;
 		this.executionLifecycleManager = new ExecutionLifecycleManager(executionContext);
 		this.repositoryObjectManager = executionContext.getRepositoryObjectManager();
+		this.planAccessor = executionContext.getPlanAccessor();
+		this.functionAccessor =  executionContext.get(FunctionAccessor.class);
 		this.executionAccessor = executionContext.getExecutionAccessor();
 	}
 	
@@ -111,24 +114,18 @@ public class ExecutionEngineRunner {
 		}
 		return result;
 	}
-	
-	public PlanRunnerResult run(Plan plan) {
-		executionContext.getPlanAccessor().save(plan);
-		
-		return result(executionContext.getExecutionId());
-	}
 
 	protected ReportNode execute(Plan plan, ReportNode rootReportNode) {
 		Collection<Function> planInnerFunctions = plan.getFunctions();
 		if(planInnerFunctions!=null && planInnerFunctions.size()>0) {
-			FunctionAccessor functionAccessor = executionContext.get(FunctionAccessor.class);
-			if(functionAccessor!=null && functionAccessor instanceof FunctionCRUDAccessor) {
-				((FunctionCRUDAccessor)functionAccessor).save(new ArrayList<>(planInnerFunctions));
+			if(functionAccessor != null) {
+				functionAccessor.save(planInnerFunctions);
+			} else {
+				throw new RuntimeException("Unable to save inner functions because no function accessor is available");
 			}
 		}
 		Collection<Plan> subPlans = plan.getSubPlans();
 		if(subPlans!=null && subPlans.size()>0) {
-			PlanAccessor planAccessor = executionContext.getPlanAccessor();
 			planAccessor.save(subPlans);
 		}
 		

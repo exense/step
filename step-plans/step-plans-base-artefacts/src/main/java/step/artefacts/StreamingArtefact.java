@@ -2,6 +2,8 @@ package step.artefacts;
 
 import java.util.concurrent.Future;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import step.artefacts.ArtefactQueue.WorkItem;
 import step.artefacts.handlers.StreamingArtefactHandler;
 import step.core.artefacts.AbstractArtefact;
@@ -11,6 +13,7 @@ import step.core.artefacts.reports.ReportNode;
 @Artefact(handler = StreamingArtefactHandler.class)
 public class StreamingArtefact extends AbstractArtefact {
 
+	@JsonIgnore
 	private ArtefactQueue queue;
 	
 	public StreamingArtefact() {

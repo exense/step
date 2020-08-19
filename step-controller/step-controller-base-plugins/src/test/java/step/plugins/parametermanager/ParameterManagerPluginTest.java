@@ -74,7 +74,7 @@ public class ParameterManagerPluginTest {
 	}
 
 	protected ExecutionContext newExecutionContext() {
-		return new ExecutionEngine().newExecutionContext();
+		return ExecutionEngine.builder().build().newExecutionContext();
 	}
 
 	protected void declareParameter(String key, String value, ParameterScope scope, String scopeEntity) {

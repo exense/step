@@ -46,20 +46,24 @@ import step.artefacts.ArtefactQueue;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.artefacts.StreamingArtefact;
+import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.execution.ExecutionContext;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.PlanNavigator;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.manager.FunctionManager;
@@ -133,8 +137,17 @@ public class InteractiveServices extends AbstractServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		planAccessor = getContext().getPlanAccessor();
-		executionEngine = new ExecutionEngine(OperationMode.CONTROLLER, getContext());
+		GlobalContext context = getContext();
+		planAccessor = context.getPlanAccessor();
+		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
+				.withParentContext(context).withPluginsFromClasspath().withPlugin(new AbstractExecutionEnginePlugin() {
+
+					@Override
+					public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext,
+							ExecutionEngineContext executionEngineContext) {
+						executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
+					}
+				}).build();
 	}
 	
 	@PreDestroy
@@ -158,13 +171,13 @@ public class InteractiveServices extends AbstractServices {
 					.build();
 		
 		executionParameters.setPlan(plan);
-		ExecutionContext newExecutionContext = executionEngine.newExecutionContext(executionParameters);
-		Future<PlanRunnerResult> future = executorService.submit(()->executionEngine.execute(newExecutionContext));
+		String executionId = executionEngine.initializeExecution(executionParameters, null);
+		Future<PlanRunnerResult> future = executorService.submit(()->executionEngine.execute(executionId));
 		InteractiveSession session = new InteractiveSession(streamingArtefact.getQueue(), future);
 		
-		String id = newExecutionContext.getExecutionId();
-		sessions.put(id, session);
-		return id;
+		// the session id has to match the execution id as it used in the client to find the report nodes
+		sessions.put(executionId, session);
+		return executionId;
 	}
 	
 	@POST

@@ -58,16 +58,18 @@ public class RepositoryObjectManager {
 	
 	public ReportExport exportTestExecutionReport(ExecutionContext context, RepositoryObjectReference report) {	
 		ReportExport export = new ReportExport();
-		String respositoryId = report.getRepositoryID();
-		try {
-			Repository repository = getRepository(respositoryId);
-			repository.exportExecution(context, report.getRepositoryParameters());	
-			export.setStatus(ReportExportStatus.SUCCESSFUL);
-		} catch (Exception e) {
-			export.setStatus(ReportExportStatus.FAILED);
-			export.setError(e.getMessage() + ". See application logs for more details.");
-			logger.error("Error while exporting test " + context.getExecutionId() + " to " + respositoryId,e);
-		}			
+		if(report != null) {
+			String respositoryId = report.getRepositoryID();
+			try {
+				Repository repository = getRepository(respositoryId);
+				repository.exportExecution(context, report.getRepositoryParameters());	
+				export.setStatus(ReportExportStatus.SUCCESSFUL);
+			} catch (Exception e) {
+				export.setStatus(ReportExportStatus.FAILED);
+				export.setError(e.getMessage() + ". See application logs for more details.");
+				logger.error("Error while exporting test " + context.getExecutionId() + " to " + respositoryId,e);
+			}			
+		}
 		return export;
 	}
 	

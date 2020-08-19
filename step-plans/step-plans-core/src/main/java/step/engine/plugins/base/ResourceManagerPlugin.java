@@ -1,10 +1,11 @@
-package step.engine.plugins;
+package step.engine.plugins.base;
 
 import step.attachments.FileResolver;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.Plugin;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceManager;
 

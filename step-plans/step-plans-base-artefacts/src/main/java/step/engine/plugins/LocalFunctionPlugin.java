@@ -21,23 +21,22 @@ import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.FunctionCRUDAccessor;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.java.handler.KeywordHandler;
 
-@Plugin(dependencies= {BasePlugin.class})
+@Plugin(dependencies= {FunctionPlugin.class})
 public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 
-	private FunctionCRUDAccessor functionAccessor;
+	private FunctionAccessor functionAccessor;
 	private FunctionTypeRegistry functionTypeRegistry;
 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
 		if(context.getOperationMode() == OperationMode.LOCAL) {
-			functionAccessor = (FunctionCRUDAccessor) context.require(FunctionAccessor.class);
+			functionAccessor = context.require(FunctionAccessor.class);
 			functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 			
 			functionTypeRegistry.registerFunctionType(new LocalFunctionType());

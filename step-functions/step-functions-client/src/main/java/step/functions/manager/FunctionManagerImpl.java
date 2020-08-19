@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.functions.Function;
-import step.functions.accessor.FunctionCRUDAccessor;
+import step.functions.accessor.FunctionAccessor;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
@@ -35,11 +35,11 @@ public class FunctionManagerImpl implements FunctionManager {
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionManagerImpl.class);
 
-	private final FunctionCRUDAccessor functionRepository;
+	private final FunctionAccessor functionRepository;
 	
 	private final FunctionTypeRegistry functionTypeRegistry;
 
-	public FunctionManagerImpl(FunctionCRUDAccessor functionRepository, FunctionTypeRegistry functionTypeRegistry) {
+	public FunctionManagerImpl(FunctionAccessor functionRepository, FunctionTypeRegistry functionTypeRegistry) {
 		super();
 		this.functionRepository = functionRepository;
 		this.functionTypeRegistry = functionTypeRegistry;

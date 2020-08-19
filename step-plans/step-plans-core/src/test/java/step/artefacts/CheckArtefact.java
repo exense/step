@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 
 @Artefact(handler=CheckArtefactHandler.class)
@@ -30,7 +31,7 @@ public class CheckArtefact extends AbstractArtefact {
 	private Consumer<ExecutionContext> executionRunnable;
 
 	public CheckArtefact() {
-		super();
+		this(c->c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED));
 	}
 	
 	public CheckArtefact(Consumer<ExecutionContext> executionRunnable) {

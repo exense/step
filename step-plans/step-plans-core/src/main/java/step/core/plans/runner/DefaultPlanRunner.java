@@ -3,9 +3,7 @@ package step.core.plans.runner;
 import java.util.HashMap;
 import java.util.Map;
 
-import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
 
 /**
@@ -17,21 +15,15 @@ import step.core.plans.Plan;
  */
 public class DefaultPlanRunner implements PlanRunner {
 
-	private final ExecutionContext executionContext;
-	private final ExecutionEngine engine = new ExecutionEngine();
+	private final ExecutionEngine engine = ExecutionEngine.builder().withPluginsFromClasspath().build();
 	protected Map<String, String> properties;
 	
 	public DefaultPlanRunner() {
 		this(null);
 	}
 	
-	public DefaultPlanRunner(ExecutionContext executionContext) {
-		this(executionContext, null);
-	}
-	
-	public DefaultPlanRunner(ExecutionContext executionContext, Map<String, String> properties) {
+	public DefaultPlanRunner(Map<String, String> properties) {
 		super();
-		this.executionContext = executionContext;
 		this.properties = properties;
 	}
 
@@ -42,25 +34,13 @@ public class DefaultPlanRunner implements PlanRunner {
 
 	@Override
 	public PlanRunnerResult run(Plan plan, Map<String, String> executionParameters) {
-		if(executionContext == null) {
-			executionParameters = buildExecutionParametersIfNull(executionParameters);
-			return engine.execute(plan, executionParameters);
-		} else {
-			ExecutionParameters executionParametersObject = executionContext.getExecutionParameters();
-			Map<String, String> customParameters = buildExecutionParametersIfNull(executionParametersObject.getCustomParameters());
-			executionParametersObject.setCustomParameters(customParameters);
-			executionParametersObject.setPlan(plan);
-			return engine.execute(executionContext);
-		}
-	}
-
-	protected Map<String, String> buildExecutionParametersIfNull(Map<String, String> executionParameters) {
+		Map<String, String> mergedExecutionParameters = new HashMap<>();
 		if(properties != null) {
-			if(executionParameters == null) {
-				executionParameters = new HashMap<>();
-			}
-			executionParameters.putAll(properties);
+			mergedExecutionParameters.putAll(properties);
 		}
-		return executionParameters;
+		if(executionParameters != null) {
+			mergedExecutionParameters.putAll(executionParameters);
+		}
+		return engine.execute(plan, mergedExecutionParameters);
 	}
 }

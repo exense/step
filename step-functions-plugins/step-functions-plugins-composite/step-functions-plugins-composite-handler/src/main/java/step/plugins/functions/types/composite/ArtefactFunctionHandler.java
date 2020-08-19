@@ -68,7 +68,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 		ExecutionContext executionContext = (ExecutionContext) getTokenReservationSession().get(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY);
 		
 		if(executionContext == null) {
-			executionContext = new ExecutionEngine().newExecutionContext();
+			executionContext = ExecutionEngine.builder().withPluginsFromClasspath().build().newExecutionContext();
 			GridClient gridClient = new MockedGridClientImpl();
 
 			ControllerCredentials credentials = new ControllerCredentials("http://localhost:8080", "admin", "init");

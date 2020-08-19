@@ -24,13 +24,13 @@ import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import step.artefacts.AbstractArtefactTest;
 import step.artefacts.CheckArtefact;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
-import step.datapool.excel.AbstractArtefactTest;
 
 public class AbstractArtefactHandlerTest extends AbstractArtefactTest {
 	

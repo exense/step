@@ -37,7 +37,7 @@ public class DataSetTest {
 	}
 
 	protected ExecutionContext newExecutionContext() {
-		return new ExecutionEngine().newExecutionContext();
+		return ExecutionEngine.builder().build().newExecutionContext();
 	}
 	
 	@Test

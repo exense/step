@@ -32,6 +32,7 @@ import javax.json.JsonObject;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.AbstractArtefactTest;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolRow;

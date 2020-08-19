@@ -36,7 +36,7 @@ public class LocalPlanRunner extends DefaultPlanRunner {
 	 * @param functionClasses the list of Classes containing the functions (aka Keywords)
 	 */
 	public LocalPlanRunner(Map<String, String> properties, Class<?>... functionClasses) {
-		super(null, properties);
+		super(properties);
 	}
 	
 	/**
@@ -44,6 +44,6 @@ public class LocalPlanRunner extends DefaultPlanRunner {
 	 * @param functionClasses the list of Classes containing the functions (aka Keywords)
 	 */
 	public LocalPlanRunner(Map<String, String> properties, List<Class<?>> functionClasses) {
-		super(null, properties);
+		super(properties);
 	}
 }

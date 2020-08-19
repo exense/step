@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.functions.services;
+package step.controller.grid.services;
 
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +59,7 @@ import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.manager.FunctionManager;
+import step.functions.services.GetTokenHandleParameter;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
@@ -197,7 +198,7 @@ public class FunctionServices extends AbstractServices {
 			tokenWrapperOwner.setUsername(session.getUser().getUsername());
 			tokenWrapperOwner.setIpAddress(req.getRemoteAddr());
 			tokenWrapperOwner.setDescription(parameter.getReservationDescription());
-			return functionExecutionService.getTokenHandle(parameter.attributes, parameter.interests, parameter.createSession, tokenWrapperOwner);
+			return functionExecutionService.getTokenHandle(parameter.getAttributes(), parameter.getInterests(), parameter.isCreateSession(), tokenWrapperOwner);
 		} else {
 			return functionExecutionService.getLocalTokenHandle();
 		}
