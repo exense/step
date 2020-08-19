@@ -20,7 +20,7 @@
 	</parent>
 
 	<properties>
-		<ldap-exense-commons.version>2020.08.19-a080fd5</ldap-exense-commons.version>
+		<ldap-exense-commons.version>2020.08.19-7522100</ldap-exense-commons.version>
 	</properties>
 
 	<dependencies>

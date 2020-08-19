@@ -48,7 +48,7 @@ public class AuthenticationManager {
 		User user = userAccessor.getByUsername(username);
 		
 		if(user == null) {
-			throw new ApplicationException(100, "Unknow user '"+username+"': this user should be defined in step", null);
+			throw new ApplicationException(100, "Unknow user '"+username+"': this user is not defined in step", null);
 		}
 		session.setUser(user);
 	}

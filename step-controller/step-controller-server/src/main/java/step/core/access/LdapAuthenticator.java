@@ -13,6 +13,7 @@ import ch.commons.auth.ldap.LDAPClient;
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.GlobalContextAware;
+import step.core.controller.errorhandling.ApplicationException;
 
 public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 	
@@ -49,6 +50,10 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 
 	@Override
 	public boolean authenticate(Credentials credentials) throws Exception {
-		return authenticator.authenticate(credentials);
+		try {
+			return authenticator.authenticate(credentials);
+		} catch (NamingException e) {
+			throw new ApplicationException(100, e.getMessage(), null);
+		}
 	}
 }

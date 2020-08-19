@@ -24,6 +24,7 @@ import step.core.access.Role;
 import step.core.access.RoleProvider;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.controller.errorhandling.ApplicationException;
 
 @Singleton
 @Path("/access")
@@ -77,6 +78,8 @@ public class AccessServices extends AbstractServices {
 		boolean authenticated = false;
 		try {
 			authenticated = authenticationManager.authenticate(session, credentials);
+		} catch(ApplicationException e) {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed: "+e.getErrorMessage()).type("text/plain").build();
 		}catch(Exception e) {
 			e.printStackTrace();
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed. Check the server logs for more details.").type("text/plain").build();
