@@ -88,7 +88,7 @@ public class AccessServices extends AbstractServices {
         	SessionResponse sessionResponse = buildSessionResponse(session);
         	return Response.ok(sessionResponse).build();            	
         } else {
-        	return Response.status(Response.Status.UNAUTHORIZED.getStatusCode()).entity("Invalid username/password").type("text/plain").build();
+        	return Response.status(Response.Status.UNAUTHORIZED.getStatusCode()).entity("Authentication failed: Invalid username/password").type("text/plain").build();
         }    
     }
 	
