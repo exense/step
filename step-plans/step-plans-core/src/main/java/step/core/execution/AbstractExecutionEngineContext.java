@@ -1,6 +1,9 @@
 package step.core.execution;
 
+import java.io.File;
+
 import ch.exense.commons.app.Configuration;
+import step.attachments.FileResolver;
 import step.core.AbstractContext;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessor;
@@ -14,17 +17,28 @@ import step.core.repositories.RepositoryObjectManager;
 import step.engine.execution.ExecutionManager;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
+import step.resources.InMemoryResourceAccessor;
+import step.resources.InMemoryResourceRevisionAccessor;
+import step.resources.ResourceAccessor;
+import step.resources.ResourceManager;
+import step.resources.ResourceManagerImpl;
 
 public abstract class AbstractExecutionEngineContext extends AbstractContext {
 
 	private Configuration configuration;
 	private ExpressionHandler expressionHandler;
 	private DynamicBeanResolver dynamicBeanResolver;
+	
+	private ResourceAccessor resourceAccessor;
 	private PlanAccessor planAccessor;
 	private ReportNodeAccessor reportNodeAccessor;
 	private ExecutionAccessor executionAccessor;
+
+	private ResourceManager resourceManager;
 	private ExecutionManager executionManager;
 	private RepositoryObjectManager repositoryObjectManager;
+
+	private FileResolver fileResolver;
 	
 	public AbstractExecutionEngineContext() {
 		super();
@@ -35,11 +49,17 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 		configuration = new Configuration();
 		expressionHandler = new ExpressionHandler();
 		dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
+		
+		resourceAccessor = new InMemoryResourceAccessor();
 		planAccessor = new InMemoryPlanAccessor();
 		reportNodeAccessor = new InMemoryReportNodeAccessor();
 		executionAccessor = new InMemoryExecutionAccessor();
+
+		resourceManager = new ResourceManagerImpl(new File("resources"), resourceAccessor, new InMemoryResourceRevisionAccessor());
 		executionManager = new ExecutionManagerImpl(executionAccessor);
 		repositoryObjectManager = new RepositoryObjectManager();
+
+		fileResolver = new FileResolver(resourceManager);
 	}
 	
 	protected void useAllAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
@@ -57,6 +77,9 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 	
 	protected void useSourceAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
 		planAccessor = parentContext.getPlanAccessor();
+		resourceAccessor = parentContext.getResourceAccessor();
+		resourceManager = parentContext.getResourceManager();
+		fileResolver = parentContext.getFileResolver();
 	}
 	
 	protected void useReportingAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
@@ -71,6 +94,30 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 
 	public void setConfiguration(Configuration configuration) {
 		this.configuration = configuration;
+	}
+
+	public FileResolver getFileResolver() {
+		return fileResolver;
+	}
+
+	public void setFileResolver(FileResolver fileResolver) {
+		this.fileResolver = fileResolver;
+	}
+
+	public ResourceAccessor getResourceAccessor() {
+		return resourceAccessor;
+	}
+
+	public void setResourceAccessor(ResourceAccessor resourceAccessor) {
+		this.resourceAccessor = resourceAccessor;
+	}
+
+	public ResourceManager getResourceManager() {
+		return resourceManager;
+	}
+
+	public void setResourceManager(ResourceManager resourceManager) {
+		this.resourceManager = resourceManager;
 	}
 
 	public ExpressionHandler getExpressionHandler() {

@@ -63,7 +63,6 @@ import step.functions.services.GetTokenHandleParameter;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
-import step.resources.ResourceManager;
 
 @Path("/functions")
 public class FunctionServices extends AbstractServices {
@@ -81,7 +80,7 @@ public class FunctionServices extends AbstractServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().get(ResourceManager.class));
+		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().getResourceManager());
 		functionAccessor = getContext().get(FunctionAccessor.class);
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);

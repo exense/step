@@ -19,7 +19,6 @@ import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.reports.ErrorType;
-import step.engine.plugins.base.ResourceManagerPlugin;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.handler.FunctionHandlerFactory;
 import step.functions.io.Input;
@@ -61,7 +60,7 @@ public class ArtefactFunctionHandlerTest {
 	}
 
 	protected ExecutionContext newExecutionContext() {
-		return ExecutionEngine.builder().withPlugin(new ResourceManagerPlugin()).build().newExecutionContext();
+		return ExecutionEngine.builder().build().newExecutionContext();
 	}
 
 	protected ArtefactFunctionHandler createArtefactFunctionHandler(ExecutionContext context) {

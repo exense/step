@@ -30,7 +30,6 @@ import step.core.execution.ExecutionEngineException;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.engine.plugins.base.ResourceManagerPlugin;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -84,7 +83,7 @@ public class FunctionGroupHandlerTest {
 	}
 	
 	private ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction) {
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ResourceManagerPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
 
 			@Override
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
@@ -235,7 +234,7 @@ public class FunctionGroupHandlerTest {
 		InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
 		functionAccessor.save(function);			
 		
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ResourceManagerPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
 
 			@Override
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,

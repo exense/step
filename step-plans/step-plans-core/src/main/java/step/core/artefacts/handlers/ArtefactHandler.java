@@ -29,7 +29,6 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
 import step.core.artefacts.WorkArtefactFactory;
@@ -77,7 +76,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		reportNodeAttributesManager = new ReportNodeAttributesManager(context);
 		dynamicBeanResolver = context.getDynamicBeanResolver();
-		resourceManager = context.get(ResourceManager.class);
+		resourceManager = context.getResourceManager();
 	}
 	
 	private enum Phase {

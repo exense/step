@@ -65,7 +65,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		Configuration configuration = context.getConfiguration();
 		
 		GridClient gridClient = context.require(GridClient.class);
-		FileResolver fileResolver = context.require(FileResolver.class);
+		FileResolver fileResolver = context.getFileResolver();
 		
 		FunctionEditorRegistry editorRegistry = new FunctionEditorRegistry();
 		

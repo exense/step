@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.core;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
+import step.attachments.FileResolver;
 import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.access.UserAccessorImpl;
@@ -58,6 +60,13 @@ import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
+import step.resources.ResourceAccessor;
+import step.resources.ResourceAccessorImpl;
+import step.resources.ResourceManager;
+import step.resources.ResourceManagerControllerPlugin;
+import step.resources.ResourceManagerImpl;
+import step.resources.ResourceRevisionAccessor;
+import step.resources.ResourceRevisionAccessorImpl;
 
 public class Controller {
 	
@@ -108,6 +117,17 @@ public class Controller {
 		mongoClientSession = new MongoClientSession(configuration);
 		
 		context.setConfiguration(configuration);
+		
+		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(mongoClientSession);
+		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(mongoClientSession);
+		String resourceRootDir = ResourceManagerControllerPlugin.getResourceDir(configuration);
+		ResourceManager resourceManager = new ResourceManagerImpl(new File(resourceRootDir), resourceAccessor, resourceRevisionAccessor);
+		FileResolver fileResolver = new FileResolver(resourceManager);
+		
+		context.setResourceAccessor(resourceAccessor);
+		context.setResourceManager(resourceManager);
+		context.setFileResolver(fileResolver);
+		
 		context.setMongoClientSession(mongoClientSession);
 		CollectionRegistry collectionRegistry = new CollectionRegistry();
 		context.put(CollectionRegistry.class, collectionRegistry);		

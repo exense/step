@@ -71,7 +71,7 @@ public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
 							for (Object object : list) {
 								if(object instanceof AttachmentMeta) {
 									AttachmentMeta attachmentMeta = (AttachmentMeta) object;
-									ResourceManager resourceManager = context.get(ResourceManager.class);
+									ResourceManager resourceManager = context.getResourceManager();
 									File fileToCopy = resourceManager.getResourceFile(attachmentMeta.getId().toString()).getResourceFile();
 									// Export only if the file name matches the defined filter
 									if(filter == null || filter.matcher(fileToCopy.getName()).matches()) {

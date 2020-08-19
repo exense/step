@@ -36,7 +36,7 @@ public class ImportServices extends AbstractServices {
 	public void init() throws Exception {
 		super.init();
 		importManager = new ImportManager(getContext());
-		fileResolver = getContext().get(FileResolver.class);
+		fileResolver = getContext().getFileResolver();
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 	}
 

@@ -34,7 +34,7 @@ public class ExcelFileLookup {
 		super();
 		this.context = context;
 		if(context!=null) {
-			this.fileResolver = context.get(FileResolver.class);
+			this.fileResolver = context.getFileResolver();
 		}
 	}
 

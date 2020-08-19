@@ -9,8 +9,6 @@ import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.Plugin;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.engine.plugins.base.ResourceManagerPlugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.execution.FunctionExecutionService;
@@ -23,7 +21,7 @@ import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.client.GridClient;
 import step.grid.client.MockedGridClientImpl;
 
-@Plugin(dependencies= {ResourceManagerPlugin.class})
+@Plugin(dependencies= {})
 public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 
 	private FunctionAccessor functionAccessor;
@@ -35,7 +33,7 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		FileResolver fileResolver = context.require(FileResolver.class);
+		FileResolver fileResolver = context.getFileResolver();
 
 		functionAccessor = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionAccessor.class, k->new InMemoryFunctionAccessorImpl());
 		functionTypeRegistry = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionTypeRegistry.class, k->new FunctionTypeRegistryImpl(fileResolver, gridClient));

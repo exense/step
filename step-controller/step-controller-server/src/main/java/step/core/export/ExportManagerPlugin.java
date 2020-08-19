@@ -12,7 +12,7 @@ public class ExportManagerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		ResourceManager resourceManager = context.get(ResourceManager.class);
+		ResourceManager resourceManager = context.getResourceManager();
 		ExportTaskManager exportTaskManager = new ExportTaskManager(resourceManager);
 		context.put(ExportTaskManager.class, exportTaskManager);
 		

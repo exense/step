@@ -70,7 +70,7 @@ public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfigur
 	@Override
 	public void init() {
 		super.init();
-		fileResolver = context.get(FileResolver.class);
+		fileResolver = context.getFileResolver();
 		createDatapool(saKey, fileId, tabName);
 		createHeaders();
 		this.cursor = 1; // skip headers
