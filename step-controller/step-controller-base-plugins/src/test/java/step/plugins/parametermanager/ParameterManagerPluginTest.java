@@ -19,8 +19,8 @@ public class ParameterManagerPluginTest {
 	
 	@Test
 	public void testEmptyParameterList() {
-		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor);
 		ExecutionContext executionContext = newExecutionContext();
+		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, executionContext);
 		
 		parameterManagerPlugin.executionStart(executionContext);
 		
@@ -42,9 +42,9 @@ public class ParameterManagerPluginTest {
 		
 		declareParameter("MyApp.MyFunctionParameter3", "MyApp.MyFunctionParameter3Value1", ParameterScope.FUNCTION, "MyApp.MyFunction3");
 		declareParameter("MyFunctionParameter3", "MyFunctionParameter3Value1", ParameterScope.FUNCTION, "MyFunction3");
-		
-		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor);
+
 		ExecutionContext executionContext = newExecutionContext();
+		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, executionContext);
 		parameterManagerPlugin.executionStart(executionContext);
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter"));
 		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyGlobalParameter"));
@@ -100,8 +100,8 @@ public class ParameterManagerPluginTest {
 	@IgnoreDuringAutoDiscovery
 	public static class LocalParameterManagerPlugin extends ParameterManagerPlugin {
 
-		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor) {
-			super(new ParameterManager(parameterAccessor));
+		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor, ExecutionContext executionContext) {
+			super(new ParameterManager(parameterAccessor, executionContext.getConfiguration()));
 		}
 		
 		

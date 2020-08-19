@@ -55,7 +55,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		
 		context.get(CollectionRegistry.class).register("parameters", new ParameterCollection(context.getMongoClientSession().getMongoDatabase()));
 		
-		ParameterManager parameterManager = new ParameterManager(parameterAccessor);
+		ParameterManager parameterManager = new ParameterManager(parameterAccessor, context.getConfiguration());
 		context.put(ParameterManager.class, parameterManager);
 		this.parameterManager = parameterManager;
 		
