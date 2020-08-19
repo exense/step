@@ -1,5 +1,6 @@
 package step.core.access;
 
+import step.core.controller.errorhandling.ApplicationException;
 import step.core.deployment.Session;
 
 public class RoleResolverImpl implements RoleResolver {
@@ -15,13 +16,10 @@ public class RoleResolverImpl implements RoleResolver {
 	public String getRoleInContext(Session session) {
 		User user = userAccessor.get(session.getUser().getId());
 		
-		//For compatibility with external user management
 		if(user == null) {
-			user = new ExternalUser();
-			user.setUsername(session.getUser().getUsername());
+			throw new ApplicationException(100, "Unknow user '"+session.getUser()+"': this user should be defined in step", null);
 		}
 		
 		return user.getRole();
 	}
-
 }

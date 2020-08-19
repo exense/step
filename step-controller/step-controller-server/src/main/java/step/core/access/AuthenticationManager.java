@@ -6,6 +6,7 @@ import java.util.List;
 import ch.commons.auth.Authenticator;
 import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
+import step.core.controller.errorhandling.ApplicationException;
 import step.core.deployment.Session;
 
 public class AuthenticationManager {
@@ -45,12 +46,9 @@ public class AuthenticationManager {
 	protected void setUserToSession(Session session, String username) {
 		session.setAuthenticated(true);
 		User user = userAccessor.getByUsername(username);
-
-		//For compatibility with external user management
+		
 		if(user == null) {
-			user = new ExternalUser();
-			user.setUsername(username);
-			userAccessor.save(user);
+			throw new ApplicationException(100, "Unknow user '"+username+"': this user should be defined in step", null);
 		}
 		session.setUser(user);
 	}
