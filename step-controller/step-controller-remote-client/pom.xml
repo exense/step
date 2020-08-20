@@ -10,10 +10,6 @@
 		<version>0.0.0</version>
 	</parent>
 
-	<properties>
-		<ldap-exense-commons.version>2020.08.19-9ac9523</ldap-exense-commons.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.commons</groupId>
