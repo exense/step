@@ -53,6 +53,10 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
     $scope.handle.undo();
   }
 
+  $scope.discardAll = function() {
+    $scope.handle.discardAll();
+  }
+
   $scope.redo = function() {
     $scope.handle.redo();
   }

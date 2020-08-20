@@ -480,6 +480,16 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
           }
         }
 
+        $scope.handle.discardAll = function () {
+          while ($scope.undoStack.length > 1) {
+            $scope.redoStack.push($scope.undoStack.pop());
+          }
+          if ($scope.undoStack.length > 0) {
+            $scope.plan = $scope.undoStack.pop();
+            $scope.fireChangeEvent(true);
+          }
+        }
+
         $scope.handle.hasUndo = function () {
           return ($scope.undoStack.length > 1);
         }

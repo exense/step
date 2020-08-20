@@ -6,6 +6,9 @@
 				<div class="panel-heading st-flex-fixed">{{model.plan.root?model.plan.root._class:''}} - {{model.plan.attributes.name}}
 					<div class="pull-right">
 						<div class="btn-group btn-group-menu">
+							<button type="button" ng-if="hasUndo()" ng-type="submit" class="btn btn-default btn-xs" ng-click="discardAll()" uib-tooltip="revert all changes" tooltip-append-to-body="true" tooltip-placement="bottom">
+								<span>Discard All</span>
+							</button>
 							<button type="button" ng-disabled="!hasUndo()" ng-type="submit" class="btn btn-default btn-xs" ng-click="undo()" uib-tooltip="Undo (ctrl+z)" tooltip-append-to-body="true" tooltip-placement="bottom">
 								<span class="icon-flipped glyphicon glyphicon-repeat"></span>
 							</button>
