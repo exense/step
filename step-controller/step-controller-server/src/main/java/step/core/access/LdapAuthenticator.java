@@ -54,7 +54,7 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 			return authenticator.authenticate(credentials);
 		} catch (NamingException e) {
 			e.printStackTrace();
-			throw new ApplicationException(100, "Invalid username/password", null);
+			throw new ApplicationException(100, "Invalid username/password. See the controller logs for more detail", null);
 		}
 	}
 }
