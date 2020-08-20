@@ -81,7 +81,7 @@ public class AccessServices extends AbstractServices {
 		} catch(ApplicationException e) {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed: "+e.getErrorMessage()).type("text/plain").build();
 		}catch(Exception e) {
-			e.printStackTrace();
+			logger.error("Unknow Exception when trying to authenticate the user '"+credentials.getUsername()+"'", e);
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed. Check the server logs for more details.").type("text/plain").build();
 		}
         if(authenticated) {

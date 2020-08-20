@@ -43,7 +43,7 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 			logger.info("LdapAuthenticator is active.");
 			authenticator = new CypherAuthenticator(directory);
 		} catch (NamingException e) {
-			e.printStackTrace();
+			logger.error("Error when trying to create the LDAP client", e);
 		}
 		
 	}
@@ -53,7 +53,7 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 		try {
 			return authenticator.authenticate(credentials);
 		} catch (NamingException e) {
-			e.printStackTrace();
+			logger.error("Invalid username/password", e);
 			throw new ApplicationException(100, "Invalid username/password. See the controller logs for more detail", null);
 		}
 	}
