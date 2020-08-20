@@ -35,11 +35,11 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
 		FileResolver fileResolver = context.getFileResolver();
 
+		gridClient = context.inheritFromParentOrComputeIfAbsent(parentContext, GridClient.class ,k->new MockedGridClientImpl());
+
 		functionAccessor = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionAccessor.class, k->new InMemoryFunctionAccessorImpl());
 		functionTypeRegistry = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionTypeRegistry.class, k->new FunctionTypeRegistryImpl(fileResolver, gridClient));
 		functionManager = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionManager.class, k->new FunctionManagerImpl(functionAccessor, functionTypeRegistry));
-		
-		gridClient = context.inheritFromParentOrComputeIfAbsent(parentContext, GridClient.class ,k->new MockedGridClientImpl());
 		
 		functionExecutionService = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionExecutionService.class, k->{
 			try {
