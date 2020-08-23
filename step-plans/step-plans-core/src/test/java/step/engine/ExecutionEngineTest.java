@@ -30,6 +30,7 @@ import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
+import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.ImportResult;
@@ -172,6 +173,7 @@ public class ExecutionEngineTest {
 	private Boolean exportCalled = false; 
 
 	@Plugin
+	@IgnoreDuringAutoDiscovery
 	public class TestRepositoryPlugin extends AbstractExecutionEnginePlugin {
 		
 		@Override
