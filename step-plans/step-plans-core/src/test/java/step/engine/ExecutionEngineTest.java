@@ -1,8 +1,16 @@
 package step.engine;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
@@ -15,6 +23,8 @@ import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.ExecutionEngineException;
 import step.core.execution.OperationMode;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
@@ -26,6 +36,7 @@ import step.core.repositories.ImportResult;
 import step.core.repositories.Repository;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
+import step.engine.execution.ExecutionLifecycleManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
 public class ExecutionEngineTest {
@@ -46,22 +57,86 @@ public class ExecutionEngineTest {
 	}
 	
 	@Test
+	public void test2PhasesExecution() throws ExecutionEngineException, IOException {
+		ExecutionEngine executionEngine = ExecutionEngine.builder().build();
+		
+		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact()).endBlock().build();
+		String executionId = executionEngine.initializeExecution(new ExecutionParameters(plan, null));
+		PlanRunnerResult result = executionEngine.execute(executionId);
+		
+		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+	}
+	
+	@Test
+	public void testAbortExecution() throws ExecutionEngineException, IOException, TimeoutException, InterruptedException, ExecutionException {
+		ExecutionEngine executionEngine = ExecutionEngine.builder().build();
+
+		Semaphore semaphore = new Semaphore(1);
+		semaphore.acquire();
+		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact(e-> {
+			// Notify execution start
+			semaphore.release();
+			while(!e.isInterrupted()) {
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e1) {}
+			}
+		})).endBlock().build();
+		
+		Future<PlanRunnerResult> future = Executors.newSingleThreadExecutor().submit(()->executionEngine.execute(plan));
+
+		// Wait for the execution to start
+		semaphore.tryAcquire(10, TimeUnit.SECONDS);
+		List<ExecutionContext> currentExecutions = executionEngine.getCurrentExecutions();
+		
+		// The number of executions should now be 1
+		Assert.assertEquals(1, currentExecutions.size());
+		ExecutionContext executionContext = currentExecutions.get(0);
+		
+		// Abort the execution
+		new ExecutionLifecycleManager(executionContext).abort();
+		
+		// Wait for the execution to terminate
+		future.get().waitForExecutionToTerminate(1000);
+		
+		// The number of executions should now be 0
+		currentExecutions = executionEngine.getCurrentExecutions();
+		Assert.assertEquals(0, currentExecutions.size());
+	}
+	
+	@Test
 	public void testRepository() throws ExecutionEngineException, IOException {
 		ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new TestRepositoryPlugin()).build();
 		
 		PlanRunnerResult result = executionEngine.execute(new ExecutionParameters(new RepositoryObjectReference(TEST_REPOSITORY, newSuccessfulRepositoryImport()), null));
 		
 		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+		Assert.assertTrue(exportCalled);
+	}
+	
+	@Test
+	public void testSimulationMode() throws ExecutionEngineException, IOException {
+		ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new TestRepositoryPlugin()).build();
+		
+		// Build executionParameters with Simulation mode
+		ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.SIMULATION, null, new RepositoryObjectReference(TEST_REPOSITORY, newSuccessfulRepositoryImport()), null, null, null, null, false, null);
+		PlanRunnerResult result = executionEngine.execute(executionParameters); 
+		
+		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+		Assert.assertFalse(exportCalled);
 	}
 	
 	@Test
 	public void testRepositoryImportError() throws ExecutionEngineException, IOException {
-		ExecutionEngine executionEngine = ExecutionEngine.builder().build();
+		ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new TestRepositoryPlugin()).build();
 		
 		PlanRunnerResult result = executionEngine.execute(new ExecutionParameters(new RepositoryObjectReference(TEST_REPOSITORY, newFailingRepositoryImport()), null));
 		
-		//Assert.assertEquals(ExecutionStatus.ENDED, executionContext.getStatus());
-		// Add assert of import error
+		Execution execution = executionEngine.getExecutionEngineContext().getExecutionAccessor().get(result.getExecutionId());
+		ImportResult importResult = execution.getImportResult();
+		Assert.assertFalse(importResult.isSuccessful());
+		String string = importResult.getErrors().get(0);
+		Assert.assertEquals(REPOSITORY_IMPORT_STATUS_ERROR, string);
 	}
 
 	protected HashMap<String, String> newFailingRepositoryImport() {
@@ -93,11 +168,12 @@ public class ExecutionEngineTest {
 		
 		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
 	}
+	
+	private Boolean exportCalled = false; 
 
 	@Plugin
-	public static class TestRepositoryPlugin extends AbstractExecutionEnginePlugin {
+	public class TestRepositoryPlugin extends AbstractExecutionEnginePlugin {
 		
-
 		@Override
 		public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
 			context.getRepositoryObjectManager().registerRepository(TEST_REPOSITORY, new Repository() {
@@ -111,6 +187,9 @@ public class ExecutionEngineTest {
 						String importStatus = repositoryParameters.get(REPOSITORY_IMPORT_STATUS);
 						if(importStatus.equals(REPOSITORY_IMPORT_STATUS_ERROR)) {
 							importResult.setSuccessful(false);
+							List<String> errors = new ArrayList<>();
+							errors.add(REPOSITORY_IMPORT_STATUS_ERROR);
+							importResult.setErrors(errors);
 						} else {
 							importResult.setSuccessful(true);
 							Plan plan = PlanBuilder.create().startBlock(new CheckArtefact()).endBlock().build();
@@ -134,9 +213,9 @@ public class ExecutionEngineTest {
 				
 				@Override
 				public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
+					exportCalled = true;
 				}
 			});
 		}
-
 	}
 }

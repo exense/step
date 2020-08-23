@@ -12,19 +12,27 @@ import org.slf4j.LoggerFactory;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
+import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResult;
+import step.core.plugins.Plugin;
 import step.core.plugins.PluginManager;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 import step.engine.plugins.ExecutionEnginePlugin;
 
+/**
+ * This class represent the central component for the execution of {@link Plan}s.
+ * It supports local executions as well as central executions within controller instances.
+ * 
+ * It replaces all the classes implementing the legacy {@link PlanRunner} interface
+ *
+ */
 public class ExecutionEngine {
 
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionEngine.class);
 	
 	private final ExecutionEngineContext executionEngineContext;
 	private final ExecutionEnginePlugin plugins;
-
-	private ConcurrentHashMap<String, ExecutionContext> currentExecutions = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, ExecutionContext> currentExecutions = new ConcurrentHashMap<>();
 	
 	private ExecutionEngine(ExecutionEngineContext executionEngineContext, ExecutionEnginePlugin plugins) {
 		super();
@@ -35,24 +43,40 @@ public class ExecutionEngine {
 	
 	public static class Builder {
 
-		private step.core.plugins.PluginManager.Builder<ExecutionEnginePlugin> pluginBuilder = PluginManager.builder(ExecutionEnginePlugin.class);
+		private final step.core.plugins.PluginManager.Builder<ExecutionEnginePlugin> pluginBuilder;
 		private OperationMode operationMode;
 		private AbstractExecutionEngineContext parentContext;
 		
 		public Builder() {
 			super();
+			pluginBuilder = PluginManager.builder(ExecutionEnginePlugin.class);
 		}
 		
+		/**
+		 * Add a {@link Plugin} instance to the list of {@link Plugin}s to be used by the {@link ExecutionEngine}
+		 * @param plugin the instance of {@link Plugin} to be added 
+		 * @return 
+		 */
 		public Builder withPlugin(ExecutionEnginePlugin plugin) {
 			pluginBuilder.withPlugin(plugin);
 			return this;
 		}
 		
+		/**
+		 * Add a {@link List} of {@link Plugin} instances to the list of {@link Plugin}s to be used by the {@link ExecutionEngine}
+		 * @param plugins the {@link List} of {@link Plugin} isntances
+		 * @return 
+		 */
 		public Builder withPlugins(List<ExecutionEnginePlugin> plugins) {
 			pluginBuilder.withPlugins(plugins);
 			return this;
 		}
 	
+		/**
+		 * Searches for classes annotated by {@link Plugin} and implementing {@link ExecutionEnginePlugin} in the classpath
+		 * and add them to the list of plugins to be used by the {@link ExecutionEngine} 
+		 * @return
+		 */
 		public Builder withPluginsFromClasspath() {
 			try {
 				pluginBuilder.withPluginsFromClasspath();
@@ -62,16 +86,29 @@ public class ExecutionEngine {
 			return this;
 		}
 		
+		/**
+		 * Sets the operation mode of the {@link ExecutionEngine}. {@link OperationMode}
+		 * @param operationMode the operation mode of the {@link ExecutionEngine}
+		 * @return
+		 */
 		public Builder withOperationMode(OperationMode operationMode) {
 			this.operationMode = operationMode;
 			return this;
 		}
 		
+		/**
+		 * Sets a parent context from which the attributes should be inherited
+		 * @param parentContext
+		 * @return
+		 */
 		public Builder withParentContext(AbstractExecutionEngineContext parentContext) {
 			this.parentContext = parentContext;
 			return this;
 		}
 		
+		/**
+		 * @return creates the {@link ExecutionEngine} instance
+		 */
 		public ExecutionEngine build() {
 			if(operationMode == null) {
 				operationMode = OperationMode.LOCAL;
@@ -95,21 +132,55 @@ public class ExecutionEngine {
 		}
 	}
 	
+	/**
+	 * @return a new instance of the {@link ExecutionEngine} build
+	 */
 	public static Builder builder() {
 		return new Builder();
 	}
 	
+	/**
+	 * @return the {@link ExecutionEngineContext} of this {@link ExecutionEngine}
+	 */
 	public ExecutionEngineContext getExecutionEngineContext() {
 		return executionEngineContext;
 	}
 	
+	/**
+	 * Initializes an execution based on the provided parameters.
+	 * This creates and persists a new {@link Execution} instance.
+	 * This method call should be followed by {@link ExecutionEngine#execute(String)}
+	 * 
+	 * @param executionParameters the {@link ExecutionParameters} of the {@link Execution} to be created
+	 * @return the ID of the new {@link Execution}
+	 */
+	public String initializeExecution(ExecutionParameters executionParameters) {
+		return initializeExecution(executionParameters, null);
+	}
+	
+	/**
+	 * Initializes an execution based on the provided parameters.
+	 * This creates and persists a new {@link Execution} instance.
+	 * This method call should be followed by {@link ExecutionEngine#execute(String)}
+	 * 
+	 * @param executionParameters the {@link ExecutionParameters} of the {@link Execution} to be created
+	 * @param taskID the ID of the scheduler task from which this execution is originating from
+	 * @return the ID of the new {@link Execution}
+	 */
 	public String initializeExecution(ExecutionParameters executionParameters, String taskID) {
 		Execution execution = new ExecutionFactory().createExecution(executionParameters, taskID);
 		executionEngineContext.getExecutionAccessor().save(execution);
-		return execution.getId().toString();
+		String executionId = execution.getId().toString();
+		return executionId;
 	}
 	
+	/**
+	 * Executes an {@link Execution} previously initialized by {@link ExecutionEngine#initializeExecution(ExecutionParameters, String)} 
+	 * @param executionId the ID of the {@link Execution} initialized and returned by {@link ExecutionEngine#initializeExecution(ExecutionParameters, String)}
+	 * @return the result of the execution
+	 */
 	public PlanRunnerResult execute(String executionId) {
+		logger.info("Starting execution with id '"+executionId+"'");
 		Execution execution = executionEngineContext.getExecutionAccessor().get(executionId);
 		if(execution != null) {
 			ExecutionParameters executionParameters = execution.getExecutionParameters();
@@ -119,15 +190,32 @@ public class ExecutionEngine {
 		}
 	}
 	
+	/**
+	 * Create a new execution and runs the provided plan as part of this {@link Execution}
+	 * @param plan the {@link Plan} to be executed
+	 * @return
+	 */
 	public PlanRunnerResult execute(Plan plan) {
 		return execute(plan, null);
 	}
 	
+	/**
+	 * Create a new execution and runs the provided plan as part of this {@link Execution}
+	 * @param plan the {@link Plan} to be executed
+	 * @param executionParameters the map of execution parameters. These parameters are equivalent to 
+	 * the parameters selected on the execution screen of the STEP UI
+	 * @return
+	 */
 	public PlanRunnerResult execute(Plan plan, Map<String, String> executionParameters) {
 		ExecutionParameters executionParameterObject = new ExecutionParameters(plan, executionParameters);
 		return execute(executionParameterObject);
 	}
 
+	/**
+	 * Create a new execution and runs the plan specified within the provided {@link ExecutionParameters}
+	 * @param executionParameterObject the 
+	 * @return
+	 */
 	public PlanRunnerResult execute(ExecutionParameters executionParameterObject) {
 		String executionId = initializeExecution(executionParameterObject, null);
 		return execute(executionId, executionParameterObject);
@@ -144,6 +232,10 @@ public class ExecutionEngine {
 		}
 	}
 	
+	/**
+	 * @return a new {@link ExecutionContext}. <b>Warning:</b> This method should only be used for testing purposes 
+	 * i.e. for tests requiring an {@link ExecutionContext} without {@link ExecutionEngine}
+	 */
 	public ExecutionContext newExecutionContext() {
 		return newExecutionContext(new ObjectId().toString(), new ExecutionParameters());
 	}
@@ -161,6 +253,9 @@ public class ExecutionEngine {
 		return executionContext;
 	}
 
+	/**
+	 * @return the {@link List} of currently running executions
+	 */
 	public List<ExecutionContext> getCurrentExecutions() {
 		return new ArrayList<>(currentExecutions.values());
 	}
