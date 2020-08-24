@@ -55,6 +55,11 @@ public class DynamicValue<T> {
 		}
 	}
 	
+	public T getOrDefault(T defaultValue) {
+		T value = get();
+		return value != null ? value : defaultValue;
+	}
+	
 	public DynamicValue<T> cloneValue() {
 		DynamicValue<T> clone = new DynamicValue<>();
 		clone.dynamic = dynamic;

@@ -28,7 +28,7 @@ public @interface Artefact {
 
 	String name() default ""; 
 
-	Class<?> handler();
+	Class<?> handler() default Object.class;
 	
 	Class<? extends ReportNode> report() default ReportNode.class;
 	

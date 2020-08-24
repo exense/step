@@ -41,11 +41,17 @@ public class ArtefactHandlerManager {
 		return artefactHandler;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(Class<AbstractArtefact> artefactClass, ExecutionContext context) {
 		Artefact artefact = artefactClass.getAnnotation(Artefact.class);
 		if(artefact!=null) {
-			@SuppressWarnings("unchecked")
-			Class<ArtefactHandler<AbstractArtefact, ReportNode>> artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) artefact.handler();
+			Class<?> artefactHandlerFromAnnotation = artefact.handler();
+			Class<ArtefactHandler<AbstractArtefact, ReportNode>> artefactHandlerClass;
+			if(artefactHandlerFromAnnotation == Object.class) {
+				artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) context.getArtefactHandlerRegistry().get(artefactClass);
+			} else {
+				artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) artefactHandlerFromAnnotation;
+			}
 			if(artefactHandlerClass!=null) {
 				ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler;
 				try {
