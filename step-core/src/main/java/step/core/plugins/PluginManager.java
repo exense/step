@@ -125,23 +125,9 @@ public class PluginManager<T> {
 			return this;
 		}
 		
-		private List<T> getPluginsFromClassLoader(String... packagePrefixes) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-			List<Class<?>> pluginClasses = getClassesAnnotatedByPluginAnnotation(packagePrefixes);
-			
-			List<T> plugins = new ArrayList<>();
-			for(Class<?> pluginClass:pluginClasses) {
-				if(this.pluginClass.isAssignableFrom(pluginClass) && pluginClass.getAnnotation(IgnoreDuringAutoDiscovery.class) == null) {
-					@SuppressWarnings("unchecked")
-					T plugin = newPluginInstance((Class<T>) pluginClass);
-					plugins.add(plugin);
-				}
-			}
-			return plugins;
-		}
-
-		private List<Class<?>> getClassesAnnotatedByPluginAnnotation(String... packagePrefixes) throws ClassNotFoundException {
+		private List<T> getPluginsFromClassLoader(String... packagePrefixes) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 			long t1 = System.currentTimeMillis();
-			logger.info("Searching for plugins classes...");
+			logger.info("Searching for plugins annotated by "+Plugin.class.getName()+" and implementing "+pluginClass.getCanonicalName());
 			ClassGraph classGraph = new ClassGraph().whitelistPackages(packagePrefixes).enableClassInfo().enableAnnotationInfo();
 			
 			List<String> classNames;
@@ -151,13 +137,24 @@ public class PluginManager<T> {
 			}
 			
 			ClassLoader cl = Thread.currentThread().getContextClassLoader();
-			List<Class<?>> pluginClasses = new ArrayList<>();
+			List<String> pluginClasses = new ArrayList<>();
+			List<T> plugins = new ArrayList<>();
 			for (String className : classNames) {
-				pluginClasses.add(cl.loadClass(className));
+				Class<?> clazz = cl.loadClass(className);
+				if(pluginClass.isAssignableFrom(clazz)) {
+					if(clazz.getAnnotation(IgnoreDuringAutoDiscovery.class) == null) {
+						pluginClasses.add(className);
+						@SuppressWarnings("unchecked")
+						T plugin = newPluginInstance((Class<T>) clazz);
+						plugins.add(plugin);
+					} else {
+						logger.debug("Ignoring plugin "+className+" annotated by "+IgnoreDuringAutoDiscovery.class.getName());
+					}
+				}
 			}
 			
 			logger.info("Found following plugins classes in "+(System.currentTimeMillis()-t1)+"ms: "+pluginClasses);
-			return pluginClasses;
+			return plugins;
 		}
 		
 		private T newPluginInstance(Class<T> _class) throws InstantiationException, IllegalAccessException  {

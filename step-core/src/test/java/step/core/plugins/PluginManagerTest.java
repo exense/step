@@ -37,6 +37,13 @@ public class PluginManagerTest {
 	}
 	
 	@Test
+	public void testBuilderWithPluginsFromClassLoaderAndFilter() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+		PluginManager<TestPluginInterface2> pluginManager = new PluginManager.Builder<TestPluginInterface2>(TestPluginInterface2.class).withPluginsFromClasspath()
+				.withPluginFilter(p->false).build();
+		Assert.assertEquals(0, pluginManager.getPlugins().size());
+	}
+	
+	@Test
 	public void testBuilderWithPluginsFromClassLoader2() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		PluginManager<TestPluginInterface2> pluginManager = new PluginManager.Builder<TestPluginInterface2>(TestPluginInterface2.class).withPluginsFromClasspath("").build();
 		assertOrder(pluginManager, TestPlugin.class);
