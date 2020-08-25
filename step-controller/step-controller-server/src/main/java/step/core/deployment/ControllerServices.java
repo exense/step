@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -42,6 +43,7 @@ import javax.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
@@ -55,6 +57,13 @@ import step.engine.execution.ExecutionLifecycleManager;
 @Singleton
 @Path("controller")
 public class ControllerServices extends AbstractServices {
+	
+	private ArtefactHandlerRegistry artefactHandlerRegistry;
+	
+	@PostConstruct
+	public void init() {
+		artefactHandlerRegistry = getContext().getArtefactHandlerRegistry();
+	}
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -223,7 +232,7 @@ public class ControllerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public Set<String> getArtefactTypes() {
-		return getContext().getArtefactRegistry().getArtefactNames();
+		return artefactHandlerRegistry.getArtefactNames();
 	}
 
 	@GET
@@ -232,7 +241,7 @@ public class ControllerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public Set<String> getArtefactTemplates() {
-		return new TreeSet<>(getContext().getArtefactRegistry().getArtefactTemplateNames());
+		return new TreeSet<>(artefactHandlerRegistry.getArtefactTemplateNames());
 	}
 	
 	@GET
@@ -241,6 +250,6 @@ public class ControllerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
-		return getContext().getArtefactRegistry().getArtefactTypeInstance(type);
+		return artefactHandlerRegistry.getArtefactTypeInstance(type);
 	}
 }

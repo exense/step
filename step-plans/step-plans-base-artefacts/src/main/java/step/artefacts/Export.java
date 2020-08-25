@@ -18,13 +18,12 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.ExportHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = ExportHandler.class, report = ReportNode.class, block=false)
+@Artefact(report = ReportNode.class, block=false)
 public class Export extends AbstractArtefact {
 
 	private DynamicValue<String> value = new DynamicValue<>("");

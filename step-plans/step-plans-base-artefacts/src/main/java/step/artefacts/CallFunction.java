@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.CallFunctionHandler;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(name="CallKeyword", handler = CallFunctionHandler.class, report = CallFunctionReportNode.class)
+@Artefact(name="CallKeyword", report = CallFunctionReportNode.class)
 public class CallFunction extends TokenSelector {
 		
 	String functionId;

@@ -150,6 +150,7 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 		Assert.assertEquals("Value1", map.get("Output1"));
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testDrainOutputToDataSetHandle() {
 		ExecutionContext executionContext = buildExecutionContext();

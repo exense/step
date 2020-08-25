@@ -5,7 +5,6 @@ import java.io.File;
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.core.AbstractContext;
-import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessor;
@@ -31,7 +30,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 	private ExpressionHandler expressionHandler;
 	private DynamicBeanResolver dynamicBeanResolver;
 
-	private ArtefactRegistry artefactRegistry;
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
 	
 	private ResourceAccessor resourceAccessor;
@@ -55,7 +53,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 		expressionHandler = new ExpressionHandler();
 		dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
 		
-		artefactRegistry = new ArtefactRegistry();
 		artefactHandlerRegistry = new ArtefactHandlerRegistry();
 		
 		resourceAccessor = new InMemoryResourceAccessor();
@@ -81,7 +78,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 		expressionHandler = parentContext.getExpressionHandler();
 		dynamicBeanResolver = parentContext.getDynamicBeanResolver();
 		repositoryObjectManager = parentContext.getRepositoryObjectManager();
-		artefactRegistry = parentContext.getArtefactRegistry();
 		artefactHandlerRegistry = parentContext.getArtefactHandlerRegistry();
 	}
 	
@@ -144,14 +140,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 	
 	public void setDynamicBeanResolver(DynamicBeanResolver dynamicBeanResolver) {
 		this.dynamicBeanResolver = dynamicBeanResolver;
-	}
-	
-	public ArtefactRegistry getArtefactRegistry() {
-		return artefactRegistry;
-	}
-
-	public void setArtefactRegistry(ArtefactRegistry artefactRegistry) {
-		this.artefactRegistry = artefactRegistry;
 	}
 
 	public ArtefactHandlerRegistry getArtefactHandlerRegistry() {

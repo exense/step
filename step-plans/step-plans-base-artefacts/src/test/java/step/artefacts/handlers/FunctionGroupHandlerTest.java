@@ -11,14 +11,15 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
-import step.artefacts.CheckArtefact;
 import step.artefacts.Echo;
 import step.artefacts.FunctionGroup;
 import step.artefacts.RetryIfFails;
 import step.artefacts.Sequence;
 import step.artefacts.Sleep;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -83,7 +84,7 @@ public class FunctionGroupHandlerTest {
 	}
 	
 	private ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction) {
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 
 			@Override
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
@@ -234,7 +235,7 @@ public class FunctionGroupHandlerTest {
 		InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
 		functionAccessor.save(function);			
 		
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 
 			@Override
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,

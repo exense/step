@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.artefacts;
+package step.core.artefacts.handlers;
 
-import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 
 public class CheckArtefactHandler extends ArtefactHandler<CheckArtefact, ReportNode> {

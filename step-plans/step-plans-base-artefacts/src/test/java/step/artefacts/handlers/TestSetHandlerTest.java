@@ -27,8 +27,8 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.artefacts.Check;
-import step.artefacts.CheckArtefact;
 import step.artefacts.TestSet;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;

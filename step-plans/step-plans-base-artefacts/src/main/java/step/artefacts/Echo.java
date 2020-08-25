@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.EchoHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = EchoHandler.class, block=false)
+@Artefact(block=false)
 public class Echo extends AbstractArtefact {
 
 	private DynamicValue<Object> text = new DynamicValue<>();

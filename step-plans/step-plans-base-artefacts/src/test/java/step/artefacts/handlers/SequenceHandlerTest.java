@@ -32,9 +32,9 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.artefacts.CheckArtefact;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;

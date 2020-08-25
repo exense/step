@@ -44,7 +44,7 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 	}
 
 	private void evaluateExpressionAndDelegate(WhileReportNode node, While testArtefact, boolean execution) {
-		long timeout = testArtefact.getTimeout().getOrDefault(0l);
+		long timeout = testArtefact.getTimeout().getOrDefault(Long.class, 0l);
 		long maxTime = System.currentTimeMillis() + timeout;
 
 		Integer maxIterationsValue = testArtefact.getMaxIterations().get();
@@ -53,7 +53,7 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
 		int failedLoops = 0;
 		
-		long pacing = testArtefact.getPacing().getOrDefault(0l);
+		long pacing = testArtefact.getPacing().getOrDefault(Long.class, 0l);
 
 		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 

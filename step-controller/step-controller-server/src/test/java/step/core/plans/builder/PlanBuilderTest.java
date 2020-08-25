@@ -7,9 +7,6 @@ import org.junit.Test;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.plans.Plan;
 
 public class PlanBuilderTest {
@@ -62,38 +59,12 @@ public class PlanBuilderTest {
 		return a;
 	}
 	
-	@Artefact(name="Custom", handler = CustomHandler.class)
+	@Artefact(name="Custom")
 	public static class CustomArtefact extends AbstractArtefact {
 
 		@Override
 		public String toString() {
 			return "CustomArtefact [" + getDescription() + "]";
 		}
-		
 	}
-	
-	public static class CustomHandler extends ArtefactHandler<CustomArtefact, ReportNode>{
-
-		@Override
-		protected void createReportSkeleton_(ReportNode parentNode, CustomArtefact testArtefact) {
-			
-		}
-
-		@Override
-		protected void execute_(ReportNode node, CustomArtefact testArtefact) throws Exception {
-			if(testArtefact.getChildren()!=null) {
-				testArtefact.getChildren().forEach(child->{
-					delegateExecute(child, node);
-				});
-			}
-			node.setStatus(ReportNodeStatus.PASSED);
-		}
-
-		@Override
-		public ReportNode createReportNode_(ReportNode parentNode, CustomArtefact testArtefact) {
-			return new ReportNode();
-		}
-		
-	}
-
 }

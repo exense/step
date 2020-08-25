@@ -64,7 +64,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		_id = new ObjectId();
 		
 		Map<String, String> defaultAttributes = new HashMap<>();
-		defaultAttributes.put("name", getDefaultArtefactName(this.getClass()));
+		defaultAttributes.put("name", getArtefactName(this.getClass()));
 		attributes = defaultAttributes;
 		persistNode = true;
 		dynamicName = new DynamicValue<String>("");
@@ -72,7 +72,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		dynamicName.setExpression("");
 	}
 	
-	private String getDefaultArtefactName(Class<? extends AbstractArtefact> artefactClass) {
+	public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {
 		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
 		return annotation.name().length() > 0 ? annotation.name() : artefactClass.getSimpleName();
 	}

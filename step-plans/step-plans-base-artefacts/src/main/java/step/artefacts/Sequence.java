@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.SequenceHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = SequenceHandler.class, useAsTemplate = true)
+@Artefact(useAsTemplate = true)
 public class Sequence extends AbstractArtefact {
 	
 	DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);

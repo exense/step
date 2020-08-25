@@ -42,7 +42,7 @@ public class PlanPlugin extends AbstractControllerPlugin {
 
 			@Override
 			public Plan newPlan(String template) throws Exception {
-				AbstractArtefact artefact = context.getArtefactRegistry().getArtefactTypeInstance(template);
+				AbstractArtefact artefact = context.getArtefactHandlerRegistry().getArtefactTypeInstance(template);
 				Plan plan = PlanBuilder.create().startBlock(artefact).endBlock().build();
 				return plan;
 			}

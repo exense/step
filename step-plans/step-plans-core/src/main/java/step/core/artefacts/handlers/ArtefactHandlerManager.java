@@ -10,10 +10,12 @@ import step.core.execution.ExecutionContext;
 public class ArtefactHandlerManager {
 	
 	private final ExecutionContext context;
+	private final ArtefactHandlerRegistry artefactHandlerRegistry;
 	
 	public ArtefactHandlerManager(ExecutionContext context) {
 		super();
 		this.context = context;
+		this.artefactHandlerRegistry = context.getArtefactHandlerRegistry();
 	}
 
 	public void createReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
@@ -45,13 +47,8 @@ public class ArtefactHandlerManager {
 	private ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(Class<AbstractArtefact> artefactClass, ExecutionContext context) {
 		Artefact artefact = artefactClass.getAnnotation(Artefact.class);
 		if(artefact!=null) {
-			Class<?> artefactHandlerFromAnnotation = artefact.handler();
 			Class<ArtefactHandler<AbstractArtefact, ReportNode>> artefactHandlerClass;
-			if(artefactHandlerFromAnnotation == Object.class) {
-				artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) context.getArtefactHandlerRegistry().get(artefactClass);
-			} else {
-				artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) artefactHandlerFromAnnotation;
-			}
+			artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) artefactHandlerRegistry.get(artefactClass);
 			if(artefactHandlerClass!=null) {
 				ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler;
 				try {

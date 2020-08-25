@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.CallPlanHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = CallPlanHandler.class)
+@Artefact()
 public class CallPlan extends AbstractArtefact {
 	
 	private String planId;

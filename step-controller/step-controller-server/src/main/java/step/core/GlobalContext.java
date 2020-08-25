@@ -21,7 +21,6 @@ package step.core;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoClientSession;
-import step.core.artefacts.ArtefactRegistry;
 import step.core.entities.EntityManager;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.model.ExecutionAccessor;
@@ -43,8 +42,6 @@ public class GlobalContext extends AbstractExecutionEngineContext {
 	private ServiceRegistrationCallback serviceRegistrationCallback;
 	
 	private EntityManager entityManager;
-	
-	private ArtefactRegistry artefactRegistry;
 	
 	public GlobalContext() {
 		super();
@@ -97,14 +94,6 @@ public class GlobalContext extends AbstractExecutionEngineContext {
 	public void setServiceRegistrationCallback(
 			ServiceRegistrationCallback serviceRegistrationCallback) {
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
-	}
-	
-	public ArtefactRegistry getArtefactRegistry() {
-		return artefactRegistry;
-	}
-
-	public void setArtefactRegistry(ArtefactRegistry artefactRegistry) {
-		this.artefactRegistry = artefactRegistry;
 	}
 
 	public Version getCurrentVersion() {

@@ -29,11 +29,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.artefacts.CheckArtefact;
 import step.artefacts.Echo;
 import step.artefacts.Set;
 import step.artefacts.Sleep;
 import step.artefacts.While;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;

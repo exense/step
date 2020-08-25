@@ -35,7 +35,6 @@ import step.core.accessors.MongoClientSession;
 import step.core.accessors.PlanAccessorImpl;
 import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
-import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
@@ -145,7 +144,6 @@ public class Controller {
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
-		context.setArtefactRegistry(ArtefactRegistry.getInstance());
 		
 		context.setEntityManager(new EntityManager());
 		context.getEntityManager()

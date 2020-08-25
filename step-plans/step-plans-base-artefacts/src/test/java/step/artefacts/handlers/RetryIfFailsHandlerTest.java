@@ -25,10 +25,10 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import step.artefacts.CheckArtefact;
 import step.artefacts.IfBlock;
 import step.artefacts.RetryIfFails;
 import step.artefacts.Set;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;

@@ -18,11 +18,10 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.PlaceholderHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 
-@Artefact(handler = PlaceholderHandler.class)
+@Artefact()
 public class Placeholder extends AbstractArtefact {
 
 }

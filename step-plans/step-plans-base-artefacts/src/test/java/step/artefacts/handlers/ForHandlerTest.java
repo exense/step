@@ -29,9 +29,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import step.artefacts.CheckArtefact;
 import step.artefacts.ForBlock;
 import step.artefacts.reports.ForBlockReportNode;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;

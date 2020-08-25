@@ -19,12 +19,12 @@
 package step.artefacts.handlers;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
@@ -33,12 +33,24 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.ContainsDynamicValues;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.DefaultPlanRunner;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.threadpool.ThreadPoolPlugin;
 
 public class TestGroupHandler {
 
+	private ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+		@Override
+		public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
+				ExecutionContext executionContext) {
+			executionContext.getArtefactHandlerRegistry().put(TestArtefact.class, TestArtefactHandler.class);
+		}
+	}).build();
+	
 	@Test
 	public void test() throws IOException {		
 		ThreadGroup threadGroup = new ThreadGroup();
@@ -52,10 +64,8 @@ public class TestGroupHandler {
 		
 		Plan plan = PlanBuilder.create().startBlock(threadGroup).add(c).endBlock().build();
 		
-		DefaultPlanRunner runner = new DefaultPlanRunner();
-		
 		long t1 = System.currentTimeMillis();
-		runner.run(plan).visitReportNodes(node->{
+		engine.execute(plan).visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
 		long t2 = System.currentTimeMillis();
@@ -70,7 +80,7 @@ public class TestGroupHandler {
 		
 	}
 	
-	@Artefact(handler=TestArtefactHandler.class)
+	@Artefact()
 	public static class TestArtefact extends AbstractArtefact {
 		
 		AtomicInteger iterations;

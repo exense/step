@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.WhileHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(name = "While", handler = WhileHandler.class)
+@Artefact(name = "While")
 public class While extends AbstractArtefact {
 
 	private DynamicValue<Boolean> condition = new DynamicValue<>("", "");

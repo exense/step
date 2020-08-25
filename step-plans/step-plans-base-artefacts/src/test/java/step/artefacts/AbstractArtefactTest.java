@@ -10,7 +10,7 @@ public class AbstractArtefactTest {
 	}
 
 	protected ExecutionContext newExecutionContext() {
-		return ExecutionEngine.builder().build().newExecutionContext();
+		return ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build().newExecutionContext();
 	}
 
 }

@@ -22,12 +22,11 @@ import java.util.function.BiConsumer;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import step.artefacts.handlers.FunctionGroupHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
 
-@Artefact(handler = FunctionGroupHandler.class, name="Session")
+@Artefact(name="Session")
 public class FunctionGroup extends TokenSelector {
 
 	@JsonIgnore

@@ -18,11 +18,10 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.ScriptHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 
-@Artefact(handler = ScriptHandler.class, block=false)
+@Artefact(block=false)
 public class Script extends AbstractArtefact {
 
 	private String script;

@@ -8,7 +8,6 @@ import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
@@ -36,7 +35,7 @@ public class LocalRepository implements Repository {
 		
 		ArtefactInfo info = new ArtefactInfo();
 		info.setName(plan.getAttributes()!=null?plan.getAttributes().get(AbstractOrganizableObject.NAME):null);
-		info.setType(ArtefactRegistry.getArtefactName(plan.getRoot().getClass()));
+		info.setType(AbstractArtefact.getArtefactName(plan.getRoot().getClass()));
 		return info;
 	}
 

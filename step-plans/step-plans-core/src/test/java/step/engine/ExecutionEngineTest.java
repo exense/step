@@ -15,7 +15,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.artefacts.CheckArtefact;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;

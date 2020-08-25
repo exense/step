@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.artefacts;
+package step.core.artefacts;
 
 import java.util.function.Consumer;
 
@@ -25,7 +25,7 @@ import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 
-@Artefact(handler=CheckArtefactHandler.class)
+@Artefact()
 public class CheckArtefact extends AbstractArtefact {
 
 	private Consumer<ExecutionContext> executionRunnable;
