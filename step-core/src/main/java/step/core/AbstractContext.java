@@ -19,34 +19,68 @@
 package step.core;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public abstract class AbstractContext {
+	
+	private final ConcurrentHashMap<String, Object> attributes;
 
-	private ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
+	public AbstractContext() {
+		super();
+		this.attributes = new ConcurrentHashMap<String, Object>();
+	}
 
 	public Object get(Object key) {
 		return attributes.get(key);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T>T get(Class<T> class_) {
+		return (T) get(key(class_));
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T>T require(Class<T> class_) {
+		Object object = get(key(class_));
+		if(object == null) {
+			throw new IllegalStateException("Missing required session object of type "+class_.toString());
+		} else {
+			return (T) object;
+		}
+	}
+	
+	public <T> T computeIfAbsent(Class<T> class_, Function<Class<T>, T> mappingFunction) {
+		T value = get(class_);
+		if(value == null) {
+			value = mappingFunction.apply(class_);
+			put(class_, value);
+		}
+		return value;
 	}
 
 	public Object put(String key, Object value) {
 		return attributes.put(key, value);
 	}
 	
-	public <T> Object put(Class<T> class_, T value) {
-		return attributes.put(class_.getName(), value);
-	}
-	
 	@SuppressWarnings("unchecked")
-	public <T>T get(Class<T> class_) {
-		return (T) attributes.get(class_.getName());
+	public <T> T put(Class<T> class_, T value) {
+		return (T) attributes.put(key(class_), value);
 	}
 
-	public ConcurrentHashMap<String, Object> getAttributes() {
-		return attributes;
-	}
-
-	public void setAttributes(ConcurrentHashMap<String, Object> attributes) {
-		this.attributes = attributes;
+	private <T> String key(Class<T> class_) {
+		return class_.getName();
 	}
 	
+	public <T> T inheritFromParentOrComputeIfAbsent(AbstractContext parentContext, Class<T> class_,
+			Function<Class<T>, T> mappingFunction) {
+		T parentAttribute = parentContext != null ? parentContext.get(class_) : null;
+		T value;
+		if (parentAttribute == null) {
+			value = mappingFunction.apply(class_);
+		} else {
+			value = parentAttribute;
+		}
+		put(class_, value);
+		return value;
+	}
 }

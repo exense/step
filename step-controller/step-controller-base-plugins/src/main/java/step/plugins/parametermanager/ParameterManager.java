@@ -28,6 +28,7 @@ import javax.script.Bindings;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
+import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,10 +41,13 @@ public class ParameterManager {
 	private static Logger logger = LoggerFactory.getLogger(ParameterManager.class);
 	
 	private CRUDAccessor<Parameter> parameterAccessor;
+
+	private String defaultScriptEngine;
 	
-	public ParameterManager(CRUDAccessor<Parameter> parameterAccessor) {
+	public ParameterManager(CRUDAccessor<Parameter> parameterAccessor, Configuration configuration) {
 		super();
 		this.parameterAccessor = parameterAccessor;
+		this.defaultScriptEngine = configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE);
 	}
 
 	public Map<String, String> getAllParameterValues(Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
@@ -64,7 +68,7 @@ public class ParameterManager {
 				}
 				parameters.add(p);
 				try {
-					Activator.compileActivationExpression(p);
+					Activator.compileActivationExpression(p, defaultScriptEngine);
 				} catch (ScriptException e) {
 					logger.error("Error while compilating activation expression of parameter "+p, e);
 				}
@@ -74,11 +78,16 @@ public class ParameterManager {
 		
 		for(String key:parameterMap.keySet()) {
 			List<Parameter> parameters = parameterMap.get(key);
-			Parameter bestMatch = Activator.findBestMatch(bindings, parameters);
+			Parameter bestMatch = Activator.findBestMatch(bindings, parameters, defaultScriptEngine);
 			if(bestMatch!=null) {
 				result.put(key, bestMatch);
 			}
 		}
 		return result;
 	}
+
+	public String getDefaultScriptEngine() {
+		return defaultScriptEngine;
+	}
+
 }

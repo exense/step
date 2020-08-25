@@ -39,7 +39,7 @@ public class QuotaManager {
 	private static final Logger logger = LoggerFactory.getLogger(QuotaManager.class);
 		
 	private volatile QuotaManagerConfig config;
-	
+	private volatile boolean enabled = false;
 	private volatile List<QuotaHandler> quotaHandlers;
 	
 	private final ConcurrentHashMap<UUID, List<Permit>> permits = new ConcurrentHashMap<>();
@@ -61,6 +61,14 @@ public class QuotaManager {
 	
 	public QuotaManagerConfig getConfig() {
 		return config;
+	}
+
+	protected boolean isEnabled() {
+		return enabled;
+	}
+
+	protected void setEnabled(boolean enabled) {
+		this.enabled = enabled;
 	}
 
 	public void loadConfiguration(File configFile) {

@@ -256,21 +256,15 @@ angular.module('tables', ['export'])
           // to load (HTTP call to retrieve the template for instance), the cell cannot be rendered in the current angular digest cycle
           // and the data returned by colDef.render (See above) used for ordering and filtering are wrong
           // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
-          // Waiting 100ms however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
+          // Waiting Xms or n cycles however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
           performInNCycles(function() {
         	  scope.table.draw(false);
           }, 50)
         }
 		  }
-		  
-		  // Load the table in 10 cycles
-		  performInNCycles(function() {
-			  controller.reload();
-      }, 50)
     
 		  controller.reload = function() {
 		    var columns = controller.getDtColumns();
-		    console.log('nb columns: ' + columns.length);
 		    if(columns && columns.length>0) {
 		      // First destroy the previous table if any
 	        if(scope.table && scope.table.destroy) {
@@ -445,8 +439,17 @@ angular.module('tables', ['export'])
 	          loadTableData();
 		      }
 		    }
-		    
+
 		  }
+
+      controller.reload();
+
+      scope.$on('newColumn', function(event, args) {
+        $timeout(function() {
+          controller.reload();
+        });
+
+      });
 		  
       scope.exportAsCSV = function() {
         var requestURI='rest/table/' + scope.collection + '/export?';
@@ -513,6 +516,8 @@ angular.module('tables', ['export'])
 					return transclude(callback, null, 'cell')
 				},
 			}, positionInParent)
+
+			scope.$emit('newColumn');
 		}
 	}
 })

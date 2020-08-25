@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.script.ScriptException;
 
+import ch.exense.commons.app.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,15 +42,28 @@ import step.core.objectenricher.ObjectPredicate;
 public class ParameterManagerTest {
 
 	@Test
-	public void test1() throws ScriptException {
+	public void testJavascript() throws ScriptException {
+		Configuration configuration = new Configuration();
+		configuration.putProperty("tec.activator.scriptEngine","javascript");
+		test1Common(configuration);
+	}
+
+	@Test
+	public void testGroovy() throws ScriptException {
+		Configuration configuration = new Configuration();
+		configuration.putProperty("tec.activator.scriptEngine","groovy");
+		test1Common(configuration);
+	}
+
+	public void test1Common(Configuration configuration) throws ScriptException {
 		InMemoryCRUDAccessor<Parameter> accessor = new InMemoryCRUDAccessor<>();
-		ParameterManager m = new ParameterManager(accessor);
-		
+		ParameterManager m = new ParameterManager(accessor, configuration);
+
 		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
 		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
 		accessor.save(new Parameter(new Expression("user=='abricot'"), "key1", "abricotier", "desc"));
 		accessor.save(new Parameter(new Expression("user=='poire'"), "key1", "poirier", "desc"));
-		
+
 		accessor.save(new Parameter(null, "key2", "defaultValue", "desc"));
 		accessor.save(new Parameter(null, "key2", "defaultValue2", "desc"));
 		accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue2", "desc"));
@@ -59,15 +73,15 @@ public class ParameterManagerTest {
 		Parameter p = new Parameter(new Expression("user=='poire'"), "key3", "value3", "desc");
 		p.setPriority(10);
 		accessor.save(p);
-		
+
 		Map<String, Object> bindings = new HashMap<String, Object>();
 		bindings.put("user", "poire");
-				
+
 		Map<String, String> params = m.getAllParameterValues(bindings, null);
 		Assert.assertEquals(params.get("key1"),"poirier");
 		Assert.assertEquals(params.get("key2"),"defaultValue2");
 		Assert.assertEquals(params.get("key3"),"value3");
-		
+
 		params = m.getAllParameterValues(bindings, new ObjectPredicate() {
 			@Override
 			public boolean test(Object t) {
@@ -80,7 +94,7 @@ public class ParameterManagerTest {
 	@Test
 	public void testPerf() throws ScriptException {
 		InMemoryCRUDAccessor<Parameter> accessor = new InMemoryCRUDAccessor<>();
-		ParameterManager m = new ParameterManager(accessor);
+		ParameterManager m = new ParameterManager(accessor, new Configuration());
 		
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {
@@ -106,7 +120,7 @@ public class ParameterManagerTest {
 	@Test
 	public void testParallel() throws ScriptException, InterruptedException, ExecutionException {
 		InMemoryCRUDAccessor<Parameter> accessor = new InMemoryCRUDAccessor<>();
-		ParameterManager m = new ParameterManager(accessor);
+		ParameterManager m = new ParameterManager(accessor, new Configuration());
 		
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {

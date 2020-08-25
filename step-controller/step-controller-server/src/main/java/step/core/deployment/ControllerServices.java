@@ -23,7 +23,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -41,19 +43,27 @@ import javax.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ArtefactRegistry;
+import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.ReportNode;
-import step.core.execution.ExecutionRunnable;
+import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.engine.execution.ExecutionLifecycleManager;
 
 @Singleton
 @Path("controller")
 public class ControllerServices extends AbstractServices {
+	
+	private ArtefactHandlerRegistry artefactHandlerRegistry;
+	
+	@PostConstruct
+	public void init() {
+		artefactHandlerRegistry = getContext().getArtefactHandlerRegistry();
+	}
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -153,9 +163,9 @@ public class ControllerServices extends AbstractServices {
 	@Path("/execution/{id}/stop")
 	@Secured(right="plan-execute")
 	public Void abort(@PathParam("id") String executionID) {
-		ExecutionRunnable task = getExecutionRunnable(executionID);
-		if(task!=null) {
-			task.getExecutionLifecycleManager().abort();
+		ExecutionContext context = getExecutionRunnable(executionID);
+		if(context!=null) {
+			new ExecutionLifecycleManager(context).abort();
 		}
 		return null;
 	}
@@ -222,7 +232,16 @@ public class ControllerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public Set<String> getArtefactTypes() {
-		return getContext().getArtefactRegistry().getArtefactNames();
+		return artefactHandlerRegistry.getArtefactNames();
+	}
+
+	@GET
+	@Path("/artefact/templates")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
+	public Set<String> getArtefactTemplates() {
+		return new TreeSet<>(artefactHandlerRegistry.getArtefactTemplateNames());
 	}
 	
 	@GET
@@ -231,6 +250,6 @@ public class ControllerServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
-		return getContext().getArtefactRegistry().getArtefactTypeInstance(type);
+		return artefactHandlerRegistry.getArtefactTypeInstance(type);
 	}
 }

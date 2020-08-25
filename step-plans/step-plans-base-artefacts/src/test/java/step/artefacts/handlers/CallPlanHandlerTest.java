@@ -6,9 +6,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import step.artefacts.CallPlan;
-import step.artefacts.CheckArtefact;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ContextBuilder;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 
@@ -16,7 +15,7 @@ public class CallPlanHandlerTest extends AbstractArtefactHandlerTest {
 	
 	@Test
 	public void test() {
-		context = ContextBuilder.createLocalExecutionContext();
+		context = newExecutionContext();
 		
 		AtomicBoolean executed = new AtomicBoolean();
 		

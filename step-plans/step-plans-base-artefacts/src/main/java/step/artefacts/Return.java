@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.ReturnHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = ReturnHandler.class, block=false)
+@Artefact(block=false)
 public class Return extends AbstractArtefact {
 
 	private DynamicValue<String> output = new DynamicValue<>();

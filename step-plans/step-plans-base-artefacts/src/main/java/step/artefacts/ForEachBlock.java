@@ -18,10 +18,9 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.ForBlockHandler;
 import step.core.artefacts.Artefact;
 
-@Artefact(name="ForEach", handler = ForBlockHandler.class)
+@Artefact(name="ForEach")
 public class ForEachBlock extends AbstractForBlock {
 
 }

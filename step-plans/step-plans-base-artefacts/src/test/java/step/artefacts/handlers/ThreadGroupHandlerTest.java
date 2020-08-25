@@ -28,9 +28,9 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.artefacts.Check;
-import step.artefacts.CheckArtefact;
 import step.artefacts.Sleep;
 import step.artefacts.ThreadGroup;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;

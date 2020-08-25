@@ -18,21 +18,20 @@
  *******************************************************************************/
 angular.module('adminControllers', ['step' ])
 
-.run(function(ViewRegistry, EntityRegistry) {
+.run(function(ViewRegistry, EntityRegistry, $timeout) {
   ViewRegistry.registerView('admin','partials/admin.html');
   EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/users/userSelectionTable.html');
+  ViewRegistry.registerDashlet('admin','Users','partials/users/users.html','users');
+  $timeout(function() {ViewRegistry.registerDashlet('admin','Settings','partials/settings.html','controller');})
 })
 
-.controller('AdminCtrl', ['$scope', 'stateStorage',
-    function($scope, stateStorage) {
+.controller('AdminCtrl', ['$scope', 'stateStorage', 'ViewRegistry',
+    function($scope, stateStorage, ViewRegistry) {
       // push this scope to the state stack
       stateStorage.push($scope, 'admin', {});
-      
-      $scope.tabs = [
-          { id: 'users'},
-          { id: 'controller'}
-      ]
-      
+
+      $scope.tabs = ViewRegistry.getDashlets("admin");
+
       // Select the "Users" tab per default
       if($scope.$state == null) { $scope.$state = 'users' };
       

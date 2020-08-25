@@ -19,11 +19,14 @@
 package step.plugins.interactive;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -39,33 +42,34 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.artefacts.ArtefactQueue;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
-import step.artefacts.handlers.FunctionGroupHandler;
-import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.artefacts.StreamingArtefact;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.execution.ControllerExecutionContextBuilder;
-import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionManager;
-import step.core.execution.MockedExecutionManagerImpl;
-import step.core.objectenricher.ObjectHookRegistry;
+import step.core.execution.AbstractExecutionEngineContext;
+import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
+import step.core.execution.OperationMode;
+import step.core.execution.model.ExecutionParameters;
+import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.plans.PlanNavigator;
 import step.core.plans.builder.PlanBuilder;
-import step.core.variables.VariableType;
+import step.core.plans.runner.PlanRunnerResult;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
-import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.manager.FunctionManager;
-import step.grid.TokenWrapper;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.planbuilder.FunctionArtefacts;
+import step.plugins.parametermanager.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 
 @Singleton
@@ -78,24 +82,38 @@ public class InteractiveServices extends AbstractServices {
 	
 	private Timer sessionExpirationTimer; 
 	
-	private ObjectHookRegistry objectHookRegistry;
+	private ExecutionEngine executionEngine;
 	
-	private ControllerExecutionContextBuilder executionContextBuilder;
+	private final ExecutorService executorService;
+
+	private PlanAccessor planAccessor;
 	
 	private static class InteractiveSession {
 		
-		ExecutionContext c;
-		
-		ReportNode root;
-		
-		FunctionGroupContext functionGroupContext;
-		
 		long lasttouch;
+		private final ArtefactQueue artefactQueue;
+		private final Future<PlanRunnerResult> future;
+		
+		public InteractiveSession(ArtefactQueue artefactQueue, Future<PlanRunnerResult> future) {
+			super();
+			this.artefactQueue = artefactQueue;
+			this.future = future;
+			this.lasttouch = System.currentTimeMillis();
+		}
+		
+		protected ArtefactQueue getArtefactQueue() {
+			return artefactQueue;
+		}
+		
+		protected Future<PlanRunnerResult> getFuture() {
+			return future;
+		}
 	}
-	
 	
 	public InteractiveServices() {
 		super();
+		
+		executorService = Executors.newCachedThreadPool();
 		
 		sessionExpirationTimer = new Timer("Session expiration timer");
 		sessionExpirationTimer.schedule(new TimerTask() {
@@ -122,8 +140,16 @@ public class InteractiveServices extends AbstractServices {
 	public void init() throws Exception {
 		super.init();
 		GlobalContext context = getContext();
-		objectHookRegistry = context.get(ObjectHookRegistry.class);
-		executionContextBuilder = new ControllerExecutionContextBuilder(context);
+		planAccessor = context.getPlanAccessor();
+		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
+				.withParentContext(context).withPluginsFromClasspath().withPlugin(new AbstractExecutionEnginePlugin() {
+
+					@Override
+					public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext,
+							ExecutionEngineContext executionEngineContext) {
+						executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
+					}
+				}).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class))).build();
 	}
 	
 	@PreDestroy
@@ -131,105 +157,67 @@ public class InteractiveServices extends AbstractServices {
 		if(sessionExpirationTimer != null) {
 			sessionExpirationTimer.cancel();
 		}
+		executorService.shutdown();
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/start")
 	@Secured(right="interactive")
-	public String start() throws AgentCommunicationException {
-		InteractiveSession session = new InteractiveSession();
-		ExecutionContext  executionContext = executionContextBuilder.createExecutionContext();
-		// Replace the ExecutionManager as we don't have any Execution in this context
-		executionContext.put(ExecutionManager.class, new MockedExecutionManagerImpl());
+	public String start(ExecutionParameters executionParameters) throws AgentCommunicationException {
+		StreamingArtefact streamingArtefact = new StreamingArtefact();
+		Plan plan = PlanBuilder.create()
+						.startBlock(FunctionArtefacts.session())
+							.add(streamingArtefact)
+						.endBlock()
+					.build();
 		
-		// Enrich the ExecutionParameters with the current context attributes as done by the TenantContextFilter when starting a normal execution
-		objectHookRegistry.getObjectEnricher(getSession()).accept(executionContext.getExecutionParameters());
+		executionParameters.setPlan(plan);
+		String executionId = executionEngine.initializeExecution(executionParameters, null);
+		Future<PlanRunnerResult> future = executorService.submit(()->executionEngine.execute(executionId));
+		InteractiveSession session = new InteractiveSession(streamingArtefact.getQueue(), future);
 		
-		session.c = executionContext;
-		session.lasttouch = System.currentTimeMillis();
-		session.root = new ReportNode();
-		session.functionGroupContext = new FunctionGroupContext(null);
-		String id = executionContext.getExecutionId();
-		
-		executionContext.getReportNodeCache().put(session.root);
-		executionContext.setReport(session.root);
-		executionContext.setCurrentReportNode(session.root);
-		session.c.getVariablesManager().putVariable(session.root, FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY, 
-				session.functionGroupContext);
-
-		executionContext.getExecutionCallbacks().beforePlanImport(executionContext);
-		executionContext.getExecutionCallbacks().executionStart(executionContext);
-		sessions.put(id, session);
-		return id;
+		// the session id has to match the execution id as it used in the client to find the report nodes
+		sessions.put(executionId, session);
+		return executionId;
 	}
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}/stop")
 	@Secured(right="interactive")
-	public void stop(@PathParam("id") String sessionId) throws FunctionExecutionServiceException {
+	public void stop(@PathParam("id") String sessionId) throws FunctionExecutionServiceException, InterruptedException, ExecutionException {
 		InteractiveSession session = getAndTouchSession(sessionId);
 		if(session!=null) {
-			closeSession(session);			
+			closeSession(session);		
+			session.getFuture().get();
 		}
 	}
 
 	private void closeSession(InteractiveSession session) throws FunctionExecutionServiceException {
-		List<TokenWrapper> tokens = session.functionGroupContext.getTokens();
-		if(tokens!=null) {
-			FunctionExecutionService functionExecutionService = getContext().get(FunctionExecutionService.class);
-			tokens.forEach(t->{
-				try {
-					functionExecutionService.returnTokenHandle(t.getID());
-				} catch (FunctionExecutionServiceException e) {
-					logger.warn("Error while closing interactive session", e);
-				}
-			});
-		}
-		session.c.getExecutionCallbacks().afterExecutionEnd(session.c);
-	}
-	
-	public static class ExecutionParameters {
-		
-		Map<String, String> executionParameters;
-
-		public ExecutionParameters() {
-			super();
-		}
-
-		public Map<String, String> getExecutionParameters() {
-			return executionParameters;
-		}
-
-		public void setExecutionParameters(Map<String, String> executionParameters) {
-			this.executionParameters = executionParameters;
-		}
+		session.getArtefactQueue().stop();
 	}
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}/execute/{planid}/{artefactid}")
 	@Secured(right="interactive")
-	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("planid") String planId, @PathParam("artefactid") String artefactId, ExecutionParameters executionParameters, @Context ContainerRequestContext crc) {
+	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("planid") String planId, @PathParam("artefactid") String artefactId, @Context ContainerRequestContext crc) throws InterruptedException, ExecutionException {
 		InteractiveSession session = getAndTouchSession(sessionId);
 		if(session!=null) {
-			ExecutionContext context = session.c;
-			Plan plan = context.getPlanAccessor().get(planId);
-			AbstractArtefact artefact = new PlanNavigator(plan).findArtefactById(artefactId);
-
-			context.setCurrentReportNode(session.root);
-			ParameterManagerPlugin.putVariables(context, session.root, executionParameters.getExecutionParameters(), VariableType.IMMUTABLE);
-			
-			ArtefactHandlerManager artefactHandlerManager = context.getArtefactHandlerManager();
-			artefactHandlerManager.createReportSkeleton(artefact, session.root);
-			artefactHandlerManager.execute(artefact, session.root);
-
-			return null;			
+			AbstractArtefact artefact = findArtefactInPlan(planId, artefactId);
+			Future<ReportNode> future = session.getArtefactQueue().add(artefact);
+			ReportNode reportNode = future.get();
+			return reportNode;
 		} else {
 			 throw new RuntimeException("Session doesn't exist or expired.");
 		}
-		
+	}
+
+	protected AbstractArtefact findArtefactInPlan(String planId, String artefactId) {
+		Plan plan = planAccessor.get(planId);
+		AbstractArtefact artefact = new PlanNavigator(plan).findArtefactById(artefactId);
+		return artefact;
 	}
 	
 	public static class FunctionTestingSession {

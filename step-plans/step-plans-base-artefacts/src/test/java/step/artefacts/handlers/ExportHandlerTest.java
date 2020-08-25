@@ -8,15 +8,16 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
+import ch.exense.commons.io.FileHelper;
 import junit.framework.Assert;
-import step.artefacts.CheckArtefact;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Export;
 import step.artefacts.Sequence;
-import ch.exense.commons.io.FileHelper;
+import step.core.artefacts.CheckArtefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.DefaultPlanRunner;
 
 public class ExportHandlerTest {
 
@@ -81,7 +82,6 @@ public class ExportHandlerTest {
 		Plan plan = PlanBuilder.create().startBlock(s).add(new CheckArtefact(c->{
 			throw new RuntimeException();
 		})).add(e).endBlock().build();
-		DefaultPlanRunner runner = new DefaultPlanRunner();
-		runner.run(plan).printTree();
+		ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build().execute(plan);
 	}
 }

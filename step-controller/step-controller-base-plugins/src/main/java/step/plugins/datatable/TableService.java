@@ -98,7 +98,7 @@ public class TableService extends ApplicationServices {
 		collectionRegistry = getContext().get(CollectionRegistry.class);
 		maxTime = controller.getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
-		exportTaskManager = new ExportTaskManager(getContext().get(ResourceManager.class));
+		exportTaskManager = new ExportTaskManager(getContext().getResourceManager());
 	}
 	
 	@PreDestroy

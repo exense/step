@@ -18,8 +18,6 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
-import static step.artefacts.helper.ArtefactHandlerHelper.getNumberValueAsLong;
-
 import step.artefacts.Sequence;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
@@ -35,13 +33,13 @@ public class SequenceHandler extends ArtefactHandler<Sequence, ReportNode> {
 	@Override
 	public void execute_(ReportNode node, Sequence testArtefact) {
 		Number pacingNumber = testArtefact.getPacing().get();
-		long pacing = getNumberValueAsLong(pacingNumber, 0l);
-		long startTime = pacingNumber!=null?System.currentTimeMillis():0;
 		
 		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.execute_(node, testArtefact, testArtefact.getContinueOnError().get());
 
 		if(pacingNumber!=null) {
+			long pacing = pacingNumber.longValue();
+			long startTime = System.currentTimeMillis();
 			long endTime = System.currentTimeMillis();
 			long duration = endTime-startTime;
 			long pacingWait = pacing-duration;

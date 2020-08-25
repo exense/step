@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.AssertHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = AssertHandler.class)
+@Artefact()
 public class Assert extends AbstractArtefact {
 
 	private DynamicValue<String> actual = new DynamicValue<>("");

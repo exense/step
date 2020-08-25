@@ -18,67 +18,50 @@
  *******************************************************************************/
 package step.core.execution;
 
-import ch.exense.commons.app.Configuration;
-import step.core.AbstractContext;
+import org.bson.types.ObjectId;
+
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeAccessor;
-import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.variables.VariablesManager;
-import step.expressions.ExpressionHandler;
 
-public class ExecutionContext extends AbstractContext  {
-		
-	private final ArtefactHandlerManager artefactHandlerManager;
-	
-	private ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
+public class ExecutionContext extends AbstractExecutionEngineContext  {
 
-	private ExecutionParameters executionParameters;
-	
+	// Immutable fields
 	private final String executionId;
-	
-	private String executionType;
-	
-	private Plan plan;
-
-	private ReportNode report;
-	
-	private volatile ExecutionStatus status;
-	
+	private final ExecutionParameters executionParameters;
+	private final ArtefactHandlerManager artefactHandlerManager;
+	private final ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
+	private final ReportNode reportNode;
 	private final VariablesManager variablesManager;
-				
 	private final ReportNodeCache reportNodeCache;
-	
-	private PlanAccessor planAccessor;
-	
-	private ReportNodeAccessor reportNodeAccessor;
-	
-	private ExpressionHandler expressionHandler;
-	
-	private DynamicBeanResolver dynamicBeanResolver;
-	
-	private EventManager eventManager;
-	
-	private ExecutionTypeListener executionTypeListener;
-	
+	private final EventManager eventManager;
 	private ExecutionCallbacks executionCallbacks;
+
+	// Mutable fields
+	private volatile ExecutionStatus status;
+	private String executionType;
+	private Plan plan;
 	
-	private Configuration configuration;
-	
-	public ExecutionContext(String executionId) {
+	protected ExecutionContext(String executionId, ExecutionParameters executionParameters) {
 		super();
-				
 		this.executionId = executionId;
-				
+		this.executionParameters = executionParameters;
+		
 		reportNodeCache = new ReportNodeCache();
 		variablesManager = new VariablesManager(this);
 		artefactHandlerManager = new ArtefactHandlerManager(this);
+		eventManager = new EventManager();
+		
+		reportNode = new ReportNode();
+		reportNode.setExecutionID(executionId);
+		reportNode.setId(new ObjectId(executionId));
+		reportNodeCache.put(reportNode);
+		setCurrentReportNode(reportNode);
 	}
 
 	public ArtefactHandlerManager getArtefactHandlerManager() {
@@ -102,11 +85,7 @@ public class ExecutionContext extends AbstractContext  {
 	}
 
 	public ReportNode getReport() {
-		return report;
-	}
-
-	public void setReport(ReportNode report) {
-		this.report = report;
+		return reportNode;
 	}
 	
 	public ReportNodeCache getReportNodeCache() {
@@ -169,30 +148,6 @@ public class ExecutionContext extends AbstractContext  {
 	public ExecutionParameters getExecutionParameters() {
 		return executionParameters;
 	}
-
-	public void setExecutionParameters(ExecutionParameters parameters) {
-		this.executionParameters = parameters;
-	}
-
-	public PlanAccessor getPlanAccessor() {
-		return planAccessor;
-	}
-
-	public void setPlanAccessor(PlanAccessor planAccessor) {
-		this.planAccessor = planAccessor;
-	}
-
-	public ReportNodeAccessor getReportNodeAccessor() {
-		return reportNodeAccessor;
-	}
-	
-	public ExpressionHandler getExpressionHandler() {
-		return expressionHandler;
-	}
-	
-	public DynamicBeanResolver getDynamicBeanResolver() {
-		return dynamicBeanResolver;
-	}
 	
 	public EventManager getEventManager() {
 		return eventManager;
@@ -202,39 +157,7 @@ public class ExecutionContext extends AbstractContext  {
 		return executionCallbacks;
 	}
 
-	public ExecutionTypeListener getExecutionTypeListener() {
-		return executionTypeListener;
-	}
-
-	public Configuration getConfiguration() {
-		return configuration;
-	}
-
-	protected void setReportNodeAccessor(ReportNodeAccessor reportNodeAccessor) {
-		this.reportNodeAccessor = reportNodeAccessor;
-	}
-
-	protected void setExpressionHandler(ExpressionHandler expressionHandler) {
-		this.expressionHandler = expressionHandler;
-	}
-
-	protected void setDynamicBeanResolver(DynamicBeanResolver dynamicBeanResolver) {
-		this.dynamicBeanResolver = dynamicBeanResolver;
-	}
-
-	protected void setEventManager(EventManager eventManager) {
-		this.eventManager = eventManager;
-	}
-
 	protected void setExecutionCallbacks(ExecutionCallbacks executionCallbacks) {
 		this.executionCallbacks = executionCallbacks;
-	}
-
-	protected void setExecutionTypeListener(ExecutionTypeListener executionTypeListener) {
-		this.executionTypeListener = executionTypeListener;
-	}
-
-	protected void setConfiguration(Configuration configuration) {
-		this.configuration = configuration;
 	}
 }

@@ -29,14 +29,23 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       readonly: '=',
     },
     controller: function($scope,$location,$rootScope, AuthService) {
+      $scope.undoStack=[];
+      $scope.redoStack=[];
       
       $scope.$watch('plan',function() {
         if($scope.plan) {
-          load(function(root) {
-            tree.open_all();
-            setupInitialState(root);
-            overrideJSTreeKeyFunctions();
-          });
+          if ($scope.undoStack.length == 0) {
+            var backupPlan = JSON.parse(JSON.stringify($scope.plan));
+            $scope.undoStack.push(backupPlan);
+            load(function(root) {
+              tree.open_all();
+              setupInitialState(root);
+              overrideJSTreeKeyFunctions();
+            });
+          } else {
+            load(function(root) {});
+          }
+
         }
       });
       
@@ -462,6 +471,39 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             
           });
         }
+
+        $scope.handle.undo = function() {
+          if ($scope.undoStack.length > 1) {
+            $scope.redoStack.push($scope.undoStack.pop());
+            $scope.plan = $scope.undoStack.pop();
+            $scope.fireChangeEvent(true);
+          }
+        }
+
+        $scope.handle.discardAll = function () {
+          while ($scope.undoStack.length > 1) {
+            $scope.redoStack.push($scope.undoStack.pop());
+          }
+          if ($scope.undoStack.length > 0) {
+            $scope.plan = $scope.undoStack.pop();
+            $scope.fireChangeEvent(true);
+          }
+        }
+
+        $scope.handle.hasUndo = function () {
+          return ($scope.undoStack.length > 1);
+        }
+
+        $scope.handle.redo = function() {
+          if ($scope.redoStack.length > 0) {
+            $scope.plan = $scope.redoStack.pop();
+            $scope.fireChangeEvent(true);
+          }
+        }
+
+        $scope.handle.hasRedo = function () {
+          return ($scope.redoStack.length > 0);
+        }
       }
       
       
@@ -629,9 +671,14 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         }
       }
       
-      $scope.fireChangeEvent = function() {
+      $scope.fireChangeEvent = function(keepRedoStack) {
         if($scope.stOnChange) {
           $scope.stOnChange();
+        }
+        var backupPlan = JSON.parse(JSON.stringify($scope.plan));
+        $scope.undoStack.push(backupPlan);
+        if (keepRedoStack == undefined && !keepRedoStack) {
+          $scope.redoStack = [];
         }
       }
       

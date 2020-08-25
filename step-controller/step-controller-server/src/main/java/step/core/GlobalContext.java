@@ -18,37 +18,22 @@
  *******************************************************************************/
 package step.core;
 
-import ch.exense.commons.app.Configuration;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
 import step.core.accessors.MongoClientSession;
-import step.core.artefacts.ArtefactRegistry;
-import step.core.artefacts.reports.ReportNodeAccessor;
-import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.entities.EntityManager;
-import step.core.execution.EventManager;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.model.ExecutionAccessor;
-import step.core.plans.PlanAccessor;
 import step.core.plugins.ControllerPluginManager;
-import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
-import step.expressions.ExpressionHandler;
 
-public class GlobalContext extends AbstractContext {
-	
-	private Configuration configuration; 
+public class GlobalContext extends AbstractExecutionEngineContext {
 	
 	private ControllerPluginManager pluginManager;
-	
-	private RepositoryObjectManager repositoryObjectManager;
 	
 	private MongoClientSession mongoClientSession;
 	
 	private ExecutionAccessor executionAccessor;
-	
-	private PlanAccessor planAccessor;
-
-	private ReportNodeAccessor reportAccessor;
 	
 	private ExecutionTaskAccessor scheduleAccessor;
 	
@@ -56,26 +41,10 @@ public class GlobalContext extends AbstractContext {
 	
 	private ServiceRegistrationCallback serviceRegistrationCallback;
 	
-	private ExpressionHandler expressionHandler;
-	
-	private DynamicBeanResolver dynamicBeanResolver;
-	
-	private EventManager eventManager;
-	
 	private EntityManager entityManager;
-	
-	private ArtefactRegistry artefactRegistry;
 	
 	public GlobalContext() {
 		super();
-	}
-
-	public Configuration getConfiguration() {
-		return configuration;
-	}
-
-	public void setConfiguration(Configuration configuration) {
-		this.configuration = configuration;
 	}
 
 	public MongoClientSession getMongoClientSession() {
@@ -92,22 +61,6 @@ public class GlobalContext extends AbstractContext {
 
 	public void setExecutionAccessor(ExecutionAccessor executionAccessor) {
 		this.executionAccessor = executionAccessor;
-	}
-
-	public PlanAccessor getPlanAccessor() {
-		return planAccessor;
-	}
-
-	public void setPlanAccessor(PlanAccessor planAccessor) {
-		this.planAccessor = planAccessor;
-	}
-
-	public ReportNodeAccessor getReportAccessor() {
-		return reportAccessor;
-	}
-
-	public void setReportAccessor(ReportNodeAccessor reportAccessor) {
-		this.reportAccessor = reportAccessor;
 	}
 
 	public ExecutionTaskAccessor getScheduleAccessor() {
@@ -133,15 +86,6 @@ public class GlobalContext extends AbstractContext {
 	public void setPluginManager(ControllerPluginManager pluginManager) {
 		this.pluginManager = pluginManager;
 	}
-
-	public RepositoryObjectManager getRepositoryObjectManager() {
-		return repositoryObjectManager;
-	}
-
-	public void setRepositoryObjectManager(
-			RepositoryObjectManager repositoryObjectManager) {
-		this.repositoryObjectManager = repositoryObjectManager;
-	}
 	
 	public ServiceRegistrationCallback getServiceRegistrationCallback() {
 		return serviceRegistrationCallback;
@@ -150,38 +94,6 @@ public class GlobalContext extends AbstractContext {
 	public void setServiceRegistrationCallback(
 			ServiceRegistrationCallback serviceRegistrationCallback) {
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
-	}
-	
-	public ExpressionHandler getExpressionHandler() {
-		return expressionHandler;
-	}
-
-	public void setExpressionHandler(ExpressionHandler expressionHandler) {
-		this.expressionHandler = expressionHandler;
-	}
-
-	public DynamicBeanResolver getDynamicBeanResolver() {
-		return dynamicBeanResolver;
-	}
-
-	public void setDynamicBeanResolver(DynamicBeanResolver dynamicBeanResolver) {
-		this.dynamicBeanResolver = dynamicBeanResolver;
-	}
-
-	public EventManager getEventManager() {
-		return eventManager;
-	}
-
-	public void setEventManager(EventManager eventManager) {
-		this.eventManager = eventManager;
-	}
-	
-	public ArtefactRegistry getArtefactRegistry() {
-		return artefactRegistry;
-	}
-
-	public void setArtefactRegistry(ArtefactRegistry artefactRegistry) {
-		this.artefactRegistry = artefactRegistry;
 	}
 
 	public Version getCurrentVersion() {

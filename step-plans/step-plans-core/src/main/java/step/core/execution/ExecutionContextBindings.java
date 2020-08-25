@@ -21,8 +21,6 @@ package step.core.execution;
 import java.util.HashMap;
 import java.util.Map;
 
-import step.resources.ResourceManager;
-
 public class ExecutionContextBindings {
 	
 	public static final String BINDING_RESOURCE_MANAGER = "resourceManager";
@@ -32,7 +30,7 @@ public class ExecutionContextBindings {
 		bindings.putAll(context.getVariablesManager().getAllVariables());
 		bindings.put("context", context);
 		bindings.put("variables", context.getVariablesManager());
-		bindings.put(BINDING_RESOURCE_MANAGER, context.get(ResourceManager.class));
+		bindings.put(BINDING_RESOURCE_MANAGER, context.getResourceManager());
 		return bindings;
 	}
 	

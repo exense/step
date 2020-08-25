@@ -21,6 +21,7 @@ import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AccessorLayerJacksonMapperProvider;
+import step.core.accessors.FunctionAccessorImpl;
 import step.core.accessors.MongoClientSession;
 import step.core.accessors.PlanAccessorImpl;
 import step.core.execution.model.Execution;
@@ -29,8 +30,7 @@ import step.core.imports.converter.ArtefactsToPlans;
 import step.core.plans.Plan;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
-import step.functions.accessor.FunctionAccessorImpl;
-import step.functions.accessor.FunctionCRUDAccessor;
+import step.functions.accessor.FunctionAccessor;
 import step.migration.MigrationTask;
 import step.plugins.functions.types.CompositeFunction;
 
@@ -47,7 +47,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 	private com.mongodb.client.MongoCollection<Document> tasksCollection;
 	private ExecutionAccessorImpl executionAccessor;
 	private ExecutionTaskAccessorImpl executionTaskAccessor;
-	private FunctionCRUDAccessor functionAccessor;
+	private FunctionAccessor functionAccessor;
 	private Mapper dbLayerObjectMapper;
 	private Map<ObjectId, ObjectId> artefactIdToPlanId;
 	private Unmarshaller unmarshaller;

@@ -7,16 +7,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.dynamicbeans.DynamicValue;
 import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.filemanager.FileVersionId;
 import step.handlers.javahandler.KeywordExecutor;
@@ -79,23 +78,19 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		fileExtensionMap.put("javascript", "js");
 	}
 	
-	protected File getDefaultScriptFile(GeneralScriptFunction function) {
+	protected File getDefaultScriptFile(GeneralScriptFunction function, String scriptDir) {
 		String filename = getScriptFilename(function);
-		String scriptDir = configuration.getProperty("keywords.script.scriptdir");
 		File file = new File(scriptDir+"/"+filename);
 		return file;
 	}
 
 	private String getScriptFilename(GeneralScriptFunction function) {
-		TreeSet<String> sortedKeys = new TreeSet<>(function.getAttributes().keySet());
 		StringBuilder filename = new StringBuilder();
-		Iterator<String> it = sortedKeys.iterator();
-		while(it.hasNext()) {
-			filename.append(function.getAttributes().get(it.next()));
-			if(it.hasNext()) {
-				filename.append("_");				
-			}
+		if (function.getAttributes().containsKey(AbstractOrganizableObject.NAME)) {
+			filename.append(function.getAttributes().get(AbstractOrganizableObject.NAME));
+			filename.append("_");
 		}
+		filename.append(UUID.randomUUID());
 		filename.append(".").append(fileExtensionMap.get(getScriptLanguage(function)));
 		return filename.toString();
 	}
@@ -112,8 +107,13 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 			throw new SetupFunctionException("Unable to apply template. The file '"+templateScript.getAbsolutePath()+"' doesn't exist");
 		}
 	}
-	
+
 	protected File setupScriptFile(GeneralScriptFunction function, InputStream templateStream) throws SetupFunctionException {
+		return setupScriptFile(function, templateStream, configuration.getProperty("keywords.script.scriptdir"));
+	}
+	
+	protected File setupScriptFile(GeneralScriptFunction function, InputStream templateStream,
+								   String scriptDir) throws SetupFunctionException {
 		File scriptFile;
 		
 		String scriptFilename = function.getScriptFile().get();
@@ -123,7 +123,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		}
 		
 		if(scriptFilename==null || scriptFilename.trim().length()==0) {
-			scriptFile = getDefaultScriptFile(function);
+			scriptFile = getDefaultScriptFile(function, scriptDir);
 			function.getScriptFile().setValue(scriptFile.getAbsolutePath());
 		} else {
 			scriptFile = new File(scriptFilename);
@@ -150,6 +150,34 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		}
 		
 		return scriptFile;
+	}
+
+	@Override
+	public T copyFunction(T function) throws FunctionTypeException {
+		T copy = super.copyFunction(function);
+		DynamicValue<String> scriptFile = function.getScriptFile();//copy of the source script file
+		File newFile = null;
+		if(function.getScriptLanguage().get().equals("groovy") || function.getScriptLanguage().get().equals("javascript")) {
+			try {
+				copy.setScriptFile(new DynamicValue<>(""));//reset script to setup a new one
+				String parent = null;
+				try {
+					parent = new File(scriptFile.get()).getParent();
+				} catch (Exception e) {
+					//keep configuration script dir in case of error
+				}
+				newFile = (parent != null) ?
+						setupScriptFile(copy, new FileInputStream(scriptFile.get()), parent) :
+						setupScriptFile(copy, new FileInputStream(scriptFile.get()));
+			} catch (SetupFunctionException | FileNotFoundException e) {
+				//Keep source config in case of error
+			} finally {
+				if (newFile == null) {
+					copy.setScriptFile(scriptFile);
+				}
+			}
+		}
+		return copy;
 	}
 	
 	private void applyTemplate(File scriptFile, InputStream templateScript) throws SetupFunctionException {

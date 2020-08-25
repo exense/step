@@ -5,14 +5,14 @@ import step.core.imports.ImportServices;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.resources.ResourceManager;
-import step.resources.ResourcePlugin;
+import step.resources.ResourceManagerControllerPlugin;
 
-@Plugin(dependencies= {ResourcePlugin.class})
+@Plugin(dependencies= {ResourceManagerControllerPlugin.class})
 public class ExportManagerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		ResourceManager resourceManager = context.get(ResourceManager.class);
+		ResourceManager resourceManager = context.getResourceManager();
 		ExportTaskManager exportTaskManager = new ExportTaskManager(resourceManager);
 		context.put(ExportTaskManager.class, exportTaskManager);
 		

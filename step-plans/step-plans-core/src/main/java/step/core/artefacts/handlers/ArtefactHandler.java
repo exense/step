@@ -76,7 +76,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		reportNodeAttributesManager = new ReportNodeAttributesManager(context);
 		dynamicBeanResolver = context.getDynamicBeanResolver();
-		resourceManager = context.get(ResourceManager.class);
+		resourceManager = context.getResourceManager();
 	}
 	
 	private enum Phase {
@@ -88,10 +88,15 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	public void createReportSkeleton(ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {		
 		REPORT_NODE reportNode = beforeDelegation(Phase.SKELETON_CREATION, parentReportNode, artefact, newVariables);
-		
+		if(parentReportNode != null && parentReportNode.isOrphan()) {
+			reportNode.setOrphan(true);
+		} else {
+			reportNode.setOrphan(!artefact.isCreateSkeleton());
+		}
+
 		try {
 			dynamicBeanResolver.evaluate(artefact, getBindings());
-			
+			artefact.setNameDynamically();
 			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
@@ -103,7 +108,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			failWithException(reportNode, e, false);
 		}
 		
-		if(artefact.isCreateSkeleton()) {
+		if(artefact.isCreateSkeleton() && !reportNode.isOrphan()) {
 			saveReportNode(reportNode);
 		}
 		
@@ -134,6 +139,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 			
 			dynamicBeanResolver.evaluate(artefact, getBindings());
+			artefact.setNameDynamically();
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
 			

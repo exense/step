@@ -19,7 +19,26 @@
 		<version>0.0.0-SNAPSHOT</version>
 	</parent>
 
+	<properties>
+		<ldap-exense-commons.version>2020.08.19-9ac9523</ldap-exense-commons.version>
+	</properties>
+
 	<dependencies>
+		<dependency>
+			<groupId>ch.exense.commons</groupId>
+			<artifactId>exense-auth-core</artifactId>
+			<version>${ldap-exense-commons.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.commons</groupId>
+			<artifactId>exense-auth-cyphers</artifactId>
+			<version>${ldap-exense-commons.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.commons</groupId>
+			<artifactId>exense-auth-ldap</artifactId>
+			<version>${ldap-exense-commons.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-controller-api</artifactId>
@@ -126,7 +145,7 @@
 		<dependency>
 			<groupId>org.quartz-scheduler</groupId>
 			<artifactId>quartz</artifactId>
-			<version>2.2.1</version>
+			<version>2.3.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish</groupId>

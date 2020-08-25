@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 
+import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -114,7 +115,7 @@ public class ScreenTemplateManagerTest {
 			}
 		};
 
-		ScreenTemplateManager s = new ScreenTemplateManager(a);
+		ScreenTemplateManager s = new ScreenTemplateManager(a, new Configuration());
 		
 		List<Input> inputs = s.getInputsForScreen("testScreen1", new HashMap<String, Object>(), newPredicate());
 		Assert.assertEquals(3, inputs.size());

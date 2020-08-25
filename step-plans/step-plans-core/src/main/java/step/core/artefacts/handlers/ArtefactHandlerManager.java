@@ -41,11 +41,14 @@ public class ArtefactHandlerManager {
 		return artefactHandler;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(Class<AbstractArtefact> artefactClass, ExecutionContext context) {
+		// Be careful not to cache the ArtefactHandlerRegistry as this is a mutable variable of the context...
+		ArtefactHandlerRegistry artefactHandlerRegistry = context.getArtefactHandlerRegistry();
 		Artefact artefact = artefactClass.getAnnotation(Artefact.class);
 		if(artefact!=null) {
-			@SuppressWarnings("unchecked")
-			Class<ArtefactHandler<AbstractArtefact, ReportNode>> artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) artefact.handler();
+			Class<ArtefactHandler<AbstractArtefact, ReportNode>> artefactHandlerClass;
+			artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) artefactHandlerRegistry.get(artefactClass);
 			if(artefactHandlerClass!=null) {
 				ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler;
 				try {

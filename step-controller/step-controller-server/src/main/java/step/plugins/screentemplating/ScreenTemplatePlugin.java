@@ -35,7 +35,7 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) {
 		screenInputAccessor = new ScreenInputAccessorImpl(context.getMongoClientSession());
-		screenTemplateManager = new ScreenTemplateManager(screenInputAccessor);
+		screenTemplateManager = new ScreenTemplateManager(screenInputAccessor, context.getConfiguration());
 		
 		initializeScreenInputsIfNecessary();
 		

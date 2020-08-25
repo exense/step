@@ -18,6 +18,7 @@
  *******************************************************************************/
 package step.core;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
+import step.attachments.FileResolver;
 import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.access.UserAccessorImpl;
@@ -33,7 +35,6 @@ import step.core.accessors.MongoClientSession;
 import step.core.accessors.PlanAccessorImpl;
 import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
-import step.core.artefacts.ArtefactRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
@@ -41,7 +42,6 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
-import step.core.execution.EventManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
@@ -50,14 +50,26 @@ import step.core.imports.GenericDBImporter;
 import step.core.imports.PlanImporter;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
-import step.core.plugins.ControllerPluginCallbacks;
+import step.core.plugins.ControllerPlugin;
 import step.core.plugins.ControllerPluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
+import step.resources.Resource;
+import step.resources.ResourceAccessor;
+import step.resources.ResourceAccessorImpl;
+import step.resources.ResourceImpoter;
+import step.resources.ResourceManager;
+import step.resources.ResourceManagerControllerPlugin;
+import step.resources.ResourceManagerImpl;
+import step.resources.ResourceRevision;
+import step.resources.ResourceRevisionAccessor;
+import step.resources.ResourceRevisionAccessorImpl;
+import step.resources.ResourceRevisionsImporter;
 
 public class Controller {
 	
@@ -83,14 +95,13 @@ public class Controller {
 	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
 		pluginManager = new ControllerPluginManager(configuration);
-		pluginManager.initialize();
 		
 		initContext();
 		context.setServiceRegistrationCallback(serviceRegistrationCallback);
 		
 		recover();
 		
-		ControllerPluginCallbacks pluginProxy = pluginManager.getProxy();
+		ControllerPlugin pluginProxy = pluginManager.getProxy();
 		logger.info("Starting controller...");
 		pluginProxy.executionControllerStart(context);
 		logger.info("Initializing data...");
@@ -109,23 +120,34 @@ public class Controller {
 		mongoClientSession = new MongoClientSession(configuration);
 		
 		context.setConfiguration(configuration);
+		
+		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(mongoClientSession);
+		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(mongoClientSession);
+		String resourceRootDir = ResourceManagerControllerPlugin.getResourceDir(configuration);
+		ResourceManager resourceManager = new ResourceManagerImpl(new File(resourceRootDir), resourceAccessor, resourceRevisionAccessor);
+		FileResolver fileResolver = new FileResolver(resourceManager);
+		
+		context.setResourceAccessor(resourceAccessor);
+		context.setResourceManager(resourceManager);
+		context.setFileResolver(fileResolver);
+		
 		context.setMongoClientSession(mongoClientSession);
 		CollectionRegistry collectionRegistry = new CollectionRegistry();
 		context.put(CollectionRegistry.class, collectionRegistry);		
-		context.setExecutionAccessor(new ExecutionAccessorImpl(mongoClientSession));		
+		ExecutionAccessorImpl executionAccessor = new ExecutionAccessorImpl(mongoClientSession);
+		context.setExecutionAccessor(executionAccessor);		
+		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
 		context.setPlanAccessor(new PlanAccessorImpl(mongoClientSession));		
-		context.setReportAccessor(new ReportNodeAccessorImpl(mongoClientSession));
+		context.setReportNodeAccessor(new ReportNodeAccessorImpl(mongoClientSession));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(mongoClientSession));
 		context.setUserAccessor(new UserAccessorImpl(mongoClientSession));
 		collectionRegistry.register("users", new Collection(mongoClientSession.getMongoDatabase(), "users", User.class, false));
-		context.setRepositoryObjectManager(new RepositoryObjectManager(context.getPlanAccessor()));
+		context.setRepositoryObjectManager(new RepositoryObjectManager());
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
 				configuration.getPropertyAsInteger("tec.expressions.warningthreshold"),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
-		context.setEventManager(new EventManager());
-		context.setArtefactRegistry(ArtefactRegistry.getInstance());
 		
 		context.setEntityManager(new EntityManager(context));
 		context.getEntityManager()
@@ -143,7 +165,11 @@ public class Controller {
 					new GenericDBImporter<ExecutiontTaskParameters, ExecutionTaskAccessor>(context)))
 			.register(new Entity<User,UserAccessor>(
 					EntityManager.users, context.getUserAccessor(), User.class, 
-					new GenericDBImporter<User, UserAccessor>(context)));
+					new GenericDBImporter<User, UserAccessor>(context)))
+			.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor,
+						Resource.class, new ResourceImpoter(context)))
+			.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
+						resourceRevisionAccessor, ResourceRevision.class, new ResourceRevisionsImporter(context)));
 
 		createOrUpdateIndexes();
 	}

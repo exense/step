@@ -18,10 +18,9 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.SequenceHandler;
 import step.core.artefacts.Artefact;
 
-@Artefact(handler = SequenceHandler.class)
+@Artefact()
 public class BeforeSequence extends Sequence {
 	
 }

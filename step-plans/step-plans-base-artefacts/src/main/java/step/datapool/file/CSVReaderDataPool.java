@@ -6,8 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -167,7 +167,7 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 
 		@Override
 		public Set<String> keySet() {
-			return new HashSet<>(headers);
+			return new LinkedHashSet<>(headers);
 		}
 
 	}

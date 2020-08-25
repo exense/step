@@ -18,11 +18,10 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.TestCaseHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 
-@Artefact(handler = TestCaseHandler.class)
+@Artefact(useAsTemplate = true)
 public class TestCase extends AbstractArtefact {
 
 	public TestCase() {

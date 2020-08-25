@@ -5,20 +5,21 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import step.artefacts.CheckArtefact;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ForBlock;
 import step.artefacts.Sequence;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.DefaultPlanRunner;
-import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResultAssert;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.datapool.sequence.IntSequenceDataPool;
+import step.threadpool.ThreadPoolPlugin;
 
 public class JUnit4ReportWriterTest {
 
@@ -61,8 +62,8 @@ public class JUnit4ReportWriterTest {
 		File report = new File("TEST-JUnit4ReportWriterTest-testTestset.xml");
 		report.deleteOnExit();
 		
-		PlanRunner runner = new DefaultPlanRunner();
-		runner.run(plan).writeReport(new JUnit4ReportWriter(), report);
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).build();
+		engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
 		
 		PlanRunnerResultAssert.assertEquals(this.getClass(), "TEST-JUnit4ReportWriterTest-testTestset-expected.xml", report, "time=\".+?\"");
 	}
@@ -90,8 +91,8 @@ public class JUnit4ReportWriterTest {
 		File report = new File("TEST-JUnit4ReportWriterTest-testSimpleSequence.xml");
 		report.deleteOnExit();
 		
-		PlanRunner runner = new DefaultPlanRunner();
-		runner.run(plan).writeReport(new JUnit4ReportWriter(), report);
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build();
+		engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
 		
 		PlanRunnerResultAssert.assertEquals(this.getClass(), "TEST-JUnit4ReportWriterTest-testSimpleSequence-expected.xml", report, "time=\".+?\"");
 	}

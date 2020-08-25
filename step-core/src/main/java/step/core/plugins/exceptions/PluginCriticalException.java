@@ -2,7 +2,7 @@ package step.core.plugins.exceptions;
 
 public class PluginCriticalException extends RuntimeException {
 
-	public PluginCriticalException(String string, Exception e) {
+	public PluginCriticalException(String string, Throwable e) {
 		super(string,e);
 	}
 

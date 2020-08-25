@@ -28,10 +28,10 @@ public @interface Artefact {
 
 	String name() default ""; 
 
-	Class<?> handler();
-	
 	Class<? extends ReportNode> report() default ReportNode.class;
 	
 	boolean block() default true;
-	
+
+	boolean useAsTemplate() default false;
+
 }

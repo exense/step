@@ -28,15 +28,15 @@ import org.junit.Test;
 
 import ch.exense.commons.io.FileHelper;
 import junit.framework.Assert;
+import step.artefacts.AbstractArtefactTest;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ContextBuilder;
 import step.core.plans.runner.PlanRunnerResultAssert;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
 
-public class CSVReaderDataPoolTest {
+public class CSVReaderDataPoolTest extends AbstractArtefactTest {
 
 	@Test
 	public void testEmpty() {
@@ -97,7 +97,7 @@ public class CSVReaderDataPoolTest {
 	
 	protected DataSet<?> getDataPool(File file, boolean enableRowCommit) {
 		FileDataPool conf = getCSVDataSourceConf(file);
-		DataSet<?> pool =  DataPoolFactory.getDataPool("csv", conf, ContextBuilder.createLocalExecutionContext());
+		DataSet<?> pool =  DataPoolFactory.getDataPool("csv", conf, newExecutionContext());
 		pool.enableRowCommit(enableRowCommit);
 		pool.init();
 		return pool;

@@ -55,6 +55,21 @@ public class DynamicValue<T> {
 		}
 	}
 	
+	public T get(Class<T> class_) {
+		T value = get();
+		return ValueConverter.convert(value, class_);
+	}
+
+	public T getOrDefault(T defaultValue) {
+		T value = get();
+		return value != null ? value : defaultValue;
+	}
+	
+	public T getOrDefault(Class<T> class_, T defaultValue) {
+		T value = get(class_);
+		return value != null ? value : defaultValue;
+	}
+	
 	public DynamicValue<T> cloneValue() {
 		DynamicValue<T> clone = new DynamicValue<>();
 		clone.dynamic = dynamic;

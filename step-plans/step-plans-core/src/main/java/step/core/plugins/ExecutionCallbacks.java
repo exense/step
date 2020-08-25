@@ -25,7 +25,7 @@ import step.core.execution.ExecutionContext;
 import step.functions.Function;
 import step.functions.io.Output;
 
-public interface ExecutionCallbacks extends PluginCallbacks {
+public interface ExecutionCallbacks {
 	
 	/**
 	 * This hook is called before a {@link Function} is executed in CallFunctionHandler 

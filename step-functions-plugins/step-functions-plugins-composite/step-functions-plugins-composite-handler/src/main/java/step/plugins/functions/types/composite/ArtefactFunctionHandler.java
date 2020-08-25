@@ -34,8 +34,8 @@ import step.client.resources.RemoteResourceManager;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
 import step.core.plans.PlanAccessor;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
@@ -68,10 +68,13 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 		ExecutionContext executionContext = (ExecutionContext) getTokenReservationSession().get(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY);
 		
 		if(executionContext == null) {
-			executionContext = ContextBuilder.createLocalExecutionContext();
+			executionContext = ExecutionEngine.builder().withPluginsFromClasspath().build().newExecutionContext();
 			GridClient gridClient = new MockedGridClientImpl();
 
 			ControllerCredentials credentials = new ControllerCredentials("http://localhost:8080", "admin", "init");
+
+			PlanAccessor planAccessor = new RemotePlanAccessorImpl(credentials);
+			executionContext.setPlanAccessor(planAccessor);
 
 			FunctionAccessor functionAccessor = new RemoteFunctionAccessorImpl(credentials);
 			//FunctionExecutionService functionExecutionService = new RemoteFunctionExecutionService(credentials);
@@ -91,8 +94,6 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 				executionContext.put(FunctionExecutionService.class, functionExecutionService);
 				executionContext.put(FunctionRouter.class, new LocalFunctionRouterImpl(functionExecutionService));
 				
-				PlanAccessor planAccessor = new RemotePlanAccessorImpl(credentials);
-				executionContext.setPlanAccessor(planAccessor);
 			} catch (Exception e) {
 				logger.error("Error while setting up execution context for composite keyword execution", e);
 			}

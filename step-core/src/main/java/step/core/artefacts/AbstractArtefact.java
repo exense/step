@@ -42,7 +42,11 @@ import step.core.entities.EntityReference;
 @JsonTypeInfo(use=Id.CUSTOM,property="_class")
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)
 public abstract class AbstractArtefact extends AbstractOrganizableObject {
-	
+
+	protected DynamicValue<String> dynamicName;
+
+	protected boolean useDynamicName;
+
 	protected String description;
 		
 	protected List<AbstractArtefact> children = new ArrayList<>();
@@ -62,12 +66,15 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		_id = new ObjectId();
 		
 		Map<String, String> defaultAttributes = new HashMap<>();
-		defaultAttributes.put("name", getDefaultArtefactName(this.getClass()));
+		defaultAttributes.put("name", getArtefactName(this.getClass()));
 		attributes = defaultAttributes;
 		persistNode = true;
+		dynamicName = new DynamicValue<String>("");
+		dynamicName.setDynamic(true);
+		dynamicName.setExpression("");
 	}
 	
-	private String getDefaultArtefactName(Class<? extends AbstractArtefact> artefactClass) {
+	public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {
 		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
 		return annotation.name().length() > 0 ? annotation.name() : artefactClass.getSimpleName();
 	}
@@ -150,6 +157,31 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
 	public void setSkipNode(DynamicValue<Boolean> skipNode) {
 		this.skipNode = skipNode;
+	}
+
+	public DynamicValue<String> getDynamicName() {
+		return dynamicName;
+	}
+
+	public void setDynamicName(DynamicValue<String> dynamicName) {
+		this.dynamicName = dynamicName;
+	}
+
+	public boolean isUseDynamicName() {
+		return useDynamicName;
+	}
+
+	public void setUseDynamicName(boolean useDynamicName) {
+		this.useDynamicName = useDynamicName;
+	}
+
+	public void setNameDynamically() {
+		if (isUseDynamicName()) {
+			String value = getDynamicName().get();
+			if (value != null && !value.equals("")) {
+				addAttribute(AbstractOrganizableObject.NAME, value);
+			}
+		}
 	}
 
 	@Override

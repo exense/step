@@ -22,8 +22,18 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 
 import step.core.GlobalContext;
+import step.engine.plugins.ExecutionEnginePlugin;
 
-public abstract class AbstractControllerPlugin extends AbstractExecutionPlugin implements ControllerPluginCallbacks {
+public abstract class AbstractControllerPlugin extends AbstractPlugin implements ControllerPlugin {
+	
+	@Override
+	public ExecutionEnginePlugin getExecutionEnginePlugin() {
+		return null;
+	}
+	
+	public WebPlugin getWebPlugin() {
+		return null;
+	}
 
 	@Override
 	public void executionControllerStart(GlobalContext context)  throws Exception {}
@@ -36,10 +46,6 @@ public abstract class AbstractControllerPlugin extends AbstractExecutionPlugin i
 	
 	@Override
 	public void executionControllerDestroy(GlobalContext context) {}
-
-	public WebPlugin getWebPlugin() {
-		return null;
-	}
 	
 	protected void registerWebapp(GlobalContext context, String path) {
 		ResourceHandler bb = new ResourceHandler();

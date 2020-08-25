@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.IfBlockHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(name = "If", handler = IfBlockHandler.class)
+@Artefact(name = "If")
 public class IfBlock extends AbstractArtefact {
 
 	private DynamicValue<Boolean> condition = new DynamicValue<>("", "");

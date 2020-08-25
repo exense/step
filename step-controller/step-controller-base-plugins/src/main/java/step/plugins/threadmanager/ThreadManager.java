@@ -34,24 +34,20 @@ import org.slf4j.LoggerFactory;
 
 import step.common.managedoperations.Operation;
 import step.common.managedoperations.OperationManager;
-import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
-import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.Plugin;
 
-@Plugin
-public class ThreadManager extends AbstractControllerPlugin {
+public class ThreadManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ThreadManager.class);
 	
 	private List<Pattern> matchingPatterns = new ArrayList<>();
 	
-	private void registerPattern(Pattern pattern) {
+	public void registerPattern(Pattern pattern) {
 		matchingPatterns.add(pattern);
 	}
 	
-	private void registerClass(Class<?> clazz) {
+	public void registerClass(Class<?> clazz) {
 		matchingPatterns.add(Pattern.compile(clazz.getName().replace(".", "\\.")+".*"));
 	}
 	
@@ -68,26 +64,13 @@ public class ThreadManager extends AbstractControllerPlugin {
 		return false;
 	}
 	
-	public static final String THREAD_MANAGER_INSTANCE_KEY = "ThreadManagerPlugin_Instance";
-
 	private static final String SET_KEY = "ThreadManagerPlugin_SetKey";
 	
-	@Override
-	public void executionControllerStart(GlobalContext context) {
-		context.getServiceRegistrationCallback().registerService(ThreadManagerServices.class);
-		context.put(THREAD_MANAGER_INSTANCE_KEY, this);
-		
-//		registerPattern(Pattern.compile(".*\\.sleep$"));
-//		registerClass(GridClient.class);
-//		registerClass(QuotaManager.class);
-	}
-
 	@SuppressWarnings("unchecked")
 	private HashSet<Thread> getRegister(ExecutionContext context) {
 		return (HashSet<Thread>) context.get(SET_KEY);
 	}
 	
-	@Override
 	public void associateThread(ExecutionContext context, Thread thread, long parentThreadId) {
 		logger.debug("associate Thread: " + thread.getId() + ", and parent thread id: " + parentThreadId);
 		
@@ -99,7 +82,6 @@ public class ThreadManager extends AbstractControllerPlugin {
 		associateThread(context, thread);
 	}
 	
-	@Override
 	public void associateThread(ExecutionContext context, Thread thread) {
 		Set<Thread> associatedThreads = getRegister(context);
 		
@@ -118,7 +100,6 @@ public class ThreadManager extends AbstractControllerPlugin {
 	// Track all the threads (parent + children) associated to a report node
 	private Map<String, List<Long>> reportNodeIdToThreadId = new ConcurrentHashMap<>();
 	
-	@Override
 	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
 		// Associate the current thread ID to this report node
 		String reportNodeId = node.getId().toString();
@@ -127,7 +108,6 @@ public class ThreadManager extends AbstractControllerPlugin {
 		threads.add(threadId);
 	}
 
-	@Override
 	public void afterReportNodeExecution(ExecutionContext context, ReportNode node) {
 		// Remove the list of threads for this report node
 		String reportNodeId = node.getId().toString();
@@ -144,8 +124,6 @@ public class ThreadManager extends AbstractControllerPlugin {
 		}
 	}
 	
-
-	@Override
 	public void unassociateThread(ExecutionContext context, Thread thread) {
 		Set<Thread> associatedThreads = getRegister(context);
 
@@ -157,7 +135,6 @@ public class ThreadManager extends AbstractControllerPlugin {
 		reportNodeIdToThreadId.entrySet().forEach(e->e.getValue().remove(threadId));
 	}
 
-	@Override
 	public void beforeExecutionEnd(ExecutionContext context) {
 		Set<Thread> associatedThreads = getRegister(context);
 

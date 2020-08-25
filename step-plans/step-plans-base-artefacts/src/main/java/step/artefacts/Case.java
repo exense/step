@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.CaseHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = CaseHandler.class)
+@Artefact()
 public class Case extends AbstractArtefact {
 	
 	private DynamicValue<String> value = new DynamicValue<String>("");

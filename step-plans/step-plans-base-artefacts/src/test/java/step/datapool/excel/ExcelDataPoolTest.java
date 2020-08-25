@@ -32,13 +32,13 @@ import javax.json.JsonObject;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.AbstractArtefactTest;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ContextBuilder;
 import step.core.variables.SimpleStringMap;
 import step.datapool.DataPoolRow;
 import step.datapool.Utils;
 
-public class ExcelDataPoolTest {
+public class ExcelDataPoolTest extends AbstractArtefactTest {
 
 	@Test
 	public void testDefaultSheet() {		
@@ -52,10 +52,10 @@ public class ExcelDataPoolTest {
 	}
 
 	private void initPool(ExcelDataPoolImpl pool) {
-		pool.setContext(ContextBuilder.createLocalExecutionContext());
+		pool.setContext(newExecutionContext());
 		pool.init();
 	}
-	
+
 	@Test
 	public void testToString() {		
 		ExcelDataPool conf = getDataSourceConf(true, "ExcelDataPool.xlsx", "Parallel");

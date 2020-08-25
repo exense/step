@@ -52,7 +52,7 @@ public class ReportNodeAttachmentManager {
 	public ReportNodeAttachmentManager(ExecutionContext context) {
 		super();
 		this.context = context;
-		this.resourceManager = context.get(ResourceManager.class);
+		this.resourceManager = context.getResourceManager();
 	}
 
 	// Warning: only use this constructor if you know that you will only use the method createAttachmentWithoutQuotaCheck. 

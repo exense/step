@@ -14,8 +14,8 @@ import step.artefacts.Return;
 import step.artefacts.Script;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ContextBuilder;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.reports.ErrorType;
@@ -32,7 +32,7 @@ public class ArtefactFunctionHandlerTest {
 
 	@Test
 	public void test() {
-		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext context = newExecutionContext();
 
 		Return r = new Return();
 		r.setOutput(new DynamicValue<String>("{\"Result\":{\"dynamic\":true,\"expression\":\"input.Input1\"}}"));
@@ -56,7 +56,11 @@ public class ArtefactFunctionHandlerTest {
 		
 		AtomicInteger count = new AtomicInteger(0);
 		context.getReportNodeAccessor().getAll().forEachRemaining(n->count.incrementAndGet());
-		Assert.assertEquals(4, count.get());
+		Assert.assertEquals(3, count.get());
+	}
+
+	protected ExecutionContext newExecutionContext() {
+		return ExecutionEngine.builder().build().newExecutionContext();
 	}
 
 	protected ArtefactFunctionHandler createArtefactFunctionHandler(ExecutionContext context) {
@@ -73,7 +77,7 @@ public class ArtefactFunctionHandlerTest {
 	
 	@Test
 	public void testError() {
-		ExecutionContext context = ContextBuilder.createLocalExecutionContext();
+		ExecutionContext context = newExecutionContext();
 
 		Script script = new Script();
 		script.setScript("output.setError('MyError'");

@@ -1,5 +1,9 @@
 package step.artefacts.handlers;
 
+import static step.planbuilder.BaseArtefacts.synchronized_;
+import static step.planbuilder.BaseArtefacts.testScenario;
+import static step.planbuilder.BaseArtefacts.threadGroup;
+
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Synchronized;
 import step.artefacts.TestScenario;
 import step.artefacts.ThreadGroup;
@@ -18,12 +23,23 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.DefaultPlanRunner;
-import static step.planbuilder.BaseArtefacts.*;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.threadpool.ThreadPoolPlugin;
 
 public class SynchronizedHandlerTest {
+	
+	private ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+		@Override
+		public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
+				ExecutionContext executionContext) {
+			executionContext.getArtefactHandlerRegistry().put(TestArtefact.class, TestArtefactHandler.class);
+		}
+	}).build();
 	
 	@Test
 	public void testUnnamedLocalLock() throws IOException {		
@@ -45,9 +61,7 @@ public class SynchronizedHandlerTest {
 										.endBlock()
 									.build();
 		
-		DefaultPlanRunner runner = new DefaultPlanRunner();
-		
-		runner.run(plan).visitReportNodes(node->{
+		engine.execute(plan).visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
 		// Unnamed lock are equivalent to a lock using the artefactID as lock name and is therefore local to a specific artefact
@@ -81,9 +95,7 @@ public class SynchronizedHandlerTest {
 										.endBlock()
 									.build();
 		
-		DefaultPlanRunner runner = new DefaultPlanRunner();
-		
-		runner.run(plan).visitReportNodes(node->{
+		engine.execute(plan).visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
 		Assert.assertEquals(2, maxParallelism.get());
@@ -113,13 +125,10 @@ public class SynchronizedHandlerTest {
 				.endBlock()
 			.endBlock()
 		.build();
-
-		
-		DefaultPlanRunner runner = new DefaultPlanRunner();
 		
 		ExecutorService threadPool = Executors.newFixedThreadPool(2);
-		threadPool.execute(()->runner.run(plan1));
-		threadPool.execute(()->runner.run(plan2));
+		threadPool.execute(()->engine.execute(plan1));
+		threadPool.execute(()->engine.execute(plan2));
 
 		threadPool.shutdown();
 		threadPool.awaitTermination(10, TimeUnit.SECONDS);
@@ -172,16 +181,14 @@ public class SynchronizedHandlerTest {
 										.endBlock()
 									.build();
 		
-		DefaultPlanRunner runner = new DefaultPlanRunner();
-		
-		runner.run(plan).visitReportNodes(node->{
+		engine.execute(plan).visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
 		Assert.assertEquals(2, maxParallelism.get());
 		Assert.assertEquals(100, iterations.get());
 	}
 	
-	@Artefact(handler=TestArtefactHandler.class)
+	@Artefact()
 	public static class TestArtefact extends AbstractArtefact {
 		
 		private AtomicInteger iterations;

@@ -24,15 +24,13 @@ import java.io.StringWriter;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
-import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.DefaultPlanRunner;
-import step.core.plans.runner.PlanRunner;
-import step.core.plans.runner.PlanRunnerResult;
 
 public class SkipArtefactHandlerTest extends AbstractArtefactHandlerTest {
 
@@ -56,11 +54,9 @@ public class SkipArtefactHandlerTest extends AbstractArtefactHandlerTest {
 				.build();
 		
 		// Run the plan
-		PlanRunner planRunner = new DefaultPlanRunner();
-		PlanRunnerResult result = planRunner.run(plan);	
-		// Print the report tree and assert it matches the expected report
 		StringWriter writer = new StringWriter();
-		result.printTree(writer);
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build();
+		engine.execute(plan).printTree(writer);
 			
 		Assert.assertEquals("Sequence:PASSED:\n" + 
 				" Sequence:PASSED:\n" +
@@ -88,11 +84,9 @@ public class SkipArtefactHandlerTest extends AbstractArtefactHandlerTest {
 				.build();
 		
 		// Run the plan
-		PlanRunner planRunner = new DefaultPlanRunner();
-		PlanRunnerResult result = planRunner.run(plan);	
-		// Print the report tree and assert it matches the expected report
 		StringWriter writer = new StringWriter();
-		result.printTree(writer);
+		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build();
+		engine.execute(plan).printTree(writer);
 			
 		Assert.assertEquals("Sequence:PASSED:\n" + 
 				" Sequence:SKIPPED:\n" +

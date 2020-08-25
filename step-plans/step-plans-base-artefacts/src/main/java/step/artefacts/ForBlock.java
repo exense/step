@@ -18,11 +18,10 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.ForBlockHandler;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(name = "For", handler = ForBlockHandler.class)
+@Artefact(name = "For")
 public class ForBlock extends AbstractForBlock {
 
 	public ForBlock() {

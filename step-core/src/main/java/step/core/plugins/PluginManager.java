@@ -27,156 +27,239 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfoList;
+import io.github.classgraph.ScanResult;
 import step.core.plugins.exceptions.PluginCriticalException;
 
-public class PluginManager<T extends AbstractPlugin> implements InvocationHandler{
+public class PluginManager<T> {
 	
 	private static Logger logger = LoggerFactory.getLogger(PluginManager.class);
 	
-	protected List<T> plugins = new CopyOnWriteArrayList<>();
+	private final Class<T> pluginClass;
+	private final List<T> plugins;
 	
-	public void initialize() throws Exception {
-		loadAnnotatedPlugins();
+	private PluginManager(Class<T> pluginClass, List<T> plugins) {
+		super();
+		this.pluginClass = pluginClass;
+		this.plugins = plugins;
+		
+		logger.info("Starting plugin manager with following plugins: "+Arrays.toString(plugins.toArray()));
 	}
 	
-	public <CALLBACK extends PluginCallbacks> CALLBACK getProxy(Class<CALLBACK> interfaceClass) {
+	public T getProxy() {
+		return getProxy(pluginClass);
+	}
+
+	public <I> I getProxy(Class<I> proxyInterface) {
 		@SuppressWarnings("unchecked")
-		CALLBACK proxy = (CALLBACK) Proxy.newProxyInstance(
-				interfaceClass.getClassLoader(),
-				new Class[] { interfaceClass }, this);
+		I proxy = (I) Proxy.newProxyInstance(
+				proxyInterface.getClassLoader(),
+				new Class[] { proxyInterface }, new InvocationHandler() {
+					
+					@Override
+					public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+						for(T plugin:plugins) {
+							try {
+								method.invoke(plugin, args);
+							} catch (IllegalArgumentException e) {
+								// Ignore
+							} catch (Throwable e) {
+								if (e instanceof InvocationTargetException && ((InvocationTargetException) e).getTargetException() instanceof PluginCriticalException) {
+									throw ((InvocationTargetException) e).getTargetException();
+								} else {
+									logger.error("Error invoking method #" + method.getName() + " of plugin '" + plugin.getClass().getName() + "'" + "(" + e.toString() + ")", e);
+								}
+							} 
+						}
+						return null;
+					}
+				});
 		return proxy;
 	}
 	
-	@SuppressWarnings("unchecked")
-	private void loadAnnotatedPlugins() throws InstantiationException, IllegalAccessException, CircularDependencyException  {
-		Set<Class<?>> pluginClasses = new Reflections("step").getTypesAnnotatedWith(Plugin.class);
-		logger.debug("Found plugins classes: "+pluginClasses);
-		
-		for(Class<?> pluginClass:pluginClasses) {
-			T plugin = newPluginInstance((Class<T>) pluginClass);
-			if(plugin.validate())
-				register(plugin);
-		}
-		
-		plugins = sortPluginsByDependencies(plugins);
-		logger.info("Loaded plugins in following order: "+plugins);
+	public List<T> getPlugins() {
+		return plugins;
 	}
 
-	/**
-	 * Sort the plugins according to their mutual dependencies.
-	 * The plugin with the highest dependency to other plugins will be located at the end of the list.
-	 * 
-	 * @param plugins the unsorted list of plugins
-	 * @return the sorted list of plugins
-	 * @throws CircularDependencyException if a circular dependency is detected
-	 */
-	protected List<T> sortPluginsByDependencies(List<T> plugins) throws CircularDependencyException {
+	public static <T> Builder<T> builder(Class<T> pluginClass) {
+		return new Builder<T>(pluginClass);
+	}
+	
+	public static class Builder<T> {
 		
+		private final Class<T> pluginClass;
+		protected List<T> plugins = new ArrayList<>();
+		private Predicate<T> pluginsFilter = null;
 		
-		// Create a list of additional dependencies based on the attribute "runsBefore"
-		// The attribute "runsBefore" specifies a list of plugins before which a specific plugin should be executed.
-		// Specifying that "A has to be run before B" has the same meaning as "B is depending on A"
-		Map<Class<?>, List<Class<?>>> additionalDependencies = new HashMap<>();
-		for (T plugin : plugins) {
-			Class<? extends AbstractPlugin> pluginClass = plugin.getClass();
-			Class<?>[] runsBeforeList = pluginClass.getAnnotation(Plugin.class).runsBefore();
-			for (Class<?> runsBefore : runsBeforeList) {
-				// 
-				additionalDependencies.computeIfAbsent(runsBefore, c->new ArrayList<>()).add(pluginClass);
-			}
+		public Builder(Class<T> pluginClass) {
+			super();
+			this.pluginClass = pluginClass;
 		}
 		
-		List<T> result = new ArrayList<>(plugins);
+		public Builder<T> withPluginFilter(Predicate<T> pluginsFilter) {
+			this.pluginsFilter = pluginsFilter;
+			return this;
+		}
+
+		public Builder<T> withPlugin(T plugin) {
+			plugins.add(plugin);
+			return this;
+		}
 		
-		int iterationCount = 0;
+		public Builder<T> withPlugins(List<T> plugins_) {
+			plugins.addAll(plugins_);
+			return this;
+		}
 		
-		boolean hasModification = true;
-		// loop as long as modifications to the ordering of the list are performed
-		while(hasModification) {
-			if(iterationCount>1000) {
-				throw new CircularDependencyException("Circular dependency in the plugin dependencies");
+		public Builder<T> withPluginsFromClasspath(String... packagePrefixes) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+			List<T> pluginsFromClassLoader = getPluginsFromClassLoader(packagePrefixes);
+			plugins.addAll(pluginsFromClassLoader);
+			return this;
+		}
+		
+		private List<T> getPluginsFromClassLoader(String... packagePrefixes) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+			long t1 = System.currentTimeMillis();
+			logger.info("Searching for plugins annotated by "+Plugin.class.getName()+" and implementing "+pluginClass.getCanonicalName());
+			ClassGraph classGraph = new ClassGraph().whitelistPackages(packagePrefixes).enableClassInfo().enableAnnotationInfo();
+			
+			List<String> classNames;
+			try (ScanResult result = classGraph.scan()) {
+				ClassInfoList classInfos = result.getClassesWithAnnotation(Plugin.class.getName());
+				classNames = classInfos.getNames();
 			}
 			
-			hasModification = false;
-			List<T> clone = new ArrayList<>(result);
-			for (T plugin : result) {
-				Class<? extends AbstractPlugin> pluginClass = plugin.getClass();
-				Class<?>[] dependencies = pluginClass.getAnnotation(Plugin.class).dependencies();
-				
-				List<Class<?>> allDependencies = new ArrayList<>(Arrays.asList(dependencies));
-				if(additionalDependencies.containsKey(pluginClass)) {
-					allDependencies.addAll(additionalDependencies.get(pluginClass));
+			ClassLoader cl = Thread.currentThread().getContextClassLoader();
+			List<String> pluginClasses = new ArrayList<>();
+			List<T> plugins = new ArrayList<>();
+			for (String className : classNames) {
+				Class<?> clazz = cl.loadClass(className);
+				if(pluginClass.isAssignableFrom(clazz)) {
+					if(clazz.getAnnotation(IgnoreDuringAutoDiscovery.class) == null) {
+						pluginClasses.add(className);
+						@SuppressWarnings("unchecked")
+						T plugin = newPluginInstance((Class<T>) clazz);
+						plugins.add(plugin);
+					} else {
+						logger.debug("Ignoring plugin "+className+" annotated by "+IgnoreDuringAutoDiscovery.class.getName());
+					}
+				}
+			}
+			
+			logger.info("Found following plugins classes in "+(System.currentTimeMillis()-t1)+"ms: "+pluginClasses);
+			return plugins;
+		}
+		
+		private T newPluginInstance(Class<T> _class) throws InstantiationException, IllegalAccessException  {
+			T plugin = _class.newInstance();
+			return (T) plugin;
+		}
+		
+		/**
+		 * Sort the plugins according to their mutual dependencies.
+		 * The plugin with the highest dependency to other plugins will be located at the end of the list.
+		 * 
+		 * @param plugins the unsorted list of plugins
+		 * @return the sorted list of plugins
+		 * @throws CircularDependencyException if a circular dependency is detected
+		 */
+		private List<T> sortPluginsByDependencies(List<T> plugins) throws CircularDependencyException {
+			// Create a list of additional dependencies based on the attribute "runsBefore"
+			// The attribute "runsBefore" specifies a list of plugins before which a specific plugin should be executed.
+			// Specifying that "A has to be run before B" has the same meaning as "B is depending on A"
+			Map<Class<?>, List<Class<?>>> additionalDependencies = new HashMap<>();
+			for (T plugin : plugins) {
+				Class<?> pluginClass = plugin.getClass();
+				Plugin annotation = pluginClass.getAnnotation(Plugin.class);
+				if(annotation != null) {
+					Class<?>[] runsBeforeList = annotation.runsBefore();
+					for (Class<?> runsBefore : runsBeforeList) {
+						// 
+						additionalDependencies.computeIfAbsent(runsBefore, c->new ArrayList<>()).add(pluginClass);
+					}
+				}
+			}
+			
+			List<T> result = new ArrayList<>(plugins);
+			
+			int iterationCount = 0;
+			
+			boolean hasModification = true;
+			// loop as long as modifications to the ordering of the list are performed
+			while(hasModification) {
+				if(iterationCount>1000) {
+					throw new CircularDependencyException("Circular dependency in the plugin dependencies");
 				}
 				
-				int initialPosition = clone.indexOf(plugin);
-				int newPosition = -1;
-				if(allDependencies.size()>0) {
-					for (Class<?> dependency : allDependencies) {
-						int positionOfDependencyInClone = IntStream.range(0, clone.size()).filter(i -> dependency.equals(clone.get(i).getClass())).findFirst().orElse(-1);
-						// if the dependency is located after the current plugin  
-						if(positionOfDependencyInClone>initialPosition) {
-							// if this is the highest position of all dependencies of this plugin
-							if(positionOfDependencyInClone>newPosition) {
-								newPosition = positionOfDependencyInClone;
+				hasModification = false;
+				List<T> clone = new ArrayList<>(result);
+				for (T plugin : result) {
+					Class<?> pluginClass = plugin.getClass();
+					Plugin annotation = pluginClass.getAnnotation(Plugin.class);
+					
+					final List<Class<?>> allDependencies = new ArrayList<>();
+
+					if(annotation != null) {
+						Class<?>[] dependencies = annotation.dependencies();
+						allDependencies.addAll(Arrays.asList(dependencies));
+					}
+					
+					if(additionalDependencies.containsKey(pluginClass)) {
+						allDependencies.addAll(additionalDependencies.get(pluginClass));
+					}
+					
+					int initialPosition = clone.indexOf(plugin);
+					int newPosition = -1;
+					if(allDependencies.size()>0) {
+						for (Class<?> dependency : allDependencies) {
+							int positionOfDependencyInClone = IntStream.range(0, clone.size()).filter(i -> dependency.equals(clone.get(i).getClass())).findFirst().orElse(-1);
+							// if the dependency is located after the current plugin  
+							if(positionOfDependencyInClone>initialPosition) {
+								// if this is the highest position of all dependencies of this plugin
+								if(positionOfDependencyInClone>newPosition) {
+									newPosition = positionOfDependencyInClone;
+								}
 							}
 						}
 					}
+					if(newPosition>=0) {
+						// move the plugin after the dependency with the highest position
+						clone.add(newPosition+1, plugin);
+						clone.remove(initialPosition);
+						hasModification = true;
+					}
 				}
-				if(newPosition>=0) {
-					// move the plugin after the dependency with the highest position
-					clone.add(newPosition+1, plugin);
-					clone.remove(initialPosition);
-					hasModification = true;
-				}
+				
+				result = clone;
+				iterationCount++;
 			}
 			
-			result = clone;
-			iterationCount++;
+			return result;
 		}
 		
-		return result;
-	}
-	
-	@SuppressWarnings("serial")
-	public static class CircularDependencyException extends Exception {
+		@SuppressWarnings("serial")
+		public static class CircularDependencyException extends Exception {
 
-		public CircularDependencyException(String message) {
-			super(message);
+			public CircularDependencyException(String message) {
+				super(message);
+			}
+			
 		}
 		
-	}
-
-	public void register(T plugin) {
-		plugins.add(plugin);
-	}
-
-	@SuppressWarnings("unchecked")
-	private T newPluginInstance(Class<T> _class) throws InstantiationException, IllegalAccessException  {
-		AbstractPlugin plugin = _class.newInstance();
-		return (T) plugin;
-	}
-
-	@Override
-	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		for(AbstractPlugin plugin:plugins) {
-			try {
-				method.invoke(plugin, args);
-			} catch (Throwable e) {
-				if (e instanceof InvocationTargetException && ((InvocationTargetException) e).getTargetException() instanceof PluginCriticalException) {
-					throw ((InvocationTargetException) e).getTargetException();
-				} else {
-					logger.error("Error invoking method #" + method.getName() + " of plugin '" + plugin.getClass().getName() + "'" + "(" + e.toString() + ")", e);
-				}
-			} 
+		public PluginManager<T> build() throws CircularDependencyException {
+			List<T> validPlugins = plugins.stream()
+									.filter(p->!(p instanceof OptionalPlugin) || ((OptionalPlugin)p).validate())
+									.filter(p->pluginsFilter == null || pluginsFilter.test(p))
+									.collect(Collectors.toList());		
+			List<T> sortedPluginsByDependencies = sortPluginsByDependencies(validPlugins);
+			return new PluginManager<T>(pluginClass, sortedPluginsByDependencies);
 		}
-		return null;
 	}
 }

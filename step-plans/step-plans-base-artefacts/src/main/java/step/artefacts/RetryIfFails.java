@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.RetryIfFailsHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = RetryIfFailsHandler.class)
+@Artefact()
 public class RetryIfFails extends AbstractArtefact {
 	
 	DynamicValue<Integer> maxRetries = new DynamicValue<Integer>(1);

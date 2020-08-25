@@ -25,7 +25,7 @@ import javax.servlet.http.HttpSession;
 import ch.exense.commons.app.Configuration;
 import step.core.Controller;
 import step.core.GlobalContext;
-import step.core.execution.ExecutionRunnable;
+import step.core.execution.ExecutionContext;
 import step.core.scheduler.ExecutionScheduler;
 
 public abstract class AbstractServices {
@@ -57,13 +57,9 @@ public abstract class AbstractServices {
 		return controller.getScheduler();
 	}
 	
-	protected ExecutionRunnable getExecutionRunnable(String executionID) {
-		for(ExecutionRunnable runnable:getScheduler().getCurrentExecutions()) {
-			if(runnable.getContext().getExecutionId().equals(executionID)) {
-				return runnable;
-			}
-		}
-		return null;
+	protected ExecutionContext getExecutionRunnable(String executionID) {
+		return getScheduler().getCurrentExecutions().stream().filter(e->e.getExecutionId().equals(executionID))
+				.findFirst().orElse(null);
 	}
 	
 	protected Session getSession() {

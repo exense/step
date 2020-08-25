@@ -18,12 +18,11 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.SleepHandler;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = SleepHandler.class, block=false)
+@Artefact(block=false)
 public class Sleep extends AbstractArtefact {
 
 	private DynamicValue<Long> duration = new DynamicValue<>(0L);

@@ -18,11 +18,10 @@
  *******************************************************************************/
 package step.artefacts;
 
-import step.artefacts.handlers.SynchronizedHandler;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(handler = SynchronizedHandler.class)
+@Artefact()
 public class Synchronized extends Sequence {
 	
 	private DynamicValue<String> lockName = new DynamicValue<String>("");

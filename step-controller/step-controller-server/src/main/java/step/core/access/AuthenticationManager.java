@@ -3,7 +3,10 @@ package step.core.access;
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.commons.auth.Authenticator;
+import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
+import step.core.controller.errorhandling.ApplicationException;
 import step.core.deployment.Session;
 
 public class AuthenticationManager {
@@ -24,7 +27,7 @@ public class AuthenticationManager {
 		return configuration.getPropertyAsBoolean("authentication", true);
 	}
 
-	public boolean authenticate(Session session, Credentials credentials) {
+	public boolean authenticate(Session session, Credentials credentials) throws Exception {
 		boolean authenticated = authenticator.authenticate(credentials);
 		if (authenticated) {
 			setUserToSession(session, credentials.getUsername());
@@ -43,6 +46,10 @@ public class AuthenticationManager {
 	protected void setUserToSession(Session session, String username) {
 		session.setAuthenticated(true);
 		User user = userAccessor.getByUsername(username);
+		
+		if(user == null) {
+			throw new ApplicationException(100, "Unknow user '"+username+"': this user is not defined in step", null);
+		}
 		session.setUser(user);
 	}
 	

@@ -28,38 +28,30 @@ import org.quartz.spi.TriggerFiredBundle;
 import step.core.GlobalContext;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
-import step.core.execution.ExecutionRunnable;
-import step.core.execution.ExecutionRunnableFactory;
-import step.core.execution.model.Execution;
+import step.core.execution.ExecutionEngine;
 import step.core.execution.model.ExecutionParameters;
 
 public class ExecutionJobFactory implements JobFactory {
 
-	private GlobalContext context;
+	private final ExecutionEngine executionEngine;
+	private final ControllerSettingAccessor controllerSettingAccessor;
 	
-	private ExecutionRunnableFactory executionRunnableFactory;
-	
-	private ControllerSettingAccessor controllerSettingAccessor;
-
-	public ExecutionJobFactory(GlobalContext context, ExecutionRunnableFactory executionRunnableFactory) {
+	public ExecutionJobFactory(GlobalContext context, ExecutionEngine executionEngine) {
 		super();
-		this.context = context;
-		this.executionRunnableFactory = executionRunnableFactory;
-		
 		controllerSettingAccessor = new ControllerSettingAccessor(context.getMongoClientSession());
+		this.executionEngine = executionEngine;
 	}
 
 	@Override
 	public Job newJob(TriggerFiredBundle arg0, Scheduler arg1) throws SchedulerException {
 		JobDataMap data = arg0.getJobDetail().getJobDataMap();
-		ExecutionRunnable task;
-		Execution execution;
+		String executionID;
+		ExecutionParameters executionParams;
 		if(data.containsKey(Executor.EXECUTION_ID)) {
-			String executionID = data.getString(Executor.EXECUTION_ID);
-			execution = context.getExecutionAccessor().get(executionID);
+			executionID = data.getString(Executor.EXECUTION_ID);
 		} else {
 			String executionTaskID = data.getString(Executor.EXECUTION_TASK_ID);
-			ExecutionParameters executionParams = (ExecutionParameters) data.get(Executor.EXECUTION_PARAMETERS);
+			executionParams = (ExecutionParameters) data.get(Executor.EXECUTION_PARAMETERS);
 			
 			ControllerSetting schedulerUsernameSetting = controllerSettingAccessor.getSettingByKey("scheduler_execution_username");
 			if(schedulerUsernameSetting != null) {
@@ -69,11 +61,9 @@ public class ExecutionJobFactory implements JobFactory {
 				}
 			}
 			
-			execution = executionRunnableFactory.createExecution(executionParams, executionTaskID);			
+			executionID = executionEngine.initializeExecution(executionParams, executionTaskID);
 		}
-		task = executionRunnableFactory.newExecutionRunnable(execution);
-		
-		ExecutionJob job = new ExecutionJob(task);
-		return job;
+		 
+		return new ExecutionJob(executionEngine, executionID);
 	}
 }

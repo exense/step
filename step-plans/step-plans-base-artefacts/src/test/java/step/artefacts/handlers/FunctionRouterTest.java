@@ -12,6 +12,7 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import junit.framework.Assert;
+import step.artefacts.AbstractArtefactTest;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.core.dynamicbeans.DynamicBeanResolver;
@@ -19,7 +20,6 @@ import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionTestHelper;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
@@ -40,7 +40,7 @@ import step.grid.filemanager.FileVersionId;
 import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
-public class FunctionRouterTest {
+public class FunctionRouterTest extends AbstractArtefactTest {
 
 	protected ExecutionContext context;
 	
@@ -50,7 +50,7 @@ public class FunctionRouterTest {
 	
 	@Before
 	public void setupContext() throws Exception {
-		context = ExecutionTestHelper.setupContext();
+		context = newExecutionContext();
 		
 		function = new Function();
 		Map<String, String> map = new HashMap<>();

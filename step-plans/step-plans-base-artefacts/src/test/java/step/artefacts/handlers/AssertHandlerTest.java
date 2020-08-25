@@ -30,12 +30,10 @@ import org.junit.Test;
 
 import step.artefacts.Assert;
 import step.artefacts.Assert.AssertOperator;
-import step.artefacts.handlers.AbstractArtefactHandlerTest;
 import step.artefacts.reports.AssertReportNode;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.plans.builder.PlanBuilder;
 
 public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	

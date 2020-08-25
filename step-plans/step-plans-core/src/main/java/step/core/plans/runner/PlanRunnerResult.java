@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -127,6 +128,12 @@ public class PlanRunnerResult {
 		bWriter.flush();
 		return this;
 	}	
+	
+	public String getTreeAsString() throws IOException {
+		StringWriter stringWriter = new StringWriter();
+		printTree(stringWriter);
+		return stringWriter.toString();
+	}
 	
 	/**
 	 * Writes a report of the execution using the provided {@link ReportWriter} 

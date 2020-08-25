@@ -60,7 +60,7 @@ public class StagingRepositoryServices extends AbstractServices {
 		super.init();
 		GlobalContext context = getContext();
 		stagingContextAccessor = context.get(StagingContextAccessorImpl.class);
-		resourceManager = context.get(ResourceManager.class);
+		resourceManager = context.getResourceManager();
 	}
 	
 	@GET

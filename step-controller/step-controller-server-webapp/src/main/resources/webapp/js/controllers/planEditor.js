@@ -25,7 +25,7 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
 .controller('PlanEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location,Dialogs, PlanTypeRegistry, AuthService, reportTableFactory, executionServices, ExportDialogs) {
   $scope.authService = AuthService;
   stateStorage.push($scope, 'editor', {});
-      
+
   $scope.model = {}
   
   $scope.$watch('$state',function() {
@@ -48,6 +48,42 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
   $scope.save = function() {
     savePlan($scope.model.plan);
   }
+
+  $scope.undo = function() {
+    $scope.handle.undo();
+  }
+
+  $scope.discardAll = function() {
+    $scope.handle.discardAll();
+  }
+
+  $scope.redo = function() {
+    $scope.handle.redo();
+  }
+
+  $scope.hasUndo = function() {
+    var result = false;
+    if ($scope.handle.hasUndo !== undefined) {
+      result = $scope.handle.hasUndo();
+    }
+    return result;
+  }
+
+  $scope.hasRedo = function() {
+  var result = false;
+    if ($scope.handle.hasRedo !== undefined) {
+      result = $scope.handle.hasRedo();
+    }
+    return result;
+  }
+
+  $scope.$on('undo-requested', function(event, args) {
+    $scope.undo();
+  });
+
+  $scope.$on('redo-requested', function(event, args) {
+    $scope.redo();
+  });
 
   $scope.exportPlan = function() {
     ExportDialogs.displayExportDialog('Plans export','plan/'+$scope.planId, $scope.model.plan.attributes.name+'.zip', true, false).then(function () {})
@@ -106,10 +142,9 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
   
   $scope.interactiveSession = {
       execute: function(artefact) {
-        var parameters = {executionParameters:$scope.executionParameters}
         var sessionId = $scope.interactiveSession.id;
         $scope.componentTabs.selectedTab = 3;
-        $http.post("rest/interactive/"+sessionId+"/execute/"+$scope.model.plan.id+"/"+artefact.id, parameters).then(function() {
+        $http.post("rest/interactive/"+sessionId+"/execute/"+$scope.model.plan.id+"/"+artefact.id).then(function() {
           $scope.stepsTable.reload();
         });
       },
@@ -123,11 +158,18 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
   }
   
   $scope.startInteractive = function() {
-    $http.post("rest/interactive/start").then(function(response){
+    var executionParameters = {repositoryObject: $scope.artefactRef, userID:'', mode:'RUN', customParameters:$scope.executionParameters}
+    $http.post("rest/interactive/start", executionParameters).then(function(response){
       var interactiveSessionId = response.data;
       $scope.interactiveSession.id = interactiveSessionId;
     })
   }
+  
+  $scope.$watchCollection('executionParameters', function(val) {
+    if ($scope.isInteractiveSessionActive()) {
+      $scope.resetInteractive();
+    }
+  })
   
   $scope.resetInteractive = function() {
     $scope.stopInteractive();

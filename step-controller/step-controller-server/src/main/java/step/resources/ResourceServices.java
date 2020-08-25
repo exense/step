@@ -20,10 +20,9 @@ import javax.ws.rs.core.StreamingOutput;
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.io.FileHelper;
+import step.core.GlobalContext;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.objectenricher.ObjectEnricher;
@@ -39,9 +38,10 @@ public class ResourceServices extends AbstractServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		resourceManager = getContext().get(ResourceManager.class);
-		resourceAccessor = getContext().get(ResourceAccessor.class);
-		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
+		GlobalContext globalContext = getContext();
+		resourceManager = globalContext.getResourceManager();
+		resourceAccessor = globalContext.getResourceAccessor();
+		objectHookRegistry = globalContext.get(ObjectHookRegistry.class);
 	}
 	
 	@POST

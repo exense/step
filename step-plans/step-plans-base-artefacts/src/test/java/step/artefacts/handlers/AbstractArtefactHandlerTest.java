@@ -24,20 +24,20 @@ import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import step.artefacts.CheckArtefact;
+import step.artefacts.AbstractArtefactTest;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionTestHelper;
 
-public class AbstractArtefactHandlerTest {
+public class AbstractArtefactHandlerTest extends AbstractArtefactTest {
 	
 	protected ExecutionContext context;
 	
 	protected void setupContext() {
-		context = ExecutionTestHelper.setupContext();
+		context = newExecutionContext();
 	}
 	
 	protected void createSkeleton(AbstractArtefact artefact) {

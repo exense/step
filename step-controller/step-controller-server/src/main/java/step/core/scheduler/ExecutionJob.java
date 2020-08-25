@@ -22,23 +22,21 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-import step.core.execution.ExecutionRunnable;
+import step.core.execution.ExecutionEngine;
 
 public class ExecutionJob implements Job {
 	
-	private final ExecutionRunnable runnable;
+	private final ExecutionEngine executionEngine;
+	private final String executionId;
 	
-	public ExecutionJob(ExecutionRunnable runnable) {
+	public ExecutionJob(ExecutionEngine executionEngine, String executionId) {
 		super();
-		this.runnable = runnable;
-	}
-	
-	@Override
-	public void execute(JobExecutionContext arg0) throws JobExecutionException {
-		runnable.run();
+		this.executionEngine = executionEngine;
+		this.executionId = executionId;
 	}
 
-	public ExecutionRunnable getRunnable() {
-		return runnable;
+	@Override
+	public void execute(JobExecutionContext arg0) throws JobExecutionException {
+		executionEngine.execute(executionId);
 	}
 }
