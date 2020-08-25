@@ -16,14 +16,18 @@ import java.util.function.Consumer;
 import org.junit.Test;
 
 import junit.framework.Assert;
-import step.artefacts.AbstractArtefactTest;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
 import step.core.execution.model.ExecutionStatus;
 import step.threadpool.ThreadPool.WorkerController;
 
-public class ThreadPoolTest extends AbstractArtefactTest {
+public class ThreadPoolTest {
 
+	protected ExecutionContext newExecutionContext() {
+		return ExecutionEngine.builder().build().newExecutionContext();
+	}
+	
 	@Test
 	public void test() {
 		ExecutionContext context = newExecutionContext();
