@@ -6,7 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import org.junit.Test;
 
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
+import step.core.artefacts.CheckArtefact;
 import step.core.plans.Plan;
 
 public class PlanBuilderTest {
@@ -32,7 +32,7 @@ public class PlanBuilderTest {
 			ex = e;
 		}
 		assertNotNull(ex);
-		assertEquals("Unbalanced block CustomArtefact [Root]", ex.getMessage());
+		assertEquals("Unbalanced block CheckArtefact [Root]", ex.getMessage());
 	}
 	
 	@Test
@@ -54,17 +54,8 @@ public class PlanBuilderTest {
 	}
 	
 	public static AbstractArtefact artefact(String description) {
-		CustomArtefact a = new CustomArtefact();
+		CheckArtefact a = new CheckArtefact();
 		a.setDescription(description);
 		return a;
-	}
-	
-	@Artefact(name="Custom")
-	public static class CustomArtefact extends AbstractArtefact {
-
-		@Override
-		public String toString() {
-			return "CustomArtefact [" + getDescription() + "]";
-		}
 	}
 }

@@ -42,6 +42,10 @@ public class BaseArtefactPlugin extends AbstractExecutionEnginePlugin {
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext,
 			ExecutionEngineContext executionEngineContext) {
 		ArtefactHandlerRegistry artefactHandlerRegistry = executionEngineContext.getArtefactHandlerRegistry();
+		registerArtefacts(artefactHandlerRegistry);
+	}
+	
+	public static void registerArtefacts(ArtefactHandlerRegistry artefactHandlerRegistry) {
 		artefactHandlerRegistry.put(TestSet.class, TestSetHandler.class);
 		artefactHandlerRegistry.put(TestCase.class, TestCaseHandler.class);
 		artefactHandlerRegistry.put(TestScenario.class, TestScenarioHandler.class);

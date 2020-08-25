@@ -14,6 +14,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import ch.exense.commons.io.FileHelper;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
@@ -31,10 +32,10 @@ import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 import step.datapool.excel.ExcelDataPool;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.FunctionCRUDAccessor;
 import step.planbuilder.BaseArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
@@ -46,8 +47,9 @@ import step.resources.ResourceManager;
 
 public class ExportManagerTest {
 	
-	public static GlobalContext createGlobalContext() {
+	public static GlobalContext createGlobalContext() throws InstantiationException, IllegalAccessException, ClassNotFoundException, CircularDependencyException {
 		GlobalContext context = GlobalContextBuilder.createGlobalContext();
+		BaseArtefactPlugin.registerArtefacts(context.getArtefactHandlerRegistry());
 		//From ParameterManagerPlugin
 		InMemoryCRUDAccessor<Parameter> parameterAccessor = new InMemoryCRUDAccessor<Parameter>();
 		context.put("ParameterAccessor", parameterAccessor);
@@ -279,12 +281,12 @@ public class ExportManagerTest {
 	}
 	
 	private void testExportPlansRecursively(boolean overwrite) throws Exception {
-		GlobalContext c = GlobalContextBuilder.createGlobalContext();
+		GlobalContext c = createGlobalContext();
 		Sequence rootSequence = BaseArtefacts.sequence();
 		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
 		c.getPlanAccessor().save(plan);
 		Function function = new Function();
-		FunctionCRUDAccessor functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
+		FunctionAccessor functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 		functionAccessor.save(function);
 		Sequence sequence = BaseArtefacts.sequence();
 		sequence.addChild(BaseArtefacts.callPlan(plan.getId().toString()));
@@ -320,7 +322,7 @@ public class ExportManagerTest {
 			AtomicInteger nbPlans = new AtomicInteger(0);
 			c.getPlanAccessor().getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
 			AtomicInteger nbFunctions = new AtomicInteger(0);
-			functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
+			functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 			functionAccessor.getAll().forEachRemaining(f->nbFunctions.incrementAndGet());
 			Assert.assertEquals(2, nbPlans.intValue());
 			Assert.assertEquals(1, nbFunctions.intValue());
@@ -356,11 +358,13 @@ public class ExportManagerTest {
 	
 	private void testExportPlansWithCompoFct(boolean overwrite) throws Exception {
 		GlobalContext c = GlobalContextBuilder.createGlobalContext();
+		BaseArtefactPlugin.registerArtefacts(c.getArtefactHandlerRegistry());
+		
 		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(c.getPlanAccessor());
 		CompositeFunction function = compositeFunctionType.newFunction();
 		compositeFunctionType.setupFunction(function);
 		String compositePlanId = function.getPlanId();
-		FunctionCRUDAccessor functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
+		FunctionAccessor functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 		functionAccessor.save(function);
 		
 		Sequence sequence = BaseArtefacts.sequence();
@@ -380,7 +384,7 @@ public class ExportManagerTest {
 						
 			//create a new context to test the import
 			c = GlobalContextBuilder.createGlobalContext();
-			functionAccessor = (FunctionCRUDAccessor) c.get(FunctionAccessor.class);
+			functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 			ImportManager importManager = new ImportManager(c);
 			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
 			

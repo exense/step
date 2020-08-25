@@ -13,14 +13,15 @@ import org.junit.Test;
 
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.builder.PlanBuilderTest;
+import step.planbuilder.BaseArtefacts;
 
 public class DefaultPlanRunnerTest {
 
 	@Test
 	public void test() throws IOException {
-		PlanBuilder builder = PlanBuilder.create().startBlock(PlanBuilderTest.artefact("Root"));
+		PlanBuilder builder = PlanBuilder.create().startBlock(BaseArtefacts.sequence());
 		for(int i=1;i<1000;i++) {
-			builder.add(PlanBuilderTest.artefact("Child"+i));
+			builder.add(BaseArtefacts.sequence());
 		}
 		builder.endBlock();
 		

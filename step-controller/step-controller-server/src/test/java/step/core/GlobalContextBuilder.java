@@ -38,7 +38,6 @@ import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.FunctionCRUDAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.resources.InMemoryResourceAccessor;
 import step.resources.InMemoryResourceRevisionAccessor;
@@ -107,9 +106,9 @@ public class GlobalContextBuilder {
 			.register(new Entity<User,UserAccessor>(
 					EntityManager.users, context.getUserAccessor(), User.class, 
 					new GenericDBImporter<User, UserAccessor>(context)))
-			.register(new Entity<Function, FunctionCRUDAccessor>(
-				EntityManager.functions, (FunctionCRUDAccessor) functionAccessor, Function.class, 
-				new GenericDBImporter<Function,FunctionCRUDAccessor>(context)))
+			.register(new Entity<Function, FunctionAccessor>(
+				EntityManager.functions, (FunctionAccessor) functionAccessor, Function.class, 
+				new GenericDBImporter<Function,FunctionAccessor>(context)))
 			.register( new Entity<Resource, ResourceAccessor>(
 				EntityManager.resources, resourceAccessor, Resource.class, 
 				new GenericDBImporter<Resource, ResourceAccessor>(context) {

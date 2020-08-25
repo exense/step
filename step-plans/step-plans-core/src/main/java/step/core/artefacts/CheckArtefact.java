@@ -47,4 +47,8 @@ public class CheckArtefact extends AbstractArtefact {
 		this.executionRunnable = executionRunnable;
 	}
 	
+	@Override
+	public String toString() {
+		return "CheckArtefact [" + getDescription() + "]";
+	}
 }
