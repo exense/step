@@ -16,10 +16,12 @@ import org.junit.Test;
 
 import junit.framework.Assert;
 import step.core.artefacts.CheckArtefact;
+import step.core.artefacts.handlers.CheckArtefactHandler;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngine.Builder;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.ExecutionEngineException;
 import step.core.execution.OperationMode;
@@ -49,17 +51,33 @@ public class ExecutionEngineTest {
 
 	@Test
 	public void test() throws ExecutionEngineException, IOException {
-		ExecutionEngine executionEngine = ExecutionEngine.builder().build();
+		ExecutionEngine executionEngine = newExecutionEngine();
 		
 		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact()).endBlock().build();
 		PlanRunnerResult result = executionEngine.execute(plan);
 		
 		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
 	}
+
+	protected ExecutionEngine newExecutionEngine() {
+		return newExecutionEngineBuilder().build();
+	}
+
+	protected Builder newExecutionEngineBuilder() {
+		return ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
+
+			@Override
+			public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext,
+					ExecutionEngineContext executionEngineContext) {
+				executionEngineContext.getArtefactHandlerRegistry().put(CheckArtefact.class, CheckArtefactHandler.class);
+			}
+			
+		});
+	}
 	
 	@Test
 	public void test2PhasesExecution() throws ExecutionEngineException, IOException {
-		ExecutionEngine executionEngine = ExecutionEngine.builder().build();
+		ExecutionEngine executionEngine = newExecutionEngine();
 		
 		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact()).endBlock().build();
 		String executionId = executionEngine.initializeExecution(new ExecutionParameters(plan, null));
@@ -70,7 +88,7 @@ public class ExecutionEngineTest {
 	
 	@Test
 	public void testAbortExecution() throws ExecutionEngineException, IOException, TimeoutException, InterruptedException, ExecutionException {
-		ExecutionEngine executionEngine = ExecutionEngine.builder().build();
+		ExecutionEngine executionEngine = newExecutionEngine();
 
 		Semaphore semaphore = new Semaphore(1);
 		semaphore.acquire();
@@ -107,7 +125,7 @@ public class ExecutionEngineTest {
 	
 	@Test
 	public void testRepository() throws ExecutionEngineException, IOException {
-		ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new TestRepositoryPlugin()).build();
+		ExecutionEngine executionEngine = newExecutionEngineBuilder().withPlugin(new TestRepositoryPlugin()).build();
 		
 		PlanRunnerResult result = executionEngine.execute(new ExecutionParameters(new RepositoryObjectReference(TEST_REPOSITORY, newSuccessfulRepositoryImport()), null));
 		
@@ -117,7 +135,7 @@ public class ExecutionEngineTest {
 	
 	@Test
 	public void testSimulationMode() throws ExecutionEngineException, IOException {
-		ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new TestRepositoryPlugin()).build();
+		ExecutionEngine executionEngine = newExecutionEngineBuilder().withPlugin(new TestRepositoryPlugin()).build();
 		
 		// Build executionParameters with Simulation mode
 		ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.SIMULATION, null, new RepositoryObjectReference(TEST_REPOSITORY, newSuccessfulRepositoryImport()), null, null, null, null, false, null);
@@ -163,7 +181,7 @@ public class ExecutionEngineTest {
 		})).endBlock().build();
 		parentContext.setPlanAccessor(planAccessor);
 		
-		ExecutionEngine executionEngine = ExecutionEngine.builder().withParentContext(parentContext).build();
+		ExecutionEngine executionEngine = newExecutionEngineBuilder().withParentContext(parentContext).build();
 		
 		PlanRunnerResult result = executionEngine.execute(plan);
 		

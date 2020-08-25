@@ -10,12 +10,10 @@ import step.core.execution.ExecutionContext;
 public class ArtefactHandlerManager {
 	
 	private final ExecutionContext context;
-	private final ArtefactHandlerRegistry artefactHandlerRegistry;
 	
 	public ArtefactHandlerManager(ExecutionContext context) {
 		super();
 		this.context = context;
-		this.artefactHandlerRegistry = context.getArtefactHandlerRegistry();
 	}
 
 	public void createReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
@@ -45,6 +43,8 @@ public class ArtefactHandlerManager {
 	
 	@SuppressWarnings("unchecked")
 	private ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(Class<AbstractArtefact> artefactClass, ExecutionContext context) {
+		// Be careful not to cache the ArtefactHandlerRegistry as this is a mutable variable of the context...
+		ArtefactHandlerRegistry artefactHandlerRegistry = context.getArtefactHandlerRegistry();
 		Artefact artefact = artefactClass.getAnnotation(Artefact.class);
 		if(artefact!=null) {
 			Class<ArtefactHandler<AbstractArtefact, ReportNode>> artefactHandlerClass;
