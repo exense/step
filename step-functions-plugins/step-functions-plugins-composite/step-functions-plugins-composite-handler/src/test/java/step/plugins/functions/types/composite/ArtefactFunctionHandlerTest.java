@@ -10,6 +10,7 @@ import javax.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Return;
 import step.artefacts.Script;
 import step.core.artefacts.reports.ReportNode;
@@ -60,7 +61,7 @@ public class ArtefactFunctionHandlerTest {
 	}
 
 	protected ExecutionContext newExecutionContext() {
-		return ExecutionEngine.builder().build().newExecutionContext();
+		return ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build().newExecutionContext();
 	}
 
 	protected ArtefactFunctionHandler createArtefactFunctionHandler(ExecutionContext context) {

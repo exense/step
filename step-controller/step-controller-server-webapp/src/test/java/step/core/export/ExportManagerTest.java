@@ -63,7 +63,7 @@ public class ExportManagerTest {
 
 	@Test
 	public void testExportPlanById() throws Exception {
-		GlobalContext c = GlobalContextBuilder.createGlobalContext();
+		GlobalContext c = createGlobalContext();
 		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(BaseArtefacts.sequence()).endBlock().build();
 		c.getPlanAccessor().save(plan);
 		
@@ -88,7 +88,7 @@ public class ExportManagerTest {
 			}*/
 			
 			//create a new context to test the import
-			c = GlobalContextBuilder.createGlobalContext();
+			c = createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
 			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
 			
@@ -116,7 +116,7 @@ public class ExportManagerTest {
 	
 	@Test
 	public void testExportAllPlans() throws Exception {
-		GlobalContext c = GlobalContextBuilder.createGlobalContext();
+		GlobalContext c = createGlobalContext();
 		Sequence rootSequence = BaseArtefacts.sequence();
 		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
 		c.getPlanAccessor().save(plan);
@@ -132,7 +132,7 @@ public class ExportManagerTest {
 			exportManager.exportAll(exportConfig);
 			
 			//create a new context to test the import
-			c = GlobalContextBuilder.createGlobalContext();
+			c = createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
 			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
 			
@@ -232,7 +232,7 @@ public class ExportManagerTest {
 	
 	@Test
 	public void testExportPlanByWithCustomFields() throws Exception {
-		GlobalContext c = GlobalContextBuilder.createGlobalContext();
+		GlobalContext c = createGlobalContext();
 		Sequence seq = BaseArtefacts.sequence();
 		seq.addCustomField("key", "value");
 		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(seq).endBlock().build();
@@ -357,8 +357,7 @@ public class ExportManagerTest {
 	
 	
 	private void testExportPlansWithCompoFct(boolean overwrite) throws Exception {
-		GlobalContext c = GlobalContextBuilder.createGlobalContext();
-		BaseArtefactPlugin.registerArtefacts(c.getArtefactHandlerRegistry());
+		GlobalContext c = createGlobalContext();
 		
 		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(c.getPlanAccessor());
 		CompositeFunction function = compositeFunctionType.newFunction();
@@ -383,7 +382,7 @@ public class ExportManagerTest {
 			exportManager.exportById(exportConfig, plan.getId().toString());
 						
 			//create a new context to test the import
-			c = GlobalContextBuilder.createGlobalContext();
+			c = createGlobalContext();
 			functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 			ImportManager importManager = new ImportManager(c);
 			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
@@ -425,8 +424,7 @@ public class ExportManagerTest {
 	}
 	
 	public void testExportPlansWithResourceFct(boolean overwrite) throws Exception {
-		GlobalContext c = GlobalContextBuilder.createGlobalContext();
-		
+		GlobalContext c = createGlobalContext();
 		
 		// Create a resource
 		ResourceManager resourceManager = c.get(ResourceManager.class);
@@ -457,7 +455,7 @@ public class ExportManagerTest {
 			resourceManager.deleteResource(resource.getId().toHexString());
 						
 			//create a new context to test the import
-			c = GlobalContextBuilder.createGlobalContext();
+			c = createGlobalContext();
 			ResourceManager resourceManagerImport = c.get(ResourceManager.class);
 
 			ImportManager importManager = new ImportManager(c);
@@ -525,12 +523,12 @@ public class ExportManagerTest {
 	}
 	
 	protected void testOlderPlanImport(String resourcePath, String originPlanId) throws Exception {
-		GlobalContext c = GlobalContextBuilder.createGlobalContext();
+		GlobalContext c = createGlobalContext();
 		URL resource = getClass().getClassLoader().getResource(resourcePath);
 		File testImportFile = new File(resource.getFile());
 		
 		//create a new context to test the import
-		c = GlobalContextBuilder.createGlobalContext();
+		c = createGlobalContext();
 		ImportManager importManager = new ImportManager(c);
 		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
 		
