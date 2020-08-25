@@ -21,10 +21,12 @@ package step.artefacts;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 
 @Artefact(name="CallKeyword", report = CallFunctionReportNode.class)
 public class CallFunction extends TokenSelector {
-		
+	
 	String functionId;
 	
 	DynamicValue<String> function = new DynamicValue<>("{}");
@@ -41,6 +43,7 @@ public class CallFunction extends TokenSelector {
 		this.function = function;
 	}
 
+	@EntityReference(type=EntityManager.functions)
 	public String getFunctionId() {
 		return functionId;
 	}

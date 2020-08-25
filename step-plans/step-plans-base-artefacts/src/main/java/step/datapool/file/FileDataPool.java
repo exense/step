@@ -19,6 +19,8 @@
 package step.datapool.file;
 
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
 
 
@@ -30,6 +32,7 @@ public class FileDataPool extends DataPoolConfiguration {
 		super();
 	}
 
+	@EntityReference(type=EntityManager.resources)
 	public DynamicValue<String> getFile() {
 		return file;
 	}

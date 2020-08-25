@@ -3,7 +3,9 @@ package step.core.export;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -12,12 +14,13 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;
+import step.core.entities.EntityManager;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
 import step.core.objectenricher.ObjectEnricher;
@@ -57,15 +60,19 @@ public class ExportServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public ExportStatus exportPlan(@PathParam("id") String id) {
+	public ExportStatus exportPlan(@PathParam("id") String id, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
+			@QueryParam("additionalEntities") List<String> additionalEntities) {
+		Session session = getSession();
 		Map<String,String> metadata = getMetadata();
 		ObjectEnricher objectDrainer = objectHookRegistry.getObjectDrainer(getSession());
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws IOException {
-				String planName = accessor.get(id).getAttributes().get(AbstractOrganizableObject.NAME);
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, planName + ".json");
-				exportManager.exportById(resourceContainer.getOutputStream(),objectDrainer , metadata, id, "plans");
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);//planName + ".json");
+				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),objectDrainer , metadata,objectPredicateFactory.getObjectPredicate(session), 
+						EntityManager.plans, recursively, additionalEntities);
+				Set<String> refMissingWarning = exportManager.exportById(exportConfig, id);
+				status.setWarnings(refMissingWarning);
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
@@ -85,15 +92,18 @@ public class ExportServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public ExportStatus exportAllArtefacts(@PathParam("entity") String entity) {
+	public ExportStatus exportEntities(@PathParam("entity") String entity, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
+			@QueryParam("additionalEntities") List<String> additionalEntities) {
 		Session session = getSession();
 		Map<String,String> metadata = getMetadata();
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, entity + ".json");
-				exportManager.exportAll(resourceContainer.getOutputStream(), objectHookRegistry.getObjectDrainer(session), 
-						metadata, objectPredicateFactory.getObjectPredicate(session),entity);
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
+				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), objectHookRegistry.getObjectDrainer(session),
+						metadata, objectPredicateFactory.getObjectPredicate(session), entity, recursively, additionalEntities);
+				Set<String> refMissingWarning = exportManager.exportAll(exportConfig);
+				status.setWarnings(refMissingWarning);
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}

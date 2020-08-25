@@ -1,6 +1,8 @@
 package step.plugins.java;
 
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 import step.functions.Function;
 
 /**
@@ -18,6 +20,7 @@ public class GeneralScriptFunction extends Function {
 	
 	DynamicValue<String> errorHandlerFile = new DynamicValue<>("");
 	
+	@EntityReference(type=EntityManager.resources)
 	public DynamicValue<String> getScriptFile() {
 		return scriptFile;
 	}
@@ -40,6 +43,7 @@ public class GeneralScriptFunction extends Function {
 		this.scriptLanguage = scriptLanguage;
 	}
 
+	@EntityReference(type=EntityManager.resources)
 	public DynamicValue<String> getLibrariesFile() {
 		return librariesFile;
 	}
@@ -52,6 +56,7 @@ public class GeneralScriptFunction extends Function {
 		this.librariesFile = librariesFile;
 	}
 
+	@EntityReference(type=EntityManager.resources)
 	public DynamicValue<String> getErrorHandlerFile() {
 		return errorHandlerFile;
 	}

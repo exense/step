@@ -62,7 +62,7 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
   });
 })
 
-.controller('PlanListCtrl', function($rootScope, $scope, $http, $location, $uibModal, stateStorage, ExportService, Dialogs, PlanDialogs, ImportDialogs, AuthService) {
+.controller('PlanListCtrl', function($rootScope, $scope, $http, $location, $uibModal, stateStorage, Dialogs, PlanDialogs, ImportDialogs, ExportDialogs, AuthService) {
     stateStorage.push($scope, 'list', {});	
     $scope.authService = AuthService;
     
@@ -111,13 +111,13 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
     }
     
     $scope.importPlans = function() {
-      ImportDialogs.displayImportDialog('Plans import','plans').then(function () {
+      ImportDialogs.displayImportDialog('Plans import','plans', true, false).then(function () {
         reload();
       });
     }
     
     $scope.exportPlans = function() {
-      ExportService.get("rest/export/plans")
+      ExportDialogs.displayExportDialog('Plans export','plans', 'allPlans.zip', true, false).then(function () {})
     }
     
   })

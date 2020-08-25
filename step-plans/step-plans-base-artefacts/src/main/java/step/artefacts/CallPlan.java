@@ -21,6 +21,8 @@ package step.artefacts;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 
 @Artefact()
 public class CallPlan extends AbstractArtefact {
@@ -39,6 +41,7 @@ public class CallPlan extends AbstractArtefact {
 		return true;
 	}
 
+	@EntityReference(type=EntityManager.plans)
 	public String getPlanId() {
 		return planId;
 	}

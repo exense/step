@@ -1,5 +1,10 @@
 package step.core.entities;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.CRUDAccessor;
 import step.core.imports.Importer;
@@ -10,7 +15,9 @@ public class Entity<A extends AbstractIdentifiableObject, T extends CRUDAccessor
 	private T accessor;
 	private Class<A> entityClass;
 	private Importer<A,T> importer;
-	
+	private List<ResolveReferencesHook> resolveReferencesHook = new ArrayList<ResolveReferencesHook>();
+	private List<BiConsumer<Object, Map<String, String>>> updateReferencesHook = new ArrayList<BiConsumer<Object, Map<String, String>>>();
+
 	public Entity(String name, T accessor, Class<A> entityClass, Importer<A,T> importer) {
 		super();
 		this.name = name;
@@ -50,6 +57,22 @@ public class Entity<A extends AbstractIdentifiableObject, T extends CRUDAccessor
 
 	public void setImporter(Importer<A,T> importer) {
 		this.importer = importer;
+	}
+
+	public List<ResolveReferencesHook> getReferencesHook() {
+		return resolveReferencesHook;
+	}
+
+	public void setReferencesHook(List<ResolveReferencesHook> referencesHook) {
+		this.resolveReferencesHook = referencesHook;
+	}
+
+	public List<BiConsumer<Object, Map<String, String>>> getUpdateReferencesHook() {
+		return updateReferencesHook;
+	}
+
+	public void setUpdateReferencesHook(List<BiConsumer<Object, Map<String, String>>> updateReferencesHook) {
+		this.updateReferencesHook = updateReferencesHook;
 	}
 
 }

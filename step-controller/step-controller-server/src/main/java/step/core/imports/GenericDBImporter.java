@@ -1,7 +1,7 @@
 package step.core.imports;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 import org.bson.Document;
@@ -16,10 +16,8 @@ import com.mongodb.client.MongoCollection;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.CRUDAccessor;
 import step.core.entities.Entity;
-import step.core.objectenricher.ObjectEnricher;
 
 public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends CRUDAccessor<A>> implements Importer<A, T> {
 	
@@ -39,14 +37,37 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 		}
 	}
 	
-	public void importOne(JsonParser jParser, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version) throws JsonParseException, JsonMappingException, IOException {
-		if (version.compareTo(new Version(3,13,0)) >= 0) {
+	public A importOne(ImportConfiguration importConfig, JsonParser jParser, ObjectMapper mapper,
+			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
+		if (importConfig.version.compareTo(new Version(3,13,0)) >= 0) {
 			A aObj = mapper.readValue(jParser, entity.getEntityClass());
-			objectEnricher.accept(aObj);
-			entity.getAccessor().save(aObj);
+			importConfig.objectEnricher.accept(aObj);
+			if (importConfig.overwrite) {
+				entity.getAccessor().save(aObj);
+			} else {
+				saveWithNewId(aObj,references);
+			}
+			return aObj;
+			
 		} else {
-			saveToTmpCollection(mapper.readValue(jParser, Document.class));			
+			saveToTmpCollection(mapper.readValue(jParser, Document.class));
+			return null;
 		}
+	}
+	
+	protected void saveWithNewId(A aObj, Map<String, String> references) {
+		String origId = aObj.getId().toHexString();
+		ObjectId objectId;
+		//if the origId was already replaced, use the new one
+		if (references.containsKey(origId)) {
+			objectId = new ObjectId(references.get(origId));
+		} else {
+			objectId = new ObjectId();
+		}
+		aObj.setId(objectId);
+		references.put(origId, aObj.getId().toHexString());
+		context.getEntityManager().updateReferences(aObj, references);
+		entity.getAccessor().save(aObj);
 	}
 	
 	protected MongoCollection<Document> getOrInitTmpCollection() {
@@ -71,10 +92,10 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 	}
 
 	@Override
-	public void importMany(File file, ObjectMapper mapper, ObjectEnricher objectEnricher, Version version)
+	public void importMany(ImportConfiguration importConfig, ObjectMapper mapper)
 			throws IOException {
-		// TODO Auto-generated method stub
-		
+		throw new RuntimeException("Not implemented");
 	}
+
 
 }

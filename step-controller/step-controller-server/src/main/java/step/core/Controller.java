@@ -59,13 +59,17 @@ import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
+import step.resources.Resource;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceAccessorImpl;
+import step.resources.ResourceImpoter;
 import step.resources.ResourceManager;
 import step.resources.ResourceManagerControllerPlugin;
 import step.resources.ResourceManagerImpl;
+import step.resources.ResourceRevision;
 import step.resources.ResourceRevisionAccessor;
 import step.resources.ResourceRevisionAccessorImpl;
+import step.resources.ResourceRevisionsImporter;
 
 public class Controller {
 	
@@ -145,7 +149,7 @@ public class Controller {
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		
-		context.setEntityManager(new EntityManager());
+		context.setEntityManager(new EntityManager(context));
 		context.getEntityManager()
 			.register( new Entity<Execution, ExecutionAccessor>(
 				EntityManager.executions, context.getExecutionAccessor(), Execution.class, 
@@ -161,7 +165,11 @@ public class Controller {
 					new GenericDBImporter<ExecutiontTaskParameters, ExecutionTaskAccessor>(context)))
 			.register(new Entity<User,UserAccessor>(
 					EntityManager.users, context.getUserAccessor(), User.class, 
-					new GenericDBImporter<User, UserAccessor>(context)));
+					new GenericDBImporter<User, UserAccessor>(context)))
+			.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor,
+						Resource.class, new ResourceImpoter(context)))
+			.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
+						resourceRevisionAccessor, ResourceRevision.class, new ResourceRevisionsImporter(context)));
 
 		createOrUpdateIndexes();
 	}

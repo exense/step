@@ -92,7 +92,7 @@ angular.module('functionsControllers',['step'])
   return dialogs;
 })
 
-.controller('FunctionListCtrl', function($scope, $rootScope, $compile, $http, $interval, $uibModal, stateStorage, Dialogs, FunctionDialogs, ImportDialogs, ExportService, $location, AuthService, FunctionTypeRegistry) {
+.controller('FunctionListCtrl', function($scope, $rootScope, $compile, $http, $interval, $uibModal, stateStorage, Dialogs, FunctionDialogs, ImportDialogs, ExportDialogs, $location, AuthService, FunctionTypeRegistry) {
   stateStorage.push($scope, 'functions', {});	
   
   $scope.authService = AuthService;
@@ -149,13 +149,13 @@ angular.module('functionsControllers',['step'])
   }
   
   $scope.importFunctions = function() {
-    ImportDialogs.displayImportDialog('Keyword import','functions').then(function () {
+    ImportDialogs.displayImportDialog('Keyword import','functions', true).then(function () {
       reload();
     });
   }
   
   $scope.exportFunctions = function() {
-    ExportService.get("rest/export/functions")
+    ExportDialogs.displayExportDialog('Keywords export','functions', 'allKeywords.zip', true).then(function () {})
   }
   
   $scope.functionTypeLabel = function(type) {

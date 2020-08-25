@@ -503,14 +503,16 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 .factory('ImportDialogs', function ($rootScope, $uibModal, EntityRegistry,$sce) {
   var dialogs = {};
   
-  dialogs.displayImportDialog = function(title,path) {
+  dialogs.displayImportDialog = function(title,path,importAll,overwrite) {
     var modalInstance = $uibModal.open({
       backdrop: 'static',
-      templateUrl: 'partials/plans/importPlansDialog.html',
+      templateUrl: 'partials/importDialog.html',
       controller: 'importModalCtrl',
       resolve: {
         title: function() {return title;},
-        path: function() {return path;}}
+        path: function() {return path;},
+        importAll: function() {return importAll;},
+        overwrite: function() {return overwrite;}}
     });
     return modalInstance.result;
   }
@@ -518,15 +520,69 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   return dialogs;
 })
 
-.controller('importModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs, title, path) {
+.controller('importModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs, title, path, importAll, overwrite) {
   $scope.title = title;
+  $scope.path = path;
+  $scope.importAll = importAll;
+  $scope.overwrite = overwrite;
   $scope.resourcePath; 
   
   $scope.save = function() {
     if($scope.resourcePath) {
-      $http({url:"rest/import/" + path,method:"POST",params:{path:$scope.resourcePath}}).then(function(response) {
+      $http({url:"rest/import/" + path,method:"POST",params:{path:$scope.resourcePath,importAll:$scope.importAll,overwrite:$scope.overwrite}}).then(function(response) {
         $uibModalInstance.close(response.data);
       })      
+    } else {
+      Dialogs.showErrorMsg("Upload not completed.");
+    }
+  }
+  
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss('cancel');
+  };
+})
+
+.factory('ExportDialogs', function ($rootScope, $uibModal, EntityRegistry,$sce) {
+  var dialogs = {};
+  
+  dialogs.displayExportDialog = function(title, path, filename, recursively, parameters) {
+    var modalInstance = $uibModal.open({
+      backdrop: 'static',
+      templateUrl: 'partials/exportDialog.html',
+      controller: 'exportModalCtrl',
+      resolve: {
+        title: function() {return title;},
+        path: function() {return path;},
+        filename: function() {return filename;},
+        recursively: function() {return recursively;},
+        parameters: function() {return parameters;}}
+    });
+    return modalInstance.result;
+  }
+
+  return dialogs;
+})
+
+.controller('exportModalCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs, ExportService, title, path, filename, recursively, parameters) {
+  $scope.title = title;
+  $scope.path = path;
+  $scope.filename = filename;
+  $scope.recursively = recursively;
+  $scope.parameters = parameters;
+  
+  $scope.save = function() {
+    if($scope.filename) {
+      urlParams = "?recursively=" + $scope.recursively + "&filename=" + $scope.filename;
+      if ($scope.parameters) {
+        urlParams += "&additionalEntities=parameters"
+      }
+      ExportService.get("rest/export/" + $scope.path + urlParams);
+      $uibModalInstance.close();
+      
+      
+  /*    $http({url:"rest/import/" + path,method:"POST",params:{path:$scope.resourcePath,importAll:$scope.importAll,overwrite:$scope.overwrite}}).then(function(response) {
+        $uibModalInstance.close(response.data);
+      })*/      
     } else {
       Dialogs.showErrorMsg("Upload not completed.");
     }
@@ -565,6 +621,13 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 			resolve: {message:function(){return  $sce.trustAsHtml(msg)}}});
 		return modalInstance.result;
 	}
+	
+	 dialogs.showListOfMsgs = function(messages) {
+	    var modalInstance = $uibModal.open({backdrop: 'static',animation: false, templateUrl: 'partials/messagesListDialog.html',
+	      controller: 'DialogCtrl', 
+	      resolve: {message:function(){return  messages}}});
+	    return modalInstance.result;
+	  }
 
 	dialogs.editTextField = function(scope) {
 		var modalInstance = $uibModal.open({

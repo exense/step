@@ -35,6 +35,7 @@ import step.core.accessors.collections.CollectionRegistry;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.Entity;
+import step.core.entities.EntityManager;
 import step.core.imports.GenericDBImporter;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -58,8 +59,6 @@ import step.resources.ResourceManagerControllerPlugin;
 @Plugin(dependencies= {ScreenTemplatePlugin.class, GridPlugin.class, ResourceManagerControllerPlugin.class})
 public class FunctionControllerPlugin extends AbstractControllerPlugin {
 
-	private static final String COLLECTION_FUNCTIONS = "functions";
-	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		Configuration configuration = context.getConfiguration();
@@ -84,7 +83,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 
 		context.put(FunctionAccessor.class, functionAccessor);
 		context.getEntityManager().register(new Entity<Function, FunctionAccessorImpl>(
-				COLLECTION_FUNCTIONS, (FunctionAccessorImpl) functionAccessor, Function.class, 
+				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class, 
 				new GenericDBImporter<Function,FunctionAccessorImpl>(context)));
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
@@ -97,7 +96,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		
 		CollectionRegistry collectionRegistry = context.get(CollectionRegistry.class);
 		MongoDatabase mongoDatabase = context.getMongoClientSession().getMongoDatabase();
-		collectionRegistry.register(COLLECTION_FUNCTIONS, new Collection<Function>(mongoDatabase, COLLECTION_FUNCTIONS, Function.class, true));
+		collectionRegistry.register(EntityManager.functions, new Collection<Function>(mongoDatabase, EntityManager.functions, Function.class, true));
 	}
 	
 	@Override

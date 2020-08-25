@@ -22,7 +22,7 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
   PlanTypeRegistry.register('step.core.plans.Plan', 'Default', 'partials/plans/planTreeEditor.html');
 })
 
-.controller('PlanEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location,Dialogs, PlanTypeRegistry, AuthService, reportTableFactory, executionServices, ExportService) {
+.controller('PlanEditorCtrl', function($scope, $compile, $http, stateStorage, $interval, $uibModal, $location,Dialogs, PlanTypeRegistry, AuthService, reportTableFactory, executionServices, ExportDialogs) {
   $scope.authService = AuthService;
   stateStorage.push($scope, 'editor', {});
 
@@ -86,7 +86,7 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
   });
 
   $scope.exportPlan = function() {
-    ExportService.get("rest/export/plan/"+$scope.planId);
+    ExportDialogs.displayExportDialog('Plans export','plan/'+$scope.planId, $scope.model.plan.attributes.name+'.zip', true, false).then(function () {})
   }
   
   $scope.clonePlan = function() {

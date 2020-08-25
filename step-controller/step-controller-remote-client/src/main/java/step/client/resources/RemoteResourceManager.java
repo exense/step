@@ -214,4 +214,20 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 		throw new RuntimeException("Not implemented");
 	}
 
+	@Override
+	public String getResourcesRootPath() {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public Resource updateResourceContent(Resource resource, InputStream resourceStream, String resourceFileName,
+			ResourceRevision revision) throws IOException {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
+	public ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException {
+		throw new RuntimeException("Not implemented");
+	}
+
 }
