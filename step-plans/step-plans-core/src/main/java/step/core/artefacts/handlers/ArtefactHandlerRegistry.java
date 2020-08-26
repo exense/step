@@ -10,11 +10,11 @@ import javax.annotation.PostConstruct;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import step.core.artefacts.ArtefactTypeCache;
 
 public class ArtefactHandlerRegistry {
 
 	private final Map<Class<? extends AbstractArtefact>, Class<? extends ArtefactHandler<?, ?>>> register = new ConcurrentHashMap<>();
+	private final Map<String, Class<? extends AbstractArtefact>> artefactClassesByName = new ConcurrentHashMap<>();
 
 	public Class<? extends ArtefactHandler<?, ?>> get(Class<? extends AbstractArtefact> key) {
 		return register.get(key);
@@ -22,18 +22,16 @@ public class ArtefactHandlerRegistry {
 
 	public Class<? extends ArtefactHandler<?, ?>> put(Class<? extends AbstractArtefact> key,
 			Class<? extends ArtefactHandler<?, ?>> value) {
-		String artefactName = AbstractArtefact.getArtefactName(key);
-		ArtefactTypeCache.put(artefactName, key);
-
+		artefactClassesByName.put(AbstractArtefact.getArtefactName(key), key);
 		return register.put(key, value);
 	}
 
 	public Set<String> getArtefactNames() {
-		return ArtefactTypeCache.keySet();
+		return artefactClassesByName.keySet();
 	}
 
 	public Class<? extends AbstractArtefact> getArtefactType(String name) {
-		return ArtefactTypeCache.getArtefactType(name);
+		return artefactClassesByName.get(name);
 	}
 
 	public AbstractArtefact getArtefactTypeInstance(String type) throws Exception {
@@ -49,8 +47,8 @@ public class ArtefactHandlerRegistry {
 
 	public Set<String> getArtefactTemplateNames() {
 		Set<String> templateArtefacts = new HashSet<String>();
-		ArtefactTypeCache.keySet().forEach(k -> {
-			if (ArtefactTypeCache.getArtefactType(k).getAnnotation(Artefact.class).useAsTemplate()) {
+		getArtefactNames().forEach(k -> {
+			if (getArtefactType(k).getAnnotation(Artefact.class).useAsTemplate()) {
 				templateArtefacts.add(k);
 			}
 		});
