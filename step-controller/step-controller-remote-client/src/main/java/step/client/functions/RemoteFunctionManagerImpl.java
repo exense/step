@@ -6,13 +6,11 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.MediaType;
 
-import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.functions.Function;
-import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
 
-public class RemoteFunctionManagerImpl extends AbstractRemoteClient implements FunctionManager {
+public class RemoteFunctionManagerImpl extends RemoteFunctionManager {
 
 	public RemoteFunctionManagerImpl(ControllerCredentials credentials){
 		super(credentials);
