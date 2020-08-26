@@ -60,7 +60,7 @@ public abstract class AbstractExecutionEngineContext extends AbstractContext {
 		reportNodeAccessor = new InMemoryReportNodeAccessor();
 		executionAccessor = new InMemoryExecutionAccessor();
 
-		resourceManager = new ResourceManagerImpl(new File("resources"), resourceAccessor, new InMemoryResourceRevisionAccessor());
+		resourceManager = new LocalResourceManagerImpl(new File("resources"), resourceAccessor, new InMemoryResourceRevisionAccessor());
 		executionManager = new ExecutionManagerImpl(executionAccessor);
 		repositoryObjectManager = new RepositoryObjectManager();
 

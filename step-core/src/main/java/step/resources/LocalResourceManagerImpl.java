@@ -15,6 +15,11 @@ public class LocalResourceManagerImpl extends ResourceManagerImpl {
 		super(folder, new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
 	}
 	
+	public LocalResourceManagerImpl(File resourceRootFolder, ResourceAccessor resourceAccessor,
+			ResourceRevisionAccessor resourceRevisionAccessor) {
+		super(resourceRootFolder, resourceAccessor, resourceRevisionAccessor);
+	}
+
 	public void cleanup() {
 		if (resourceRootFolder.exists() && resourceRootFolder.isDirectory() && resourceRootFolder.canWrite()) {
 			try {
