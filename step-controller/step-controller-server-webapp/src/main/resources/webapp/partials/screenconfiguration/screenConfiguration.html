@@ -6,7 +6,7 @@
 	<st-table data="screenInputs" handle="tableHandle" uid="'screenInputs'" persist-state="true">
 		<st-actions>
 			<div class="btn-group btn-group-menu">
-				<button type="button" ng-disabled="!authService.hasRight('admin')" class="btn btn-success" ng-click="addInput()">New</button>
+				<button type="button" ng-disabled="!authService.hasRight('screenInputs-write')" class="btn btn-success" ng-click="addInput()">New</button>
 			</div>
 		</st-actions>
 		<st-columns>

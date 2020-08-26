@@ -20,9 +20,10 @@ angular.module('adminControllers', ['step' ])
 
 .run(function(ViewRegistry, EntityRegistry, $timeout) {
   ViewRegistry.registerView('admin','partials/admin.html');
+  ViewRegistry.registerView('settings','partials/settings.html');
   EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/users/userSelectionTable.html');
   ViewRegistry.registerDashlet('admin','Users','partials/users/users.html','users');
-  $timeout(function() {ViewRegistry.registerDashlet('admin','Settings','partials/settings.html','controller');})
+  $timeout(function() {ViewRegistry.registerDashlet('admin','Settings','partials/adminSettings.html','controller');})
 })
 
 .controller('AdminCtrl', ['$scope', 'stateStorage', 'ViewRegistry',
@@ -123,6 +124,26 @@ angular.module('adminControllers', ['step' ])
 
   $scope.currentConfigurationItem = $scope.configurationItems[0];
   
+  $scope.setCurrentConfigurationItem = function(item) {
+    $scope.$state = item.id;
+    $scope.currentConfigurationItem = item;
+  }
+})
+
+.controller('LightSettingsCtrl', function($scope, $http, stateStorage, ViewRegistry) {
+  $scope.configurationItems = ViewRegistry.getDashlets('settings');
+
+  stateStorage.push($scope, 'settings', {});
+
+  $scope.$watch('$state',function() {
+    if($scope.$state!=null) {
+      $scope.currentConfigurationItem = _.find($scope.configurationItems,function(item) {
+        return item.id==$scope.$state})
+    }
+  });
+
+  $scope.currentConfigurationItem = $scope.configurationItems[0];
+
   $scope.setCurrentConfigurationItem = function(item) {
     $scope.$state = item.id;
     $scope.currentConfigurationItem = item;

@@ -130,7 +130,7 @@ public class ScreenTemplateService extends AbstractServices {
 	}
 	
 	@POST
-	@Secured(right="admin")
+	@Secured(right="screenInputs-write")
 	@Path("/input/{id}/move")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void moveInput(@PathParam("id") String id, int offset) {
@@ -138,7 +138,7 @@ public class ScreenTemplateService extends AbstractServices {
 	}
 	
 	@DELETE
-	@Secured(right="admin")
+	@Secured(right="screenInputs-delete")
 	@Path("/input/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void deleteInput(@PathParam("id") String id) {		
@@ -147,7 +147,7 @@ public class ScreenTemplateService extends AbstractServices {
 	}
 	
 	@POST
-	@Secured(right="admin")
+	@Secured(right="screenInputs-write")
 	@Path("/input")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void saveInput(ScreenInput screenInput) {

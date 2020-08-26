@@ -20,6 +20,7 @@ angular.module('screenConfigurationControllers',['tables','step'])
 
 .run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerDashlet('admin/controller','Screens','partials/screenconfiguration/screenConfiguration.html','screens');
+  ViewRegistry.registerDashlet('settings','Screens','partials/screenconfiguration/screenConfiguration.html','screens');
   EntityRegistry.registerEntity('Input', 'input', 'screenInputs', 'rest/screens/input/', 'rest/screens/input/', 'st-table', '/partials/screenconfiguration/screenInputSelectionTable.html', null, 'glyphicon glyphicon-modal-window');
 })
 
