@@ -20,6 +20,7 @@ import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.resources.InMemoryResourceAccessor;
 import step.resources.InMemoryResourceRevisionAccessor;
+import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
 import step.resources.ResourceManagerImpl;
