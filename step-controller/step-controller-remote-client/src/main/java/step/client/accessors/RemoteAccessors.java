@@ -1,9 +1,6 @@
 package step.client.accessors;
 
 import step.client.credentials.ControllerCredentials;
-import step.core.execution.model.ExecutionAccessor;
-import step.core.plans.PlanAccessor;
-import step.functions.accessor.FunctionAccessor;
 
 public class RemoteAccessors {
 	
@@ -14,15 +11,15 @@ public class RemoteAccessors {
 		this.credentials = credentials;
 	}
 
-	public FunctionAccessor getFunctionAccessor() {
+	public RemoteFunctionAccessor getFunctionAccessor() {
 		return new RemoteFunctionAccessorImpl(credentials);
 	}
 
-	public PlanAccessor getPlanAccessor() {
+	public RemotePlanAccessor getPlanAccessor() {
 		return new RemotePlanAccessorImpl(credentials);
 	}
 	
-	public ExecutionAccessor getExecutionAccessor() {
+	public RemoteExecutionAccessor getExecutionAccessor() {
 		return new RemoteExecutionAccessorImpl(credentials);
 	}
 	

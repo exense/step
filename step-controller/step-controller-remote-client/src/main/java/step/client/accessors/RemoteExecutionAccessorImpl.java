@@ -15,10 +15,9 @@ import step.client.credentials.ControllerCredentials;
 import step.commons.iterators.SkipLimitIterator;
 import step.commons.iterators.SkipLimitProvider;
 import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionAccessor;
 import step.core.repositories.RepositoryObjectReference;
 
-public class RemoteExecutionAccessorImpl extends AbstractRemoteCRUDAccessorImpl<Execution> implements ExecutionAccessor {
+public class RemoteExecutionAccessorImpl extends RemoteExecutionAccessor {
 
 	public RemoteExecutionAccessorImpl() {
 		super("/rest/executions/", Execution.class);
