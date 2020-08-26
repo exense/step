@@ -43,7 +43,7 @@ public abstract class AbstractContext {
 	public <T>T require(Class<T> class_) {
 		Object object = get(key(class_));
 		if(object == null) {
-			throw new IllegalStateException("Missing required session object of type "+class_.toString());
+			throw new DependencyException("Missing required dependency to "+class_.toString());
 		} else {
 			return (T) object;
 		}
