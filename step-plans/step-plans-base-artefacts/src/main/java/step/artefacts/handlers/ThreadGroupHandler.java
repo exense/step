@@ -96,7 +96,9 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 						thread.setPacing(pacing);
 						thread.setThreadGroup(testArtefact);
 						
-						ReportNode threadReportNode = delegateExecute(thread, node, new HashMap<>());
+						HashMap<String, Object> newVariable = new HashMap<>();
+						newVariable.put(thread.threadGroup.getUserItem().get(), thread.groupId);
+						ReportNode threadReportNode = delegateExecute(thread, node, newVariable);
 						reportNodeStatusComposer.addStatusAndRecompose(threadReportNode.getStatus());
 					} catch (Exception e) {
 						failWithException(node, e);
@@ -229,7 +231,6 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 									
 									HashMap<String, Object> newVariable = new HashMap<>();
 									newVariable.put(thread.threadGroup.getLocalItem().get(), i);
-									newVariable.put(thread.threadGroup.getUserItem().get(), thread.groupId);
 									//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
 									newVariable.put(thread.threadGroup.getItem().get(), thread.gcounter.intValue());
 									

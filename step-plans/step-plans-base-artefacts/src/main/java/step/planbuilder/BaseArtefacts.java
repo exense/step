@@ -1,6 +1,7 @@
 package step.planbuilder;
 
 import java.io.File;
+import java.util.function.Consumer;
 
 import step.artefacts.AfterSequence;
 import step.artefacts.AfterThread;
@@ -20,7 +21,9 @@ import step.artefacts.TestScenario;
 import step.artefacts.TestSet;
 import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.CheckArtefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionContext;
 import step.datapool.excel.ExcelDataPool;
 import step.datapool.sequence.IntSequenceDataPool;
 
@@ -140,5 +143,10 @@ public class BaseArtefacts {
 		Check check = new Check();
 		check.setExpression(new DynamicValue<>(expression, ""));
 		return check;
+	}
+	
+	public static CheckArtefact runnable(Consumer<ExecutionContext> executionRunnable) {
+		CheckArtefact checkArtefact = new CheckArtefact(executionRunnable);
+		return checkArtefact;
 	}
 }

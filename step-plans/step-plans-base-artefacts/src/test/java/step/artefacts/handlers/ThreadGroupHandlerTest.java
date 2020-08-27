@@ -18,10 +18,21 @@
  *******************************************************************************/
 package step.artefacts.handlers;
 
-import static step.planbuilder.BaseArtefacts.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static step.planbuilder.BaseArtefacts.afterSequence;
+import static step.planbuilder.BaseArtefacts.afterThread;
+import static step.planbuilder.BaseArtefacts.beforeSequence;
+import static step.planbuilder.BaseArtefacts.beforeThread;
+import static step.planbuilder.BaseArtefacts.check;
+import static step.planbuilder.BaseArtefacts.echo;
+import static step.planbuilder.BaseArtefacts.runnable;
+import static step.planbuilder.BaseArtefacts.threadGroup;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
@@ -35,8 +46,6 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.DefaultPlanRunner;
-import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResult;
 
 public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
@@ -46,10 +55,9 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		ThreadGroup artefact = new ThreadGroup();
 		
 		Plan plan = PlanBuilder.create().startBlock(artefact).add(passedCheck()).add(failedCheck()).endBlock().build();
-		DefaultPlanRunner runner = new DefaultPlanRunner();
 		
 		StringWriter writer = new StringWriter();
-		runner.run(plan).printTree(writer);
+		executionEngine.execute(plan).printTree(writer);
 		
 		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.FAILED));
 	}
@@ -60,10 +68,9 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		artefact.getIterations().setValue(3);
 		
 		Plan plan = PlanBuilder.create().startBlock(artefact).add(passedCheck()).add(passedCheck()).endBlock().build();
-		DefaultPlanRunner runner = new DefaultPlanRunner();
 		
 		StringWriter writer = new StringWriter();
-		runner.run(plan).printTree(writer);
+		executionEngine.execute(plan).printTree(writer);
 		
 		Assert.assertEquals("ThreadGroup:PASSED:\n" + 
 				" Thread 1:PASSED:\n" + 
@@ -82,10 +89,9 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 	@Test
 	public void testStatusReportingError() throws Exception {
 		Plan plan = PlanBuilder.create().startBlock(new ThreadGroup()).add(passedCheck()).add(errorCheck()).add(passedCheck()).endBlock().build();
-		DefaultPlanRunner runner = new DefaultPlanRunner();
 		
 		StringWriter writer = new StringWriter();
-		runner.run(plan).printTree(writer);
+		executionEngine.execute(plan).printTree(writer);
 		
 		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.TECHNICAL_ERROR));
 	}
@@ -141,31 +147,35 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		});
 		
 		Plan plan = PlanBuilder.create().startBlock(artefact).add(sleep).add(check).endBlock().build();
-		DefaultPlanRunner runner = new DefaultPlanRunner();
 		
 		StringWriter writer = new StringWriter();
-		runner.run(plan).printTree(writer);
+		executionEngine.execute(plan).printTree(writer);
 		return writer;
 	}
 	
 	@Test
 	public void testBeforeAndAfterThread() throws Exception {
+		final AtomicInteger globalCounterActual = new AtomicInteger();
+		final List<String> userIds = new ArrayList<>();
 		// Create a plan with an empty sequence block
 		Plan plan = PlanBuilder.create()
 				.startBlock(threadGroup(1, 2))
 					.startBlock(beforeThread())
-						.add(echo("'Before...'"))
+						// the userId should be available in the beforeThread
+						.add(echo("'Before...'+userId"))
 					.endBlock()
-					.add(echo("'Iteration'"))
+					// the variables userId, literationId, gcounter should be available in the beforeThread
+					.add(echo("'Iteration'+userId+literationId+gcounter"))
+					.add(runnable(c->globalCounterActual.addAndGet(c.getVariablesManager().getVariableAsInteger("gcounter"))))
+					.add(runnable(c->userIds.add(c.getVariablesManager().getVariableAsString("userId"))))
 					.startBlock(afterThread())
-					.add(echo("'After...'"))
-				.endBlock()
+						.add(echo("'After...'+userId"))
+					.endBlock()
 				.endBlock()
 				.build();
 		
 		// Run the plan
-		PlanRunner planRunner = new DefaultPlanRunner();
-		PlanRunnerResult result = planRunner.run(plan);	
+		PlanRunnerResult result = executionEngine.execute(plan);	
 		
 		result.waitForExecutionToTerminate();
 		
@@ -179,10 +189,18 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 				"    Echo:PASSED:\n" + 
 				"   Iteration 1:PASSED:\n" + 
 				"    Echo:PASSED:\n" + 
+				"    CheckArtefact:RUNNING:\n" + 
+				"    CheckArtefact:RUNNING:\n" + 
 				"   Iteration 2:PASSED:\n" + 
 				"    Echo:PASSED:\n" + 
+				"    CheckArtefact:RUNNING:\n" + 
+				"    CheckArtefact:RUNNING:\n" + 
 				"   AfterThread:PASSED:\n" + 
-				"    Echo:PASSED:\n" , writer.toString());	
+				"    Echo:PASSED:\n" + 
+				"" , writer.toString());	
+		
+		assertEquals(3, globalCounterActual.get());
+		assertArrayEquals(new String[] {"1","1"}, userIds.toArray());
 	}
 	
 	@Test
@@ -191,10 +209,11 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		Plan plan = PlanBuilder.create()
 				.startBlock(threadGroup(1, 2))
 					.startBlock(beforeThread())
-						.add(echo("'Before...'"))
+						.add(echo("'Before...'+userId"))
 					.endBlock()
 					.startBlock(beforeSequence())
-						.add(echo("'Before...'"))
+						// literationId should be available in BeforeSequence 
+						.add(echo("'Before...'+literationId"))
 					.endBlock()
 					.add(echo("'Iteration'"))
 					.add(check("false"))
@@ -208,8 +227,7 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 				.build();
 		
 		// Run the plan
-		PlanRunner planRunner = new DefaultPlanRunner();
-		PlanRunnerResult result = planRunner.run(plan);	
+		PlanRunnerResult result = executionEngine.execute(plan);	
 		
 		result.waitForExecutionToTerminate();
 		
