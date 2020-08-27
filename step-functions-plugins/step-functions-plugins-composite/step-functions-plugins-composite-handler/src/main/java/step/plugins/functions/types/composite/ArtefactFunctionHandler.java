@@ -20,125 +20,75 @@ package step.plugins.functions.types.composite;
 
 import javax.json.JsonObject;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import ch.exense.commons.app.Configuration;
-import step.artefacts.handlers.FunctionRouter;
-import step.artefacts.handlers.LocalFunctionRouterImpl;
-import step.attachments.FileResolver;
-import step.client.accessors.RemoteFunctionAccessorImpl;
-import step.client.accessors.RemotePlanAccessorImpl;
-import step.client.credentials.ControllerCredentials;
-import step.client.resources.RemoteResourceManager;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionEngine;
-import step.core.plans.PlanAccessor;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.variables.VariableType;
-import step.functions.accessor.FunctionAccessor;
-import step.functions.execution.FunctionExecutionService;
-import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
-import step.functions.type.FunctionTypeRegistryImpl;
-import step.grid.client.GridClient;
-import step.grid.client.MockedGridClientImpl;
-import step.plugins.java.GeneralScriptFunctionType;
-import step.plugins.selenium.SeleniumFunctionType;
-import step.resources.ResourceManager;
 
 public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(ArtefactFunctionHandler.class);
-	
+	private static final String INPUT = "input";
+	private static final String OUTPUT = "output";
+
 	// Key agreed upon to pass the artefact serving as root to the handler (via props)
 	public static final String PLANID_KEY = "$planid";
 	
 	@Override
 	protected Output<JsonObject> handle(Input<JsonObject> input) {
-		
+		OutputBuilder output = new OutputBuilder();
+
 		ExecutionContext executionContext = (ExecutionContext) getTokenReservationSession().get(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY);
 		
 		if(executionContext == null) {
-			executionContext = ExecutionEngine.builder().withPluginsFromClasspath().build().newExecutionContext();
-			GridClient gridClient = new MockedGridClientImpl();
-
-			ControllerCredentials credentials = new ControllerCredentials("http://localhost:8080", "admin", "init");
-
-			PlanAccessor planAccessor = new RemotePlanAccessorImpl(credentials);
-			executionContext.setPlanAccessor(planAccessor);
-
-			FunctionAccessor functionAccessor = new RemoteFunctionAccessorImpl(credentials);
-			//FunctionExecutionService functionExecutionService = new RemoteFunctionExecutionService(credentials);
-			ResourceManager resourceManager = new RemoteResourceManager(credentials);
-			
-			FunctionTypeRegistryImpl functionTypeRegistryImpl = new FunctionTypeRegistryImpl(new FileResolver(resourceManager), gridClient);
-			// TODO implement all this properly
-			functionTypeRegistryImpl.registerFunctionType(new GeneralScriptFunctionType(new Configuration()));
-			Configuration configuration = new Configuration();
-			configuration.putProperty("plugins.selenium.libs.3.x", "../distribution/template-controller/ext/selenium/selenium-java-3.5.3");
-			functionTypeRegistryImpl.registerFunctionType(new SeleniumFunctionType(configuration));
-			
-			FunctionExecutionService functionExecutionService;
-			try {
-				functionExecutionService = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistryImpl, executionContext.getDynamicBeanResolver());
-				executionContext.put(FunctionAccessor.class, functionAccessor);
-				executionContext.put(FunctionExecutionService.class, functionExecutionService);
-				executionContext.put(FunctionRouter.class, new LocalFunctionRouterImpl(functionExecutionService));
-				
-			} catch (Exception e) {
-				logger.error("Error while setting up execution context for composite keyword execution", e);
-			}
-			
-		}
-		
-		String planId = input.getProperties().get(PLANID_KEY);
-		String parentReportId = input.getProperties().get(AbstractFunctionHandler.PARENTREPORTID_KEY);
-		
-		ReportNode parentNode;
-		if(parentReportId!=null) {
-			parentNode = executionContext.getReportNodeAccessor().get(parentReportId);
-			if(parentNode == null) {
-				parentNode = executionContext.getCurrentReportNode();
-			}
+			output.setError("Running composite Keyword on agent not supported. Please change the keyword configuration accordingly.");
 		} else {
-			parentNode = executionContext.getCurrentReportNode();
-			//throw new RuntimeException("Parent node id is null. This should never occur");
-		}
-		
-		ReportNode previousCurrentNode = executionContext.getCurrentReportNode();
-		executionContext.setCurrentReportNode(parentNode);
-		executionContext.getReportNodeCache().put(parentNode);
-		
-		AbstractArtefact artefact = executionContext.getPlanAccessor().get(planId).getRoot();
-		
-		executionContext.getVariablesManager().putVariable(parentNode, "input", input.getPayload());
-		OutputBuilder output = new OutputBuilder();
-		executionContext.getVariablesManager().putVariable(parentNode, VariableType.IMMUTABLE, "output", output);
-		
-		try {
-			ReportNode node = executionContext.getArtefactHandlerManager().execute(artefact, parentNode);
-			if(node.getStatus()== ReportNodeStatus.TECHNICAL_ERROR || node.getStatus()== ReportNodeStatus.FAILED) {
-				Error error = new Error();
-				error.setCode(0);
-				error.setMsg("Error in composite keyword");
-				error.setRoot(false);
-				error.setType(node.getStatus().equals(ReportNodeStatus.FAILED)?ErrorType.BUSINESS:ErrorType.TECHNICAL);
-				output.setError(error);
+			String planId = input.getProperties().get(PLANID_KEY);
+			String parentReportId = input.getProperties().get(AbstractFunctionHandler.PARENTREPORTID_KEY);
+			
+			ReportNode parentNode;
+			if(parentReportId!=null) {
+				parentNode = executionContext.getReportNodeAccessor().get(parentReportId);
+				if(parentNode == null) {
+					parentNode = executionContext.getCurrentReportNode();
+				}
+			} else {
+				parentNode = executionContext.getCurrentReportNode();
+				//throw new RuntimeException("Parent node id is null. This should never occur");
 			}
-			return output.build();
-		} finally {
-			executionContext.getVariablesManager().removeVariable(parentNode, "output");
-			executionContext.setCurrentReportNode(previousCurrentNode);
+			
+			ReportNode previousCurrentNode = executionContext.getCurrentReportNode();
+			executionContext.setCurrentReportNode(parentNode);
+			executionContext.getReportNodeCache().put(parentNode);
+			
+			AbstractArtefact artefact = executionContext.getPlanAccessor().get(planId).getRoot();
+			
+			executionContext.getVariablesManager().putVariable(parentNode, INPUT, input.getPayload());
+			executionContext.getVariablesManager().putVariable(parentNode, VariableType.IMMUTABLE, OUTPUT, output);
+			
+			try {
+				ReportNode node = executionContext.getArtefactHandlerManager().execute(artefact, parentNode);
+				if(node.getStatus()== ReportNodeStatus.TECHNICAL_ERROR || node.getStatus()== ReportNodeStatus.FAILED) {
+					Error error = new Error();
+					error.setCode(0);
+					error.setMsg("Error in composite keyword");
+					error.setRoot(false);
+					error.setType(node.getStatus().equals(ReportNodeStatus.FAILED)?ErrorType.BUSINESS:ErrorType.TECHNICAL);
+					output.setError(error);
+				}
+			} finally {
+				executionContext.getVariablesManager().removeVariable(parentNode, OUTPUT);
+				executionContext.setCurrentReportNode(previousCurrentNode);
+			}
 		}
+		
+		return output.build();
 	}
-
 }
