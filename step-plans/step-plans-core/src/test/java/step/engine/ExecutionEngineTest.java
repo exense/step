@@ -1,5 +1,7 @@
 package step.engine;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,6 +59,7 @@ public class ExecutionEngineTest {
 		PlanRunnerResult result = executionEngine.execute(plan);
 		
 		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 
 	protected ExecutionEngine newExecutionEngine() {
@@ -84,6 +87,7 @@ public class ExecutionEngineTest {
 		PlanRunnerResult result = executionEngine.execute(executionId);
 		
 		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 	
 	@Test
@@ -116,11 +120,15 @@ public class ExecutionEngineTest {
 		new ExecutionLifecycleManager(executionContext).abort();
 		
 		// Wait for the execution to terminate
-		future.get().waitForExecutionToTerminate(1000);
+		PlanRunnerResult result = future.get();
+		result.waitForExecutionToTerminate(1000);
 		
 		// The number of executions should now be 0
 		currentExecutions = executionEngine.getCurrentExecutions();
 		Assert.assertEquals(0, currentExecutions.size());
+		
+		// TODO the status is reported here as RUNNING which is wrong. Fix this in the future
+		assertEquals(ReportNodeStatus.RUNNING, result.getResult());
 	}
 	
 	@Test
@@ -129,6 +137,7 @@ public class ExecutionEngineTest {
 		
 		PlanRunnerResult result = executionEngine.execute(new ExecutionParameters(new RepositoryObjectReference(TEST_REPOSITORY, newSuccessfulRepositoryImport()), null));
 		
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
 		Assert.assertTrue(exportCalled);
 	}
@@ -141,6 +150,7 @@ public class ExecutionEngineTest {
 		ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.SIMULATION, null, new RepositoryObjectReference(TEST_REPOSITORY, newSuccessfulRepositoryImport()), null, null, null, null, false, null);
 		PlanRunnerResult result = executionEngine.execute(executionParameters); 
 		
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
 		Assert.assertFalse(exportCalled);
 	}
@@ -156,6 +166,7 @@ public class ExecutionEngineTest {
 		Assert.assertFalse(importResult.isSuccessful());
 		String string = importResult.getErrors().get(0);
 		Assert.assertEquals(REPOSITORY_IMPORT_STATUS_ERROR, string);
+		assertEquals(ReportNodeStatus.NORUN, result.getResult());
 	}
 
 	protected HashMap<String, String> newFailingRepositoryImport() {
@@ -185,6 +196,7 @@ public class ExecutionEngineTest {
 		
 		PlanRunnerResult result = executionEngine.execute(plan);
 		
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
 	}
 	

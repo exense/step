@@ -37,8 +37,12 @@ public class PlanRunnerResult {
 	
 	public ReportNodeStatus getResult() {
 		ReportNode rootReportNode = reportTreeAccessor.get(rootReportNodeId);
-		ReportNodeStatus status = rootReportNode.getStatus();
-		return status;
+		if(rootReportNode != null) {
+			ReportNodeStatus status = rootReportNode.getStatus();
+			return status;
+		} else {
+			return ReportNodeStatus.NORUN;
+		}
 	}
 
 	public String getExecutionId() {

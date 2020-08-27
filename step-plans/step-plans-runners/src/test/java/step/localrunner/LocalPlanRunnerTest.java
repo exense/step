@@ -26,7 +26,8 @@ import step.artefacts.reports.EchoReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
-import step.core.plans.builder.PlanBuilder; 
+import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult; 
 
 public class LocalPlanRunnerTest {
 	
@@ -47,11 +48,13 @@ public class LocalPlanRunnerTest {
 		Plan plan = PlanBuilder.create().startBlock(new Sequence()).add(echo).endBlock().build();
 		
 		runner = new LocalPlanRunner(properties, LocalRunnerTestLibrary.class);
-		runner.run(plan).visitReportNodes(node->{
+		PlanRunnerResult result = runner.run(plan);
+		result.visitReportNodes(node->{
 			if(node instanceof EchoReportNode) {
 				Assert.assertEquals("MyProp1",((EchoReportNode) node).getEcho());
 			}
 		});
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 	
 	@Test
@@ -64,11 +67,13 @@ public class LocalPlanRunnerTest {
 		Plan plan = PlanBuilder.create().startBlock(new Sequence()).add(echo).endBlock().build();
 		
 		runner = new LocalPlanRunner(properties, LocalRunnerTestLibrary.class);
-		runner.run(plan, properties).visitReportNodes(node->{
+		PlanRunnerResult result = runner.run(plan, properties);
+		result.visitReportNodes(node->{
 			if(node instanceof EchoReportNode) {
 				Assert.assertEquals("MyProp1",((EchoReportNode) node).getEcho());
 			}
 		});
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 	
 	@Test
@@ -88,7 +93,8 @@ public class LocalPlanRunnerTest {
 				.build();
 		
 		StringWriter tree = new StringWriter();
-		runner.run(plan).visitReportNodes(node->{
+		PlanRunnerResult result = runner.run(plan);
+		result.visitReportNodes(node->{
 			assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		}).printTree(tree);
 		
@@ -99,6 +105,7 @@ public class LocalPlanRunnerTest {
 				"  assertSessionValue:PASSED:\n" + 
 				" Session:PASSED:\n" + 
 				"  assertSessionValue:PASSED:\n", tree.toString());
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 	
 	@Test
@@ -109,10 +116,12 @@ public class LocalPlanRunnerTest {
 		Plan plan = PlanBuilder.create().startBlock(sequence()).add(script).endBlock().build();
 		
 		StringWriter tree = new StringWriter();
-		runner.run(plan).printTree(tree);
+		PlanRunnerResult result = runner.run(plan);
+		result.printTree(tree);
 		
 		Assert.assertEquals("Sequence:TECHNICAL_ERROR:\n" + 
 				" Script:TECHNICAL_ERROR:Error while running groovy expression: 'throw new Exception()'\n", tree.toString());
+		assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
 	}
 	
 	@Test
@@ -156,11 +165,12 @@ public class LocalPlanRunnerTest {
 				"  keyword1:PASSED:\n";
 		
 		StringWriter tree = new StringWriter();
-		runner.run(plan).visitReportNodes(node->{
+		PlanRunnerResult result = runner.run(plan);
+		result.visitReportNodes(node->{
 			assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		}).printTree(tree);
 		
-		
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 		Assert.assertEquals(expectedTree, tree.toString());
 	}
 	
@@ -171,9 +181,11 @@ public class LocalPlanRunnerTest {
 				.add(keywordWithDynamicInput("keyword2","/{\"Param1\":\"${previous.Result1}\"}/.toString()"))
 				.endBlock().build();
 		
-		runner.run(plan).visitReportNodes(node->{
+		PlanRunnerResult result = runner.run(plan);
+		result.visitReportNodes(node->{
 			assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 	
 	@Test
@@ -182,9 +194,11 @@ public class LocalPlanRunnerTest {
 				.add(keywordWithKeyValues("keyword2", "Param1","value1"))
 				.endBlock().build();
 		
-		runner.run(plan).visitReportNodes(node->{
+		PlanRunnerResult result = runner.run(plan);
+		result.visitReportNodes(node->{
 			assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 	
 //	private void printReportNode(ReportNode node, int level) {
@@ -210,9 +224,11 @@ public class LocalPlanRunnerTest {
 				.add(keywordWithDynamicKeyValues("keyword2", "Param1","previous.Param1"))
 				.endBlock().build();
 		
-		runner.run(plan).visitReportNodes(node->{
+		PlanRunnerResult result = runner.run(plan);
+		result.visitReportNodes(node->{
 			assertEquals(ReportNodeStatus.PASSED, node);
 		});;
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 	
 //	@Test

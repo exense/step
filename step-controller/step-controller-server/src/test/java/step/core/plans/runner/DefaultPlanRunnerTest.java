@@ -1,18 +1,13 @@
 package step.core.plans.runner;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.builder.PlanBuilderTest;
 import step.planbuilder.BaseArtefacts;
 
 public class DefaultPlanRunnerTest {
@@ -28,6 +23,7 @@ public class DefaultPlanRunnerTest {
 		DefaultPlanRunner runner = new DefaultPlanRunner();
 		PlanRunnerResult result = runner.run(builder.build());
 		
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 		PlanRunnerResultAssert.assertEquals(this.getClass(), "DefaultPlanRunnerTestExpected.txt", result);
 	}
 	
