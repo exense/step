@@ -56,8 +56,14 @@ public class GlobalContextBuilder {
 	public static GlobalContext createGlobalContext() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		GlobalContext context = new GlobalContext();
 
-		context.setExpressionHandler(new ExpressionHandler());
-		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
+		ExpressionHandler expressionHandler = new ExpressionHandler();
+		context.setExpressionHandler(expressionHandler);
+		DynamicBeanResolver dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler()));
+		context.setDynamicBeanResolver(dynamicBeanResolver);
+
+		//new since SED-440, class need a full refactoring
+		context.setExpressionHandler(expressionHandler);
+		context.setDynamicBeanResolver(dynamicBeanResolver);
 		
 		Configuration configuration = new Configuration();
 		ControllerPluginManager pluginManager = new ControllerPluginManager(configuration);
@@ -87,6 +93,11 @@ public class GlobalContextBuilder {
 			context.put(ResourceAccessor.class, resourceAccessor);
 			context.put(ResourceManager.class, resourceManager);
 			context.put(FileResolver.class, fileResolver);
+
+			//new since SED-440, class need a full refactoring
+			context.setResourceAccessor(resourceAccessor);
+			context.setResourceManager(resourceManager);
+			context.setFileResolver(fileResolver);
 		} catch (IOException e) {
 			logger.error("Unable to create temp folder for the resource manager", e);
 		}
