@@ -34,7 +34,7 @@
 	</appender>
 	 -->
 	<logger name="org.lightcouch" level="error" />
-	<logger name="step" level="debug" />
+	<!-- 	<logger name="step" level="debug" /> -->
 	<logger name="step.grid.tokenpool.TokenPool" level="info" />
 	<!-- <logger name="step.grid.filemanager" level="debug" /> -->
 	<!-- <logger name="step.rtm.RtmPlugin" level="trace" additivity="false">
