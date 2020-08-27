@@ -22,12 +22,9 @@ public class UndefinedVariableException extends RuntimeException {
 
 	private static final long serialVersionUID = -7770455970260059111L;
 
-	public UndefinedVariableException() {
-		super();
-	}
-
 	public UndefinedVariableException(String variableName) {
-		super("The variable " + variableName + " is undefined.");
+		// Disable stacktrace for performance reasons
+		super("The variable " + variableName + " is undefined.", null, false, false);
 	}
 
 }

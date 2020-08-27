@@ -25,9 +25,16 @@ public class ArtefactTypeCache {
 	private static final ArtefactTypeCache INSTANCE = new ArtefactTypeCache();
 	
 	private final Map<String, Class<? extends AbstractArtefact>> artefactRegister;
+	
+	/**
+	 * Calling {@link AbstractArtefact#getArtefactName} is quite inefficient because it relies on
+	 * {@link Class#getSimpleName()}. We're therefore using a cache for artefact names here
+	 */
+	private final Map<Class<? extends AbstractArtefact>, String> artefactNameCache;
 
 	{
 		artefactRegister = new ConcurrentHashMap<>();
+		artefactNameCache = new ConcurrentHashMap<>();
 		ClassGraph classGraph = new ClassGraph().whitelistPackages().enableClassInfo().enableAnnotationInfo();
 		try (ScanResult result = classGraph.scan()) {
 			ClassInfoList classInfos = result.getClassesWithAnnotation(Artefact.class.getName());
@@ -38,6 +45,7 @@ public class ArtefactTypeCache {
 					artefactClass = (Class<? extends AbstractArtefact>) Class.forName(className);
 					String artefactName = AbstractArtefact.getArtefactName((Class<AbstractArtefact>)artefactClass);
 					artefactRegister.put(artefactName, artefactClass);
+					artefactNameCache.put(artefactClass, artefactName);
 				} catch (ClassNotFoundException e) {
 					logger.error("Error while loading class "+className, e);
 					throw new RuntimeException(e);
@@ -48,6 +56,10 @@ public class ArtefactTypeCache {
 	
 	public static Class<? extends AbstractArtefact> getArtefactType(String name) {
 		return INSTANCE.artefactRegister.get(name);
+	}
+	
+	public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {
+		return INSTANCE.artefactNameCache.get(artefactClass);
 	}
 
 	public static Set<String> keySet() {

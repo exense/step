@@ -43,7 +43,7 @@ public class ArtefactTypeIdResolver implements TypeIdResolver {
 	
 	@SuppressWarnings("unchecked")
 	private String idFromClass(Class<?>c) {
-		return AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) c);
+		return ArtefactTypeCache.getArtefactName((Class<? extends AbstractArtefact>) c);
 	}
 
 	@Override
@@ -57,7 +57,8 @@ public class ArtefactTypeIdResolver implements TypeIdResolver {
 
 	@Override
 	public JavaType typeFromId(DatabindContext arg0, String arg1) {
-		return TypeFactory.defaultInstance().constructType(ArtefactTypeCache.getArtefactType(arg1));
+		Class<? extends AbstractArtefact> artefactClass = ArtefactTypeCache.getArtefactType(arg1);
+		return TypeFactory.defaultInstance().constructType(artefactClass);
 	}
 
 	@Override
