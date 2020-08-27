@@ -9,6 +9,7 @@ import javax.json.JsonObjectBuilder;
 
 import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.MongoClientSession;
+import step.core.json.JsonProviderCache;
 
 public class ScreenInputAccessorImpl extends AbstractCRUDAccessor<ScreenInput> implements ScreenInputAccessor {
 
@@ -18,7 +19,7 @@ public class ScreenInputAccessorImpl extends AbstractCRUDAccessor<ScreenInput> i
 
 	@Override
 	public List<ScreenInput> getScreenInputsByScreenId(String screenId) {
-		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
+		JsonObjectBuilder builder = JsonProviderCache.createObjectBuilder();
 		builder.add("screenId", screenId);
 
 		List<ScreenInput> result = new ArrayList<>();

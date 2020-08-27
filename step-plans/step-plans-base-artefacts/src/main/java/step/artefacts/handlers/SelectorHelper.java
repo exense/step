@@ -5,15 +5,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.json.JsonObject;
-import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonParsingException;
 
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.json.JsonProviderCache;
 
 public class SelectorHelper {
 
-	private static JsonProvider jprov = JsonProvider.provider();
-	
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
 	public SelectorHelper(DynamicJsonObjectResolver dynamicJsonObjectResolver) {
@@ -25,9 +23,9 @@ public class SelectorHelper {
 		JsonObject query;
 		try {
 			if(jsonStr!=null&&jsonStr.trim().length()>0) {
-				query = jprov.createReader(new StringReader(jsonStr)).readObject();
+				query = JsonProviderCache.createReader(new StringReader(jsonStr)).readObject();
 			} else {
-				query = jprov.createObjectBuilder().build();
+				query = JsonProviderCache.createObjectBuilder().build();
 			}
 		} catch(JsonParsingException e) {
 			throw new RuntimeException("Error while parsing json "+jsonStr+" :"+e.getMessage());

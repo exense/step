@@ -21,20 +21,17 @@ package step.artefacts.handlers;
 import java.io.StringReader;
 
 import javax.json.JsonObject;
-import javax.json.spi.JsonProvider;
 
 import step.artefacts.CallPlan;
-import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
+import step.core.json.JsonProviderCache;
 import step.core.plans.Plan;
 
 public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
-
-	private static JsonProvider jprov = JsonProvider.provider();
 
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
@@ -60,7 +57,7 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 		context.getVariablesManager().putVariable(parentNode, "#placeholder", testArtefact);
 
 		String inputJson = (testArtefact.getInput().get()!=null)?testArtefact.getInput().get():"{}";
-		JsonObject input = jprov.createReader(new StringReader(inputJson)).readObject();
+		JsonObject input = JsonProviderCache.createReader(new StringReader(inputJson)).readObject();
 		JsonObject resolvedInput = dynamicJsonObjectResolver.evaluate(input, getBindings());		
 		context.getVariablesManager().putVariable(parentNode, "input", resolvedInput);
 	}

@@ -24,15 +24,13 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.json.JsonObject;
-import javax.json.spi.JsonProvider;
 
 import step.artefacts.TokenSelector;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.json.JsonProviderCache;
 import step.grid.tokenpool.Interest;
 
 public class TokenSelectorHelper {
-	
-	private static JsonProvider jprov = JsonProvider.provider();
 	
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
@@ -44,7 +42,7 @@ public class TokenSelectorHelper {
 	public Map<String, Interest> getTokenSelectionCriteria(TokenSelector testArtefact, Map<String, Object> bindings) {
 		String token = testArtefact.getToken().get();
 		if(token!=null) {
-			JsonObject selectionCriteriaBeforeEvaluation = jprov.createReader(new StringReader(token)).readObject();			
+			JsonObject selectionCriteriaBeforeEvaluation = JsonProviderCache.createReader(new StringReader(token)).readObject();			
 			JsonObject selectionCriteriaJson = dynamicJsonObjectResolver.evaluate(selectionCriteriaBeforeEvaluation, bindings);
 			Map<String, Interest> selectionCriteria = new HashMap<>();
 			selectionCriteriaJson.keySet().stream().forEach(key->selectionCriteria.put(key, new Interest(Pattern.compile(selectionCriteriaJson.getString(key)), true)));

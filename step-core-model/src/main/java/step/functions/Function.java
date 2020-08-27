@@ -20,7 +20,6 @@ package step.functions;
 
 import java.util.Map;
 
-import javax.json.Json;
 import javax.json.JsonObject;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -28,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.json.JsonProviderCache;
 
 /**
  * This class encapsulates all the configuration parameters of functions (aka Keywords)
@@ -38,7 +38,7 @@ import step.core.dynamicbeans.DynamicValue;
 public class Function extends AbstractOrganizableObject {
 	
 	protected DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
-	protected JsonObject schema = Json.createObjectBuilder().build();
+	protected JsonObject schema = JsonProviderCache.createObjectBuilder().build();
 	
 	protected boolean executeLocally;
 	protected Map<String, String> tokenSelectionCriteria;

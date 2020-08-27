@@ -25,10 +25,11 @@ import java.util.Map;
 import java.util.Spliterator;
 
 import javax.json.JsonObjectBuilder;
-import javax.json.spi.JsonProvider;
 
 import org.bson.types.ObjectId;
 import org.jongo.MongoCollection;
+
+import step.core.json.JsonProviderCache;
 
 
 
@@ -38,8 +39,6 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 	
 	private Class<T> entityClass;
 	
-	protected static JsonProvider jsonProvider = JsonProvider.provider();
-		
 	public AbstractCRUDAccessor(MongoClientSession clientSession, String collectionName, Class<T> entityClass) {
 		super(clientSession);
 		this.entityClass = entityClass;
@@ -86,7 +85,7 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 	}
 
 	protected String queryByAttributes(Map<String, String> attributes, String attributesMapKey) {
-		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
+		JsonObjectBuilder builder = JsonProviderCache.createObjectBuilder();
 		for(String key:attributes.keySet()) {
 			builder.add(attributesMapKey+"."+key, attributes.get(key));
 		}

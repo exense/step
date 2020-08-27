@@ -21,7 +21,6 @@ package step.artefacts.handlers;
 import java.io.StringReader;
 
 import javax.json.JsonObject;
-import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonParsingException;
 
 import step.artefacts.Return;
@@ -31,11 +30,10 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
+import step.core.json.JsonProviderCache;
 import step.functions.io.OutputBuilder;
 
 public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
-	
-	private static JsonProvider jprov = JsonProvider.provider();
 	
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 
@@ -67,9 +65,9 @@ public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 		JsonObject outputJsonObject;
 		try {
 			if(outputJson!=null&&outputJson.trim().length()>0) {
-				outputJsonObject = jprov.createReader(new StringReader(outputJson)).readObject();
+				outputJsonObject = JsonProviderCache.createReader(new StringReader(outputJson)).readObject();
 			} else {
-				outputJsonObject = jprov.createObjectBuilder().build();
+				outputJsonObject = JsonProviderCache.createObjectBuilder().build();
 			}
 		} catch(JsonParsingException e) {
 			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage());

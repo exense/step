@@ -26,18 +26,12 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
-import javax.json.spi.JsonProvider;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import step.core.json.JsonProviderCache;
 
 public class DynamicJsonObjectResolver {
 	
-	private static Logger logger = LoggerFactory.getLogger(DynamicJsonObjectResolver.class);
-	
 	DynamicJsonValueResolver valueResolver;
-	
-	private static JsonProvider jprov = JsonProvider.provider();
 	
 	public DynamicJsonObjectResolver(DynamicJsonValueResolver valueResolver) {
 		super();
@@ -45,7 +39,7 @@ public class DynamicJsonObjectResolver {
 	}
 	
 	public JsonObject evaluate(JsonObject o, Map<String, Object> bindings) {
-		JsonObjectBuilder builder = jprov.createObjectBuilder();
+		JsonObjectBuilder builder = JsonProviderCache.createObjectBuilder();
 		if(o!=null) {
 			for(String key:o.keySet()) {
 				JsonValue v = o.get(key);

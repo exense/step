@@ -19,36 +19,27 @@
 package step.artefacts.handlers;
 
 import java.io.StringReader;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.json.JsonValue.ValueType;
-import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonParsingException;
-
-import org.bson.types.ObjectId;
 
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.common.managedoperations.OperationManager;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
+import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
 import step.core.plugins.ExecutionCallbacks;
@@ -77,8 +68,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 	
-	private static JsonProvider jprov = JsonProvider.provider();
-			
 	private SelectorHelper selectorHelper;
 	
 	private FunctionRouter functionRouter;
@@ -188,7 +177,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			}
 		} else {
 			output = new Output<>();
-			output.setPayload(jprov.createObjectBuilder().build());
+			output.setPayload(JsonProviderCache.createObjectBuilder().build());
 			node.setOutputObject(output.getPayload());
 			node.setOutput(output.getPayload().toString());
 			node.setStatus(ReportNodeStatus.PASSED);
@@ -286,9 +275,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		JsonObject query;
 		try {
 			if(functionStr!=null&&functionStr.trim().length()>0) {
-				query = jprov.createReader(new StringReader(functionStr)).readObject();
+				query = JsonProviderCache.createReader(new StringReader(functionStr)).readObject();
 			} else {
-				query = jprov.createObjectBuilder().build();
+				query = JsonProviderCache.createObjectBuilder().build();
 			}
 		} catch(JsonParsingException e) {
 			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage());
