@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import step.attachments.FileResolver;
 import step.core.AbstractContext;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.CRUDAccessor;
 import step.core.dynamicbeans.DynamicValue;
@@ -38,10 +39,10 @@ public class EntityManager  {
 	
 	private Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
 	private Map<Class<?>, Entity<?,?>> entitiesByClass = new ConcurrentHashMap<Class<?>, Entity<?,?>>();
-	private AbstractContext context;
+	private AbstractStepContext context;
 	Map<Class<?>,BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 	
-	public EntityManager(AbstractContext context) {
+	public EntityManager(AbstractStepContext context) {
 		this.context = context;
 	}
 
@@ -131,13 +132,19 @@ public class EntityManager  {
 	}
 	
 	private void resolveReference(Object value, EntityReferencesMap references, String entityType, Class<?> type) {
-		FileResolver fileResolver = context.get(FileResolver.class);
+		FileResolver fileResolver = context.getFileResolver();
 		String refId = null;
 		if (type.equals(DynamicValue.class) && value!=null) {
-			Object dValue = ((DynamicValue<?>) value).get();
-			refId = (dValue!=null) ? dValue.toString() : null;
-			if (entityType.equals(resources)) {
-				refId = fileResolver.resolveResourceId(refId);
+			DynamicValue<?> dynamicValue = (DynamicValue<?>) value;
+			if (!dynamicValue.isDynamic()) {
+				Object dValue = dynamicValue.get();
+				refId = (dValue != null) ? dValue.toString() : null;
+				if (entityType.equals(resources)) {
+					refId = fileResolver.resolveResourceId(refId);
+				}
+			} else {
+				logger.warn("Reference using dynamic expression found and cannot be resolved during export. Expression: "
+						+ dynamicValue.getExpression());
 			}
 		} else if (type.equals(String.class)) {
 			refId = (String) value;
@@ -148,7 +155,7 @@ public class EntityManager  {
 			boolean added = references.addElementTo(entityType, refId);
 			//hack for resource revisions (no explicit references for now)
 			if (entityType.equals(resources)) {
-				String revisionId = context.get(ResourceManager.class).getResourceRevisionByResourceId(refId).getId().toHexString();
+				String revisionId = context.getResourceManager().getResourceRevisionByResourceId(refId).getId().toHexString();
 				references.addElementTo(EntityManager.resourceRevisions, revisionId);
 			}
 			//avoid circular references issue
@@ -190,11 +197,15 @@ public class EntityManager  {
 							Object value = method.invoke(object);
 							if (entityType.equals(recursive)) {
 								//No actual references, but need to process the field recursively
-								if (value instanceof Collection) {
-									Collection<?> c = (Collection<?>) value;
-									c.forEach(o->updateReferences(o, references));
+								if (value != null) {
+									if (value instanceof Collection) {
+										Collection<?> c = (Collection<?>) value;
+										c.forEach(o -> updateReferences(o, references));
+									} else {
+										updateReferences(value, references);
+									}
 								} else {
-									updateReferences(value, references);
+									logger.warn("Skipping import of reference with null value");
 								}
 							}
 							else {	
@@ -218,12 +229,13 @@ public class EntityManager  {
 	}
 	
 	private Object getNewValue_(Object value, Class<?> returnType, Map<String, String> references, String entityType) {
-		FileResolver fileResolver = context.get(FileResolver.class);
+		FileResolver fileResolver = context.getFileResolver();
 		Object newValue = null;
 		String origRefId = null;
 		String newRefId = null;
 		//Get original id
-		if (returnType.equals(DynamicValue.class) && value != null && ((DynamicValue<?>) value).get() != null) {
+		if (returnType.equals(DynamicValue.class) && value != null &&
+				!((DynamicValue<?>) value).isDynamic() && ((DynamicValue<?>) value).get() != null) {
 			origRefId = ((DynamicValue<?>) value).get().toString();
 		} else if (returnType.equals(String.class)) {
 			origRefId = (String) value;
@@ -247,7 +259,7 @@ public class EntityManager  {
 		if (entityType.equals(resources)) {
 			newRefId = FileResolver.RESOURCE_PREFIX + references.get(origRefId);
 		}
-		if (returnType.equals(DynamicValue.class)) {
+		if (returnType.equals(DynamicValue.class) && !((DynamicValue<?>) value).isDynamic()) {
 			newValue = new DynamicValue<String> (newRefId);
 		} else if (returnType.equals(String.class)) {
 			newValue = newRefId;

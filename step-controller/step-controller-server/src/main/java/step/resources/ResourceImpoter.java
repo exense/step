@@ -24,7 +24,7 @@ public class ResourceImpoter extends GenericDBImporter<Resource, ResourceAccesso
 	@Override
 	public Resource importOne(ImportConfiguration importConfig, JsonParser jParser, ObjectMapper mapper,
 			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
-		ResourceManager resourceManager = context.get(ResourceManager.class);
+		ResourceManager resourceManager = context.getResourceManager();
 		Resource resource = mapper.readValue(jParser, entity.getEntityClass());
 		importConfig.getObjectEnricher().accept(resource);
 		resource = importConfig.getLocalResourceMgr().saveResource(resource);

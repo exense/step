@@ -119,7 +119,7 @@ public class ExportManager {
 	}
 
 	private void exportResources(ZipOutputStream zos, List<String> resourceRef, Entity<?, ?> resourceEntity) {
-		ResourceManager resourceManager = context.get(ResourceManager.class);
+		ResourceManager resourceManager = context.getResourceManager();
 		resourceRef.forEach(r-> {
 			File file = resourceManager.getResourceFile(r).getResourceFile();
 			try {
