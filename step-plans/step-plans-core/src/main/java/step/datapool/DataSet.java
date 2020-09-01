@@ -94,7 +94,7 @@ public abstract class DataSet<T> {
 						}
 						try {
 							writeRow(row);
-						} catch (IOException e) {
+						} catch (Exception e) {
 							logger.error("Error while writing row"+row.toString(), e);
 						}
 					}

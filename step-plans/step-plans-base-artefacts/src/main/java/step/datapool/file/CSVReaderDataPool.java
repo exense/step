@@ -100,7 +100,10 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 			Iterator<String> iterator = headers.iterator();
 			while (iterator.hasNext()) {
 				String header = iterator.next();
-				tempFileWriter.print(csvRow.rowData.get(header).toString());
+				Object object = csvRow.rowData.get(header);
+				if(object != null) {
+					tempFileWriter.print(object.toString());			
+				}
 				if (iterator.hasNext()) {
 					tempFileWriter.print(delimiter);
 				}
