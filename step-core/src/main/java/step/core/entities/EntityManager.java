@@ -62,7 +62,7 @@ public class EntityManager  {
 			throw new RuntimeException("Entity of type " + entityType + " is not supported");
 		}
 		entity.getAccessor().getAll().forEachRemaining(a -> {
-			if (objectPredicate.test(a)) {
+			if (entity.isByPassObjectPredicate() || objectPredicate.test(a)) {
 				refs.addElementTo(entityType, a.getId().toHexString());
 				if (recursively) {
 					getAllEntities(entityType, a.getId().toHexString(), refs);	

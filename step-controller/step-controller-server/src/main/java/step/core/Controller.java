@@ -31,6 +31,7 @@ import step.attachments.FileResolver;
 import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.access.UserAccessorImpl;
+import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.MongoClientSession;
 import step.core.accessors.PlanAccessorImpl;
 import step.core.accessors.collections.Collection;
@@ -57,6 +58,7 @@ import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.dashboards.DashboardSession;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.resources.Resource;
@@ -169,7 +171,13 @@ public class Controller {
 			.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor,
 						Resource.class, new ResourceImpoter(context)))
 			.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
-						resourceRevisionAccessor, ResourceRevision.class, new ResourceRevisionsImporter(context)));
+						resourceRevisionAccessor, ResourceRevision.class, new ResourceRevisionsImporter(context)))
+			.register(new Entity<DashboardSession, AbstractCRUDAccessor<DashboardSession>>("sessions",
+					new AbstractCRUDAccessor<DashboardSession>(mongoClientSession,"sessions", DashboardSession.class),
+					DashboardSession.class, new GenericDBImporter<DashboardSession, AbstractCRUDAccessor<DashboardSession>>(context) {
+					}
+					));
+		context.getEntityManager().getEntityByName("sessions").setByPassObjectPredicate(true);
 
 		createOrUpdateIndexes();
 	}

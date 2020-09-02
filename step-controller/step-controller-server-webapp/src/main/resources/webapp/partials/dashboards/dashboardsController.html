@@ -1,5 +1,42 @@
 <div id="DashboardsController" ng-controller="DashboardsController">
-	<div style="display: grid; display: -ms-grid; float: right;">
+	<div style="float: right;">
+		<div class="dib mr4">
+			<div class="center">
+				<label>Import/Export</label>
+			</div>
+			<div class="btn-group center w-100">
+				<button class="btn btn-success btn-nav" type="button"
+								ng-click="importSession()" uib-tooltip="Import Sessions from file"
+								tooltip-append-to-body="true" tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-import glyphicon-app"></span>
+				</button>
+				<button class="btn btn-success btn-nav" type="button"
+												 ng-click="exportSession()" uib-tooltip="Export Sessions to file"
+												 tooltip-append-to-body="true" tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-export glyphicon-app"></span>
+				</button>
+			</div>
+		</div>
+		<div class="dib mr4">
+			<div class="center">
+				<label>Preset/Entities</label>
+			</div>
+			<div class="btn-group center w-100">
+				<button class="btn btn-success btn-nav"
+								ng-click="loadFromPresets()" uib-tooltip="Load preset"
+								tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-folder-close glyphicon-app"></span>
+				</button>
+				<button class="btn btn-success btn-nav"
+								ng-click="popApplyEntity()" uib-tooltip="Apply entity"
+								tooltip-placement="bottom">
+					<span class="glyphicon glyphicon-search glyphicon-list-alt glyphicon-app"></span>
+				</button>
+				<presetparent />
+			</div>
+		</div>
+	</div>
+	<!--<div style="display: grid; display: -ms-grid; float: right;">
 		<label style="-ms-grid-row :1;grid-row: 1;">Entities</label>
 		<ul
 			style="list-style-type: none !important; display: inline-flex; padding: 0;-ms-grid-row :2;grid-row: 2;">
@@ -28,7 +65,9 @@
 				</button></li>
 		<presetparent />
 		</ul>
-	</div>
+	</div>-->
+
 	<viz-session-manager restprefix="'/rest'"
 		dashboards="dashboardsendpoint" currentsession="sessionName" />
+
 </div>

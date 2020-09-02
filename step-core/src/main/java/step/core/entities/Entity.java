@@ -17,6 +17,7 @@ public class Entity<A extends AbstractIdentifiableObject, T extends CRUDAccessor
 	private Importer<A,T> importer;
 	private List<ResolveReferencesHook> resolveReferencesHook = new ArrayList<ResolveReferencesHook>();
 	private List<BiConsumer<Object, Map<String, String>>> updateReferencesHook = new ArrayList<BiConsumer<Object, Map<String, String>>>();
+	private boolean byPassObjectPredicate = false;
 
 	public Entity(String name, T accessor, Class<A> entityClass, Importer<A,T> importer) {
 		super();
@@ -73,6 +74,14 @@ public class Entity<A extends AbstractIdentifiableObject, T extends CRUDAccessor
 
 	public void setUpdateReferencesHook(List<BiConsumer<Object, Map<String, String>>> updateReferencesHook) {
 		this.updateReferencesHook = updateReferencesHook;
+	}
+
+	public boolean isByPassObjectPredicate() {
+		return byPassObjectPredicate;
+	}
+
+	public void setByPassObjectPredicate(boolean byPassObjectPredicate) {
+		this.byPassObjectPredicate = byPassObjectPredicate;
 	}
 
 }

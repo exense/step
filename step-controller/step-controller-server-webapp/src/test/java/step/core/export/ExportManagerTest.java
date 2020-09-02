@@ -427,7 +427,7 @@ public class ExportManagerTest {
 		GlobalContext c = createGlobalContext();
 		
 		// Create a resource
-		ResourceManager resourceManager = c.get(ResourceManager.class);
+		ResourceManager resourceManager = c.getResourceManager();
 		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_DATASOURCE, this.getClass().getResourceAsStream("dummyExcel.xls"), "TestResource.txt", false, null);
 		Assert.assertNotNull(resource);
 			
@@ -456,18 +456,19 @@ public class ExportManagerTest {
 						
 			//create a new context to test the import
 			c = createGlobalContext();
-			ResourceManager resourceManagerImport = c.get(ResourceManager.class);
+			ResourceManager resourceManagerImport = c.getResourceManager();
 
 			ImportManager importManager = new ImportManager(c);
 			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
-			Resource actualResource = c.get(ResourceAccessor.class).get(resource.getId());
+			Resource actualResource =   c.getResourceAccessor().get(resource.getId());
+
 
 			AtomicInteger nbPlans = new AtomicInteger(0);
 			c.getPlanAccessor().getAll().forEachRemaining(pp->{nbPlans.incrementAndGet();});
 			AtomicInteger nbResources = new AtomicInteger(0);
-			c.get(ResourceAccessor.class).getAll().forEachRemaining(r->{
+			c.getResourceAccessor().getAll().forEachRemaining(r->{
 				nbResources.incrementAndGet();
 				resourceManagerImport.deleteResource(r.getId().toHexString());
 			});

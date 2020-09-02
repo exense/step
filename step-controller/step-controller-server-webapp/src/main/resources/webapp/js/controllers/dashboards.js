@@ -22,7 +22,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	ViewRegistry.registerView('dashboards','partials/dashboards/dashboardsController.html');
 })
 
-.controller('DashboardsController', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService, $location, ViewRegistry, EntityRegistry, $element, $uibModal) {
+.controller('DashboardsController', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, ImportDialogs, ExportDialogs, AuthService, $location, ViewRegistry, EntityRegistry, $element, $uibModal) {
 	stateStorage.push($scope, 'dashboards', {});	
 	$scope.authService = AuthService;
 	$scope.staticPresets = new StaticPresets();
@@ -43,6 +43,16 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 		
 		return inputs;
 	};
+
+	$scope.importSession = function() {
+	  ImportDialogs.displayImportDialog('Dashboard sessions import','sessions', true).then(function () {
+      reload();
+    });
+	}
+
+	$scope.exportSession = function() {
+	  ExportDialogs.displayExportDialog('Dashboard sessions export','sessions', 'allSession.zip', true).then(function () {})
+  }
 	
 	$scope.initFromLocation = function(){
 		if($scope.$state.startsWith('__pp__')){
