@@ -22,5 +22,8 @@ public class RemoteAccessors {
 	public RemoteExecutionAccessor getExecutionAccessor() {
 		return new RemoteExecutionAccessorImpl(credentials);
 	}
-	
+
+	public RemoteParameterAccessor getParameterAccessor() {
+		return new RemoteParameterAccessorImpl(credentials);
+	}
 }
