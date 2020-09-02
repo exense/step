@@ -3,25 +3,29 @@ package step.threadpool;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IntegerSequenceIterator implements Iterator<Integer> {
 
-	private Iterator<Integer> iterator;
+	AtomicInteger counter;
+	int end;
+	int increment;
 	
-	public IntegerSequenceIterator(int start, int end, int inrement) {
-		List<Integer> sequence = new ArrayList<>();
-		for(int i=start; i<=end; i+=inrement) {
-			sequence.add(i);
-		}
-		iterator = sequence.iterator();
+	public IntegerSequenceIterator(int start, int end, int increment) {
+		counter = new AtomicInteger(start);
+		this.end = end;
+		this.increment = increment;
 	}
 	@Override
 	public boolean hasNext() {
-		return iterator.hasNext();
+		//never called from the worker run method
+		return (counter.get()<=end);
 	}
 
 	@Override
 	public Integer next() {
-		return iterator.next();
+		//must return null if reached the end
+		Integer value = counter.getAndAdd(increment);
+		return (value<=end) ? value : null;
 	}
 }
