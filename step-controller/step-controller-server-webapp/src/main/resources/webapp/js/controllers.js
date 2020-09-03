@@ -405,7 +405,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			}
 
 			$scope.initAutoRefresh = function (on, interval, autoIncreaseTo) {
-				$scope.autorefresh = {enabled : on, interval : interval, refreshFct: refreshFct, autoIncreaseTo: autoIncreaseTo};
+				$scope.autorefresh.enabled=on;
+				$scope.autorefresh.interval=interval;
+				$scope.autorefresh.refreshFct=refreshFct;
+				$scope.autorefresh.autoIncreaseTo=autoIncreaseTo;
 			}
 			$scope.autorefresh = {};
 
@@ -524,13 +527,25 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				}
 			});
 
+      $scope.oldIntervalValue = -1;
 			$scope.$watch('tabs.selectedTab', function(newvalue, oldvalue){
 				//initializing dashboard only when hitting the performance tab
 				if(newvalue === 2){
 					if($scope.execution.status!=='ENDED') {
 						//must handle this here until we have a dedicated controller per tab
-						$scope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
-						$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });						
+
+            //initialize viz refresh with 1 seconds to get first graphs quickly
+            $timeout(function() {
+              $scope.$broadcast('globalsettings-refreshInterval', { 'new': 1000 });
+              $scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });
+            });
+						//then disable refresh rates < 30 seconds for the performance tab (reduce CPU overhead)
+						$scope.oldIntervalValue=$scope.autorefresh.interval;
+						$scope.autorefresh.setMinPresets(30000);
+						$timeout(function() {
+						  $scope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
+						  $scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });
+						 },2000);
 					}
 
 					$(document).ready(function () {
@@ -543,6 +558,12 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				}else{
 					//turning off refresh when clicking other views
 					$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
+					//reverting to previous interval (if changed on preformance tab)
+					$scope.autorefresh.setMinPresets(0);
+					if ($scope.oldIntervalValue >= 0 ) {
+					  $scope.autorefresh.interval=$scope.oldIntervalValue;
+					  $scope.oldIntervalValue-1;
+					}
 				}
 			});
 		},
@@ -628,15 +649,29 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
 		controller: function($scope) {
 
 			$scope.autoRefreshPresets = [
-				{label:'OFF', value:0},
-				{label:'5 seconds', value:5000},
-				{label:'10 seconds', value:10000},
-				{label:'30 seconds', value:30000},
-				{label:'1 minute', value:60000},
-				{label:'5 minutes', value:300000}
+				{label:'OFF', value:0, disabled:false},
+				{label:'5 seconds', value:5000, disabled:false},
+				{label:'10 seconds', value:10000, disabled:false},
+				{label:'30 seconds', value:30000, disabled:false},
+				{label:'1 minute', value:60000, disabled:false},
+				{label:'5 minutes', value:300000, disabled:false}
 				];
 
 			var manuallyChanged = false;
+
+			$scope.autorefresh.setMinPresets = function (minValue) {
+        for (var i = 0; i < $scope.autoRefreshPresets.length; i++) {
+          var obj = $scope.autoRefreshPresets[i];
+          if (obj.value > 0 && obj.value < minValue) {
+            obj.disabled=true;
+          } else {
+            obj.disabled=false;
+          }
+        }
+        if ($scope.autorefresh.interval<=minValue) {
+          $scope.autorefresh.interval=minValue;
+        }
+			}
 
 			$scope.changeRefreshInterval = function (newInterval){
 				manuallyChanged = true;

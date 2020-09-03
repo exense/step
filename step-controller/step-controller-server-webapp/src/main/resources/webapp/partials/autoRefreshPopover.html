@@ -8,7 +8,7 @@
 	<form style='min-width: 120px;'>
 	<select 
 		 ng-model="autorefresh.interval" ng-change="changeRefreshInterval(autorefresh.interval)" ng-mouseup="closePopOver()"
-		ng-options="autoRefreshPreset.value as autoRefreshPreset.label for autoRefreshPreset in autoRefreshPresets"
+		ng-options="autoRefreshPreset.value as autoRefreshPreset.label disable when autoRefreshPreset.disabled for autoRefreshPreset in autoRefreshPresets"
 		size="6" class="form-control autoRefreshSelect" style="width: 100%" />
 	</form>
 </script>
