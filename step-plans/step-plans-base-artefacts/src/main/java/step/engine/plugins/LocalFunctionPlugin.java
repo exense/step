@@ -9,9 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.bson.types.ObjectId;
-import org.reflections.Reflections;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.util.ConfigurationBuilder;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Attribute;
@@ -19,6 +16,7 @@ import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
+import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.AbstractFunctionType;
@@ -47,16 +45,8 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 	
 	public List<Function> getLocalFunctions() {
 		List<Function> functions = new ArrayList<Function>();
-		// TODO migrate Refelections to io.github.classgraph
-		Reflections reflections = new Reflections(new ConfigurationBuilder().forPackages("step")
-				.setScanners(new MethodAnnotationsScanner()));
-		
-		Set<Method> methods;
-		try {
-			methods = reflections.getMethodsAnnotatedWith(Keyword.class);
-		} catch(Throwable e) {
-			throw new RuntimeException(e);
-		}
+
+		Set<Method> methods = AnnotationScanner.getMethodsWithAnnotation(Keyword.class);
 		for(Method m:methods) {
 			Keyword annotation = m.getAnnotation(Keyword.class);
 			

@@ -5,11 +5,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.artefacts.reports.ReportNode;
+import step.core.scanner.AnnotationScanner;
 
 public class ViewManager {
 
@@ -30,7 +30,7 @@ public class ViewManager {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void loadViews() {
-		Set<Class<?>> viewClasses = new Reflections("step").getTypesAnnotatedWith(View.class);
+		Set<Class<?>> viewClasses = AnnotationScanner.getClassesWithAnnotation(View.class);
 		
 		for(Class<?> viewClass:viewClasses) {
 			AbstractView view;
