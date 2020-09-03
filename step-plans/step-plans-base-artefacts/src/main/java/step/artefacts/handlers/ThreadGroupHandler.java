@@ -79,7 +79,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> groupController) {
 				return groupID -> {
 					try {
-						final long localStartOffset = testArtefact.getStartOffset().get()+(long)((1.0*groupID)/numberOfUsers*rampup);
+						final long localStartOffset = testArtefact.getStartOffset().get()+(long)((1.0*(groupID-1))/numberOfUsers*rampup);
 
 						try {
 							java.lang.Thread.sleep(localStartOffset);
