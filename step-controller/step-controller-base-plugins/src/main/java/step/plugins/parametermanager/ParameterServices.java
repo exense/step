@@ -34,12 +34,14 @@ import javax.ws.rs.core.MediaType;
 
 import org.bson.types.ObjectId;
 
+import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.GlobalContext;
 import step.core.access.AccessManager;
 import step.core.accessors.CRUDAccessor;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.parameter.ParameterScope;
 
 @Path("/parameters")
 public class ParameterServices extends AbstractServices {

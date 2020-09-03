@@ -16,11 +16,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-package step.plugins.parametermanager;
+package step.parameter;
 
-import step.commons.activation.ActivableObject;
-import step.commons.activation.Expression;
-import step.core.accessors.AbstractTrackedObject;
 import step.core.accessors.CRUDAccessor;
 
 public interface ParameterAccessor extends CRUDAccessor<Parameter> {

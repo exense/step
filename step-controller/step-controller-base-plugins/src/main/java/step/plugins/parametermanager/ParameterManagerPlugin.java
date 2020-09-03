@@ -22,11 +22,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.parameter.Parameter;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.ObjectHookPlugin;
@@ -40,6 +40,8 @@ import step.core.variables.VariablesManager;
 import step.engine.execution.ExecutionManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
+import step.parameter.ParameterManager;
+import step.parameter.ParameterScope;
 
 @Plugin(dependencies = { ObjectHookPlugin.class })
 @IgnoreDuringAutoDiscovery
@@ -110,8 +112,8 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	private Map<ParameterScope, Map<String, List<Parameter>>> getAllParametersByScope(Map<String, Parameter> allParameters) {
 		Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = new HashMap<>();
 		allParameters.forEach((k,v)->{
-			ParameterScope scope = v.scope != null ? v.scope : ParameterScope.GLOBAL;
-			String scopeValue = v.scopeEntity != null ? v.scopeEntity : PARAMETER_SCOPE_VALUE_DEFAULT;
+			ParameterScope scope = v.getScope() != null ? v.getScope() : ParameterScope.GLOBAL;
+			String scopeValue = v.getScopeEntity() != null ? v.getScopeEntity() : PARAMETER_SCOPE_VALUE_DEFAULT;
 			parametersByScope.computeIfAbsent(scope, t->new HashMap<String, List<Parameter>>())
 							 .computeIfAbsent(scopeValue, t->new ArrayList<Parameter>())
 							 .add(v);
@@ -127,7 +129,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 			List<Parameter> scopeValueSpecificParameters = scopeSpecificParameters.get(scopeValue);
 			if(scopeValueSpecificParameters != null) {
 				scopeValueSpecificParameters.forEach(p->{
-					varMan.putVariable(node, VariableType.IMMUTABLE, p.key, p.value);
+					varMan.putVariable(node, VariableType.IMMUTABLE, p.getKey(), p.getValue());
 				});
 			}
 		}

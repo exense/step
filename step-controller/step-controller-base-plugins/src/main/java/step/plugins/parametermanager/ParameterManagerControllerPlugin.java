@@ -23,16 +23,17 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.parameter.Parameter;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.CRUDAccessor;
 import step.core.accessors.collections.CollectionRegistry;
-import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.entities.Entity;
 import step.core.imports.GenericDBImporter;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.parameter.ParameterManager;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.InputType;
 import step.plugins.screentemplating.ScreenInput;

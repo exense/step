@@ -69,7 +69,7 @@ import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.manager.FunctionManager;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.planbuilder.FunctionArtefacts;
-import step.plugins.parametermanager.ParameterManager;
+import step.parameter.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 
 @Singleton

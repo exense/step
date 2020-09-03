@@ -35,9 +35,11 @@ import ch.exense.commons.app.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.accessors.InMemoryCRUDAccessor;
 import step.core.objectenricher.ObjectPredicate;
+import step.parameter.ParameterManager;
 
 public class ParameterManagerTest {
 

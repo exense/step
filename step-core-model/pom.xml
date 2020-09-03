@@ -43,6 +43,11 @@
 			<artifactId>javax.json</artifactId>
 			<version>1.0</version>
 		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-commons</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>

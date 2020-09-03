@@ -6,12 +6,15 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.parameter.Parameter;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryCRUDAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.functions.Function;
+import step.parameter.ParameterManager;
+import step.parameter.ParameterScope;
 
 public class ParameterManagerPluginTest {
 	

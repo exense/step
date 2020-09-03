@@ -1,7 +1,7 @@
 package step.client.accessors;
 
 import step.client.credentials.ControllerCredentials;
-import step.plugins.parametermanager.Parameter;
+import step.parameter.Parameter;
 
 public class RemoteParameterAccessorImpl extends RemoteParameterAccessor {
 

@@ -39,10 +39,9 @@ import step.functions.accessor.FunctionAccessor;
 import step.planbuilder.BaseArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
-import step.plugins.parametermanager.Parameter;
+import step.parameter.Parameter;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.resources.Resource;
-import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
 
 public class ExportManagerTest {
