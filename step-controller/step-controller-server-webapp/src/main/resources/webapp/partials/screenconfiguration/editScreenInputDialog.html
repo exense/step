@@ -6,7 +6,7 @@
 	<form ng-submit="save()">
 		<div class="form-group">
 			<label>ID</label> 
-			<span class="glyphicon glyphicon-question-sign" uib-tooltip="Keys containing 'pwd' or 'password' will be automatically protected"></span>
+			<span class="glyphicon glyphicon-question-sign" uib-tooltip="Keys containing 'pwd' or 'password' will be automatically protected" tooltip-append-to-body="true"></span>
 			<input class="form-control"	ng-model="input.input.id" autofocus>
 		</div>
 		<div class="form-group">
@@ -63,12 +63,12 @@
 			<div class="panel-body" ng-show="showAdvanced">
 				<div class="form-group">
 					<label>Value HTML Template</label> 
-					<span class="glyphicon glyphicon-question-sign" uib-tooltip="The HTML template to be used to display the value of the input (Optional)"></span>
+					<span class="glyphicon glyphicon-question-sign" uib-tooltip="The HTML template to be used to display the value of the input (Optional)" tooltip-append-to-body="true"></span>
 					<input class="form-control"	ng-model="input.input.valueHtmlTemplate">
 				</div>
 				<div class="form-group">
 					<label>Search service mapper</label> 
-					<span class="glyphicon glyphicon-question-sign" uib-tooltip="When the input is used in a table, this service will be used to resolve the column filter to actual input values. The filter is passed in the body, a list of string is expected as a result (Optional)"></span>
+					<span class="glyphicon glyphicon-question-sign" uib-tooltip="When the input is used in a table, this service will be used to resolve the column filter to actual input values. The filter is passed in the body, a list of string is expected as a result (Optional)" tooltip-append-to-body="true"></span>
 					<input class="form-control"	ng-model="input.input.searchMapperService">
 				</div>
 			</div>

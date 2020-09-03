@@ -25,11 +25,11 @@
 		</div>
 		<div ng-if="parameter.scope=='APPLICATION'" class="form-group">
 			<st-custom-form-input st-screen="'functionTable'" st-input-id="'attributes.application'" ng-model="parameter.scopeEntity"></st-custom-form-input>
-			<span class="glyphicon glyphicon-question-sign" uib-tooltip="The name of the applicationd this parameter is restricted to"></span>
+			<span class="glyphicon glyphicon-question-sign" uib-tooltip="The name of the applicationd this parameter is restricted to" tooltip-append-to-body="true"></span>
 		</div>
 		<div ng-if="parameter.scope=='FUNCTION'" class="form-group">
 			<input class="form-control"	ng-model="parameter.scopeEntity">
-			<span class="glyphicon glyphicon-question-sign" uib-tooltip="The name of the Keyword this parameter is restricted to"></span>
+			<span class="glyphicon glyphicon-question-sign" uib-tooltip="The name of the Keyword this parameter is restricted to" tooltip-append-to-body="true"></span>
 		</div>
 	</form>
 	<form ng-submit="save()">

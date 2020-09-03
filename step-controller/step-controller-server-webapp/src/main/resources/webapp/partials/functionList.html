@@ -34,19 +34,19 @@
 			<st-column width="'150px'">
 				<cell>
 					<div class="btn-group btn-group-sm">
-						<button type="button" class="btn btn-default" ng-click="$parent.editFunction(row.id)" ng-disabled="!authService.hasRight('kw-write')"  uib-tooltip="Configure keyword">
+						<button type="button" class="btn btn-default" ng-click="$parent.editFunction(row.id)" ng-disabled="!authService.hasRight('kw-write')"  uib-tooltip="Configure keyword" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
             			</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.openFunctionEditor(row.id)" ng-disabled="!authService.hasRight('kw-write')" uib-tooltip="Edit keyword">
+            			<button type="button" class="btn btn-default" ng-click="$parent.openFunctionEditor(row.id)" ng-disabled="!authService.hasRight('kw-write')" uib-tooltip="Edit keyword" tooltip-append-to-body="true">
 	            			<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
 	            		</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.executeFunction(row.id)" ng-disabled="!authService.hasRight('kw-execute')" uib-tooltip="Execute keyword">
+            			<button type="button" class="btn btn-default" ng-click="$parent.executeFunction(row.id)" ng-disabled="!authService.hasRight('kw-execute')" uib-tooltip="Execute keyword" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-play" aria-hidden="true"></span>
             			</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.copyFunction(row.id)" ng-disabled="!authService.hasRight('kw-write')" uib-tooltip="Copy keyword">
+            			<button type="button" class="btn btn-default" ng-click="$parent.copyFunction(row.id)" ng-disabled="!authService.hasRight('kw-write')" uib-tooltip="Copy keyword" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
             			</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.deleteFunction(row.id)" ng-disabled="!authService.hasRight('kw-delete')" uib-tooltip="Delete keyword">
+            			<button type="button" class="btn btn-default" ng-click="$parent.deleteFunction(row.id)" ng-disabled="!authService.hasRight('kw-delete')" uib-tooltip="Delete keyword" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             			</button>
           			</div>
