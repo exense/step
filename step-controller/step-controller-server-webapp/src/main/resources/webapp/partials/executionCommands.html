@@ -2,13 +2,13 @@
 <div class="btn-toolbar" role="toolbar" aria-label="...">
 	<div class="input-group" style="width:200px">
 		<div class="btn-group">
-			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="execute(true)" uib-tooltip="Simulate execution">
+			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="execute(true)" uib-tooltip="Simulate execution" tooltip-append-to-body="true">
 				<span class="glyphicon glyphicon glyphicon-ok" aria-hidden="true"></span>
 			</button> 
-			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="execute(false)">
+			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="execute(false)" uib-tooltip="Execute" tooltip-append-to-body="true">
 				<span class="glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>
 			</button>  
-			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="schedule()" uib-tooltip="Schedule">
+			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="schedule()" uib-tooltip="Schedule" tooltip-append-to-body="true">
 				<span class="glyphicon glyphicon glyphicon-time" aria-hidden="true"></span>
 			</button>
 		</div>
