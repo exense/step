@@ -1,0 +1,15 @@
+Set var = "hallo"
+
+Function name="test2"
+    test3 vorname = "Franz" Name = "${input.getString('Name')}"
+
+    Function name="test3"
+        Echo "$var ${input.getString('vorname')} ${input.getString('Name')}"
+    EndFunction
+EndFunction
+
+Function name="test1"
+    test2 Name = "${input.getString('Name')}"
+EndFunction
+
+test1 Name="Muster"

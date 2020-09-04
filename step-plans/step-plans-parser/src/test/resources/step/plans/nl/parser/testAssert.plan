@@ -1,0 +1,6 @@
+Function name="test1"
+    Script output.add("Name",input.getString('Name'))
+EndFunction
+
+test1 Name="Franz"
+Assert Name="Franz"

@@ -1,0 +1,11 @@
+T__0=1
+T__1=2
+T__2=3
+EQ=4
+WORD=5
+STRING=6
+SPACE=7
+'Set'=1
+'Function'=2
+'EndFunction'=3
+'='=4

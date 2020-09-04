@@ -1,0 +1,478 @@
+package step.repositories.parser;
+
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import step.artefacts.Check;
+import step.artefacts.DataSetArtefact;
+import step.artefacts.ForBlock;
+import step.artefacts.ForEachBlock;
+import step.artefacts.FunctionGroup;
+import step.artefacts.IfBlock;
+import step.artefacts.RetryIfFails;
+import step.artefacts.Sequence;
+import step.artefacts.Sleep;
+import step.artefacts.Synchronized;
+import step.artefacts.TestCase;
+import step.artefacts.TestScenario;
+import step.artefacts.TestSet;
+import step.artefacts.ThreadGroup;
+import step.artefacts.While;
+import step.datapool.excel.ExcelDataPool;
+import step.datapool.file.FileDataPool;
+import step.datapool.sequence.IntSequenceDataPool;
+import step.repositories.parser.StepsParser.ParsingException;
+import step.repositories.parser.annotated.DefaultDescriptionStepParser;
+
+public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepParserTest {
+
+	@Before
+	public void setUp() {
+		parser = StepsParser.builder().withStepParsers(new DefaultDescriptionStepParser()).build();
+	}
+	
+	@Test
+	public void testFor() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("For 1 to 20"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		ForBlock forBlock = parseAndGetUniqueChild(steps, ForBlock.class);
+		IntSequenceDataPool dataSource = (IntSequenceDataPool) forBlock.getDataSource();
+		Assert.assertEquals(1,(int)dataSource.getStart().getValue());
+		Assert.assertEquals(20,(int)dataSource.getEnd().getValue());
+
+		Assert.assertEquals(1,getChildren(forBlock).size());
+	}
+	
+	@Test
+	public void testForEach() throws ParsingException {
+		String filepath = "TestForEach.txt";
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("For each row in file \""+filepath+"\""));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		ForEachBlock forEachBlock = parseAndGetUniqueChild(steps, ForEachBlock.class);
+		FileDataPool dataSource = (FileDataPool) forEachBlock.getDataSource();
+		
+		Assert.assertEquals("\""+filepath+"\"", dataSource.getFile().getExpression());
+		//Assert.assertEquals(true, dataSource.getHeaders());
+		Assert.assertEquals(false, dataSource.getForWrite().get());
+
+		Assert.assertEquals(1,getChildren(forEachBlock).size());
+	}
+	
+	@Test
+	public void testForEachRowInAttachedExcel() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("For each row in attached excel"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		ForEachBlock forEachBlock = parseAndGetUniqueChild(steps, ForEachBlock.class);
+		ExcelDataPool dataSource = (ExcelDataPool) forEachBlock.getDataSource();
+		
+		Assert.assertEquals("resourceManager.getResourceFile(currentArtefact.getAttachments().get(0).toString()).getResourceFile().getAbsolutePath()",
+				dataSource.getFile().getExpression());
+		Assert.assertEquals(true, dataSource.getHeaders().get());
+		Assert.assertEquals(false, dataSource.getForWrite().get());
+
+		Assert.assertEquals(1,getChildren(forEachBlock).size());
+	}
+	
+	@Test
+	public void testForEachRowInExcel() throws ParsingException {		
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("For each row in excel   \"path/to/excel.xlsx\"   "));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		ForEachBlock forEachBlock = parseAndGetUniqueChild(steps, ForEachBlock.class);
+		ExcelDataPool dataSource = (ExcelDataPool) forEachBlock.getDataSource();
+		
+		Assert.assertEquals("\"path/to/excel.xlsx\"", dataSource.getFile().getExpression());
+		Assert.assertEquals(true, dataSource.getHeaders().get());
+		Assert.assertEquals(false, dataSource.getForWrite().get());
+
+		Assert.assertEquals(1,getChildren(forEachBlock).size());
+	}
+	
+	@Test
+	public void testForEachDefaults() throws ParsingException {
+		String filepath = "TestForEach.txt";
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("ForEach SourceType = \"excel\" File =\""+filepath+"\""));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		ForEachBlock forEachBlock = parseAndGetUniqueChild(steps, ForEachBlock.class);
+		ExcelDataPool dataSource = (ExcelDataPool) forEachBlock.getDataSource();
+		
+		Assert.assertEquals("\""+filepath+"\"", dataSource.getFile().getExpression());
+		//Assert.assertEquals(true, dataSource.getHeaders());
+		Assert.assertEquals(false, dataSource.getForWrite().get());
+		Assert.assertEquals(1, (int) forEachBlock.getThreads().getValue());
+		Assert.assertEquals("row", forEachBlock.getItem().getValue());
+
+		Assert.assertEquals(1,getChildren(forEachBlock).size());
+	}
+	
+	@Test
+	public void testForEachExcel() throws ParsingException {
+		String filepath = "TestForEach.txt";
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("ForEach Threads=22 RowHandle = \"blabla\" SourceType = \"excel\" File =\""+filepath+"\""));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		ForEachBlock forEachBlock = parseAndGetUniqueChild(steps, ForEachBlock.class);
+		ExcelDataPool dataSource = (ExcelDataPool) forEachBlock.getDataSource();
+		
+		Assert.assertEquals("\""+filepath+"\"", dataSource.getFile().getExpression());
+		//Assert.assertEquals(true, dataSource.getHeaders());
+		Assert.assertEquals(false, dataSource.getForWrite().get());
+		Assert.assertEquals("22", forEachBlock.getThreads().getExpression());
+		Assert.assertEquals("\"blabla\"", forEachBlock.getItem().getExpression());
+
+		Assert.assertEquals(1,getChildren(forEachBlock).size());
+	}
+	
+	@Test
+	public void testForEachExcelWithWorksheet() throws ParsingException {
+		String filepath = "TestForEach.txt";
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("ForEach Threads=22 RowHandle = \"blabla\" SourceType = \"excel\" File =\""+filepath+"\" Worksheet=\"sheet2\""));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		ForEachBlock forEachBlock = parseAndGetUniqueChild(steps, ForEachBlock.class);
+		ExcelDataPool dataSource = (ExcelDataPool) forEachBlock.getDataSource();
+		
+		Assert.assertEquals("\"sheet2\"", dataSource.getWorksheet().getExpression());
+		Assert.assertEquals(1,getChildren(forEachBlock).size());
+	}
+	
+	@Test
+	public void testDataSet() throws ParsingException {
+		String filepath = "TestForEach.txt";
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("DataSet IteratorHandle = \"blabla\" SourceType = \"excel\" File =\""+filepath+"\""));
+
+		DataSetArtefact artefact = parseAndGetUniqueChild(steps, DataSetArtefact.class);
+		ExcelDataPool dataSource = (ExcelDataPool) artefact.getDataSource();
+		
+		Assert.assertEquals("\""+filepath+"\"", dataSource.getFile().getExpression());
+		//Assert.assertEquals(true, dataSource.getHeaders());
+		Assert.assertEquals(false, dataSource.getForWrite().get());
+		Assert.assertEquals("\"blabla\"", artefact.getItem().getExpression());
+		Assert.assertEquals(false, artefact.getResetAtEnd().getValue());
+	}
+	
+	@Test
+	public void testSleep() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Sleep 1ms"));
+		Sleep sleep = parseAndGetUniqueChild(steps, Sleep.class);
+		Assert.assertEquals("1*1",sleep.getDuration().getExpression());
+		Assert.assertEquals("ms",sleep.getUnit().getValue());
+		
+		steps = new ArrayList<>();
+		steps.add(step("Sleep 1s"));
+		sleep = parseAndGetUniqueChild(steps, Sleep.class);
+		Assert.assertEquals("1000*1",sleep.getDuration().getExpression());
+		
+		steps = new ArrayList<>();
+		steps.add(step("Sleep 1m  	"));
+		sleep = parseAndGetUniqueChild(steps, Sleep.class);
+		Assert.assertEquals("60000*1",sleep.getDuration().getExpression());
+		
+		steps = new ArrayList<>();
+		steps.add(step("Sleep 1h  	"));
+		sleep = parseAndGetUniqueChild(steps, Sleep.class);
+		Assert.assertEquals("3600000*1",sleep.getDuration().getExpression());
+		
+		steps = new ArrayList<>();
+		steps.add(step("Sleep x s"));
+		sleep = parseAndGetUniqueChild(steps, Sleep.class);
+		Assert.assertEquals("1000*x",sleep.getDuration().getExpression());
+		
+		steps = new ArrayList<>();
+		steps.add(step("Sleep Duration=1 Unit=s"));
+		sleep = parseAndGetUniqueChild(steps, Sleep.class);
+		Assert.assertEquals("1",sleep.getDuration().getExpression());
+		Assert.assertEquals("s",sleep.getUnit().getExpression());
+	}
+	
+//	steps.add(step("Sleep 1s"));
+//	steps.add(step("Sleep 1m"));
+//	steps.add(step("Sleep 1h"));
+	
+	@Test
+	public void testWhile() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("While Condition= true \n"));
+		steps.add(step("End"));
+
+		While artefact = parseAndGetUniqueChild(steps, While.class);
+		Assert.assertNotNull(artefact);
+		Assert.assertEquals("true",artefact.getCondition().getExpression());
+	}
+	
+	@Test
+	public void testWhileComplexExpression() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		String expression = " true && (false && \" \".equals(' ')) ";
+		steps.add(step("While Condition= |"+expression+"| \n"));
+		steps.add(step("End"));
+
+		While artefact = parseAndGetUniqueChild(steps, While.class);
+		Assert.assertNotNull(artefact);
+		Assert.assertEquals(expression,artefact.getCondition().getExpression());
+	}
+	
+	@Test
+	// TODO as soon as we have a space in the condition the parser is failing! implement a way to group expressions
+	public void testWhileComplexCondition() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("While Condition= true&&true \n"));
+		steps.add(step("End"));
+
+		While artefact = parseAndGetUniqueChild(steps, While.class);
+		Assert.assertNotNull(artefact);
+		Assert.assertEquals("true&&true",artefact.getCondition().getExpression());
+	}
+	
+	@Test
+	public void testTestSet() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("TestSet  \n"));
+		steps.add(step("End"));
+
+		TestSet artefact = parseAndGetUniqueChild(steps, TestSet.class);
+		Assert.assertNotNull(artefact);
+	}
+	
+	@Test
+	public void testTestCase() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("TestCase"));
+		steps.add(step("End"));
+
+		TestCase artefact = parseAndGetUniqueChild(steps, TestCase.class);
+		Assert.assertNotNull(artefact);
+	}
+	
+	@Test
+	public void testThreadGroup() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("ThreadGroup"));
+		steps.add(step("End"));
+
+		ThreadGroup artefact = parseAndGetUniqueChild(steps, ThreadGroup.class);
+		Assert.assertNotNull(artefact);
+		Assert.assertEquals((int)0, (int)artefact.getMaxDuration().getValue());
+	}
+	
+	@Test
+	public void testThreadGroupMaxDuration() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("ThreadGroup MaxDuration=10"));
+		steps.add(step("End"));
+
+		ThreadGroup artefact = parseAndGetUniqueChild(steps, ThreadGroup.class);
+		Assert.assertNotNull(artefact);
+		Assert.assertEquals("10", artefact.getMaxDuration().getExpression());
+	}
+	
+	@Test
+	public void testTestScenario() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("TestScenario"));
+		steps.add(step("End"));
+
+		TestScenario artefact = parseAndGetUniqueChild(steps, TestScenario.class);
+		Assert.assertNotNull(artefact);
+	}
+	
+	@Test
+	public void testSynchronized() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Synchronized  "));
+		steps.add(step("End"));
+
+		Synchronized artefact = parseAndGetUniqueChild(steps, Synchronized.class);
+		Assert.assertNotNull(artefact);
+	}
+	
+	@Test
+	public void testSynchronizedNamed() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Synchronized LockName=\"myLock\" GlobalLock=\"true\""));
+		steps.add(step("End"));
+
+		Synchronized artefact = parseAndGetUniqueChild(steps, Synchronized.class);
+		Assert.assertEquals("\"myLock\"", artefact.getLockName().getExpression());
+		Assert.assertEquals("\"true\"", artefact.getGlobalLock().getExpression());
+		Assert.assertNotNull(artefact);
+	}
+	
+	@Test
+	public void testGroupOn() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Group on test=\"value\" \"test with space\"=\"value\" \n \"test2\"=value"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		FunctionGroup group = parseAndGetUniqueChild(steps, FunctionGroup.class);
+		
+		JsonObject o = Json.createReader(new StringReader(group.getToken().get())).readObject();
+		Assert.assertEquals("\"value\"",o.getJsonObject("test").getString("expression"));
+		Assert.assertEquals("value", o.getJsonObject("test2").getString("expression"));
+		Assert.assertEquals("\"value\"",o.getJsonObject("test with space").getString("expression"));
+	}
+	
+	@Test
+	public void testSessionDefaults() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Session"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		FunctionGroup group = parseAndGetUniqueChild(steps, FunctionGroup.class);
+		
+		Json.createReader(new StringReader(group.getToken().get())).readObject();
+	}
+	
+	@Test
+	public void testSession() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Session test=\"value\" \"test with space\"=\"value\" \n \"test2\"=value"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		FunctionGroup group = parseAndGetUniqueChild(steps, FunctionGroup.class);
+		
+		JsonObject o = Json.createReader(new StringReader(group.getToken().get())).readObject();
+		Assert.assertEquals("\"value\"",o.getJsonObject("test").getString("expression"));
+		Assert.assertEquals("value", o.getJsonObject("test2").getString("expression"));
+		Assert.assertEquals("\"value\"",o.getJsonObject("test with space").getString("expression"));
+	}
+	
+	@Test
+	public void testGroupOnError() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Group on test=\"value\" test"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		Exception e = null;
+		try {
+			parseAndGetUniqueChild(steps, FunctionGroup.class);			
+		} catch(Exception e1) {
+			e = e1;
+		}
+		Assert.assertTrue(e.getMessage().contains("expecting '='"));
+	}
+	
+	@Test
+	public void testSequence() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Sequence"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		Sequence sequence = parseAndGetUniqueChild(steps, Sequence.class);
+		Assert.assertFalse(sequence.getContinueOnError().getValue());
+	}
+	
+	@Test
+	public void testSequenceContinueOnError() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Sequence ContinueOnError=\"true\""));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		Sequence sequence = parseAndGetUniqueChild(steps, Sequence.class);
+		Assert.assertEquals("\"true\"",sequence.getContinueOnError().getExpression());
+		Assert.assertTrue(sequence.getContinueOnError().isDynamic());
+	}
+	
+	@Test
+	public void testSequenceContinueOnError2() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Sequence ContinueOnError=false  \n   "));
+		steps.add(step("End"));
+		
+		Sequence sequence = parseAndGetUniqueChild(steps, Sequence.class);
+		Assert.assertEquals("false",sequence.getContinueOnError().getExpression());
+	}
+	
+	@Test
+	public void testRetryIfFailsDefaults() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("RetryIfFails"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		RetryIfFails artefact = parseAndGetUniqueChild(steps, RetryIfFails.class);
+		Assert.assertEquals(1,(int)artefact.getMaxRetries().getValue());
+		Assert.assertEquals(1000,(int)artefact.getGracePeriod().getValue());
+	}
+	
+	@Test
+	public void testRetryIfFails() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("RetryIfFails MaxRetries=2 GracePeriod=1 Timeout=3000"));
+		steps.add(step("End"));
+
+		RetryIfFails artefact = parseAndGetUniqueChild(steps, RetryIfFails.class);
+		Assert.assertEquals("2",artefact.getMaxRetries().getExpression());
+		Assert.assertEquals("1",artefact.getGracePeriod().getExpression());
+		Assert.assertEquals("3000",artefact.getTimeout().getExpression());
+	}
+	
+	@Test
+	public void testGroup() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Group"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+
+		FunctionGroup group = parseAndGetUniqueChild(steps, FunctionGroup.class);
+		
+		Json.createReader(new StringReader(group.getToken().get())).readObject();
+	}
+	
+	@Test
+	public void testIf() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("If a==true"));
+		steps.add(step("Echo test"));
+		steps.add(step("End"));
+		
+		IfBlock f = parseAndGetUniqueChild(steps, IfBlock.class);
+		Assert.assertEquals("a==true",f.getCondition().getExpression());
+
+		Assert.assertEquals(1,getChildren(f).size());
+	}
+	
+	@Test
+	public void testCheck() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Check Expression= true \n"));
+
+		Check artefact = parseAndGetUniqueChild(steps, Check.class);
+		Assert.assertNotNull(artefact);
+		Assert.assertEquals("true",artefact.getExpression().getExpression());
+	}
+}

@@ -1,0 +1,6 @@
+TestCase:PASSED:
+ Session:PASSED:
+  CallKeyword:PASSED:
+   Sequence:PASSED:
+    Script:PASSED:
+   Assert:PASSED:

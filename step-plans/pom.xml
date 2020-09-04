@@ -31,6 +31,7 @@
 	
 	<modules>
 		<module>step-plans-core</module>
+		<module>step-plans-parser</module>
 		<module>step-plans-runners</module>
 		<module>step-plans-base-artefacts</module>
 	</modules>
