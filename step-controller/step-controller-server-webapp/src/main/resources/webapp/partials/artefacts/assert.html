@@ -7,6 +7,8 @@
 			<select ng-model="artefact.operator" ng-change="save()" ng-options="option.name as option.label for option in operatorTypes" class="form-control" />
 		</div>
 		<dynamic-textfield label="'Expected value'" on-save="save()" dynamic-value="artefact.expected" />
+		<dynamic-checkbox label="'Negate the assertion'" on-save="save()" dynamic-value="artefact.doNegate" />
+		<dynamic-textfield label="'Custom error message'" on-save="save()" dynamic-value="artefact.customErrorMessage" />
 	</form>
 </fieldset>
 </div>

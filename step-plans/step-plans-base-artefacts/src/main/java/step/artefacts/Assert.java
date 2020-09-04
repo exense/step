@@ -29,9 +29,23 @@ public class Assert extends AbstractArtefact {
 	
 	private AssertOperator operator;
 	
+	@Deprecated
 	private boolean negate = false;
 	
+	DynamicValue<Boolean> doNegate = new DynamicValue<Boolean>(false);
+
+	
 	private DynamicValue<String> expected = new DynamicValue<>("");
+	
+	private DynamicValue<String> customErrorMessage = new DynamicValue<>("");
+
+	public DynamicValue<String> getCustomErrorMessage() {
+		return customErrorMessage;
+	}
+
+	public void setCustomErrorMessage(DynamicValue<String> customErrorMessage) {
+		this.customErrorMessage = customErrorMessage;
+	}
 
 	public Assert() {
 		super();
@@ -61,13 +75,26 @@ public class Assert extends AbstractArtefact {
 		this.expected = expected;
 	}
 
+	
+	@Deprecated
 	public boolean isNegate() {
 		return negate;
 	}
 
+	@Deprecated
 	public void setNegate(boolean negate) {
 		this.negate = negate;
 	}
+
+	public DynamicValue<Boolean> getDoNegate() {
+		return doNegate;
+	}
+
+	public void setDoNegate(DynamicValue<Boolean> doNegate) {
+		this.doNegate = doNegate;
+	}
+
+
 
 	public static enum AssertOperator {
 		

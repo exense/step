@@ -66,7 +66,8 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("value1"));
 		a.setOperator(AssertOperator.EQUALS);
-		a.setNegate(true);
+		//a.setNegate(true);
+		a.setDoNegate(new DynamicValue<Boolean>(true));
 
 		execute(a);
 		
@@ -105,7 +106,9 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("2"));
 		a.setOperator(AssertOperator.CONTAINS);
-		a.setNegate(true);
+		//a.setNegate(true);
+		a.setDoNegate(new DynamicValue<Boolean>(true));
+
 
 		execute(a);
 		
@@ -141,7 +144,9 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("bal"));
 		a.setOperator(AssertOperator.BEGINS_WITH);
-		a.setNegate(true);
+		//a.setNegate(true);
+		a.setDoNegate(new DynamicValue<Boolean>(true));
+
 
 		execute(a);
 		
@@ -190,7 +195,9 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>(".*al.*"));
 		a.setOperator(AssertOperator.MATCHES);
-		a.setNegate(true);
+		//a.setNegate(true);
+		a.setDoNegate(new DynamicValue<Boolean>(true));
+
 
 		execute(a);
 		

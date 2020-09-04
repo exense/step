@@ -30,6 +30,8 @@ import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 
 public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 	
@@ -86,13 +88,15 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 				String expectedValue = expectedValueObject!=null?expectedValueObject.toString():null;
 				node.setExpected(expectedValue);
 
-				boolean negate = artefact.isNegate();
+				//boolean negate = artefact.isNegate();
+				boolean negate= artefact.getDoNegate().get();
 				String not = negate?" not ":" ";
 				
 				String description = "";
 				AssertOperator operator = artefact.getOperator();
 				if(operator == AssertOperator.EQUALS) {
-					passed = artefact.isNegate()^expectedValue.equals(actual);
+					//passed = artefact.isNegate()^expectedValue.equals(actual);
+					passed = negate^expectedValue.equals(actual);
 					message = "'"+key + "' expected" + not + "to be equal to '"+expectedValue+"' "+(passed?"and":"but")+ " was '"+actual+"'";
 					description = key + (negate?" !":" ") + "= '" +  expectedValue + "'" ;
 				} else if(operator == AssertOperator.CONTAINS) {
@@ -118,6 +122,13 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 			}
 			node.setMessage(message);			
 			node.setStatus(passed?ReportNodeStatus.PASSED:ReportNodeStatus.FAILED);
+			
+			if(!passed) {
+				String customErrorMessage = artefact.getCustomErrorMessage().get();
+				if(customErrorMessage != null && !customErrorMessage.isEmpty()) {
+					node.setMessage(customErrorMessage);
+				}
+			}
 		} else {
 			node.setStatus(ReportNodeStatus.NORUN);
 		}
