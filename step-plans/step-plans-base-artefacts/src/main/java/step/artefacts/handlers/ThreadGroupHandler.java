@@ -118,7 +118,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 												groupController.interrupt();
 											}
 										}
-									} catch (Exception e) {
+									} catch (Throwable e) {
 										if(iterationReportNode!=null) {
 											failWithException(iterationReportNode, e);
 											reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());

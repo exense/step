@@ -65,7 +65,11 @@ public class ThreadPool {
 			T next;
 			try {
 				while ((next = workItemIterator.next()) != null) {
-					workItemConsumer.accept(next);
+					try {
+						workItemConsumer.accept(next);
+					} catch (Throwable t) {
+						logger.error("Uncaught error while executing work item "+next.toString(), t);
+					}
 					// ensure that a retrieved workitem is always consumed.
 					// break if necessary after the item has been consumed (The ForBlockHandler for instance rely on this guaranty for row commit)
 					if(batchContext.executionContext.isInterrupted() || batchContext.isInterrupted.get()) {
