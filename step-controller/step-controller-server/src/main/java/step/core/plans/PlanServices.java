@@ -54,8 +54,7 @@ public class PlanServices extends AbstractServices {
 	@Secured(right="plan-write")
 	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
 		PlanType<Plan> planType = planTypeRegistry.getPlanType(type);
-		Plan plan = planType.newPlan(template);
-		return plan;
+		return planType.newPlan(template);
 	}
 	
 	@POST
@@ -78,10 +77,9 @@ public class PlanServices extends AbstractServices {
 	@Path("/{id}/compile")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public PlanCompilationResult compilePlan(@PathParam("id") String id) throws Exception {
+	public PlanCompilationResult compilePlan(@PathParam("id") String id) {
 		Plan plan = planAccessor.get(id);
-		PlanCompilationResult planCompilationResult = new PlanCompilationResult();
-		planCompilationResult = compilePlan(plan);
+		PlanCompilationResult planCompilationResult = compilePlan(plan);
 		if(!planCompilationResult.isHasError()) {
 			save(plan);
 		}
@@ -130,14 +128,15 @@ public class PlanServices extends AbstractServices {
 	@POST
 	@Path("/find")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="kw-read")
+	@Secured(right="plan-read")
 	public List<Plan> findMany(Map<String,String> attributes) {
 		return StreamSupport.stream(planAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 	}
 
 	@GET
+	@Path("/all")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="kw-read")
+	@Secured(right="plan-read")
 	public List<Plan> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
 		if(skip != null && limit != null) {
 			return planAccessor.getRange(skip, limit);

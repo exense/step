@@ -25,8 +25,8 @@ import step.core.accessors.CRUDAccessor;
 
 public class AbstractRemoteCRUDAccessorImpl<T extends AbstractIdentifiableObject> extends AbstractRemoteClient implements CRUDAccessor<T>{
 
-	private final String path;
-	private final Class<T> entityClass;
+	protected final String path;
+	protected final Class<T> entityClass;
 	
 	public AbstractRemoteCRUDAccessorImpl(String path, Class<T> entityClass) {
 		super();
@@ -67,13 +67,12 @@ public class AbstractRemoteCRUDAccessorImpl<T extends AbstractIdentifiableObject
 
 	@Override
 	public Iterator<T> getAll() {
-		SkipLimitIterator<T> skipLimitIterator = new SkipLimitIterator<T>(new SkipLimitProvider<T>() {
+		return new SkipLimitIterator<T>(new SkipLimitProvider<T>() {
 			@Override
 			public List<T> getBatch(int skip, int limit) {
 				return getRange(skip, limit);
 			}
 		});
-		return skipLimitIterator;			
 	}
 	
 	protected ParameterizedType parameterizedGenericType = new ParameterizedType() {

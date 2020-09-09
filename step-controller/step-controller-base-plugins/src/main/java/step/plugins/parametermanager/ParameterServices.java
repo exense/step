@@ -180,23 +180,11 @@ public class ParameterServices extends AbstractServices {
 		}
 		return parameter;
 	}
-	
-	@GET
-	@Path("/all")
-	@Secured(right="param-read")
-	public List<Parameter> getAll() {
-		List<Parameter> result = new ArrayList<>();
-		parameterAccessor.getAll().forEachRemaining(p->{
-			result.add(maskProtectedValue(p));
-		});
-		
-		return result;
-	}
 
 	@POST
 	@Path("/search")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="kw-read")
+	@Secured(right="param-read")
 	public Parameter get(Map<String,String> attributes) {
 		return parameterAccessor.findByAttributes(attributes);
 	}
@@ -204,14 +192,15 @@ public class ParameterServices extends AbstractServices {
 	@POST
 	@Path("/find")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="kw-read")
+	@Secured(right="param-read")
 	public List<Parameter> findMany(Map<String,String> attributes) {
 		return StreamSupport.stream(parameterAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 	}
 
 	@GET
+	@Path("/all")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="kw-read")
+	@Secured(right="param-read")
 	public List<Parameter> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
 		if(skip != null && limit != null) {
 			return parameterAccessor.getRange(skip, limit);
