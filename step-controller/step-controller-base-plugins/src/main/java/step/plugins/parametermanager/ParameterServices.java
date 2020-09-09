@@ -21,19 +21,17 @@ package step.plugins.parametermanager;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.PostConstruct;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import org.bson.types.ObjectId;
 
+import step.functions.Function;
 import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.GlobalContext;
@@ -194,5 +192,32 @@ public class ParameterServices extends AbstractServices {
 		});
 		
 		return result;
+	}
+
+	@POST
+	@Path("/search")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public Parameter get(Map<String,String> attributes) {
+		return parameterAccessor.findByAttributes(attributes);
+	}
+
+	@POST
+	@Path("/find")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public List<Parameter> findMany(Map<String,String> attributes) {
+		return StreamSupport.stream(parameterAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public List<Parameter> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+		if(skip != null && limit != null) {
+			return parameterAccessor.getRange(skip, limit);
+		} else {
+			return getAll(0, 1000);
+		}
 	}
 }
