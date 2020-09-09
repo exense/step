@@ -31,8 +31,8 @@
 	
 	<dependencies>
 		<dependency>
-			<groupId>ch.exense</groupId>
-			<artifactId>exense-commons</artifactId>
+			<groupId>ch.exense.commons</groupId>
+			<artifactId>exense-basic-commons</artifactId>
 			<version>${exense-commons.version}</version>
 		</dependency>
 		<dependency>
