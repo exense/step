@@ -135,6 +135,17 @@ public class PlanServices extends AbstractServices {
 		return StreamSupport.stream(planAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 	}
 
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public List<Plan> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+		if(skip != null && limit != null) {
+			return planAccessor.getRange(skip, limit);
+		} else {
+			return getAll(0, 1000);
+		}
+	}
+
 	@DELETE
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
