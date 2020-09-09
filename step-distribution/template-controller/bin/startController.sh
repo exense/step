@@ -22,9 +22,6 @@ JAVA_PATH=""
 
 JAVA_OPTS="-Dlogback.configurationFile=./logback.xml -Dhttp.keepAlive=true -Dhttp.maxConnections=100"
 
-# the classpath should be absolute:
-FILE_FULLPATH=$(readlink -f "$0")
-FILE_PATH=$(dirname "${FILE_FULLPATH}")
-LIB_PATH=${FILE_PATH}/../lib
+LIB_PATH=../lib
 
 ${JAVA_PATH}java ${JAVA_OPTS} -cp "${LIB_PATH}/*:" step.controller.ControllerServer -config=../conf/step.properties
