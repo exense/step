@@ -31,7 +31,6 @@ import javax.ws.rs.core.MediaType;
 
 import org.bson.types.ObjectId;
 
-import step.functions.Function;
 import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.GlobalContext;

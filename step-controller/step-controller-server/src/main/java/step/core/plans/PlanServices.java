@@ -1,6 +1,9 @@
 package step.core.plans;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -31,6 +34,7 @@ import step.core.plans.PlanCompilerException;
 import step.core.plans.PlanNavigator;
 import step.core.plans.PlanType;
 import step.core.plans.PlanTypeRegistry;
+import step.functions.Function;
 
 @Singleton
 @Path("plans")
@@ -122,7 +126,26 @@ public class PlanServices extends AbstractServices {
 	public Plan get(Map<String,String> attributes) {
 		return planAccessor.findByAttributes(attributes);
 	}
-	
+
+	@POST
+	@Path("/find")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public List<Plan> findMany(Map<String,String> attributes) {
+		return StreamSupport.stream(planAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="kw-read")
+	public List<Plan> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+		if(skip != null && limit != null) {
+			return planAccessor.getRange(skip, limit);
+		} else {
+			return getAll(0, 1000);
+		}
+	}
+
 	@DELETE
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
