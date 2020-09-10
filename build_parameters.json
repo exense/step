@@ -78,7 +78,7 @@
 	    "INSTANCE":			[ "lst" ],
 	    "APPLICATION":		[ "stepos" ],
 	    "DOMAIN":			[ "exense.ch" ],
-		"IMAGE_REPOSITORY": ["docker-dev/step"],
+		"IMAGE_REPOSITORY": ["docker-dev.exense.ch/step"],
 	    "PERSISTENCE":		[ "false" ],
 	    "WHEN":				[ "STAGING" ]
   	}
