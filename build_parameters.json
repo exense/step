@@ -54,8 +54,8 @@
     	],
     
 		"URL_STAGING":  [
-      		"build@ftps.exense.ch","NOT_USED","docker-dev.exense.ch",
-      		"build@ftps.exense.ch","NOT_USED","docker-dev.exense.ch"
+      		"build@ftps.exense.ch","NOT_USED","docker.exense.ch",
+      		"build@ftps.exense.ch","NOT_USED","docker.exense.ch"
     	],
       
 		"URL_PROD":     [
