@@ -74,11 +74,12 @@
 	},
 	"INSTANCES":
 	{
-		"ENVIRONMENT":  [ "bld" ],
-	    "INSTANCE":     [ "lst" ], 
-	    "APPLICATION":  [ "stepos" ],
-	    "DOMAIN":       [ "exense.ch" ],
-	    "PERSISTENCE":  [ "false" ],
-	    "WHEN":         [ "STAGING" ]
+		"ENVIRONMENT":		[ "bld" ],
+	    "INSTANCE":			[ "lst" ],
+	    "APPLICATION":		[ "stepos" ],
+	    "DOMAIN":			[ "exense.ch" ],
+		"IMAGE_REPOSITORY": ["docker-dev/step"],
+	    "PERSISTENCE":		[ "false" ],
+	    "WHEN":				[ "STAGING" ]
   	}
 }
