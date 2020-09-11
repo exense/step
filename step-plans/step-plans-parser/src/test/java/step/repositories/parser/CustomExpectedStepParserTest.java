@@ -74,7 +74,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
 		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
 		Assert.assertEquals(AssertOperator.EQUALS,check1.getOperator());
-		Assert.assertTrue(check1.isNegate());
+		Assert.assertTrue(check1.getDoNegate().get());
 	}
 	
 	@Test
@@ -88,7 +88,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
 		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
 		Assert.assertEquals(AssertOperator.BEGINS_WITH,check1.getOperator());
-		Assert.assertTrue(check1.isNegate());
+		Assert.assertTrue(check1.getDoNegate().get());
 	}
 	
 	@Test
@@ -101,7 +101,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
 		Assert.assertEquals("Key1",check1.getActual().get());
 		Assert.assertEquals(AssertOperator.CONTAINS,check1.getOperator());
-		Assert.assertFalse(check1.isNegate());
+		Assert.assertFalse(check1.getDoNegate().get());
 	}
 	
 	@Test
@@ -114,7 +114,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
 		Assert.assertEquals("Key1",check1.getActual().get());
 		Assert.assertEquals(AssertOperator.BEGINS_WITH,check1.getOperator());
-		Assert.assertFalse(check1.isNegate());
+		Assert.assertFalse(check1.getDoNegate().get());
 	}
 	
 	@Test
@@ -127,7 +127,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
 		Assert.assertEquals("$.key1['key2']",check1.getActual().get());
 		Assert.assertEquals(AssertOperator.BEGINS_WITH,check1.getOperator());
-		Assert.assertFalse(check1.isNegate());
+		Assert.assertFalse(check1.getDoNegate().get());
 	}
 
 	@Test
@@ -182,7 +182,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		Assert.assertEquals("\"\"",check2.getExpected().getExpression());
 		Assert.assertEquals("Key2",check2.getActual().get());
 		Assert.assertEquals(AssertOperator.EQUALS,check2.getOperator());
-		Assert.assertTrue(check2.isNegate());
+		Assert.assertTrue(check2.getDoNegate().get());
 	}
 	
 	@Test
