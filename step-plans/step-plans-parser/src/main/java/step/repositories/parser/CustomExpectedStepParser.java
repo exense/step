@@ -98,7 +98,8 @@ public class CustomExpectedStepParser implements StepParser<ExpectedStep> {
 			String key = ctx.attributeName().getText();
 			
 			if(ctx.NOT()!=null) {
-				assert_.setNegate(true);
+				//assert_.setNegate(true);
+				assert_.setDoNegate(new DynamicValue<Boolean>(true));
 			} 
 			
 			assert_.getActual().setValue(key);

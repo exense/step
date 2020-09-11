@@ -29,8 +29,8 @@ public class Assert extends AbstractArtefact {
 	
 	private AssertOperator operator;
 	
-	@Deprecated
-	private boolean negate = false;
+	
+	//private boolean negate = false;
 	
 	DynamicValue<Boolean> doNegate = new DynamicValue<Boolean>(false);
 
@@ -76,15 +76,13 @@ public class Assert extends AbstractArtefact {
 	}
 
 	
-	@Deprecated
-	public boolean isNegate() {
+/*	public boolean isNegate() {
 		return negate;
 	}
 
-	@Deprecated
 	public void setNegate(boolean negate) {
 		this.negate = negate;
-	}
+	}*/
 
 	public DynamicValue<Boolean> getDoNegate() {
 		return doNegate;
