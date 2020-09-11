@@ -23,13 +23,13 @@ public class AnnotationScanner implements Closeable, AutoCloseable {
 	private static final Logger logger = LoggerFactory.getLogger(AnnotationScanner.class);
 	private ScanResult scanResult;
 	
-	private static final ConcurrentHashMap<String, AnnotationScanner> scanResults = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<Key, AnnotationScanner> scanResults = new ConcurrentHashMap<>();
 	
-	private AnnotationScanner(String... packagePrefixes) {
+	private AnnotationScanner(ClassLoader classLoader, String... packagePrefixes) {
 		super();
 		long t1 = System.currentTimeMillis();
 		logger.info("Scanning classpath...");
-		ClassGraph classGraph = new ClassGraph().whitelistPackages(packagePrefixes).enableClassInfo().enableAnnotationInfo().enableMethodInfo();
+		ClassGraph classGraph = new ClassGraph().whitelistPackages(packagePrefixes).addClassLoader(classLoader).enableClassInfo().enableAnnotationInfo().enableMethodInfo();
 		scanResult = classGraph.scan();
 		logger.info("Scanned classpath in "+(System.currentTimeMillis()-t1)+"ms");
 	}
@@ -45,7 +45,7 @@ public class AnnotationScanner implements Closeable, AutoCloseable {
 	}
 	
 	public static Set<Class<?>> getClassesWithAnnotation(String packagePrefix, Class<? extends Annotation> annotationClass, ClassLoader classloader) {
-		AnnotationScanner scanner = getAnnotationScannerInstance(packagePrefix);
+		AnnotationScanner scanner = getAnnotationScannerInstance(packagePrefix, classloader);
 		return scanner.getClassesWithAnnotation_(annotationClass, classloader);
 	}
 	
@@ -63,16 +63,16 @@ public class AnnotationScanner implements Closeable, AutoCloseable {
 	}
 	
 	public static Set<Method> getMethodsWithAnnotation(String packagePrefix, Class<? extends Annotation> annotationClass, ClassLoader classloader) {
-		AnnotationScanner scanner = getAnnotationScannerInstance(packagePrefix);
+		AnnotationScanner scanner = getAnnotationScannerInstance(packagePrefix, classloader);
 		return scanner.getMethodsWithAnnotation_(annotationClass, classloader);
 	}
 
-	protected static AnnotationScanner getAnnotationScannerInstance(String packagePrefix) {
+	protected static AnnotationScanner getAnnotationScannerInstance(String packagePrefix, ClassLoader classLoader) {
 		String key = packagePrefix;
 		if(packagePrefix == null) {
 			key = ALLPACKAGES_PREFIXES;
 		}
-		AnnotationScanner scanner = scanResults.computeIfAbsent(key, k->packagePrefix!=null?new AnnotationScanner(packagePrefix):new AnnotationScanner());
+		AnnotationScanner scanner = scanResults.computeIfAbsent(new Key(key, classLoader), k->packagePrefix!=null?new AnnotationScanner(classLoader, packagePrefix):new AnnotationScanner(classLoader));
 		return scanner;
 	}
 	
@@ -110,5 +110,48 @@ public class AnnotationScanner implements Closeable, AutoCloseable {
 				logger.error("Error while closing "+v.toString(), e);
 			}
 		});
+	}
+	
+	private static final class Key {
+		
+		private final String prefix;
+		private final ClassLoader classLoader;
+		
+		public Key(String prefix, ClassLoader classLoader) {
+			super();
+			this.prefix = prefix;
+			this.classLoader = classLoader;
+		}
+		
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((classLoader == null) ? 0 : classLoader.hashCode());
+			result = prime * result + ((prefix == null) ? 0 : prefix.hashCode());
+			return result;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Key other = (Key) obj;
+			if (classLoader == null) {
+				if (other.classLoader != null)
+					return false;
+			} else if (!classLoader.equals(other.classLoader))
+				return false;
+			if (prefix == null) {
+				if (other.prefix != null)
+					return false;
+			} else if (!prefix.equals(other.prefix))
+				return false;
+			return true;
+		}
 	}
 }

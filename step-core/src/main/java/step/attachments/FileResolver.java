@@ -12,12 +12,15 @@ public class FileResolver {
 	public static final String ATTACHMENT_PREFIX = "attachment:";
 	public static final String RESOURCE_PREFIX = "resource:";
 	
-	private ResourceManager resourceManager;
-	
+	private final ResourceManager resourceManager;
 	
 	public FileResolver(ResourceManager resourceManager) {
 		super();
 		this.resourceManager = resourceManager;
+	}
+
+	public ResourceManager getResourceManager() {
+		return resourceManager;
 	}
 
 	public File resolve(String path) {
