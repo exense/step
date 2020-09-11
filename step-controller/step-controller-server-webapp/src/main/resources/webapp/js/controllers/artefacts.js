@@ -91,7 +91,7 @@ angular.module('artefacts',['step'])
   artefactTypes.register('CallPlan',{icon:'glyphicon-new-window', form:'partials/artefacts/callPlan.html', 
 	  description:'Used to invoke a plan from within another plan'});
   artefactTypes.register('CallKeyword',{icon:'glyphicon-record', form:'partials/artefacts/callFunction.html', 
-	  description:'Technical node used as part of keyword invocation. Can be used explicitly in order to template keyword calling, due to exposure of the “name” input'});
+	  description:'Technical node used as part of keyword invocation. Can be used explicitly in order to call a keyword by reflection'});
   artefactTypes.register('For',{icon:'glyphicon-th', form:'partials/artefacts/for.html', 
 	  description:'Creates a For loop at execution time and iterates through its children'});
   artefactTypes.register('ForEach',{icon:'glyphicon-th', form:'partials/artefacts/forEach.html', 
@@ -104,8 +104,7 @@ angular.module('artefacts',['step'])
 	  description:'Guarantee thread safety within a test block by synchronizing all threads on the entire Test Execution'});
   artefactTypes.register('Sequence',{icon:'glyphicon-align-justify', form:'partials/artefacts/sequence.html', 
 	  description:'Guarantees the ordering of the child nodes, as displayed in the tree.'});
-  artefactTypes.register('BeforeSequence',{icon:'glyphicon-arrow-up', form:'partials/artefacts/sequence.html', 
-	  description:''});
+  artefactTypes.register('BeforeSequence',{icon:'glyphicon-arrow-up', form:'partials/artefacts/sequence.html', description:''});
   artefactTypes.register('AfterSequence',{icon:'glyphicon-arrow-down', form:'partials/artefacts/sequence.html', 
 	  description:''});
   artefactTypes.register('Return',{icon:'glyphicon-share-alt', form:'partials/artefacts/return.html', 
@@ -115,7 +114,7 @@ angular.module('artefacts',['step'])
   artefactTypes.register('If',{icon:'glyphicon-unchecked', form:'partials/artefacts/if.html', 
 	  description:'Only executes the child nodes if the condition is met'});
   artefactTypes.register('Session',{icon:'glyphicon-magnet', form:'partials/artefacts/functionGroup.html', 
-	  description:'Guarantees that the same session will be used for every child node’s execution'});
+	  description:'Guarantees that Keywords are executed within the the same Session i.e. Agent Token'});
   artefactTypes.register('Set',{icon:'glyphicon-save', form:'partials/artefacts/set.html', 
 	  description:'Sets a value to a variable, which can then be accessed throughout Plans and sub Plans'});
   artefactTypes.register('Sleep',{icon:'glyphicon-hourglass', form:'partials/artefacts/sleep.html', 
@@ -124,8 +123,8 @@ angular.module('artefacts',['step'])
 	  description:'Executes any arbitrary groovy code. The script context is local, which means that variable used in the script control cannot be accessed externally by other nodes'});
   artefactTypes.register('ThreadGroup',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html', 
 	  description:'Starts multiple threads which will execute the node content in parallel'});
-  artefactTypes.register('BeforeThread',{icon:'glyphicon-arrow-left', form:'partials/artefacts/sequence.html', 
-	  description:''});
+  artefactTypes.register('BeforeThread',{icon:'glyphicon-arrow-left', form:'partials/artefacts/sequence.html'
+	  ,description:''});
   artefactTypes.register('AfterThread',{icon:'glyphicon-arrow-right', form:'partials/artefacts/sequence.html', 
 	  description:''});
   artefactTypes.register('Thread',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html', isSelectable:false});
@@ -136,7 +135,7 @@ angular.module('artefacts',['step'])
   artefactTypes.register('RetryIfFails',{icon:'glyphicon-retweet', form:'partials/artefacts/retryIfFails.html', 
 	  description:'Retry mechanism with grace period'});
   artefactTypes.register('Check',{icon:'glyphicon-ok', form:'partials/artefacts/check.html', 
-	  description:'Asserts the given expression, useful for validating the output of the parent node'});
+	  description:'Performs a custom assertion using groovy expressions. Useful for validating the output of the parent node. For standard assertions use the Control Assert instead'});
   artefactTypes.register('Assert',{icon:'glyphicon-ok', form:'partials/artefacts/assert.html', 
 	  description:'Validates the output of a keyword execution.'});
   artefactTypes.register('Placeholder',{icon:'glyphicon-unchecked', form:'partials/artefacts/placeholder.html', 
@@ -164,6 +163,7 @@ angular.module('artefacts',['step'])
           $scope.icon = artefactTypes.getIcon(classname);
           $scope.label = artefactTypes.getLabel(classname);
           $scope.editor = artefactTypes.getEditor(classname);
+          $scope.description = artefactTypes.getDescription(classname);
         }
       })
 

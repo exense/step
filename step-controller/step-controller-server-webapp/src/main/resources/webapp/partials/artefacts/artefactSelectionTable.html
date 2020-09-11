@@ -6,7 +6,7 @@
 				<header>Name</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell><i style="display:inline-block" ng-class="artefactIcon(row.name)" /> {{row.name}}
-					<span class="glyphicon glyphicon-question-sign" uib-tooltip="{{artefactDescription(row.name)}}" tooltip-append-to-body="true"></span>
+					<span ng-if="artefactDescription(row.name)" class="glyphicon glyphicon-question-sign pull-right" uib-tooltip="{{artefactDescription(row.name)}}"  tooltip-append-to-body="true"></span>
 				</cell>
 			</st-column>
 			<st-selection-column />
