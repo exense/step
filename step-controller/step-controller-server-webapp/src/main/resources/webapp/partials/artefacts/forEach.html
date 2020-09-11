@@ -2,8 +2,8 @@
 	<fieldset ng-disabled="readonly">
 		<form>
 			<div ng-include="'partials/artefacts/dataSourceConfiguration.html'"></div>
-			<dynamic-textfield label="'Number of threads'" on-save="save()" dynamic-value="artefact.threads" />
-			<dynamic-textfield label="'Maximum number of failures'" on-save="save()" dynamic-value="artefact.maxFailedLoops" />
+			<dynamic-textfield label="'Number of threads'" tooltip="'Number of threads to use in order to parallelize the loop'" on-save="save()" dynamic-value="artefact.threads" />
+			<dynamic-textfield label="'Maximum number of failures'" tooltip="'The number of failures before the loop is stopped. If empty, the loop will not stop due to failure'" on-save="save()" dynamic-value="artefact.maxFailedLoops" />
 			
 			<div class="panel panel-default">
 			<div class="panel-heading">

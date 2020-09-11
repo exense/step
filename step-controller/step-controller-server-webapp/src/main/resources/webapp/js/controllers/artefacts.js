@@ -84,36 +84,65 @@ angular.module('artefacts',['step'])
 .run(function(artefactTypes) {
   artefactTypes.register('TestSet',{icon:'glyphicon-folder-close', form:'partials/artefacts/testSet.html',
     description:'Used to group up TestCase’s as a single unit and executing them in parallel'});
-  artefactTypes.register('TestCase',{icon:'glyphicon-list-alt', form:'partials/artefacts/testCase.html', description:''});
-  artefactTypes.register('TestScenario',{icon:'glyphicon-equalizer', form:'partials/artefacts/testScenario.html', description:''});
-  artefactTypes.register('CallPlan',{icon:'glyphicon-new-window', form:'partials/artefacts/callPlan.html', description:''});
-  artefactTypes.register('CallKeyword',{icon:'glyphicon-record', form:'partials/artefacts/callFunction.html', description:''});
-  artefactTypes.register('For',{icon:'glyphicon-th', form:'partials/artefacts/for.html', description:''});
-  artefactTypes.register('ForEach',{icon:'glyphicon-th', form:'partials/artefacts/forEach.html', description:''});
-  artefactTypes.register('While',{icon:'glyphicon-repeat', form:'partials/artefacts/while.html', description:''});
-  artefactTypes.register('DataSet',{icon:'glyphicon-th-large', form:'partials/artefacts/dataSet.html', description:''});
-  artefactTypes.register('Synchronized',{icon:'glyphicon-align-justify', form:'partials/artefacts/synchronized.html', description:''});
-  artefactTypes.register('Sequence',{icon:'glyphicon-align-justify', form:'partials/artefacts/sequence.html', description:''});
-  artefactTypes.register('BeforeSequence',{icon:'glyphicon-arrow-up', form:'partials/artefacts/sequence.html', description:''});
-  artefactTypes.register('AfterSequence',{icon:'glyphicon-arrow-down', form:'partials/artefacts/sequence.html', description:''});
-  artefactTypes.register('Return',{icon:'glyphicon-share-alt', form:'partials/artefacts/return.html', description:''});
-  artefactTypes.register('Echo',{icon:'glyphicon-zoom-in', form:'partials/artefacts/echo.html', description:''});
-  artefactTypes.register('If',{icon:'glyphicon-unchecked', form:'partials/artefacts/if.html', description:''});
-  artefactTypes.register('Session',{icon:'glyphicon-magnet', form:'partials/artefacts/functionGroup.html', description:''});
-  artefactTypes.register('Set',{icon:'glyphicon-save', form:'partials/artefacts/set.html', description:''});
-  artefactTypes.register('Sleep',{icon:'glyphicon-hourglass', form:'partials/artefacts/sleep.html', description:''});
-  artefactTypes.register('Script',{icon:'glyphicon-align-left', form:'partials/artefacts/script.html', description:''});
-  artefactTypes.register('ThreadGroup',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html', description:''});
-  artefactTypes.register('BeforeThread',{icon:'glyphicon-arrow-left', form:'partials/artefacts/sequence.html', description:''});
-  artefactTypes.register('AfterThread',{icon:'glyphicon-arrow-right', form:'partials/artefacts/sequence.html', description:''});
+  artefactTypes.register('TestCase',{icon:'glyphicon-list-alt', form:'partials/artefacts/testCase.html', 
+	  description:'Specific container for a group of nodes, it will activate the top-level panel in the execution view for high-level test case execution monitoring'});
+  artefactTypes.register('TestScenario',{icon:'glyphicon-equalizer', form:'partials/artefacts/testScenario.html', 
+	  description:'Usually used to parallelize the execution of multiple ThreadGroups or ‘sub’ plans'});
+  artefactTypes.register('CallPlan',{icon:'glyphicon-new-window', form:'partials/artefacts/callPlan.html', 
+	  description:'Used to invoke a plan from within another plan'});
+  artefactTypes.register('CallKeyword',{icon:'glyphicon-record', form:'partials/artefacts/callFunction.html', 
+	  description:'Technical node used as part of keyword invocation. Can be used explicitly in order to template keyword calling, due to exposure of the “name” input'});
+  artefactTypes.register('For',{icon:'glyphicon-th', form:'partials/artefacts/for.html', 
+	  description:'Creates a For loop at execution time and iterates through its children'});
+  artefactTypes.register('ForEach',{icon:'glyphicon-th', form:'partials/artefacts/forEach.html', 
+	  description:'Creates a ForEach loop based on a collection and iterates through the child nodes'});
+  artefactTypes.register('While',{icon:'glyphicon-repeat', form:'partials/artefacts/while.html', 
+	  description:'Iterates over the node content until the given condition is not met'});
+  artefactTypes.register('DataSet',{icon:'glyphicon-th-large', form:'partials/artefacts/dataSet.html', 
+	  description:'Used to iterate over rows of data in a table'});
+  artefactTypes.register('Synchronized',{icon:'glyphicon-align-justify', form:'partials/artefacts/synchronized.html', 
+	  description:'Guarantee thread safety within a test block by synchronizing all threads on the entire Test Execution'});
+  artefactTypes.register('Sequence',{icon:'glyphicon-align-justify', form:'partials/artefacts/sequence.html', 
+	  description:'Guarantees the ordering of the child nodes, as displayed in the tree.'});
+  artefactTypes.register('BeforeSequence',{icon:'glyphicon-arrow-up', form:'partials/artefacts/sequence.html', 
+	  description:''});
+  artefactTypes.register('AfterSequence',{icon:'glyphicon-arrow-down', form:'partials/artefacts/sequence.html', 
+	  description:''});
+  artefactTypes.register('Return',{icon:'glyphicon-share-alt', form:'partials/artefacts/return.html', 
+	  description:'Used within a Composite Keyword, set the Composite output to the returned value(s)'});
+  artefactTypes.register('Echo',{icon:'glyphicon-zoom-in', form:'partials/artefacts/echo.html', 
+	  description:'Used to print data in the report nodes of a plan, mostly for debugging or information purposes'});
+  artefactTypes.register('If',{icon:'glyphicon-unchecked', form:'partials/artefacts/if.html', 
+	  description:'Only executes the child nodes if the condition is met'});
+  artefactTypes.register('Session',{icon:'glyphicon-magnet', form:'partials/artefacts/functionGroup.html', 
+	  description:'Guarantees that the same session will be used for every child node’s execution'});
+  artefactTypes.register('Set',{icon:'glyphicon-save', form:'partials/artefacts/set.html', 
+	  description:'Sets a value to a variable, which can then be accessed throughout Plans and sub Plans'});
+  artefactTypes.register('Sleep',{icon:'glyphicon-hourglass', form:'partials/artefacts/sleep.html', 
+	  description:'Causes the thread to sleep'});
+  artefactTypes.register('Script',{icon:'glyphicon-align-left', form:'partials/artefacts/script.html', 
+	  description:'Executes any arbitrary groovy code. The script context is local, which means that variable used in the script control cannot be accessed externally by other nodes'});
+  artefactTypes.register('ThreadGroup',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html', 
+	  description:'Starts multiple threads which will execute the node content in parallel'});
+  artefactTypes.register('BeforeThread',{icon:'glyphicon-arrow-left', form:'partials/artefacts/sequence.html', 
+	  description:''});
+  artefactTypes.register('AfterThread',{icon:'glyphicon-arrow-right', form:'partials/artefacts/sequence.html', 
+	  description:''});
   artefactTypes.register('Thread',{icon:'glyphicon-resize-horizontal', form:'partials/artefacts/threadGroup.html', isSelectable:false});
-  artefactTypes.register('Switch',{icon:'glyphicon-option-vertical', form:'partials/artefacts/switch.html', description:''});
-  artefactTypes.register('Case',{icon:'glyphicon-minus', form:'partials/artefacts/case.html', description:''});
-  artefactTypes.register('RetryIfFails',{icon:'glyphicon-retweet', form:'partials/artefacts/retryIfFails.html', description:''});
-  artefactTypes.register('Check',{icon:'glyphicon-ok', form:'partials/artefacts/check.html', description:''});
-  artefactTypes.register('Assert',{icon:'glyphicon-ok', form:'partials/artefacts/assert.html', description:''});
-  artefactTypes.register('Placeholder',{icon:'glyphicon-unchecked', form:'partials/artefacts/placeholder.html', description:''});
-  artefactTypes.register('Export',{icon:'glyphicon-export', form:'partials/artefacts/export.html', description:''});
+  artefactTypes.register('Switch',{icon:'glyphicon-option-vertical', form:'partials/artefacts/switch.html', 
+	  description:'Same as in any programming language, to use in combinaison with the "Case" control'});
+  artefactTypes.register('Case',{icon:'glyphicon-minus', form:'partials/artefacts/case.html', 
+	  description:'Same as in any programming language, to use in combinaison with the "Switch" control'});
+  artefactTypes.register('RetryIfFails',{icon:'glyphicon-retweet', form:'partials/artefacts/retryIfFails.html', 
+	  description:'Retry mechanism with grace period'});
+  artefactTypes.register('Check',{icon:'glyphicon-ok', form:'partials/artefacts/check.html', 
+	  description:'Asserts the given expression, useful for validating the output of the parent node'});
+  artefactTypes.register('Assert',{icon:'glyphicon-ok', form:'partials/artefacts/assert.html', 
+	  description:'Validates the output of a keyword execution.'});
+  artefactTypes.register('Placeholder',{icon:'glyphicon-unchecked', form:'partials/artefacts/placeholder.html', 
+	  description:''});
+  artefactTypes.register('Export',{icon:'glyphicon-export', form:'partials/artefacts/export.html', 
+	  description:''});
 })
 
 .directive('artefactDetails', function($http,$timeout,$interval,stateStorage,$filter,$location) {
