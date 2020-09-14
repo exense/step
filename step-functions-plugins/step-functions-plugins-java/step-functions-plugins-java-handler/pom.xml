@@ -22,6 +22,11 @@
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-functions-handler</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
