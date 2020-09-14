@@ -8,7 +8,10 @@ import java.util.Set;
 
 import javax.json.JsonObject;
 
-import step.core.scanner.AnnotationScanner;
+import org.reflections.Reflections;
+import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.util.ConfigurationBuilder;
+
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -45,13 +48,11 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 	}
 	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {
-
+		URL url = cl.getURLs()[0];
 		try {
-//			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(url)
-//					.addClassLoader(cl).setScanners(new MethodAnnotationsScanner()));
-//			Set<Method> methods = reflections.getMethodsAnnotatedWith(Keyword.class);
-			Set<Method> methods = AnnotationScanner.getMethodsWithAnnotation(Keyword.class,cl);
-
+			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(url)
+					.addClassLoader(cl).setScanners(new MethodAnnotationsScanner()));
+			Set<Method> methods = reflections.getMethodsAnnotatedWith(Keyword.class);
 			Set<String> kwClasses = new HashSet<>();
 			for(Method method:methods) {
 				kwClasses.add(method.getDeclaringClass().getName());
@@ -60,7 +61,7 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 			kwClasses.forEach(kwClassname->kwClassnamesBuilder.append(kwClassname+KeywordExecutor.KEYWORD_CLASSES_DELIMITER));
 			return kwClassnamesBuilder.toString();
 		} catch (Exception e) {
-			String errorMsg = "Error while looking for methods annotated with @Keyword in "+cl.getURLs();
+			String errorMsg = "Error while looking for methods annotated with @Keyword in "+url.toString();
 			throw new Exception(errorMsg, e);
 		}
 	}
