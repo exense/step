@@ -82,7 +82,6 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		executionParameterObject.setRepositoryObject(repositoryObjectReference);
 		executionParameterObject.setUserID(credentials.getUsername());
 		executionParameterObject.setMode(ExecutionMode.RUN);
-		executionParameterObject.setIsolatedExecution(false);
 		executionParameterObject.setCustomParameters(executionParameters);
 		
 		return execute(executionParameterObject);

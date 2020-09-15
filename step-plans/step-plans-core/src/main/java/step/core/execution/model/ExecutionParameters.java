@@ -50,6 +50,10 @@ public class ExecutionParameters extends AbstractOrganizableObject {
 	String userID;
 		
 	ArtefactFilter artefactFilter;
+	
+	/**
+	 * @deprecated this field is deprecated and isn't used anymore
+	 */
 	boolean isolatedExecution = false;
 	
 	List<RepositoryObjectReference> exports;
@@ -170,10 +174,18 @@ public class ExecutionParameters extends AbstractOrganizableObject {
 		this.customParameters = customParameters;
 	}
 
+	/**
+	 * @deprecated This field is deprecated and isn't used anymore
+	 * @return
+	 */
 	public Boolean isIsolatedExecution() {
 		return isolatedExecution;
 	}
 
+	/**
+	 * @deprecated This field is deprecated and isn't used anymore
+	 * @param isolatedExecution
+	 */
 	public void setIsolatedExecution(Boolean isolatedExecution) {
 		this.isolatedExecution = isolatedExecution;
 	}

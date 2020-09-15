@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
+import step.core.plans.InMemoryPlanAccessor;
+import step.core.plans.LayeredPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResult;
@@ -244,9 +246,15 @@ public class ExecutionEngine {
 		ExecutionContext executionContext = new ExecutionContext(executionId, executionParameters);
 		executionContext.useStandardAttributesFromParentContext(executionEngineContext);
 		executionContext.useReportingAttributesFromParentContext(executionEngineContext);
-		if(!executionParameters.isIsolatedExecution()) {
-			executionContext.useSourceAttributesFromParentContext(executionEngineContext);
-		}
+		executionContext.useSourceAttributesFromParentContext(executionEngineContext);
+
+		// Use a layered plan accessor to isolate the local context from the parent one
+		// This allow temporary persistence of plans for the duration of the execution
+		LayeredPlanAccessor planAccessor = new LayeredPlanAccessor();
+		planAccessor.pushAccessor(executionEngineContext.getPlanAccessor());
+		planAccessor.pushAccessor(new InMemoryPlanAccessor());
+		executionContext.setPlanAccessor(planAccessor);
+		
 		executionContext.setExecutionCallbacks(plugins);
 		plugins.initializeExecutionContext(executionEngineContext, executionContext);
 		

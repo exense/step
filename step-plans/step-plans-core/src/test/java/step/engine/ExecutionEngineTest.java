@@ -1,6 +1,7 @@
 package step.engine;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
@@ -186,8 +188,18 @@ public class ExecutionEngineTest {
 		ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL);
 		InMemoryPlanAccessor planAccessor = new InMemoryPlanAccessor();
 		
+		Plan otherPlan = new Plan();
+		planAccessor.save(otherPlan);
+		
+		Plan otherPlan2 = new Plan();
+		
 		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact(c->{
-			Assert.assertTrue(c.getPlanAccessor()==planAccessor);
+			PlanAccessor localPlanAccessor = c.getPlanAccessor();
+			Plan actual = localPlanAccessor.get(otherPlan.getId());
+			// Assert that the plan "otherPlan" that has been saved to the parent context is available
+			assertEquals(otherPlan.getId(), actual.getId());
+			
+			localPlanAccessor.save(otherPlan2);
 			c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).endBlock().build();
 		parentContext.setPlanAccessor(planAccessor);
@@ -195,6 +207,11 @@ public class ExecutionEngineTest {
 		ExecutionEngine executionEngine = newExecutionEngineBuilder().withParentContext(parentContext).build();
 		
 		PlanRunnerResult result = executionEngine.execute(plan);
+		
+		// Assert that plan "otherPlan2" that has been saved within the execution to the plan accessor for the 
+		// context has not be saved to the plan accessor of the parent context
+		Plan actual = planAccessor.get(otherPlan2.getId());
+		assertNull(actual);
 		
 		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());

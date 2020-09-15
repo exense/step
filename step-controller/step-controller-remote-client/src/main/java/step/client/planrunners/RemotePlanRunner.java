@@ -70,7 +70,6 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
 		params.setDescription(name);
 		params.setUserID(credentials.getUsername());
 		params.setCustomParameters(executionParameters);
-		params.setIsolatedExecution(false);
 		
 		Builder b = requestBuilder("/rest/controller/execution");
 		Entity<ExecutionParameters> entity = Entity.entity(params, MediaType.APPLICATION_JSON);

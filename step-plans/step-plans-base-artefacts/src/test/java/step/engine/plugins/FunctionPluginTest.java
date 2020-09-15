@@ -1,6 +1,9 @@
 package step.engine.plugins;
 
+import static org.junit.Assert.assertNull;
+
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -14,6 +17,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.functions.Function;
@@ -27,30 +31,45 @@ public class FunctionPluginTest {
 
 	@Test
 	public void testNormalMode() {
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(new CustomPlugin()).build();
-		engine.execute(PlanBuilder.create().startBlock(FunctionArtefacts.keyword("My function call")).endBlock().build());
-	}
-	
-	@Test
-	public void testIsolatedMode() {
 		AbstractExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL);
 		InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
 		
 		Function function = new Function();
 		functionAccessor.save(function);
+
+		Function function2 = new Function();
 		
 		parentContext.put(FunctionAccessor.class, functionAccessor);
 		
-		ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(new FunctionPlugin()).withPlugin(new CustomPlugin()).build();
+		CustomPlugin plugin = new CustomPlugin(c->{
+			// Assert that the function of the parent context is available in the local context
+			FunctionAccessor localFunctionAccessor = c.require(FunctionAccessor.class);
+			Assert.assertEquals(function, localFunctionAccessor.getAll().next());
+			
+			localFunctionAccessor.save(function2);
+		});
+		ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(new FunctionPlugin()).withPlugin(plugin).build();
 		Plan plan = PlanBuilder.create().startBlock(FunctionArtefacts.keyword("My function call")).endBlock().build();
 		ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, null, null, null, true, null);
 		engine.execute(executionParameters);
+		
+		// Assert that the function2 that has been saved to the local function accessor of the execution context
+		// has not be saved to the parent context
+		Function actual = functionAccessor.get(function2.getId());
+		assertNull(actual);
 	}
 	
+	@IgnoreDuringAutoDiscovery
 	@Plugin(dependencies = {FunctionPlugin.class})
 	public static class CustomPlugin extends AbstractExecutionEnginePlugin {
 		
+		private final Consumer<ExecutionContext> consumer;
 		private CustomFunctionType functionType = new CustomFunctionType();
+
+		public CustomPlugin(Consumer<ExecutionContext> consumer) {
+			super();
+			this.consumer = consumer;
+		}
 
 		@Override
 		public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext,
@@ -74,12 +93,8 @@ public class FunctionPluginTest {
 				Assert.assertNotNull(functionType);
 				Assert.assertTrue(this.functionType == functionType);
 				
-				
-				FunctionAccessor functionAccessor = executionContext.require(FunctionAccessor.class);
-				// Assert that the function accessor contains no entry.
-				// This assert is performed for the test testIsolatedMode where the isolation mode should guaranty that 
-				// a new function accessor is created for the scope of the execution
-				Assert.assertFalse(functionAccessor.getAll().hasNext());
+				consumer.accept(executionContext);
+
 			} catch (Throwable e) {
 				throw new PluginCriticalException("Error within plugin", e);
 			}

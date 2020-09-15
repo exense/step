@@ -11,6 +11,7 @@ import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.Plugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
+import step.functions.accessor.LayeredFunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.execution.FunctionExecutionServiceImpl;
@@ -29,7 +30,6 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 	private FunctionTypeRegistry functionTypeRegistry;
 	private FunctionRouter functionRouter;
 	private FunctionExecutionService functionExecutionService;
-	private FunctionManager functionManager;
 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
@@ -39,7 +39,6 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 
 		functionAccessor = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionAccessor.class, k->new InMemoryFunctionAccessorImpl());
 		functionTypeRegistry = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionTypeRegistry.class, k->new FunctionTypeRegistryImpl(fileResolver, gridClient));
-		functionManager = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionManager.class, k->new FunctionManagerImpl(functionAccessor, functionTypeRegistry));
 		
 		functionExecutionService = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionExecutionService.class, k->{
 			try {
@@ -58,30 +57,17 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 	@Override
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
 			ExecutionContext context) {
-		boolean isolatedExecution = context.getExecutionParameters().isIsolatedExecution();
-		if(isolatedExecution) {
-			FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
-			FunctionExecutionService functionExecutionService;
-			try {
-				functionExecutionService = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, context.getDynamicBeanResolver());
-			} catch (FunctionExecutionServiceException e) {
-				throw new RuntimeException("Error while creating function execution service", e);
-			}
-			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-			FunctionRouter functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
-			
-			FunctionManagerImpl functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
-			context.put(FunctionAccessor.class, functionAccessor);
-			context.put(FunctionManager.class, functionManager);
-			context.put(FunctionTypeRegistry.class, functionTypeRegistry);
-			context.put(FunctionExecutionService.class, functionExecutionService);
-			context.put(FunctionRouter.class, functionRouter);
-		} else {
-			context.put(FunctionAccessor.class, functionAccessor);
-			context.put(FunctionManager.class, functionManager);
-			context.put(FunctionTypeRegistry.class, functionTypeRegistry);
-			context.put(FunctionExecutionService.class, functionExecutionService);
-			context.put(FunctionRouter.class, functionRouter);
-		}
+		// Use a layered function accessor to isolate the local context from the parent one
+		// This allow temporary persistence of function for the duration of the execution
+		LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor();
+		layeredFunctionAccessor.pushAccessor(functionAccessor);
+		layeredFunctionAccessor.pushAccessor(new InMemoryFunctionAccessorImpl());
+		FunctionManagerImpl functionManager = new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry);
+		
+		context.put(FunctionAccessor.class, layeredFunctionAccessor);
+		context.put(FunctionManager.class, functionManager);
+		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
+		context.put(FunctionExecutionService.class, functionExecutionService);
+		context.put(FunctionRouter.class, functionRouter);
 	}
 }
