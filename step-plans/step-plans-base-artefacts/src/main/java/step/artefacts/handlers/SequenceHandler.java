@@ -21,6 +21,7 @@ package step.artefacts.handlers;
 import step.artefacts.Sequence;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 
 public class SequenceHandler extends ArtefactHandler<Sequence, ReportNode> {
 	
@@ -32,6 +33,7 @@ public class SequenceHandler extends ArtefactHandler<Sequence, ReportNode> {
 	
 	@Override
 	public void execute_(ReportNode node, Sequence testArtefact) {
+		long startTime = System.currentTimeMillis();
 		Number pacingNumber = testArtefact.getPacing().get();
 		
 		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
@@ -39,14 +41,13 @@ public class SequenceHandler extends ArtefactHandler<Sequence, ReportNode> {
 
 		if(pacingNumber!=null) {
 			long pacing = pacingNumber.longValue();
-			long startTime = System.currentTimeMillis();
 			long endTime = System.currentTimeMillis();
 			long duration = endTime-startTime;
 			long pacingWait = pacing-duration;
 			if(pacingWait>0) {
-				try {
-					Thread.sleep(pacingWait);
-				} catch (InterruptedException e) {}
+				if (!CancellableSleep.sleep(pacingWait, context::isInterrupted, SequenceHandler.class)) {
+					node.setStatus(ReportNodeStatus.INTERRUPTED);
+				}
 			} else {
 				// TODO warning if the pacing exceeded
 			}

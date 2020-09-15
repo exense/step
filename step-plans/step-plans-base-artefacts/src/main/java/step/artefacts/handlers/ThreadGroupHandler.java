@@ -79,14 +79,11 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> groupController) {
 				return groupID -> {
 					try {
-						final long localStartOffset = testArtefact.getStartOffset().get()+(long)((1.0*(groupID-1))/numberOfUsers*rampup);
+						long timeBetweenUsers = rampup / (numberOfUsers > 1 ? (numberOfUsers - 1) : 1);
+						long localStartOffset = (timeBetweenUsers * (groupID - 1)) + testArtefact.getStartOffset().get();
 
-						try {
-							java.lang.Thread.sleep(localStartOffset);
-						} catch (InterruptedException e1) {
-							throw new RuntimeException(e1);
-						}
-						
+						CancellableSleep.sleep(localStartOffset, context::isInterrupted, ThreadGroupHandler.class);
+
 						Thread thread = createWorkArtefact(Thread.class, testArtefact, "Thread "+groupID, true);
 						thread.setGcounter(gcounter);
 						thread.setGroupController(groupController);
@@ -203,7 +200,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		}
 
 		@Override
-		protected void execute_(ReportNode node, Thread thread) throws Exception {
+		protected void execute_(ReportNode node, Thread thread) {
 			ThreadPool threadPool = context.get(ThreadPool.class);
 			
 			ReportNode reportNode = executeInSession(thread, node, (sessionArtefact, sessionReportNode)->{
@@ -222,7 +219,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 									Sequence iterationTestCase = createWorkArtefact(Sequence.class, sessionArtefact, "Iteration "+i);
 									
 									if(thread.pacing!=0) {
-										iterationTestCase.setPacing(new DynamicValue<Long>((long)thread.pacing));
+										iterationTestCase.setPacing(new DynamicValue<>((long) thread.pacing));
 									}
 									
 									for(AbstractArtefact child:newChildren) {

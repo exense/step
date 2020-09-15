@@ -71,22 +71,22 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 			throw new RuntimeException("Unable to parse attribute 'ms' as long.",e);
 		}
 		
-		Map<String,String> details = new LinkedHashMap<String,String> ();
+		Map<String,String> details = new LinkedHashMap<>();
 		details.put("Sleep time", DurationFormatUtils.formatDuration(sleepDurationMs, "HH:mm:ss.SSS"));
 		if (inSession) {
 			details.put("Release token", Boolean.toString(releaseToken));
 		}
 		OperationManager.getInstance().enter("Sleep", details, node.getId().toString());
-		try {
-			if(!context.isSimulation()) {
-				Thread.sleep(sleepDurationMs);
+
+		ReportNodeStatus finalStatus = ReportNodeStatus.PASSED;
+		if (!context.isSimulation()) {
+			if (!CancellableSleep.sleep(sleepDurationMs, context::isInterrupted, SleepHandler.class)) {
+				finalStatus = ReportNodeStatus.INTERRUPTED;
 			}
-		} catch (InterruptedException e) {
-		} finally {
-			OperationManager.getInstance().exit();
 		}
-		
-		node.setStatus(ReportNodeStatus.PASSED);		
+		node.setStatus(finalStatus);
+
+		OperationManager.getInstance().exit();
 	}
 
 	@Override
