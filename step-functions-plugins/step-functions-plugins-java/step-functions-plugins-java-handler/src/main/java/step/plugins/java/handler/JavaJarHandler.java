@@ -1,10 +1,9 @@
 package step.plugins.java.handler;
 
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.json.JsonObject;
 
@@ -45,22 +44,13 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 	}
 	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {
-
 		try {
-//			Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(url)
-//					.addClassLoader(cl).setScanners(new MethodAnnotationsScanner()));
-//			Set<Method> methods = reflections.getMethodsAnnotatedWith(Keyword.class);
-			Set<Method> methods = AnnotationScanner.getMethodsWithAnnotation(Keyword.class,cl);
-
-			Set<String> kwClasses = new HashSet<>();
-			for(Method method:methods) {
-				kwClasses.add(method.getDeclaringClass().getName());
-			}
-			StringBuilder kwClassnamesBuilder = new StringBuilder();
-			kwClasses.forEach(kwClassname->kwClassnamesBuilder.append(kwClassname+KeywordExecutor.KEYWORD_CLASSES_DELIMITER));
-			return kwClassnamesBuilder.toString();
+			Set<Method> methods = AnnotationScanner.getMethodsWithAnnotation(Keyword.class, cl);
+			String classList = methods.stream().map(m -> m.getDeclaringClass().getName()).distinct()
+					.collect(Collectors.joining(KeywordExecutor.KEYWORD_CLASSES_DELIMITER));
+			return classList;
 		} catch (Exception e) {
-			String errorMsg = "Error while looking for methods annotated with @Keyword in "+cl.getURLs();
+			String errorMsg = "Error while looking for methods annotated with @Keyword in " + cl.getURLs();
 			throw new Exception(errorMsg, e);
 		}
 	}

@@ -2,9 +2,13 @@ package step.core.scanner;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.lang.reflect.Method;
 
 import org.junit.Test;
+
+import ch.exense.commons.io.FileHelper;
+import step.core.dynamicbeans.ContainsDynamicValues;
 
 public class AnnotationScannerTest {
 
@@ -50,6 +54,12 @@ public class AnnotationScannerTest {
 				.getMethodsWithAnnotation("step", TestAnnotation.class, this.getClass().getClassLoader()).stream()
 				.findFirst().get();
 		assertEquals("testMethod", method1.getName());
+	}
+	
+	@Test
+	public void testGetMethodsWithAnnotation() {
+		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step-core-model-test.jar");
+		AnnotationScanner.getMethodsWithAnnotation(ContainsDynamicValues.class, file).stream().filter(m->m.getName().equals("testMethod")).findFirst().get();
 	}
 	
 	@Test

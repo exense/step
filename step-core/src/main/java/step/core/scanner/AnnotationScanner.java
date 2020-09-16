@@ -1,16 +1,23 @@
 package step.core.scanner;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +66,37 @@ public class AnnotationScanner implements Closeable, AutoCloseable {
 	}
 	
 	public static Set<Method> getMethodsWithAnnotation(Class<? extends Annotation> annotationClass, ClassLoader classloader) {
-		return getMethodsWithAnnotation(null, annotationClass, classloader);
+		return getMethodsWithAnnotation((String)null, annotationClass, classloader);
+	}
+	
+	
+	public static Set<Method> getMethodsWithAnnotation(Class<? extends Annotation> annotationClass,	File file) {
+		try {
+			URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {file.toURI().toURL()});
+			return getMethodsWithAnnotation(annotationClass, urlClassLoader);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Scan the URLs of the provided {@link URLClassLoader} and return the list of methods annotated
+	 * by the provided Annotation. Important: This method isn't using cache.
+	 *  
+	 * @param annotationClass
+	 * @param classloader
+	 * @return
+	 */
+	public static Set<Method> getMethodsWithAnnotation(Class<? extends Annotation> annotationClass,	URLClassLoader classloader) {
+		List<String> jars = Arrays.asList(classloader.getURLs()).stream()
+				.map(url -> FilenameUtils.getName(url.getPath())).collect(Collectors.toList());
+
+		ClassGraph classGraph = new ClassGraph().whitelistJars(jars.toArray(new String[jars.size()])).addClassLoader(classloader)
+				.enableClassInfo().enableAnnotationInfo().enableMethodInfo();
+		try (ScanResult scanResult = classGraph.scan()) {
+			Set<Method> methods = getMethodsWithAnnotation(scanResult, annotationClass, classloader);
+			return methods;
+		}
 	}
 	
 	public static Set<Method> getMethodsWithAnnotation(String packagePrefix, Class<? extends Annotation> annotationClass, ClassLoader classloader) {
@@ -77,13 +114,18 @@ public class AnnotationScanner implements Closeable, AutoCloseable {
 	}
 	
 	private Set<Method> getMethodsWithAnnotation_(Class<? extends Annotation> annotationClass, ClassLoader classloader) {
+		return getMethodsWithAnnotation(scanResult, annotationClass, classloader);
+	}
+
+	public static Set<Method> getMethodsWithAnnotation(ScanResult scanResult, Class<? extends Annotation> annotationClass,
+			ClassLoader classloader) {
 		Set<Method> result = new HashSet<>();
 		ClassInfoList classInfos = scanResult.getClassesWithMethodAnnotation(annotationClass.getName());
 		Set<Class<?>> classesFromClassInfoList = loadClassesFromClassInfoList(classloader, classInfos);
 		classesFromClassInfoList.forEach(c->{
 			Method[] methods = c.getMethods();
 			for (Method method : methods) {
-				if(method.isAnnotationPresent(annotationClass)) {
+				if(isAnnotationPresent(annotationClass, method)) {
 					result.add(method);
 				}
 			}
@@ -91,7 +133,22 @@ public class AnnotationScanner implements Closeable, AutoCloseable {
 		return result;
 	}
 
-	private Set<Class<?>> loadClassesFromClassInfoList(ClassLoader classloader, ClassInfoList classInfos) {
+	/**
+	 * Alternative implementation of {@link Class#isAnnotationPresent(Class)} which doesn't rely
+	 * on class equality but class names. The class loaders of the annotationClass and the 
+	 * method provided as argument
+	 * might be different
+	 * 
+	 * @param annotationClass
+	 * @param method
+	 * @return
+	 */
+	private static boolean isAnnotationPresent(Class<? extends Annotation> annotationClass, Method method) {
+		return Arrays.asList(method.getAnnotations()).stream()
+				.filter(an -> an.annotationType().getName().equals(annotationClass.getName())).findAny().isPresent();
+	}
+
+	private static Set<Class<?>> loadClassesFromClassInfoList(ClassLoader classloader, ClassInfoList classInfos) {
 		return classInfos.getNames().stream().map(Classes.loadWith(classloader)).collect(Collectors.toSet());
 	}
 
