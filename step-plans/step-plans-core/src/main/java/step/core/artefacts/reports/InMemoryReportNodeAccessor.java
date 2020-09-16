@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 
@@ -115,7 +117,19 @@ public class InMemoryReportNodeAccessor extends InMemoryCRUDAccessor<ReportNode>
 	@Override
 	public Iterator<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID,
 			List<Map<String, String>> customAttributes) {
-		throw new RuntimeException("Not implemented");
+		return map.values().stream().filter(n->{
+			n.getExecutionID().equals(executionID);
+			boolean containsAllCustomAttributes = true;
+			for (Map<String, String> map : customAttributes) {
+				Set<String> keys = map.keySet();
+				for (String	key : keys) {
+					if(!map.get(key).equals(n.getCustomAttribute(key))) {
+						containsAllCustomAttributes = false;
+					}
+				}
+			}
+			return containsAllCustomAttributes;
+		}).collect(Collectors.toList()).iterator();
 	}
 
 	@Override
@@ -155,5 +169,4 @@ public class InMemoryReportNodeAccessor extends InMemoryCRUDAccessor<ReportNode>
 	public void removeNodesByExecutionID(String executionID) {
 		map.entrySet().removeIf(e->e.getValue().getExecutionID().equals(executionID));
 	}
-
 }
