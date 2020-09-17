@@ -19,6 +19,7 @@
 package step.artefacts.handlers;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import step.artefacts.Synchronized;
 import step.common.managedoperations.OperationManager;
@@ -49,14 +50,18 @@ public class SynchronizedHandler extends ArtefactHandler<Synchronized, ReportNod
 	}
 	
 	@Override
-	public void execute_(ReportNode node, Synchronized testArtefact) {
+	public void execute_(ReportNode node, Synchronized testArtefact) throws InterruptedException {
 		sh.init(context);
 		Lock lock = getLock(testArtefact);
 		
 		String operation = lock.global?"Waiting for global lock":"Waiting for lock";
 		OperationManager.getInstance().enter(operation, lock.name);
-		synchronized(lock) {
+		ReentrantLock reentrantLock = lock.lock;
+		reentrantLock.lockInterruptibly();
+		try {
 			sh.execute_(node, testArtefact);
+		} finally {
+			reentrantLock.unlock();
 		}
 		OperationManager.getInstance().exit();
 	}
@@ -84,13 +89,15 @@ public class SynchronizedHandler extends ArtefactHandler<Synchronized, ReportNod
 	}
 	
 	private static class Lock {
-		String name;
-		boolean global;
+		final String name;
+		final boolean global;
+		final ReentrantLock lock;
 
 		public Lock(String name, boolean global) {
 			super();
 			this.name = name;
 			this.global = global;
+			this.lock = new ReentrantLock(true);
 		}
 	}
 
