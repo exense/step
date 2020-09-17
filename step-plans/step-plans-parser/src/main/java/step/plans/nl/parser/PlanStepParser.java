@@ -22,7 +22,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import step.artefacts.CallFunction;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.DynamicValue;
 import step.repositories.parser.AbstractStep;
 import step.repositories.parser.ParsingContext;
 import step.repositories.parser.StepParser;
@@ -70,10 +72,15 @@ public class PlanStepParser implements StepParser<PlanStep> {
 
 			@Override
 			public void addArtefactToCurrentParent(AbstractArtefact artefact) {
-				if(step.getName()!=null) {
+				String stepName = step.getName();
+				String dynamicNameExpression = step.getDynamicNameExpression();
+				if(stepName!=null) {
 					Map<String, String> attributes = new HashMap<>();
-					attributes.put("name", step.getName());
+					attributes.put(AbstractOrganizableObject.NAME, stepName);
 					artefact.setAttributes(attributes);					
+				} else if(dynamicNameExpression != null) {
+					artefact.setDynamicName(new DynamicValue<>(dynamicNameExpression, ""));
+					artefact.setUseDynamicName(true);
 				}
 				artefact.setAttachments(step.getAttachments());
 				artefact.setDescription(step.getDescription());

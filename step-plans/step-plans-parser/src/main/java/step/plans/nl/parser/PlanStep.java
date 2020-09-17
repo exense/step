@@ -23,6 +23,7 @@ import step.repositories.parser.AbstractStep;
 public class PlanStep extends AbstractStep {
 
 	String name;
+	String dynamicNameExpression;
 	
 	String description;
 	
@@ -30,16 +31,10 @@ public class PlanStep extends AbstractStep {
 	
 	String line;
 
-	public PlanStep(String name, String command, String description) {
+	public PlanStep(String name, String dynamicNameExpression, String description, String command, String line) {
 		super();
 		this.name = name;
-		this.command = command;
-		this.description = description;
-	}
-
-	public PlanStep(String name, String description, String command, String line) {
-		super();
-		this.name = name;
+		this.dynamicNameExpression = dynamicNameExpression;
 		this.description = description;
 		this.command = command;
 		this.line = line;
@@ -51,6 +46,14 @@ public class PlanStep extends AbstractStep {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public String getDynamicNameExpression() {
+		return dynamicNameExpression;
+	}
+	
+	public void setDynamicNameExpression(String dynamicNameExpression) {
+		this.dynamicNameExpression = dynamicNameExpression;
 	}
 
 	public String getDescription() {

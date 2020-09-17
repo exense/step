@@ -26,6 +26,8 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import ch.exense.commons.app.Configuration;
@@ -89,6 +91,8 @@ public class PlanParser {
 		return parse(new InputStreamReader(inputStream));
 	}
 	
+	private static final Pattern DYNAMIC_NAME_PATTERN = Pattern.compile("[ ]*\\|(.+?)\\|[ ]*");
+	
 	protected Plan parse(Reader contentReader) throws ParsingException {
 		StepsParser stepsParser = StepsParser.builder().withConfiguration(configuration).withExtensionsFromClasspath()
 				.withStepParsers(new PlanStepParser()).build();
@@ -100,6 +104,7 @@ public class PlanParser {
 		boolean inBlock = false;
 		
 		String stepName = null;
+		String dynamicStepName = null;
 		String comment = null;
 		
 		int lineNumber = 0;
@@ -107,13 +112,18 @@ public class PlanParser {
 			lineNumber++;
 			if(currentLine.trim().startsWith("//")) {
 				String commentValue = currentLine.trim().replaceFirst("//", "");
-				if(stepName == null) {
-					stepName = commentValue;					
+				if(stepName == null && dynamicStepName == null) {
+					Matcher matcher = DYNAMIC_NAME_PATTERN.matcher(commentValue);
+					if(matcher.matches()) {
+						dynamicStepName = matcher.group(1);
+					} else {
+						stepName = commentValue;
+					}
 				} else {
 					if(comment == null) {
 						comment = commentValue;
 					} else {
-						comment += commentValue;
+						comment += "\n" + commentValue;
 					}
 				}		
 			} else {
@@ -121,9 +131,10 @@ public class PlanParser {
 					if(currentLine.trim().endsWith("-")) {
 						inBlock = false;
 						currentDescriptionStepStr += currentLine.replaceAll("-[ \t]*$", "");
-						descriptionSteps.add(new PlanStep(stepName, comment, currentDescriptionStepStr, Integer.toString(lineNumber)));
+						descriptionSteps.add(new PlanStep(stepName, dynamicStepName, comment, currentDescriptionStepStr, Integer.toString(lineNumber)));
 						comment = null;
 						stepName = null;
+						dynamicStepName = null;
 					} else {
 						currentDescriptionStepStr += " " + currentLine;
 					}
@@ -132,9 +143,10 @@ public class PlanParser {
 						inBlock = true;
 						currentDescriptionStepStr = currentLine.replaceFirst("-", "");
 					} else {
-						descriptionSteps.add(new PlanStep(stepName, comment, currentLine, Integer.toString(lineNumber)));
+						descriptionSteps.add(new PlanStep(stepName, dynamicStepName, comment, currentLine, Integer.toString(lineNumber)));
 						comment = null;
 						stepName = null;
+						dynamicStepName = null;
 					}
 					
 				}
