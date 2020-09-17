@@ -38,7 +38,9 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 		FileResolver fileResolver = context.getFileResolver();
 
 		gridClient = context.inheritFromParentOrComputeIfAbsent(parentContext, GridClient.class ,k->new MockedGridClientImpl());
-		grid = parentContext.get(Grid.class);
+		if(parentContext != null) {
+			grid = parentContext.get(Grid.class);
+		}
 
 		functionAccessor = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionAccessor.class, k->new InMemoryFunctionAccessorImpl());
 		functionTypeRegistry = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionTypeRegistry.class, k->new FunctionTypeRegistryImpl(fileResolver, gridClient));
