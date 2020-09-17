@@ -55,7 +55,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- Exense projects -->
 		<exense-commons.version>2020.09.10-cfed422f</exense-commons.version>
-		<step-grid.version>2020.09.14-c553fb5d</step-grid.version>
+		<step-grid.version>2020.09.17-c6011ce9</step-grid.version>
 		<step-api.version>1.1.3</step-api.version>
 		<viz.version>1.0.1</viz.version>
 		<!-- -->
