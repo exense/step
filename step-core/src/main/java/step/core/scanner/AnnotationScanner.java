@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,9 +88,9 @@ public class AnnotationScanner implements Closeable, AutoCloseable {
 	 */
 	public static Set<Method> getMethodsWithAnnotation(Class<? extends Annotation> annotationClass,	URLClassLoader classloader) {
 		List<String> jars = Arrays.asList(classloader.getURLs()).stream()
-				.map(url -> FilenameUtils.getName(url.getPath())).collect(Collectors.toList());
+				.map(url -> url.getPath()).collect(Collectors.toList());
 
-		ClassGraph classGraph = new ClassGraph().whitelistJars(jars.toArray(new String[jars.size()])).addClassLoader(classloader)
+		ClassGraph classGraph = new ClassGraph().overrideClasspath(jars)
 				.enableClassInfo().enableAnnotationInfo().enableMethodInfo();
 		try (ScanResult scanResult = classGraph.scan()) {
 			Set<Method> methods = getMethodsWithAnnotation(scanResult, annotationClass, classloader);

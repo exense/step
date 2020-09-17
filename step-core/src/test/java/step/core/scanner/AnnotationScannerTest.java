@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -59,7 +61,22 @@ public class AnnotationScannerTest {
 	@Test
 	public void testGetMethodsWithAnnotation() {
 		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step-core-model-test.jar");
-		AnnotationScanner.getMethodsWithAnnotation(ContainsDynamicValues.class, file).stream().filter(m->m.getName().equals("testMethod")).findFirst().get();
+		List<Method> methods = AnnotationScanner.getMethodsWithAnnotation(ContainsDynamicValues.class, file).stream().collect(Collectors.toList());
+		assertEquals(1, methods.size());
+		assertEquals("testMethod", methods.get(0).getName());
+	}
+
+	// Don't remove this class
+	// It is here to ensure that annotation scanning performed in
+	// testGetMethodsWithAnnotation() isn't finding other methods that the 
+	// one contained in the specified jar step-core-model-test.jar
+	public static class TestBean {
+		
+		@ContainsDynamicValues
+		public void testMethod2() {
+			// This method 
+		}
+		
 	}
 	
 	@Test
@@ -71,6 +88,7 @@ public class AnnotationScannerTest {
 		assertEquals("testMethod", method1.getName());
 	}
 
+	
 	@TestAnnotation
 	public static class TestClass {
 
