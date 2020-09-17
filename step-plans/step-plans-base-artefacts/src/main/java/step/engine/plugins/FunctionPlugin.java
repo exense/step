@@ -19,6 +19,7 @@ import step.functions.manager.FunctionManager;
 import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
+import step.grid.Grid;
 import step.grid.client.GridClient;
 import step.grid.client.MockedGridClientImpl;
 
@@ -26,6 +27,7 @@ import step.grid.client.MockedGridClientImpl;
 public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 
 	private FunctionAccessor functionAccessor;
+	private Grid grid;
 	private GridClient gridClient;
 	private FunctionTypeRegistry functionTypeRegistry;
 	private FunctionRouter functionRouter;
@@ -36,6 +38,7 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 		FileResolver fileResolver = context.getFileResolver();
 
 		gridClient = context.inheritFromParentOrComputeIfAbsent(parentContext, GridClient.class ,k->new MockedGridClientImpl());
+		grid = parentContext.get(Grid.class);
 
 		functionAccessor = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionAccessor.class, k->new InMemoryFunctionAccessorImpl());
 		functionTypeRegistry = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionTypeRegistry.class, k->new FunctionTypeRegistryImpl(fileResolver, gridClient));
@@ -69,5 +72,12 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
 		context.put(FunctionExecutionService.class, functionExecutionService);
 		context.put(FunctionRouter.class, functionRouter);
+		
+		if (grid != null) {
+			// Some controls or plans might require the grid to
+			// get the agent list for instance. Thus adding it to the context
+			// if available
+			context.put(Grid.class, grid);
+		}
 	}
 }
