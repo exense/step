@@ -79,8 +79,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> groupController) {
 				return groupID -> {
 					try {
-						long timeBetweenUsers = rampup / (numberOfUsers > 1 ? (numberOfUsers - 1) : 1);
-						long localStartOffset = (timeBetweenUsers * (groupID - 1)) + testArtefact.getStartOffset().get();
+						final long localStartOffset = testArtefact.getStartOffset().get() + (long) ((1.0 * (groupID - 1)) / numberOfUsers * rampup);
 
 						CancellableSleep.sleep(localStartOffset, context::isInterrupted, ThreadGroupHandler.class);
 
