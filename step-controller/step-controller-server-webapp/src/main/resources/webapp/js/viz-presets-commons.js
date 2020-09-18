@@ -360,7 +360,8 @@ function RealtimePerformanceDashboard(executionId, measurementType, entity, auto
 					new GlobalSettings(
 							[new Placeholder("__businessobjectid__", executionId, false), new Placeholder("__measurementType__", measurementType?measurementType:'custom', false),
 								new Placeholder("__from__", effectiveFrom, true),
-								new Placeholder("__to__", effectiveTo, true)
+								new Placeholder("__to__", effectiveTo, true),
+								new Placeholder("__granularity__","auto", false),
 							],
 							autorefresh?autorefresh:true,
 									false,
@@ -382,9 +383,6 @@ function PerformanceDashboard(executionId, measurementType, entity, from, to) {
 
 	var widgetsArray = [];
 	var entityName = 'Measurement';
-
-	var __from__;
-	var __to__;
 
 	if(!from){
 		__from__ = 0;
@@ -421,7 +419,12 @@ function PerformanceDashboard(executionId, measurementType, entity, from, to) {
 			entityName + ' Performance',
 			new DashboardState(
 					new GlobalSettings(
-							[new Placeholder("__businessobjectid__", executionId, false), new Placeholder("__measurementType__", measurementType?measurementType:'custom', false)],
+							[new Placeholder("__businessobjectid__", executionId, false),
+								new Placeholder("__from__", __from__, true),
+								new Placeholder("__to__", __to__, true),
+								new Placeholder("__granularity__","auto", false),
+								new Placeholder("__measurementType__", measurementType?measurementType:'custom', false)
+							],
 							false,
 							false,
 							'Global Settings',
