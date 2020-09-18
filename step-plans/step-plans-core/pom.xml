@@ -43,6 +43,13 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>3.1</version>
 		</dependency>
+
+		<!-- Required in compile scope as some classes of main code are using junit -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
