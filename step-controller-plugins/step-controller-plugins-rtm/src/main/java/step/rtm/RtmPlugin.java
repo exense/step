@@ -56,6 +56,7 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 				measurement.put("rnId", stepReport.getId().toString());
 				measurement.put("rnStatus", stepReport.getStatus().toString());
 				measurement.put("type", "keyword");
+				measurement.put("agentUrl", stepReport.getAgentUrl());
 				measurements.add(measurement);
 
 
@@ -75,6 +76,7 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 					measurement.put("rnId", stepReport.getId().toString());
 					measurement.put("rnStatus", stepReport.getStatus().toString());
 					measurement.put("type", "custom");
+					measurement.put("agentUrl", stepReport.getAgentUrl());
 
 					if(measure.getData() != null){
 						for(Map.Entry<String,Object> entry : measure.getData().entrySet()){

@@ -57,6 +57,15 @@ public class BaseArtefacts {
 		return f;
 	}
 	
+	public static ForBlock for_(String startExpression, String endExpression) {
+		ForBlock f = new ForBlock();
+		IntSequenceDataPool conf = new IntSequenceDataPool();
+		conf.setStart(new DynamicValue<Integer>(startExpression, ""));
+		conf.setEnd(new DynamicValue<Integer>(endExpression, ""));;
+		f.setDataSource(conf);
+		return f;
+	}
+	
 	public static ForEachBlock forEachRowInExcel(File file) {
 		ForEachBlock f = new ForEachBlock();
 		ExcelDataPool p = new ExcelDataPool();
