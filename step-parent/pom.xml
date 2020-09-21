@@ -279,7 +279,7 @@
 
 	<profiles>
 		<profile>
-			<id>Default</id>
+			<id>LocalBuild</id>
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
