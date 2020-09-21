@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 import ch.exense.commons.app.Configuration;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.PlanAccessor;
-import step.core.scanner.AnnotationScanner;
+import step.core.scanner.CachedAnnotationScanner;
 import step.functions.accessor.FunctionAccessor;
 import step.repositories.parser.ParsingContext.ParsingError;
 import step.repositories.parser.ParsingContext.StackEntry;
@@ -59,7 +59,7 @@ public class StepsParser {
 		}
 		
 		public Builder withExtensionsFromClasspath() {
-			AnnotationScanner.getClassesWithAnnotation(StepParserExtension.class).stream()
+			CachedAnnotationScanner.getClassesWithAnnotation(StepParserExtension.class).stream()
 				.map(newInstanceAs(StepParser.class)).forEach(parsers::add);
 			return this;
 		}

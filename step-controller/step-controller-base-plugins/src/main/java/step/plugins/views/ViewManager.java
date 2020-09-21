@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.artefacts.reports.ReportNode;
-import step.core.scanner.AnnotationScanner;
+import step.core.scanner.CachedAnnotationScanner;
 
 public class ViewManager {
 
@@ -30,7 +30,7 @@ public class ViewManager {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void loadViews() {
-		Set<Class<?>> viewClasses = AnnotationScanner.getClassesWithAnnotation(View.class);
+		Set<Class<?>> viewClasses = CachedAnnotationScanner.getClassesWithAnnotation(View.class);
 		
 		for(Class<?> viewClass:viewClasses) {
 			AbstractView view;

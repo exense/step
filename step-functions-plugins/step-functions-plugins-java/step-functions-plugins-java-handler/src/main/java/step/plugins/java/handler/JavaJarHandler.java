@@ -44,8 +44,8 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 	}
 	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {
-		try {
-			Set<Method> methods = AnnotationScanner.getMethodsWithAnnotation(Keyword.class, cl);
+		try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJarFromURLClassLoader(cl)) {
+			Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
 			String classList = methods.stream().map(m -> m.getDeclaringClass().getName()).distinct()
 					.collect(Collectors.joining(KeywordExecutor.KEYWORD_CLASSES_DELIMITER));
 			return classList;

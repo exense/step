@@ -16,7 +16,7 @@ import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
-import step.core.scanner.AnnotationScanner;
+import step.core.scanner.CachedAnnotationScanner;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.AbstractFunctionType;
@@ -46,7 +46,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 	public List<Function> getLocalFunctions() {
 		List<Function> functions = new ArrayList<Function>();
 
-		Set<Method> methods = AnnotationScanner.getMethodsWithAnnotation(Keyword.class);
+		Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
 		for(Method m:methods) {
 			Keyword annotation = m.getAnnotation(Keyword.class);
 			

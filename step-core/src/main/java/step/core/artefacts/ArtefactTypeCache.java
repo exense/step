@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import step.core.scanner.AnnotationScanner;
+import step.core.scanner.CachedAnnotationScanner;
 
 /**
  * The only reason why this class exists and has been implemented in a static
@@ -29,7 +29,7 @@ public class ArtefactTypeCache {
 		artefactRegister = new ConcurrentHashMap<>();
 		artefactNameCache = new ConcurrentHashMap<>();
 		
-		Set<Class<?>> artefactClasses = AnnotationScanner.getClassesWithAnnotation(Artefact.class);
+		Set<Class<?>> artefactClasses = CachedAnnotationScanner.getClassesWithAnnotation(Artefact.class);
 		for (Class<?> artefactClass_ : artefactClasses) {
 			Class<? extends AbstractArtefact> artefactClass = (Class<? extends AbstractArtefact>) artefactClass_; 
 			String artefactName = AbstractArtefact.getArtefactName((Class<AbstractArtefact>)artefactClass);

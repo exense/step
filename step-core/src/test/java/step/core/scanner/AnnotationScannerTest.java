@@ -16,54 +16,45 @@ public class AnnotationScannerTest {
 
 	@Test
 	public void test() {
-		Class<?> class1 = AnnotationScanner.getClassesWithAnnotation(TestAnnotation.class).stream().findFirst().get();
-		assertEquals(TestClass.class, class1);
+		try(AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromContextClassLoader()) {
+			Class<?> class1 = annotationScanner.getClassesWithAnnotation((TestAnnotation.class)).stream().findFirst().get();
+			assertEquals(TestClass.class, class1);
+			
+			Method method1 = annotationScanner.getMethodsWithAnnotation(TestAnnotation.class).stream().findFirst().get();
+			assertEquals("testMethod", method1.getName());
+		}
 	}
 
 	@Test
 	public void test2() {
-		Class<?> class1 = AnnotationScanner
-				.getClassesWithAnnotation(TestAnnotation.class, this.getClass().getClassLoader()).stream().findFirst()
-				.get();
-		assertEquals(TestClass.class, class1);
-	}
-
-	@Test
-	public void test3() {
-		Class<?> class1 = AnnotationScanner
-				.getClassesWithAnnotation("step", TestAnnotation.class, this.getClass().getClassLoader()).stream()
-				.findFirst().get();
-		assertEquals(TestClass.class, class1);
-	}
-
-	@Test
-	public void testMethod1() {
-		Method method1 = AnnotationScanner.getMethodsWithAnnotation(TestAnnotation.class).stream().findFirst().get();
-		assertEquals("testMethod", method1.getName());
-	}
-
-	@Test
-	public void testMethod2() {
-		Method method1 = AnnotationScanner
-				.getMethodsWithAnnotation(TestAnnotation.class, this.getClass().getClassLoader()).stream().findFirst()
-				.get();
-		assertEquals("testMethod", method1.getName());
-	}
-
-	@Test
-	public void testMethod3() {
-		Method method1 = AnnotationScanner
-				.getMethodsWithAnnotation("step", TestAnnotation.class, this.getClass().getClassLoader()).stream()
-				.findFirst().get();
-		assertEquals("testMethod", method1.getName());
+		try(AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(this.getClass().getClassLoader())) {
+			Class<?> class1 = annotationScanner.getClassesWithAnnotation((TestAnnotation.class)).stream().findFirst().get();
+			assertEquals(TestClass.class, class1);
+			
+			Method method1 = annotationScanner.getMethodsWithAnnotation(TestAnnotation.class).stream().findFirst().get();
+			assertEquals("testMethod", method1.getName());
+		}
 	}
 	
 	@Test
-	public void testGetMethodsWithAnnotation() {
+	public void test3() {
+		try(AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader("step", this.getClass().getClassLoader())) {
+			Class<?> class1 = annotationScanner.getClassesWithAnnotation((TestAnnotation.class)).stream().findFirst().get();
+			assertEquals(TestClass.class, class1);
+			
+			Method method1 = annotationScanner.getMethodsWithAnnotation(TestAnnotation.class).stream().findFirst().get();
+			assertEquals("testMethod", method1.getName());
+		}
+	}
+	
+	@Test
+	public void testAnnotationScannerForSpecificJars() {
 		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step-core-model-test.jar");
-		List<Method> methods = AnnotationScanner.getMethodsWithAnnotation(ContainsDynamicValues.class, file).stream().collect(Collectors.toList());
-		assertEquals(1, methods.size());
-		assertEquals("testMethod", methods.get(0).getName());
+		try(AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(file)) {
+			List<Method> methods = annotationScanner.getMethodsWithAnnotation(ContainsDynamicValues.class).stream().collect(Collectors.toList());
+			assertEquals(1, methods.size());
+			assertEquals("testMethod", methods.get(0).getName());
+		}
 	}
 
 	// Don't remove this class
@@ -78,16 +69,6 @@ public class AnnotationScannerTest {
 		}
 		
 	}
-	
-	@Test
-	public void testClearCache() {
-		Method method1 = AnnotationScanner.getMethodsWithAnnotation(TestAnnotation.class).stream().findFirst().get();
-		assertEquals("testMethod", method1.getName());
-		AnnotationScanner.clearCache();
-		method1 = AnnotationScanner.getMethodsWithAnnotation(TestAnnotation.class).stream().findFirst().get();
-		assertEquals("testMethod", method1.getName());
-	}
-
 	
 	@TestAnnotation
 	public static class TestClass {

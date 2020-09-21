@@ -59,33 +59,35 @@ public class StepClassParser {
 	}
 
 	protected List<StepClassParserResult> getPlanFromAnnotatedMethods(Class<?> klass) {
-		return AnnotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class).stream()
-				.filter(m -> m.getDeclaringClass() == klass).map(m -> {
-					String planName = m.getName();
-					Exception exception = null;
-					Plan plan = null;
-					try {
-						String planStr = m.getAnnotation(step.junit.runners.annotations.Plan.class).value();
-						if (planStr == null || planStr.trim().length() == 0) {
-							Keyword keyword = m.getAnnotation(Keyword.class);
-							if (keyword != null) {
-								String name = keyword.name();
-								if (name != null && name.trim().length() > 0) {
-									planStr = name;
+		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(klass.getClassLoader())) {
+			return annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class).stream()
+					.filter(m -> m.getDeclaringClass() == klass).map(m -> {
+						String planName = m.getName();
+						Exception exception = null;
+						Plan plan = null;
+						try {
+							String planStr = m.getAnnotation(step.junit.runners.annotations.Plan.class).value();
+							if (planStr == null || planStr.trim().length() == 0) {
+								Keyword keyword = m.getAnnotation(Keyword.class);
+								if (keyword != null) {
+									String name = keyword.name();
+									if (name != null && name.trim().length() > 0) {
+										planStr = name;
+									} else {
+										planStr = m.getName();
+									}
 								} else {
 									planStr = m.getName();
 								}
-							} else {
-								planStr = m.getName();
 							}
+							plan = planParser.parse(planStr);
+							setPlanName(plan, planName);
+						} catch (Exception e) {
+							exception = e;
 						}
-						plan = planParser.parse(planStr);
-						setPlanName(plan, planName);
-					} catch (Exception e) {
-						exception = e;
-					}
-					return new StepClassParserResult(planName, plan, exception);
-				}).collect(Collectors.toList());
+						return new StepClassParserResult(planName, plan, exception);
+					}).collect(Collectors.toList());
+		}
 	}
 
 	protected List<StepClassParserResult> getPlansForClass(Class<?> klass) throws Exception {

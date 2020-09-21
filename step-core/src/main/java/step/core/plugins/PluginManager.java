@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.plugins.exceptions.PluginCriticalException;
-import step.core.scanner.AnnotationScanner;
+import step.core.scanner.CachedAnnotationScanner;
 
 public class PluginManager<T> {
 	
@@ -130,7 +130,7 @@ public class PluginManager<T> {
 		
 		private List<T> getPluginsFromClassLoader(String packagePrefix) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 			ClassLoader cl = Thread.currentThread().getContextClassLoader();
-			Set<Class<?>> classesWithAnnotation = AnnotationScanner.getClassesWithAnnotation(packagePrefix, Plugin.class, cl);
+			Set<Class<?>> classesWithAnnotation = CachedAnnotationScanner.getClassesWithAnnotation(packagePrefix, Plugin.class, cl);
 			
 			List<String> pluginClasses = new ArrayList<>();
 			List<T> plugins = new ArrayList<>();
