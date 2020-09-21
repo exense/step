@@ -60,7 +60,12 @@ public class AnnotationScanner implements AutoCloseable {
 		if (packagePrefix != null) {
 			classGraph.whitelistPackages(packagePrefix);
 		}
-		classGraph.overrideClassLoaders(classloader);
+		
+		// In this method we would actually like to only scan the classes of the provided
+		// class loader and thus use the following method. This method is unfortunately 
+		// not working under Java 9+ (https://github.com/classgraph/classgraph/issues/382)
+		//classGraph.overrideClassLoaders(classloader);
+		classGraph.addClassLoader(classloader);
 		classGraph.enableClassInfo().enableAnnotationInfo().enableMethodInfo();
 
 		return scan(classGraph, classloader);
