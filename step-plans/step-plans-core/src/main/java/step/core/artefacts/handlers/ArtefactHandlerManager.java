@@ -25,6 +25,11 @@ public class ArtefactHandlerManager {
 		artefactHandler.createReportSkeleton(parentNode, artefact, newVariables);
 	}
 	
+	public void initPropertyArtefact(AbstractArtefact artefact, ReportNode parentNode) {
+		ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = getArtefactHandler(artefact);
+		artefactHandler.initProperties(parentNode, artefact);
+	}
+	
 	public ReportNode execute(AbstractArtefact artefact, ReportNode parentNode) {
 		return execute(artefact, parentNode, null);
 	}

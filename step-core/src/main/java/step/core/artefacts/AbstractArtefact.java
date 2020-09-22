@@ -142,6 +142,11 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	public boolean isCreateSkeleton() {
 		return false;
 	}
+	
+	@JsonIgnore
+	public boolean isPropertyArefact() {
+		return false;
+	}
 
 	public boolean isPersistNode() {
 		return persistNode;

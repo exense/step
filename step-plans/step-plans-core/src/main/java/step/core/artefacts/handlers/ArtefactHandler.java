@@ -150,6 +150,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				if(persistBefore && artefact.isPersistNode()) {
 					saveReportNode(reportNode);					
 				}
+		
+				List<AbstractArtefact> children = getChildren(artefact);
+				children.stream().filter(c->c.isPropertyArefact()).forEach(p->artefactHandlerManager.initPropertyArtefact(p, reportNode));
 				
 				execute_(reportNode, artefact);
 			}
@@ -177,6 +180,18 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return reportNode;
 	}
 	
+	/**
+	 * Before calling {@link ArtefactHandler#execute_(ReportNode, AbstractArtefact)}
+	 * for an artefact node N this method is called for each child of N which
+	 * returns true on {@link AbstractArtefact#isPropertyArefact()}. This allow
+	 * initialization of variables or properties before execution
+	 * 
+	 * @param parentReportNode the parent {@link ReportNode}
+	 * @param artefact         the {@link AbstractArtefact}
+	 */
+	public void initProperties(ReportNode parentReportNode, ARTEFACT artefact) {
+	}
+
 	/**
 	 * Execute the provided artefact and report the execution to the provided report node
 	 * @param reportNode the {@link ReportNode} corresponding to the artefact
@@ -400,6 +415,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 	
 	protected void failWithException(ReportNode result, String errorMsg, Throwable e, boolean generateAttachment) {
+		e.printStackTrace();
 		if(logger.isDebugEnabled()) {
 			logger.debug("Error in node", e);
 		}
