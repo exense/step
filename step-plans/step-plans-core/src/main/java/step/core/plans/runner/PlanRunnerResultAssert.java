@@ -43,6 +43,16 @@ public class PlanRunnerResultAssert {
 		return result;
 	}
 	
+	public static void assertEquals(String expectedReportTree, PlanRunnerResult actualResult) throws IOException {
+		StringWriter writer = new StringWriter();
+		actualResult.printTree(writer);
+		Assert.assertEquals(normalizeEndOfLines(expectedReportTree), normalizeEndOfLines(writer.toString()));
+	}
+
+	protected static String normalizeEndOfLines(String expectedReportTree) {
+		return expectedReportTree.replaceAll("\r\n", "\n");
+	}
+	
 	public static void assertEquals(File expectedReportTreeFile, PlanRunnerResult actualResult) throws IOException {
 		StringWriter writer = new StringWriter();
 		actualResult.printTree(writer);
