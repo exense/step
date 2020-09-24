@@ -29,10 +29,14 @@ import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
 
 /**
- * This class represents a client for the execution of fully isolated runs on the controller.
- * Fully isolated means that all the artefacts used for execution ({@link Plan}, {@link Function}s, and parameters) 
- * are isolated from the artefacts that might be already located on the controller
- *
+ * This class represents a client for the execution of fully isolated runs on
+ * the controller. Fully isolated means that all the artefacts used for
+ * execution ({@link Plan}, {@link Function}s, and parameters) are isolated from
+ * the artefacts that might be already located on the controller
+ * 
+ * @deprecated The staging client is deprecated and will be removed in future
+ *             releases. All executions are now providing an isolated context
+ *             thus making the Staging repository useless.
  */
 public class StagingRepositoryClient extends AbstractRemoteClient {
 

@@ -9,6 +9,12 @@ import step.core.repositories.Repository;
 import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 
+/**
+ * @deprecated The staging client is deprecated and will be removed in future
+ *             releases. All executions are now providing an isolated context
+ *             thus making the Staging repository useless.
+ *
+ */
 public class StagingRepository implements Repository {
 
 	protected StagingContextAccessorImpl stagingContextAccessor;

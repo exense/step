@@ -12,9 +12,11 @@ import ch.exense.commons.io.Poller;
 import step.client.AbstractRemoteClient;
 import step.client.accessors.RemotePlanAccessorImpl;
 import step.client.credentials.ControllerCredentials;
+import step.client.executions.RemoteExecutionManager;
 import step.client.reports.RemoteReportTreeAccessor;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportTreeAccessor;
+import step.core.execution.ExecutionEngine;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
@@ -27,6 +29,10 @@ import step.core.repositories.RepositoryObjectReference;
 
 /**
  * A runner that runs plans fully remotely
+ * 
+ * @deprecated This class will be removed in future releases. To run a plan
+ *             located on your controller use {@link RemoteExecutionManager}
+ *             instead.
  * 
  * @author Jérôme Comte
  *
