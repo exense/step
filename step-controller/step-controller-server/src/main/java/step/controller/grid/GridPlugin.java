@@ -21,7 +21,9 @@ package step.controller.grid;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,12 +89,20 @@ public class GridPlugin extends AbstractControllerPlugin {
 	}
 
 	protected ConfigurableTokenLifecycleStrategy getTokenLifecycleStrategy(Configuration configuration) {
+		String AgentErrorCodeProperty = configuration.getProperty("grid.client.token.lifecycle.remove.on.agenterrors", AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED.toString());
+		Set<AgentErrorCode> agentErrors;
+		if (AgentErrorCodeProperty.equals("")) {
+			agentErrors = Stream.of(AgentErrorCode.values()).collect(Collectors.toSet());
+		} else {
+			agentErrors = Arrays.asList(AgentErrorCodeProperty.split(",")).stream().map(v->AgentErrorCode.valueOf(v)).collect(Collectors.toSet());
+		}
+
 		return new ConfigurableTokenLifecycleStrategy(
 				configuration.getPropertyAsBoolean("grid.client.token.lifecycle.remove.on.tokenreleaseerror", true),
 				configuration.getPropertyAsBoolean("grid.client.token.lifecycle.remove.on.tokenreservationerror", true),
 				configuration.getPropertyAsBoolean("grid.client.token.lifecycle.remove.on.tokencallerror", true),
 				configuration.getPropertyAsBoolean("grid.client.token.lifecycle.remove.on.agenterror", true),
-				Arrays.asList(configuration.getProperty("grid.client.token.lifecycle.remove.on.agenterrors", AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED.toString()).split(",")).stream().map(v->AgentErrorCode.valueOf(v)).collect(Collectors.toSet()));
+				agentErrors);
 	}
 
 	protected GridClientConfiguration buildGridClientConfiguration(Configuration configuration) {

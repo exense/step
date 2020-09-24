@@ -29,6 +29,7 @@ import junit.framework.Assert;
 import step.artefacts.AbstractArtefactTest;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolFactory;
+import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
 import step.datapool.file.FileDataPoolImpl.ExtendedFile;
 
@@ -62,10 +63,12 @@ public class DirectoryDataPoolTest extends AbstractArtefactTest {
 		DirectoryDataPool conf = new DirectoryDataPool();
 		conf.setFolder(new DynamicValue<String>(fileEmpty.getAbsolutePath()));
 
-		DataSet<?> poolEmpty =  DataPoolFactory.getDataPool("folder", conf, newExecutionContext());
+		DataSet<?> poolEmpty = DataPoolFactory.getDataPool("folder", conf, newExecutionContext());
 		poolEmpty.init();
-		
-		Assert.assertNull(poolEmpty.next());
+
+		DataPoolRow next = poolEmpty.next();
+
+		Assert.assertTrue(next==null || ((FileDataPoolImpl.ExtendedFile)next.getValue()).getName().equals(".gitignore"));
 		
 		poolEmpty.close();
 	}
