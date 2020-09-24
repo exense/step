@@ -38,12 +38,17 @@ public interface ExecutionCallbacks {
 	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function);
 	
 	/**
-	 * This hook is called after a {@link Function} is executed in CallFunctionHandler.
-	 * The hook is also called in simulation mode 
+	 * This hook is called immediately after a {@link Function} is executed in
+	 * CallFunctionHandler. The {@link ReportNode} provided as argument is therefore
+	 * not reflecting the final status. If you need the final status after
+	 * CallFunction execution use the hook
+	 * {@link ExecutionCallbacks#afterReportNodeExecution(ExecutionContext, ReportNode)}
+	 * instead. The hook is also called in simulation mode.
 	 * 
-	 * @param context the {@link ExecutionContext}
+	 * @param context  the {@link ExecutionContext}
+	 * @param node
 	 * @param function the {@link Function} that has been executed
-	 * @param output the result {@link Output} of the execution
+	 * @param output   the result {@link Output} of the execution
 	 */
 	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output);
 	

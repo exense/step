@@ -132,6 +132,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				} finally {
 					OperationManager.getInstance().exit();
 				}
+				executionCallbacks.afterFunctionExecution(context, node, function, output);
 				
 				Error error = output.getError();
 				if(error!=null) {
@@ -182,9 +183,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			node.setOutput(output.getPayload().toString());
 			node.setStatus(ReportNodeStatus.PASSED);
 		}
-		
-		executionCallbacks.afterFunctionExecution(context, node, function, output);
-		
 	}
 
 	private void validateInput(FunctionInput<JsonObject> input, Function function) {

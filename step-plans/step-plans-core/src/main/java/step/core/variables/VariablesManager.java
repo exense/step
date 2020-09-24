@@ -18,7 +18,9 @@
  *******************************************************************************/
 package step.core.variables;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -182,6 +184,19 @@ public class VariablesManager {
 						result.put(variableName, value);
 					}
 				}
+			}
+		} while (currentNode.getParentID()!=null && 
+				(currentNode = nodeCache.get(currentNode.getParentID().toString()))!=null);
+		return result;
+	}
+	
+	public List<Object> getAllVariables(String key) {
+		List<Object> result = new ArrayList<>();
+		ReportNode currentNode = context.getCurrentReportNode();
+		do {
+			Object variable = getVariable(currentNode, key, false);
+			if(variable != null) {
+				result.add(variable);
 			}
 		} while (currentNode.getParentID()!=null && 
 				(currentNode = nodeCache.get(currentNode.getParentID().toString()))!=null);
