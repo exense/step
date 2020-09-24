@@ -24,9 +24,11 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 
-@Artefact(name="CallKeyword", report = CallFunctionReportNode.class)
+@Artefact(name=CallFunction.ARTEFACT_NAME, report = CallFunctionReportNode.class)
 public class CallFunction extends TokenSelector {
 	
+	public static final String ARTEFACT_NAME = "CallKeyword";
+
 	String functionId;
 	
 	DynamicValue<String> function = new DynamicValue<>("{}");

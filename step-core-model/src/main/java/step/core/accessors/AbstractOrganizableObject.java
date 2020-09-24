@@ -49,4 +49,20 @@ public class AbstractOrganizableObject extends AbstractIdentifiableObject {
 		}
 		attributes.put(key, value);
 	}
+
+	public boolean hasAttribute(String key) {
+		if(attributes != null) {
+			return attributes.containsKey(key);
+		} else {
+			return false;
+		}
+	}
+	
+	public String getAttribute(String key) {
+		if(attributes != null) {
+			return attributes.get(key);
+		} else {
+			return null;
+		}
+	}
 }

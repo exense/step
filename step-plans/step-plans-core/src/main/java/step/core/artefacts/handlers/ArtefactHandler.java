@@ -357,14 +357,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 
 	private String getReportNodeName(ARTEFACT artefact) {
-		Map<String, String> attributes = artefact.getAttributes();
-		if (attributes != null) {
-			String name = attributes.get(AbstractArtefact.NAME);
-			if (name != null) {
-				return name;
-			}
-		}
-		return "Unnamed";
+		String name = artefact.getAttribute(AbstractArtefact.NAME);
+		return name != null ? name : "Unnamed";
 	}
 	
 	/**

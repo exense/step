@@ -33,6 +33,7 @@ import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.common.managedoperations.OperationManager;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -102,6 +103,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		node.setFunctionId(function.getId().toString());
 		node.setFunctionAttributes(function.getAttributes());
 
+		String name = node.getName();
+		// Name the report node after the keyword if it's not already the case
+		String functionName = function.getAttribute(AbstractOrganizableObject.NAME);
+		if(name.equals(CallFunction.ARTEFACT_NAME) && functionName != null) {
+			node.setName(functionName);
+		}
+		
 		FunctionInput<JsonObject> input = buildInput(argumentStr);
 		node.setInput(input.getPayload().toString());
 		
