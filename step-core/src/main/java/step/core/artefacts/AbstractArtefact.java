@@ -143,6 +143,19 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		return false;
 	}
 	
+	/**
+	 * Property artefacts are special artefacts that are directly attached to their
+	 * parent artefact. Property artefacts are not subject to transclusion and
+	 * remain attached to their parent. They are executed in 2 phases.
+	 * <li>During the first phase the method ArtafactHandler.initProperties is
+	 * called for each property artefacts before their parent artefact is
+	 * executed.</li>
+	 * <li>The second phase starts after execution of the parent artefact. During
+	 * the second phase all the property artefact are executed
+	 * (ArtafactHandler.execute_)</li>
+	 * 
+	 * @return true if this artefact is a property artefact
+	 */
 	@JsonIgnore
 	public boolean isPropertyArefact() {
 		return false;

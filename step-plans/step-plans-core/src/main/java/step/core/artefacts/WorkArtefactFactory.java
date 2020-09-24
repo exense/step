@@ -5,6 +5,8 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.artefacts.handlers.ArtefactHandler;
+
 public class WorkArtefactFactory {
 	
 	private static final Logger logger = LoggerFactory.getLogger(WorkArtefactFactory.class);
@@ -21,7 +23,8 @@ public class WorkArtefactFactory {
 		try {
 			T artefact = artefactClass.newInstance();
 			if(copyChildren) {
-				artefact.setChildren(parentArtefact.getChildren());
+				// Property artefacts remain attached to their parent and are thus not subject to transclusion
+				artefact.setChildren(ArtefactHandler.excludePropertyChildren(parentArtefact.getChildren()));
 			}
 			HashMap<String, String> attributes = new HashMap<>();
 			attributes.put("name", name);

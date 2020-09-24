@@ -1,4 +1,4 @@
-package step.artefacts.handlers;
+package step.core.artefacts.handlers;
 
 import step.core.artefacts.reports.ReportNodeStatus;
 

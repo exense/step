@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 import step.artefacts.TestScenario;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
 import step.core.artefacts.reports.ReportNode;
 import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;

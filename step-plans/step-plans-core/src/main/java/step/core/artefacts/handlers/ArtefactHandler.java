@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -151,10 +152,22 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 					saveReportNode(reportNode);					
 				}
 		
-				List<AbstractArtefact> children = getChildren(artefact);
-				children.stream().filter(c->c.isPropertyArefact()).forEach(p->artefactHandlerManager.initPropertyArtefact(p, reportNode));
+				List<AbstractArtefact> allChildren = getAllChildren(artefact, context);
+				List<AbstractArtefact> propertyChildren = filterPropertyChildren(allChildren); 
+				// Initialize property children (Phase 1)
+				propertyChildren.forEach(p->artefactHandlerManager.initPropertyArtefact(p, reportNode));
 				
 				execute_(reportNode, artefact);
+				
+				AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode.getStatus());
+				// Execute property children. Property artefact remain attached to their parent
+				// and are executed after their parents. (Phase 2). This allow for instance some
+				// validation after the execution of the parent
+				propertyChildren.forEach(p->{
+					ReportNode propertyReportNode = artefactHandlerManager.execute(p, reportNode);
+					reportNodeStatusComposer.addStatusAndRecompose(propertyReportNode.getStatus());
+				});
+				reportNode.setStatus(reportNodeStatusComposer.getParentStatus());
 			}
 		} catch (Exception e) {
 			failWithException(reportNode, e);
@@ -367,6 +380,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 	
 	public static List<AbstractArtefact> getChildren(AbstractArtefact artefact, ExecutionContext context) { 
+		return excludePropertyChildren(getAllChildren(artefact, context));
+	}
+
+	private static List<AbstractArtefact> getAllChildren(AbstractArtefact artefact, ExecutionContext context) {
 		DynamicBeanResolver dynamicBeanResolver = context.getDynamicBeanResolver();
 		List<AbstractArtefact> result = new ArrayList<>();
 		List<AbstractArtefact> children = artefact.getChildren();
@@ -376,6 +393,14 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 		return result;
+	}
+
+	public static List<AbstractArtefact> filterPropertyChildren(List<AbstractArtefact> children) {
+		return children != null ? children.stream().filter(c -> c.isPropertyArefact()).collect(Collectors.toList()) : null;
+	}
+	
+	public static List<AbstractArtefact> excludePropertyChildren(List<AbstractArtefact> children) {
+		return children != null ? children.stream().filter(c -> !c.isPropertyArefact()).collect(Collectors.toList()) : null;
 	}
 	
 	protected <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {
@@ -415,7 +440,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 	
 	protected void failWithException(ReportNode result, String errorMsg, Throwable e, boolean generateAttachment) {
-		e.printStackTrace();
 		if(logger.isDebugEnabled()) {
 			logger.debug("Error in node", e);
 		}

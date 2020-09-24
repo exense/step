@@ -32,6 +32,7 @@ import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
 import step.threadpool.IntegerSequenceIterator;
