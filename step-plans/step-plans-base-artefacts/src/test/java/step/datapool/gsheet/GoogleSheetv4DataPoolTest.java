@@ -37,7 +37,7 @@ public class GoogleSheetv4DataPoolTest{
 
 		GoogleSheetv4DataPoolConfiguration poolConf = new GoogleSheetv4DataPoolConfiguration();
 		poolConf.setFileId(new DynamicValue<String>("1w2YeLORbeMPrnXAIKCRNi8QVnibhwsAk5FatAMFVxRA"));
-		poolConf.setServiceAccountKey(new DynamicValue<String>("/Users/doriancransac/google API/exenseDevSA/drive-integration-598d33c4fc68.json"));
+		poolConf.setServiceAccountKey(new DynamicValue<String>("/../...json"));
 		poolConf.setTabName(new DynamicValue<String>("Tabellenblatt1"));
 
 		DataSet<?> pool = DataPoolFactory.getDataPool("gsheet", poolConf, null);

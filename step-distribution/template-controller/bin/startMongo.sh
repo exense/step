@@ -1,6 +1,6 @@
 #!/bin/sh
 #*******************************************************************************
-# (C) Copyright 2016 Jerome Comte and Dorian Cransac
+# Copyright (C) 2020, exense GmbH
 #  
 # This file is part of STEP
 #  

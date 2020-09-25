@@ -1,5 +1,5 @@
 @rem ***************************************************************************
-@rem (C) Copyright 2016 Jerome Comte and Dorian Cransac
+@rem Copyright (C) 2020, exense GmbH
 @rem  
 @rem This file is part of STEP
 @rem  
