@@ -1,8 +1,7 @@
 {
   "name": "step",
   "authors": [
-    "Jerome Comte <jerome.comte@exense.ch>",
-    "Dorian Cransac <dorian.cransac@exense.ch>"
+    "exense GmbH <contact@exense.ch>"
   ],
   "description": "",
   "main": "index.html",

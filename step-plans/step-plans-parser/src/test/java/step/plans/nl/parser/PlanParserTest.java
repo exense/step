@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- * 
+ *  
  * This file is part of STEP
  *  
  * STEP is free software: you can redistribute it and/or modify

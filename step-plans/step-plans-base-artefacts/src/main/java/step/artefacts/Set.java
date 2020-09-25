@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (C) Copyright 2016 Jerome Comte and Dorian Cransac
+ * Copyright (C) 2020, exense GmbH
  *  
  * This file is part of STEP
  *  
@@ -15,7 +15,7 @@
  *  
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
- *******************************************************************************/
+ ******************************************************************************/
 package step.artefacts;
 
 import step.artefacts.reports.SetReportNode;
