@@ -75,7 +75,7 @@ public class Function extends AbstractOrganizableObject {
 	/**
 	 * Defines if the function has to be executed on a local token
 	 * 
-	 * @param executeLocally
+	 * @param executeLocally true if the function has to be executed on a local token
 	 */
 	public void setExecuteLocally(boolean executeLocally) {
 		this.executeLocally = executeLocally;
@@ -132,7 +132,7 @@ public class Function extends AbstractOrganizableObject {
 	/**
 	 * Sets the HTML code to be used as template when editing the function in the plan editor
 	 * 
-	 * @param schema the JSON schema of the function. See https://json-schema.org/ for more details concerning JSON schema.
+	 * @param customTemplateContent the HTML template
 	 */
 	public void setHtmlTemplate(String customTemplateContent) {
 		this.htmlTemplate = customTemplateContent;
