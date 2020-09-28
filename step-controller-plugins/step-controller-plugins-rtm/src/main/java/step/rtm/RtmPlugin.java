@@ -30,6 +30,9 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngineContext;
+import step.core.execution.model.Execution;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.reports.Measure;
@@ -38,6 +41,8 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 @Plugin
 @IgnoreDuringAutoDiscovery
 public class RtmPlugin extends AbstractExecutionEnginePlugin {
+
+	private static final String SCHEDULER_TASK_ID = "$schedulerTaskId";
 
 	private static final Logger logger = LoggerFactory.getLogger(RtmPlugin.class);
 
@@ -49,12 +54,26 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 	}
 
 	@Override
-	public void afterReportNodeExecution(ReportNode node) {		
+	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+		Execution execution = executionContext.getExecutionAccessor().get(executionContext.getExecutionId());
+		String schedulerTaskId = execution.getExecutionTaskID();
+		if (schedulerTaskId != null) {
+			// cache the scheduler task id in the context to avoid retrieval of the
+			// execution after each report nod execution
+			executionContext.put(SCHEDULER_TASK_ID, schedulerTaskId);
+		}
+	}
+
+	@Override
+	public void afterReportNodeExecution(ExecutionContext executionContext, ReportNode node) {		
 		if(node instanceof CallFunctionReportNode) {
 			CallFunctionReportNode stepReport = (CallFunctionReportNode) node;
 
 			Map<String, String> functionAttributes = stepReport.getFunctionAttributes();
 
+			String schedulerTaskId = (String) executionContext.get(SCHEDULER_TASK_ID);
+			String planId = executionContext.getPlan().getId().toString();
+			
 			List<Object> measurements = new ArrayList<>();
 
 			Map<String, Object> measurement;
@@ -74,6 +93,11 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 					measurement.put("rnStatus", stepReport.getStatus().toString());
 					measurement.put("type", "custom");
 					measurement.put("agentUrl", stepReport.getAgentUrl());
+					measurement.put("planId", planId);
+					if(schedulerTaskId != null) {
+						measurement.put("taskId", schedulerTaskId);
+					}
+					
 
 					if(measure.getData() != null){
 						for(Map.Entry<String,Object> entry : measure.getData().entrySet()){
