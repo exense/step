@@ -18,11 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import org.apache.commons.lang3.time.DurationFormatUtils;
-
 import step.artefacts.RetryIfFails;
 import step.artefacts.Sequence;
 import step.artefacts.reports.RetryIfFailsReportNode;
@@ -30,6 +26,9 @@ import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFailsReportNode> {
 
@@ -47,6 +46,9 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 		long begin = System.currentTimeMillis();
 		boolean inSession = isInSession();
 		for(int count = 1; count<=testArtefact.getMaxRetries().get();count++) {
+			if (context.isInterrupted()) {
+				break;
+			}
 			boolean persistFail = (!testArtefact.getReportLastTryOnly().get() || 
 					(testArtefact.getReportLastTryOnly().get() && count>=testArtefact.getMaxRetries().get()));
 			
@@ -58,8 +60,8 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 			ReportNode iterationReportNode = delegateExecute(iterationTestCase, node);
 			
 			lastStatus = iterationReportNode.getStatus();
-			
-			if(iterationReportNode.getStatus()==ReportNodeStatus.PASSED || context.isInterrupted()) {
+
+			if (iterationReportNode.getStatus() == ReportNodeStatus.PASSED) {
 				break;
 			} 
 			if(testArtefact.getTimeout().get() > 0 && System.currentTimeMillis() > (begin + testArtefact.getTimeout().get())){
@@ -76,26 +78,23 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 				removeReportNode(iterationReportNode);
 			}
 			
-			try {
-				long duration = testArtefact.getGracePeriod().get();
-				boolean releaseToken = (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0); 
-				Map<String,String> details = new LinkedHashMap<String,String> ();
-				details.put("Grace period", DurationFormatUtils.formatDuration(duration, "HH:mm:ss.SSS"));
-				if (inSession) {
-					details.put("Release token", Boolean.toString(releaseToken));
-				}
-				OperationManager.getInstance().enter("RetryIfFails", details , node.getId().toString());
-				if (releaseToken && inSession) {
-					releaseTokens();
-					node.setReleasedToken(true);
-				}
-				context.getEventManager().notifyReportNodeUpdated(node);
-				Thread.sleep(duration);
-			} catch (InterruptedException e) {
-				lastStatus = ReportNodeStatus.INTERRUPTED;
-			} finally {
-				OperationManager.getInstance().exit();
+			long duration = testArtefact.getGracePeriod().get();
+			boolean releaseToken = (testArtefact.getReleaseTokens().get() && testArtefact.getGracePeriod().get() > 0);
+			Map<String,String> details = new LinkedHashMap<>();
+			details.put("Grace period", DurationFormatUtils.formatDuration(duration, "HH:mm:ss.SSS"));
+			if (inSession) {
+				details.put("Release token", Boolean.toString(releaseToken));
 			}
+			OperationManager.getInstance().enter("RetryIfFails", details , node.getId().toString());
+			if (releaseToken && inSession) {
+				releaseTokens();
+				node.setReleasedToken(true);
+			}
+			context.getEventManager().notifyReportNodeUpdated(node);
+			if (!CancellableSleep.sleep(duration, context::isInterrupted, RetryIfFailsHandler.class)) {
+				lastStatus = ReportNodeStatus.INTERRUPTED;
+			}
+			OperationManager.getInstance().exit();
 		}
 		
 		node.setStatus(lastStatus);
