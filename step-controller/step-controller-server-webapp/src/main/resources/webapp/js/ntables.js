@@ -30,6 +30,13 @@ angular.module('tables', ['export'])
 		scopesTracker.destroy();
 		headerScopesTracker.destroy();
 	});
+	
+	// stop progation of the event at st-table boundary.
+	// this ensures isolation and is for instance required 
+	// when embedding an st-table within another st-table
+	$scope.$on('newColumn', function(event, args) {
+		event.stopPropagation();
+	});
 
 	ctrl.dtColumns = {}
 	
@@ -128,6 +135,7 @@ angular.module('tables', ['export'])
 })
 .directive('stTable', function($compile, $http, Preferences, stateStorage, $timeout, Dialogs, ExportService) {
 	return {
+		restrict: 'E',
 		scope : {
 			uid: '=',
 			handle: '=?',
@@ -193,6 +201,8 @@ angular.module('tables', ['export'])
           scope.onSelectionChange();        
         }
       }
+
+
 
       scope.setSelection = function(id, selected) {
         scope.selectionModel.setSelection(id, selected);
