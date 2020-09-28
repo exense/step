@@ -33,6 +33,7 @@ import step.controller.grid.services.GridServices;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.functions.execution.ConfigurableTokenLifecycleStrategy;
 import step.grid.Grid;
 import step.grid.GridImpl;
@@ -73,8 +74,17 @@ public class GridPlugin extends AbstractControllerPlugin {
 		gridConfig.setTokenAffinityEvaluatorProperties(tokenAffinityEvaluatorProperties);
 		
 		grid = new GridImpl(new File(fileManagerPath), gridPort, gridConfig);
-		grid.start();
-		
+        try {
+            grid.start();
+        } catch (Throwable e) {
+            try {
+                grid.stop();
+            } catch (Throwable t) {
+                //ignore
+            }
+            throw new PluginCriticalException("An exception occurred when trying to start the Grid plugin: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+
 		TokenLifecycleStrategy tokenLifecycleStrategy = getTokenLifecycleStrategy(configuration);
 		
 		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration);
