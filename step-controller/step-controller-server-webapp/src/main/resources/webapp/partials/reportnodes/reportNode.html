@@ -1,14 +1,12 @@
 <div>
+	<div>Duration (ms): {{node.duration}}</div>
+	<div ng-if="node.resolvedArtefact.customAttributes.source">Source: {{node.resolvedArtefact.customAttributes.source}}</div>
 	<!-- <div class="form-group">{{artefact._class}} - {{node.name}} <reportnode-status status="node.status" /></div> -->
 	<div style="margin-top:10px;" ng-include="reportNodeType.template"></div>
-	
-	<div ng-if="node.resolvedArtefact.customAttributes.source">Source: {{node.resolvedArtefact.customAttributes.source}}</div>
-	<div>Start: <date time="node.executionTime" /></div>
-	<div>Duration (ms): {{node.duration}}</div>
-	<div class="panel panel-default" style="margin-top:10px;">
-		<div class="panel-heading"><a ng-click="showArtefact = !showArtefact">Plan node</a></div>
+	<div class="section-header2"><a ng-click="showArtefact = !showArtefact">Plan node</a></div>
+	<div class="panel panel-default" style="margin-top:10px;" ng-show="showArtefact">
 		<div class="panel-body" ng-if="showArtefact">			
-			<artefact-details artefact="node.resolvedArtefact" readonly="false" />
+			<artefact-details artefact="node.resolvedArtefact" readonly="true" />
 		</div>
 	</div>
 </div>
