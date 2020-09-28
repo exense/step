@@ -31,6 +31,9 @@
             			<button type="button" class="btn btn-default" ng-click="$parent.askAndDeleteTask(row.id, true)" ng-disabled="!authService.hasRight('task-write')" uib-tooltip="Delete" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             			</button>
+            			<a class="btn btn-default btn-sm" href="/#/root/dashboards/__pp__RTMDashboard?__filter1__=text,taskId,{{row.id}}" uib-tooltip="Analyze performance in interactive session"
+							tooltip-append-to-body="true" target="_blank"><span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
+						</a>
           			</div>
           		</cell>
 			</st-column>
