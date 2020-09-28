@@ -763,6 +763,12 @@ fieldset {
 	font-size: 18px;
 }
 
+.section-header2 {
+	font-weight: bold;
+	margin-top: 8px;
+	margin-bottom: 4px;
+}
+
 .section-content {
 	color: #454646;
 	width: 100%;	
@@ -772,4 +778,14 @@ fieldset {
 .section-highlight {
 	margin-top: 15px;
 	margin-bottom: 15px;
+}
+
+.table-compact table.dataTable {
+	margin-top: 2px !important;
+	margin-bottom: 2px !important;
+}
+
+.table-compact td, .table-compact th {
+	padding-top: 2px !important;
+	padding-bottom: 2px !important;
 }

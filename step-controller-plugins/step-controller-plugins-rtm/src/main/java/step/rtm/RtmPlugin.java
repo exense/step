@@ -41,12 +41,10 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(RtmPlugin.class);
 
-	private final boolean measureReportNodes;
 	private final MeasurementAccessor accessor;
 
-	public RtmPlugin(boolean measureReportNodes, MeasurementAccessor accessor) {
+	public RtmPlugin(MeasurementAccessor accessor) {
 		super();
-		this.measureReportNodes = measureReportNodes;
 		this.accessor = accessor;
 	}
 
@@ -60,25 +58,6 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 			List<Object> measurements = new ArrayList<>();
 
 			Map<String, Object> measurement;
-			if(measureReportNodes) {
-				measurement = new HashMap<>();
-
-				if(functionAttributes != null) {
-					measurement.putAll(functionAttributes);
-				}
-
-				measurement.put(RtmControllerPlugin.ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
-				//measurement.put("name", stepReport.getFunctionAttributes().get(AbstractOrganizableObject.NAME));
-				measurement.put("value", (long)stepReport.getDuration());
-				measurement.put("begin", stepReport.getExecutionTime());
-				measurement.put("rnId", stepReport.getId().toString());
-				measurement.put("rnStatus", stepReport.getStatus().toString());
-				measurement.put("type", "keyword");
-				measurement.put("agentUrl", stepReport.getAgentUrl());
-				measurements.add(measurement);
-
-
-			}
 
 			if(stepReport.getMeasures()!=null) {
 				for(Measure measure:stepReport.getMeasures()) {
@@ -123,7 +102,6 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 			if (logger.isTraceEnabled()) {
 				logMeasurements(measurements);
 			}
-
 		}
 	}
 

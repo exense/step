@@ -46,7 +46,6 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 	public static final String ATTRIBUTE_EXECUTION_ID = "eId";
 
 	private MeasurementAccessor accessor;
-	private boolean measureReportNodes;
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
@@ -70,7 +69,6 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 				logger.info("["+prop+"] "+rtmProperties.getProperty(prop));
 			}
 		}
-		measureReportNodes = stepProperties.getPropertyAsBoolean("plugins.rtm.measurereportnodes", true);
 
 		MongoCollection<Document> measurements = context.getMongoClientSession().getMongoDatabase().getCollection("measurements");
 		AbstractAccessor.createOrUpdateCompoundIndex(measurements,ATTRIBUTE_EXECUTION_ID, "begin");
@@ -105,7 +103,7 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new RtmPlugin(measureReportNodes, accessor);
+		return new RtmPlugin(accessor);
 	}
 
 	private void cloneProperty(Properties rtmProperties, ch.exense.commons.app.Configuration stepProperties, String property) {
