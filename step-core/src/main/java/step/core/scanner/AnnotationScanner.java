@@ -95,13 +95,21 @@ public class AnnotationScanner implements AutoCloseable {
 	 *         provided jar file
 	 */
 	public static AnnotationScanner forSpecificJar(File jar) {
+		try {
+			return forSpecificJar(jar,new URLClassLoader(new URL[] { jar.toURI().toURL() }));
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static AnnotationScanner forSpecificJar(File jar, ClassLoader classLoaderForResultClassesAndMethods) {
 		URLClassLoader urlClassLoader;
 		try {
 			urlClassLoader = new URLClassLoader(new URL[] { jar.toURI().toURL() });
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
-		return forSpecificJarFromURLClassLoader(urlClassLoader);
+		return forSpecificJarFromURLClassLoader(urlClassLoader,classLoaderForResultClassesAndMethods);
 	}
 
 	/**
@@ -113,13 +121,26 @@ public class AnnotationScanner implements AutoCloseable {
 	 *         provided {@link URLClassLoader} (parent excluded)
 	 */
 	public static AnnotationScanner forSpecificJarFromURLClassLoader(URLClassLoader classloader) {
+		return forSpecificJarFromURLClassLoader(classloader,classloader);
+	}
+
+	/**
+	 * Scans the jar files of a specific {@link URLClassLoader}
+	 *
+	 * @param classloader the specific {@link ClassLoader} to scan the {@link URL}s
+	 * @param classLoaderForResultClassesAndMethods the {@link ClassLoader} containing the context
+	 *
+	 * @return an instance of {@link AnnotationScanner} scanning all classes of the
+	 *         provided {@link URLClassLoader} (parent excluded)
+	 */
+	public static AnnotationScanner forSpecificJarFromURLClassLoader(URLClassLoader classloader, ClassLoader classLoaderForResultClassesAndMethods) {
 		List<String> jars = Arrays.asList(classloader.getURLs()).stream().map(url -> url.getPath())
 				.collect(Collectors.toList());
 
 		ClassGraph classGraph = new ClassGraph().overrideClasspath(jars).enableClassInfo().enableAnnotationInfo()
 				.enableMethodInfo();
 
-		return scan(classGraph, classloader);
+		return scan(classGraph, classLoaderForResultClassesAndMethods);
 	}
 
 	private static AnnotationScanner scan(ClassGraph classGraph, ClassLoader classLoaderForResultClassesAndMethods) {
