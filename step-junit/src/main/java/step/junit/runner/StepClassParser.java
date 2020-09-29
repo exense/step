@@ -34,7 +34,13 @@ import step.plans.nl.parser.PlanParser;
 
 public class StepClassParser {
 
+	private final boolean appendClassnameToPlanName;
 	private final PlanParser planParser = new PlanParser();
+
+	public StepClassParser(boolean appendClassnameToPlanName) {
+		super();
+		this.appendClassnameToPlanName = appendClassnameToPlanName;
+	}
 
 	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {
 		final List<StepClassParserResult> result = new ArrayList<>();
@@ -60,7 +66,7 @@ public class StepClassParser {
 		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(klass.getClassLoader())) {
 			return annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class).stream()
 					.filter(m -> m.getDeclaringClass() == klass).map(m -> {
-						String planName = m.getName();
+						String planName = (appendClassnameToPlanName?m.getDeclaringClass().getName()+".":"")+m.getName();
 						Exception exception = null;
 						Plan plan = null;
 						try {

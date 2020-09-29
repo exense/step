@@ -47,7 +47,7 @@ public class Step extends ParentRunner<StepClassParserResult> {
 
 	private static final Logger logger = LoggerFactory.getLogger(Step.class);
 
-	private final StepClassParser classParser = new StepClassParser();
+	private final StepClassParser classParser = new StepClassParser(false);
 	private final Class<?> klass;
 	private final List<StepClassParserResult> listPlans;
 
