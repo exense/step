@@ -20,6 +20,7 @@ package step.client;
 
 import org.junit.runner.RunWith;
 
+import step.handlers.javahandler.Keyword;
 import step.junit.runner.Step;
 import step.junit.runners.annotations.ExecutionParameters;
 import step.junit.runners.annotations.Plan;
@@ -30,7 +31,20 @@ import step.junit.runners.annotations.Plans;
 @ExecutionParameters({"PARAM_EXEC","Value"})
 public class StepRunnerWithPlansAnnotationTest {
 	
+	@Plan()
+	@Keyword
+	public void implicitPlanWithDefaultKeywordName() {}
+	
+	@Plan
+	@Keyword(name = "My custom keyword name")
+	public void implicitPlanWithWithCustomKeywordName() {}
+	
+//	Negative test: Commented out as this test is failing per design. 
+// 	Uncomment it out to perform the negative test manually 
+//	@Plan
+//	public void implicitPlanWithWithoutKeywordAnnotation() {}
+	
 	@Plan("Echo \"${PARAM_EXEC}\"")
-	public void inlinePlan2() {}
+	public void explicitPlan() {}
 
 }

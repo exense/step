@@ -18,9 +18,7 @@
  ******************************************************************************/
 package step.junit.runner;
 
-import java.io.File;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,29 +34,29 @@ import step.plans.nl.parser.PlanParser;
 
 public class StepClassParser {
 
-	private static final String DEFAULT_PLAN_EXTENTION = ".plan";
-
 	private final PlanParser planParser = new PlanParser();
 
 	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {
 		final List<StepClassParserResult> result = new ArrayList<>();
-
-		Plans plans;
-		if ((plans = klass.getAnnotation(Plans.class)) != null) {
-			// 1. case: explicit list of plans:
-			for (String name : plans.value()) {
-				result.add(createPlan(klass, name));
-			}
-		} else {
-			// 2. case: all *.plans files in the package:
-			result.addAll(getPlansForClass(klass));
-		}
-
+		// Plans from annotation @Plans
+		result.addAll(getPlansFromPlansAnnotation(klass));
+		// Plans from methods annotated with @Plan
 		result.addAll(getPlanFromAnnotatedMethods(klass));
 		return result;
 	}
 
-	protected List<StepClassParserResult> getPlanFromAnnotatedMethods(Class<?> klass) {
+	private List<StepClassParserResult> getPlansFromPlansAnnotation(Class<?> klass) throws Exception {
+		final List<StepClassParserResult> result = new ArrayList<>();
+		Plans plans;
+		if ((plans = klass.getAnnotation(Plans.class)) != null) {
+			for (String name : plans.value()) {
+				result.add(createPlan(klass, name));
+			}
+		}
+		return result;
+	}
+
+	private List<StepClassParserResult> getPlanFromAnnotatedMethods(Class<?> klass) {
 		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(klass.getClassLoader())) {
 			return annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class).stream()
 					.filter(m -> m.getDeclaringClass() == klass).map(m -> {
@@ -67,17 +65,17 @@ public class StepClassParser {
 						Plan plan = null;
 						try {
 							String planStr = m.getAnnotation(step.junit.runners.annotations.Plan.class).value();
-							if (planStr == null || planStr.trim().length() == 0) {
+							if (planStr.trim().length() == 0) {
 								Keyword keyword = m.getAnnotation(Keyword.class);
 								if (keyword != null) {
 									String name = keyword.name();
-									if (name != null && name.trim().length() > 0) {
-										planStr = name;
+									if (name.trim().length() > 0) {
+										planStr = "\"" + name + "\"";
 									} else {
 										planStr = m.getName();
 									}
 								} else {
-									planStr = m.getName();
+									throw new IllegalStateException("Missing annotation @Keyword on implicit plan method "+m.getName());
 								}
 							}
 							plan = planParser.parse(planStr);
@@ -90,21 +88,7 @@ public class StepClassParser {
 		}
 	}
 
-	protected List<StepClassParserResult> getPlansForClass(Class<?> klass) throws Exception {
-		List<StepClassParserResult> result = new ArrayList<>();
-
-		URL url = klass.getResource(".");
-
-		File folder = new File(url.getFile());
-		for (File f : folder.listFiles()) {
-			if (f.getName().endsWith(DEFAULT_PLAN_EXTENTION)) {
-				result.add(createPlan(klass, f.getName()));
-			}
-		}
-		return result;
-	}
-
-	protected StepClassParserResult createPlan(Class<?> klass, String name) throws Exception {
+	private StepClassParserResult createPlan(Class<?> klass, String name) throws Exception {
 		Plan plan = null;
 		Exception exception = null;
 		try {
@@ -122,7 +106,7 @@ public class StepClassParser {
 		return new StepClassParserResult(name, plan, exception);
 	}
 
-	public static void setPlanName(Plan plan, String name) {
+	private static void setPlanName(Plan plan, String name) {
 		Map<String, String> attributes = new HashMap<>();
 		attributes.put(AbstractArtefact.NAME, name);
 		plan.setAttributes(attributes);
