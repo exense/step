@@ -44,14 +44,12 @@ import step.core.GlobalContext;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectHookRegistry;
 
 @Path("/resources")
 public class ResourceServices extends AbstractServices { 
 
 	protected ResourceManager resourceManager;
 	protected ResourceAccessor resourceAccessor;
-	private ObjectHookRegistry objectHookRegistry;
 	
 	@PostConstruct
 	public void init() throws Exception {
@@ -59,7 +57,6 @@ public class ResourceServices extends AbstractServices {
 		GlobalContext globalContext = getContext();
 		resourceManager = globalContext.getResourceManager();
 		resourceAccessor = globalContext.getResourceAccessor();
-		objectHookRegistry = globalContext.get(ObjectHookRegistry.class);
 	}
 	
 	@POST
@@ -69,7 +66,7 @@ public class ResourceServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType, @QueryParam("duplicateCheck") Boolean checkForDuplicate) throws Exception {
-		ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(getSession());
+		ObjectEnricher objectEnricher = getObjectEnricher();
 		
 		if(checkForDuplicate == null) {
 			checkForDuplicate = true;

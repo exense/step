@@ -26,6 +26,8 @@ import ch.exense.commons.app.Configuration;
 import step.core.Controller;
 import step.core.GlobalContext;
 import step.core.execution.ExecutionContext;
+import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.scheduler.ExecutionScheduler;
 
 public abstract class AbstractServices {
@@ -40,13 +42,17 @@ public abstract class AbstractServices {
 	
 	protected Configuration configuration;
 
+	private ObjectHookRegistry objectHookRegistry;
+
 	public AbstractServices() {
 		super();
 	}
 	
 	@PostConstruct
 	public void init() throws Exception {
-		configuration = controller.getContext().getConfiguration();
+		GlobalContext context = controller.getContext();
+		configuration = context.getConfiguration();
+		objectHookRegistry = context.get(ObjectHookRegistry.class);
 	}
 
 	protected GlobalContext getContext() {
@@ -72,5 +78,9 @@ public abstract class AbstractServices {
 	
 	protected void setSession(Session session) {
 		httpSession.setAttribute(SESSION, session);
+	}
+	
+	protected ObjectEnricher getObjectEnricher() {
+		return objectHookRegistry.getObjectEnricher(getSession());
 	}
 }

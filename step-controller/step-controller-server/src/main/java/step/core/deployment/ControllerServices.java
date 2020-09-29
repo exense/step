@@ -61,7 +61,8 @@ public class ControllerServices extends AbstractServices {
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		artefactHandlerRegistry = getContext().getArtefactHandlerRegistry();
 	}
 	
@@ -83,6 +84,11 @@ public class ControllerServices extends AbstractServices {
 	@Path("/task")
 	@Secured(right="task-write")
 	public void schedule(ExecutiontTaskParameters schedule) {
+		// Enrich the execution parameters with the attributes of the task parameters.
+		// The attributes of the execution parameters are then added to the Execution
+		// This is for instance needed to run the execution within the same project as
+		// the scheduler task
+		getObjectEnricher().accept(schedule.getExecutionsParameters());
 		getScheduler().addExecutionTask(schedule);
 	}
 	
