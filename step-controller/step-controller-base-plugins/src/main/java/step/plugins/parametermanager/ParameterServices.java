@@ -18,26 +18,33 @@
  ******************************************************************************/
 package step.plugins.parametermanager;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.PostConstruct;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.bson.types.ObjectId;
 
-import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.GlobalContext;
 import step.core.access.AccessManager;
 import step.core.accessors.CRUDAccessor;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.parameter.Parameter;
 import step.parameter.ParameterScope;
 
 @Path("/parameters")
@@ -168,17 +175,18 @@ public class ParameterServices extends AbstractServices {
 	@Secured(right="param-read")
 	public Parameter get(@PathParam("id") String id) {
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
-		if(parameter!=null) {
-			maskProtectedValue(parameter);
+		return maskProtectedValue(parameter);
+	}
+	
+	protected Parameter maskProtectedValue(Parameter parameter) {
+		if(parameter != null && isProtected(parameter)) {
+			parameter.setValue(PROTECTED_VALUE);				
 		}
 		return parameter;
 	}
 	
-	protected Parameter maskProtectedValue(Parameter parameter) {
-		if(isProtected(parameter)) {
-			parameter.setValue(PROTECTED_VALUE);				
-		}
-		return parameter;
+	protected List<Parameter> maskProtectedValues(Stream<Parameter> stream) {
+		return stream.map(p->maskProtectedValue(p)).collect(Collectors.toList());
 	}
 
 	@POST
@@ -186,15 +194,15 @@ public class ParameterServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
 	public Parameter get(Map<String,String> attributes) {
-		return parameterAccessor.findByAttributes(attributes);
+		return maskProtectedValue(parameterAccessor.findByAttributes(attributes));
 	}
 
 	@POST
 	@Path("/find")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
-	public List<Parameter> findMany(Map<String,String> attributes) {
-		return StreamSupport.stream(parameterAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+	public List<Parameter> findMany(Map<String, String> attributes) {
+		return maskProtectedValues(StreamSupport.stream(parameterAccessor.findManyByAttributes(attributes), false));
 	}
 
 	@GET
@@ -202,10 +210,12 @@ public class ParameterServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
 	public List<Parameter> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+		List<Parameter> range;
 		if(skip != null && limit != null) {
-			return parameterAccessor.getRange(skip, limit);
+			range = parameterAccessor.getRange(skip, limit);
 		} else {
-			return getAll(0, 1000);
+			range = getAll(0, 1000);
 		}
+		return maskProtectedValues(range.stream());
 	}
 }
