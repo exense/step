@@ -72,6 +72,8 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 
 		MongoCollection<Document> measurements = context.getMongoClientSession().getMongoDatabase().getCollection("measurements");
 		AbstractAccessor.createOrUpdateCompoundIndex(measurements,ATTRIBUTE_EXECUTION_ID, "begin");
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements,"planId", "begin");
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements,"taskId", "begin");
 		AbstractAccessor.createOrUpdateIndex(measurements,"begin");
 
 		WebAppContext webappCtx = new WebAppContext();
