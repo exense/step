@@ -102,4 +102,7 @@ public class Entity<A extends AbstractIdentifiableObject, T extends CRUDAccessor
 		this.byPassObjectPredicate = byPassObjectPredicate;
 	}
 
+	public boolean shouldExport(AbstractIdentifiableObject a) {
+		return true;
+	}
 }

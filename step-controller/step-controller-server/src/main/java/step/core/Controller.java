@@ -32,6 +32,7 @@ import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.access.UserAccessorImpl;
 import step.core.accessors.AbstractCRUDAccessor;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.MongoClientSession;
 import step.core.accessors.PlanAccessorImpl;
 import step.core.accessors.collections.Collection;
@@ -158,7 +159,12 @@ public class Controller {
 				new GenericDBImporter<Execution, ExecutionAccessor>(context) {
 			}))
 			.register(new Entity<Plan,PlanAccessor>(
-					EntityManager.plans, context.getPlanAccessor(), Plan.class, new PlanImporter(context)))
+					EntityManager.plans, context.getPlanAccessor(), Plan.class, new PlanImporter(context)){
+				@Override
+				public boolean shouldExport(AbstractIdentifiableObject a) {
+					return ((Plan) a).isVisible();
+				}
+			})
 			.register(new Entity<ReportNode,ReportNodeAccessor>(
 					EntityManager.reports, context.getReportAccessor(), ReportNode.class,
 					new GenericDBImporter<ReportNode, ReportNodeAccessor>(context)))
