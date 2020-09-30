@@ -28,6 +28,10 @@ import javax.json.JsonObject;
 import org.bson.conversions.Bson;
 
 import ch.exense.commons.app.Configuration;
+import step.artefacts.reports.CheckReportNode;
+import step.artefacts.reports.EchoReportNode;
+import step.artefacts.reports.RetryIfFailsReportNode;
+import step.artefacts.reports.SleepReportNode;
 import step.core.GlobalContext;
 import step.core.accessors.collections.field.CollectionField;
 import step.core.accessors.collections.field.formatter.DateFormatter;
@@ -42,9 +46,10 @@ public class LeafReportNodeCollection extends ReportNodeCollection {
 		
 		Configuration configuration = context.getConfiguration();
 		String optionalReportNodesFilterStr = configuration.getProperty("execution.reports.nodes.include", 
-				"_class:step.artefacts.reports.EchoReportNode,"+
-				"_class:step.artefacts.reports.RetryIfFailsReportNode,"+
-				"_class:step.artefacts.reports.SleepReportNode,"+
+				"_class:"+EchoReportNode.class.getName()+","+
+				"_class:"+RetryIfFailsReportNode.class.getName()+","+
+				"_class:"+SleepReportNode.class.getName()+","+
+				"_class:"+CheckReportNode.class.getName()+","+
 				"_class:step.artefacts.reports.WaitForEventReportNode");
 		optionalReportNodesFilter = new ArrayList<String[]>();
 		for (String kv: optionalReportNodesFilterStr.split(",")) {

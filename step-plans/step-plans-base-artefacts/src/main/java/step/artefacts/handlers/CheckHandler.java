@@ -19,19 +19,20 @@
 package step.artefacts.handlers;
 
 import step.artefacts.Check;
+import step.artefacts.reports.CheckReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 
-public class CheckHandler extends ArtefactHandler<Check, ReportNode> {
+public class CheckHandler extends ArtefactHandler<Check, CheckReportNode> {
 	
 	@Override
-	protected void createReportSkeleton_(ReportNode parentNode, Check testArtefact) {
+	protected void createReportSkeleton_(CheckReportNode parentNode, Check testArtefact) {
 
 	}
 
 	@Override
-	protected void execute_(ReportNode node, Check testArtefact) {
+	protected void execute_(CheckReportNode node, Check testArtefact) {
 		ReportNode callFunctionReport = (ReportNode) context.getVariablesManager().getVariable("callReport"); 
 		if(callFunctionReport==null || callFunctionReport.getStatus()==ReportNodeStatus.PASSED) {
 			if(testArtefact.getExpression().get()) {
@@ -43,7 +44,7 @@ public class CheckHandler extends ArtefactHandler<Check, ReportNode> {
 	}
 
 	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, Check testArtefact) {
-		return new ReportNode();
+	public CheckReportNode createReportNode_(ReportNode parentNode, Check testArtefact) {
+		return new CheckReportNode();
 	}
 }

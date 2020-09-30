@@ -58,7 +58,9 @@ public class PlanStepParser implements StepParser<PlanStep> {
 					}
 				} else if (current instanceof CallFunction) {
 					parsingContext.parseStep(newParsingContext(parsingContext, step), subStep);
-				}		
+				} else {
+					parsingContext.addParsingError(ASSERT_TOKEN+"s have to be used within or directly after a Keyword");
+				}
 			} else {
 				subStep = new DescriptionStep(step.getCommand().trim());			
 				parsingContext.parseStep(newParsingContext(parsingContext, step), subStep);
