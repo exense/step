@@ -29,7 +29,8 @@ angular.module('export',[])
         var status = response.data;
         if(status.ready) {
           var attachmentID = status.attachmentID;
-          if (status.warnings !== undefined && status.warnings.length>0) {
+          if (status.warnings !== undefined && status.warnings !== null &&
+              status.warnings.length > 0) {
             Dialogs.showListOfMsgs(status.warnings).then(function() {
               download(attachmentID);          
             })
