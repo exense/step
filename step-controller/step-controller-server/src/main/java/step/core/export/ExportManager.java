@@ -131,19 +131,24 @@ public class ExportManager {
 			List<String> resourceRef = references.getReferencesByType(EntityManager.resources);
 			Entity<?, ?> resourceEntity = context.getEntityManager().getEntityByName(EntityManager.resources);
 			if (resourceRef != null && resourceRef.size() > 0 && resourceEntity != null) {
-				exportResources(zos, resourceRef, resourceEntity);
+				exportResources(zos, references, resourceEntity);
 			}
 		}
 	}
 
-	private void exportResources(ZipOutputStream zos, List<String> resourceRef, Entity<?, ?> resourceEntity) {
+	private void exportResources(ZipOutputStream zos, EntityReferencesMap references, Entity<?, ?> resourceEntity) {
 		ResourceManager resourceManager = context.getResourceManager();
+		List<String> resourceRef = references.getReferencesByType(EntityManager.resources);
 		resourceRef.forEach(r-> {
 			File file = resourceManager.getResourceFile(r).getResourceFile();
-			try {
-				FileHelper.zipFile(zos, file, resourceManager.getResourcesRootPath());
-			} catch (IOException e) {
-				throw new RuntimeException("Unable to add resource file to the archive",e);
+			if (file.exists()) {
+				try {
+					FileHelper.zipFile(zos, file, resourceManager.getResourcesRootPath());
+				} catch (IOException e) {
+					throw new RuntimeException("Unable to add resource file to the archive",e);
+				}
+			} else {
+				references.addReferenceNotFoundWarning("Resource file with id '" + r + "' and name" + file.getName() + "' is missing");
 			}
 		});
 	}
