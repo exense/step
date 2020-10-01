@@ -559,7 +559,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					//turning off refresh when clicking other views
 					$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
 					//reverting to previous interval (if changed on preformance tab)
-					$scope.autorefresh.setMinPresets(0);
+					//when opening the execution autorefresh is not defined yet
+					if ($scope.autorefresh && $scope.autorefresh.setMinPresets) {
+					  $scope.autorefresh.setMinPresets(0);
+					}
 					if ($scope.oldIntervalValue >= 0 ) {
 					  $scope.autorefresh.interval=$scope.oldIntervalValue;
 					  $scope.oldIntervalValue-1;
