@@ -23,6 +23,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.objectenricher.ObjectHookRegistry;
 import step.parameter.Parameter;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
@@ -65,6 +66,8 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				parameterAccessor,
 				Parameter.class,
 				new GenericDBImporter<Parameter, CRUDAccessor<Parameter>>(context)));
+
+		context.get(ObjectHookRegistry.class).add(parameterManager.getObjectHook());
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
 	}

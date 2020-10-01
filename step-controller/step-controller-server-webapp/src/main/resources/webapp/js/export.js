@@ -32,10 +32,10 @@ angular.module('export',[])
           if (status.warnings !== undefined && status.warnings !== null &&
               status.warnings.length > 0) {
             Dialogs.showListOfMsgs(status.warnings).then(function() {
-              download(attachmentID);          
+              downloadExport(attachmentID);
             })
           } else {
-            download(attachmentID);
+            downloadExport(attachmentID);
           }
           
           
@@ -46,6 +46,14 @@ angular.module('export',[])
         }
       });
     })();
+  }
+
+  var downloadExport = function(attachmentID) {
+    if (attachmentID !== undefined && attachmentID !== null) {
+      download(attachmentID);
+    } else {
+      Dialogs.showErrorMsg("The export file could not be created, check the controller logs for more details");
+    }
   }
   
   var download = function(attachmentID){

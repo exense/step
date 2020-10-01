@@ -70,7 +70,7 @@ public class ImportServices extends AbstractServices {
 			if (!importAll) {
 				filter = Arrays.asList(entity);
 			}
-			ImportConfiguration importConfiguration = new ImportConfiguration(file.getFile(), getObjectEnricher(),filter,overwrite);
+			ImportConfiguration importConfiguration = new ImportConfiguration(file.getFile(), getObjectEnricher(),getObjectDrainer(),filter,overwrite);
 			importManager.importAll(importConfiguration);
 		} catch (Exception e) {
 			logger.error("Import failed",e);

@@ -83,4 +83,8 @@ public abstract class AbstractServices {
 	protected ObjectEnricher getObjectEnricher() {
 		return objectHookRegistry.getObjectEnricher(getSession());
 	}
+
+	protected ObjectEnricher getObjectDrainer() {
+		return objectHookRegistry.getObjectDrainer(getSession());
+	}
 }

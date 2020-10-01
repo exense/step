@@ -29,17 +29,19 @@ import step.resources.LocalResourceManagerImpl;
 public class ImportConfiguration {
 	File file;
 	ObjectEnricher objectEnricher;
+	ObjectEnricher objectDrainer;
 	List<String> entitiesFilter;
 	boolean overwrite;
 	Map<String,String> metadata;
 	Version version;
 	LocalResourceManagerImpl localResourceMgr;
-	
-	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
-			boolean overwrite) {
+
+	public ImportConfiguration(File file, ObjectEnricher objectEnricher, ObjectEnricher objectDrainer, List<String> entitiesFilter,
+							   boolean overwrite) {
 		super();
 		this.file = file;
 		this.objectEnricher = objectEnricher;
+		this.objectDrainer = objectDrainer;
 		this.entitiesFilter = entitiesFilter;
 		this.overwrite = overwrite;
 	}
@@ -54,6 +56,12 @@ public class ImportConfiguration {
 	}
 	public void setObjectEnricher(ObjectEnricher objectEnricher) {
 		this.objectEnricher = objectEnricher;
+	}
+	public ObjectEnricher getObjectDrainer() {
+		return objectDrainer;
+	}
+	public void setObjectDrainer(ObjectEnricher objectDrainer) {
+		this.objectDrainer = objectDrainer;
 	}
 	public List<String> getEntitiesFilter() {
 		return entitiesFilter;

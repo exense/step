@@ -773,6 +773,14 @@ fieldset {
 	color: #454646;
 	width: 100%;	
 	margin-bottom: 10px;
+
+}
+
+.section-content-border {
+  padding: 10px;
+  border-style: double;
+  border-color: grey;
+  border-radius: 10px;
 }
 
 .section-highlight {

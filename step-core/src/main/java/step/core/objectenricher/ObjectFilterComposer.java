@@ -30,10 +30,11 @@ public class ObjectFilterComposer {
 				String filter = "";
 				Iterator<ObjectFilter> iterator = list.iterator();
 				while(iterator.hasNext()) {
-					filter += iterator.next().getOQLFilter();
-					if(iterator.hasNext()) {
+					String nextFilter = iterator.next().getOQLFilter();
+					if (!filter.equals("") && !nextFilter.equals("")) {
 						filter += " and ";
 					}
+					filter += nextFilter;
 				}
 				return filter;
 			}

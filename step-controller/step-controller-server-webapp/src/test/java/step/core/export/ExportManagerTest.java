@@ -107,7 +107,7 @@ public class ExportManagerTest {
 			//create a new context to test the import
 			c = createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), dummyObjectEnricher(), Arrays.asList("plans"), true));
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Assert.assertEquals(plan.getId(), actualPlan.getId());
@@ -151,7 +151,7 @@ public class ExportManagerTest {
 			//create a new context to test the import
 			c = createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), dummyObjectEnricher(), Arrays.asList("plans"), true));
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Plan actualPlan2 = c.getPlanAccessor().get(plan2.getId());
@@ -193,7 +193,7 @@ public class ExportManagerTest {
 			parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
 
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), dummyObjectEnricher(),null, true));
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Plan actualPlan2 = c.getPlanAccessor().get(plan2.getId());
@@ -235,7 +235,7 @@ public class ExportManagerTest {
 			parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
 
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), dummyObjectEnricher(),null, true));
 			
 			Parameter actualParam = parameterAccessor.get(savedParam.getId());
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
@@ -277,7 +277,7 @@ public class ExportManagerTest {
 			//create a new context to test the import
 			c = GlobalContextBuilder.createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), dummyObjectEnricher(), Arrays.asList("plans"), true));
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Assert.assertEquals(plan.getId(), actualPlan.getId());
@@ -334,7 +334,7 @@ public class ExportManagerTest {
 			//create a new context to test the import
 			c = GlobalContextBuilder.createGlobalContext();
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), dummyObjectEnricher(),null, overwrite));
 			
 			AtomicInteger nbPlans = new AtomicInteger(0);
 			c.getPlanAccessor().getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
@@ -402,7 +402,7 @@ public class ExportManagerTest {
 			c = createGlobalContext();
 			functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), dummyObjectEnricher(),null, overwrite));
 			
 			AtomicInteger nbPlans = new AtomicInteger(0);
 			c.getPlanAccessor().getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
@@ -476,7 +476,7 @@ public class ExportManagerTest {
 			ResourceManager resourceManagerImport = c.getResourceManager();
 
 			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), dummyObjectEnricher(),null, overwrite));
 			
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Resource actualResource =   c.getResourceAccessor().get(resource.getId());
@@ -548,7 +548,7 @@ public class ExportManagerTest {
 		//create a new context to test the import
 		c = createGlobalContext();
 		ImportManager importManager = new ImportManager(c);
-		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(),dummyObjectEnricher(), Arrays.asList("plans"), true));
 		
 		Plan actualPlan = c.getPlanAccessor().get(originPlanId);
 		Assert.assertEquals(originPlanId, actualPlan.getId().toString());

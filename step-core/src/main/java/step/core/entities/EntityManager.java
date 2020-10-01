@@ -108,11 +108,16 @@ public class EntityManager  {
 	
 	private void resolveReferences(Object object, EntityReferencesMap references) {
 		if(object!=null) {
+
 			Class<?> clazz = object.getClass();
-			try {
+
 				BeanInfo beanInfo = beanInfoCache.get(clazz);
 				if(beanInfo==null) {
-					beanInfo = Introspector.getBeanInfo(clazz, Object.class);
+					try {
+						beanInfo = Introspector.getBeanInfo(clazz, Object.class);
+					} catch (IntrospectionException e) {
+						references.addReferenceNotFoundWarning("Introspection failed for class " + clazz.getName());
+					}
 					beanInfoCache.put(clazz, beanInfo);
 				}
 				
@@ -122,7 +127,14 @@ public class EntityManager  {
 						if(method.isAnnotationPresent(EntityReference.class)) {
 							EntityReference eRef = method.getAnnotation(EntityReference.class);
 							String entityType = eRef.type();
-							Object value = method.invoke(object);
+							Object value = null;
+							try {
+								value = method.invoke(object);
+							} catch (IllegalAccessException e) {
+								references.addReferenceNotFoundWarning("IllegalAccessException failed for method " + method.getName());
+							} catch (InvocationTargetException e) {
+								e.printStackTrace();
+							}
 							if (entityType.equals(recursive)) {
 								//No actual references, but need to process the field recursively
 								if (value instanceof Collection) {
@@ -143,9 +155,7 @@ public class EntityManager  {
 						}						
 					}
 				}
-			} catch (Exception e) {
-				throw new RuntimeException("Export failed, unabled to get references by reflections",e);
-			}			
+
 		}
 	}
 	

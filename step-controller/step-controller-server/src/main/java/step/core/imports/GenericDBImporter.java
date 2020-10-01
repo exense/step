@@ -59,6 +59,9 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
 		if (importConfig.version.compareTo(new Version(3,13,0)) >= 0) {
 			A aObj = mapper.readValue(jParser, entity.getEntityClass());
+			if (importConfig.objectDrainer!=null) {
+				importConfig.objectDrainer.accept(aObj);
+			}
 			importConfig.objectEnricher.accept(aObj);
 			if (importConfig.overwrite) {
 				entity.getAccessor().save(aObj);
