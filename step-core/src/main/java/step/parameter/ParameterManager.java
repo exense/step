@@ -109,7 +109,7 @@ public class ParameterManager {
 
 					@Override
 					public Map<String, String> getAdditionalAttributes() {
-						return null;
+						return new HashMap<>();
 					}
 				};
 			}
