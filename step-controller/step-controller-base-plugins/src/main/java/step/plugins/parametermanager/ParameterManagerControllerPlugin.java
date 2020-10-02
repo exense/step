@@ -29,6 +29,7 @@ import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.CRUDAccessor;
 import step.core.accessors.collections.CollectionRegistry;
+import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.entities.Entity;
 import step.core.imports.GenericDBImporter;
 import step.core.plugins.AbstractControllerPlugin;
@@ -41,7 +42,7 @@ import step.plugins.screentemplating.ScreenInput;
 import step.plugins.screentemplating.ScreenInputAccessor;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
-@Plugin(dependencies= {ScreenTemplatePlugin.class})
+@Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class})
 public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 	
 	private static final String entityName = "parameters";
@@ -67,7 +68,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				Parameter.class,
 				new GenericDBImporter<Parameter, CRUDAccessor<Parameter>>(context)));
 
-		context.get(ObjectHookRegistry.class).add(parameterManager.getObjectHook());
+		context.require(ObjectHookRegistry.class).add(parameterManager.getObjectHook());
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
 	}
