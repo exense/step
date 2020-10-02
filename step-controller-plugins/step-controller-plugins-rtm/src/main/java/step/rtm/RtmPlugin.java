@@ -91,7 +91,6 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 					measurement.put("begin", measure.getBegin());
 					measurement.put("rnId", stepReport.getId().toString());
 					measurement.put("rnStatus", stepReport.getStatus().toString());
-					measurement.put("type", "custom");
 					measurement.put("agentUrl", stepReport.getAgentUrl());
 					measurement.put("planId", planId);
 					if(schedulerTaskId != null) {

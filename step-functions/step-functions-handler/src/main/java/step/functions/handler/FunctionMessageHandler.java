@@ -99,6 +99,10 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			Output<?> output = functionHandler.handle(input);
 			measurementsBuilder.stopMeasure(customMeasureData());
 			
+			List<Measure> outputMeasures = output.getMeasures();
+			// Add type="custom" to all output measures
+			addCustomTypeToOutputMeasures(outputMeasures);
+			
 			// Add Keyword measure to output
 			addAdditionalMeasuresToOutput(output, measurementsBuilder.getMeasures());
 
@@ -111,6 +115,17 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			return outputMessageBuilder.build();
 			
 		});
+	}
+
+	protected void addCustomTypeToOutputMeasures(List<Measure> outputMeasures) {
+		if(outputMeasures!=null) {
+			outputMeasures.forEach(m->{
+				if(m.getData() == null) {
+					m.setData(new HashMap<>());
+				}
+				m.getData().put(MeasureTypes.ATTRIBUTE_TYPE, MeasureTypes.TYPE_CUSTOM);
+			});
+		}
 	}
 
 	protected void addAdditionalMeasuresToOutput(Output<?> output, List<Measure> additionalMeasures) {
