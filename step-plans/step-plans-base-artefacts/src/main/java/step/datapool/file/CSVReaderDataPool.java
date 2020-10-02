@@ -92,7 +92,7 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 		try {
 			tempFileWriter.close();
 			// persist the changes if necessary
-			if (hasChanges.get()) {
+			if (isWriteEnabled() && hasChanges.get()) {
 				// move the initial file
 				File initialFile = new File(filePath + ".initial");
 				Files.move(new File(filePath), initialFile);
@@ -111,23 +111,33 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 	public void writeRow(DataPoolRow row) throws IOException {
 		super.writeRow(row);
 
-		Object value = row.getValue();
-		if (value != null && value instanceof CSVRowWrapper) {
-			CSVRowWrapper csvRow = (CSVRowWrapper) value;
-
-			Iterator<String> iterator = headers.iterator();
-			while (iterator.hasNext()) {
-				String header = iterator.next();
-				Object object = csvRow.rowData.get(header);
-				if(object != null) {
-					tempFileWriter.print(object.toString());			
+		if(isWriteEnabled()) {
+			Object value = row.getValue();
+			if (value != null && value instanceof CSVRowWrapper) {
+				CSVRowWrapper csvRow = (CSVRowWrapper) value;
+				
+				Iterator<String> iterator = headers.iterator();
+				while (iterator.hasNext()) {
+					String header = iterator.next();
+					Object object = csvRow.rowData.get(header);
+					if(object != null) {
+						tempFileWriter.print(object.toString());			
+					}
+					if (iterator.hasNext()) {
+						tempFileWriter.print(delimiter);
+					}
 				}
-				if (iterator.hasNext()) {
-					tempFileWriter.print(delimiter);
-				}
+				tempFileWriter.println();
 			}
-			tempFileWriter.println();
 		}
+	}
+
+	protected boolean isWriteEnabled() {
+		// Write is currently only enabled for ForEach and not DataSets
+		// The only way to differentiate a ForEach from a DataSet is the flag isRowCommitEnabled
+		// One may want to support writes for DataSet in forWrite mode. This might require
+		// an additional check here.
+		return isRowCommitEnabled;
 	}
 
 	@Override
