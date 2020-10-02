@@ -19,12 +19,15 @@
 package step.functions.handler;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import step.core.reports.Measure;
+import step.core.reports.MeasurementsBuilder;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.agent.AgentTokenServices;
@@ -90,9 +93,15 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 			
 			// Handle the input
+			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
+			measurementsBuilder.startMeasure(input.getFunction());
 			@SuppressWarnings("unchecked")
 			Output<?> output = functionHandler.handle(input);
+			measurementsBuilder.stopMeasure(customMeasureData());
 			
+			// Add Keyword measure to output
+			addAdditionalMeasuresToOutput(output, measurementsBuilder.getMeasures());
+
 			// Serialize the output
 			ObjectNode outputPayload = (ObjectNode) mapper.valueToTree(output);
 
@@ -102,6 +111,21 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			return outputMessageBuilder.build();
 			
 		});
+	}
+
+	protected void addAdditionalMeasuresToOutput(Output<?> output, List<Measure> additionalMeasures) {
+		List<Measure> outputMeasures = output.getMeasures();
+		if(outputMeasures == null) {
+			output.setMeasures(additionalMeasures);
+		} else {
+			outputMeasures.addAll(additionalMeasures);
+		}
+	}
+
+	protected Map<String, Object> customMeasureData() {
+		Map<String, Object> data = new HashMap<>();
+		data.put(MeasureTypes.ATTRIBUTE_TYPE, MeasureTypes.TYPE_KEYWORD);
+		return data;
 	}
 
 	private Map<String, String> getMergedAgentProperties(AgentTokenWrapper token) {

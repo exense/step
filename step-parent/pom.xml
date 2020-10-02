@@ -57,7 +57,7 @@
 		<!-- Exense projects -->
 		<exense-commons.version>2020.09.10-cfed422f</exense-commons.version>
 		<step-grid.version>2020.09.24-ID9031a39</step-grid.version>
-		<step-api.version>2020.09.23-ID0438543</step-api.version>
+		<step-api.version>2020.10.01-ID2649a2b</step-api.version>
 		<viz.version>1.0.1</viz.version>
 		<!-- -->
 		<junit.version>4.8.1</junit.version>
