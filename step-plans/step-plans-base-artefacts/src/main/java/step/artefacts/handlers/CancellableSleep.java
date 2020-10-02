@@ -39,7 +39,9 @@ public class CancellableSleep {
 
         final String context = makeLogContextString(invocationContext);
 
-        logger.debug(context + "Sleeping for " + duration + " ms; checking for cancellation every " + checkIntervalMs + " ms");
+        if(logger.isDebugEnabled()) {
+        	logger.debug(context + "Sleeping for " + duration + " ms; checking for cancellation every " + checkIntervalMs + " ms");
+        }
 
         while (true) {
             if (cancelCondition.get()) {
@@ -57,14 +59,18 @@ public class CancellableSleep {
                 return true;
             }
 
-            // We always sleep at least 1 ms to avoid tightly looping multiple times during the same millisecond.
-            // This also means that we'll usually overshoot the original sleep target duration by about 1 or 2 ms,
-            // but this is within the error range of what the JVM would do as well.
-            long chunk = (leftToSleep % checkIntervalMs) + 1;
+            long chunk;
+            if(leftToSleep >= checkIntervalMs) {
+            	chunk = checkIntervalMs;
+            } else {
+            	// Sleep at least 1ms to avoid tightly looping multiple times during the same millisecond
+            	chunk = Math.max(1, leftToSleep % checkIntervalMs);
+            }
 
             if (logger.isTraceEnabled()) {
                 logger.trace(context + "Sleeping for another " + chunk + " ms, total ms left to sleep: " + leftToSleep);
             }
+            System.out.println("Sleeping "+chunk);
             try {
                 Thread.sleep(chunk);
             } catch (InterruptedException e) {
