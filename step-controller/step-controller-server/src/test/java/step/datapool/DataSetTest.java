@@ -29,9 +29,13 @@ import step.core.execution.ExecutionEngine;
 
 public class DataSetTest {
 
+	public static class TestConfiguration extends DataPoolConfiguration {
+		
+	}
+	
 	@Test
 	public void test() {
-		DataSet<Object> dataSet = new DataSet<Object>(new Object()) {
+		DataSet<TestConfiguration> dataSet = new DataSet<TestConfiguration>(new TestConfiguration()) {
 
 			@Override
 			public void reset() {
@@ -61,7 +65,7 @@ public class DataSetTest {
 	@Test
 	public void testWriteRow() {
 		AtomicInteger writeRowCallCount = new AtomicInteger(0);
-		DataSet<Object> dataSet = new DataSet<Object>(new Object()) {
+		DataSet<TestConfiguration> dataSet = new DataSet<TestConfiguration>(new TestConfiguration()) {
 
 			@Override
 			public void writeRow(DataPoolRow row) throws IOException {
@@ -82,6 +86,12 @@ public class DataSetTest {
 			public void addRow(Object row) {
 				
 			}
+			
+			@Override
+			protected boolean isWriteQueueSupportEnabled() {
+				// Enabled write queue
+				return true;
+			}
 		};
 		dataSet.setContext(newExecutionContext());
 		dataSet.init();
@@ -90,6 +100,46 @@ public class DataSetTest {
 		dataSet.close();
 		
 		Assert.assertEquals(2, writeRowCallCount.get());
+	}
+	
+	@Test
+	public void testWriteRowDisabled() {
+		AtomicInteger writeRowCallCount = new AtomicInteger(0);
+		DataSet<TestConfiguration> dataSet = new DataSet<TestConfiguration>(new TestConfiguration()) {
+
+			@Override
+			public void writeRow(DataPoolRow row) throws IOException {
+				writeRowCallCount.incrementAndGet();
+			}
+
+			@Override
+			public void reset() {
+				
+			}
+
+			@Override
+			public Object next_() {
+				return "dummy";
+			}
+
+			@Override
+			public void addRow(Object row) {
+				
+			}
+			
+			@Override
+			protected boolean isWriteQueueSupportEnabled() {
+				// Explicitly disable write queue
+				return false;
+			}
+		};
+		dataSet.setContext(newExecutionContext());
+		dataSet.init();
+		dataSet.next().commit();
+		dataSet.next().commit();
+		dataSet.close();
+		
+		Assert.assertEquals(0, writeRowCallCount.get());
 	}
 
 }

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import step.core.execution.ExecutionContext;
 
-public abstract class DataSet<T> {
+public abstract class DataSet<T extends DataPoolConfiguration> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(DataSet.class);
 	
@@ -43,8 +43,8 @@ public abstract class DataSet<T> {
 	 * This queue is processed by the writeQueueProcessor thread and is used to
 	 * to persist changes to data pool performed by the user
 	 */
-	protected LinkedBlockingQueue<DataPoolRow> writeQueue;
-	protected ExecutorService writeQueueProcessor;
+	private LinkedBlockingQueue<DataPoolRow> writeQueue;
+	private ExecutorService writeQueueProcessor;
 	
 	protected boolean isRowCommitEnabled = false;
 	protected volatile boolean closing;
@@ -66,64 +66,72 @@ public abstract class DataSet<T> {
 	public void init() {
 		closing = false;
 		
-		Integer maxQueueSize = context.getConfiguration().getPropertyAsInteger("datasets.write.queue.maxsize", 1000);
-		writeQueue = new LinkedBlockingQueue<>(maxQueueSize);
-		
-		BasicThreadFactory factory = new BasicThreadFactory.Builder().namingPattern("dataset-write-thread-%d").build();
-		writeQueueProcessor = Executors.newFixedThreadPool(1, factory);
-		writeQueueProcessor.submit(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					DataPoolRow row;
-					while(true) {
-						row=writeQueue.poll(100, TimeUnit.MILLISECONDS);
-						if(row == null) {
-							if(closing) {
-								// the data set has been closed. no more row will be added to the queue => break
-								break;
-							} else {
-								// the data set has not been closed. new rows might be added to the queue => poll again 
-								continue;
+		if(isWriteQueueSupportEnabled()) {
+			Integer maxQueueSize = context.getConfiguration().getPropertyAsInteger("datasets.write.queue.maxsize", 1000);
+			writeQueue = new LinkedBlockingQueue<>(maxQueueSize);
+			
+			BasicThreadFactory factory = new BasicThreadFactory.Builder().namingPattern("dataset-write-thread-%d").build();
+			writeQueueProcessor = Executors.newFixedThreadPool(1, factory);
+			writeQueueProcessor.submit(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						DataPoolRow row;
+						while(true) {
+							row=writeQueue.poll(100, TimeUnit.MILLISECONDS);
+							if(row == null) {
+								if(closing) {
+									// the data set has been closed. no more row will be added to the queue => break
+									break;
+								} else {
+									// the data set has not been closed. new rows might be added to the queue => poll again 
+									continue;
+								}
+							}
+							
+							if(isRowCommitEnabled) {
+								// wait for the row to be committed
+								row.waitForCommit();
+							}
+							try {
+								writeRow(row);
+							} catch (Exception e) {
+								logger.error("Error while writing row"+row.toString(), e);
 							}
 						}
-						
-						if(isRowCommitEnabled) {
-							// wait for the row to be committed
-							row.waitForCommit();
-						}
-						try {
-							writeRow(row);
-						} catch (Exception e) {
-							logger.error("Error while writing row"+row.toString(), e);
-						}
+					} catch (InterruptedException e) {
+						logger.error("Error while running queue processor thread", e);
 					}
-				} catch (InterruptedException e) {
-					logger.error("Error while running queue processor thread", e);
 				}
-			}
-		});
+			});
+		}
 	}
 
 	public abstract void reset();
 	
 	public void close() {
 		closing = true;
-		writeQueueProcessor.shutdown();
-		try {
-			boolean terminated = writeQueueProcessor.awaitTermination(1, TimeUnit.MINUTES);
-			if(!terminated) {
-				logger.error("Timeout while waiting for write queue processor to terminate");
+		if(isWriteQueueSupportEnabled()) {
+			writeQueueProcessor.shutdown();
+			try {
+				boolean terminated = writeQueueProcessor.awaitTermination(1, TimeUnit.MINUTES);
+				if(!terminated) {
+					logger.error("Timeout while waiting for write queue processor to terminate");
+				}
+			} catch (InterruptedException e) {
+				logger.error("Error while waiting for write queue processor to terminate", e);
 			}
-		} catch (InterruptedException e) {
-			logger.error("Error while waiting for write queue processor to terminate", e);
 		}
+	}
+
+	protected boolean isWriteQueueSupportEnabled() {
+		return false;
 	}
 	
 	public final synchronized DataPoolRow next() {
 		Object nextValue = next_();
 		DataPoolRow dataPoolRow = nextValue!=null?new DataPoolRow(nextValue):null;
-		if(dataPoolRow!=null) {
+		if(isWriteQueueSupportEnabled() && dataPoolRow!=null) {
 			// Put the row to the write queue
 			writeQueue.offer(dataPoolRow);
 		}

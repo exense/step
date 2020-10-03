@@ -132,7 +132,12 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 		}
 	}
 
-	protected boolean isWriteEnabled() {
+	@Override
+	protected boolean isWriteQueueSupportEnabled() {
+		return isWriteEnabled();
+	}
+	
+	private boolean isWriteEnabled() {
 		// Write is currently only enabled for ForEach and not DataSets
 		// The only way to differentiate a ForEach from a DataSet is the flag isRowCommitEnabled
 		// One may want to support writes for DataSet in forWrite mode. This might require
