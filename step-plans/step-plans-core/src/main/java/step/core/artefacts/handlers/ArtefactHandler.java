@@ -87,7 +87,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		EXECUTION;
 	}
 	
-	public void createReportSkeleton(ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {		
+	public void createReportSkeleton(ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {
 		REPORT_NODE reportNode = beforeDelegation(Phase.SKELETON_CREATION, parentReportNode, artefact, newVariables);
 		if(parentReportNode != null && parentReportNode.isOrphan()) {
 			reportNode.setOrphan(true);
@@ -98,6 +98,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		try {
 			dynamicBeanResolver.evaluate(artefact, getBindings());
 			artefact.setNameDynamically();
+			reportNode.setName(getReportNodeName(artefact));
 			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
 			if(filter!=null&&!filter.isSelected(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
@@ -125,7 +126,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		if(getListOfArtefactsNotInitialized().contains(artefact.getId().toString())) {
 			createReportSkeleton(parentReportNode, artefact, newVariables);
 		}
-		
+
 		REPORT_NODE reportNode = beforeDelegation(Phase.EXECUTION, parentReportNode, artefact, newVariables);
 		
 		long t1 = System.currentTimeMillis();
@@ -141,6 +142,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			
 			dynamicBeanResolver.evaluate(artefact, getBindings());
 			artefact.setNameDynamically();
+			reportNode.setName(getReportNodeName(artefact));
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
 			
