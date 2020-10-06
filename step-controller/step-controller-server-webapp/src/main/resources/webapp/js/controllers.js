@@ -534,18 +534,18 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					if($scope.execution.status!=='ENDED') {
 						//must handle this here until we have a dedicated controller per tab
 
-            //initialize viz refresh with 1 seconds to get first graphs quickly
+            //change refresh interval to min 10 seconds (will use an auto increase) and start viz refreh
+	          $scope.oldIntervalValue=$scope.autorefresh.interval;
+	          $scope.oldAutoIncreaseTo=$scope.autorefresh.autoIncreaseTo;
+	          var minValue=10000;
+						$scope.autorefresh.setMinPresets(minValue);
+						if ($scope.oldIntervalValue<=minValue) {
+              $scope.autorefresh.interval=1000; // trigger the watcher to restart the timer
+              $scope.autorefresh.autoIncreaseTo=minValue;
+            }
             $timeout(function() {
-              $scope.$broadcast('globalsettings-refreshInterval', { 'new': 1000 });
               $scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });
             });
-						//then disable refresh rates < 30 seconds for the performance tab (reduce CPU overhead)
-						$scope.oldIntervalValue=$scope.autorefresh.interval;
-						$scope.autorefresh.setMinPresets(30000);
-						$timeout(function() {
-						  $scope.$broadcast('globalsettings-refreshInterval', { 'new': $scope.autorefresh.interval });
-						  $scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });
-						 },2000);
 					}
 
 					$(document).ready(function () {
@@ -565,7 +565,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					}
 					if ($scope.oldIntervalValue >= 0 ) {
 					  $scope.autorefresh.interval=$scope.oldIntervalValue;
-					  $scope.oldIntervalValue-1;
+					  $scope.autorefresh.autoIncreaseTo=$scope.oldAutoIncreaseTo;
+					  $scope.oldIntervalValue=-1;
 					}
 				}
 			});
@@ -666,14 +667,12 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
         for (var i = 0; i < $scope.autoRefreshPresets.length; i++) {
           var obj = $scope.autoRefreshPresets[i];
           if (obj.value > 0 && obj.value < minValue) {
-            obj.disabled=true;
+            obj.disabled=false;//for now keep it active
           } else {
             obj.disabled=false;
           }
         }
-        if ($scope.autorefresh.interval<=minValue) {
-          $scope.autorefresh.interval=minValue;
-        }
+
 			}
 
 			$scope.changeRefreshInterval = function (newInterval){
@@ -702,6 +701,8 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
 							var newInterval = $scope.autorefresh.interval*2;
 							$scope.autorefresh.interval = (newInterval < $scope.autorefresh.autoIncreaseTo) ? newInterval : $scope.autorefresh.autoIncreaseTo;
 						}
+						//reset flag;
+						manuallyChanged = false;
 					}, $scope.autorefresh.interval);
 				}
 			}
