@@ -120,7 +120,9 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 				}
 			}
 
-			accessor.saveManyMeasurements(measurements);
+			if (measurements.size()>0) {
+				accessor.saveManyMeasurements(measurements);
+			}
 
 			if (logger.isTraceEnabled()) {
 				logMeasurements(measurements);
