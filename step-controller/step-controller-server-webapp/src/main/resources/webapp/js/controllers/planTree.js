@@ -476,7 +476,8 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
           if ($scope.undoStack.length > 1) {
             $scope.redoStack.push($scope.undoStack.pop());
             $scope.plan = $scope.undoStack.pop();
-            $scope.fireChangeEvent(true);
+            $scope.fireChangeEvent(true, true);
+
           }
         }
 
@@ -486,7 +487,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
           }
           if ($scope.undoStack.length > 0) {
             $scope.plan = $scope.undoStack.pop();
-            $scope.fireChangeEvent(true);
+            $scope.fireChangeEvent(true, true);
           }
         }
 
@@ -497,7 +498,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         $scope.handle.redo = function() {
           if ($scope.redoStack.length > 0) {
             $scope.plan = $scope.redoStack.pop();
-            $scope.fireChangeEvent(true);
+            $scope.fireChangeEvent(true, true);
           }
         }
 
@@ -671,9 +672,13 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         }
       }
       
-      $scope.fireChangeEvent = function(keepRedoStack) {
+      $scope.fireChangeEvent = function(keepRedoStack, delayed) {
         if($scope.stOnChange) {
-          $scope.stOnChange();
+          if (delayed) {
+            $timeout(function(){$scope.stOnChange()});
+          } else {
+            $scope.stOnChange();
+          }
         }
         var backupPlan = JSON.parse(JSON.stringify($scope.plan));
         $scope.undoStack.push(backupPlan);
