@@ -484,6 +484,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					if(newStatus === 'ENDED'){
 						$scope.switchToPermanent();
 						$scope.initAutoRefresh(false,0,0);
+						refreshFct();//perform final refresh
 					}else{
 						$scope.switchToRealtime();
 						if (oldStatus == null) {
