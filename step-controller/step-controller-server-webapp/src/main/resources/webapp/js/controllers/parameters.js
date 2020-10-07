@@ -71,7 +71,7 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
     }
     
     $scope.exportParameters = function() {
-      ExportDialogs.displayExportDialog('Parameters export','parameters', 'allParameters.zip', true).then(function () {})
+      ExportDialogs.displayExportDialog('Parameters export','parameters', 'allParameters.sta', true).then(function () {})
     }
     
     $scope.$on("parameter.edited",function(evt,data){

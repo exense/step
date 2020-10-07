@@ -51,7 +51,7 @@ angular.module('dashboardsControllers',['tables','step', 'viz-session-manager'])
 	}
 
 	$scope.exportSession = function() {
-	  ExportDialogs.displayExportDialog('Dashboard sessions export','sessions', 'allSession.zip', true).then(function () {})
+	  ExportDialogs.displayExportDialog('Dashboard sessions export','sessions', 'allSession.sta', true).then(function () {})
   }
 	
 	$scope.initFromLocation = function(){

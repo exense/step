@@ -155,7 +155,7 @@ angular.module('functionsControllers',['step'])
   }
   
   $scope.exportFunctions = function() {
-    ExportDialogs.displayExportDialog('Keywords export','functions', 'allKeywords.zip', true).then(function () {})
+    ExportDialogs.displayExportDialog('Keywords export','functions', 'allKeywords.sta', true).then(function () {})
   }
   
   $scope.functionTypeLabel = function(type) {
