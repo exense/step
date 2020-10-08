@@ -70,7 +70,6 @@ public class CancellableSleep {
             if (logger.isTraceEnabled()) {
                 logger.trace(context + "Sleeping for another " + chunk + " ms, total ms left to sleep: " + leftToSleep);
             }
-            System.out.println("Sleeping "+chunk);
             try {
                 Thread.sleep(chunk);
             } catch (InterruptedException e) {
