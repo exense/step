@@ -60,7 +60,7 @@
 		<step-api.version>1.1.5</step-api.version>
 		<viz.version>1.0.1</viz.version>
 		<!-- -->
-		<junit.version>4.8.1</junit.version>
+		<junit.version>4.13.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
 		<groovy.version>2.2.1</groovy.version>
 		<mongodb.version>3.12.0</mongodb.version>
