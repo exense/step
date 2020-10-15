@@ -525,6 +525,23 @@ public class ExportManagerTest {
 		String originPlanId = "5e8d7edb4cf3ad5e290d77e9";
 		testOlderPlanImport(resourcePath, originPlanId);
 	}
+
+	@Test
+	public void testImportVisualPlanWithAssert_3_13() throws Exception {
+		String resourcePath = "./step/core/export/ExportVisualPlan3_13.json";
+		String originPlanId = "5f87f3c83ff2d04dd8f9a3f7";
+		testOlderPlanImport(resourcePath, originPlanId);
+	}
+
+
+	//Not working in junit as working with tmp collection
+	// @Test
+	public void testImportVisualPlanWithAssert_3_12() throws Exception {
+		String resourcePath = "./step/core/export/TestWithAssert_3_12.json";
+		String originPlanId = "5f87f3c83ff2d04dd8f9a3f7";
+		testOlderPlanImport(resourcePath, originPlanId);
+	}
+
 	
 	//@Test //not working in OS
 	public void testImportTextPlan_3_13() throws Exception {
@@ -535,7 +552,7 @@ public class ExportManagerTest {
 	
 	//@Test // not working in unit test as it stores data to a tmp mongo collection
 	public void testImportPlan_3_12() throws Exception {
-		String resourcePath = "./step/core/export/3_12_and_before.json";
+		String resourcePath = "step/core/export/3_13_ExportVisualPlanWithAssert.json";
 		String originPlanId = null;
 		testOlderPlanImport(resourcePath, originPlanId);
 	}

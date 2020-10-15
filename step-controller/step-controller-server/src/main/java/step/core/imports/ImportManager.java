@@ -51,10 +51,7 @@ public class ImportManager {
 	}
 
 	/** import entities included in provided file
-	 * @param file containing the content to import
-	 * @param objectEnricher to enrich imported data with additional info (i.e. project...) 
-	 * @param entitiesFilter list of entity types to import, if null all entities are imported 
-	 * @param overwrite define whether to keep exported ids (i.e. will overwrite if re-imported in same controller)
+	 * @param importConfig import config object with all required details (source file, enricher...)
 	 * @throws Exception
 	 */
 	public void importAll(ImportConfiguration importConfig) throws Exception {

@@ -21,8 +21,15 @@ package step.core.imports;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,4 +87,53 @@ public class PlanImporter extends GenericDBImporter<Plan, PlanAccessor> {
 		} 
 	}
 
+	@Override
+	protected BasicDBObject applyMigrationTasks(ImportConfiguration importConfig,BasicDBObject p) {
+		if (importConfig.getVersion().compareTo(new Version(3,13,0)) == 0) {
+			AtomicInteger successCount = new AtomicInteger();
+			AtomicInteger errorCount = new AtomicInteger();
+			try {
+				BasicDBList assertNodesToBeUpdated = new BasicDBList();
+
+				LinkedHashMap root = (LinkedHashMap) p.get("root");
+				ArrayList children = (ArrayList<LinkedHashMap>) root.get("children");
+				retrieveAssertNodeRecursively(children, assertNodesToBeUpdated);
+
+				assertNodesToBeUpdated.iterator().forEachRemaining(a -> {
+					LinkedHashMap assertNode = (LinkedHashMap) a;
+					try {
+						if(assertNode.containsKey("negate")) {
+							logger.info("Migrating assert node " + assertNode.get("_id") + ", found in plan " + p.getString("_id"));
+							boolean currentNegateValue = (boolean) assertNode.get("negate");
+							assertNode.remove("negate");
+
+							Map<String, Object> doNegateMap = new HashMap<String,Object>();
+							doNegateMap.put("dynamic", false);
+							doNegateMap.put("value", currentNegateValue);
+							assertNode.put("doNegate", new Document(doNegateMap));
+							successCount.incrementAndGet();
+						}
+					} catch (Exception e) {
+						errorCount.incrementAndGet();
+						logger.error("Error while migrating assert " + assertNode, e);
+					}
+				});
+			} catch(Exception e) {
+				errorCount.incrementAndGet();
+				logger.error("Error while migrating"
+						+ " asserts from plan " + p, e);
+			}
+		}
+		return p;
+	}
+
+	private void retrieveAssertNodeRecursively(ArrayList<LinkedHashMap> children, BasicDBList assertNodesToBeUpdated) {
+		for(LinkedHashMap child : children) {
+			if(child.get("_class").equals("Assert")) {
+				assertNodesToBeUpdated.add(child);
+			} else {
+				retrieveAssertNodeRecursively((ArrayList<LinkedHashMap>) child.get("children"), assertNodesToBeUpdated);
+			}
+		}
+	}
 }

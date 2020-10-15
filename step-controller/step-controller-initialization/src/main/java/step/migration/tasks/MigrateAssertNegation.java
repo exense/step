@@ -115,7 +115,7 @@ public class MigrateAssertNegation extends MigrationTask {
 							assertNode.remove("negate");
 							
 							Map<String, Object> doNegateMap = new HashMap<String,Object>();
-							doNegateMap.put("dynamic", true);
+							doNegateMap.put("dynamic", false);
 							doNegateMap.put("value", currentNegateValue);
 							assertNode.put("doNegate", new Document(doNegateMap));
 							

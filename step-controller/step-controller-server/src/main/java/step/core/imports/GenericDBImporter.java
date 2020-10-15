@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -36,6 +37,7 @@ import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.CRUDAccessor;
 import step.core.entities.Entity;
+import step.core.plans.Plan;
 
 public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends CRUDAccessor<A>> implements Importer<A, T> {
 	
@@ -58,7 +60,10 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 	public A importOne(ImportConfiguration importConfig, JsonParser jParser, ObjectMapper mapper,
 			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
 		if (importConfig.version.compareTo(new Version(3,13,0)) >= 0) {
-			A aObj = mapper.readValue(jParser, entity.getEntityClass());
+			//A aObj = mapper.readValue(jParser, entity.getEntityClass());
+			BasicDBObject o = mapper.readValue(jParser, BasicDBObject.class);
+			applyMigrationTasks(importConfig, o);
+			A aObj = mapper.readValue(o.toJson().toString(), entity.getEntityClass());
 			if (importConfig.objectDrainer!=null) {
 				importConfig.objectDrainer.accept(aObj);
 			}
@@ -75,7 +80,11 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 			return null;
 		}
 	}
-	
+
+	protected BasicDBObject applyMigrationTasks(ImportConfiguration importConfig, BasicDBObject o) {
+		return o;
+	}
+
 	protected void saveWithNewId(A aObj, Map<String, String> references) {
 		String origId = aObj.getId().toHexString();
 		ObjectId objectId;
