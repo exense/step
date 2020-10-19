@@ -58,7 +58,7 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 	@Override
 	public TokenWrapper selectToken(CallFunction callFunction, Function function, FunctionGroupContext functionGroupContext, Map<String, Object> bindings, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
 		TokenWrapper token;
-		if(function.requiresLocalExecution()) {
+		if(function.requiresLocalExecution() || callFunction.getRemote().get().equals(false)) {
 			// The function requires a local execution => get a local token
 			if(functionGroupContext!=null) {
 				synchronized (functionGroupContext) {

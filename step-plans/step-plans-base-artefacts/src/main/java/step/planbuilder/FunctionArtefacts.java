@@ -35,13 +35,24 @@ public class FunctionArtefacts {
 	}
 	
 	public static CallFunction keywordWithDynamicInput(String keywordName, String input) {
+		return keywordWithDynamicInput(keywordName, true, input);
+	}
+
+	
+	public static CallFunction keywordWithDynamicInput(String keywordName, boolean remote, String input) {
 		CallFunction call = new CallFunction();
 		call.setArgument(new DynamicValue<String>(input,""));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
+		call.setRemote(new DynamicValue<Boolean>(remote));
 		return call;
 	}
 	
 	public static CallFunction keywordWithKeyValues(String keywordName, String... keyValues) {
+		return keywordWithKeyValues(keywordName, true, keyValues);
+	}
+
+	
+	public static CallFunction keywordWithKeyValues(String keywordName, boolean remote, String... keyValues) {
 		CallFunction call = new CallFunction();
 		
 		JsonObjectBuilder builder = Json.createObjectBuilder();
@@ -53,10 +64,16 @@ public class FunctionArtefacts {
 		
 		call.setArgument(new DynamicValue<String>(builder.build().toString()));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
+		call.setRemote(new DynamicValue<Boolean>(remote));
 		return call;
 	}
 	
+	
 	public static CallFunction keywordWithDynamicKeyValues(String keywordName, String... keyValues) {
+		return keywordWithDynamicKeyValues(keywordName, true, keyValues);
+	}
+	
+	public static CallFunction keywordWithDynamicKeyValues(String keywordName, boolean remote, String... keyValues) {
 		CallFunction call = new CallFunction();
 		
 		JsonObjectBuilder builder = Json.createObjectBuilder();
@@ -71,14 +88,21 @@ public class FunctionArtefacts {
 		
 		call.setArgument(new DynamicValue<String>(builder.build().toString()));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
+		call.setRemote(new DynamicValue<Boolean>(remote));
 		return call;
 	}
+
 	
 	public static CallFunction keyword(String keywordName, String input) {
+		return keyword(keywordName, true, input);
+	}
+	
+	public static CallFunction keyword(String keywordName, boolean remote, String input) {
 		CallFunction call = new CallFunction();
 		call.setArgument(new DynamicValue<String>(input));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
 		call.getAttributes().put("name", keywordName);
+		call.setRemote(new DynamicValue<Boolean>(remote));
 		return call;
 	}
 	
@@ -94,15 +118,24 @@ public class FunctionArtefacts {
 		return new DynamicValue<>(dynamic, "");
 	}
 	
-	public static CallFunction keywordById(String keywordId, String input) {
+	public static CallFunction keywordById(String keywordId, boolean remote, String input) {
 		CallFunction call = new CallFunction();
 		call.setArgument(new DynamicValue<String>(input));
 		call.setFunctionId(keywordId);
 		return call;
 	}
 	
+	public static CallFunction keywordById(String keywordId, String input) {
+		return keywordById(keywordId, true, input);
+	}
+
+	
 	public static CallFunction keyword(String keywordName) {
-		return keyword(keywordName, "{}");
+		return keyword(keywordName, true);
+	}
+	
+	public static CallFunction keyword(String keywordName, boolean remote) {
+		return keyword(keywordName, remote, "{}");
 	}
 
 }

@@ -22,12 +22,15 @@
 		<fieldset ng-disabled="readonly">
 			<dynamic-json-editor label="'Input'" dynamic-value="artefact.argument" on-save="save()" />
 			<dynamic-textfield label="'Map output to'" dynamic-value="artefact.resultMap" on-save="save()" />
+			
+			
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<a ng-click="showTokenSelectionParameters = !showTokenSelectionParameters">Keyword routing</a>
-				</div>
+				</div>				
 				<div class="panel-body" ng-show="showTokenSelectionParameters">
-					<dynamic-json-editor label="'Agent token selectors'" dynamic-value="artefact.token" on-save="save()" />
+						<dynamic-checkbox label="'Execute on agents'" dynamic-value="artefact.remote" on-save="save()" tooltip="'Defines if the Keyword has to be executed on an agent or locally on the controller.'" />
+						<dynamic-json-editor label="'Agent token selectors'" dynamic-value="artefact.token" on-save="save()" />
 				</div>
 			</div>
 		</fieldset>
