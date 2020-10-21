@@ -44,6 +44,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.engine.plugins.ExecutionEnginePlugin;
 
 public class Executor {
@@ -62,8 +63,10 @@ public class Executor {
 		
 		List<ExecutionEnginePlugin> additionalPlugins = globalContext.getPluginManager().getExecutionEnginePlugins();
 		
+		ObjectHookRegistry objectHookRegistry = globalContext.require(ObjectHookRegistry.class);
+		
 		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
-				.withParentContext(globalContext).withPluginsFromClasspath().withPlugins(additionalPlugins).build();
+				.withParentContext(globalContext).withPluginsFromClasspath().withPlugins(additionalPlugins).withObjectHookRegistry(objectHookRegistry).build();
 		
 		try {
 			Properties props = getProperties();
@@ -128,18 +131,23 @@ public class Executor {
 	}
 
 	public String execute(ExecutionParameters executionParameters) {
-		return execute(executionParameters, null);
+		String executionID = executionEngine.initializeExecution(executionParameters);
+		scheduleExistingExecutionNow(executionID);
+		return executionID;
 	}
 	
-	public String execute(ExecutionParameters executionParameters, String executionTaskId) {
-		String executionID = executionEngine.initializeExecution(executionParameters, executionTaskId);
-		
+	public String execute(ExecutiontTaskParameters executionTaskParameters) {
+		String executionID = executionEngine.initializeExecution(executionTaskParameters);
+		scheduleExistingExecutionNow(executionID);
+		return executionID;
+	}
+
+	private void scheduleExistingExecutionNow(String executionID) {
 		Trigger trigger = TriggerBuilder.newTrigger().startNow().build();
 
 		JobDetail job = buildSingleJob(executionID);
 		
 		scheduleJob(trigger, job);
-		return executionID;
 	}
 
 	private void scheduleJob(Trigger trigger, JobDetail job) {

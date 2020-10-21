@@ -113,7 +113,7 @@ public class ExecutionScheduler {
 	public String executeExecutionTask(String executionTaskID, String user) {
 		ExecutiontTaskParameters task = get(executionTaskID);
 		task.getExecutionsParameters().setUserID(user);
-		return executor.execute(task.getExecutionsParameters(), executionTaskID);
+		return executor.execute(task);
 	}
 	
 	public ExecutiontTaskParameters get(String id) {

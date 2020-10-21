@@ -26,10 +26,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.parameter.Parameter;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
-import step.core.deployment.ObjectHookPlugin;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.objectenricher.ObjectPredicate;
@@ -40,10 +38,11 @@ import step.core.variables.VariablesManager;
 import step.engine.execution.ExecutionManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
+import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
 
-@Plugin(dependencies = { ObjectHookPlugin.class })
+@Plugin(dependencies = {})
 @IgnoreDuringAutoDiscovery
 public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	
@@ -66,7 +65,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		
 		// Resolve the active parameters
 		Map<String, Object> contextBindings = ExecutionContextBindings.get(context);
-		ObjectPredicate objectPredicate = context.get(ObjectPredicate.class);
+		ObjectPredicate objectPredicate = context.getObjectPredicate();
 		Map<String, Parameter> allParameters = parameterManager.getAllParameters(contextBindings, objectPredicate);
 
 		// Add all the active parameters to the execution parameter map of the Execution object

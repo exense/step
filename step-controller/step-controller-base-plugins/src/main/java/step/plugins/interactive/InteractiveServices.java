@@ -58,6 +58,7 @@ import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.InMemoryExecutionAccessor;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.PlanNavigator;
@@ -68,8 +69,8 @@ import step.functions.Function;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.manager.FunctionManager;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
-import step.planbuilder.FunctionArtefacts;
 import step.parameter.ParameterManager;
+import step.planbuilder.FunctionArtefacts;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 
 @Singleton
@@ -141,6 +142,7 @@ public class InteractiveServices extends AbstractServices {
 		super.init();
 		GlobalContext context = getContext();
 		planAccessor = context.getPlanAccessor();
+		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
 		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
 				.withParentContext(context).withPluginsFromClasspath().withPlugin(new AbstractExecutionEnginePlugin() {
 
@@ -149,7 +151,7 @@ public class InteractiveServices extends AbstractServices {
 							ExecutionEngineContext executionEngineContext) {
 						executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
 					}
-				}).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class))).build();
+				}).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class))).withObjectHookRegistry(objectHookRegistry).build();
 	}
 	
 	@PreDestroy
@@ -173,7 +175,7 @@ public class InteractiveServices extends AbstractServices {
 					.build();
 		
 		executionParameters.setPlan(plan);
-		String executionId = executionEngine.initializeExecution(executionParameters, null);
+		String executionId = executionEngine.initializeExecution(executionParameters);
 		Future<PlanRunnerResult> future = executorService.submit(()->executionEngine.execute(executionId));
 		InteractiveSession session = new InteractiveSession(streamingArtefact.getQueue(), future);
 		

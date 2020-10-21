@@ -52,5 +52,23 @@ public class ObjectHookRegistry extends ArrayList<ObjectHook> {
 		return ObjectEnricherComposer
 				.compose(stream().map(hook -> hook.getObjectDrainer(context)).collect(Collectors.toList()));
 	}
+	
+	/**
+	 * Rebuilds an {@link AbstractContext} based on an object that has been
+	 * previously enriched with the composed {@link ObjectEnricher} of this registry
+	 * 
+	 * @param context the context to be recreated
+	 * @param object the object to base the context reconstruction on
+	 * @throws Exception
+	 */
+	public void rebuildContext(AbstractContext context, Object object) throws Exception {
+		this.forEach(hook->{
+			try {
+				hook.rebuildContext(context, object);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
 
 }

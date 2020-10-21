@@ -28,6 +28,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.plans.Plan;
 import step.core.repositories.ImportResult;
+import step.core.scheduler.ExecutiontTaskParameters;
 
 
 
@@ -58,6 +59,8 @@ public class Execution extends AbstractOrganizableObject {
 	Map<String, String> parameters;
 	
 	ExecutionParameters executionParameters;
+	
+	ExecutiontTaskParameters executiontTaskParameters;
 		
 	public Execution() {
 		super();
@@ -197,6 +200,14 @@ public class Execution extends AbstractOrganizableObject {
 
 	public void setExecutionParameters(ExecutionParameters executionParameters) {
 		this.executionParameters = executionParameters;
+	}
+
+	public ExecutiontTaskParameters getExecutiontTaskParameters() {
+		return executiontTaskParameters;
+	}
+
+	public void setExecutiontTaskParameters(ExecutiontTaskParameters executiontTaskParameters) {
+		this.executiontTaskParameters = executiontTaskParameters;
 	}
 
 	@Override

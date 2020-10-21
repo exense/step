@@ -27,8 +27,13 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.AbstractContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
+import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectHookRegistry;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.LayeredPlanAccessor;
 import step.core.plans.Plan;
@@ -37,6 +42,7 @@ import step.core.plans.runner.PlanRunnerResult;
 import step.core.plugins.Plugin;
 import step.core.plugins.PluginManager;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
+import step.core.scheduler.ExecutiontTaskParameters;
 import step.engine.plugins.ExecutionEnginePlugin;
 
 /**
@@ -50,15 +56,21 @@ public class ExecutionEngine {
 
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionEngine.class);
 	
+	private final ObjectHookRegistry objectHookRegistry;
 	private final ExecutionEngineContext executionEngineContext;
 	private final ExecutionEnginePlugin plugins;
 	private final ConcurrentHashMap<String, ExecutionContext> currentExecutions = new ConcurrentHashMap<>();
 	
-	private ExecutionEngine(ExecutionEngineContext executionEngineContext, ExecutionEnginePlugin plugins) {
+	private ExecutionEngine(ExecutionEngineContext executionEngineContext, ExecutionEnginePlugin plugins, ObjectHookRegistry objectHookRegistry) {
 		super();
 		
 		this.executionEngineContext = executionEngineContext;
 		this.plugins = plugins;
+		if(objectHookRegistry != null) {
+			this.objectHookRegistry = objectHookRegistry;
+		} else {
+			this.objectHookRegistry = new ObjectHookRegistry();
+		}
 	}
 	
 	public static class Builder {
@@ -66,6 +78,7 @@ public class ExecutionEngine {
 		private final step.core.plugins.PluginManager.Builder<ExecutionEnginePlugin> pluginBuilder;
 		private OperationMode operationMode;
 		private AbstractExecutionEngineContext parentContext;
+		private ObjectHookRegistry objectHookRegistry;
 		
 		public Builder() {
 			super();
@@ -127,6 +140,16 @@ public class ExecutionEngine {
 		}
 		
 		/**
+		 * Use a specific {@link ObjectHookRegistry} to handle object enrichment and filtering
+		 * @param objectHookRegistry the {@link ObjectHookRegistry} to be used
+		 * @return 
+		 */
+		public Builder withObjectHookRegistry(ObjectHookRegistry objectHookRegistry) {
+			this.objectHookRegistry = objectHookRegistry;
+			return this;
+		}
+		
+		/**
 		 * @return creates the {@link ExecutionEngine} instance
 		 */
 		public ExecutionEngine build() {
@@ -148,7 +171,7 @@ public class ExecutionEngine {
 			ExecutionEnginePlugin plugins = pluginManager.getProxy();
 			plugins.initializeExecutionEngineContext(parentContext, executionEngineContext);
 			
-			return new ExecutionEngine(executionEngineContext, plugins);
+			return new ExecutionEngine(executionEngineContext, plugins, objectHookRegistry);
 		}
 	}
 	
@@ -175,7 +198,8 @@ public class ExecutionEngine {
 	 * @return the ID of the new {@link Execution}
 	 */
 	public String initializeExecution(ExecutionParameters executionParameters) {
-		return initializeExecution(executionParameters, null);
+		Execution execution = ExecutionFactory.createExecution(executionParameters, null, getObjectEnricher(executionParameters, null));
+		return saveExecution(execution);
 	}
 	
 	/**
@@ -183,12 +207,15 @@ public class ExecutionEngine {
 	 * This creates and persists a new {@link Execution} instance.
 	 * This method call should be followed by {@link ExecutionEngine#execute(String)}
 	 * 
-	 * @param executionParameters the {@link ExecutionParameters} of the {@link Execution} to be created
-	 * @param taskID the ID of the scheduler task from which this execution is originating from
+	 * @param executionTaskParameters the {@link ExecutiontTaskParameters} of the {@link Execution} to be created
 	 * @return the ID of the new {@link Execution}
 	 */
-	public String initializeExecution(ExecutionParameters executionParameters, String taskID) {
-		Execution execution = new ExecutionFactory().createExecution(executionParameters, taskID);
+	public String initializeExecution(ExecutiontTaskParameters executionTaskParameters) {
+		Execution execution = ExecutionFactory.createExecution(executionTaskParameters.getExecutionsParameters(), executionTaskParameters, getObjectEnricher(null, executionTaskParameters));
+		return saveExecution(execution);
+	}
+
+	private String saveExecution(Execution execution) {
 		executionEngineContext.getExecutionAccessor().save(execution);
 		String executionId = execution.getId().toString();
 		return executionId;
@@ -204,7 +231,8 @@ public class ExecutionEngine {
 		Execution execution = executionEngineContext.getExecutionAccessor().get(executionId);
 		if(execution != null) {
 			ExecutionParameters executionParameters = execution.getExecutionParameters();
-			return execute(executionId, executionParameters);
+			ExecutiontTaskParameters executiontTaskParameters = execution.getExecutiontTaskParameters();
+			return execute(executionId, executionParameters, executiontTaskParameters);
 		} else {
 			throw new ExecutionEngineException("Unable to find execution with ID '"+executionId+"'. Please ensure that you've called initializeExecution() first");
 		}
@@ -237,12 +265,12 @@ public class ExecutionEngine {
 	 * @return
 	 */
 	public PlanRunnerResult execute(ExecutionParameters executionParameterObject) {
-		String executionId = initializeExecution(executionParameterObject, null);
-		return execute(executionId, executionParameterObject);
+		String executionId = initializeExecution(executionParameterObject);
+		return execute(executionId, executionParameterObject, null);
 	}
 	
-	private PlanRunnerResult execute(String executionId, ExecutionParameters executionParameters) {
-		ExecutionContext context = newExecutionContext(executionId, executionParameters);
+	private PlanRunnerResult execute(String executionId, ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
+		ExecutionContext context = newExecutionContext(executionId, executionParameters, executiontTaskParameters);
 		ExecutionEngineRunner executionEngineRunner = new ExecutionEngineRunner(context);
 		currentExecutions.put(executionId, context);
 		try {
@@ -257,10 +285,10 @@ public class ExecutionEngine {
 	 * i.e. for tests requiring an {@link ExecutionContext} without {@link ExecutionEngine}
 	 */
 	public ExecutionContext newExecutionContext() {
-		return newExecutionContext(new ObjectId().toString(), new ExecutionParameters());
+		return newExecutionContext(new ObjectId().toString(), new ExecutionParameters(), null);
 	}
 	
-	protected ExecutionContext newExecutionContext(String executionId, ExecutionParameters executionParameters) {
+	protected ExecutionContext newExecutionContext(String executionId, ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
 		ExecutionContext executionContext = new ExecutionContext(executionId, executionParameters);
 		executionContext.useStandardAttributesFromParentContext(executionEngineContext);
 		executionContext.useReportingAttributesFromParentContext(executionEngineContext);
@@ -276,8 +304,52 @@ public class ExecutionEngine {
 		executionContext.setExecutionCallbacks(plugins);
 		plugins.initializeExecutionContext(executionEngineContext, executionContext);
 		
+		addObjectHooksToExecutionContext(executionParameters, executiontTaskParameters, executionContext);
+		
 		return executionContext;
 	}
+	
+	private ObjectEnricher getObjectEnricher(ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
+		ObjectHookContext context = rebuildObjectHookContext(executionParameters, executiontTaskParameters);
+		return objectHookRegistry.getObjectEnricher(context);
+	}
+	
+	private ObjectPredicate getObjectPredicate(ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
+		ObjectHookContext context = rebuildObjectHookContext(executionParameters, executiontTaskParameters);
+		ObjectPredicateFactory objectPredicateFactory = new ObjectPredicateFactory(objectHookRegistry);
+		return objectPredicateFactory.getObjectPredicate(context);
+	}
+	
+	private void addObjectHooksToExecutionContext(ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters, ExecutionContext executionContext) {
+		ObjectEnricher objectEnricher = getObjectEnricher(executionParameters, executiontTaskParameters);
+		ObjectPredicate objectPredicate = getObjectPredicate(executionParameters, executiontTaskParameters);
+		executionContext.setObjectPredicate(objectPredicate);
+		executionContext.setObjectEnricher(objectEnricher);
+	}
+
+	private ObjectHookContext rebuildObjectHookContext(ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
+		// Rebuild the Session based on the relevant object (ExecutionParameters or ExecutiontTaskParameters)
+		// This has to be done because the Session is not always available when running an execution
+		// (by Scheduled tasks for instance)
+		Object sessionRelevantObject;
+		if(executiontTaskParameters != null) {
+			sessionRelevantObject = executiontTaskParameters;
+		} else {
+			sessionRelevantObject = executionParameters;
+		}
+		
+		ObjectHookContext context = new ObjectHookContext();
+		try {
+			objectHookRegistry.rebuildContext(context, sessionRelevantObject);
+		} catch (Exception e) {
+			String errorMessage = "Error while rebuilding context for origin object "+sessionRelevantObject;
+			logger.error(errorMessage, e);
+			throw new RuntimeException(errorMessage, e);
+		}
+		return context;
+	}
+	
+	private static class ObjectHookContext extends AbstractContext {}
 
 	/**
 	 * @return the {@link List} of currently running executions

@@ -25,6 +25,8 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.variables.VariablesManager;
@@ -42,6 +44,9 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 	private final EventManager eventManager;
 	private ExecutionCallbacks executionCallbacks;
 
+	private ObjectEnricher objectEnricher;
+	private ObjectPredicate objectPredicate;
+	
 	// Mutable fields
 	private volatile ExecutionStatus status;
 	private String executionType;
@@ -159,5 +164,21 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 
 	protected void setExecutionCallbacks(ExecutionCallbacks executionCallbacks) {
 		this.executionCallbacks = executionCallbacks;
+	}
+
+	public ObjectEnricher getObjectEnricher() {
+		return objectEnricher;
+	}
+
+	protected void setObjectEnricher(ObjectEnricher objectEnricher) {
+		this.objectEnricher = objectEnricher;
+	}
+
+	public ObjectPredicate getObjectPredicate() {
+		return objectPredicate;
+	}
+
+	protected void setObjectPredicate(ObjectPredicate objectPredicate) {
+		this.objectPredicate = objectPredicate;
 	}
 }

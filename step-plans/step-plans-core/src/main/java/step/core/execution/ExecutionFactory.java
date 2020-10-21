@@ -23,27 +23,28 @@ import java.util.HashMap;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.objectenricher.ObjectEnricher;
+import step.core.scheduler.ExecutiontTaskParameters;
 
 public class ExecutionFactory {
-	
-	public Execution createExecution(ExecutionParameters executionParameters, String taskID) {		
+
+	public static Execution createExecution(ExecutionParameters executionParameters, ExecutiontTaskParameters executionTaskParameter, ObjectEnricher objectEnricher) {
 		Execution execution = new Execution();
 		execution.setStartTime(System.currentTimeMillis());
 		execution.setExecutionParameters(executionParameters);
 		execution.setStatus(ExecutionStatus.INITIALIZING);
 		execution.setAttributes(new HashMap<>());
+
+		if(executionTaskParameter != null) {
+			execution.setExecutiontTaskParameters(executionTaskParameter);
+			execution.setExecutionTaskID(executionTaskParameter.getId().toString());
+		}
 		
-		if(executionParameters.getAttributes() != null) {
-			execution.getAttributes().putAll(executionParameters.getAttributes());
+		if (objectEnricher != null) {
+			objectEnricher.accept(execution);
 		}
 
-//		if(objectEnricher != null) {
-//			objectEnricher.accept(execution);
-//		}
-		
-		execution.setExecutionTaskID(taskID);
-		
-		if(executionParameters.getDescription()!=null) {
+		if (executionParameters.getDescription() != null) {
 			execution.setDescription(executionParameters.getDescription());
 		}
 

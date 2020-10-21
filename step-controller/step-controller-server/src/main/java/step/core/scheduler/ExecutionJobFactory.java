@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.scheduler;
 
+import org.bson.types.ObjectId;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.Scheduler;
@@ -35,11 +36,13 @@ public class ExecutionJobFactory implements JobFactory {
 
 	private final ExecutionEngine executionEngine;
 	private final ControllerSettingAccessor controllerSettingAccessor;
+	private final ExecutionTaskAccessor executionTaskAccessor;
 	
 	public ExecutionJobFactory(GlobalContext context, ExecutionEngine executionEngine) {
 		super();
 		controllerSettingAccessor = new ControllerSettingAccessor(context.getMongoClientSession());
 		this.executionEngine = executionEngine;
+		this.executionTaskAccessor = context.getScheduleAccessor();
 	}
 
 	@Override
@@ -61,7 +64,8 @@ public class ExecutionJobFactory implements JobFactory {
 				}
 			}
 			
-			executionID = executionEngine.initializeExecution(executionParams, executionTaskID);
+			ExecutiontTaskParameters executiontTaskParameters = executionTaskAccessor.get(new ObjectId(executionTaskID));
+			executionID = executionEngine.initializeExecution(executiontTaskParameters);
 		}
 		 
 		return new ExecutionJob(executionEngine, executionID);

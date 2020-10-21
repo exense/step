@@ -26,7 +26,6 @@ import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.engine.plugins.ExecutionEnginePlugin;
 
 @Plugin
 public class ObjectHookControllerPlugin extends AbstractControllerPlugin {
@@ -45,10 +44,4 @@ public class ObjectHookControllerPlugin extends AbstractControllerPlugin {
 		
 		context.getServiceRegistrationCallback().registerService(ObjectHookInterceptor.class);
 	}
-
-	@Override
-	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new ObjectHookPlugin(objectHookRegistry);
-	}
-
 }
