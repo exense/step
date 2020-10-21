@@ -225,7 +225,7 @@ function TimelineWidget(outerScope) {
 						value = d;
 					}
 
-					return d3.time.format("%H:%M:%S")(new Date(value));
+					return d3.time.format("%Y.%m.%d %H:%M:%S")(new Date(value));
 				}.toString()
 			},
 			callback: function(scope, element){
@@ -243,7 +243,7 @@ function TimelineWidget(outerScope) {
 							value = d;
 						}
 
-						return d3.time.format("%H:%M:%S")(new Date(value));
+						return d3.time.format("%Y.%m.%d %H:%M:%S")(new Date(value));
 					});
 
 					//$(document).ready(function(){
@@ -467,7 +467,7 @@ function EffectiveChartOptions(charType, xAxisOverride, timeFrame, yAxisOverride
 	var axisTo = 'new Date().getTime() - '+ offset;
 	
 	var opts = new ChartOptions(charType, true, false,
-			xAxisOverride?xAxisOverride:'function (d) {\r\n    var value;\r\n    if ((typeof d) === \"string\") {\r\n        value = parseInt(d);\r\n    } else {\r\n        value = d;\r\n    }\r\n\r\n    return d3.time.format(\"%H:%M:%S\")(new Date(value));\r\n}', 
+			xAxisOverride?xAxisOverride:'function (d) {\r\n    var value;\r\n    if ((typeof d) === \"string\") {\r\n        value = parseInt(d);\r\n    } else {\r\n        value = d;\r\n    }\r\n\r\n    return d3.time.format(\"%Y.%m.%d %H:%M:%S\")(new Date(value));\r\n}',
 					yAxisOverride?yAxisOverride:'function (d) { return d.toFixed(1); }',
 							timeFrame?'['+axisFrom+','+axisTo+']':undefined
 	);
