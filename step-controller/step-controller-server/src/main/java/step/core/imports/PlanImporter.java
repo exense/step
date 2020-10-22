@@ -103,7 +103,7 @@ public class PlanImporter extends GenericDBImporter<Plan, PlanAccessor> {
 					LinkedHashMap assertNode = (LinkedHashMap) a;
 					try {
 						if(assertNode.containsKey("negate")) {
-							logger.info("Migrating assert node " + assertNode.get("_id") + ", found in plan " + p.getString("_id"));
+							logger.info("Migrating assert node " + assertNode.get("id") + ", found in plan " + p.getString("id"));
 							boolean currentNegateValue = (boolean) assertNode.get("negate");
 							assertNode.remove("negate");
 
