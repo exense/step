@@ -24,15 +24,25 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import step.attachments.AttachmentMeta;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.artefacts.reports.ReportTreeVisitor;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
 import step.reporting.ReportWriter;
+import step.resources.Resource;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevisionContent;
 
 /**
  * This class provides an API for the manipulation of plan executions
@@ -45,12 +55,20 @@ public class PlanRunnerResult {
 	protected final String rootReportNodeId;
 	
 	protected final ReportTreeAccessor reportTreeAccessor;
-
+	protected final ResourceManager resourceManager;
+	
+	private static final Logger logger = LoggerFactory.getLogger(PlanRunnerResult.class);
+	
 	public PlanRunnerResult(String executionId, String rootReportNodeId, ReportTreeAccessor reportTreeAccessor) {
+		this(executionId, rootReportNodeId, reportTreeAccessor, null);
+	}
+	
+	public PlanRunnerResult(String executionId, String rootReportNodeId, ReportTreeAccessor reportTreeAccessor, ResourceManager resourceManager) {
 		super();
 		this.executionId = executionId;
 		this.rootReportNodeId = rootReportNodeId;
 		this.reportTreeAccessor = reportTreeAccessor;
+		this.resourceManager = resourceManager;
 	}
 	
 	public ReportNodeStatus getResult() {
@@ -143,6 +161,27 @@ public class PlanRunnerResult {
 				ReportNode node = event.getNode();
 				bWriter.write(node.getName()+":"+node.getStatus()+":"+(node.getError()!=null?node.getError().getMsg():""));
 				bWriter.write("\n");
+				
+				List<AttachmentMeta> attachments = node.getAttachments();
+				if(attachments != null) {
+					attachments.forEach(a->{
+						Resource resource = resourceManager.getResource(a.getId().toString());
+						// TODO create constant for value "exception.log"
+						if(resource.getResourceName().equals("exception.log")) {
+							try {
+								bWriter.write("Stacktrace: \n");
+								ResourceRevisionContent resourceContent = resourceManager.getResourceContent(a.getId().toString());
+								try {
+									IOUtils.copy(resourceContent.getResourceStream(), bWriter, StandardCharsets.UTF_8);
+								} finally {
+									resourceContent.close();
+								}
+							} catch (IOException e) {
+								logger.error("Error while writing attachment", e);
+							}
+						}
+					});
+				}
 			} catch (IOException e) {
 				throw new RuntimeException("Error while printing tree",e);
 			}

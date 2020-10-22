@@ -155,7 +155,8 @@ public class ExecutionEngineRunner {
 	}
 	
 	protected PlanRunnerResult result(String executionId) {
-		return new PlanRunnerResult(executionId, executionContext.getReport().getId().toString(), executionContext.getReportNodeAccessor());
+		return new PlanRunnerResult(executionId, executionContext.getReport().getId().toString(), executionContext.getReportNodeAccessor(),
+				executionContext.getResourceManager());
 	}
 	
 	private ImportResult importPlan(ExecutionContext context) throws Exception {

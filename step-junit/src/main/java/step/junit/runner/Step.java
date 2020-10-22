@@ -52,6 +52,7 @@ public class Step extends ParentRunner<StepClassParserResult> {
 	private final List<StepClassParserResult> listPlans;
 
 	private ExecutionEngine executionEngine;
+	private ResourceManager resourceManager;
 
 	public Step(Class<?> klass) throws InitializationError {
 		super(klass);
@@ -61,11 +62,7 @@ public class Step extends ParentRunner<StepClassParserResult> {
 			executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
 				@Override
 				public void afterExecutionEnd(ExecutionContext context) {
-					ResourceManager resourceManager = context.getResourceManager();
-					if (resourceManager instanceof LocalResourceManagerImpl) {
-						// Cleanup resource manager after execution
-						((LocalResourceManagerImpl) resourceManager).cleanup();
-					}
+					resourceManager = context.getResourceManager();
 				}
 			}).withPluginsFromClasspath().build();
 			listPlans = classParser.createPlansForClass(klass);
@@ -108,6 +105,10 @@ public class Step extends ParentRunner<StepClassParserResult> {
 		} catch (Exception e) {
 			childNotifier.addFailure(e);
 		} finally {
+			if (resourceManager instanceof LocalResourceManagerImpl) {
+				// Cleanup resource manager after execution
+				((LocalResourceManagerImpl) resourceManager).cleanup();
+			}
 			childNotifier.fireTestFinished();
 		}
 	}
