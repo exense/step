@@ -135,7 +135,7 @@ public class Step extends ParentRunner<StepClassParserResult> {
 		String executionTree;
 		Writer w = new StringWriter();
 		try {
-			res.printTree(w);
+			res.printTree(w, true);
 			executionTree = w.toString();
 		} catch (IOException e) {
 			logger.error("Error while writing execution tree", w);

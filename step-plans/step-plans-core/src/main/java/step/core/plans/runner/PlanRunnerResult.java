@@ -142,7 +142,7 @@ public class PlanRunnerResult {
 	 * @throws IOException
 	 */
 	public PlanRunnerResult printTree() throws IOException {
-		return printTree(new OutputStreamWriter(System.out));
+		return printTree(new OutputStreamWriter(System.out), false);
 	}
 	
 	/**
@@ -152,6 +152,20 @@ public class PlanRunnerResult {
 	 * @throws IOException
 	 */
 	public PlanRunnerResult printTree(Writer writer) throws IOException {
+		return printTree(writer, false);
+	}
+	
+	/**
+	 * Prints the result tree to the {@link Writer} provided as input
+	 * 
+	 * @param writer
+	 * @param printAttachments if the attachments of the report nodes have to be
+	 *                         printed out (currently restricted to attachments
+	 *                         called "exception.log")
+	 * @return
+	 * @throws IOException
+	 */
+	public PlanRunnerResult printTree(Writer writer, boolean printAttachments) throws IOException {
 		BufferedWriter bWriter = new BufferedWriter(writer);
 		visitReportTree(event->{
 			try {
@@ -162,25 +176,27 @@ public class PlanRunnerResult {
 				bWriter.write(node.getName()+":"+node.getStatus()+":"+(node.getError()!=null?node.getError().getMsg():""));
 				bWriter.write("\n");
 				
-				List<AttachmentMeta> attachments = node.getAttachments();
-				if(attachments != null) {
-					attachments.forEach(a->{
-						Resource resource = resourceManager.getResource(a.getId().toString());
-						// TODO create constant for value "exception.log"
-						if(resource.getResourceName().equals("exception.log")) {
-							try {
-								bWriter.write("Stacktrace: \n");
-								ResourceRevisionContent resourceContent = resourceManager.getResourceContent(a.getId().toString());
+				if(printAttachments) {
+					List<AttachmentMeta> attachments = node.getAttachments();
+					if(attachments != null) {
+						attachments.forEach(a->{
+							Resource resource = resourceManager.getResource(a.getId().toString());
+							// TODO create constant for value "exception.log"
+							if(resource.getResourceName().equals("exception.log")) {
 								try {
-									IOUtils.copy(resourceContent.getResourceStream(), bWriter, StandardCharsets.UTF_8);
-								} finally {
-									resourceContent.close();
+									bWriter.write("Stacktrace: \n");
+									ResourceRevisionContent resourceContent = resourceManager.getResourceContent(a.getId().toString());
+									try {
+										IOUtils.copy(resourceContent.getResourceStream(), bWriter, StandardCharsets.UTF_8);
+									} finally {
+										resourceContent.close();
+									}
+								} catch (IOException e) {
+									logger.error("Error while writing attachment", e);
 								}
-							} catch (IOException e) {
-								logger.error("Error while writing attachment", e);
 							}
-						}
-					});
+						});
+					}
 				}
 			} catch (IOException e) {
 				throw new RuntimeException("Error while printing tree",e);
