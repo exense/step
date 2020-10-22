@@ -21,11 +21,14 @@ package step.core.scanner;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
+
+import com.google.common.io.Files;
 
 import ch.exense.commons.io.FileHelper;
 import step.core.dynamicbeans.ContainsDynamicValues;
@@ -69,6 +72,19 @@ public class AnnotationScannerTest {
 	public void testAnnotationScannerForSpecificJars() {
 		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step-core-model-test.jar");
 		try(AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(file)) {
+			List<Method> methods = annotationScanner.getMethodsWithAnnotation(ContainsDynamicValues.class).stream().collect(Collectors.toList());
+			assertEquals(1, methods.size());
+			assertEquals("testMethod", methods.get(0).getName());
+		}
+	}
+	
+	@Test
+	public void testAnnotationScannerForSpecificJarsWithSpacesAndSpecialCharsInPath() throws IOException {
+		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step-core-model-test.jar");
+		File folderWithSpace = FileHelper.createTempFolder("Folder with space");
+		File targetFile = new File(folderWithSpace.getAbsolutePath()+"/stèp-côre-mo del-test.jar");
+		Files.copy(file, targetFile);
+		try(AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(targetFile)) {
 			List<Method> methods = annotationScanner.getMethodsWithAnnotation(ContainsDynamicValues.class).stream().collect(Collectors.toList());
 			assertEquals(1, methods.size());
 			assertEquals("testMethod", methods.get(0).getName());

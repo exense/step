@@ -19,11 +19,14 @@
 package step.core.scanner;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -134,8 +137,14 @@ public class AnnotationScanner implements AutoCloseable {
 	 *         provided {@link URLClassLoader} (parent excluded)
 	 */
 	public static AnnotationScanner forSpecificJarFromURLClassLoader(URLClassLoader classloader, ClassLoader classLoaderForResultClassesAndMethods) {
-		List<String> jars = Arrays.asList(classloader.getURLs()).stream().map(url -> url.getPath())
-				.collect(Collectors.toList());
+		List<String> jars = Arrays.asList(classloader.getURLs()).stream().map(url -> {
+			try {
+				// Use url decoder to ensure that escaped space %20 are unescaped properly
+				return URLDecoder.decode(url.getPath(), StandardCharsets.UTF_8.name());
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
+		}).collect(Collectors.toList());
 
 		ClassGraph classGraph = new ClassGraph().overrideClasspath(jars).enableClassInfo().enableAnnotationInfo()
 				.enableMethodInfo();
