@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import step.core.GlobalContext;
+import step.core.controller.ControllerSetting;
+import step.core.controller.ControllerSettingAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.plugins.screentemplating.Input;
@@ -34,15 +36,31 @@ import step.plugins.screentemplating.ScreenTemplatePlugin;
 public class SchedulerPlugin extends AbstractControllerPlugin {
 
 	private static final String SCHEDULER_TABLE = "schedulerTable";
+	private static final String SCHEDULER_ENABLED = "scheduler_enabled";
+	
+	private ControllerSettingAccessor controllerSettingAccessor;
+
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		
+		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
 	}
 	
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
 		createScreenInputDefinitionsIfNecessary(context);
+		createSchedulerSettingsIfNecessary(context);
+	}
+	
+	protected void createSchedulerSettingsIfNecessary(GlobalContext context) {
+		createSettingIfNotExisting(context, SCHEDULER_ENABLED, "true");
+	}
+
+	protected void createSettingIfNotExisting(GlobalContext context, String key, String defaultValue) {
+		ControllerSetting schedulerEnabled = controllerSettingAccessor.getSettingByKey(key);
+		if(schedulerEnabled == null) {
+			controllerSettingAccessor.save(new ControllerSetting(key, defaultValue));
+		}
 	}
 
 	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {

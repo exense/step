@@ -1,10 +1,22 @@
 <div id="SchedulerCtrl" ng-controller="SchedulerCtrl">
 	<st-table data="schedulerTasks" uid="'schedulerTaskList'" persist-state="true">
-		<st-actions>
-			<div class="btn-group btn-group-menu">
+		<st-actions>	
+			<div class="btn-group btn-group-menu">	
+	
+		<div class="flex-ns items-center justify-start ma1">
+	 	<label class="mb0 mr1">Global switch</label>
+
+		<span class="glyphicon glyphicon-question-sign" uib-tooltip="" tooltip-append-to-body="true"></span>
+		
+		<div class="btn-switch ml-auto" ng-class="{'btn-switch--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle" ng-click="switchSchedulerEnabledToggle()">
+			<div class="btn-switch-circle" ng-class="{'btn-switch-circle--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle" ng-click="switchSchedulerEnabledToggle()">
+			</div>
+		</div>
+	</div>					
 				<button type="button" ng-disabled="!authService.hasRight('task-write')" class="btn btn-success" ng-click="addSchedulerEntry()">New task</button>
 			</div>
 		</st-actions>
+		
 		<st-columns>
 			<st-custom-columns st-screen="schedulerTable" st-exclude-fields="[]"/>
 			<st-column name="cronExpression">
@@ -16,7 +28,7 @@
 				<header>Status</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell>
-					<button type="button" class="btn btn-primary" ng-click="$parent.toggleTaskState(row.id, row.active)" ng-disabled="!authService.hasRight('task-write')" aria-pressed="false" autocomplete="off">{{row.active?'On':'Off'}}</button>
+					<button type="button" ng-class="model.schedulerEnabledToggle ? 'btn btn-primary': 'btn'" ng-click="$parent.toggleTaskState(row.id, row.active)" ng-disabled="!authService.hasRight('task-write')" aria-pressed="false" autocomplete="off">{{row.active?'On':'Off'}}</button>
 				</cell>
 			</st-column>
 			<st-column width="'150px'">

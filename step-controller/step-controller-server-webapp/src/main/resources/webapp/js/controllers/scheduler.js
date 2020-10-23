@@ -126,7 +126,18 @@ angular.module('schedulerControllers',[])
   stateStorage.push($scope, 'scheduler', {});
     
   $scope.authService = AuthService;
+  $scope.model = {};
     
+  $http.get("rest/settings/scheduler_enabled").then(function(response){
+	    $scope.model.schedulerEnabledToggle = response.data?response.data=='true':false;
+	  })
+  
+  $scope.switchSchedulerEnabledToggle = function() {
+	  $scope.model.schedulerEnabledToggle = !$scope.model.schedulerEnabledToggle;
+	  $http.post("rest/settings/scheduler_enabled", $scope.model.schedulerEnabledToggle.toString());  
+  };
+  
+  
   $scope.loadTable = function loadTable() {
     $http.get("rest/controller/task").then(function(response) {
       $scope.schedulerTasks = response.data;
