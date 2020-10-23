@@ -1,6 +1,6 @@
 {
   "name": "step-node-agent",
-  "version": "0.0.0",
+  "version": "3.14.1",
   "description": "The official STEP Agent implementation for Node.js",
   "main": "index.js",
   "scripts": {
