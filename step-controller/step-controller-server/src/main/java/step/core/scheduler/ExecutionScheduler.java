@@ -48,9 +48,19 @@ public class ExecutionScheduler {
 		executor.shutdown();
 	}
 
+	public void standBy() {
+		logger.info("Scheduler put in standby mode");
+		executor.standBy();
+	}
+	
 	public void start() {
 		executor.start();
+		logger.info("Scheduler has been started");
 		loadExecutionTasks();
+	}
+	
+	public boolean isInStandbyMode() {
+		return executor.isInStandbyMode();
 	}
 	
 	private void loadExecutionTasks() {

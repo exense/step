@@ -79,6 +79,19 @@ public class ControllerServices extends AbstractServices {
 		}.start();;
 	}
 	
+	@PUT
+	@Path("/scheduler/control")
+	@Secured(right="admin")
+	public void controlScheduler(@QueryParam("enabled") Boolean enabled) {
+		if(enabled != null && enabled) {
+			if(getScheduler().isInStandbyMode()) {
+				getScheduler().start();
+			}
+		} else {
+			getScheduler().standBy();
+		}
+	}
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/task")
@@ -97,7 +110,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/task/{id}/execute")
 	@Secured(right="plan-execute")
 	public String execute(@PathParam("id") String executionTaskID) {
-		Session session = getSession();
+		Session session = getSession();		
 		return getScheduler().executeExecutionTask(executionTaskID, session.getUser().getUsername());
 	}
 	
