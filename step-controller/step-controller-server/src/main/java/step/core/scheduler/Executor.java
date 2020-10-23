@@ -100,22 +100,6 @@ public class Executor {
 		}
 	}
 	
-	public void standBy() {
-		try {
-			scheduler.standby();
-		} catch (SchedulerException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	public boolean isInStandbyMode() {
-		try {
-			return scheduler.isInStandbyMode();
-		} catch (SchedulerException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 	public void deleteSchedule(ExecutiontTaskParameters task) {
 		JobKey key = new JobKey(task.getId().toString());
 		try {
