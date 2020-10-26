@@ -7,7 +7,7 @@
 	 		<label class="mb0 mr1">Enable scheduler</label>
 			<span class="glyphicon glyphicon-question-sign" uib-tooltip="Use this switch to enable or disable completely the scheduler. You can still add, edit or remove some scheduling entries while the scheduler is stopped." tooltip-append-to-body="true"></span>
 		
-			<div class="btn-switch ml-auto" ng-class="{'btn-switch--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle" ng-click="switchSchedulerEnabledToggle()">
+			<div class="btn-switch ml-auto" ng-class="{'btn-switch--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle" ng-click="switchSchedulerEnabledToggle()" ng-disabled="!authService.hasRight('admin')">
 			<div class="btn-switch-circle" ng-class="{'btn-switch-circle--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle">
 				</div>
 			</div>
