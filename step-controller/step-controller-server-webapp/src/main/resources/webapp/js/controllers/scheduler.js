@@ -132,11 +132,6 @@ angular.module('schedulerControllers',[])
       $scope.model.schedulerEnabledToggle = response.data?response.data=='true':false;
 	  })
   
-  $scope.switchSchedulerEnabledToggle = function() {
-      $scope.model.schedulerEnabledToggle = !$scope.model.schedulerEnabledToggle;
-      $http.put("rest/controller/task/schedule?enabled=" + $scope.model.schedulerEnabledToggle.toString());
-  };
-  
   
   $scope.loadTable = function loadTable() {
     $http.get("rest/controller/task").then(function(response) {
@@ -251,13 +246,22 @@ angular.module('schedulerControllers',[])
   return factory
 })
     
-.controller('SchedulerConfigurationCtrl', function ($scope, $http) {
-  
+.controller('SchedulerConfigurationCtrl', function ($scope, $http, AuthService) {
+	$scope.authService = AuthService;
+	$scope.model = {};
+	
+	$http.get("rest/settings/scheduler_enabled").then(function(response){
+	      $scope.model.schedulerEnabledToggle = response.data?response.data=='true':false;
+	})
+
+	
   $http.get("rest/settings/scheduler_execution_username").then(function(response){
     $scope.executionUser = response.data?response.data:"";
   })
   
+  
   $scope.save = function () {
+	$http.put("rest/controller/task/schedule?enabled=" + $scope.model.schedulerEnabledToggle.toString())
     $http.post("rest/settings/scheduler_execution_username", $scope.executionUser)
   };
 })
