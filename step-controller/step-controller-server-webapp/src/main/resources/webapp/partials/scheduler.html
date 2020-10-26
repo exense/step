@@ -1,19 +1,15 @@
 <div id="SchedulerCtrl" ng-controller="SchedulerCtrl">
 	<st-table data="schedulerTasks" uid="'schedulerTaskList'" persist-state="true">
 		<st-actions>	
-			<div class="btn-group btn-group-menu">	
-	
-		<!--<div class="flex-ns items-center justify-start ma1">
-	 		<label class="mb0 mr1">Enable scheduler</label>
-			<span class="glyphicon glyphicon-question-sign" uib-tooltip="Use this switch to enable or disable completely the scheduler. You can still add, edit or remove some scheduling entries while the scheduler is stopped." tooltip-append-to-body="true"></span>
-		
-			<div class="btn-switch ml-auto" ng-class="{'btn-switch--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle" ng-click="switchSchedulerEnabledToggle()" ng-disabled="!authService.hasRight('admin')">
-			<div class="btn-switch-circle" ng-class="{'btn-switch-circle--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle">
-				</div>
-			</div>
-	</div>	-->				
+			<div class="btn-group btn-group-menu">				
 				<button type="button" ng-disabled="!authService.hasRight('task-write')" class="btn btn-success" ng-click="addSchedulerEntry()">New task</button>
 			</div>
+			
+			<div class="btn-group btn-group-menu">
+				<button ng-if="authService.hasRight('admin')" type="button" class="btn btn-default" ng-click="configureScheduler()" uib-tooltip="Configure scheduler" tooltip-append-to-body="true" tooltip-placement="bottom" >
+					<span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+				</button>
+			</div>							
 		</st-actions>
 		
 		<st-columns>
@@ -27,7 +23,9 @@
 				<header>Status</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell>
-					<button type="button" ng-class="model.schedulerEnabledToggle ? 'btn btn-primary': 'btn'" ng-click="$parent.toggleTaskState(row.id, row.active)" ng-disabled="!authService.hasRight('task-write')" aria-pressed="false" autocomplete="off">{{row.active?'On':'Off'}}</button>
+				
+					<button type="button" ng-class="model.schedulerEnabledToggle ? 'btn btn-primary': 'btn'" ng-click="$parent.toggleTaskState(row.id, row.active)" uib-tooltip="{{ model.schedulerEnabledToggle ? '': 'Scheduler has been disabled' }}" tooltip-append-to-body="true" ng-disabled="!authService.hasRight('task-write')" aria-pressed="false" autocomplete="off">{{row.active?'On':'Off'}}</button>
+				
 				</cell>
 			</st-column>
 			<st-column width="'150px'">

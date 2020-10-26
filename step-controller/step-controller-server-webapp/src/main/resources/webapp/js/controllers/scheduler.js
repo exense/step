@@ -133,6 +133,10 @@ angular.module('schedulerControllers',[])
 	  })
   
   
+  $scope.configureScheduler = function() {
+    $location.path("/root/admin/controller/scheduler")
+  };
+  
   $scope.loadTable = function loadTable() {
     $http.get("rest/controller/task").then(function(response) {
       $scope.schedulerTasks = response.data;
