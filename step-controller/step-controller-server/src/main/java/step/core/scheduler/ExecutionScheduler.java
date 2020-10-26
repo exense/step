@@ -131,4 +131,24 @@ public class ExecutionScheduler {
 	public List<ExecutionContext> getCurrentExecutions() {
 		return executor.getCurrentExecutions();
 	}
+
+	public void enableAllExecutionTasksSchedule() {
+		logger.info("Scheduler is now enabled");
+		Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
+		while(it.hasNext()) {
+			ExecutiontTaskParameters task = it.next();
+			logger.debug("Enabling schedule for task " + task.getName() + " having for id : " + task.getId());
+			executor.schedule(task);
+		}		
+	}
+	
+	public void disableAllExecutionTasksSchedule() {
+		logger.info("Scheduler is now disabled");
+		Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
+		while(it.hasNext()) {
+			ExecutiontTaskParameters task = it.next();
+			logger.debug("Disabling schedule: " + task.getName() + " having for id : " + task.getId());
+			executor.deleteSchedule(task);
+		}
+	}
 }

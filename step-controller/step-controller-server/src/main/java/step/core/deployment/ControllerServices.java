@@ -102,6 +102,18 @@ public class ControllerServices extends AbstractServices {
 	}
 	
 	@PUT
+	@Path("/task/schedule")
+	@Secured(right="admin")
+	public void enableAllExecutionTasksSchedule(@QueryParam("enabled") Boolean enabled) {
+		if(enabled != null && enabled) {
+			getScheduler().enableAllExecutionTasksSchedule();
+		} else {
+			getScheduler().disableAllExecutionTasksSchedule();
+		}
+	}
+	
+	
+	@PUT
 	@Path("/task/{id}")
 	@Secured(right="task-write")
 	public void enableExecutionTask(@PathParam("id") String executionTaskID) {
