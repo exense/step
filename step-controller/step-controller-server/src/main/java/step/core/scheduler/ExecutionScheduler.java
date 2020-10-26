@@ -62,21 +62,23 @@ public class ExecutionScheduler {
 	}
 	
 	private void loadExecutionTasks() {
-		Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
-		while(it.hasNext()) {
-			ExecutiontTaskParameters task = it.next();
-			logger.info("Loading schedule: " + task.toString());
-			try {
-				boolean mayFireAgain = executor.schedule(task);
-				if(!mayFireAgain) {
-					removeExecutionTask(task.getId().toString());
+		ControllerSetting schedulerEnabled = controllerSettingAccessor.getSettingByKey(SCHEDULER_ENABLED);
+		if(schedulerEnabled == null || Boolean.valueOf(schedulerEnabled.getValue()) == true) {
+			Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
+			while(it.hasNext()) {
+				ExecutiontTaskParameters task = it.next();
+				logger.info("Loading schedule: " + task.toString());
+				try {
+					boolean mayFireAgain = executor.schedule(task);
+					if(!mayFireAgain) {
+						removeExecutionTask(task.getId().toString());
+					}
+				} catch (Exception e) {
+					logger.error("An error occurred while scheduling task. "+ task.toString()+ ". Disabling task.", e);
+					disableExecutionTask(task.getId().toString());
 				}
-			} catch (Exception e) {
-				logger.error("An error occurred while scheduling task. "+ task.toString()+ ". Disabling task.", e);
-				disableExecutionTask(task.getId().toString());
 			}
-		}
-		
+		}		
 	}
 	
 	public Iterator<ExecutiontTaskParameters> getActiveExecutionTasks() {
@@ -112,7 +114,7 @@ public class ExecutionScheduler {
 		task.setActive(true);
 		save(task);
 		
-		ControllerSetting schedulerEnabled = controllerSettingAccessor.getSettingByKey("SCHEDULER_ENABLED");
+		ControllerSetting schedulerEnabled = controllerSettingAccessor.getSettingByKey(SCHEDULER_ENABLED);
 		if(schedulerEnabled != null && Boolean.valueOf(schedulerEnabled.getValue()) == false) {
 			//executor.deleteSchedule(task);
 			return true;
