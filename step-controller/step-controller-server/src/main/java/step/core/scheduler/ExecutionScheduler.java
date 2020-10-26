@@ -26,12 +26,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
+import step.core.controller.ControllerSetting;
+import step.core.controller.ControllerSettingAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionParameters;
 
 public class ExecutionScheduler {
 	
 	private final Logger logger = LoggerFactory.getLogger(ExecutionScheduler.class);
+	
+	private ControllerSettingAccessor controllerSettingAccessor;
+
 	
 	private GlobalContext context;
 		
@@ -42,6 +47,7 @@ public class ExecutionScheduler {
 		
 		this.context = globalContext;
 		this.executor = new Executor(globalContext);
+		this.controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
 	}
 
 	public void shutdown() {
@@ -103,7 +109,14 @@ public class ExecutionScheduler {
 		executor.validate(task);
 		task.setActive(true);
 		save(task);
-		return executor.schedule(task);
+		
+		ControllerSetting schedulerEnabled = controllerSettingAccessor.getSettingByKey("scheduler_enabled");
+		if(schedulerEnabled != null && Boolean.valueOf(schedulerEnabled.getValue()) == false) {
+			//executor.deleteSchedule(task);
+			return true;
+		} else {		
+			return executor.schedule(task);
+		}
 	}
 	
 	public String execute(ExecutionParameters executionParameters) {
