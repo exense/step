@@ -129,12 +129,13 @@ angular.module('schedulerControllers',[])
   $scope.model = {};
     
   $http.get("rest/settings/scheduler_enabled").then(function(response){
-	    $scope.model.schedulerEnabledToggle = response.data?response.data=='true':false;
+      $scope.model.schedulerEnabledToogle = response.data?response.data=='true':false;
 	  })
   
   $scope.switchSchedulerEnabledToggle = function() {
-	  $scope.model.schedulerEnabledToggle = !$scope.model.schedulerEnabledToggle;
-	  $http.post("rest/settings/scheduler_enabled", $scope.model.schedulerEnabledToggle.toString());  
+      $scope.model.schedulerEnabledToggle = !$scope.model.schedulerEnabledToggle;
+      $http.post("rest/settings/scheduler_enabled", $scope.model.schedulerEnabledToggle.toString());  
+      $http.put("rest/controller/task/schedule?enabled=" + $scope.model.schedulerEnabledToggle.toString());
   };
   
   
