@@ -134,7 +134,6 @@ angular.module('schedulerControllers',[])
   
   $scope.switchSchedulerEnabledToggle = function() {
       $scope.model.schedulerEnabledToggle = !$scope.model.schedulerEnabledToggle;
-      $http.post("rest/settings/scheduler_enabled", $scope.model.schedulerEnabledToggle.toString());  
       $http.put("rest/controller/task/schedule?enabled=" + $scope.model.schedulerEnabledToggle.toString());
   };
   
