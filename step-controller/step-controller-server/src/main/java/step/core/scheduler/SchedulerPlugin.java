@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import step.core.GlobalContext;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
+import step.core.controller.ControllerSettingPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.plugins.screentemplating.Input;
@@ -32,7 +33,7 @@ import step.plugins.screentemplating.ScreenInput;
 import step.plugins.screentemplating.ScreenInputAccessor;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
-@Plugin(dependencies= {ScreenTemplatePlugin.class})
+@Plugin(dependencies= {ScreenTemplatePlugin.class, ControllerSettingPlugin.class})
 public class SchedulerPlugin extends AbstractControllerPlugin {
 
 	private static final String SCHEDULER_TABLE = "schedulerTable";
