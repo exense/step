@@ -74,21 +74,21 @@ public class ExportServices extends AbstractServices {
 	}
 
 	@GET
-	@Path("/plan/{id}")
+	@Path("/{entity}/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public ExportStatus exportPlan(@PathParam("id") String id, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
-			@QueryParam("additionalEntities") List<String> additionalEntities) {
+	public ExportStatus exportEntityById(@PathParam("entity") String entity, @PathParam("id") String id, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
+										 @QueryParam("additionalEntities") List<String> additionalEntities) {
 		Session session = getSession();
 		Map<String,String> metadata = getMetadata();
 		ObjectEnricher objectDrainer = objectHookRegistry.getObjectDrainer(getSession());
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws IOException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);//planName + ".json");
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
 				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),objectDrainer , metadata,objectPredicateFactory.getObjectPredicate(session), 
-						EntityManager.plans, recursively, additionalEntities);
+						entity, recursively, additionalEntities);
 				Set<String> refMissingWarning = exportManager.exportById(exportConfig, id);
 				status.setWarnings(refMissingWarning);
 				resourceContainer.save(null);
