@@ -119,6 +119,10 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
     $scope.exportPlans = function() {
       ExportDialogs.displayExportDialog('Plans export','plans', 'allPlans.sta', true, false).then(function () {})
     }
+
+    $scope.exportPlan = function(id, name) {
+      ExportDialogs.displayExportDialog('Plans export','plans/'+id, name+'.sta', true, false).then(function () {})
+    }
     
   })
   

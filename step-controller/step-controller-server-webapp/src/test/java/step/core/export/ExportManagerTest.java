@@ -43,6 +43,7 @@ import step.core.accessors.CRUDAccessor;
 import step.core.accessors.InMemoryCRUDAccessor;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.Entity;
+import step.core.entities.EntityManager;
 import step.core.imports.GenericDBImporter;
 import step.core.imports.ImportConfiguration;
 import step.core.imports.ImportManager;
@@ -112,6 +113,47 @@ public class ExportManagerTest {
 			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
 			Assert.assertEquals(plan.getId(), actualPlan.getId());
 			Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
+		} finally {
+			testExportFile.delete();
+		}
+	}
+
+	@Test
+	public void testExportKeywordById() throws Exception {
+		GlobalContext c = createGlobalContext();
+		Function function = new Function();
+		FunctionAccessor functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
+		functionAccessor.save(function);
+
+		File testExportFile = new File("testExport.zip");
+		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
+			ExportManager exportManager = new ExportManager(c);
+			Map<String,String> metadata = new HashMap<String,String>();
+			metadata.put("version", c.getCurrentVersion().toString());
+			metadata.put("export-time" , "1589542872475");
+			metadata.put("user", "admin");
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, dummyObjectEnricher(), metadata, dummyObjectPredicate(), EntityManager.functions, true, null);
+			exportManager.exportById(exportConfig, function.getId().toString());
+			Assert.assertTrue(FileHelper.isArchive(testExportFile));
+
+			//DEBUG
+			/*try (BufferedReader br = new BufferedReader(
+					new InputStreamReader(new FileInputStream(testExportFile), StandardCharsets.UTF_8));) {
+				String line;
+				while ((line = br.readLine()) != null) {
+					System.out.println(line);
+				}
+			}*/
+
+			//create a new context to test the import
+			c = createGlobalContext();
+			ImportManager importManager = new ImportManager(c);
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), dummyObjectEnricher(), Arrays.asList(EntityManager.functions), true));
+			functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
+			functionAccessor.save(function);
+			Function actualFunction = functionAccessor.get(function.getId());
+
+			Assert.assertEquals(function.getId(), actualFunction.getId());
 		} finally {
 			testExportFile.delete();
 		}
