@@ -23,8 +23,11 @@ import java.util.List;
 import com.mongodb.client.MongoDatabase;
 
 import ch.exense.commons.app.Configuration;
+import step.artefacts.CallFunction;
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
+import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.FunctionRouter;
+import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
 import step.controller.grid.GridPlugin;
 import step.controller.grid.services.FunctionServices;
@@ -82,9 +85,20 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		FunctionRouter functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
 
 		context.put(FunctionAccessor.class, functionAccessor);
+		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+		final FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 		context.getEntityManager().register(new Entity<Function, FunctionAccessorImpl>(
 				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class, 
-				new GenericDBImporter<Function,FunctionAccessorImpl>(context)));
+				new GenericDBImporter<Function,FunctionAccessorImpl>(context)) {
+			@Override
+			public String resolve(Object artefact) {
+				if (artefact instanceof CallFunction) {
+					return functionLocator.getFunction((CallFunction) artefact).getId().toHexString();
+				} else {
+					return null;
+				}
+			}
+		});
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
 		

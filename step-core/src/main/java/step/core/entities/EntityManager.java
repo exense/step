@@ -73,7 +73,14 @@ public class EntityManager  {
 	public Entity<?,?> getEntityByName(String entityName) {
 		return entities.get(entityName);
 	}
-	
+
+	/**
+	 * Retrieve all existing references from the DB for give entity type
+	 * @param entityType type of entities to retrieve
+	 * @param objectPredicate to apply to filter entities (i.e. project)
+	 * @param recursively flag to export references recursively (i.e by exporting a plan recursively the plan will be scanned to find sub references)
+	 * @param refs the map of entity references to be populated during the process
+	 */
 	public void getEntitiesReferences(String entityType, ObjectPredicate objectPredicate, boolean recursively, EntityReferencesMap refs) {
 		Entity<?, ?> entity = getEntityByName(entityType);
 		if (entity == null ) {
@@ -89,6 +96,12 @@ public class EntityManager  {
 		});
 	}
 
+	/**
+	 * get entities recursively by scanning the given entity (aka artefact), the entity is retrieved and deserialized from the db
+	 * @param entityName name of the type of entity
+	 * @param id the id of the entity
+	 * @param references the map of references to be populated
+	 */
 	public void getAllEntities (String entityName, String id, EntityReferencesMap references) {
 		Entity<?, ?> entity = getEntityByName(entityName);
 		if (entity == null) {
@@ -105,7 +118,12 @@ public class EntityManager  {
 			entity.getReferencesHook().forEach(h->h.accept(a,references));
 		}
 	}
-	
+
+	/**
+	 * scan the given object with introspection to find references. The method is called recursively.
+	 * @param object to be introspected
+	 * @param references map to be populated
+	 */
 	private void resolveReferences(Object object, EntityReferencesMap references) {
 		if(object!=null) {
 
@@ -149,6 +167,9 @@ public class EntityManager  {
 									Collection<?> c = (Collection<?>) value;
 									c.forEach(r->resolveReference(r, references, entityType, r.getClass()));
 								} else {
+									if (value == null) {
+										value = getEntityByName(entityType).resolve(object);
+									}
 									resolveReference(value, references, entityType, method.getReturnType());
 								}
 							}
@@ -158,7 +179,13 @@ public class EntityManager  {
 
 		}
 	}
-	
+
+	/** Resolve a single reference to an actual value
+	 * @param value
+	 * @param references
+	 * @param entityType
+	 * @param type
+	 */
 	private void resolveReference(Object value, EntityReferencesMap references, String entityType, Class<?> type) {
 		FileResolver fileResolver = context.getFileResolver();
 		String refId = null;
