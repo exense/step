@@ -27,6 +27,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
+import step.artefacts.CallFunction;
+import step.artefacts.CallPlan;
+import step.artefacts.handlers.PlanLocator;
+import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
 import step.core.access.User;
 import step.core.access.UserAccessor;
@@ -41,6 +45,8 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
@@ -153,6 +159,9 @@ public class Controller {
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		
 		context.setEntityManager(new EntityManager(context));
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+		PlanLocator planLocator = new PlanLocator(null,getContext().getPlanAccessor(),selectorHelper);
 		context.getEntityManager()
 			.register( new Entity<Execution, ExecutionAccessor>(
 				EntityManager.executions, context.getExecutionAccessor(), Execution.class, 
@@ -163,6 +172,14 @@ public class Controller {
 				@Override
 				public boolean shouldExport(AbstractIdentifiableObject a) {
 					return ((Plan) a).isVisible();
+				}
+				@Override
+				public String resolve(Object artefact) {
+					if (artefact instanceof CallPlan) {
+						return planLocator.selectPlan((CallPlan) artefact).getId().toHexString();
+					} else {
+						return null;
+					}
 				}
 			})
 			.register(new Entity<ReportNode,ReportNodeAccessor>(
@@ -186,6 +203,7 @@ public class Controller {
 		context.getEntityManager().getEntityByName("sessions").setByPassObjectPredicate(true);
 
 		createOrUpdateIndexes();
+
 	}
 
 	private void createOrUpdateIndexes() {
