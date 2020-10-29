@@ -612,8 +612,8 @@ resource-input .input-group {
 	width: 50px;
 	height: 25px;
 	cursor: pointer;
-	background-color: #9dc1e0;
-	border: 2px solid #9dc1e0;
+	background-color: lightgrey;
+	border: 2px solid lightgrey;
 	border-radius: 40px;
 }
 
@@ -625,20 +625,21 @@ resource-input .input-group {
 	display: block;
 	height: 23px;
 	width: 25px;
-	background-color: #337ab7;
+	background-color: grey;
 	border-radius: 40px;
 }
 
 
 
 .btn-switch--on {
-	background-color: #faebcc;
-	border: 2px solid #faebcc; 
+	background-color: #9dc1e0;
+	border: 2px solid #9dc1e0; 
 }
 
 .btn-switch-circle--on { 
 	left : auto;
 	right: 0;
+	background-color: #337ab7;
 }
 
 .parameter-scope {
