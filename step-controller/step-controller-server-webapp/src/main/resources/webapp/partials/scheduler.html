@@ -24,7 +24,7 @@
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell>
 				
-					<button type="button" ng-class="model.schedulerEnabledToggle ? 'btn btn-primary': 'btn'" ng-click="$parent.toggleTaskState(row.id, row.active)" uib-tooltip="{{ model.schedulerEnabledToggle ? '': 'Scheduler has been disabled' }}" tooltip-append-to-body="true" ng-disabled="!authService.hasRight('task-write')" aria-pressed="false" autocomplete="off">{{row.active?'On':'Off'}}</button>
+					<button type="button" ng-class="model.schedulerEnabledToggle ? 'btn btn-primary': 'btn'" ng-click="$parent.toggleTaskState(row.id, row.active)" uib-tooltip="{{ model.schedulerEnabledToggle ? '': 'Scheduler has been disabled by your administrator' }}" tooltip-append-to-body="true" ng-disabled="!authService.hasRight('task-write')" aria-pressed="false" autocomplete="off">{{row.active?'On':'Off'}}</button>
 				
 				</cell>
 			</st-column>

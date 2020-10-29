@@ -1,13 +1,12 @@
 <div ng-controller="SchedulerConfigurationCtrl">
-	<form>
-	<div class="form-check">
-		<input class="form-check-input" type="checkbox" ng-change="save()" ng-model="model.schedulerEnabledToggle">
-		<label class="form-check-label">Enable scheduler</label>
-	</div>
-	
-	<div ng-if="model.schedulerEnabledToggle" class="panel panel-default">
+	<form>	
+	<div class="panel panel-default">
 		<div class="panel-body">
 			<div class="form-group">
+				<label class="form-check-label">Enable scheduler</label> <span class="glyphicon glyphicon-question-sign" uib-tooltip="Used to enable or disable the scheduler globally. If disabled, no task registered in the scheduler will be fired." tooltip-append-to-body="true"></span>
+				<input class="form-check-input" type="checkbox" ng-change="save()" ng-model="model.schedulerEnabledToggle">
+			</div>
+			<div class="form-group">	
 				<label>Execution user</label> <span class="glyphicon glyphicon-question-sign" uib-tooltip="The username of the user under which the scheduled tasks should be executed. Leave empty to run the scheduled tasks under the username of the user who scheduled the task" tooltip-append-to-body="true"></span>
 				<input ng-blur="save()" class="form-control" ng-model="executionUser">
 			</div>
