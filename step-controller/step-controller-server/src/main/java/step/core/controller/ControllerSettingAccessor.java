@@ -25,6 +25,9 @@ import step.core.accessors.MongoClientSession;
 import step.core.json.JsonProviderCache;
 
 public class ControllerSettingAccessor extends AbstractCRUDAccessor<ControllerSetting> {
+	
+	public static final String SCHEDULER_ENABLED = "scheduler_enabled";
+
 
 	public ControllerSettingAccessor(MongoClientSession clientSession) {
 		super(clientSession, "settings", ControllerSetting.class);
@@ -35,5 +38,19 @@ public class ControllerSettingAccessor extends AbstractCRUDAccessor<ControllerSe
 		builder.add("key", key);
 		String query = builder.build().toString();
 		return collection.findOne(query).as(ControllerSetting.class);
+	}
+	
+	public boolean isSchedulerEnabled() {
+		ControllerSetting schedulerEnabled = getSettingByKey(SCHEDULER_ENABLED);
+		return schedulerEnabled == null || Boolean.valueOf(schedulerEnabled.getValue()) == true;
+	}
+	
+	public ControllerSetting getOrCreateSettingByKey(String key) {
+		ControllerSetting setting = getSettingByKey(key);
+		if(setting == null) {
+			setting = new ControllerSetting();
+			setting.setKey(key);
+		}
+		return setting;
 	}
 }

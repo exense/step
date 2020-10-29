@@ -41,8 +41,6 @@ public class ExecutionScheduler {
 		
 	private Executor executor;
 	
-	private static final String SCHEDULER_ENABLED = "scheduler_enabled";
-
 	
 	public ExecutionScheduler(GlobalContext globalContext) {
 		super();
@@ -62,12 +60,11 @@ public class ExecutionScheduler {
 	}
 	
 	private void loadExecutionTasks() {
-		ControllerSetting schedulerEnabled = controllerSettingAccessor.getSettingByKey(SCHEDULER_ENABLED);
-		if(schedulerEnabled == null || Boolean.valueOf(schedulerEnabled.getValue()) == true) {
+		if(controllerSettingAccessor.isSchedulerEnabled()) {
 			Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
 			while(it.hasNext()) {
 				ExecutiontTaskParameters task = it.next();
-				logger.info("Loading schedule: " + task.toString());
+				logger.info("Loading schedule for task " + task.getName() + " having for id : " + task.getId());
 				try {
 					boolean mayFireAgain = executor.schedule(task);
 					if(!mayFireAgain) {
@@ -99,7 +96,9 @@ public class ExecutionScheduler {
 		ExecutiontTaskParameters task = get(executionTaskID);
 		task.setActive(true);
 		save(task);
-		executor.schedule(task);
+		if(controllerSettingAccessor.isSchedulerEnabled()) {
+			executor.schedule(task);			
+		} 
 	}
 	
 	public void disableExecutionTask(String executionTaskID) {
@@ -114,12 +113,10 @@ public class ExecutionScheduler {
 		task.setActive(true);
 		save(task);
 		
-		ControllerSetting schedulerEnabled = controllerSettingAccessor.getSettingByKey(SCHEDULER_ENABLED);
-		if(schedulerEnabled != null && Boolean.valueOf(schedulerEnabled.getValue()) == false) {
-			//executor.deleteSchedule(task);
-			return true;
+		if(controllerSettingAccessor.isSchedulerEnabled()) {
+			return executor.schedule(task);			
 		} else {		
-			return executor.schedule(task);
+			return true;
 		}
 	}
 	
@@ -151,38 +148,25 @@ public class ExecutionScheduler {
 
 	public void enableAllExecutionTasksSchedule() {
 		// Save setting
-		ControllerSetting setting = controllerSettingAccessor.getSettingByKey(SCHEDULER_ENABLED);
-		if(setting == null) {
-			setting = new ControllerSetting();
-			setting.setKey(SCHEDULER_ENABLED);
-		}
+		ControllerSetting setting = controllerSettingAccessor.getOrCreateSettingByKey(ControllerSettingAccessor.SCHEDULER_ENABLED);
 		setting.setValue("true");
 		controllerSettingAccessor.save(setting);
 		
-		logger.info("Scheduler is now enabled");
-		Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
-		while(it.hasNext()) {
-			ExecutiontTaskParameters task = it.next();
-			logger.debug("Enabling schedule for task " + task.getName() + " having for id : " + task.getId());
-			executor.schedule(task);
-		}		
+		logger.info("Scheduler has been enabled by your administrator");
+		loadExecutionTasks();	
 	}
 	
 	public void disableAllExecutionTasksSchedule() {
 		// Save setting
-		ControllerSetting setting = controllerSettingAccessor.getSettingByKey(SCHEDULER_ENABLED);
-		if(setting == null) {
-			setting = new ControllerSetting();
-			setting.setKey(SCHEDULER_ENABLED);
-		}
+		ControllerSetting setting = controllerSettingAccessor.getOrCreateSettingByKey(ControllerSettingAccessor.SCHEDULER_ENABLED);
 		setting.setValue("false");
 		controllerSettingAccessor.save(setting);		
 		
-		logger.info("Scheduler is now disabled");
+		logger.info("Scheduler has been disabled by your administrator");
 		Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
 		while(it.hasNext()) {
 			ExecutiontTaskParameters task = it.next();
-			logger.debug("Disabling schedule: " + task.getName() + " having for id : " + task.getId());
+			logger.info("Disabling schedule for task " + task.getName() + " having for id : " + task.getId());
 			executor.deleteSchedule(task);
 		}
 	}

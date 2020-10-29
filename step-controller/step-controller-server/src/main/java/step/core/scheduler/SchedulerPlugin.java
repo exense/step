@@ -37,7 +37,6 @@ import step.plugins.screentemplating.ScreenTemplatePlugin;
 public class SchedulerPlugin extends AbstractControllerPlugin {
 
 	private static final String SCHEDULER_TABLE = "schedulerTable";
-	private static final String SCHEDULER_ENABLED = "scheduler_enabled";
 	
 	private ControllerSettingAccessor controllerSettingAccessor;
 
@@ -54,7 +53,7 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	}
 	
 	protected void createSchedulerSettingsIfNecessary(GlobalContext context) {
-		createSettingIfNotExisting(context, SCHEDULER_ENABLED, "true");
+		createSettingIfNotExisting(context, ControllerSettingAccessor.SCHEDULER_ENABLED, "true");
 	}
 
 	protected void createSettingIfNotExisting(GlobalContext context, String key, String defaultValue) {
