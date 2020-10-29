@@ -41,6 +41,7 @@ public class ExecutionScheduler {
 		
 	private Executor executor;
 	
+	public static final String SETTING_SCHEDULER_ENABLED = "scheduler_enabled";
 	
 	public ExecutionScheduler(GlobalContext globalContext) {
 		super();
@@ -60,7 +61,7 @@ public class ExecutionScheduler {
 	}
 	
 	private void loadExecutionTasks() {
-		if(controllerSettingAccessor.isSchedulerEnabled()) {
+		if(isSchedulerEnabled()) {
 			Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
 			while(it.hasNext()) {
 				ExecutiontTaskParameters task = it.next();
@@ -96,7 +97,7 @@ public class ExecutionScheduler {
 		ExecutiontTaskParameters task = get(executionTaskID);
 		task.setActive(true);
 		save(task);
-		if(controllerSettingAccessor.isSchedulerEnabled()) {
+		if(isSchedulerEnabled()) {
 			executor.schedule(task);			
 		} 
 	}
@@ -113,11 +114,15 @@ public class ExecutionScheduler {
 		task.setActive(true);
 		save(task);
 		
-		if(controllerSettingAccessor.isSchedulerEnabled()) {
+		if(isSchedulerEnabled()) {
 			return executor.schedule(task);			
 		} else {		
 			return true;
 		}
+	}
+	
+	private boolean isSchedulerEnabled() {
+		return controllerSettingAccessor.getSettingAsBoolean(SETTING_SCHEDULER_ENABLED);
 	}
 	
 	public String execute(ExecutionParameters executionParameters) {
@@ -148,21 +153,17 @@ public class ExecutionScheduler {
 
 	public void enableAllExecutionTasksSchedule() {
 		// Save setting
-		ControllerSetting setting = controllerSettingAccessor.getOrCreateSettingByKey(ControllerSettingAccessor.SCHEDULER_ENABLED);
-		setting.setValue("true");
-		controllerSettingAccessor.save(setting);
+		controllerSettingAccessor.updateOrCreateSetting(SETTING_SCHEDULER_ENABLED, Boolean.TRUE.toString());
 		
-		logger.info("Scheduler has been enabled by your administrator");
+		logger.info("Enabling Scheduler...");
 		loadExecutionTasks();	
 	}
 	
 	public void disableAllExecutionTasksSchedule() {
 		// Save setting
-		ControllerSetting setting = controllerSettingAccessor.getOrCreateSettingByKey(ControllerSettingAccessor.SCHEDULER_ENABLED);
-		setting.setValue("false");
-		controllerSettingAccessor.save(setting);		
+		controllerSettingAccessor.updateOrCreateSetting(SETTING_SCHEDULER_ENABLED, Boolean.FALSE.toString());
 		
-		logger.info("Scheduler has been disabled by your administrator");
+		logger.info("Disabling Scheduler...");
 		Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
 		while(it.hasNext()) {
 			ExecutiontTaskParameters task = it.next();

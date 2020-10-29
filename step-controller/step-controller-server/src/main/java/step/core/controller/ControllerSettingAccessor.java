@@ -26,9 +26,6 @@ import step.core.json.JsonProviderCache;
 
 public class ControllerSettingAccessor extends AbstractCRUDAccessor<ControllerSetting> {
 	
-	public static final String SCHEDULER_ENABLED = "scheduler_enabled";
-
-
 	public ControllerSettingAccessor(MongoClientSession clientSession) {
 		super(clientSession, "settings", ControllerSetting.class);
 	}
@@ -40,12 +37,30 @@ public class ControllerSettingAccessor extends AbstractCRUDAccessor<ControllerSe
 		return collection.findOne(query).as(ControllerSetting.class);
 	}
 	
-	public boolean isSchedulerEnabled() {
-		ControllerSetting schedulerEnabled = getSettingByKey(SCHEDULER_ENABLED);
-		return schedulerEnabled == null || Boolean.valueOf(schedulerEnabled.getValue()) == true;
+	// TODO: the following methods should be moved to a ControllerSettingManager.
+	// They actually don't belong to an accessor which role should be limited to
+	// retrieval and persistence of data
+	public ControllerSetting updateOrCreateSetting(String key, String value) {
+		ControllerSetting setting = getOrCreateSettingByKey(key);
+		setting.setValue(value);
+		return save(setting);
+	}
+
+	public ControllerSetting createSettingIfNotExisting(String key, String value) {
+		ControllerSetting schedulerEnabled = getSettingByKey(key);
+		if (schedulerEnabled == null) {
+			return save(new ControllerSetting(key, value));
+		} else {
+			return schedulerEnabled;
+		}
 	}
 	
-	public ControllerSetting getOrCreateSettingByKey(String key) {
+	public boolean getSettingAsBoolean(String key) {
+		ControllerSetting setting = getSettingByKey(key);
+		return setting != null ? Boolean.valueOf(setting.getValue()) : false;
+	}
+	
+	private ControllerSetting getOrCreateSettingByKey(String key) {
 		ControllerSetting setting = getSettingByKey(key);
 		if(setting == null) {
 			setting = new ControllerSetting();
@@ -53,4 +68,5 @@ public class ControllerSettingAccessor extends AbstractCRUDAccessor<ControllerSe
 		}
 		return setting;
 	}
+	// End of TODO
 }
