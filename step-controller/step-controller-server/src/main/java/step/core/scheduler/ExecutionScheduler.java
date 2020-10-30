@@ -111,7 +111,9 @@ public class ExecutionScheduler {
 
 	public boolean addExecutionTask(ExecutiontTaskParameters task) {
 		executor.validate(task);
-		task.setActive(true);
+		if(!taskAlreadyExists(task)) {
+			task.setActive(true);
+		}		
 		save(task);
 		
 		if(isSchedulerEnabled()) {
@@ -121,6 +123,17 @@ public class ExecutionScheduler {
 		}
 	}
 	
+	private boolean taskAlreadyExists(ExecutiontTaskParameters task) {
+		boolean exist = false;
+		Iterator<ExecutiontTaskParameters> it = getActiveAndInactiveExecutionTasks();
+		while(it.hasNext()) {
+			ExecutiontTaskParameters taskToCompare = it.next();
+			exist = task.equals(taskToCompare);
+			if(exist) break;
+		}
+		return exist;
+	}
+
 	private boolean isSchedulerEnabled() {
 		return controllerSettingAccessor.getSettingAsBoolean(SETTING_SCHEDULER_ENABLED);
 	}
