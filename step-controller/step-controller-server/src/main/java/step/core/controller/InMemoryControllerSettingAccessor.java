@@ -10,7 +10,7 @@ public class InMemoryControllerSettingAccessor extends InMemoryCRUDAccessor<Cont
 	private List<ControllerSetting> controllerSettings = new ArrayList<ControllerSetting>();
 	
 	@Override
-	public ControllerSetting getSettingByKey(String key) {
+	public ControllerSetting getSettingByKey(String key) { 
 		return controllerSettings.stream()
 				.filter(s -> s.getKey().equals(key))
 				.findFirst()
@@ -23,9 +23,8 @@ public class InMemoryControllerSettingAccessor extends InMemoryCRUDAccessor<Cont
 		if(setting == null) {
 			setting = new ControllerSetting();
 			setting.setKey(key);
-		} else {
-			setting.setValue(value);
-		}
+		} 
+		setting.setValue(value);
 		controllerSettings.add(setting);
 		return setting;
 	}
@@ -35,5 +34,15 @@ public class InMemoryControllerSettingAccessor extends InMemoryCRUDAccessor<Cont
 	public boolean getSettingAsBoolean(String key) {
 		ControllerSetting controllerSetting = getSettingByKey(key);
 		return Boolean.valueOf(controllerSetting.getValue());		
+	}
+
+	@Override
+	public ControllerSetting createSettingIfNotExisting(String key, String value) {
+		ControllerSetting setting = getSettingByKey(key);
+		if (setting == null) {
+			return save(new ControllerSetting(key, value));
+		} else {
+			return setting;
+		}
 	}
 }
