@@ -9,4 +9,6 @@ public interface ControllerSettingAccessor {
 	boolean getSettingAsBoolean(String settingSchedulerEnabled);
 
 	ControllerSetting save(ControllerSetting controllerSetting);
+
+	ControllerSetting createSettingIfNotExisting(String settingSchedulerEnabled, String string);
 }

@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
-import step.artefacts.CallFunction;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
@@ -44,7 +43,7 @@ import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
-import step.core.controller.ControllerSettingAccessorImpl;
+import step.core.controller.ControllerSettingAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -119,9 +118,8 @@ public class Controller {
 		pluginProxy.initializeData(context);
 		logger.info("Calling post data initialization scripts...");
 		pluginProxy.afterInitializeData(context);
-		
-		
-		scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessorImpl.class), context.getScheduleAccessor(), new Executor(context));
+			
+		scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context));
 		scheduler.start();
 	}
 	

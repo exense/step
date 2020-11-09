@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import step.core.GlobalContext;
-import step.core.controller.ControllerSettingAccessorImpl;
+import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -37,12 +37,12 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 
 	private static final String SCHEDULER_TABLE = "schedulerTable";
 	
-	private ControllerSettingAccessorImpl controllerSettingAccessor;
+	private ControllerSettingAccessor controllerSettingAccessor;
 
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		controllerSettingAccessor = context.require(ControllerSettingAccessorImpl.class);
+		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
 	}
 	
 	@Override

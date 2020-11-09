@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.controller.ControllerSettingAccessor;
-import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionParameters;
 
@@ -47,11 +46,10 @@ public class ExecutionScheduler {
 		this.executionTaskAccessor = executionTaskAccessor;
 		this.executor = executor;
 	}
-	
+
 	public void shutdown() {
 		executor.shutdown();
 	}
-
 
 	public void start() {
 		executor.start();
