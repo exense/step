@@ -79,7 +79,6 @@ public class Executor {
 	}
 
 	public Executor() {
-		// TODO Auto-generated constructor stub
 	}
 
 	private Properties getProperties() {

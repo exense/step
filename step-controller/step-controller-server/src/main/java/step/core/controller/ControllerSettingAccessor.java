@@ -7,4 +7,6 @@ public interface ControllerSettingAccessor {
 	ControllerSetting updateOrCreateSetting(String key, String value);
 
 	boolean getSettingAsBoolean(String settingSchedulerEnabled);
+
+	ControllerSetting save(ControllerSetting controllerSetting);
 }

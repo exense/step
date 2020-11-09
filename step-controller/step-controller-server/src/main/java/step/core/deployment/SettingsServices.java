@@ -29,13 +29,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import step.core.controller.ControllerSetting;
+import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingAccessorImpl;
 
 @Singleton
 @Path("settings")
 public class SettingsServices extends AbstractServices {
 	
-	protected ControllerSettingAccessorImpl controllerSettingsAccessor;
+	protected ControllerSettingAccessor controllerSettingsAccessor;
 
 	@PostConstruct
 	public void init() throws Exception {

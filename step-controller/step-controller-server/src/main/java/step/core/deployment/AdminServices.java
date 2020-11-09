@@ -37,13 +37,14 @@ import step.core.access.Preferences;
 import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.controller.ControllerSetting;
+import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingAccessorImpl;
 
 @Singleton
 @Path("admin")
 public class AdminServices extends AbstractServices {
 	
-	protected ControllerSettingAccessorImpl controllerSettingsAccessor;
+	protected ControllerSettingAccessor controllerSettingsAccessor;
 
 	private static final String MAINTENANCE_MESSAGE_KEY = "maintenance_message";
 	private static final String MAINTENANCE_TOGGLE_KEY = "maintenance_message_enabled";
