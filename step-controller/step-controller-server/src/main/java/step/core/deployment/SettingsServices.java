@@ -29,18 +29,18 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import step.core.controller.ControllerSetting;
-import step.core.controller.ControllerSettingAccessor;
+import step.core.controller.ControllerSettingAccessorImpl;
 
 @Singleton
 @Path("settings")
 public class SettingsServices extends AbstractServices {
 	
-	protected ControllerSettingAccessor controllerSettingsAccessor;
+	protected ControllerSettingAccessorImpl controllerSettingsAccessor;
 
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		controllerSettingsAccessor = new ControllerSettingAccessor(controller.getContext().getMongoClientSession());
+		controllerSettingsAccessor = new ControllerSettingAccessorImpl(controller.getContext().getMongoClientSession());
 	}
 	
 	@POST

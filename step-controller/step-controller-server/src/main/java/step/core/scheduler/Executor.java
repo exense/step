@@ -78,6 +78,10 @@ public class Executor {
 		}
 	}
 
+	public Executor() {
+		// TODO Auto-generated constructor stub
+	}
+
 	private Properties getProperties() {
 		Properties props = new Properties();
 		props.put("org.quartz.threadPool.threadCount", configuration.getProperty("tec.executor.threads", "10"));

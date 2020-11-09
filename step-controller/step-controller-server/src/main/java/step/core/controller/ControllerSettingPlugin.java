@@ -29,12 +29,12 @@ import step.engine.plugins.ExecutionEnginePlugin;
 @Plugin
 public class ControllerSettingPlugin extends AbstractControllerPlugin {
 
-	private ControllerSettingAccessor controllerSettingAccessor;
+	private ControllerSettingAccessorImpl controllerSettingAccessor;
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		controllerSettingAccessor = new ControllerSettingAccessor(context.getMongoClientSession());
-		context.put(ControllerSettingAccessor.class, controllerSettingAccessor);
+		controllerSettingAccessor = new ControllerSettingAccessorImpl(context.getMongoClientSession());
+		context.put(ControllerSettingAccessorImpl.class, controllerSettingAccessor);
 	}
 
 	@Override
@@ -50,9 +50,9 @@ public class ControllerSettingPlugin extends AbstractControllerPlugin {
 
 	public static class ControllerSettingsService {
 		
-		private ControllerSettingAccessor controllerSettingAccessor;
+		private ControllerSettingAccessorImpl controllerSettingAccessor;
 
-		public ControllerSettingsService(ControllerSettingAccessor controllerSettingAccessor) {
+		public ControllerSettingsService(ControllerSettingAccessorImpl controllerSettingAccessor) {
 			super();
 			this.controllerSettingAccessor = controllerSettingAccessor;
 		}

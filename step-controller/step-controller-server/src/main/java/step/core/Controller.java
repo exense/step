@@ -44,6 +44,7 @@ import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
+import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -65,6 +66,7 @@ import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.scheduler.Executor;
 import step.dashboards.DashboardSession;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
@@ -118,7 +120,8 @@ public class Controller {
 		logger.info("Calling post data initialization scripts...");
 		pluginProxy.afterInitializeData(context);
 		
-		scheduler = new ExecutionScheduler(context);
+		
+		scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessorImpl.class), context.getScheduleAccessor(), new Executor(context));
 		scheduler.start();
 	}
 	

@@ -25,9 +25,8 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.GlobalContext;
-import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
+import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionParameters;
 
@@ -35,25 +34,24 @@ public class ExecutionScheduler {
 	
 	private final Logger logger = LoggerFactory.getLogger(ExecutionScheduler.class);
 	
-	private ControllerSettingAccessor controllerSettingAccessor;
-	
-	private GlobalContext context;
-		
-	private Executor executor;
+	private final ControllerSettingAccessor controllerSettingAccessor;
+	private final ExecutionTaskAccessor executionTaskAccessor;		
+	private final Executor executor;
 	
 	public static final String SETTING_SCHEDULER_ENABLED = "scheduler_enabled";
-	
-	public ExecutionScheduler(GlobalContext globalContext) {
-		super();
 		
-		this.context = globalContext;
-		this.executor = new Executor(globalContext);
-		this.controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
+	public ExecutionScheduler(ControllerSettingAccessor controllerSettingAccessor,
+			ExecutionTaskAccessor executionTaskAccessor, Executor executor) {
+		super();
+		this.controllerSettingAccessor = controllerSettingAccessor;
+		this.executionTaskAccessor = executionTaskAccessor;
+		this.executor = executor;
 	}
-
+	
 	public void shutdown() {
 		executor.shutdown();
 	}
+
 
 	public void start() {
 		executor.start();
@@ -80,11 +78,11 @@ public class ExecutionScheduler {
 	}
 	
 	public Iterator<ExecutiontTaskParameters> getActiveExecutionTasks() {
-		return context.getScheduleAccessor().getActiveExecutionTasks();
+		return executionTaskAccessor.getActiveExecutionTasks();
 	}
 	
 	public Iterator<ExecutiontTaskParameters> getActiveAndInactiveExecutionTasks() {
-		return context.getScheduleAccessor().getAll();
+		return executionTaskAccessor.getAll();
 	}
 	
 	public void removeExecutionTask(String executionTaskID) {
@@ -149,15 +147,15 @@ public class ExecutionScheduler {
 	}
 	
 	public ExecutiontTaskParameters get(String id) {
-		return context.getScheduleAccessor().get(new ObjectId(id));
+		return executionTaskAccessor.get(new ObjectId(id));
 	}
 	
 	private void save(ExecutiontTaskParameters schedule) {
-		context.getScheduleAccessor().save(schedule);
+		executionTaskAccessor.save(schedule);
 	}
 	
 	private void remove(ExecutiontTaskParameters schedule) {
-		context.getScheduleAccessor().remove(schedule.getId());
+		executionTaskAccessor.remove(schedule.getId());
 	}
 	
 	public List<ExecutionContext> getCurrentExecutions() {
