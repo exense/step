@@ -57,4 +57,15 @@ public abstract class AbstractControllerPlugin extends AbstractPlugin implements
 		
 		context.getServiceRegistrationCallback().registerHandler(ctx);
 	}
+
+	protected void registerWebappFromClass(Class baseClass, GlobalContext context, String path) {
+		ResourceHandler bb = new ResourceHandler();
+
+		bb.setResourceBase(baseClass.getResource("webapp").toExternalForm());
+
+		ContextHandler ctx = new ContextHandler(path);
+		ctx.setHandler(bb);
+
+		context.getServiceRegistrationCallback().registerHandler(ctx);
+	}
 }
