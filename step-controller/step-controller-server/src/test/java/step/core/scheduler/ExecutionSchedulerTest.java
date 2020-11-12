@@ -146,7 +146,17 @@ public class ExecutionSchedulerTest {
 		assertTrue(getExecutor().isScheduleMethodCalled);
 		
 		executionScheduler.disableAllExecutionTasksSchedule();
+		// Reset the isScheduleMethodCalled
+		getExecutor().isScheduleMethodCalled = false;
 		assertFalse(controllerSettingAccessor.getSettingAsBoolean(ExecutionScheduler.SETTING_SCHEDULER_ENABLED));
+		
+		ExecutiontTaskParameters executiontTaskParameters2 = new ExecutiontTaskParameters();
+		executiontTaskParameters2.setExecutionsParameters(new ExecutionParameters());
+		String executionTaskId2 = executiontTaskParameters2.getId().toString();
+		assertTrue(executionScheduler.addExecutionTask(executiontTaskParameters2));
+		
+		executionScheduler.enableExecutionTask(executionTaskId2);
+		assertFalse(getExecutor().isScheduleMethodCalled);
 		
 		executionScheduler.enableAllExecutionTasksSchedule();
 		assertTrue(controllerSettingAccessor.getSettingAsBoolean(ExecutionScheduler.SETTING_SCHEDULER_ENABLED));
