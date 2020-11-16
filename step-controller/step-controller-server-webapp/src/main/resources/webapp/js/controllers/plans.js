@@ -210,3 +210,22 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
     }
   };
 })
+
+.directive('planLinkAndName', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      planRef: '=?'
+    },
+    templateUrl: 'partials/components/planLinkAndName.html',
+    controller: function($scope, $http) {
+      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
+      if($scope.planRef && $scope.planRef.repositoryID=='local') {
+    	  $scope.planId = $scope.planRef.repositoryParameters.planid
+    	  $http.get("rest/plans/"+ $scope.planId).then(function(response) {
+    		  $scope.planName = response.data.attributes.name;
+    	  });
+      }
+    }
+  };
+})
