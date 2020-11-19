@@ -67,14 +67,10 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 	@Override
 	public boolean authenticate(Credentials credentials) throws Exception {
 		ConnectionConfig.Builder builder = ConnectionConfig.builder()
-				.url(ldapUrl);
+				.url(ldapUrl).useStartTLS(ldapTLS);
 
 		if (ldapTechUser!=null) {
 			builder = builder.connectionInitializers(new BindConnectionInitializer(ldapTechUser, new Credential(ldapTechPwd)));
-		}
-
-		if (ldapTLS) {
-			builder = builder.useStartTLS(false);
 		}
 
 		ConnectionConfig connConfig = builder.build();
