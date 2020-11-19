@@ -26,7 +26,6 @@ import org.ldaptive.auth.AuthenticationRequest;
 import org.ldaptive.auth.AuthenticationResponse;
 import org.ldaptive.auth.SearchDnResolver;
 import org.ldaptive.auth.SimpleBindAuthenticationHandler;
-import org.ldaptive.control.ResponseControl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
@@ -34,9 +33,8 @@ import step.core.GlobalContextAware;
 
 public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 	
-	private static Logger logger = LoggerFactory.getLogger(LdapAuthenticator.class);
-	
-	private Configuration configuration;
+	private static final Logger logger = LoggerFactory.getLogger(LdapAuthenticator.class);
+
 	private String ldapUrl;
 	private String ldapBaseDn;
 	private String ldapFilter;
@@ -48,7 +46,7 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 
 	@Override
 	public void setGlobalContext(GlobalContext context) {
-		configuration = context.getConfiguration();
+		Configuration configuration = context.getConfiguration();
 		
 		ldapUrl = configuration.getProperty("ui.authenticator.ldap.url",null);
 		ldapBaseDn = configuration.getProperty("ui.authenticator.ldap.base",null);
@@ -66,6 +64,7 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 
 	@Override
 	public boolean authenticate(Credentials credentials) throws Exception {
+		logger.debug("Authenticating user '"+credentials.getUsername()+"' with ldap '"+ldapUrl+"'");
 		ConnectionConfig.Builder builder = ConnectionConfig.builder()
 				.url(ldapUrl).useStartTLS(ldapTLS);
 
@@ -86,11 +85,15 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 
 		org.ldaptive.auth.Authenticator auth = new org.ldaptive.auth.Authenticator(dnResolver, authHandler);
 		AuthenticationResponse response = auth.authenticate(
-				new AuthenticationRequest(credentials.getUsername(), new Credential(credentials.getPassword()), null));
-		if (response.isSuccess()) {
-			return true;
-		} else {
-			return false;
+				new AuthenticationRequest(credentials.getUsername(), new Credential(credentials.getPassword())));
+
+		if (logger.isDebugEnabled()) {
+			if (response.isSuccess()) {
+				logger.debug("Authentication successful for user '"+credentials.getUsername()+"'");
+			} else {
+				logger.debug("Authentication failed for user '"+credentials.getUsername()+"': "+response.getDiagnosticMessage());
+			}
 		}
+		return response.isSuccess();
 	}
 }
