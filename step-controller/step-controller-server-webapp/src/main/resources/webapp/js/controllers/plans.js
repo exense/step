@@ -229,3 +229,21 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
     }
   };
 })
+
+.directive('planName', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      planRef: '=?'
+    },
+    templateUrl: 'partials/components/planName.html',
+    controller: function($scope, $http) {
+      if($scope.planRef && $scope.planRef.repositoryID=='local') {
+    	  $scope.planId = $scope.planRef.repositoryParameters.planid
+    	  $http.get("rest/plans/"+ $scope.planId).then(function(response) {
+    		  $scope.planName = response.data.attributes.name;
+    	  });
+      }
+    }
+  };
+})
