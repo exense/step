@@ -18,61 +18,83 @@
  ******************************************************************************/
 package step.core.access;
 
-import javax.naming.NamingException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ch.commons.auth.Authenticator;
 import ch.commons.auth.Credentials;
-import ch.commons.auth.PasswordDirectory;
-import ch.commons.auth.cyphers.CypherAuthenticator;
-import ch.commons.auth.ldap.LDAPClient;
 import ch.exense.commons.app.Configuration;
+import org.ldaptive.*;
+import org.ldaptive.auth.AuthenticationRequest;
+import org.ldaptive.auth.AuthenticationResponse;
+import org.ldaptive.auth.SearchDnResolver;
+import org.ldaptive.auth.SimpleBindAuthenticationHandler;
+import org.ldaptive.control.ResponseControl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.GlobalContextAware;
-import step.core.controller.errorhandling.ApplicationException;
 
 public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 	
 	private static Logger logger = LoggerFactory.getLogger(LdapAuthenticator.class);
 	
 	private Configuration configuration;
-	
-	private PasswordDirectory directory;
-	private CypherAuthenticator authenticator;
+	private String ldapUrl;
+	private String ldapBaseDn;
+	private String ldapFilter;
+
+	private String ldapTechUser;
+	private String ldapTechPwd;
+
+	private Boolean ldapTLS;
 
 	@Override
 	public void setGlobalContext(GlobalContext context) {
 		configuration = context.getConfiguration();
 		
-		String ldapUrl = configuration.getProperty("ui.authenticator.ldap.url",null);
-		String ldapBaseDn = configuration.getProperty("ui.authenticator.ldap.base",null);
-		String ldapFilter = configuration.getProperty("ui.authenticator.ldap.filter",null);
-		String ldapTechuser = configuration.getProperty("ui.authenticator.ldap.techuser",null);
-		String ldapTechpwd = configuration.getProperty("ui.authenticator.ldap.techpwd",null);
+		ldapUrl = configuration.getProperty("ui.authenticator.ldap.url",null);
+		ldapBaseDn = configuration.getProperty("ui.authenticator.ldap.base",null);
+		ldapFilter = configuration.getProperty("ui.authenticator.ldap.filter",null);
+
+		ldapTechUser = configuration.getProperty("ui.authenticator.ldap.techuser",null);
+		ldapTechPwd = configuration.getProperty("ui.authenticator.ldap.techpwd",null);
+
+		ldapTLS = Boolean.parseBoolean(configuration.getProperty("ui.authenticator.ldap.tls","false"));
 		
-		// Ldap over SSL case
-		String pathToJks = configuration.getProperty("ui.authenticator.ldap.ssl.pathToJks",null);
-		String jksPassword = configuration.getProperty("ui.authenticator.ldap.ssl.jksPassword",null);
-		
-		try {
-			directory = new LDAPClient(ldapUrl,ldapBaseDn,ldapFilter, ldapTechuser,ldapTechpwd, pathToJks, jksPassword);
-			logger.info("LdapAuthenticator is active.");
-			authenticator = new CypherAuthenticator(directory);
-		} catch (NamingException e) {
-			e.printStackTrace();
-		}
-		
+		// Ldap certificate
+		//pathToJks = configuration.getProperty("ui.authenticator.ldap.ssl.pathToJks",null);
+		//jksPassword = configuration.getProperty("ui.authenticator.ldap.ssl.jksPassword",null);
 	}
 
 	@Override
 	public boolean authenticate(Credentials credentials) throws Exception {
-		try {
-			return authenticator.authenticate(credentials);
-		} catch (NamingException e) {
-			e.printStackTrace();
-			throw new ApplicationException(100, "Invalid username/password", null);
+		ConnectionConfig.Builder builder = ConnectionConfig.builder()
+				.url(ldapUrl);
+
+		if (ldapTechUser!=null) {
+			builder = builder.connectionInitializers(new BindConnectionInitializer(ldapTechUser, new Credential(ldapTechPwd)));
+		}
+
+		if (ldapTLS) {
+			builder = builder.useStartTLS(false);
+		}
+
+		ConnectionConfig connConfig = builder.build();
+
+		// use a search dn resolver
+		SearchDnResolver dnResolver = SearchDnResolver.builder()
+				.factory(new DefaultConnectionFactory(connConfig))
+				.dn(ldapBaseDn)
+				.filter(ldapFilter)
+				.build();
+
+		SimpleBindAuthenticationHandler authHandler = new SimpleBindAuthenticationHandler(new DefaultConnectionFactory(connConfig));
+
+		org.ldaptive.auth.Authenticator auth = new org.ldaptive.auth.Authenticator(dnResolver, authHandler);
+		AuthenticationResponse response = auth.authenticate(
+				new AuthenticationRequest(credentials.getUsername(), new Credential(credentials.getPassword()), null));
+		if (response.isSuccess()) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 }
