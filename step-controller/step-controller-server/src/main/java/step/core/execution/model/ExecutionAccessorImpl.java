@@ -63,7 +63,7 @@ public class ExecutionAccessorImpl extends AbstractCRUDAccessor<Execution> imple
 	@Override
 	public List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference) {
 		List<Execution> result = new ArrayList<>();
-		collection.find("{executionParameters.artefact: #}", objectReference).as(Execution.class).forEach(e->result.add(e));;
+		collection.find("{executionParameters.repositoryObject: #}", objectReference).as(Execution.class).forEach(e->result.add(e));;
 		return result;
 	}
 
