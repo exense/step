@@ -1,5 +1,5 @@
 <div class="modal-header">
-	<h3 class="modal-title">{{mode=='edit'?'Edit':'New'}} Keyword</h3>
+	<h3 class="modal-title">{{mode=='edit'?'Edit':'New'}} {{title}}</h3>
 </div>
 
 <div class="modal-body">
@@ -28,7 +28,7 @@
 		
 		<div class="form-group form-group-sm">
 			<label>Type</label> 
-			<select ng-change="loadInitialFunction()" ng-model="function_.type" ng-options="option as functionTypeRegistry.getLabel(option) for option in functionTypeRegistry.getTypes()" class="form-control" />
+			<select ng-change="loadInitialFunction()" ng-model="function_.type" ng-options="option as functionTypeRegistry.getLabel(option) for option in getTypes()" class="form-control" />
 		</div>
 		
 		<div class="panel panel-default" style="margin-top: 20px">

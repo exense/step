@@ -45,18 +45,33 @@ angular.module('functionsControllers',['step'])
   api.getTypes = function() {
     return _.keys(registry);
   }
+
+  api.getFilteredTypes = function(arrayFilters){
+    var keys = _.keys(registry);
+    var resultsArray=[];
+    for (var i=0; i<keys.length;i++) {
+      if (arrayFilters.indexOf(keys[i]) >= 0) {
+        resultsArray.push(keys[i])
+      }
+    }
+    return resultsArray;
+  }
   
   return api;
 })
 
 .factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {
   
-  function openModal(function_) {
+  function openModal(function_,typesFilter,title) {
     var modalInstance = $uibModal.open({
       backdrop: 'static',
         templateUrl: 'partials/functions/functionConfigurationDialog.html',
         controller: 'newFunctionModalCtrl',
-        resolve: {function_: function () {return function_;}}
+        resolve: {
+          function_: function () {return function_;},
+          typesFilter: function () {return typesFilter;},
+          title: function () {return title;}
+          }
       });
 
       return modalInstance.result;
@@ -64,16 +79,16 @@ angular.module('functionsControllers',['step'])
   
   var dialogs = {};
   
-  dialogs.editFunction = function(id, callback) {
+  dialogs.editFunction = function(id, callback,typesFilter,title) {
     $http.get("rest/functions/"+id).then(function(response) {
-      openModal(response.data).then(function() {
+      openModal(response.data,typesFilter,title).then(function() {
         if(callback){callback()};
       })
     });
   }
   
-  dialogs.addFunction = function(callback) {
-    openModal().then(function() {
+  dialogs.addFunction = function(callback,typesFilter,title) {
+    openModal(null,typesFilter,title).then(function() {
       if(callback){callback()};
     })
   }
@@ -108,8 +123,8 @@ angular.module('functionsControllers',['step'])
     reload();
   })
   
-  $scope.editFunction = function(id) {
-    FunctionDialogs.editFunction(id, function() {reload()});
+  $scope.editFunction = function(id,typesFilter,title) {
+    FunctionDialogs.editFunction(id, function() {reload()},typesFilter,title);
   }
   
   $scope.copyFunction = function(id) {
@@ -127,8 +142,8 @@ angular.module('functionsControllers',['step'])
     FunctionDialogs.openFunctionEditor(functionid);
   }
   
-  $scope.addFunction = function() {
-    FunctionDialogs.addFunction(function() {reload()});
+  $scope.addFunction = function(typesFilter,title) {
+    FunctionDialogs.addFunction(function() {reload()},typesFilter,title);
   }
   
   $scope.executeFunction = function(id) {
@@ -167,14 +182,23 @@ angular.module('functionsControllers',['step'])
   }
 })
 
-.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'Dialogs', 'AuthService','FunctionTypeRegistry',
-function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dialogs, AuthService, FunctionTypeRegistry) {
+.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'typesFilter', 'title', 'Dialogs', 'AuthService','FunctionTypeRegistry',
+function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typesFilter, title, Dialogs, AuthService, FunctionTypeRegistry) {
   $scope.functionTypeRegistry = FunctionTypeRegistry;
   
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
+  $scope.title = (title == null) ? 'Keyword' : title;
   
   $scope.isSchemaEnforced = AuthService.getConf().miscParams.enforceschemas;
+
+  $scope.getTypes = function() {
+    if (typesFilter != null && typesFilter.length > 0) {
+      return $scope.functionTypeRegistry.getFilteredTypes(typesFilter);
+    } else {
+      return $scope.functionTypeRegistry.getTypes();
+    }
+  }
   
   $scope.addRoutingCriteria = function() {
     $scope.criteria.push({key:"",value:""});
@@ -225,7 +249,11 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,Dia
   }
   
   if(newFunction) {
-    $scope.function_ = {type:'step.plugins.java.GeneralScriptFunction'}
+    if (typesFilter != null && typesFilter.length > 0) {
+      $scope.function_ = {type: typesFilter[0]}
+    } else {
+      $scope.function_ = {type:'step.plugins.java.GeneralScriptFunction'}
+    }
     $scope.loadInitialFunction();
   } else {
     $scope.function_ = function_;

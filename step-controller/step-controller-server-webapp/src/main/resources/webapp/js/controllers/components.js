@@ -422,11 +422,15 @@ angular.module('components',['step'])
 .directive('inputdropdown', ['$http',function($http) {
   return {
     restrict: 'E',
-    scope: {options:'=',action:'=',initialValue:'=',handle:'='},
+    scope: {options:'=',action:'=',initialValue:'=',handle:'=',onlyOptions:'=?'},
     controller: function($scope){
       $scope.model = {};
       $scope.model.inputtext = $scope.initialValue?$scope.initialValue:'';
-      
+      $scope.onlyOptions = $scope.onlyOptions? $scope.onlyOptions:false;
+      if ($scope.model.inputtext !== '') {
+        $scope.action($scope.model.inputtext);
+      }
+
       $scope.createRegexpForSelection = function(selection) {
         regexp = '';
         if(selection.length>1) {
@@ -469,6 +473,9 @@ angular.module('components',['step'])
 
       $scope.selectionChanged = function() {
         var selection = _.where($scope.options, { selected : true });
+        if (selection.length == 0 && $scope.onlyOptions) {
+          selection = _.where($scope.options, { selected : false });
+        }
         $scope.model.inputtext = $scope.createRegexpForSelection(selection);
         $scope.action($scope.model.inputtext);
       };
