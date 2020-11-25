@@ -62,7 +62,7 @@ angular.module('functionsControllers',['step'])
 
 .factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {
   
-  function openModal(function_,typesFilter,title) {
+  function openModal(function_, typesFilter, title, serviceRoot) {
     var modalInstance = $uibModal.open({
       backdrop: 'static',
         templateUrl: 'partials/functions/functionConfigurationDialog.html',
@@ -70,7 +70,8 @@ angular.module('functionsControllers',['step'])
         resolve: {
           function_: function () {return function_;},
           typesFilter: function () {return typesFilter;},
-          title: function () {return title;}
+          title: function () {return title;},
+          serviceRoot: function (){return serviceRoot;}
           }
       });
 
@@ -78,23 +79,27 @@ angular.module('functionsControllers',['step'])
   }
   
   var dialogs = {};
+  var serviceRoot = "functions";
+  dialogs.setServiceRoot = function(varServiceRoot) {
+    serviceRoot = varServiceRoot;
+  }
   
-  dialogs.editFunction = function(id, callback,typesFilter,title) {
-    $http.get("rest/functions/"+id).then(function(response) {
-      openModal(response.data,typesFilter,title).then(function() {
+  dialogs.editFunction = function(id, callback, typesFilter, title) {
+    $http.get("rest/"+serviceRoot+"/"+id).then(function(response) {
+      openModal(response.data,typesFilter,title,serviceRoot).then(function() {
         if(callback){callback()};
       })
     });
   }
   
-  dialogs.addFunction = function(callback,typesFilter,title) {
-    openModal(null,typesFilter,title).then(function() {
+  dialogs.addFunction = function(callback, typesFilter, title) {
+    openModal(null,typesFilter,title,serviceRoot).then(function() {
       if(callback){callback()};
     })
   }
   
   dialogs.openFunctionEditor = function(functionid) {
-    $http.get("rest/functions/"+functionid+"/editor").then(function(response){
+    $http.get("rest/"+serviceRoot+"/"+functionid+"/editor").then(function(response){
       var path = response.data
       if(path) {
         $location.path(path);              
@@ -112,6 +117,12 @@ angular.module('functionsControllers',['step'])
   
   $scope.authService = AuthService;
   $scope.tableHandle = {};
+
+  var serviceRoot="functions";
+  $scope.initCtrl = function(root){
+    serviceRoot=root;
+    FunctionDialogs.setServiceRoot(serviceRoot);
+  }
   
   function reload() {
     $scope.tableHandle.reload();
@@ -133,7 +144,7 @@ angular.module('functionsControllers',['step'])
   
   $scope.pasteFunction = function() {
     if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
-      $http.post("rest/functions/"+$rootScope.clipboard.id+"/copy")
+      $http.post("rest/"+serviceRoot+"/"+$rootScope.clipboard.id+"/copy")
       .then(function() {reload()});
     }
   }
@@ -159,7 +170,7 @@ angular.module('functionsControllers',['step'])
   
   $scope.deleteFunction = function(id) {
     Dialogs.showDeleteWarning().then(function() {
-      $http.delete("rest/functions/"+id).then(function() {reload()});
+      $http.delete("rest/"+serviceRoot+"/"+id).then(function() {reload()});
     })
   }
   
@@ -182,8 +193,8 @@ angular.module('functionsControllers',['step'])
   }
 })
 
-.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'typesFilter', 'title', 'Dialogs', 'AuthService','FunctionTypeRegistry',
-function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typesFilter, title, Dialogs, AuthService, FunctionTypeRegistry) {
+.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'typesFilter', 'title', 'serviceRoot', 'Dialogs', 'AuthService','FunctionTypeRegistry',
+function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typesFilter, title, serviceRoot, Dialogs, AuthService, FunctionTypeRegistry) {
   $scope.functionTypeRegistry = FunctionTypeRegistry;
   
   var newFunction = function_==null;
@@ -229,7 +240,7 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typ
   loadTokenSelectionCriteria(function_);
   
   $scope.loadInitialFunction = function() {
-    $http.get("rest/functions/types/"+$scope.function_.type).then(function(response){
+    $http.get("rest/"+serviceRoot+"/types/"+$scope.function_.type).then(function(response){
       var initialFunction = response.data;
       if($scope.function_) {
         initialFunction.id = $scope.function_.id;
@@ -267,12 +278,12 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typ
   	schemaJson = JSON.parse($scope.schemaStr);
   	$scope.function_.schema = schemaJson;
   	
-  	$http.post("rest/functions",$scope.function_).then(function(response) {
+  	$http.post("rest/"+serviceRoot+"",$scope.function_).then(function(response) {
   	  var function_ = response.data;
   	  $uibModalInstance.close(response.data);
 
   	  if(editAfterSave) {
-  	    $http.get("rest/functions/"+function_.id+"/editor").then(function(response){
+  	    $http.get("rest/"+serviceRoot+"/"+function_.id+"/editor").then(function(response){
   	      var path = response.data;
   	      if(path) {
   	        $location.path(path);
