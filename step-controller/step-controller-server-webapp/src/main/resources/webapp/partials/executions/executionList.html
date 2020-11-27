@@ -1,7 +1,7 @@
 <div id="ExecutionListCtrl" ng-controller="ExecutionListCtrl">
-	<st-table collection="'executions'" handle="tableHandle" uid="'executionList'" order="[[1, &quot;desc&quot;]]">
+	<div class="toolbar"><auto-refresh-commands autorefresh="autorefresh" /></div>
+		<st-table collection="'executions'" handle="tableHandle" uid="'executionList'" order="[[1, &quot;desc&quot;]]">
 		<st-actions>
-			<auto-refresh-commands autorefresh="autorefresh" />
 		</st-actions>
 		<st-columns>
 			<st-column name="description">
