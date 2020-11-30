@@ -27,6 +27,8 @@ public enum InputType {
 	DROPDOWN,
 	
 	DATE_RANGE,
+
+	CHECKBOX,
 	
 	NONE,
 }
