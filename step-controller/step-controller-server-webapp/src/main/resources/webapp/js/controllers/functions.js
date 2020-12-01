@@ -62,7 +62,7 @@ angular.module('functionsControllers',['step'])
 
 .factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {
   
-  function openModal(function_, typesFilter, title, serviceRoot) {
+  function openModal(function_, typesFilter, title, serviceRoot, lightForm) {
     var modalInstance = $uibModal.open({
       backdrop: 'static',
         templateUrl: 'partials/functions/functionConfigurationDialog.html',
@@ -71,7 +71,8 @@ angular.module('functionsControllers',['step'])
           function_: function () {return function_;},
           typesFilter: function () {return typesFilter;},
           title: function () {return title;},
-          serviceRoot: function (){return serviceRoot;}
+          serviceRoot: function (){return serviceRoot;},
+          lightForm: function (){return lightForm;}
           }
       });
 
@@ -84,16 +85,16 @@ angular.module('functionsControllers',['step'])
     serviceRoot = varServiceRoot;
   }
   
-  dialogs.editFunction = function(id, callback, typesFilter, title) {
+  dialogs.editFunction = function(id, callback, typesFilter, title, lightForm) {
     $http.get("rest/"+serviceRoot+"/"+id).then(function(response) {
-      openModal(response.data,typesFilter,title,serviceRoot).then(function() {
+      openModal(response.data,typesFilter,title,serviceRoot, lightForm).then(function() {
         if(callback){callback()};
       })
     });
   }
   
-  dialogs.addFunction = function(callback, typesFilter, title) {
-    openModal(null,typesFilter,title,serviceRoot).then(function() {
+  dialogs.addFunction = function(callback, typesFilter, title, lightForm) {
+    openModal(null,typesFilter,title,serviceRoot, lightForm).then(function() {
       if(callback){callback()};
     })
   }
@@ -134,8 +135,8 @@ angular.module('functionsControllers',['step'])
     reload();
   })
   
-  $scope.editFunction = function(id,typesFilter,title) {
-    FunctionDialogs.editFunction(id, function() {reload()},typesFilter,title);
+  $scope.editFunction = function(id, typesFilter, title, lightForm) {
+    FunctionDialogs.editFunction(id, function() {reload()}, typesFilter, title, lightForm);
   }
   
   $scope.copyFunction = function(id) {
@@ -153,8 +154,8 @@ angular.module('functionsControllers',['step'])
     FunctionDialogs.openFunctionEditor(functionid);
   }
   
-  $scope.addFunction = function(typesFilter,title) {
-    FunctionDialogs.addFunction(function() {reload()},typesFilter,title);
+  $scope.addFunction = function(typesFilter, title, lightForm) {
+    FunctionDialogs.addFunction(function() {reload()}, typesFilter, title, lightForm);
   }
   
   $scope.executeFunction = function(id) {
@@ -193,13 +194,14 @@ angular.module('functionsControllers',['step'])
   }
 })
 
-.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'typesFilter', 'title', 'serviceRoot', 'Dialogs', 'AuthService','FunctionTypeRegistry',
-function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typesFilter, title, serviceRoot, Dialogs, AuthService, FunctionTypeRegistry) {
+.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'typesFilter', 'title', 'serviceRoot', 'lightForm', 'Dialogs', 'AuthService','FunctionTypeRegistry',
+function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typesFilter, title, serviceRoot, lightForm, Dialogs, AuthService, FunctionTypeRegistry) {
   $scope.functionTypeRegistry = FunctionTypeRegistry;
   
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
   $scope.title = (title == null) ? 'Keyword' : title;
+  $scope.lightForm = (lightForm == null) ? false : lightForm;
   
   $scope.isSchemaEnforced = AuthService.getConf().miscParams.enforceschemas;
 

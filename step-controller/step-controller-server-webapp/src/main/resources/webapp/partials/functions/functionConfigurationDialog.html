@@ -11,11 +11,11 @@
 			<label>Description</label> 
 			<textarea ng-model="function_.description" class="form-control"></textarea>
 		</div>
-		<div ng-show="isSchemaEnforced === 'true';" class="form-group form-group-sm">
+		<div ng-show="!lightForm && isSchemaEnforced === 'true';" class="form-group form-group-sm">
 			<label>Schema</label> 
 			<textarea ng-model="schemaStr" class="form-control"></textarea>
 		</div>
-		<div ng-if="function_.htmlTemplate" class="form-group form-group-sm">
+		<div ng-if="!lightForm && function_.htmlTemplate" class="form-group form-group-sm">
 			<label></label> 
 			<label>
 				<input type="checkbox" ng-model="function_.useCustomTemplate"> 
@@ -35,7 +35,7 @@
 			<div class="panel-body" ng-include="functionTypeRegistry.getForm(function_.type)" ></div>
 		</div>
 	
-		<div class="panel panel-default">
+		<div class="panel panel-default" ng-show="!lightForm">
 			<div class="panel-heading">
 				<a ng-click="showAdvanced = !showAdvanced">Advanced</a>
 			</div>
