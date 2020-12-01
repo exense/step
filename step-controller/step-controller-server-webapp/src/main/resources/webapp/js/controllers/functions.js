@@ -73,10 +73,14 @@ angular.module('functionsControllers',['step'])
       return config;
     }
 
+    functionDialogsConfig.getDefaultConfig = function() {
+      return functionDialogsConfig.getConfigObject('Keyword','functions',[],false,'functionTable');
+    }
+
     return functionDialogsConfig;
 })
 
-.factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {
+.factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs,FunctionDialogsConfig, $location) {
   
   function openModal(function_, dialogConfig) {
     var modalInstance = $uibModal.open({
@@ -85,7 +89,7 @@ angular.module('functionsControllers',['step'])
         controller: 'newFunctionModalCtrl',
         resolve: {
           function_: function () {return function_;},
-          dialogConfig: function () {return dialogConfig;}
+          dialogConfig: function () {return (dialogConfig) ? dialogConfig : FunctionDialogsConfig.getDefaultConfig();;}
           }
       });
 
@@ -95,6 +99,7 @@ angular.module('functionsControllers',['step'])
   var dialogs = {};
 
   dialogs.editFunction = function(id, callback, dialogConfig) {
+    dialogConfig = (dialogConfig) ? dialogConfig : FunctionDialogsConfig.getDefaultConfig();
     $http.get("rest/"+dialogConfig.serviceRoot+"/"+id).then(function(response) {
       openModal(response.data,dialogConfig).then(function() {
         if(callback){callback()};
@@ -103,12 +108,14 @@ angular.module('functionsControllers',['step'])
   }
   
   dialogs.addFunction = function(callback, dialogConfig) {
+    dialogConfig = (dialogConfig) ? dialogConfig : FunctionDialogsConfig.getDefaultConfig();
     openModal(null,dialogConfig).then(function() {
       if(callback){callback()};
     })
   }
   
   dialogs.openFunctionEditor = function(functionid, dialogConfig) {
+    dialogConfig = (dialogConfig) ? dialogConfig : FunctionDialogsConfig.getDefaultConfig();
     $http.get("rest/"+dialogConfig.serviceRoot+"/"+functionid+"/editor").then(function(response){
       var path = response.data
       if(path) {
