@@ -1,21 +1,21 @@
 <div class="modal-header">
-	<h3 class="modal-title">{{mode=='edit'?'Edit':'New'}} {{title}}</h3>
+	<h3 class="modal-title">{{mode=='edit'?'Edit':'New'}} {{dialogConfig.title}}</h3>
 </div>
 
 <div class="modal-body">
 	<strong>{{description}}</strong>
 	<form ng-submit="save(true)">
-		<st-custom-form st-model="function_" st-screen="functionTable"/>
+		<st-custom-form st-model="function_" st-screen="{{dialogConfig.customScreenTable}}"/>
 		<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
 		<div class="form-group form-group-sm">
 			<label>Description</label> 
 			<textarea ng-model="function_.description" class="form-control"></textarea>
 		</div>
-		<div ng-show="!lightForm && isSchemaEnforced === 'true';" class="form-group form-group-sm">
+		<div ng-show="!dialogConfig.lightForm && isSchemaEnforced === 'true';" class="form-group form-group-sm">
 			<label>Schema</label> 
 			<textarea ng-model="schemaStr" class="form-control"></textarea>
 		</div>
-		<div ng-if="!lightForm && function_.htmlTemplate" class="form-group form-group-sm">
+		<div ng-if="!dialogConfig.lightForm && function_.htmlTemplate" class="form-group form-group-sm">
 			<label></label> 
 			<label>
 				<input type="checkbox" ng-model="function_.useCustomTemplate"> 
@@ -35,7 +35,7 @@
 			<div class="panel-body" ng-include="functionTypeRegistry.getForm(function_.type)" ></div>
 		</div>
 	
-		<div class="panel panel-default" ng-show="!lightForm">
+		<div class="panel panel-default" ng-show="!dialogConfig.lightForm">
 			<div class="panel-heading">
 				<a ng-click="showAdvanced = !showAdvanced">Advanced</a>
 			</div>

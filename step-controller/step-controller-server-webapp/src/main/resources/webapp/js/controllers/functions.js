@@ -60,19 +60,32 @@ angular.module('functionsControllers',['step'])
   return api;
 })
 
+.factory('FunctionDialogsConfig', function ($rootScope, $uibModal, $http, Dialogs, $location) {
+    var functionDialogsConfig = {};
+
+    functionDialogsConfig.getConfigObject = function(title,serviceRoot,functionTypeFilters,lightForm, customScreenTable) {
+      var config = {};
+      config.title = title;
+      config.serviceRoot = serviceRoot;
+      config.functionTypeFilters = functionTypeFilters;
+      config.lightForm = lightForm;
+      config.customScreenTable = customScreenTable;
+      return config;
+    }
+
+    return functionDialogsConfig;
+})
+
 .factory('FunctionDialogs', function ($rootScope, $uibModal, $http, Dialogs, $location) {
   
-  function openModal(function_, typesFilter, title, serviceRoot, lightForm) {
+  function openModal(function_, dialogConfig) {
     var modalInstance = $uibModal.open({
       backdrop: 'static',
         templateUrl: 'partials/functions/functionConfigurationDialog.html',
         controller: 'newFunctionModalCtrl',
         resolve: {
           function_: function () {return function_;},
-          typesFilter: function () {return typesFilter;},
-          title: function () {return title;},
-          serviceRoot: function (){return serviceRoot;},
-          lightForm: function (){return lightForm;}
+          dialogConfig: function () {return dialogConfig;}
           }
       });
 
@@ -80,27 +93,23 @@ angular.module('functionsControllers',['step'])
   }
   
   var dialogs = {};
-  var serviceRoot = "functions";
-  dialogs.setServiceRoot = function(varServiceRoot) {
-    serviceRoot = varServiceRoot;
-  }
-  
-  dialogs.editFunction = function(id, callback, typesFilter, title, lightForm) {
-    $http.get("rest/"+serviceRoot+"/"+id).then(function(response) {
-      openModal(response.data,typesFilter,title,serviceRoot, lightForm).then(function() {
+
+  dialogs.editFunction = function(id, callback, dialogConfig) {
+    $http.get("rest/"+dialogConfig.serviceRoot+"/"+id).then(function(response) {
+      openModal(response.data,dialogConfig).then(function() {
         if(callback){callback()};
       })
     });
   }
   
-  dialogs.addFunction = function(callback, typesFilter, title, lightForm) {
-    openModal(null,typesFilter,title,serviceRoot, lightForm).then(function() {
+  dialogs.addFunction = function(callback, dialogConfig) {
+    openModal(null,dialogConfig).then(function() {
       if(callback){callback()};
     })
   }
   
-  dialogs.openFunctionEditor = function(functionid) {
-    $http.get("rest/"+serviceRoot+"/"+functionid+"/editor").then(function(response){
+  dialogs.openFunctionEditor = function(functionid, dialogConfig) {
+    $http.get("rest/"+dialogConfig.serviceRoot+"/"+functionid+"/editor").then(function(response){
       var path = response.data
       if(path) {
         $location.path(path);              
@@ -113,16 +122,17 @@ angular.module('functionsControllers',['step'])
   return dialogs;
 })
 
-.controller('FunctionListCtrl', function($scope, $rootScope, $compile, $http, $interval, $uibModal, stateStorage, Dialogs, FunctionDialogs, ImportDialogs, ExportDialogs, $location, AuthService, FunctionTypeRegistry) {
+.controller('FunctionListCtrl', function($scope, $rootScope, $compile, $http, $interval, $uibModal, stateStorage, Dialogs, FunctionDialogs, FunctionDialogsConfig, ImportDialogs, ExportDialogs, $location, AuthService, FunctionTypeRegistry) {
   stateStorage.push($scope, 'functions', {});	
   
   $scope.authService = AuthService;
   $scope.tableHandle = {};
 
-  var serviceRoot="functions";
-  $scope.initCtrl = function(root){
-    serviceRoot=root;
-    FunctionDialogs.setServiceRoot(serviceRoot);
+  $scope.config = FunctionDialogsConfig.getConfigObject('Keyword','functions',[],false,'functionTable')
+  $scope.initCtrl = function(type){
+    if (type == 'masks') {
+      $scope.config = FunctionDialogsConfig.getConfigObject('Mask','masks',['step.plugins.pdftest.PdfTestFunction','step.plugins.compare.image.ImageCompareFunction'],true,'compareMasksTable');
+    }
   }
   
   function reload() {
@@ -135,8 +145,8 @@ angular.module('functionsControllers',['step'])
     reload();
   })
   
-  $scope.editFunction = function(id, typesFilter, title, lightForm) {
-    FunctionDialogs.editFunction(id, function() {reload()}, typesFilter, title, lightForm);
+  $scope.editFunction = function(id) {
+    FunctionDialogs.editFunction(id, function() {reload()}, $scope.config);
   }
   
   $scope.copyFunction = function(id) {
@@ -145,17 +155,17 @@ angular.module('functionsControllers',['step'])
   
   $scope.pasteFunction = function() {
     if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
-      $http.post("rest/"+serviceRoot+"/"+$rootScope.clipboard.id+"/copy")
+      $http.post("rest/"+$scope.config.serviceRoot+"/"+$rootScope.clipboard.id+"/copy")
       .then(function() {reload()});
     }
   }
   
   $scope.openFunctionEditor = function(functionid) {
-    FunctionDialogs.openFunctionEditor(functionid);
+    FunctionDialogs.openFunctionEditor(functionid, $scope.config);
   }
   
-  $scope.addFunction = function(typesFilter, title, lightForm) {
-    FunctionDialogs.addFunction(function() {reload()}, typesFilter, title, lightForm);
+  $scope.addFunction = function() {
+    FunctionDialogs.addFunction(function() {reload()}, $scope.config);
   }
   
   $scope.executeFunction = function(id) {
@@ -171,7 +181,7 @@ angular.module('functionsControllers',['step'])
   
   $scope.deleteFunction = function(id) {
     Dialogs.showDeleteWarning().then(function() {
-      $http.delete("rest/"+serviceRoot+"/"+id).then(function() {reload()});
+      $http.delete("rest/"+$scope.config.serviceRoot+"/"+id).then(function() {reload()});
     })
   }
   
@@ -194,20 +204,18 @@ angular.module('functionsControllers',['step'])
   }
 })
 
-.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'typesFilter', 'title', 'serviceRoot', 'lightForm', 'Dialogs', 'AuthService','FunctionTypeRegistry',
-function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typesFilter, title, serviceRoot, lightForm, Dialogs, AuthService, FunctionTypeRegistry) {
+.controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'dialogConfig', 'Dialogs', 'AuthService','FunctionTypeRegistry',
+function ($rootScope, $scope, $uibModalInstance, $http, $location, function_, dialogConfig, Dialogs, AuthService, FunctionTypeRegistry) {
   $scope.functionTypeRegistry = FunctionTypeRegistry;
   
   var newFunction = function_==null;
   $scope.mode = newFunction?"add":"edit";
-  $scope.title = (title == null) ? 'Keyword' : title;
-  $scope.lightForm = (lightForm == null) ? false : lightForm;
-  
+  $scope.dialogConfig = dialogConfig;
   $scope.isSchemaEnforced = AuthService.getConf().miscParams.enforceschemas;
 
   $scope.getTypes = function() {
-    if (typesFilter != null && typesFilter.length > 0) {
-      return $scope.functionTypeRegistry.getFilteredTypes(typesFilter);
+    if ($scope.dialogConfig.functionTypeFilters != null && $scope.dialogConfig.functionTypeFilters.length > 0) {
+      return $scope.functionTypeRegistry.getFilteredTypes($scope.dialogConfig.functionTypeFilters);
     } else {
       return $scope.functionTypeRegistry.getTypes();
     }
@@ -242,7 +250,7 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typ
   loadTokenSelectionCriteria(function_);
   
   $scope.loadInitialFunction = function() {
-    $http.get("rest/"+serviceRoot+"/types/"+$scope.function_.type).then(function(response){
+    $http.get("rest/"+$scope.dialogConfig.serviceRoot+"/types/"+$scope.function_.type).then(function(response){
       var initialFunction = response.data;
       if($scope.function_) {
         initialFunction.id = $scope.function_.id;
@@ -262,8 +270,8 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typ
   }
   
   if(newFunction) {
-    if (typesFilter != null && typesFilter.length > 0) {
-      $scope.function_ = {type: typesFilter[0]}
+    if ($scope.dialogConfig.functionTypeFilters != null && $scope.dialogConfig.functionTypeFilters.length > 0) {
+      $scope.function_ = {type: $scope.dialogConfig.functionTypeFilters[0]}
     } else {
       $scope.function_ = {type:'step.plugins.java.GeneralScriptFunction'}
     }
@@ -280,12 +288,12 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typ
   	schemaJson = JSON.parse($scope.schemaStr);
   	$scope.function_.schema = schemaJson;
   	
-  	$http.post("rest/"+serviceRoot+"",$scope.function_).then(function(response) {
+  	$http.post("rest/"+$scope.dialogConfig.serviceRoot+"",$scope.function_).then(function(response) {
   	  var function_ = response.data;
   	  $uibModalInstance.close(response.data);
 
   	  if(editAfterSave) {
-  	    $http.get("rest/"+serviceRoot+"/"+function_.id+"/editor").then(function(response){
+  	    $http.get("rest/"+$scope.dialogConfig.serviceRoot+"/"+function_.id+"/editor").then(function(response){
   	      var path = response.data;
   	      if(path) {
   	        $location.path(path);
@@ -362,10 +370,27 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_,typ
       stOptions: '=?'
     },
     templateUrl: 'partials/functions/functionLink.html',
-    controller: function($scope, FunctionDialogs) {
+    controller: function($scope, FunctionDialogs, FunctionDialogsConfig) {
       $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
       $scope.openFunctionEditor = function() {
-        FunctionDialogs.openFunctionEditor($scope.function_.id);
+        FunctionDialogs.openFunctionEditor($scope.function_.id, FunctionDialogsConfig.getConfigObject('Keyword','functions',[],false,'functionTable'))
+      }
+    }
+  };
+})
+
+.directive('maskLink', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      function_: '=',
+      stOptions: '=?'
+    },
+    templateUrl: 'partials/functions/functionLink.html',
+    controller: function($scope, FunctionDialogs, FunctionDialogsConfig) {
+      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
+      $scope.openFunctionEditor = function() {
+        FunctionDialogs.openFunctionEditor($scope.function_.id, FunctionDialogsConfig.getConfigObject('Mask','masks',['step.plugins.pdftest.PdfTestFunction','step.plugins.compare.image.ImageCompareFunction'],true,'compareMasksTable'));
       }
     }
   };
