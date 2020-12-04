@@ -1,0 +1,11 @@
+<json-viewer-inline ng-if="format === 'kv'" class="json-pre-styling" style="margin-bottom:0px;" json="json"/>
+<div ng-if="format === 'json'"><json-viewer-pretty-print json="json"/></div>
+<div style="margin-left:0px;margin-bottom:10px;" class="btn-group btn-group-menu">
+  <button type="button" class="btn btn-default btn-xs" uib-tooltip="Toggle key/value format" tooltip-append-to-body="true" ng-click="format='kv'">
+    <span>kv</span>
+  </button>
+  <button type="button" class="btn btn-default btn-xs" uib-tooltip="Toggle json format" tooltip-append-to-body="true" ng-click="format='json'">
+    <span>json</span>
+  </button>
+  <copy-to-clipboard content="getFormattedString()" />
+</div>

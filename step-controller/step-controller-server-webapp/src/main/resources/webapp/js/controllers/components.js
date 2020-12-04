@@ -77,6 +77,18 @@ angular.module('components',['step'])
   };
 })
 
+.directive('datems', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      time: '='
+    },
+    template: "<span>{{ time | date:'dd.MM.yyyy HH:mm:ss.sss'}}</span>",
+    controller: function() {
+    }
+  };
+})
+
 .directive('time', function() {
   return {
     restrict: 'E',
@@ -93,9 +105,55 @@ angular.module('components',['step'])
   return {
     restrict: 'E',
     scope: {
-      json: '='
+      json: '=',
+      maxKeys: '=?'
     },
     templateUrl: 'partials/components/jsonViewer.html',
+    controller: function($scope, $http) {
+      $scope.$watch('json', function() {
+        $scope.jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
+        $scope.keys = Object.keys($scope.jsonObject);
+        $scope.maxKeys = ($scope.maxKeys) ? $scope.maxKeys : $scope.keys.length;
+      })
+    }
+  };
+})
+
+.directive('jsonViewerExtended', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      json: '=',
+      format: '='
+    },
+    templateUrl: 'partials/components/jsonViewerExtended.html',
+    controller: function($scope, $http) {
+
+      $scope.getFormattedString = function() {
+        var jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
+        if ($scope.format === 'json') {
+          return JSON.stringify(jsonObject,null,2);
+        } else if ($scope.format === 'kv') {
+          var inlineStr ="";
+          for (key in jsonObject) {
+            inlineStr += key + ": " + jsonObject[key] + '\n';
+          }
+          return inlineStr
+        } else {
+          return $scope.json;
+        }
+      }
+    }
+  };
+})
+
+.directive('jsonViewerInline', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      json: '='
+    },
+    templateUrl: 'partials/components/jsonViewerInline.html',
     controller: function($scope, $http) {
       $scope.$watch('json', function() {
         $scope.jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
@@ -104,6 +162,61 @@ angular.module('components',['step'])
     }
   };
 })
+
+.directive('jsonViewerPrettyPrint', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      json: '='
+    },
+    templateUrl: 'partials/components/jsonViewerPrettyPrint.html',
+    controller: function($scope, $http) {
+      $scope.$watch('json', function() {
+        $scope.jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
+        $scope.jsonString = JSON.stringify($scope.jsonObject, null,2);
+      })
+    }
+  };
+})
+
+.service('ngCopy', ['$window', function ($window) {
+	var body = angular.element($window.document.body);
+	var textarea = angular.element('<textarea/>');
+	textarea.css({
+		position: 'fixed',
+		opacity: '0'
+	});
+
+	return function (toCopy) {
+		textarea.val(toCopy);
+		body.append(textarea);
+		textarea[0].select();
+
+		try {
+			var successful = document.execCommand('copy');
+			if (!successful) throw successful;
+		} catch (err) {
+			//window.prompt("Copy to clipboard: Ctrl+C, Enter", toCopy);
+		}
+
+		textarea.remove();
+	}
+}])
+
+.directive('copyToClipboard', ['ngCopy', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      content: '='
+    },
+    templateUrl: 'partials/components/copyToClipBoard.html',
+    controller: function($scope, $http,ngCopy) {
+      $scope.copy = function() {
+        ngCopy($scope.content);
+      }
+    }
+  };
+}])
 
 .directive('stTextPopup', function(Dialogs) {
   return {

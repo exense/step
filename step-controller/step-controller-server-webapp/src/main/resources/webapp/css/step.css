@@ -433,6 +433,25 @@ div.progress {
 	color:#555;
 }
 
+.json-pre {
+  white-space: pre-wrap;
+  background-color: white !important;
+  margin-bottom:0px;
+}
+
+.json-pre-styling {
+  display: block;
+  padding: 9.5px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.42857143;
+  color: #333;
+  word-break: break-all;
+  word-wrap: break-word;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
 .btn-default.active {
 	color: #fff;
 	background-color: #337ab7;
@@ -798,4 +817,19 @@ fieldset {
 .table-compact td, .table-compact th {
 	padding-top: 2px !important;
 	padding-bottom: 2px !important;
+}
+
+.text-margin-left {
+  margin-left: 10px;
+}
+
+.inline {
+  display: inline-block;
+}
+
+.truncate {
+  white-space: nowrap;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
