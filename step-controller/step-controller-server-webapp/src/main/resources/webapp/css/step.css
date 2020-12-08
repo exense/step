@@ -684,6 +684,11 @@ resource-input .input-group {
 	-ms-word-wrap: break-word;
 }
 
+.text-wrapping-anywhere {
+	overflow-wrap: anywhere;
+	-ms-word-wrap: anywhere;
+}
+
 tbody .form-group {
 	margin-bottom: 0px;
 }

@@ -132,12 +132,16 @@ angular.module('components',['step'])
         var jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
         var inlineStr ="";
         for (key in jsonObject) {
-          inlineStr += key + "= " + jsonObject[key] + ' ';
+          var value = jsonObject[key];
+          //handle cases were expression is not evaluated (like malformed expression)
+          value = (value.value) ? value.value : value;
+          value = (value.expression) ? value.expression : value;
+          inlineStr += key + " = " + value + ' | ';
         }
         if ($scope.maxChars && $scope.maxChars < inlineStr.length) {
           $scope.value=inlineStr.substring(0,$scope.maxChars) + "...";
         } else {
-          $scope.value=inlineStr;
+          $scope.value=inlineStr.substring(0,inlineStr.length-2);
         }
       })
     }
@@ -161,7 +165,7 @@ angular.module('components',['step'])
         } else if ($scope.format === 'kv') {
           var inlineStr ="";
           for (key in jsonObject) {
-            inlineStr += key + ": " + jsonObject[key] + '\n';
+            inlineStr += key + " = " + jsonObject[key] + '\n';
           }
           return inlineStr
         } else {

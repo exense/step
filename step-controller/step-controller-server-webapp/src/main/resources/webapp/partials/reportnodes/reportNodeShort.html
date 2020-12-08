@@ -34,7 +34,7 @@
 				<div class="section-header2 inline"><a ng-click="showInput = !showInput">Inputs</a></div>
 				<div class="section-header2 inline pull-right"><a ng-click="showInput = !showInput"><em>{{toggleIOText(showInput)}}</em></></a></div>
 				<div class="inline">
-					<json-viewer-plain class="text-margin-left" json="node.input" max-chars="100" ng-show="!showInput"/>
+					<json-viewer-plain class="text-margin-left text-wrapping-anywhere" json="node.input" max-chars="100" ng-show="!showInput"/>
 				</div>
 			</div>
 			<div ng-show="showInput">
@@ -47,7 +47,7 @@
 				<div class="section-header2 inline"><a ng-click="showOutput = !showOutput">Outputs</a></div>
 				<div class="section-header2 inline pull-right"><a ng-click="showOutput = !showOutput"><em>{{toggleIOText(showOutput)}}</em></></a></div>
 				<div class="inline">
-					<json-viewer-plain class="text-margin-left" json="node.output" max-chars="100" ng-show="!showOutput"/>
+					<json-viewer-plain class="text-margin-left text-wrapping-anywhere" json="node.output" max-chars="100" ng-show="!showOutput"/>
 				</div>
 			</div>
 			<div ng-show="showOutput">
@@ -55,16 +55,18 @@
 			</div>
 		</div>
 	</div>
-	<div ng-if="node._class=='step.artefacts.reports.EchoReportNode' && !isShowDetails">
-		<div ng-if="node.echo">Echo: <small><em>{{node.echo}}</em></small></div>
+	<div ng-if="node._class=='step.artefacts.reports.EchoReportNode'">
+		<!--<div>
+			<div style="display:inline-block;width:100%;">-->
+		<div ng-if="node.echo" class="text-wrapping-anywhere">Echo: <small><em>{{node.echo}}</em></small></div>
 	</div>
 	<div ng-if="node._class=='step.artefacts.reports.AssertReportNode'">
-		<div ng-if="node.message"><small><em>{{node.message}}</em></small></div>
+		<div ng-if="node.message" class="text-wrapping-anywhere"><small><em>{{node.message}}</em></small></div>
 	</div>
 	<div ng-if="node.resolvedArtefact._class=='Set'">
-		<div>{{node.key}} = {{node.value}}</div>
+		<div class="text-wrapping-anywhere">{{node.key}} = {{node.value}}</div>
 	</div>
-	<div ng-if="node.error">Error: <small><em>{{node.error.msg}}
+	<div ng-if="node.error" class="text-wrapping-anywhere"><span class="section-header2">Error: </span><small><em>{{node.error.msg}}
 		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>
 	</div>
 	<div>
