@@ -2,10 +2,10 @@
 <div ng-if="format === 'json'"><json-viewer-pretty-print json="json"/></div>
 <div style="margin-left:0px;margin-bottom:10px;" class="btn-group btn-group-menu">
   <button type="button" class="btn btn-default btn-xs" uib-tooltip="Toggle key/value format" tooltip-append-to-body="true" ng-click="format='kv'">
-    <span>kv</span>
+    <span>Key-Value</span>
   </button>
   <button type="button" class="btn btn-default btn-xs" uib-tooltip="Toggle json format" tooltip-append-to-body="true" ng-click="format='json'">
-    <span>json</span>
+    <span>JSON</span>
   </button>
   <copy-to-clipboard content="getFormattedString()" />
 </div>

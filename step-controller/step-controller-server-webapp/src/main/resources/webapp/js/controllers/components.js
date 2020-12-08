@@ -119,6 +119,31 @@ angular.module('components',['step'])
   };
 })
 
+.directive('jsonViewerPlain', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      json: '=',
+      maxChars: '=?'
+    },
+    templateUrl: 'partials/components/jsonViewerPlain.html',
+    controller: function($scope, $http) {
+      $scope.$watch('json', function() {
+        var jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
+        var inlineStr ="";
+        for (key in jsonObject) {
+          inlineStr += key + "= " + jsonObject[key] + ' ';
+        }
+        if ($scope.maxChars && $scope.maxChars < inlineStr.length) {
+          $scope.value=inlineStr.substring(0,$scope.maxChars) + "...";
+        } else {
+          $scope.value=inlineStr;
+        }
+      })
+    }
+  };
+})
+
 .directive('jsonViewerExtended', function() {
   return {
     restrict: 'E',

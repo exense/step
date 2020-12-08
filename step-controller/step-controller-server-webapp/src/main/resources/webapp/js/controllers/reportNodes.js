@@ -105,6 +105,10 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
       $scope.toggleDetails = function() {
         $scope.isShowDetails = !$scope.isShowDetails;
       }
+
+      $scope.toggleIOText = function(details) {
+        return (details) ? 'less' : 'more';
+      }
     }
   };
 })

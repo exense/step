@@ -30,25 +30,29 @@
 	<hr />
 	<div ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
 		<div>
-			<div class="section-header2 inline"><a ng-click="showInput = !showInput">Inputs</a></div>
-			<div class="inline">
-				<json-viewer class="text-margin-left" json="node.input" max-keys="2" ng-show="!showInput"/>
+			<div style="display:inline-block;width:100%;">
+				<div class="section-header2 inline"><a ng-click="showInput = !showInput">Inputs</a></div>
+				<div class="section-header2 inline pull-right"><a ng-click="showInput = !showInput"><em>{{toggleIOText(showInput)}}</em></></a></div>
+				<div class="inline">
+					<json-viewer-plain class="text-margin-left" json="node.input" max-chars="100" ng-show="!showInput"/>
+				</div>
 			</div>
-			<div class="section-header2 pull-right inline"><a ng-click="showInput = !showInput">more</a></div>
-		</div>
-		<div ng-show="showInput">
-			<json-viewer-extended json="node.input" format="'kv'"/>
-			<!--<pre class="text-wrapping" ng-if="node.input">{{node.input}}</pre>-->
+			<div ng-show="showInput">
+				<json-viewer-extended json="node.input" format="'kv'"/>
+				<!--<pre class="text-wrapping" ng-if="node.input">{{node.input}}</pre>-->
+			</div>
 		</div>
 		<div>
-			<div class="section-header2 inline"><a ng-click="showOutput = !showOutput">Outputs</a></div>
-			<div class="inline">
-				<json-viewer class="text-margin-left" json="node.output" max-keys="2" ng-show="!showOutput"/>
+			<div style="display:inline-block;width:100%;">
+				<div class="section-header2 inline"><a ng-click="showOutput = !showOutput">Outputs</a></div>
+				<div class="section-header2 inline pull-right"><a ng-click="showOutput = !showOutput"><em>{{toggleIOText(showOutput)}}</em></></a></div>
+				<div class="inline">
+					<json-viewer-plain class="text-margin-left" json="node.output" max-chars="100" ng-show="!showOutput"/>
+				</div>
 			</div>
-			<div class="section-header2 inline pull-right"><a ng-click="showOutput = !showOutput">more</a></div>
-		</div>
-		<div ng-show="showOutput">
-			<json-viewer-extended json="node.output" format="'kv'"/>
+			<div ng-show="showOutput">
+				<json-viewer-extended json="node.output" format="'kv'"/>
+			</div>
 		</div>
 	</div>
 	<div ng-if="node._class=='step.artefacts.reports.EchoReportNode' && !isShowDetails">
