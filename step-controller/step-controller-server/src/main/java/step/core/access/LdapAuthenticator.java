@@ -78,6 +78,7 @@ public class LdapAuthenticator implements Authenticator, GlobalContextAware {
 		SearchDnResolver dnResolver = SearchDnResolver.builder()
 				.factory(new DefaultConnectionFactory(connConfig))
 				.dn(ldapBaseDn)
+				.subtreeSearch(true)
 				.filter(ldapFilter)
 				.build();
 
