@@ -15,6 +15,7 @@
 		</encoder>
 	</appender>
 	<logger name="org.lightcouch" level="error" />
+	<logger name="org.ldaptive" level="error" />
 	<!-- <logger name="io.djigger...." level="debug" /> -->
 	
 	<root level="info">
