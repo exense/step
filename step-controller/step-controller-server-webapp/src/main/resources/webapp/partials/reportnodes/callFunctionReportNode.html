@@ -7,7 +7,7 @@
 </div>
 <div ng-show="node.measures">
 	<div class="section-header2 node-link"><a ng-click="hideMeasurements = !hideMeasurements">Measurements ({{node.measures.length}})</a></div>
-	<div ng-show="!hideMeasurements" class="node-text">
+	<div ng-show="!hideMeasurements" class="node-detail-text">
 		<st-table data="node.measures" uid="'measurementList'" persist-state="false" dom="node.measures.length>10?'rtp':'rt'" class="table-compact">
 			<st-columns>
 				<st-column name="name">
@@ -44,6 +44,6 @@
 
 <div class="section-header2 node-link"><a ng-click="showDetails = !showDetails">Keyword routing</a></div>
 <div ng-show="showDetails">
-	<div ng-if="node.agentUrl">Agent: <span>{{node.agentUrl}}</span></div>
-	<div ng-if="node.tokenId">Token ID: <span>{{node.tokenId}}</span></div>
+	<div ng-if="node.agentUrl" class="node-detail-text">Agent: <span>{{node.agentUrl}}</span></div>
+	<div ng-if="node.tokenId" class="node-detail-text">Token ID: <span>{{node.tokenId}}</span></div>
 </div>

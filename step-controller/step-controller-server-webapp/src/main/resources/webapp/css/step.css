@@ -837,10 +837,21 @@ fieldset {
   color: #337ab7;
 }
 
-.node-text {
+.node-detail-row {
+  display:table;
+}
+
+.node-detail-label {
+  display:table-cell;
+  white-space: nowrap;
+  width:37px;
+  color: #777;
+  font-size: 85%;
+}
+
+.node-detail-text {
   color:#555;
   font-size: 12px !important;
-  font-style: italic;
 }
 
 .btn-xxs,

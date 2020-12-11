@@ -1,11 +1,10 @@
 <div>
-	<div>
+	<div style="height:25px">
 		<report-node-icon node="node"/>
 		<!-- node.resolvedArtefact has been introduced with 3.6.0. We're checking it here for retrocompatibility. Remove this check has soon as possible -->
 		{{node._class=='step.artefacts.reports.CallFunctionReportNode'?concatenate(node.functionAttributes):(node.resolvedArtefact?artefactTypes.getLabel(node.resolvedArtefact._class):node.name)}}
 		<span class="text-margin-left text-muted small">{{node.name}}</span>
 		<span ng-if="includeStatus" class="pull-right text-margin-left" style="margin-bottom:10px;" ><reportnode-status status="node.status" /></span>
-		<span class="pull-right"><attachments node="node" /></span>
 		<span class="pull-right" style="margin-right:5px">
 			<div class="btn-group btn-group-menu">
 				<button type="button" class="btn btn-default btn-xs" uib-tooltip="Show this node in the tree view" tooltip-append-to-body="true" ng-click="executionViewServices.showNodeInTree(reportNodeId)">
@@ -16,40 +15,36 @@
 				</button>
 			</div>
 		</span>
+		<span class="pull-right"><attachments node="node" /></span>
 	</div>
 	<!--<hr />-->
 	<div ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
-		<div ng-show="showDetails" class="section-header2 node-link"><a ng-click="hideInput = !hideInput">Inputs</a></div>
-		<div ng-if="!hideInput || !showDetails" style="display:table">
-			<div ng-show="!showDetails" style="display:table-cell;white-space: nowrap;">
-				<span class="text-muted small">Input</span>
-			</div>
-			<json-viewer-extended style="display:table-cell;" json="node.input" format="'kv'"/>
+		<div ng-show="showDetails" class="section-header2 node-link"><a ng-click="hideInput = !hideInput">Input</a></div>
+		<div ng-if="!hideInput || !showDetails" class="node-detail-row">
+			<div ng-show="!showDetails" class="node-detail-label">Input</div>
+			<json-viewer-extended class="node-detail-text" json="node.input" format="'kv'"/>
 		</div>
-		<div ng-show="showDetails" class="section-header2 node-link"><a ng-click="hideOutput = !hideOutput">Outputs</a></div>
-		<div ng-if="!hideOutput || !showDetails" style="display:table">
-			<div ng-show="!showDetails"  style="display:table-cell;white-space: nowrap;">
-				<span class="text-muted small">Output</span>
-			</div>
-			<json-viewer-extended style="display:table-cell;" json="node.output" format="'kv'"/>
+		<div ng-show="showDetails" class="section-header2 node-link"><a ng-click="hideOutput = !hideOutput">Output</a></div>
+		<div ng-if="!hideOutput || !showDetails" class="node-detail-row">
+			<div ng-show="!showDetails" class="node-detail-label">Output</div>
+			<json-viewer-extended class="node-detail-text" json="node.output" format="'kv'"/>
 		</div>
 	</div>
 	<div ng-if="node._class=='step.artefacts.reports.EchoReportNode'">
-		<!--<div>
-			<div style="display:inline-block;width:100%;">-->
 		<div ng-if="node.echo" class="text-wrapping-anywhere"><span class="text-muted small">Echo </span>
-			<span class="text-margin-left node-text">{{node.echo}}</span>
+			<span class="text-margin-left node-detail-text">{{node.echo}}</span>
 		</div>
 	</div>
 	<div ng-if="node._class=='step.artefacts.reports.AssertReportNode'">
-		<div ng-if="node.message" class="text-wrapping-anywhere node-text">{{node.message}}</div>
+		<div ng-if="node.message" class="text-wrapping-anywhere node-detail-text">{{node.message}}</div>
 	</div>
 	<div ng-if="node.resolvedArtefact._class=='Set'">
 		<div class="text-wrapping-anywhere">{{node.key}} = {{node.value}}</div>
 	</div>
-	<div ng-if="node.error" class="text-wrapping-anywhere node-text"><span class="text-muted small">Error</span>
-		<span class="text-margin-left">{{node.error.msg}}
-		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</span>
+	<div ng-if="node.error"  class="node-detail-row">
+		<div class="node-detail-label">Error</div>
+		<div class="node-detail-text">{{node.error.msg}}
+		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</div>
 	</div>
 	<div>
 		<attachments-preview attachments="node.attachments" />
