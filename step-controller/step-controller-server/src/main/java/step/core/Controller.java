@@ -58,8 +58,12 @@ import step.core.imports.GenericDBImporter;
 import step.core.imports.PlanImporter;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.plugins.ControllerInitializationPlugin;
 import step.core.plugins.ControllerPlugin;
 import step.core.plugins.ControllerPluginManager;
+import step.core.plugins.ModuleChecker;
+import step.core.plugins.PluginManager;
+import step.core.plugins.PluginManager.Builder;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
@@ -104,7 +108,6 @@ public class Controller {
 
 	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			
 		this.serviceRegistrationCallback = serviceRegistrationCallback;
-		pluginManager = new ControllerPluginManager(configuration);
 		
 		initContext();
 		context.setServiceRegistrationCallback(serviceRegistrationCallback);
@@ -123,13 +126,20 @@ public class Controller {
 		scheduler.start();
 	}
 	
-	private void initContext() {
+	private void initContext() throws Exception {
 		context = new GlobalContext();
+		context.setConfiguration(configuration);
+		
+		Builder<ControllerInitializationPlugin> builder = new PluginManager.Builder<ControllerInitializationPlugin>(ControllerInitializationPlugin.class);
+		PluginManager<ControllerInitializationPlugin> controllerInitializationPluginManager = builder.withPluginsFromClasspath().build();
+		logger.info("Checking preconditions...");
+		controllerInitializationPluginManager.getProxy().checkPreconditions(context);
+		
+		ModuleChecker moduleChecker = context.get(ModuleChecker.class);
+		pluginManager = new ControllerPluginManager(configuration, moduleChecker);
 		context.setPluginManager(pluginManager);
 		
 		mongoClientSession = new MongoClientSession(configuration);
-		
-		context.setConfiguration(configuration);
 		
 		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(mongoClientSession);
 		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(mongoClientSession);

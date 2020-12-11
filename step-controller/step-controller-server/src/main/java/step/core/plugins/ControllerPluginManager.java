@@ -31,10 +31,17 @@ public class ControllerPluginManager {
 	
 	protected Configuration configuration;
 	
+	private ModuleChecker moduleChecker;
+	
 	protected PluginManager<ControllerPlugin> pluginManager;
 	
 	public ControllerPluginManager(Configuration configuration) throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+		this(configuration, null);
+	}
+	
+	public ControllerPluginManager(Configuration configuration, ModuleChecker moduleChecker) throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
 		this.configuration = configuration;
+		this.moduleChecker = moduleChecker;
 		Builder<ControllerPlugin> builder = new PluginManager.Builder<ControllerPlugin>(ControllerPlugin.class);
 		this.pluginManager = builder.withPluginsFromClasspath().withPluginFilter(this::isPluginEnabled).build();
 	}
@@ -52,6 +59,7 @@ public class ControllerPluginManager {
 	}
 
 	private boolean isPluginEnabled(Object plugin) {
-		return configuration.getPropertyAsBoolean("plugins."+plugin.getClass().getSimpleName()+".enabled", true);
+		return configuration.getPropertyAsBoolean("plugins." + plugin.getClass().getSimpleName() + ".enabled", true)
+				&& (moduleChecker == null || moduleChecker.apply(plugin));
 	}
 }
