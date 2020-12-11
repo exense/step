@@ -1,20 +1,20 @@
-<div ng-if="node.loopCount">Number of polling: <small><em>{{node.loopCount}}</em></small></div>
-<div ng-if="node.waitDuration">Wait duration (ms): <small><em>{{node.waitDuration}}</em></small></div>
+<div ng-if="node.loopCount"><span class="text-muted small">Number of polling</span><span class="node-text text-margin-left">{{node.loopCount}}</span></div>
+<div ng-if="node.waitDuration"><span class="text-muted small">Wait duration (ms)</span><span class="node-text text-margin-left">{{node.waitDuration}}</span></div>
 <div ng-if="node.criteriaEventId || node.criteriaGroup">
-	<span>Criteria:</span>
-	<span ng-if="!node.criteriaEventId && !node.criteriaGroup"><small>Not available</small></span>
-	<span ng-if="node.criteriaEventId"><small><strong>id=</strong>{{node.criteriaEventId}}</small></span>
-	<span ng-if="!node.criteriaEventId && node.criteriaGroup">
-		<small><Strong>Group=</Strong>{{node.criteriaGroup}}<strong>,Name=</strong>{{node.criteriaName}}</small>
+	<span class="text-muted small">Criteria</span>
+	<span ng-if="!node.criteriaEventId && !node.criteriaGroup" class="node-text text-margin-left">Not available</span>
+	<span ng-if="node.criteriaEventId" class="node-text text-margin-left"><strong>id=</strong>{{node.criteriaEventId}}</span>
+	<span ng-if="!node.criteriaEventId && node.criteriaGroup" class="node-text text-margin-left">
+		<strong>Group=</strong>{{node.criteriaGroup}}<strong>, Name=</strong>{{node.criteriaName}}
 	</span>
 </div>
 <div ng-if="node.event">
-	<span>Event:</span>
+	<span class="text-muted small">Event:</span>
 	<ul>
-		<li><small>ID: {{node.event.id}}</small></li>
-		<li><small>Group: {{node.event.group}}</small></li>
-		<li><small>Name: {{node.event.name}}</small></li>
-		<li><small>Payload: {{node.event.payload}}</small></li>
+		<li><span class="node-text">ID: {{node.event.id}}</span></li>
+		<li><span class="node-text">Group: {{node.event.group}}</span></li>
+		<li><span class="node-text">Name: {{node.event.name}}</span></li>
+		<li><span class="node-text">Payload: {{node.event.payload}}</span></li>
 	</ul>
 </div>
 <br/>

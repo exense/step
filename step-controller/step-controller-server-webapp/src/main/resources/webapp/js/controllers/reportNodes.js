@@ -80,8 +80,6 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
     },
     templateUrl: 'partials/reportnodes/reportNodeShort.html',
     controller: function($scope,$http,artefactTypes) {
-      $scope.isShowDetails = $scope.showDetails;
-      
       $scope.artefactTypes = artefactTypes;
       $scope.concatenate = function(map) {
         var result = "";
@@ -101,13 +99,9 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
           $scope.reportNodeId = $scope.node.id;
         }
       })
-       
-      $scope.toggleDetails = function() {
-        $scope.isShowDetails = !$scope.isShowDetails;
-      }
 
-      $scope.toggleIOText = function(details) {
-        return (details) ? 'less' : 'more';
+      $scope.toggleDetails = function() {
+        $scope.showDetails = !$scope.showDetails;
       }
     }
   };

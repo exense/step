@@ -1,13 +1,13 @@
 <div ng-if="children && children.length>0">
 	<table class="table">
 		<tr ng-repeat="child in children" ng-if="child._class=='step.artefacts.reports.AssertReportNode' || child._class=='step.artefacts.reports.PerformanceAssertReportNode'">
-			<td><reportnode-short node ="child" /></td><td><reportnode-status status="child.status" /></td>
+			<td><reportnode-short node ="child" show-details="true"/></td><td><reportnode-status status="child.status" /></td>
 		</tr>
 	</table>
 </div>
 <div ng-show="node.measures">
-	<div class="section-header2"><a ng-click="showMeasurements = !showMeasurements">Measurements ({{node.measures.length}})</a></div>
-	<div ng-show="showMeasurements">
+	<div class="section-header2 node-link"><a ng-click="hideMeasurements = !hideMeasurements">Measurements ({{node.measures.length}})</a></div>
+	<div ng-show="!hideMeasurements" class="node-text">
 		<st-table data="node.measures" uid="'measurementList'" persist-state="false" dom="node.measures.length>10?'rtp':'rt'" class="table-compact">
 			<st-columns>
 				<st-column name="name">
@@ -42,7 +42,7 @@
 </div>
 
 
-<div class="section-header2"><a ng-click="showDetails = !showDetails">Details</a></div>
+<div class="section-header2 node-link"><a ng-click="showDetails = !showDetails">Keyword routing</a></div>
 <div ng-show="showDetails">
 	<div ng-if="node.agentUrl">Agent: <span>{{node.agentUrl}}</span></div>
 	<div ng-if="node.tokenId">Token ID: <span>{{node.tokenId}}</span></div>

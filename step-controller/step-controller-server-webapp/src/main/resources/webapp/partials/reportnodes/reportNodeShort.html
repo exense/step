@@ -1,13 +1,6 @@
 <div>
-	
 	<div>
-		<button ng-if="!isShowDetails" type="button" class="btn btn-default btn-xs" uib-tooltip="Show/hide details" tooltip-append-to-body="true" ng-click="toggleDetails()">
-			<span class="glyphicon glyphicon-chevron-right" />
-		</button>
-		<button ng-if="isShowDetails" type="button" class="btn btn-default btn-xs" uib-tooltip="Show/hide details" tooltip-append-to-body="true" ng-click="toggleDetails()">
-			<span class="glyphicon glyphicon-chevron-down" />
-		</button>
-		<report-node-icon node="node" class="text-margin-left"/>
+		<report-node-icon node="node"/>
 		<!-- node.resolvedArtefact has been introduced with 3.6.0. We're checking it here for retrocompatibility. Remove this check has soon as possible -->
 		{{node._class=='step.artefacts.reports.CallFunctionReportNode'?concatenate(node.functionAttributes):(node.resolvedArtefact?artefactTypes.getLabel(node.resolvedArtefact._class):node.name)}}
 		<span class="text-margin-left text-muted small">{{node.name}}</span>
@@ -21,62 +14,54 @@
 				<button ng-if="executionViewServices.getExecution()&&executionViewServices.getExecution().executionType=='TestSet'" type="button" class="btn btn-default btn-xs" uib-tooltip="Select the test case containing this node in the test case table" tooltip-append-to-body="true" ng-click="executionViewServices.showTestCase(reportNodeId)">
 					<span class="glyphicon glyphicon-list-alt" />
 				</button>
-				<button type="button" class="btn btn-default btn-xs" uib-tooltip="Show/hide details" tooltip-append-to-body="true" ng-click="toggleDetails()">
-					<span class="glyphicon glyphicon-option-horizontal" />
-				</button>
 			</div>
 		</span>
 	</div>
-	<hr />
+	<!--<hr />-->
 	<div ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
-		<div>
-			<div style="display:inline-block;width:100%;">
-				<div class="section-header2 inline"><a ng-click="showInput = !showInput">Inputs</a></div>
-				<div class="section-header2 inline pull-right"><a ng-click="showInput = !showInput"><em>{{toggleIOText(showInput)}}</em></></a></div>
-				<div class="inline">
-					<json-viewer-plain class="text-margin-left text-wrapping-anywhere" json="node.input" max-chars="100" ng-show="!showInput"/>
-				</div>
+		<div ng-show="showDetails" class="section-header2 node-link"><a ng-click="hideInput = !hideInput">Inputs</a></div>
+		<div ng-if="!hideInput || !showDetails" style="display:table">
+			<div ng-show="!showDetails" style="display:table-cell;white-space: nowrap;">
+				<span class="text-muted small">Input</span>
 			</div>
-			<div ng-show="showInput">
-				<json-viewer-extended json="node.input" format="'kv'"/>
-				<!--<pre class="text-wrapping" ng-if="node.input">{{node.input}}</pre>-->
-			</div>
+			<json-viewer-extended style="display:table-cell;" json="node.input" format="'kv'"/>
 		</div>
-		<div>
-			<div style="display:inline-block;width:100%;">
-				<div class="section-header2 inline"><a ng-click="showOutput = !showOutput">Outputs</a></div>
-				<div class="section-header2 inline pull-right"><a ng-click="showOutput = !showOutput"><em>{{toggleIOText(showOutput)}}</em></></a></div>
-				<div class="inline">
-					<json-viewer-plain class="text-margin-left text-wrapping-anywhere" json="node.output" max-chars="100" ng-show="!showOutput"/>
-				</div>
+		<div ng-show="showDetails" class="section-header2 node-link"><a ng-click="hideOutput = !hideOutput">Outputs</a></div>
+		<div ng-if="!hideOutput || !showDetails" style="display:table">
+			<div ng-show="!showDetails"  style="display:table-cell;white-space: nowrap;">
+				<span class="text-muted small">Output</span>
 			</div>
-			<div ng-show="showOutput">
-				<json-viewer-extended json="node.output" format="'kv'"/>
-			</div>
+			<json-viewer-extended style="display:table-cell;" json="node.output" format="'kv'"/>
 		</div>
 	</div>
 	<div ng-if="node._class=='step.artefacts.reports.EchoReportNode'">
 		<!--<div>
 			<div style="display:inline-block;width:100%;">-->
-		<div ng-if="node.echo" class="text-wrapping-anywhere">Echo: <small><em>{{node.echo}}</em></small></div>
+		<div ng-if="node.echo" class="text-wrapping-anywhere"><span class="text-muted small">Echo </span>
+			<span class="text-margin-left node-text">{{node.echo}}</span>
+		</div>
 	</div>
 	<div ng-if="node._class=='step.artefacts.reports.AssertReportNode'">
-		<div ng-if="node.message" class="text-wrapping-anywhere"><small><em>{{node.message}}</em></small></div>
+		<div ng-if="node.message" class="text-wrapping-anywhere node-text">{{node.message}}</div>
 	</div>
 	<div ng-if="node.resolvedArtefact._class=='Set'">
 		<div class="text-wrapping-anywhere">{{node.key}} = {{node.value}}</div>
 	</div>
-	<div ng-if="node.error" class="text-wrapping-anywhere"><span class="section-header2">Error: </span><small><em>{{node.error.msg}}
-		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</em></small>
+	<div ng-if="node.error" class="text-wrapping-anywhere node-text"><span class="text-muted small">Error</span>
+		<span class="text-margin-left">{{node.error.msg}}
+		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</span>
 	</div>
 	<div>
 		<attachments-preview attachments="node.attachments" />
 	</div>
-	<div ng-if="isShowDetails">
+	<div ng-if="showDetails">
 		<reportnode id="reportNodeId" show-artefact="false" />
 	</div>
 	<hr />
 	<div>
 		<span class="text-muted small">Start: <datems time="node.executionTime" /></span>
-		<span class="text-muted small text-margin-left">Duration (ms): {{node.duration}}</span></div>
+		<span class="text-muted small"> ¦ Duration (ms): {{node.duration}}</span>
+		<span class="text-muted small" ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
+			 ¦ Agent: {{node.agentUrl}}</span>
+	</div>
 </div>

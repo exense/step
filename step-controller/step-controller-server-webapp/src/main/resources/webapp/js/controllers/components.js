@@ -116,17 +116,18 @@ angular.module('components',['step'])
         $scope.maxKeys = ($scope.maxKeys) ? $scope.maxKeys : $scope.keys.length;
       })
     }
+
   };
 })
 
-.directive('jsonViewerPlain', function() {
+.directive('jsonViewerKeyValueInline', function() {
   return {
     restrict: 'E',
     scope: {
       json: '=',
       maxChars: '=?'
     },
-    templateUrl: 'partials/components/jsonViewerPlain.html',
+    templateUrl: 'partials/components/jsonViewerKeyValueInline.html',
     controller: function($scope, $http) {
       $scope.$watch('json', function() {
         var jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
@@ -136,7 +137,7 @@ angular.module('components',['step'])
           //handle cases were expression is not evaluated (like malformed expression)
           value = (value.value) ? value.value : value;
           value = (value.expression) ? value.expression : value;
-          inlineStr += key + " = " + value + ' | ';
+          inlineStr += key + " = " + value + ' ¦ ';
         }
         if ($scope.maxChars && $scope.maxChars < inlineStr.length) {
           $scope.value=inlineStr.substring(0,$scope.maxChars) + "...";
@@ -157,8 +158,8 @@ angular.module('components',['step'])
     },
     templateUrl: 'partials/components/jsonViewerExtended.html',
     controller: function($scope, $http) {
-
-      $scope.getFormattedString = function() {
+      $scope.handle={};
+      $scope.handle.getFormattedString = function() {
         var jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
         if ($scope.format === 'json') {
           return JSON.stringify(jsonObject,null,2);
@@ -172,21 +173,47 @@ angular.module('components',['step'])
           return $scope.json;
         }
       }
+
+      $scope.toggleExtendedText = function(details) {
+        return (details) ? 'collapse' : 'expand';
+      }
+
+      $scope.hasContent = function(){
+        var jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json;
+        return (jsonObject && Object.keys(jsonObject).length > 0);
+      }
     }
   };
 })
 
-.directive('jsonViewerInline', function() {
+.directive('jsonViewerExtendedToolbox', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      format: '=',
+      handle: "=",
+      mouseover: "="
+    },
+    templateUrl: 'partials/components/jsonViewerExtendedToolBox.html',
+    controller: function($scope, $http) {
+
+    }
+  };
+})
+
+.directive('jsonViewerKeyValue', function() {
   return {
     restrict: 'E',
     scope: {
       json: '='
     },
-    templateUrl: 'partials/components/jsonViewerInline.html',
+    templateUrl: 'partials/components/jsonViewerKeyValue.html',
     controller: function($scope, $http) {
       $scope.$watch('json', function() {
         $scope.jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
-        $scope.keys = Object.keys($scope.jsonObject);
+        if ($scope.jsonObject) {
+          $scope.keys = Object.keys($scope.jsonObject);
+        }
       })
     }
   };
@@ -203,6 +230,28 @@ angular.module('components',['step'])
       $scope.$watch('json', function() {
         $scope.jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
         $scope.jsonString = JSON.stringify($scope.jsonObject, null,2);
+      })
+    }
+  };
+})
+
+.directive('jsonViewerPrettyPrintInline', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      json: '=',
+      maxChars: '=?'
+    },
+    templateUrl: 'partials/components/jsonViewerPrettyPrintInline.html',
+    controller: function($scope, $http) {
+      $scope.$watch('json', function() {
+        $scope.jsonObject = (typeof $scope.json == 'string')?JSON.parse($scope.json):$scope.json
+        var inlineStr = JSON.stringify($scope.jsonObject, null,2);
+        if ($scope.maxChars && $scope.maxChars < inlineStr.length) {
+          $scope.jsonString=inlineStr.substring(0,$scope.maxChars) + "...";
+        } else {
+          $scope.jsonString=inlineStr.substring(0,inlineStr.length-2);
+        }
       })
     }
   };

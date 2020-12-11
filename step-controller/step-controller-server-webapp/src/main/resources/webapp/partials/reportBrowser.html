@@ -26,13 +26,21 @@
 						<st-column name="executionTime" width="'60px'">
 							<header>Begin</header>
 							<second-header></second-header>
-							<cell><time time="row.executionTime" /></cell>
+							<cell>
+								<button ng-if="!rowScope.showDetails" type="button" class="btn btn-default btn-xxs" uib-tooltip="Show/hide details" tooltip-append-to-body="true" ng-click="rowScope.showDetails=!rowScope.showDetails">
+									<span class="glyphicon glyphicon-chevron-right" />
+								</button>
+								<button ng-if="rowScope.showDetails" type="button" class="btn btn-default btn-xxs" uib-tooltip="Show/hide details" tooltip-append-to-body="true" ng-click="rowScope.showDetails=!rowScope.showDetails">
+									<span class="glyphicon glyphicon-chevron-down" />
+								</button>
+								<time time="row.executionTime" />
+							</cell>
 						</st-column>
 						<st-column name="step">
 							<header>Step</header>
 							<second-header><inputdropdown action="search" initial-value="initialValue" ></inputdropdown></second-header>
 							<cell>
-								<reportnode-short node="row" execution-view-services="executionViewServices" />
+								<reportnode-short node="row" execution-view-services="executionViewServices" show-details="rowScope.showDetails"/>
 							</cell>
 						</st-column>
 						<st-column name="status" width="'80px'">

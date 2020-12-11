@@ -435,21 +435,11 @@ div.progress {
 
 .json-pre {
   white-space: pre-wrap;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   background-color: white !important;
   margin-bottom:0px;
-}
-
-.json-pre-styling {
-  display: block;
-  padding: 9.5px;
-  margin: 0 0 10px;
-  font-size: 13px;
-  line-height: 1.42857143;
-  color: #333;
-  word-break: break-all;
-  word-wrap: break-word;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: none;
+  padding: 0;
 }
 
 .btn-default.active {
@@ -832,9 +822,39 @@ fieldset {
   display: inline-block;
 }
 
-.truncate {
-  white-space: nowrap;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.node-link, .node-link > a {
+  color:#555 !important;
+  font-size: 12px;
+  font-style: italic;
+  text-decoration: underline;
+}
+
+.toolbox-link, .node-text a.toolbox-link {
+  margin-left: 10px;
+  font-size: 12px;
+  font-style: italic;
+  text-decoration: underline;
+  color: #337ab7;
+}
+
+.node-text {
+  color:#555;
+  font-size: 12px !important;
+  font-style: italic;
+}
+
+.btn-xxs,
+.btn-group-xxs > .btn {
+  padding: 0px 5px;
+  margin-top: -1px;
+  font-size: 12px;
+  font-style: italic;
+  text-decoration: underline;
+ /* line-height: 1.5;*/
+  border-radius: 3px;
+}
+
+.btn-no-border {
+  border: none;
+  color: #555 !important;
 }

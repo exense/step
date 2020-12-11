@@ -81,11 +81,20 @@ angular.module('tables', ['export'])
 		colDef.createdCell = function(td, cellData, rowData, row, col) {
 			var rowScope;
 			var content = column.cellTransclude(function(clone, scope) {
-				if(serverSide) {
-					scope.row = JSON.parse(rowData[0]);
-				} else {
-					scope.row = rowData;
-				}
+			  var rowScope2;
+        if(rowData.rowScope == null) {
+          rowScope2 = {};
+          rowData.rowScope = rowScope2
+        } else {
+          rowScope2 = rowData.rowScope;
+        }
+        if(serverSide) {
+          scope.row = JSON.parse(rowData[0]);
+        } else {
+          scope.row = rowData;
+        }
+        scope.rowScope = rowScope2;
+
 				scope.tableScope = $scope;
 				rowScope = scope;
 			});
