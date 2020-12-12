@@ -76,7 +76,8 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
       node: '=',
       executionViewServices: '=',
       includeStatus: '=',
-      showDetails: '='
+      showDetails: '=',
+      showFooter: '=?'
     },
     templateUrl: 'partials/reportnodes/reportNodeShort.html',
     controller: function($scope,$http,artefactTypes) {
@@ -93,6 +94,17 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
         }
         return result.substring(0,result.length-1);
       };
+      $scope.getHeaderText = function() {
+        var node = $scope.node;
+      	if(node._class=='step.artefacts.reports.CallFunctionReportNode') {
+          return $scope.concatenate(node.functionAttributes);
+      	} else {
+      	  return $scope.artefactTypes.getLabel(node.resolvedArtefact._class);
+      	}
+      }
+      $scope.isEmpty = function(o) {
+        return o == null || o == '{}';
+      }
       $scope.reportNodeId = $scope.node.id;
       $scope.$watch('node',function(node, oldStatus) {
         if(node) {
@@ -120,7 +132,6 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
     },
     templateUrl: 'partials/reportnodes/assertReportNodeShort.html',
     controller: function($scope) {
-    	console.log("dasdsadas")
     }
   };
 })
