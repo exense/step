@@ -97,12 +97,30 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
       $scope.$watch('node',function(node, oldStatus) {
         if(node) {
           $scope.reportNodeId = $scope.node.id;
+          if($scope.node.status == 'FAILED') {
+	          $http.get('rest/controller/reportnode/'+node.id+"/children").then(function(response) {
+	              $scope.children = response.data;
+              })
+          }
         }
       })
 
       $scope.toggleDetails = function() {
         $scope.showDetails = !$scope.showDetails;
       }
+    }
+  };
+})
+
+.directive('assertReportNodeShort', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      node: '='
+    },
+    templateUrl: 'partials/reportnodes/assertReportNodeShort.html',
+    controller: function($scope) {
+    	console.log("dasdsadas")
     }
   };
 })

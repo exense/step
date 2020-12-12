@@ -41,7 +41,14 @@
 	<div ng-if="node.resolvedArtefact._class=='Set'">
 		<div class="text-wrapping-anywhere">{{node.key}} = {{node.value}}</div>
 	</div>
-	<div ng-if="node.error"  class="node-detail-row">
+	<div ng-if="!showDetails && children && children.length>0" class="node-detail-row">
+		<div class="node-detail-label">Errors</div>
+		<div class="node-detail-text">
+			<assert-report-node-short ng-repeat="child in children" ng-if="(child._class=='step.artefacts.reports.AssertReportNode' || 
+				child._class=='step.artefacts.reports.PerformanceAssertReportNode') && child.status != 'PASSED'" node ="child"/>
+		</div>
+	</div>
+	<div ng-if="node.error" class="node-detail-row">
 		<div class="node-detail-label">Error</div>
 		<div class="node-detail-text">{{node.error.msg}}
 		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</div>
