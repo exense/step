@@ -1,6 +1,8 @@
 <div>
-	<div ng-if="node.resolvedArtefact.customAttributes.source">Source: {{node.resolvedArtefact.customAttributes.source}}</div>
-	<!-- <div class="form-group">{{artefact._class}} - {{node.name}} <reportnode-status status="node.status" /></div> -->
+	<div ng-if="node.resolvedArtefact.customAttributes.source">
+		<div class="section-header2 node-link"><a ng-click="hideSource = !hideSource">Source</a></div>
+		<div ng-show="!hideSource">{{node.resolvedArtefact.customAttributes.source}}</div>
+	</div>
 	<div style="margin-top:10px;" ng-include="reportNodeType.template"></div>
 	<div class="section-header2 node-link"><a ng-click="showArtefact = !showArtefact">Plan node</a></div>
 	<div class="panel panel-default" style="margin-top:10px;" ng-show="showArtefact">
