@@ -112,7 +112,10 @@ public class AbstractCRUDAccessor<T extends AbstractIdentifiableObject> extends 
 	
 	@Override
 	public void save(java.util.Collection<? extends T> entities) {
-		this.collection.insert(entities.toArray());
+		// there's surprisingly no method to perform a batch save
+		// the method insertMany does an insert and thus fails in case of updates
+		// and can therefore not be used here
+		entities.forEach(e->save(e));
 	}
 
 	@Override

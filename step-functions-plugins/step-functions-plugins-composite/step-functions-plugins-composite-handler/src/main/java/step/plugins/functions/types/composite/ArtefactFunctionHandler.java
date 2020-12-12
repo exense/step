@@ -18,20 +18,61 @@
  ******************************************************************************/
 package step.plugins.functions.types.composite;
 
+import java.io.IOException;
+import java.util.Map;
+
 import javax.json.JsonObject;
 
+import org.bson.types.ObjectId;
+
+import step.artefacts.CallFunction;
+import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.artefacts.handlers.FunctionRouter;
+import step.attachments.FileResolver;
+import step.client.accessors.RemoteFunctionAccessorImpl;
+import step.client.accessors.RemotePlanAccessorImpl;
+import step.client.accessors.RemoteReportNodeAccessorImpl;
+import step.client.credentials.ControllerCredentials;
+import step.client.resources.RemoteResourceManager;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.reports.BufferedReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
+import step.core.execution.OperationMode;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
+import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult;
+import step.core.plugins.IgnoreDuringAutoDiscovery;
+import step.core.plugins.Plugin;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.variables.VariableType;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.FunctionPlugin;
+import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
+import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
+import step.functions.manager.FunctionManager;
+import step.functions.manager.FunctionManagerImpl;
+import step.functions.type.FunctionTypeRegistry;
+import step.grid.TokenWrapper;
+import step.grid.TokenWrapperOwner;
+import step.grid.client.GridClient;
+import step.planbuilder.FunctionArtefacts;
+import step.resources.ResourceManager;
 
 public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 
@@ -42,16 +83,40 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 	public static final String PLANID_KEY = "$planid";
 	
 	@Override
-	protected Output<JsonObject> handle(Input<JsonObject> input) {
+	protected Output<JsonObject> handle(Input<JsonObject> input) throws IOException {
 		OutputBuilder output = new OutputBuilder();
 
+		
+		String parentReportId = input.getProperties().get(AbstractFunctionHandler.PARENTREPORTID_KEY);
+		
 		ExecutionContext executionContext = (ExecutionContext) getTokenReservationSession().get(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY);
 		
 		if(executionContext == null) {
-			output.setError("Running composite Keyword on agent not supported. Please change the keyword configuration accordingly.");
+			ControllerCredentials credentials = new ControllerCredentials("http://localhost:8080", "admin", "init");
+			
+			ReportNode parentReportNode;
+			try(RemoteReportNodeAccessorImpl remoteReportNodeAccessor = new RemoteReportNodeAccessorImpl(credentials)) {
+				parentReportNode = remoteReportNodeAccessor.get(parentReportId);
+			}
+
+			GridClient gricClient = new LocalGridClientImpl(getApplicationContextBuilder());
+			try(RemoteExecutionContext remoteExecutionContext = new RemoteExecutionContext(credentials, gricClient, parentReportNode.getExecutionID(), parentReportId)) {
+				RemoteFunctionPlugin plugin = new RemoteFunctionPlugin(remoteExecutionContext);
+				PlanAccessor planAccessor = remoteExecutionContext.getPlanAccessor();
+				
+				ExecutionEngine engine = ExecutionEngine.builder().withParentContext(remoteExecutionContext).withPluginsFromClasspath().withOperationMode(OperationMode.CONTROLLER)
+						.withPlugin(plugin).build();
+				
+				String planId = input.getProperties().get(PLANID_KEY);
+				Plan plan = planAccessor.get(planId);
+				Plan session = PlanBuilder.create().startBlock(FunctionArtefacts.session()).add(plan.getRoot()).endBlock().build();
+				PlanRunnerResult result = engine.execute(session);
+				
+				// TODO send measurements to controller
+				//output.setError("Running composite Keyword on agent not supported. Please change the keyword configuration accordingly.");
+			};
 		} else {
 			String planId = input.getProperties().get(PLANID_KEY);
-			String parentReportId = input.getProperties().get(AbstractFunctionHandler.PARENTREPORTID_KEY);
 			
 			ReportNode parentNode;
 			if(parentReportId!=null) {
@@ -90,5 +155,105 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 		}
 		
 		return output.build();
+	}
+	
+	public static class RemoteExecutionContext extends AbstractExecutionEngineContext implements AutoCloseable {
+		
+		private final RemotePlanAccessorImpl planAccessor;
+		private final RemoteResourceManager resourceManager;
+		private final FileResolver fileResolver;
+		private final BufferedReportNodeAccessor reportNodeAccessor;
+		private final RemoteFunctionAccessorImpl functionAccessor;
+
+		public RemoteExecutionContext(ControllerCredentials credentials, GridClient gridClient, String executionId, String rootReportNodeParentId) {
+			super();
+			
+			planAccessor = new RemotePlanAccessorImpl(credentials);
+			resourceManager = new RemoteResourceManager(credentials);
+			fileResolver = new FileResolver(resourceManager);
+			reportNodeAccessor = new BufferedReportNodeAccessor(new RemoteReportNodeAccessorImpl(credentials), node->{
+				if(node.getParentID() == null) {
+					node.setParentID(new ObjectId(rootReportNodeParentId));
+				}
+				node.setExecutionID(executionId);
+			});
+			functionAccessor = new RemoteFunctionAccessorImpl(credentials);
+			
+			put(GridClient.class, gridClient);
+		}
+		
+		public PlanAccessor getPlanAccessor() {
+			return planAccessor;
+		}
+
+		public ResourceManager getResourceManager() {
+			return resourceManager;
+		}
+
+		public FileResolver getFileResolver() {
+			return fileResolver;
+		}
+
+		public ReportNodeAccessor getReportNodeAccessor() {
+			return reportNodeAccessor;
+		}
+
+		public FunctionAccessor getFunctionAccessor() {
+			return functionAccessor;
+		}
+
+		@Override
+		public void close() {
+			try {
+				reportNodeAccessor.close();
+				functionAccessor.close();
+				resourceManager.close();
+				planAccessor.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	};
+	
+	@IgnoreDuringAutoDiscovery
+	@Plugin(dependencies = FunctionPlugin.class)
+	public static class RemoteFunctionPlugin extends AbstractExecutionEnginePlugin {
+		
+		private final RemoteExecutionContext remoteExecutionContext;
+
+		public RemoteFunctionPlugin(RemoteExecutionContext remoteExecutionContext) {
+			super();
+			this.remoteExecutionContext = remoteExecutionContext;
+		}
+
+		@Override
+		public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+			GridClient gridClient = executionEngineContext.require(GridClient.class);
+			
+			TokenWrapper localTokenHandle = gridClient.getLocalTokenHandle();
+			
+			FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
+			FunctionAccessor functionAccessor = remoteExecutionContext.getFunctionAccessor();
+			FunctionManagerImpl functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
+			
+			executionContext.put(FunctionAccessor.class, functionAccessor);
+			executionContext.put(FunctionManager.class, functionManager);
+			
+			FunctionExecutionService functionExecutionService;
+			try {
+				functionExecutionService = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, executionContext.getDynamicBeanResolver());
+			} catch (FunctionExecutionServiceException e) {
+				throw new RuntimeException(e);
+			}
+			executionContext.put(FunctionExecutionService.class, functionExecutionService);
+			executionContext.put(FunctionRouter.class, new FunctionRouter() {
+				@Override
+				public TokenWrapper selectToken(CallFunction callFunction, Function function, FunctionGroupContext functionGroupContext,
+						Map<String, Object> bindings, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+					return localTokenHandle;
+				}
+			});
+		}
+		
 	}
 }

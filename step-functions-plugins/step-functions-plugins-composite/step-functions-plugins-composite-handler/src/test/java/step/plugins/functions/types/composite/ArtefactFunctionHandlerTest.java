@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.functions.types.composite;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,7 +51,7 @@ import step.planbuilder.BaseArtefacts;
 public class ArtefactFunctionHandlerTest {
 
 	@Test
-	public void test() {
+	public void test() throws IOException {
 		ExecutionContext context = newExecutionContext();
 
 		Return r = new Return();
@@ -95,7 +96,7 @@ public class ArtefactFunctionHandlerTest {
 	}
 	
 	@Test
-	public void testError() {
+	public void testError() throws IOException {
 		ExecutionContext context = newExecutionContext();
 
 		Script script = new Script();

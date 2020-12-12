@@ -67,6 +67,10 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		this.applicationContextBuilder = applicationContextBuilder;
 	}
 
+	protected ApplicationContextBuilder getApplicationContextBuilder() {
+		return applicationContextBuilder;
+	}
+
 	protected void setFileManagerClient(FileManagerClient fileManagerClient) {
 		this.fileManagerClient = fileManagerClient;
 	}
