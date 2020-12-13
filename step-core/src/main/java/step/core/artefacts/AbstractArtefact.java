@@ -60,6 +60,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	protected boolean persistNode = true;
 	
 	private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
+	private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
 	
 	public AbstractArtefact() {
 		super();
@@ -200,6 +201,14 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 				addAttribute(AbstractOrganizableObject.NAME, value);
 			}
 		}
+	}
+
+	public DynamicValue<Boolean> getInstrumentNode() {
+		return instrumentNode;
+	}
+
+	public void setInstrumentNode(DynamicValue<Boolean> instrumentNode) {
+		this.instrumentNode = instrumentNode;
 	}
 
 	@Override

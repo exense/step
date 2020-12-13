@@ -32,6 +32,10 @@
 				<textarea ng-blur="save()" ng-model="artefact.description" class="form-control" rows="5"></textarea>
 			</div>
 			<div class="form-group form-group-sm">
+				<dynamic-checkbox tooltip="'Instrument this node to measure its performance. A performance measurement will be created after each execution of the node.'" label="'Instrument'" on-save="save()" dynamic-value="artefact.instrumentNode"/>
+			</div>
+			
+			<div class="form-group form-group-sm">
 				<dynamic-checkbox tooltip="'Switch to disable or enable the execution of this node.'" label="'Skip node execution'" on-save="save()" dynamic-value="artefact.skipNode"/>
 			</div>
 		</fieldset>

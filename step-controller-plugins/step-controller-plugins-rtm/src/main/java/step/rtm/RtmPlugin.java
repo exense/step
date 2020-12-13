@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
@@ -42,6 +43,18 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 @IgnoreDuringAutoDiscovery
 public class RtmPlugin extends AbstractExecutionEnginePlugin {
 
+	private static final String TYPE_CUSTOM = "custom";
+	private static final String TYPE = "type";
+	private static final String NAME = "name";
+	private static final String BEGIN = "begin";
+	private static final String VALUE = "value";
+	private static final String RN_ID = "rnId";
+	private static final String RN_STATUS = "rnStatus";
+	private static final String AGENT_URL = "agentUrl";
+	private static final String ORIGIN = "origin";
+	private static final String TASK_ID = "taskId";
+	private static final String PLAN_ID = "planId";
+	
 	private static final String SCHEDULER_TASK_ID = "$schedulerTaskId";
 
 	private static final Logger logger = LoggerFactory.getLogger(RtmPlugin.class);
@@ -66,58 +79,62 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 
 	@Override
 	public void afterReportNodeExecution(ExecutionContext executionContext, ReportNode node) {		
-		if(node instanceof CallFunctionReportNode) {
-			CallFunctionReportNode stepReport = (CallFunctionReportNode) node;
-
-			Map<String, String> functionAttributes = stepReport.getFunctionAttributes();
+		AbstractArtefact artefactInstance = node.getArtefactInstance();
+		if(node instanceof CallFunctionReportNode || isArtefactInstrumented(artefactInstance)) {
+			List<Object> measurements = new ArrayList<>();
 
 			String schedulerTaskId = (String) executionContext.get(SCHEDULER_TASK_ID);
 			String planId = executionContext.getPlan().getId().toString();
-			
-			List<Object> measurements = new ArrayList<>();
 
-			Map<String, Object> measurement;
-
-			if(stepReport.getMeasures()!=null) {
-				for(Measure measure:stepReport.getMeasures()) {
-					measurement = new HashMap<>();
-
-					measurement.putAll(functionAttributes);
-
-					measurement.put(RtmControllerPlugin.ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
-					measurement.put("name", measure.getName());
-					measurement.put("origin", stepReport.getFunctionAttributes().get(AbstractOrganizableObject.NAME));
-					measurement.put("value", measure.getDuration());
-					measurement.put("begin", measure.getBegin());
-					measurement.put("rnId", stepReport.getId().toString());
-					measurement.put("rnStatus", stepReport.getStatus().toString());
-					measurement.put("agentUrl", stepReport.getAgentUrl());
-					measurement.put("planId", planId);
-					if(schedulerTaskId != null) {
-						measurement.put("taskId", schedulerTaskId);
-					}
-					
-
-					if(measure.getData() != null){
-						for(Map.Entry<String,Object> entry : measure.getData().entrySet()){
-							String key = entry.getKey();
-							Object val = entry.getValue();
-							if((key != null) && (val != null)){
-								if(	(val instanceof Long) || (val instanceof String)){
-									measurement.put(key, val);
-								}else{
-									if(	(val instanceof Number)){
-										measurement.put(key, ((Integer) val).longValue());
-									}else{
-										// ignore improper types
+			if(node instanceof CallFunctionReportNode) {
+				CallFunctionReportNode stepReport = (CallFunctionReportNode) node;
+				
+				if(stepReport.getMeasures()!=null) {
+					for(Measure measure:stepReport.getMeasures()) {
+						Map<String, String> functionAttributes = stepReport.getFunctionAttributes();
+						Map<String, Object> measurement = new HashMap<>();
+						measurement.putAll(functionAttributes);
+						measurement.put(RtmControllerPlugin.ATTRIBUTE_EXECUTION_ID, stepReport.getExecutionID());
+						measurement.put(NAME, measure.getName());
+						measurement.put(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
+						measurement.put(VALUE, measure.getDuration());
+						measurement.put(BEGIN, measure.getBegin());
+						measurement.put(AGENT_URL, stepReport.getAgentUrl());
+						enrichWithNodeAttributes(measurement, node, schedulerTaskId, planId);
+						
+						if (measure.getData() != null) {
+							measure.getData().forEach((key, val) -> {
+								if ((key != null) && (val != null)) {
+									if ((val instanceof Long) || (val instanceof String)) {
+										measurement.put(key, val);
+									} else {
+										if ((val instanceof Number)) {
+											measurement.put(key, ((Integer) val).longValue());
+										} else {
+											// ignore improper types
+										}
 									}
 								}
-							}
+							});
 						}
+						
+						measurements.add(measurement);
 					}
-
-					measurements.add(measurement);
 				}
+				
+			}
+			if (isArtefactInstrumented(artefactInstance)) {
+				Map<String, Object> measurement = new HashMap<>();
+
+				measurement.put(RtmControllerPlugin.ATTRIBUTE_EXECUTION_ID, node.getExecutionID());
+				measurement.put(NAME, node.getName());
+				measurement.put(ORIGIN, artefactInstance.getAttribute(AbstractOrganizableObject.NAME));
+				measurement.put(VALUE, (long) node.getDuration());
+				measurement.put(BEGIN, node.getExecutionTime());
+				measurement.put(TYPE, TYPE_CUSTOM);
+				enrichWithNodeAttributes(measurement, node, schedulerTaskId, planId);
+
+				measurements.add(measurement);
 			}
 
 			if (measurements.size()>0) {
@@ -127,6 +144,19 @@ public class RtmPlugin extends AbstractExecutionEnginePlugin {
 			if (logger.isTraceEnabled()) {
 				logMeasurements(measurements);
 			}
+		}
+	}
+
+	private boolean isArtefactInstrumented(AbstractArtefact artefactInstance) {
+		return artefactInstance != null && artefactInstance.getInstrumentNode().get();
+	}
+
+	private void enrichWithNodeAttributes(Map<String, Object> measurement, ReportNode node, String schedulerTaskId, String planId) {
+		measurement.put(RN_ID, node.getId().toString());
+		measurement.put(RN_STATUS, node.getStatus().toString());
+		measurement.put(PLAN_ID, planId);
+		if(schedulerTaskId != null) {
+			measurement.put(TASK_ID, schedulerTaskId);
 		}
 	}
 
