@@ -218,7 +218,7 @@ angular.module('tables', ['export'])
         sendSelectionChangeEvent();
       }
       
-      scope.setSelectionOnFilteredRows = function(value) {
+      scope.setSelectionOnFilteredRows = function(value, sendEvent) {
         if(!isTableFiltered()) {
           scope.selectionModel.setDefaultSelection(value);
           scope.selectionModel.setSelectionAll(value);
@@ -228,7 +228,10 @@ angular.module('tables', ['export'])
             scope.selectionModel.setSelectionForObject(dataRow,value);
           })
         }
-        sendSelectionChangeEvent();
+        sendEvent = (typeof sendEvent !== 'undefined') ? sendEvent : true;
+        if (sendEvent) {
+          sendSelectionChangeEvent();
+        }
       };
       
       controller.multipleSelection = scope.multipleSelection; 
@@ -408,11 +411,11 @@ angular.module('tables', ['export'])
 	        scope.handle.deselect = function(id) {
 	          scope.handle.setSelection(id, false);
 	        }
-	        scope.handle.selectAll = function() {
-	          scope.setSelectionOnFilteredRows(true);
+	        scope.handle.selectAll = function(sendEvent) {
+	          scope.setSelectionOnFilteredRows(true,sendEvent);
 	        }
-	        scope.handle.deselectAll = function() {
-	          scope.setSelectionOnFilteredRows(false);
+	        scope.handle.deselectAll = function(sendEvent) {
+	          scope.setSelectionOnFilteredRows(false,sendEvent);
 	        }
 
 	        // render first header

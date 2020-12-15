@@ -175,7 +175,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 			$scope.testCaseTable = {};
 			$scope.drillDownTestcase = function(id) {
-				$scope.testCaseTable.deselectAll();
+				$scope.testCaseTable.deselectAll(false);
 				$scope.testCaseTable.select(id);
 				$scope.enablePanel("steps",true);
 				$scope.scrollTo("steps");
