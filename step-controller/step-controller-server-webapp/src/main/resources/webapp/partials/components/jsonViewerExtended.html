@@ -5,7 +5,7 @@
   <json-viewer-extended-toolbox mouseover="mouseover" format="format" handle="handle"/>
 </div>
 <div ng-show="showExtendedView" ng-mouseenter="mouseover=true" ng-mouseleave="mouseover=false">
-  <json-viewer-key-value ng-show="format === 'kv'"  style="margin-bottom:0px;" json="json"/>
+  <json-viewer-key-value ng-show="format === 'kv'" class="text-wrapping-anywhere" style="margin-bottom:0px;" json="json"/>
   <json-viewer-pretty-print ng-show="format === 'json'" json="json" style="margin-bottom:0px;" />
   <a class="node-link" ng-click="showExtendedView = !showExtendedView">{{toggleExtendedText(showExtendedView)}}</a>
   <json-viewer-extended-toolbox mouseover="mouseover" format="format" handle="handle"/>
