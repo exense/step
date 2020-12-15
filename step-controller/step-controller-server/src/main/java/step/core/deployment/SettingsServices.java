@@ -61,7 +61,7 @@ public class SettingsServices extends AbstractServices {
 	@GET
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
-	@Secured(right="admin")
+	@Secured(right="settings-read")
 	public String get(@PathParam("id") String key) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
 		if(setting != null) {
