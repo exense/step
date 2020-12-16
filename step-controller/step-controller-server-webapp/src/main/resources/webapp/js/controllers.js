@@ -100,7 +100,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 			
 			$scope.copyExecutionServiceAsCurlToClipboard = function() {
 			  var location = window.location;
-			  var url = location.protocol + '//' + location.hostname + ':' + location.port + '/rest/controller/execution';
+			  var url = location.protocol + '//' + location.hostname + (location.port?':'+location.port:'') + '/rest/controller/execution';
 			  var payload = buildExecutionParams(false);
 			  var cmd = "curl -X POST " + url + " -H 'Content-Type: application/json' -d '" + JSON.stringify(payload) + "'";
 			  ngCopy(cmd);
