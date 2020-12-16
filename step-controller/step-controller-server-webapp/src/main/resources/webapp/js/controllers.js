@@ -52,8 +52,8 @@ tecAdminControllers.factory('executionServices', function($http,$q,$filter,Scree
 	return factory
 })
 
-tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','AuthService','schedulerServices','executionServices',
-	function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,AuthService,schedulerServices,executionServices) {
+tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$location','stateStorage','$uibModal','$timeout','AuthService','schedulerServices','executionServices','ngCopy',
+	function($rootScope, $http, $location,$stateStorage,$uibModal,$timeout,AuthService,schedulerServices,executionServices,ngCopy) {
 	return {
 		restrict: 'E',
 		scope: {
@@ -96,6 +96,14 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 				}
 				executionParams.customParameters = $scope.executionParameters;
 				return executionParams;
+			}
+			
+			$scope.copyExecutionServiceAsCurlToClipboard = function() {
+			  var location = window.location;
+			  var url = location.protocol + '//' + location.hostname + ':' + location.port + '/rest/controller/execution';
+			  var payload = buildExecutionParams(false);
+			  var cmd = "curl -X POST " + url + " -H 'Content-Type: application/json' -d '" + JSON.stringify(payload) + "'";
+			  ngCopy(cmd);
 			}
 
 			$scope.execute = function(simulate) {

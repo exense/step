@@ -1,6 +1,6 @@
 <st-custom-form st-model="executionParameters" st-screen="executionParameters" />
 <div class="btn-toolbar" role="toolbar" aria-label="...">
-	<div class="input-group" style="width:200px">
+	<div class="input-group">
 		<div class="btn-group">
 			<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="execute(true)" uib-tooltip="Simulate execution" tooltip-append-to-body="true">
 				<span class="glyphicon glyphicon glyphicon-ok" aria-hidden="true"></span>
@@ -12,6 +12,12 @@
 				<span class="glyphicon glyphicon glyphicon-time" aria-hidden="true"></span>
 			</button>
 		</div>
+	</div>
+	
+	<div class="input-group pull-right">
+		<button type="button" ng-disabled="!authService.hasRight('plan-execute')" class="btn btn-default" aria-label="Left Align" ng-click="copyExecutionServiceAsCurlToClipboard()" uib-tooltip="Copy start request as curl command to clipboard" tooltip-append-to-body="true">
+			<span class="glyphicon glyphicon-link" aria-hidden="true"></span>
+		</button>
 	</div>
 
 	<div ng-if="execution && execution.status!='ENDED'" class="btn-group">
