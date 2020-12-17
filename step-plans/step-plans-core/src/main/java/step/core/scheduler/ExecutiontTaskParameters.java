@@ -18,12 +18,12 @@
  ******************************************************************************/
 package step.core.scheduler;
 
-import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
 
 public class ExecutiontTaskParameters extends AbstractOrganizableObject {
 	
+	// TODO remove this field and create a migration task to also remove it from the DB
 	public String name;
 	
 	public ExecutionParameters executionsParameters;
@@ -44,10 +44,20 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject {
 		this.active = true;
 	}
 
+	/**
+	 * @deprecated This field isn't used anymore. The task name is now persisted as
+	 *             attribute.Please use getAttribute("name") instead
+	 * @return
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * @deprecated This field isn't used anymore. The task name is now persisted as
+	 *             attribute.Please use setAttribute("name","...") instead
+	 * @param name
+	 */
 	public void setName(String name) {
 		this.name = name;
 	}

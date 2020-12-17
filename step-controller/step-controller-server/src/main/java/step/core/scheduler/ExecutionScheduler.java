@@ -25,6 +25,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionParameters;
@@ -61,7 +62,7 @@ public class ExecutionScheduler {
 			Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
 			while(it.hasNext()) {
 				ExecutiontTaskParameters task = it.next();
-				logger.info("Loading schedule for task " + task.getName() + " having for id : " + task.getId());
+				logger.info("Loading schedule for task '" + task.getAttribute(AbstractOrganizableObject.NAME) + "' having for id : " + task.getId());
 				try {
 					boolean mayFireAgain = executor.schedule(task);
 					if(!mayFireAgain) {
@@ -176,7 +177,7 @@ public class ExecutionScheduler {
 		Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
 		while(it.hasNext()) {
 			ExecutiontTaskParameters task = it.next();
-			logger.info("Disabling schedule for task " + task.getName() + " having for id : " + task.getId());
+			logger.info("Disabling schedule for task '" + task.getAttribute(AbstractOrganizableObject.NAME) + "' having for id : " + task.getId());
 			executor.deleteSchedule(task);
 		}
 	}
