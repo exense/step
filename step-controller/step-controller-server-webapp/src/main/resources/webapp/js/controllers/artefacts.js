@@ -156,7 +156,7 @@ angular.module('artefacts',['step'])
     controller: function($scope,$location,artefactTypes,AuthService) {
       
       $scope.authService = AuthService;
-      
+      $scope.showAttributes = true;
       $scope.$watch('artefact', function() {
         if($scope.artefact) {
           var classname = $scope.artefact._class;
