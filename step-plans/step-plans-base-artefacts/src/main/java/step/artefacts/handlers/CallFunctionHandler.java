@@ -286,7 +286,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				query = JsonProviderCache.createObjectBuilder().build();
 			}
 		} catch(JsonParsingException e) {
-			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage());
+			throw new RuntimeException("Error while parsing argument (input): "+e.getMessage()
+					+"\nInput string was "+functionStr);
 		}
 		return dynamicJsonObjectResolver.evaluate(query, getBindings());
 	}
