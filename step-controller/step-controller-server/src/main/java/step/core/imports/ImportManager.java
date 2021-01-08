@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.mongodb.BasicDBObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ch.exense.commons.io.FileHelper;
 import step.core.GlobalContext;
 import step.core.Version;
+import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.export.ImportExportMapper;
 import step.resources.LocalResourceManagerImpl;
@@ -96,7 +98,7 @@ public class ImportManager {
 
 			} catch (Exception e) {
 				logger.error("Import failed for file: " + importConfig.file.getName(), e);
-				throw e;
+				throw new RuntimeException("Import failed, check the controller logs for more details");
 			} finally {
 				if (importConfig.localResourceMgr != null) {
 					importConfig.localResourceMgr.cleanup();
@@ -116,17 +118,21 @@ public class ImportManager {
 			Map<String, String> refMapping) throws IOException, InstantiationException, IllegalAccessException {
 		String name = jParser.getCurrentName();
 		boolean skip = skipEntityType(importConfig.entitiesFilter, name);
-		Importer<?,?> importer = context.getEntityManager().getEntityByName(name).getImporter();
+		Entity<?, ?> entityByName = context.getEntityManager().getEntityByName(name);
 		if (!skip) {
-			if (importer==null) {
-				throw new RuntimeException("The entity type with name '" + name + "' is unsupported.");
+			if (entityByName == null || entityByName.getImporter() == null) {
+				throw new RuntimeException("The entity type with name '" + name + "' is unsupported in this version or license of step.");
 			}
 			logger.info("Importing entities of type " + name );
 		}
+		Importer<?,?> importer = entityByName.getImporter();
 		if (jParser.nextToken().equals(JsonToken.START_ARRAY)) {
 			while (!jParser.nextToken().equals(JsonToken.END_ARRAY)) {
 				if (!skip) {
 					importer.importOne(importConfig, jParser, mapper, refMapping);
+				} else {
+					//consume the json object when skipped
+					mapper.readValue(jParser, BasicDBObject.class);
 				}
 			}
 		} else {
@@ -160,8 +166,8 @@ public class ImportManager {
 			mapper = ImportExportMapper.getMapper(version);
 			importer.importMany(importConfig, mapper);
 		} else {
-			logger.error("Import failed, the first property was unexepected '" + firstKey + "':'" + firstValue + "'");
-			throw new RuntimeException("Import failed, the first property was unexepected '" + firstKey + "':'" + firstValue + "'"
+			logger.error("Import failed, the first property was unexpected '" + firstKey + "':'" + firstValue + "'");
+			throw new RuntimeException("Import failed, the first property was unexpected '" + firstKey + "':'" + firstValue + "'"
 					+ ". Check the error logs for more details.");
 		}
 	}
