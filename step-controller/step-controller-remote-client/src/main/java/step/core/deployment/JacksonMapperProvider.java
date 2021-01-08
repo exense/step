@@ -19,9 +19,12 @@
 package step.core.deployment;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.ext.ContextResolver;
 
+import com.fasterxml.jackson.databind.Module;
 import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -48,22 +51,31 @@ public class JacksonMapperProvider implements ContextResolver<ObjectMapper> {
     public ObjectMapper getContext(Class<?> type) {
         return mapper;
     }
+
+    private static Class<ObjectId> _id = ObjectId.class;
+    public static List<Module> modules = new ArrayList<>();
+
+    static {
+        modules.add(new JSR353Module());
+        modules.add(new JsonOrgModule());
+        modules.add(new SimpleModule("jersey", new Version(1, 0, 0, null,null,null)) //
+                .addSerializer(_id, _idSerializer()) //
+                .addDeserializer(_id, _idDeserializer()));
+    }
  
     /**
      * @return an ObjectMapper for the UI or export layer
      */
     public static ObjectMapper createMapper() {
     	ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JSR353Module());
-        mapper.registerModule(new JsonOrgModule());
-        mapper.registerModule(new SimpleModule("jersey", new Version(1, 0, 0, null,null,null)) //
-                        .addSerializer(_id, _idSerializer()) //
-                        .addDeserializer(_id, _idDeserializer()));
+        JacksonMapperProvider.getModules().forEach(m->mapper.registerModule(m));
         return mapper;
     }
- 
-    private static Class<ObjectId> _id = ObjectId.class;
- 
+
+    public static List<Module> getModules() {
+        return modules;
+    }
+
     private static JsonDeserializer<ObjectId> _idDeserializer() {
         return new JsonDeserializer<ObjectId>() {
             public ObjectId deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {

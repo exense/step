@@ -32,22 +32,33 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoCollection;
 
+import org.jongo.Mapper;
+import org.jongo.marshall.Unmarshaller;
+import org.jongo.marshall.jackson.JacksonMapper;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AccessorLayerJacksonMapperProvider;
 import step.core.accessors.CRUDAccessor;
+import step.core.deployment.JacksonMapperProvider;
 import step.core.entities.Entity;
-import step.core.plans.Plan;
 
 public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends CRUDAccessor<A>> implements Importer<A, T> {
 	
 	protected Entity<A, T> entity;
 	protected GlobalContext context;
 	protected MongoCollection<Document> tmpCollection = null;
+	private Mapper dbLayerObjectMapper;
+	private Unmarshaller unmarshaller;
 	
 	public GenericDBImporter(GlobalContext context) {
 		super();
 		this.context = context;
+		JacksonMapper.Builder builder2 = new JacksonMapper.Builder();
+		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
+		JacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
+		dbLayerObjectMapper = builder2.build();
+		unmarshaller = dbLayerObjectMapper.getUnmarshaller();
 	}
 
 	public void init(Entity<A, T> entity) {
@@ -63,7 +74,7 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 			//A aObj = mapper.readValue(jParser, entity.getEntityClass());
 			BasicDBObject o = mapper.readValue(jParser, BasicDBObject.class);
 			applyMigrationTasks(importConfig, o);
-			A aObj = mapper.readValue(o.toJson().toString(), entity.getEntityClass());
+			A aObj = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(o),entity.getEntityClass());
 			if (importConfig.objectDrainer!=null) {
 				importConfig.objectDrainer.accept(aObj);
 			}
