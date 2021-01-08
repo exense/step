@@ -168,7 +168,11 @@ public class EntityManager  {
 									c.forEach(r->resolveReference(r, references, entityType, r.getClass()));
 								} else {
 									if (value == null) {
-										value = getEntityByName(entityType).resolve(object);
+										try {
+											value = getEntityByName(entityType).resolve(object);
+										} catch (Exception e) {
+											references.addReferenceNotFoundWarning("Unable to resolve reference of type " + entityType + " from artefact " + object.getClass().getCanonicalName() + ". Error: " + e.getMessage());
+										}
 									}
 									resolveReference(value, references, entityType, method.getReturnType());
 								}
