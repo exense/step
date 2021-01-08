@@ -124,7 +124,28 @@ public class PlanImporter extends GenericDBImporter<Plan, PlanAccessor> {
 						+ " asserts from plan " + p, e);
 			}
 		}
+		//need to manually change "id" to "_id" before unmarshalling to plan
+		if (importConfig.getVersion().compareTo(new Version(3,13,0)) <= 0) {
+			if (p.containsKey("id")) {
+				p.put("_id", p.get("id"));
+				p.remove("id");
+			}
+			convertChildrenIDs((LinkedHashMap) p.get("root"));
+		}
 		return p;
+	}
+
+	private void convertChildrenIDs(LinkedHashMap p) {
+		if (p!=null) {
+			if (p.containsKey("id")) {
+				p.put("_id", p.get("id"));
+				p.remove("id");
+			}
+			ArrayList children = (ArrayList<LinkedHashMap>) p.get("children");
+			if (children != null) {
+				children.forEach(c -> convertChildrenIDs((LinkedHashMap) c));
+			}
+		}
 	}
 
 	private void retrieveAssertNodeRecursively(ArrayList<LinkedHashMap> children, BasicDBList assertNodesToBeUpdated) {
