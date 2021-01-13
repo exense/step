@@ -60,7 +60,7 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@POST
-	@Secured
+	@Secured(right="resource-write")
 	@Path("/content")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -85,7 +85,7 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@POST
-	@Secured
+	@Secured(right="resource-write")
 	//@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -95,6 +95,7 @@ public class ResourceServices extends AbstractServices {
 	
 	@POST
 	@Path("/{id}/content")
+	@Secured(right="resource-write")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse saveResourceContent(@PathParam("id") String resourceId, @FormDataParam("file") InputStream uploadedInputStream,
@@ -107,7 +108,7 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@GET
-	@Secured
+	@Secured(right="resource-read")
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Resource getResource(@PathParam("id") String resourceId) throws IOException {
@@ -115,6 +116,7 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@GET
+	@Secured(right="resource-read")
 	@Path("/{id}/content")
 	public Response getResourceContent(@PathParam("id") String resourceId, @QueryParam("inline") boolean inline) throws IOException {
 		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
@@ -122,13 +124,14 @@ public class ResourceServices extends AbstractServices {
 	}
 	
 	@DELETE
-	@Secured
+	@Secured(right="resource-delete")
 	@Path("/{id}")
 	public void deleteResource(@PathParam("id") String resourceId) {
 		resourceManager.deleteResource(resourceId);
 	}
 	
 	@GET
+	@Secured(right="resource-read")
     @Path("/revision/{id}/content")
 	public Response getResourceRevisionContent(@PathParam("id") String resourceRevisionId, @QueryParam("inline") boolean inline) throws IOException {
 		ResourceRevisionContentImpl resourceContent = resourceManager.getResourceRevisionContent(resourceRevisionId);
@@ -137,7 +140,6 @@ public class ResourceServices extends AbstractServices {
 	
 	@javax.ws.rs.core.Context 
 	ServletContext context;
-	
 	protected Response getResponseForResourceRevisionContent(ResourceRevisionContent resourceContent, boolean inline) {
 		StreamingOutput fileStream = new StreamingOutput() {
 			@Override
