@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.json.JsonArray;
@@ -238,7 +239,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	private Map<String, String> jsonToMap(JsonObject jsonOutput) {
-		Map<String, String> resultMap = new HashMap<>();
+		Map<String, String> resultMap = new LinkedHashMap<>();
 		for(String key:jsonOutput.keySet()) {
 			JsonValue value = jsonOutput.get(key);
 			if(value.getValueType() == ValueType.STRING) {
