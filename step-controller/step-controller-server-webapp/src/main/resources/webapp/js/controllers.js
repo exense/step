@@ -278,9 +278,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 			$scope.reportTreeHandle = {};
 
-			$scope.openRtm = function() {
+			//Deprecated
+			/*$scope.openRtm = function() {
 				$window.open($scope.rtmlink, '_blank');
-			}
+			}*/
 
 			$scope.openLink = function(link,target) {
 				$window.open(link, target);
@@ -291,9 +292,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			var eId = $scope.eid;
 			$scope.reloadingTable=false;
 			$scope.isRefreshing=false;
-			$http.get('rest/rtm/rtmlink/' + eId).then(function(response) {
+			/*$http.get('rest/rtm/rtmlink/' + eId).then(function(response) {
 				$scope.rtmlink = response.data.link;
-			})
+			})*/
 
 			var refreshTestCaseTable = function() {        
 				$http.get('rest/executions/' + eId + '/reportnodes?limit=500&class=step.artefacts.reports.TestCaseReportNode').then(function(response) {

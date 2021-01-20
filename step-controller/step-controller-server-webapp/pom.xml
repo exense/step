@@ -102,6 +102,11 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-controller-plugins-postgres</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-controller-initialization</artifactId>
 			<version>${project.version}</version>
 		</dependency>
