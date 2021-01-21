@@ -350,16 +350,7 @@ angular.module('artefacts',['step'])
           initLastRow();
         }
       })
-      
-      $scope.$watch('isFocusOnLastRow', function(value) {
-        if(value === true) { 
-          $timeout(function() {
-            $("#lastRowKey").focus();
-            $scope.isFocusOnLastRow=false;
-          });
-        }
-      })
-      
+
       $scope.$watch('doCommitLastRow', function(value) {
         if(value === true) { 
           $timeout(function() {
@@ -504,6 +495,17 @@ angular.module('artefacts',['step'])
       }
       
       
+    },
+    link: function($scope, element, attrs) {
+
+      $scope.$watch('isFocusOnLastRow', function(value) {
+        if(value === true) {
+          $timeout(function() {
+            element[0].querySelector('#lastRowKey').focus();
+            $scope.isFocusOnLastRow=false;
+          });
+        }
+      })
     }
   }
 })
