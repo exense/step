@@ -20,7 +20,6 @@ package step.migration.tasks;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -98,9 +97,9 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		executionTaskAccessor = new ExecutionTaskAccessorImpl(mongoClientSession);
 		functionAccessor = new FunctionAccessorImpl(mongoClientSession);
 
-		artefactIdToPlanId = new HashMap<>();
 		artefactsToPlans = new ArtefactsToPlans(artefactCollection,
 				new PlanAccessorImpl(mongoClientSession));
+		artefactIdToPlanId = artefactsToPlans.getArtefactIdToPlanId();
 	}
 
 	@Override

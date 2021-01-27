@@ -55,7 +55,7 @@ public class ArtefactsToPlans  {
 	private PlanAccessor planAccessor;
 	
 	private Mapper dbLayerObjectMapper;
-	private Map<ObjectId, ObjectId> artefactIdToPlanId;
+	private final Map<ObjectId, ObjectId> artefactIdToPlanId;
 	private Unmarshaller unmarshaller;
 	private int nbPlans = 0;
 	private ObjectEnricher objectEnricher = null;
@@ -195,5 +195,9 @@ public class ArtefactsToPlans  {
 	
 	public int getNbPlans() {
 		return nbPlans;
+	}
+
+	public Map<ObjectId, ObjectId> getArtefactIdToPlanId() {
+		return artefactIdToPlanId;
 	}
 }
