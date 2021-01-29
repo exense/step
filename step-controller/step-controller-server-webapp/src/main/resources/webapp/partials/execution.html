@@ -1,4 +1,4 @@
-<div ng-controller="ExecutionTabsCtrl">
+<div ng-controller="ExecutionTabsCtrl" style="max-width:97vw">
 	<ul class="nav nav-tabs">
 	  <li role="presentation" ng-class="{active: isTabActive(tab.id)}" ng-repeat="tab in tabs track by tab.id">
 	  	<a ng-click="selectTab(tab.id)" ><execution-result ng-if="tab.id!='list'" execution="getTabExecution(tab.id)" /> {{tab.title}} <i class="glyphicon glyphicon-remove" ng-if="tab.id!='list'" ng-click="closeTab(tab.id)" aria-hidden="true"/> </a>
