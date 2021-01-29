@@ -34,6 +34,7 @@
 				<include>ch.exense.step:step-controller-server-webapp</include>
 				<include>ch.exense.step:step-controller-plugins-rtm</include>
 				<include>ch.exense.step:step-controller-plugins-postgres</include>
+				<include>ch.exense.step:step-controller-plugins-prometheus</include>
 				<include>ch.exense.step:step-controller-plugins-script-editor</include>
 				<include>ch.exense.step:step-functions-plugins-selenium</include>
 				<include>ch.exense.step:step-functions-plugins-jmeter</include>

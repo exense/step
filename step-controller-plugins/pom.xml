@@ -32,6 +32,7 @@
 		<module>step-controller-plugins-rtm</module>
 		<module>step-controller-plugins-script-editor</module>
 		<module>step-controller-plugins-postgres</module>
+		<module>step-controller-plugins-prometheus</module>
 	</modules>
 	
 	<dependencies>
