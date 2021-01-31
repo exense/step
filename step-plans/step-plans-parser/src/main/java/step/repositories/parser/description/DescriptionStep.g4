@@ -26,11 +26,11 @@ keywordParameter
 
 keywordName : (STRING|WORD);
  
-attributeName : WORD;
+attributeName : (WORD|STRING);
 
 attributeValue : STRING;
   
-setValue : (attributeName|STRING);
+setValue : (WORD|STRING);
   
 EQ : '=';
 

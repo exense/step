@@ -84,6 +84,15 @@ public class CustomDescriptionStepParserTest extends AbstractStepParserTest {
 	}
 	
 	@Test
+	public void testInputKeysWithSpaces1() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("KW1 \"my parameter with spaces\" = \"b \"   \n 	 c=\"d\"    "));
+		
+		CallFunction f = parseAndGetUniqueChild(steps, CallFunction.class);
+		Assert.assertEquals("{\"my parameter with spaces\":\"b \",\"c\":\"d\"}",evaluateFunctionArgument(f));
+	}
+	
+	@Test
 	public void testReproducer() throws ParsingException {
 		List<AbstractStep> steps = new ArrayList<>();
 		steps.add(step("TestKeyword Parameter1 = \"Value1\" \r\n  \u00A0Parameter2 = \"Value2\" \r\n"));
