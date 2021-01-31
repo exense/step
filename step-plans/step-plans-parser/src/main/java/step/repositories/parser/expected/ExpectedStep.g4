@@ -13,7 +13,7 @@ expr
  ;
  
 checkExpression
- : attributeName NOT? op=(EQ|REGEX|CONTAINS|BEGINS|ENDS) attributeValue		#checkExpr
+ : outputAttributeName NOT? op=(EQ|REGEX|CONTAINS|BEGINS|ENDS) attributeValue		#checkExpr
  ;    
 
 setExpression : 'Set' assignment+;
@@ -24,6 +24,7 @@ exportExpression : 'Export' controlParameter+;
 
 controlParameter : attributeName EQ setValue;
 
+outputAttributeName : (WORD|STRING);
 attributeName : WORD;
 setValue : (attributeName|STRING);
 attributeValue : STRING;  

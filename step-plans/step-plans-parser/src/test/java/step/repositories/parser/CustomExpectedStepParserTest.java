@@ -129,6 +129,26 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		Assert.assertEquals(AssertOperator.BEGINS_WITH,check1.getOperator());
 		Assert.assertFalse(check1.getDoNegate().get());
 	}
+	
+	@Test
+	public void testOutputAttributeWithSpaces() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("\"Key with space\" = \"Value1\""));
+		steps.add(step("\"key1WithoutSpaceBetweenQuotes\" = \"Value1\""));
+		
+		AbstractArtefact root = parse(steps);
+		Assert.assertEquals(2,getChildren(root).size());
+		
+		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
+		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
+		Assert.assertEquals("Key with space",check1.getActual().getValue());
+		Assert.assertEquals(AssertOperator.EQUALS,check1.getOperator());
+		
+		step.artefacts.Assert check2 = (step.artefacts.Assert ) getChildren(root).get(1);
+		Assert.assertEquals("\"Value1\"",check2.getExpected().getExpression());
+		Assert.assertEquals("key1WithoutSpaceBetweenQuotes",check2.getActual().getValue());
+		Assert.assertEquals(AssertOperator.EQUALS,check2.getOperator());
+	}
 
 	@Test
 	public void testSet() throws ParsingException {
