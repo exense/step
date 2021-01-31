@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import org.bson.types.ObjectId;
 
@@ -44,32 +45,58 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 
 	@Override
 	public T findByAttributes(Map<String, String> attributes) {
-		return map.values().stream().filter(v->{
-			if(v instanceof AbstractOrganizableObject) {
-				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
-			} else {
-				if(v instanceof AbstractIdentifiableObject) {
-					return ((AbstractIdentifiableObject)v).customFields.equals(attributes);
-				}else {
-					return false;
-				}
-			}
-		}).findFirst().orElse(null);
+		return findByAttributesStream(attributes).findFirst().orElse(null);
 	}
 
 	@Override
 	public Spliterator<T> findManyByAttributes(Map<String, String> attributes) {
-		return map.values().stream().filter(v->{
-			if(v instanceof AbstractOrganizableObject) {
-				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
+		return findByAttributesStream(attributes).spliterator();
+	}
+
+	@Override
+	public T findByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		return findByAttributesStream(attributes, attributesMapKey).findFirst().orElse(null);
+	}
+
+	@Override
+	public Spliterator<T> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
+		return findByAttributesStream(attributes, attributesMapKey).spliterator();
+	}
+
+	private Stream<T> findByAttributesStream(Map<String, String> attributes) {
+		return map.values().stream().filter(v -> {
+			if (v instanceof AbstractOrganizableObject) {
+				return areAllEntriesContainedInMap(((AbstractOrganizableObject) v).attributes, attributes);
+			} else if (v instanceof AbstractIdentifiableObject) {
+				return areAllEntriesContainedInMap(((AbstractIdentifiableObject) v).customFields, attributes);
 			} else {
-				if(v instanceof AbstractIdentifiableObject) {
-					return ((AbstractIdentifiableObject)v).customFields.equals(attributes);
-				}else {
-					return false;
-				}
+				return false;
 			}
-		}).spliterator();
+		});
+	}
+	
+	private Stream<T> findByAttributesStream(Map<String, String> attributes, String attributesMapKey) {
+		return map.values().stream().filter(v -> {
+			if (attributesMapKey.equals("attributes")) {
+				return areAllEntriesContainedInMap(((AbstractOrganizableObject) v).attributes, attributes);
+			} else if (attributesMapKey.equals("customFields")) {
+				return areAllEntriesContainedInMap(((AbstractIdentifiableObject) v).customFields, attributes);
+			} else {
+				throw new IllegalArgumentException("Unknown field "+attributesMapKey);
+			}
+		});
+	}
+	
+	private boolean areAllEntriesContainedInMap(Map<?, ?> map, Map<?, ?> entries) {
+		if(map != null) {
+			if(entries != null) {
+				return map.entrySet().containsAll(entries.entrySet());
+			} else {
+				return true;
+			}
+		} else {
+			return entries == null || entries.isEmpty();
+		}
 	}
 
 	@Override
@@ -96,36 +123,6 @@ public class InMemoryCRUDAccessor<T extends AbstractIdentifiableObject> implemen
 		if(entities != null && entities.size()>0) {
 			entities.forEach(e->save(e));
 		}
-	}
-
-	@Override
-	public T findByAttributes(Map<String, String> attributes, String attributesMapKey) {
-		return map.values().stream().filter(v->{
-			if(attributesMapKey.equals("attributes")) {
-				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
-			} else {
-				if(attributesMapKey.equals("customFields")) {
-					return ((AbstractIdentifiableObject)v).customFields.equals(attributes);
-				}else {
-					return false;
-				}
-			}
-		}).findFirst().orElse(null);
-	}
-
-	@Override
-	public Spliterator<T> findManyByAttributes(Map<String, String> attributes, String attributesMapKey) {
-		return map.values().stream().filter(v->{
-			if(v instanceof AbstractOrganizableObject) {
-				return ((AbstractOrganizableObject)v).attributes.equals(attributes);
-			} else {
-				if(attributesMapKey.equals("customFields")) {
-					return ((AbstractIdentifiableObject)v).customFields.equals(attributes);
-				}else {
-					return false;
-				}
-			}
-		}).spliterator();
 	}
 
 	@Override
