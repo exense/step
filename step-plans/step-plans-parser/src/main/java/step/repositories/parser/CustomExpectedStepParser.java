@@ -95,7 +95,7 @@ public class CustomExpectedStepParser implements StepParser<ExpectedStep> {
 			Assert assert_ = new Assert();
 			String operator = ctx.op.getText();
 			
-			String key = ctx.attributeName().getText();
+			String key = CustomDescriptionStepParser.stripQuotesIfNeeded(ctx.outputAttributeName().getText());
 			
 			if(ctx.NOT()!=null) {
 				//assert_.setNegate(true);

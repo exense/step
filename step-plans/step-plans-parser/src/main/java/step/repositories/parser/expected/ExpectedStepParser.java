@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Copyright (C) 2020, exense GmbH
- *  
- * This file is part of STEP
- *  
- * STEP is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *  
- * STEP is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *  
- * You should have received a copy of the GNU Affero General Public License
- * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************/
 // Generated from ExpectedStep.g4 by ANTLR 4.5.3
 
     package step.repositories.parser.expected;
@@ -42,10 +24,12 @@ public class ExpectedStepParser extends Parser {
 	public static final int
 		RULE_parse = 0, RULE_expr = 1, RULE_checkExpression = 2, RULE_setExpression = 3, 
 		RULE_assignment = 4, RULE_exportExpression = 5, RULE_controlParameter = 6, 
-		RULE_attributeName = 7, RULE_setValue = 8, RULE_attributeValue = 9;
+		RULE_outputAttributeName = 7, RULE_attributeName = 8, RULE_setValue = 9, 
+		RULE_attributeValue = 10;
 	public static final String[] ruleNames = {
 		"parse", "expr", "checkExpression", "setExpression", "assignment", "exportExpression", 
-		"controlParameter", "attributeName", "setValue", "attributeValue"
+		"controlParameter", "outputAttributeName", "attributeName", "setValue", 
+		"attributeValue"
 	};
 
 	private static final String[] _LITERAL_NAMES = {
@@ -135,9 +119,9 @@ public class ExpectedStepParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(20);
+			setState(22);
 			expr();
-			setState(21);
+			setState(23);
 			match(EOF);
 			}
 		}
@@ -197,28 +181,29 @@ public class ExpectedStepParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(28);
+			setState(30);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << T__1) | (1L << WORD))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << T__1) | (1L << WORD) | (1L << STRING))) != 0)) {
 				{
-				setState(26);
+				setState(28);
 				switch (_input.LA(1)) {
 				case WORD:
+				case STRING:
 					{
-					setState(23);
+					setState(25);
 					checkExpression();
 					}
 					break;
 				case T__0:
 					{
-					setState(24);
+					setState(26);
 					setExpression();
 					}
 					break;
 				case T__1:
 					{
-					setState(25);
+					setState(27);
 					exportExpression();
 					}
 					break;
@@ -226,7 +211,7 @@ public class ExpectedStepParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				}
-				setState(30);
+				setState(32);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -256,8 +241,8 @@ public class ExpectedStepParser extends Parser {
 	}
 	public static class CheckExprContext extends CheckExpressionContext {
 		public Token op;
-		public AttributeNameContext attributeName() {
-			return getRuleContext(AttributeNameContext.class,0);
+		public OutputAttributeNameContext outputAttributeName() {
+			return getRuleContext(OutputAttributeNameContext.class,0);
 		}
 		public AttributeValueContext attributeValue() {
 			return getRuleContext(AttributeValueContext.class,0);
@@ -292,18 +277,18 @@ public class ExpectedStepParser extends Parser {
 			_localctx = new CheckExprContext(_localctx);
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(31);
-			attributeName();
 			setState(33);
+			outputAttributeName();
+			setState(35);
 			_la = _input.LA(1);
 			if (_la==NOT) {
 				{
-				setState(32);
+				setState(34);
 				match(NOT);
 				}
 			}
 
-			setState(35);
+			setState(37);
 			((CheckExprContext)_localctx).op = _input.LT(1);
 			_la = _input.LA(1);
 			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << EQ) | (1L << REGEX) | (1L << CONTAINS) | (1L << BEGINS) | (1L << ENDS))) != 0)) ) {
@@ -311,7 +296,7 @@ public class ExpectedStepParser extends Parser {
 			} else {
 				consume();
 			}
-			setState(36);
+			setState(38);
 			attributeValue();
 			}
 		}
@@ -359,9 +344,9 @@ public class ExpectedStepParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(38);
+			setState(40);
 			match(T__0);
-			setState(40); 
+			setState(42); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -369,7 +354,7 @@ public class ExpectedStepParser extends Parser {
 				case 1:
 					{
 					{
-					setState(39);
+					setState(41);
 					assignment();
 					}
 					}
@@ -377,7 +362,7 @@ public class ExpectedStepParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(42); 
+				setState(44); 
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,3,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
@@ -427,11 +412,11 @@ public class ExpectedStepParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(44);
-			attributeName();
-			setState(45);
-			match(EQ);
 			setState(46);
+			attributeName();
+			setState(47);
+			match(EQ);
+			setState(48);
 			setValue();
 			}
 		}
@@ -479,9 +464,9 @@ public class ExpectedStepParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(48);
+			setState(50);
 			match(T__1);
-			setState(50); 
+			setState(52); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -489,7 +474,7 @@ public class ExpectedStepParser extends Parser {
 				case 1:
 					{
 					{
-					setState(49);
+					setState(51);
 					controlParameter();
 					}
 					}
@@ -497,7 +482,7 @@ public class ExpectedStepParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(52); 
+				setState(54); 
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,4,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
@@ -547,12 +532,61 @@ public class ExpectedStepParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(54);
-			attributeName();
-			setState(55);
-			match(EQ);
 			setState(56);
+			attributeName();
+			setState(57);
+			match(EQ);
+			setState(58);
 			setValue();
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class OutputAttributeNameContext extends ParserRuleContext {
+		public TerminalNode WORD() { return getToken(ExpectedStepParser.WORD, 0); }
+		public TerminalNode STRING() { return getToken(ExpectedStepParser.STRING, 0); }
+		public OutputAttributeNameContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_outputAttributeName; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof ExpectedStepListener ) ((ExpectedStepListener)listener).enterOutputAttributeName(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof ExpectedStepListener ) ((ExpectedStepListener)listener).exitOutputAttributeName(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ExpectedStepVisitor ) return ((ExpectedStepVisitor<? extends T>)visitor).visitOutputAttributeName(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+
+	public final OutputAttributeNameContext outputAttributeName() throws RecognitionException {
+		OutputAttributeNameContext _localctx = new OutputAttributeNameContext(_ctx, getState());
+		enterRule(_localctx, 14, RULE_outputAttributeName);
+		int _la;
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(60);
+			_la = _input.LA(1);
+			if ( !(_la==WORD || _la==STRING) ) {
+			_errHandler.recoverInline(this);
+			} else {
+				consume();
+			}
 			}
 		}
 		catch (RecognitionException re) {
@@ -589,11 +623,11 @@ public class ExpectedStepParser extends Parser {
 
 	public final AttributeNameContext attributeName() throws RecognitionException {
 		AttributeNameContext _localctx = new AttributeNameContext(_ctx, getState());
-		enterRule(_localctx, 14, RULE_attributeName);
+		enterRule(_localctx, 16, RULE_attributeName);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(58);
+			setState(62);
 			match(WORD);
 			}
 		}
@@ -634,21 +668,21 @@ public class ExpectedStepParser extends Parser {
 
 	public final SetValueContext setValue() throws RecognitionException {
 		SetValueContext _localctx = new SetValueContext(_ctx, getState());
-		enterRule(_localctx, 16, RULE_setValue);
+		enterRule(_localctx, 18, RULE_setValue);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(62);
+			setState(66);
 			switch (_input.LA(1)) {
 			case WORD:
 				{
-				setState(60);
+				setState(64);
 				attributeName();
 				}
 				break;
 			case STRING:
 				{
-				setState(61);
+				setState(65);
 				match(STRING);
 				}
 				break;
@@ -691,11 +725,11 @@ public class ExpectedStepParser extends Parser {
 
 	public final AttributeValueContext attributeValue() throws RecognitionException {
 		AttributeValueContext _localctx = new AttributeValueContext(_ctx, getState());
-		enterRule(_localctx, 18, RULE_attributeValue);
+		enterRule(_localctx, 20, RULE_attributeValue);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(64);
+			setState(68);
 			match(STRING);
 			}
 		}
@@ -711,23 +745,24 @@ public class ExpectedStepParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\rE\4\2\t\2\4\3\t"+
-		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\3"+
-		"\2\3\2\3\2\3\3\3\3\3\3\7\3\35\n\3\f\3\16\3 \13\3\3\4\3\4\5\4$\n\4\3\4"+
-		"\3\4\3\4\3\5\3\5\6\5+\n\5\r\5\16\5,\3\6\3\6\3\6\3\6\3\7\3\7\6\7\65\n\7"+
-		"\r\7\16\7\66\3\b\3\b\3\b\3\b\3\t\3\t\3\n\3\n\5\nA\n\n\3\13\3\13\3\13\2"+
-		"\2\f\2\4\6\b\n\f\16\20\22\24\2\3\3\2\6\nA\2\26\3\2\2\2\4\36\3\2\2\2\6"+
-		"!\3\2\2\2\b(\3\2\2\2\n.\3\2\2\2\f\62\3\2\2\2\168\3\2\2\2\20<\3\2\2\2\22"+
-		"@\3\2\2\2\24B\3\2\2\2\26\27\5\4\3\2\27\30\7\2\2\3\30\3\3\2\2\2\31\35\5"+
-		"\6\4\2\32\35\5\b\5\2\33\35\5\f\7\2\34\31\3\2\2\2\34\32\3\2\2\2\34\33\3"+
-		"\2\2\2\35 \3\2\2\2\36\34\3\2\2\2\36\37\3\2\2\2\37\5\3\2\2\2 \36\3\2\2"+
-		"\2!#\5\20\t\2\"$\7\5\2\2#\"\3\2\2\2#$\3\2\2\2$%\3\2\2\2%&\t\2\2\2&\'\5"+
-		"\24\13\2\'\7\3\2\2\2(*\7\3\2\2)+\5\n\6\2*)\3\2\2\2+,\3\2\2\2,*\3\2\2\2"+
-		",-\3\2\2\2-\t\3\2\2\2./\5\20\t\2/\60\7\6\2\2\60\61\5\22\n\2\61\13\3\2"+
-		"\2\2\62\64\7\4\2\2\63\65\5\16\b\2\64\63\3\2\2\2\65\66\3\2\2\2\66\64\3"+
-		"\2\2\2\66\67\3\2\2\2\67\r\3\2\2\289\5\20\t\29:\7\6\2\2:;\5\22\n\2;\17"+
-		"\3\2\2\2<=\7\13\2\2=\21\3\2\2\2>A\5\20\t\2?A\7\f\2\2@>\3\2\2\2@?\3\2\2"+
-		"\2A\23\3\2\2\2BC\7\f\2\2C\25\3\2\2\2\b\34\36#,\66@";
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\rI\4\2\t\2\4\3\t"+
+		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4"+
+		"\f\t\f\3\2\3\2\3\2\3\3\3\3\3\3\7\3\37\n\3\f\3\16\3\"\13\3\3\4\3\4\5\4"+
+		"&\n\4\3\4\3\4\3\4\3\5\3\5\6\5-\n\5\r\5\16\5.\3\6\3\6\3\6\3\6\3\7\3\7\6"+
+		"\7\67\n\7\r\7\16\78\3\b\3\b\3\b\3\b\3\t\3\t\3\n\3\n\3\13\3\13\5\13E\n"+
+		"\13\3\f\3\f\3\f\2\2\r\2\4\6\b\n\f\16\20\22\24\26\2\4\3\2\6\n\3\2\13\f"+
+		"D\2\30\3\2\2\2\4 \3\2\2\2\6#\3\2\2\2\b*\3\2\2\2\n\60\3\2\2\2\f\64\3\2"+
+		"\2\2\16:\3\2\2\2\20>\3\2\2\2\22@\3\2\2\2\24D\3\2\2\2\26F\3\2\2\2\30\31"+
+		"\5\4\3\2\31\32\7\2\2\3\32\3\3\2\2\2\33\37\5\6\4\2\34\37\5\b\5\2\35\37"+
+		"\5\f\7\2\36\33\3\2\2\2\36\34\3\2\2\2\36\35\3\2\2\2\37\"\3\2\2\2 \36\3"+
+		"\2\2\2 !\3\2\2\2!\5\3\2\2\2\" \3\2\2\2#%\5\20\t\2$&\7\5\2\2%$\3\2\2\2"+
+		"%&\3\2\2\2&\'\3\2\2\2\'(\t\2\2\2()\5\26\f\2)\7\3\2\2\2*,\7\3\2\2+-\5\n"+
+		"\6\2,+\3\2\2\2-.\3\2\2\2.,\3\2\2\2./\3\2\2\2/\t\3\2\2\2\60\61\5\22\n\2"+
+		"\61\62\7\6\2\2\62\63\5\24\13\2\63\13\3\2\2\2\64\66\7\4\2\2\65\67\5\16"+
+		"\b\2\66\65\3\2\2\2\678\3\2\2\28\66\3\2\2\289\3\2\2\29\r\3\2\2\2:;\5\22"+
+		"\n\2;<\7\6\2\2<=\5\24\13\2=\17\3\2\2\2>?\t\3\2\2?\21\3\2\2\2@A\7\13\2"+
+		"\2A\23\3\2\2\2BE\5\22\n\2CE\7\f\2\2DB\3\2\2\2DC\3\2\2\2E\25\3\2\2\2FG"+
+		"\7\f\2\2G\27\3\2\2\2\b\36 %.8D";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

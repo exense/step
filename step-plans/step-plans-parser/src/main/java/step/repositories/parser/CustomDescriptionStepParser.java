@@ -205,13 +205,6 @@ public class CustomDescriptionStepParser implements StepParser<DescriptionStep> 
 			return result;
 		}
 
-		protected String stripQuotesIfNeeded(String str) {
-			if(str.startsWith("\"") && str.endsWith("\"")) {
-				str = str.substring(1, str.length()-1);
-			}
-			return str;
-		}
-
 		@Override
 		public Object visitKeywordParameter(KeywordParameterContext ctx) {
 			String key = stripQuotesIfNeeded(ctx.attributeName().getText());
@@ -226,6 +219,13 @@ public class CustomDescriptionStepParser implements StepParser<DescriptionStep> 
 
 			return super.visitKeywordParameter(ctx);
 		}
+	}
+	
+	protected static String stripQuotesIfNeeded(String str) {
+		if(str.startsWith("\"") && str.endsWith("\"")) {
+			str = str.substring(1, str.length()-1);
+		}
+		return str;
 	}
 
 }

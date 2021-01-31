@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Copyright (C) 2020, exense GmbH
- *  
- * This file is part of STEP
- *  
- * STEP is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *  
- * STEP is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *  
- * You should have received a copy of the GNU Affero General Public License
- * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************/
 // Generated from ExpectedStep.g4 by ANTLR 4.5.3
 
     package step.repositories.parser.expected;
@@ -115,6 +97,18 @@ public class ExpectedStepBaseListener implements ExpectedStepListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitControlParameter(ExpectedStepParser.ControlParameterContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterOutputAttributeName(ExpectedStepParser.OutputAttributeNameContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitOutputAttributeName(ExpectedStepParser.OutputAttributeNameContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
