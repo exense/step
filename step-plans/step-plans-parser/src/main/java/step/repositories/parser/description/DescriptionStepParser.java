@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Copyright (C) 2020, exense GmbH
- *  
- * This file is part of STEP
- *  
- * STEP is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *  
- * STEP is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *  
- * You should have received a copy of the GNU Affero General Public License
- * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************/
 // Generated from DescriptionStep.g4 by ANTLR 4.5.3
 
     package step.repositories.parser.description;
@@ -273,7 +255,7 @@ public class DescriptionStepParser extends Parser {
 			setState(37);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==WORD) {
+			while (_la==WORD || _la==STRING) {
 				{
 				{
 				setState(34);
@@ -345,7 +327,7 @@ public class DescriptionStepParser extends Parser {
 				setState(44); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( _la==WORD );
+			} while ( _la==WORD || _la==STRING );
 			}
 		}
 		catch (RecognitionException re) {
@@ -397,7 +379,7 @@ public class DescriptionStepParser extends Parser {
 			setState(50);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==WORD) {
+			while (_la==WORD || _la==STRING) {
 				{
 				{
 				setState(47);
@@ -617,6 +599,7 @@ public class DescriptionStepParser extends Parser {
 
 	public static class AttributeNameContext extends ParserRuleContext {
 		public TerminalNode WORD() { return getToken(DescriptionStepParser.WORD, 0); }
+		public TerminalNode STRING() { return getToken(DescriptionStepParser.STRING, 0); }
 		public AttributeNameContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -639,11 +622,17 @@ public class DescriptionStepParser extends Parser {
 	public final AttributeNameContext attributeName() throws RecognitionException {
 		AttributeNameContext _localctx = new AttributeNameContext(_ctx, getState());
 		enterRule(_localctx, 18, RULE_attributeName);
+		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(65);
-			match(WORD);
+			_la = _input.LA(1);
+			if ( !(_la==WORD || _la==STRING) ) {
+			_errHandler.recoverInline(this);
+			} else {
+				consume();
+			}
 			}
 		}
 		catch (RecognitionException re) {
@@ -700,9 +689,7 @@ public class DescriptionStepParser extends Parser {
 	}
 
 	public static class SetValueContext extends ParserRuleContext {
-		public AttributeNameContext attributeName() {
-			return getRuleContext(AttributeNameContext.class,0);
-		}
+		public TerminalNode WORD() { return getToken(DescriptionStepParser.WORD, 0); }
 		public TerminalNode STRING() { return getToken(DescriptionStepParser.STRING, 0); }
 		public SetValueContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -726,25 +713,16 @@ public class DescriptionStepParser extends Parser {
 	public final SetValueContext setValue() throws RecognitionException {
 		SetValueContext _localctx = new SetValueContext(_ctx, getState());
 		enterRule(_localctx, 22, RULE_setValue);
+		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(71);
-			switch (_input.LA(1)) {
-			case WORD:
-				{
-				setState(69);
-				attributeName();
-				}
-				break;
-			case STRING:
-				{
-				setState(70);
-				match(STRING);
-				}
-				break;
-			default:
-				throw new NoViableAltException(this);
+			setState(69);
+			_la = _input.LA(1);
+			if ( !(_la==WORD || _la==STRING) ) {
+			_errHandler.recoverInline(this);
+			} else {
+				consume();
 			}
 			}
 		}
@@ -760,24 +738,24 @@ public class DescriptionStepParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\tL\4\2\t\2\4\3\t"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\tJ\4\2\t\2\4\3\t"+
 		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4"+
 		"\f\t\f\4\r\t\r\3\2\3\2\3\2\3\3\3\3\3\3\3\3\5\3\"\n\3\3\4\3\4\7\4&\n\4"+
 		"\f\4\16\4)\13\4\3\5\3\5\6\5-\n\5\r\5\16\5.\3\6\3\6\7\6\63\n\6\f\6\16\6"+
 		"\66\13\6\3\7\3\7\3\b\3\b\3\b\3\b\3\t\3\t\3\t\3\t\3\n\3\n\3\13\3\13\3\f"+
-		"\3\f\3\r\3\r\5\rJ\n\r\3\r\2\2\16\2\4\6\b\n\f\16\20\22\24\26\30\2\3\3\2"+
-		"\7\bF\2\32\3\2\2\2\4!\3\2\2\2\6#\3\2\2\2\b*\3\2\2\2\n\60\3\2\2\2\f\67"+
-		"\3\2\2\2\169\3\2\2\2\20=\3\2\2\2\22A\3\2\2\2\24C\3\2\2\2\26E\3\2\2\2\30"+
-		"I\3\2\2\2\32\33\5\4\3\2\33\34\7\2\2\3\34\3\3\2\2\2\35\"\5\6\4\2\36\"\5"+
-		"\b\5\2\37\"\5\n\6\2 \"\5\f\7\2!\35\3\2\2\2!\36\3\2\2\2!\37\3\2\2\2! \3"+
-		"\2\2\2\"\5\3\2\2\2#\'\5\22\n\2$&\5\20\t\2%$\3\2\2\2&)\3\2\2\2\'%\3\2\2"+
-		"\2\'(\3\2\2\2(\7\3\2\2\2)\'\3\2\2\2*,\7\3\2\2+-\5\16\b\2,+\3\2\2\2-.\3"+
-		"\2\2\2.,\3\2\2\2./\3\2\2\2/\t\3\2\2\2\60\64\7\4\2\2\61\63\5\20\t\2\62"+
-		"\61\3\2\2\2\63\66\3\2\2\2\64\62\3\2\2\2\64\65\3\2\2\2\65\13\3\2\2\2\66"+
-		"\64\3\2\2\2\678\7\5\2\28\r\3\2\2\29:\5\24\13\2:;\7\6\2\2;<\5\30\r\2<\17"+
-		"\3\2\2\2=>\5\24\13\2>?\7\6\2\2?@\5\26\f\2@\21\3\2\2\2AB\t\2\2\2B\23\3"+
-		"\2\2\2CD\7\7\2\2D\25\3\2\2\2EF\7\b\2\2F\27\3\2\2\2GJ\5\24\13\2HJ\7\b\2"+
-		"\2IG\3\2\2\2IH\3\2\2\2J\31\3\2\2\2\7!\'.\64I";
+		"\3\f\3\r\3\r\3\r\2\2\16\2\4\6\b\n\f\16\20\22\24\26\30\2\3\3\2\7\bC\2\32"+
+		"\3\2\2\2\4!\3\2\2\2\6#\3\2\2\2\b*\3\2\2\2\n\60\3\2\2\2\f\67\3\2\2\2\16"+
+		"9\3\2\2\2\20=\3\2\2\2\22A\3\2\2\2\24C\3\2\2\2\26E\3\2\2\2\30G\3\2\2\2"+
+		"\32\33\5\4\3\2\33\34\7\2\2\3\34\3\3\2\2\2\35\"\5\6\4\2\36\"\5\b\5\2\37"+
+		"\"\5\n\6\2 \"\5\f\7\2!\35\3\2\2\2!\36\3\2\2\2!\37\3\2\2\2! \3\2\2\2\""+
+		"\5\3\2\2\2#\'\5\22\n\2$&\5\20\t\2%$\3\2\2\2&)\3\2\2\2\'%\3\2\2\2\'(\3"+
+		"\2\2\2(\7\3\2\2\2)\'\3\2\2\2*,\7\3\2\2+-\5\16\b\2,+\3\2\2\2-.\3\2\2\2"+
+		".,\3\2\2\2./\3\2\2\2/\t\3\2\2\2\60\64\7\4\2\2\61\63\5\20\t\2\62\61\3\2"+
+		"\2\2\63\66\3\2\2\2\64\62\3\2\2\2\64\65\3\2\2\2\65\13\3\2\2\2\66\64\3\2"+
+		"\2\2\678\7\5\2\28\r\3\2\2\29:\5\24\13\2:;\7\6\2\2;<\5\30\r\2<\17\3\2\2"+
+		"\2=>\5\24\13\2>?\7\6\2\2?@\5\26\f\2@\21\3\2\2\2AB\t\2\2\2B\23\3\2\2\2"+
+		"CD\t\2\2\2D\25\3\2\2\2EF\7\b\2\2F\27\3\2\2\2GH\t\2\2\2H\31\3\2\2\2\6!"+
+		"\'.\64";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

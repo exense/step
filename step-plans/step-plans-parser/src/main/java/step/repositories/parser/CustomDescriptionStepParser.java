@@ -214,7 +214,7 @@ public class CustomDescriptionStepParser implements StepParser<DescriptionStep> 
 
 		@Override
 		public Object visitKeywordParameter(KeywordParameterContext ctx) {
-			String key = ctx.attributeName().getText();
+			String key = stripQuotesIfNeeded(ctx.attributeName().getText());
 			String value = ctx.attributeValue().getText();
 
 			// builder.add(key, value.substring(1,value.length()-1));
