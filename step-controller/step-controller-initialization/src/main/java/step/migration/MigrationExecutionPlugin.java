@@ -38,10 +38,8 @@ public class MigrationExecutionPlugin extends AbstractControllerPlugin {
 	private static final Logger logger = LoggerFactory.getLogger(MigrationExecutionPlugin.class);
 	
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void migrateData(GlobalContext context) throws Exception {
 		checkVersion(context);	
-				
-		super.executionControllerStart(context);
 	}
 
 	private void checkVersion(GlobalContext context) {
