@@ -117,6 +117,8 @@ public class Controller {
 		ControllerPlugin pluginProxy = pluginManager.getProxy();
 		logger.info("Starting controller...");
 		pluginProxy.executionControllerStart(context);
+		logger.info("Executing migration tasks...");
+		pluginProxy.migrateData(context);
 		logger.info("Initializing data...");
 		pluginProxy.initializeData(context);
 		logger.info("Calling post data initialization scripts...");
@@ -161,7 +163,7 @@ public class Controller {
 		context.setReportNodeAccessor(new ReportNodeAccessorImpl(mongoClientSession));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(mongoClientSession));
 		context.setUserAccessor(new UserAccessorImpl(mongoClientSession));
-		collectionRegistry.register("users", new Collection(mongoClientSession.getMongoDatabase(), "users", User.class, false));
+		collectionRegistry.register("users", new Collection<User>(mongoClientSession.getMongoDatabase(), "users", User.class, false));
 		context.setRepositoryObjectManager(new RepositoryObjectManager());
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
 				configuration.getPropertyAsInteger("tec.expressions.warningthreshold"),

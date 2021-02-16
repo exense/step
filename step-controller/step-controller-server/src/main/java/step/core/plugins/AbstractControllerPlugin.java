@@ -39,6 +39,9 @@ public abstract class AbstractControllerPlugin extends AbstractPlugin implements
 	public void executionControllerStart(GlobalContext context)  throws Exception {}
 
 	@Override
+	public void migrateData(GlobalContext context) throws Exception {}
+	
+	@Override
 	public void initializeData(GlobalContext context) throws Exception {}
 	
 	@Override
@@ -58,7 +61,7 @@ public abstract class AbstractControllerPlugin extends AbstractPlugin implements
 		context.getServiceRegistrationCallback().registerHandler(ctx);
 	}
 
-	protected void registerWebappFromClass(Class baseClass, GlobalContext context, String path) {
+	protected void registerWebappFromClass(Class<?> baseClass, GlobalContext context, String path) {
 		ResourceHandler bb = new ResourceHandler();
 
 		bb.setResourceBase(baseClass.getResource("webapp").toExternalForm());

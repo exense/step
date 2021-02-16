@@ -29,6 +29,8 @@ public interface ControllerPlugin {
 
 	public void executionControllerStart(GlobalContext context) throws Exception;
 
+	public void migrateData(GlobalContext context) throws Exception;
+	
 	public void initializeData(GlobalContext context) throws Exception;
 
 	public void afterInitializeData(GlobalContext context) throws Exception;
