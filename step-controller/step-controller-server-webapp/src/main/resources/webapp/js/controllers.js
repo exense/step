@@ -38,10 +38,14 @@ tecAdminControllers.factory('executionServices', function($http,$q,$filter,Scree
 			ScreenTemplates.getScreenInputsByScreenId('executionParameters').then(function(inputs){
 				var result = {};
 				_.each(inputs, function(input) {
-					if(input.options && input.options.length>0) {
-						result[input.id] = input.options[0].value;
+					if(input.defaultValue) {
+						result[input.id] = input.defaultValue;
 					} else {
-						result[input.id] = '';
+						if(input.options && input.options.length>0) {
+							result[input.id] = input.options[0].value;
+						} else {
+							result[input.id] = '';
+						}
 					}
 				})
 				resolve(result);

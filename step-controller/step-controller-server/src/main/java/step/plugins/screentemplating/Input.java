@@ -40,6 +40,8 @@ public class Input extends AbstractActivableObject {
 	String searchMapperService;
 	
 	List<Option> options;
+	
+	String defaultValue;
 
 	public Input() {
 		super();
@@ -128,6 +130,14 @@ public class Input extends AbstractActivableObject {
 
 	public void setOptions(List<Option> options) {
 		this.options = options;
+	}
+
+	public String getDefaultValue() {
+		return defaultValue;
+	}
+
+	public void setDefaultValue(String defaultValue) {
+		this.defaultValue = defaultValue;
 	}
 
 	@Override
