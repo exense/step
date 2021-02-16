@@ -2,14 +2,11 @@
 	<form>	
 	<div class="panel panel-default">
 		<div class="panel-body">
-			<div class="flex-ns items-center justify-start mr-auto mb2">
-				<label class="mr2">Enable scheduler </label>
-				<span class="glyphicon glyphicon-question-sign" uib-tooltip="Used to enable or disable the scheduler globally accross all projects. Manual task execution remains possible." tooltip-append-to-body="true"></span>				
-			
-				<div class="btn-switch ml2" ng-class="{'btn-switch--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle" ng-click="save()">
-					<div class="btn-switch-circle" ng-class="{'btn-switch-circle--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle">
-					</div>
-				</div>
+			<div class="form-group">
+				<label>Enable scheduler</label> <span class="glyphicon glyphicon-question-sign" uib-tooltip="Used to enable or disable the scheduler globally accross all projects. Manual task execution remains possible." tooltip-append-to-body="true"></span>
+				<span class="btn-switch form-control" ng-class="{'btn-switch--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle" ng-click="toggleSchedulerEnabled()">
+					<span class="btn-switch-circle" ng-class="{'btn-switch-circle--on':model.schedulerEnabledToggle}" ng-model="model.schedulerEnabledToggle"></span>
+				</span>
 		 	</div>		
 			<div class="form-group">	
 				<label>Execution user</label> <span class="glyphicon glyphicon-question-sign" uib-tooltip="The username of the user under which the scheduled tasks should be executed. Leave empty to run the scheduled tasks under the username of the user who scheduled the task" tooltip-append-to-body="true"></span>

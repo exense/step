@@ -263,10 +263,12 @@ angular.module('schedulerControllers',[])
     $scope.executionUser = response.data?response.data:"";
   })
   
-  
-  $scope.save = function () {
+  $scope.toggleSchedulerEnabled = function () {
 	$scope.model.schedulerEnabledToggle = !$scope.model.schedulerEnabledToggle;
 	$http.put("rest/controller/task/schedule?enabled=" + $scope.model.schedulerEnabledToggle.toString())
+  }
+  
+  $scope.save = function () {
     $http.post("rest/settings/scheduler_execution_username", $scope.executionUser)
   };
 })
