@@ -268,10 +268,11 @@ angular.module('screenConfigurationControllers',['tables','step'])
       }
       
       $scope.model = function() {
+		var model;
         if($scope.stBean) {
-          return ScreenTemplates.getScreenInputModel($scope.stBean, $scope.input);
+          model = ScreenTemplates.getScreenInputModel($scope.stBean, $scope.input);
         } else {
-          return function(value) {
+          model = function(value) {
             if(angular.isDefined(value)) {
               $scope.ngModel=value;
             } else {
@@ -279,6 +280,12 @@ angular.module('screenConfigurationControllers',['tables','step'])
             }
           }
         }
+        // if the model isn't set and a default value has been specified, 
+        // then set the default value
+        if(model() == undefined && $scope.input.defaultValue) {
+          model($scope.input.defaultValue)
+        }
+        return model;
       }
       
       $scope.saveAttributes = function() {
