@@ -138,7 +138,7 @@ angular.module('functionsControllers',['step'])
   $scope.config = FunctionDialogsConfig.getConfigObject('Keyword','functions',[],false,'functionTable')
   $scope.initCtrl = function(type){
     if (type == 'masks') {
-      $scope.config = FunctionDialogsConfig.getConfigObject('Mask','masks',['step.plugins.pdftest.PdfTestFunction','step.plugins.compare.image.ImageCompareFunction'],true,'compareMasksTable');
+      $scope.config = FunctionDialogsConfig.getConfigObject('Mask','masks',['step.plugins.pdftest.PdfTestFunction','step.plugins.compare.image.ImageCompareFunction'],true,'functionTable');
     }
   }
   
@@ -381,23 +381,6 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_, di
       $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
       $scope.openFunctionEditor = function() {
         FunctionDialogs.openFunctionEditor($scope.function_.id, FunctionDialogsConfig.getConfigObject('Keyword','functions',[],false,'functionTable'))
-      }
-    }
-  };
-})
-
-.directive('maskLink', function() {
-  return {
-    restrict: 'E',
-    scope: {
-      function_: '=',
-      stOptions: '=?'
-    },
-    templateUrl: 'partials/functions/functionLink.html',
-    controller: function($scope, FunctionDialogs, FunctionDialogsConfig) {
-      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
-      $scope.openFunctionEditor = function() {
-        FunctionDialogs.openFunctionEditor($scope.function_.id, FunctionDialogsConfig.getConfigObject('Mask','masks',['step.plugins.pdftest.PdfTestFunction','step.plugins.compare.image.ImageCompareFunction'],true,'compareMasksTable'));
       }
     }
   };
