@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.rtm;
+package step.plugins.measurements.rtm;
 
 import java.io.File;
 import java.util.Arrays;
@@ -37,13 +37,12 @@ import step.core.accessors.AbstractAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.plugins.measurements.AbstractMeasurementPlugin;
 
 @Plugin
 public class RtmControllerPlugin extends AbstractControllerPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(RtmControllerPlugin.class);
-
-	public static final String ATTRIBUTE_EXECUTION_ID = "eId";
 
 	private MeasurementAccessor accessor;
 
@@ -71,10 +70,10 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 		}
 
 		MongoCollection<Document> measurements = context.getMongoClientSession().getMongoDatabase().getCollection("measurements");
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements,ATTRIBUTE_EXECUTION_ID, "begin");
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements,"planId", "begin");
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements,"taskId", "begin");
-		AbstractAccessor.createOrUpdateIndex(measurements,"begin");
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements, AbstractMeasurementPlugin.ATTRIBUTE_EXECUTION_ID, AbstractMeasurementPlugin.BEGIN);
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements, AbstractMeasurementPlugin.PLAN_ID, AbstractMeasurementPlugin.BEGIN);
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements, AbstractMeasurementPlugin.TASK_ID, AbstractMeasurementPlugin.BEGIN);
+		AbstractAccessor.createOrUpdateIndex(measurements, AbstractMeasurementPlugin.BEGIN);
 
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");

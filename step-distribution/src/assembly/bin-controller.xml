@@ -33,7 +33,8 @@
 			<includes>
 				<include>ch.exense.step:step-controller-server-webapp</include>
 				<include>ch.exense.step:step-controller-plugins-rtm</include>
-				<include>ch.exense.step:step-controller-plugins-postgres</include>
+				<include>ch.exense.step:step-controller-plugins-measurements-jdbc</include>
+				<include>ch.exense.step:step-controller-plugins-measurements-log</include>
 				<include>ch.exense.step:step-controller-plugins-prometheus</include>
 				<include>ch.exense.step:step-controller-plugins-script-editor</include>
 				<include>ch.exense.step:step-functions-plugins-selenium</include>

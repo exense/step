@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.postgres;
+package step.plugins.measurements.prometheus;
 
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
@@ -25,10 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
-@Path("postgres")
-public class PostgresPluginServices {
+@Path("prometheus")
+public class PrometheusPluginServices {
 
-	private static final Logger logger = LoggerFactory.getLogger(PostgresPluginServices.class);
+	private static final Logger logger = LoggerFactory.getLogger(PrometheusPluginServices.class);
 
 	
 

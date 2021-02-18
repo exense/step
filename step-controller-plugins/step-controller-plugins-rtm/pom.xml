@@ -31,7 +31,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-controller-server</artifactId>
+			<artifactId>step-controller-measurement</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

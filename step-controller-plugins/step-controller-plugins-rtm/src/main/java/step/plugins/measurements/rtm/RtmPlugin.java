@@ -16,20 +16,38 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.prometheus;
+package step.plugins.measurements.rtm;
 
-import javax.inject.Singleton;
-import javax.ws.rs.Path;
+import java.util.*;
 
+import org.rtm.commons.MeasurementAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Singleton
-@Path("prometheus")
-public class PrometheusPluginServices {
+import step.core.execution.ExecutionContext;
+import step.core.plugins.IgnoreDuringAutoDiscovery;
+import step.core.plugins.Plugin;
+import step.plugins.measurements.AbstractMeasurementPlugin;
+import step.plugins.measurements.Measurement;
 
-	private static final Logger logger = LoggerFactory.getLogger(PrometheusPluginServices.class);
+@Plugin
+@IgnoreDuringAutoDiscovery
+public class RtmPlugin extends AbstractMeasurementPlugin {
 
-	
+	private static final Logger logger = LoggerFactory.getLogger(RtmPlugin.class);
 
+	private final MeasurementAccessor accessor;
+
+	public RtmPlugin(MeasurementAccessor accessor) {
+		super();
+		this.accessor = accessor;
+	}
+
+	@Override
+	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
+		List<?> rtmMeasurements = measurements;
+		if (measurements.size()>0) {
+			accessor.saveManyMeasurements((List<Object>) rtmMeasurements);
+		}
+	}
 }
