@@ -683,6 +683,12 @@ tbody .form-group {
 	margin-bottom: 0px;
 }
 
+.loader-nTable {
+  top: 0px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 .loader {
   position: absolute;
   top: 122px;

@@ -1,5 +1,5 @@
 <div id="SchedulerCtrl" ng-controller="SchedulerCtrl">
-	<st-table data="schedulerTasks" uid="'schedulerTaskList'" persist-state="true">
+	<st-table data="schedulerTasks" uid="'schedulerTaskList'" persist-state="true" use-spinner="true">
 		<st-actions>	
 			<div class="btn-group btn-group-menu">				
 				<button type="button" ng-disabled="!authService.hasRight('task-write')" class="btn btn-success" ng-click="addSchedulerEntry()">New task</button>

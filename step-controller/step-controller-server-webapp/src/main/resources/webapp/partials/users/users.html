@@ -1,5 +1,5 @@
 <div class="panel-body" id="UserListCtrl" ng-controller="UserListCtrl">
-  <st-table data="users" handle="tableHandle" uid="'userList'">
+  <st-table data="users" handle="tableHandle" uid="'userList'" use-spinner="true">
     <st-actions>
       <div class="btn-group btn-group-menu">
         <button type="button" ng-disabled="!authService.hasRight('user-write')"	class="btn btn-success" ng-click="addUser()">Add user</button>
