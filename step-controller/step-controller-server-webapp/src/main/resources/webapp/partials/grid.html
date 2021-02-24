@@ -6,7 +6,7 @@
 					<auto-refresh-commands autorefresh="autorefresh" />
 				</div>
 				<div class="panel-body">
-					<st-table data="agents" uid="'agentList'">
+					<st-table data="agents" uid="'agentList'" use-spinner="true">
 						<st-columns>
 							<st-column name="url">
 								<header>Url</header>
@@ -53,7 +53,7 @@
 					<auto-refresh-commands autorefresh="autorefresh" />
 				</div>
 				<div class="panel-body">
-					<st-table data="tokens" uid="'tokenList'">
+					<st-table data="tokens" uid="'tokenList'" use-spinner="true">
 						<st-actions>
 						</st-actions>
 						<st-columns>
@@ -143,7 +143,7 @@
 						</form>
 					</div>
 					<div style="margin-top:10px;">
-						<st-table data="tokenGroups" uid="'tokenGroups'" persist-state="true">
+						<st-table data="tokenGroups" uid="'tokenGroups'" persist-state="true" use-spinner="true">
 							<st-actions>
 							</st-actions>
 							<st-columns>

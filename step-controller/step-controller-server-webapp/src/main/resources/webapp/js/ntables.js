@@ -166,7 +166,8 @@ angular.module('tables', ['export'])
 			// called only when multipleSelection = false
 			onSelection: '=?',
 			onSelectionChange: '=?',
-			serverSideParameters: '=?'
+			serverSideParameters: '=?',
+			useSpinner: '=?'
 		},
 		transclude : {
 			'stActions' : '?stActions',
@@ -179,6 +180,9 @@ angular.module('tables', ['export'])
 		  var serverSide = scope.collection?true:false;
 
 		  var tableElement = angular.element(element).find('table');
+
+		  scope.showSpin=false;
+      scope.loadingTable=false;
 
 		  scope.selectionModel = new SelectionModel(function(){
 		    if(serverSide) {
@@ -269,6 +273,12 @@ angular.module('tables', ['export'])
 		  function loadTableData() {
 		    var value = scope.data;
 		    if(scope.table) {
+		      $timeout(function(){
+            if (scope.useSpinner) {
+              scope.showSpin =  true;
+            }
+            scope.loadingTable=true;
+            });
           scope.table.clear();
           if (value && value.length > 0) {
             scope.table.rows.add(value);
@@ -302,6 +312,10 @@ angular.module('tables', ['export'])
 	        // disable autoWidth: the auto sizing of column widths seems to work better when calculated by the browser
 	        tableOptions.autoWidth = false;
 	        tableOptions.fnDrawCallback = function() {
+	          $timeout(function(){
+	            scope.showSpin=false;
+              scope.loadingTable=false;
+            });
 	          controller.newCycle();
 	        };
 	        tableOptions.columns = columns;
@@ -384,18 +398,24 @@ angular.module('tables', ['export'])
 	        }
 	        scope.handle.reload = function(showSpin) {
 	          if (!scope.loadingTable) {
-	            scope.loadingTable=true;
-	            scope.showSpin=showSpin;
-	            scope.isExternalReload=true;
+	            $timeout(function(){
+                scope.loadingTable=true;
+                scope.showSpin=showSpin;
+	              scope.isExternalReload=true;
+              });
 	            table.ajax.reload(function() {
+	              $timeout(function(){
 	                scope.loadingTable=false;
 	                scope.showSpin=false;
   	              scope.isExternalReload=false
-	              }, false);
+	              })}, false);
 	          }
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
-	          scope.showSpin = true;
+	          $timeout(function(){
+	            scope.showSpin = true;
+	            scope.loadingTable = true;
+	            });
 	          var column = table.column(columnName+':name');
 	          column.search(searchExpression,true,false).draw();
 	        }
