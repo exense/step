@@ -22,17 +22,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
+import step.core.encryption.EncryptionManager;
+import step.core.encryption.EncryptionManagerException;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.variables.VariableType;
 import step.core.variables.VariablesManager;
 import step.engine.execution.ExecutionManager;
@@ -48,15 +52,18 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	
 	private static final String PARAMETER_SCOPE_VALUE_DEFAULT = "default";
 	private static final String PARAMETERS_BY_SCOPE = "$parametersByScope";
+	private static final String PROTECTED_PARAMETERS = "$parametersProtected";
 	public static final String entityName = "parameters";
 
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerPlugin.class);
 		
 	protected final ParameterManager parameterManager;
+	protected final EncryptionManager encryptionManager;
 	
-	public ParameterManagerPlugin(ParameterManager parameterManager) {
+	public ParameterManagerPlugin(ParameterManager parameterManager, EncryptionManager encryptionManager) {
 		super();
 		this.parameterManager = parameterManager;
+		this.encryptionManager = encryptionManager;
 	}
 
 	@Override
@@ -75,12 +82,22 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = getAllParametersByScope(allParameters);
 		context.put(PARAMETERS_BY_SCOPE, parametersByScope);
 		
+		List<Parameter> protectedParameters = allParameters.values().stream()
+				.filter(p -> p.getProtectedValue() != null && p.getProtectedValue()).collect(Collectors.toList());
+		context.put(PROTECTED_PARAMETERS, protectedParameters);
+		
 		// Declare the global parameters
 		addScopeParametersToContext(context, rootNode, parametersByScope, ParameterScope.GLOBAL, PARAMETER_SCOPE_VALUE_DEFAULT);
 	}
 	
 	@Override
 	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {
+		// Protected parameters
+		@SuppressWarnings("unchecked")
+		List<Parameter> protectedParameters = (List<Parameter>) context.get(PROTECTED_PARAMETERS);
+		addProtectedParametersToContext(context, node, protectedParameters);
+
+		// Function scoped parameters
 		@SuppressWarnings("unchecked")
 		Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = (Map<ParameterScope, Map<String, List<Parameter>>>) context.get(PARAMETERS_BY_SCOPE);
 		
@@ -101,9 +118,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		Map<String, String> executionParameters = new HashMap<>();
 		allParameters.forEach((k,v)->{
 			String value = v.getValue();
-			if(value != null) {
-				executionParameters.put(k, value);
-			}
+			executionParameters.put(k, value != null ? value:"");
 		});
 		executionManager.updateParameters(context, executionParameters);
 	}
@@ -111,11 +126,14 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	private Map<ParameterScope, Map<String, List<Parameter>>> getAllParametersByScope(Map<String, Parameter> allParameters) {
 		Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = new HashMap<>();
 		allParameters.forEach((k,v)->{
-			ParameterScope scope = v.getScope() != null ? v.getScope() : ParameterScope.GLOBAL;
-			String scopeValue = v.getScopeEntity() != null ? v.getScopeEntity() : PARAMETER_SCOPE_VALUE_DEFAULT;
-			parametersByScope.computeIfAbsent(scope, t->new HashMap<String, List<Parameter>>())
-							 .computeIfAbsent(scopeValue, t->new ArrayList<Parameter>())
-							 .add(v);
+			Boolean isProtectedValue = v.getProtectedValue();
+			if(isProtectedValue == null || !isProtectedValue) {
+				ParameterScope scope = v.getScope() != null ? v.getScope() : ParameterScope.GLOBAL;
+				String scopeValue = v.getScopeEntity() != null ? v.getScopeEntity() : PARAMETER_SCOPE_VALUE_DEFAULT;
+				parametersByScope.computeIfAbsent(scope, t->new HashMap<String, List<Parameter>>())
+				.computeIfAbsent(scopeValue, t->new ArrayList<Parameter>())
+				.add(v);
+			}
 		});
 		return parametersByScope;
 	}
@@ -132,6 +150,28 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 				});
 			}
 		}
+	}
+	
+	private void addProtectedParametersToContext(ExecutionContext context, ReportNode node, List<Parameter> protectedParameters) {
+		final VariablesManager varMan = context.getVariablesManager();
+		protectedParameters.forEach(p -> {
+			String encryptedValue = p.getEncryptedValue();
+			String value;
+			if(encryptedValue != null) {
+				if(encryptionManager != null) {
+					try {
+						value = encryptionManager.decrypt(encryptedValue);
+					} catch (EncryptionManagerException e) {
+						throw new PluginCriticalException("Error while decrypting value of parameter "+p.getKey(), e);
+					}
+				} else {
+					throw new PluginCriticalException("Unable to decrypt value of parameter "+p.getKey()+". No encryption manager available");
+				}
+			} else {
+				value = p.getValue();
+			}
+			varMan.putVariable(node, VariableType.IMMUTABLE, p.getKey(), value);
+		});
 	}
 
 	public static void putVariables(ExecutionContext context, ReportNode rootNode, Map<String, ? extends Object> parameters, VariableType type) {

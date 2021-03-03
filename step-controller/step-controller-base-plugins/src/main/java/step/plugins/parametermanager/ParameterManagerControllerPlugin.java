@@ -30,26 +30,29 @@ import step.core.accessors.AbstractCRUDAccessor;
 import step.core.accessors.CRUDAccessor;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.encryption.EncryptionManager;
 import step.core.entities.Entity;
 import step.core.imports.GenericDBImporter;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.parameter.ParameterManager;
+import step.plugins.encryption.EncryptionManagerDependencyPlugin;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.InputType;
 import step.plugins.screentemplating.ScreenInput;
 import step.plugins.screentemplating.ScreenInputAccessor;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
-@Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class})
+@Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class, EncryptionManagerDependencyPlugin.class})
 public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 	
 	private static final String entityName = "parameters";
 
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerControllerPlugin.class);
 		
-	protected ParameterManager parameterManager;
+	private ParameterManager parameterManager;
+	private EncryptionManager encryptionManager;
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) {
@@ -71,6 +74,9 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		context.require(ObjectHookRegistry.class).add(parameterManager.getObjectHook());
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
+
+		// The encryption manager might be null
+		encryptionManager = context.get(EncryptionManager.class);
 	}
 
 	@Override
@@ -80,7 +86,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new ParameterManagerPlugin(parameterManager);
+		return new ParameterManagerPlugin(parameterManager, encryptionManager);
 	}
 
 	private static final String PARAMETER_DIALOG = "parameterDialog";

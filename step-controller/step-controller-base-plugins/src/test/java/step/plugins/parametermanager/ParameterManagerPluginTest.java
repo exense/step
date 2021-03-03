@@ -18,25 +18,61 @@
  ******************************************************************************/
 package step.plugins.parametermanager;
 
+import static org.junit.Assert.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-import step.parameter.Parameter;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryCRUDAccessor;
+import step.core.encryption.EncryptionManager;
+import step.core.encryption.EncryptionManagerException;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
+import step.core.variables.VariablesManager;
 import step.functions.Function;
+import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
 
 public class ParameterManagerPluginTest {
 	
 	protected InMemoryCRUDAccessor<Parameter> parameterAccessor = new InMemoryCRUDAccessor<>();
+	private EncryptionManager encryptionManager;
+	private EncryptionManager errorEncryptionManager;
+	
+	@Before
+	public void before() {
+		encryptionManager = new EncryptionManager() {
+			
+			@Override
+			public String encrypt(String value) throws EncryptionManagerException {
+				return "###"+value;
+			}
+			
+			@Override
+			public String decrypt(String encryptedValue) throws EncryptionManagerException {
+				return encryptedValue.replaceFirst("###", "");
+			}
+		};
+		errorEncryptionManager = new EncryptionManager() {
+			
+			@Override
+			public String encrypt(String value) throws EncryptionManagerException {
+				return null;
+			}
+			
+			@Override
+			public String decrypt(String encryptedValue) throws EncryptionManagerException {
+				throw new EncryptionManagerException("Error");
+			}
+		};
+	}
 	
 	@Test
 	public void testEmptyParameterList() {
@@ -93,18 +129,148 @@ public class ParameterManagerPluginTest {
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter1"));
 		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
 	}
+	
+	@Test
+	public void testProtectedParameters() {
+		declareProtectedParameter("MyProtectedParameterWithoutScope", "Value", null, null);
+		declareProtectedParameter("MyProtectedParameterWithGlobalScope", "Value", ParameterScope.GLOBAL, null);
+		declareProtectedParameter("MyProtectedParameterWithApplicationScope", "Value", ParameterScope.APPLICATION, "MyApp");
+		declareProtectedParameter("MyProtectedParameterWithFunctionScope", "Value", ParameterScope.FUNCTION, "MyFunction1");
+		
+		ExecutionContext executionContext = newExecutionContext();
+		VariablesManager variablesManager = executionContext.getVariablesManager();
+
+		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, executionContext);
+		parameterManagerPlugin.executionStart(executionContext);
+		// None of the parameters should be available as they are all protected
+		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithoutScope"));
+		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithGlobalScope"));
+		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithApplicationScope"));
+		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithFunctionScope"));
+		
+		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction(null, "MyFunction1"));
+		// All parameters should now be available as they are all protected
+		Assert.assertNotNull(variablesManager.getVariable("MyProtectedParameterWithoutScope"));
+		Assert.assertNotNull(variablesManager.getVariable("MyProtectedParameterWithGlobalScope"));
+		Assert.assertNotNull(variablesManager.getVariable("MyProtectedParameterWithApplicationScope"));
+		Assert.assertNotNull(variablesManager.getVariable("MyProtectedParameterWithFunctionScope"));
+	}
+	
+	@Test
+	public void testProtectedAndEncryptedParameters() {
+		declareProtectedAndEncryptedParameter("MyProtectedParameterWithoutScope", "Value", null, null);
+		declareProtectedAndEncryptedParameter("MyProtectedParameterWithGlobalScope", "Value", ParameterScope.GLOBAL, null);
+		declareProtectedAndEncryptedParameter("MyProtectedParameterWithApplicationScope", "Value", ParameterScope.APPLICATION, "MyApp");
+		declareProtectedAndEncryptedParameter("MyProtectedParameterWithFunctionScope", "Value", ParameterScope.FUNCTION, "MyFunction1");
+		
+		ExecutionContext executionContext = newExecutionContext();
+		VariablesManager variablesManager = executionContext.getVariablesManager();
+
+		// Construct a ParameterManagerPlugin with encryption manager
+		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, encryptionManager, executionContext);
+		parameterManagerPlugin.executionStart(executionContext);
+		// None of the parameters should be available as they are all protected
+		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithoutScope"));
+		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithGlobalScope"));
+		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithApplicationScope"));
+		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithFunctionScope"));
+		
+		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction(null, "MyFunction1"));
+
+		// All parameters should now be available and their value should be decrypted
+		assertVariable(variablesManager, "MyProtectedParameterWithoutScope");
+		assertVariable(variablesManager, "MyProtectedParameterWithGlobalScope");
+		assertVariable(variablesManager, "MyProtectedParameterWithApplicationScope");
+		assertVariable(variablesManager, "MyProtectedParameterWithFunctionScope");
+	}
+	
+	@Test
+	public void testEncryptedParametersAndNoEncryptionManagerAvailable() {
+		declareProtectedAndEncryptedParameter("MyProtectedParameterWithoutScope", "Value", null, null);
+
+		ExecutionContext executionContext = newExecutionContext();
+
+		// Construct a ParameterManagerPlugin without encryption manager
+		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, null, executionContext);
+		parameterManagerPlugin.executionStart(executionContext);
+
+		Exception actualException = null;
+		try {
+			parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(),
+					newFunction(null, "MyFunction1"));
+		} catch (Exception e) {
+			actualException = e;
+		}
+		assertNotNull(actualException);
+		assertEquals(
+				"Unable to decrypt value of parameter MyProtectedParameterWithoutScope. No encryption manager available",
+				actualException.getMessage());
+	}
+	
+	@Test
+	public void testEncryptedParametersAndErrorEncryptionManager() {
+		declareProtectedAndEncryptedParameter("MyProtectedParameterWithoutScope", "Value", null, null);
+
+		ExecutionContext executionContext = newExecutionContext();
+
+		// Construct ParameterManagerPlugin with error encryption manager (failing on decrypt())
+		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, errorEncryptionManager, executionContext);
+		parameterManagerPlugin.executionStart(executionContext);
+
+		Exception actualException = null;
+		try {
+			parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(),
+					newFunction(null, "MyFunction1"));
+		} catch (Exception e) {
+			actualException = e;
+		}
+		assertNotNull(actualException);
+		assertEquals(
+				"Error while decrypting value of parameter MyProtectedParameterWithoutScope",
+				actualException.getMessage());
+	}
+
+	private void assertVariable(VariablesManager variablesManager, String variableName) {
+		String variable;
+		variable = variablesManager.getVariableAsString(variableName);
+		Assert.assertNotNull(variable);
+		assertEquals("Value", variable);
+	}
 
 	protected ExecutionContext newExecutionContext() {
 		return ExecutionEngine.builder().build().newExecutionContext();
 	}
 
 	protected void declareParameter(String key, String value, ParameterScope scope, String scopeEntity) {
+		Parameter functionParameter = newParameter(key, value, scope, scopeEntity);
+		parameterAccessor.save(functionParameter);
+	}
+
+	private Parameter newParameter(String key, String value, ParameterScope scope, String scopeEntity) {
 		Parameter functionParameter = new Parameter();
 		functionParameter.setKey(key);
 		functionParameter.setValue(value);
 		functionParameter.setScope(scope);
 		functionParameter.setScopeEntity(scopeEntity);
-		parameterAccessor.save(functionParameter);
+		return functionParameter;
+	}
+	
+	protected void declareProtectedParameter(String key, String value, ParameterScope scope, String scopeEntity) {
+		Parameter parameter = newParameter(key, value, scope, scopeEntity);
+		parameter.setProtectedValue(true);
+		parameterAccessor.save(parameter);
+	}
+	
+	protected void declareProtectedAndEncryptedParameter(String key, String value, ParameterScope scope, String scopeEntity) {
+		Parameter parameter = newParameter(key, value, scope, scopeEntity);
+		parameter.setProtectedValue(true);
+		parameter.setValue(null);
+		try {
+			parameter.setEncryptedValue(encryptionManager.encrypt(value));
+		} catch (EncryptionManagerException e) {
+			throw new RuntimeException(e);
+		}
+		parameterAccessor.save(parameter);
 	}
 
 	protected Function newFunction(String app, String name) {
@@ -122,7 +288,11 @@ public class ParameterManagerPluginTest {
 	public static class LocalParameterManagerPlugin extends ParameterManagerPlugin {
 
 		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor, ExecutionContext executionContext) {
-			super(new ParameterManager(parameterAccessor, executionContext.getConfiguration()));
+			this(parameterAccessor, null, executionContext);
+		}
+
+		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, ExecutionContext executionContext) {
+			super(new ParameterManager(parameterAccessor, executionContext.getConfiguration()), encryptionManager);
 		}
 		
 		

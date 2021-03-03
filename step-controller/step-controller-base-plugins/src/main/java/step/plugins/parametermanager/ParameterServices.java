@@ -44,6 +44,8 @@ import step.core.access.AccessManager;
 import step.core.accessors.CRUDAccessor;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.core.encryption.EncryptionManager;
+import step.core.encryption.EncryptionManagerException;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
 
@@ -52,6 +54,7 @@ public class ParameterServices extends AbstractServices {
 	
 	private AccessManager accessManager;
 	private CRUDAccessor<Parameter> parameterAccessor;
+	private EncryptionManager encryptionManager;
 	
 	@PostConstruct
 	@SuppressWarnings("unchecked")
@@ -60,6 +63,8 @@ public class ParameterServices extends AbstractServices {
 		GlobalContext context = getContext();
 		parameterAccessor = (CRUDAccessor<Parameter>) context.get("ParameterAccessor");
 		accessManager = context.get(AccessManager.class);
+		// The encryption manager might be null
+		encryptionManager = context.get(EncryptionManager.class);
 	}
 
 	@GET
@@ -81,7 +86,7 @@ public class ParameterServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-write")
-	public Parameter save(Parameter newParameter) {
+	public Parameter save(Parameter newParameter) throws EncryptionManagerException {
 		assertRights(newParameter);
 		
 		Parameter oldParameter;
@@ -109,6 +114,10 @@ public class ParameterServices extends AbstractServices {
 			}
 		}
 		
+		if(newParameter.getProtectedValue()) {
+			encryptParameterValueIfEncryptionManagerAvailable(newParameter);
+		}
+		
 		ParameterScope scope = newParameter.getScope();
 		if(scope != null && scope.equals(ParameterScope.GLOBAL)) {
 			newParameter.setScopeEntity(null);
@@ -120,6 +129,15 @@ public class ParameterServices extends AbstractServices {
 		newParameter.setLastModificationUser(lastModificationUser);
 		
 		return parameterAccessor.save(newParameter);
+	}
+
+	private void encryptParameterValueIfEncryptionManagerAvailable(Parameter newParameter) throws EncryptionManagerException {
+		if(encryptionManager != null) {
+			String value = newParameter.getValue();
+			newParameter.setValue(null);
+			String encryptedValue = encryptionManager.encrypt(value);
+			newParameter.setEncryptedValue(encryptedValue);
+		}
 	}
 
 	protected void assertRights(Parameter newParameter) {
@@ -143,7 +161,7 @@ public class ParameterServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-write")
-	public Parameter copy(@PathParam("id") String id) {	
+	public Parameter copy(@PathParam("id") String id) throws EncryptionManagerException {	
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
 		parameter.setId(new ObjectId());
 		return save(parameter);
@@ -160,7 +178,6 @@ public class ParameterServices extends AbstractServices {
 	}
 	
 	public static final String PROTECTED_VALUE = "******";
-	
 
 	public static boolean isPassword(Parameter parameter) {
 		return parameter!=null && isPassword(parameter.getKey());

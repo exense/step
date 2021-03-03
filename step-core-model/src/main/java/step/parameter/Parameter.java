@@ -36,6 +36,13 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject 
 	
 	protected Boolean protectedValue;
 	
+	/**
+	 * When running with an encryption manager, the value of protected
+	 * {@link Parameter}s is encrypted and the encrypted value is stored into this
+	 * field
+	 */
+	protected String encryptedValue;
+	
 	protected ParameterScope scope;
 	protected String scopeEntity;
 	
@@ -99,6 +106,14 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject 
 
 	public void setProtectedValue(Boolean protectedValue) {
 		this.protectedValue = protectedValue;
+	}
+
+	public String getEncryptedValue() {
+		return encryptedValue;
+	}
+
+	public void setEncryptedValue(String encryptedValue) {
+		this.encryptedValue = encryptedValue;
 	}
 
 	/**
