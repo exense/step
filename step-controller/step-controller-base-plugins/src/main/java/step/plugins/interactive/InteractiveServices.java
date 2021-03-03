@@ -39,9 +39,6 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import step.artefacts.ArtefactQueue;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
@@ -52,6 +49,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.core.encryption.EncryptionManager;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
@@ -77,8 +75,6 @@ import step.plugins.parametermanager.ParameterManagerPlugin;
 @Path("interactive")
 public class InteractiveServices extends AbstractServices {
 
-	private static final Logger logger = LoggerFactory.getLogger(InteractiveServices.class);
-	
 	private Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
 	
 	private Timer sessionExpirationTimer; 
@@ -88,6 +84,8 @@ public class InteractiveServices extends AbstractServices {
 	private final ExecutorService executorService;
 
 	private PlanAccessor planAccessor;
+
+	private EncryptionManager encryptionManager;
 	
 	private static class InteractiveSession {
 		
@@ -143,6 +141,8 @@ public class InteractiveServices extends AbstractServices {
 		GlobalContext context = getContext();
 		planAccessor = context.getPlanAccessor();
 		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
+		// the encryption manager might be null
+		encryptionManager = context.get(EncryptionManager.class);
 		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
 				.withParentContext(context).withPluginsFromClasspath().withPlugin(new AbstractExecutionEnginePlugin() {
 
@@ -151,7 +151,7 @@ public class InteractiveServices extends AbstractServices {
 							ExecutionEngineContext executionEngineContext) {
 						executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
 					}
-				}).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class))).withObjectHookRegistry(objectHookRegistry).build();
+				}).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class), encryptionManager)).withObjectHookRegistry(objectHookRegistry).build();
 	}
 	
 	@PreDestroy
