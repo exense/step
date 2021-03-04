@@ -277,7 +277,6 @@ angular.module('tables', ['export'])
             if (scope.useSpinner) {
               scope.showSpin =  true;
             }
-            scope.loadingTable=true;
             });
           scope.table.clear();
           if (value && value.length > 0) {
@@ -314,7 +313,6 @@ angular.module('tables', ['export'])
 	        tableOptions.fnDrawCallback = function() {
 	          $timeout(function(){
 	            scope.showSpin=false;
-              scope.loadingTable=false;
             });
 	          controller.newCycle();
 	        };
@@ -398,17 +396,14 @@ angular.module('tables', ['export'])
 	        }
 	        scope.handle.reload = function(showSpin) {
 	          if (!scope.loadingTable) {
-	            $timeout(function(){
-                scope.loadingTable=true;
-                scope.showSpin=showSpin;
-	              scope.isExternalReload=true;
-              });
+	            scope.loadingTable=true;
+	            scope.showSpin=showSpin;
+	            scope.isExternalReload=true;
 	            table.ajax.reload(function() {
-	              $timeout(function(){
 	                scope.loadingTable=false;
 	                scope.showSpin=false;
   	              scope.isExternalReload=false
-	              })}, false);
+	              }, false);
 	          }
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
