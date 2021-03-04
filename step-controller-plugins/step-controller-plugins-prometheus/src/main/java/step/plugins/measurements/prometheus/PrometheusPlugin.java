@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +42,12 @@ public class PrometheusPlugin extends AbstractMeasurementPlugin {
 
 	private Map<String, Set<String[]>> labelsByExec;
 
-	public PrometheusPlugin() {
+	private final Histogram measurementHisto;
+
+	public PrometheusPlugin(Histogram measurementHistogram) {
 		super();
 		labelsByExec = new HashMap();
+		this.measurementHisto = measurementHistogram;
 	}
 
 	@Override
@@ -60,7 +64,7 @@ public class PrometheusPlugin extends AbstractMeasurementPlugin {
 			String[] labels = {measurement.getExecId(), measurement.getName(), measurement.getType(),
 					measurement.getStatus(), measurement.getPlanId(), measurement.getTaskId()};
 			labelsByExec.get(executionContext.getExecutionId()).add(labels);
-			PrometheusControllerPlugin.requestLatency.labels(labels).observe(measurement.getValue()/1000.0);
+			measurementHisto.labels(labels).observe(measurement.getValue()/1000.0);
 		}
 	}
 
@@ -72,7 +76,7 @@ public class PrometheusPlugin extends AbstractMeasurementPlugin {
 		Runnable task = new Runnable() {
 			public void run() {
 				for (String[] labels : labelsByExec.remove(context.getExecutionId())) {
-					PrometheusControllerPlugin.requestLatency.remove(labels);
+					measurementHisto.remove(labels);
 				}
 			}
 		};

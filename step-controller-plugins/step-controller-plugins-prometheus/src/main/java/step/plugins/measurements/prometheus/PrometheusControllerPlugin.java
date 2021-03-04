@@ -37,9 +37,7 @@ import step.engine.plugins.ExecutionEnginePlugin;
 public class PrometheusControllerPlugin extends AbstractControllerPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(PrometheusControllerPlugin.class);
-	public static final Histogram requestLatency = Histogram.build()
-			.name("step_node_duration_seconds").help("step node duration in seconds.")
-			.labelNames("eId","name","type","status","planId","taskId").register();
+	public Histogram measurementHistogram;
 
 
 	@Override
@@ -47,6 +45,17 @@ public class PrometheusControllerPlugin extends AbstractControllerPlugin {
 		context.getServiceRegistrationCallback().registerService(PrometheusPluginServices.class);
 
 		ch.exense.commons.app.Configuration stepProperties = context.getConfiguration();
+		double[] buckets = null;
+		String bucketsStr = stepProperties.getProperty("plugins.measurements.prometheus.buckets", "");
+		String[] split = bucketsStr.split(",");
+		if (split.length>0) {
+			buckets = new double[split.length];
+			for (int i=0; i<split.length;i++) {
+				buckets[i] = Double.parseDouble(split[i]);
+			}
+		}
+		measurementHistogram = PrometheusCollectorRegistry.getInstance().getOrCreateHistogram("step_node_duration_seconds",
+				"step node duration in seconds.",buckets, "eId","name","type","status","planId","taskId");
 
 		ServletContextHandler servletContext = new ServletContextHandler();
 		servletContext.setContextPath("/metrics");
@@ -70,7 +79,7 @@ public class PrometheusControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new PrometheusPlugin();
+		return new PrometheusPlugin(measurementHistogram);
 	}
 
 }
