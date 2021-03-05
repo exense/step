@@ -30,6 +30,6 @@ public class AgentRunner {
 		File gridJar = ResourceExtractor.extractResource(AgentRunner.class.getClassLoader(), "step-grid-agent.jar");
 		URLClassLoader cl = new URLClassLoader(new URL[]{gridJar.toURI().toURL()}, AgentRunner.class.getClassLoader());
 		Thread.currentThread().setContextClassLoader(cl);
-		cl.loadClass("step.grid.agent.Agent").getConstructor(args.getClass()).newInstance((Object)args);
+		cl.loadClass("step.grid.agent.Agent").getMethod("newInstanceFromArgs",args.getClass()).invoke(null, (Object)args);
 	}
 }
