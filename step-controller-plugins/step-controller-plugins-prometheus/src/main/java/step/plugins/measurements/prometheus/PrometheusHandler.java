@@ -30,40 +30,31 @@ import org.slf4j.LoggerFactory;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.plugins.IgnoreDuringAutoDiscovery;
-import step.core.plugins.Plugin;
-import step.plugins.measurements.AbstractMeasurementPlugin;
-import step.plugins.measurements.GaugeCollector;
-import step.plugins.measurements.GaugeCollectorRegistry;
-import step.plugins.measurements.Measurement;
+import step.plugins.measurements.*;
 
-@Plugin
-@IgnoreDuringAutoDiscovery
-public class PrometheusPlugin extends AbstractMeasurementPlugin {
 
-	private static final Logger logger = LoggerFactory.getLogger(PrometheusPlugin.class);
+public class PrometheusHandler implements MeasurementHandler {
+
+	private static final Logger logger = LoggerFactory.getLogger(PrometheusHandler.class);
 
 	private Map<String, Set<String[]>> labelsByExec;
 
 	private final Histogram measurementHisto;
 
-	public PrometheusPlugin(Histogram measurementHistogram) {
+	public PrometheusHandler(Histogram measurementHistogram) {
 		super();
 		labelsByExec = new HashMap();
 		this.measurementHisto = measurementHistogram;
 		GaugeCollectorRegistry.getInstance().registerHandler(this);
 	}
 
-	@Override
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-		super.initializeExecutionContext(executionEngineContext,executionContext);
 		if (!labelsByExec.containsKey(executionContext.getExecutionId())) {
 			labelsByExec.put(executionContext.getExecutionId(), new HashSet<>());
 		}
 	}
 
-	@Override
-	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
+	public void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
 		for (Measurement measurement : measurements) {
 			String[] labels = {measurement.getExecId(), measurement.getName(), measurement.getType(),
 					measurement.getStatus(), measurement.getPlanId(), measurement.getTaskId()};
@@ -72,10 +63,7 @@ public class PrometheusPlugin extends AbstractMeasurementPlugin {
 		}
 	}
 
-	@Override
 	public void afterExecutionEnd(ExecutionContext context) {
-		super.afterExecutionEnd(context);
-
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 		Runnable task = new Runnable() {
 			public void run() {
@@ -89,7 +77,6 @@ public class PrometheusPlugin extends AbstractMeasurementPlugin {
 		scheduler.shutdown();
 	}
 
-	@Override
 	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
 		Gauge gauge = PrometheusCollectorRegistry.getInstance().getOrCreateGauge(collector.getName(), collector.getDescription(),
 				collector.getLabels());

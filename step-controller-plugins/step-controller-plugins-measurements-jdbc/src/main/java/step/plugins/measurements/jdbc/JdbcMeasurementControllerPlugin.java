@@ -30,6 +30,7 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.plugins.measurements.MeasurementPlugin;
 
 @Plugin
 public class JdbcMeasurementControllerPlugin extends AbstractControllerPlugin {
@@ -78,6 +79,10 @@ public class JdbcMeasurementControllerPlugin extends AbstractControllerPlugin {
 
 		//TODO Would create the database and table here and any indexes here if required
 
+
+		if (connectionPool != null) {
+			MeasurementPlugin.registerMeasurementHandlers(new JdbcMeasurementHandler(useCustomJsonColumn));
+		}
 	}
 
 	@Override
@@ -86,10 +91,4 @@ public class JdbcMeasurementControllerPlugin extends AbstractControllerPlugin {
 			connectionPool.close();
 		}
 	}
-
-	@Override
-	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return (connectionPool!=null) ? new JdbcMeasurementPlugin(useCustomJsonColumn) : null;
-	}
-
 }

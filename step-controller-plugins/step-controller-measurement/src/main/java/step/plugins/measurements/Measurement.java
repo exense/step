@@ -21,7 +21,7 @@ public class Measurement extends HashMap<String, Object> {
 
 	public void setBegin(long begin) {
 		this.begin = begin;
-		this.put(AbstractMeasurementPlugin.BEGIN, begin);
+		this.put(MeasurementPlugin.BEGIN, begin);
 	}
 
 	public long getValue() {
@@ -30,7 +30,7 @@ public class Measurement extends HashMap<String, Object> {
 
 	public void setValue(long value) {
 		this.value = value;
-		this.put(AbstractMeasurementPlugin.VALUE, value);
+		this.put(MeasurementPlugin.VALUE, value);
 	}
 
 	public String getName() {
@@ -39,7 +39,7 @@ public class Measurement extends HashMap<String, Object> {
 
 	public void setName(String name) {
 		this.name = name;
-		this.put(AbstractMeasurementPlugin.NAME, name);
+		this.put(MeasurementPlugin.NAME, name);
 	}
 
 	public String getType() {
@@ -48,7 +48,7 @@ public class Measurement extends HashMap<String, Object> {
 
 	public void setType(String type) {
 		this.type = type;
-		this.put(AbstractMeasurementPlugin.TYPE, type);
+		this.put(MeasurementPlugin.TYPE, type);
 	}
 
 	public String getStatus() {
@@ -57,7 +57,7 @@ public class Measurement extends HashMap<String, Object> {
 
 	public void setStatus(String status) {
 		this.status = status;
-		this.put(AbstractMeasurementPlugin.RN_STATUS, status);
+		this.put(MeasurementPlugin.RN_STATUS, status);
 	}
 
 	public String getExecId() {
@@ -66,7 +66,7 @@ public class Measurement extends HashMap<String, Object> {
 
 	public void setExecId(String execId) {
 		this.execId = execId;
-		this.put(AbstractMeasurementPlugin.ATTRIBUTE_EXECUTION_ID, execId);
+		this.put(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, execId);
 	}
 
 	public String getTaskId() {
@@ -75,7 +75,7 @@ public class Measurement extends HashMap<String, Object> {
 
 	public void setTaskId(String taskId) {
 		this.taskId = taskId;
-		this.put(AbstractMeasurementPlugin.TASK_ID, taskId);
+		this.put(MeasurementPlugin.TASK_ID, taskId);
 	}
 
 	public String getPlanId() {
@@ -84,7 +84,7 @@ public class Measurement extends HashMap<String, Object> {
 
 	public void setPlanId(String planId) {
 		this.planId = planId;
-		this.put(AbstractMeasurementPlugin.PLAN_ID, planId);
+		this.put(MeasurementPlugin.PLAN_ID, planId);
 	}
 
 	public Map<String, Object> getCustomFields() {

@@ -4,6 +4,7 @@ import step.controller.grid.GridPlugin;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.engine.plugins.ExecutionEnginePlugin;
 import step.grid.Grid;
 import step.grid.GridReportBuilder;
 import step.grid.TokenWrapperState;
@@ -59,5 +60,15 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
 		//Start the gauge scheduler
 		gaugeCollectorRegistry.start();
+	}
+
+	@Override
+	public void executionControllerDestroy(GlobalContext context) {
+
+	}
+
+	@Override
+	public ExecutionEnginePlugin getExecutionEnginePlugin() {
+		return new MeasurementPlugin();
 	}
 }

@@ -36,8 +36,8 @@ import step.core.GlobalContext;
 import step.core.accessors.AbstractAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.engine.plugins.ExecutionEnginePlugin;
-import step.plugins.measurements.AbstractMeasurementPlugin;
+import step.plugins.measurements.MeasurementHandler;
+import step.plugins.measurements.MeasurementPlugin;
 
 @Plugin
 public class RtmControllerPlugin extends AbstractControllerPlugin {
@@ -70,10 +70,10 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 		}
 
 		MongoCollection<Document> measurements = context.getMongoClientSession().getMongoDatabase().getCollection("measurements");
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements, AbstractMeasurementPlugin.ATTRIBUTE_EXECUTION_ID, AbstractMeasurementPlugin.BEGIN);
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements, AbstractMeasurementPlugin.PLAN_ID, AbstractMeasurementPlugin.BEGIN);
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements, AbstractMeasurementPlugin.TASK_ID, AbstractMeasurementPlugin.BEGIN);
-		AbstractAccessor.createOrUpdateIndex(measurements, AbstractMeasurementPlugin.BEGIN);
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
+		AbstractAccessor.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
+		AbstractAccessor.createOrUpdateIndex(measurements, MeasurementPlugin.BEGIN);
 
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
@@ -93,6 +93,8 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 
 		accessor = MeasurementAccessor.getInstance();
 		context.put(MeasurementAccessor.class, accessor);
+
+		MeasurementPlugin.registerMeasurementHandlers(new RtmHandler(accessor));
 	}
 
 	@Override
@@ -102,10 +104,6 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 		}
 	}
 
-	@Override
-	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new RtmPlugin(accessor);
-	}
 
 	private void cloneProperty(Properties rtmProperties, ch.exense.commons.app.Configuration stepProperties, String property) {
 		if(stepProperties.getProperty(property)!=null) {

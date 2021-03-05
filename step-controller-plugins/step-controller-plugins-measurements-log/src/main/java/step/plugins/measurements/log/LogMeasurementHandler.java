@@ -23,33 +23,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
-import step.core.plugins.IgnoreDuringAutoDiscovery;
-import step.core.plugins.Plugin;
-import step.plugins.measurements.AbstractMeasurementPlugin;
-import step.plugins.measurements.GaugeCollector;
-import step.plugins.measurements.GaugeCollectorRegistry;
-import step.plugins.measurements.Measurement;
+import step.core.execution.ExecutionEngineContext;
+import step.plugins.measurements.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Plugin
-@IgnoreDuringAutoDiscovery
-public class LogMeasurementPlugin extends AbstractMeasurementPlugin {
+public class LogMeasurementHandler implements MeasurementHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(LogMeasurementPlugin.class);
+	private static final Logger logger = LoggerFactory.getLogger(LogMeasurementHandler.class);
 	private static final Logger measurementLogger = LoggerFactory.getLogger("MeasurementLogger");
 	ObjectMapper objectMapper;
 
-	public LogMeasurementPlugin(){
+	public LogMeasurementHandler(){
 		super();
 		GaugeCollectorRegistry.getInstance().registerHandler(this);
 		objectMapper = new ObjectMapper();
 	}
 
-	@Override
-	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
+	public void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
 		List<?> rtmMeasurements = measurements;
 		for (Object o: measurements) {
 			try {
@@ -60,12 +53,11 @@ public class LogMeasurementPlugin extends AbstractMeasurementPlugin {
 		}
 	}
 
-	@Override
 	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
 		for (GaugeCollector.GaugeMetric metric : metrics) {
 			Map<String,Object> measurement = new HashMap<>();
 			measurement.put("gauge_name", collector.getName());
-			measurement.put(AbstractMeasurementPlugin.BEGIN,System.currentTimeMillis());
+			measurement.put(MeasurementPlugin.BEGIN,System.currentTimeMillis());
 			String[] labels = collector.getLabels();
 			for (int i=0; i < labels.length; i++) {
 				measurement.put(labels[i],metric.labelsValue[i]);
@@ -78,4 +70,7 @@ public class LogMeasurementPlugin extends AbstractMeasurementPlugin {
 			}
 		}
 	}
+
+	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext){}
+	public void afterExecutionEnd(ExecutionContext context) {}
 }

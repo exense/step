@@ -7,12 +7,18 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
+import step.core.plugins.IgnoreDuringAutoDiscovery;
+import step.core.plugins.Plugin;
 import step.core.reports.Measure;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
 import java.util.*;
 
-public abstract class AbstractMeasurementPlugin extends AbstractExecutionEnginePlugin {
+import static step.plugins.measurements.MeasurementHandler.*;
+
+@Plugin
+@IgnoreDuringAutoDiscovery
+public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
 	public static final String ATTRIBUTE_EXECUTION_ID = "eId";
 	public static final String TYPE_CUSTOM = "custom";
@@ -27,9 +33,13 @@ public abstract class AbstractMeasurementPlugin extends AbstractExecutionEngineP
 	public static final String ORIGIN = "origin";
 	public static final String TASK_ID = "taskId";
 	public static final String PLAN_ID = "planId";
+	public static final String SCHEDULER_TASK_ID = "$schedulerTaskId";
 
-	protected static final String SCHEDULER_TASK_ID = "$schedulerTaskId";
+	private static List<MeasurementHandler> measurementHandlers = new ArrayList<>();
 
+	public static synchronized void registerMeasurementHandlers(MeasurementHandler handler) {
+		measurementHandlers.add(handler);
+	}
 	@Override
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 		Execution execution = executionContext.getExecutionAccessor().get(executionContext.getExecutionId());
@@ -38,6 +48,17 @@ public abstract class AbstractMeasurementPlugin extends AbstractExecutionEngineP
 			// cache the scheduler task id in the context to avoid retrieval of the
 			// execution after each report nod execution
 			executionContext.put(SCHEDULER_TASK_ID, schedulerTaskId);
+		}
+
+		for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
+			measurementHandler.initializeExecutionContext(executionEngineContext,executionContext);
+		}
+	}
+
+	@Override
+	public void afterExecutionEnd(ExecutionContext context) {
+		for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
+			measurementHandler.afterExecutionEnd(context);
 		}
 	}
 
@@ -93,7 +114,11 @@ public abstract class AbstractMeasurementPlugin extends AbstractExecutionEngineP
 		}
 	}
 
-	protected abstract void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext);
+	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
+		for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
+			measurementHandler.processMeasurements(measurements,executionContext);
+		}
+	}
 
 	private boolean isArtefactInstrumented(AbstractArtefact artefactInstance) {
 		return artefactInstance != null && artefactInstance.getInstrumentNode().get();
@@ -128,6 +153,7 @@ public abstract class AbstractMeasurementPlugin extends AbstractExecutionEngineP
 		}
 	}
 
-	public abstract void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics);
+
+
 
 }

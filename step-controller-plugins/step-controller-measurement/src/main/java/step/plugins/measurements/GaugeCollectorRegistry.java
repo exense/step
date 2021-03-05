@@ -24,13 +24,13 @@ public class GaugeCollectorRegistry {
 			Executors.newScheduledThreadPool(1);
 
 	Map<String, GaugeCollector> collectors = new HashMap<>();
-	List<AbstractMeasurementPlugin> handlers = new ArrayList<>();
+	List<MeasurementHandler> handlers = new ArrayList<MeasurementHandler>();
 
 	public synchronized void registerCollector(String name, GaugeCollector collector){
 		collectors.put(name, collector);
 	}
 
-	 public synchronized void  registerHandler(AbstractMeasurementPlugin handler){
+	 public synchronized void  registerHandler(MeasurementHandler handler){
 		handlers.add(handler);
 	}
 

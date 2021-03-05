@@ -28,37 +28,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.execution.ExecutionContext;
-import step.core.plugins.IgnoreDuringAutoDiscovery;
-import step.core.plugins.Plugin;
-import step.plugins.measurements.AbstractMeasurementPlugin;
+import step.core.execution.ExecutionEngineContext;
 import step.plugins.measurements.GaugeCollector;
+import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.measurements.Measurement;
+import step.plugins.measurements.MeasurementHandler;
 
-@Plugin
-@IgnoreDuringAutoDiscovery
-public class JdbcMeasurementPlugin extends AbstractMeasurementPlugin {
+public class JdbcMeasurementHandler implements MeasurementHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(JdbcMeasurementPlugin.class);
+	private static final Logger logger = LoggerFactory.getLogger(JdbcMeasurementHandler.class);
 
-	private static String SQLinsertWJson = "INSERT INTO measurements("+BEGIN+","+ ATTRIBUTE_EXECUTION_ID +"," +
-			STATUS +"," + PLAN_ID + ","+ TASK_ID+ "," + NAME + "," + TYPE + "," + VALUE + ",info) VALUES(?,?,?,?,?,?,?,?,?)";
+	private static String SQLinsertWJson = "INSERT INTO measurements("+MeasurementPlugin.BEGIN+","+ MeasurementPlugin.ATTRIBUTE_EXECUTION_ID +"," +
+			MeasurementPlugin.STATUS +"," + MeasurementPlugin.PLAN_ID + ","+ MeasurementPlugin.TASK_ID+ "," + MeasurementPlugin.NAME + "," +
+			MeasurementPlugin.TYPE + "," + MeasurementPlugin.VALUE + ",info) VALUES(?,?,?,?,?,?,?,?,?)";
 
-	private static String SQLinsertPostgres = "INSERT INTO measurements("+BEGIN+","+ ATTRIBUTE_EXECUTION_ID +"," +
-		STATUS +"," + PLAN_ID + ","+ TASK_ID+ "," + NAME + "," + TYPE + "," + VALUE + ",info) VALUES(?,?,?,?,?,?,?,?,?::jsonb)";
+	private static String SQLinsertPostgres = "INSERT INTO measurements("+MeasurementPlugin.BEGIN+","+ MeasurementPlugin.ATTRIBUTE_EXECUTION_ID +"," +
+			MeasurementPlugin.STATUS +"," + MeasurementPlugin.PLAN_ID + ","+ MeasurementPlugin.TASK_ID+ "," + MeasurementPlugin.NAME + "," +
+			MeasurementPlugin.TYPE + "," + MeasurementPlugin.VALUE + ",info) VALUES(?,?,?,?,?,?,?,?,?::jsonb)";
 
-	private static String SQLinsert = "INSERT INTO measurements("+BEGIN+","+ ATTRIBUTE_EXECUTION_ID +"," +
-			STATUS +"," + PLAN_ID + ","+ TASK_ID+ "," + NAME + "," + TYPE + "," + VALUE + ") VALUES(?,?,?,?,?,?,?,?)";
+	private static String SQLinsert = "INSERT INTO measurements("+MeasurementPlugin.BEGIN+","+ MeasurementPlugin.ATTRIBUTE_EXECUTION_ID +"," +
+			MeasurementPlugin.STATUS +"," + MeasurementPlugin.PLAN_ID + ","+ MeasurementPlugin.TASK_ID+ "," + MeasurementPlugin.NAME + "," +
+			MeasurementPlugin.TYPE + "," + MeasurementPlugin.VALUE + ") VALUES(?,?,?,?,?,?,?,?)";
 
 	private boolean useCustomJsonColumn;
 
-	public JdbcMeasurementPlugin(boolean useCustomJsonColumn) {
+	public JdbcMeasurementHandler(boolean useCustomJsonColumn) {
 		super();
 		this.useCustomJsonColumn = useCustomJsonColumn;
 	}
 
 
-	@Override
-	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
+	public void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
 		try (Connection jdbcCon = DriverManager.getConnection(JdbcMeasurementControllerPlugin.ConnectionPoolName)) {
 			boolean isPostGres = jdbcCon.getMetaData().getDatabaseProductName().contains("PostgreSQL");
 			String insertStatement = SQLinsert;
@@ -97,7 +97,6 @@ public class JdbcMeasurementPlugin extends AbstractMeasurementPlugin {
 
 	}
 
-	@Override
 	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
 		logger.error("Gauge processing not implement for JDBC measurement plugin.");
 	}
@@ -123,6 +122,8 @@ public class JdbcMeasurementPlugin extends AbstractMeasurementPlugin {
 		preparedStatement.addBatch();
 	}
 
+	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext){}
+	public void afterExecutionEnd(ExecutionContext context) {}
 
 
 }

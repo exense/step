@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.engine.plugins.ExecutionEnginePlugin;
+import step.plugins.measurements.MeasurementPlugin;
 
 @Plugin
 public class PrometheusControllerPlugin extends AbstractControllerPlugin {
@@ -70,6 +70,8 @@ public class PrometheusControllerPlugin extends AbstractControllerPlugin {
 		context.getServiceRegistrationCallback().registerHandler(stats);
 		// Register collector.
 		new JettyStatisticsCollector(stats).register();
+
+		MeasurementPlugin.registerMeasurementHandlers(new PrometheusHandler(measurementHistogram));
 	}
 
 	@Override
@@ -77,9 +79,6 @@ public class PrometheusControllerPlugin extends AbstractControllerPlugin {
 
 	}
 
-	@Override
-	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new PrometheusPlugin(measurementHistogram);
-	}
+
 
 }
