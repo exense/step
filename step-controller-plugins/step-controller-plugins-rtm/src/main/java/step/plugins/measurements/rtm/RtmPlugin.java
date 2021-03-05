@@ -54,6 +54,7 @@ public class RtmPlugin extends AbstractMeasurementPlugin {
 
 	@Override
 	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
-		logger.error("Gauge processing not implement for JDBC measurement plugin.");
+		logger.error("Gauge processing not implement for RTM measurement plugin.");
+		//would require to implement specific house keeping for it as this run outside of an execution context
 	}
 }

@@ -58,6 +58,15 @@ public class LogMeasurementPlugin extends AbstractMeasurementPlugin {
 
 	@Override
 	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
-		logger.error("Gauge processing not implement for Log measurement plugin.");
+		for (GaugeCollector.GaugeMetric metric : metrics) {
+			StringBuffer buf = new StringBuffer();
+			buf.append("gauge_name=").append(collector.getName());
+			String[] labels = collector.getLabels();
+			for (int i=0; i < labels.length; i++) {
+				buf.append(" ").append(labels[i]).append("=").append(metric.labelsValue[i]);
+			}
+			buf.append(" value=").append(metric.value);
+			logger.info("[Gauge] " + buf.toString());
+		}
 	}
 }
