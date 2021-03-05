@@ -1,5 +1,6 @@
 package step.plugins.measurements;
 
+import step.controller.grid.GridPlugin;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Plugin
+@Plugin(dependencies = GridPlugin.class)
 public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
 	GaugeCollectorRegistry gaugeCollectorRegistry;
