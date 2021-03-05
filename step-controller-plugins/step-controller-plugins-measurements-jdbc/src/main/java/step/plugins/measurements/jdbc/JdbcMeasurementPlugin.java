@@ -31,6 +31,7 @@ import step.core.execution.ExecutionContext;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.plugins.measurements.AbstractMeasurementPlugin;
+import step.plugins.measurements.GaugeCollector;
 import step.plugins.measurements.Measurement;
 
 @Plugin
@@ -94,6 +95,11 @@ public class JdbcMeasurementPlugin extends AbstractMeasurementPlugin {
 			logger.error("Error while persisting measurements to the database", e );
 		}
 
+	}
+
+	@Override
+	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
+		logger.error("Gauge processing not implement for JDBC measurement plugin.");
 	}
 
 	private void addPrpStmtToBatch(PreparedStatement preparedStatement, boolean isPostGres, long executionTime,

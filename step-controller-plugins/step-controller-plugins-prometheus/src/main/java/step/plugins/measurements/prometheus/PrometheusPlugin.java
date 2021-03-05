@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,8 @@ import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.plugins.measurements.AbstractMeasurementPlugin;
+import step.plugins.measurements.GaugeCollector;
+import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.Measurement;
 
 @Plugin
@@ -48,6 +51,7 @@ public class PrometheusPlugin extends AbstractMeasurementPlugin {
 		super();
 		labelsByExec = new HashMap();
 		this.measurementHisto = measurementHistogram;
+		GaugeCollectorRegistry.getInstance().registerHandler(this);
 	}
 
 	@Override
@@ -83,5 +87,14 @@ public class PrometheusPlugin extends AbstractMeasurementPlugin {
 		int delay = 70;
 		scheduler.schedule(task, delay, TimeUnit.SECONDS);
 		scheduler.shutdown();
+	}
+
+	@Override
+	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
+		Gauge gauge = PrometheusCollectorRegistry.getInstance().getOrCreateGauge(collector.getName(), collector.getDescription(),
+				collector.getLabels());
+		for (GaugeCollector.GaugeMetric metric : metrics) {
+			gauge.labels(metric.labelsValue).set(metric.value);
+		}
 	}
 }

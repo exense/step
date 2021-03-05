@@ -128,4 +128,6 @@ public abstract class AbstractMeasurementPlugin extends AbstractExecutionEngineP
 		}
 	}
 
+	public abstract void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics);
+
 }

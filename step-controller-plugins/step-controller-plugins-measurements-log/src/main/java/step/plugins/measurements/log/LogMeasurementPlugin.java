@@ -26,6 +26,8 @@ import step.core.execution.ExecutionContext;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.plugins.measurements.AbstractMeasurementPlugin;
+import step.plugins.measurements.GaugeCollector;
+import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.Measurement;
 
 import java.util.List;
@@ -35,6 +37,11 @@ import java.util.List;
 public class LogMeasurementPlugin extends AbstractMeasurementPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(LogMeasurementPlugin.class);
+
+	public LogMeasurementPlugin(){
+		super();
+		GaugeCollectorRegistry.getInstance().registerHandler(this);
+	}
 
 	@Override
 	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
@@ -47,5 +54,10 @@ public class LogMeasurementPlugin extends AbstractMeasurementPlugin {
 				logger.error("Measurement could not be formatted to json: " + o.toString(),e);
 			}
 		}
+	}
+
+	@Override
+	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
+		logger.error("Gauge processing not implement for Log measurement plugin.");
 	}
 }

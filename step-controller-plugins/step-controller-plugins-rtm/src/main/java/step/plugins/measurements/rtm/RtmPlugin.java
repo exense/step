@@ -28,6 +28,7 @@ import step.core.execution.ExecutionContext;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.plugins.measurements.AbstractMeasurementPlugin;
+import step.plugins.measurements.GaugeCollector;
 import step.plugins.measurements.Measurement;
 
 @Plugin
@@ -49,5 +50,10 @@ public class RtmPlugin extends AbstractMeasurementPlugin {
 		if (measurements.size()>0) {
 			accessor.saveManyMeasurements((List<Object>) rtmMeasurements);
 		}
+	}
+
+	@Override
+	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
+		logger.error("Gauge processing not implement for JDBC measurement plugin.");
 	}
 }
