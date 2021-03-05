@@ -30,26 +30,30 @@ import step.plugins.measurements.GaugeCollector;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.Measurement;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Plugin
 @IgnoreDuringAutoDiscovery
 public class LogMeasurementPlugin extends AbstractMeasurementPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(LogMeasurementPlugin.class);
+	private static final Logger measurementLogger = LoggerFactory.getLogger("MeasurementLogger");
+	ObjectMapper objectMapper;
 
 	public LogMeasurementPlugin(){
 		super();
 		GaugeCollectorRegistry.getInstance().registerHandler(this);
+		objectMapper = new ObjectMapper();
 	}
 
 	@Override
 	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
 		List<?> rtmMeasurements = measurements;
-		ObjectMapper objectMapper = new ObjectMapper();
 		for (Object o: measurements) {
 			try {
-				logger.info("[Measurement] " + objectMapper.writeValueAsString(o));
+				measurementLogger.info(objectMapper.writeValueAsString(o));
 			} catch (JsonProcessingException e) {
 				logger.error("Measurement could not be formatted to json: " + o.toString(),e);
 			}
@@ -59,14 +63,19 @@ public class LogMeasurementPlugin extends AbstractMeasurementPlugin {
 	@Override
 	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
 		for (GaugeCollector.GaugeMetric metric : metrics) {
-			StringBuffer buf = new StringBuffer();
-			buf.append("gauge_name=").append(collector.getName());
+			Map<String,Object> measurement = new HashMap<>();
+			measurement.put("gauge_name", collector.getName());
+			measurement.put(AbstractMeasurementPlugin.BEGIN,System.currentTimeMillis());
 			String[] labels = collector.getLabels();
 			for (int i=0; i < labels.length; i++) {
-				buf.append(" ").append(labels[i]).append("=").append(metric.labelsValue[i]);
+				measurement.put(labels[i],metric.labelsValue[i]);
 			}
-			buf.append(" value=").append(metric.value);
-			logger.info("[Gauge] " + buf.toString());
+			measurement.put("value",metric.value);
+			try {
+				measurementLogger.info(objectMapper.writeValueAsString(measurement));
+			} catch (JsonProcessingException e) {
+				logger.error("Measurement could not be formatted to json: " + measurement.toString(),e);
+			}
 		}
 	}
 }
