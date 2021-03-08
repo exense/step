@@ -1,0 +1,29 @@
+---
+# The URL of the grid
+gridHost: http://localhost:8081
+# Specifies the interval used by the registration client in ms
+# This should be lower than the grid TTL specified on the grid side 
+registrationPeriod: 1000
+gridReadTimeout: 20000
+workingDir: ../work
+# If ssl is enabled or not
+ssl: false
+# SSL parameters. Mandatory if SSL is enabled
+#keyStorePath: cert.jks
+#keyStorePassword: '<password>'
+#keyManagerPassword: '<password>'
+# Token groups
+tokenGroups:
+# The number of tokens to be emitted
+- capacity: 1
+  tokenConf:
+    # A list of key-values that identify the agent. 
+    # These attributes can then be used to select a specific agent in the grid
+    attributes:
+#      key: val
+    properties:
+#      prop1 : value 1
+# A list of properties
+properties:
+  # The path to the installation folder of JMeter
+  plugins.jmeter.home: "/path/to/jmeter/home"

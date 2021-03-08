@@ -26,5 +26,5 @@ SET JAVA_PATH=
 
 SET JAVA_OPTS=%JAVA_OPTS% -Dlogback.configurationFile=./logback.xml
 
-"%JAVA_PATH%java.exe" %JAVA_OPTS% -cp "..\lib\*;" step.grid.agent.AgentRunner -config="..\conf\AgentConf.json"
+"%JAVA_PATH%java.exe" %JAVA_OPTS% -cp "..\lib\*;" step.grid.agent.AgentRunner -config="..\conf\AgentConf.yaml"
 
