@@ -1,10 +1,23 @@
 ---
 # The URL of the grid
 gridHost: http://localhost:8081
+# The port this agent should listen on.
+# If not explicitly set the agent will let the system find a free port automatically
+# agentPort: 8080
+# The hostname that should be used by the controller for incoming connections
+# If not explicitly set the agent will try to determine its own hostname automatically
+# agentHost: agent-host.mynetwork.net
+# The URL that should be used by the controller to communicate with this agent
+# You might have to set the agentUrl explicitly if the agent is behind a proxy for instance
+# agentUrl: http://agent-host.mynetwork.net:8080
 # Specifies the interval used by the registration client in ms
 # This should be lower than the grid TTL specified on the grid side 
 registrationPeriod: 1000
+# Specifies how long in ms the agent should wait before throwing a timeout when it opens a connection
+# or read data from the controller (to retrieve keywords jars for instance, etc)
 gridReadTimeout: 20000
+# The path to the working directory of the agent.
+# This folder is used to store temporary data like keyword jars for instance
 workingDir: ../work
 # If ssl is enabled or not
 ssl: false
