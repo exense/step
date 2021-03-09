@@ -311,6 +311,7 @@ angular.module('tables', ['export'])
 	        // disable autoWidth: the auto sizing of column widths seems to work better when calculated by the browser
 	        tableOptions.autoWidth = false;
 	        tableOptions.fnDrawCallback = function() {
+	          scope.loadingTable=false;
 	          $timeout(function(){
 	            scope.showSpin=false;
             });
@@ -407,10 +408,8 @@ angular.module('tables', ['export'])
 	          }
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
-	          $timeout(function(){
-	            scope.showSpin = true;
-	            scope.loadingTable = true;
-	            });
+            scope.showSpin = true;
+            scope.loadingTable = true;
 	          var column = table.column(columnName+':name');
 	          column.search(searchExpression,true,false).draw();
 	        }
