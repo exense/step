@@ -277,7 +277,6 @@ angular.module('tables', ['export'])
             if (scope.useSpinner) {
               scope.showSpin =  true;
             }
-            scope.loadingTable=true;
             });
           scope.table.clear();
           if (value && value.length > 0) {
@@ -294,7 +293,7 @@ angular.module('tables', ['export'])
           }, 50)
         }
 		  }
-    
+
 		  controller.reload = function() {
 		    var columns = controller.getDtColumns();
 		    if(columns && columns.length>0) {
@@ -304,7 +303,7 @@ angular.module('tables', ['export'])
 	          // remove the headers added "manually" (see below)
 	          tableElement.empty();
 	        }
-	        
+
 	        // Build the table options
 	        var tableOptions = {}
 	        tableOptions.pageLength = parseInt(Preferences.get("tables_itemsperpage", 10));
@@ -315,7 +314,6 @@ angular.module('tables', ['export'])
 	          scope.loadingTable=false;
 	          $timeout(function(){
 	            scope.showSpin=false;
-              scope.loadingTable=false;
             });
 	          controller.newCycle();
 	        };
@@ -328,18 +326,18 @@ angular.module('tables', ['export'])
 	          if (scope.uid) {
 	            tableOptions.stateSave = true;
 	            tableOptions.stateSaveCallback = function(settings, data) {
-	              // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
+	              // Append the number of columns to the id as the method controller.reload() might be called several times during table building
 	              var uid = scope.uid + tableOptions.columns.length;
 	              var state = stateStorage.get(scope, uid);
 	              if (!state) {
 	                state = {};
 	              }
 	              state.tableState = data;
-	              
+
 	              stateStorage.store(scope, state, uid);
 	            };
 	            tableOptions.stateLoadCallback = function(settings) {
-	              // Append the number of columns to the id as the method controller.reload() might be called several times during table building 
+	              // Append the number of columns to the id as the method controller.reload() might be called several times during table building
 	              var uid = scope.uid + tableOptions.columns.length;
 	              var state = stateStorage.get(scope, uid);
 	              return (state && state.tableState) ? state.tableState : null;
@@ -359,7 +357,7 @@ angular.module('tables', ['export'])
 	            if(scope.serverSideParameters) {
 	              b.data += "&params=" + encodeURIComponent(JSON.stringify(scope.serverSideParameters()))
 	            }
-	            
+
 	            // avoid stacking of request
 	            var tableAPI = scope.table;
 	            if (tableAPI && tableAPI.hasOwnProperty('settings') && tableAPI.settings()[0].jqXHR) {
@@ -370,7 +368,7 @@ angular.module('tables', ['export'])
 	          }, error: function(jqXHR, textStatus, errorThrown) {
 	            if (jqXHR.status === 500 && jqXHR.responseText.indexOf("MongoExecutionTimeoutException") >= 0) {
 	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the DB query.");
-	            } 
+	            }
 	          }}
 
 	          tableOptions.processing = false;
@@ -399,17 +397,14 @@ angular.module('tables', ['export'])
 	        }
 	        scope.handle.reload = function(showSpin) {
 	          if (!scope.loadingTable) {
-	            $timeout(function(){
-                scope.loadingTable=true;
-                scope.showSpin=showSpin;
-	              scope.isExternalReload=true;
-              });
+	            scope.loadingTable=true;
+	            scope.showSpin=showSpin;
+	            scope.isExternalReload=true;
 	            table.ajax.reload(function() {
-	              $timeout(function(){
 	                scope.loadingTable=false;
 	                scope.showSpin=false;
   	              scope.isExternalReload=false
-	              })}, false);
+	              }, false);
 	          }
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
