@@ -29,6 +29,7 @@ import step.artefacts.AfterThread;
 import step.artefacts.BeforeThread;
 import step.artefacts.Sequence;
 import step.artefacts.ThreadGroup;
+import step.artefacts.reports.ThreadReportNode;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -192,15 +193,14 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		}
 	}
 	
-	public static class ThreadHandler extends AbstractSessionArtefactHandler<Thread, ReportNode> {
+	public static class ThreadHandler extends AbstractSessionArtefactHandler<Thread, ThreadReportNode> {
 
 		@Override
-		protected void createReportSkeleton_(ReportNode parentNode, Thread testArtefact) {
-			
+		protected void createReportSkeleton_(ThreadReportNode parentNode, Thread testArtefact) {
 		}
 
 		@Override
-		protected void execute_(ReportNode node, Thread thread) {
+		protected void execute_(ThreadReportNode node, Thread thread) {
 			ThreadPool threadPool = context.get(ThreadPool.class);
 			
 			ReportNode reportNode = executeInSession(thread, node, (sessionArtefact, sessionReportNode)->{
@@ -260,8 +260,10 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		}
 
 		@Override
-		public ReportNode createReportNode_(ReportNode parentNode, Thread testArtefact) {
-			return new ReportNode();
+		public ThreadReportNode createReportNode_(ReportNode parentNode, Thread testArtefact) {
+			ThreadReportNode threadReportNode = new ThreadReportNode();
+			threadReportNode.setThreadGroupName((parentNode != null) ? parentNode.getName() : "Unnamed");
+			return threadReportNode;
 		}
 	}
 }
