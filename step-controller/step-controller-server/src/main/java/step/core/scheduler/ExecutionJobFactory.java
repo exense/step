@@ -31,7 +31,6 @@ import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.execution.ExecutionEngine;
-import step.core.execution.model.ExecutionParameters;
 
 public class ExecutionJobFactory implements JobFactory {
 
@@ -50,22 +49,21 @@ public class ExecutionJobFactory implements JobFactory {
 	public Job newJob(TriggerFiredBundle arg0, Scheduler arg1) throws SchedulerException {
 		JobDataMap data = arg0.getJobDetail().getJobDataMap();
 		String executionID;
-		ExecutionParameters executionParams;
 		if(data.containsKey(Executor.EXECUTION_ID)) {
 			executionID = data.getString(Executor.EXECUTION_ID);
 		} else {
 			String executionTaskID = data.getString(Executor.EXECUTION_TASK_ID);
-			executionParams = (ExecutionParameters) data.get(Executor.EXECUTION_PARAMETERS);
+			ExecutiontTaskParameters executiontTaskParameters = executionTaskAccessor.get(new ObjectId(executionTaskID));
 			
 			ControllerSetting schedulerUsernameSetting = controllerSettingAccessor.getSettingByKey("scheduler_execution_username");
 			if(schedulerUsernameSetting != null) {
 				String schedulerUsername = schedulerUsernameSetting.getValue();
 				if(schedulerUsername != null && schedulerUsername.trim().length()>0) {
-					executionParams.setUserID(schedulerUsername);
+					// Override the execution user if the setting scheduler_execution_username is set
+					executiontTaskParameters.getExecutionsParameters().setUserID(schedulerUsername);
 				}
 			}
 			
-			ExecutiontTaskParameters executiontTaskParameters = executionTaskAccessor.get(new ObjectId(executionTaskID));
 			executionID = executionEngine.initializeExecution(executiontTaskParameters);
 		}
 		 
