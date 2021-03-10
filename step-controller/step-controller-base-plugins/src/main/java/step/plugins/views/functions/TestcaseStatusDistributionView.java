@@ -40,6 +40,10 @@ public class TestcaseStatusDistributionView extends AbstractView<ReportNodeStatu
 	}
 
 	@Override
+	public void beforeReportNodeExecution(ReportNodeStatusDistribution model, ReportNode node) {
+	}
+
+	@Override
 	public void afterReportNodeExecution(ReportNodeStatusDistribution model, ReportNode node) {
 		if(node instanceof TestCaseReportNode && node.persistNode()) {
 			model.distribution.get(node.getStatus()).count++;

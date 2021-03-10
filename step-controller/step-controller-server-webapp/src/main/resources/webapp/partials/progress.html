@@ -295,6 +295,18 @@
 					</div>
 				</div>
 			</div>
+			<div ng-attr-id="{{getPanelId('threadGroups')}}" ng-if="threadGroupsChart.series.length>1">
+					 <!--progress.count>1"-->
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a ng-click="toggleShowPanel('threadGroups')">{{getPanelTitle('threadGroups')}}</a>
+					</div>
+					<div class="panel-body" ng-show="isShowPanel('threadGroups')">
+						<canvas id="threadGroups-chart" class="chart chart-line"
+										handle="threadGroupsChart" legend="true" click="onClick" />
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

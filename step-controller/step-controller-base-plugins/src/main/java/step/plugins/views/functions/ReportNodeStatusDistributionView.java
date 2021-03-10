@@ -28,13 +28,17 @@ import step.plugins.views.AbstractView;
 import step.plugins.views.View;
 
 @View
-public class ReportNodeStatusDistributionView extends AbstractView<ReportNodeStatusDistribution> {	
+public class ReportNodeStatusDistributionView extends AbstractView<ReportNodeStatusDistribution> {
 
 	@Override
 	public void afterReportNodeSkeletonCreation(ReportNodeStatusDistribution model, ReportNode node) {
 		if(node instanceof CallFunctionReportNode && node.persistNode()) {
 			model.countForecast++;
 		}
+	}
+
+	@Override
+	public void beforeReportNodeExecution(ReportNodeStatusDistribution model, ReportNode node) {
 	}
 
 	@Override

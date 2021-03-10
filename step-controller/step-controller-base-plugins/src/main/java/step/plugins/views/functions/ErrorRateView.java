@@ -28,7 +28,10 @@ public class ErrorRateView extends AbstractTimeBasedView<ErrorRateEntry> {
 
 	@Override
 	public void afterReportNodeSkeletonCreation(AbstractTimeBasedModel<ErrorRateEntry> model, ReportNode node) {}
-	
+
+	@Override
+	public void beforeReportNodeExecution(AbstractTimeBasedModel<ErrorRateEntry> model, ReportNode node) {	}
+
 	private ErrorRateEntry createPoint(ReportNode node) {
 		ErrorRateEntry e = null;
 		if(node.getError()!=null && node.persistNode()) {

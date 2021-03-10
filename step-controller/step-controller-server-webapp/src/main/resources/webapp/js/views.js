@@ -32,7 +32,7 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
       options:{
         animation : false,
         title : {
-          display : true,
+          display : (title),
           text : title
         },
         scales: {
@@ -69,7 +69,7 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
           var timeChart = defaultChart(title);
           timeChart.data.push([]);
           timeChart.series.push(title);
-          
+
           var i = 0;
           var size = Object.keys(data.intervals).length;
           _.mapObject(data.intervals,function(entry,date){
@@ -79,6 +79,70 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
         });
     });
   };
+
+    dataFactory.getTimeBasedGaugeChart = function (viewId, eId, startTime, endTime, title) {
+      return $q(function(resolve, reject) {
+        dataFactory.get(viewId, eId).then(
+          function(response) {
+            var data = response.data;
+            var timeChart = defaultChart(title);
+            timeChart.options.legend.display = true
+            timeChart.data.push([]);
+            timeChart.series.push('total');
+
+            var i = 0;
+            var size = Object.keys(data.intervals).length;
+            var previousValue = 0;
+            var previousValues = {};
+            var prevTimestamp = parseInt(startTime);
+            var minInterval=Math.round((parseInt(endTime)-parseInt(startTime))/20);
+            _.mapObject(data.intervals,function(entry,date){
+            var dateInt = parseInt(date);
+              while (dateInt >= (prevTimestamp+minInterval)) {
+                prevTimestamp+=minInterval;
+                timeChart.labels.push($filter('date')(prevTimestamp, 'HH:mm:ss'));
+                timeChart.data[0].push(previousValue);
+                _.mapObject(previousValues, function(count, name) {
+                  var id = timeChart.series.indexOf(name);
+                  if(id > -1) { //must already exist
+                    timeChart.data[id].push(count);
+                  }
+                });
+
+              }
+              timeChart.labels.push($filter('date')(date, 'HH:mm:ss'));
+              timeChart.data[0].push(entry.count)
+              _.mapObject(entry.byThreadGroupName, function(statistics, name) {
+                var id = timeChart.series.indexOf(name);
+                if(id==-1) {
+                  timeChart.series.push(name);
+                  timeChart.data.push([]);
+                  id = timeChart.series.length-1;
+                }
+                timeChart.data[id].push(statistics.count);
+                previousValues[name] = statistics.count;
+              });
+              previousValue = entry.count;
+              prevTimestamp = parseInt(date);
+
+
+
+            });
+            while ((prevTimestamp+minInterval) < endTime) {
+              prevTimestamp+=minInterval;
+              timeChart.labels.push($filter('date')(prevTimestamp, 'HH:mm:ss'));
+              timeChart.data[0].push(previousValue);
+              _.mapObject(previousValues, function(count, name) {
+                var id = timeChart.series.indexOf(name);
+                if(id > -1) { //must already exist
+                  timeChart.data[id].push(count);
+                }
+              });
+            }
+            resolve(timeChart);
+          });
+      });
+    };
   
   dataFactory.getReportNodeStatisticCharts = function (eId) {
     return $q(function(resolve, reject) {

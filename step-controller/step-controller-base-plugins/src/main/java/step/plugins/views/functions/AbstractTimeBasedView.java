@@ -78,17 +78,22 @@ public abstract class AbstractTimeBasedView<T> extends AbstractView<AbstractTime
 		TreeMap<Long, T> oldIntervals = model.getIntervals();
 		for(Entry<Long, T> entry:oldIntervals.entrySet()) {
 			long time = entry.getKey();
-			addPointToInterval(newIntervals, time, resolution, entry.getValue());
+			mergePointToInterval(newIntervals, time, resolution, entry.getValue());
 		}
 		
 		model.setResolutionIndex(resolutionIndex);
 		model.setResolution(resolution);
 		model.setIntervals(newIntervals);
 	}
+
+	protected void mergePointToInterval(TreeMap<Long, T> newIntervals, long time, int resolution, T point) {
+		addPointToInterval(newIntervals, time, resolution, point);
+	}
 	
-	private void addPointToInterval(Map<Long, T> intervals, long time, int resolution, T point) {
+	private void addPointToInterval(TreeMap<Long, T> intervals, long time, int resolution, T point) {
 		long interval = timeToInterval(time,resolution);
-		
+
+		initInterval(intervals,interval);
 		T entry = intervals.get(interval);
 		if(entry==null) {
 			entry = point;
@@ -98,19 +103,22 @@ public abstract class AbstractTimeBasedView<T> extends AbstractView<AbstractTime
 		}
 	}
 	
-	private void removePointFromInterval(Map<Long, T> intervals, long time, int resolution, T point) {
+	private void removePointFromInterval(TreeMap<Long, T> intervals, long time, int resolution, T point) {
 		long interval = timeToInterval(time,resolution);
+		initInterval(intervals,interval);
 		T entry = intervals.get(interval);
 		if(entry != null) {
 			unMergePoints(entry, point);
 		}
 	}
+
+	protected void initInterval(TreeMap<Long, T> intervals,long interval) {}
 	
 	protected abstract void mergePoints(T target, T source);
 	
 	protected abstract void unMergePoints(T target, T source);
 	
-	private long timeToInterval(long time, long resolution) {
+	protected long timeToInterval(long time, long resolution) {
 		return time-time%resolution;
 	}
 

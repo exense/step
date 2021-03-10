@@ -158,6 +158,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					"testCases":{label:"Test cases",show:false, enabled:false},
 					"steps":{label:"Keyword calls",show:true, enabled:true},
 					"throughput":{label:"Keyword throughput",show:true, enabled:true},
+					"threadGroups":{label:"ThreadGroup Usage",show:true, enabled:true},
 					"performance":{label:"Performance",show:true, enabled:true},
 					"reportTree":{label:"Execution tree",show:true, enabled:true},
 					"executionDetails":{label:"Execution details",show:true, enabled:true},
@@ -330,6 +331,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			}
 
 			$scope.throughputchart = {};
+			$scope.threadGroupsChart = {};
 			$scope.responseTimeByFunctionChart = {};
 
 			var refresh = function() {
@@ -405,6 +407,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					refreshExecution();
 					if ($scope.execution==null || $scope.execution.status!='ENDED') { 
 					  if($scope.active()) {
+					    $scope.currentEndTime=Date.now();
 							refresh();
 							refreshTestCaseTable();
 						}
@@ -498,6 +501,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						$scope.switchToPermanent();
 						refreshFct();//perform final refresh
 						$scope.initAutoRefresh(false,0,0);
+						$scope.currentEndTime=$scope.execution.endTime;
 					}else{
 						$scope.switchToRealtime();
 						if (oldStatus == null) {
@@ -526,6 +530,13 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					}
 				}
 			});
+
+			$scope.$watch('currentEndTime',function(newStatus, oldStatus) {
+        if(newStatus && $scope.execution) {
+          viewFactory.getTimeBasedGaugeChart('ThreadGroupStatistics',eId,$scope.execution.startTime,$scope.currentEndTime).then(function(chart){$scope.threadGroupsChart=chart})
+        }
+      });
+
 
 			$scope.$on('dashboard-ready', function () {
 				if(!$scope.init){

@@ -32,7 +32,10 @@ public class ReportNodeStatisticsView extends AbstractTimeBasedView<ReportNodeSt
 
 	@Override
 	public void afterReportNodeSkeletonCreation(AbstractTimeBasedModel<ReportNodeStatisticsEntry> model, ReportNode node) {}
-	
+
+	@Override
+	public void beforeReportNodeExecution(AbstractTimeBasedModel<ReportNodeStatisticsEntry> model, ReportNode node) {}
+
 	private ReportNodeStatisticsEntry createPoint(ReportNode node) {
 		ReportNodeStatisticsEntry e = null;
 		if(node instanceof CallFunctionReportNode && node.persistNode()) {

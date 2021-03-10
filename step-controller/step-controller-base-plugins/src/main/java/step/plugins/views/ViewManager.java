@@ -93,6 +93,10 @@ public class ViewManager {
 		invokeViewHooks(node, (model, view)->view.afterReportNodeSkeletonCreation(model, node));
 	}
 
+	public void beforeReportNodeExecution(ReportNode node) {
+		invokeViewHooks(node, (model, view)->view.beforeReportNodeExecution(model, node));
+	}
+
 	public void afterReportNodeExecution(ReportNode node) {
 		invokeViewHooks(node, (model, view)->view.afterReportNodeExecution(model, node));
 	}

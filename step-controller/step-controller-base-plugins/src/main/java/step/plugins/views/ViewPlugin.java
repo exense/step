@@ -42,6 +42,11 @@ public class ViewPlugin extends AbstractExecutionEnginePlugin {
 	}
 
 	@Override
+	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node){
+		viewManager.beforeReportNodeExecution(node);
+	}
+
+	@Override
 	public void afterReportNodeSkeletonCreation(ReportNode node) {
 		viewManager.afterReportNodeSkeletonCreation(node);
 	}

@@ -42,6 +42,8 @@ public abstract class AbstractView<V extends ViewModel> {
 	public void addModel(String executionId, V model) {
 		models.put(executionId, model);
 	}
+
+	public abstract void beforeReportNodeExecution(V model, ReportNode node);
 	
 	public abstract void afterReportNodeSkeletonCreation(V model, ReportNode node);
 	
