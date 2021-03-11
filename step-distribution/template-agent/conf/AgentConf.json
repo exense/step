@@ -1,17 +1,22 @@
 {
-"gridHost":"http://localhost:8081",
-"registrationPeriod":1000,
-"gridReadTimeout":20000,
-"workingDir":"../work",
-"tokenGroups":[
-{"capacity":10, 
-"tokenConf":{
-	"attributes":{},
-	"properties":{"chromedriver":"../ext/bin/chromedriver/chromedriver.exe"}}
-}
-],
-"properties":{
-	"plugins.jmeter.home":"../ext/lib/jmeter",
-	"plugins.selenium.libs.2.x":"../ext/lib/selenium/selenium-2.53.1",
-	"plugins.selenium.libs.3.x":"../ext/lib/selenium/selenium-java-3.5.3"}
+   "gridHost":"http://localhost:8081",
+   "registrationPeriod":1000,
+   "gridReadTimeout":20000,
+   "workingDir":"../work",
+   "tokenGroups":[
+      {
+         "capacity":10,
+         "tokenConf":{
+            "attributes":{
+               
+            },
+            "properties":{
+               
+            }
+         }
+      }
+   ],
+   "properties":{
+      "plugins.jmeter.home":"/path/to/jmeter"
+   }
 }
