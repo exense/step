@@ -32,6 +32,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.Check;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
 import step.core.artefacts.CheckArtefact;
@@ -508,5 +509,34 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 				"  Check:PASSED:\n" + 
 				" AfterSequence:FAILED:\n" + 
 				"  Check:FAILED:\n" , writer.toString());	
+	}
+	
+	@Test
+	public void testContinueAfterError() throws Exception {
+		// Create a plan with an empty sequence block
+		Check checkIfContinueAfterError = check("false");
+		checkIfContinueAfterError.getContinueParentNodeExecutionOnError().setValue(true);
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence())
+					.add(check("true"))
+					.add(checkIfContinueAfterError)
+					.add(check("true"))
+				.endBlock()
+				.build();
+		
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);	
+		
+		result.waitForExecutionToTerminate();
+		
+		StringWriter writer = new StringWriter();
+		result.printTree(writer);
+		
+		assertEquals("Sequence:FAILED:\n"
+				+ " Check:PASSED:\n"
+				+ " Check:FAILED:\n"
+				+ " Check:PASSED:\n"
+				+ "" , writer.toString());	
 	}
 }

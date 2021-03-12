@@ -34,6 +34,7 @@
 			<div class="form-group form-group-sm">
 				<dynamic-checkbox tooltip="'Instrument this node to measure its execution time. A performance measurement will be created after each execution of this node.'" label="'Instrument'" on-save="save()" dynamic-value="artefact.instrumentNode"/>
 				<dynamic-checkbox tooltip="'Switch to disable or enable the execution of this node.'" label="'Skip node execution'" on-save="save()" dynamic-value="artefact.skipNode"/>
+				<dynamic-checkbox label="'Continue execution of parent element on error'" tooltip="'Defines if the execution of the parent sequence should continue when this node fails. Per default the execution of the sequence will stop in case of any error'" on-save="save()" dynamic-value="artefact.continueParentNodeExecutionOnError"/>
 			</div>
 		</fieldset>
 	</div>

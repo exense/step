@@ -110,7 +110,7 @@ public class SequentialArtefactScheduler {
 		return reportNode;
 	}
 	
-	public void execute_(ReportNode reportNode, AbstractArtefact artefact, Boolean continueOnError) {
+	public void execute_(ReportNode reportNode, AbstractArtefact artefact, Boolean continueSequenceOnError) {
 		executeWithinBeforeAndAfter(artefact, reportNode, children -> {
 			AtomicReportNodeStatusComposer reportNodeStatusComposer;
 			if (children.isEmpty()) {
@@ -130,12 +130,22 @@ public class SequentialArtefactScheduler {
 					if (resultNode.getStatus() == ReportNodeStatus.TECHNICAL_ERROR
 							|| resultNode.getStatus() == ReportNodeStatus.FAILED) {
 						if (!context.isSimulation()) {
-							if (continueOnError != null) {
-								if (!continueOnError) {
+							boolean childContinueOnError = child.getContinueParentNodeExecutionOnError().getOrDefault(false);
+							if(childContinueOnError) {
+								// continue
+								// The value continueParentNodeExecutionOnError of the child element overrides
+								// continueSequenceOnError of the sequence
+							} else {
+								if (continueSequenceOnError != null) {
+									if (!continueSequenceOnError) {
+										break;
+									} else {
+										// continue
+									}
+								} else {
+									// break per default
 									break;
 								}
-							} else {
-								break;
 							}
 						}
 					}
