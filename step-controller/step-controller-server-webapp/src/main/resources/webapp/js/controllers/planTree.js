@@ -248,6 +248,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         //Triggered continuously during drag 
       }).bind("dnd_stop.vakata", function(e, data) { //Triggered on drag complete
           if ($scope.nodesToMove !== undefined && $scope.nodesToMove.length > 0) {
+			var artefactToFocusAfterRefresh = null;
             _.each($scope.nodesToMove, function(node) {
               var id = node.id;
               var artefact = getArtefactById($scope.plan.root, node.id);
@@ -257,10 +258,13 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
                 return child.id == id;
               });
               newParent.children.splice(node.position, 0, artefact);
-              reloadAfterArtefactInsertion(artefact);
-              $scope.fireChangeEvent();
-              $scope.nodesToMove=[];
+              artefactToFocusAfterRefresh = artefact;
             });
+            if(artefactToFocusAfterRefresh) {
+	         reloadAfterArtefactInsertion(artefactToFocusAfterRefresh);
+	         $scope.fireChangeEvent();
+	         $scope.nodesToMove=[];
+	        }
           }
       });
       
