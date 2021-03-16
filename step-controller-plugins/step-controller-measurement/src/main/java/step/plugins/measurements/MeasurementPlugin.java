@@ -101,8 +101,9 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 			String[] labels = {tNode.getExecutionID(),tNode.getThreadGroupName(),planId,schedulerTaskId};
 			gaugeCollector.getGauge().labels(labels).inc();
 			labelsByExec.get(context.getExecutionId()).add(labels);
+			List<Measurement> measurements = gaugeCollector.collectAsMeasurements();
 			for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-				measurementHandler.processGauges(gaugeCollector.collectAsMeasurements());
+				measurementHandler.processGauges(measurements);
 			}
 		}
 	}
@@ -164,8 +165,9 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 			String[] labels = {tNode.getExecutionID(),tNode.getThreadGroupName(),planId,schedulerTaskId};
 			gaugeCollector.getGauge().labels(labels).dec();
 			labelsByExec.get(executionContext.getExecutionId()).add(labels);
+			List<Measurement> measurements = gaugeCollector.collectAsMeasurements();
 			for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-				measurementHandler.processGauges(gaugeCollector.collectAsMeasurements());
+				measurementHandler.processGauges(measurements);
 			}
 		}
 	}
