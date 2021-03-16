@@ -28,12 +28,8 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
     $scope.authService = AuthService;
     
     function reload() {
-      $http.get("rest/parameters/all").then(function(response) {
-        $scope.parameters = response.data;
-      });
+      $scope.tableHandle.reload();
     }
-    
-    reload();
     
     $scope.addParameter = function() {
       ParameterDialogs.editParameter(null, function() {reload()});
