@@ -180,7 +180,7 @@ public class Collection<T> {
 	 * @return a list of query fragments to be appended to the queries when performing a column search
 	 */
 	public Bson getQueryFragmentForColumnSearch(String columnName, String searchValue) {
-		return Filters.regex(columnName, searchValue);
+		return Filters.regex(columnName, searchValue, "i");
 	}
 	
 	public Class<?> getEntityClass() {
