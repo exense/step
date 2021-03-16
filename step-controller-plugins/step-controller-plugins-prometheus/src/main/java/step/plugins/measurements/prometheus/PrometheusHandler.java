@@ -19,11 +19,11 @@
 package step.plugins.measurements.prometheus;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ public class PrometheusHandler implements MeasurementHandler {
 
 	public PrometheusHandler(Histogram measurementHistogram) {
 		super();
-		labelsByExec = new HashMap();
+		labelsByExec = new ConcurrentHashMap();
 		this.measurementHisto = measurementHistogram;
 		GaugeCollectorRegistry.getInstance().registerHandler(this);
 	}
@@ -54,12 +54,17 @@ public class PrometheusHandler implements MeasurementHandler {
 		}
 	}
 
-	public void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
+	public void processMeasurements(List<Measurement> measurements) {
 		for (Measurement measurement : measurements) {
+			String taskId = measurement.getTaskId();
 			String[] labels = {measurement.getExecId(), measurement.getName(), measurement.getType(),
-					measurement.getStatus(), measurement.getPlanId(), measurement.getTaskId()};
-			labelsByExec.get(executionContext.getExecutionId()).add(labels);
-			measurementHisto.labels(labels).observe(measurement.getValue()/1000.0);
+					measurement.getStatus(), measurement.getPlanId(), (taskId!=null) ? taskId :""};
+			labelsByExec.get(measurement.getExecId()).add(labels);
+			try {
+				measurementHisto.labels(labels).observe(measurement.getValue() / 1000.0);
+			}catch (Exception e){
+				logger.error("Unable to update prometheus measurement histogram for labels: " + labels,e);
+			}
 		}
 	}
 
@@ -77,11 +82,8 @@ public class PrometheusHandler implements MeasurementHandler {
 		scheduler.shutdown();
 	}
 
-	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
-		Gauge gauge = PrometheusCollectorRegistry.getInstance().getOrCreateGauge(collector.getName(), collector.getDescription(),
-				collector.getLabels());
-		for (GaugeCollector.GaugeMetric metric : metrics) {
-			gauge.labels(metric.labelsValue).set(metric.value);
-		}
+	public void processGauges(List<Measurement> measurements) {
+		//nothing to be done for prometheus, gauge are only defined in abstract measurement plugin and
+		// exposed by the prometheus controller plugin
 	}
 }

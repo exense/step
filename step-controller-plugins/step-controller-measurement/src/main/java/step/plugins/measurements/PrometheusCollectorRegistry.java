@@ -1,8 +1,7 @@
-package step.plugins.measurements.prometheus;
+package step.plugins.measurements;
 
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
-import io.prometheus.client.SimpleCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

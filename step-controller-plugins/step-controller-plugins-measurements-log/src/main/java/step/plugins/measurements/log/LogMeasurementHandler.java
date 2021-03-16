@@ -26,9 +26,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.plugins.measurements.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class LogMeasurementHandler implements MeasurementHandler {
 
@@ -42,8 +40,7 @@ public class LogMeasurementHandler implements MeasurementHandler {
 		objectMapper = new ObjectMapper();
 	}
 
-	public void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
-		List<?> rtmMeasurements = measurements;
+	public void processMeasurements(List<Measurement> measurements) {
 		for (Object o: measurements) {
 			try {
 				measurementLogger.info(objectMapper.writeValueAsString(o));
@@ -53,22 +50,8 @@ public class LogMeasurementHandler implements MeasurementHandler {
 		}
 	}
 
-	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
-		for (GaugeCollector.GaugeMetric metric : metrics) {
-			Map<String,Object> measurement = new HashMap<>();
-			measurement.put("gauge_name", collector.getName());
-			measurement.put(MeasurementPlugin.BEGIN,System.currentTimeMillis());
-			String[] labels = collector.getLabels();
-			for (int i=0; i < labels.length; i++) {
-				measurement.put(labels[i],metric.labelsValue[i]);
-			}
-			measurement.put("value",metric.value);
-			try {
-				measurementLogger.info(objectMapper.writeValueAsString(measurement));
-			} catch (JsonProcessingException e) {
-				logger.error("Measurement could not be formatted to json: " + measurement.toString(),e);
-			}
-		}
+	public void processGauges(List<Measurement> measurements) {
+		processMeasurements(measurements);
 	}
 
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext){}

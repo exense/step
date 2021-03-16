@@ -28,22 +28,13 @@
 		<version>0.0.0-SNAPSHOT</version>
 	</parent>
 
-	<properties>
-		<prometheus-client.version>0.10.0</prometheus-client.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-controller-measurement</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<!-- The client -->
-		<dependency>
-			<groupId>io.prometheus</groupId>
-			<artifactId>simpleclient</artifactId>
-			<version>${prometheus-client.version}</version>
-		</dependency>
+
 		<!-- Hotspot JVM metrics-->
 		<dependency>
 			<groupId>io.prometheus</groupId>

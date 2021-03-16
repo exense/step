@@ -45,7 +45,8 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
         legend: {
           display : false
         }
-      }
+      },
+      fill: false
     }
   }
   
@@ -87,31 +88,39 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
             var data = response.data;
             var timeChart = defaultChart(title);
             timeChart.options.legend.display = true
-            timeChart.data.push([]);
-            timeChart.series.push('total');
-
+            timeChart.options.scales.yAxes[0].stacked = true;
+            timeChart.fill='origin';
             var i = 0;
             var size = Object.keys(data.intervals).length;
             var previousValue = 0;
             var previousValues = {};
+            //init all series (requires if anything starts with an offset)
+            _.mapObject(data.intervals,function(entry,date){
+              _.mapObject(entry.byThreadGroupName, function(statistics, name) {
+                previousValues[name]=0;
+              });
+            });
             var prevTimestamp = parseInt(startTime);
             var minInterval=Math.round((parseInt(endTime)-parseInt(startTime))/20);
             _.mapObject(data.intervals,function(entry,date){
-            var dateInt = parseInt(date);
+              var dateInt = parseInt(date);
+              //Gauge only have actual points when value changes, create intermediate points with current value
               while (dateInt >= (prevTimestamp+minInterval)) {
                 prevTimestamp+=minInterval;
                 timeChart.labels.push($filter('date')(prevTimestamp, 'HH:mm:ss'));
-                timeChart.data[0].push(previousValue);
                 _.mapObject(previousValues, function(count, name) {
                   var id = timeChart.series.indexOf(name);
-                  if(id > -1) { //must already exist
-                    timeChart.data[id].push(count);
+                  if(id==-1) {
+                    timeChart.series.push(name);
+                    timeChart.data.push([]);
+                    id = timeChart.series.length-1;
                   }
+                  timeChart.data[id].push(count);
                 });
 
               }
+              //process the intervals with metrics
               timeChart.labels.push($filter('date')(date, 'HH:mm:ss'));
-              timeChart.data[0].push(entry.count)
               _.mapObject(entry.byThreadGroupName, function(statistics, name) {
                 var id = timeChart.series.indexOf(name);
                 if(id==-1) {
@@ -124,14 +133,12 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
               });
               previousValue = entry.count;
               prevTimestamp = parseInt(date);
-
-
-
             });
+            //Finally insert points till end of test execution
             while ((prevTimestamp+minInterval) < endTime) {
               prevTimestamp+=minInterval;
               timeChart.labels.push($filter('date')(prevTimestamp, 'HH:mm:ss'));
-              timeChart.data[0].push(previousValue);
+              //timeChart.data[0].push(previousValue);
               _.mapObject(previousValues, function(count, name) {
                 var id = timeChart.series.indexOf(name);
                 if(id > -1) { //must already exist
@@ -140,7 +147,7 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
               });
             }
             resolve(timeChart);
-          });
+        });
       });
     };
   

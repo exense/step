@@ -27,6 +27,10 @@
 		<version>0.0.0-SNAPSHOT</version>
 		<relativePath>../step-parent</relativePath>
 	</parent>
+
+	<properties>
+		<prometheus-client.version>0.10.0</prometheus-client.version>
+	</properties>
 	
 	<modules>
 		<module>step-controller-measurement</module>

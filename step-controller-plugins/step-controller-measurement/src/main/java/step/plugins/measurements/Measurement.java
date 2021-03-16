@@ -5,85 +5,69 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Measurement extends HashMap<String, Object> {
-	long begin;
-	long value;
-	String name = "";
-	String type = "";
-	String status = "";
-	String execId = "";
-	String taskId = "";
-	String planId = "";
 	Map<String, Object> customFields = new HashMap<>();
 
 	public long getBegin() {
-		return begin;
+		return (long) this.get(MeasurementPlugin.BEGIN);
 	}
 
 	public void setBegin(long begin) {
-		this.begin = begin;
 		this.put(MeasurementPlugin.BEGIN, begin);
 	}
 
 	public long getValue() {
-		return value;
+		return (long) this.get(MeasurementPlugin.VALUE);
 	}
 
 	public void setValue(long value) {
-		this.value = value;
 		this.put(MeasurementPlugin.VALUE, value);
 	}
 
 	public String getName() {
-		return name;
+		return (String) this.get(MeasurementPlugin.NAME);
 	}
 
 	public void setName(String name) {
-		this.name = name;
 		this.put(MeasurementPlugin.NAME, name);
 	}
 
 	public String getType() {
-		return type;
+		return (String) this.get(MeasurementPlugin.TYPE);
 	}
 
 	public void setType(String type) {
-		this.type = type;
 		this.put(MeasurementPlugin.TYPE, type);
 	}
 
 	public String getStatus() {
-		return status;
+		return (String) this.get(MeasurementPlugin.RN_STATUS);
 	}
 
 	public void setStatus(String status) {
-		this.status = status;
 		this.put(MeasurementPlugin.RN_STATUS, status);
 	}
 
 	public String getExecId() {
-		return execId;
+		return (String) this.get(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID);
 	}
 
 	public void setExecId(String execId) {
-		this.execId = execId;
 		this.put(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, execId);
 	}
 
 	public String getTaskId() {
-		return taskId;
+		return (String) this.get(MeasurementPlugin.TASK_ID);
 	}
 
 	public void setTaskId(String taskId) {
-		this.taskId = taskId;
 		this.put(MeasurementPlugin.TASK_ID, taskId);
 	}
 
 	public String getPlanId() {
-		return planId;
+		return (String) this.get(MeasurementPlugin.PLAN_ID);
 	}
 
 	public void setPlanId(String planId) {
-		this.planId = planId;
 		this.put(MeasurementPlugin.PLAN_ID, planId);
 	}
 

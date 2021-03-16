@@ -9,8 +9,8 @@ public interface MeasurementHandler {
 
 
 	void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext);
-	void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext);
-	void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics);
+	void processMeasurements(List<Measurement> measurements);
+	void processGauges( List<Measurement> measurements);
 	void afterExecutionEnd(ExecutionContext context);
 
 }

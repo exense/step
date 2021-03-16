@@ -118,7 +118,7 @@
     scope.colours = getColours(scope);
     var cvs = elem[0], ctx = cvs.getContext('2d');
     var data = Array.isArray(scope.handle.data[0]) ?
-      getDataSets(scope.handle.labels, scope.handle.data, scope.handle.series || [], scope.colours) :
+      getDataSets(scope.handle.labels, scope.handle.data, scope.handle.series || [], scope.colours, scope.handle.fill) :
       getData(scope.handle.labels, scope.handle.data, scope.colours);
     var chart = new Chart(ctx,{type: type,
                                 data: data,
@@ -160,7 +160,7 @@
 
   function getColour (colour) {
     return {
-      backgroundColor: rgba(colour, 0.2),
+      backgroundColor: rgba(colour, 0.7),
       borderColor: rgba(colour, 1),
       pointBorderColor: rgba(colour, 1),
       pointStrokeColor: '#fff',
@@ -187,14 +187,14 @@
     return [r, g, b];
   }
 
-  function getDataSets (labels, data, series, colours) {
+  function getDataSets (labels, data, series, colours, fill) {
     return {
       labels: labels,
       datasets: data.map(function (item, i) {
         var dataSet = angular.copy(colours[i]);
         dataSet.label = series[i];
         dataSet.data = item;
-        dataSet.fill = false;
+        dataSet.fill = fill;
         return dataSet;
       })
     };

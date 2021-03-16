@@ -1,5 +1,6 @@
 package step.plugins.measurements;
 
+import io.prometheus.client.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,17 +31,19 @@ public class GaugeCollectorRegistry {
 		collectors.put(name, collector);
 	}
 
-	 public synchronized void  registerHandler(MeasurementHandler handler){
+	public synchronized void  registerHandler(MeasurementHandler handler){
 		handlers.add(handler);
+	}
+
+	public GaugeCollector getGaugeCollector(String name) {
+		return collectors.get(name);
 	}
 
 	public void start() {
 		Runnable collect = () -> {
 			try {
 				collectors.forEach((c, t) -> {
-					//List<String> labelNames = t.getLabels(); lable names not required here, label values in GaugeMetric
-					List<GaugeCollector.GaugeMetric> gaugeMetrics = t.collect();
-					handlers.forEach(h -> h.processGauges(t, gaugeMetrics));
+					handlers.forEach(h -> h.processGauges(t.collectAsMeasurements()));
 				});
 			} catch (Exception e) {
 				logger.error("Exception occurred while processing gauge metrics", e);

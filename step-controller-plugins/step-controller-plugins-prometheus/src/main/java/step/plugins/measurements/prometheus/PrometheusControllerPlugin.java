@@ -32,6 +32,7 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.measurements.PrometheusCollectorRegistry;
 
 @Plugin
 public class PrometheusControllerPlugin extends AbstractControllerPlugin {

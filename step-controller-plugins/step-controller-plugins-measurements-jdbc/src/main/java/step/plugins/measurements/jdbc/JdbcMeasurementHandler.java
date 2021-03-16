@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.plugins.measurements.GaugeCollector;
+import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
@@ -55,10 +55,10 @@ public class JdbcMeasurementHandler implements MeasurementHandler {
 	public JdbcMeasurementHandler(boolean useCustomJsonColumn) {
 		super();
 		this.useCustomJsonColumn = useCustomJsonColumn;
+		GaugeCollectorRegistry.getInstance().registerHandler(this);
 	}
 
-
-	public void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
+	public void processMeasurements(List<Measurement> measurements) {
 		try (Connection jdbcCon = DriverManager.getConnection(JdbcMeasurementControllerPlugin.ConnectionPoolName)) {
 			boolean isPostGres = jdbcCon.getMetaData().getDatabaseProductName().contains("PostgreSQL");
 			String insertStatement = SQLinsert;
@@ -97,8 +97,9 @@ public class JdbcMeasurementHandler implements MeasurementHandler {
 
 	}
 
-	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
-		logger.error("Gauge processing not implement for JDBC measurement plugin.");
+	public void processGauges(List<Measurement> measurements) {
+		processMeasurements(measurements);
+
 	}
 
 	private void addPrpStmtToBatch(PreparedStatement preparedStatement, boolean isPostGres, long executionTime,

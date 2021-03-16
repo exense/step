@@ -1,6 +1,7 @@
 package step.plugins.measurements;
 
 import step.artefacts.reports.CallFunctionReportNode;
+import step.artefacts.reports.ThreadReportNode;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
@@ -12,9 +13,12 @@ import step.core.plugins.Plugin;
 import step.core.reports.Measure;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
-import java.util.*;
 
-import static step.plugins.measurements.MeasurementHandler.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Plugin
 @IgnoreDuringAutoDiscovery
@@ -36,6 +40,13 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	public static final String SCHEDULER_TASK_ID = "$schedulerTaskId";
 
 	private static List<MeasurementHandler> measurementHandlers = new ArrayList<>();
+	private Map<String, Set<String[]>> labelsByExec = new ConcurrentHashMap<>();
+
+	GaugeCollectorRegistry gaugeCollectorRegistry;
+
+	public MeasurementPlugin(GaugeCollectorRegistry gaugeCollectorRegistry) {
+		this.gaugeCollectorRegistry = gaugeCollectorRegistry;
+	}
 
 	public static synchronized void registerMeasurementHandlers(MeasurementHandler handler) {
 		measurementHandlers.add(handler);
@@ -50,6 +61,10 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 			executionContext.put(SCHEDULER_TASK_ID, schedulerTaskId);
 		}
 
+		if (!labelsByExec.containsKey(executionContext.getExecutionId())) {
+			labelsByExec.put(executionContext.getExecutionId(), new HashSet<>());
+		}
+
 		for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
 			measurementHandler.initializeExecutionContext(executionEngineContext,executionContext);
 		}
@@ -59,6 +74,36 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	public void afterExecutionEnd(ExecutionContext context) {
 		for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
 			measurementHandler.afterExecutionEnd(context);
+		}
+		//Clean up gauge metrics for execution id
+		GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(MeasurementControllerPlugin.ThreadgroupGaugeName);
+		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+		Runnable task = new Runnable() {
+			public void run() {
+				for (String[] labels : labelsByExec.remove(context.getExecutionId())) {
+					gaugeCollector.getGauge().remove(labels);
+				}
+			}
+		};
+		int delay = 70;
+		scheduler.schedule(task, delay, TimeUnit.SECONDS);
+		scheduler.shutdown();
+	}
+
+	@Override
+	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
+		if (node instanceof ThreadReportNode) {
+			ThreadReportNode tNode = (ThreadReportNode) node;
+			GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(MeasurementControllerPlugin.ThreadgroupGaugeName);
+			String schedulerTaskId = (String) context.get(SCHEDULER_TASK_ID);
+			schedulerTaskId = (schedulerTaskId!=null) ? schedulerTaskId : "";
+			String planId = context.getPlan().getId().toString();
+			String[] labels = {tNode.getExecutionID(),tNode.getThreadGroupName(),planId,schedulerTaskId};
+			gaugeCollector.getGauge().labels(labels).inc();
+			labelsByExec.get(context.getExecutionId()).add(labels);
+			for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
+				measurementHandler.processGauges(gaugeCollector.collectAsMeasurements());
+			}
 		}
 	}
 
@@ -109,14 +154,25 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 			if (measurements.size() > 0) {
 				processMeasurements(measurements, executionContext);
 			}
-
-
+		}
+		if (node instanceof ThreadReportNode) {
+			ThreadReportNode tNode = (ThreadReportNode) node;
+			GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(MeasurementControllerPlugin.ThreadgroupGaugeName);
+			String schedulerTaskId = (String) executionContext.get(SCHEDULER_TASK_ID);
+			schedulerTaskId = (schedulerTaskId!=null) ? schedulerTaskId : "";
+			String planId = executionContext.getPlan().getId().toString();
+			String[] labels = {tNode.getExecutionID(),tNode.getThreadGroupName(),planId,schedulerTaskId};
+			gaugeCollector.getGauge().labels(labels).dec();
+			labelsByExec.get(executionContext.getExecutionId()).add(labels);
+			for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
+				measurementHandler.processGauges(gaugeCollector.collectAsMeasurements());
+			}
 		}
 	}
 
 	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
 		for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-			measurementHandler.processMeasurements(measurements,executionContext);
+			measurementHandler.processMeasurements(measurements);
 		}
 	}
 

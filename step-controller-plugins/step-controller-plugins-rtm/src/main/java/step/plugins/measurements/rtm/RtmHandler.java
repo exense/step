@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
+import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementHandler;
-import step.plugins.measurements.GaugeCollector;
 import step.plugins.measurements.Measurement;
 
 public class RtmHandler implements MeasurementHandler {
@@ -39,20 +39,22 @@ public class RtmHandler implements MeasurementHandler {
 	public RtmHandler(MeasurementAccessor accessor) {
 		super();
 		this.accessor = accessor;
+		GaugeCollectorRegistry.getInstance().registerHandler(this);
 	}
 
-	public void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
+	public void processMeasurements(List<Measurement> measurements) {
 		List<?> rtmMeasurements = measurements;
 		if (measurements.size()>0) {
 			accessor.saveManyMeasurements((List<Object>) rtmMeasurements);
 		}
 	}
 
-	public void processGauges(GaugeCollector collector, List<GaugeCollector.GaugeMetric> metrics) {
-		logger.error("Gauge processing not implement for RTM measurement plugin.");
-		//would require to implement specific house keeping for it as this run outside of an execution context
+	public void processGauges(List<Measurement> measurements) {
+		processMeasurements(measurements);
 	}
 
-	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext){}
+	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext){
+		executionContext.put(MeasurementAccessor.class,accessor);
+	}
 	public void afterExecutionEnd(ExecutionContext context) {}
 }
