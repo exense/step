@@ -45,14 +45,6 @@ import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.core.plans.PlanCompiler;
-import step.core.plans.PlanCompilerException;
-import step.core.plans.PlanNavigator;
-import step.core.plans.PlanType;
-import step.core.plans.PlanTypeRegistry;
-import step.functions.Function;
 
 @Singleton
 @Path("plans")
@@ -192,6 +184,14 @@ public class PlanServices extends AbstractServices {
 	public AbstractArtefact cloneArtefact(AbstractArtefact artefact) {
 		assignNewId(artefact);
 		return artefact;
+	}
+	
+	@POST
+	@Path("/artefacts/clonemany")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
+	public List<AbstractArtefact> cloneArtefact(List<AbstractArtefact> artefacts) {
+		return artefacts.stream().map(a->cloneArtefact(a)).collect(Collectors.toList());
 	}
 	
 	private void assignNewId(AbstractArtefact artefact) {

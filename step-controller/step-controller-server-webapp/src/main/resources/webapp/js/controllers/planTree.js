@@ -247,40 +247,48 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       $(document).on("dnd_move.vakata", function (e, data) {
         //Triggered continuously during drag 
       }).bind("dnd_stop.vakata", function(e, data) { //Triggered on drag complete
-          if ($scope.nodesToMove !== undefined && $scope.nodesToMove.length > 0) {
-			var artefactToFocusAfterRefresh = null;
-            _.each($scope.nodesToMove, function(node) {
-              var id = node.id;
-              var artefact = getArtefactById($scope.plan.root, node.id);
-              var oldParent = getArtefactById($scope.plan.root, node.oldParent);
-              var newParent = getArtefactById($scope.plan.root, node.parent);
-              oldParent.children = _.reject(oldParent.children, function(child) {
-                return child.id == id;
-              });
-              newParent.children.splice(node.position, 0, artefact);
-              artefactToFocusAfterRefresh = artefact;
+        if ($scope.nodesToMove) {
+          // Important: We first sort the selected nodes by their position in the tree  
+          // We have to do this as jstree sorts the selected node using the chronological order of selection
+          var nodesToMove = sortNodeListByPositionInTree($scope.nodesToMove.nodes)
+          var artefactToFocusAfterRefresh = null;
+          var targetPosition = $scope.nodesToMove.targetPosition;
+          // Removes all the nodes from the old parent
+          _.each(nodesToMove, function (node) {
+            var id = node.id;
+            var artefact = getArtefactById($scope.plan.root, id);
+            var oldParent = getArtefactById($scope.plan.root, node.oldParent);
+            oldParent.children = _.reject(oldParent.children, function (child) {
+              return child.id == id;
             });
-            if(artefactToFocusAfterRefresh) {
-	         reloadAfterArtefactInsertion(artefactToFocusAfterRefresh);
-	         $scope.fireChangeEvent();
-	         $scope.nodesToMove=[];
-	        }
-          }
+            node.artefact = artefact;
+          });
+          // Insert the nodes at the desired position
+          _.each(nodesToMove, function (node) {
+            var artefact = node.artefact;
+            var newParent = getArtefactById($scope.plan.root, node.parent);
+            newParent.children.splice(targetPosition, 0, artefact);
+            artefactToFocusAfterRefresh = artefact;
+            targetPosition += 1;
+          });
+          reloadAfterArtefactInsertion(artefactToFocusAfterRefresh);
+          $scope.fireChangeEvent();
+          $scope.nodesToMove = null;
+        }
       });
       
       //Triggered for each node moved before the dnd_stop.vakata event
       $('#jstree_demo_div').on("move_node.jstree", function (e, data) {
-        if ($scope.nodesToMove === undefined) {
-          $scope.nodesToMove = [];
+        if (!$scope.nodesToMove) {
+          // We use the position of the first event as target position
+          $scope.nodesToMove = { targetPosition: data.position, nodes: [] };
         }
         var node = {
-            "id" : data.node.id,
-            "text" : data.node.text,
-            "oldParent" : data.old_parent,
-            "parent" : data.parent,
-            "position" : data.position
+          "id": data.node.id,
+          "oldParent": data.old_parent,
+          "parent": data.parent
         }
-        $scope.nodesToMove.push(node);
+        $scope.nodesToMove.nodes.push(node);
       })
       
       $("#jstree_demo_div").delegate("a","dblclick", function(e) {
@@ -565,6 +573,13 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         return selectedArtefact;
       }
       
+      function getSelectedArtefactsSortedByPositionInTree() {
+        var sortedNodes = getSelectedNodesSortedByPositionInTree();
+        return _.map(sortedNodes, function (node) {
+          return getArtefactById($scope.plan.root, node.id);
+        });
+      }
+
       openPlan = function(planId) {
         $timeout(function() {
           $location.path('/root/plans/editor/' + planId);
@@ -589,37 +604,49 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         });
       }
       
-      $scope.copy = function() {
-        var selectedArtefact = getSelectedArtefact();
-        $rootScope.clipboard = {object:"artefact",artefact:selectedArtefact};
+      $scope.copy = function () {
+        var selectedArtefacts = getSelectedArtefactsSortedByPositionInTree();
+        $rootScope.clipboard = { object: "artefact", artefactList: selectedArtefacts };
       }
-      
-      $scope.paste = function() {
+
+      $scope.paste = function () {
         var selectedArtefact = getSelectedArtefact();
-        if($rootScope.clipboard && $rootScope.clipboard.object=="artefact") {
-          $http.post("rest/plans/artefacts/clone", $rootScope.clipboard.artefact).then(function(response) {
-            var clone = response.data;
-            selectedArtefact.children.push(clone)
-            load(function () {
-              focusOnNode(clone.id);
-            });
-            $scope.fireChangeEvent();
-          });
+        if ($rootScope.clipboard && $rootScope.clipboard.object == "artefact") {
+          var artefactList = $rootScope.clipboard.artefactList
+          if (artefactList && artefactList.length > 0) {
+            $http.post("rest/plans/artefacts/clonemany", artefactList).then(function (response) {
+              var clones = response.data;
+              var artefactToFocus = null;
+              _.each(clones, function (clone) {
+                selectedArtefact.children.push(clone);
+                artefactToFocus = clone;
+              })
+              load(function () {
+                focusOnNode(artefactToFocus.id);
+              });
+              $scope.fireChangeEvent();
+            })
+          }
         }
       }
       
-      $scope.remove = function() {
-        var selectedArtefact = tree.get_selected(true)[0];
-        var parentid = tree.get_parent(selectedArtefact);
-        var previousNode = tree.get_prev_dom(selectedArtefact.id);
-        
-        var parentArtefact = getArtefactById($scope.plan.root, parentid);
-        parentArtefact.children = _.reject(parentArtefact.children, byId(selectedArtefact.id))
-        
-        load(function () {
-          setSelectedNode(previousNode);
-        });
-        $scope.fireChangeEvent();
+      $scope.remove = function () {
+        var selectedNodes = tree.get_selected(true);
+        if (selectedNodes.length > 0) {
+          var nodeToFocus = null;
+          _.each(selectedNodes, function (node) {
+            var parentid = tree.get_parent(node);
+            var previousNode = tree.get_prev_dom(node.id);
+            nodeToFocus = previousNode;
+            var parentArtefact = getArtefactById($scope.plan.root, parentid);
+            parentArtefact.children = _.reject(parentArtefact.children, byId(node.id))
+          })
+
+          load(function () {
+            setSelectedNode(nodeToFocus);
+          });
+          $scope.fireChangeEvent();
+        }
       }
       
       function byId(id) {
@@ -627,37 +654,94 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
           return artefact.id == id;
         }
       }
-      
-      $scope.move = function(offset) {
-        var selectedNode = tree.get_selected(true)[0];
-      	var parentid = tree.get_parent(selectedNode);
 
-      	var selectedArtefact = getArtefactById($scope.plan.root, selectedNode.id);
-      	var parentArtefact = getArtefactById($scope.plan.root, parentid);
-      	var children = parentArtefact.children;
-      	
-      	var index = _.findIndex(children, byId(selectedArtefact.id));
-      	var newIndex = index + offset;
-      	
-      	if(newIndex>=0 && newIndex<children.length) {
-      	  var temp = children[newIndex] 
-      	  children[newIndex] = selectedArtefact
-      	  children[index] = temp
-      	  
-      	  load(function () {
-      	    focusOnNode(selectedArtefact.id);
-      	  })
-      	  $scope.fireChangeEvent();
-      	}
+      function buildFlatNodeList(node, flatNodeList) {
+        if (!flatNodeList) {
+          flatNodeList = []
+        }
+        _.each(node.children, function (child) {
+          flatNodeList.push(child);
+          buildFlatNodeList(child, flatNodeList);
+        })
+        return flatNodeList;
+      }
+
+      function getSelectedNodesSortedByPositionInTree() {
+        var selectedNodes = tree.get_selected(true);
+        return sortNodeListByPositionInTree(selectedNodes);
+      }
+
+      function sortNodeListByPositionInTree(nodeList) {
+        var flatNodeIdList = _.map(buildFlatNodeList($scope.plan.root), function (node) { return node.id })
+        var sortedNodeList = _.sortBy(nodeList, function (node) {
+          return _.indexOf(flatNodeIdList, node.id);
+        })
+        return sortedNodeList;
+      }
+
+      $scope.move = function (offset) {
+        var selectedNodes = getSelectedNodesSortedByPositionInTree();
+
+        if (selectedNodes.length > 0) {
+          var nodeToFocus = null;
+
+          // Retrieve the list of node IDs to be moved
+          var nodeIdsToBeMoved = _.map(selectedNodes, function (node) {
+            return node.id
+          })
+
+          _.each(selectedNodes, function (node) {
+            var parentid = tree.get_parent(node);
+
+            var selectedArtefact = getArtefactById($scope.plan.root, node.id);
+            var parentArtefact = getArtefactById($scope.plan.root, parentid);
+            var children = parentArtefact.children;
+
+            var index = _.findIndex(children, byId(selectedArtefact.id));
+
+            var newIndex = index;
+            var child;
+
+            /*		
+            Jumping selected nodes over for the following reason:
+            Assuming that we have the sequence A-B-C-D and that we want to move the element A and B at the same time.
+            Without jumping the selected nodes over the following situation would occur:
+            - In the first iteration A would move to the second place and B to the first
+            - In the second iteration B would move from the first back to the second
+            => we would so come nack to the initial situation
+             */
+            do {
+              newIndex = newIndex + offset;
+              child = children[newIndex];
+            } while (child && nodeIdsToBeMoved.includes(child.id))
+
+            if (newIndex >= 0 && newIndex < children.length) {
+              var temp = children[newIndex]
+              children[newIndex] = selectedArtefact
+              children[index] = temp
+              nodeToFocus = selectedArtefact;
+
+              // Remove the node id from the list of the nodes to be moved
+              // Otherwise moving A-B from A-B-C-D would lead to C-D-A-B		
+              nodeIdsToBeMoved = _.reject(nodeIdsToBeMoved, function (id) { return id == node.id })
+            }
+          })
+          if (nodeToFocus) {
+            load(function () {
+              focusOnNode(nodeToFocus.id);
+            })
+            $scope.fireChangeEvent();
+          }
+        }
       }
       
       $scope.isInteractiveSessionActive = function() {
       	return $scope.interactiveSessionHandle.id!=null;
       }
       
-      $scope.execute = function() {
-        var selectedArtefact = tree.get_selected(true)[0];
-        $scope.interactiveSessionHandle.execute(selectedArtefact);
+      $scope.execute = function () {
+        var selectedArtefacts = getSelectedArtefactsSortedByPositionInTree();
+        $scope.interactiveSessionHandle.execute(selectedArtefacts);
       }
       
       $scope.onSelectedArtefactSave = function(artefact) {

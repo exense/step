@@ -141,16 +141,27 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
   })
   
   $scope.interactiveSession = {
-      execute: function(artefact) {
-        var sessionId = $scope.interactiveSession.id;
-        $scope.componentTabs.selectedTab = 3;
-        $http.post("rest/interactive/"+sessionId+"/execute/"+$scope.model.plan.id+"/"+artefact.id).then(function() {
-          $scope.stepsTable.reload();
-        });
-      },
-      start: function() {
-        $scope.startInteractive();
+    execute: function (artefacts) {
+      var sessionId = $scope.interactiveSession.id;
+      $scope.componentTabs.selectedTab = 3;
+
+      function execute(artefacts, callback) {
+        if (artefacts.length > 0) {
+          var artefact = artefacts[0]
+          $http.post("rest/interactive/" + sessionId + "/execute/" + $scope.model.plan.id + "/" + artefact.id).then(function () {
+            execute(artefacts.slice(1), callback);
+          })
+        } else {
+          callback()
+        }
       }
+      execute(artefacts, function () {
+        $scope.stepsTable.reload();
+      });
+    },
+    start: function () {
+      $scope.startInteractive();
+    }
   };
      
   $scope.isInteractiveSessionActive = function() {
