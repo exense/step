@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static step.planbuilder.BaseArtefacts.afterSequence;
 import static step.planbuilder.BaseArtefacts.afterThread;
 import static step.planbuilder.BaseArtefacts.beforeSequence;
@@ -33,11 +34,11 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
 import step.artefacts.Check;
 import step.artefacts.Sleep;
 import step.artefacts.ThreadGroup;
@@ -59,7 +60,7 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		StringWriter writer = new StringWriter();
 		executionEngine.execute(plan).printTree(writer);
 		
-		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.FAILED));
+		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.FAILED));
 	}
 	
 	@Test
@@ -72,7 +73,7 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		StringWriter writer = new StringWriter();
 		executionEngine.execute(plan).printTree(writer);
 		
-		Assert.assertEquals("ThreadGroup:PASSED:\n" + 
+		assertEquals("ThreadGroup:PASSED:\n" + 
 				" Thread 1:PASSED:\n" + 
 				"  Session:PASSED:\n" + 
 				"   Iteration 1:PASSED:\n" + 
@@ -93,7 +94,7 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		StringWriter writer = new StringWriter();
 		executionEngine.execute(plan).printTree(writer);
 		
-		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.TECHNICAL_ERROR));
+		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.TECHNICAL_ERROR));
 	}
 
 	private Check passedCheck() {
@@ -119,8 +120,8 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 
 		StringWriter writer = testMaxDuration(50, 100, count);
 		
-		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
-		Assert.assertTrue(count.get()<10);
+		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
+		assertTrue(count.get()<10);
 	}
 	
 	@Test
@@ -129,15 +130,55 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 
 		StringWriter writer = testMaxDuration(0, 1000, count);
 		
-		Assert.assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
-		Assert.assertEquals(10, count.get());
+		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
+		assertEquals(10, count.get());
+	}
+	
+	@Test
+	public void testMaxDurationWithoutMaxIterationCountDefault() throws Exception {
+		AtomicInteger count = new AtomicInteger(0);
+
+		StringWriter writer = testMaxDuration(50, 100, 0, count);
+		
+		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
+		assertTrue(count.get()<10);
 	}
 
+	@Test
+	public void testPacing() throws IOException, TimeoutException, InterruptedException {
+		int nIterations = 50;
+		int pacingMs = 100;
+
+		ThreadGroup artefact = new ThreadGroup();
+		artefact.setPacing(new DynamicValue<Integer>(pacingMs));
+		artefact.setIterations(new DynamicValue<Integer>(nIterations));
+
+		long t1 = System.currentTimeMillis();
+		AtomicInteger count = new AtomicInteger();
+		CheckArtefact check = new CheckArtefact(c-> {
+			count.incrementAndGet();
+			c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+		});
+		
+		Plan plan = PlanBuilder.create().startBlock(artefact).add(check).endBlock().build();
+		
+		ReportNodeStatus result = executionEngine.execute(plan).waitForExecutionToTerminate().getResult();
+		assertEquals(ReportNodeStatus.PASSED, result);
+		assertEquals(nIterations, count.get());
+		long duration = System.currentTimeMillis()-t1;
+		// Assert that the duration is higher than pacing x number of iterations
+		// and thus that the pacing has been taken into account
+		assertTrue(duration>=pacingMs*nIterations);
+	}
 
 	public StringWriter testMaxDuration(long sleepTime, int maxDuration, AtomicInteger count) throws IOException {
+		return testMaxDuration(sleepTime, maxDuration, 10, count);
+	}
+	
+	public StringWriter testMaxDuration(long sleepTime, int maxDuration, int maxIterations, AtomicInteger count) throws IOException {
 		ThreadGroup artefact = new ThreadGroup();
 		artefact.setMaxDuration(new DynamicValue<Integer>(maxDuration));
-		artefact.setIterations(new DynamicValue<Integer>(10));
+		artefact.setIterations(new DynamicValue<Integer>(maxIterations));
 		
 		Sleep sleep = new Sleep();
 		sleep.setDuration(new DynamicValue<Long>(sleepTime));
@@ -182,7 +223,7 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		StringWriter writer = new StringWriter();
 		result.printTree(writer);
 		
-		Assert.assertEquals("ThreadGroup:PASSED:\n" + 
+		assertEquals("ThreadGroup:PASSED:\n" + 
 				" Thread 1:PASSED:\n" + 
 				"  Session:PASSED:\n" + 
 				"   BeforeThread:PASSED:\n" + 
@@ -234,7 +275,7 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		StringWriter writer = new StringWriter();
 		result.printTree(writer);
 		
-		Assert.assertEquals("ThreadGroup:FAILED:\n" + 
+		assertEquals("ThreadGroup:FAILED:\n" + 
 				" Thread 1:FAILED:\n" + 
 				"  Session:FAILED:\n" + 
 				"   BeforeThread:PASSED:\n" + 

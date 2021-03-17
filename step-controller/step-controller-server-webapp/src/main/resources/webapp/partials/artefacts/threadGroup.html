@@ -1,18 +1,25 @@
 <div class="form-group-sm">
 <fieldset ng-disabled="readonly">
 	<form>		
-		<dynamic-textfield label="'Number of threads'" tooltip="'The number of Threads to be started in parallel'" on-save="save()" dynamic-value="artefact.users" />
-		<dynamic-textfield label="'Number of iterations per thread'" tooltip="'How many times the node content should be executed per thread'" on-save="save()" dynamic-value="artefact.iterations" />
-
 		<div class="panel panel-default">
 			<div class="panel-heading">
-				<a ng-click="showLoadDistribution = !showLoadDistribution">Load distribution parameters</a>
+				<a ng-click="hideLoadDistribution = !hideLoadDistribution">Load distribution parameters</a>
 			</div>
-			<div class="panel-body" ng-show="showLoadDistribution">
-				<dynamic-textfield label="'Pacing (ms)'" tooltip="'Defines a time window in order to  control the number of keywords executed per time unit'" on-save="save()" dynamic-value="artefact.pacing" />
-				<dynamic-textfield label="'Rampup (ms)'" tooltip="'Designed to be automatically divided by the number of threads to start them progressively, so it represents the total duration of the ramp-up phase. If the value is left empty, it defaults to the pacing value'" on-save="save()" dynamic-value="artefact.rampup" />
-				<dynamic-textfield label="'Start offset (ms)'" tooltip="'The duration to wait before the Rampup starts'" on-save="save()" dynamic-value="artefact.startOffset" />
-				<dynamic-textfield label="'Maximum duration (ms)'" tooltip="'A zero-value means unlimited'" on-save="save()" dynamic-value="artefact.maxDuration" />
+			<div class="panel-body" ng-show="!hideLoadDistribution">
+				<dynamic-textfield label="'Number of threads'" tooltip="'Specifies the number of threads to be started.'" on-save="save()" dynamic-value="artefact.users" />
+				<dynamic-textfield label="'Pacing (ms)'" tooltip="'Specifies the amount of time between each iteration.'" on-save="save()" dynamic-value="artefact.pacing" />
+				<dynamic-textfield label="'Ramp-up (ms)'" tooltip="'Specifies the amount of time that should be taken to start all the threads. If left empty the ramp-up duration will be equal to the pacing.'" on-save="save()" dynamic-value="artefact.rampup" />
+				<dynamic-textfield label="'Start offset (ms)'" tooltip="'Specifies the duration to wait before the ramp-up starts.'" on-save="save()" dynamic-value="artefact.startOffset" />
+			</div>
+		</div>
+		
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="hideDurationParameters = !hideDurationParameters">Duration parameters</a>
+			</div>
+			<div class="panel-body" ng-show="!hideDurationParameters">
+				<dynamic-textfield label="'Number of iterations per thread'" tooltip="'Specifies the number of iterations per thread. If left empty the execution will last until it reaches the specified maximum duration.'" on-save="save()" dynamic-value="artefact.iterations" />
+				<dynamic-textfield label="'Maximum duration (ms)'" tooltip="'Specifies the maximum duration of each thread. A zero-value means unlimited.'" on-save="save()" dynamic-value="artefact.maxDuration" />
 			</div>
 		</div>
 
