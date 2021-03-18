@@ -41,7 +41,10 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             $scope.undoStack=[];
             $scope.redoStack=[];
           }
-          if ($scope.undoStack.length == 0) {
+          // In read only mode we always expand the tree on plan change
+          // In normal mode a plan change might be an undo/redo operation.
+          // In this case we want to keep the tree state
+          if ($scope.readonly || $scope.undoStack.length == 0) {
             var backupPlan = JSON.parse(JSON.stringify($scope.plan));
             $scope.undoStack.push(backupPlan);
             load(function(root) {
@@ -381,18 +384,22 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       	  return node;
       	}
       	
-      	var root = asJSTreeNode($scope.plan.root);
-        
-      	treeData.push(root)
-      	tree.settings.core.data = treeData;
-      	
-      	$('#jstree_demo_div').one("refresh.jstree", function() {
-      		if(callback) {
-      			callback(root); 		
-      		}
-      	})
-
-      	tree.refresh();
+        // In some cases (Empty plain text plan for instance)
+        // the root artefact doesn't exist
+        if($scope.plan.root) {
+          var root = asJSTreeNode($scope.plan.root);
+          
+          treeData.push(root)
+          tree.settings.core.data = treeData;
+          
+          $('#jstree_demo_div').one("refresh.jstree", function() {
+            if(callback) {
+              callback(root); 		
+            }
+          })
+  
+          tree.refresh();
+        }
       }
       
       function focusOnNode(nodeId) {
