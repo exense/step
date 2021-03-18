@@ -43,6 +43,7 @@ import step.artefacts.handlers.SelectorHelper;
 import step.core.artefacts.AbstractArtefact;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.core.deployment.Unfiltered;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 
@@ -181,6 +182,7 @@ public class PlanServices extends AbstractServices {
 	@Path("/artefacts/clone")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
+	@Unfiltered
 	public AbstractArtefact cloneArtefact(AbstractArtefact artefact) {
 		assignNewId(artefact);
 		return artefact;
@@ -190,6 +192,7 @@ public class PlanServices extends AbstractServices {
 	@Path("/artefacts/clonemany")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
+	@Unfiltered
 	public List<AbstractArtefact> cloneArtefact(List<AbstractArtefact> artefacts) {
 		return artefacts.stream().map(a->cloneArtefact(a)).collect(Collectors.toList());
 	}
