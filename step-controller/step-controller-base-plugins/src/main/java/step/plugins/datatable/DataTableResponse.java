@@ -29,6 +29,10 @@ public class DataTableResponse {
 	
 	String[][] data;
 
+	public DataTableResponse() {
+		super();
+	}
+
 	public DataTableResponse(int draw, long recordsTotal,
 			long recordsFiltered, String[][] data) {
 		super();

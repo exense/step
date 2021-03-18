@@ -134,9 +134,11 @@ public class ParameterServices extends AbstractServices {
 	private void encryptParameterValueIfEncryptionManagerAvailable(Parameter newParameter) throws EncryptionManagerException {
 		if(encryptionManager != null) {
 			String value = newParameter.getValue();
-			newParameter.setValue(null);
-			String encryptedValue = encryptionManager.encrypt(value);
-			newParameter.setEncryptedValue(encryptedValue);
+			if(value != null) {
+				newParameter.setValue(null);
+				String encryptedValue = encryptionManager.encrypt(value);
+				newParameter.setEncryptedValue(encryptedValue);
+			}
 		}
 	}
 
