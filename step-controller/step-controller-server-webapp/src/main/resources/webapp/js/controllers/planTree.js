@@ -29,11 +29,18 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       readonly: '=',
     },
     controller: function($scope,$location,$rootScope, AuthService) {
+      $scope.undoStackEntityId;
       $scope.undoStack=[];
       $scope.redoStack=[];
       
       $scope.$watch('plan',function() {
         if($scope.plan) {
+          if(!$scope.undoStackEntityId || $scope.undoStackEntityId != $scope.plan.id) {
+            // We're switching to a new plan. Reset the undoStack
+            $scope.undoStackEntityId = $scope.plan.id;
+            $scope.undoStack=[];
+            $scope.redoStack=[];
+          }
           if ($scope.undoStack.length == 0) {
             var backupPlan = JSON.parse(JSON.stringify($scope.plan));
             $scope.undoStack.push(backupPlan);
