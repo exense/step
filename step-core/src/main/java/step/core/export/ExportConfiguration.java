@@ -19,27 +19,28 @@
 package step.core.export;
 
 import java.io.OutputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 
 public class ExportConfiguration {
 	
-	OutputStream outputStream;
-	ObjectEnricher objectEnricher;
-	Map<String, String> metadata;
-	ObjectPredicate objectPredicate;
-	String entityType;
-	boolean recursively;
-	List<String> additionalEntities;
+	private OutputStream outputStream;
+	private Map<String, String> metadata;
+	private ObjectPredicate objectPredicate;
+	private String entityType;
+	private boolean recursively;
+	private List<String> additionalEntities;
+	private Set<String> messages = new HashSet<>();
 	
-	public ExportConfiguration(OutputStream outputStream, ObjectEnricher objectEnricher, Map<String, String> metadata,
-			ObjectPredicate objectPredicate, String entityType, boolean recursively, List<String> additionalEntities) {
+	public ExportConfiguration(OutputStream outputStream, Map<String, String> metadata,
+							   ObjectPredicate objectPredicate, String entityType, boolean recursively, List<String> additionalEntities) {
 		super();
 		this.outputStream = outputStream;
-		this.objectEnricher = objectEnricher;
 		this.metadata = metadata;
 		this.objectPredicate = objectPredicate;
 		this.entityType = entityType;
@@ -53,12 +54,6 @@ public class ExportConfiguration {
 	}
 	public void setOutputStream(OutputStream outputStream) {
 		this.outputStream = outputStream;
-	}
-	public ObjectEnricher getObjectEnricher() {
-		return objectEnricher;
-	}
-	public void setObjectEnricher(ObjectEnricher objectEnricher) {
-		this.objectEnricher = objectEnricher;
 	}
 	public Map<String, String> getMetadata() {
 		return metadata;
@@ -89,5 +84,20 @@ public class ExportConfiguration {
 	}
 	public void setAdditionalEntities(List<String> additionalEntities) {
 		this.additionalEntities = additionalEntities;
+	}
+
+	public void getContext() {
+	}
+
+	public void addMessages(Set<String> newMessages) {
+		messages.addAll(newMessages);
+	}
+
+	public Set<String> getMessages() {
+		return messages;
+	}
+
+	public void addMessage(String s) {
+		messages.add(s);
 	}
 }

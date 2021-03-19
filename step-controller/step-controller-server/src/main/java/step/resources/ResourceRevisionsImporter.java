@@ -41,7 +41,7 @@ public class ResourceRevisionsImporter extends GenericDBImporter<ResourceRevisio
 	public ResourceRevision importOne(ImportConfiguration importConfig, JsonParser jParser, ObjectMapper mapper,
 			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
 		ResourceRevision resourceRevision = mapper.readValue(jParser, entity.getEntityClass());
-		importConfig.getObjectEnricher().accept(resourceRevision);
+		context.getEntityManager().runImportHooks(resourceRevision,importConfig);
 		resourceRevision = importConfig.getLocalResourceMgr().saveResourceRevision(resourceRevision);
 		return resourceRevision;
 	}

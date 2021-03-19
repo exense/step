@@ -24,22 +24,25 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.attachments.FileResolver;
-import step.core.AbstractContext;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.CRUDAccessor;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.export.ExportConfiguration;
+import step.core.imports.ImportConfiguration;
 import step.core.objectenricher.ObjectPredicate;
-import step.resources.ResourceManager;
 
 public class EntityManager  {
 	
@@ -59,6 +62,9 @@ public class EntityManager  {
 	private Map<Class<?>, Entity<?,?>> entitiesByClass = new ConcurrentHashMap<Class<?>, Entity<?,?>>();
 	private AbstractStepContext context;
 	Map<Class<?>,BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
+
+	private List<BiConsumer<Object, ImportConfiguration>> importHook = new ArrayList<BiConsumer<Object, ImportConfiguration>>();
+	private List<BiConsumer<Object, ExportConfiguration>> exportHook = new ArrayList<BiConsumer<Object,ExportConfiguration>>();
 	
 	public EntityManager(AbstractStepContext context) {
 		this.context = context;
@@ -75,7 +81,7 @@ public class EntityManager  {
 	}
 
 	/**
-	 * Retrieve all existing references from the DB for give entity type
+	 * Retrieve all existing references from the DB for given entity type
 	 * @param entityType type of entities to retrieve
 	 * @param objectPredicate to apply to filter entities (i.e. project)
 	 * @param recursively flag to export references recursively (i.e by exporting a plan recursively the plan will be scanned to find sub references)
@@ -113,6 +119,7 @@ public class EntityManager  {
 		if (a == null ) {
 			logger.warn("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");
 			references.addReferenceNotFoundWarning("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");
+			//keep reference in map to avoid to resolve it multiple times
 		} else {
 			resolveReferences(a, references);
 			entity.getReferencesHook().forEach(h->h.accept(a,references));
@@ -224,7 +231,7 @@ public class EntityManager  {
 		}
 	}
 	
-	public Entity<?,?> getEntitiesByClass(Class<?> c) {
+	public Entity<?,?> getEntityByClass(Class<?> c) {
 		Entity<?,?> result = entitiesByClass.get(c);
 		while (result == null && !c.equals(Object.class)) {
 			c = c.getSuperclass();
@@ -234,8 +241,13 @@ public class EntityManager  {
 		
 	}
 
+	/** Used when importing artefacts with new IDs to update all references accordingly
+	 * if the map doesn't contain the old ID yet, a new id and corresponding map entry are created
+	 * @Param object: object to be updated
+	 * @Param references: the map of references (old to new ID)
+	 */
 	public void updateReferences(Object object, Map<String, String> references) {
-		Entity<?,?> entity = getEntitiesByClass(object.getClass());
+		Entity<?,?> entity = getEntityByClass(object.getClass());
 		if (entity != null) {
 			entity.getUpdateReferencesHook().forEach(r->r.accept(object, references));
 		}
@@ -340,6 +352,24 @@ public class EntityManager  {
 			return getNewValue_(value,returnType,references, entityType);
 		}
 		
+	}
+
+	public void registerExportHook(BiConsumer<Object, ExportConfiguration> exportBiConsumer) {
+		exportHook.add(exportBiConsumer);
+	}
+
+	public void runExportHooks(Object o, ExportConfiguration exportConfiguration) {
+		exportHook.forEach(h-> h.accept(o,exportConfiguration));
+	}
+
+	public void registerImportHook(BiConsumer<Object, ImportConfiguration> importBiConsumer) {
+		importHook.add(importBiConsumer);
+	}
+
+	public void runImportHooks(Object o, ImportConfiguration importConfiguration) {
+		importHook.forEach(h-> h.accept(o,importConfiguration));
+		//apply session object enricher as well
+		importConfiguration.getObjectEnricher().accept(o);
 	}
 	
 }

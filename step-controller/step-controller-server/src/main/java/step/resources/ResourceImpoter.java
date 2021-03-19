@@ -44,7 +44,7 @@ public class ResourceImpoter extends GenericDBImporter<Resource, ResourceAccesso
 			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
 		ResourceManager resourceManager = context.getResourceManager();
 		Resource resource = mapper.readValue(jParser, entity.getEntityClass());
-		importConfig.getObjectEnricher().accept(resource);
+		context.getEntityManager().runImportHooks(resource, importConfig);
 		resource = importConfig.getLocalResourceMgr().saveResource(resource);
 		String origResourceId = resource.getId().toHexString();
 		ResourceRevision revision = importConfig.getLocalResourceMgr().getResourceRevisionByResourceId(origResourceId);
@@ -56,6 +56,9 @@ public class ResourceImpoter extends GenericDBImporter<Resource, ResourceAccesso
 				try {
 					Resource newResouce = resourceManager.createResource(resource.getResourceType(), fileInputStream,
 							resourceFile.getName(), false, importConfig.getObjectEnricher());
+					//the resource was saved already in createResource, but need to run the import hooks and update
+					context.getEntityManager().runImportHooks(newResouce, importConfig);
+					entity.getAccessor().save(newResouce);
 					references.put(origResourceId, newResouce.getId().toHexString());
 					references.put(origRevisionId, newResouce.getCurrentRevisionId().toHexString());	
 				} catch (SimilarResourceExistingException e) {

@@ -70,16 +70,13 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 	
 	public A importOne(ImportConfiguration importConfig, JsonParser jParser, ObjectMapper mapper,
 			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
-		if (importConfig.version.compareTo(new Version(3,13,0)) >= 0) {
+		if (importConfig.getVersion().compareTo(new Version(3,13,0)) >= 0) {
 			//A aObj = mapper.readValue(jParser, entity.getEntityClass());
 			BasicDBObject o = mapper.readValue(jParser, BasicDBObject.class);
 			applyMigrationTasks(importConfig, o);
 			A aObj = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(o),entity.getEntityClass());
-			if (importConfig.objectDrainer!=null) {
-				importConfig.objectDrainer.accept(aObj);
-			}
-			importConfig.objectEnricher.accept(aObj);
-			if (importConfig.overwrite) {
+			context.getEntityManager().runImportHooks(aObj, importConfig);
+			if (importConfig.isOverwrite()) {
 				entity.getAccessor().save(aObj);
 			} else {
 				saveWithNewId(aObj,references);

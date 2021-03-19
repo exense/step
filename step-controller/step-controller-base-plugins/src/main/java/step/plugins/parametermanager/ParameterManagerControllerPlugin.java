@@ -19,11 +19,14 @@
 package step.plugins.parametermanager;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.objectenricher.ObjectHookRegistry;
+import step.core.encryption.EncryptionManagerException;
+import step.core.export.ExportConfiguration;
+import step.core.imports.ImportConfiguration;
 import step.parameter.Parameter;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractCRUDAccessor;
@@ -50,6 +53,8 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 	private static final String entityName = "parameters";
 
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerControllerPlugin.class);
+
+	public static final String RESET_VALUE = "####change me####";
 		
 	private ParameterManager parameterManager;
 	private EncryptionManager encryptionManager;
@@ -70,8 +75,8 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				parameterAccessor,
 				Parameter.class,
 				new GenericDBImporter<Parameter, CRUDAccessor<Parameter>>(context)));
-
-		context.require(ObjectHookRegistry.class).add(parameterManager.getObjectHook());
+		context.getEntityManager().registerExportHook(new ParameterExportBiConsumer(context));
+		context.getEntityManager().registerImportHook(new ParameterImportBiConsumer(context));
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
 
@@ -124,4 +129,75 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 			screenInputAccessor.save(new ScreenInput(4, PARAMETER_DIALOG, new Input(InputType.TEXT, "priority", "	Priority", null, null)));
 		}
 	}
+
+	public static String EXPORT_PROTECT_PARAM_WARN = "Protected parameters found: their values will not be exported but marked as reset.";
+	public static String EXPORT_ENCRYPT_PARAM_WARN = "Encrypted parameters found: values can only be read if imported with the same encryption key.";
+	public static String IMPORT_DECRYPT_FAIL_WARN = "Encrypted parameter were found but could not be decrypted, they were marked as reset.";
+	public static String IMPORT_DECRYPT_NO_EM_WARN = "Encrypted parameter were found but no encryption manager exists. The values were marked as reset.";
+	public static String IMPORT_RESET_WARN = "Protected parameters were found and must be reset.";
+
+	public static class ParameterExportBiConsumer implements BiConsumer<Object, ExportConfiguration> {
+
+		GlobalContext context;
+
+		public ParameterExportBiConsumer(GlobalContext context) {
+			this.context = context;
+		}
+
+		@Override
+		public void accept(Object object_, ExportConfiguration exportConfiguration) {
+			if (object_ != null && object_ instanceof Parameter) {
+				Parameter param = (Parameter) object_;
+				//if protected and not encrypted, mask value by changing it to reset value
+				if (param.getProtectedValue() != null && param.getProtectedValue()) {
+					if (param.getValue() != null) {
+						param.setValue(RESET_VALUE);
+						exportConfiguration.addMessage(EXPORT_PROTECT_PARAM_WARN);
+					} else {
+						exportConfiguration.addMessage(EXPORT_ENCRYPT_PARAM_WARN);
+					}
+				}
+			}
+		}
+	}
+
+	public static class ParameterImportBiConsumer implements BiConsumer<Object, ImportConfiguration> {
+
+		GlobalContext context;
+
+		public ParameterImportBiConsumer(GlobalContext context) {
+			this.context = context;
+		}
+
+		@Override
+		public void accept(Object object_, ImportConfiguration importConfiguration) {
+			if (object_ != null && object_ instanceof Parameter) {
+				Parameter param = (Parameter) object_;
+				//if importing protected and encrypted value
+				if (param.getProtectedValue() != null && param.getProtectedValue()) {
+					if (param.getValue() == null) {
+						EncryptionManager encryptionManager = context.get(EncryptionManager.class);
+						//if we have a valid encryption manager and can still decrypt keep encrypted value, else reset
+						if (encryptionManager != null && param.getEncryptedValue() != null) {
+							try {
+								encryptionManager.decrypt(param.getEncryptedValue());
+							} catch (EncryptionManagerException e) {
+								param.setValue(RESET_VALUE);
+								param.setEncryptedValue(null);
+								importConfiguration.addMessage(IMPORT_DECRYPT_FAIL_WARN);
+							}
+						} else {
+							param.setValue(RESET_VALUE);
+							param.setEncryptedValue(null);
+							importConfiguration.addMessage(IMPORT_DECRYPT_NO_EM_WARN);
+						}
+					} else {
+						importConfiguration.addMessage(IMPORT_RESET_WARN);
+					}
+				}
+			}
+		}
+	}
+
+
 }

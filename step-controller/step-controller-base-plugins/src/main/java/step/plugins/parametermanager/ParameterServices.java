@@ -154,7 +154,7 @@ public class ParameterServices extends AbstractServices {
 		return accessManager.checkRightInContext(getSession(), "param-global-write");
 	}
 
-	protected boolean isProtected(Parameter oldParameter) {
+	protected static boolean isProtected(Parameter oldParameter) {
 		return oldParameter.getProtectedValue()!=null && oldParameter.getProtectedValue();
 	}
 	
@@ -197,8 +197,9 @@ public class ParameterServices extends AbstractServices {
 		return maskProtectedValue(parameter);
 	}
 	
-	protected Parameter maskProtectedValue(Parameter parameter) {
-		if(parameter != null && isProtected(parameter)) {
+	public static Parameter maskProtectedValue(Parameter parameter) {
+		if(parameter != null && isProtected(parameter) &&
+				!ParameterManagerControllerPlugin.RESET_VALUE.equals(parameter.getValue())) {
 			parameter.setValue(PROTECTED_VALUE);				
 		}
 		return parameter;

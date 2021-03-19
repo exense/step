@@ -82,15 +82,14 @@ public class ExportServices extends AbstractServices {
 										 @QueryParam("additionalEntities") List<String> additionalEntities) {
 		Session session = getSession();
 		Map<String,String> metadata = getMetadata();
-		ObjectEnricher objectDrainer = objectHookRegistry.getObjectDrainer(getSession());
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws IOException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
-				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),objectDrainer , metadata,objectPredicateFactory.getObjectPredicate(session), 
+				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata,objectPredicateFactory.getObjectPredicate(session),
 						entity, recursively, additionalEntities);
-				Set<String> refMissingWarning = exportManager.exportById(exportConfig, id);
-				status.setWarnings(refMissingWarning);
+				exportManager.exportById(exportConfig, id);
+				status.setWarnings(exportConfig.getMessages());
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
@@ -118,10 +117,10 @@ public class ExportServices extends AbstractServices {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
-				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), objectHookRegistry.getObjectDrainer(session),
+				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
 						metadata, objectPredicateFactory.getObjectPredicate(session), entity, recursively, additionalEntities);
-				Set<String> refMissingWarning = exportManager.exportAll(exportConfig);
-				status.setWarnings(refMissingWarning);
+				exportManager.exportAll(exportConfig);
+				status.setWarnings(exportConfig.getMessages());
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}

@@ -30,9 +30,7 @@ public interface ObjectHook {
 	public ObjectFilter getObjectFilter(AbstractContext context);
 	
 	public ObjectEnricher getObjectEnricher(AbstractContext context);
-	
-	public ObjectEnricher getObjectDrainer(AbstractContext context);
-	
+
 	/**
 	 * Rebuilds an {@link AbstractContext} based on an object that has been
 	 * previously enriched with an {@link ObjectEnricher} provided by this class

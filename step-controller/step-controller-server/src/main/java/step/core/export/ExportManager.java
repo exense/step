@@ -54,32 +54,34 @@ public class ExportManager {
 		this.context = context;
 	}
 	
-	public Set<String> exportById(ExportConfiguration exportConfig, String id) throws FileNotFoundException, IOException {
+	public void exportById(ExportConfiguration exportConfig, String id) throws FileNotFoundException, IOException {
 		EntityReferencesMap refs = new EntityReferencesMap();
-		refs.addElementTo(exportConfig.entityType, id);
-		if (exportConfig.recursively) {
-			context.getEntityManager().getAllEntities(exportConfig.entityType, id, refs);	
+		refs.addElementTo(exportConfig.getEntityType(), id);
+		if (exportConfig.isRecursively()) {
+			context.getEntityManager().getAllEntities(exportConfig.getEntityType(), id, refs);
 		}
-		if (exportConfig.additionalEntities != null && exportConfig.additionalEntities.size()>0) {
-			exportConfig.additionalEntities.forEach(e-> 
-				context.getEntityManager().getEntitiesReferences(e, exportConfig.objectPredicate, false, refs)
+		List<String> additionalEntities = exportConfig.getAdditionalEntities();
+		if (additionalEntities != null && additionalEntities.size()>0) {
+			additionalEntities.forEach(e->
+				context.getEntityManager().getEntitiesReferences(e, exportConfig.getObjectPredicate(), false, refs)
 			);
 		}
 		export(exportConfig, refs);
-		return refs.getRefNotFoundWarnings();
+		exportConfig.addMessages(refs.getRefNotFoundWarnings());
 	}
 	
-	public Set<String> exportAll(ExportConfiguration exportConfig) throws FileNotFoundException, IOException {
+	public void exportAll(ExportConfiguration exportConfig) throws FileNotFoundException, IOException {
 		EntityReferencesMap refs = new EntityReferencesMap();
-		context.getEntityManager().getEntitiesReferences(exportConfig.entityType, exportConfig.objectPredicate, exportConfig.recursively, refs);
-		if (exportConfig.additionalEntities != null) {
-			exportConfig.additionalEntities.forEach(e-> context.getEntityManager().getEntitiesReferences(e, exportConfig.objectPredicate, false, refs));
+		context.getEntityManager().getEntitiesReferences(exportConfig.getEntityType(), exportConfig.getObjectPredicate(), exportConfig.isRecursively(), refs);
+		List<String> additionalEntities = exportConfig.getAdditionalEntities();
+		if (additionalEntities != null) {
+			additionalEntities.forEach(e-> context.getEntityManager().getEntitiesReferences(e, exportConfig.getObjectPredicate(), false, refs));
 		}
 		export(exportConfig, refs);
-		return refs.getRefNotFoundWarnings();
+		exportConfig.addMessages(refs.getRefNotFoundWarnings());
 	}
 	
-	private void exportEntityByIds(String entityName, JsonGenerator jGen, EntityReferencesMap references, ObjectEnricher objectEnricher) {
+	private void exportEntityByIds(ExportConfiguration exportConfig, String entityName, JsonGenerator jGen, EntityReferencesMap references) {
 		Entity<?, ?> entity = context.getEntityManager().getEntityByName(entityName);
 		if (entity == null ) {
 			throw new RuntimeException("Entity of type " + entityName + " is not supported");
@@ -90,7 +92,7 @@ public class ExportManager {
 				logger.warn("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");
 				references.addReferenceNotFoundWarning("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");
 			} else {
-				objectEnricher.accept(a);
+				context.getEntityManager().runExportHooks(a, exportConfig);
 				try {
 					jGen.writeObject(a);
 				} catch (IOException e) {
@@ -112,12 +114,12 @@ public class ExportManager {
 			// pretty print
 			jGen.useDefaultPrettyPrinter();
 			jGen.writeStartObject();
-			jGen.writeObjectField("metadata", exportConfig.metadata);
+			jGen.writeObjectField("metadata", exportConfig.getMetadata());
 			//start a json array for each entity type
 			references.getTypes().forEach(e-> {
 				try {
 					jGen.writeArrayFieldStart(e);			
-					exportEntityByIds(e, jGen, references, exportConfig.objectEnricher);
+					exportEntityByIds(exportConfig, e, jGen, references);
 					jGen.writeEndArray();	
 				} catch (IOException e1) {
 					throw new RuntimeException("Error while exporting entity of type " + e,e1);
@@ -125,7 +127,7 @@ public class ExportManager {
 			});
 			jGen.writeEndObject();//end export object
 		}
-		try (ZipOutputStream zos = new ZipOutputStream(exportConfig.outputStream)){
+		try (ZipOutputStream zos = new ZipOutputStream(exportConfig.getOutputStream())){
 			FileHelper.zipFile(zos, jsonStream, "export.json");
 			//Export resources (files)
 			List<String> resourceRef = references.getReferencesByType(EntityManager.resources);

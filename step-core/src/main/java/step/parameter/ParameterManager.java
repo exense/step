@@ -23,18 +23,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.commons.activation.Activator;
 import step.core.AbstractContext;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.CRUDAccessor;
-import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectFilter;
-import step.core.objectenricher.ObjectHook;
 import step.core.objectenricher.ObjectPredicate;
 
 import javax.script.Bindings;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ParameterManager {
@@ -91,78 +86,4 @@ public class ParameterManager {
 		return defaultScriptEngine;
 	}
 
-	public ObjectHook getObjectHook() {
-		return new ObjectHook() {
-
-			@Override
-			public ObjectFilter getObjectFilter(AbstractContext context) {
-				return getObjectFilterFactory().apply(context);
-			}
-
-			@Override
-			public ObjectEnricher getObjectEnricher(AbstractContext context) {
-				return new ObjectEnricher() {
-
-					@Override
-					public void accept(Object t) {
-					}
-
-					@Override
-					public Map<String, String> getAdditionalAttributes() {
-						return new HashMap<>();
-					}
-				};
-			}
-
-			@Override
-			public ObjectEnricher getObjectDrainer(AbstractContext context) {
-				return getObjectDrainerFactory().apply(context);
-			}
-
-			@Override
-			public void rebuildContext(AbstractContext context, Object object) throws Exception {
-
-			}
-		};
-	}
-
-	private Function<AbstractContext, ObjectFilter> getObjectFilterFactory() {
-		return s->new ObjectFilter() {
-			@Override
-			public String getOQLFilter() {
-				return "";
-			}
-		};
-	}
-
-	private Function<AbstractContext, ObjectEnricher> getObjectDrainerFactory() {
-		return s->new ObjectEnricher() {
-
-			@Override
-			public void accept(Object t) {
-				drainObject(s, t);
-			}
-
-			@Override
-			public Map<String, String> getAdditionalAttributes() {
-				return new HashMap<String, String>();
-			}
-		};
-	}
-
-	public static final String PROTECTED_VALUE = "******";
-
-	private void drainObject(AbstractContext session, Object object_) {
-		assertSessionNotNull(session);
-		if(object_ != null && object_ instanceof Parameter) {
-			Parameter param = (Parameter) object_;
-			if (param.getProtectedValue()!=null && param.getProtectedValue()) {
-				param.setValue(PROTECTED_VALUE);
-			}
-		}
-	}
-
-	private void assertSessionNotNull(AbstractContext session) {
-		Objects.requireNonNull(session, "Session must not be null");
-	}
 }

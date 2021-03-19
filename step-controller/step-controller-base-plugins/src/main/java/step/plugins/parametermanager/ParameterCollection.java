@@ -57,10 +57,7 @@ public class ParameterCollection extends Collection<Parameter> {
 			@Override
 			public Parameter next() {
 				Parameter next = iterator.next();
-				if(next.getProtectedValue()) {
-					next.setValue(ParameterServices.PROTECTED_VALUE);					
-				}
-				return next;
+				return ParameterServices.maskProtectedValue(next);
 			}
 			
 		};

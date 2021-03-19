@@ -531,6 +531,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
     if($scope.resourcePath) {
       $http({url:"rest/import/" + path,method:"POST",params:{path:$scope.resourcePath,importAll:$scope.importAll,overwrite:$scope.overwrite}}).then(function(response) {
         $uibModalInstance.close(response.data);
+        if (response.data && response.data.length > 0) {
+          Dialogs.showListOfMsgs(response.data);
+        }
       })      
     } else {
       Dialogs.showErrorMsg("Upload not completed.");

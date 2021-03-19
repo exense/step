@@ -19,29 +19,30 @@
 package step.core.imports;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import step.core.Version;
 import step.core.objectenricher.ObjectEnricher;
 import step.resources.LocalResourceManagerImpl;
 
 public class ImportConfiguration {
-	File file;
-	ObjectEnricher objectEnricher;
-	ObjectEnricher objectDrainer;
-	List<String> entitiesFilter;
-	boolean overwrite;
-	Map<String,String> metadata;
-	Version version;
-	LocalResourceManagerImpl localResourceMgr;
+	private File file;
+	private ObjectEnricher objectEnricher;
+	private List<String> entitiesFilter;
+	private boolean overwrite;
+	private Map<String,String> metadata;
+	private Version version;
+	private LocalResourceManagerImpl localResourceMgr;
+	private Set<String> messages = new HashSet<>();
 
-	public ImportConfiguration(File file, ObjectEnricher objectEnricher, ObjectEnricher objectDrainer, List<String> entitiesFilter,
+	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
 							   boolean overwrite) {
 		super();
 		this.file = file;
 		this.objectEnricher = objectEnricher;
-		this.objectDrainer = objectDrainer;
 		this.entitiesFilter = entitiesFilter;
 		this.overwrite = overwrite;
 	}
@@ -56,12 +57,6 @@ public class ImportConfiguration {
 	}
 	public void setObjectEnricher(ObjectEnricher objectEnricher) {
 		this.objectEnricher = objectEnricher;
-	}
-	public ObjectEnricher getObjectDrainer() {
-		return objectDrainer;
-	}
-	public void setObjectDrainer(ObjectEnricher objectDrainer) {
-		this.objectDrainer = objectDrainer;
 	}
 	public List<String> getEntitiesFilter() {
 		return entitiesFilter;
@@ -92,5 +87,16 @@ public class ImportConfiguration {
 	}
 	public void setLocalResourceMgr(LocalResourceManagerImpl localResourceMgr) {
 		this.localResourceMgr = localResourceMgr;
+	}
+	public Set<String> getMessages() {
+		return messages;
+	}
+
+	public void addMessages(Set<String> newMessages) {
+		messages.addAll(newMessages);
+	}
+
+	public void addMessage(String s) {
+		messages.add(s);
 	}
 }

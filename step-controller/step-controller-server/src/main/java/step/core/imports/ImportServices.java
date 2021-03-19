@@ -20,6 +20,7 @@ package step.core.imports;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -64,14 +65,15 @@ public class ImportServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public void importEntity(@PathParam("entity") String entity, @QueryParam("path") String path, @QueryParam("importAll") boolean importAll, @QueryParam("overwrite") boolean overwrite) throws Exception {
+	public Set<String> importEntity(@PathParam("entity") String entity, @QueryParam("path") String path, @QueryParam("importAll") boolean importAll, @QueryParam("overwrite") boolean overwrite) throws Exception {
 		try (FileHandle file = fileResolver.resolveFileHandle(path)) {
 			List<String> filter = null;
 			if (!importAll) {
 				filter = Arrays.asList(entity);
 			}
-			ImportConfiguration importConfiguration = new ImportConfiguration(file.getFile(), getObjectEnricher(),getObjectDrainer(),filter,overwrite);
+			ImportConfiguration importConfiguration = new ImportConfiguration(file.getFile(), getObjectEnricher(), filter, overwrite);
 			importManager.importAll(importConfiguration);
+			return importConfiguration.getMessages();
 		}
 	}
 }
