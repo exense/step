@@ -18,31 +18,41 @@
  ******************************************************************************/
 package step.parameter;
 
-import ch.exense.commons.app.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import step.commons.activation.Activator;
-import step.core.AbstractContext;
-import step.core.accessors.CRUDAccessor;
-import step.core.objectenricher.ObjectPredicate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.script.Bindings;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
-import java.util.*;
-import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ch.exense.commons.app.Configuration;
+import step.commons.activation.Activator;
+import step.core.accessors.CRUDAccessor;
+import step.core.encryption.EncryptionManager;
+import step.core.encryption.EncryptionManagerException;
+import step.core.objectenricher.ObjectPredicate;
 
 public class ParameterManager {
 	
+	public static final String RESET_VALUE = "####change me####";
+
 	private static Logger logger = LoggerFactory.getLogger(ParameterManager.class);
 	
 	private CRUDAccessor<Parameter> parameterAccessor;
+	private EncryptionManager encryptionManager;
 
 	private String defaultScriptEngine;
 	
-	public ParameterManager(CRUDAccessor<Parameter> parameterAccessor, Configuration configuration) {
+	public ParameterManager(CRUDAccessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, Configuration configuration) {
 		super();
 		this.parameterAccessor = parameterAccessor;
+		this.encryptionManager = encryptionManager;
 		this.defaultScriptEngine = configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE);
 	}
 
@@ -80,6 +90,50 @@ public class ParameterManager {
 			}
 		}
 		return result;
+	}
+	
+	public void encryptAllParameters() {
+		parameterAccessor.getAll().forEachRemaining(p->{
+			if(isProtected(p)) {
+				logger.info("Encrypting parameter "+p);
+				try {
+					Parameter encryptedParameter = encryptParameterValueIfEncryptionManagerAvailable(p);
+					parameterAccessor.save(encryptedParameter);
+				} catch (EncryptionManagerException e) {
+					logger.error("Error while encrypting parameter "+p.getKey());
+				}
+			}
+		});
+	}
+	
+	public void resetAllProtectedParameters() {
+		parameterAccessor.getAll().forEachRemaining(p->{
+			if(isProtected(p)) {
+				logger.info("Resetting parameter "+p);
+				p.setValue(RESET_VALUE);
+				p.setEncryptedValue(null);
+				parameterAccessor.save(p);
+			}
+		});
+	}
+
+	private boolean isProtected(Parameter p) {
+		Boolean protectedValue = p.getProtectedValue();
+		return protectedValue;
+	}
+	
+	public Parameter encryptParameterValueIfEncryptionManagerAvailable(Parameter parameter) throws EncryptionManagerException {
+		if(encryptionManager != null) {
+			if(isProtected(parameter)) {
+				String value = parameter.getValue();
+				if(value != null) {
+					parameter.setValue(null);
+					String encryptedValue = encryptionManager.encrypt(value);
+					parameter.setEncryptedValue(encryptedValue);
+				}
+			}
+		}
+		return parameter;
 	}
 
 	public String getDefaultScriptEngine() {

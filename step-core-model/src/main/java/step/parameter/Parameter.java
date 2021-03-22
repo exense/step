@@ -138,4 +138,9 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject 
 	public void setScopeEntity(String scopeEntity) {
 		this.scopeEntity = scopeEntity;
 	}
+
+	@Override
+	public String toString() {
+		return "Parameter [key=" + key + "]";
+	}
 }

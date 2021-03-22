@@ -54,19 +54,20 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerControllerPlugin.class);
 
-	public static final String RESET_VALUE = "####change me####";
-		
 	private ParameterManager parameterManager;
 	private EncryptionManager encryptionManager;
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) {
+		// The encryption manager might be null
+		encryptionManager = context.get(EncryptionManager.class);
+
 		AbstractCRUDAccessor<Parameter> parameterAccessor = new AbstractCRUDAccessor<>(context.getMongoClientSession(), "parameters", Parameter.class);
 		context.put("ParameterAccessor", parameterAccessor);
 		
 		context.get(CollectionRegistry.class).register("parameters", new ParameterCollection(context.getMongoClientSession().getMongoDatabase()));
 		
-		ParameterManager parameterManager = new ParameterManager(parameterAccessor, context.getConfiguration());
+		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getConfiguration());
 		context.put(ParameterManager.class, parameterManager);
 		this.parameterManager = parameterManager;
 		
@@ -79,14 +80,22 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		context.getEntityManager().registerImportHook(new ParameterImportBiConsumer(context));
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
-
-		// The encryption manager might be null
-		encryptionManager = context.get(EncryptionManager.class);
 	}
 
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
 		createScreenInputDefinitionsIfNecessary(context);
+		
+		if(encryptionManager != null) {
+			if(encryptionManager.isFirstStart()) {
+				logger.info("First start of the encryption manager. Encrypting all protected parameters...");
+				parameterManager.encryptAllParameters();
+			}
+			if(encryptionManager.isKeyPairChanged()) {
+				logger.info("Key pair of encryption manager changed. Resetting all protected parameters...");
+				parameterManager.resetAllProtectedParameters();
+			}
+		}
 	}
 
 	@Override
@@ -151,7 +160,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				//if protected and not encrypted, mask value by changing it to reset value
 				if (param.getProtectedValue() != null && param.getProtectedValue()) {
 					if (param.getValue() != null) {
-						param.setValue(RESET_VALUE);
+						param.setValue(ParameterManager.RESET_VALUE);
 						exportConfiguration.addMessage(EXPORT_PROTECT_PARAM_WARN);
 					} else {
 						exportConfiguration.addMessage(EXPORT_ENCRYPT_PARAM_WARN);
@@ -182,12 +191,12 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 							try {
 								encryptionManager.decrypt(param.getEncryptedValue());
 							} catch (EncryptionManagerException e) {
-								param.setValue(RESET_VALUE);
+								param.setValue(ParameterManager.RESET_VALUE);
 								param.setEncryptedValue(null);
 								importConfiguration.addMessage(IMPORT_DECRYPT_FAIL_WARN);
 							}
 						} else {
-							param.setValue(RESET_VALUE);
+							param.setValue(ParameterManager.RESET_VALUE);
 							param.setEncryptedValue(null);
 							importConfiguration.addMessage(IMPORT_DECRYPT_NO_EM_WARN);
 						}

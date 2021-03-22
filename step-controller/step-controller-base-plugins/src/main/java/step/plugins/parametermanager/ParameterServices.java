@@ -44,9 +44,9 @@ import step.core.access.AccessManager;
 import step.core.accessors.CRUDAccessor;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.parameter.Parameter;
+import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
 
 @Path("/parameters")
@@ -54,7 +54,7 @@ public class ParameterServices extends AbstractServices {
 	
 	private AccessManager accessManager;
 	private CRUDAccessor<Parameter> parameterAccessor;
-	private EncryptionManager encryptionManager;
+	private ParameterManager parameterManager;
 	
 	@PostConstruct
 	@SuppressWarnings("unchecked")
@@ -62,9 +62,8 @@ public class ParameterServices extends AbstractServices {
 		super.init();
 		GlobalContext context = getContext();
 		parameterAccessor = (CRUDAccessor<Parameter>) context.get("ParameterAccessor");
+		parameterManager = context.require(ParameterManager.class);
 		accessManager = context.get(AccessManager.class);
-		// The encryption manager might be null
-		encryptionManager = context.get(EncryptionManager.class);
 	}
 
 	@GET
@@ -114,9 +113,7 @@ public class ParameterServices extends AbstractServices {
 			}
 		}
 		
-		if(newParameter.getProtectedValue()) {
-			encryptParameterValueIfEncryptionManagerAvailable(newParameter);
-		}
+		newParameter = parameterManager.encryptParameterValueIfEncryptionManagerAvailable(newParameter);
 		
 		ParameterScope scope = newParameter.getScope();
 		if(scope != null && scope.equals(ParameterScope.GLOBAL)) {
@@ -129,17 +126,6 @@ public class ParameterServices extends AbstractServices {
 		newParameter.setLastModificationUser(lastModificationUser);
 		
 		return parameterAccessor.save(newParameter);
-	}
-
-	private void encryptParameterValueIfEncryptionManagerAvailable(Parameter newParameter) throws EncryptionManagerException {
-		if(encryptionManager != null) {
-			String value = newParameter.getValue();
-			if(value != null) {
-				newParameter.setValue(null);
-				String encryptedValue = encryptionManager.encrypt(value);
-				newParameter.setEncryptedValue(encryptedValue);
-			}
-		}
 	}
 
 	protected void assertRights(Parameter newParameter) {
@@ -199,7 +185,7 @@ public class ParameterServices extends AbstractServices {
 	
 	public static Parameter maskProtectedValue(Parameter parameter) {
 		if(parameter != null && isProtected(parameter) &&
-				!ParameterManagerControllerPlugin.RESET_VALUE.equals(parameter.getValue())) {
+				!ParameterManager.RESET_VALUE.equals(parameter.getValue())) {
 			parameter.setValue(PROTECTED_VALUE);				
 		}
 		return parameter;

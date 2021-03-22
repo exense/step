@@ -59,6 +59,16 @@ public class ParameterManagerPluginTest {
 			public String decrypt(String encryptedValue) throws EncryptionManagerException {
 				return encryptedValue.replaceFirst("###", "");
 			}
+
+			@Override
+			public boolean isKeyPairChanged() {
+				return false;
+			}
+
+			@Override
+			public boolean isFirstStart() {
+				return false;
+			}
 		};
 		errorEncryptionManager = new EncryptionManager() {
 			
@@ -70,6 +80,16 @@ public class ParameterManagerPluginTest {
 			@Override
 			public String decrypt(String encryptedValue) throws EncryptionManagerException {
 				throw new EncryptionManagerException("Error");
+			}
+
+			@Override
+			public boolean isKeyPairChanged() {
+				return false;
+			}
+
+			@Override
+			public boolean isFirstStart() {
+				return false;
 			}
 		};
 	}
@@ -292,7 +312,7 @@ public class ParameterManagerPluginTest {
 		}
 
 		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, ExecutionContext executionContext) {
-			super(new ParameterManager(parameterAccessor, executionContext.getConfiguration()), encryptionManager);
+			super(new ParameterManager(parameterAccessor, encryptionManager, executionContext.getConfiguration()), encryptionManager);
 		}
 		
 		

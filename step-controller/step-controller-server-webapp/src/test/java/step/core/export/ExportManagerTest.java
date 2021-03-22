@@ -21,10 +21,13 @@ package step.core.export;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ch.exense.commons.app.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -47,7 +50,6 @@ import step.core.imports.GenericDBImporter;
 import step.core.imports.ImportConfiguration;
 import step.core.imports.ImportManager;
 import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -55,11 +57,11 @@ import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 import step.datapool.excel.ExcelDataPool;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.planbuilder.BaseArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
-import step.parameter.Parameter;
 import step.plugins.parametermanager.ParameterManagerControllerPlugin;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.resources.Resource;
@@ -78,6 +80,16 @@ public class ExportManagerTest {
 			@Override
 			public String decrypt(String encryptedValue) throws EncryptionManagerException {
 				return encryptedValue.replaceFirst("###", "");
+			}
+
+			@Override
+			public boolean isKeyPairChanged() {
+				return false;
+			}
+
+			@Override
+			public boolean isFirstStart() {
+				return false;
 			}
 		};
 		context.put(EncryptionManager.class,encryptionManager);
@@ -287,7 +299,7 @@ public class ExportManagerTest {
 			Assert.assertEquals(savedParam.getId(), actualParam.getId());
 			Assert.assertEquals(savedParamProtected.getId(), actualParamProtected.getId());
 			Assert.assertEquals(true, actualParamProtected.getProtectedValue());
-			Assert.assertEquals(ParameterManagerControllerPlugin.RESET_VALUE, actualParamProtected.getValue());
+			Assert.assertEquals(ParameterManager.RESET_VALUE, actualParamProtected.getValue());
 			Assert.assertEquals(null, actualParamProtected.getEncryptedValue());
 			Assert.assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
 			Assert.assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
@@ -337,6 +349,14 @@ public class ExportManagerTest {
 				public String decrypt(String encryptedValue) throws EncryptionManagerException {
 					throw new EncryptionManagerException("Error while decrypting value");
 				}
+				@Override
+				public boolean isKeyPairChanged() {
+					return false;
+				}
+				@Override
+				public boolean isFirstStart() {
+					return false;
+				}
 			};
 			c.put(EncryptionManager.class,encryptionManagerNewInstance);
 
@@ -349,7 +369,7 @@ public class ExportManagerTest {
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtectedEncrypted.getId());
 			Assert.assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
 			Assert.assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			Assert.assertEquals(ParameterManagerControllerPlugin.RESET_VALUE, actualParamProtectedEncrypted.getValue());
+			Assert.assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
 			Assert.assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
@@ -394,7 +414,7 @@ public class ExportManagerTest {
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtectedEncrypted.getId());
 			Assert.assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
 			Assert.assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			Assert.assertEquals(ParameterManagerControllerPlugin.RESET_VALUE, actualParamProtectedEncrypted.getValue());
+			Assert.assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
 			Assert.assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
