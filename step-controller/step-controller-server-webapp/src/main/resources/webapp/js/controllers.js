@@ -231,7 +231,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 							var path = response.data;
 							_.each(path, function(node) {
 								if(node.resolvedArtefact && node.resolvedArtefact._class == 'TestCase') {
-									$scope.testCaseTable.deselectAll();
+									$scope.testCaseTable.deselectAll(false);
 									$scope.testCaseTable.select(node.resolvedArtefact.id);
 									$scope.enablePanel("testCases",true);
 								}
