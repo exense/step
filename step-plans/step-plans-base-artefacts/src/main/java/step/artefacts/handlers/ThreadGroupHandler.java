@@ -48,12 +48,12 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 
 	@Override
 	public void execute_(final ReportNode node, final ThreadGroup testArtefact) {		
-		final int numberOfUsers = testArtefact.getUsers().getOrDefault(0);
-		final int numberOfIterations = testArtefact.getIterations().getOrDefault(0);
-		final int pacing = testArtefact.getPacing().getOrDefault(0);
-		final long rampup = testArtefact.getRampup().getOrDefault(pacing);
-		final int maxDuration = testArtefact.getMaxDuration().getOrDefault(0);
-		final int startOffset = testArtefact.getStartOffset().getOrDefault(0);
+		final int numberOfUsers = testArtefact.getUsers().getOrDefault(Integer.class, 0);
+		final int numberOfIterations = testArtefact.getIterations().getOrDefault(Integer.class, 0);
+		final int pacing = testArtefact.getPacing().getOrDefault(Integer.class, 0);
+		final int rampup = testArtefact.getRampup().getOrDefault(Integer.class, pacing);
+		final int maxDuration = testArtefact.getMaxDuration().getOrDefault(Integer.class, 0);
+		final int startOffset = testArtefact.getStartOffset().getOrDefault(Integer.class, 0);
 
 		if (numberOfUsers <= 0) {
 			throw new RuntimeException("Invalid argument: The number of threads has to be higher than 0.");
