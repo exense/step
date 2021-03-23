@@ -102,21 +102,6 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-controller-plugins-measurements-jdbc</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-controller-plugins-measurements-log</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-controller-plugins-prometheus</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
 			<artifactId>step-controller-initialization</artifactId>
 			<version>${project.version}</version>
 		</dependency>

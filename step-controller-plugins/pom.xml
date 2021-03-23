@@ -36,9 +36,6 @@
 		<module>step-controller-measurement</module>
 		<module>step-controller-plugins-rtm</module>
 		<module>step-controller-plugins-script-editor</module>
-		<module>step-controller-plugins-measurements-jdbc</module>
-		<module>step-controller-plugins-prometheus</module>
-        <module>step-controller-plugins-measurements-log</module>
     </modules>
 	
 	<dependencies>
