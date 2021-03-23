@@ -201,6 +201,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 							importConfiguration.addMessage(IMPORT_DECRYPT_NO_EM_WARN);
 						}
 					} else {
+						param.setValue(ParameterManager.RESET_VALUE);
 						importConfiguration.addMessage(IMPORT_RESET_WARN);
 					}
 				}

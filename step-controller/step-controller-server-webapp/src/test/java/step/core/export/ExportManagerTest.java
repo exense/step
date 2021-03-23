@@ -461,7 +461,31 @@ public class ExportManagerTest {
 			testExportFile.delete();
 		}
 	}
-	
+
+	@Test
+	public void testOlderParametersImport() throws Exception {
+		GlobalContext c = createGlobalContext();
+		URL resource = getClass().getClassLoader().getResource("./step/core/export/allParameters_3_15.sta");
+		File testImportFile = new File(resource.getFile());
+
+		//create a new context to test the import
+		c = createGlobalContext();
+		ImportManager importManager = new ImportManager(c);
+		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(c), null, true));
+
+		InMemoryCRUDAccessor<Parameter> parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+		Parameter parameterClear = parameterAccessor.get("6059b301e7ca79765f814864");
+		Parameter parameterProtected = parameterAccessor.get("6059b2d0e7ca79765f81451a");
+		Assert.assertNotNull(parameterClear);
+		Assert.assertNotNull(parameterProtected);
+		Assert.assertEquals("value_clear",parameterClear.getValue());
+		Assert.assertEquals(false,parameterClear.getProtectedValue());
+		Assert.assertEquals(ParameterManager.RESET_VALUE,parameterProtected.getValue());
+		Assert.assertEquals(true,parameterProtected.getProtectedValue());
+		//Assert.assertEquals(originPlanId, actualPlan.getId().toString());
+	}
+
+
 	@Test
 	public void testExportPlanByIdWithParameters() throws Exception {
 		GlobalContext c = createGlobalContext();
@@ -626,7 +650,6 @@ public class ExportManagerTest {
 	public void testExportPlansWithCompoNewReferences() throws Exception {
 		testExportPlansWithCompoFct(false);
 	}
-	
 	
 	private void testExportPlansWithCompoFct(boolean overwrite) throws Exception {
 		GlobalContext c = createGlobalContext();
@@ -796,7 +819,6 @@ public class ExportManagerTest {
 		String originPlanId = "5f87f3c83ff2d04dd8f9a3f7";
 		testOlderPlanImport(resourcePath, originPlanId);
 	}
-
 	
 	//@Test //not working in OS
 	public void testImportTextPlan_3_13() throws Exception {
