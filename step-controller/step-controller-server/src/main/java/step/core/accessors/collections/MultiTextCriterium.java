@@ -49,7 +49,8 @@ public class MultiTextCriterium implements CollectionColumnSearchQueryFactory {
 		List<Bson> fragments = new ArrayList<>();
 		Iterator<String> it = attributes.iterator();
 		while(it.hasNext()) {
-			fragments.add(regex(it.next(), expression));
+			// Case insensitive search
+			fragments.add(regex(it.next(), expression, "i"));
 		}
 		return or(fragments);
 	}
