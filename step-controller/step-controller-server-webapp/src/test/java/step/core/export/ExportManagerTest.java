@@ -420,6 +420,47 @@ public class ExportManagerTest {
 			testExportFile.delete();
 		}
 	}
+
+	@Test
+	public void testImportProtectedToEncrypted() throws Exception {
+		//create a new context to test the import without encpryption manager
+		GlobalContext c = createGlobalContext_();
+		InMemoryCRUDAccessor<Parameter> parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
+		paramProtectedEncrypted.setProtectedValue(true);
+		Parameter savedParamProtected = parameterAccessor.save(paramProtectedEncrypted);
+
+		File testExportFile = new File("testExport.json");
+		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
+			ExportManager exportManager = new ExportManager(c);
+			Map<String,String> metadata = new HashMap<String,String>();
+			metadata.put("version", c.getCurrentVersion().toString());
+			List<String> additionalEntities = new ArrayList<String>();
+			additionalEntities.add(ParameterManagerPlugin.entityName);
+
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
+			exportManager.exportAll(exportConfig);
+
+			Assert.assertEquals(1,exportConfig.getMessages().size());
+			Assert.assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportConfig.getMessages().toArray()[0]);
+
+			c = createGlobalContext();
+			parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+			ImportManager importManager = new ImportManager(c);
+			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true);
+			importManager.importAll(importConfiguration);
+			Assert.assertEquals(1,importConfiguration.getMessages().size());
+			Assert.assertEquals(ParameterManagerControllerPlugin.IMPORT_RESET_WARN,importConfiguration.getMessages().toArray()[0]);
+
+			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtected.getId());
+			Assert.assertEquals(savedParamProtected.getId(), actualParamProtectedEncrypted.getId());
+			Assert.assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
+			Assert.assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
+			Assert.assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
+		} finally {
+			testExportFile.delete();
+		}
+	}
 	
 	@Test
 	public void testExportPlanByIdWithParameters() throws Exception {
