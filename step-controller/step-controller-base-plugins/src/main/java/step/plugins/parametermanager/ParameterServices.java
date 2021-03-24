@@ -86,8 +86,6 @@ public class ParameterServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-write")
 	public Parameter save(Parameter newParameter) throws EncryptionManagerException {
-		assertRights(newParameter);
-		
 		Parameter oldParameter;
 		if(newParameter.getId()!=null) {
 			oldParameter = parameterAccessor.get(newParameter.getId());
@@ -95,17 +93,23 @@ public class ParameterServices extends AbstractServices {
 			oldParameter = null;
 		}
 		
-		if(oldParameter == null){
+		return save(newParameter, oldParameter);
+	}
+	
+	private Parameter save(Parameter newParameter, Parameter sourceParameter) throws EncryptionManagerException {
+		assertRights(newParameter);
+		
+		if(sourceParameter == null){
 			// new parameter. setting initial value of protected value.
 			// values that contains password are protected
 			newParameter.setProtectedValue(isPassword(newParameter));
 		} else {
 			// the parameter has been updated but the value hasn't been changed
 			if(newParameter.getValue().equals(PROTECTED_VALUE)) {
-				newParameter.setValue(oldParameter.getValue());
+				newParameter.setValue(sourceParameter.getValue());
 			}
 			
-			if(isProtected(oldParameter)) {
+			if(isProtected(sourceParameter)) {
 				// protected value should not be changed
 				newParameter.setProtectedValue(true);
 			} else {
@@ -125,7 +129,7 @@ public class ParameterServices extends AbstractServices {
 		newParameter.setLastModificationDate(lastModificationDate);
 		newParameter.setLastModificationUser(lastModificationUser);
 		
-		return parameterAccessor.save(newParameter);
+		return maskProtectedValue(parameterAccessor.save(newParameter));
 	}
 
 	protected void assertRights(Parameter newParameter) {
@@ -149,10 +153,12 @@ public class ParameterServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-write")
-	public Parameter copy(@PathParam("id") String id) throws EncryptionManagerException {	
-		Parameter parameter = parameterAccessor.get(new ObjectId(id));
-		parameter.setId(new ObjectId());
-		return save(parameter);
+	public Parameter copy(@PathParam("id") String id) throws EncryptionManagerException {
+		Parameter sourceParameter = parameterAccessor.get(new ObjectId(id));
+		// Create a clone of the source parameter
+		Parameter newParameter = parameterAccessor.get(new ObjectId(id));
+		newParameter.setId(new ObjectId());
+		return save(newParameter, sourceParameter);
 	}
 	
 	@DELETE
