@@ -139,11 +139,11 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		}
 	}
 
-	public static String EXPORT_PROTECT_PARAM_WARN = "Protected parameters found: their values will not be exported but marked as reset.";
-	public static String EXPORT_ENCRYPT_PARAM_WARN = "Encrypted parameters found: values can only be read if imported with the same encryption key.";
-	public static String IMPORT_DECRYPT_FAIL_WARN = "Encrypted parameter were found but could not be decrypted, they were marked as reset.";
-	public static String IMPORT_DECRYPT_NO_EM_WARN = "Encrypted parameter were found but no encryption manager exists. The values were marked as reset.";
-	public static String IMPORT_RESET_WARN = "Protected parameters were found and must be reset.";
+	public static String EXPORT_PROTECT_PARAM_WARN = "The parameter list contains protected parameter. The values of these parameters won't be exported and will have to be reset at import.";
+	public static String EXPORT_ENCRYPT_PARAM_WARN = "The parameter list contains encrypted parameters. The values of these parameters will be reset if you import them on an other installation of step.";
+	public static String IMPORT_DECRYPT_FAIL_WARN = "The export file contains encrypted parameter which could not be decrypted. The values of these parameters will be reset.";
+	public static String IMPORT_DECRYPT_NO_EM_WARN = "The export file contains encrypted parameters. The values of these parameters will be reset.";
+	public static String IMPORT_RESET_WARN = "The export file contains protected parameters. Their values must be reset.";
 
 	public static class ParameterExportBiConsumer implements BiConsumer<Object, ExportConfiguration> {
 
