@@ -30,6 +30,8 @@ public class ThreadGroup extends AbstractArtefact {
 	DynamicValue<Integer> iterations = new DynamicValue<Integer>(1);
 	
 	DynamicValue<Integer> rampup = new DynamicValue<Integer>(null);
+
+	DynamicValue<Integer> pack = new DynamicValue<Integer>(null);
 	
 	DynamicValue<Integer> pacing = new DynamicValue<Integer>(null);
 
@@ -73,6 +75,14 @@ public class ThreadGroup extends AbstractArtefact {
 
 	public void setPacing(DynamicValue<Integer> pacing) {
 		this.pacing = pacing;
+	}
+
+	public DynamicValue<Integer> getPack() {
+		return pack;
+	}
+
+	public void setPack(DynamicValue<Integer> pack) {
+		this.pack = pack;
 	}
 
 	public DynamicValue<Integer> getStartOffset() {

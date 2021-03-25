@@ -52,12 +52,14 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		final int numberOfIterations = testArtefact.getIterations().getOrDefault(Integer.class, 0);
 		final int pacing = testArtefact.getPacing().getOrDefault(Integer.class, 0);
 		final int rampup = testArtefact.getRampup().getOrDefault(Integer.class, pacing);
+		final int pack = testArtefact.getPack().getOrDefault(Integer.class, 1);
 		final int maxDuration = testArtefact.getMaxDuration().getOrDefault(Integer.class, 0);
 		final int startOffset = testArtefact.getStartOffset().getOrDefault(Integer.class, 0);
 
 		if (numberOfUsers <= 0) {
 			throw new RuntimeException("Invalid argument: The number of threads has to be higher than 0.");
 		}
+
 		if (maxDuration == 0 && numberOfIterations == 0) {
 			throw new RuntimeException(
 					"Invalid argument: Either specify the maximum duration or the number of iterations of the thread group.");
@@ -77,7 +79,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> groupController) {
 				return groupID -> {
 					try {
-						final long localStartOffset = startOffset + (long) ((1.0 * (groupID - 1)) / numberOfUsers * rampup);
+						final long localStartOffset = startOffset + (long) (1.0 * pack*Math.floor((groupID - 1)/pack) / numberOfUsers * rampup);
 
 						CancellableSleep.sleep(localStartOffset, context::isInterrupted, ThreadGroupHandler.class);
 
@@ -121,6 +123,8 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		@JsonIgnore
 		int pacing;
 		@JsonIgnore
+		int pack;
+		@JsonIgnore
 		long groupStartTime;
 		@JsonIgnore
 		ThreadGroup threadGroup;
@@ -157,6 +161,14 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 
 		public void setPacing(int pacing) {
 			this.pacing = pacing;
+		}
+
+		public int getPack() {
+			return pack;
+		}
+
+		public void setPack(int pacing) {
+			this.pack = pack;
 		}
 
 		public long getGroupStartTime() {
