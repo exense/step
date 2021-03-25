@@ -18,7 +18,7 @@
 # along with STEP.  If not, see <http://www.gnu.org/licenses/>.
 #*******************************************************************************
 JAVA_PATH=""
-#JAVA_PATH="/usr/sbin/jre1.8.0_77/bin/"
+#JAVA_PATH="/usr/sbin/jdk-11.0.10/bin/"
 
 JAVA_OPTS="${JAVA_OPTS} -Dlogback.configurationFile=./logback.xml -Dhttp.keepAlive=true -Dhttp.maxConnections=100"
 

@@ -21,7 +21,7 @@ rem @echo off
 TITLE STEP Controller
 
 rem if java.exe isn't on your path or is too old, then set your own as follows (watch for the backslash and double quote at the end):
-rem SET JAVA_PATH=C:\Program Files\Java\jdk1.8.0_101\bin\
+rem SET JAVA_PATH=C:\Program Files\Java\jdk-11.0.10\bin\
 SET JAVA_PATH=
 
 SET JAVA_OPTS=%JAVA_OPTS% -Dlogback.configurationFile=./logback.xml -Dhttp.keepAlive=true -Dhttp.maxConnections=100
