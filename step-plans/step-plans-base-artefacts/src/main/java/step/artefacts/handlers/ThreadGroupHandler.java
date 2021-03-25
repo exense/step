@@ -64,6 +64,11 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			throw new RuntimeException(
 					"Invalid argument: Either specify the maximum duration or the number of iterations of the thread group.");
 		}
+
+		if (pack <= 0) {
+			throw new RuntimeException(
+					"Invalid argument: The number of packed threads has to be higher than 0.");
+		}
 		
 		// Attach global iteration counter & user counter
 		LongAdder gcounter = new LongAdder();
