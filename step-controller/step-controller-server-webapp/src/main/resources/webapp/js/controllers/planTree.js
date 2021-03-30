@@ -573,12 +573,17 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       }
       
       $scope.switchDisable = function() {
-        var selectedNode = tree.get_selected(true)[0];
-        var selectedArtefact = getArtefactById($scope.plan.root, selectedNode.id);
-        selectedArtefact.skipNode.value = !selectedArtefact.skipNode.value;
-        selectedNode.li_attr = (selectedArtefact.skipNode.value) ? { "class" : "text-muted" } : {"class" : ""}
-        $scope.fireChangeEvent();
-        tree.redraw(true);
+        var selectedNodes = tree.get_selected(true);
+        if (selectedNodes.length > 0) {
+          var nodeToFocus = null;
+          _.each(selectedNodes, function (selectedNode) {
+            var selectedArtefact = getArtefactById($scope.plan.root, selectedNode.id);
+            selectedArtefact.skipNode.value = !selectedArtefact.skipNode.value;
+            selectedNode.li_attr = (selectedArtefact.skipNode.value) ? { "class" : "text-muted" } : {"class" : ""}
+          });
+          $scope.fireChangeEvent();
+          tree.redraw(true);
+        }
       }
       
       function getSelectedArtefact() {
