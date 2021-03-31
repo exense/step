@@ -102,6 +102,9 @@ angular.module('views',[]).factory('viewFactory', ['$http','$q','$filter', funct
             });
             var prevTimestamp = parseInt(startTime);
             var minInterval=Math.round((parseInt(endTime)-parseInt(startTime))/20);
+            if (minInterval <= 0) {
+              minInterval=1;
+            }
             _.mapObject(data.intervals,function(entry,date){
               var dateInt = parseInt(date);
               //Gauge only have actual points when value changes, create intermediate points with current value
