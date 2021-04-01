@@ -9,7 +9,7 @@
 				<dynamic-textfield label="'Number of threads'" tooltip="'Specifies the number of threads to be started.'" on-save="save()" dynamic-value="artefact.users" />
 				<dynamic-textfield label="'Pacing (ms)'" tooltip="'Specifies the amount of time between each iteration.'" on-save="save()" dynamic-value="artefact.pacing" />
 				<dynamic-textfield label="'Ramp-up (ms)'" tooltip="'Specifies the amount of time that should be taken to start all the threads. If left empty the ramp-up duration will be equal to the pacing.'" on-save="save()" dynamic-value="artefact.rampup" />
-				<dynamic-textfield label="'Pack'" tooltip="'Defines number of threads started together during rampup'" on-save="save()" dynamic-value="artefact.pack" />
+				<dynamic-textfield label="'Pack'" tooltip="'Defines number of threads started together during the ramp-up (Optional, by default threads are started one by one)'" on-save="save()" dynamic-value="artefact.pack" />
 				<dynamic-textfield label="'Start offset (ms)'" tooltip="'Specifies the duration to wait before the ramp-up starts.'" on-save="save()" dynamic-value="artefact.startOffset" />
 			</div>
 		</div>
