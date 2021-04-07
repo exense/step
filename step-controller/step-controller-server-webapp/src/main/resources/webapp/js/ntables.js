@@ -182,7 +182,6 @@ angular.module('tables', ['export'])
 		  var tableElement = angular.element(element).find('table');
 
 		  scope.showSpin=false;
-      scope.loadingTable=false;
 
 		  scope.selectionModel = new SelectionModel(function(){
 		    if(serverSide) {
@@ -311,7 +310,6 @@ angular.module('tables', ['export'])
 	        // disable autoWidth: the auto sizing of column widths seems to work better when calculated by the browser
 	        tableOptions.autoWidth = false;
 	        tableOptions.fnDrawCallback = function() {
-	          scope.loadingTable=false;
 	          $timeout(function(){
 	            scope.showSpin=false;
             });
@@ -350,22 +348,24 @@ angular.module('tables', ['export'])
 	        if(serverSide) {
 	          var query = 'rest/table/' + scope.collection + '/data?';
 
+			  var loading = false;
 	          tableOptions.ajax = {'url':query,'type':'POST',beforeSend:function(a,b) {
-	            if(scope.filter) {
-	              b.data += '&filter=' + encodeURIComponent(scope.filter);
-	            }
-	            if(scope.serverSideParameters) {
-	              b.data += "&params=" + encodeURIComponent(JSON.stringify(scope.serverSideParameters()))
-	            }
-	            
-	            // avoid stacking of request
-	            var tableAPI = scope.table;
-	            if (tableAPI && tableAPI.hasOwnProperty('settings') && tableAPI.settings()[0].jqXHR) {
-	              tableAPI.settings()[0].jqXHR.abort();
-	            }
-
+				// Avoid stacking of requests  
+				if(loading) {
+					a.abort();
+				} else {
+					loading = true;
+					if(scope.filter) {
+					  b.data += '&filter=' + encodeURIComponent(scope.filter);
+					}
+					if(scope.serverSideParameters) {
+					  b.data += "&params=" + encodeURIComponent(JSON.stringify(scope.serverSideParameters()))
+					}
+				}
 	          }, complete:function (qXHR, textStatus ) {
+				loading = false;
 	          }, error: function(jqXHR, textStatus, errorThrown) {
+				loading = false;
 	            if (jqXHR.status === 500 && jqXHR.responseText.indexOf("MongoExecutionTimeoutException") >= 0) {
 	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the DB query.");
 	            } 
@@ -396,20 +396,15 @@ angular.module('tables', ['export'])
 	          scope.handle = {};
 	        }
 	        scope.handle.reload = function(showSpin) {
-	          if (!scope.loadingTable) {
-	            scope.loadingTable=true;
 	            scope.showSpin=showSpin;
 	            scope.isExternalReload=true;
-	            table.ajax.reload(function() {
-	                scope.loadingTable=false;
-	                scope.showSpin=false;
-  	              scope.isExternalReload=false
-	              }, false);
-	          }
+				table.ajax.reload(function () {
+					scope.showSpin = false;
+					scope.isExternalReload = false
+				}, false);
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
-            scope.showSpin = true;
-            scope.loadingTable = true;
+              scope.showSpin = true;
 	          var column = table.column(columnName+':name');
 	          column.search(searchExpression,true,false).draw();
 	        }
