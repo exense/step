@@ -74,14 +74,15 @@ public class DirectoryDataPoolTest extends AbstractArtefactTest {
 	}
 	
 	@Test
-	public void testDirectoryDataPoolTestToString() {		
-		Assert.assertTrue(pool.next().getValue().toString().contains("File.txt"));
+	public void testDirectoryDataPoolTestToString() {
+	Assert.assertTrue(pool.next().getValue().toString().endsWith("File.txt"));
 	}
 	
 	@Test
-	public void testDirectoryDataPoolTestGetName() {		
-		Assert.assertEquals("File",((ExtendedFile)pool.next().getValue()).getNameWithoutExtension());
-		Assert.assertEquals("File2.txt",((ExtendedFile)pool.next().getValue()).getName());
+	public void testDirectoryDataPoolTestGetName() {
+		ExtendedFile value = (ExtendedFile) pool.next().getValue();
+		Assert.assertEquals("File", value.getNameWithoutExtension());
+		Assert.assertEquals("File.txt",(value).getName());
 	}
 	
 	@Test

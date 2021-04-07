@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion> 
+  <parent>
+    <groupId>com.fasterxml.jackson</groupId>
+    <artifactId>jackson-base</artifactId>
+    <version>2.10.0</version>
+  </parent>
+  <groupId>com.fasterxml.jackson.datatype</groupId>
+  <artifactId>jackson-datatype-jsr353</artifactId>
+  <name>Jackson-datatype-JSR-353</name>
+  <version>2.10.0</version>
+  <packaging>bundle</packaging>
+  <description>Add-on module for Jackson (http://jackson.codehaus.org) to support
+working with JSR-353 (JDK Json-processing API) node types via data-binding
+  </description>
+  <url>https://github.com/FasterXML/jackson</url>
+  <scm>
+    <connection>scm:git:git@github.com:FasterXML/jackson-datatype-jsr353.git</connection>
+    <developerConnection>scm:git:git@github.com:FasterXML/jackson-datatype-jsr353.git</developerConnection>
+    <url>http://github.com/FasterXML/jackson-datatype-jsr353</url>
+    <tag>jackson-datatype-jsr353-2.10.0</tag>
+  </scm>
+  <properties>
+    <!-- Generate PackageVersion.java into this directory. -->
+    <packageVersion.dir>com/fasterxml/jackson/datatype/jsr353</packageVersion.dir>
+    <packageVersion.package>${project.groupId}.jsr353</packageVersion.package>
+  </properties>
+
+  <dependencies>
+    <!-- Extends Jackson mapper -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <!-- We definitely need at least API -->
+    <dependency>
+        <groupId>javax.json</groupId>
+        <artifactId>javax.json-api</artifactId>
+        <version>1.0</version>
+    </dependency>
+    
+    <!-- and for tests can use the RI -->
+    <dependency>
+        <groupId>org.glassfish</groupId>
+        <artifactId>javax.json</artifactId>
+        <version>1.0.4</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <!-- Inherited from oss-base. Generate PackageVersion.java.-->
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+      </plugin>
+      <!--  28-Mar-2019, tatu: Add rudimentary JDK9+ module info. To build with JDK 8
+            will have to use `moduleInfoFile` as anything else requires JDK 9+
+	-->
+      <plugin>
+        <groupId>org.moditect</groupId>
+        <artifactId>moditect-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

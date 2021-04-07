@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>de.undercouch</groupId>
+  <artifactId>bson4jackson</artifactId>
+  <version>2.9.0</version>
+  <name>bson4jackson</name>
+  <description>A pluggable BSON generator and parser for Jackson JSON processor.</description>
+  <url>http://www.michel-kraemer.com</url>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>michel-kraemer</id>
+      <name>Michel Kraemer</name>
+      <email>michel@undercouch.de</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git://github.com/michel-kraemer/bson4jackson.git</connection>
+    <developerConnection>scm:git:git://github.com/michel-kraemer/bson4jackson.git</developerConnection>
+    <url>scm:git:git://github.com/michel-kraemer/bson4jackson.git</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.9.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.9.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.9.3</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+</project>
