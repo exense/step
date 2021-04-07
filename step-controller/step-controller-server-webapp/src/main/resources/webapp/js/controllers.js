@@ -260,14 +260,15 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			},$scope, executionViewServices);
 
 			$scope.getIncludedTestcases = function() {
-				var selectionMode = $scope.testCaseTable.getSelectionMode?$scope.testCaseTable.getSelectionMode():'all';
-				if(selectionMode=='all') {
+				var table = $scope.testCaseTable;
+				var selectionMode = table.getSelectionMode?table.getSelectionMode():'all';
+				if(selectionMode=='all' || table.areAllSelected()) {
 					return null;
 				} else if (selectionMode=='custom' || selectionMode=='none') {
 					var includedTestCases = {"by":$scope.execution.executionParameters.repositoryObject.repositoryID=="local"?"id":"name"};
 					var result = [];
-					if($scope.testCaseTable.getRows!=null) {
-						_.each($scope.testCaseTable.getRows(true),function(value){result.push(includedTestCases.by=="id"?value.artefactID:value.name)});
+					if(table.getRows!=null) {
+						_.each(table.getRows(true),function(value){result.push(includedTestCases.by=="id"?value.artefactID:value.name)});
 					}
 					includedTestCases.list = result;
 					return includedTestCases;

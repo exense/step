@@ -103,6 +103,10 @@ SelectionModel = function(dataFunction, idAttribute) {
   this.getSelectedIds = function() {
     return _.map(_.filter(_.pairs(me.selectionModel), function(pair) {return pair[1].selected}), function(pair) {return pair[0]});
   }
+
+  this.areAllSelected = function() {
+    return me.getSelectedIds().length == _.pairs(me.selectionModel).length;
+  }
   
   this.getId = function(val) {
     if(idAttribute) {

@@ -83,15 +83,16 @@ angular.module('repositoryControllers', ['step'])
         $scope.statusOptions = _.map(_.uniq(_.map(data.runs, function(e){return e.status})), function(e){return {text:e}});
       });
       $scope.functions.getIncludedTestcases = function() {
-        var selectionMode = $scope.tableHandle.getSelectionMode();
-        if(selectionMode=='all') {
+        var table = $scope.tableHandle;
+        var selectionMode = table.getSelectionMode();
+        if(selectionMode=='all' || table.areAllSelected()) {
           return null;
         } else if (selectionMode=='custom' || selectionMode=='none') {
           var trackBy = $scope.trackTestcasesBy=='id'?'id':'name'
           var includedTestCases = {"by":trackBy};
           var result = [];
-          if($scope.tableHandle.getRows!=null) {
-            _.each($scope.tableHandle.getRows(true),function(value){result.push(trackBy=='id'?value.id:value.testplanName)});
+          if(table.getRows!=null) {
+            _.each(table.getRows(true),function(value){result.push(trackBy=='id'?value.id:value.testplanName)});
           }
           includedTestCases.list = result;
           return includedTestCases;          

@@ -412,6 +412,7 @@ angular.module('tables', ['export'])
 	        scope.handle.getSelectedIds = scope.selectionModel.getSelectedIds.bind(scope.selectionModel);
 	        scope.handle.getSelection = scope.selectionModel.getSelection.bind(scope.selectionModel);
 	        scope.handle.getSelectionMode = scope.selectionModel.getSelectionMode.bind(scope.selectionModel);
+			scope.handle.areAllSelected = scope.selectionModel.areAllSelected.bind(scope.selectionModel);
 
 	        scope.handle.setSelection = scope.setSelection;
 	        scope.handle.select = function(id) {
