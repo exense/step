@@ -28,6 +28,8 @@ import step.core.deployment.Session;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectPredicateFactory;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.editors.FunctionEditor;
@@ -67,7 +69,8 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 	
 	protected SelectorHelper selectorHelper;
 	protected FunctionLocator functionLocator;
-	
+	protected ObjectPredicateFactory objectPredicateFactory;
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -78,6 +81,7 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
+		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
 	}
 
 	@GET
@@ -122,7 +126,8 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 	public Function lookupCallFunction(CallFunction callFunction) {
 		Function function = null;
 		try {
-			function = functionLocator.getFunction(callFunction);
+			ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+			function = functionLocator.getFunction(callFunction, objectPredicate);
 		} catch (RuntimeException e) {}
 		return function;
 	}

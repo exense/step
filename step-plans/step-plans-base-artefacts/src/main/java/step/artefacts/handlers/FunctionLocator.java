@@ -57,6 +57,16 @@ public class FunctionLocator {
 	}
 
 	public Function getFunction(CallFunction testArtefact) {
+		return getFunction(testArtefact, null);
+	}
+
+	/**
+	 * Resolve a CallFunction artefact to the underlying function
+	 * @param testArtefact the CallFunction artefact
+	 * @param sessionObjectPredicate object predicate set in HTTP session (null if invoked from an execution)
+	 * @return the Function referenced by this artefact
+	 */
+	public Function getFunction(CallFunction testArtefact, ObjectPredicate sessionObjectPredicate) {
 		Function function = null;
 		if(testArtefact.getFunctionId()!=null) {
 			function = functionAccessor.get(new ObjectId(testArtefact.getFunctionId()));
@@ -67,7 +77,7 @@ public class FunctionLocator {
 			String selectionAttributesJson = testArtefact.getFunction().get();
 			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, getBindings());
 			
-			ObjectPredicate objectPredicate = (context!=null) ? context.getObjectPredicate() : null;
+			ObjectPredicate objectPredicate = (context!=null) ? context.getObjectPredicate() : sessionObjectPredicate;
 			Stream<Function> stream = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false);
 			if(objectPredicate != null) {
 				stream = stream.filter(objectPredicate);

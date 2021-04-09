@@ -46,6 +46,8 @@ import step.core.deployment.Secured;
 import step.core.deployment.Unfiltered;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectPredicateFactory;
 
 @Singleton
 @Path("plans")
@@ -53,11 +55,13 @@ public class PlanServices extends AbstractServices {
 
 	protected PlanAccessor planAccessor;
 	protected PlanTypeRegistry planTypeRegistry;
+	protected ObjectPredicateFactory objectPredicateFactory;
 	
 	@PostConstruct
 	public void init() {
 		planAccessor = getContext().getPlanAccessor();
 		planTypeRegistry = getContext().get(PlanTypeRegistry.class);
+		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
 	}
 	
 	@GET
@@ -170,12 +174,17 @@ public class PlanServices extends AbstractServices {
 	@Secured(right="plan-read")
 	public Plan lookupPlan(@PathParam("id") String id, @PathParam("artefactid") String artefactId) {
 		Plan plan = get(id);
+		Plan result = null;
 		PlanNavigator planNavigator = new PlanNavigator(plan);
 		CallPlan artefact = (CallPlan) planNavigator.findArtefactById(artefactId);
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(null,getContext().getPlanAccessor(),selectorHelper);
-		return planLocator.selectPlan(artefact);
+		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+		try {
+			result = planLocator.selectPlan(artefact, objectPredicate);
+		} catch (RuntimeException e) {}
+		return result;
 	}
 	
 	@POST

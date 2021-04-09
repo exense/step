@@ -18,31 +18,45 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import step.artefacts.CallPlan;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.functions.Function;
 
 public class PlanLocator {
 	
 	protected ExecutionContext context;
 	protected PlanAccessor accessor;
 	protected SelectorHelper selectorHelper;
-	
+
 	public Plan selectPlan(CallPlan artefact) {
+		return selectPlan(artefact, null);
+	}
+
+	public Plan selectPlan(CallPlan artefact, ObjectPredicate sessionObjectPredicate) {
 		Plan a;
 		
 		if(artefact.getPlanId()!=null) {
 			a =  accessor.get(artefact.getPlanId());
 		} else {
+			ObjectPredicate objectPredicate = (context!=null) ? context.getObjectPredicate() : sessionObjectPredicate;
 			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(artefact.getSelectionAttributes().get(), getBindings());
-			a = accessor.findByAttributes(selectionAttributes);
-			if(a==null) {
-				throw new RuntimeException("Unable to find plan with attributes: "+selectionAttributes.toString());
+			//a = accessor.findByAttributes(selectionAttributes);
+			Stream<Plan> stream = StreamSupport.stream(accessor.findManyByAttributes(selectionAttributes), false);
+			if(objectPredicate != null) {
+				stream = stream.filter(objectPredicate);
 			}
+			List<Plan> matchingFunctions = stream.collect(Collectors.toList());
+			a = matchingFunctions.stream().findFirst().orElseThrow(()->new RuntimeException("Unable to find plan with attributes: "+selectionAttributes.toString()));
 		}
 		return a;
 	}
