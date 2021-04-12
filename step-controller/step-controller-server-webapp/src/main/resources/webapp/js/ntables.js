@@ -348,13 +348,14 @@ angular.module('tables', ['export'])
 	        if(serverSide) {
 	          var query = 'rest/table/' + scope.collection + '/data?';
 
-			  var loading = false;
+			  var loadRequestCount = 0;
 	          tableOptions.ajax = {'url':query,'type':'POST',beforeSend:function(a,b) {
 				// Avoid stacking of requests  
-				if(loading) {
+				if(loadRequestCount >= 5) {
+					console.log("Table load request aborted to avoid stacking")
 					a.abort();
 				} else {
-					loading = true;
+					loadRequestCount++; 
 					if(scope.filter) {
 					  b.data += '&filter=' + encodeURIComponent(scope.filter);
 					}
@@ -363,9 +364,9 @@ angular.module('tables', ['export'])
 					}
 				}
 	          }, complete:function (qXHR, textStatus ) {
-				loading = false;
+				loadRequestCount--;
 	          }, error: function(jqXHR, textStatus, errorThrown) {
-				loading = false;
+				loadRequestCount--;
 	            if (jqXHR.status === 500 && jqXHR.responseText.indexOf("MongoExecutionTimeoutException") >= 0) {
 	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the DB query.");
 	            }
