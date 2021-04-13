@@ -77,7 +77,8 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 			});
 
 		//Start the gauge scheduler
-		gaugeCollectorRegistry.start();
+		int interval = context.getConfiguration().getPropertyAsInteger("plugins.measurements.gaugecollector.interval",15);
+		gaugeCollectorRegistry.start(interval);
 	}
 
 	@Override

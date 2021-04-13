@@ -39,7 +39,7 @@ public class GaugeCollectorRegistry {
 		return collectors.get(name);
 	}
 
-	public void start() {
+	public void start(int interval) {
 		Runnable collect = () -> {
 			try {
 				collectors.forEach((c, t) -> {
@@ -50,6 +50,6 @@ public class GaugeCollectorRegistry {
 			}
 		};
 		ScheduledFuture<?> collectHandle =
-				scheduler.scheduleAtFixedRate(collect, 15, 15, SECONDS);
+				scheduler.scheduleAtFixedRate(collect, 15, interval, SECONDS);
 	}
 }
