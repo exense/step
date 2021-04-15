@@ -13,8 +13,7 @@ import step.grid.GridReportBuilder;
 import step.grid.TokenWrapperState;
 import step.grid.reports.TokenGroupCapacity;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static step.plugins.measurements.MeasurementPlugin.*;
 
@@ -44,19 +43,31 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 					"step grid token usage and capacity", labels) {
 				final List<String> groupBy = Arrays.asList(new String[]{"$agenttype", "url"});
 				final GridReportBuilder gridReportBuilder = new GridReportBuilder((Grid) context.get(Grid.class));
+				final Map<String, String> urlToType = new HashMap<>();
 
 				@Override
 				public List<Collector.MetricFamilySamples> collect() {
 					List<TokenGroupCapacity> usageByIdentity = gridReportBuilder.getUsageByIdentity(groupBy);
+					Map<String, String> newUrlToType = new HashMap<>();
 					for (TokenGroupCapacity tokenGroupCapacity : usageByIdentity) {
 						Integer free = tokenGroupCapacity.getCountByState().get(TokenWrapperState.FREE);
 						free = (free == null) ? 0 : free;
 						int capacity = tokenGroupCapacity.getCapacity();
-						getGauge().labels(tokenGroupCapacity.getKey().get("$agenttype"),
-								tokenGroupCapacity.getKey().get("url"), "free").set(Double.valueOf(free));
-						getGauge().labels(tokenGroupCapacity.getKey().get("$agenttype"),
-								tokenGroupCapacity.getKey().get("url"), "capacity").set(Double.valueOf(capacity));
+						String agentUrl = tokenGroupCapacity.getKey().get("url");
+						String agentType = tokenGroupCapacity.getKey().get("$agenttype");
+						newUrlToType.put(agentUrl, agentType);
+						urlToType.remove(agentUrl);
+						getGauge().labels(agentType,
+								agentUrl, "free").set(Double.valueOf(free));
+						getGauge().labels(agentType,
+								agentUrl, "capacity").set(Double.valueOf(capacity));
 					}
+					for (String url : urlToType.keySet()) {
+						String type = urlToType.remove(url);
+						getGauge().remove(type, url,"free");
+						getGauge().remove(type,url, "capacity");
+					}
+					urlToType.putAll(newUrlToType);
 					return getGauge().collect();
 				}
 			});
