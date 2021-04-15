@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 
 import ch.exense.commons.app.Configuration;
 import step.artefacts.Sequence;
-import step.artefacts.TestCase;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
@@ -40,6 +39,7 @@ import step.core.plans.PlanAccessor;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
+import step.plans.nl.RootArtefactType;
 import step.repositories.parser.StepsParser;
 import step.repositories.parser.StepsParser.ParsingException;
 
@@ -49,8 +49,6 @@ import step.repositories.parser.StepsParser.ParsingException;
  */
 public class PlanParser {
 
-	protected boolean wrapInTestcase = true;
-	
 	protected Configuration configuration;
 	
 	public PlanParser() {
@@ -61,39 +59,33 @@ public class PlanParser {
 		this.configuration = configuration;
 	}
 
-	public boolean isWrapInTestcase() {
-		return wrapInTestcase;
-	}
-
-	public void setWrapInTestcase(boolean wrapInTestcase) {
-		this.wrapInTestcase = wrapInTestcase;
-	}
-
 	/**
-	 * Parses a {@link Plan} in plain-text format
+	 * Parses a {@link Plan} in plain text format
 	 * 
-	 * @param content the plan in plain-text
+	 * @param content the plan in plain text
+	 * @param rootType the type of the root artefact to use. May be null if wrapping is unwanted.
 	 * @return the parsed {@link Plan}
 	 * @throws ParsingException if a parsing error occurs
 	 */
-	public Plan parse(String content) throws ParsingException {
-		return parse(new StringReader(content));
+	public Plan parse(String content, RootArtefactType rootType) throws ParsingException {
+		return parse(new StringReader(content), rootType);
 	}
-	
+
 	/**
-	 * Parses a {@link Plan} in plain-text format from a stream
+	 * Parses a {@link Plan} in plain text format from a stream
 	 * 
 	 * @param inputStream the {@link InputStream} to be read
+	 * @param rootType the type of the root artefact to use. May be null if wrapping is unwanted.
 	 * @return the parsed {@link Plan}
 	 * @throws ParsingException if a parsing error occurs
 	 */
-	public Plan parse(InputStream inputStream) throws ParsingException {
-		return parse(new InputStreamReader(inputStream));
+	public Plan parse(InputStream inputStream, RootArtefactType rootType) throws ParsingException {
+		return parse(new InputStreamReader(inputStream), rootType);
 	}
-	
+
 	private static final Pattern DYNAMIC_NAME_PATTERN = Pattern.compile("[ ]*\\|(.+?)\\|[ ]*");
-	
-	protected Plan parse(Reader contentReader) throws ParsingException {
+
+	protected Plan parse(Reader contentReader, RootArtefactType rootType) throws ParsingException {
 		StepsParser stepsParser = StepsParser.builder().withConfiguration(configuration).withExtensionsFromClasspath()
 				.withStepParsers(new PlanStepParser()).build();
 
@@ -156,34 +148,32 @@ public class PlanParser {
 		
 		FunctionAccessor functionRepository = new InMemoryFunctionAccessorImpl();
 		PlanAccessor planAccessor = new InMemoryPlanAccessor();
-		
-		AbstractArtefact wrapper = null;
-		if(wrapInTestcase) {
-			wrapper = new TestCase();
+
+		AbstractArtefact rootArtefact;
+
+		if (rootType != null) {
+			rootArtefact = rootType.createRootArtefact();
 		} else {
-			wrapper = new Sequence();
+			rootArtefact = new Sequence();
 		}
-		
-//		List<DescriptionStep> steps = reader.lines().map(l-> new DescriptionStep(l)).collect(Collectors.toList());
-		stepsParser.parseSteps(wrapper, descriptionSteps, planAccessor, functionRepository);
+
+		stepsParser.parseSteps(rootArtefact, descriptionSteps, planAccessor, functionRepository);
 
 		Collection<Function> functions = new ArrayList<>();
-		functionRepository.getAll().forEachRemaining(f->functions.add(f));
+		functionRepository.getAll().forEachRemaining(functions::add);
 		
 		Collection<Plan> subPlans = new ArrayList<>();
-		planAccessor.getAll().forEachRemaining(p->subPlans.add(p));
+		planAccessor.getAll().forEachRemaining(subPlans::add);
 		
-		AbstractArtefact rootArtefact;
-		if(wrapInTestcase) {
-			rootArtefact = wrapper;
-		} else {
-			List<AbstractArtefact> children = wrapper.getChildren();
-			if(children==null || children.size()==0) {
-				throw new ParsingException("No root element found.");
-			} else if (children.size()>1) {
-				throw new ParsingException("More than one root element found. This is not allowed with the option wrapInTestcase=false");
+		if (rootType == null) {
+			// no explicit root type was given, so we expect to have exactly one child.
+			List<AbstractArtefact> children = rootArtefact.getChildren();
+			if (children == null || children.size() == 0) {
+				throw new ParsingException("No root element found. Consider using a non-null rootType argument.");
+			} else if (children.size() > 1) {
+				throw new ParsingException("More than one root element found. Consider using a non-null rootType argument.");
 			} else {
-				rootArtefact = wrapper.getChildren().get(0);
+				rootArtefact = children.get(0);
 			}
 		}
 		
