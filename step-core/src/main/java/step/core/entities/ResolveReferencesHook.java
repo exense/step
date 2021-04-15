@@ -18,25 +18,19 @@
  ******************************************************************************/
 package step.core.entities;
 
-import java.util.function.BiConsumer;
+import step.core.objectenricher.ObjectPredicate;
 
-public class ResolveReferencesHook implements BiConsumer<Object, EntityReferencesMap> {
+public class ResolveReferencesHook {
 
 	protected EntityManager entityManager;
-	
-	
 	
 	public ResolveReferencesHook(EntityManager entityManager) {
 		super();
 		this.entityManager = entityManager;
 	}
 
-
-
-	@Override
-	public void accept(Object t, EntityReferencesMap u) {
+	public void accept(Object t, ObjectPredicate objectPredicate, EntityReferencesMap u) {
 		throw new RuntimeException("Not implemented");
 		
 	}
-
 }

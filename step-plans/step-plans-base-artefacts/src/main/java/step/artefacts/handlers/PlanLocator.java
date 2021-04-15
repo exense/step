@@ -20,60 +20,49 @@ package step.artefacts.handlers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import step.artefacts.CallPlan;
-import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionContextBindings;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
-import step.functions.Function;
 
 public class PlanLocator {
 	
-	protected ExecutionContext context;
-	protected PlanAccessor accessor;
-	protected SelectorHelper selectorHelper;
+	private final PlanAccessor accessor;
+	private final SelectorHelper selectorHelper;
 
-	public Plan selectPlan(CallPlan artefact) {
-		return selectPlan(artefact, null);
+	public PlanLocator(PlanAccessor accessor, SelectorHelper selectorHelper) {
+		super();
+		this.accessor = accessor;
+		this.selectorHelper = selectorHelper;
 	}
+	
+	/**
+	 * Resolve a {@link CallPlan} artefact to the underlying {@link Plan}
+	 * 
+	 * @param callFunctionArtefact the {@link CallPlan} artefact
+	 * @param objectPredicate the predicate to be used to filter the results out
+	 * @param bindings the bindings to be used for the evaluation of dynamic expressions (can be null)
+	 * @return the {@link Plan} referenced by the provided artefact
+	 */
+	public Plan selectPlan(CallPlan artefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) {
+		Objects.requireNonNull(artefact, "The artefact must not be null");
+		Objects.requireNonNull(objectPredicate, "The object predicate must not be null");
 
-	public Plan selectPlan(CallPlan artefact, ObjectPredicate sessionObjectPredicate) {
 		Plan a;
-		
 		if(artefact.getPlanId()!=null) {
 			a =  accessor.get(artefact.getPlanId());
 		} else {
-			ObjectPredicate objectPredicate = (context!=null) ? context.getObjectPredicate() : sessionObjectPredicate;
-			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(artefact.getSelectionAttributes().get(), getBindings());
-			//a = accessor.findByAttributes(selectionAttributes);
+			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(artefact.getSelectionAttributes().get(), bindings);
 			Stream<Plan> stream = StreamSupport.stream(accessor.findManyByAttributes(selectionAttributes), false);
-			if(objectPredicate != null) {
-				stream = stream.filter(objectPredicate);
-			}
+			stream = stream.filter(objectPredicate);
 			List<Plan> matchingFunctions = stream.collect(Collectors.toList());
 			a = matchingFunctions.stream().findFirst().orElseThrow(()->new RuntimeException("Unable to find plan with attributes: "+selectionAttributes.toString()));
 		}
 		return a;
 	}
-	
-	private Map<String, Object> getBindings() {
-		if (context != null) {
-			return ExecutionContextBindings.get(context);
-		} else {
-			return null;
-		}
-	}
-
-	public PlanLocator(ExecutionContext context, PlanAccessor accessor, SelectorHelper selectorHelper) {
-		super();
-		this.context = context;
-		this.accessor = accessor;
-		this.selectorHelper = selectorHelper;
-	}
-
 }

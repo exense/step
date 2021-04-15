@@ -28,6 +28,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionContextBindings;
 import step.core.json.JsonProviderCache;
 import step.core.plans.Plan;
 
@@ -41,9 +42,8 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	public void init(ExecutionContext context) {
 		super.init(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		planLocator = new PlanLocator(context, context.getPlanAccessor(), new SelectorHelper(dynamicJsonObjectResolver));
+		planLocator = new PlanLocator(context.getPlanAccessor(), new SelectorHelper(dynamicJsonObjectResolver));
 	}
-
 	
 	@Override
 	protected void createReportSkeleton_(ReportNode parentNode,	CallPlan testArtefact) {
@@ -61,9 +61,6 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 		JsonObject resolvedInput = dynamicJsonObjectResolver.evaluate(input, getBindings());		
 		context.getVariablesManager().putVariable(parentNode, "input", resolvedInput);
 	}
-	
-	
-	
 
 	@Override
 	protected void execute_(ReportNode node, CallPlan testArtefact) {
@@ -76,7 +73,8 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	}
 
 	protected Plan selectPlan(CallPlan testArtefact) {
-		return planLocator.selectPlan(testArtefact);
+		return planLocator.selectPlan(testArtefact, context.getObjectPredicate(),
+				ExecutionContextBindings.get(context));
 	}
 
 	@Override

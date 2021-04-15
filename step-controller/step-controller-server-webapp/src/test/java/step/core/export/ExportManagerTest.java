@@ -68,6 +68,14 @@ import step.resources.Resource;
 import step.resources.ResourceManager;
 
 public class ExportManagerTest {
+	
+	private ObjectPredicate objectPredicate = new ObjectPredicate() {
+		
+		@Override
+		public boolean test(Object t) {
+			return true;
+		}
+	};
 
 	public static GlobalContext createGlobalContext() throws InstantiationException, IllegalAccessException, ClassNotFoundException, CircularDependencyException {
 		GlobalContext context = createGlobalContext_();
@@ -127,7 +135,7 @@ public class ExportManagerTest {
 			metadata.put("export-time" , "1589542872475");
 			metadata.put("user", "admin");
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
-			exportManager.exportById(exportConfig, plan.getId().toString());
+			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
 			Assert.assertTrue(FileHelper.isArchive(testExportFile));
 			
 			//DEBUG
@@ -167,7 +175,7 @@ public class ExportManagerTest {
 			metadata.put("export-time" , "1589542872475");
 			metadata.put("user", "admin");
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), EntityManager.functions, true, null);
-			exportManager.exportById(exportConfig, function.getId().toString());
+			exportManager.exportById(exportConfig, function.getId().toString(), objectPredicate);
 			Assert.assertTrue(FileHelper.isArchive(testExportFile));
 
 			//DEBUG
@@ -506,7 +514,7 @@ public class ExportManagerTest {
 			List<String> additionalEntities = new ArrayList<String>();
 			additionalEntities.add(ParameterManagerPlugin.entityName);
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
-			exportManager.exportById(exportConfig, plan.getId().toString());
+			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
 			Assert.assertTrue(FileHelper.isArchive(testExportFile));
 			
 			//create a new context to test the import
@@ -542,7 +550,7 @@ public class ExportManagerTest {
 			metadata.put("export-time" , "1589542872475");
 			metadata.put("user", "admin");
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
-			exportManager.exportById(exportConfig, plan.getId().toString());
+			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
 			
 			//DEBUG
 			/*try (BufferedReader br = new BufferedReader(
@@ -598,7 +606,7 @@ public class ExportManagerTest {
 			Map<String,String> metadata = new HashMap<String,String>();
 			metadata.put("version", c.getCurrentVersion().toString());
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
-			exportManager.exportById(exportConfig, plan2.getId().toString());
+			exportManager.exportById(exportConfig, plan2.getId().toString(), objectPredicate);
 			
 			/*DEBUG
 			  try (BufferedReader br = new BufferedReader(
@@ -674,7 +682,7 @@ public class ExportManagerTest {
 			Map<String,String> metadata = new HashMap<String,String>();
 			metadata.put("version", c.getCurrentVersion().toString());
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
-			exportManager.exportById(exportConfig, plan.getId().toString());
+			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
 						
 			//create a new context to test the import
 			c = createGlobalContext();
@@ -744,7 +752,7 @@ public class ExportManagerTest {
 			Map<String,String> metadata = new HashMap<String,String>();
 			metadata.put("version", c.getCurrentVersion().toString());
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
-			exportManager.exportById(exportConfig, plan.getId().toString());
+			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
 			//delete created resource
 			File resourceFile = resourceManager.getResourceFile(resource.getId().toHexString()).getResourceFile();
 			resourceManager.deleteResource(resource.getId().toHexString());

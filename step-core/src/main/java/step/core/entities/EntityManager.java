@@ -96,7 +96,7 @@ public class EntityManager  {
 			if ((entity.isByPassObjectPredicate() || objectPredicate.test(a)) && entity.shouldExport(a)) {
 				refs.addElementTo(entityType, a.getId().toHexString());
 				if (recursively) {
-					getAllEntities(entityType, a.getId().toHexString(), refs);	
+					getAllEntities(entityType,a.getId().toHexString(), objectPredicate, refs);	
 				}
 			}
 		});
@@ -108,7 +108,7 @@ public class EntityManager  {
 	 * @param id the id of the entity
 	 * @param references the map of references to be populated
 	 */
-	public void getAllEntities (String entityName, String id, EntityReferencesMap references) {
+	public void getAllEntities (String entityName, String id, ObjectPredicate objectPredicate, EntityReferencesMap references) {
 		Entity<?, ?> entity = getEntityByName(entityName);
 		if (entity == null) {
 			logger.error("Entities of type '" + entityName + "' are not supported");
@@ -121,8 +121,8 @@ public class EntityManager  {
 			references.addReferenceNotFoundWarning("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");
 			//keep reference in map to avoid to resolve it multiple times
 		} else {
-			resolveReferences(a, references);
-			entity.getReferencesHook().forEach(h->h.accept(a,references));
+			resolveReferences(a, objectPredicate, references);
+			entity.getReferencesHook().forEach(h->h.accept(a, objectPredicate, references));
 		}
 	}
 
@@ -131,7 +131,7 @@ public class EntityManager  {
 	 * @param object to be introspected
 	 * @param references map to be populated
 	 */
-	private void resolveReferences(Object object, EntityReferencesMap references) {
+	private void resolveReferences(Object object, ObjectPredicate objectPredicate, EntityReferencesMap references) {
 		if(object!=null) {
 
 			Class<?> clazz = object.getClass();
@@ -164,24 +164,24 @@ public class EntityManager  {
 								//No actual references, but need to process the field recursively
 								if (value instanceof Collection) {
 									Collection<?> c = (Collection<?>) value;
-									c.forEach(o->resolveReferences(o, references));
+									c.forEach(o->resolveReferences(o, objectPredicate, references));
 								} else {
-									resolveReferences(value, references);
+									resolveReferences(value, objectPredicate, references);
 								}
 							}
 							else {	
 								if (value instanceof Collection) {
 									Collection<?> c = (Collection<?>) value;
-									c.forEach(r->resolveReference(r, references, entityType, r.getClass()));
+									c.forEach(r->resolveReference(r, objectPredicate, references, entityType, r.getClass()));
 								} else {
 									if (value == null) {
 										try {
-											value = getEntityByName(entityType).resolve(object);
+											value = getEntityByName(entityType).resolve(object, objectPredicate);
 										} catch (Exception e) {
 											references.addReferenceNotFoundWarning("Unable to resolve reference of type " + entityType + " from artefact " + object.getClass().getCanonicalName() + ". Error: " + e.getMessage());
 										}
 									}
-									resolveReference(value, references, entityType, method.getReturnType());
+									resolveReference(value, objectPredicate, references, entityType, method.getReturnType());
 								}
 							}
 						}						
@@ -197,7 +197,7 @@ public class EntityManager  {
 	 * @param entityType
 	 * @param type
 	 */
-	private void resolveReference(Object value, EntityReferencesMap references, String entityType, Class<?> type) {
+	private void resolveReference(Object value, ObjectPredicate objectPredicate, EntityReferencesMap references, String entityType, Class<?> type) {
 		FileResolver fileResolver = context.getFileResolver();
 		String refId = null;
 		if (type.equals(DynamicValue.class) && value!=null) {
@@ -226,7 +226,7 @@ public class EntityManager  {
 			}
 			//avoid circular references issue
 			if (added) { 
-				getAllEntities(entityType, refId, references);
+				getAllEntities(entityType, refId, objectPredicate, references);
 			}
 		}
 	}
@@ -342,7 +342,9 @@ public class EntityManager  {
 	
 	private Object getNewValue(Object value, Class<?> returnType, Map<String, String> references, String entityType) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		if (value instanceof Collection) {
+			@SuppressWarnings("unchecked")
 			Collection<Object> c = (Collection<Object>) value;
+			@SuppressWarnings("unchecked")
 			Collection<Object> newCol = c.getClass().getConstructor().newInstance();
 			c.forEach(e-> {
 				newCol.add(getNewValue_(e,e.getClass(),references, entityType));

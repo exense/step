@@ -26,6 +26,7 @@ import java.util.function.BiConsumer;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.CRUDAccessor;
 import step.core.imports.Importer;
+import step.core.objectenricher.ObjectPredicate;
 
 public class Entity<A extends AbstractIdentifiableObject, T extends CRUDAccessor<A>> {
 	
@@ -102,7 +103,7 @@ public class Entity<A extends AbstractIdentifiableObject, T extends CRUDAccessor
 		this.byPassObjectPredicate = byPassObjectPredicate;
 	}
 
-	public String resolve(Object artefact) {
+	public String resolve(Object artefact, ObjectPredicate objectPredicate) {
 		return null;
 	}
 

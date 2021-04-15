@@ -40,6 +40,7 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.imports.GenericDBImporter;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
@@ -91,9 +92,9 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class, 
 				new GenericDBImporter<Function,FunctionAccessorImpl>(context)) {
 			@Override
-			public String resolve(Object artefact) {
+			public String resolve(Object artefact, ObjectPredicate objectPredicate) {
 				if (artefact instanceof CallFunction) {
-					return functionLocator.getFunction((CallFunction) artefact).getId().toHexString();
+					return functionLocator.getFunction((CallFunction) artefact, objectPredicate, null).getId().toHexString();
 				} else {
 					return null;
 				}

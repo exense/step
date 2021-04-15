@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.zip.ZipOutputStream;
 
 import org.slf4j.Logger;
@@ -40,7 +39,7 @@ import step.core.accessors.AbstractIdentifiableObject;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReferencesMap;
-import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectPredicate;
 import step.resources.ResourceManager;
 
 public class ExportManager {
@@ -54,11 +53,11 @@ public class ExportManager {
 		this.context = context;
 	}
 	
-	public void exportById(ExportConfiguration exportConfig, String id) throws FileNotFoundException, IOException {
+	public void exportById(ExportConfiguration exportConfig, String id, ObjectPredicate objectPredicate) throws FileNotFoundException, IOException {
 		EntityReferencesMap refs = new EntityReferencesMap();
 		refs.addElementTo(exportConfig.getEntityType(), id);
 		if (exportConfig.isRecursively()) {
-			context.getEntityManager().getAllEntities(exportConfig.getEntityType(), id, refs);
+			context.getEntityManager().getAllEntities(exportConfig.getEntityType(), id, objectPredicate, refs);
 		}
 		List<String> additionalEntities = exportConfig.getAdditionalEntities();
 		if (additionalEntities != null && additionalEntities.size()>0) {

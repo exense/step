@@ -179,10 +179,10 @@ public class PlanServices extends AbstractServices {
 		CallPlan artefact = (CallPlan) planNavigator.findArtefactById(artefactId);
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		PlanLocator planLocator = new PlanLocator(null,getContext().getPlanAccessor(),selectorHelper);
+		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		try {
-			result = planLocator.selectPlan(artefact, objectPredicate);
+			result = planLocator.selectPlan(artefact, objectPredicate, null);
 		} catch (RuntimeException e) {}
 		return result;
 	}

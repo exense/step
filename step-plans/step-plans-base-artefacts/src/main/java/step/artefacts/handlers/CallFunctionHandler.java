@@ -41,6 +41,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionContextBindings;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
@@ -85,7 +86,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 		this.selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		this.functionLocator = new FunctionLocator(functionAccessor, selectorHelper, context);
+		this.functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 	}
 
 	@Override
@@ -201,7 +202,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	private Function getFunction(CallFunction testArtefact) {
-		return functionLocator.getFunction(testArtefact);
+		return functionLocator.getFunction(testArtefact, context.getObjectPredicate(),
+				ExecutionContextBindings.get(context));
 	}
 
 	@SuppressWarnings("unchecked")

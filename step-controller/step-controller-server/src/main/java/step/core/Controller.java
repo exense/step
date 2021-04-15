@@ -56,6 +56,7 @@ import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionStatus;
 import step.core.imports.GenericDBImporter;
 import step.core.imports.PlanImporter;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plugins.ControllerInitializationPlugin;
@@ -174,7 +175,7 @@ public class Controller {
 		context.setEntityManager(new EntityManager(context));
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		PlanLocator planLocator = new PlanLocator(null,getContext().getPlanAccessor(),selectorHelper);
+		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
 		context.getEntityManager()
 			.register( new Entity<Execution, ExecutionAccessor>(
 				EntityManager.executions, context.getExecutionAccessor(), Execution.class, 
@@ -187,9 +188,9 @@ public class Controller {
 					return ((Plan) a).isVisible();
 				}
 				@Override
-				public String resolve(Object artefact) {
+				public String resolve(Object artefact, ObjectPredicate objectPredicate) {
 					if (artefact instanceof CallPlan) {
-						return planLocator.selectPlan((CallPlan) artefact).getId().toHexString();
+						return planLocator.selectPlan((CallPlan) artefact, objectPredicate, null).getId().toHexString();
 					} else {
 						return null;
 					}

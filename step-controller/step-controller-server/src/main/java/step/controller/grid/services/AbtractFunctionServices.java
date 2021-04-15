@@ -127,7 +127,7 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 		Function function = null;
 		try {
 			ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
-			function = functionLocator.getFunction(callFunction, objectPredicate);
+			function = functionLocator.getFunction(callFunction, objectPredicate, null);
 		} catch (RuntimeException e) {}
 		return function;
 	}

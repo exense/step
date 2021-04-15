@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -38,10 +37,8 @@ import javax.ws.rs.core.MediaType;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;
-import step.core.entities.EntityManager;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
-import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.PlanAccessor;
@@ -88,7 +85,7 @@ public class ExportServices extends AbstractServices {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
 				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata,objectPredicateFactory.getObjectPredicate(session),
 						entity, recursively, additionalEntities);
-				exportManager.exportById(exportConfig, id);
+				exportManager.exportById(exportConfig, id, objectPredicateFactory.getObjectPredicate(session));
 				status.setWarnings(exportConfig.getMessages());
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
