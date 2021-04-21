@@ -22,14 +22,27 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import step.grid.bootstrap.ResourceExtractor;
 
 public class AgentRunner {
+	
+	private static final Logger logger = LoggerFactory.getLogger(AgentRunner.class);
 	
 	public static void main(String[] args) throws Exception {
 		File gridJar = ResourceExtractor.extractResource(AgentRunner.class.getClassLoader(), "step-grid-agent.jar");
 		URLClassLoader cl = new URLClassLoader(new URL[]{gridJar.toURI().toURL()}, AgentRunner.class.getClassLoader());
 		Thread.currentThread().setContextClassLoader(cl);
-		cl.loadClass("step.grid.agent.Agent").getMethod("newInstanceFromArgs",args.getClass()).invoke(null, (Object)args);
+		AutoCloseable agent = (AutoCloseable) cl.loadClass("step.grid.agent.Agent").getMethod("newInstanceFromArgs",args.getClass()).invoke(null, (Object)args);
+
+		Runtime.getRuntime().addShutdownHook(new Thread(()->{
+			try {
+				agent.close();
+			} catch (Exception e) {
+				logger.error("Error while closing agent", e);
+			}
+		}));
 	}
 }
