@@ -16,6 +16,10 @@ registrationPeriod: 1000
 # Specifies how long in ms the agent should wait before throwing a timeout when it opens a connection
 # or read data from the controller (to retrieve keywords jars for instance, etc)
 gridReadTimeout: 20000
+# Specifies the time limit in ms for the agent to complete a graceful shutdown
+# Within this time limit the agent will stop accepting new token reservation and will wait for all reserved token
+# to be released before shutting down
+gracefulShutdownTimeout: 30000
 # The path to the working directory of the agent.
 # This folder is used to store temporary data like keyword jars for instance
 workingDir: ../work
