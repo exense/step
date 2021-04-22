@@ -78,7 +78,7 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 			dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource(), context);
 			dataSet.enableRowCommit(false);
 			dataSet.init();
-			ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
+			ReportNode parentNode = context.getReportNodeCache().get(node.getParentID());
 			
 			context.getVariablesManager().putVariable(parentNode, VariableType.NORMAL, testArtefact.getItem().get(), new DataSetWrapper(testArtefact, dataSet));
 			

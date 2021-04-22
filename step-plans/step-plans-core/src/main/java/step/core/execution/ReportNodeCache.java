@@ -20,22 +20,24 @@ package step.core.execution;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.bson.types.ObjectId;
+
 import step.core.artefacts.reports.ReportNode;
 
 public class ReportNodeCache {
 	
-	private ConcurrentHashMap<String,ReportNode> cache = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<ObjectId, ReportNode> cache = new ConcurrentHashMap<>();
 	
 	public void remove(ReportNode node) {
-		cache.remove(node.getId().toString());
+		cache.remove(node.getId());
 	}
 	
-	public ReportNode get(String nodeId) {
+	public ReportNode get(ObjectId nodeId) {
 		return cache.get(nodeId);
 	}
 	
 	public void put(ReportNode node) {
-		cache.put(node.getId().toString(), node);
+		cache.put(node.getId(), node);
 	}
 
 

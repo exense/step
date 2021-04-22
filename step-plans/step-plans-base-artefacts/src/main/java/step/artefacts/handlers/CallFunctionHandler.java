@@ -156,7 +156,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					context.getVariablesManager().putVariable(node, "output", output.getPayload());
 					node.setOutput(output.getPayload().toString());
 					node.setOutputObject(output.getPayload());
-					ReportNode parentNode = context.getReportNodeCache().get(node.getParentID().toString());
+					ReportNode parentNode = context.getReportNodeCache().get(node.getParentID());
 					if(parentNode!=null) {
 						context.getVariablesManager().putVariable(parentNode, "previous", output.getPayload());					
 					}

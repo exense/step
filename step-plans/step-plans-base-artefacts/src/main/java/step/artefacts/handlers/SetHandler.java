@@ -61,7 +61,7 @@ public class SetHandler extends ArtefactHandler<Set, SetReportNode> {
 				} else {
 					referenceNode = callFunctionReport;
 				}
-				ReportNode parentNode = context.getReportNodeCache().get(referenceNode.getParentID().toString());
+				ReportNode parentNode = context.getReportNodeCache().get(referenceNode.getParentID());
 				varMan.putVariable(parentNode, key, result);
 			}
 			node.setKey(key);

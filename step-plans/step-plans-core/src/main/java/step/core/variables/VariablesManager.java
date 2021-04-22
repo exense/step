@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.bson.types.ObjectId;
+
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ReportNodeCache;
@@ -36,7 +38,7 @@ public class VariablesManager {
 	
 	private final ReportNodeCache nodeCache;
 		
-	private ConcurrentHashMap<String, Map<String, Variable>> register = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<ObjectId, Map<String, Variable>> register = new ConcurrentHashMap<>();
 		
 	public VariablesManager(ExecutionContext context) {
 		super();
@@ -45,7 +47,7 @@ public class VariablesManager {
 	}
 	
 	public void removeVariable(ReportNode node, String key) {
-		Map<String, Variable> variableMap = getVariableMap(node.getId().toString(), false);
+		Map<String, Variable> variableMap = getVariableMap(node.getId(), false);
 		if(variableMap!=null) {
 			variableMap.remove(key);
 		}
@@ -71,7 +73,7 @@ public class VariablesManager {
 	
 	public void putVariable(ReportNode targetNode,VariableType type, String key, Object value) {
 		Map<String, Variable> variableMap;
-		variableMap = getVariableMap(targetNode.getId().toString(), true);		
+		variableMap = getVariableMap(targetNode.getId(), true);		
 		Variable variable = new Variable(value, type);
 		variableMap.put(key, variable);
 	}
@@ -148,19 +150,19 @@ public class VariablesManager {
 		Variable variable = null;
 		ReportNode currentNode = node;
 		do {
-			Map<String, Variable> variableMap = getVariableMap(currentNode.getId().toString(), false);
+			Map<String, Variable> variableMap = getVariableMap(currentNode.getId(), false);
 			if(variableMap!=null) {
 				variable = variableMap.get(key);
 			}
 		} while (recursive && 
 				variable==null &&
 				currentNode.getParentID()!=null && 
-				(currentNode = nodeCache.get(currentNode.getParentID().toString()))!=null);
+				(currentNode = nodeCache.get(currentNode.getParentID()))!=null);
 		return variable;
 	}
 
 	
-	private Map<String, Variable> getVariableMap(String nodeId, boolean createIfNotExisting) { 
+	private Map<String, Variable> getVariableMap(ObjectId nodeId, boolean createIfNotExisting) { 
 		Map<String, Variable>variableMap = register.get(nodeId);
 		if(createIfNotExisting && variableMap==null) {
 			variableMap = new ConcurrentHashMap<String, Variable>();
@@ -176,7 +178,7 @@ public class VariablesManager {
 		Map<String, Object> result = new HashMap<>();
 		ReportNode currentNode = context.getCurrentReportNode();
 		do {
-			Map<String, Variable> variableMap = register.get(currentNode.getId().toString());
+			Map<String, Variable> variableMap = register.get(currentNode.getId());
 			if(variableMap!=null) {
 				for(String variableName:variableMap.keySet()) {
 					if(!result.containsKey(variableName)) {
@@ -186,7 +188,7 @@ public class VariablesManager {
 				}
 			}
 		} while (currentNode.getParentID()!=null && 
-				(currentNode = nodeCache.get(currentNode.getParentID().toString()))!=null);
+				(currentNode = nodeCache.get(currentNode.getParentID()))!=null);
 		return result;
 	}
 	
@@ -199,7 +201,7 @@ public class VariablesManager {
 				result.add(variable);
 			}
 		} while (currentNode.getParentID()!=null && 
-				(currentNode = nodeCache.get(currentNode.getParentID().toString()))!=null);
+				(currentNode = nodeCache.get(currentNode.getParentID()))!=null);
 		return result;
 	}
 	
@@ -212,7 +214,7 @@ public class VariablesManager {
 		Variable result = null;
 		ReportNode currentNode = node;
 		do {
-			Map<String, Variable> variables = register.get(currentNode.getId().toString());
+			Map<String, Variable> variables = register.get(currentNode.getId());
 			if(variables!=null) {
 				Matcher matcher = pattern.matcher("");
 				for(String variableName:variables.keySet()) {
@@ -224,11 +226,11 @@ public class VariablesManager {
 			}
 		} while (result==null &&
 				currentNode.getParentID()!=null && 
-				(currentNode = nodeCache.get(currentNode.getParentID().toString()))!=null);
+				(currentNode = nodeCache.get(currentNode.getParentID()))!=null);
 		return result!=null?result.getValue():null;
 	}
 	
-	public void releaseVariables(String nodeId) {
+	public void releaseVariables(ObjectId nodeId) {
 		register.remove(nodeId);
 	}
 }

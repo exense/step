@@ -295,7 +295,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	private void afterDelegation(REPORT_NODE reportNode, ReportNode parentReportNode, ARTEFACT artefact) {
 		reportNodeCache.remove(reportNode);
-		variablesManager.releaseVariables(reportNode.getId().toString());
+		variablesManager.releaseVariables(reportNode.getId());
 
 		context.setCurrentReportNode(parentReportNode);
 		variablesManager.putVariable(parentReportNode, "report", reportNode);
