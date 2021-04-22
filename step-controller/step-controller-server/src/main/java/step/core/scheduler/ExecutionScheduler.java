@@ -113,7 +113,7 @@ public class ExecutionScheduler {
 		}		
 		save(task);
 		
-		if(isSchedulerEnabled()) {
+		if(isSchedulerEnabled() && task.isActive()) {
 			return executor.schedule(task);			
 		} else {		
 			return true;
