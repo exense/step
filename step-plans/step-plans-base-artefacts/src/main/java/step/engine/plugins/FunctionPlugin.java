@@ -27,6 +27,7 @@ import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.Plugin;
+import step.functions.accessor.CachedFunctionAccessor;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.accessor.LayeredFunctionAccessor;
@@ -85,9 +86,13 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 		LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor();
 		layeredFunctionAccessor.pushAccessor(functionAccessor);
 		layeredFunctionAccessor.pushAccessor(new InMemoryFunctionAccessorImpl());
-		FunctionManagerImpl functionManager = new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry);
 		
-		context.put(FunctionAccessor.class, layeredFunctionAccessor);
+		// Use a cached accessor for performance reasons
+		CachedFunctionAccessor cachedFunctionAccessor = new CachedFunctionAccessor(layeredFunctionAccessor);
+		
+		FunctionManagerImpl functionManager = new FunctionManagerImpl(cachedFunctionAccessor, functionTypeRegistry);
+		
+		context.put(FunctionAccessor.class, cachedFunctionAccessor);
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
 		context.put(FunctionExecutionService.class, functionExecutionService);

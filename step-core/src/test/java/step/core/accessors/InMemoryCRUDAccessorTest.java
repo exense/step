@@ -18,7 +18,8 @@
  ******************************************************************************/
 package step.core.accessors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,74 +28,77 @@ import java.util.Spliterator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.junit.Before;
 import org.junit.Test;
 
 
 public class InMemoryCRUDAccessorTest {
 
+	protected CRUDAccessor<AbstractIdentifiableObject> accessor;
+	
+	@Before
+	public void before() {
+		accessor = new InMemoryCRUDAccessor<>();
+	}
+	
 	@Test
 	public void test() {
-		InMemoryCRUDAccessor<AbstractIdentifiableObject> inMemoryCRUDAccessor = new InMemoryCRUDAccessor<>();
 		AbstractIdentifiableObject entity = new AbstractIdentifiableObject();
-		inMemoryCRUDAccessor.save(entity);
-		AbstractIdentifiableObject actualEntity = inMemoryCRUDAccessor.get(entity.getId());
+		accessor.save(entity);
+		AbstractIdentifiableObject actualEntity = accessor.get(entity.getId());
 		assertEquals(entity, actualEntity);
 		
-		actualEntity = inMemoryCRUDAccessor.get(entity.getId().toString());
+		actualEntity = accessor.get(entity.getId().toString());
 		assertEquals(entity, actualEntity);
 		
-		List<AbstractIdentifiableObject> range = inMemoryCRUDAccessor.getRange(0, 1);
+		List<AbstractIdentifiableObject> range = accessor.getRange(0, 1);
 		assertEquals(1, range.size());
 		assertEquals(entity, range.get(0));
 		
-		range = inMemoryCRUDAccessor.getRange(10, 1);
+		range = accessor.getRange(10, 1);
 		assertEquals(0, range.size());
 		
 		ArrayList<AbstractIdentifiableObject> all = new ArrayList<>();
-		inMemoryCRUDAccessor.getAll().forEachRemaining(e->all.add(e));
+		accessor.getAll().forEachRemaining(e->all.add(e));
 		assertEquals(1, all.size());
 		
 		all.clear();
-		inMemoryCRUDAccessor.remove(entity.getId());
-		inMemoryCRUDAccessor.getAll().forEachRemaining(e->all.add(e));
+		accessor.remove(entity.getId());
+		accessor.getAll().forEachRemaining(e->all.add(e));
 		assertEquals(0, all.size());
 		
 		ArrayList<AbstractIdentifiableObject> entities = new ArrayList<AbstractIdentifiableObject>();
 		entities.add(new AbstractIdentifiableObject());
 		entities.add(new AbstractIdentifiableObject());
-		inMemoryCRUDAccessor.save(entities);
-		inMemoryCRUDAccessor.getAll().forEachRemaining(e->all.add(e));
+		accessor.save(entities);
+		accessor.getAll().forEachRemaining(e->all.add(e));
 		assertEquals(2, all.size());
 		
 		entity = new AbstractIdentifiableObject();
 		entity.setId(null);
-		inMemoryCRUDAccessor.save(entity);
+		accessor.save(entity);
 		assertNotNull(entity.getId());
 	}
 	
 	@Test
 	public void testFindByAttributes() {
-		InMemoryCRUDAccessor<AbstractIdentifiableObject> inMemoryCRUDAccessor = new InMemoryCRUDAccessor<>();
-		
 		AbstractOrganizableObject entity = new AbstractOrganizableObject();
 		entity.addAttribute("att1", "val1");
 		entity.addAttribute("att2", "val2");
 		
-		testFindByAttributes(inMemoryCRUDAccessor, entity, true);
+		testFindByAttributes(accessor, entity, true);
 	}
 
 	@Test
 	public void testFindByCustomFields() {
-		InMemoryCRUDAccessor<AbstractIdentifiableObject> inMemoryCRUDAccessor = new InMemoryCRUDAccessor<>();
-		
 		AbstractIdentifiableObject entity = new AbstractIdentifiableObject();
 		entity.addCustomField("att1", "val1");
 		entity.addCustomField("att2", "val2");
 		
-		testFindByAttributes(inMemoryCRUDAccessor, entity, false);
+		testFindByAttributes(accessor, entity, false);
 	}
 
-	private void testFindByAttributes(InMemoryCRUDAccessor<AbstractIdentifiableObject> inMemoryCRUDAccessor,
+	private void testFindByAttributes(CRUDAccessor<AbstractIdentifiableObject> inMemoryCRUDAccessor,
 			AbstractIdentifiableObject entity, boolean findAttributes) {
 		inMemoryCRUDAccessor.save(entity);
 		
