@@ -128,8 +128,6 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		@JsonIgnore
 		int pacing;
 		@JsonIgnore
-		int pack;
-		@JsonIgnore
 		long groupStartTime;
 		@JsonIgnore
 		ThreadGroup threadGroup;
@@ -166,14 +164,6 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 
 		public void setPacing(int pacing) {
 			this.pacing = pacing;
-		}
-
-		public int getPack() {
-			return pack;
-		}
-
-		public void setPack(int pacing) {
-			this.pack = pack;
 		}
 
 		public long getGroupStartTime() {
@@ -230,6 +220,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			long maxDuration = thread.maxDuration;
 			
 			ReportNode reportNode = executeInSession(thread, node, (sessionArtefact, sessionReportNode)->{
+				context.getVariablesManager().putVariable(sessionReportNode, TEC_EXECUTION_REPORTNODES_PERSISTBEFORE, false);
 				SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
 				sequentialArtefactScheduler.executeWithinBeforeAndAfter(sessionArtefact, sessionReportNode, newChildren->{
 					AtomicReportNodeStatusComposer sessionReportNodeStatusComposer = new AtomicReportNodeStatusComposer(sessionReportNode.getStatus());

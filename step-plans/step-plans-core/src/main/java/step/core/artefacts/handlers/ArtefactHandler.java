@@ -48,10 +48,13 @@ import step.core.variables.VariablesManager;
 import step.resources.ResourceManager;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
-	
+
 	protected static Logger logger = LoggerFactory.getLogger(ArtefactHandler.class);
 	
-	public static String FILE_VARIABLE_PREFIX = "file:";
+	public static final String FILE_VARIABLE_PREFIX = "file:";
+	public static final String TEC_EXECUTION_REPORTNODES_PERSISTAFTER = "tec.execution.reportnodes.persistafter";
+	public static final String TEC_EXECUTION_REPORTNODES_PERSISTBEFORE = "tec.execution.reportnodes.persistbefore";
+	public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
 
 	protected ExecutionContext context;
 	private ArtefactHandlerManager artefactHandlerManager;
@@ -133,10 +136,16 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		reportNode.setExecutionTime(t1);
 		reportNode.setStatus(ReportNodeStatus.RUNNING);
 		
-		boolean persistBefore = variablesManager.getVariableAsBoolean("tec.execution.reportnodes.persistbefore",true);		
-		boolean persistAfter = variablesManager.getVariableAsBoolean("tec.execution.reportnodes.persistafter",true);
-		boolean persistOnlyNonPassed = variablesManager.getVariableAsBoolean("tec.execution.reportnodes.persistonlynonpassed",false);
-		
+		final boolean persistBefore, persistAfter;
+		final boolean persistOnlyNonPassed = variablesManager.getVariableAsBoolean(TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED, false);
+		if (persistOnlyNonPassed) {
+			persistBefore = false;
+			persistAfter = true;
+		} else {
+			persistBefore = variablesManager.getVariableAsBoolean(TEC_EXECUTION_REPORTNODES_PERSISTBEFORE, true);
+			persistAfter = variablesManager.getVariableAsBoolean(TEC_EXECUTION_REPORTNODES_PERSISTAFTER, true);
+		}
+
 		try {
 			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 			
