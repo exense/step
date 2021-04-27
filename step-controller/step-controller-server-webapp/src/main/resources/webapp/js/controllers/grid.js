@@ -19,24 +19,24 @@
 angular.module('gridControllers', ['step' ])
 
 .run(function(ViewRegistry, EntityRegistry) {
-  ViewRegistry.registerView('grid','partials/grid.html');
+  ViewRegistry.registerView('grid','partials/grid/grid.html');
+//  ViewRegistry.registerDashlet('grid', 'Agents', 'partials/grid/gridAgents.html', 'agents');
+ // ViewRegistry.registerDashlet('grid', 'Tokens', 'partials/grid/gridTokens.html', 'tokens');
+  //ViewRegistry.registerDashlet('grid', 'Token Groups', 'partials/grid/gridTokenGroups.html', 'tokengroups');
+  //ViewRegistry.registerDashlet('grid', 'Quota Manager', 'partials/grid/gridQuotaManager.html', 'quotamanager');
 })
 
-.controller('GridCtrl', ['$scope', 'stateStorage', 'AuthService',
-    function($scope, $stateStorage, AuthService) {
+.controller('GridCtrl', ['$scope', 'stateStorage', 'AuthService','ViewRegistry',
+    function($scope, $stateStorage, AuthService,ViewRegistry) {
       $stateStorage.push($scope, 'grid');
-      
+
+      $scope.tabs = ViewRegistry.getDashlets("grid");
+
       $scope.authService = AuthService;
       
-      if($scope.$state == null) { $scope.$state = 'agents' };
-      
-      $scope.tabs = [
-          { id: 'agents'},
-          { id: 'tokens'},
-          { id: 'adapters'},
-          { id: 'quotamanager'}
-      ]
-      
+      if($scope.$state == null) { $scope.$state = 'autoscaler' };
+
+      // Returns the item number of the active tab
       $scope.activeTab = function() {
         return _.findIndex($scope.tabs,function(tab){return tab.id==$scope.$state});
       }

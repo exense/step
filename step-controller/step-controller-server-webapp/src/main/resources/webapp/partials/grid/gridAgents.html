@@ -1,0 +1,45 @@
+<div ng-controller="AgentListCtrl">
+    <div class="toolbar">
+        <auto-refresh-commands autorefresh="autorefresh" />
+    </div>
+    <div class="panel-body">
+        <st-table data="agents" uid="'agentList'" use-spinner="true">
+            <st-columns>
+                <st-column name="url">
+                    <header>Url</header>
+                    <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+                    <cell><span><small>{{row.url}}</small></span></cell>
+                </st-column>
+                <st-column name="typeLabel">
+                    <header>Type</header>
+                    <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+                    <cell>
+                        <span class="agent-type agent-type-{{row.type}}"></span>
+                        <span>{{row.typeLabel}}</span>
+                    </cell>
+                </st-column>
+                <st-column name="tokensCapacity">
+                    <header>Token states</header>
+                    <cell>
+                        <grid-status-distribution token-group="row.tokensCapacity" />
+                    </cell>
+                </st-column>
+                <st-column width="'150px'">
+                    <cell>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-default" ng-disabled="!authService.hasRight('token-manage')" ng-click="interrupt(row.id)" uib-tooltip="Pause agent and enter maintenance mode" >
+                                <span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="btn btn-default" ng-disabled="!authService.hasRight('token-manage')" ng-click="resume(row.id)" uib-tooltip="Resume agent and exit maintenance mode">
+                                <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="btn btn-default" ng-disabled="!authService.hasRight('token-manage')" ng-click="removeTokenErrors(row.id)" uib-tooltip="Remove all token errors">
+                                <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </cell>
+                </st-column>
+            </st-columns>
+        </st-table>
+    </div>
+</div>
