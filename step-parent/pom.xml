@@ -143,6 +143,15 @@
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.0.0</version>
 				<configuration>
+					<!-- detectLinks MUST NOT be set to true in a production context, as it derives random domain names
+					from package names, then tries to download data from those random URLs. -->
+					<detectLinks>false</detectLinks>
+
+					<!-- detectOfflineLinks SHOULD also be set to false, because:  -->
+					<!-- a) it cannot generate meaningful links to the javadoc from other projects, anyway -->
+					<!-- b) it causes unnecessarily scary ERROR messages at build time  -->
+					<detectOfflineLinks>false</detectOfflineLinks>
+
 					<quiet>true</quiet>
 					<source>11</source>
 					<additionalOptions>
