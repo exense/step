@@ -1,4 +1,4 @@
-<div class="panel-body">
+<div class="st-flex-column panel-body">
 	<div class="row"
 		ng-if="execution.importResult && !execution.importResult.successful">
 		<div class="alert alert-danger" role="alert">
@@ -10,8 +10,8 @@
 		</div>
 	</div>
 
-	<div class="row" ng-if="execution">
-		<div class="col-xs-9">
+	<div class="st-flex-row row" ng-if="execution">
+		<div class="flex sectionResizable section-execution-left " resizable r-directions="['right']" r-flex="true">
 			<div class="toolbar">
 				<auto-refresh-commands autorefresh="autorefresh" />
 				<button type="button" class="btn btn-default btn-xs"
@@ -221,9 +221,13 @@
 						| number:1}}%</span> </cell> </st-column></st-table>
 				</div>
 			</div>
-			</uib-tab> </uib-tabset>
+			</uib-tab>
+			<uib-tab ng-repeat="entry in addOnTabs" heading="{{entry.label}}" select="onSelection(entry.id)">
+				<ng-include class="st-flex-column" src="entry.template"></ng-include>
+			</uib-tab>
+			</uib-tabset>
 		</div>
-		<div class="col-xs-3">
+		<div class="st-flex-column sectionResizable resizable-panel-right">
 			<div class="panel panel-default">
 				<div class="panel-body" ng-if="execution">
 					<execution-commands description="execution.description"

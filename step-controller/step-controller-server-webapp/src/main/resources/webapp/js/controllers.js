@@ -154,6 +154,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 			$scope.tabs = {selectedTab:0};
 
+			$scope.addOnTabs = ViewRegistry.getDashlets("progressAddons");
+
 			var panels = {
 					"testCases":{label:"Test cases",show:false, enabled:false},
 					"steps":{label:"Keyword calls",show:true, enabled:true},

@@ -741,10 +741,23 @@ st-table table.dataTable tbody > tr {
 }
 
 .st-flex-column {
-	display: flex;
+	display: flex !important;
 	flex-direction: column;
 	flex: 1 1 auto;
 	overflow-y: auto;
+}
+
+execution-progress .tab-content,
+execution-progress div[active="tabs.selectedTab"],
+execution-progress div[active="tabs.selectedTab"] .tab-pane.active {
+	display: flex !important;
+	flex-direction: column;
+	flex: 1 1 auto;
+	overflow-y: hidden;
+}
+
+.section-execution-left.resizable {
+	flex: 0 0 70%;
 }
 
 plan-tree.st-flex-column {
