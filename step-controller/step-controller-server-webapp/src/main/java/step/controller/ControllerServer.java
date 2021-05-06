@@ -172,10 +172,11 @@ public class ControllerServer {
 	private void initWebapp() throws Exception {
 		ResourceHandler bb = new ResourceHandler();
 		bb.setResourceBase(Resource.newClassPathResource("webapp").getURI().toString());
-		
+		bb.setEtags(true);
+
 		ContextHandler ctx = new ContextHandler("/"); /* the server uri path */
 		ctx.setHandler(bb);
-		
+
 		addHandler(ctx);
 	}
 

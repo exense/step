@@ -54,6 +54,7 @@ public abstract class AbstractControllerPlugin extends AbstractPlugin implements
 		ResourceHandler bb = new ResourceHandler();
 		
 		bb.setResourceBase(this.getClass().getResource("webapp").toExternalForm());
+		bb.setEtags(true);
 		
 		ContextHandler ctx = new ContextHandler(path);
 		ctx.setHandler(bb);
@@ -65,6 +66,7 @@ public abstract class AbstractControllerPlugin extends AbstractPlugin implements
 		ResourceHandler bb = new ResourceHandler();
 
 		bb.setResourceBase(baseClass.getResource("webapp").toExternalForm());
+		bb.setEtags(true);
 
 		ContextHandler ctx = new ContextHandler(path);
 		ctx.setHandler(bb);
