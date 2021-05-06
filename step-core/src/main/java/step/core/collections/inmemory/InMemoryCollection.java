@@ -58,12 +58,6 @@ public class InMemoryCollection<T extends AbstractIdentifiableObject> implements
 	@Override
 	public Stream<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
 		Stream<T> stream = filteredStream(filter);
-		if(skip != null) {
-			stream = stream.skip(skip);
-		}
-		if(limit != null) {
-			stream = stream.limit(limit);
-		}
 		if(order != null) {
 			Comparator<T> comparing = Comparator.comparing(e->{
 				try {
@@ -76,6 +70,12 @@ public class InMemoryCollection<T extends AbstractIdentifiableObject> implements
 				comparing = comparing.reversed();
 			}
 			stream = stream.sorted(comparing);
+		}
+		if(skip != null) {
+			stream = stream.skip(skip);
+		}
+		if(limit != null) {
+			stream = stream.limit(limit);
 		}
 		return stream;
 	}

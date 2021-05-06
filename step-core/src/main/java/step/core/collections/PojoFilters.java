@@ -140,7 +140,13 @@ public class PojoFilters {
 		@Override
 		public boolean test(T t) {
 			try {
-				return equalsFilter.getExpectedValue().equals(getBeanProperty(t, equalsFilter.getField()));
+				Object beanProperty = getBeanProperty(t, equalsFilter.getField());
+				Object expectedValue = equalsFilter.getExpectedValue();
+				if(expectedValue != null) {
+					return expectedValue.equals(beanProperty);
+				} else {
+					return beanProperty == null; 
+				}
 			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
 				return false;
 			}

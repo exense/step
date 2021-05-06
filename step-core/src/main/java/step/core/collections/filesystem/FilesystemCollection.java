@@ -105,12 +105,6 @@ public class FilesystemCollection<T extends AbstractIdentifiableObject> implemen
 				return o1.getId().compareTo(o2.getId());
 			}
 		});
-		if(skip != null) {
-			stream = stream.skip(skip);
-		}
-		if(limit != null) {
-			stream = stream.limit(limit);
-		}
 		if(order != null) {
 			Comparator<T> comparing = Comparator.comparing(e->{
 				try {
@@ -123,6 +117,12 @@ public class FilesystemCollection<T extends AbstractIdentifiableObject> implemen
 				comparing = comparing.reversed();
 			}
 			stream = stream.sorted(comparing);
+		}
+		if(skip != null) {
+			stream = stream.skip(skip);
+		}
+		if(limit != null) {
+			stream = stream.limit(limit);
 		}
 		return stream;
 	}
