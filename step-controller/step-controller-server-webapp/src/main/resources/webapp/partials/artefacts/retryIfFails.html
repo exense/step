@@ -1,7 +1,7 @@
 <div class="form-group-sm">
 <fieldset ng-disabled="readonly">
 	<form>
-		<dynamic-textfield label="'Max tries'" tooltip="'Number of retries if child nodes execution fails'" on-save="save()" dynamic-value="artefact.maxRetries" />	
+		<dynamic-textfield label="'Max tries'" tooltip="'Maximum number of tries if child nodes execution fails'" on-save="save()" dynamic-value="artefact.maxRetries" />
 		<dynamic-textfield label="'Grace period (ms)'" tooltip="'Duration to wait after a failed attempt'" on-save="save()" dynamic-value="artefact.gracePeriod" />
 		<dynamic-textfield label="'Timeout'" tooltip="'Maximum execution time for the whole execution retries'" on-save="save()" dynamic-value="artefact.timeout" />
 		<!-- <ng-include src="'partials/artefacts/waitingArtefactsAdvanced.html'"></ng-include> -->
