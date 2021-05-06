@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.accessors.collections;
+package step.core.tables;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -27,22 +27,22 @@ import java.util.List;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 
-public class DateRangeCriterium implements CollectionColumnSearchQueryFactory {
+public class DateRangeCriterium implements TableColumnSearchQueryFactory {
 	
-	private SimpleDateFormat DATE_FORMAT;
+	private final SimpleDateFormat dateFormat;
 	
-	public DateRangeCriterium(String dateFormat) {
+	public DateRangeCriterium(String pattern) {
 		super();
 		
-		DATE_FORMAT = new SimpleDateFormat(dateFormat);
+		dateFormat = new SimpleDateFormat(pattern);
 	}
 
 	@Override
 	public Filter createQuery(String attributeName, String expression) {
 		try {
 			Date from;
-			synchronized (DATE_FORMAT) {
-				from = DATE_FORMAT.parse(expression);				
+			synchronized (dateFormat) {
+				from = dateFormat.parse(expression);				
 			}
 			
 			Calendar c = Calendar.getInstance();

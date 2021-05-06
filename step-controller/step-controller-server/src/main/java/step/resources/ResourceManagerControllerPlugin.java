@@ -20,11 +20,11 @@ package step.resources;
 
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
-import step.core.accessors.collections.CollectionRegistry;
 import step.core.collections.Collection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;
+import step.core.tables.TableRegistry;
 
 @Plugin()
 public class ResourceManagerControllerPlugin extends AbstractControllerPlugin {
@@ -35,7 +35,7 @@ public class ResourceManagerControllerPlugin extends AbstractControllerPlugin {
 		
 		Collection<Resource> collectionDriver = context.getCollectionFactory().getCollection("resources",
 				Resource.class);
-		context.get(CollectionRegistry.class).register("resources", new AbstractTable<>(collectionDriver, true));
+		context.get(TableRegistry.class).register("resources", new AbstractTable<>(collectionDriver, true));
 	}
 
 	public static String getResourceDir(Configuration configuration) {

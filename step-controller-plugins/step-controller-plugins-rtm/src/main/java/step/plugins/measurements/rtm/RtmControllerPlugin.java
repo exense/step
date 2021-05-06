@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import com.mongodb.client.MongoCollection;
 
 import step.core.GlobalContext;
-import step.core.accessors.MongoClientSession;
+import step.core.collections.mongodb.MongoClientSession;
 import step.core.collections.mongodb.MongoDBCollection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;

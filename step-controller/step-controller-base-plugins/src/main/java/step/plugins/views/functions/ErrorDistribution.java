@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.plugins.views.functions;
 
-import step.core.accessors.collections.ViewCounterMap;
+import step.core.tables.ViewCounterMap;
 import step.plugins.views.ViewModel;
 
 public class ErrorDistribution extends ViewModel {

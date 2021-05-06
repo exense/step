@@ -24,22 +24,22 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import step.core.GlobalContext;
-import step.core.accessors.collections.MultiTextCriterium;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.tables.AbstractTable;
+import step.core.tables.MultiTextCriterium;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.ScreenTemplateManager;
 
-public class ReportNodeCollection extends AbstractTable<ReportNode> {
+public class ReportNodeTable extends AbstractTable<ReportNode> {
 	
 	private final List<String> reportSearchAttributes;
 
-	public ReportNodeCollection(GlobalContext context, Collection<ReportNode> collectionDriver) {
-		super(collectionDriver, false);
+	public ReportNodeTable(GlobalContext context, Collection<ReportNode> collection) {
+		super(collection, false);
 		
 		reportSearchAttributes = new ArrayList<>();
 		ScreenTemplateManager screenTemplateManager = context.get(ScreenTemplateManager.class);

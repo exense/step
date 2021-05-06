@@ -29,14 +29,14 @@ import step.core.tables.AbstractTable;
 import step.core.tables.TableFindResult;
 import step.parameter.Parameter;
 
-public class ParameterCollection extends AbstractTable<Parameter> {
+public class ParameterTable extends AbstractTable<Parameter> {
 
 	private static final String PARAMETER_FIELD_PRIORITY = "priority";
 	private static final String PARAMETER_FIELD_SCOPE_ENTITY = "scopeEntity";
 	private static final String PARAMETER_FIELD_SCOPE = "scope";
 
-	public ParameterCollection(Collection<Parameter> underlyingCollection) {
-		super(underlyingCollection, true);
+	public ParameterTable(Collection<Parameter> collection) {
+		super(collection, true);
 	}
 
 	@Override

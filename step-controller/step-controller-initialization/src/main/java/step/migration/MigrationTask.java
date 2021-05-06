@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
 import step.core.Version;
-import step.core.accessors.MongoClientSession;
+import step.core.collections.mongodb.MongoClientSession;
 
 public abstract class MigrationTask {
 

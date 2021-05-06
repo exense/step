@@ -21,7 +21,6 @@ package step.core.collections.mongodb;
 import java.io.IOException;
 
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.MongoClientSession;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 

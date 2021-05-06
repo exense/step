@@ -36,13 +36,12 @@ import step.core.access.UserAccessor;
 import step.core.access.UserAccessorImpl;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.MongoClientSession;
-import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
+import step.core.collections.mongodb.MongoClientSession;
 import step.core.collections.mongodb.MongoDBCollectionFactory;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
@@ -74,6 +73,7 @@ import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.Executor;
 import step.core.tables.AbstractTable;
+import step.core.tables.TableRegistry;
 import step.dashboards.DashboardSession;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
@@ -162,8 +162,8 @@ public class Controller {
 		context.setResourceManager(resourceManager);
 		context.setFileResolver(fileResolver);
 		
-		CollectionRegistry collectionRegistry = new CollectionRegistry();
-		context.put(CollectionRegistry.class, collectionRegistry);		
+		TableRegistry tableRegistry = new TableRegistry();
+		context.put(TableRegistry.class, tableRegistry);		
 		ExecutionAccessorImpl executionAccessor = new ExecutionAccessorImpl(
 				collectionFactory.getCollection("executions", Execution.class));
 		context.setExecutionAccessor(executionAccessor);		
@@ -175,9 +175,9 @@ public class Controller {
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(
 				collectionFactory.getCollection("tasks", ExecutiontTaskParameters.class)));
 
-		Collection<User> userCollectionDriver = collectionFactory.getCollection("users", User.class);
-		context.setUserAccessor(new UserAccessorImpl(userCollectionDriver));
-		collectionRegistry.register("users", new AbstractTable<User>(userCollectionDriver, false));
+		Collection<User> userCollection = collectionFactory.getCollection("users", User.class);
+		context.setUserAccessor(new UserAccessorImpl(userCollection));
+		tableRegistry.register("users", new AbstractTable<User>(userCollection, false));
 		
 		
 		context.setRepositoryObjectManager(new RepositoryObjectManager());

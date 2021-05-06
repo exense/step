@@ -16,22 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.accessors.collections;
+package step.core.tables;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import step.core.collections.Filter;
 
-import step.core.tables.Table;
+public interface TableColumnSearchQueryFactory {
 
-public class CollectionRegistry {
-
-	private Map<String, Table<?>> collections = new ConcurrentHashMap<>();
-	
-	public void register(String collectionName, Table<?> collection) {
-		collections.put(collectionName, collection);
-	}
-	
-	public Table<?> get(String collectionName) {
-		return collections.get(collectionName);
-	}
+	public Filter createQuery(String attributeName, String expression);
 }

@@ -38,12 +38,12 @@ import step.core.execution.LeafReportNodesFilter;
 import step.core.tables.TableColumn;
 import step.core.tables.formatters.DateFormatter;
 
-public class LeafReportNodeCollection extends ReportNodeCollection {
+public class LeafReportNodeTable extends ReportNodeTable {
 	
 	private final List<String[]> optionalReportNodesFilter;
 	
-	public LeafReportNodeCollection(GlobalContext context, Collection<ReportNode> underlyingCollection) {
-		super(context, underlyingCollection);
+	public LeafReportNodeTable(GlobalContext context, Collection<ReportNode> collection) {
+		super(context, collection);
 		
 		Configuration configuration = context.getConfiguration();
 		String optionalReportNodesFilterStr = configuration.getProperty("execution.reports.nodes.include", 

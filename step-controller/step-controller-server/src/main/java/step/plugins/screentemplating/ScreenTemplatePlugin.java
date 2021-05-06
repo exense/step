@@ -21,11 +21,11 @@ package step.plugins.screentemplating;
 import java.util.Arrays;
 
 import step.core.GlobalContext;
-import step.core.accessors.collections.CollectionRegistry;
 import step.core.collections.Collection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;
+import step.core.tables.TableRegistry;
 
 @Plugin
 public class ScreenTemplatePlugin extends AbstractControllerPlugin {
@@ -47,7 +47,7 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 		
 		Collection<ScreenInput> collectionDriver = context.getCollectionFactory().getCollection("screenInputs",
 				ScreenInput.class);
-		context.get(CollectionRegistry.class).register("screenInputs", new AbstractTable<>(collectionDriver, true));
+		context.get(TableRegistry.class).register("screenInputs", new AbstractTable<>(collectionDriver, true));
 	}
 
 	private void initializeScreenInputsIfNecessary() {

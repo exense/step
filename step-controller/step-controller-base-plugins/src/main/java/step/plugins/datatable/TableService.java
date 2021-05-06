@@ -51,7 +51,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.core.accessors.collections.CollectionRegistry;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
@@ -66,6 +65,7 @@ import step.core.ql.OQLFilterBuilder;
 import step.core.tables.Table;
 import step.core.tables.TableColumn;
 import step.core.tables.TableFindResult;
+import step.core.tables.TableRegistry;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
@@ -77,7 +77,7 @@ public class TableService extends ApplicationServices {
 	private static final Logger logger = LoggerFactory.getLogger(TableService.class);
 	
 	private ObjectHookRegistry objectHookRegistry;
-	protected CollectionRegistry collectionRegistry;
+	protected TableRegistry tableRegistry;
 	protected int maxTime;
 	
 	protected ExportTaskManager exportTaskManager;
@@ -91,7 +91,7 @@ public class TableService extends ApplicationServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		collectionRegistry = getContext().get(CollectionRegistry.class);
+		tableRegistry = getContext().get(TableRegistry.class);
 		maxTime = controller.getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 		exportTaskManager = new ExportTaskManager(getContext().getResourceManager());
@@ -128,7 +128,7 @@ public class TableService extends ApplicationServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
 	public List<String> getTableColumnDistinct(@PathParam("id") String collectionID, @PathParam("column") String column, @Context UriInfo uriInfo) throws Exception {
-		Table<?> collection = collectionRegistry.get(collectionID);
+		Table<?> collection = tableRegistry.get(collectionID);
 		return collection.distinct(column);
 	}
 	
@@ -138,13 +138,13 @@ public class TableService extends ApplicationServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured
 	public List<String> searchIdsBy(@PathParam("id") String collectionID, @PathParam("column") String columnName, String searchValue) throws Exception {
-		Table<?> collection = collectionRegistry.get(collectionID);
+		Table<?> collection = tableRegistry.get(collectionID);
 		Filter columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
 		return collection.distinct("_id",columnQueryFragment);
 	}
 	
 	private DataTableResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, Filter sessionQueryFragment) throws Exception {		
-		Table<?> collection = collectionRegistry.get(collectionID);
+		Table<?> collection = tableRegistry.get(collectionID);
 		if(collection == null) {
 			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
 		}
@@ -219,7 +219,7 @@ public class TableService extends ApplicationServices {
 	public String createExport(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
 		MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 	
-		Table<?> collection = collectionRegistry.get(collectionID);
+		Table<?> collection = tableRegistry.get(collectionID);
 		if(collection == null) {
 			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
 		}

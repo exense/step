@@ -30,7 +30,6 @@ import step.attachments.FileResolver;
 import step.controller.grid.GridPlugin;
 import step.controller.grid.services.FunctionServices;
 import step.core.GlobalContext;
-import step.core.accessors.collections.CollectionRegistry;
 import step.core.collections.Collection;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -41,6 +40,7 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;
+import step.core.tables.TableRegistry;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionAccessorImpl;
@@ -109,11 +109,11 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		
 		context.getServiceRegistrationCallback().registerService(FunctionServices.class);
 		
-		CollectionRegistry collectionRegistry = context.get(CollectionRegistry.class);
+		TableRegistry tableRegistry = context.get(TableRegistry.class);
 		
 		Collection<Function> functionCollection = context.getCollectionFactory()
 				.getCollection(EntityManager.functions, Function.class);
-		collectionRegistry.register(EntityManager.functions, new AbstractTable<>(functionCollection, true));
+		tableRegistry.register(EntityManager.functions, new AbstractTable<>(functionCollection, true));
 	}
 	
 	@Override

@@ -30,7 +30,6 @@ import step.attachments.FileResolver;
 import step.core.access.InMemoryUserAccessor;
 import step.core.access.User;
 import step.core.access.UserAccessor;
-import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
@@ -52,6 +51,7 @@ import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
+import step.core.tables.TableRegistry;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
@@ -89,7 +89,7 @@ public class GlobalContextBuilder {
 		
 		context.setConfiguration(configuration);
 		
-		context.put(CollectionRegistry.class, new CollectionRegistry());
+		context.put(TableRegistry.class, new TableRegistry());
 		InMemoryExecutionAccessor executionAccessor = new InMemoryExecutionAccessor();
 		context.setExecutionAccessor(executionAccessor);
 		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));

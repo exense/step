@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.accessors;
+package step.core.collections.mongodb;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -35,8 +35,8 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
 
 import ch.exense.commons.app.Configuration;
+import step.core.accessors.AccessorLayerJacksonMapperProvider;
 import step.core.collections.Collection;
-import step.core.collections.mongodb.MongoDBCollection;
 
 public class MongoClientSession implements Closeable {
 

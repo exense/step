@@ -16,34 +16,44 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.accessors.collections;
+package step.core.tables;
 
-public class ViewCounterMap  extends ThresholdMap<String, Integer> {
+import step.core.collections.serialization.DottedKeyMap;
 
-	private static final long serialVersionUID = -5842315205753972877L;
-	
-	public ViewCounterMap(){
-		super(500, "Other");
+/**
+ * 
+ * A Map with a guaranteed max number of keys, when the threshold is exceeded,
+ * values are redirected to a garbage key.
+ * 
+ */
+public class ThresholdMap<K, V>  extends DottedKeyMap<K, V> {
+
+	private static final long serialVersionUID = 8922169005470741941L;
+
+	private int threshold;
+
+	private K garbageKey;
+
+	ThresholdMap(int threshold, K garbageKeyName){
+		this.threshold = threshold;
+		this.garbageKey = garbageKeyName;
 	}
-	
-	public ViewCounterMap(int threshold, String defaultKey){
-		super(threshold, defaultKey);
-	}
-	
-	public void incrementForKey(String key){
-		Integer current = get(key);
-		if(current == null){
-			put(key, 1);
+
+	@Override
+	public V put(K key, V value){
+		if(size() >= threshold){
+			return super.put(garbageKey, value);
+		}else{
+			return super.put(key, value);
 		}
-		else{
-			put(key, current + 1);
-		}
 	}
-	
-	public void decrementForKey(String key){
-		Integer current = get(key);
-		if(current != null){
-			put(key, current - 1);
+
+	@Override
+	public V get(Object key){
+		if(!containsKey(key) && size() >= threshold){
+			return super.get(garbageKey);
+		}else{
+			return super.get(key);
 		}
 	}
 }

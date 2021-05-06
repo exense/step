@@ -16,44 +16,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.accessors.collections;
+package step.core.tables;
 
-import step.core.collections.serialization.DottedKeyMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * 
- * A Map with a guaranteed max number of keys, when the threshold is exceeded,
- * values are redirected to a garbage key.
- * 
- */
-public class ThresholdMap<K, V>  extends DottedKeyMap<K, V> {
+public class TableRegistry {
 
-	private static final long serialVersionUID = 8922169005470741941L;
-
-	private int threshold;
-
-	private K garbageKey;
-
-	ThresholdMap(int threshold, K garbageKeyName){
-		this.threshold = threshold;
-		this.garbageKey = garbageKeyName;
+	private Map<String, Table<?>> tables = new ConcurrentHashMap<>();
+	
+	public void register(String tableName, Table<?> table) {
+		tables.put(tableName, table);
 	}
-
-	@Override
-	public V put(K key, V value){
-		if(size() >= threshold){
-			return super.put(garbageKey, value);
-		}else{
-			return super.put(key, value);
-		}
-	}
-
-	@Override
-	public V get(Object key){
-		if(!containsKey(key) && size() >= threshold){
-			return super.get(garbageKey);
-		}else{
-			return super.get(key);
-		}
+	
+	public Table<?> get(String tableName) {
+		return tables.get(tableName);
 	}
 }

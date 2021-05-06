@@ -38,7 +38,7 @@ import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AccessorLayerJacksonMapperProvider;
-import step.core.accessors.MongoClientSession;
+import step.core.collections.mongodb.MongoClientSession;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.imports.converter.ArtefactsToPlans;

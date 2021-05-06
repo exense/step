@@ -16,13 +16,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.accessors.collections;
+package step.core.plans;
+
+import java.util.List;
 
 import javax.json.JsonObject;
 
+import step.core.collections.Collection;
 import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.core.tables.AbstractTable;
 
-public interface CollectionQueryFactory {
+public class PlanTable extends AbstractTable<Plan> {
 
-	public Filter buildAdditionalQuery(JsonObject filter);
+	public PlanTable(Collection<Plan> collection) {
+		super(collection, true);
+	}
+
+	@Override
+	public List<Filter> getAdditionalQueryFragments(JsonObject queryParameters) {
+		return List.of(Filters.equals("visible", true));
+	}
 }

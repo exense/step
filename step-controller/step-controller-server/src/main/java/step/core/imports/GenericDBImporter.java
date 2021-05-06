@@ -39,7 +39,7 @@ import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AccessorLayerJacksonMapperProvider;
-import step.core.accessors.MongoClientSession;
+import step.core.collections.mongodb.MongoClientSession;
 import step.core.accessors.Accessor;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.entities.Entity;

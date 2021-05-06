@@ -15,27 +15,27 @@ import step.core.collections.SearchOrder;
 public class AbstractTable<T> implements Table<T> {
 	
 	private final boolean filtered;
-	protected Collection<T> collectionDriver;
+	protected final Collection<T> collection;
 
 	public AbstractTable(Collection<T> CollectionDriver, boolean filtered) {
 		super();
 		this.filtered = filtered;
-		this.collectionDriver = CollectionDriver;
+		this.collection = CollectionDriver;
 	}
 
 	@Override
 	public List<String> distinct(String columnName, Filter filter) {
-		return collectionDriver.distinct(columnName, filter);
+		return collection.distinct(columnName, filter);
 	}
 
 	@Override
 	public List<String> distinct(String columnName) {
-		return collectionDriver.distinct(columnName);
+		return collection.distinct(columnName);
 	}
 
 	@Override
 	public TableFindResult<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
-		Iterator<T> iterator = collectionDriver.find(filter, order, skip, limit, maxTime).map(this::enrichEntity).iterator();
+		Iterator<T> iterator = collection.find(filter, order, skip, limit, maxTime).map(this::enrichEntity).iterator();
 		TableFindResult<T> enrichedResult = new TableFindResult<T>(0, 0, iterator);
 		return enrichedResult;
 	}

@@ -23,20 +23,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import step.core.GlobalContext;
-import step.core.accessors.collections.DateRangeCriterium;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.execution.model.ExecutionStatus;
 import step.core.tables.AbstractTable;
+import step.core.tables.DateRangeCriterium;
 
-public class ExecutionCollection extends AbstractTable<ExecutionWrapper> {
+public class ExecutionTable extends AbstractTable<ExecutionWrapper> {
 	
 	private final ExecutionSummaryProvider executionSummaryFormatter;
 	private final RootReportNodeProvider rootReportNodeFormatter;
 
-	public ExecutionCollection(GlobalContext context, Collection<ExecutionWrapper> collectionDriver) {
-		super(collectionDriver, true);
+	public ExecutionTable(GlobalContext context, Collection<ExecutionWrapper> collection) {
+		super(collection, true);
 		RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
 		ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
 		this.executionSummaryFormatter = executionSummaryFormatter;

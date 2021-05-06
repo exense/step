@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.Accessor;
-import step.core.accessors.collections.CollectionRegistry;
 import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.encryption.EncryptionManager;
@@ -38,6 +37,7 @@ import step.core.imports.GenericDBImporter;
 import step.core.imports.ImportConfiguration;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.tables.TableRegistry;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -68,7 +68,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		Accessor<Parameter> parameterAccessor = new AbstractAccessor<Parameter>(collection);
 		context.put("ParameterAccessor", parameterAccessor);
 		
-		context.get(CollectionRegistry.class).register("parameters", new ParameterCollection(collection));
+		context.get(TableRegistry.class).register("parameters", new ParameterTable(collection));
 		
 		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getConfiguration());
 		context.put(ParameterManager.class, parameterManager);

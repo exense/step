@@ -16,28 +16,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.accessors.collections;
+package step.core.tables;
 
-
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 
+public class MultiTextCriterium implements TableColumnSearchQueryFactory {
 
+	private final List<String> attributes;
 
-public class MultiTextCriterium implements CollectionColumnSearchQueryFactory {
-
-	List<String> attributes;
-	
 	public MultiTextCriterium(List<String> attributes) {
 		super();
 		this.attributes = attributes;
 	}
-	
+
 	public MultiTextCriterium(String... attributes) {
 		super();
 		this.attributes = Arrays.asList(attributes);
@@ -45,13 +41,8 @@ public class MultiTextCriterium implements CollectionColumnSearchQueryFactory {
 
 	@Override
 	public Filter createQuery(String attributeName, String expression) {
-		List<Filter> fragments = new ArrayList<>();
-		Iterator<String> it = attributes.iterator();
-		while(it.hasNext()) {
-			// Case insensitive search
-			fragments.add(Filters.regex(it.next(), expression, false));
-		}
-		return Filters.or(fragments);
+		return Filters
+				.or(attributes.stream().map(a -> Filters.regex(a, expression, false)).collect(Collectors.toList()));
 	}
 
 }

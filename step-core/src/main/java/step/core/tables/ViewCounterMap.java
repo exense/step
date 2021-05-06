@@ -16,11 +16,34 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.accessors.collections;
+package step.core.tables;
 
-import step.core.collections.Filter;
+public class ViewCounterMap  extends ThresholdMap<String, Integer> {
 
-public interface CollectionColumnSearchQueryFactory {
-
-	public Filter createQuery(String attributeName, String expression);
+	private static final long serialVersionUID = -5842315205753972877L;
+	
+	public ViewCounterMap(){
+		super(500, "Other");
+	}
+	
+	public ViewCounterMap(int threshold, String defaultKey){
+		super(threshold, defaultKey);
+	}
+	
+	public void incrementForKey(String key){
+		Integer current = get(key);
+		if(current == null){
+			put(key, 1);
+		}
+		else{
+			put(key, current + 1);
+		}
+	}
+	
+	public void decrementForKey(String key){
+		Integer current = get(key);
+		if(current != null){
+			put(key, current - 1);
+		}
+	}
 }
