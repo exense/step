@@ -20,9 +20,9 @@ package step.core.accessors.collections;
 
 import javax.json.JsonObject;
 
-import org.bson.conversions.Bson;
+import step.core.collections.Filter;
 
 public interface CollectionQueryFactory {
 
-	public Bson buildAdditionalQuery(JsonObject filter);
+	public Filter buildAdditionalQuery(JsonObject filter);
 }

@@ -20,9 +20,9 @@ package step.resources;
 
 import java.util.Iterator;
 
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 
-public interface ResourceRevisionAccessor extends CRUDAccessor<ResourceRevision> {
+public interface ResourceRevisionAccessor extends Accessor<ResourceRevision> {
 	
 	public Iterator<ResourceRevision> getResourceRevisionsByResourceId(String resourceId);
 

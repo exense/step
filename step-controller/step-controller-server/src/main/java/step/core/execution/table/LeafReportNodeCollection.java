@@ -25,24 +25,25 @@ import java.util.Map;
 
 import javax.json.JsonObject;
 
-import org.bson.conversions.Bson;
-
 import ch.exense.commons.app.Configuration;
 import step.artefacts.reports.CheckReportNode;
 import step.artefacts.reports.EchoReportNode;
 import step.artefacts.reports.RetryIfFailsReportNode;
 import step.artefacts.reports.SleepReportNode;
 import step.core.GlobalContext;
-import step.core.accessors.collections.field.CollectionField;
-import step.core.accessors.collections.field.formatter.DateFormatter;
+import step.core.artefacts.reports.ReportNode;
+import step.core.collections.Collection;
+import step.core.collections.Filter;
 import step.core.execution.LeafReportNodesFilter;
+import step.core.tables.TableColumn;
+import step.core.tables.formatters.DateFormatter;
 
 public class LeafReportNodeCollection extends ReportNodeCollection {
 	
 	private final List<String[]> optionalReportNodesFilter;
 	
-	public LeafReportNodeCollection(GlobalContext context) {
-		super(context);
+	public LeafReportNodeCollection(GlobalContext context, Collection<ReportNode> underlyingCollection) {
+		super(context, underlyingCollection);
 		
 		Configuration configuration = context.getConfiguration();
 		String optionalReportNodesFilterStr = configuration.getProperty("execution.reports.nodes.include", 
@@ -58,8 +59,8 @@ public class LeafReportNodeCollection extends ReportNodeCollection {
 	}
 
 	@Override
-	public List<Bson> getAdditionalQueryFragments(JsonObject queryParameters) {
-		List<Bson> additionalQueryFragments = super.getAdditionalQueryFragments(queryParameters);
+	public List<Filter> getAdditionalQueryFragments(JsonObject queryParameters) {
+		List<Filter> additionalQueryFragments = super.getAdditionalQueryFragments(queryParameters);
 		if(additionalQueryFragments == null) {
 			additionalQueryFragments = new ArrayList<>();
 		}
@@ -67,18 +68,17 @@ public class LeafReportNodeCollection extends ReportNodeCollection {
 		return additionalQueryFragments;
 	}
 	
-	@Override
-	protected Map<String, CollectionField> getExportFields() {
-		Map<String, CollectionField> result = new LinkedHashMap<String,CollectionField> ();
-		result.put("executionTime",new CollectionField("executionTime","Begin",new DateFormatter("dd.MM.yyyy HH:mm:ss")));
-		result.put("name",new CollectionField("name","Name"));
-		result.put("functionAttributes",new CollectionField("functionAttributes","Keyword"));
-		result.put("status",new CollectionField("status","Status"));
-		result.put("error",new CollectionField("error","Error"));
-		result.put("input",new CollectionField("input","Input"));
-		result.put("output",new CollectionField("output","Output"));
-		result.put("duration",new CollectionField("duration","Duration"));
-		result.put("adapter",new CollectionField("adapter","Adapter"));
+	protected Map<String, TableColumn> getExportFields() {
+		Map<String, TableColumn> result = new LinkedHashMap<String,TableColumn> ();
+		result.put("executionTime",new TableColumn("executionTime","Begin",new DateFormatter("dd.MM.yyyy HH:mm:ss")));
+		result.put("name",new TableColumn("name","Name"));
+		result.put("functionAttributes",new TableColumn("functionAttributes","Keyword"));
+		result.put("status",new TableColumn("status","Status"));
+		result.put("error",new TableColumn("error","Error"));
+		result.put("input",new TableColumn("input","Input"));
+		result.put("output",new TableColumn("output","Output"));
+		result.put("duration",new TableColumn("duration","Duration"));
+		result.put("adapter",new TableColumn("adapter","Adapter"));
 		return result;
 	}
 

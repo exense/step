@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.export.ExportConfiguration;
 import step.core.imports.ImportConfiguration;
@@ -114,7 +114,7 @@ public class EntityManager  {
 			logger.error("Entities of type '" + entityName + "' are not supported");
 			throw new RuntimeException("Entities of type '" + entityName + "' are not supported");
 		}
-		CRUDAccessor<?> accessor = entity.getAccessor();
+		Accessor<?> accessor = entity.getAccessor();
 		AbstractIdentifiableObject a = accessor.get(id);
 		if (a == null ) {
 			logger.warn("Referenced entity with id '" + id + "' and type '" + entityName + "' is missing");

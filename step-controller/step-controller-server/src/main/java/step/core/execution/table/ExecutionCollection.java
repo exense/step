@@ -22,21 +22,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.bson.conversions.Bson;
-
 import step.core.GlobalContext;
-import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.DateRangeCriterium;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.collections.Collection;
+import step.core.collections.Filter;
 import step.core.execution.model.ExecutionStatus;
+import step.core.tables.AbstractTable;
 
-public class ExecutionCollection extends Collection<ExecutionWrapper> {
+public class ExecutionCollection extends AbstractTable<ExecutionWrapper> {
 	
 	private final ExecutionSummaryProvider executionSummaryFormatter;
 	private final RootReportNodeProvider rootReportNodeFormatter;
 
-	public ExecutionCollection(GlobalContext context) {
-		super(context.getMongoClientSession().getMongoDatabase(), "executions", ExecutionWrapper.class, true);
+	public ExecutionCollection(GlobalContext context, Collection<ExecutionWrapper> collectionDriver) {
+		super(collectionDriver, true);
 		RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
 		ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
 		this.executionSummaryFormatter = executionSummaryFormatter;
@@ -63,17 +63,12 @@ public class ExecutionCollection extends Collection<ExecutionWrapper> {
 	}
 
 	@Override
-	public Bson getQueryFragmentForColumnSearch(String columnName, String searchValue) {
+	public Filter getQueryFragmentForColumnSearch(String columnName, String searchValue) {
 		if(columnName.equals("startTime") || columnName.equals("endTime")) {
-			Bson queryFragment = new DateRangeCriterium("dd.MM.yyyy").createQuery(columnName, searchValue);
+			Filter queryFragment = new DateRangeCriterium("dd.MM.yyyy").createQuery(columnName, searchValue);
 			return queryFragment;
 		} else {
 			return super.getQueryFragmentForColumnSearch(columnName, searchValue);
 		}
-	}
-
-	@Override
-	public Class<?> getEntityClass() {
-		return ExecutionWrapper.class;
 	}
 }

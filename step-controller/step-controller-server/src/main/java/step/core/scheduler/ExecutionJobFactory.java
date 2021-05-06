@@ -29,7 +29,6 @@ import org.quartz.spi.TriggerFiredBundle;
 import step.core.GlobalContext;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
-import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.execution.ExecutionEngine;
 
 public class ExecutionJobFactory implements JobFactory {
@@ -40,7 +39,7 @@ public class ExecutionJobFactory implements JobFactory {
 	
 	public ExecutionJobFactory(GlobalContext context, ExecutionEngine executionEngine) {
 		super();
-		controllerSettingAccessor = new ControllerSettingAccessorImpl(context.getMongoClientSession());
+		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
 		this.executionEngine = executionEngine;
 		this.executionTaskAccessor = context.getScheduleAccessor();
 	}

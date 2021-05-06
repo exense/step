@@ -18,62 +18,35 @@
  ******************************************************************************/
 package step.core.ql;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
-import org.apache.commons.beanutils.NestedNullException;
-import org.apache.commons.beanutils.PropertyUtils;
 
-import step.core.ql.Filter;
-import step.core.ql.FilterFactory;
-import step.core.ql.OQLFilterVisitor;
-import step.core.ql.OQLLexer;
-import step.core.ql.OQLParser;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.core.collections.PojoFilter;
+import step.core.collections.PojoFilters.PojoFilterFactory;
 import step.core.ql.OQLParser.ParseContext;
 
 public class OQLFilterBuilder {
-
-	public static Filter<Object> getFilter(String expression) {
-		return getFilter(expression, new FilterFactory<Object>() {
-			@Override
-			public Filter<Object> createFullTextFilter(String expression) {
-				throw new RuntimeException("Full text search not implemented");
-			}
-
-			@Override
-			public Filter<Object> createAttributeFilter(String operator, String attribute, String value) {
-				return new Filter<Object>() {
-					@Override
-					public boolean test(Object input) {
-						try {
-							return value.equals(PropertyUtils.getProperty(input, attribute));
-						} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | NestedNullException e) {
-							return false;
-						}
-					}
-				};
-			}
-		});
-	}
 	
-	public static <T> Filter<T>  getFilter(String expression, FilterFactory<T> factory) {
+	public static Filter getFilter(String expression) {
 		if(expression == null || expression.isEmpty()) {
-			return new Filter<T>() {
-				@Override
-				public boolean test(T t) {
-					return true;
-				}
-			};
+			return Filters.empty();
 		} else {
 			ParseContext context = parse(expression);
-			OQLFilterVisitor<T> visitor = new OQLFilterVisitor<>(factory);
-			Filter<T> filter = visitor.visit(context.getChild(0));
+			OQLFilterVisitor visitor = new OQLFilterVisitor();
+			Filter filter = visitor.visit(context.getChild(0));
 			return filter;
 		}
+	}
+	
+	public static PojoFilter<Object> getPojoFilter(String expression) {
+		Filter filter = getFilter(expression);
+		PojoFilter<Object> pojoFilter = new PojoFilterFactory<Object>().buildFilter(filter);
+		return pojoFilter;
 	}
 	
 	private static ParseContext parse(String expression) {

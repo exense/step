@@ -20,9 +20,9 @@ package step.core.accessors;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-import step.core.accessors.collections.DottedKeyMap;
-import step.core.accessors.serialization.DottedMapKeyDeserializer;
-import step.core.accessors.serialization.DottedMapKeySerializer;
+import step.core.collections.serialization.DottedKeyMap;
+import step.core.collections.serialization.DottedMapKeyDeserializer;
+import step.core.collections.serialization.DottedMapKeySerializer;
 
 /**
  * Default Jackson module used for the serialization in the persistence layer (Jongo)

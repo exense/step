@@ -18,28 +18,23 @@
  ******************************************************************************/
 package step.core.plans;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.json.JsonObject;
 
-import org.bson.Document;
-import org.bson.conversions.Bson;
+import step.core.collections.Collection;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.core.tables.AbstractTable;
 
-import com.mongodb.client.MongoDatabase;
+public class PlanCollection extends AbstractTable<Plan> {
 
-import step.core.accessors.collections.Collection;
-
-public class PlanCollection extends Collection<Plan> {
-
-	public PlanCollection(MongoDatabase mongoDatabase) {
-		super(mongoDatabase, "plans", Plan.class, true);
+	public PlanCollection(Collection<Plan> collectionDriver) {
+		super(collectionDriver, true);
 	}
 
 	@Override
-	public List<Bson> getAdditionalQueryFragments(JsonObject queryParameters) {
-		ArrayList<Bson> fragments = new ArrayList<Bson>();
-		fragments.add(new Document("visible", true));
-		return fragments;
+	public List<Filter> getAdditionalQueryFragments(JsonObject queryParameters) {
+		return List.of(Filters.equals("visible", true));
 	}
 }

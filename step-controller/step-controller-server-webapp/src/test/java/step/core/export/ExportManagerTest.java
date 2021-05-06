@@ -39,8 +39,8 @@ import step.artefacts.Sequence;
 import step.attachments.FileResolver;
 import step.core.GlobalContext;
 import step.core.GlobalContextBuilder;
-import step.core.accessors.CRUDAccessor;
-import step.core.accessors.InMemoryCRUDAccessor;
+import step.core.accessors.Accessor;
+import step.core.accessors.InMemoryAccessor;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
@@ -109,13 +109,13 @@ public class ExportManagerTest {
 		GlobalContext context = GlobalContextBuilder.createGlobalContext();
 		BaseArtefactPlugin.registerArtefacts(context.getArtefactHandlerRegistry());
 		//From ParameterManagerPlugin
-		InMemoryCRUDAccessor<Parameter> parameterAccessor = new InMemoryCRUDAccessor<Parameter>();
+		InMemoryAccessor<Parameter> parameterAccessor = new InMemoryAccessor<Parameter>();
 		context.put("ParameterAccessor", parameterAccessor);
-		context.getEntityManager().register(new Entity<Parameter, CRUDAccessor<Parameter>> (
+		context.getEntityManager().register(new Entity<Parameter, Accessor<Parameter>> (
 				ParameterManagerPlugin.entityName,
 				parameterAccessor,
 				Parameter.class,
-				new GenericDBImporter<Parameter, CRUDAccessor<Parameter>>(context)));
+				new GenericDBImporter<Parameter, Accessor<Parameter>>(context)));
 		context.getEntityManager().registerExportHook(new ParameterManagerControllerPlugin.ParameterExportBiConsumer(context));
 		context.getEntityManager().registerImportHook(new ParameterManagerControllerPlugin.ParameterImportBiConsumer(context));
 		return context;
@@ -250,7 +250,7 @@ public class ExportManagerTest {
 	@Test
 	public void testExportAllPlansWithParameters() throws Exception {
 		GlobalContext c = createGlobalContext();
-		InMemoryCRUDAccessor<Parameter> parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 		
 		Sequence rootSequence = BaseArtefacts.sequence();
 		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
@@ -288,7 +288,7 @@ public class ExportManagerTest {
 
 			//create a new context to test the import
 			c = createGlobalContext();
-			parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 
 			ImportManager importManager = new ImportManager(c);
 			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true);
@@ -321,7 +321,7 @@ public class ExportManagerTest {
 	@Test
 	public void testImportNewEncryptionManager() throws Exception {
 		GlobalContext c = createGlobalContext();
-		InMemoryCRUDAccessor<Parameter> parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 
 		EncryptionManager encryptionManager = c.get(EncryptionManager.class);
 		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
@@ -346,7 +346,7 @@ public class ExportManagerTest {
 
 			//create a new context to test the import
 			c = createGlobalContext();
-			parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 			//Override previous encryption manager to simulate new instance
 			EncryptionManager encryptionManagerNewInstance = new EncryptionManager() {
 				@Override
@@ -387,7 +387,7 @@ public class ExportManagerTest {
 	@Test
 	public void testImportNoEncryptionManager() throws Exception {
 		GlobalContext c = createGlobalContext();
-		InMemoryCRUDAccessor<Parameter> parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 
 		EncryptionManager encryptionManager = c.get(EncryptionManager.class);
 		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
@@ -412,7 +412,7 @@ public class ExportManagerTest {
 
 			//create a new context to test the import without encpryption manager
 			c = createGlobalContext_();
-			parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 			ImportManager importManager = new ImportManager(c);
 			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true);
 			importManager.importAll(importConfiguration);
@@ -433,7 +433,7 @@ public class ExportManagerTest {
 	public void testImportProtectedToEncrypted() throws Exception {
 		//create a new context to test the import without encpryption manager
 		GlobalContext c = createGlobalContext_();
-		InMemoryCRUDAccessor<Parameter> parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
 		paramProtectedEncrypted.setProtectedValue(true);
 		Parameter savedParamProtected = parameterAccessor.save(paramProtectedEncrypted);
@@ -453,7 +453,7 @@ public class ExportManagerTest {
 			Assert.assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportConfig.getMessages().toArray()[0]);
 
 			c = createGlobalContext();
-			parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 			ImportManager importManager = new ImportManager(c);
 			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true);
 			importManager.importAll(importConfiguration);
@@ -481,7 +481,7 @@ public class ExportManagerTest {
 		ImportManager importManager = new ImportManager(c);
 		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(c), null, true));
 
-		InMemoryCRUDAccessor<Parameter> parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 		Parameter parameterClear = parameterAccessor.get("6059b301e7ca79765f814864");
 		Parameter parameterProtected = parameterAccessor.get("6059b2d0e7ca79765f81451a");
 		Assert.assertNotNull(parameterClear);
@@ -497,7 +497,7 @@ public class ExportManagerTest {
 	@Test
 	public void testExportPlanByIdWithParameters() throws Exception {
 		GlobalContext c = createGlobalContext();
-		InMemoryCRUDAccessor<Parameter> parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(BaseArtefacts.sequence()).endBlock().build();
 		c.getPlanAccessor().save(plan);
 		
@@ -519,7 +519,7 @@ public class ExportManagerTest {
 			
 			//create a new context to test the import
 			c = createGlobalContext();
-			parameterAccessor = (InMemoryCRUDAccessor<Parameter>) c.get("ParameterAccessor");
+			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 
 			ImportManager importManager = new ImportManager(c);
 			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true));

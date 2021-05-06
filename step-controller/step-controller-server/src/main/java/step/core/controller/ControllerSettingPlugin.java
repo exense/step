@@ -33,7 +33,8 @@ public class ControllerSettingPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		controllerSettingAccessor = new ControllerSettingAccessorImpl(context.getMongoClientSession());
+		controllerSettingAccessor = new ControllerSettingAccessorImpl(
+				context.getCollectionFactory().getCollection("settings", ControllerSetting.class));
 		context.put(ControllerSettingAccessor.class, controllerSettingAccessor);
 	}
 

@@ -21,10 +21,11 @@ package step.plugins.screentemplating;
 import java.util.Arrays;
 
 import step.core.GlobalContext;
-import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
+import step.core.collections.Collection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.tables.AbstractTable;
 
 @Plugin
 public class ScreenTemplatePlugin extends AbstractControllerPlugin {
@@ -34,7 +35,8 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) {
-		screenInputAccessor = new ScreenInputAccessorImpl(context.getMongoClientSession());
+		screenInputAccessor = new ScreenInputAccessorImpl(
+				context.getCollectionFactory().getCollection("screenInputs", ScreenInput.class));
 		screenTemplateManager = new ScreenTemplateManager(screenInputAccessor, context.getConfiguration());
 		
 		initializeScreenInputsIfNecessary();
@@ -43,7 +45,9 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 		context.put(ScreenTemplateManager.class, screenTemplateManager);
 		context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
 		
-		context.get(CollectionRegistry.class).register("screenInputs", new Collection<ScreenInput>(context.getMongoClientSession().getMongoDatabase(), "screenInputs", ScreenInput.class, true));
+		Collection<ScreenInput> collectionDriver = context.getCollectionFactory().getCollection("screenInputs",
+				ScreenInput.class);
+		context.get(CollectionRegistry.class).register("screenInputs", new AbstractTable<>(collectionDriver, true));
 	}
 
 	private void initializeScreenInputsIfNecessary() {

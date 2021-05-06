@@ -41,7 +41,7 @@ import org.bson.types.ObjectId;
 import step.commons.activation.Expression;
 import step.core.GlobalContext;
 import step.core.access.AccessManager;
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.encryption.EncryptionManagerException;
@@ -53,7 +53,7 @@ import step.parameter.ParameterScope;
 public class ParameterServices extends AbstractServices {
 	
 	private AccessManager accessManager;
-	private CRUDAccessor<Parameter> parameterAccessor;
+	private Accessor<Parameter> parameterAccessor;
 	private ParameterManager parameterManager;
 	
 	@PostConstruct
@@ -61,7 +61,7 @@ public class ParameterServices extends AbstractServices {
 	public void init() throws Exception {
 		super.init();
 		GlobalContext context = getContext();
-		parameterAccessor = (CRUDAccessor<Parameter>) context.get("ParameterAccessor");
+		parameterAccessor = (Accessor<Parameter>) context.get("ParameterAccessor");
 		parameterManager = context.require(ParameterManager.class);
 		accessManager = context.get(AccessManager.class);
 	}

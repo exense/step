@@ -25,10 +25,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.serialization.EscapingDottedKeysMapDeserializer;
-import step.core.accessors.serialization.EscapingDottedKeysMapSerializer;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
+import step.core.collections.serialization.EscapingDottedKeysMapDeserializer;
+import step.core.collections.serialization.EscapingDottedKeysMapSerializer;
 import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
 

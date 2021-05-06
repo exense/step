@@ -24,11 +24,11 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 import step.core.imports.Importer;
 import step.core.objectenricher.ObjectPredicate;
 
-public class Entity<A extends AbstractIdentifiableObject, T extends CRUDAccessor<A>> {
+public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>> {
 	
 	private String name;
 	private T accessor;

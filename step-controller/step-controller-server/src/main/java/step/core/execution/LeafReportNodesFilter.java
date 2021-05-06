@@ -18,9 +18,6 @@
  ******************************************************************************/
 package step.core.execution;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.in;
-import static com.mongodb.client.model.Filters.or;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,10 +25,9 @@ import java.util.List;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 
-import org.bson.Document;
-import org.bson.conversions.Bson;
-
 import step.core.accessors.collections.CollectionQueryFactory;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 
 public class LeafReportNodesFilter implements CollectionQueryFactory {
 	
@@ -42,28 +38,28 @@ public class LeafReportNodesFilter implements CollectionQueryFactory {
 		this.optionalReportNodesFilter = optionalReportNodesFilter;
 	}
 
-	public Bson buildAdditionalQuery(JsonObject filter) {		
-		List<Bson> fragments = new ArrayList<>();
+	public Filter buildAdditionalQuery(JsonObject filter) {		
+		List<Filter> fragments = new ArrayList<>();
 		if(filter != null && filter.containsKey("eid")) {
-			fragments.add(new Document("executionID", filter.getString("eid")));
+			fragments.add(Filters.equals("executionID", filter.getString("eid")));
 		}
 		
-		List<Bson> nodeFilters = new ArrayList<Bson>();
-		nodeFilters.add(new Document("_class","step.artefacts.reports.CallFunctionReportNode"));
-		nodeFilters.add(new Document("error.root",true));
+		List<Filter> nodeFilters = new ArrayList<>();
+		nodeFilters.add(Filters.equals("_class","step.artefacts.reports.CallFunctionReportNode"));
+		nodeFilters.add(Filters.equals("error.root",true));
 		if(optionalReportNodesFilter != null) {
 			for (String[] kv: optionalReportNodesFilter) {
-				nodeFilters.add(new Document(kv[0], kv[1]));	
+				nodeFilters.add(Filters.equals(kv[0], kv[1]));	
 			}
 		}
-		fragments.add(or(nodeFilters));
+		fragments.add(Filters.or(nodeFilters));
 		if(filter != null && filter.containsKey("testcases")) {
 			//customAttributes.TestCase
 			List<String> testcaseIds = new ArrayList<>();
 			filter.getJsonArray("testcases").forEach(v->testcaseIds.add(((JsonString)v).getString()));
-			fragments.add(in("customAttributes.TestCase",testcaseIds));
+			fragments.add(Filters.in("customAttributes.TestCase", testcaseIds));
 		}
 		
-		return and(fragments);
+		return Filters.and(fragments);
 	}
 }

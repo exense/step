@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.plugins.views;
 
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 
-public interface ViewModelAccessor extends CRUDAccessor<ViewModel> {
+public interface ViewModelAccessor extends Accessor<ViewModel> {
 
 	<T extends ViewModel> T get(String viewId, String executionId, Class<T> as);
 

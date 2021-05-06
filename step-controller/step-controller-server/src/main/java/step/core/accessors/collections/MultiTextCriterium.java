@@ -18,15 +18,14 @@
  ******************************************************************************/
 package step.core.accessors.collections;
 
-import static com.mongodb.client.model.Filters.or;
-import static com.mongodb.client.model.Filters.regex;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.bson.conversions.Bson;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 
 
 
@@ -45,14 +44,14 @@ public class MultiTextCriterium implements CollectionColumnSearchQueryFactory {
 	}
 
 	@Override
-	public Bson createQuery(String attributeName, String expression) {
-		List<Bson> fragments = new ArrayList<>();
+	public Filter createQuery(String attributeName, String expression) {
+		List<Filter> fragments = new ArrayList<>();
 		Iterator<String> it = attributes.iterator();
 		while(it.hasNext()) {
 			// Case insensitive search
-			fragments.add(regex(it.next(), expression, "i"));
+			fragments.add(Filters.regex(it.next(), expression, false));
 		}
-		return or(fragments);
+		return Filters.or(fragments);
 	}
 
 }

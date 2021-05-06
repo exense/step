@@ -18,9 +18,13 @@
  ******************************************************************************/
 package step.functions.accessor;
 
-import step.core.accessors.InMemoryCRUDAccessor;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.functions.Function;
 
-public class InMemoryFunctionAccessorImpl extends InMemoryCRUDAccessor<Function> implements FunctionAccessor {
+public class InMemoryFunctionAccessorImpl extends FunctionAccessorImpl implements FunctionAccessor {
+
+	public InMemoryFunctionAccessorImpl() {
+		super(new InMemoryCollection<Function>());
+	}
 
 }

@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.core.accessors.collections;
 
+import step.core.collections.serialization.DottedKeyMap;
+
 /**
  * 
  * A Map with a guaranteed max number of keys, when the threshold is exceeded,

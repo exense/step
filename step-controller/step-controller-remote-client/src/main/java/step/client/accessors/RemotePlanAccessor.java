@@ -18,18 +18,18 @@
  ******************************************************************************/
 package step.client.accessors;
 
-import step.client.credentials.ControllerCredentials;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.parameter.Parameter;
-
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.GenericType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class RemotePlanAccessor extends AbstractRemoteCRUDAccessorImpl<Plan> implements PlanAccessor {
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.core.GenericType;
+
+import step.client.credentials.ControllerCredentials;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
+
+public abstract class RemotePlanAccessor extends AbstractRemoteAccessorImpl<Plan> implements PlanAccessor {
 
 	public RemotePlanAccessor(ControllerCredentials credentials, String path, Class<Plan> entityClass) {
 		super(credentials, path, entityClass);

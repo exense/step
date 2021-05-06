@@ -18,53 +18,12 @@
  ******************************************************************************/
 package step.core.execution.model;
 
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import step.core.collections.inmemory.InMemoryCollection;
 
-import step.core.accessors.InMemoryCRUDAccessor;
-import step.core.repositories.RepositoryObjectReference;
+public class InMemoryExecutionAccessor extends ExecutionAccessorImpl implements ExecutionAccessor {
 
-public class InMemoryExecutionAccessor extends InMemoryCRUDAccessor<Execution> implements ExecutionAccessor {
-
-	@Override
-	public void createIndexesIfNeeded(Long ttl) {
+	public InMemoryExecutionAccessor() {
+		super(new InMemoryCollection<Execution>());
 	}
 
-	@Override
-	public List<Execution> getActiveTests() {
-		throw notImplemented();
-	}
-
-	@Override
-	public List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference) {
-		throw notImplemented();
-	}
-
-	@Override
-	public Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end) {
-		throw notImplemented();
-	}
-
-	@Override
-	public Iterable<Execution> findLastStarted(int limit) {
-		throw notImplemented();
-	}
-
-	@Override
-	public Iterable<Execution> findLastEnded(int limit) {
-		throw notImplemented();
-	}
-
-	@Override
-	public List<Execution> getLastExecutionsBySchedulerTaskID(String schedulerTaskID, int limit) {
-		return map.values().stream().filter(e->schedulerTaskID.equals(e.getExecutionTaskID())).sorted(new Comparator<Execution>() {
-			@Override
-			public int compare(Execution o1, Execution o2) {
-				return -o1.getEndTime().compareTo(o2.getEndTime());
-			}
-		}).limit(limit).collect(Collectors.toList());
-	}
 }

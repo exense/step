@@ -18,12 +18,18 @@
  ******************************************************************************/
 package step.core;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-public abstract class AbstractContext {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public abstract class AbstractContext implements Closeable {
 	
 	private final ConcurrentHashMap<String, Object> attributes;
+	private static final Logger logger = LoggerFactory.getLogger(AbstractContext.class);
 
 	public AbstractContext() {
 		super();
@@ -82,5 +88,18 @@ public abstract class AbstractContext {
 		}
 		put(class_, value);
 		return value;
+	}
+
+	@Override
+	public void close() throws IOException {
+		attributes.values().forEach(v -> {
+			if (v instanceof Closeable) {
+				try {
+					((Closeable) v).close();
+				} catch (IOException e) {
+					logger.error("Error while closing sesison object", e);
+				}
+			}
+		});
 	}
 }

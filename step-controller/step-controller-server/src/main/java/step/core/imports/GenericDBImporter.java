@@ -39,11 +39,12 @@ import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AccessorLayerJacksonMapperProvider;
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.MongoClientSession;
+import step.core.accessors.Accessor;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.entities.Entity;
 
-public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends CRUDAccessor<A>> implements Importer<A, T> {
+public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends Accessor<A>> implements Importer<A, T> {
 	
 	protected Entity<A, T> entity;
 	protected GlobalContext context;
@@ -111,7 +112,7 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends C
 	protected MongoCollection<Document> getOrInitTmpCollection() {
 		if (tmpCollection == null) {
 			String collectionName = "Tmp" + UUID.randomUUID();
-			tmpCollection = context.getMongoClientSession().getMongoDatabase().getCollection(collectionName);
+			tmpCollection = context.require(MongoClientSession.class).getMongoDatabase().getCollection(collectionName);
 		} 
 		return tmpCollection;
 	}

@@ -37,8 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.collections.PojoFilter;
 import step.core.objectenricher.ObjectHookRegistry;
-import step.core.ql.Filter;
 import step.core.ql.OQLFilterBuilder;
 
 @Secured
@@ -87,7 +87,7 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 				List<?> list = (List<?>)entity;
 				Session session = getSession();
 				String oqlFilter = objectHookRegistry.getObjectFilter(session).getOQLFilter();
-				Filter<Object> filter = OQLFilterBuilder.getFilter(oqlFilter);
+				PojoFilter<Object> filter = OQLFilterBuilder.getPojoFilter(oqlFilter);
 				final List<?> newList = list.stream().filter(isNotAbstractOrganizableObject.or(filter)).collect(Collectors.toList());
 				context.setEntity(newList);
 			}

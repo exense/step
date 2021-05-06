@@ -18,13 +18,12 @@
  ******************************************************************************/
 package step.migration;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import step.core.GlobalContext;
 import step.core.Version;
-import step.migration.MigrationManager;
-import step.migration.MigrationTask;
 
 public class MigrationManagerTest {
 
@@ -54,7 +53,8 @@ public class MigrationManagerTest {
 
 	
 	protected MigrationManager getMigrationManager(StringBuilder s) {
-		MigrationManager m = new MigrationManager(null);
+		GlobalContext context = new GlobalContext();
+		MigrationManager m = new MigrationManager(context);
 		registerMigrator(s, m, new Version(0, 2, 2));
 		registerMigrator(s, m, new Version(2, 2, 5));
 		registerMigrator(s, m, new Version(1, 2, 2));

@@ -18,13 +18,13 @@
  ******************************************************************************/
 package step.functions.accessor;
 
-import step.core.accessors.CRUDAccessor;
-import step.core.accessors.CachedCRUDAccessor;
+import step.core.accessors.Accessor;
+import step.core.accessors.CachedAccessor;
 import step.functions.Function;
 
-public class CachedFunctionAccessor extends CachedCRUDAccessor<Function> implements FunctionAccessor {
+public class CachedFunctionAccessor extends CachedAccessor<Function> implements FunctionAccessor {
 
-	public CachedFunctionAccessor(CRUDAccessor<Function> underlyingAccessor) {
+	public CachedFunctionAccessor(Accessor<Function> underlyingAccessor) {
 		super(underlyingAccessor);
 	}
 

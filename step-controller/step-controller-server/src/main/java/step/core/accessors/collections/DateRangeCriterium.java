@@ -22,10 +22,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
-import org.bson.conversions.Bson;
-
-import com.mongodb.client.model.Filters;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 
 public class DateRangeCriterium implements CollectionColumnSearchQueryFactory {
 	
@@ -38,7 +38,7 @@ public class DateRangeCriterium implements CollectionColumnSearchQueryFactory {
 	}
 
 	@Override
-	public Bson createQuery(String attributeName, String expression) {
+	public Filter createQuery(String attributeName, String expression) {
 		try {
 			Date from;
 			synchronized (DATE_FORMAT) {
@@ -51,7 +51,7 @@ public class DateRangeCriterium implements CollectionColumnSearchQueryFactory {
 			
 			Date to = c.getTime();
 			
-			return Filters.and(Filters.lt(attributeName, to.getTime()), Filters.gte(attributeName, from.getTime()));
+			return Filters.and(List.of(Filters.lt(attributeName, to.getTime()), Filters.gte(attributeName, from.getTime())));
 		} catch (ParseException e) {
 			return null;
 		}

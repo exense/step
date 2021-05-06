@@ -33,10 +33,10 @@ import org.slf4j.LoggerFactory;
 import com.mongodb.client.MongoCollection;
 
 import step.core.GlobalContext;
-import step.core.accessors.AbstractAccessor;
+import step.core.accessors.MongoClientSession;
+import step.core.collections.mongodb.MongoDBCollection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.plugins.measurements.MeasurementHandler;
 import step.plugins.measurements.MeasurementPlugin;
 
 @Plugin
@@ -69,11 +69,11 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 			}
 		}
 
-		MongoCollection<Document> measurements = context.getMongoClientSession().getMongoDatabase().getCollection("measurements");
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
-		AbstractAccessor.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
-		AbstractAccessor.createOrUpdateIndex(measurements, MeasurementPlugin.BEGIN);
+		MongoCollection<Document> measurements = context.require(MongoClientSession.class).getMongoDatabase().getCollection("measurements");
+		MongoDBCollection.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
+		MongoDBCollection.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
+		MongoDBCollection.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
+		MongoDBCollection.createOrUpdateIndex(measurements, MeasurementPlugin.BEGIN);
 
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.parameter;
 
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 
-public interface ParameterAccessor extends CRUDAccessor<Parameter> {
+public interface ParameterAccessor extends Accessor<Parameter> {
 }

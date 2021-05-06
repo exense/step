@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.plans;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -26,6 +27,8 @@ import org.bson.types.ObjectId;
 import step.core.GlobalContext;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.AbstractArtefact;
+import step.core.collections.Collection;
+import step.core.collections.filesystem.FilesystemCollection;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -76,8 +79,8 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		});
 		context.put(PlanTypeRegistry.class, planTypeRegistry);
 		context.getServiceRegistrationCallback().registerService(PlanServices.class);
-		
-		context.get(CollectionRegistry.class).register("plans", new PlanCollection(context.getMongoClientSession().getMongoDatabase()));
+		context.get(CollectionRegistry.class).register("plans",
+				new PlanCollection(context.getCollectionFactory().getCollection("plans", Plan.class)));
 	}
 	
 	@Override

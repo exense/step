@@ -20,9 +20,9 @@ package step.core.plans;
 
 import java.util.List;
 
-import step.core.accessors.LayeredCRUDAccessor;
+import step.core.accessors.LayeredAccessor;
 
-public class LayeredPlanAccessor extends LayeredCRUDAccessor<Plan> implements PlanAccessor {
+public class LayeredPlanAccessor extends LayeredAccessor<Plan> implements PlanAccessor {
 
 	public LayeredPlanAccessor() {
 		super();

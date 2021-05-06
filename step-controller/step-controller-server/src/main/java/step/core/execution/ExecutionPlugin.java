@@ -20,7 +20,10 @@ package step.core.execution;
 
 import step.core.GlobalContext;
 import step.core.accessors.collections.CollectionRegistry;
+import step.core.artefacts.reports.ReportNode;
+import step.core.collections.Collection;
 import step.core.execution.table.ExecutionCollection;
+import step.core.execution.table.ExecutionWrapper;
 import step.core.execution.table.LeafReportNodeCollection;
 import step.core.execution.table.ReportNodeCollection;
 import step.core.execution.type.ExecutionTypePlugin;
@@ -34,9 +37,15 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		CollectionRegistry collectionRegistry = context.get(CollectionRegistry.class);
-		collectionRegistry.register("executions", new ExecutionCollection(context));
-		collectionRegistry.register("leafReports", new LeafReportNodeCollection(context));
-		collectionRegistry.register("reports", new ReportNodeCollection(context));
+		
+		Collection<ExecutionWrapper> collection = context.getCollectionFactory().getCollection("executions",
+				ExecutionWrapper.class);
+		Collection<ReportNode> reportsCollection = context.getCollectionFactory().getCollection("reports",
+				ReportNode.class);
+
+		collectionRegistry.register("executions", new ExecutionCollection(context, collection));
+		collectionRegistry.register("leafReports", new LeafReportNodeCollection(context, reportsCollection));
+		collectionRegistry.register("reports", new ReportNodeCollection(context, reportsCollection));
 		context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
 	}
 }

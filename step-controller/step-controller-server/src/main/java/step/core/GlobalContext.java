@@ -20,7 +20,7 @@ package step.core;
 
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
-import step.core.accessors.MongoClientSession;
+import step.core.collections.CollectionFactory;
 import step.core.entities.EntityManager;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.model.ExecutionAccessor;
@@ -30,8 +30,8 @@ import step.core.scheduler.ExecutionTaskAccessor;
 public class GlobalContext extends AbstractExecutionEngineContext {
 	
 	private ControllerPluginManager pluginManager;
-	
-	private MongoClientSession mongoClientSession;
+	 
+	private CollectionFactory collectionFactory;
 	
 	private ExecutionAccessor executionAccessor;
 	
@@ -47,12 +47,12 @@ public class GlobalContext extends AbstractExecutionEngineContext {
 		super();
 	}
 
-	public MongoClientSession getMongoClientSession() {
-		return mongoClientSession;
+	public CollectionFactory getCollectionFactory() {
+		return collectionFactory;
 	}
 
-	public void setMongoClientSession(MongoClientSession mongoClientSession) {
-		this.mongoClientSession = mongoClientSession;
+	public void setCollectionFactory(CollectionFactory collectionFactory) {
+		this.collectionFactory = collectionFactory;
 	}
 
 	public ExecutionAccessor getExecutionAccessor() {

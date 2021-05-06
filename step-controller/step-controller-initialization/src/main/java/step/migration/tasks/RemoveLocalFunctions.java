@@ -22,7 +22,6 @@ import org.bson.Document;
 
 import com.mongodb.client.result.DeleteResult;
 
-import step.core.GlobalContext;
 import step.core.Version;
 import step.migration.MigrationTask;
 
@@ -38,13 +37,13 @@ public class RemoveLocalFunctions extends MigrationTask {
 
 	@Override
 	public void runUpgradeScript() {
-		removeLocalFunctions(context);
+		removeLocalFunctions();
 	}
 	
-	private void removeLocalFunctions(GlobalContext context) {
+	private void removeLocalFunctions() {
 		logger.info("Searching for keywords of type 'LocalFunction' to be deleted...");
 		
-		com.mongodb.client.MongoCollection<Document> functions = context.getMongoClientSession().getMongoDatabase().getCollection("functions");
+		com.mongodb.client.MongoCollection<Document> functions = mongoClientSession.getMongoDatabase().getCollection("functions");
 		
 		Document filter = new Document("type", "step.functions.base.types.LocalFunction");
 		DeleteResult result = functions.deleteMany(filter);

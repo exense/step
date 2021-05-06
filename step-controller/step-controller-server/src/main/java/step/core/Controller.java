@@ -34,15 +34,16 @@ import step.attachments.FileResolver;
 import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.access.UserAccessorImpl;
-import step.core.accessors.AbstractCRUDAccessor;
+import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.MongoClientSession;
-import step.core.accessors.PlanAccessorImpl;
-import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.mongodb.MongoDBCollectionFactory;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -59,6 +60,7 @@ import step.core.imports.PlanImporter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.plans.PlanAccessorImpl;
 import step.core.plugins.ControllerInitializationPlugin;
 import step.core.plugins.ControllerPlugin;
 import step.core.plugins.ControllerPluginManager;
@@ -71,6 +73,7 @@ import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.Executor;
+import step.core.tables.AbstractTable;
 import step.dashboards.DashboardSession;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
@@ -99,8 +102,6 @@ public class Controller {
 	private ExecutionScheduler scheduler;
 	
 	private ServiceRegistrationCallback serviceRegistrationCallback;
-	
-	private MongoClientSession mongoClientSession;
 	
 	public Controller(Configuration configuration) {
 		super();
@@ -142,10 +143,17 @@ public class Controller {
 		pluginManager = new ControllerPluginManager(configuration, moduleChecker);
 		context.setPluginManager(pluginManager);
 		
-		mongoClientSession = new MongoClientSession(configuration);
+		MongoClientSession mongoClientSession = new MongoClientSession(configuration);
+		context.put(MongoClientSession.class, mongoClientSession);
+
+		CollectionFactory collectionFactory;
+		collectionFactory = new MongoDBCollectionFactory(mongoClientSession);
+		// collectionFactory = new FilesystemCollectionFactory(new File("./db"));
+		context.setCollectionFactory(collectionFactory);
 		
-		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(mongoClientSession);
-		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(mongoClientSession);
+		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
+		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(
+				collectionFactory.getCollection("resourceRevisions", ResourceRevision.class));
 		String resourceRootDir = ResourceManagerControllerPlugin.getResourceDir(configuration);
 		ResourceManager resourceManager = new ResourceManagerImpl(new File(resourceRootDir), resourceAccessor, resourceRevisionAccessor);
 		FileResolver fileResolver = new FileResolver(resourceManager);
@@ -154,17 +162,24 @@ public class Controller {
 		context.setResourceManager(resourceManager);
 		context.setFileResolver(fileResolver);
 		
-		context.setMongoClientSession(mongoClientSession);
 		CollectionRegistry collectionRegistry = new CollectionRegistry();
 		context.put(CollectionRegistry.class, collectionRegistry);		
-		ExecutionAccessorImpl executionAccessor = new ExecutionAccessorImpl(mongoClientSession);
+		ExecutionAccessorImpl executionAccessor = new ExecutionAccessorImpl(
+				collectionFactory.getCollection("executions", Execution.class));
 		context.setExecutionAccessor(executionAccessor);		
 		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
-		context.setPlanAccessor(new PlanAccessorImpl(mongoClientSession));		
-		context.setReportNodeAccessor(new ReportNodeAccessorImpl(mongoClientSession));
-		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(mongoClientSession));
-		context.setUserAccessor(new UserAccessorImpl(mongoClientSession));
-		collectionRegistry.register("users", new Collection<User>(mongoClientSession.getMongoDatabase(), "users", User.class, false));
+		
+		context.setPlanAccessor(new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class)));
+		context.setReportNodeAccessor(
+				new ReportNodeAccessorImpl(collectionFactory.getCollection("reports", ReportNode.class)));
+		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(
+				collectionFactory.getCollection("tasks", ExecutiontTaskParameters.class)));
+
+		Collection<User> userCollectionDriver = collectionFactory.getCollection("users", User.class);
+		context.setUserAccessor(new UserAccessorImpl(userCollectionDriver));
+		collectionRegistry.register("users", new AbstractTable<User>(userCollectionDriver, false));
+		
+		
 		context.setRepositoryObjectManager(new RepositoryObjectManager());
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
 				configuration.getPropertyAsInteger("tec.expressions.warningthreshold"),
@@ -209,11 +224,13 @@ public class Controller {
 						Resource.class, new ResourceImpoter(context)))
 			.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
 						resourceRevisionAccessor, ResourceRevision.class, new ResourceRevisionsImporter(context)))
-			.register(new Entity<DashboardSession, AbstractCRUDAccessor<DashboardSession>>("sessions",
-					new AbstractCRUDAccessor<DashboardSession>(mongoClientSession,"sessions", DashboardSession.class),
-					DashboardSession.class, new GenericDBImporter<DashboardSession, AbstractCRUDAccessor<DashboardSession>>(context) {
-					}
-					));
+			.register(new Entity<DashboardSession, AbstractAccessor<DashboardSession>>("sessions",
+					new AbstractAccessor<DashboardSession>(
+							collectionFactory.getCollection("sessions", DashboardSession.class)),
+					DashboardSession.class,
+					new GenericDBImporter<DashboardSession, AbstractAccessor<DashboardSession>>(context) {
+					}));
+		
 		context.getEntityManager().getEntityByName("sessions").setByPassObjectPredicate(true);
 
 		createOrUpdateIndexes();
@@ -235,13 +252,11 @@ public class Controller {
 		// call shutdown hooks
 		pluginManager.getProxy().executionControllerDestroy(context);
 		
-		if(mongoClientSession !=null) {
-			try {
-				mongoClientSession.close();
-			} catch (IOException e) {
-				logger.error("Error while closing mongo client", e);
-			}
-		}		
+		try {
+			context.close();
+		} catch (IOException e) {
+			logger.error("Error while closing global context", e);
+		}
 	}
 	
 	private void recover() {

@@ -22,7 +22,7 @@ import step.client.credentials.ControllerCredentials;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 
-public abstract class RemoteExecutionAccessor extends AbstractRemoteCRUDAccessorImpl<Execution> implements ExecutionAccessor {
+public abstract class RemoteExecutionAccessor extends AbstractRemoteAccessorImpl<Execution> implements ExecutionAccessor {
 
 	public RemoteExecutionAccessor(ControllerCredentials credentials, String path, Class<Execution> entityClass) {
 		super(credentials, path, entityClass);

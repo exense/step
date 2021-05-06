@@ -38,7 +38,6 @@ import javax.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
 
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.FindByCriteraParam;
 import step.core.deployment.Secured;
@@ -68,7 +67,6 @@ public class ExecutionServices extends AbstractServices {
 			return getAll(0, 1000);
 		}
 	}
-	
 	
 	@GET
 	@Path("/{id}")
@@ -104,14 +102,6 @@ public class ExecutionServices extends AbstractServices {
 		return ((ExecutionAccessorImpl) getContext().getExecutionAccessor()).findByCritera(param.getCriteria(), 
 				param.getStart().getTime(), param.getEnd().getTime(), 
 				param.getSkip(), param.getLimit());
-	}
-	
-	@GET
-	@Path("/{id}/statusdistribution")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="execution-read")
-	public Map<ReportNodeStatus, Integer> getStatusReport(@PathParam("id") String executionID, @QueryParam("class") String reportNodeClass) {
-		return getContext().getReportAccessor().getLeafReportNodesStatusDistribution(executionID, reportNodeClass);
 	}
 	
 	@GET

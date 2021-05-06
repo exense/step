@@ -18,23 +18,18 @@
  ******************************************************************************/
 package step.core.controller;
 
-import javax.json.JsonObjectBuilder;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
+import step.core.collections.Filters;
 
-import step.core.accessors.AbstractCRUDAccessor;
-import step.core.accessors.MongoClientSession;
-import step.core.json.JsonProviderCache;
-
-public class ControllerSettingAccessorImpl extends AbstractCRUDAccessor<ControllerSetting> implements ControllerSettingAccessor {
+public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSetting> implements ControllerSettingAccessor {
 	
-	public ControllerSettingAccessorImpl(MongoClientSession clientSession) {
-		super(clientSession, "settings", ControllerSetting.class);
+	public ControllerSettingAccessorImpl(Collection<ControllerSetting> collectionDriver) {
+		super(collectionDriver);
 	}
-	
+
 	public ControllerSetting getSettingByKey(String key) {
-		JsonObjectBuilder builder = JsonProviderCache.createObjectBuilder();
-		builder.add("key", key);
-		String query = builder.build().toString();
-		return collection.findOne(query).as(ControllerSetting.class);
+		return collectionDriver.find(Filters.equals("key", key), null, null, null, 0).findFirst().orElse(null);
 	}
 	
 	// TODO: the following methods should be moved to a ControllerSettingManager.

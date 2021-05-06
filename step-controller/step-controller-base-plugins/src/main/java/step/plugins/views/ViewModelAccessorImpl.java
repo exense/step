@@ -18,23 +18,29 @@
  ******************************************************************************/
 package step.plugins.views;
 
-import step.core.accessors.AbstractCRUDAccessor;
-import step.core.accessors.MongoClientSession;
+import java.util.List;
 
-public class ViewModelAccessorImpl extends AbstractCRUDAccessor<ViewModel> implements ViewModelAccessor {
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
+import step.core.collections.Filters;
 
-	public ViewModelAccessorImpl(MongoClientSession clientSession) {
-		super(clientSession, "views", ViewModel.class);
-		createOrUpdateIndex(getMongoCollection("views"), "executionId");
+public class ViewModelAccessorImpl extends AbstractAccessor<ViewModel> implements ViewModelAccessor {
+
+	public ViewModelAccessorImpl(Collection<ViewModel> collectionDriver) {
+		super(collectionDriver);
+		createOrUpdateIndex("executionId");
 	}
-	
+
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T extends ViewModel> T get(String viewId, String executionId, Class<T> as) {
-		return collection.findOne("{viewId:'"+viewId+"',executionId:'"+executionId+"'}").as(as);
+		return (T) collectionDriver.find(
+				Filters.and(List.of(Filters.equals("viewId", viewId), Filters.equals("executionId", executionId))),
+				null, null, null, 0).findFirst().orElse(null);
 	}
 	
 	@Override
 	public void removeViewsByExecutionId(String executionId) {
-		collection.remove("{executionId:'"+executionId+"'}");
+		collectionDriver.remove(Filters.equals("executionId", executionId));
 	}
 }

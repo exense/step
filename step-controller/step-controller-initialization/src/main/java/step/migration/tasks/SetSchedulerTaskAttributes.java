@@ -41,7 +41,7 @@ public class SetSchedulerTaskAttributes extends MigrationTask {
 	@Override
 	public void runUpgradeScript() {
 		logger.info("Searching for tasks with no attributes.name to be migrated...");
-		com.mongodb.client.MongoCollection<Document> tasks = context.getMongoClientSession().getMongoDatabase().getCollection("tasks");
+		com.mongodb.client.MongoCollection<Document> tasks = mongoClientSession.getMongoDatabase().getCollection("tasks");
 		
 		AtomicInteger i = new AtomicInteger();
 		Document filterTasksWithNoAttrName = new Document("attributes.name", null);

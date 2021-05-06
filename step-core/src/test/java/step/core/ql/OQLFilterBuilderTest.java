@@ -18,14 +18,17 @@
  ******************************************************************************/
 package step.core.ql;
 
+
+import static org.junit.Assert.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
-import step.core.ql.Filter;
-import step.core.ql.OQLFilterBuilder;
+import step.core.collections.Filter;
+import step.core.collections.PojoFilter;
+import step.core.collections.PojoFilters.PojoFilterFactory;
 
 public class OQLFilterBuilderTest {
 
@@ -78,78 +81,84 @@ public class OQLFilterBuilderTest {
 	
 	@Test
 	public void test() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("property1=prop1");
+		PojoFilter<Object> filter = filter("property1=prop1");
 		boolean test = filter.test(new Bean());
-		Assert.assertTrue(test);
+		assertTrue(test);
+	}
+
+	private PojoFilter<Object> filter(String expression) {
+		Filter filter = OQLFilterBuilder.getFilter(expression);
+		PojoFilter<Object> pojoFilter = new PojoFilterFactory<Object>().buildFilter(filter);
+		return pojoFilter;
 	}
 	
 	@Test
 	public void test2() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("property1=prop1 and bean1.property1=prop1");
+		PojoFilter<Object> filter = filter("property1=prop1 and bean1.property1=prop1");
 		boolean test = filter.test(new Bean());
-		Assert.assertTrue(test);
+		assertTrue(test);
 	}
 	
 	@Test
 	public void test3() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("property1=prop1 and bean1.property1=prop1 and map1.property2=prop2");
+		PojoFilter<Object> filter = filter("property1=prop1 and bean1.property1=prop1 and map1.property2=prop2");
 		boolean test = filter.test(new Bean());
-		Assert.assertTrue(test);
+		assertTrue(test);
 	}
 	
 	@Test
 	public void test4() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("property1=wrongValue and bean1.property1=prop1 and map1.property2=prop2");
+		PojoFilter<Object> filter = filter("property1=wrongValue and bean1.property1=prop1 and map1.property2=prop2");
 		boolean test = filter.test(new Bean());
-		Assert.assertFalse(test);
+		assertFalse(test);
 	}
 
 	@Test
 	public void test5() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("map1.wrongProperty=prop2");
+		PojoFilter<Object> filter = filter("map1.wrongProperty=prop2");
 		boolean test = filter.test(new Bean());
-		Assert.assertFalse(test);
+		assertFalse(test);
 	}
 	
 	@Test
 	public void test6() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("");
+		PojoFilter<Object> filter = filter("");
 		boolean test = filter.test(new Bean());
-		Assert.assertTrue(test);
+		assertTrue(test);
 	}
 	
 	@Test
 	public void test7() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter(null);
+		PojoFilter<Object> filter = filter(null);
 		boolean test = filter.test(new Bean());
-		Assert.assertTrue(test);
+		assertTrue(test);
 	}
 	
 	@Test
 	public void test8() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("not(property1=prop1)");
+		PojoFilter<Object> filter = filter("not(property1=prop1)");
 		boolean test = filter.test(new Bean());
-		Assert.assertFalse(test);
+		assertFalse(test);
 	}
 	
 	@Test
 	public void test9() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("not(property1=prop1) or bean1.property1=prop1");
+		PojoFilter<Object> filter = filter("not(property1=prop1) or bean1.property1=prop1");
 		boolean test = filter.test(new Bean());
-		Assert.assertTrue(test);
+		assertTrue(test);
 	}
 	
 	@Test
 	public void test10() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("property1=\"prop1\"");
+		PojoFilter<Object> filter = filter("property1=\"prop1\"");
 		boolean test = filter.test(new Bean());
-		Assert.assertTrue(test);
+		assertTrue(test);
 	}
 	
 	@Test
 	public void test11() {
-		Filter<Object> filter = OQLFilterBuilder.getFilter("property2=\"prop with some \"\"\"\"\"");
+		PojoFilter<Object> filter = filter("property2=\"prop with some \"\"\"\"\"");
 		boolean test = filter.test(new Bean());
-		Assert.assertTrue(test);
+		assertTrue(test);
 	}
 }

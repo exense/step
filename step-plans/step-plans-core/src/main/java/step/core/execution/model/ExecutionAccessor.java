@@ -22,10 +22,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 import step.core.repositories.RepositoryObjectReference;
 
-public interface ExecutionAccessor extends CRUDAccessor<Execution> {
+public interface ExecutionAccessor extends Accessor<Execution> {
 
 	void createIndexesIfNeeded(Long ttl);
 	

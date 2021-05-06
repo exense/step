@@ -20,9 +20,9 @@ package step.plugins.screentemplating;
 
 import java.util.List;
 
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 
-public interface ScreenInputAccessor extends CRUDAccessor<ScreenInput> {
+public interface ScreenInputAccessor extends Accessor<ScreenInput> {
 
 	List<ScreenInput> getScreenInputsByScreenId(String screenId);
 

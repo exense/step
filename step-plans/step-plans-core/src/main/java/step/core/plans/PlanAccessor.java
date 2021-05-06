@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.core.plans;
 
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 
-public interface PlanAccessor extends CRUDAccessor<Plan> {
+public interface PlanAccessor extends Accessor<Plan> {
 
 }

@@ -20,9 +20,9 @@ package step.core.scheduler;
 
 import java.util.Iterator;
 
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 
-public interface ExecutionTaskAccessor extends CRUDAccessor<ExecutiontTaskParameters> {
+public interface ExecutionTaskAccessor extends Accessor<ExecutiontTaskParameters> {
 
 	Iterator<ExecutiontTaskParameters> getActiveExecutionTasks();
 

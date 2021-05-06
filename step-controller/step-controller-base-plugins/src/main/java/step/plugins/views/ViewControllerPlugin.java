@@ -30,7 +30,8 @@ public class ViewControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) {
-		ViewModelAccessor accessor = new ViewModelAccessorImpl(context.getMongoClientSession());
+		ViewModelAccessor accessor = new ViewModelAccessorImpl(
+				context.getCollectionFactory().getCollection("views", ViewModel.class));
 		viewManager = new ViewManager(accessor);
 		context.put(ViewModelAccessor.class, accessor);
 		context.put(ViewManager.class, viewManager);

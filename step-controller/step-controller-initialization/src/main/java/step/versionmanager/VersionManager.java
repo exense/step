@@ -20,12 +20,13 @@ package step.versionmanager;
 
 import java.util.Date;
 
-import org.jongo.MongoCollection;
-import org.jongo.MongoCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
+import step.core.collections.Collection;
+import step.core.collections.Filters;
+import step.core.collections.SearchOrder;
 
 public class VersionManager {
 	
@@ -33,7 +34,7 @@ public class VersionManager {
 	
 	private final GlobalContext context;
 	
-	private final MongoCollection controllerLogs;
+	private final Collection<ControllerLog> controllerLogs;
 	
 	private ControllerLog latestControllerLog = null;
 	
@@ -41,14 +42,13 @@ public class VersionManager {
 		super();
 		this.context = context;
 		
-		controllerLogs = context.getMongoClientSession().getJongoCollection("controllerlogs");
+		controllerLogs = context.getCollectionFactory().getCollection("controllerlogs", ControllerLog.class);
 	}
 
 	public void readLatestControllerLog() {
-		MongoCursor<ControllerLog> cursor = controllerLogs.find().sort("{start:-1}").as(ControllerLog.class);
+		latestControllerLog = controllerLogs.find(Filters.empty(), new SearchOrder("start", -1), null, null, 0).findFirst().orElse(null); 
 		
-		if(cursor.count()>0) {
-			latestControllerLog = controllerLogs.find().sort("{start:-1}").as(ControllerLog.class).next();
+		if(latestControllerLog != null) {
 			logger.info("Last start of the controller: "+ latestControllerLog.toString());
 		} else {
 			logger.info("No start log found. Starting the controller for the first time against this DB...");
@@ -67,6 +67,6 @@ public class VersionManager {
 		ControllerLog logEntry = new ControllerLog();
 		logEntry.setStart(new Date());
 		logEntry.setVersion(context.getCurrentVersion());
-		controllerLogs.insert(logEntry);
+		controllerLogs.save(logEntry);
 	}
 }

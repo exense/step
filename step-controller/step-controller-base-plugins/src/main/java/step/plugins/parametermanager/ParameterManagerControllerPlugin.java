@@ -24,21 +24,22 @@ import java.util.function.BiConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.encryption.EncryptionManagerException;
-import step.core.export.ExportConfiguration;
-import step.core.imports.ImportConfiguration;
-import step.parameter.Parameter;
 import step.core.GlobalContext;
-import step.core.accessors.AbstractCRUDAccessor;
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.AbstractAccessor;
+import step.core.accessors.Accessor;
 import step.core.accessors.collections.CollectionRegistry;
+import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.encryption.EncryptionManager;
+import step.core.encryption.EncryptionManagerException;
 import step.core.entities.Entity;
+import step.core.export.ExportConfiguration;
 import step.core.imports.GenericDBImporter;
+import step.core.imports.ImportConfiguration;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
 import step.plugins.screentemplating.Input;
@@ -62,20 +63,22 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		// The encryption manager might be null
 		encryptionManager = context.get(EncryptionManager.class);
 
-		AbstractCRUDAccessor<Parameter> parameterAccessor = new AbstractCRUDAccessor<>(context.getMongoClientSession(), "parameters", Parameter.class);
+		Collection<Parameter> collection = context.getCollectionFactory().getCollection("parametes", Parameter.class);
+
+		Accessor<Parameter> parameterAccessor = new AbstractAccessor<Parameter>(collection);
 		context.put("ParameterAccessor", parameterAccessor);
 		
-		context.get(CollectionRegistry.class).register("parameters", new ParameterCollection(context.getMongoClientSession().getMongoDatabase()));
+		context.get(CollectionRegistry.class).register("parameters", new ParameterCollection(collection));
 		
 		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getConfiguration());
 		context.put(ParameterManager.class, parameterManager);
 		this.parameterManager = parameterManager;
 		
-		context.getEntityManager().register(new Entity<Parameter, CRUDAccessor<Parameter>> (
+		context.getEntityManager().register(new Entity<Parameter, Accessor<Parameter>> (
 				ParameterManagerControllerPlugin.entityName, 
 				parameterAccessor,
 				Parameter.class,
-				new GenericDBImporter<Parameter, CRUDAccessor<Parameter>>(context)));
+				new GenericDBImporter<Parameter, Accessor<Parameter>>(context)));
 		context.getEntityManager().registerExportHook(new ParameterExportBiConsumer(context));
 		context.getEntityManager().registerImportHook(new ParameterImportBiConsumer(context));
 		

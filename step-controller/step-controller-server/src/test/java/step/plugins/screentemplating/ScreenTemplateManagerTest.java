@@ -20,17 +20,16 @@ package step.plugins.screentemplating;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 
-import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
+import ch.exense.commons.app.Configuration;
 import junit.framework.Assert;
 import step.commons.activation.Expression;
 import step.core.objectenricher.ObjectPredicate;
@@ -70,7 +69,7 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
-			public void save(Collection<? extends ScreenInput> entities) {
+			public void save(Iterable<ScreenInput> entities) {
 			}
 
 			@Override

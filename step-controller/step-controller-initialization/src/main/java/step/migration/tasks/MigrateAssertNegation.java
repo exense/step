@@ -39,8 +39,9 @@ import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AccessorLayerJacksonMapperProvider;
 import step.core.accessors.MongoClientSession;
-import step.core.accessors.PlanAccessorImpl;
+import step.core.collections.mongodb.MongoDBCollection;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessorImpl;
 import step.migration.MigrationTask;
 
 /**
@@ -62,7 +63,7 @@ public class MigrateAssertNegation extends MigrationTask {
 	@Override
 	protected void setContext(GlobalContext context) {
 		super.setContext(context);
-		init(context.getMongoClientSession());
+		init(mongoClientSession);
 		context.put(MigrateAssertNegation.class, this);
 	}
 	
@@ -75,7 +76,7 @@ public class MigrateAssertNegation extends MigrationTask {
 		dbLayerObjectMapper = builder2.build();
 		unmarshaller = dbLayerObjectMapper.getUnmarshaller();
 	
-		planAccessor = new PlanAccessorImpl(mongoClientSession);
+		planAccessor = new PlanAccessorImpl(new MongoDBCollection<Plan>(mongoClientSession, "plans", Plan.class));
 	}
 	
 	@Override

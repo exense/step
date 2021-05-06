@@ -18,18 +18,12 @@
  ******************************************************************************/
 package step.plugins.views;
 
-import step.core.accessors.InMemoryCRUDAccessor;
+import step.core.collections.inmemory.InMemoryCollection;
 
-public class InMemoryViewModelAccessor extends InMemoryCRUDAccessor<ViewModel> implements ViewModelAccessor {
+public class InMemoryViewModelAccessor extends ViewModelAccessorImpl {
 
-	@Override
-	public <T extends ViewModel> T get(String viewId, String executionId, Class<T> as) {
-		return null;
-	}
-
-	@Override
-	public void removeViewsByExecutionId(String executionId) {
-
+	public InMemoryViewModelAccessor() {
+		super(new InMemoryCollection<ViewModel>());
 	}
 
 }

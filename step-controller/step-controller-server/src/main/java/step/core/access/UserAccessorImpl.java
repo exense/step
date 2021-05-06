@@ -18,36 +18,40 @@
  ******************************************************************************/
 package step.core.access;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import step.core.accessors.AbstractCRUDAccessor;
-import step.core.accessors.MongoClientSession;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
+import step.core.collections.Filters;
+import step.core.collections.Filters.Equals;
 
-public class UserAccessorImpl extends AbstractCRUDAccessor<User> implements UserAccessor {
+public class UserAccessorImpl extends AbstractAccessor<User> implements UserAccessor {
 
-	public UserAccessorImpl(MongoClientSession clientSession) {
-		super(clientSession, "users", User.class);
+	public UserAccessorImpl(Collection<User> collectionDriver) {
+		super(collectionDriver);
 	}
 
 	@Override
 	public void remove(String username) {
-		collection.remove("{'username':'"+username+"'}");
+		collectionDriver.remove(byName(username));
 	}
 	
 	@Override
 	public List<User> getAllUsers() {
-		List<User> result = new ArrayList<>();
-		collection.find().as(User.class).iterator().forEachRemaining(u->result.add(u));
-		return result;
+		return collectionDriver.find(Filters.empty(), null, null, null, 0).collect(Collectors.toList());
 	}
 	
 	@Override
 	public User getByUsername(String username) {
 		assert username != null;
-		return collection.findOne("{username: #}", username).as(User.class);
+		return collectionDriver.find(byName(username), null, null, null, 0).findFirst().orElse(null);
+	}
+
+	private Equals byName(String username) {
+		return Filters.equals("username", username);
 	}
 	
 	public static String encryptPwd(String pwd) {

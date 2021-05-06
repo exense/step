@@ -19,32 +19,29 @@
 package step.plugins.parametermanager;
 
 import java.util.Iterator;
+import java.util.List;
 
-import org.bson.conversions.Bson;
-
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-
-import step.core.accessors.collections.Collection;
-import step.core.accessors.collections.CollectionFind;
-import step.core.accessors.collections.SearchOrder;
+import step.core.collections.Collection;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.core.collections.SearchOrder;
+import step.core.tables.AbstractTable;
+import step.core.tables.TableFindResult;
 import step.parameter.Parameter;
 
-public class ParameterCollection extends Collection<Parameter> {
+public class ParameterCollection extends AbstractTable<Parameter> {
 
-	private static final String COLLECTION_PARAMETERS = "parameters";
-	
 	private static final String PARAMETER_FIELD_PRIORITY = "priority";
 	private static final String PARAMETER_FIELD_SCOPE_ENTITY = "scopeEntity";
 	private static final String PARAMETER_FIELD_SCOPE = "scope";
 
-	public ParameterCollection(MongoDatabase mongoDatabase) {
-		super(mongoDatabase, COLLECTION_PARAMETERS, Parameter.class, true);
+	public ParameterCollection(Collection<Parameter> underlyingCollection) {
+		super(underlyingCollection, true);
 	}
-	
+
 	@Override
-	public CollectionFind<Parameter> find(Bson query, SearchOrder order, Integer skip, Integer limit, int maxTime) {
-		CollectionFind<Parameter> find = super.find(query, order, skip, limit, maxTime);
+	public TableFindResult<Parameter> find(Filter query, SearchOrder order, Integer skip, Integer limit, int maxTime) {
+		TableFindResult<Parameter> find = super.find(query, order, skip, limit, maxTime);
 		
 		Iterator<Parameter> iterator = find.getIterator();
 		Iterator<Parameter> filteredIterator = new Iterator<Parameter>() {
@@ -61,24 +58,24 @@ public class ParameterCollection extends Collection<Parameter> {
 			}
 			
 		};
-		CollectionFind<Parameter> filteredFind = new CollectionFind<>(find.getRecordsTotal(), find.getRecordsFiltered(), filteredIterator);
+		TableFindResult<Parameter> filteredFind = new TableFindResult<>(find.getRecordsTotal(), find.getRecordsFiltered(), filteredIterator);
 		return filteredFind;
 	}
 	
 	@Override
-	public Bson getQueryFragmentForColumnSearch(String columnName, String searchValue) {
+	public Filter getQueryFragmentForColumnSearch(String columnName, String searchValue) {
 		if (columnName.equals(PARAMETER_FIELD_SCOPE)) {
 			// The column is displaying Scope displays the scope and the entity related to it
 			// We're therefore creating a composite filter on these 2 fields
-			return Filters.or(super.getQueryFragmentForColumnSearch(PARAMETER_FIELD_SCOPE, searchValue),
-					super.getQueryFragmentForColumnSearch(PARAMETER_FIELD_SCOPE_ENTITY, searchValue));
+			return Filters.or(List.of(super.getQueryFragmentForColumnSearch(PARAMETER_FIELD_SCOPE, searchValue),
+					super.getQueryFragmentForColumnSearch(PARAMETER_FIELD_SCOPE_ENTITY, searchValue)));
 		} else if (columnName.equals(PARAMETER_FIELD_PRIORITY)) {
 			// The field priority is stored as a number. Regexp filters are therefore not working
 			// For this reason one have to Filter using the eq filter
 			int parseInt;
 			try {
 				parseInt = Integer.parseInt(searchValue);
-				return Filters.eq(PARAMETER_FIELD_PRIORITY, parseInt);
+				return Filters.equals(PARAMETER_FIELD_PRIORITY, parseInt);
 			} catch (NumberFormatException e) {
 				return super.getQueryFragmentForColumnSearch(PARAMETER_FIELD_PRIORITY, searchValue);
 			}

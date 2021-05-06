@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.InMemoryCRUDAccessor;
+import step.core.accessors.InMemoryAccessor;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.execution.ExecutionContext;
@@ -42,7 +42,7 @@ import step.parameter.ParameterScope;
 
 public class ParameterManagerPluginTest {
 	
-	protected InMemoryCRUDAccessor<Parameter> parameterAccessor = new InMemoryCRUDAccessor<>();
+	protected InMemoryAccessor<Parameter> parameterAccessor = new InMemoryAccessor<>();
 	private EncryptionManager encryptionManager;
 	private EncryptionManager errorEncryptionManager;
 	
@@ -307,11 +307,11 @@ public class ParameterManagerPluginTest {
 	@IgnoreDuringAutoDiscovery
 	public static class LocalParameterManagerPlugin extends ParameterManagerPlugin {
 
-		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor, ExecutionContext executionContext) {
+		public LocalParameterManagerPlugin(InMemoryAccessor<Parameter> parameterAccessor, ExecutionContext executionContext) {
 			this(parameterAccessor, null, executionContext);
 		}
 
-		public LocalParameterManagerPlugin(InMemoryCRUDAccessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, ExecutionContext executionContext) {
+		public LocalParameterManagerPlugin(InMemoryAccessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, ExecutionContext executionContext) {
 			super(new ParameterManager(parameterAccessor, encryptionManager, executionContext.getConfiguration()), encryptionManager);
 		}
 		

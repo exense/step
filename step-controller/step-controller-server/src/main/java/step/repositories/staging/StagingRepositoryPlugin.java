@@ -31,7 +31,8 @@ public class StagingRepositoryPlugin extends AbstractControllerPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		super.executionControllerStart(context);
 		
-		StagingContextAccessorImpl registry = new StagingContextAccessorImpl(context.getMongoClientSession());
+		StagingContextAccessorImpl registry = new StagingContextAccessorImpl(
+				context.getCollectionFactory().getCollection("staging", StagingContext.class));
 		StagingRepository repository = new StagingRepository(registry);
 		
 		context.getRepositoryObjectManager().registerRepository(STAGING_REPOSITORY, repository);

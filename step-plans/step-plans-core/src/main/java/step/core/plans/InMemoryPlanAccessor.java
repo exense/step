@@ -18,8 +18,12 @@
  ******************************************************************************/
 package step.core.plans;
 
-import step.core.accessors.InMemoryCRUDAccessor;
+import step.core.collections.inmemory.InMemoryCollection;
 
-public class InMemoryPlanAccessor extends InMemoryCRUDAccessor<Plan> implements PlanAccessor {
+public class InMemoryPlanAccessor extends PlanAccessorImpl implements PlanAccessor {
+
+	public InMemoryPlanAccessor() {
+		super(new InMemoryCollection<Plan>());
+	}
 
 }

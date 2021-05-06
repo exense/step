@@ -88,4 +88,26 @@ public interface Accessor<T extends AbstractIdentifiableObject> {
 	 * @return a {@link List} containing the objects of the specified range
 	 */
 	List<T> getRange(int skip, int limit);
+	
+	/**
+	 * Remove an entity.
+	 * 
+	 * @param id id the entity
+	 */
+	void remove(ObjectId id);
+
+	/**
+	 * Save an entity. If an entity with the same id exists, it will be updated otherwise inserted. 
+	 * 
+	 * @param entity the entity instance to be saved
+	 * @return the saved entity
+	 */
+	T save(T entity);
+
+	/**
+	 * Save a list of entities. 
+	 * 
+	 * @param entities the list of entities to be saved
+	 */
+	void save(Iterable<T> entities);
 }

@@ -35,6 +35,8 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
 
 import ch.exense.commons.app.Configuration;
+import step.core.collections.Collection;
+import step.core.collections.mongodb.MongoDBCollection;
 
 public class MongoClientSession implements Closeable {
 
@@ -87,6 +89,10 @@ public class MongoClientSession implements Closeable {
 		MongoCollection collection = jongo.getCollection(collectionName);
 		
 		return collection;
+	}
+	
+	public <T> Collection<T> getEntityCollection(String name, Class<T> entityClass) {
+		return new MongoDBCollection<T>(this, name, entityClass);
 	}
 
 	@Override

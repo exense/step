@@ -18,13 +18,12 @@
  ******************************************************************************/
 package step.repositories.staging;
 
-import step.core.accessors.AbstractCRUDAccessor;
-import step.core.accessors.MongoClientSession;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
 
-public class StagingContextAccessorImpl extends AbstractCRUDAccessor<StagingContext> {
+public class StagingContextAccessorImpl extends AbstractAccessor<StagingContext> {
 
-	public StagingContextAccessorImpl(MongoClientSession clientSession) {
-		super(clientSession, "staging", StagingContext.class);
+	public StagingContextAccessorImpl(Collection<StagingContext> collectionDriver) {
+		super(collectionDriver);
 	}
-
 }

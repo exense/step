@@ -40,7 +40,8 @@ public class ScreenTemplateArtefactTableMigrationTask extends MigrationTask {
 
 	@Override
 	protected void setContext(GlobalContext context) {
-		screenInputs = context.getMongoClientSession().getMongoDatabase().getCollection("screenInputs");
+		super.setContext(context);
+		screenInputs = mongoClientSession.getMongoDatabase().getCollection("screenInputs");
 	}
 
 	@Override

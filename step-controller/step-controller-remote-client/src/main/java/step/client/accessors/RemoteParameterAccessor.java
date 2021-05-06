@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class RemoteParameterAccessor extends AbstractRemoteCRUDAccessorImpl<Parameter> implements ParameterAccessor {
+public abstract class RemoteParameterAccessor extends AbstractRemoteAccessorImpl<Parameter> implements ParameterAccessor {
 
 	public RemoteParameterAccessor(ControllerCredentials credentials, String path, Class<Parameter> entityClass) {
 		super(credentials, path, entityClass);

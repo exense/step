@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.core.accessors.collections;
 
-import org.bson.conversions.Bson;
+import step.core.collections.Filter;
 
 public interface CollectionColumnSearchQueryFactory {
 
-	public Bson createQuery(String attributeName, String expression);
+	public Filter createQuery(String attributeName, String expression);
 }

@@ -18,9 +18,10 @@
  ******************************************************************************/
 package step.core.ql;
 
-import step.core.ql.Filter;
-import step.core.ql.FilterFactory;
-import step.core.ql.OQLBaseVisitor;
+import java.util.List;
+
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 import step.core.ql.OQLParser.AndExprContext;
 import step.core.ql.OQLParser.EqualityExprContext;
 import step.core.ql.OQLParser.NonQuotedStringAtomContext;
@@ -29,32 +30,24 @@ import step.core.ql.OQLParser.OrExprContext;
 import step.core.ql.OQLParser.ParExprContext;
 import step.core.ql.OQLParser.StringAtomContext;
 
-public class OQLFilterVisitor <T> extends OQLBaseVisitor<Filter<T>>{
+public class OQLFilterVisitor extends OQLBaseVisitor<Filter>{
 
-	private FilterFactory<T> factory;
-
-	public OQLFilterVisitor(FilterFactory<T> factory) {
+	public OQLFilterVisitor() {
 		super();
-		this.factory = factory;
 	}
 
 	@Override
-	public Filter<T> visitAndExpr(AndExprContext ctx) {
-		final Filter<T> left = this.visit(ctx.expr(0));
-		final Filter<T> right = this.visit(ctx.expr(1));
-        return new Filter<T>() {
-			@Override
-			public boolean test(T input) {
-				return left.test(input)&&right.test(input);
-			}
-        };
+	public Filter visitAndExpr(AndExprContext ctx) {
+		final Filter left = this.visit(ctx.expr(0));
+		final Filter right = this.visit(ctx.expr(1));
+        return Filters.and(List.of(left, right));
 	}
 
 	@Override
-	public Filter<T> visitEqualityExpr(EqualityExprContext ctx) {
+	public Filter visitEqualityExpr(EqualityExprContext ctx) {
 		String text0 = unescapeStringIfNecessary(ctx.expr(0).getText());
 		String text1 = unescapeStringIfNecessary(ctx.expr(1).getText());
-		return factory.createAttributeFilter(ctx.op.getText(), text0, text1);
+		return Filters.equals(text0, text1);
 	}
 
 	protected String unescapeStringIfNecessary(String text1) {
@@ -65,48 +58,33 @@ public class OQLFilterVisitor <T> extends OQLBaseVisitor<Filter<T>>{
 	}
 
 	@Override
-	public Filter<T> visitOrExpr(OrExprContext ctx) {
-		final Filter<T> left = this.visit(ctx.expr(0));
-		final Filter<T> right = this.visit(ctx.expr(1));
-        return new Filter<T>() {
-			@Override
-			public boolean test(T input) {
-				return left.test(input)||right.test(input);
-			}
-        };
+	public Filter visitOrExpr(OrExprContext ctx) {
+		final Filter left = this.visit(ctx.expr(0));
+		final Filter right = this.visit(ctx.expr(1));
+        return Filters.or(List.of(left, right));
 	}
 
 	@Override
-	public Filter<T> visitNotExpr(NotExprContext ctx) {
-		final Filter<T> expr = this.visit(ctx.expr());
-        return new Filter<T>() {
-			@Override
-			public boolean test(T input) {
-				return !expr.test(input);
-			}
-        };
+	public Filter visitNotExpr(NotExprContext ctx) {
+		final Filter expr = this.visit(ctx.expr());
+        return Filters.not(expr);
 	}
 
 	@Override
-	public Filter<T> visitParExpr(ParExprContext ctx) {
-		final Filter<T> expr = this.visit(ctx.expr());
-		return new Filter<T>() {
-			@Override
-			public boolean test(T input) {
-				return expr.test(input);
-			}
-        };
+	public Filter visitParExpr(ParExprContext ctx) {
+		final Filter expr = this.visit(ctx.expr());
+		return expr;
 	}
 
 	@Override
-	public Filter<T> visitNonQuotedStringAtom(NonQuotedStringAtomContext ctx) {
-		return factory.createFullTextFilter(ctx.getText());
+	public Filter visitNonQuotedStringAtom(NonQuotedStringAtomContext ctx) {
+		return Filters.fulltext(ctx.getText());
 	}
 
 	@Override
-	public Filter<T> visitStringAtom(StringAtomContext ctx) {
+	public Filter visitStringAtom(StringAtomContext ctx) {
 		String str = unescapeStringAtom(ctx.getText());
-        return factory.createFullTextFilter(str);
+        return Filters.fulltext(str);
 	}
 
 	protected String unescapeStringAtom(String str) {

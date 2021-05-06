@@ -47,7 +47,7 @@ public class RenameArtefactType extends MigrationTask {
 	
 	private void renameArtefactType(GlobalContext context, String classFrom, String classTo) {
 		logger.info("Searching for artefacts of type '"+classFrom+"' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> artefacts = context.getMongoClientSession().getMongoDatabase().getCollection("artefacts");
+		com.mongodb.client.MongoCollection<Document> artefacts = mongoClientSession.getMongoDatabase().getCollection("artefacts");
 		
 		AtomicInteger i = new AtomicInteger();
 		Document filterCallFunction = new Document("_class", classFrom);

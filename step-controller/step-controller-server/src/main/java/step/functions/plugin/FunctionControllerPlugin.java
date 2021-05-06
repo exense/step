@@ -20,8 +20,6 @@ package step.functions.plugin;
 
 import java.util.List;
 
-import com.mongodb.client.MongoDatabase;
-
 import ch.exense.commons.app.Configuration;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
@@ -32,9 +30,8 @@ import step.attachments.FileResolver;
 import step.controller.grid.GridPlugin;
 import step.controller.grid.services.FunctionServices;
 import step.core.GlobalContext;
-import step.core.accessors.FunctionAccessorImpl;
-import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
+import step.core.collections.Collection;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.Entity;
@@ -43,8 +40,10 @@ import step.core.imports.GenericDBImporter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.tables.AbstractTable;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceImpl;
@@ -78,7 +77,8 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		functionTypeConfiguration.setFileResolverCacheExpireAfter(configuration.getPropertyAsInteger("functions.fileresolver.cache.expireafter.ms", 500));
 		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, gridClient, functionTypeConfiguration);
 
-		FunctionAccessor functionAccessor = new FunctionAccessorImpl(context.getMongoClientSession());
+		Collection<Function> collection = context.getCollectionFactory().getCollection("functions", Function.class);
+		FunctionAccessor functionAccessor = new FunctionAccessorImpl(collection);
 		FunctionManager functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
 		FunctionExecutionService functionExecutionService = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, context.getDynamicBeanResolver());
 		
@@ -110,8 +110,10 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		context.getServiceRegistrationCallback().registerService(FunctionServices.class);
 		
 		CollectionRegistry collectionRegistry = context.get(CollectionRegistry.class);
-		MongoDatabase mongoDatabase = context.getMongoClientSession().getMongoDatabase();
-		collectionRegistry.register(EntityManager.functions, new Collection<Function>(mongoDatabase, EntityManager.functions, Function.class, true));
+		
+		Collection<Function> functionCollection = context.getCollectionFactory()
+				.getCollection(EntityManager.functions, Function.class);
+		collectionRegistry.register(EntityManager.functions, new AbstractTable<>(functionCollection, true));
 	}
 	
 	@Override

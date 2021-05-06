@@ -38,7 +38,7 @@ public class ScreenTemplateMigrationTask extends MigrationTask {
 
 	@Override
 	public void runUpgradeScript() {
-		com.mongodb.client.MongoCollection<Document> screenInputs = context.getMongoClientSession().getMongoDatabase().getCollection("screenInputs");
+		com.mongodb.client.MongoCollection<Document> screenInputs = mongoClientSession.getMongoDatabase().getCollection("screenInputs");
 		Document filter = new Document("screenId", "functionTable");
 		screenInputs.find(filter).forEach(new Block<Document>() {
 			@Override

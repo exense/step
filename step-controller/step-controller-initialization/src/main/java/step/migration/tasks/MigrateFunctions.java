@@ -50,7 +50,7 @@ public class MigrateFunctions extends MigrationTask {
 	private void migrateGeneralScriptFunction(GlobalContext context) {
 		logger.info("Searching for keywords of type 'Script' to be migrated...");
 		
-		com.mongodb.client.MongoCollection<Document> functions = context.getMongoClientSession().getMongoDatabase().getCollection("functions");
+		com.mongodb.client.MongoCollection<Document> functions = mongoClientSession.getMongoDatabase().getCollection("functions");
 		
 		Document filter = new Document("type", "step.plugins.functions.types.GeneralScriptFunction");
 		Document replacement = new Document("$set", new Document("type", "step.plugins.java.GeneralScriptFunction"));
@@ -61,7 +61,7 @@ public class MigrateFunctions extends MigrationTask {
 	
 	private void migrateGeneralScriptFunctions(GlobalContext context) {
 		logger.info("Searching for functions of type 'step.plugins.functions.types.GeneralScriptFunction' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> functions = context.getMongoClientSession().getMongoDatabase().getCollection("functions");
+		com.mongodb.client.MongoCollection<Document> functions = mongoClientSession.getMongoDatabase().getCollection("functions");
 		
 		AtomicInteger i = new AtomicInteger();
 		Document filterCallFunction = new Document("type", "step.plugins.functions.types.GeneralScriptFunction");
@@ -83,7 +83,7 @@ public class MigrateFunctions extends MigrationTask {
 	// TODO do this only when migrating from 3.4.0 to 3.5.0 or higher
 	private void migrateCallFunction(GlobalContext context) {
 		logger.info("Searching for artefacts of type 'CallFunction' to be migrated...");
-		com.mongodb.client.MongoCollection<Document> artefacts = context.getMongoClientSession().getMongoDatabase().getCollection("artefacts");
+		com.mongodb.client.MongoCollection<Document> artefacts = mongoClientSession.getMongoDatabase().getCollection("artefacts");
 		
 		AtomicInteger i = new AtomicInteger();
 		Document filterCallFunction = new Document("_class", "CallFunction");

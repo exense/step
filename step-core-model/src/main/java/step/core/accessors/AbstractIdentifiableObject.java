@@ -75,8 +75,13 @@ public class AbstractIdentifiableObject {
 		}
 	}
 	
-	public Object computeCustomFieldIfAbsent(String key, Function<? super String, ? extends Object> mappingFunction) {
-		return customFields.computeIfAbsent(key, mappingFunction);
+	@SuppressWarnings("unchecked")
+	public <T> T computeCustomFieldIfAbsent(String key, Function<? super String, T> mappingFunction) {
+		if(customFields!=null) {
+			return (T) customFields.computeIfAbsent(key, mappingFunction);
+		} else {
+			return mappingFunction.apply(key);
+		}
 	}
 
 	@SuppressWarnings("unchecked")

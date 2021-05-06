@@ -46,20 +46,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
-import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
 
-import step.core.accessors.collections.Collection;
-import step.core.accessors.collections.CollectionFind;
 import step.core.accessors.collections.CollectionRegistry;
-import step.core.accessors.collections.SearchOrder;
-import step.core.accessors.collections.field.CollectionField;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.core.collections.SearchOrder;
 import step.core.deployment.ApplicationServices;
 import step.core.deployment.JacksonMapperProvider;
 import step.core.deployment.Secured;
@@ -67,7 +62,10 @@ import step.core.export.ExportTaskManager;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
 import step.core.objectenricher.ObjectHookRegistry;
-import step.core.ql.OQLMongoDBBuilder;
+import step.core.ql.OQLFilterBuilder;
+import step.core.tables.Table;
+import step.core.tables.TableColumn;
+import step.core.tables.TableFindResult;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
@@ -80,7 +78,6 @@ public class TableService extends ApplicationServices {
 	
 	private ObjectHookRegistry objectHookRegistry;
 	protected CollectionRegistry collectionRegistry;
-	protected MongoDatabase database;
 	protected int maxTime;
 	
 	protected ExportTaskManager exportTaskManager;
@@ -94,7 +91,6 @@ public class TableService extends ApplicationServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		database = getContext().getMongoClientSession().getMongoDatabase();
 		collectionRegistry = getContext().get(CollectionRegistry.class);
 		maxTime = controller.getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
@@ -114,7 +110,7 @@ public class TableService extends ApplicationServices {
 		if(uriInfo.getQueryParameters()!=null) {
 			form.putAll(uriInfo.getQueryParameters());
 		}
-		Bson sessionQueryFragment = getAdditionalQueryFragmentFromContext(collectionID);
+		Filter sessionQueryFragment = getAdditionalQueryFragmentFromContext(collectionID);
 		return getTableData(collectionID, form, sessionQueryFragment);
 	}
 	
@@ -123,7 +119,7 @@ public class TableService extends ApplicationServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
 	public DataTableResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
-		Bson sessionQueryFragment = getAdditionalQueryFragmentFromContext(collectionID);
+		Filter sessionQueryFragment = getAdditionalQueryFragmentFromContext(collectionID);
 		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragment);
 	}
 	
@@ -132,7 +128,7 @@ public class TableService extends ApplicationServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
 	public List<String> getTableColumnDistinct(@PathParam("id") String collectionID, @PathParam("column") String column, @Context UriInfo uriInfo) throws Exception {
-		Collection<?> collection = collectionRegistry.get(collectionID);
+		Table<?> collection = collectionRegistry.get(collectionID);
 		return collection.distinct(column);
 	}
 	
@@ -142,20 +138,20 @@ public class TableService extends ApplicationServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured
 	public List<String> searchIdsBy(@PathParam("id") String collectionID, @PathParam("column") String columnName, String searchValue) throws Exception {
-		Collection<?> collection = collectionRegistry.get(collectionID);
-		Bson columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
+		Table<?> collection = collectionRegistry.get(collectionID);
+		Filter columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
 		return collection.distinct("_id",columnQueryFragment);
 	}
 	
-	private DataTableResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, Bson sessionQueryFragment) throws Exception {		
-		Collection<?> collection = collectionRegistry.get(collectionID);
+	private DataTableResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, Filter sessionQueryFragment) throws Exception {		
+		Table<?> collection = collectionRegistry.get(collectionID);
 		if(collection == null) {
 			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
 		}
 
 		Map<Integer, String> columnNames = getColumnNamesMap(params);
 		
-		List<Bson> queryFragments = createQueryFragments(params, columnNames, collection);
+		List<Filter> queryFragments = createQueryFragments(params, columnNames, collection);
 		
 		int draw = Integer.parseInt(params.getFirst("draw"));
 		int skip = Integer.parseInt(params.getFirst("start"));
@@ -181,16 +177,16 @@ public class TableService extends ApplicationServices {
 			JsonReader reader = Json.createReader(new StringReader(params.getFirst("params")));
 			queryParameters = reader.readObject();
 		}
-		List<Bson> additionalQueryFragments = collection.getAdditionalQueryFragments(queryParameters);
+		List<Filter> additionalQueryFragments = collection.getAdditionalQueryFragments(queryParameters);
 		if(additionalQueryFragments != null) {
 			queryFragments.addAll(additionalQueryFragments);
 		}
 		
-		Bson query = queryFragments.size()>0?Filters.and(queryFragments):new Document();
+		Filter query = queryFragments.size()>0?Filters.and(queryFragments):Filters.empty();
 		
-		CollectionFind<?> find = collection.find(query, order, skip, limit, maxTime);
+		TableFindResult<?> find = collection.find(query, order, skip, limit, maxTime);
 
-		List<Object> objects = new ArrayList<>();	
+		List<Object> objects = new ArrayList<>();
 		Iterator<?> iterator = find.getIterator();
 		while(iterator.hasNext()) {
 			objects.add(iterator.next());
@@ -223,7 +219,7 @@ public class TableService extends ApplicationServices {
 	public String createExport(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
 		MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 	
-		Collection<?> collection = collectionRegistry.get(collectionID);
+		Table<?> collection = collectionRegistry.get(collectionID);
 		if(collection == null) {
 			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
 		}
@@ -234,8 +230,8 @@ public class TableService extends ApplicationServices {
 			queryParameters = reader.readObject();
 		}
 		
-		List<Bson> queryFragments = collection.getAdditionalQueryFragments(queryParameters);
-		Bson query = queryFragments.size()>0?Filters.and(queryFragments):new Document();
+		List<Filter> queryFragments = collection.getAdditionalQueryFragments(queryParameters);
+		Filter query = queryFragments.size()>0?Filters.and(queryFragments):Filters.empty();
 		
 		String exportID = UUID.randomUUID().toString();
 		exportTaskManager.createExportTask(exportID, new ExportTask(collection, null, query));
@@ -252,8 +248,8 @@ public class TableService extends ApplicationServices {
 	}
 	
 
-	private List<Bson> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames, Collection<?> collection) {
-		List<Bson> queryFragments = new ArrayList<>();
+	private List<Filter> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames, Table<?> collection) {
+		List<Filter> queryFragments = new ArrayList<>();
 		for(String key:params.keySet()) {
 			Matcher m = columnSearchPattern.matcher(key);
 			Matcher searchMatcher = searchPattern.matcher(key);
@@ -263,7 +259,7 @@ public class TableService extends ApplicationServices {
 				String searchValue = params.getFirst(key);
 
 				if(searchValue!=null && searchValue.length()>0) {
-					Bson columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
+					Filter columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
 					queryFragments.add(columnQueryFragment);
 				}
 			} else if(searchMatcher.matches()) {
@@ -274,7 +270,7 @@ public class TableService extends ApplicationServices {
 			}
 		}
 		if(params.containsKey("filter")) {
-			Bson filter = OQLMongoDBBuilder.build(params.getFirst("filter"));
+			Filter filter = OQLFilterBuilder.getFilter(params.getFirst("filter"));
 			queryFragments.add(filter);
 		}
 		return queryFragments;
@@ -294,18 +290,18 @@ public class TableService extends ApplicationServices {
 		return columnNames;
 	}
 
-	private Bson getAdditionalQueryFragmentFromContext(String collectionID) {
-		Bson query = OQLMongoDBBuilder.build(objectHookRegistry.getObjectFilter(getSession()).getOQLFilter());
+	private Filter getAdditionalQueryFragmentFromContext(String collectionID) {
+		Filter query = OQLFilterBuilder.getFilter(objectHookRegistry.getObjectFilter(getSession()).getOQLFilter());
 		return query;
 	}
 
 	public static class ExportTask extends ExportRunnable {
 
-		protected Collection<?> collection;
-		protected Map<String, CollectionField> columns;
-		protected Bson query;
+		protected Table<?> collection;
+		protected Map<String, TableColumn> columns;
+		protected Filter query;
 
-		public ExportTask(Collection<?> collection, Map<String, CollectionField> columns, Bson query) {
+		public ExportTask(Table<?> collection, Map<String, TableColumn> columns, Filter query) {
 			super();
 			this.collection = collection;
 			this.columns = columns;

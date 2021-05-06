@@ -18,8 +18,13 @@
  ******************************************************************************/
 package step.resources;
 
-import step.core.accessors.InMemoryCRUDAccessor;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.inmemory.InMemoryCollection;
 
-public class InMemoryResourceAccessor extends InMemoryCRUDAccessor<Resource> implements ResourceAccessor {
+public class InMemoryResourceAccessor extends AbstractAccessor<Resource> implements ResourceAccessor {
+
+	public InMemoryResourceAccessor() {
+		super(new InMemoryCollection<Resource>());
+	}
 
 }

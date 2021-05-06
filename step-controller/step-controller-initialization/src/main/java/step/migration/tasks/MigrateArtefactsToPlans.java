@@ -38,16 +38,17 @@ import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AccessorLayerJacksonMapperProvider;
-import step.core.accessors.FunctionAccessorImpl;
 import step.core.accessors.MongoClientSession;
-import step.core.accessors.PlanAccessorImpl;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.imports.converter.ArtefactsToPlans;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessorImpl;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.FunctionAccessorImpl;
 import step.migration.MigrationTask;
 import step.plugins.functions.types.CompositeFunction;
 
@@ -77,7 +78,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 	@Override
 	protected void setContext(GlobalContext context) {
 		super.setContext(context);
-		init(context.getMongoClientSession());
+		init(mongoClientSession);
 		context.put(MigrateArtefactsToPlans.class, this);
 	}
 
@@ -93,12 +94,14 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		dbLayerObjectMapper = builder2.build();
 		unmarshaller = dbLayerObjectMapper.getUnmarshaller();
 		
-		executionAccessor = new ExecutionAccessorImpl(mongoClientSession);
-		executionTaskAccessor = new ExecutionTaskAccessorImpl(mongoClientSession);
-		functionAccessor = new FunctionAccessorImpl(mongoClientSession);
+		executionAccessor = new ExecutionAccessorImpl(
+				mongoClientSession.getEntityCollection("executions", Execution.class));
+		executionTaskAccessor = new ExecutionTaskAccessorImpl(
+				mongoClientSession.getEntityCollection("tasks", ExecutiontTaskParameters.class));
+		functionAccessor = new FunctionAccessorImpl(mongoClientSession.getEntityCollection("functions", Function.class));
 
 		artefactsToPlans = new ArtefactsToPlans(artefactCollection,
-				new PlanAccessorImpl(mongoClientSession));
+				new PlanAccessorImpl(mongoClientSession.getEntityCollection("plans", Plan.class)));
 		artefactIdToPlanId = artefactsToPlans.getArtefactIdToPlanId();
 	}
 

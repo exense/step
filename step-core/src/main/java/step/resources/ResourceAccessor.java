@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.resources;
 
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 
-public interface ResourceAccessor extends CRUDAccessor<Resource> {
+public interface ResourceAccessor extends Accessor<Resource> {
 
 }

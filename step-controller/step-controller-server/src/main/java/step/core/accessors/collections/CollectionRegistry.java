@@ -21,15 +21,17 @@ package step.core.accessors.collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import step.core.tables.Table;
+
 public class CollectionRegistry {
 
-	private Map<String, Collection<?>> collections = new ConcurrentHashMap<>();
+	private Map<String, Table<?>> collections = new ConcurrentHashMap<>();
 	
-	public void register(String collectionName, Collection<?> collection) {
+	public void register(String collectionName, Table<?> collection) {
 		collections.put(collectionName, collection);
 	}
 	
-	public Collection<?> get(String collectionName) {
+	public Table<?> get(String collectionName) {
 		return collections.get(collectionName);
 	}
 }

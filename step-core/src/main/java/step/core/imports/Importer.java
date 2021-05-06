@@ -27,10 +27,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 import step.core.entities.Entity;
 
-public interface Importer<A extends AbstractIdentifiableObject, T extends CRUDAccessor<A>> {
+public interface Importer<A extends AbstractIdentifiableObject, T extends Accessor<A>> {
 	
 	public void init(Entity<A, T> entity);
 	

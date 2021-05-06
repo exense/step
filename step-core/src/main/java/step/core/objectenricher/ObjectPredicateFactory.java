@@ -19,7 +19,9 @@
 package step.core.objectenricher;
 
 import step.core.AbstractContext;
-import step.core.ql.Filter;
+import step.core.collections.Filter;
+import step.core.collections.PojoFilter;
+import step.core.collections.PojoFilters.PojoFilterFactory;
 import step.core.ql.OQLFilterBuilder;
 
 public class ObjectPredicateFactory {
@@ -34,11 +36,12 @@ public class ObjectPredicateFactory {
 	public ObjectPredicate getObjectPredicate(AbstractContext context) {
 		ObjectFilter objectFilter = objectHookRegistry.getObjectFilter(context);
 		String oqlFilter = objectFilter.getOQLFilter();
-		Filter<Object> filter = OQLFilterBuilder.getFilter(oqlFilter);
+		Filter filter = OQLFilterBuilder.getFilter(oqlFilter);
+		PojoFilter<Object> pojoFilter = new PojoFilterFactory<Object>().buildFilter(filter);
 		return new ObjectPredicate() {
 			@Override
 			public boolean test(Object t) {
-				return filter.test(t);
+				return pojoFilter.test(t);
 			}
 		};
 	}

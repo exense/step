@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
 import step.core.Version;
+import step.core.accessors.MongoClientSession;
 
 public abstract class MigrationTask {
 
@@ -31,6 +32,8 @@ public abstract class MigrationTask {
 	protected GlobalContext context;
 	
 	protected Version asOfVersion;
+	
+	protected MongoClientSession mongoClientSession;
 
 	public GlobalContext getContext() {
 		return context;
@@ -38,6 +41,7 @@ public abstract class MigrationTask {
 
 	protected void setContext(GlobalContext context) {
 		this.context = context;
+		mongoClientSession = context.get(MongoClientSession.class);
 	}
 
 	public Version getAsOfVersion() {

@@ -20,9 +20,9 @@ package step.core.access;
 
 import java.util.List;
 
-import step.core.accessors.CRUDAccessor;
+import step.core.accessors.Accessor;
 
-public interface UserAccessor extends CRUDAccessor<User> {
+public interface UserAccessor extends Accessor<User> {
 
 	void remove(String username);
 

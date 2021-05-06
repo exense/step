@@ -20,11 +20,13 @@ package step.plugins.datatable;
 
 import step.core.GlobalContext;
 import step.core.access.User;
-import step.core.accessors.collections.Collection;
 import step.core.accessors.collections.CollectionRegistry;
+import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.tables.AbstractTable;
+import step.core.tables.Table;
 
 @Plugin(dependencies= {ObjectHookControllerPlugin.class})
 public class TablePlugin extends AbstractControllerPlugin {
@@ -33,7 +35,8 @@ public class TablePlugin extends AbstractControllerPlugin {
 	public void executionControllerStart(GlobalContext context) {
 		context.getServiceRegistrationCallback().registerService(TableService.class);
 		
-		Collection<User> collection = new Collection<>(context.getMongoClientSession().getMongoDatabase(), "users", User.class, false);
+		Collection<User> collectionDriver = context.getCollectionFactory().getCollection("users", User.class);
+		Table<User> collection = new AbstractTable<>(collectionDriver, false);
 		context.get(CollectionRegistry.class).register("users", collection);
 	}
 
