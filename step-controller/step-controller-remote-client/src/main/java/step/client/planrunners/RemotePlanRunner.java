@@ -28,13 +28,13 @@ import javax.ws.rs.core.MediaType;
 
 import ch.exense.commons.io.Poller;
 import step.client.AbstractRemoteClient;
-import step.client.accessors.RemotePlanAccessorImpl;
+import step.client.accessors.RemotePlanAccessor;
+import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.client.reports.RemoteReportTreeAccessor;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportTreeAccessor;
-import step.core.execution.ExecutionEngine;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
@@ -58,15 +58,18 @@ import step.core.repositories.RepositoryObjectReference;
 public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner {
 
 	private PlanAccessor planAccessor;
+	private RemoteCollectionFactory remoteCollectionFactory;
 
 	public RemotePlanRunner() {
 		super();
-		planAccessor = new RemotePlanAccessorImpl();
+		remoteCollectionFactory = new RemoteCollectionFactory(this);
+		planAccessor = new RemotePlanAccessor(remoteCollectionFactory);
 	}
 
 	public RemotePlanRunner(ControllerCredentials credentials) {
 		super(credentials);
-		planAccessor = new RemotePlanAccessorImpl(credentials);
+		remoteCollectionFactory = new RemoteCollectionFactory(this);
+		planAccessor = new RemotePlanAccessor(remoteCollectionFactory);
 	}
 
 	@Override

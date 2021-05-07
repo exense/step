@@ -63,7 +63,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		// The encryption manager might be null
 		encryptionManager = context.get(EncryptionManager.class);
 
-		Collection<Parameter> collection = context.getCollectionFactory().getCollection("parametes", Parameter.class);
+		Collection<Parameter> collection = context.getCollectionFactory().getCollection("parameters", Parameter.class);
 
 		Accessor<Parameter> parameterAccessor = new AbstractAccessor<Parameter>(collection);
 		context.put("ParameterAccessor", parameterAccessor);

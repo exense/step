@@ -45,8 +45,9 @@ import step.core.imports.ImportConfiguration;
 import step.core.objectenricher.ObjectPredicate;
 
 public class EntityManager  {
-	
-	private static Logger logger = LoggerFactory.getLogger(EntityManager.class);
+
+
+    private static Logger logger = LoggerFactory.getLogger(EntityManager.class);
 	
 	public final static String executions = "executions";
 	public final static String plans = "plans";
@@ -57,6 +58,7 @@ public class EntityManager  {
 	public final static String resources = "resources";
 	public final static String resourceRevisions = "resourceRevisions";
 	public final static String recursive = "recursive";
+	public final static String projects = "projects";
 	
 	private Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
 	private Map<Class<?>, Entity<?,?>> entitiesByClass = new ConcurrentHashMap<Class<?>, Entity<?,?>>();

@@ -24,6 +24,7 @@ import java.util.Map;
 
 import javax.json.JsonObject;
 
+import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.SearchOrder;
 import step.core.objectenricher.ObjectFilter;
@@ -68,4 +69,7 @@ public interface Table<T> {
 	void export(Filter query, Map<String, TableColumn> columns, PrintWriter writer);
 
 	T enrichEntity(T entity);
+
+	public Collection<T> getCollectionDriver();
+
 }

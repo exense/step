@@ -84,11 +84,11 @@ public class AbstractRemoteClient implements Closeable {
 		cookies = client.target(credentials.getServerUrl() + "/rest/access/login").request().post(entity).getCookies();
 	}
 	
-	protected Builder requestBuilder(String path) {
+	public Builder requestBuilder(String path) {
 		return requestBuilder(path, null);
 	}
-	
-	protected Builder requestBuilder(String path, Map<String, String> queryParams) {
+
+	public Builder requestBuilder(String path, Map<String, String> queryParams) {
 		WebTarget target = client.target(credentials.getServerUrl() + path);
 		if(queryParams!=null) {
 			for(String key:queryParams.keySet()) {
@@ -105,7 +105,7 @@ public class AbstractRemoteClient implements Closeable {
 		return b;
 	}
 	
-	protected <T> T executeRequest(Supplier<T> provider) throws ControllerClientException {
+	public <T> T executeRequest(Supplier<T> provider) throws ControllerClientException {
 		try {
 			T r = provider.get();
 			if(r instanceof Response) {

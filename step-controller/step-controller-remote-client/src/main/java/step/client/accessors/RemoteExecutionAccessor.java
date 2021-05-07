@@ -18,18 +18,16 @@
  ******************************************************************************/
 package step.client.accessors;
 
-import step.client.credentials.ControllerCredentials;
+import step.client.collections.remote.RemoteCollectionFactory;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.ExecutionAccessorImpl;
 
-public abstract class RemoteExecutionAccessor extends AbstractRemoteAccessorImpl<Execution> implements ExecutionAccessor {
+public class RemoteExecutionAccessor extends ExecutionAccessorImpl implements ExecutionAccessor {
 
-	public RemoteExecutionAccessor(ControllerCredentials credentials, String path, Class<Execution> entityClass) {
-		super(credentials, path, entityClass);
+	public RemoteExecutionAccessor(RemoteCollectionFactory remoteCollectionFactory) {
+		super(remoteCollectionFactory.getCollection( "executions", Execution.class));
 	}
 
-	public RemoteExecutionAccessor(String path, Class<Execution> entityClass) {
-		super(path, entityClass);
-	}
 
 }

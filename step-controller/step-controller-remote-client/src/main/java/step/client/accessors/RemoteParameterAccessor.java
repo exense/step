@@ -18,7 +18,10 @@
  ******************************************************************************/
 package step.client.accessors;
 
+import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
+import step.core.accessors.AbstractAccessor;
+import step.core.plans.Plan;
 import step.parameter.Parameter;
 import step.parameter.ParameterAccessor;
 
@@ -28,16 +31,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class RemoteParameterAccessor extends AbstractRemoteAccessorImpl<Parameter> implements ParameterAccessor {
+public class RemoteParameterAccessor extends AbstractAccessor<Parameter> implements ParameterAccessor {
 
-	public RemoteParameterAccessor(ControllerCredentials credentials, String path, Class<Parameter> entityClass) {
-		super(credentials, path, entityClass);
+	public RemoteParameterAccessor(RemoteCollectionFactory remoteCollectionFactory) {
+		super(remoteCollectionFactory.getCollection( "parameters", Parameter.class));
 	}
 
-	public RemoteParameterAccessor(String path, Class<Parameter> entityClass) {
-		super(path, entityClass);
-	}
-
+	/*
 	@Override
 	public List<Parameter> getRange(int skip, int limit) {
 		Map<String, String> queryParams = new HashMap<>();
@@ -48,5 +48,5 @@ public abstract class RemoteParameterAccessor extends AbstractRemoteAccessorImpl
 		};
 		Invocation.Builder b = requestBuilder(path+"all", queryParams);
 		return executeRequest(()->b.get(genericEntity));
-	}
+	}*/
 }

@@ -64,4 +64,8 @@ public class AbstractTable<T> implements Table<T> {
 	public T enrichEntity(T entity) {
 		return entity;
 	}
+
+	public Collection<T> getCollectionDriver() {
+		return collectionDriver;
+	}
 }

@@ -18,30 +18,34 @@
  ******************************************************************************/
 package step.client.accessors;
 
-import step.client.credentials.ControllerCredentials;
+import step.client.collections.remote.RemoteCollectionFactory;
 
 public class RemoteAccessors {
 	
-	protected final ControllerCredentials credentials;
+	protected final RemoteCollectionFactory remoteCollectionFactory;
 
-	public RemoteAccessors(ControllerCredentials credentials) {
+	public RemoteAccessors(RemoteCollectionFactory remoteCollectionFactory) {
 		super();
-		this.credentials = credentials;
+		this.remoteCollectionFactory = remoteCollectionFactory;
 	}
 
 	public RemoteFunctionAccessor getFunctionAccessor() {
-		return new RemoteFunctionAccessorImpl(credentials);
+		return new RemoteFunctionAccessor(remoteCollectionFactory);
 	}
 
 	public RemotePlanAccessor getPlanAccessor() {
-		return new RemotePlanAccessorImpl(credentials);
+		return new RemotePlanAccessor(remoteCollectionFactory);
 	}
 	
 	public RemoteExecutionAccessor getExecutionAccessor() {
-		return new RemoteExecutionAccessorImpl(credentials);
+		return new RemoteExecutionAccessor(remoteCollectionFactory);
 	}
 
 	public RemoteParameterAccessor getParameterAccessor() {
-		return new RemoteParameterAccessorImpl(credentials);
+		return new RemoteParameterAccessor(remoteCollectionFactory);
+	}
+
+	public AbstractRemoteAccessor getAbstractAccessor(String collectionId, Class entityClass) {
+		return new AbstractRemoteAccessor(remoteCollectionFactory,collectionId,entityClass);
 	}
 }
