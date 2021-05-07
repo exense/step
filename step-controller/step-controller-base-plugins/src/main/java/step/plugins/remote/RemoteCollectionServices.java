@@ -1,11 +1,11 @@
 package step.plugins.remote;
 
 import step.client.collections.remote.FindRequest;
-import step.core.accessors.collections.CollectionRegistry;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.core.tables.TableRegistry;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -19,12 +19,12 @@ import java.util.stream.Stream;
 @Path("remote")
 public class RemoteCollectionServices<T> extends AbstractServices {
 
-    protected CollectionRegistry collectionRegistry;
+    protected TableRegistry tableRegistry;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
-        collectionRegistry = getContext().get(CollectionRegistry.class);
+        tableRegistry = getContext().get(TableRegistry.class);
     }
 
     @PreDestroy
@@ -37,7 +37,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right="plan-write")
     public  Stream<T> find(@PathParam("id") String collectionId, FindRequest findRequest) {
-        Collection<T> collectionDriver = (Collection<T>) collectionRegistry.get(collectionId).getCollectionDriver();
+        Collection<T> collectionDriver = (Collection<T>) tableRegistry.get(collectionId).getCollectionDriver();
         return  collectionDriver.find(findRequest.getFilter(), findRequest.getOrder(), findRequest.getSkip(),
                 findRequest.getLimit(), findRequest.getMaxTime());
 
@@ -48,7 +48,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right="plan-write")
     public  List<String> distinct(@PathParam("id") String collectionId, @PathParam("id") String columnName) {
-        Collection<T> collectionDriver = (Collection<T>) collectionRegistry.get(collectionId).getCollectionDriver();
+        Collection<T> collectionDriver = (Collection<T>) tableRegistry.get(collectionId).getCollectionDriver();
         return collectionDriver.distinct(columnName);
     }
 
@@ -58,7 +58,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right="plan-write")
     public  List<String> distinctPost(@PathParam("id") String collectionId, @PathParam("id") String columnName, Filter filter) {
-        Collection<T> collectionDriver = (Collection<T>) collectionRegistry.get(collectionId).getCollectionDriver();
+        Collection<T> collectionDriver = (Collection<T>) tableRegistry.get(collectionId).getCollectionDriver();
         return collectionDriver.distinct(columnName,filter);
     }
 
@@ -67,7 +67,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right="plan-write")
     public void delete(@PathParam("id") String collectionId, Filter filter) {
-        Collection<T> collectionDriver = (Collection<T>) collectionRegistry.get(collectionId).getCollectionDriver();
+        Collection<T> collectionDriver = (Collection<T>) tableRegistry.get(collectionId).getCollectionDriver();
         collectionDriver.remove(filter);
     }
 
@@ -77,7 +77,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right="plan-write")
     public  T save(@PathParam("id") String collectionId, T entity) {
-        Collection<T> collectionDriver = (Collection<T>) collectionRegistry.get(collectionId).getCollectionDriver();
+        Collection<T> collectionDriver = (Collection<T>) tableRegistry.get(collectionId).getCollectionDriver();
         return collectionDriver.save(entity);
     }
 
@@ -86,7 +86,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right="plan-write")
     public  void saveBulk(@PathParam("id") String collectionId, List<T> entities) {
-        Collection<T> collectionDriver = (Collection<T>) collectionRegistry.get(collectionId).getCollectionDriver();
+        Collection<T> collectionDriver = (Collection<T>) tableRegistry.get(collectionId).getCollectionDriver();
         collectionDriver.save(entities);
     }
 
