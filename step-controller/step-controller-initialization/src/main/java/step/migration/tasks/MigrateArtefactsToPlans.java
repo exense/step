@@ -18,37 +18,19 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.jongo.Mapper;
-import org.jongo.marshall.Unmarshaller;
-import org.jongo.marshall.jackson.JacksonMapper;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.MongoNamespace;
-import com.mongodb.client.MongoDatabase;
-
-import ch.exense.commons.app.ArgumentParser;
-import ch.exense.commons.app.Configuration;
-import step.core.GlobalContext;
 import step.core.Version;
-import step.core.accessors.AccessorLayerJacksonMapperProvider;
-import step.core.collections.mongodb.MongoClientSession;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionAccessorImpl;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.DocumentObject;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 import step.core.imports.converter.ArtefactsToPlans;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessorImpl;
-import step.core.scheduler.ExecutionTaskAccessorImpl;
-import step.core.scheduler.ExecutiontTaskParameters;
-import step.functions.Function;
-import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.FunctionAccessorImpl;
 import step.migration.MigrationTask;
 import step.plugins.functions.types.CompositeFunction;
 
@@ -58,50 +40,24 @@ import step.plugins.functions.types.CompositeFunction;
  */
 public class MigrateArtefactsToPlans extends MigrationTask {
 
-	private MongoDatabase mongoDatabase;
-	private com.mongodb.client.MongoCollection<Document> artefactCollection;
-	private com.mongodb.client.MongoCollection<Document> functionCollection;
-	private com.mongodb.client.MongoCollection<Document> executionCollection;
-	private com.mongodb.client.MongoCollection<Document> tasksCollection;
-	private ExecutionAccessorImpl executionAccessor;
-	private ExecutionTaskAccessorImpl executionTaskAccessor;
-	private FunctionAccessor functionAccessor;
-	private Mapper dbLayerObjectMapper;
-	private Map<ObjectId, ObjectId> artefactIdToPlanId;
-	private Unmarshaller unmarshaller;
-	private ArtefactsToPlans artefactsToPlans;
+	private final Collection<Document> artefactCollection;
+	private final Collection<Document> functionCollection;
+	private final Collection<Document> executionCollection;
+	private final Collection<Document> tasksCollection;
+	private final Map<ObjectId, ObjectId> artefactIdToPlanId;
+	private final ArtefactsToPlans artefactsToPlans;
+	private final Collection<Document> planCollection;
 
-	public MigrateArtefactsToPlans() {
-		super(new Version(3,13,0));
-	}
-
-	@Override
-	protected void setContext(GlobalContext context) {
-		super.setContext(context);
-		init(mongoClientSession);
-		context.put(MigrateArtefactsToPlans.class, this);
-	}
-
-	protected void init(MongoClientSession mongoClientSession) {
-		mongoDatabase = mongoClientSession.getMongoDatabase();
-		artefactCollection = mongoDatabase.getCollection("artefacts");
-		executionCollection = mongoDatabase.getCollection("executions");
-		functionCollection = mongoDatabase.getCollection("functions");
-		tasksCollection = mongoDatabase.getCollection("tasks");
+	public MigrateArtefactsToPlans(CollectionFactory collectionFactory) {
+		super(new Version(3,13,0), collectionFactory);
 		
-		JacksonMapper.Builder builder2 = new JacksonMapper.Builder();
-		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
-		dbLayerObjectMapper = builder2.build();
-		unmarshaller = dbLayerObjectMapper.getUnmarshaller();
-		
-		executionAccessor = new ExecutionAccessorImpl(
-				mongoClientSession.getEntityCollection("executions", Execution.class));
-		executionTaskAccessor = new ExecutionTaskAccessorImpl(
-				mongoClientSession.getEntityCollection("tasks", ExecutiontTaskParameters.class));
-		functionAccessor = new FunctionAccessorImpl(mongoClientSession.getEntityCollection("functions", Function.class));
+		artefactCollection = collectionFactory.getCollection("artefacts", Document.class);
+		planCollection = collectionFactory.getCollection("plans", Document.class);
+		executionCollection = collectionFactory.getCollection("executions", Document.class);
+		functionCollection = collectionFactory.getCollection("functions", Document.class);
+		tasksCollection = collectionFactory.getCollection("tasks", Document.class);
 
-		artefactsToPlans = new ArtefactsToPlans(artefactCollection,
-				new PlanAccessorImpl(mongoClientSession.getEntityCollection("plans", Plan.class)));
+		artefactsToPlans = new ArtefactsToPlans(artefactCollection, planCollection);
 		artefactIdToPlanId = artefactsToPlans.getArtefactIdToPlanId();
 	}
 
@@ -120,29 +76,29 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 	protected void renameArtefactCollection() {
 		String newArtefactsCollectionName = "artefacts_migrated";
 		logger.info("Renaming collection 'artefacts' to '"+newArtefactsCollectionName+"'. This collection won't be used by step anymore. You can drop it if all your plans have been migrated without error.");
-		artefactCollection.renameCollection(new MongoNamespace(mongoDatabase.getName(), newArtefactsCollectionName));
+		artefactCollection.rename(newArtefactsCollectionName);
 	}
 	
 	private void migrateCompositeFunctionsFunctions() {
 		AtomicInteger successCount = new AtomicInteger();
 		AtomicInteger errorCount = new AtomicInteger();
 		
-		Document filterCompositeFunction = new Document("type", CompositeFunction.class.getName());
-		functionCollection.find(filterCompositeFunction, BasicDBObject.class).iterator().forEachRemaining(t -> {
+		Filter filterCompositeFunction = Filters.equals("type", CompositeFunction.class.getName());
+		functionCollection.find(filterCompositeFunction, null, null, null, 0).forEach(t -> {
 			try {
-				if(t.containsField("artefactId")) {
-					String id = t.getString("_id");
+				if(t.containsKey("artefactId")) {
+					String id = t.getId().toString();
 					String artefactId = t.getString("artefactId");
 					
-					BasicDBObject rootArtefact = artefactCollection.find(new Document("_id", new ObjectId(artefactId)), BasicDBObject.class).first();
+					Document rootArtefact = artefactCollection.find(Filters.id(artefactId), null, null, null, 0).findFirst().get();
 					if(rootArtefact != null) {
-						Plan plan = artefactsToPlans.migrateArtefactToPlan(rootArtefact);
+						Document plan = artefactsToPlans.migrateArtefactToPlan(rootArtefact, false);
 						if(plan != null) {
 							ObjectId planId = plan.getId();
-							t.put("planId", planId);
+							t.put("planId", planId.toString());
 							t.remove("artefactId");
-							CompositeFunction compositeFunction = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(t), CompositeFunction.class);
-							functionAccessor.save(compositeFunction);
+							
+							functionCollection.save(t);
 							successCount.incrementAndGet();
 						} else {
 							errorCount.incrementAndGet();
@@ -170,15 +126,13 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		AtomicInteger errorCount = new AtomicInteger();
 		
 		logger.info("Searching for executions be migrated...");
-		executionCollection.find(BasicDBObject.class).iterator().forEachRemaining(t -> {
+		executionCollection.find(Filters.empty(), null, null, null, 0).forEach(t -> {
 			try {
-				BasicDBObject object = (BasicDBObject) t.get("executionParameters");
+				DocumentObject object = t.getObject("executionParameters");
 				ExecutionParametersMigrationResult executionParameterMigrationResult = migrateExecutionParameter(object);
 				if(executionParameterMigrationResult.executionParametersUpdated) {
-					// ... and save the result while ensuring integrity by unmarshalling as POJO
-					Execution execution = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(t), Execution.class);
-					execution.setPlanId(executionParameterMigrationResult.planId);
-					executionAccessor.save(execution);
+					t.put("planId", executionParameterMigrationResult.planId);
+					executionCollection.save(t);
 					successCount.incrementAndGet();
 				}
 			} catch (Exception e) {
@@ -197,10 +151,10 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		String planId;
 	}
 	
-	protected ExecutionParametersMigrationResult migrateExecutionParameter(BasicDBObject object) {
+	protected ExecutionParametersMigrationResult migrateExecutionParameter(DocumentObject object) {
 		ExecutionParametersMigrationResult result = new ExecutionParametersMigrationResult();
 		if(object != null) {
-			BasicDBObject artefact = (BasicDBObject) object.get("artefact");
+			DocumentObject artefact = object.getObject("artefact");
 			if(artefact != null) {
 				// Rename the field "repositoryParameters.artefactid" to "repositoryParameters.planid"
 				String planIdString = migrateRepositoryObjectReference(artefact);
@@ -215,12 +169,12 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		return result;
 	}
 
-	protected String migrateRepositoryObjectReference(BasicDBObject artefact) {
+	protected String migrateRepositoryObjectReference(DocumentObject artefact) {
 		String result = null;
 		ObjectId planId;
-		BasicDBObject repositoryParameters = (BasicDBObject) artefact.get("repositoryParameters");
+		DocumentObject repositoryParameters = artefact.getObject("repositoryParameters");
 		if(repositoryParameters != null) {
-			String artefactId = repositoryParameters.getString("artefactid");
+			String artefactId = (String) repositoryParameters.get("artefactid");
 			if(artefactId != null) {
 				planId = artefactIdToPlanId.get(new ObjectId(artefactId));
 				if(planId != null) {
@@ -235,29 +189,13 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 	}
 	
 	private void migrateSchedulerTasks() {
-		tasksCollection.find(BasicDBObject.class).iterator().forEachRemaining(t -> {
-			BasicDBObject executionsParameters = (BasicDBObject) t.get("executionsParameters");
+		tasksCollection.find(Filters.empty(), null, null, null, 0).forEach(t -> {
+			DocumentObject executionsParameters = t.getObject("executionsParameters");
 			ExecutionParametersMigrationResult executionParameterMigrationResult = migrateExecutionParameter(executionsParameters);
 			if(executionParameterMigrationResult.executionParametersUpdated) {
-				ExecutiontTaskParameters executionTaskParameters = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(t), ExecutiontTaskParameters.class);
-				executionTaskAccessor.save(executionTaskParameters);
+				tasksCollection.save(t);
 			}
 		});
-	}
-	
-	public static void main(String[] args) throws IOException {
-		ArgumentParser arguments = new ArgumentParser(args);
-		Configuration configuration;
-		if(arguments.hasOption("config")) {
-			configuration = new Configuration(new File(arguments.getOption("config")));
-		} else {
-			configuration = new Configuration();
-			configuration.putProperty("db.host", "localhost");
-		}
-		MongoClientSession mongoClientSession = new MongoClientSession(configuration);
-		MigrateArtefactsToPlans task = new MigrateArtefactsToPlans();
-		task.init(mongoClientSession);
-		task.runUpgradeScript();
 	}
 	
 	@Override

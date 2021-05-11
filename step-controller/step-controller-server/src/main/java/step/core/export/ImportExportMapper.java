@@ -26,14 +26,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.JacksonMapperProvider;
+import step.core.accessors.DefaultJacksonMapperProvider;
 
 
 
 public class ImportExportMapper {
 	
 	public static ObjectMapper getMapper(Version version) {
-		ObjectMapper mapper = JacksonMapperProvider.createMapper();
+		ObjectMapper mapper = DefaultJacksonMapperProvider.getObjectMapper();
 		if (version.compareTo(new Version(3,14,0)) >= 0) {
 			mapper.addMixIn(AbstractOrganizableObject.class, MyMixin.class);
 		}

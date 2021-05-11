@@ -18,11 +18,14 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-import org.bson.Document;
 
-import com.mongodb.client.result.DeleteResult;
 
 import step.core.Version;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.Filters;
+import step.core.collections.Filters.Equals;
 import step.migration.MigrationTask;
 
 /**
@@ -31,8 +34,11 @@ import step.migration.MigrationTask;
  */
 public class RemoveLocalFunctions extends MigrationTask {
 
-	public RemoveLocalFunctions() {
-		super(new Version(3,13,0));
+	private final Collection<Document> functions;
+
+	public RemoveLocalFunctions(CollectionFactory collectionFactory) {
+		super(new Version(3,13,0), collectionFactory);
+		functions = collectionFactory.getCollection("functions", Document.class);
 	}
 
 	@Override
@@ -43,12 +49,11 @@ public class RemoveLocalFunctions extends MigrationTask {
 	private void removeLocalFunctions() {
 		logger.info("Searching for keywords of type 'LocalFunction' to be deleted...");
 		
-		com.mongodb.client.MongoCollection<Document> functions = mongoClientSession.getMongoDatabase().getCollection("functions");
+		Equals filter = Filters.equals("type", "step.functions.base.types.LocalFunction");
+		long count = functions.find(filter, null, null, null, 0).count();
+		functions.remove(filter);
 		
-		Document filter = new Document("type", "step.functions.base.types.LocalFunction");
-		DeleteResult result = functions.deleteMany(filter);
-		
-		logger.info("Removed "+result.getDeletedCount()+" keywords of type 'LocalFunction'");
+		logger.info("Removed "+count+" keywords of type 'LocalFunction'");
 	}
 		
 	@Override

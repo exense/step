@@ -24,7 +24,9 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
 @SuppressWarnings("rawtypes")
@@ -42,7 +44,13 @@ public class EscapingDottedKeysMapSerializer extends JsonSerializer<Map> {
 		for(Object key:value.keySet()) {
 			newMap.put(encodeKey(key), value.get(key));
 		}
-		jgen.writeObject(newMap);
+		ObjectCodec initialCodec = jgen.getCodec();
+		jgen.setCodec(new ObjectMapper());
+		try {
+			jgen.writeObject(newMap);
+		} finally {
+			jgen.setCodec(initialCodec);
+		}
 	}
 	
     // replacing "." and "$" by their unicodes as they are invalid keys in BSON

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.accessors;
+package step.core.collections.mongodb;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,28 +24,41 @@ import java.util.List;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
-import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
-public class AccessorLayerJacksonMapperProvider {
+import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.collections.serialization.DottedKeyMap;
+import step.core.collections.serialization.DottedMapKeyDeserializer;
+import step.core.collections.serialization.DottedMapKeySerializer;
+
+class MongoDBCollectionJacksonMapperProvider {
 
 	public static List<Module> modules = new ArrayList<>();
-	
-	static {
-		modules.add(new JSR353Module());
-		modules.add(new JsonOrgModule());
-		modules.add(new DefaultAccessorModule());
-	}
 
-	public static List<Module> getModules() {
-		return modules;
+	static {
+		modules.addAll(DefaultJacksonMapperProvider.getCustomModules());
+		modules.add(new DefaultAccessorModule());
 	}
 
 	public static ObjectMapper getObjectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
-		modules.forEach(m->objectMapper.registerModule(m));
+		modules.forEach(m -> objectMapper.registerModule(m));
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		return objectMapper;
 	}
-	
+
+	private static class DefaultAccessorModule extends SimpleModule {
+
+		private static final long serialVersionUID = 5544301456563146100L;
+
+		public DefaultAccessorModule() {
+			super();
+			// MongoDB doesn't support keys with dots in documents. The following
+			// serializers are responsible for escaping dots in keys to be able to store it
+			// in MongoDB
+			addSerializer(DottedKeyMap.class, new DottedMapKeySerializer());
+			addDeserializer(DottedKeyMap.class, new DottedMapKeyDeserializer());
+		}
+	}
+
 }

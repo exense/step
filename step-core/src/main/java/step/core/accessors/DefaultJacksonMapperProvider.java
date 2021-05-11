@@ -42,19 +42,20 @@ import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 
 public class DefaultJacksonMapperProvider {
 
-	public static List<Module> modules = new ArrayList<>();
+	private static List<Module> customModules = new ArrayList<>();
+	private static List<Module> modules = new ArrayList<>();
 	private static Class<ObjectId> _id = ObjectId.class;
 	
 	static {
-		modules.add(new JSR353Module());
-		modules.add(new JsonOrgModule());
+		customModules.add(new JSR353Module());
+		customModules.add(new JsonOrgModule());
         modules.add(new SimpleModule("jersey", new Version(1, 0, 0, null,null,null)) //
                 .addSerializer(_id, _idSerializer()) //
                 .addDeserializer(_id, _idDeserializer()));
 	}
 
-	public static List<Module> getModules() {
-		return modules;
+	public static List<Module> getCustomModules() {
+		return customModules;
 	}
 	
 	public static ObjectMapper getObjectMapper(JsonFactory factory) {
@@ -70,6 +71,7 @@ public class DefaultJacksonMapperProvider {
 	}
 
 	private static void configure(ObjectMapper objectMapper) {
+		customModules.forEach(m->objectMapper.registerModule(m));
 		modules.forEach(m->objectMapper.registerModule(m));
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	}

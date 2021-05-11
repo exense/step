@@ -51,11 +51,12 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
 import step.core.deployment.ApplicationServices;
-import step.core.deployment.JacksonMapperProvider;
 import step.core.deployment.Secured;
 import step.core.export.ExportTaskManager;
 import step.core.export.ExportTaskManager.ExportRunnable;
@@ -82,7 +83,7 @@ public class TableService extends ApplicationServices {
 	
 	protected ExportTaskManager exportTaskManager;
 
-	private ObjectMapper webLayerObjectMapper = JacksonMapperProvider.createMapper();
+	private ObjectMapper webLayerObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 	
 	private Pattern columnSearchPattern = Pattern.compile("columns\\[([0-9]+)\\]\\[search\\]\\[value\\]");
 	private Pattern searchPattern = Pattern.compile("search\\[value\\]");
@@ -140,7 +141,7 @@ public class TableService extends ApplicationServices {
 	public List<String> searchIdsBy(@PathParam("id") String collectionID, @PathParam("column") String columnName, String searchValue) throws Exception {
 		Table<?> collection = tableRegistry.get(collectionID);
 		Filter columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
-		return collection.distinct("_id",columnQueryFragment);
+		return collection.distinct(AbstractIdentifiableObject.ID, columnQueryFragment);
 	}
 	
 	private DataTableResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, Filter sessionQueryFragment) throws Exception {		

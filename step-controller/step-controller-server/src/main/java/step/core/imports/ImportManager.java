@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.mongodb.BasicDBObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,7 +133,8 @@ public class ImportManager {
 					importer.importOne(importConfig, jParser, mapper, refMapping);
 				} else {
 					//consume the json object when skipped
-					mapper.readValue(jParser, BasicDBObject.class);
+					// TODO: fix this
+					//mapper.readValue(jParser, BasicDBObject.class);
 				}
 			}
 		} else {

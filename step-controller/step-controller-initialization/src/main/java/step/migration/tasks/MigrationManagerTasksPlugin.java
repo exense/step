@@ -18,10 +18,8 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import step.core.GlobalContext;
+import step.core.collections.CollectionFactory;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.migration.MigrationManager;
@@ -33,17 +31,16 @@ import step.migration.MigrationManagerPlugin;
 @Plugin(dependencies= {MigrationManagerPlugin.class})
 public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 
-	private static final Logger logger = LoggerFactory.getLogger(MigrationManagerTasksPlugin.class);
-	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
+		CollectionFactory collectionFactory = context.getCollectionFactory();
 		MigrationManager migrationManager = context.get(MigrationManager.class);
-		migrationManager.register(new RenameArtefactType());
-		migrationManager.register(new MigrateFunctions());
-		migrationManager.register(new ScreenTemplateMigrationTask());
-		migrationManager.register(new SetSchedulerTaskAttributes());
-		migrationManager.register(new RemoveLocalFunctions());
-		migrationManager.register(new MigrateArtefactsToPlans());
-		migrationManager.register(new ScreenTemplateArtefactTableMigrationTask());
+		migrationManager.register(new SetSchedulerTaskAttributes(collectionFactory));
+		MigrateArtefactsToPlans migrationTask = new MigrateArtefactsToPlans(collectionFactory);
+		migrationManager.register(migrationTask);
+		context.put(MigrateArtefactsToPlans.class, migrationTask);
+		migrationManager.register(new ScreenTemplateMigrationTask(collectionFactory));
+		migrationManager.register(new RemoveLocalFunctions(collectionFactory));
+		migrationManager.register(new ScreenTemplateArtefactTableMigrationTask(collectionFactory));
 	}
 }

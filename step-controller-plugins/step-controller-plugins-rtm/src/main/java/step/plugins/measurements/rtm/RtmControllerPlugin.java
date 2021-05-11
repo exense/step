@@ -30,11 +30,8 @@ import org.rtm.commons.MeasurementAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.client.MongoCollection;
-
 import step.core.GlobalContext;
-import step.core.collections.mongodb.MongoClientSession;
-import step.core.collections.mongodb.MongoDBCollection;
+import step.core.collections.Collection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.plugins.measurements.MeasurementPlugin;
@@ -68,16 +65,16 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 				logger.info("["+prop+"] "+rtmProperties.getProperty(prop));
 			}
 		}
-
-		MongoCollection<Document> measurements = context.require(MongoClientSession.class).getMongoDatabase().getCollection("measurements");
-		MongoDBCollection.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
-		MongoDBCollection.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
-		MongoDBCollection.createOrUpdateCompoundIndex(measurements, MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
-		MongoDBCollection.createOrUpdateIndex(measurements, MeasurementPlugin.BEGIN);
-
+		
+		Collection<Document> collection = context.getCollectionFactory().getCollection("measurements", Document.class);
+		collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
+		collection.createOrUpdateCompoundIndex(MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
+		collection.createOrUpdateCompoundIndex(MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
+		collection.createOrUpdateIndex(MeasurementPlugin.BEGIN);
+		
 		WebAppContext webappCtx = new WebAppContext();
 		webappCtx.setContextPath("/rtm");
-
+		
 		String war = stepProperties.getProperty("plugins.rtm.war");
 		if(war==null) {
 			throw new RuntimeException("Property 'plugins.rtm.war' is null. Unable to start RTM.");
@@ -90,10 +87,10 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 		webappCtx.setWar(war);
 		webappCtx.setParentLoaderPriority(true);
 		context.getServiceRegistrationCallback().registerHandler(webappCtx);
-
+		
 		accessor = MeasurementAccessor.getInstance();
 		context.put(MeasurementAccessor.class, accessor);
-
+		
 		MeasurementPlugin.registerMeasurementHandlers(new RtmHandler(accessor));
 	}
 
@@ -103,7 +100,6 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 			accessor.close();
 		}
 	}
-
 
 	private void cloneProperty(Properties rtmProperties, ch.exense.commons.app.Configuration stepProperties, String property) {
 		if(stepProperties.getProperty(property)!=null) {

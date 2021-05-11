@@ -65,8 +65,6 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	
 	public AbstractArtefact() {
 		super();
-		_id = new ObjectId();
-		
 		Map<String, String> defaultAttributes = new HashMap<>();
 		defaultAttributes.put("name", getArtefactName(this.getClass()));
 		attributes = defaultAttributes;
@@ -224,7 +222,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((_id == null) ? 0 : _id.hashCode());
+		result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
 		return result;
 	}
 
@@ -237,10 +235,10 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		if (getClass() != obj.getClass())
 			return false;
 		AbstractArtefact other = (AbstractArtefact) obj;
-		if (_id == null) {
-			if (other._id != null)
+		if (getId() == null) {
+			if (other.getId() != null)
 				return false;
-		} else if (!_id.equals(other._id))
+		} else if (!getId().equals(other.getId()))
 			return false;
 		return true;
 	}

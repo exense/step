@@ -16,31 +16,36 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.collections.mongodb;
+package step.core.collections.inmemory;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import step.core.accessors.AbstractIdentifiableObject;
+import org.bson.types.ObjectId;
+
+import ch.exense.commons.app.Configuration;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 
-public class MongoDBCollectionFactory implements CollectionFactory {
+public class InMemoryCollectionFactory implements CollectionFactory {
 
-	private final MongoClientSession mongoClientSession;
+	private final Map<String, Map<ObjectId, Object>> collections = new ConcurrentHashMap<>();
 	
-	public MongoDBCollectionFactory(MongoClientSession mongoClientSession) {
+	public InMemoryCollectionFactory(Configuration configuration) {
 		super();
-		this.mongoClientSession = mongoClientSession;
-	}
-
-	@Override
-	public <T extends AbstractIdentifiableObject> Collection<T> getCollection(String name, Class<T> entityClass) {
-		return mongoClientSession.getEntityCollection(name, entityClass);
 	}
 
 	@Override
 	public void close() throws IOException {
-		mongoClientSession.close();
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> Collection<T> getCollection(String name, Class<T> entityClass) {
+		Map<ObjectId, Object> entities = collections.computeIfAbsent(name, k->new ConcurrentHashMap<ObjectId, Object>());
+		return (Collection<T>) new InMemoryCollection<T>(entityClass, (Map<ObjectId, T>) entities);
 	}
 
 }

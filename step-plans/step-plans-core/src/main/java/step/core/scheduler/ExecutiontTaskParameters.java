@@ -103,10 +103,10 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject {
 		if (getClass() != obj.getClass())
 			return false;
 		ExecutiontTaskParameters other = (ExecutiontTaskParameters) obj;
-		if (_id == null) {
-			if (other._id != null)
+		if (getId() == null) {
+			if (other.getId() != null)
 				return false;
-		} else if (!_id.equals(other._id))
+		} else if (!getId().equals(other.getId()))
 			return false;
 		return true;
 	}

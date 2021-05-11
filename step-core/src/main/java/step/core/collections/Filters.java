@@ -21,6 +21,10 @@ package step.core.collections;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.types.ObjectId;
+
+import step.core.accessors.AbstractIdentifiableObject;
+
 public class Filters {
 
 	public interface FilterFactory<T> {
@@ -45,7 +49,18 @@ public class Filters {
 	}
 	
 	public static Equals equals(String field, Object expectedValue) {
+		if(field.equals(AbstractIdentifiableObject.ID) && expectedValue instanceof String) {
+			expectedValue = new ObjectId(expectedValue.toString());
+		}
 		return new Equals(field, expectedValue);
+	}
+	
+	public static Equals id(ObjectId id) {
+		return equals(AbstractIdentifiableObject.ID, id);
+	}
+	
+	public static Equals id(String id) {
+		return id(new ObjectId(id));
 	}
 	
 	public static Lt lt(String field, long value) {

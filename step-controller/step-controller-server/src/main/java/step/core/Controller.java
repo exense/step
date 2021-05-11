@@ -41,8 +41,7 @@ import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
-import step.core.collections.mongodb.MongoClientSession;
-import step.core.collections.mongodb.MongoDBCollectionFactory;
+import step.core.collections.filesystem.FilesystemCollectionFactory;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -143,12 +142,9 @@ public class Controller {
 		pluginManager = new ControllerPluginManager(configuration, moduleChecker);
 		context.setPluginManager(pluginManager);
 		
-		MongoClientSession mongoClientSession = new MongoClientSession(configuration);
-		context.put(MongoClientSession.class, mongoClientSession);
-
-		CollectionFactory collectionFactory;
-		collectionFactory = new MongoDBCollectionFactory(mongoClientSession);
-		// collectionFactory = new FilesystemCollectionFactory(new File("./db"));
+		String collectionClassname = configuration.getProperty("db.type", FilesystemCollectionFactory.class.getName());
+		CollectionFactory collectionFactory = (CollectionFactory) Class.forName(collectionClassname)
+				.getConstructor(Configuration.class).newInstance(configuration);
 		context.setCollectionFactory(collectionFactory);
 		
 		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));

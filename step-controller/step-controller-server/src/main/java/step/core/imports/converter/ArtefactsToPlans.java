@@ -18,28 +18,23 @@
  ******************************************************************************/
 package step.core.imports.converter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
-import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.jongo.Mapper;
-import org.jongo.marshall.Unmarshaller;
-import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.MongoCollection;
-
-import step.artefacts.CallPlan;
-import step.core.accessors.AccessorLayerJacksonMapperProvider;
-import step.core.artefacts.AbstractArtefact;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.collections.Collection;
+import step.core.collections.Document;
+import step.core.collections.DocumentObject;
+import step.core.collections.Filters;
 import step.core.objectenricher.ObjectEnricher;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
 
 
 /**
@@ -51,27 +46,20 @@ public class ArtefactsToPlans  {
 	private static final Logger logger = LoggerFactory.getLogger(ArtefactsToPlans.class);
 
 	private static final String CHILDREN_ID_FIELD = "childrenIDs";
-	private MongoCollection<Document> artefactCollection;
-	private PlanAccessor planAccessor;
+	private Collection<Document> artefactCollection;
+	private Collection<Document> planCollection;
 	
-	private Mapper dbLayerObjectMapper;
 	private final Map<ObjectId, ObjectId> artefactIdToPlanId;
-	private Unmarshaller unmarshaller;
 	private int nbPlans = 0;
 	private ObjectEnricher objectEnricher = null;
 
-	public ArtefactsToPlans(MongoCollection<Document> artefacts, PlanAccessor accessor) {
-		this(artefacts,accessor,null);
+	public ArtefactsToPlans(Collection<Document> artefacts, Collection<Document> plans) {
+		this(artefacts, plans, null);
 	}
 	
-	public ArtefactsToPlans(MongoCollection<Document> artefacts, PlanAccessor accessor, ObjectEnricher objectEnricher) {
-		planAccessor = accessor;
+	public ArtefactsToPlans(Collection<Document> artefacts, Collection<Document> plans, ObjectEnricher objectEnricher) {
 		artefactCollection = artefacts;
-		
-		JacksonMapper.Builder builder2 = new JacksonMapper.Builder();
-		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
-		dbLayerObjectMapper = builder2.build();
-		unmarshaller = dbLayerObjectMapper.getUnmarshaller();
+		planCollection = plans;
 		
 		this.objectEnricher = objectEnricher;
 		artefactIdToPlanId = new HashMap<>();
@@ -81,11 +69,10 @@ public class ArtefactsToPlans  {
 	private void generatePlanIds() {
 		logger.info("Searching for root artefacts to be migrated...");
 		AtomicInteger count = new AtomicInteger();
-		Document filterRootArtefacts = new Document("root", true);
-		artefactCollection.find(filterRootArtefacts, BasicDBObject.class).iterator().forEachRemaining(t -> {
+		
+		rootArtefactStream().forEach(t -> {
 			try {
-				ObjectId objectId = t.getObjectId("_id");
-				artefactIdToPlanId.put(objectId, new ObjectId());
+				artefactIdToPlanId.put(t.getId(), new ObjectId());
 				count.incrementAndGet();
 			} catch (Exception e) {
 				logger.error("Invalid object id found for the root artefact",e);
@@ -93,14 +80,17 @@ public class ArtefactsToPlans  {
 		});
 		nbPlans = count.get();
 	}
+
+	private Stream<Document> rootArtefactStream() {
+		return artefactCollection.find(Filters.equals("root", true), null, null, null, 0);
+	}
 	
 	public int migrateArtefactsToPlans() {
 		AtomicInteger successCount = new AtomicInteger();
 		AtomicInteger errorCount = new AtomicInteger();
 
-		Document filterRootArtefacts = new Document("root", true);
-		artefactCollection.find(filterRootArtefacts, BasicDBObject.class).iterator().forEachRemaining(t -> {
-			migrateArtefactToPlan(successCount, errorCount, t);
+		rootArtefactStream().forEach(t -> {
+			migrateArtefactToPlan(successCount, errorCount, t, true);
 		});
 		
 		logger.info("Migrated "+successCount.get()+" artefacts successfully.");
@@ -115,34 +105,34 @@ public class ArtefactsToPlans  {
 		return errors;
 	}
 
-	public Plan migrateArtefactToPlan(BasicDBObject t) {
-		return migrateArtefactToPlan(null, null, t);
+	public Document migrateArtefactToPlan(Document t, boolean visiblePlan) {
+		return migrateArtefactToPlan(null, null, t, visiblePlan);
 	}
 	
-	protected Plan migrateArtefactToPlan(AtomicInteger successCount, AtomicInteger errorCount, BasicDBObject t) {
+	protected Document migrateArtefactToPlan(AtomicInteger successCount, AtomicInteger errorCount, Document t, boolean visiblePlan) {
 		Map<String, String> attributes = new HashMap<>();
 		try {
-			BasicDBObject document = (BasicDBObject)t.get("attributes");
+			DocumentObject document = t.getObject("attributes");
 			if(document != null) {
 				document.keySet().forEach(key->{
-					attributes.put(key, document.getString(key));
+					attributes.put(key, document.get(key).toString());
 				});
 			}
 			
-			AbstractArtefact artefact = unmarshallArtefact(t);
+			Document plan = new Document();
 			
-			Plan plan = new Plan();
-			
-			plan.setId(artefactIdToPlanId.get(artefact.getId()));
-			plan.setAttributes(attributes);
-			plan.setRoot(artefact);
-			plan.setVisible(true);
+			plan.put(AbstractIdentifiableObject.ID, artefactIdToPlanId.get(t.getId()));
+			plan.put("attributes", attributes);
+			plan.put("root", migrateArtefact(t));
+			plan.put("visible", visiblePlan);
+			plan.put("_class", "step.core.plans.Plan");
 			
 			logger.info("Migrated plan "+attributes);
 			if (objectEnricher != null) {
 				objectEnricher.accept(plan);
 			}
-			plan = planAccessor.save(plan);
+			
+			plan = planCollection.save(plan);
 			if(successCount != null) {
 				successCount.incrementAndGet();
 			}
@@ -157,23 +147,21 @@ public class ArtefactsToPlans  {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private AbstractArtefact unmarshallArtefact(BasicDBObject t) {
+	private Document migrateArtefact(Document t) {
 		List<Object> childrendIDs = null;
-		if(t.containsField(CHILDREN_ID_FIELD)) {
+		if(t.containsKey(CHILDREN_ID_FIELD)) {
 			childrendIDs = (List<Object>) t.get(CHILDREN_ID_FIELD);
 		}
 		t.remove(CHILDREN_ID_FIELD);
 		
-		AbstractArtefact artefact = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(t), AbstractArtefact.class);
-		
-		if(artefact instanceof CallPlan) {
-			String artefactId = t.getString("artefactId");
+		if(t.get("_class").equals("CallPlan")) {
+			String artefactId = (String) t.get("artefactId");
 			if(artefactId!=null) {
 				ObjectId referencedPlanId = artefactIdToPlanId.get(new ObjectId(artefactId));
 				if(referencedPlanId != null) {
-					((CallPlan) artefact).setPlanId(referencedPlanId.toString());
+					t.put("planId", referencedPlanId.toString());
 				} else {
-					logger.warn("The artefact "+artefactId+" referenced by the artefact (call plan) "+t.getObjectId("_id").toString()+" doesn't exist");
+					logger.warn("The artefact "+artefactId+" referenced by the artefact (call plan) "+t.get(AbstractIdentifiableObject.ID).toString()+" doesn't exist");
 				}
 			} else {
 				// Call by attributes => nothing to do as we're assigning the attributes of the root artefact to the plan
@@ -184,13 +172,13 @@ public class ArtefactsToPlans  {
 			childrendIDs.forEach(childID->{
 				//required to support both migration from database and exported JSON
 				ObjectId  childObjectId = (childID instanceof ObjectId) ? (ObjectId) childID : new ObjectId((String) childID);
-				BasicDBObject child = artefactCollection.find(new Document("_id", childObjectId), BasicDBObject.class).first();
-				AbstractArtefact artefactChild = unmarshallArtefact(child);
-				artefact.getChildren().add(artefactChild);
+				Document child = artefactCollection.find(Filters.equals(AbstractIdentifiableObject.ID, childObjectId), null, null, null, 0).findFirst().get();
+				Document artefactChild = migrateArtefact(child);
+				((List<Document>) t.computeIfAbsent("children", k->new ArrayList<Document>())).add(artefactChild);
 			});
 		}
 		
-		return artefact;
+		return t;
 	}	
 	
 	public int getNbPlans() {

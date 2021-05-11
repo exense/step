@@ -22,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import step.core.GlobalContext;
 import step.core.Version;
 
 public class MigrationManagerTest {
@@ -53,8 +52,7 @@ public class MigrationManagerTest {
 
 	
 	protected MigrationManager getMigrationManager(StringBuilder s) {
-		GlobalContext context = new GlobalContext();
-		MigrationManager m = new MigrationManager(context);
+		MigrationManager m = new MigrationManager();
 		registerMigrator(s, m, new Version(0, 2, 2));
 		registerMigrator(s, m, new Version(2, 2, 5));
 		registerMigrator(s, m, new Version(1, 2, 2));
@@ -65,7 +63,7 @@ public class MigrationManagerTest {
 	}
 
 	protected void registerMigrator(StringBuilder s, MigrationManager m, Version v) {
-		m.register(new MigrationTask(v) {
+		m.register(new MigrationTask(v, null) {
 			
 			@Override
 			public void runUpgradeScript() {

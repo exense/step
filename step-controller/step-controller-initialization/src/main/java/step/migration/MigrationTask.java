@@ -21,39 +21,27 @@ package step.migration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.GlobalContext;
 import step.core.Version;
-import step.core.collections.mongodb.MongoClientSession;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
 
 public abstract class MigrationTask {
 
 	protected static final Logger logger = LoggerFactory.getLogger(MigrationTask.class);
 	
-	protected GlobalContext context;
+	protected final Version asOfVersion;
 	
-	protected Version asOfVersion;
-	
-	protected MongoClientSession mongoClientSession;
+	protected final CollectionFactory collectionFactory;
 
-	public GlobalContext getContext() {
-		return context;
-	}
-
-	protected void setContext(GlobalContext context) {
-		this.context = context;
-		mongoClientSession = context.get(MongoClientSession.class);
+	public MigrationTask(Version asOfVersion, CollectionFactory collectionFactory) {
+		super();
+		this.asOfVersion = asOfVersion;
+		this.collectionFactory = collectionFactory;
 	}
 
 	public Version getAsOfVersion() {
 		return asOfVersion;
-	}
-
-	/**
-	 * @param asOfVersion the version as of which the the task has to be executed
-	 */
-	public MigrationTask(Version asOfVersion) {
-		super();
-		this.asOfVersion = asOfVersion;
 	}
 	
 	/**
@@ -65,5 +53,9 @@ public abstract class MigrationTask {
 	 * Script to be executed when migrating from the version asOfVersion to a version lower than asOfVersion
 	 */
 	public abstract void runDowngradeScript();
+
+	protected Collection<Document> getDocumentCollection(String name) {
+		return this.collectionFactory.getCollection(name, Document.class);
+	}
 
 }

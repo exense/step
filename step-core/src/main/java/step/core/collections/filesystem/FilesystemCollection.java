@@ -36,7 +36,6 @@ import org.bson.types.ObjectId;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
@@ -44,7 +43,7 @@ import step.core.collections.PojoFilter;
 import step.core.collections.PojoFilters.PojoFilterFactory;
 import step.core.collections.SearchOrder;
 
-public class FilesystemCollection<T extends AbstractIdentifiableObject> implements Collection<T> {
+public class FilesystemCollection<T> extends AbstractCollection<T> implements Collection<T> {
 
 	private static final String FILE_EXTENSION = ".entity";
 	private final ObjectMapper mapper;
@@ -63,12 +62,6 @@ public class FilesystemCollection<T extends AbstractIdentifiableObject> implemen
 
 	@Override
 	public List<String> distinct(String columnName, Filter filter) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<String> distinct(String columnName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -102,7 +95,7 @@ public class FilesystemCollection<T extends AbstractIdentifiableObject> implemen
 		Stream<T> stream = filteredStream(filter).map(FileAndEntity::getEntity).sorted(new Comparator<T>() {
 			@Override
 			public int compare(T o1, T o2) {
-				return o1.getId().compareTo(o2.getId());
+				return getId(o1).compareTo(getId(o2));
 			}
 		});
 		if(order != null) {
@@ -131,7 +124,9 @@ public class FilesystemCollection<T extends AbstractIdentifiableObject> implemen
 		PojoFilter<T> pojoFilter = new PojoFilterFactory<T>().buildFilter(filter);
 		Iterator<FileAndEntity<T>> it = entityStream().iterator();
 		Spliterator<FileAndEntity<T>> spliterator = Spliterators.spliteratorUnknownSize(it, 0);
-		Stream<FileAndEntity<T>> filter2 = StreamSupport.stream(spliterator, false).filter(f->pojoFilter.test(f.entity));
+		Stream<FileAndEntity<T>> filter2 = StreamSupport.stream(spliterator, false).filter(f-> {
+			return pojoFilter.test(f.entity);
+		});
 		return filter2;
 	}
 
@@ -144,8 +139,8 @@ public class FilesystemCollection<T extends AbstractIdentifiableObject> implemen
 
 	@Override
 	public T save(T entity) {
-		if (entity.getId() == null) {
-			entity.setId(new ObjectId());
+		if (getId(entity) == null) {
+			setId(entity, new ObjectId());
 		}
 		File file = getFile(entity);
 		writeEntity(entity, file);
@@ -176,7 +171,7 @@ public class FilesystemCollection<T extends AbstractIdentifiableObject> implemen
 	}
 
 	private File getFile(T entity) {
-		ObjectId id = entity.getId();
+		ObjectId id = getId(entity);
 		File file = getFileById(id);
 		return file;
 	}
@@ -195,5 +190,16 @@ public class FilesystemCollection<T extends AbstractIdentifiableObject> implemen
 	@Override
 	public void createOrUpdateCompoundIndex(String... fields) {
 		// not supported
+	}
+	
+	@Override
+	public void rename(String newName) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void drop() {
+		// TODO Auto-generated method stub
+		
 	}
 }

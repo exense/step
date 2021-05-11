@@ -22,44 +22,34 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-import com.mongodb.BasicDBObject;
-import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.client.MongoCollection;
 
-import org.jongo.Mapper;
-import org.jongo.marshall.Unmarshaller;
-import org.jongo.marshall.jackson.JacksonMapper;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.AccessorLayerJacksonMapperProvider;
-import step.core.collections.mongodb.MongoClientSession;
 import step.core.accessors.Accessor;
-import step.core.deployment.JacksonMapperProvider;
+import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
 import step.core.entities.Entity;
 
 public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends Accessor<A>> implements Importer<A, T> {
 	
 	protected Entity<A, T> entity;
 	protected GlobalContext context;
-	protected MongoCollection<Document> tmpCollection = null;
-	private Mapper dbLayerObjectMapper;
-	private Unmarshaller unmarshaller;
+	protected Collection<Document> tmpCollection = null;
+	private ObjectMapper objectMapper;
 	
 	public GenericDBImporter(GlobalContext context) {
 		super();
 		this.context = context;
-		JacksonMapper.Builder builder2 = new JacksonMapper.Builder();
-		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
-		JacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
-		dbLayerObjectMapper = builder2.build();
-		unmarshaller = dbLayerObjectMapper.getUnmarshaller();
+		objectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 	}
 
 	public void init(Entity<A, T> entity) {
@@ -73,9 +63,9 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends A
 			Map<String, String> references) throws JsonParseException, JsonMappingException, IOException {
 		if (importConfig.getVersion().compareTo(new Version(3,13,0)) >= 0) {
 			//A aObj = mapper.readValue(jParser, entity.getEntityClass());
-			BasicDBObject o = mapper.readValue(jParser, BasicDBObject.class);
+			Document o = mapper.readValue(jParser, Document.class);
 			applyMigrationTasks(importConfig, o);
-			A aObj = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(o),entity.getEntityClass());
+			A aObj = objectMapper.convertValue(o ,entity.getEntityClass());
 			context.getEntityManager().runImportHooks(aObj, importConfig);
 			if (importConfig.isOverwrite()) {
 				entity.getAccessor().save(aObj);
@@ -90,7 +80,7 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends A
 		}
 	}
 
-	protected BasicDBObject applyMigrationTasks(ImportConfiguration importConfig, BasicDBObject o) {
+	protected Document applyMigrationTasks(ImportConfiguration importConfig, Document o) {
 		return o;
 	}
 
@@ -109,15 +99,16 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends A
 		entity.getAccessor().save(aObj);
 	}
 	
-	protected MongoCollection<Document> getOrInitTmpCollection() {
+	protected Collection<Document> getOrInitTmpCollection() {
 		if (tmpCollection == null) {
 			String collectionName = "Tmp" + UUID.randomUUID();
-			tmpCollection = context.require(MongoClientSession.class).getMongoDatabase().getCollection(collectionName);
+			CollectionFactory collectionFactory = context.getCollectionFactory();
+			tmpCollection = collectionFactory.getCollection(collectionName, Document.class);
 		} 
 		return tmpCollection;
 	}
 	
-	protected MongoCollection<Document> getTmpCollection() {
+	protected Collection<Document> getTmpCollection() {
 		return tmpCollection;
 	}
 	
@@ -127,7 +118,7 @@ public class GenericDBImporter<A extends AbstractIdentifiableObject, T extends A
 			doc.put("_id", new ObjectId(id));
 			
 		}
-		getOrInitTmpCollection().insertOne(doc);	
+		getOrInitTmpCollection().save(doc);	
 	}
 
 	@Override

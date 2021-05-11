@@ -21,17 +21,18 @@ package step.core.collections.filesystem;
 import java.io.File;
 import java.io.IOException;
 
-import step.core.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.app.Configuration;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 
 public class FilesystemCollectionFactory implements CollectionFactory {
 
+	public static final String DB_FILESYSTEM_PATH = "db.filesystem.path";
 	private final File workspace;
 	
-	public FilesystemCollectionFactory(File workspace) {
+	public FilesystemCollectionFactory(Configuration configuration) {
 		super();
-		this.workspace = workspace;
+		this.workspace = configuration.getPropertyAsDirectory(DB_FILESYSTEM_PATH, new File("db"));
 	}
 
 	@Override
@@ -40,7 +41,7 @@ public class FilesystemCollectionFactory implements CollectionFactory {
 	}
 
 	@Override
-	public <T extends AbstractIdentifiableObject> Collection<T> getCollection(String name, Class<T> entityClass) {
+	public <T> Collection<T> getCollection(String name, Class<T> entityClass) {
 		return new FilesystemCollection<>(new File(workspace.getAbsolutePath()+"/"+name), entityClass);
 	}
 

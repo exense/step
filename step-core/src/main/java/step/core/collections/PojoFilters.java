@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.beanutils.NestedNullException;
 import org.apache.commons.beanutils.PropertyUtils;
 
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.collections.Filters.And;
 import step.core.collections.Filters.Equals;
 import step.core.collections.Filters.FilterFactory;
@@ -140,7 +141,8 @@ public class PojoFilters {
 		@Override
 		public boolean test(T t) {
 			try {
-				Object beanProperty = getBeanProperty(t, equalsFilter.getField());
+				String field = equalsFilter.getField();
+				Object beanProperty = getBeanProperty(t, field);
 				Object expectedValue = equalsFilter.getExpectedValue();
 				if(expectedValue != null) {
 					return expectedValue.equals(beanProperty);
@@ -172,8 +174,13 @@ public class PojoFilters {
 		@Override
 		public boolean test(T t) {
 			try {
-				Matcher matcher = pattern.matcher(getBeanProperty(t, regexFilter.getField()).toString());
-				return matcher.find();
+				Object beanProperty = getBeanProperty(t, regexFilter.getField());
+				if(beanProperty != null) {
+					Matcher matcher = pattern.matcher(beanProperty.toString());
+					return matcher.find();
+				} else {
+					return false;
+				}
 			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
 				return false;
 			}
@@ -183,7 +190,17 @@ public class PojoFilters {
 	private static Object getBeanProperty(Object t, String fieldName)
 			throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		try {
-			return PropertyUtils.getProperty(t, fieldName);
+			if(fieldName.equals("_class")) {
+				return t.getClass().getName();
+			} else if(fieldName.equals(AbstractIdentifiableObject.ID)) {
+				if(t instanceof Document) {
+					return ((Document) t).getId();
+				} else {
+					return PropertyUtils.getProperty(t, fieldName);
+				}
+			} else {
+				return PropertyUtils.getProperty(t, fieldName);
+			}
 		} catch (NestedNullException e) {
 			return null;
 		}

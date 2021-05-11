@@ -25,33 +25,31 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.bson.Document;
+import org.bson.UuidRepresentation;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-import org.jongo.Mapper;
-import org.jongo.marshall.Unmarshaller;
-import org.jongo.marshall.jackson.JacksonMapper;
+import org.mongojack.JacksonMongoCollection;
+import org.mongojack.ObjectMapperConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Streams;
-import com.mongodb.BasicDBObject;
 import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.model.CountOptions;
 
-import step.core.accessors.AccessorLayerJacksonMapperProvider;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.SearchOrder;
+import step.core.collections.filesystem.AbstractCollection;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
 
-public class MongoDBCollection<T> implements Collection<T> {
+public class MongoDBCollection<T> extends AbstractCollection<T> implements Collection<T> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MongoDBCollection.class);
 
@@ -59,12 +57,9 @@ public class MongoDBCollection<T> implements Collection<T> {
 	
 	protected static final String CSV_DELIMITER = ";";
 	
-	private final Class<T> entityClass;
+	private final MongoClientSession mongoClientSession;
 
-	private MongoCollection<BasicDBObject> collection;
-	protected org.jongo.MongoCollection jongoCollection;
-
-	private Mapper dbLayerObjectMapper;
+	private JacksonMongoCollection<T> collection;
 	
 	/**
 	 * @param mongoDatabase
@@ -75,15 +70,11 @@ public class MongoDBCollection<T> implements Collection<T> {
 	 * may be appended to the queries run against this collection
 	 */
 	public MongoDBCollection(MongoClientSession mongoClientSession, String collectionName, Class<T> entityClass) {
-		this.entityClass = entityClass;
+		this.mongoClientSession = mongoClientSession;
 		
-		collection = mongoClientSession.getMongoDatabase().getCollection(collectionName, BasicDBObject.class);
-		jongoCollection = mongoClientSession.getJongoCollection(collectionName);
-
-		JacksonMapper.Builder builder2 = new JacksonMapper.Builder();
-		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
-		dbLayerObjectMapper = builder2.build();
-		
+		collection = JacksonMongoCollection.builder()
+				.withObjectMapper(ObjectMapperConfigurer.configureObjectMapper(MongoDBCollectionJacksonMapperProvider.getObjectMapper()))
+				.build(mongoClientSession.getMongoDatabase(), collectionName, entityClass, UuidRepresentation.JAVA_LEGACY);
 	}
 
 	/**
@@ -95,20 +86,11 @@ public class MongoDBCollection<T> implements Collection<T> {
 	public List<String> distinct(String columnName, Filter filter) {
 		Bson query = filterToQuery(filter);
 		
-		if (columnName.equals("_id")) {
-			return collection.distinct(columnName, query, ObjectId.class).map(ObjectId::toString).into(new ArrayList<String>());
+		if (columnName.equals(AbstractIdentifiableObject.ID)) {
+			return collection.distinct("_id", query, ObjectId.class).map(ObjectId::toString).into(new ArrayList<String>());
 		} else {
 			return collection.distinct(columnName, query, String.class).into(new ArrayList<String>());
 		}
-	}
-
-	/**
-	 * @param columnName the name of the column (field)
-	 * @return the distinct values of the column 
-	 */
-	@Override
-	public List<String> distinct(String columnName) {
-		return collection.distinct(columnName, String.class).filter(new Document(columnName,new Document("$ne",null))).into(new ArrayList<String>());
 	}
 	
 	private Bson filterToQuery(Filter filter) {
@@ -118,13 +100,13 @@ public class MongoDBCollection<T> implements Collection<T> {
 	@Override
 	public Stream<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
 		Bson query = filterToQuery(filter);
-		long count = collection.estimatedDocumentCount();
+		//long count = collection.estimatedDocumentCount();
 		
-		CountOptions option = new CountOptions();
-		option.skip(0).limit(DEFAULT_LIMIT);
-		long countResults = collection.countDocuments(query, option);
-			
-		FindIterable<BasicDBObject> find = collection.find(query).maxTime(maxTime, TimeUnit.SECONDS);
+		//CountOptions option = new CountOptions();
+		//option.skip(0).limit(DEFAULT_LIMIT);
+		//long countResults = collection.countDocuments(query, option);
+		
+		FindIterable<T> find = collection.find(query).maxTime(maxTime, TimeUnit.SECONDS);
 		if(order!=null) {
 			Document sortDoc = new Document(order.getAttributeName(), order.getOrder());
 			find.sort(sortDoc);
@@ -135,7 +117,7 @@ public class MongoDBCollection<T> implements Collection<T> {
 		if(limit!=null) {
 			find.limit(limit);
 		}
-		MongoCursor<BasicDBObject> iterator;
+		MongoCursor<T> iterator;
 		try {
 			iterator = find.iterator();
 		} catch (MongoExecutionTimeoutException e) {
@@ -143,7 +125,6 @@ public class MongoDBCollection<T> implements Collection<T> {
 			throw e;
 		}
 		
-		Unmarshaller unmarshaller = dbLayerObjectMapper.getUnmarshaller();
 		Iterator<T> enrichedIterator = new Iterator<T>() {
 			@Override
 			public boolean hasNext() {
@@ -152,13 +133,37 @@ public class MongoDBCollection<T> implements Collection<T> {
 
 			@Override
 			public T next() {
-				BasicDBObject next = iterator.next();
-				T entity = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(next), entityClass);
-				return entity;
+				T next = iterator.next();
+				fixIdAfterRead(next);
+				return next;
 			}
 		};
 		
 		return Streams.stream(enrichedIterator);
+	}
+	
+	private void fixIdAfterRead(T next) {
+		if(next instanceof step.core.collections.Document) {
+			step.core.collections.Document document = (step.core.collections.Document) next;
+			Object id = document.get("_id");
+			if(id instanceof ObjectId) {
+				id = id.toString();
+			}
+			document.put(AbstractIdentifiableObject.ID, id);
+			document.remove("_id");
+		}
+	}
+	
+	private void fixIdBeforeSave(T next) {
+		if(next instanceof step.core.collections.Document) {
+			step.core.collections.Document document = (step.core.collections.Document) next;
+			Object id = document.get(AbstractIdentifiableObject.ID);
+			if(id instanceof String) {
+				id = new ObjectId((String) id);
+			}
+			document.put("_id", id);
+			document.remove(AbstractIdentifiableObject.ID);
+		}
 	}
 
 	@Override
@@ -168,13 +173,18 @@ public class MongoDBCollection<T> implements Collection<T> {
 
 	@Override
 	public T save(T entity) {
-		jongoCollection.save(entity);
+		if(getId(entity) == null) {
+			setId(entity, new ObjectId());
+		}
+		fixIdBeforeSave(entity);
+		collection.save(entity);
+		fixIdAfterRead(entity);
 		return entity;
 	}
 
 	@Override
 	public void save(Iterable<T> entities) {
-		jongoCollection.insert(StreamSupport.stream(entities.spliterator(), false).toArray());
+		entities.forEach(this::save);
 	}
 
 	@Override
@@ -223,6 +233,16 @@ public class MongoDBCollection<T> implements Collection<T> {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public void rename(String newName) {
+		collection.renameCollection(new MongoNamespace(mongoClientSession.getMongoDatabase().getName(), newName));
+	}
+
+	@Override
+	public void drop() {
+		collection.drop();
 	}
 	
 //	/**

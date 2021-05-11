@@ -24,12 +24,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +33,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.GlobalContext;
 import step.core.Version;
+import step.core.collections.Collection;
+import step.core.collections.Document;
 import step.core.imports.converter.ArtefactsToPlans;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
@@ -79,7 +76,8 @@ public class PlanImporter extends GenericDBImporter<Plan, PlanAccessor> {
 	
 	protected void finalizeImport(Version version, ObjectEnricher objectEnricher) {
 		if (version.compareTo(new Version(3,13,0)) < 0 && getTmpCollection() != null) {
-			ArtefactsToPlans artefactsToPlans = new ArtefactsToPlans(getTmpCollection(), (PlanAccessor) entity.getAccessor(), objectEnricher);
+			Collection<Document> planCollection = context.getCollectionFactory().getCollection("plans", Document.class);
+			ArtefactsToPlans artefactsToPlans = new ArtefactsToPlans(getTmpCollection(), planCollection, objectEnricher);
 			int errors = artefactsToPlans.migrateArtefactsToPlans();
 			if (errors > 0) {
 				throw new RuntimeException("Import of plan from previous versions failed. Check the error logs for more  details.");
@@ -88,41 +86,9 @@ public class PlanImporter extends GenericDBImporter<Plan, PlanAccessor> {
 	}
 
 	@Override
-	protected BasicDBObject applyMigrationTasks(ImportConfiguration importConfig,BasicDBObject p) {
+	protected Document applyMigrationTasks(ImportConfiguration importConfig, Document p) {
 		if (importConfig.getVersion().compareTo(new Version(3,13,0)) == 0) {
-			AtomicInteger successCount = new AtomicInteger();
-			AtomicInteger errorCount = new AtomicInteger();
-			try {
-				BasicDBList assertNodesToBeUpdated = new BasicDBList();
-
-				LinkedHashMap root = (LinkedHashMap) p.get("root");
-				ArrayList children = (ArrayList<LinkedHashMap>) root.get("children");
-				retrieveAssertNodeRecursively(children, assertNodesToBeUpdated);
-
-				assertNodesToBeUpdated.iterator().forEachRemaining(a -> {
-					LinkedHashMap assertNode = (LinkedHashMap) a;
-					try {
-						if(assertNode.containsKey("negate")) {
-							logger.info("Migrating assert node " + assertNode.get("id") + ", found in plan " + p.getString("id"));
-							boolean currentNegateValue = (boolean) assertNode.get("negate");
-							assertNode.remove("negate");
-
-							Map<String, Object> doNegateMap = new HashMap<String,Object>();
-							doNegateMap.put("dynamic", false);
-							doNegateMap.put("value", currentNegateValue);
-							assertNode.put("doNegate", new Document(doNegateMap));
-							successCount.incrementAndGet();
-						}
-					} catch (Exception e) {
-						errorCount.incrementAndGet();
-						logger.error("Error while migrating assert " + assertNode, e);
-					}
-				});
-			} catch(Exception e) {
-				errorCount.incrementAndGet();
-				logger.error("Error while migrating"
-						+ " asserts from plan " + p, e);
-			}
+			// TODO apply generic migration tasks here
 		}
 		//need to manually change "id" to "_id" before unmarshalling to plan
 		if (importConfig.getVersion().compareTo(new Version(3,13,0)) <= 0) {
@@ -144,16 +110,6 @@ public class PlanImporter extends GenericDBImporter<Plan, PlanAccessor> {
 			ArrayList children = (ArrayList<LinkedHashMap>) p.get("children");
 			if (children != null) {
 				children.forEach(c -> convertChildrenIDs((LinkedHashMap) c));
-			}
-		}
-	}
-
-	private void retrieveAssertNodeRecursively(ArrayList<LinkedHashMap> children, BasicDBList assertNodesToBeUpdated) {
-		for(LinkedHashMap child : children) {
-			if(child.get("_class").equals("Assert")) {
-				assertNodesToBeUpdated.add(child);
-			} else {
-				retrieveAssertNodeRecursively((ArrayList<LinkedHashMap>) child.get("children"), assertNodesToBeUpdated);
 			}
 		}
 	}

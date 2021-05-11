@@ -18,9 +18,6 @@
  ******************************************************************************/
 package step.migration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -32,11 +29,9 @@ import step.versionmanager.VersionManagerPlugin;
  */
 public class MigrationManagerPlugin extends AbstractControllerPlugin {
 
-	private static final Logger logger = LoggerFactory.getLogger(MigrationManagerPlugin.class);
-	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		MigrationManager migrationManager = new MigrationManager(context);
+		MigrationManager migrationManager = new MigrationManager();
 		context.put(MigrationManager.class, migrationManager);
 		
 		super.executionControllerStart(context);

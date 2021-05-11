@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import javax.persistence.Id;
+
 import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -34,7 +36,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  */
 public class AbstractIdentifiableObject {
 
-	protected ObjectId _id;
+	public static final String ID = "id";
+	
+	private ObjectId _id;
 	
 	@JsonSerialize(using = MapSerializer.class)
 	@JsonDeserialize(using = MapDeserializer.class) 
@@ -48,6 +52,7 @@ public class AbstractIdentifiableObject {
 	/**
 	 * @return the unique ID of this object
 	 */
+	@Id
 	public ObjectId getId() {
 		return _id;
 	}

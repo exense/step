@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.json.JsonObject;
 
@@ -30,7 +31,8 @@ public class AbstractTable<T> implements Table<T> {
 
 	@Override
 	public List<String> distinct(String columnName) {
-		return collection.distinct(columnName);
+		return collection.distinct(columnName, Filters.empty()).stream().filter(e -> e != null)
+				.collect(Collectors.toList());
 	}
 
 	@Override

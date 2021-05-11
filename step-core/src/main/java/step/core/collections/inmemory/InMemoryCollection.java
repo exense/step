@@ -28,19 +28,33 @@ import java.util.stream.Stream;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.bson.types.ObjectId;
 
-import step.core.accessors.AbstractIdentifiableObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
+import step.core.collections.Document;
 import step.core.collections.Filter;
 import step.core.collections.PojoFilter;
 import step.core.collections.PojoFilters.PojoFilterFactory;
 import step.core.collections.SearchOrder;
+import step.core.collections.filesystem.AbstractCollection;
 
-public class InMemoryCollection<T extends AbstractIdentifiableObject> implements Collection<T> {
+public class InMemoryCollection<T> extends AbstractCollection<T> implements Collection<T> {
 
-	private final Map<ObjectId, T> entities = new ConcurrentHashMap<>();
+	private final Class<T> entityClass;
+	private final Map<ObjectId, T> entities;
+	private final ObjectMapper mapper = DefaultJacksonMapperProvider.getObjectMapper();
 	
 	public InMemoryCollection() {
 		super();
+		entityClass = null;
+		entities = new ConcurrentHashMap<>();
+	}
+	
+	public InMemoryCollection(Class<T> entityClass, Map<ObjectId, T> entities) {
+		super();
+		this.entityClass = entityClass;
+		this.entities = entities;
 	}
 
 	@Override
@@ -48,13 +62,8 @@ public class InMemoryCollection<T extends AbstractIdentifiableObject> implements
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public List<String> distinct(String columnName) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public Stream<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
 		Stream<T> stream = filteredStream(filter);
@@ -77,7 +86,15 @@ public class InMemoryCollection<T extends AbstractIdentifiableObject> implements
 		if(limit != null) {
 			stream = stream.limit(limit);
 		}
-		return stream;
+		return stream.map(e -> {
+			if(entityClass == Document.class && !(e instanceof Document)) {
+				return (T) mapper.convertValue(e, Document.class);
+			} else if(e instanceof Document && entityClass != Document.class) {
+				return mapper.convertValue(e, entityClass);
+			} else {
+				return e;
+			}
+		});
 	}
 
 	private Stream<T> filteredStream(Filter filter) {
@@ -85,7 +102,7 @@ public class InMemoryCollection<T extends AbstractIdentifiableObject> implements
 		return entityStream().filter(pojoFilter::test).sorted(new Comparator<T>() {
 				@Override
 				public int compare(T o1, T o2) {
-					return o1.getId().compareTo(o2.getId());
+					return getId(o1).compareTo(getId(o2));
 				}
 			});
 	}
@@ -97,16 +114,16 @@ public class InMemoryCollection<T extends AbstractIdentifiableObject> implements
 	@Override
 	public void remove(Filter filter) {
 		filteredStream(filter).forEach(f->{
-			entities.remove(f.getId());
+			entities.remove(getId(f));
 		});
 	}
 
 	@Override
 	public T save(T entity) {
-		if (entity.getId() == null) {
-			entity.setId(new ObjectId());
+		if (getId(entity) == null) {
+			setId(entity, new ObjectId());
 		}
-		entities.put(entity.getId(), entity);
+		entities.put(getId(entity), entity);
 		return entity;
 	}
 
@@ -124,6 +141,17 @@ public class InMemoryCollection<T extends AbstractIdentifiableObject> implements
 
 	@Override
 	public void createOrUpdateCompoundIndex(String... fields) {
+		
+	}
+
+	@Override
+	public void rename(String newName) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void drop() {
+		// TODO Auto-generated method stub
 		
 	}
 }

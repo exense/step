@@ -26,20 +26,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.GlobalContext;
 import step.core.Version;
 
 public class MigrationManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MigrationManager.class);
 	
-	protected final GlobalContext context;
-	
 	protected List<MigrationTask> migrators = new ArrayList<>();
 	
-	public MigrationManager(GlobalContext context) {
+	public MigrationManager() {
 		super();
-		this.context = context;
 	}
 
 	/**
@@ -48,7 +44,6 @@ public class MigrationManager {
 	 * @param migrationTask the task to be registered
 	 */
 	public void register(MigrationTask migrationTask) {
-		migrationTask.setContext(context);
 		migrators.add(migrationTask);
 	}
 

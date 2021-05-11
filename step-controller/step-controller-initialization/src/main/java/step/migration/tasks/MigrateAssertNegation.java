@@ -18,30 +18,18 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.bson.Document;
-import org.jongo.Mapper;
-import org.jongo.marshall.Unmarshaller;
-import org.jongo.marshall.jackson.JacksonMapper;
-
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.client.MongoDatabase;
-
-import ch.exense.commons.app.ArgumentParser;
-import ch.exense.commons.app.Configuration;
-import step.core.GlobalContext;
 import step.core.Version;
-import step.core.accessors.AccessorLayerJacksonMapperProvider;
-import step.core.collections.mongodb.MongoClientSession;
-import step.core.collections.mongodb.MongoDBCollection;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessorImpl;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.DocumentObject;
+import step.core.collections.Filters;
 import step.migration.MigrationTask;
 
 /**
@@ -50,67 +38,30 @@ import step.migration.MigrationTask;
  *
  */
 public class MigrateAssertNegation extends MigrationTask {
-	private MongoDatabase mongoDatabase;
-	private com.mongodb.client.MongoCollection<Document> planCollection;
-	private PlanAccessorImpl planAccessor;
-	private Mapper dbLayerObjectMapper;
-	private Unmarshaller unmarshaller;
 	
-	public MigrateAssertNegation() {
-		super(new Version(3,13,3));
-	}
+	private Collection<Document> planCollection;
+	
+	public MigrateAssertNegation(CollectionFactory collectionFactory) {
+		super(new Version(3,13,3), collectionFactory);
 
-	@Override
-	protected void setContext(GlobalContext context) {
-		super.setContext(context);
-		init(mongoClientSession);
-		context.put(MigrateAssertNegation.class, this);
-	}
-	
-	protected void init(MongoClientSession mongoClientSession) {
-		mongoDatabase = mongoClientSession.getMongoDatabase();
-		planCollection = mongoDatabase.getCollection("plans");
-		
-		JacksonMapper.Builder builder2 = new JacksonMapper.Builder();
-		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder2.registerModule(m));
-		dbLayerObjectMapper = builder2.build();
-		unmarshaller = dbLayerObjectMapper.getUnmarshaller();
-	
-		planAccessor = new PlanAccessorImpl(new MongoDBCollection<Plan>(mongoClientSession, "plans", Plan.class));
+		planCollection = collectionFactory.getCollection("plans", Document.class);
 	}
 	
 	@Override
 	public void runUpgradeScript() {
-		modifyAssertNegationType(context);
-	}
-	
-	private void retrieveAssertNodeRecursively(BasicDBList children, BasicDBList assertNodesToBeUpdated) {
-		for(Object child : children) {
-			if(((BasicDBObject) child).get("_class").equals("Assert")) {				
-				assertNodesToBeUpdated.add(child);
-			} else {
-				retrieveAssertNodeRecursively((BasicDBList) ((BasicDBObject) child).get("children"), assertNodesToBeUpdated);
-			}
-		}
-	}
-	
-	private void modifyAssertNegationType(GlobalContext context) {
 		AtomicInteger successCount = new AtomicInteger();
 		AtomicInteger errorCount = new AtomicInteger();
 		logger.info("Searching for artefacts of type 'Assert' to be migrated...");
 		
-		planCollection.find(BasicDBObject.class).iterator().forEachRemaining(p -> {
+		planCollection.find(Filters.empty(), null, null, null, 0).forEach(p -> {
 			try {
-				BasicDBList children = new BasicDBList();
-				BasicDBList assertNodesToBeUpdated = new BasicDBList();
+				List<DocumentObject> assertNodesToBeUpdated = new ArrayList<>();
 				
-				children = (BasicDBList) ((BasicDBObject) p.get("root")).get("children");
-				retrieveAssertNodeRecursively(children, assertNodesToBeUpdated);
+				retrieveAssertNodeRecursively(p.getObject("root"), assertNodesToBeUpdated);
 				
-				assertNodesToBeUpdated.iterator().forEachRemaining(a -> {
-					BasicDBObject assertNode = (BasicDBObject) a;
+				assertNodesToBeUpdated.forEach(assertNode -> {
 					try {
-						if(assertNode.containsField("negate")) {
+						if(assertNode.containsKey("negate")) {
 							logger.info("Migrating assert node " + assertNode.getString("_id") + ", found in plan " + p.getString("_id"));
 							boolean currentNegateValue = assertNode.getBoolean("negate");					
 							assertNode.remove("negate");
@@ -118,10 +69,9 @@ public class MigrateAssertNegation extends MigrationTask {
 							Map<String, Object> doNegateMap = new HashMap<String,Object>();
 							doNegateMap.put("dynamic", false);
 							doNegateMap.put("value", currentNegateValue);
-							assertNode.put("doNegate", new Document(doNegateMap));
+							assertNode.put("doNegate", doNegateMap);
 							
-							Plan unmarshalledPlan = unmarshaller.unmarshall(org.jongo.bson.Bson.createDocument(p), Plan.class);
-							planAccessor.save(unmarshalledPlan);
+							planCollection.save(p);
 							
 							successCount.incrementAndGet();
 						}						
@@ -141,22 +91,19 @@ public class MigrateAssertNegation extends MigrationTask {
 			logger.error("Got "+errorCount+" errors while migrating assert controls. See previous error logs for details.");
 		}
 	}
-
-	public static void main(String[] args) throws IOException {
-		ArgumentParser arguments = new ArgumentParser(args);
-		Configuration configuration;
-		if(arguments.hasOption("config")) {
-			configuration = new Configuration(new File(arguments.getOption("config")));
-		} else {
-			configuration = new Configuration();
-			configuration.putProperty("db.host", "localhost");
+	
+	private void retrieveAssertNodeRecursively(DocumentObject node, List<DocumentObject> assertNodesToBeUpdated) {
+		Object nodeClass = node.get("_class");
+		if(nodeClass != null && nodeClass.toString().equals("Assert")) {				
+			assertNodesToBeUpdated.add(node);
 		}
-		MongoClientSession mongoClientSession = new MongoClientSession(configuration);
-		MigrateAssertNegation task = new MigrateAssertNegation();
-		task.init(mongoClientSession);
-		task.runUpgradeScript();
+		
+		List<DocumentObject> children = node.getArray("children");
+		if(children != null) {
+			children.forEach(child->retrieveAssertNodeRecursively(child, assertNodesToBeUpdated));
+		}
 	}
-
+	
 	@Override
 	public void runDowngradeScript() {
 		// TODO Auto-generated method stub		

@@ -25,7 +25,9 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
 public class ExecutionParameterMapSerializer extends JsonSerializer<Map<String, String>> {
@@ -69,6 +71,12 @@ public class ExecutionParameterMapSerializer extends JsonSerializer<Map<String, 
 			}
 			entries.add(new MapEntry(key, entryValue));
 		}
-		jgen.writeObject(entries);
+		ObjectCodec initialCodec = jgen.getCodec();
+		jgen.setCodec(new ObjectMapper());
+		try {
+			jgen.writeObject(entries);
+		} finally {
+			jgen.setCodec(initialCodec);
+		}
 	}
 }

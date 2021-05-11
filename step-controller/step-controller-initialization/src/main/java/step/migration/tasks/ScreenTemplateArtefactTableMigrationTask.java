@@ -20,10 +20,13 @@ package step.migration.tasks;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.bson.Document;
-
-import step.core.GlobalContext;
 import step.core.Version;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.DocumentObject;
+import step.core.collections.Filters;
 import step.migration.MigrationTask;
 
 /**
@@ -32,50 +35,39 @@ import step.migration.MigrationTask;
  */
 public class ScreenTemplateArtefactTableMigrationTask extends MigrationTask {
 
-	private com.mongodb.client.MongoCollection<Document> screenInputs;
+	private Collection<Document> screenInputs;
 
-	public ScreenTemplateArtefactTableMigrationTask() {
-		super(new Version(3,13,0));
-	}
-
-	@Override
-	protected void setContext(GlobalContext context) {
-		super.setContext(context);
-		screenInputs = mongoClientSession.getMongoDatabase().getCollection("screenInputs");
+	public ScreenTemplateArtefactTableMigrationTask(CollectionFactory collectionFactory) {
+		super(new Version(3,13,0), collectionFactory);
+		screenInputs = collectionFactory.getCollection("screenInputs", Document.class);
 	}
 
 	@Override
 	public void runUpgradeScript() {
-		Document filter = new Document("screenId", "artefactTable");
-		screenInputs.find(filter).iterator().forEachRemaining(t -> {
-			try {
-				t.put("screenId", "planTable");
-				Document input = (Document) t.get("input");
-				
-				String inputId = input.getString("id");
-				if(inputId.equals("attributes.name")) {
-					input.put("valueHtmlTemplate", "<plan-link plan-id=\"stBean.id\" description=\"stBean.attributes.name\" />");
-				}
-				
-				Document idFilter = new Document("_id", t.get("_id"));
-				if(!inputExist(inputId)) {
-					screenInputs.replaceOne(idFilter, t);
-					logger.info("Migrating screen input to "+t.toJson());
-				} else {
-					screenInputs.deleteOne(idFilter);
-					logger.info("Deleted screen input "+t.toJson());
-				}
-			} catch(ClassCastException e) {
-				// ignore
+		screenInputs.find(Filters.equals("screenId", "artefactTable"), null, null, null, 0).forEach(t -> {
+			t.put("screenId", "planTable");
+			DocumentObject input = t.getObject("input");
+			
+			String inputId = input.getString("id");
+			if(inputId.equals("attributes.name")) {
+				input.put("valueHtmlTemplate", "<plan-link plan-id=\"stBean.id\" description=\"stBean.attributes.name\" />");
 			}
+			
+			if(!inputExist(inputId)) {
+				screenInputs.save(t);
+				logger.info("Migrated on screen input to "+t);
+			} else {
+				screenInputs.remove(Filters.equals(AbstractIdentifiableObject.ID, t.get(AbstractIdentifiableObject.ID)));
+				logger.info("Deleted screen input");
+			}
+
 		});
 	}
 
 	protected boolean inputExist(String inputId) {
-		Document planFilter = new Document("screenId", "planTable");
 		AtomicBoolean result = new AtomicBoolean();
-		screenInputs.find(planFilter).iterator().forEachRemaining(doc -> {
-			Document i = (Document) doc.get("input");
+		screenInputs.find(Filters.equals("screenId", "planTable"), null, null, null, 0).forEach(doc -> {
+			DocumentObject i = doc.getObject("input");
 			if(i.getString("id").equals(inputId)) {
 				result.set(true);
 			}

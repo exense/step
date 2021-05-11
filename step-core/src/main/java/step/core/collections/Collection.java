@@ -35,12 +35,6 @@ public interface Collection<T> {
 	
 	/**
 	 * @param columnName the name of the column (field)
-	 * @return the distinct values of the column 
-	 */
-	List<String> distinct(String columnName);
-
-	/**
-	 * @param columnName the name of the column (field)
 	 * @param query: the query filter
 	 * @return the distinct values of the column 
 	 */
@@ -55,4 +49,8 @@ public interface Collection<T> {
 	void createOrUpdateIndex(String field);
 
 	void createOrUpdateCompoundIndex(String... fields);
+	
+	void rename(String newName);
+	
+	void drop();
 }

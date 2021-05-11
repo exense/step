@@ -20,10 +20,8 @@ package step.core.collections;
 
 import java.io.Closeable;
 
-import step.core.accessors.AbstractIdentifiableObject;
-
 public interface CollectionFactory extends Closeable {
 
-	public <T extends AbstractIdentifiableObject> Collection<T> getCollection(String name, Class<T> entityClass);
+	public <T> Collection<T> getCollection(String name, Class<T> entityClass);
 	
 }

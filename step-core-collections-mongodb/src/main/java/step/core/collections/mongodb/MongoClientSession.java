@@ -20,57 +20,43 @@ package step.core.collections.mongodb;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.jongo.Jongo;
-import org.jongo.MongoCollection;
-import org.jongo.marshall.jackson.JacksonMapper;
-
-import com.mongodb.DB;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoClientSettings.Builder;
 import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
 import ch.exense.commons.app.Configuration;
-import step.core.accessors.AccessorLayerJacksonMapperProvider;
 import step.core.collections.Collection;
 
 public class MongoClientSession implements Closeable {
 
-	protected MongoClient mongoClient;
+	protected final MongoClient mongoClient;
+	protected final String db;
 	
-	protected String db;
-	
-	protected Configuration configuration;
-
 	public MongoClientSession(Configuration configuration) {
 		super();
-		this.configuration = configuration;
-		
-		initMongoClient();
-	}
-	
-	protected void initMongoClient() {
+
 		String host = configuration.getProperty("db.host");
 		Integer port = configuration.getPropertyAsInteger("db.port",27017);
 		String user = configuration.getProperty("db.username");
 		String pwd = configuration.getProperty("db.password");
-		int maxConnections = configuration.getPropertyAsInteger("db.maxConnections", 200);
+		// TODO set max connection. how to do this with the new mongo db client is unclear
+		//int maxConnections = configuration.getPropertyAsInteger("db.maxConnections", 200);
 			
 		db = configuration.getProperty("db.database","step");
-
-		ServerAddress address = new ServerAddress(host, port);
-		List<MongoCredential> credentials = new ArrayList<>();
+		
+		Builder builder = MongoClientSettings.builder();
+		//MongoClientOptions options = clientOptions.connectionsPerHost(maxConnections).build();
 		if(user!=null) {
 			MongoCredential credential = MongoCredential.createCredential(user, db, pwd.toCharArray());
-			credentials.add(credential);
+			builder.credential(credential);
 		}
-		MongoClientOptions.Builder clientOptions = new MongoClientOptions.Builder();
-		MongoClientOptions options = clientOptions.connectionsPerHost(maxConnections).build();
-		mongoClient = new MongoClient(address, credentials,options);
+		builder.applyConnectionString(new ConnectionString("mongodb://"+host+":"+port));
+		mongoClient = MongoClients.create(builder.build());
 		
 	}
 	
@@ -78,19 +64,10 @@ public class MongoClientSession implements Closeable {
 		return mongoClient.getDatabase(db);
 	}
 	
-	public org.jongo.MongoCollection getJongoCollection(String collectionName) {
-		@SuppressWarnings("deprecation")
-		DB db = mongoClient.getDB(this.db);
-		
-		JacksonMapper.Builder builder = new JacksonMapper.Builder();
-		AccessorLayerJacksonMapperProvider.getModules().forEach(m->builder.registerModule(m));
-		
-		Jongo jongo = new Jongo(db,builder.build());
-		MongoCollection collection = jongo.getCollection(collectionName);
-		
-		return collection;
+	public MongoClient getMongoClient() {
+		return mongoClient;
 	}
-	
+
 	public <T> Collection<T> getEntityCollection(String name, Class<T> entityClass) {
 		return new MongoDBCollection<T>(this, name, entityClass);
 	}
