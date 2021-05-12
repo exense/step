@@ -30,7 +30,6 @@
 	
 	<modules>
 		<module>step-functions-plugins-java</module>
-		<module>step-functions-plugins-selenium</module>
 		<module>step-functions-plugins-node</module>
 		<module>step-functions-plugins-jmeter</module>
 		<module>step-functions-plugins-composite</module>

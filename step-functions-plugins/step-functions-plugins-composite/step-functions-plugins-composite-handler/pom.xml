@@ -53,11 +53,6 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-functions-plugins-selenium-def</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
 			<artifactId>step-controller-remote-client</artifactId>
 			<version>${project.version}</version>
 		</dependency>

@@ -42,5 +42,6 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 		migrationManager.register(new ScreenTemplateMigrationTask(collectionFactory));
 		migrationManager.register(new RemoveLocalFunctions(collectionFactory));
 		migrationManager.register(new ScreenTemplateArtefactTableMigrationTask(collectionFactory));
+		migrationManager.register(new MigrateSeleniumFunctions(collectionFactory));
 	}
 }

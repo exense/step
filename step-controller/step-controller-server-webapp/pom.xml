@@ -82,11 +82,6 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-functions-plugins-selenium-controller-def</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
 			<artifactId>step-functions-plugins-composite-controller-def</artifactId>
 			<version>${project.version}</version>
 		</dependency>

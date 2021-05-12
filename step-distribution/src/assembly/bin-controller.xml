@@ -37,7 +37,6 @@
 				<include>ch.exense.step:step-controller-plugins-measurements-log</include>
 				<include>ch.exense.step:step-controller-plugins-prometheus</include>
 				<include>ch.exense.step:step-controller-plugins-script-editor</include>
-				<include>ch.exense.step:step-functions-plugins-selenium</include>
 				<include>ch.exense.step:step-functions-plugins-jmeter</include>
 				<include>ch.exense.step:step-functions-plugins-node</include>
 			</includes>
