@@ -1,7 +1,6 @@
 package step.plugins.remote;
 
 import com.fasterxml.jackson.databind.type.CollectionType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import step.client.collections.remote.FindRequest;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
@@ -47,7 +46,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Path("/{id}/find")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right="plan-write")
+    @Secured(right="collection-read")
     @Unfiltered
     public  Response find(@PathParam("id") String collectionId, FindRequest findRequest) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
@@ -80,7 +79,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Path("/{id}/distinct/{columnName}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right="plan-write")
+    @Secured(right="collection-read")
     public  List<String> distinctPost(@PathParam("id") String collectionId, @PathParam("id") String columnName, Filter filter) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
         return collectionDriver.distinct(columnName,filter);
@@ -89,7 +88,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @POST
     @Path("/{id}/remove")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right="plan-write")
+    @Secured(right="collection-delete")
     public void delete(@PathParam("id") String collectionId, Filter filter) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
         collectionDriver.remove(filter);
@@ -99,7 +98,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Path("/{id}/save")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right="plan-write")
+    @Secured(right="collection-write")
     public Response save(@PathParam("id") String collectionId, T entity) {
         Class<?> entityClass = entityManager.resolveClass(collectionId);
         Object value = DefaultJacksonMapperProvider.getObjectMapper().convertValue(entity, entityClass);
@@ -111,7 +110,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @POST
     @Path("/{id}/saveMany")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right="plan-write")
+    @Secured(right="collection-write")
     public  void saveBulk(@PathParam("id") String collectionId, List<T> entities) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
         Class<?> entityClass = entityManager.resolveClass(collectionId);
