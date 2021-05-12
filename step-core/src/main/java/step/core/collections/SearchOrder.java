@@ -23,6 +23,10 @@ public class SearchOrder {
 	private String attributeName;
 	
 	private int order;
+
+	public SearchOrder(){
+		super();
+	}
 	
 	public SearchOrder(String attributeName, int order) {
 		super();

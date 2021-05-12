@@ -18,10 +18,7 @@
  ******************************************************************************/
 package step.core.execution.model;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import step.commons.iterators.SkipLimitIterator;
@@ -61,7 +58,9 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 	}
 
 	public List<Execution> findByCritera(Map<String, String> criteria, long start, long end, int skip, int limit) {
-		List<Filter> filters = List.of(Filters.gte("startTime", start), Filters.lte("endTime", start));
+		List<Filter> filters = new ArrayList<>();
+		filters.add(Filters.gte("startTime", start));
+		filters.add(Filters.lte("endTime", start));
 		criteria.forEach((k, v) -> {
 			filters.add(Filters.equals(k, v));
 		});

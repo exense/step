@@ -19,6 +19,12 @@
 package step.client.accessors;
 
 import step.client.collections.remote.RemoteCollectionFactory;
+import step.core.accessors.AbstractAccessor;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.execution.model.ExecutionAccessor;
+import step.core.plans.PlanAccessor;
+import step.functions.accessor.FunctionAccessor;
+import step.parameter.ParameterAccessor;
 
 public class RemoteAccessors {
 	
@@ -29,23 +35,23 @@ public class RemoteAccessors {
 		this.remoteCollectionFactory = remoteCollectionFactory;
 	}
 
-	public RemoteFunctionAccessor getFunctionAccessor() {
+	public FunctionAccessor getFunctionAccessor() {
 		return new RemoteFunctionAccessor(remoteCollectionFactory);
 	}
 
-	public RemotePlanAccessor getPlanAccessor() {
+	public PlanAccessor getPlanAccessor() {
 		return new RemotePlanAccessor(remoteCollectionFactory);
 	}
 	
-	public RemoteExecutionAccessor getExecutionAccessor() {
+	public ExecutionAccessor getExecutionAccessor() {
 		return new RemoteExecutionAccessor(remoteCollectionFactory);
 	}
 
-	public RemoteParameterAccessor getParameterAccessor() {
+	public ParameterAccessor getParameterAccessor() {
 		return new RemoteParameterAccessor(remoteCollectionFactory);
 	}
 
-	public AbstractRemoteAccessor getAbstractAccessor(String collectionId, Class entityClass) {
+	public <T extends AbstractIdentifiableObject> AbstractAccessor<T> getAbstractAccessor(String collectionId, Class<T> entityClass) {
 		return new AbstractRemoteAccessor(remoteCollectionFactory,collectionId,entityClass);
 	}
 }

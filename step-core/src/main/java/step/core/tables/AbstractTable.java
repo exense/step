@@ -67,7 +67,4 @@ public class AbstractTable<T> implements Table<T> {
 		return entity;
 	}
 
-	public Collection<T> getCollectionDriver() {
-		return collection;
-	}
 }

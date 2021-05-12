@@ -24,10 +24,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
@@ -58,7 +55,7 @@ public class EntityManager  {
 	public final static String resources = "resources";
 	public final static String resourceRevisions = "resourceRevisions";
 	public final static String recursive = "recursive";
-	public final static String projects = "projects";
+
 	
 	private Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
 	private Map<Class<?>, Entity<?,?>> entitiesByClass = new ConcurrentHashMap<Class<?>, Entity<?,?>>();
@@ -80,6 +77,12 @@ public class EntityManager  {
 	
 	public Entity<?,?> getEntityByName(String entityName) {
 		return entities.get(entityName);
+	}
+
+	public Class<?> resolveClass(String entityName) {
+		Entity<?, ?> entity = entities.get(entityName);
+		Objects.requireNonNull(entity, "This entity type is not known: " + entityName);
+		return entity.getEntityClass();
 	}
 
 	/**

@@ -19,17 +19,9 @@
 package step.client.accessors;
 
 import step.client.collections.remote.RemoteCollectionFactory;
-import step.client.credentials.ControllerCredentials;
 import step.core.accessors.AbstractAccessor;
-import step.core.plans.Plan;
 import step.parameter.Parameter;
 import step.parameter.ParameterAccessor;
-
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.GenericType;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class RemoteParameterAccessor extends AbstractAccessor<Parameter> implements ParameterAccessor {
 
@@ -37,16 +29,5 @@ public class RemoteParameterAccessor extends AbstractAccessor<Parameter> impleme
 		super(remoteCollectionFactory.getCollection( "parameters", Parameter.class));
 	}
 
-	/*
-	@Override
-	public List<Parameter> getRange(int skip, int limit) {
-		Map<String, String> queryParams = new HashMap<>();
-		queryParams.put("skip", Integer.toString(skip));
-		queryParams.put("limit", Integer.toString(limit));
-		GenericType<List<Parameter>> genericEntity = new GenericType<List<Parameter>>(
-				parameterizedGenericType) {
-		};
-		Invocation.Builder b = requestBuilder(path+"all", queryParams);
-		return executeRequest(()->b.get(genericEntity));
-	}*/
+
 }

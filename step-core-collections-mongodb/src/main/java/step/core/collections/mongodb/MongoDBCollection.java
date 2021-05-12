@@ -62,10 +62,8 @@ public class MongoDBCollection<T> extends AbstractCollection<T> implements Colle
 	private JacksonMongoCollection<T> collection;
 	
 	/**
-	 * @param mongoDatabase
 	 * @param collectionName the name of the mongo collection
-	 * @param entityClass the 
-	 * @param filtered if the {@link MongoDBCollection} is subject to context filtering i.e. 
+	 * @param entityClass the
 	 * if the context parameters delivered by the {@link ObjectFilter}s of the {@link ObjectHookRegistry}
 	 * may be appended to the queries run against this collection
 	 */
@@ -79,7 +77,6 @@ public class MongoDBCollection<T> extends AbstractCollection<T> implements Colle
 
 	/**
 	 * @param columnName the name of the column (field)
-	 * @param query: the query filter
 	 * @return the distinct values of the column 
 	 */
 	@Override
@@ -194,7 +191,7 @@ public class MongoDBCollection<T> extends AbstractCollection<T> implements Colle
 
 	@Override
 	public void createOrUpdateCompoundIndex(String... fields) {
-		createOrUpdateCompoundIndex(fields);
+		createOrUpdateCompoundIndex(collection, fields);
 	}
 	
 	

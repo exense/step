@@ -143,12 +143,8 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	 */
 	@SuppressWarnings("unchecked")
 	public Map<ReportNodeStatus, Integer> getStatusReport(String executionId, String reportNodeClass) {
-		Map<String, String> params = new HashMap<>();
-		if(reportNodeClass != null) {
-			params.put("class", reportNodeClass);
-		}
-		Builder b = requestBuilder("/rest/executions/"+executionId+"/statusdistribution", params);
-		return executeRequest(()->b.get(Map.class));
+		throw new RuntimeException("Not supported anymore since 3.17");
+
 	}
 	
 	/**

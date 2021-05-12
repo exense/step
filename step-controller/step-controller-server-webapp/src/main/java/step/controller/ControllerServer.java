@@ -226,14 +226,14 @@ public class ControllerServer {
 			}
 		});
 		
-		resourceConfig.registerClasses(VizServlet.class);
+		/*resourceConfig.registerClasses(VizServlet.class);
 		GenericVizAccessor accessor = new GenericVizAccessor(new MongoClientSession(configuration));
-		resourceConfig.register(new AbstractBinder() {	
+		resourceConfig.register(new AbstractBinder() {
 			@Override
 			protected void configure() {
 				bind(accessor).to(GenericVizAccessor.class);
 			}
-		});
+		});*/
 		
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);
 

@@ -70,6 +70,4 @@ public interface Table<T> {
 
 	T enrichEntity(T entity);
 
-	public Collection<T> getCollectionDriver();
-
 }

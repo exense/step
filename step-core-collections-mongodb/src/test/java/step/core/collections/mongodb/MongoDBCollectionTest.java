@@ -8,17 +8,14 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
-
 import ch.exense.commons.app.Configuration;
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.AbstractCollectionTest;
 import step.core.collections.Collection;
 import step.core.collections.Document;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
+import step.core.entities.Bean;
 
 public class MongoDBCollectionTest extends AbstractCollectionTest {
 
@@ -75,13 +72,5 @@ public class MongoDBCollectionTest extends AbstractCollectionTest {
 		documents.remove(Filters.empty());
 		assertEquals(0, documents.find(Filters.empty(), null, null, null, 0).collect(Collectors.toList()).size());
 	}
-	
-	@JsonTypeInfo(use=Id.CLASS,property="type")
-	public static class Bean extends AbstractOrganizableObject {
 
-		public Bean() {
-			super();
-		}
-		
-	}
 }

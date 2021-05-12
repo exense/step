@@ -93,28 +93,45 @@ public class Filters {
 	
 	public static class AbstractCompositeFilter implements Filter {
 
-		private final List<Filter> filters;
-		
-		public AbstractCompositeFilter(List<Filter> filters) {
+		private List<Filter> children;
+
+		public AbstractCompositeFilter(){
 			super();
-			this.filters = filters;
+		}
+
+		public AbstractCompositeFilter(List<Filter> children) {
+			super();
+			this.children = children;
 		}
 
 		@Override
 		public List<Filter> getChildren() {
-			return filters;
+			return children;
+		}
+
+		public void setChildren(List<Filter> children) {
+			this.children = children;
 		}
 	}
 	
 	public static class AbstractAtomicFilter implements Filter {
 
+		public AbstractAtomicFilter() {
+			super();
+		}
+
 		@Override
 		public List<Filter> getChildren() {
 			return null;
 		}
+
 	}
 	
 	public static class And extends AbstractCompositeFilter {
+
+		public And() {
+			super();
+		}
 
 		public And(List<Filter> filters) {
 			super(filters);
@@ -123,6 +140,10 @@ public class Filters {
 	
 	public static class Or extends AbstractCompositeFilter {
 
+		public Or() {
+			super();
+		}
+
 		public Or(List<Filter> filters) {
 			super(filters);
 		}
@@ -130,7 +151,11 @@ public class Filters {
 	
 	public static class Not extends AbstractCompositeFilter {
 
-		private final Filter filter;
+		private Filter filter;
+
+		public Not() {
+			super();
+		}
 		
 		public Not(Filter filter) {
 			super(new ArrayList<Filter>(List.of(filter)));
@@ -140,11 +165,19 @@ public class Filters {
 		public Filter getFilter() {
 			return filter;
 		}
+
+		public void setFilter(Filter filter) {
+			this.filter = filter;
+		}
 	}
 	
 	public static class Fulltext extends AbstractAtomicFilter {
 
-		private final String expression;
+		private String expression;
+
+		public Fulltext() {
+			super();
+		}
 
 		public Fulltext(String expression) {
 			super();
@@ -154,13 +187,19 @@ public class Filters {
 		public String getExpression() {
 			return expression;
 		}
+
+		public void setExpression(String expression) {
+			this.expression = expression;
+		}
 	}
 	
 	public static class Equals extends AbstractAtomicFilter {
 
-		private final String field;
-		private final Object expectedValue;
-		
+		private String field;
+		private Object expectedValue;
+
+		public Equals() {super();};
+
 		public Equals(String field, Object expectedValue) {
 			super();
 			this.field = field;
@@ -174,13 +213,25 @@ public class Filters {
 		public Object getExpectedValue() {
 			return expectedValue;
 		}
+
+		public void setField(String field) {
+			this.field = field;
+		}
+
+		public void setExpectedValue(Object expectedValue) {
+			this.expectedValue = expectedValue;
+		}
 	}
 	
 	public static class Gt extends AbstractAtomicFilter {
 
-		private final String field;
-		private final long value;
-		
+		private String field;
+		private long value;
+
+		public Gt() {
+			super();
+		}
+
 		public Gt(String field, long value) {
 			super();
 			this.field = field;
@@ -194,13 +245,25 @@ public class Filters {
 		public long getValue() {
 			return value;
 		}
+
+		public void setField(String field) {
+			this.field = field;
+		}
+
+		public void setValue(long value) {
+			this.value = value;
+		}
 	}
 	
 	public static class Gte extends AbstractAtomicFilter {
 
-		private final String field;
-		private final long value;
-		
+		private String field;
+		private long value;
+
+		public Gte() {
+			super();
+		}
+
 		public Gte(String field, long value) {
 			super();
 			this.field = field;
@@ -214,13 +277,25 @@ public class Filters {
 		public long getValue() {
 			return value;
 		}
+
+		public void setField(String field) {
+			this.field = field;
+		}
+
+		public void setValue(long value) {
+			this.value = value;
+		}
 	}
 	
 	public static class Lt extends AbstractAtomicFilter {
 
-		private final String field;
-		private final long value;
-		
+		private String field;
+		private long value;
+
+		public Lt() {
+			super();
+		}
+
 		public Lt(String field, long value) {
 			super();
 			this.field = field;
@@ -234,13 +309,25 @@ public class Filters {
 		public long getValue() {
 			return value;
 		}
+
+		public void setField(String field) {
+			this.field = field;
+		}
+
+		public void setValue(long value) {
+			this.value = value;
+		}
 	}
 	
 	public static class Lte extends AbstractAtomicFilter {
 
-		private final String field;
-		private final long value;
-		
+		private String field;
+		private long value;
+
+		public Lte() {
+			super();
+		}
+
 		public Lte(String field, long value) {
 			super();
 			this.field = field;
@@ -254,12 +341,24 @@ public class Filters {
 		public long getValue() {
 			return value;
 		}
+
+		public void setField(String field) {
+			this.field = field;
+		}
+
+		public void setValue(long value) {
+			this.value = value;
+		}
 	}
 	
 	public static class In extends AbstractAtomicFilter {
-		
-		private final String field;
-		private final List<String> values;
+
+		private String field;
+		private List<String> values;
+
+		public In() {
+			super();
+		}
 
 		public In(String field, List<String> values) {
 			super();
@@ -274,13 +373,25 @@ public class Filters {
 		public List<String> getValues() {
 			return values;
 		}
+
+		public void setField(String field) {
+			this.field = field;
+		}
+
+		public void setValues(List<String> values) {
+			this.values = values;
+		}
 	}
 	
 	public static class Regex extends AbstractAtomicFilter {
 
-		private final String field;
-		private final String expression;
-		private final boolean caseSensitive;
+		private String field;
+		private String expression;
+		private boolean caseSensitive;
+
+		public Regex() {
+			super();
+		}
 
 		public Regex(String field, String expression, boolean caseSensitive) {
 			super();
@@ -299,6 +410,18 @@ public class Filters {
 
 		public boolean isCaseSensitive() {
 			return caseSensitive;
+		}
+
+		public void setField(String field) {
+			this.field = field;
+		}
+
+		public void setExpression(String expression) {
+			this.expression = expression;
+		}
+
+		public void setCaseSensitive(boolean caseSensitive) {
+			this.caseSensitive = caseSensitive;
 		}
 	}
 	

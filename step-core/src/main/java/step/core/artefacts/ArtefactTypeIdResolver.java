@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import java.util.Objects;
+
 public class ArtefactTypeIdResolver implements TypeIdResolver {
 
 	@Override
@@ -58,6 +60,7 @@ public class ArtefactTypeIdResolver implements TypeIdResolver {
 	@Override
 	public JavaType typeFromId(DatabindContext arg0, String arg1) {
 		Class<? extends AbstractArtefact> artefactClass = ArtefactTypeCache.getArtefactType(arg1);
+		Objects.requireNonNull(artefactClass,"Artefact unknown : " + arg1);
 		return TypeFactory.defaultInstance().constructType(artefactClass);
 	}
 

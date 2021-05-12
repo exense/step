@@ -47,6 +47,7 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
+import step.core.entities.Bean;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.execution.model.Execution;
@@ -188,6 +189,9 @@ public class Controller {
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
 		context.getEntityManager()
+				//Bean entity used for remote test
+			.register( new Entity<Bean, AbstractAccessor<Bean>>("beans",new AbstractAccessor(context.getCollectionFactory().getCollection("beans", Bean.class)),
+					Bean.class,new GenericDBImporter<Bean, AbstractAccessor<Bean>>(context)))
 			.register( new Entity<Execution, ExecutionAccessor>(
 				EntityManager.executions, context.getExecutionAccessor(), Execution.class, 
 				new GenericDBImporter<Execution, ExecutionAccessor>(context) {
