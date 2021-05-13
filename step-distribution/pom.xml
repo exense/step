@@ -107,6 +107,20 @@
 							</descriptors>
 						</configuration>
 					</execution>
+					<execution>
+						<id>distro-assembly-ide</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<finalName>step-ide-${project.version}</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+							<descriptors>
+								<descriptor>src/assembly/bin-ide.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>

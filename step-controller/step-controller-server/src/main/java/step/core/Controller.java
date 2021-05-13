@@ -179,7 +179,7 @@ public class Controller {
 		
 		context.setRepositoryObjectManager(new RepositoryObjectManager());
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
-				configuration.getPropertyAsInteger("tec.expressions.warningthreshold"),
+				configuration.getPropertyAsInteger("tec.expressions.warningthreshold",200),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
