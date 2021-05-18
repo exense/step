@@ -57,7 +57,8 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 				.collect(Collectors.toList());
 	}
 
-	public List<Execution> findByCritera(Map<String, String> criteria, long start, long end, int skip, int limit) {
+	public List<Execution> findByCritera(Map<String, String> criteria, long start, long end, SearchOrder order,
+										 int skip, int limit) {
 		List<Filter> filters = new ArrayList<>();
 		filters.add(Filters.gte("startTime", start));
 		filters.add(Filters.lte("endTime", start));
@@ -65,19 +66,23 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 			filters.add(Filters.equals(k, v));
 		});
 
-		return collectionDriver.find(Filters.and(filters), new SearchOrder("endTime", -1), skip, limit, 0)
+		return collectionDriver.find(Filters.and(filters), order, skip, limit, 0)
 				.collect(Collectors.toList());
 	}
 
+	public Iterable<Execution> findByCritera(Map<String, String> criteria,  Date start, Date end) {
+		return findByCritera(criteria,start,end, new SearchOrder("endTime" , -1));
+	}
+
 	@Override
-	public Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end) {
+	public Iterable<Execution> findByCritera(Map<String, String> criteria,  Date start, Date end, SearchOrder order) {
 		return new Iterable<Execution>() {
 			@Override
 			public Iterator<Execution> iterator() {
 				return new SkipLimitIterator<Execution>(new SkipLimitProvider<Execution>() {
 					@Override
 					public List<Execution> getBatch(int skip, int limit) {
-						return findByCritera(criteria, start.getTime(), end.getTime(), skip, limit);
+						return findByCritera(criteria, start.getTime(), end.getTime(), order, skip, limit);
 					}
 				});
 			}
