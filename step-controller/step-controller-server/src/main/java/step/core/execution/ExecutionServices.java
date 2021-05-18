@@ -38,7 +38,6 @@ import javax.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
 
 import step.core.artefacts.reports.ReportNode;
-import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.FindByCriteraParam;
 import step.core.deployment.Secured;
@@ -101,7 +100,7 @@ public class ExecutionServices extends AbstractServices {
 	@Secured(right="execution-read")
 	public List<Execution> findByCritera(FindByCriteraParam param) {
 		return ((ExecutionAccessorImpl) getContext().getExecutionAccessor()).findByCritera(param.getCriteria(), 
-				param.getStart().getTime(), param.getEnd().getTime(), new SearchOrder("endTime", -1),
+				param.getStart().getTime(), param.getEnd().getTime(), 
 				param.getSkip(), param.getLimit());
 	}
 	

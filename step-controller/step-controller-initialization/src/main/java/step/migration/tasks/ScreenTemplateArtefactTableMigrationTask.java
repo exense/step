@@ -21,7 +21,6 @@ package step.migration.tasks;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import step.core.Version;
-import step.core.accessors.AbstractIdentifiableObject;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
@@ -57,7 +56,7 @@ public class ScreenTemplateArtefactTableMigrationTask extends MigrationTask {
 				screenInputs.save(t);
 				logger.info("Migrated on screen input to "+t);
 			} else {
-				screenInputs.remove(Filters.equals(AbstractIdentifiableObject.ID, t.get(AbstractIdentifiableObject.ID)));
+				screenInputs.remove(Filters.id(t.getId()));
 				logger.info("Deleted screen input");
 			}
 

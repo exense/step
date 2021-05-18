@@ -1,15 +1,17 @@
 package step.core.entities;
 
+import javax.json.JsonObject;
+
 import org.json.JSONObject;
-import step.core.accessors.AbstractIdentifiableObject;
+
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.serialization.DottedKeyMap;
-
-import javax.json.JsonObject;
 
 public class Bean extends AbstractOrganizableObject {
 
     private String property1;
+    private Long longProperty;
+    private boolean booleanProperty;
 
     private JsonObject jsonObject;
 
@@ -34,7 +36,23 @@ public class Bean extends AbstractOrganizableObject {
         this.property1 = property1;
     }
 
-    public JsonObject getJsonObject() {
+    public Long getLongProperty() {
+		return longProperty;
+	}
+
+	public void setLongProperty(Long longProperty) {
+		this.longProperty = longProperty;
+	}
+
+	public boolean isBooleanProperty() {
+		return booleanProperty;
+	}
+
+	public void setBooleanProperty(boolean booleanProperty) {
+		this.booleanProperty = booleanProperty;
+	}
+
+	public JsonObject getJsonObject() {
         return jsonObject;
     }
 

@@ -123,7 +123,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	public ReportNode getRootReportNode(String executionID) {
 		assert executionID!=null;
 		return collectionDriver.find(
-				Filters.and(List.of(Filters.equals("executionID", executionID), Filters.equals("parentID", null))),
+				Filters.and(List.of(Filters.equals("executionID", executionID), Filters.equals("parentID", (String) null))),
 				null, null, null, 0).findFirst().orElse(null);
 	}
 	

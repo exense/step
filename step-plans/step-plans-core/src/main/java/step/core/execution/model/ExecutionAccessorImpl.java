@@ -18,7 +18,11 @@
  ******************************************************************************/
 package step.core.execution.model;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import step.commons.iterators.SkipLimitIterator;
@@ -52,13 +56,21 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 
 	@Override
 	public List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference) {
-		return collectionDriver
-				.find(Filters.equals("executionParameters.repositoryObject", objectReference), null, null, null, 0)
-				.collect(Collectors.toList());
+		Filter filter;
+		String prefix = "executionParameters.repositoryObject.";
+		List<Filter> collect = objectReference.getRepositoryParameters().entrySet().stream()
+				.map(e -> Filters.equals(prefix+"repositoryParameters."+e.getKey(), e.getValue())).collect(Collectors.toList());
+		if(collect.size()==0) {
+			filter = Filters.equals(prefix+"repositoryID", objectReference.getRepositoryID());
+		} else {
+			filter = Filters.and(List.of(
+					Filters.equals(prefix+"repositoryID", objectReference.getRepositoryID()),
+					Filters.and(collect)));
+		}
+		return collectionDriver.find(filter, null, null, null, 0).collect(Collectors.toList());
 	}
 
-	public List<Execution> findByCritera(Map<String, String> criteria, long start, long end, SearchOrder order,
-										 int skip, int limit) {
+	public List<Execution> findByCritera(Map<String, String> criteria, long start, long end, int skip, int limit) {
 		List<Filter> filters = new ArrayList<>();
 		filters.add(Filters.gte("startTime", start));
 		filters.add(Filters.lte("endTime", start));
@@ -66,23 +78,19 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 			filters.add(Filters.equals(k, v));
 		});
 
-		return collectionDriver.find(Filters.and(filters), order, skip, limit, 0)
+		return collectionDriver.find(Filters.and(filters), new SearchOrder("endTime", -1), skip, limit, 0)
 				.collect(Collectors.toList());
 	}
 
-	public Iterable<Execution> findByCritera(Map<String, String> criteria,  Date start, Date end) {
-		return findByCritera(criteria,start,end, new SearchOrder("endTime" , -1));
-	}
-
 	@Override
-	public Iterable<Execution> findByCritera(Map<String, String> criteria,  Date start, Date end, SearchOrder order) {
+	public Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end) {
 		return new Iterable<Execution>() {
 			@Override
 			public Iterator<Execution> iterator() {
 				return new SkipLimitIterator<Execution>(new SkipLimitProvider<Execution>() {
 					@Override
 					public List<Execution> getBatch(int skip, int limit) {
-						return findByCritera(criteria, start.getTime(), end.getTime(), order, skip, limit);
+						return findByCritera(criteria, start.getTime(), end.getTime(), skip, limit);
 					}
 				});
 			}

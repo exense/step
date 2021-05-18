@@ -32,6 +32,7 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.mongojack.JacksonMongoCollection;
 import org.mongojack.ObjectMapperConfigurer;
+import org.mongojack.SerializationOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +73,7 @@ public class MongoDBCollection<T> extends AbstractCollection<T> implements Colle
 		
 		collection = JacksonMongoCollection.builder()
 				.withObjectMapper(ObjectMapperConfigurer.configureObjectMapper(MongoDBCollectionJacksonMapperProvider.getObjectMapper()))
+				.withSerializationOptions(SerializationOptions.builder().withSimpleFilterSerialization(true).build())
 				.build(mongoClientSession.getMongoDatabase(), collectionName, entityClass, UuidRepresentation.JAVA_LEGACY);
 	}
 

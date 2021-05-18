@@ -155,6 +155,43 @@ public abstract class AbstractCollectionTest {
 				.collect(Collectors.toList());
 		assertEquals(List.of(bean2, bean3), result);
 	}
+	
+	@Test
+	public void testFindFilters() {
+		Collection<Bean> collection = collectionFactory.getCollection("beans", Bean.class);
+		collection.remove(Filters.empty());
+		
+		Bean bean = new Bean();
+		bean.setProperty1("My property 1");
+		bean.setLongProperty(11l);
+		bean.setBooleanProperty(false);
+		bean.addAttribute("MyAtt1", "My value 1");
+		collection.save(bean);
+		
+		// Find by regex
+		List<Bean> result = collection.find(Filters.regex("property1", "My", true), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
+		assertEquals(bean.getId(), result.get(0).getId());
+		
+		// Find by regex with dotted key
+		result = collection.find(Filters.regex("attributes.MyAtt1", "My", true), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
+		assertEquals(bean.getId(), result.get(0).getId());
+		
+		// Equals String
+		result = collection.find(Filters.equals("property1", "My property 1"), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
+		assertEquals(bean.getId(), result.get(0).getId());
+		
+		// Equals String with dotted key
+		result = collection.find(Filters.equals("attributes.MyAtt1", "My value 1"), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
+		assertEquals(bean.getId(), result.get(0).getId());
+		
+		// Equals boolean
+		result = collection.find(Filters.equals("booleanProperty", false), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
+		assertEquals(bean.getId(), result.get(0).getId());
+		
+		// Equals long
+		result = collection.find(Filters.equals("longProperty", 11), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
+		assertEquals(bean.getId(), result.get(0).getId());
+	}
 
 	@Test
 	public void testRemove() throws Exception {

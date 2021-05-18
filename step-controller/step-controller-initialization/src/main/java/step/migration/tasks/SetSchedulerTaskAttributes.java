@@ -43,7 +43,7 @@ public class SetSchedulerTaskAttributes extends MigrationTask {
 		logger.info("Searching for tasks with no attributes.name to be migrated...");
 
 		AtomicInteger i = new AtomicInteger();
-		tasksCollection.find(Filters.equals("attributes.name", null), null, null, null, 0).forEach(t -> {
+		tasksCollection.find(Filters.equals("attributes.name", (String) null), null, null, null, 0).forEach(t -> {
 			i.incrementAndGet();
 			((DocumentObject) t.computeIfAbsent("attributes", k -> new DocumentObject())).put(AbstractOrganizableObject.NAME,
 					t.get("name"));

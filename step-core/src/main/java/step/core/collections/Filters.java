@@ -48,10 +48,23 @@ public class Filters {
 		return new True();
 	}
 	
-	public static Equals equals(String field, Object expectedValue) {
+	public static Equals equals(String field, boolean expectedValue) {
+		return new Equals(field, expectedValue);
+	}
+	
+	public static Equals equals(String field, long expectedValue) {
+		return new Equals(field, expectedValue);
+	}
+	
+	public static Equals equals(String field, String expectedValue) {
 		if(field.equals(AbstractIdentifiableObject.ID) && expectedValue instanceof String) {
-			expectedValue = new ObjectId(expectedValue.toString());
+			return new Equals(field, new ObjectId(expectedValue.toString()));
+		} else {
+			return new Equals(field, expectedValue);
 		}
+	}
+	
+	public static Equals equals(String field, ObjectId expectedValue) {
 		return new Equals(field, expectedValue);
 	}
 	

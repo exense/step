@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import step.core.accessors.Accessor;
-import step.core.collections.SearchOrder;
 import step.core.repositories.RepositoryObjectReference;
 
 public interface ExecutionAccessor extends Accessor<Execution> {
@@ -35,7 +34,6 @@ public interface ExecutionAccessor extends Accessor<Execution> {
 	List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference);
 
 	Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end);
-	Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end, SearchOrder order);
 
 	Iterable<Execution> findLastStarted(int limit);
 

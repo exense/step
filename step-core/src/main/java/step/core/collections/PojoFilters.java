@@ -19,6 +19,7 @@
 package step.core.collections;
 
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -145,7 +146,15 @@ public class PojoFilters {
 				Object beanProperty = getBeanProperty(t, field);
 				Object expectedValue = equalsFilter.getExpectedValue();
 				if(expectedValue != null) {
-					return expectedValue.equals(beanProperty);
+					if(expectedValue instanceof Number) {
+						if(beanProperty != null) {
+							return new BigDecimal(expectedValue.toString()).compareTo(new BigDecimal(beanProperty.toString()))==0;
+						} else {
+							return false;
+						}
+					} else {
+						return expectedValue.equals(beanProperty);
+					}
 				} else {
 					return beanProperty == null; 
 				}
