@@ -75,14 +75,14 @@ public class MongoDBFilterFactory implements FilterFactory<Bson> {
 			Gt gtFilter = (Gt) filter;
 			return com.mongodb.client.model.Filters.gt(gtFilter.getField(), gtFilter.getValue());
 		} else if (filter instanceof Gte) {
-			Gte gtFilter = (Gte) filter;
-			return com.mongodb.client.model.Filters.gte(gtFilter.getField(), gtFilter.getValue());
+			Gte gteFilter = (Gte) filter;
+			return com.mongodb.client.model.Filters.gte(gteFilter.getField(), gteFilter.getValue());
 		} else if (filter instanceof Lt) {
-			Lt gtFilter = (Lt) filter;
-			return com.mongodb.client.model.Filters.lt(gtFilter.getField(), gtFilter.getValue());
+			Lt ltFilter = (Lt) filter;
+			return com.mongodb.client.model.Filters.lt(ltFilter.getField(), ltFilter.getValue());
 		} else if (filter instanceof Lte) {
-			Lte gtFilter = (Lte) filter;
-			return com.mongodb.client.model.Filters.gte(gtFilter.getField(), gtFilter.getValue());
+			Lte lteFilter = (Lte) filter;
+			return com.mongodb.client.model.Filters.lte(lteFilter.getField(), lteFilter.getValue());
 		} else {
 			throw new IllegalArgumentException("Unsupported filter type " + filter.getClass());
 		}
