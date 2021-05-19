@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import org.bson.conversions.Bson;
 
+import org.bson.types.ObjectId;
 import step.core.collections.Filter;
 import step.core.collections.Filters.And;
 import step.core.collections.Filters.Equals;
@@ -60,10 +61,14 @@ public class MongoDBFilterFactory implements FilterFactory<Bson> {
 		} else if (filter instanceof Equals) {
 			Equals equalsFilter = (Equals) filter;
 			String field = equalsFilter.getField();
+			Object expectedValue = equalsFilter.getExpectedValue();
 			if(field.equals("id")) {
 				field = "_id";
+				if (expectedValue instanceof String) {
+					expectedValue = new ObjectId((String) expectedValue);
+				}
 			}
-			return com.mongodb.client.model.Filters.eq(field, equalsFilter.getExpectedValue());
+			return com.mongodb.client.model.Filters.eq(field, expectedValue);
 		} else if (filter instanceof Regex) {
 			Regex regexFilter = (Regex) filter;
 			if(regexFilter.isCaseSensitive()) {

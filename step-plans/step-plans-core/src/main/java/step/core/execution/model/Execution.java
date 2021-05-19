@@ -84,7 +84,7 @@ public class Execution extends AbstractOrganizableObject {
 		return endTime;
 	}
 
-	public void setEndTime(long endTime) {
+	public void setEndTime(Long endTime) {
 		this.endTime = endTime;
 	}
 

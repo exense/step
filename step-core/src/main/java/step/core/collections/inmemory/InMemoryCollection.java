@@ -71,7 +71,9 @@ public class InMemoryCollection<T> extends AbstractCollection<T> implements Coll
 			Comparator<T> comparing = Comparator.comparing(e->{
 				try {
 					return PropertyUtils.getProperty(e, order.getAttributeName()).toString();
-				} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e1) {
+				} catch (NoSuchMethodException e1) {
+					return "";
+				} catch (IllegalAccessException | InvocationTargetException e1) {
 					throw new RuntimeException(e1);
 				}
 			});

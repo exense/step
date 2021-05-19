@@ -57,11 +57,7 @@ public class Filters {
 	}
 	
 	public static Equals equals(String field, String expectedValue) {
-		if(field.equals(AbstractIdentifiableObject.ID) && expectedValue instanceof String) {
-			return new Equals(field, new ObjectId(expectedValue.toString()));
-		} else {
-			return new Equals(field, expectedValue);
-		}
+		return new Equals(field, expectedValue);
 	}
 	
 	public static Equals equals(String field, ObjectId expectedValue) {

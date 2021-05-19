@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.beanutils.NestedNullException;
 import org.apache.commons.beanutils.PropertyUtils;
 
+import org.bson.types.ObjectId;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.collections.Filters.And;
 import step.core.collections.Filters.Equals;
@@ -36,6 +37,10 @@ import step.core.collections.Filters.Not;
 import step.core.collections.Filters.Or;
 import step.core.collections.Filters.Regex;
 import step.core.collections.Filters.True;
+import step.core.collections.Filters.Lt;
+import step.core.collections.Filters.Lte;
+import step.core.collections.Filters.Gt;
+import step.core.collections.Filters.Gte;
 
 public class PojoFilters {
 
@@ -67,6 +72,14 @@ public class PojoFilters {
 				return new RegexPojoFilter<POJO>((Regex) filter);
 			} else if (filter instanceof True) {
 				return new TruePojoFilter<POJO>();
+			} else if (filter instanceof Lt) {
+				return new LtPojoFilter<POJO>((Lt) filter);
+			} else if (filter instanceof Lte) {
+				return new LtePojoFilter<POJO>((Lte) filter);
+			} else if (filter instanceof Gt) {
+				return new GtPojoFilter<POJO>((Gt) filter);
+			}else if (filter instanceof Gte) {
+				return new GtePojoFilter<POJO>((Gte) filter);
 			} else {
 				throw new IllegalArgumentException("Unsupported filter type " + filter.getClass());
 			}
@@ -146,6 +159,9 @@ public class PojoFilters {
 				Object beanProperty = getBeanProperty(t, field);
 				Object expectedValue = equalsFilter.getExpectedValue();
 				if(expectedValue != null) {
+					if (field.equals(AbstractIdentifiableObject.ID) && expectedValue instanceof String){
+						expectedValue = new ObjectId((String) expectedValue);
+					}
 					if(expectedValue instanceof Number) {
 						if(beanProperty != null) {
 							return new BigDecimal(expectedValue.toString()).compareTo(new BigDecimal(beanProperty.toString()))==0;
@@ -158,7 +174,9 @@ public class PojoFilters {
 				} else {
 					return beanProperty == null; 
 				}
-			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+			} catch (NoSuchMethodException e) {
+				return (equalsFilter.getExpectedValue() == null);
+			} catch (IllegalAccessException | InvocationTargetException e) {
 				return false;
 			}
 		}
@@ -185,10 +203,118 @@ public class PojoFilters {
 			try {
 				Object beanProperty = getBeanProperty(t, regexFilter.getField());
 				if(beanProperty != null) {
-					Matcher matcher = pattern.matcher(beanProperty.toString());
-					return matcher.find();
+			Matcher matcher = pattern.matcher(beanProperty.toString());
+			return matcher.find();
+		} else {
+			return false;
+		}
+	} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+		return false;
+	}
+}
+	}
+
+	public static class LtPojoFilter<T> implements PojoFilter<T> {
+
+		private final Lt ltFilter;
+
+		public LtPojoFilter(Lt ltFilter) {
+			super();
+			this.ltFilter = ltFilter;
+		}
+
+		@Override
+		public boolean test(T t) {
+			try {
+				String field = ltFilter.getField();
+				Object beanProperty = getBeanProperty(t, field);
+				long value = ltFilter.getValue();
+				if(beanProperty instanceof Number) {
+					Number fieldValue = (Number) beanProperty;
+					return ( fieldValue.longValue() < value);
 				} else {
-					return false;
+					throw new RuntimeException("Gt,Gte,Lt and Lte filters only support numbers, provided field is not compatible: " + field);
+				}
+			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+				return false;
+			}
+		}
+	}
+
+	public static class LtePojoFilter<T> implements PojoFilter<T> {
+
+		private final Lte lteFilter;
+
+		public LtePojoFilter(Lte lteFilter) {
+			super();
+			this.lteFilter = lteFilter;
+		}
+
+		@Override
+		public boolean test(T t) {
+			try {
+				String field = lteFilter.getField();
+				Object beanProperty = getBeanProperty(t, field);
+				long value = lteFilter.getValue();
+				if(beanProperty instanceof Number) {
+					Number fieldValue = (Number) beanProperty;
+					return ( fieldValue.longValue() <= value);
+				} else {
+					throw new RuntimeException("Gt,Gte,Lt and Lte filters only support numbers, provided field is not compatible: " + field);
+				}
+			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+				return false;
+			}
+		}
+	}
+
+	public static class GtPojoFilter<T> implements PojoFilter<T> {
+
+		private final Gt gtFilter;
+
+		public GtPojoFilter(Gt gtFilter) {
+			super();
+			this.gtFilter = gtFilter;
+		}
+
+		@Override
+		public boolean test(T t) {
+			try {
+				String field = gtFilter.getField();
+				Object beanProperty = getBeanProperty(t, field);
+				long value = gtFilter.getValue();
+				if(beanProperty instanceof Number) {
+					Number fieldValue = (Number) beanProperty;
+					return ( fieldValue.longValue() > value);
+				} else {
+					throw new RuntimeException("Gt,Gte,Lt and Lte filters only support numbers, provided field is not compatible: " + field);
+				}
+			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+				return false;
+			}
+		}
+	}
+
+	public static class GtePojoFilter<T> implements PojoFilter<T> {
+
+		private final Gte gteFilter;
+
+		public GtePojoFilter(Gte gteFilter) {
+			super();
+			this.gteFilter = gteFilter;
+		}
+
+		@Override
+		public boolean test(T t) {
+			try {
+				String field = gteFilter.getField();
+				Object beanProperty = getBeanProperty(t, field);
+				long value = gteFilter.getValue();
+				if (beanProperty instanceof Number) {
+					Number fieldValue = (Number) beanProperty;
+					return (fieldValue.longValue() >= value);
+				} else {
+					throw new RuntimeException("Gt,Gte,Lt and Lte filters only support numbers, provided field is not compatible: " + field);
 				}
 			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
 				return false;

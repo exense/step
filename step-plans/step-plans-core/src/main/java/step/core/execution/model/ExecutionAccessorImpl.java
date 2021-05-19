@@ -70,31 +70,76 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 		return collectionDriver.find(filter, null, null, null, 0).collect(Collectors.toList());
 	}
 
-	public List<Execution> findByCritera(Map<String, String> criteria, long start, long end, int skip, int limit) {
+	public List<Execution> findByCritera(Map<String, String> criteria, long start, long end, SearchOrder order, int skip, int limit) {
 		List<Filter> filters = new ArrayList<>();
 		filters.add(Filters.gte("startTime", start));
-		filters.add(Filters.lte("endTime", start));
+		filters.add(Filters.lte("endTime", end));
 		criteria.forEach((k, v) -> {
 			filters.add(Filters.equals(k, v));
 		});
 
-		return collectionDriver.find(Filters.and(filters), new SearchOrder("endTime", -1), skip, limit, 0)
+		return collectionDriver.find(Filters.and(filters), order, skip, limit, 0)
 				.collect(Collectors.toList());
 	}
 
 	@Override
 	public Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end) {
+		return findByCritera(criteria,start,end, new SearchOrder("endTime" , -1));
+	}
+
+	@Override
+	public Iterable<Execution> findByCritera(Map<String, String> criteria, Date start, Date end, SearchOrder order) {
 		return new Iterable<Execution>() {
 			@Override
 			public Iterator<Execution> iterator() {
 				return new SkipLimitIterator<Execution>(new SkipLimitProvider<Execution>() {
 					@Override
 					public List<Execution> getBatch(int skip, int limit) {
-						return findByCritera(criteria, start.getTime(), end.getTime(), skip, limit);
+						return findByCritera(criteria, start.getTime(), end.getTime(), order, skip, limit);
 					}
 				});
 			}
 		};
+	}
+
+	@Override
+	public Iterable<Execution> findInInterval(Map<String, String> criteria, Date start, Date end,
+											  boolean endedOnly, SearchOrder order) {
+		return new Iterable<Execution>() {
+			@Override
+			public Iterator<Execution> iterator() {
+				return new SkipLimitIterator<Execution>(new SkipLimitProvider<Execution>() {
+					@Override
+					public List<Execution> getBatch(int skip, int limit) {
+						return findInInterval(criteria, start.getTime(), end.getTime(), endedOnly, order, skip, limit);
+					}
+				});
+			}
+		};
+	}
+
+	private List<Execution> findInInterval(Map<String, String> criteria, long start, long end, boolean endedOnly,
+										   SearchOrder order, int skip, int limit) {
+		List<Filter> filters = new ArrayList<>();
+		/* Note: exec end time only set if status is ENDED
+		if looking for execution ended in time interval then end time but be in time interval
+			otherwise either there is no yet an end time (exec still running) then
+		  		start time must be lt interval end time
+		  	or start time is lt end time interval and endtime must be gt than start time interval
+		 */
+		if (endedOnly) {
+			filters.add(Filters.gte("endTime", start));
+			filters.add(Filters.lte("endTime", end));
+		} else {
+			filters.add(Filters.and(List.of(Filters.lte("startTime", end),
+					Filters.or(List.of(Filters.gte("endTime", start),Filters.equals("endTime",(String) null))))));
+		}
+		criteria.forEach((k, v) -> {
+			filters.add(Filters.equals(k, v));
+		});
+
+		return collectionDriver.find(Filters.and(filters), order, skip, limit, 0)
+				.collect(Collectors.toList());
 	}
 
 	@Override

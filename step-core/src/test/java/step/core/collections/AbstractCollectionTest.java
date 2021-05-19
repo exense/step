@@ -167,6 +167,13 @@ public abstract class AbstractCollectionTest {
 		bean.setBooleanProperty(false);
 		bean.addAttribute("MyAtt1", "My value 1");
 		collection.save(bean);
+
+		Bean bean2 = new Bean();
+		bean2.setProperty1("My property 2");
+		bean2.setLongProperty(21l);
+		bean2.setBooleanProperty(false);
+		bean2.addAttribute("MyAtt1", "My value 2");
+		collection.save(bean2);
 		
 		// Find by regex
 		List<Bean> result = collection.find(Filters.regex("property1", "My", true), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
@@ -191,6 +198,18 @@ public abstract class AbstractCollectionTest {
 		// Equals long
 		result = collection.find(Filters.equals("longProperty", 11), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
 		assertEquals(bean.getId(), result.get(0).getId());
+
+		//is null
+		result = collection.find(Filters.equals("missingField", (String) null), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
+		assertEquals(bean.getId(), result.get(0).getId());
+
+		result = collection.find(Filters.and(List.of(Filters.gte("longProperty", 11),Filters.lt("longProperty",21))), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
+		assertEquals(bean.getId(), result.get(0).getId());
+		assertEquals(1, result.size());
+
+		result = collection.find(Filters.and(List.of(Filters.gt("longProperty", 11),Filters.lte("longProperty",21))), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
+		assertEquals(bean2.getId(), result.get(0).getId());
+		assertEquals(1, result.size());
 	}
 
 	@Test
