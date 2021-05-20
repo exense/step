@@ -30,6 +30,7 @@ import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.handlers.javahandler.Keyword;
 import step.junit.runners.annotations.Plans;
+import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 
 public class StepClassParser {
@@ -84,7 +85,7 @@ public class StepClassParser {
 									throw new IllegalStateException("Missing annotation @Keyword on implicit plan method "+m.getName());
 								}
 							}
-							plan = planParser.parse(planStr);
+							plan = planParser.parse(planStr, RootArtefactType.TestCase);
 							setPlanName(plan, planName);
 						} catch (Exception e) {
 							exception = e;
@@ -103,7 +104,7 @@ public class StepClassParser {
 				throw new Exception("Plan '" + name + "' was not found for class " + klass.getName());
 			}
 
-			plan = planParser.parse(stream);
+			plan = planParser.parse(stream, RootArtefactType.TestCase);
 			setPlanName(plan, name);
 		} catch (Exception e) {
 			exception = e;
