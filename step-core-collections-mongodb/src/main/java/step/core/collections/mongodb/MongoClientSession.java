@@ -20,6 +20,7 @@ package step.core.collections.mongodb;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -30,6 +31,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
 import ch.exense.commons.app.Configuration;
+import com.mongodb.connection.ConnectionPoolSettings;
 import step.core.collections.Collection;
 
 public class MongoClientSession implements Closeable {
@@ -44,18 +46,37 @@ public class MongoClientSession implements Closeable {
 		Integer port = configuration.getPropertyAsInteger("db.port",27017);
 		String user = configuration.getProperty("db.username");
 		String pwd = configuration.getProperty("db.password");
-		// TODO set max connection. how to do this with the new mongo db client is unclear
-		//int maxConnections = configuration.getPropertyAsInteger("db.maxConnections", 200);
-			
+
+		int maxConnections = configuration.getPropertyAsInteger("db.maxConnections", 200);
+		Integer minConnections = configuration.getPropertyAsInteger("db.minConnections");
+		Integer maxConnectionIdleTimeMs = configuration.getPropertyAsInteger("db.maxConnectionIdleTimeMs");
+		Integer maintenanceFrequencyMs = configuration.getPropertyAsInteger("db.maintenanceFrequencyMs");
+		Integer maxConnectionLifeTimeMs = configuration.getPropertyAsInteger("db.maxConnectionLifeTimeMs");
+		Integer maxWaitTimeMs = configuration.getPropertyAsInteger("db.maxWaitTimeMs");
+
 		db = configuration.getProperty("db.database","step");
 		
 		Builder builder = MongoClientSettings.builder();
-		//MongoClientOptions options = clientOptions.connectionsPerHost(maxConnections).build();
 		if(user!=null) {
 			MongoCredential credential = MongoCredential.createCredential(user, db, pwd.toCharArray());
 			builder.credential(credential);
 		}
 		builder.applyConnectionString(new ConnectionString("mongodb://"+host+":"+port));
+		//ref https://mongodb.github.io/mongo-java-driver/4.0/apidocs/mongodb-driver-core/com/mongodb/connection/ConnectionPoolSettings.html
+		builder.applyToConnectionPoolSettings(poolSettingBuilder -> {
+			poolSettingBuilder.maxSize(maxConnections);
+			if (minConnections != null)
+				poolSettingBuilder.minSize(minConnections);
+			if (maxConnectionIdleTimeMs != null)
+				poolSettingBuilder.maxConnectionIdleTime(maxConnectionIdleTimeMs, TimeUnit.MILLISECONDS);
+			if (maintenanceFrequencyMs != null)
+				poolSettingBuilder.maintenanceFrequency(maintenanceFrequencyMs, TimeUnit.MILLISECONDS);
+			if (maxConnectionLifeTimeMs != null)
+				poolSettingBuilder.maxConnectionLifeTime(maxConnectionLifeTimeMs, TimeUnit.MILLISECONDS);
+			if (maxWaitTimeMs != null)
+				poolSettingBuilder.maxWaitTime(maxWaitTimeMs, TimeUnit.MILLISECONDS);
+			poolSettingBuilder.build();
+		});
 		mongoClient = MongoClients.create(builder.build());
 		
 	}
