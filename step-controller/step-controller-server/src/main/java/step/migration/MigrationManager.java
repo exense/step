@@ -18,22 +18,25 @@
  ******************************************************************************/
 package step.migration;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.Version;
+import step.core.collections.CollectionFactory;
 
 public class MigrationManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MigrationManager.class);
 	
-	protected List<MigrationTask> migrators = new ArrayList<>();
-	
+	protected List<Class<? extends MigrationTask>> migrationTasks = new ArrayList<>();
+
 	public MigrationManager() {
 		super();
 	}
@@ -43,8 +46,8 @@ public class MigrationManager {
 	 * 
 	 * @param migrationTask the task to be registered
 	 */
-	public void register(MigrationTask migrationTask) {
-		migrators.add(migrationTask);
+	public void register(Class<? extends MigrationTask> migrationTask) {
+		migrationTasks.add(migrationTask);
 	}
 
 	/**
@@ -54,7 +57,16 @@ public class MigrationManager {
 	 * @param to the new version
 	 * @return true if the migration ran successfully 
 	 */
-	public boolean migrate(Version from, Version to) {
+	public boolean migrate(CollectionFactory collectionFactory, Version from, Version to, MigrationContext migrationContext) {
+		List<MigrationTask> migrators = migrationTasks.stream().map(m -> {
+			try {
+				Constructor<? extends MigrationTask> constructor = m.getConstructor(CollectionFactory.class, MigrationContext.class);
+				return constructor.newInstance(collectionFactory, migrationContext);
+			} catch (Exception e) {
+				throw new RuntimeException("Error while creating instance of migration task "+m.getName(), e);
+			}
+		}).collect(Collectors.toList());
+		
 		logger.info("Migrating from "+from+" to "+to);
 		AtomicBoolean successful = new AtomicBoolean(true);
 		List<MigrationTask> matchedMigrators = new ArrayList<>();

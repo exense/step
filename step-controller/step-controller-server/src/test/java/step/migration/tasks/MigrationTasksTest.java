@@ -24,7 +24,7 @@ public class MigrationTasksTest {
 //		new ScreenTemplateArtefactTableMigrationTask(collectionFactory).runUpgradeScript();
 //		new MigrateAssertNegation(collectionFactory).runUpgradeScript();
 		
-		new MigrateSeleniumFunctions(collectionFactory).runUpgradeScript();;
+		new MigrateSeleniumFunctions(collectionFactory, null).runUpgradeScript();;
 	}
 
 }

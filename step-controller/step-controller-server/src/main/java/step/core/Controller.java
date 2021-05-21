@@ -54,8 +54,6 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionStatus;
-import step.core.imports.GenericDBImporter;
-import step.core.imports.PlanImporter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -80,14 +78,13 @@ import step.expressions.ExpressionHandler;
 import step.resources.Resource;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceAccessorImpl;
-import step.resources.ResourceImpoter;
+import step.resources.ResourceImporter;
 import step.resources.ResourceManager;
 import step.resources.ResourceManagerControllerPlugin;
 import step.resources.ResourceManagerImpl;
 import step.resources.ResourceRevision;
 import step.resources.ResourceRevisionAccessor;
 import step.resources.ResourceRevisionAccessorImpl;
-import step.resources.ResourceRevisionsImporter;
 
 public class Controller {
 	
@@ -188,50 +185,46 @@ public class Controller {
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
-		context.getEntityManager()
-				//Bean entity used for remote test
-			.register( new Entity<Bean, AbstractAccessor<Bean>>("beans",new AbstractAccessor(context.getCollectionFactory().getCollection("beans", Bean.class)),
-					Bean.class,new GenericDBImporter<Bean, AbstractAccessor<Bean>>(context)))
-			.register( new Entity<Execution, ExecutionAccessor>(
-				EntityManager.executions, context.getExecutionAccessor(), Execution.class, 
-				new GenericDBImporter<Execution, ExecutionAccessor>(context) {
-			}))
-			.register(new Entity<Plan,PlanAccessor>(
-					EntityManager.plans, context.getPlanAccessor(), Plan.class, new PlanImporter(context)){
-				@Override
-				public boolean shouldExport(AbstractIdentifiableObject a) {
-					return ((Plan) a).isVisible();
-				}
-				@Override
-				public String resolve(Object artefact, ObjectPredicate objectPredicate) {
-					if (artefact instanceof CallPlan) {
-						return planLocator.selectPlan((CallPlan) artefact, objectPredicate, null).getId().toHexString();
-					} else {
-						return null;
+		EntityManager entityManager = context.getEntityManager();
+		entityManager
+				// Bean entity used for remote test
+				.register(new Entity<Bean, AbstractAccessor<Bean>>("beans",
+						new AbstractAccessor(context.getCollectionFactory().getCollection("beans", Bean.class)),
+						Bean.class))
+				.register(new Entity<Execution, ExecutionAccessor>(EntityManager.executions,
+						context.getExecutionAccessor(), Execution.class))
+				.register(new Entity<Plan, PlanAccessor>(EntityManager.plans, context.getPlanAccessor(), Plan.class) {
+					@Override
+					public boolean shouldExport(AbstractIdentifiableObject a) {
+						return ((Plan) a).isVisible();
 					}
-				}
-			})
-			.register(new Entity<ReportNode,ReportNodeAccessor>(
-					EntityManager.reports, context.getReportAccessor(), ReportNode.class,
-					new GenericDBImporter<ReportNode, ReportNodeAccessor>(context)))
-			.register(new Entity<ExecutiontTaskParameters,ExecutionTaskAccessor>(
-					EntityManager.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class, 
-					new GenericDBImporter<ExecutiontTaskParameters, ExecutionTaskAccessor>(context)))
-			.register(new Entity<User,UserAccessor>(
-					EntityManager.users, context.getUserAccessor(), User.class, 
-					new GenericDBImporter<User, UserAccessor>(context)))
-			.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor,
-						Resource.class, new ResourceImpoter(context)))
-			.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
-						resourceRevisionAccessor, ResourceRevision.class, new ResourceRevisionsImporter(context)))
-			.register(new Entity<DashboardSession, AbstractAccessor<DashboardSession>>("sessions",
-					new AbstractAccessor<DashboardSession>(
-							collectionFactory.getCollection("sessions", DashboardSession.class)),
-					DashboardSession.class,
-					new GenericDBImporter<DashboardSession, AbstractAccessor<DashboardSession>>(context) {
-					}));
+
+					@Override
+					public String resolve(Object artefact, ObjectPredicate objectPredicate) {
+						if (artefact instanceof CallPlan) {
+							return planLocator.selectPlan((CallPlan) artefact, objectPredicate, null).getId()
+									.toHexString();
+						} else {
+							return null;
+						}
+					}
+				})
+				.register(new Entity<ReportNode, ReportNodeAccessor>(EntityManager.reports, context.getReportAccessor(),
+						ReportNode.class))
+				.register(new Entity<ExecutiontTaskParameters, ExecutionTaskAccessor>(EntityManager.tasks,
+						context.getScheduleAccessor(), ExecutiontTaskParameters.class))
+				.register(new Entity<User, UserAccessor>(EntityManager.users, context.getUserAccessor(), User.class))
+				.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor,
+						Resource.class))
+				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
+						resourceRevisionAccessor, ResourceRevision.class))
+				.register(new Entity<DashboardSession, AbstractAccessor<DashboardSession>>("sessions",
+						new AbstractAccessor<DashboardSession>(
+								collectionFactory.getCollection("sessions", DashboardSession.class)),
+						DashboardSession.class));
 		
-		context.getEntityManager().getEntityByName("sessions").setByPassObjectPredicate(true);
+		entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));
+		entityManager.getEntityByName("sessions").setByPassObjectPredicate(true);
 
 		createOrUpdateIndexes();
 

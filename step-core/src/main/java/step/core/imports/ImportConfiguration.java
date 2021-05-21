@@ -19,6 +19,7 @@
 package step.core.imports;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,9 @@ public class ImportConfiguration {
 	private Version version;
 	private LocalResourceManagerImpl localResourceMgr;
 	private Set<String> messages = new HashSet<>();
-
+	private Map<String, String> references = new HashMap<String, String>();
+	private Map<String, String> newToOldReferences = new HashMap<String, String>();
+	
 	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
 							   boolean overwrite) {
 		super();
@@ -98,5 +101,11 @@ public class ImportConfiguration {
 
 	public void addMessage(String s) {
 		messages.add(s);
+	}
+	public Map<String, String> getReferences() {
+		return references;
+	}
+	public Map<String, String> getNewToOldReferences() {
+		return newToOldReferences;
 	}
 }

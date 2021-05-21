@@ -33,7 +33,6 @@ import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.entities.Entity;
 import step.core.export.ExportConfiguration;
-import step.core.imports.GenericDBImporter;
 import step.core.imports.ImportConfiguration;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -51,8 +50,6 @@ import step.plugins.screentemplating.ScreenTemplatePlugin;
 @Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class, EncryptionManagerDependencyPlugin.class})
 public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 	
-	private static final String entityName = "parameters";
-
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerControllerPlugin.class);
 
 	private ParameterManager parameterManager;
@@ -75,10 +72,9 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		this.parameterManager = parameterManager;
 		
 		context.getEntityManager().register(new Entity<Parameter, Accessor<Parameter>> (
-				ParameterManagerControllerPlugin.entityName, 
+				Parameter.ENTITY_NAME, 
 				parameterAccessor,
-				Parameter.class,
-				new GenericDBImporter<Parameter, Accessor<Parameter>>(context)));
+				Parameter.class));
 		context.getEntityManager().registerExportHook(new ParameterExportBiConsumer(context));
 		context.getEntityManager().registerImportHook(new ParameterImportBiConsumer(context));
 		

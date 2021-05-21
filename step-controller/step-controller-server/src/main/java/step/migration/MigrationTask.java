@@ -31,13 +31,14 @@ public abstract class MigrationTask {
 	protected static final Logger logger = LoggerFactory.getLogger(MigrationTask.class);
 	
 	protected final Version asOfVersion;
-	
+	protected final MigrationContext migrationContext;
 	protected final CollectionFactory collectionFactory;
-
-	public MigrationTask(Version asOfVersion, CollectionFactory collectionFactory) {
+	
+	public MigrationTask(Version asOfVersion, CollectionFactory collectionFactory, MigrationContext migrationContext) {
 		super();
 		this.asOfVersion = asOfVersion;
 		this.collectionFactory = collectionFactory;
+		this.migrationContext = migrationContext;
 	}
 
 	public Version getAsOfVersion() {
@@ -55,7 +56,7 @@ public abstract class MigrationTask {
 	public abstract void runDowngradeScript();
 
 	protected Collection<Document> getDocumentCollection(String name) {
-		return this.collectionFactory.getCollection(name, Document.class);
+		return collectionFactory.getCollection(name, Document.class);
 	}
 
 }

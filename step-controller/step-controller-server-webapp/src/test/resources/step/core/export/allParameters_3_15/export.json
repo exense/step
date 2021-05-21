@@ -1,0 +1,42 @@
+{
+  "metadata" : {
+    "export-time" : "1616491297335",
+    "user" : "admin",
+    "version" : "3.15.0"
+  },
+  "parameters" : [ {
+    "customFields" : null,
+    "attributes" : { },
+    "lastModificationDate" : 1616491265874,
+    "lastModificationUser" : "admin",
+    "key" : "param_clear",
+    "value" : "value_clear",
+    "description" : "This should not be protected or encrypted",
+    "activationExpression" : {
+      "script" : "env == \"TEST\"",
+      "scriptEngine" : null
+    },
+    "priority" : 1,
+    "protectedValue" : false,
+    "scope" : "GLOBAL",
+    "scopeEntity" : null,
+    "_id" : "6059b301e7ca79765f814864"
+  }, {
+    "customFields" : null,
+    "attributes" : { },
+    "lastModificationDate" : 1616491291789,
+    "lastModificationUser" : "admin",
+    "key" : "param_pwd",
+    "value" : "******",
+    "description" : "Protected value in 3.15",
+    "activationExpression" : {
+      "script" : "env == \"PROD\"",
+      "scriptEngine" : null
+    },
+    "priority" : 1,
+    "protectedValue" : true,
+    "scope" : "GLOBAL",
+    "scopeEntity" : null,
+    "_id" : "6059b2d0e7ca79765f81451a"
+  } ]
+}

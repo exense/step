@@ -33,18 +33,15 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 	private String name;
 	private T accessor;
 	private Class<A> entityClass;
-	private Importer<A,T> importer;
 	private List<ResolveReferencesHook> resolveReferencesHook = new ArrayList<ResolveReferencesHook>();
 	private List<BiConsumer<Object, Map<String, String>>> updateReferencesHook = new ArrayList<BiConsumer<Object, Map<String, String>>>();
 	private boolean byPassObjectPredicate = false;
 
-	public Entity(String name, T accessor, Class<A> entityClass, Importer<A,T> importer) {
+	public Entity(String name, T accessor, Class<A> entityClass) {
 		super();
 		this.name = name;
 		this.accessor = accessor;
 		this.entityClass = entityClass;
-		this.importer = importer;
-		this.importer.init(this);
 	}
 	
 	public String getName() {
@@ -69,14 +66,6 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 
 	public void setEntityClass(Class<A> entityClass) {
 		this.entityClass = entityClass;
-	}
-
-	public Importer<A,T> getImporter() {
-		return importer;
-	}
-
-	public void setImporter(Importer<A,T> importer) {
-		this.importer = importer;
 	}
 
 	public List<ResolveReferencesHook> getReferencesHook() {

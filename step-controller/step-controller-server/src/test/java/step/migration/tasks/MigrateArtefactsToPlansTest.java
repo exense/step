@@ -13,7 +13,7 @@ import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
-import step.plugins.functions.types.CompositeFunction;
+import step.migration.MigrationContext;
 
 public class MigrateArtefactsToPlansTest {
 
@@ -41,11 +41,11 @@ public class MigrateArtefactsToPlansTest {
 		callPlan1.put("artefactId", artefact1.get(AbstractIdentifiableObject.ID).toString());
 		
 		Document compositeFunction1 = new Document();
-		compositeFunction1.put("type", CompositeFunction.class.getName());
+		compositeFunction1.put("type", "step.plugins.functions.types.CompositeFunction");
 		compositeFunction1.put("artefactId", artefact1.get(AbstractIdentifiableObject.ID).toString());
 		functionCollection.save(compositeFunction1);
 		
-		MigrateArtefactsToPlans migrationTask = new MigrateArtefactsToPlans(collectionFactory);
+		MigrateArtefactsToPlans migrationTask = new MigrateArtefactsToPlans(collectionFactory, new MigrationContext(null));
 		migrationTask.runUpgradeScript();
 	}
 

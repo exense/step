@@ -30,6 +30,7 @@ import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
 import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
+import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
 /**
@@ -41,8 +42,8 @@ public class MigrateAssertNegation extends MigrationTask {
 	
 	private Collection<Document> planCollection;
 	
-	public MigrateAssertNegation(CollectionFactory collectionFactory) {
-		super(new Version(3,13,3), collectionFactory);
+	public MigrateAssertNegation(CollectionFactory collectionFactory, MigrationContext migrationContext) {
+		super(new Version(3,13,3), collectionFactory, migrationContext);
 
 		planCollection = collectionFactory.getCollection("plans", Document.class);
 	}

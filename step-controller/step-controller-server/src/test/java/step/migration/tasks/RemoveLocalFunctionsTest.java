@@ -45,7 +45,7 @@ public class RemoveLocalFunctionsTest {
 		Document document = new Document();
 		document.put("type", "step.functions.base.types.LocalFunction");
 		collection.save(document);
-		new RemoveLocalFunctions(collectionFactory).runUpgradeScript();;
+		new RemoveLocalFunctions(collectionFactory, null).runUpgradeScript();;
 		assertEquals(0, collection.find(Filters.empty(), null, null, null, 0).count());		
 	}
 

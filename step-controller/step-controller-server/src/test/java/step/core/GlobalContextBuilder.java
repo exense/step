@@ -40,8 +40,6 @@ import step.core.entities.EntityManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.InMemoryExecutionAccessor;
-import step.core.imports.GenericDBImporter;
-import step.core.imports.PlanImporter;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -65,7 +63,6 @@ import step.resources.ResourceManager;
 import step.resources.ResourceManagerImpl;
 import step.resources.ResourceRevision;
 import step.resources.ResourceRevisionAccessor;
-import step.resources.ResourceRevisionsImporter;
 
 public class GlobalContextBuilder {
 	
@@ -121,30 +118,21 @@ public class GlobalContextBuilder {
 		}
 		
 		context.setEntityManager(new EntityManager(context));
-		context.getEntityManager().register( new Entity<Execution, ExecutionAccessor>(
-				EntityManager.executions, context.getExecutionAccessor(), Execution.class, 
-				new GenericDBImporter<Execution, ExecutionAccessor>(context) {
-			}))
-			.register( new Entity<Plan,PlanAccessor>(EntityManager.plans, context.getPlanAccessor(), Plan.class, new PlanImporter(context)))
-			.register(new Entity<ReportNode,ReportNodeAccessor>(
-					EntityManager.reports, context.getReportAccessor(), ReportNode.class,
-					new GenericDBImporter<ReportNode, ReportNodeAccessor>(context)))
-			.register(new Entity<ExecutiontTaskParameters,ExecutionTaskAccessor>(
-					EntityManager.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class, 
-					new GenericDBImporter<ExecutiontTaskParameters, ExecutionTaskAccessor>(context)))
-			.register(new Entity<User,UserAccessor>(
-					EntityManager.users, context.getUserAccessor(), User.class, 
-					new GenericDBImporter<User, UserAccessor>(context)))
-			.register(new Entity<Function, FunctionAccessor>(
-				EntityManager.functions, (FunctionAccessor) functionAccessor, Function.class, 
-				new GenericDBImporter<Function,FunctionAccessor>(context)))
-			.register( new Entity<Resource, ResourceAccessor>(
-				EntityManager.resources, resourceAccessor, Resource.class, 
-				new GenericDBImporter<Resource, ResourceAccessor>(context) {
-				}))
-			.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(
-					EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class,
-					new ResourceRevisionsImporter(context)));
+		context.getEntityManager()
+				.register(new Entity<Execution, ExecutionAccessor>(EntityManager.executions,
+						context.getExecutionAccessor(), Execution.class))
+				.register(new Entity<Plan, PlanAccessor>(EntityManager.plans, context.getPlanAccessor(), Plan.class))
+				.register(new Entity<ReportNode, ReportNodeAccessor>(EntityManager.reports, context.getReportAccessor(),
+						ReportNode.class))
+				.register(new Entity<ExecutiontTaskParameters, ExecutionTaskAccessor>(EntityManager.tasks,
+						context.getScheduleAccessor(), ExecutiontTaskParameters.class))
+				.register(new Entity<User, UserAccessor>(EntityManager.users, context.getUserAccessor(), User.class))
+				.register(new Entity<Function, FunctionAccessor>(EntityManager.functions,
+						(FunctionAccessor) functionAccessor, Function.class))
+				.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor,
+						Resource.class))
+				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
+						resourceRevisionAccessor, ResourceRevision.class));
 		
 		return context;
 	}

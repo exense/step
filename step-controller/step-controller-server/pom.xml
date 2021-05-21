@@ -99,6 +99,12 @@
 			<version>${step-grid.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-core-collections-mongodb</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20160810</version>

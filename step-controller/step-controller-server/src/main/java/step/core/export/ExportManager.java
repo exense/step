@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ch.exense.commons.io.FileHelper;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReferencesMap;
@@ -47,7 +48,8 @@ public class ExportManager {
 	private static Logger logger = LoggerFactory.getLogger(ExportManager.class);
 
 	private GlobalContext context;
-
+	private final ObjectMapper mapper = DefaultJacksonMapperProvider.getObjectMapper();
+	
 	public ExportManager(GlobalContext context) {
 		super();
 		this.context = context;
@@ -106,7 +108,6 @@ public class ExportManager {
 		
 		ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
 				
-		ObjectMapper mapper = ImportExportMapper.getMapper(context.getCurrentVersion());
 		//Export db content to JSON
 		try (JsonGenerator jGen = mapper.getFactory().createGenerator(jsonStream, JsonEncoding.UTF8)) {
 			//Header with metadata

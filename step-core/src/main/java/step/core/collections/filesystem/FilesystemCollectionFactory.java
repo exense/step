@@ -35,6 +35,11 @@ public class FilesystemCollectionFactory implements CollectionFactory {
 		this.workspace = configuration.getPropertyAsDirectory(DB_FILESYSTEM_PATH, new File("db"));
 	}
 
+	public FilesystemCollectionFactory(File workspace) {
+		super();
+		this.workspace = workspace;
+	}
+
 	@Override
 	public void close() throws IOException {
 		

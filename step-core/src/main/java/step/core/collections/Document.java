@@ -41,6 +41,10 @@ public class Document extends DocumentObject {
 	public ObjectId getId() {
 		return containsKey("_id") ? (ObjectId) get("_id") : new ObjectId((String) get(AbstractIdentifiableObject.ID));
 	}
+	
+	public void setId(ObjectId id) {
+		put(AbstractIdentifiableObject.ID, id.toString());
+	}
 
 	@Override
 	public String toString() {

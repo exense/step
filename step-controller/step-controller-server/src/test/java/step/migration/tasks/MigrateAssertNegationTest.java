@@ -33,7 +33,7 @@ public class MigrateAssertNegationTest {
 		plan.put("_class", Plan.class.getName());
 		
 		collectionFactory.getCollection("plans", Document.class).save(plan);
-		MigrateAssertNegation task = new MigrateAssertNegation(collectionFactory);
+		MigrateAssertNegation task = new MigrateAssertNegation(collectionFactory, null);
 		task.runUpgradeScript();
 		
 		Plan plan1 = collectionFactory.getCollection("plans", Plan.class).find(Filters.empty(), null, null, null, 0).findFirst().get();

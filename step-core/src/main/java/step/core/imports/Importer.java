@@ -19,22 +19,13 @@
 package step.core.imports;
 
 import java.io.IOException;
-import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.Accessor;
-import step.core.entities.Entity;
-
-public interface Importer<A extends AbstractIdentifiableObject, T extends Accessor<A>> {
+public interface Importer {
 	
-	public void init(Entity<A, T> entity);
+	public void importOne(JsonParser jParser) throws JsonParseException, JsonMappingException, IOException;
 	
-	public A importOne(ImportConfiguration importConfig, JsonParser jParser, ObjectMapper mapper, Map<String, String> references)  throws JsonParseException, JsonMappingException, IOException;
-	
-	public void importMany(ImportConfiguration importConfig, ObjectMapper mapper) throws IOException; 
 }

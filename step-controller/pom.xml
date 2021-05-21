@@ -34,7 +34,6 @@
 		<module>step-controller-server</module>
 		<module>step-controller-base-plugins</module>
 		<module>step-controller-server-webapp</module>
-		<module>step-controller-initialization</module>
 		<module>step-controller-remote-client</module>
 	</modules>
 

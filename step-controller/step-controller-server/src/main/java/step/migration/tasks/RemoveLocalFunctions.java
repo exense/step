@@ -18,43 +18,48 @@
  ******************************************************************************/
 package step.migration.tasks;
 
+
+
 import step.core.Version;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
-import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
+import step.core.collections.Filters.Equals;
+import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
 /**
- * This task migrates the screen inputs from screen 'functionTable' which
- * require the prefix "attributes." as of 3.11
+ * This task removes the functions of type 'LocalFunction'
  *
  */
-public class ScreenTemplateMigrationTask extends MigrationTask {
+public class RemoveLocalFunctions extends MigrationTask {
 
-	private final Collection<Document> screenInputs;
+	private final Collection<Document> functions;
 
-	public ScreenTemplateMigrationTask(CollectionFactory collectionFactory) {
-		super(new Version(3, 11, 0), collectionFactory);
-		screenInputs = collectionFactory.getCollection("screenInputs", Document.class);
+	public RemoveLocalFunctions(CollectionFactory collectionFactory, MigrationContext migrationContext) {
+		super(new Version(3,13,0), collectionFactory, migrationContext);
+		functions = collectionFactory.getCollection("functions", Document.class);
 	}
 
 	@Override
 	public void runUpgradeScript() {
-		screenInputs.find(Filters.equals("screenId", "functionTable"), null, null, null, 0).forEach(t -> {
-
-			DocumentObject input = t.getObject("input");
-			if (input.getString("id").equals("name")) {
-				input.put("id", "attributes.name");
-			}
-
-			screenInputs.save(t);
-		});
+		removeLocalFunctions();
 	}
-
+	
+	private void removeLocalFunctions() {
+		logger.info("Searching for keywords of type 'LocalFunction' to be deleted...");
+		
+		Equals filter = Filters.equals("type", "step.functions.base.types.LocalFunction");
+		long count = functions.find(filter, null, null, null, 0).count();
+		functions.remove(filter);
+		
+		logger.info("Removed "+count+" keywords of type 'LocalFunction'");
+	}
+		
 	@Override
 	public void runDowngradeScript() {
-
+		
 	}
+
 }

@@ -26,6 +26,7 @@ import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
 import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
+import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
 /**
@@ -36,8 +37,8 @@ public class ScreenTemplateArtefactTableMigrationTask extends MigrationTask {
 
 	private Collection<Document> screenInputs;
 
-	public ScreenTemplateArtefactTableMigrationTask(CollectionFactory collectionFactory) {
-		super(new Version(3,13,0), collectionFactory);
+	public ScreenTemplateArtefactTableMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
+		super(new Version(3,13,0), collectionFactory, migrationContext);
 		screenInputs = collectionFactory.getCollection("screenInputs", Document.class);
 	}
 

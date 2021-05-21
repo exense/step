@@ -19,7 +19,6 @@
 package step.migration.tasks;
 
 import step.core.GlobalContext;
-import step.core.collections.CollectionFactory;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.migration.MigrationManager;
@@ -33,15 +32,12 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		CollectionFactory collectionFactory = context.getCollectionFactory();
 		MigrationManager migrationManager = context.get(MigrationManager.class);
-		migrationManager.register(new SetSchedulerTaskAttributes(collectionFactory));
-		MigrateArtefactsToPlans migrationTask = new MigrateArtefactsToPlans(collectionFactory);
-		migrationManager.register(migrationTask);
-		context.put(MigrateArtefactsToPlans.class, migrationTask);
-		migrationManager.register(new ScreenTemplateMigrationTask(collectionFactory));
-		migrationManager.register(new RemoveLocalFunctions(collectionFactory));
-		migrationManager.register(new ScreenTemplateArtefactTableMigrationTask(collectionFactory));
-		migrationManager.register(new MigrateSeleniumFunctions(collectionFactory));
+		migrationManager.register(SetSchedulerTaskAttributes.class);
+		migrationManager.register(MigrateArtefactsToPlans.class);
+		migrationManager.register(ScreenTemplateMigrationTask.class);
+		migrationManager.register(RemoveLocalFunctions.class);
+		migrationManager.register(ScreenTemplateArtefactTableMigrationTask.class);
+		migrationManager.register(MigrateSeleniumFunctions.class);
 	}
 }

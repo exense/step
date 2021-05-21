@@ -31,8 +31,8 @@ import step.core.collections.DocumentObject;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.imports.converter.ArtefactsToPlans;
+import step.migration.MigrationContext;
 import step.migration.MigrationTask;
-import step.plugins.functions.types.CompositeFunction;
 
 /**
  * This task migrates the collection 'artefacts' to the collection 'plans' which has been introduced in 3.13 
@@ -48,8 +48,8 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 	private final ArtefactsToPlans artefactsToPlans;
 	private final Collection<Document> planCollection;
 
-	public MigrateArtefactsToPlans(CollectionFactory collectionFactory) {
-		super(new Version(3,13,0), collectionFactory);
+	public MigrateArtefactsToPlans(CollectionFactory collectionFactory, MigrationContext migrationContext) {
+		super(new Version(3,13,0), collectionFactory, migrationContext);
 		
 		artefactCollection = collectionFactory.getCollection("artefacts", Document.class);
 		planCollection = collectionFactory.getCollection("plans", Document.class);
@@ -59,6 +59,8 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 
 		artefactsToPlans = new ArtefactsToPlans(artefactCollection, planCollection);
 		artefactIdToPlanId = artefactsToPlans.getArtefactIdToPlanId();
+		
+		migrationContext.put(MigrateArtefactsToPlans.class, this);
 	}
 
 	@Override
@@ -83,7 +85,7 @@ public class MigrateArtefactsToPlans extends MigrationTask {
 		AtomicInteger successCount = new AtomicInteger();
 		AtomicInteger errorCount = new AtomicInteger();
 		
-		Filter filterCompositeFunction = Filters.equals("type", CompositeFunction.class.getName());
+		Filter filterCompositeFunction = Filters.equals("type", "step.plugins.functions.types.CompositeFunction");
 		functionCollection.find(filterCompositeFunction, null, null, null, 0).forEach(t -> {
 			try {
 				if(t.containsKey("artefactId")) {

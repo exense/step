@@ -24,7 +24,7 @@ public class SetSchedulerTaskAttributesTest {
 		task1.put(AbstractOrganizableObject.NAME, NAME);
 
 		collectionFactory.getCollection("tasks", Document.class).save(task1);
-		SetSchedulerTaskAttributes task = new SetSchedulerTaskAttributes(collectionFactory);
+		SetSchedulerTaskAttributes task = new SetSchedulerTaskAttributes(collectionFactory, null);
 		task.runUpgradeScript();
 
 		ExecutiontTaskParameters plan1 = collectionFactory.getCollection("tasks", ExecutiontTaskParameters.class)

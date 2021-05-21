@@ -18,50 +18,47 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 import step.core.Version;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
+import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
-import step.core.collections.Filters.Equals;
+import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
-/**
- * This task removes the functions of type 'LocalFunction'
- *
- */
-public class MigrateSeleniumFunctions extends MigrationTask {
+public class SetSchedulerTaskAttributes extends MigrationTask {
 
-	private final Collection<Document> functions;
+	private final Collection<Document> tasksCollection;
 
-	public MigrateSeleniumFunctions(CollectionFactory collectionFactory) {
-		super(new Version(3,17,0), collectionFactory);
-		functions = collectionFactory.getCollection("functions", Document.class);
+	public SetSchedulerTaskAttributes(CollectionFactory collectionFactory, MigrationContext migrationContext) {
+		super(new Version(3, 12, 1), collectionFactory, migrationContext);
+		tasksCollection = collectionFactory.getCollection("tasks", Document.class);
 	}
 
 	@Override
 	public void runUpgradeScript() {
-		logger.info("Searching for keywords of type 'SeleniumFunction' to be migrated...");
-		
-		AtomicInteger count = new AtomicInteger();
-		Equals filter = Filters.equals("type", "step.plugins.selenium.SeleniumFunction");
-		functions.find(filter, null, null, null, 0).forEach(f -> {
-			f.put("type", "step.plugins.java.GeneralScriptFunction");
-			f.remove("seleniumVersion");
-			functions.save(f);
-			count.incrementAndGet();
+		logger.info("Searching for tasks with no attributes.name to be migrated...");
+
+		AtomicInteger i = new AtomicInteger();
+		tasksCollection.find(Filters.equals("attributes.name", (String) null), null, null, null, 0).forEach(t -> {
+			i.incrementAndGet();
+			((DocumentObject) t.computeIfAbsent("attributes", k -> new DocumentObject())).put(AbstractOrganizableObject.NAME,
+					t.get("name"));
+			
+			tasksCollection.save(t);
 		});
-		
-		logger.info("Migrated "+count.get()+" keywords of type 'SeleniumFunction'");
+
+		logger.info("Migrated " + i.get() + " tasks.");
+
 	}
-		
+
 	@Override
 	public void runDowngradeScript() {
-		
+		// TODO Auto-generated method stub
 	}
 
 }

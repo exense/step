@@ -35,7 +35,6 @@ import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
-import step.core.imports.GenericDBImporter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -89,8 +88,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		final FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 		context.getEntityManager().register(new Entity<Function, FunctionAccessorImpl>(
-				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class, 
-				new GenericDBImporter<Function,FunctionAccessorImpl>(context)) {
+				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class) {
 			@Override
 			public String resolve(Object artefact, ObjectPredicate objectPredicate) {
 				if (artefact instanceof CallFunction) {

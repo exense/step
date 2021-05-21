@@ -24,6 +24,8 @@ import step.core.accessors.AbstractTrackedObject;
 
 public class Parameter extends AbstractTrackedObject implements ActivableObject {
 	
+	public static final String ENTITY_NAME = "parameters";
+	
 	protected String key;
 	
 	protected String value;
