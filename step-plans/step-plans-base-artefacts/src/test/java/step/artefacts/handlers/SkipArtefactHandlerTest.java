@@ -88,8 +88,7 @@ public class SkipArtefactHandlerTest extends AbstractArtefactHandlerTest {
 		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build();
 		engine.execute(plan).printTree(writer);
 			
-		Assert.assertEquals("Sequence:PASSED:\n" + 
-				" Sequence:SKIPPED:\n" +
+		Assert.assertEquals("Sequence:PASSED:\n" +
 				" Echo:PASSED:\n" +
 				"" , writer.toString());			
 	}
