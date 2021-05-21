@@ -60,7 +60,7 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 		this.jdbc_url = configuration.getConnectionString().get();
 		this.db_user =  configuration.getUser().get();
-		this.db_pwd =  configuration.getPassword().get();
+		this.db_pwd = configuration.getPassword().get();
 		this.driver_class =  configuration.getDriverClass().get();
 		this.writePKey = configuration.getWritePKey().get();
 
@@ -85,9 +85,10 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	}
 
 	public void connect(){
-
+		String password = context.getResolver().resolve(db_pwd);
+		
 		try {
-			conn1 = DriverManager.getConnection(jdbc_url, db_user, db_pwd);
+			conn1 = DriverManager.getConnection(jdbc_url, db_user, password);
 			//conn1.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 			conn1.setAutoCommit(false);
 		} catch (SQLException e) {
