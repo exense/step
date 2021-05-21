@@ -124,7 +124,14 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	protected abstract void createReportSkeleton_(REPORT_NODE parentNode, ARTEFACT testArtefact);
 	
-	public ReportNode execute(REPORT_NODE parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {		
+	public ReportNode execute(REPORT_NODE parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {
+		if (artefact.getSkipNode().get()) {
+			REPORT_NODE reportNode = createReportNode(parentReportNode, artefact);
+			reportNode.setStatus(ReportNodeStatus.SKIPPED);
+			reportNode.setExecutionTime(System.currentTimeMillis());
+			return reportNode;
+		}
+
 		// If the artefact hasn't been initialized during createReportSkeleton phase, relaunch the skeleton creation phase for this node
 		if(getListOfArtefactsNotInitialized().contains(artefact.getId().toString())) {
 			createReportSkeleton(parentReportNode, artefact, newVariables);
@@ -156,7 +163,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			reportNode.setResolvedArtefact(artefact);
 			
 			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
-			if((filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get()) {
+			if((filter!=null&&!filter.isSelected(artefact))) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
 				if(persistBefore && artefact.isPersistNode()) {
