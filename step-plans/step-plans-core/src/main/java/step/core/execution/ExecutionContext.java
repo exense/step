@@ -29,6 +29,7 @@ import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
+import step.core.resolvers.Resolver;
 import step.core.variables.VariablesManager;
 
 public class ExecutionContext extends AbstractExecutionEngineContext  {
@@ -43,6 +44,7 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 	private final ReportNodeCache reportNodeCache;
 	private final EventManager eventManager;
 	private ExecutionCallbacks executionCallbacks;
+	private final Resolver resolver;
 
 	private ObjectEnricher objectEnricher;
 	private ObjectPredicate objectPredicate;
@@ -61,6 +63,7 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 		variablesManager = new VariablesManager(this);
 		artefactHandlerManager = new ArtefactHandlerManager(this);
 		eventManager = new EventManager();
+		resolver = new Resolver();
 		
 		reportNode = new ReportNode();
 		reportNode.setExecutionID(executionId);
@@ -180,5 +183,9 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 
 	protected void setObjectPredicate(ObjectPredicate objectPredicate) {
 		this.objectPredicate = objectPredicate;
+	}
+
+	public Resolver getResolver() {
+		return resolver;
 	}
 }

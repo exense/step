@@ -18,10 +18,12 @@
  ******************************************************************************/
 package step.plugins.parametermanager;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -45,11 +47,13 @@ import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
+import step.security.SecurityManager;
 
 @Plugin(dependencies = {})
 @IgnoreDuringAutoDiscovery
 public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	
+	private static final String RESOLVER_PREFIX_PARAMETER = "parameter::";
 	private static final String PARAMETER_SCOPE_VALUE_DEFAULT = "default";
 	private static final String PARAMETERS_BY_SCOPE = "$parametersByScope";
 	private static final String PROTECTED_PARAMETERS = "$parametersProtected";
@@ -76,6 +80,8 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 
 		// Add all the active parameters to the execution parameter map of the Execution object
 		buildExecutionParametersMapAndUpdateExecution(context, allParameters);
+		
+		initializeParameterResolver(context, allParameters);
 		
 		// Build the map of parameters by scope
 		Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = getAllParametersByScope(allParameters);
@@ -151,26 +157,53 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		}
 	}
 	
+	private void initializeParameterResolver(ExecutionContext context, Map<String, Parameter> parameters) {
+		final ConcurrentMap<String, String> parameterValues = parameters.values().stream().map(p -> {
+			return new SimpleEntry<String, String>(p.getKey(), getParameterValue(p));
+		}).collect(Collectors.toConcurrentMap(SimpleEntry::getKey, SimpleEntry::getValue));
+		context.getResolver().register(e -> {
+			if (e != null && e.startsWith(RESOLVER_PREFIX_PARAMETER)) {
+				// As the parameterValues map may contain protected parameter values, calling
+				// this method from custom scripts is forbidden
+				SecurityManager.assertNotInExpressionHandler();
+				String key = e.replace(RESOLVER_PREFIX_PARAMETER, "");
+				String value = parameterValues.get(key);
+				if (value != null) {
+					return value;
+				} else {
+					return null;
+				}
+			} else {
+				return null;
+			}
+		});
+	}
+	
 	private void addProtectedParametersToContext(ExecutionContext context, ReportNode node, List<Parameter> protectedParameters) {
 		final VariablesManager varMan = context.getVariablesManager();
 		protectedParameters.forEach(p -> {
-			String encryptedValue = p.getEncryptedValue();
-			String value;
-			if(encryptedValue != null) {
-				if(encryptionManager != null) {
-					try {
-						value = encryptionManager.decrypt(encryptedValue);
-					} catch (EncryptionManagerException e) {
-						throw new PluginCriticalException("Error while decrypting value of parameter "+p.getKey(), e);
-					}
-				} else {
-					throw new PluginCriticalException("Unable to decrypt value of parameter "+p.getKey()+". No encryption manager available");
-				}
-			} else {
-				value = p.getValue();
-			}
+			String value = getParameterValue(p);
 			varMan.putVariable(node, VariableType.IMMUTABLE, p.getKey(), value);
 		});
+	}
+
+	public String getParameterValue(Parameter p) {
+		String encryptedValue = p.getEncryptedValue();
+		String value;
+		if(encryptedValue != null) {
+			if(encryptionManager != null) {
+				try {
+					value = encryptionManager.decrypt(encryptedValue);
+				} catch (EncryptionManagerException e) {
+					throw new PluginCriticalException("Error while decrypting value of parameter "+p.getKey(), e);
+				}
+			} else {
+				throw new PluginCriticalException("Unable to decrypt value of parameter "+p.getKey()+". No encryption manager available");
+			}
+		} else {
+			value = p.getValue();
+		}
+		return value;
 	}
 
 	public static void putVariables(ExecutionContext context, ReportNode rootNode, Map<String, ? extends Object> parameters, VariableType type) {
