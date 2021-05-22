@@ -212,12 +212,10 @@ public class ParameterManagerPluginTest {
 
 		// Construct a ParameterManagerPlugin without encryption manager
 		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, null, executionContext);
-		parameterManagerPlugin.executionStart(executionContext);
 
 		Exception actualException = null;
 		try {
-			parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(),
-					newFunction(null, "MyFunction1"));
+			parameterManagerPlugin.executionStart(executionContext);
 		} catch (Exception e) {
 			actualException = e;
 		}
@@ -235,12 +233,10 @@ public class ParameterManagerPluginTest {
 
 		// Construct ParameterManagerPlugin with error encryption manager (failing on decrypt())
 		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, errorEncryptionManager, executionContext);
-		parameterManagerPlugin.executionStart(executionContext);
 
 		Exception actualException = null;
 		try {
-			parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(),
-					newFunction(null, "MyFunction1"));
+			parameterManagerPlugin.executionStart(executionContext);
 		} catch (Exception e) {
 			actualException = e;
 		}
