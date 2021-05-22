@@ -53,7 +53,7 @@ import step.security.SecurityManager;
 @IgnoreDuringAutoDiscovery
 public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	
-	private static final String RESOLVER_PREFIX_PARAMETER = "parameter::";
+	private static final String RESOLVER_PREFIX_PARAMETER = "parameter:";
 	private static final String PARAMETER_SCOPE_VALUE_DEFAULT = "default";
 	private static final String PARAMETERS_BY_SCOPE = "$parametersByScope";
 	private static final String PROTECTED_PARAMETERS = "$parametersProtected";
