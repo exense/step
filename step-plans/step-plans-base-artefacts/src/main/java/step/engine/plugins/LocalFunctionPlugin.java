@@ -28,8 +28,8 @@ import java.util.Set;
 
 import org.bson.types.ObjectId;
 
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.Attribute;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.accessors.Attribute;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;

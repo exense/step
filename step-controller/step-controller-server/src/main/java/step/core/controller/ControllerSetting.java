@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.controller;
 
-import step.core.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
 
 public class ControllerSetting extends AbstractIdentifiableObject {
 

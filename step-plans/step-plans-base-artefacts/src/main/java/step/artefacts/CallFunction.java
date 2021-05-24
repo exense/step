@@ -20,7 +20,7 @@ package step.artefacts;
 
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.Artefact;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 

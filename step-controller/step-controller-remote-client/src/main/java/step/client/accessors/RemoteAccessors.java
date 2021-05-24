@@ -19,8 +19,8 @@
 package step.client.accessors;
 
 import step.client.collections.remote.RemoteCollectionFactory;
-import step.core.accessors.AbstractAccessor;
-import step.core.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.accessors.AbstractAccessor;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plans.PlanAccessor;
 import step.functions.accessor.FunctionAccessor;

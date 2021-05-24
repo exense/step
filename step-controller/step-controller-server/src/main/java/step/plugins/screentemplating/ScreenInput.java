@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.plugins.screentemplating;
 
-import step.core.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 
 public class ScreenInput extends AbstractOrganizableObject {
 

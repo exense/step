@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.dynamicbeans.DynamicBeanResolver;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;

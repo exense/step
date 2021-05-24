@@ -20,9 +20,9 @@ package step.plugins.views;
 
 import java.util.List;
 
-import step.core.accessors.AbstractAccessor;
-import step.core.collections.Collection;
-import step.core.collections.Filters;
+import ch.exense.commons.core.accessors.AbstractAccessor;
+import ch.exense.commons.core.collections.Collection;
+import ch.exense.commons.core.collections.Filters;
 
 public class ViewModelAccessorImpl extends AbstractAccessor<ViewModel> implements ViewModelAccessor {
 

@@ -20,7 +20,7 @@ package step.artefacts;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 
 @Artefact(name = "TestSet", useAsTemplate = true)
 public class TestSet extends AbstractArtefact {

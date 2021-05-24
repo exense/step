@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
 import step.commons.activation.Activator;
-import step.core.accessors.Accessor;
+import ch.exense.commons.core.accessors.Accessor;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.objectenricher.ObjectPredicate;

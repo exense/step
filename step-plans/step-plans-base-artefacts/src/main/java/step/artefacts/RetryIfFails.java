@@ -20,7 +20,7 @@ package step.artefacts;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 
 @Artefact()
 public class RetryIfFails extends AbstractArtefact {

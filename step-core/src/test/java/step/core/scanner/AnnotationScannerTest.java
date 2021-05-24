@@ -31,7 +31,7 @@ import org.junit.Test;
 import com.google.common.io.Files;
 
 import ch.exense.commons.io.FileHelper;
-import step.core.dynamicbeans.ContainsDynamicValues;
+import ch.exense.commons.core.model.dynamicbeans.ContainsDynamicValues;
 
 public class AnnotationScannerTest {
 
@@ -70,7 +70,7 @@ public class AnnotationScannerTest {
 	
 	@Test
 	public void testAnnotationScannerForSpecificJars() {
-		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step-core-model-test.jar");
+		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "exense-core-model-test.jar");
 		try(AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(file)) {
 			List<Method> methods = annotationScanner.getMethodsWithAnnotation(ContainsDynamicValues.class).stream().collect(Collectors.toList());
 			assertEquals(1, methods.size());
@@ -80,7 +80,7 @@ public class AnnotationScannerTest {
 	
 	@Test
 	public void testAnnotationScannerForSpecificJarsWithSpacesAndSpecialCharsInPath() throws IOException {
-		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step-core-model-test.jar");
+		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "exense-core-model-test.jar");
 		File folderWithSpace = FileHelper.createTempFolder("Folder with space");
 		File targetFile = new File(folderWithSpace.getAbsolutePath()+"/stèp-côre-mo del-test.jar");
 		Files.copy(file, targetFile);

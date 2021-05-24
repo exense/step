@@ -44,10 +44,10 @@ import step.artefacts.Sequence;
 import step.attachments.FileResolver;
 import step.core.GlobalContext;
 import step.core.GlobalContextBuilder;
-import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.Accessor;
-import step.core.accessors.InMemoryAccessor;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.accessors.Accessor;
+import ch.exense.commons.core.accessors.InMemoryAccessor;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.entities.Entity;
@@ -69,7 +69,7 @@ import step.planbuilder.BaseArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
 import step.plugins.parametermanager.ParameterManagerControllerPlugin;
-import step.resources.Resource;
+import ch.exense.commons.core.model.resources.Resource;
 import step.resources.ResourceImporter;
 import step.resources.ResourceManager;
 
@@ -842,7 +842,7 @@ public class ExportManagerTest {
 				Assert.assertNull(actualPlan);
 				// Assert that the plan has been properly imported
 				HashMap<String, String> attributes = new HashMap<>();
-				attributes.put(step.core.accessors.AbstractOrganizableObject.NAME, uniqueName);
+				attributes.put(ch.exense.commons.core.model.accessors.AbstractOrganizableObject.NAME, uniqueName);
 				Plan newPlan = c.getPlanAccessor().findByAttributes(attributes);
 				Assert.assertNotNull(newPlan);
 				String newResourceId = getResourceIdOfExcelDatapool(newPlan);

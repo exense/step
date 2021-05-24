@@ -25,7 +25,7 @@ import step.artefacts.Assert;
 import step.artefacts.Assert.AssertOperator;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 
 public class FunctionArtefacts {
 	

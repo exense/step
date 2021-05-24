@@ -20,7 +20,7 @@ package step.core.plans;
 
 import java.util.List;
 
-import step.core.accessors.LayeredAccessor;
+import ch.exense.commons.core.accessors.LayeredAccessor;
 
 public class LayeredPlanAccessor extends LayeredAccessor<Plan> implements PlanAccessor {
 

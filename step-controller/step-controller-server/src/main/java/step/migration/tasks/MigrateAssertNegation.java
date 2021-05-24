@@ -25,11 +25,11 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import step.core.Version;
-import step.core.collections.Collection;
-import step.core.collections.CollectionFactory;
-import step.core.collections.Document;
-import step.core.collections.DocumentObject;
-import step.core.collections.Filters;
+import ch.exense.commons.core.collections.Collection;
+import ch.exense.commons.core.collections.CollectionFactory;
+import ch.exense.commons.core.collections.Document;
+import ch.exense.commons.core.collections.DocumentObject;
+import ch.exense.commons.core.collections.Filters;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 

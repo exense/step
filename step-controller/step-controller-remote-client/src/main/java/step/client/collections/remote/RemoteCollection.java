@@ -3,9 +3,9 @@ package step.client.collections.remote;
 import step.client.AbstractRemoteClient;
 import step.commons.iterators.SkipLimitIterator;
 import step.commons.iterators.SkipLimitProvider;
-import step.core.collections.Collection;
-import step.core.collections.Filter;
-import step.core.collections.SearchOrder;
+import ch.exense.commons.core.collections.Collection;
+import ch.exense.commons.core.collections.Filter;
+import ch.exense.commons.core.collections.SearchOrder;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;

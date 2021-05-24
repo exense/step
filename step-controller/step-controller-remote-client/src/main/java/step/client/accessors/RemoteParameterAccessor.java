@@ -19,7 +19,7 @@
 package step.client.accessors;
 
 import step.client.collections.remote.RemoteCollectionFactory;
-import step.core.accessors.AbstractAccessor;
+import ch.exense.commons.core.accessors.AbstractAccessor;
 import step.parameter.Parameter;
 import step.parameter.ParameterAccessor;
 

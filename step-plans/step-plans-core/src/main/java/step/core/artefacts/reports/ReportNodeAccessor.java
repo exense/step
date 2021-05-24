@@ -24,7 +24,7 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
-import step.core.accessors.Accessor;
+import ch.exense.commons.core.accessors.Accessor;
 
 public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAccessor {
 

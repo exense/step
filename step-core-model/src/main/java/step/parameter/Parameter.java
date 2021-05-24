@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.parameter;
 
+import ch.exense.commons.core.model.accessors.AbstractTrackedObject;
 import step.commons.activation.ActivableObject;
 import step.commons.activation.Expression;
-import step.core.accessors.AbstractTrackedObject;
 
 public class Parameter extends AbstractTrackedObject implements ActivableObject {
 	

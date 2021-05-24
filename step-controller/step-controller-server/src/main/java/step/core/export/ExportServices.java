@@ -42,7 +42,7 @@ import step.core.export.ExportTaskManager.ExportStatus;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.PlanAccessor;
-import step.resources.Resource;
+import ch.exense.commons.core.model.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
 

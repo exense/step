@@ -27,11 +27,11 @@ import java.util.stream.Collectors;
 
 import step.commons.iterators.SkipLimitIterator;
 import step.commons.iterators.SkipLimitProvider;
-import step.core.accessors.AbstractAccessor;
-import step.core.collections.Collection;
-import step.core.collections.Filter;
-import step.core.collections.Filters;
-import step.core.collections.SearchOrder;
+import ch.exense.commons.core.accessors.AbstractAccessor;
+import ch.exense.commons.core.collections.Collection;
+import ch.exense.commons.core.collections.Filter;
+import ch.exense.commons.core.collections.Filters;
+import ch.exense.commons.core.collections.SearchOrder;
 import step.core.repositories.RepositoryObjectReference;
 
 public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implements ExecutionAccessor {

@@ -28,7 +28,7 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 
-import step.core.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner.Context;
 

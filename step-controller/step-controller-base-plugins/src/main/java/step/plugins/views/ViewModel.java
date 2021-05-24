@@ -21,7 +21,7 @@ package step.plugins.views;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
-import step.core.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
 
 @JsonTypeInfo(use=Id.CLASS,property="_class")
 public abstract class ViewModel extends AbstractIdentifiableObject {

@@ -44,7 +44,7 @@ import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.artefacts.StreamingArtefact;
 import step.core.GlobalContext;
-import step.core.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;

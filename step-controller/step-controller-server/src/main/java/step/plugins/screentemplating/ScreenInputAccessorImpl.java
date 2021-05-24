@@ -22,9 +22,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import step.core.accessors.AbstractAccessor;
-import step.core.collections.Collection;
-import step.core.collections.Filters;
+import ch.exense.commons.core.accessors.AbstractAccessor;
+import ch.exense.commons.core.collections.Collection;
+import ch.exense.commons.core.collections.Filters;
 
 public class ScreenInputAccessorImpl extends AbstractAccessor<ScreenInput> implements ScreenInputAccessor {
 

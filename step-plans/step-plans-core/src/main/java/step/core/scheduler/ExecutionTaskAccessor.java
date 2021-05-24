@@ -20,7 +20,7 @@ package step.core.scheduler;
 
 import java.util.Iterator;
 
-import step.core.accessors.Accessor;
+import ch.exense.commons.core.accessors.Accessor;
 
 public interface ExecutionTaskAccessor extends Accessor<ExecutiontTaskParameters> {
 

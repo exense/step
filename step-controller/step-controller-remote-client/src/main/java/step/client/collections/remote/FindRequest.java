@@ -1,7 +1,7 @@
 package step.client.collections.remote;
 
-import step.core.collections.Filter;
-import step.core.collections.SearchOrder;
+import ch.exense.commons.core.collections.Filter;
+import ch.exense.commons.core.collections.SearchOrder;
 
 public class FindRequest {
     Filter filter;

@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.core.dynamicbeans;
 
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+
 public class TestBean2 {
 
 	DynamicValue<String> testString = new DynamicValue<>("'test'", "js");

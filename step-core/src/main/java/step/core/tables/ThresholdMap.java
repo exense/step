@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.tables;
 
-import step.core.collections.serialization.DottedKeyMap;
+import ch.exense.commons.core.accessors.serialization.DottedKeyMap;
 
 /**
  * 

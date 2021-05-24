@@ -21,7 +21,7 @@ package step.controller.grid.services;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
-import step.core.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;

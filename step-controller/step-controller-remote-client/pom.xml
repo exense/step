@@ -51,6 +51,13 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.commons</groupId>
+			<artifactId>exense-core-collections</artifactId>
+			<version>${exense-commons.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-plans-core</artifactId>
 			<version>${project.version}</version>
@@ -85,7 +92,7 @@
 			<artifactId>jersey-media-multipart</artifactId>
 			<version>${jersey.version}</version>
 		</dependency>
-    </dependencies>
+	</dependencies>
 
 	<build>
 		<plugins>

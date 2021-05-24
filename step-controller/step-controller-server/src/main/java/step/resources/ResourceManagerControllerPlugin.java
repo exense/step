@@ -19,8 +19,9 @@
 package step.resources;
 
 import ch.exense.commons.app.Configuration;
+import ch.exense.commons.core.model.resources.Resource;
 import step.core.GlobalContext;
-import step.core.collections.Collection;
+import ch.exense.commons.core.collections.Collection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;

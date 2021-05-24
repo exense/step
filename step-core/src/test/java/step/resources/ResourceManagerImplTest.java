@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
+import ch.exense.commons.core.model.resources.Resource;
+import ch.exense.commons.core.model.resources.ResourceRevision;
 import org.junit.Test;
 
 import junit.framework.Assert;

@@ -19,7 +19,7 @@
 package step.repositories.parser.annotated;
 
 import step.artefacts.Check;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.repositories.parser.ParsingContext;
 import step.repositories.parser.steps.ExpectedStep;
 

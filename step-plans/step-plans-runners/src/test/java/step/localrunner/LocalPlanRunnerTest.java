@@ -42,7 +42,7 @@ import step.artefacts.Script;
 import step.artefacts.Sequence;
 import step.artefacts.reports.EchoReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult; 

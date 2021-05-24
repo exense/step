@@ -28,9 +28,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.collections.Collection;
-import step.core.collections.Document;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.collections.Collection;
+import ch.exense.commons.core.collections.Document;
 
 public class GenericImporter implements Importer {
 

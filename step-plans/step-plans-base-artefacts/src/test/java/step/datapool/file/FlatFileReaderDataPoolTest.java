@@ -25,7 +25,7 @@ import org.junit.Test;
 import ch.exense.commons.io.FileHelper;
 import junit.framework.Assert;
 import step.artefacts.AbstractArtefactTest;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataSet;
 

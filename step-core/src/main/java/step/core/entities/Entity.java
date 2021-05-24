@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.Accessor;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.accessors.Accessor;
 import step.core.imports.Importer;
 import step.core.objectenricher.ObjectPredicate;
 

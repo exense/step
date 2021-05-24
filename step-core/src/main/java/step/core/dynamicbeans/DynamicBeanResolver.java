@@ -25,6 +25,8 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import ch.exense.commons.core.model.dynamicbeans.ContainsDynamicValues;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

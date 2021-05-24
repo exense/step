@@ -28,7 +28,7 @@ import step.artefacts.Set;
 import step.artefacts.Switch;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 
 public class SwitchHandlerTest extends AbstractArtefactHandlerTest {
 	

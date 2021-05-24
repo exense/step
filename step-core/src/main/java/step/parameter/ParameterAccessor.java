@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.parameter;
 
-import step.core.accessors.Accessor;
+import ch.exense.commons.core.accessors.Accessor;
 
 public interface ParameterAccessor extends Accessor<Parameter> {
 }

@@ -2,7 +2,7 @@ package step.plugins.measurements;
 
 import step.artefacts.reports.CallFunctionReportNode;
 import step.artefacts.reports.ThreadReportNode;
-import step.core.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;

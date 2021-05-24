@@ -26,7 +26,7 @@ import step.artefacts.Set;
 import step.artefacts.reports.SetReportNode;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.variables.VariablesManager;
 
 public class SetVarHandlerTest extends AbstractArtefactHandlerTest {

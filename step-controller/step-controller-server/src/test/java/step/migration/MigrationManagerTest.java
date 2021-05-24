@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import step.core.Version;
-import step.core.collections.CollectionFactory;
+import ch.exense.commons.core.collections.CollectionFactory;
 
 public class MigrationManagerTest {
 

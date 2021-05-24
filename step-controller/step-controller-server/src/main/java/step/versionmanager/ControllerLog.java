@@ -21,7 +21,7 @@ package step.versionmanager;
 import java.util.Date;
 
 import step.core.Version;
-import step.core.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
 
 public class ControllerLog extends AbstractIdentifiableObject {
 

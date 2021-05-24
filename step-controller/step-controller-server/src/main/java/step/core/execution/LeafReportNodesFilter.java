@@ -25,8 +25,8 @@ import java.util.List;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 
-import step.core.collections.Filter;
-import step.core.collections.Filters;
+import ch.exense.commons.core.collections.Filter;
+import ch.exense.commons.core.collections.Filters;
 import step.core.tables.TableQueryFactory;
 
 public class LeafReportNodesFilter implements TableQueryFactory {

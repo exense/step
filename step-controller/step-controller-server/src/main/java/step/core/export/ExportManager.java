@@ -35,8 +35,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.exense.commons.io.FileHelper;
 import step.core.GlobalContext;
-import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.DefaultJacksonMapperProvider;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.accessors.DefaultJacksonMapperProvider;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReferencesMap;

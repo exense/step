@@ -22,8 +22,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import step.core.accessors.Accessor;
-import step.core.collections.SearchOrder;
+import ch.exense.commons.core.accessors.Accessor;
+import ch.exense.commons.core.collections.SearchOrder;
 import step.core.repositories.RepositoryObjectReference;
 
 public interface ExecutionAccessor extends Accessor<Execution> {

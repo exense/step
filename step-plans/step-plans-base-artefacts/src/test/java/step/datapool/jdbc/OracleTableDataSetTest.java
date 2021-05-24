@@ -21,7 +21,7 @@ package step.datapool.jdbc;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.datapool.jdbc.SQLTableDataPool.SQLRowWrapper;
 
 public class OracleTableDataSetTest {

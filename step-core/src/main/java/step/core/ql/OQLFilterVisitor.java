@@ -20,8 +20,8 @@ package step.core.ql;
 
 import java.util.List;
 
-import step.core.collections.Filter;
-import step.core.collections.Filters;
+import ch.exense.commons.core.collections.Filter;
+import ch.exense.commons.core.collections.Filters;
 import step.core.ql.OQLParser.AndExprContext;
 import step.core.ql.OQLParser.EqualityExprContext;
 import step.core.ql.OQLParser.NonQuotedStringAtomContext;

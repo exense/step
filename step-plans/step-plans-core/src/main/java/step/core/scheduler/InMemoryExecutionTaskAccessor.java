@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.scheduler;
 
-import step.core.collections.inmemory.InMemoryCollection;
+import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
 
 public class InMemoryExecutionTaskAccessor extends ExecutionTaskAccessorImpl implements ExecutionTaskAccessor {
 

@@ -28,7 +28,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.DynamicValueResolver;
 
 public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {

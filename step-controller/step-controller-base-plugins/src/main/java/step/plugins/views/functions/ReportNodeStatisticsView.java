@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import step.artefacts.reports.CallFunctionReportNode;
-import step.core.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.plugins.views.View;
 import step.plugins.views.functions.ReportNodeStatisticsEntry.Statistics;

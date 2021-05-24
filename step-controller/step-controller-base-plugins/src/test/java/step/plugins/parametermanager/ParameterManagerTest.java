@@ -37,7 +37,7 @@ import org.junit.Test;
 
 import step.parameter.Parameter;
 import step.commons.activation.Expression;
-import step.core.accessors.InMemoryAccessor;
+import ch.exense.commons.core.accessors.InMemoryAccessor;
 import step.core.objectenricher.ObjectPredicate;
 import step.parameter.ParameterManager;
 

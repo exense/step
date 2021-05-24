@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.collections.Collection;
-import step.core.collections.Filter;
+import ch.exense.commons.core.collections.Collection;
+import ch.exense.commons.core.collections.Filter;
 import step.core.execution.model.ExecutionStatus;
 import step.core.tables.AbstractTable;
 import step.core.tables.DateRangeCriterium;

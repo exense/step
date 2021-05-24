@@ -19,8 +19,8 @@
 package step.artefacts;
 
 import step.core.artefacts.Artefact;
-import step.core.dynamicbeans.ContainsDynamicValues;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.ContainsDynamicValues;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;

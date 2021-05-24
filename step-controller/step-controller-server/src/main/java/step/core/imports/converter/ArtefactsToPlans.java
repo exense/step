@@ -29,11 +29,11 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.accessors.AbstractIdentifiableObject;
-import step.core.collections.Collection;
-import step.core.collections.Document;
-import step.core.collections.DocumentObject;
-import step.core.collections.Filters;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.collections.Collection;
+import ch.exense.commons.core.collections.Document;
+import ch.exense.commons.core.collections.DocumentObject;
+import ch.exense.commons.core.collections.Filters;
 import step.core.objectenricher.ObjectEnricher;
 
 

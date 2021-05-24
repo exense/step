@@ -20,7 +20,7 @@ package step.core;
 
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
-import step.core.collections.CollectionFactory;
+import ch.exense.commons.core.collections.CollectionFactory;
 import step.core.entities.EntityManager;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.model.ExecutionAccessor;

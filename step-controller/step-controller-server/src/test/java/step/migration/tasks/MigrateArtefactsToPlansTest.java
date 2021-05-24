@@ -7,12 +7,12 @@ import org.junit.Test;
 import ch.exense.commons.app.Configuration;
 import step.artefacts.CallPlan;
 import step.artefacts.Sequence;
-import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.collections.Collection;
-import step.core.collections.CollectionFactory;
-import step.core.collections.Document;
-import step.core.collections.inmemory.InMemoryCollectionFactory;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.collections.Collection;
+import ch.exense.commons.core.collections.CollectionFactory;
+import ch.exense.commons.core.collections.Document;
+import ch.exense.commons.core.collections.inmemory.InMemoryCollectionFactory;
 import step.migration.MigrationContext;
 
 public class MigrateArtefactsToPlansTest {

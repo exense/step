@@ -27,7 +27,7 @@ import junit.framework.Assert;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;

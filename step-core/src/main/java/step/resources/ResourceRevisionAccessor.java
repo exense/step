@@ -20,7 +20,8 @@ package step.resources;
 
 import java.util.Iterator;
 
-import step.core.accessors.Accessor;
+import ch.exense.commons.core.accessors.Accessor;
+import ch.exense.commons.core.model.resources.ResourceRevision;
 
 public interface ResourceRevisionAccessor extends Accessor<ResourceRevision> {
 	

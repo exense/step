@@ -21,7 +21,7 @@ package step.core.objectenricher;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import step.core.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 
 /**
  * Instances of this class are responsible for the enrichment of 

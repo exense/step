@@ -25,9 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
-import step.core.accessors.AbstractAccessor;
-import step.core.accessors.Accessor;
-import step.core.collections.Collection;
+import ch.exense.commons.core.accessors.AbstractAccessor;
+import ch.exense.commons.core.accessors.Accessor;
+import ch.exense.commons.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;

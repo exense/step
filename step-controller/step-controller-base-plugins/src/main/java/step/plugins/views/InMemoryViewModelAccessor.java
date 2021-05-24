@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.plugins.views;
 
-import step.core.collections.inmemory.InMemoryCollection;
+import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
 
 public class InMemoryViewModelAccessor extends ViewModelAccessorImpl {
 

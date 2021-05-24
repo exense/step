@@ -25,8 +25,8 @@ import javax.json.JsonObject;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.json.JsonProviderCache;
 
 /**

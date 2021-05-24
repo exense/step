@@ -20,7 +20,7 @@ package step.core.tables;
 
 import javax.json.JsonObject;
 
-import step.core.collections.Filter;
+import ch.exense.commons.core.collections.Filter;
 
 public interface TableQueryFactory {
 

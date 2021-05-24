@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.datapool.file;
 
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 
 public class CSVDataPool extends FileDataPool {
 	

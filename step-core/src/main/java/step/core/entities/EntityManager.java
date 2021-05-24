@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
 
 import step.attachments.FileResolver;
 import step.core.AbstractStepContext;
-import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.Accessor;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.accessors.Accessor;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.export.ExportConfiguration;
 import step.core.imports.ImportConfiguration;
 import step.core.objectenricher.ObjectPredicate;

@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.BiConsumer;
 
+import ch.exense.commons.core.model.resources.Resource;
+import ch.exense.commons.core.model.resources.ResourceRevision;
 import org.bson.types.ObjectId;
 
 import step.core.imports.ImportConfiguration;

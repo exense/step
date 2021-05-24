@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.resources;
 
+import ch.exense.commons.core.model.resources.Resource;
+
 import java.util.List;
 
 @SuppressWarnings("serial")

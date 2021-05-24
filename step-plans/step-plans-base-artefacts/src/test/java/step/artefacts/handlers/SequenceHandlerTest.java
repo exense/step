@@ -38,7 +38,7 @@ import step.artefacts.Sequence;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plans.Plan;

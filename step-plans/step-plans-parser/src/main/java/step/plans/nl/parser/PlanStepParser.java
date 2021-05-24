@@ -22,9 +22,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import step.artefacts.CallFunction;
-import step.core.accessors.AbstractOrganizableObject;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.repositories.parser.AbstractStep;
 import step.repositories.parser.ParsingContext;
 import step.repositories.parser.StepParser;

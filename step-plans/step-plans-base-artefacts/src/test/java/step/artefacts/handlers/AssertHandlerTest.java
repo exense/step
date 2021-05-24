@@ -33,7 +33,7 @@ import step.artefacts.Assert.AssertOperator;
 import step.artefacts.reports.AssertReportNode;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 
 public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	

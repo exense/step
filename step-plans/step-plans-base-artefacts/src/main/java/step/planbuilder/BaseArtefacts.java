@@ -40,7 +40,7 @@ import step.artefacts.TestSet;
 import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.CheckArtefact;
-import step.core.dynamicbeans.DynamicValue;
+import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.datapool.excel.ExcelDataPool;
 import step.datapool.sequence.IntSequenceDataPool;

@@ -31,7 +31,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.variables.UndefinedVariableException;
 import step.core.variables.VariablesManager;
-import step.resources.Resource;
+import ch.exense.commons.core.model.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
 

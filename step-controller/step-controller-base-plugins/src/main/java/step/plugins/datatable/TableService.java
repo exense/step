@@ -51,11 +51,11 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.collections.Filter;
-import step.core.collections.Filters;
-import step.core.collections.SearchOrder;
+import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import ch.exense.commons.core.accessors.DefaultJacksonMapperProvider;
+import ch.exense.commons.core.collections.Filter;
+import ch.exense.commons.core.collections.Filters;
+import ch.exense.commons.core.collections.SearchOrder;
 import step.core.deployment.ApplicationServices;
 import step.core.deployment.Secured;
 import step.core.export.ExportTaskManager;
@@ -67,7 +67,7 @@ import step.core.tables.Table;
 import step.core.tables.TableColumn;
 import step.core.tables.TableFindResult;
 import step.core.tables.TableRegistry;
-import step.resources.Resource;
+import ch.exense.commons.core.model.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
 

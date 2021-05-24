@@ -21,11 +21,10 @@ package step.core.artefacts;
 import java.util.HashMap;
 import java.util.Map;
 
+import ch.exense.commons.core.accessors.serialization.MapDeserializer;
+import ch.exense.commons.core.accessors.serialization.MapSerializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-import step.core.accessors.MapDeserializer;
-import step.core.accessors.MapSerializer;
 
 public class TestBean {
 
