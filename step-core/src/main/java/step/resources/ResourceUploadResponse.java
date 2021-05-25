@@ -20,7 +20,6 @@ package step.resources;
 
 import java.util.List;
 
-import ch.exense.commons.core.model.resources.Resource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class ResourceUploadResponse {

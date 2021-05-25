@@ -40,7 +40,7 @@ import org.junit.Test;
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
 import step.functions.runner.FunctionRunner.Context;

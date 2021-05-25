@@ -157,14 +157,14 @@
 						<configuration>
 							<artifactItems>
 								<artifactItem>
-									<groupId>ch.exense.commons</groupId>
-									<artifactId>exense-core-model</artifactId>
-									<version>${exense-commons.version}</version>
+									<groupId>ch.exense.step</groupId>
+									<artifactId>step-core-model</artifactId>
+									<version>${project.version}</version>
 									<classifier>tests</classifier>
 									<type>test-jar</type>
 									<overWrite>false</overWrite>
 									<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
-									<destFileName>exense-core-model-test.jar</destFileName>
+									<destFileName>step-core-model-test.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
 							<overWriteReleases>true</overWriteReleases>

@@ -21,7 +21,7 @@ package step.artefacts;
 import step.artefacts.reports.SetReportNode;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(report = SetReportNode.class, block=false)
 public class Set extends AbstractArtefact {

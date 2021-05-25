@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.resources;
 
-import ch.exense.commons.core.model.resources.Resource;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;

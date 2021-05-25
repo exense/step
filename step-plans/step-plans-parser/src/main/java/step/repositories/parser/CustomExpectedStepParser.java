@@ -33,7 +33,7 @@ import step.artefacts.CallFunction;
 import step.artefacts.Export;
 import step.artefacts.Set;
 import step.core.artefacts.AbstractArtefact;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.repositories.parser.expected.ExpectedStepBaseVisitor;
 import step.repositories.parser.expected.ExpectedStepLexer;
 import step.repositories.parser.expected.ExpectedStepParser;

@@ -8,7 +8,7 @@ import step.artefacts.CallPlan;
 import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;

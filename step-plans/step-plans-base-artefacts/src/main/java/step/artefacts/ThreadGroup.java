@@ -20,7 +20,7 @@ package step.artefacts;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(useAsTemplate = true)
 public class ThreadGroup extends AbstractArtefact {

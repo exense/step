@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.exense.commons.core.model.resources.Resource;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 
 public class ExportTaskManager {

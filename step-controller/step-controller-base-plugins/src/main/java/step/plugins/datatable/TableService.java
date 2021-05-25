@@ -67,7 +67,7 @@ import step.core.tables.Table;
 import step.core.tables.TableColumn;
 import step.core.tables.TableFindResult;
 import step.core.tables.TableRegistry;
-import ch.exense.commons.core.model.resources.Resource;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
 

@@ -20,7 +20,6 @@ package step.resources;
 
 import ch.exense.commons.core.accessors.AbstractAccessor;
 import ch.exense.commons.core.collections.Collection;
-import ch.exense.commons.core.model.resources.Resource;
 
 public class ResourceAccessorImpl extends AbstractAccessor<Resource> implements ResourceAccessor {
 

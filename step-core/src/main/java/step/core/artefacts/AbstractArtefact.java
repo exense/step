@@ -36,7 +36,7 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 
 import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 

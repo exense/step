@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.datapool.jdbc;
 
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
 
 

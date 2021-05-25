@@ -25,7 +25,7 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ThreadGroup;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNodeStatus;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;

@@ -40,7 +40,7 @@ import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.artefacts.reports.ReportTreeVisitor;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
 import step.reporting.ReportWriter;
-import ch.exense.commons.core.model.resources.Resource;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContent;
 

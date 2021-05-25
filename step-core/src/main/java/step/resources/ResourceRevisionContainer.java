@@ -21,8 +21,6 @@ package step.resources;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import ch.exense.commons.core.model.resources.Resource;
-import ch.exense.commons.core.model.resources.ResourceRevision;
 import step.core.objectenricher.ObjectEnricher;
 
 public class ResourceRevisionContainer {

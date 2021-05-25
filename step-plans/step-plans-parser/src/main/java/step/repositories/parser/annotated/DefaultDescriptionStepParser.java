@@ -49,7 +49,7 @@ import step.artefacts.TestScenario;
 import step.artefacts.TestSet;
 import step.artefacts.ThreadGroup;
 import step.artefacts.While;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContextBindings;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.excel.ExcelDataPool;

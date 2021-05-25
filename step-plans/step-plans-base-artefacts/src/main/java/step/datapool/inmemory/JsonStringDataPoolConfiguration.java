@@ -18,9 +18,8 @@
  ******************************************************************************/
 package step.datapool.inmemory;
 
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
-import step.datapool.inmemory.JsonStringDataPoolConfiguration;
 
 
 public class JsonStringDataPoolConfiguration extends DataPoolConfiguration {

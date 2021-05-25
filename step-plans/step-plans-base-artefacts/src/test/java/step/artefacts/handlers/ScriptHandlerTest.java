@@ -30,7 +30,7 @@ import step.artefacts.Sequence;
 import step.artefacts.Set;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 
 public class ScriptHandlerTest extends AbstractArtefactHandlerTest {
 	

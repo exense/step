@@ -20,8 +20,6 @@ package step.core.dynamicbeans;
 
 import java.util.Map;
 
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
-import ch.exense.commons.core.model.dynamicbeans.EvaluationResult;
 import groovy.lang.GString;
 import step.expressions.ExpressionHandler;
 

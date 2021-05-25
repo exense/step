@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.plugins.node;
 
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.functions.Function;

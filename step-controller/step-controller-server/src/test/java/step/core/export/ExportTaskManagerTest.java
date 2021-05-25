@@ -27,7 +27,7 @@ import junit.framework.Assert;
 import ch.exense.commons.io.Poller;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
-import ch.exense.commons.core.model.resources.Resource;
+import step.resources.Resource;
 
 
 public class ExportTaskManagerTest {

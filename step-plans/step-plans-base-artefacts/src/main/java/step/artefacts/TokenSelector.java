@@ -19,7 +19,7 @@
 package step.artefacts;
 
 import step.core.artefacts.AbstractArtefact;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 
 public class TokenSelector extends AbstractArtefact {
 

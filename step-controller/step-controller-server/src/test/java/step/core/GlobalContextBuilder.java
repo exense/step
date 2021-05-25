@@ -57,11 +57,11 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.resources.InMemoryResourceAccessor;
 import step.resources.InMemoryResourceRevisionAccessor;
-import ch.exense.commons.core.model.resources.Resource;
+import step.resources.Resource;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
 import step.resources.ResourceManagerImpl;
-import ch.exense.commons.core.model.resources.ResourceRevision;
+import step.resources.ResourceRevision;
 import step.resources.ResourceRevisionAccessor;
 
 public class GlobalContextBuilder {

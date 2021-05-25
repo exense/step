@@ -36,7 +36,7 @@ import step.artefacts.CallFunction;
 import step.artefacts.Sequence;
 import step.artefacts.Set;
 import step.core.artefacts.AbstractArtefact;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;

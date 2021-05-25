@@ -21,7 +21,6 @@ package step.core.dynamicbeans;
 import java.util.HashMap;
 import java.util.Map;
 
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;

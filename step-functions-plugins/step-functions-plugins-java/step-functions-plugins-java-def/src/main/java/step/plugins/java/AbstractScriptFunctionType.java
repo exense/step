@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;

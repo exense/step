@@ -32,7 +32,7 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Export;
 import step.artefacts.Sequence;
 import step.core.artefacts.CheckArtefact;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;

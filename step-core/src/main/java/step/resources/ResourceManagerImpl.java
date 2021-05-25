@@ -31,10 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import ch.exense.commons.core.model.resources.CustomResourceType;
-import ch.exense.commons.core.model.resources.Resource;
-import ch.exense.commons.core.model.resources.ResourceRevision;
-import ch.exense.commons.core.model.resources.ResourceType;
 import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;

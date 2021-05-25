@@ -75,14 +75,14 @@ import step.core.tables.TableRegistry;
 import step.dashboards.DashboardSession;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
-import ch.exense.commons.core.model.resources.Resource;
+import step.resources.Resource;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceAccessorImpl;
 import step.resources.ResourceImporter;
 import step.resources.ResourceManager;
 import step.resources.ResourceManagerControllerPlugin;
 import step.resources.ResourceManagerImpl;
-import ch.exense.commons.core.model.resources.ResourceRevision;
+import step.resources.ResourceRevision;
 import step.resources.ResourceRevisionAccessor;
 import step.resources.ResourceRevisionAccessorImpl;
 

@@ -24,7 +24,7 @@ import java.util.Map;
 import step.artefacts.CallFunction;
 import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.repositories.parser.AbstractStep;
 import step.repositories.parser.ParsingContext;
 import step.repositories.parser.StepParser;

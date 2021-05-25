@@ -31,7 +31,7 @@ import com.google.common.cache.LoadingCache;
 
 import step.attachments.FileResolver;
 import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
-import ch.exense.commons.core.model.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.functions.io.Input;
 import step.grid.GridFileService;
