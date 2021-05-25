@@ -21,24 +21,31 @@ package step.migration;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.Version;
 import ch.exense.commons.core.collections.CollectionFactory;
+import step.core.Version;
 
 public class MigrationManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MigrationManager.class);
 	
-	protected List<Class<? extends MigrationTask>> migrationTasks = new ArrayList<>();
-
+	private final List<Class<? extends MigrationTask>> migrationTasks = new ArrayList<>();
+	private final Map<Class<?>, Object> bindings = new HashMap<>();
+	
 	public MigrationManager() {
 		super();
+	}
+	
+	public <T> void addBinding(Class<T> class_, T object) {
+		bindings.put(class_, object);
 	}
 
 	/**
@@ -57,7 +64,10 @@ public class MigrationManager {
 	 * @param to the new version
 	 * @return true if the migration ran successfully 
 	 */
-	public boolean migrate(CollectionFactory collectionFactory, Version from, Version to, MigrationContext migrationContext) {
+	@SuppressWarnings("unchecked")
+	public boolean migrate(CollectionFactory collectionFactory, Version from, Version to) {
+		final MigrationContext migrationContext = new MigrationContext();
+		bindings.forEach((k, v) -> migrationContext.put((Class<Object>) k, v));
 		List<MigrationTask> migrators = migrationTasks.stream().map(m -> {
 			try {
 				Constructor<? extends MigrationTask> constructor = m.getConstructor(CollectionFactory.class, MigrationContext.class);

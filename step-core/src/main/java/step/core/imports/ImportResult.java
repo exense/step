@@ -18,40 +18,18 @@
  ******************************************************************************/
 package step.core.imports;
 
-import java.io.File;
-import java.util.List;
+import java.util.Set;
 
-import step.core.objectenricher.ObjectEnricher;
+public class ImportResult {
 
-public class ImportConfiguration {
+	private final Set<String> messages;
 
-	private final File file;
-	private final ObjectEnricher objectEnricher;
-	private final List<String> entitiesFilter;
-	private final boolean overwrite;
-
-	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
-			boolean overwrite) {
+	public ImportResult(Set<String> messages) {
 		super();
-		this.file = file;
-		this.objectEnricher = objectEnricher;
-		this.entitiesFilter = entitiesFilter;
-		this.overwrite = overwrite;
+		this.messages = messages;
 	}
 
-	public File getFile() {
-		return file;
-	}
-
-	public ObjectEnricher getObjectEnricher() {
-		return objectEnricher;
-	}
-
-	public List<String> getEntitiesFilter() {
-		return entitiesFilter;
-	}
-
-	public boolean isOverwrite() {
-		return overwrite;
+	public Set<String> getMessages() {
+		return messages;
 	}
 }

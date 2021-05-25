@@ -27,9 +27,10 @@ import java.util.function.BiConsumer;
 import org.bson.types.ObjectId;
 
 import step.core.imports.ImportConfiguration;
+import step.core.imports.ImportContext;
 
 
-public class ResourceImporter implements BiConsumer<Object, ImportConfiguration> {
+public class ResourceImporter implements BiConsumer<Object, ImportContext> {
 
 	private ResourceManager resourceManager;
 	
@@ -38,17 +39,18 @@ public class ResourceImporter implements BiConsumer<Object, ImportConfiguration>
 	}
 	
 	@Override
-	public void accept(Object t, ImportConfiguration importConfig) {
+	public void accept(Object t, ImportContext importContext) {
 		if(t instanceof Resource) {
 			Resource resource = (Resource) t;
 
-			LocalResourceManagerImpl localResourceMgr = importConfig.getLocalResourceMgr();
+			ImportConfiguration importConfiguration = importContext.getImportConfiguration();
+			LocalResourceManagerImpl localResourceMgr = importContext.getLocalResourceMgr();
 			
 			String origResourceId;
-			if(importConfig.isOverwrite()) {
+			if(importConfiguration.isOverwrite()) {
 				origResourceId = resource.getId().toString(); 
 			} else {
-				origResourceId = importConfig.getNewToOldReferences().get(resource.getId().toString());
+				origResourceId = importContext.getNewToOldReferences().get(resource.getId().toString());
 			}
 			
 			// This ugly workaround is needed to be able to get resource file from local manager
@@ -56,7 +58,9 @@ public class ResourceImporter implements BiConsumer<Object, ImportConfiguration>
 			
 			File resourceFile = localResourceMgr.getResourceFile(origResourceId).getResourceFile();
 			try (InputStream fileInputStream = new FileInputStream(resourceFile)){
-				resource = resourceManager.saveResourceContent(resource.getId().toString(), fileInputStream, resource.getResourceName());
+				Resource newResource = resourceManager.saveResourceContent(resource.getId().toString(), fileInputStream, resource.getResourceName());
+				// Update the revision id
+				resource.setCurrentRevisionId(newResource.getCurrentRevisionId());
 			} catch (IOException e) {
 				throw new RuntimeException("Error while updating resource content for resource "+origResourceId, e);
 			}

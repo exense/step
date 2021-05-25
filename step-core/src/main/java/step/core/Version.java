@@ -89,4 +89,9 @@ public class Version implements Comparable<Version> {
 	private Long getVersionAsLong() {
 		return (long) (major*10000 + minor*100 + revision);
 	}
+	
+	public static Version getCurrentVersion() {
+		// TODO read this from manifest
+		return new Version(3,17,0);
+	}
 }

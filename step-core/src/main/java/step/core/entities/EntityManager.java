@@ -24,7 +24,11 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
@@ -37,8 +41,8 @@ import step.core.AbstractStepContext;
 import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
 import ch.exense.commons.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.export.ExportConfiguration;
-import step.core.imports.ImportConfiguration;
+import step.core.export.ExportContext;
+import step.core.imports.ImportContext;
 import step.core.objectenricher.ObjectPredicate;
 
 public class EntityManager  {
@@ -57,13 +61,13 @@ public class EntityManager  {
 	public final static String recursive = "recursive";
 
 	
-	private Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
-	private Map<Class<?>, Entity<?,?>> entitiesByClass = new ConcurrentHashMap<Class<?>, Entity<?,?>>();
-	private AbstractStepContext context;
-	Map<Class<?>,BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
+	private final Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
+	private final Map<Class<?>, Entity<?,?>> entitiesByClass = new ConcurrentHashMap<Class<?>, Entity<?,?>>();
+	private final AbstractStepContext context;
+	private final Map<Class<?>,BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 
-	private List<BiConsumer<Object, ImportConfiguration>> importHook = new ArrayList<BiConsumer<Object, ImportConfiguration>>();
-	private List<BiConsumer<Object, ExportConfiguration>> exportHook = new ArrayList<BiConsumer<Object,ExportConfiguration>>();
+	private final List<BiConsumer<Object, ImportContext>> importHook = new ArrayList<>();
+	private final List<BiConsumer<Object, ExportContext>> exportHook = new ArrayList<>();
 	
 	public EntityManager(AbstractStepContext context) {
 		this.context = context;
@@ -361,22 +365,22 @@ public class EntityManager  {
 		
 	}
 
-	public void registerExportHook(BiConsumer<Object, ExportConfiguration> exportBiConsumer) {
+	public void registerExportHook(BiConsumer<Object, ExportContext> exportBiConsumer) {
 		exportHook.add(exportBiConsumer);
 	}
 
-	public void runExportHooks(Object o, ExportConfiguration exportConfiguration) {
-		exportHook.forEach(h-> h.accept(o,exportConfiguration));
+	public void runExportHooks(Object o, ExportContext exportContext) {
+		exportHook.forEach(h-> h.accept(o, exportContext));
 	}
 
-	public void registerImportHook(BiConsumer<Object, ImportConfiguration> importBiConsumer) {
+	public void registerImportHook(BiConsumer<Object, ImportContext> importBiConsumer) {
 		importHook.add(importBiConsumer);
 	}
 
-	public void runImportHooks(Object o, ImportConfiguration importConfiguration) {
-		importHook.forEach(h-> h.accept(o,importConfiguration));
+	public void runImportHooks(Object o, ImportContext importContext) {
+		importHook.forEach(h-> h.accept(o, importContext));
 		//apply session object enricher as well
-		importConfiguration.getObjectEnricher().accept(o);
+		importContext.getImportConfiguration().getObjectEnricher().accept(o);
 	}
 	
 }

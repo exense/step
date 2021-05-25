@@ -16,42 +16,43 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.imports;
+package step.core.export;
 
-import java.io.File;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
-import step.core.objectenricher.ObjectEnricher;
+import step.core.entities.EntityReferencesMap;
 
-public class ImportConfiguration {
+public class ExportContext {
 
-	private final File file;
-	private final ObjectEnricher objectEnricher;
-	private final List<String> entitiesFilter;
-	private final boolean overwrite;
+	private final ExportConfiguration exportConfig;
+	private final Set<String> messages = new HashSet<>();
+	private final EntityReferencesMap references = new EntityReferencesMap();
 
-	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
-			boolean overwrite) {
+	public ExportContext(ExportConfiguration exportConfig) {
 		super();
-		this.file = file;
-		this.objectEnricher = objectEnricher;
-		this.entitiesFilter = entitiesFilter;
-		this.overwrite = overwrite;
+		this.exportConfig = exportConfig;
 	}
 
-	public File getFile() {
-		return file;
+	public boolean addMessage(String e) {
+		return messages.add(e);
 	}
 
-	public ObjectEnricher getObjectEnricher() {
-		return objectEnricher;
+	public boolean addMessages(Collection<? extends String> c) {
+		return messages.addAll(c);
 	}
 
-	public List<String> getEntitiesFilter() {
-		return entitiesFilter;
+	public Set<String> getMessages() {
+		return messages;
 	}
 
-	public boolean isOverwrite() {
-		return overwrite;
+	public ExportConfiguration getExportConfig() {
+		return exportConfig;
 	}
+
+	public EntityReferencesMap getReferences() {
+		return references;
+	}
+
 }

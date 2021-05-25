@@ -32,32 +32,26 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import step.attachments.FileResolver;
 import step.attachments.FileResolver.FileHandle;
+import step.core.GlobalContext;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.objectenricher.ObjectHookRegistry;
+import step.migration.MigrationManager;
 
 @Singleton
 @Path("import")
 public class ImportServices extends AbstractServices {
 	
-	private static final Logger logger = LoggerFactory.getLogger(ImportServices.class);
-	
-	FileResolver fileResolver;
-	
-	ImportManager importManager;
-	ObjectHookRegistry objectHookRegistry;
+	private FileResolver fileResolver;
+	private ImportManager importManager;
 		
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		importManager = new ImportManager(getContext());
-		fileResolver = getContext().getFileResolver();
-		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
+		GlobalContext context = getContext();
+		importManager = new ImportManager(context.getEntityManager(), context.require(MigrationManager.class));
+		fileResolver = context.getFileResolver();
 	}
 
 	@POST
@@ -72,8 +66,8 @@ public class ImportServices extends AbstractServices {
 				filter = Arrays.asList(entity);
 			}
 			ImportConfiguration importConfiguration = new ImportConfiguration(file.getFile(), getObjectEnricher(), filter, overwrite);
-			importManager.importAll(importConfiguration);
-			return importConfiguration.getMessages();
+			ImportResult importResult = importManager.importAll(importConfiguration);
+			return importResult.getMessages();
 		}
 	}
 }

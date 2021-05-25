@@ -19,10 +19,16 @@
 package step.core.export;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static step.planbuilder.BaseArtefacts.callPlan;
+import static step.planbuilder.BaseArtefacts.sequence;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,20 +38,21 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
+import ch.exense.commons.core.accessors.AbstractAccessor;
+import ch.exense.commons.core.accessors.Accessor;
+import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
+import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
 import ch.exense.commons.io.FileHelper;
-import ch.exense.viz.persistence.accessors.AbstractOrganizableObject;
-import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
+import step.artefacts.TestSet;
 import step.attachments.FileResolver;
-import step.core.GlobalContext;
-import step.core.GlobalContextBuilder;
-import ch.exense.commons.core.accessors.Accessor;
-import ch.exense.commons.core.accessors.InMemoryAccessor;
+import step.core.AbstractStepContext;
+import step.core.Version;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
@@ -53,164 +60,168 @@ import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.imports.ImportConfiguration;
 import step.core.imports.ImportManager;
+import step.core.imports.ImportResult;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 import step.datapool.excel.ExcelDataPool;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.migration.MigrationManager;
+import step.migration.tasks.MigrateArtefactsToPlans;
+import step.migration.tasks.MigrateAssertNegation;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
-import step.planbuilder.BaseArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
 import step.plugins.parametermanager.ParameterManagerControllerPlugin;
+import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
+import step.resources.ResourceAccessor;
 import step.resources.ResourceImporter;
 import step.resources.ResourceManager;
+import step.resources.ResourceRevision;
+import step.resources.ResourceRevisionAccessor;
 
-// TODO Fix these tests
 public class ExportManagerTest {
-	
-	private ObjectPredicate objectPredicate = new ObjectPredicate() {
-		
-		@Override
-		public boolean test(Object t) {
-			return true;
-		}
-	};
 
-	public static GlobalContext createGlobalContext() throws InstantiationException, IllegalAccessException, ClassNotFoundException, CircularDependencyException {
-		GlobalContext context = createGlobalContext_();
+	private PlanAccessor planAccessor;
+	private EntityManager entityManager;
+	private MigrationManager migrationManager;
+	private EncryptionManager encryptionManager;
+	private LocalResourceManagerImpl resourceManager;
+	private FunctionAccessor functionAccessor;
+	private Accessor<Parameter> parameterAccessor;
+	private ResourceAccessor resourceAccessor;
+	private ResourceRevisionAccessor resourceRevisionAccessor;
+	
+	@Before
+	public void before() {
 		EncryptionManager encryptionManager = new EncryptionManager() {
 			@Override
 			public String encrypt(String value) throws EncryptionManagerException {
 				return "###"+value;
 			}
-
+			
 			@Override
 			public String decrypt(String encryptedValue) throws EncryptionManagerException {
 				return encryptedValue.replaceFirst("###", "");
 			}
-
+			
 			@Override
 			public boolean isKeyPairChanged() {
 				return false;
 			}
-
+			
 			@Override
 			public boolean isFirstStart() {
 				return false;
 			}
 		};
-		context.put(EncryptionManager.class,encryptionManager);
-		context.put(MigrationManager.class, new MigrationManager());
 		
-		
-		
-		return context;
+		newContext(encryptionManager);
 	}
 
-	public static GlobalContext createGlobalContext_() throws InstantiationException, IllegalAccessException, ClassNotFoundException, CircularDependencyException {
-		GlobalContext context = GlobalContextBuilder.createGlobalContext();
-		BaseArtefactPlugin.registerArtefacts(context.getArtefactHandlerRegistry());
-		//From ParameterManagerPlugin
-		InMemoryAccessor<Parameter> parameterAccessor = new InMemoryAccessor<Parameter>();
-		context.put("ParameterAccessor", parameterAccessor);
-		context.getEntityManager().register(new Entity<Parameter, Accessor<Parameter>> (
-				Parameter.ENTITY_NAME,
-				parameterAccessor,
-				Parameter.class));
-		context.getEntityManager().registerExportHook(new ParameterManagerControllerPlugin.ParameterExportBiConsumer(context));
-		context.getEntityManager().registerImportHook(new ParameterManagerControllerPlugin.ParameterImportBiConsumer(context));
-		context.getEntityManager().registerImportHook(new ResourceImporter(context.getResourceManager()));
-		return context;
+	private void newContext(EncryptionManager encryptionManager) {
+		this.encryptionManager = encryptionManager;
+		
+		planAccessor = new InMemoryPlanAccessor();
+		functionAccessor = new InMemoryFunctionAccessorImpl();
+		parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<Parameter>());
+		
+		resourceManager = new LocalResourceManagerImpl();
+		resourceAccessor = resourceManager.getResourceAccessor();
+		resourceRevisionAccessor = resourceManager.getResourceRevisionAccessor();
+		
+		AbstractStepContext context = new AbstractStepContext() {};
+		context.setFileResolver(new FileResolver(resourceManager));
+		context.setResourceManager(resourceManager);
+		context.setResourceAccessor(resourceAccessor);
+		
+		entityManager = new EntityManager(context);
+		entityManager
+				.register(new Entity<Parameter, Accessor<Parameter>>(Parameter.ENTITY_NAME, parameterAccessor, Parameter.class))
+				.register(new Entity<Plan, PlanAccessor>(EntityManager.plans, planAccessor, Plan.class))
+				.register(new Entity<Function, FunctionAccessor>(EntityManager.functions, functionAccessor, Function.class))
+				.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor, Resource.class))
+				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions, resourceRevisionAccessor, 
+						ResourceRevision.class));
+		
+		entityManager.registerExportHook(new ParameterManagerControllerPlugin.ParameterExportBiConsumer());
+		entityManager.registerImportHook(new ParameterManagerControllerPlugin.ParameterImportBiConsumer(encryptionManager));
+		entityManager.registerImportHook(new ResourceImporter(resourceManager));
+		
+		migrationManager = new MigrationManager();
+		migrationManager.register(MigrateArtefactsToPlans.class);
+		migrationManager.register(MigrateAssertNegation.class);
 	}
-
+	
 	@Test
 	public void testExportPlanById() throws Exception {
-		GlobalContext c = createGlobalContext();
-		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(BaseArtefacts.sequence()).endBlock().build();
-		c.getPlanAccessor().save(plan);
+		Plan plan = PlanBuilder.create().startBlock(sequence()).add(sequence()).endBlock().build();
+		planAccessor.save(plan);
 		
 		File testExportFile = new File("testExport.zip");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
-			metadata.put("export-time" , "1589542872475");
-			metadata.put("user", "admin");
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
-			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
-			Assert.assertTrue(FileHelper.isArchive(testExportFile));
+			exportManager.exportById(exportConfig, plan.getId().toString());
+			assertTrue(FileHelper.isArchive(testExportFile));
 			
-			//DEBUG
-			/*try (BufferedReader br = new BufferedReader(
-					new InputStreamReader(new FileInputStream(testExportFile), StandardCharsets.UTF_8));) {
-				String line;
-				while ((line = br.readLine()) != null) {
-					System.out.println(line);
-				}
-			}*/
+			ImportManager importManager = createNewContextAndGetImportManager();
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
 			
-			//create a new context to test the import
-			c = createGlobalContext();
-			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(c), Arrays.asList("plans"), true));
-			
-			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
-			Assert.assertEquals(plan.getId(), actualPlan.getId());
-			Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
+			Plan actualPlan = planAccessor.get(plan.getId());
+			assertEquals(plan.getId(), actualPlan.getId());
+			assertEquals(plan.getRoot(), actualPlan.getRoot());
 		} finally {
 			testExportFile.delete();
 		}
+	}
+
+	private Map<String, String> buildMetadata() {
+		Map<String,String> metadata = new HashMap<String,String>();
+		metadata.put("version", Version.getCurrentVersion().toString());
+		metadata.put("export-time" , "1589542872475");
+		metadata.put("user", "admin");
+		return metadata;
+	}
+
+	private ExportManager newExportManager() {
+		return new ExportManager(entityManager, resourceManager);
 	}
 
 	@Test
 	public void testExportKeywordById() throws Exception {
-		GlobalContext c = createGlobalContext();
 		Function function = new Function();
-		FunctionAccessor functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 		functionAccessor.save(function);
 
 		File testExportFile = new File("testExport.zip");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
-			metadata.put("export-time" , "1589542872475");
-			metadata.put("user", "admin");
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), EntityManager.functions, true, null);
-			exportManager.exportById(exportConfig, function.getId().toString(), objectPredicate);
-			Assert.assertTrue(FileHelper.isArchive(testExportFile));
+			exportManager.exportById(exportConfig, function.getId().toString());
+			assertTrue(FileHelper.isArchive(testExportFile));
 
-			//DEBUG
-			/*try (BufferedReader br = new BufferedReader(
-					new InputStreamReader(new FileInputStream(testExportFile), StandardCharsets.UTF_8));) {
-				String line;
-				while ((line = br.readLine()) != null) {
-					System.out.println(line);
-				}
-			}*/
-
-			//create a new context to test the import
-			c = createGlobalContext();
-			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(c), Arrays.asList(EntityManager.functions), true));
-			functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
+			ImportManager importManager = createNewContextAndGetImportManager();
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList(EntityManager.functions), true));
 			functionAccessor.save(function);
 			Function actualFunction = functionAccessor.get(function.getId());
 
-			Assert.assertEquals(function.getId(), actualFunction.getId());
+			assertEquals(function.getId(), actualFunction.getId());
 		} finally {
 			testExportFile.delete();
 		}
 	}
 
-	protected ObjectEnricher dummyObjectEnricher(GlobalContext context) {
+	protected ObjectEnricher dummyObjectEnricher() {
 		return new ObjectEnricher() {
 
 			@Override
@@ -226,31 +237,27 @@ public class ExportManagerTest {
 
 	@Test
 	public void testExportAllPlans() throws Exception {
-		GlobalContext c = createGlobalContext();
-		Sequence rootSequence = BaseArtefacts.sequence();
-		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
-		c.getPlanAccessor().save(plan);
-		Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
-		c.getPlanAccessor().save(plan2);
+		Sequence rootSequence = sequence();
+		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(sequence()).endBlock().build();
+		planAccessor.save(plan);
+		Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(sequence()).endBlock().build();
+		planAccessor.save(plan2);
 		
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
 			exportManager.exportAll(exportConfig);
 			
-			//create a new context to test the import
-			c = createGlobalContext();
-			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(c), Arrays.asList("plans"), true));
+			ImportManager importManager = createNewContextAndGetImportManager();
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
 			
-			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
-			Plan actualPlan2 = c.getPlanAccessor().get(plan2.getId());
-			Assert.assertEquals(plan.getId(), actualPlan.getId());
-			Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
-			Assert.assertEquals(plan2.getId(), actualPlan2.getId());
+			Plan actualPlan = planAccessor.get(plan.getId());
+			Plan actualPlan2 = planAccessor.get(plan2.getId());
+			assertEquals(plan.getId(), actualPlan.getId());
+			assertEquals(plan.getRoot(), actualPlan.getRoot());
+			assertEquals(plan2.getId(), actualPlan2.getId());
 		} finally {
 			testExportFile.delete();
 		}
@@ -258,16 +265,12 @@ public class ExportManagerTest {
 	
 	@Test
 	public void testExportAllPlansWithParameters() throws Exception {
-		GlobalContext c = createGlobalContext();
-		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
-		
-		Sequence rootSequence = BaseArtefacts.sequence();
-		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
-		c.getPlanAccessor().save(plan);
-		Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
-		c.getPlanAccessor().save(plan2);
+		Sequence rootSequence = sequence();
+		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(sequence()).endBlock().build();
+		planAccessor.save(plan);
+		Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(sequence()).endBlock().build();
+		planAccessor.save(plan2);
 
-		EncryptionManager encryptionManager = c.get(EncryptionManager.class);
 		Parameter param = new Parameter(null,"key","Value","desc");
 		Parameter savedParam = parameterAccessor.save(param);
 		Parameter paramProtected = new Parameter(null,"key_pwd","Value","desc");
@@ -279,49 +282,65 @@ public class ExportManagerTest {
 		paramProtectedEncrypted.setValue(null);
 		Parameter savedParamProtectedEncrypted = parameterAccessor.save(paramProtectedEncrypted);
 		
-		
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			List<String> additionalEntities = new ArrayList<String>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
-			exportManager.exportAll(exportConfig);
+			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
-			Assert.assertEquals(2,exportConfig.getMessages().size());
-			Assert.assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportConfig.getMessages().toArray()[1]);
-			Assert.assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportConfig.getMessages().toArray()[0]);
+			assertEquals(2,exportResult.getMessages().size());
+			assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportResult.getMessages().toArray()[1]);
+			assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
 
-			//create a new context to test the import
-			c = createGlobalContext();
-			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
+			EncryptionManager encryptionManager = new EncryptionManager() {
+				@Override
+				public String encrypt(String value) throws EncryptionManagerException {
+					return "###"+value;
+				}
+				
+				@Override
+				public String decrypt(String encryptedValue) throws EncryptionManagerException {
+					return encryptedValue.replaceFirst("###", "");
+				}
+				
+				@Override
+				public boolean isKeyPairChanged() {
+					return false;
+				}
+				
+				@Override
+				public boolean isFirstStart() {
+					return false;
+				}
+			};
+			newContext(encryptionManager);
+			ImportManager importManager = newImportManager();
+			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true);
+			ImportResult importResult = importManager.importAll(importConfiguration);
+			assertEquals(1,importResult.getMessages().size());
+			assertEquals(ParameterManagerControllerPlugin.IMPORT_RESET_WARN,importResult.getMessages().toArray()[0]);
 
-			ImportManager importManager = new ImportManager(c);
-			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true);
-			importManager.importAll(importConfiguration);
-			Assert.assertEquals(1,importConfiguration.getMessages().size());
-			Assert.assertEquals(ParameterManagerControllerPlugin.IMPORT_RESET_WARN,importConfiguration.getMessages().toArray()[0]);
-
-			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
-			Plan actualPlan2 = c.getPlanAccessor().get(plan2.getId());
+			Plan actualPlan = planAccessor.get(plan.getId());
+			Plan actualPlan2 = planAccessor.get(plan2.getId());
 			Parameter actualParam = parameterAccessor.get(savedParam.getId());
 			Parameter actualParamProtected = parameterAccessor.get(savedParamProtected.getId());
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtectedEncrypted.getId());
-			Assert.assertEquals(plan.getId(), actualPlan.getId());
-			Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
-			Assert.assertEquals(plan2.getId(), actualPlan2.getId());
-			Assert.assertEquals(savedParam.getId(), actualParam.getId());
-			Assert.assertEquals(savedParamProtected.getId(), actualParamProtected.getId());
-			Assert.assertEquals(true, actualParamProtected.getProtectedValue());
-			Assert.assertEquals(ParameterManager.RESET_VALUE, actualParamProtected.getValue());
-			Assert.assertEquals(null, actualParamProtected.getEncryptedValue());
-			Assert.assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
-			Assert.assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			Assert.assertEquals(null, actualParamProtectedEncrypted.getValue());
-			Assert.assertEquals("###Value", actualParamProtectedEncrypted.getEncryptedValue());
+			assertEquals(plan.getId(), actualPlan.getId());
+			assertEquals(plan.getRoot(), actualPlan.getRoot());
+			assertEquals(plan2.getId(), actualPlan2.getId());
+			assertEquals(savedParam.getId(), actualParam.getId());
+			assertEquals(savedParamProtected.getId(), actualParamProtected.getId());
+			assertEquals(true, actualParamProtected.getProtectedValue());
+			assertEquals(ParameterManager.RESET_VALUE, actualParamProtected.getValue());
+			assertEquals(null, actualParamProtected.getEncryptedValue());
+			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
+			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
+			assertEquals(null, actualParamProtectedEncrypted.getValue());
+			assertEquals("###Value", actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
 		}
@@ -329,10 +348,6 @@ public class ExportManagerTest {
 
 	@Test
 	public void testImportNewEncryptionManager() throws Exception {
-		GlobalContext c = createGlobalContext();
-		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
-
-		EncryptionManager encryptionManager = c.get(EncryptionManager.class);
 		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
 		paramProtectedEncrypted.setProtectedValue(true);
 		paramProtectedEncrypted.setEncryptedValue(encryptionManager.encrypt(paramProtectedEncrypted.getValue()));
@@ -341,21 +356,17 @@ public class ExportManagerTest {
 
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			List<String> additionalEntities = new ArrayList<String>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
-			exportManager.exportAll(exportConfig);
+			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
-			Assert.assertEquals(1,exportConfig.getMessages().size());
-			Assert.assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportConfig.getMessages().toArray()[0]);
+			assertEquals(1,exportResult.getMessages().size());
+			assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
 
-			//create a new context to test the import
-			c = createGlobalContext();
-			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 			//Override previous encryption manager to simulate new instance
 			EncryptionManager encryptionManagerNewInstance = new EncryptionManager() {
 				@Override
@@ -375,19 +386,18 @@ public class ExportManagerTest {
 					return false;
 				}
 			};
-			c.put(EncryptionManager.class,encryptionManagerNewInstance);
-
-			ImportManager importManager = new ImportManager(c);
-			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true);
-			importManager.importAll(importConfiguration);
-			Assert.assertEquals(1,importConfiguration.getMessages().size());
-			Assert.assertEquals(ParameterManagerControllerPlugin.IMPORT_DECRYPT_FAIL_WARN,importConfiguration.getMessages().toArray()[0]);
+			newContext(encryptionManagerNewInstance);
+			ImportManager importManager = newImportManager();
+			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true);
+			ImportResult importResult = importManager.importAll(importConfiguration);
+			assertEquals(1,importResult.getMessages().size());
+			assertEquals(ParameterManagerControllerPlugin.IMPORT_DECRYPT_FAIL_WARN,importResult.getMessages().toArray()[0]);
 
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtectedEncrypted.getId());
-			Assert.assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
-			Assert.assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			Assert.assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
-			Assert.assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
+			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
+			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
+			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
+			assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
 		}
@@ -395,10 +405,6 @@ public class ExportManagerTest {
 
 	@Test
 	public void testImportNoEncryptionManager() throws Exception {
-		GlobalContext c = createGlobalContext();
-		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
-
-		EncryptionManager encryptionManager = c.get(EncryptionManager.class);
 		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
 		paramProtectedEncrypted.setProtectedValue(true);
 		paramProtectedEncrypted.setEncryptedValue(encryptionManager.encrypt(paramProtectedEncrypted.getValue()));
@@ -407,33 +413,30 @@ public class ExportManagerTest {
 
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			List<String> additionalEntities = new ArrayList<String>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
-			exportManager.exportAll(exportConfig);
+			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
-			Assert.assertEquals(1,exportConfig.getMessages().size());
-			Assert.assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportConfig.getMessages().toArray()[0]);
+			assertEquals(1,exportResult.getMessages().size());
+			assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
 
-			//create a new context to test the import without encpryption manager
-			c = createGlobalContext_();
-			c.put(MigrationManager.class, new MigrationManager());
-			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
-			ImportManager importManager = new ImportManager(c);
-			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true);
-			importManager.importAll(importConfiguration);
-			Assert.assertEquals(1,importConfiguration.getMessages().size());
-			Assert.assertEquals(ParameterManagerControllerPlugin.IMPORT_DECRYPT_NO_EM_WARN,importConfiguration.getMessages().toArray()[0]);
+			// Create a new context without encryption manager
+			newContext(null);
+			ImportManager importManager = newImportManager();
+			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true);
+			ImportResult importResult = importManager.importAll(importConfiguration);
+			assertEquals(1,importResult.getMessages().size());
+			assertEquals(ParameterManagerControllerPlugin.IMPORT_DECRYPT_NO_EM_WARN,importResult.getMessages().toArray()[0]);
 
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtectedEncrypted.getId());
-			Assert.assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
-			Assert.assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			Assert.assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
-			Assert.assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
+			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
+			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
+			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
+			assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
 		}
@@ -441,72 +444,66 @@ public class ExportManagerTest {
 
 	@Test
 	public void testImportProtectedToEncrypted() throws Exception {
-		//create a new context to test the import without encpryption manager
-		GlobalContext c = createGlobalContext_();
-		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
 		paramProtectedEncrypted.setProtectedValue(true);
 		Parameter savedParamProtected = parameterAccessor.save(paramProtectedEncrypted);
 
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			List<String> additionalEntities = new ArrayList<String>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
-			exportManager.exportAll(exportConfig);
+			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
-			Assert.assertEquals(1,exportConfig.getMessages().size());
-			Assert.assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportConfig.getMessages().toArray()[0]);
+			assertEquals(1,exportResult.getMessages().size());
+			assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
 
-			c = createGlobalContext();
-			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
-			ImportManager importManager = new ImportManager(c);
-			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true);
-			importManager.importAll(importConfiguration);
-			Assert.assertEquals(1,importConfiguration.getMessages().size());
-			Assert.assertEquals(ParameterManagerControllerPlugin.IMPORT_RESET_WARN,importConfiguration.getMessages().toArray()[0]);
+			ImportManager importManager = createNewContextAndGetImportManager();
+			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true);
+			ImportResult importResult = importManager.importAll(importConfiguration);
+			assertEquals(1,importResult.getMessages().size());
+			assertEquals(ParameterManagerControllerPlugin.IMPORT_RESET_WARN,importResult.getMessages().toArray()[0]);
 
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtected.getId());
-			Assert.assertEquals(savedParamProtected.getId(), actualParamProtectedEncrypted.getId());
-			Assert.assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			Assert.assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
-			Assert.assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
+			assertEquals(savedParamProtected.getId(), actualParamProtectedEncrypted.getId());
+			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
+			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
+			assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
 		}
 	}
 
 	@Test
-	public void testImport_3_15_7() throws Exception {
-		GlobalContext c = createGlobalContext();
-		URL resource = getClass().getClassLoader().getResource("./step/core/export/export_3_15_7.sta");
+	public void testImportFromOlderVersions() throws Exception {
+		testImportFromOlderVersion("60a515f058146c742b50a87b", "60a515fa58146c742b50a8cb", "60a5162658146c742b50aa0f", "60a5168958146c742b50af79", "export_3_15_7.sta");
+		testImportFromOlderVersion("60a8e0d3dc92e67be456f0e2", "60a8e0d3dc92e67be456f0dc", "60a8e0d3dc92e67be456f0cc", "60a8e0d3dc92e67be456f0e4", "export_3_16_1.sta");
+	}
+
+	private void testImportFromOlderVersion(final String testSet01Id, final String testCase01Id,
+			final String composite01Id, final String parameter01Id, String exportFileName) throws InstantiationException,
+			IllegalAccessException, ClassNotFoundException, CircularDependencyException, IOException, Exception {
+		URL resource = getClass().getClassLoader().getResource("./step/core/export/"+exportFileName);
 		File testImportFile = new File(resource.getFile());
 
-		//create a new context to test the import
-		c = createGlobalContext();
-		ImportManager importManager = new ImportManager(c);
-		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(c), null, true));
+		ImportManager importManager = createNewContextAndGetImportManager();
+		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), null, true));
 
-		Plan testSet01 = c.getPlanAccessor().get("60a515f058146c742b50a87b");
+		Plan testSet01 = planAccessor.get(testSet01Id);
 		assertNotNull(testSet01);
 		assertEquals("TestSet 01", testSet01.getAttribute(AbstractOrganizableObject.NAME));
 		
-		Plan testCase01 = c.getPlanAccessor().get("60a515fa58146c742b50a8cb");
+		Plan testCase01 = planAccessor.get(testCase01Id);
 		assertNotNull(testCase01);
 		assertEquals("TestCase 01", testCase01.getAttribute(AbstractOrganizableObject.NAME));
 		
-		FunctionAccessor functionAccessor = c.get(FunctionAccessor.class);
-		Function composite01 = functionAccessor.get("60a5162658146c742b50aa0f");
+		Function composite01 = functionAccessor.get(composite01Id);
 		assertNotNull(composite01);
 		
-		@SuppressWarnings("unchecked")
-		Accessor<Parameter> parameterAccessor = (Accessor<Parameter>) c.get("ParameterAccessor");
-		
-		Parameter parameter01 = parameterAccessor.get("60a5168958146c742b50af79");
+		Parameter parameter01 = parameterAccessor.get(parameter01Id);
 		assertNotNull(parameter01);
 		assertEquals("Param01", parameter01.getKey());
 		assertEquals("Value01", parameter01.getValue());
@@ -514,63 +511,50 @@ public class ExportManagerTest {
 	
 	@Test
 	public void testOlderParametersImport() throws Exception {
-		GlobalContext c = createGlobalContext();
 		URL resource = getClass().getClassLoader().getResource("./step/core/export/allParameters_3_15.sta");
 		File testImportFile = new File(resource.getFile());
 
-		//create a new context to test the import
-		c = createGlobalContext();
-		ImportManager importManager = new ImportManager(c);
-		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(c), null, true));
+		ImportManager importManager = createNewContextAndGetImportManager();
+		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), null, true));
 
-		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
 		Parameter parameterClear = parameterAccessor.get("6059b301e7ca79765f814864");
 		Parameter parameterProtected = parameterAccessor.get("6059b2d0e7ca79765f81451a");
-		Assert.assertNotNull(parameterClear);
-		Assert.assertNotNull(parameterProtected);
-		Assert.assertEquals("value_clear",parameterClear.getValue());
-		Assert.assertEquals(false,parameterClear.getProtectedValue());
-		Assert.assertEquals(ParameterManager.RESET_VALUE,parameterProtected.getValue());
-		Assert.assertEquals(true,parameterProtected.getProtectedValue());
-		//Assert.assertEquals(originPlanId, actualPlan.getId().toString());
+		assertNotNull(parameterClear);
+		assertNotNull(parameterProtected);
+		assertEquals("value_clear",parameterClear.getValue());
+		assertEquals(false,parameterClear.getProtectedValue());
+		assertEquals(ParameterManager.RESET_VALUE,parameterProtected.getValue());
+		assertEquals(true,parameterProtected.getProtectedValue());
+		//assertEquals(originPlanId, actualPlan.getId().toString());
 	}
 
 
 	@Test
 	public void testExportPlanByIdWithParameters() throws Exception {
-		GlobalContext c = createGlobalContext();
-		InMemoryAccessor<Parameter> parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
-		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(BaseArtefacts.sequence()).endBlock().build();
-		c.getPlanAccessor().save(plan);
+		Plan plan = PlanBuilder.create().startBlock(sequence()).add(sequence()).endBlock().build();
+		planAccessor.save(plan);
 		
 		Parameter param = new Parameter(null,"key","Value","desc");
 		Parameter savedParam = parameterAccessor.save(param);
 		
 		File testExportFile = new File("testExport.zip");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
-			metadata.put("export-time" , "1589542872475");
-			metadata.put("user", "admin");
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			List<String> additionalEntities = new ArrayList<String>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
-			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
-			Assert.assertTrue(FileHelper.isArchive(testExportFile));
+			exportManager.exportById(exportConfig, plan.getId().toString());
+			assertTrue(FileHelper.isArchive(testExportFile));
 			
-			//create a new context to test the import
-			c = createGlobalContext();
-			parameterAccessor = (InMemoryAccessor<Parameter>) c.get("ParameterAccessor");
-
-			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, true));
+			ImportManager importManager = createNewContextAndGetImportManager();
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true));
 			
 			Parameter actualParam = parameterAccessor.get(savedParam.getId());
-			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
-			Assert.assertEquals(plan.getId(), actualPlan.getId());
-			Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
-			Assert.assertEquals(savedParam.getId(), actualParam.getId());
+			Plan actualPlan = planAccessor.get(plan.getId());
+			assertEquals(plan.getId(), actualPlan.getId());
+			assertEquals(plan.getRoot(), actualPlan.getRoot());
+			assertEquals(savedParam.getId(), actualParam.getId());
 		} finally {
 			testExportFile.delete();
 		}
@@ -578,39 +562,24 @@ public class ExportManagerTest {
 	
 	@Test
 	public void testExportPlanByWithCustomFields() throws Exception {
-		GlobalContext c = createGlobalContext();
-		Sequence seq = BaseArtefacts.sequence();
+		Sequence seq = sequence();
 		seq.addCustomField("key", "value");
-		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(seq).endBlock().build();
-		c.getPlanAccessor().save(plan);
+		Plan plan = PlanBuilder.create().startBlock(sequence()).add(seq).endBlock().build();
+		planAccessor.save(plan);
 		
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
-			metadata.put("export-time" , "1589542872475");
-			metadata.put("user", "admin");
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
-			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
+			exportManager.exportById(exportConfig, plan.getId().toString());
 			
-			//DEBUG
-			/*try (BufferedReader br = new BufferedReader(
-					new InputStreamReader(new FileInputStream(testExportFile), StandardCharsets.UTF_8));) {
-				String line;
-				while ((line = br.readLine()) != null) {
-					System.out.println(line);
-				}
-			}*/
+			ImportManager importManager = createNewContextAndGetImportManager();
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
 			
-			//create a new context to test the import
-			c = createGlobalContext();
-			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(c), Arrays.asList("plans"), true));
-			
-			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
-			Assert.assertEquals(plan.getId(), actualPlan.getId());
-			Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
+			Plan actualPlan = planAccessor.get(plan.getId());
+			assertEquals(plan.getId(), actualPlan.getId());
+			assertEquals(plan.getRoot(), actualPlan.getRoot());
 		} finally {
 			testExportFile.delete();
 		}
@@ -627,64 +596,51 @@ public class ExportManagerTest {
 	}
 	
 	private void testExportPlansRecursively(boolean overwrite) throws Exception {
-		GlobalContext c = createGlobalContext();
-		Sequence rootSequence = BaseArtefacts.sequence();
-		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(BaseArtefacts.sequence()).endBlock().build();
-		c.getPlanAccessor().save(plan);
+		Sequence rootSequence = sequence();
+		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(sequence()).endBlock().build();
+		planAccessor.save(plan);
 		Function function = new Function();
-		FunctionAccessor functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 		functionAccessor.save(function);
-		Sequence sequence = BaseArtefacts.sequence();
-		sequence.addChild(BaseArtefacts.callPlan(plan.getId().toString()));
+		Sequence sequence = sequence();
+		sequence.addChild(callPlan(plan.getId().toString()));
 		CallFunction callFunction = new CallFunction();
 		callFunction.setFunctionId(function.getId().toString());
 		sequence.addChild(callFunction);
 		Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(sequence).endBlock().build();
-		c.getPlanAccessor().save(plan2);
+		planAccessor.save(plan2);
 		
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
-			exportManager.exportById(exportConfig, plan2.getId().toString(), objectPredicate);
+			exportManager.exportById(exportConfig, plan2.getId().toString());
 			
-			/*DEBUG
-			  try (BufferedReader br = new BufferedReader(
-			 
-					new InputStreamReader(new FileInputStream(testExportFile), StandardCharsets.UTF_8));) {
-				String line;
-				while ((line = br.readLine()) != null) {
-					System.out.println(line);
-				}
-			}*/
-						
-			//create a new context to test the import
-			c = createGlobalContext();
-			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, overwrite));
+			planAccessor.getAll().forEachRemaining(p->planAccessor.remove(p.getId()));
+			functionAccessor.getAll().forEachRemaining(p->functionAccessor.remove(p.getId()));
+			
+			ImportManager importManager = createNewContextAndGetImportManager();
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
 			
 			AtomicInteger nbPlans = new AtomicInteger(0);
-			c.getPlanAccessor().getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
+			planAccessor.getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
 			AtomicInteger nbFunctions = new AtomicInteger(0);
-			functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 			functionAccessor.getAll().forEachRemaining(f->nbFunctions.incrementAndGet());
-			Assert.assertEquals(2, nbPlans.intValue());
-			Assert.assertEquals(1, nbFunctions.intValue());
+			assertEquals(2, nbPlans.intValue());
+			assertEquals(1, nbFunctions.intValue());
 			
-			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
-			Plan actualPlan2 = c.getPlanAccessor().get(plan2.getId());
+			Plan actualPlan = planAccessor.get(plan.getId());
+			Plan actualPlan2 = planAccessor.get(plan2.getId());
 			Function actualFunction = functionAccessor.get(function.getId());
 			if (overwrite) {
-				Assert.assertEquals(plan.getId(), actualPlan.getId());
-				Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
-				Assert.assertEquals(plan2.getId(), actualPlan2.getId());
-				Assert.assertEquals(function.getId(), actualFunction.getId());
+				assertEquals(plan.getId(), actualPlan.getId());
+				assertEquals(plan.getRoot(), actualPlan.getRoot());
+				assertEquals(plan2.getId(), actualPlan2.getId());
+				assertEquals(function.getId(), actualFunction.getId());
 			} else {
-				Assert.assertNull(actualPlan);
-				Assert.assertNull(actualPlan2);
-				Assert.assertNull(actualFunction);
+				assertNull(actualPlan);
+				assertNull(actualPlan2);
+				assertNull(actualFunction);
 			}
 		} finally {
 			testExportFile.delete();
@@ -702,56 +658,51 @@ public class ExportManagerTest {
 	}
 	
 	private void testExportPlansWithCompoFct(boolean overwrite) throws Exception {
-		GlobalContext c = createGlobalContext();
-		
-		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(c.getPlanAccessor());
+		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(planAccessor);
 		CompositeFunction function = compositeFunctionType.newFunction();
 		compositeFunctionType.setupFunction(function);
 		String compositePlanId = function.getPlanId();
-		FunctionAccessor functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
 		functionAccessor.save(function);
 		
-		Sequence sequence = BaseArtefacts.sequence();
+		Sequence sequence = sequence();
 		CallFunction callFunction = new CallFunction();
 		callFunction.setFunctionId(function.getId().toString());
 		sequence.addChild(callFunction);
-		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(sequence).endBlock().build();
-		c.getPlanAccessor().save(plan);
+		Plan plan = PlanBuilder.create().startBlock(sequence()).add(sequence).endBlock().build();
+		planAccessor.save(plan);
 		
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
-			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
+			exportManager.exportById(exportConfig, plan.getId().toString());
 						
-			//create a new context to test the import
-			c = createGlobalContext();
-			functionAccessor = (FunctionAccessor) c.get(FunctionAccessor.class);
-			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, overwrite));
+			newContext(null);
+			
+			ImportManager importManager = createNewContextAndGetImportManager();
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
 			
 			AtomicInteger nbPlans = new AtomicInteger(0);
-			c.getPlanAccessor().getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
+			planAccessor.getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
 			AtomicInteger nbFunctions = new AtomicInteger(0);
 			functionAccessor.getAll().forEachRemaining(f->nbFunctions.incrementAndGet());
-			Assert.assertEquals(2, nbPlans.intValue());
-			Assert.assertEquals(1, nbFunctions.intValue());
+			assertEquals(2, nbPlans.intValue());
+			assertEquals(1, nbFunctions.intValue());
 			
-			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
-			Plan actualCompositePlan = c.getPlanAccessor().get(compositePlanId);
+			Plan actualPlan = planAccessor.get(plan.getId());
+			Plan actualCompositePlan = planAccessor.get(compositePlanId);
 			Function actualFunction = functionAccessor.get(function.getId());
 
 			if (overwrite) {
-				Assert.assertEquals(plan.getId(), actualPlan.getId());
-				Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
-				Assert.assertEquals(compositePlanId, actualCompositePlan.getId().toHexString());
-				Assert.assertEquals(function.getId(), actualFunction.getId());
+				assertEquals(plan.getId(), actualPlan.getId());
+				assertEquals(plan.getRoot(), actualPlan.getRoot());
+				assertEquals(compositePlanId, actualCompositePlan.getId().toHexString());
+				assertEquals(function.getId(), actualFunction.getId());
 			} else {
-				Assert.assertNull(actualPlan);
-				Assert.assertNull(actualCompositePlan);
-				Assert.assertNull(actualFunction);
+				assertNull(actualPlan);
+				assertNull(actualCompositePlan);
+				assertNull(actualFunction);
 			}
 		} finally {
 			testExportFile.delete();
@@ -769,12 +720,9 @@ public class ExportManagerTest {
 	}
 	
 	public void testExportPlansWithResourceFct(boolean overwrite) throws Exception {
-		GlobalContext c = createGlobalContext();
-		
 		// Create a resource
-		ResourceManager resourceManager = c.getResourceManager();
 		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_DATASOURCE, this.getClass().getResourceAsStream("dummyExcel.xls"), "TestResource.txt", false, null);
-		Assert.assertNotNull(resource);
+		assertNotNull(resource);
 			
 		ForEachBlock f = new ForEachBlock();
 		ExcelDataPool p = new ExcelDataPool();
@@ -783,74 +731,70 @@ public class ExportManagerTest {
 		f.setDataSource(p);
 		f.setDataSourceType("excel");
 		
-		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence())
-											.startBlock(BaseArtefacts.sequence())
+		Plan plan = PlanBuilder.create().startBlock(sequence())
+											.startBlock(sequence())
 												.add(f)
 											.endBlock()
 										.endBlock().build();
 		String uniqueName = UUID.randomUUID().toString();
 		plan.addAttribute(AbstractOrganizableObject.NAME, uniqueName);
-		c.getPlanAccessor().save(plan);
+		planAccessor.save(plan);
 		
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
-			ExportManager exportManager = new ExportManager(c);
-			Map<String,String> metadata = new HashMap<String,String>();
-			metadata.put("version", c.getCurrentVersion().toString());
+			ExportManager exportManager = newExportManager();
+			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
-			exportManager.exportById(exportConfig, plan.getId().toString(), objectPredicate);
+			exportManager.exportById(exportConfig, plan.getId().toString());
 			//delete created resource
-			File resourceFile = resourceManager.getResourceFile(resource.getId().toHexString()).getResourceFile();
 			resourceManager.deleteResource(resource.getId().toHexString());
 						
-			//create a new context to test the import
-			c = createGlobalContext();
-			ResourceManager resourceManagerImport = c.getResourceManager();
-
-			ImportManager importManager = new ImportManager(c);
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(c), null, overwrite));
+			newContext(null);
 			
-			Plan actualPlan = c.getPlanAccessor().get(plan.getId());
+			ImportManager importManager = createNewContextAndGetImportManager();
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
+			
+			Plan actualPlan = planAccessor.get(plan.getId());
 
 			AtomicInteger nbPlans = new AtomicInteger(0);
-			c.getPlanAccessor().getAll().forEachRemaining(pp->{nbPlans.incrementAndGet();});
+			planAccessor.getAll().forEachRemaining(pp->{nbPlans.incrementAndGet();});
 			AtomicInteger nbResources = new AtomicInteger(0);
-			c.getResourceAccessor().getAll().forEachRemaining(r->{
+			resourceAccessor.getAll().forEachRemaining(r->{
 				nbResources.incrementAndGet();
 				//resourceManagerImport.deleteResource(r.getId().toHexString());
 			});
-			Assert.assertEquals(1, nbPlans.intValue());
-			Assert.assertEquals(1, nbResources.intValue());
+			assertEquals(1, nbPlans.intValue());
+			assertEquals(1, nbResources.intValue());
 			
 			//TODO check resource file was imported (do we keep same revision?)
 			//resourceFile.exists()
 
 			if (overwrite) {
-				Assert.assertEquals(plan.getId(), actualPlan.getId());
-				Assert.assertEquals(plan.getRoot(), actualPlan.getRoot());
+				assertEquals(plan.getId(), actualPlan.getId());
+				assertEquals(plan.getRoot(), actualPlan.getRoot());
 				
 				String newResourceId = getResourceIdOfExcelDatapool(plan);
 				// Assert that the referenced resource id didn't change 
-				Assert.assertFalse(newResourceId.isBlank());
-				Assert.assertEquals(resource.getId().toHexString(), newResourceId);
+				assertFalse(newResourceId.isBlank());
+				assertEquals(resource.getId().toHexString(), newResourceId);
 				// Assert that the resource was imported properly under the same id
-				Resource actualResource = c.getResourceManager().getResource(resource.getId().toHexString());
-				Assert.assertNotNull(actualResource);
+				Resource actualResource = resourceManager.getResource(resource.getId().toHexString());
+				assertNotNull(actualResource);
 			} else {
 				// Assert that the id of the plan changed and thus that it cannot be found with the old id
-				Assert.assertNull(actualPlan);
+				assertNull(actualPlan);
 				// Assert that the plan has been properly imported
 				HashMap<String, String> attributes = new HashMap<>();
-				attributes.put(ch.exense.commons.core.model.accessors.AbstractOrganizableObject.NAME, uniqueName);
-				Plan newPlan = c.getPlanAccessor().findByAttributes(attributes);
-				Assert.assertNotNull(newPlan);
+				attributes.put(AbstractOrganizableObject.NAME, uniqueName);
+				Plan newPlan = planAccessor.findByAttributes(attributes);
+				assertNotNull(newPlan);
 				String newResourceId = getResourceIdOfExcelDatapool(newPlan);
 				// Assert that the referenced resource id has been updated properly
-				Assert.assertFalse(newResourceId.isBlank());
-				Assert.assertFalse(newResourceId.equals(resource.getId().toHexString()));
+				assertFalse(newResourceId.isBlank());
+				assertFalse(newResourceId.equals(resource.getId().toHexString()));
 				// Assert that the resource was imported properly under the new id
-				Resource actualResource = c.getResourceManager().getResource(newResourceId);
-				Assert.assertNotNull(actualResource);
+				Resource actualResource = resourceManager.getResource(newResourceId);
+				assertNotNull(actualResource);
 			}
 			
 		} finally {
@@ -879,50 +823,63 @@ public class ExportManagerTest {
 	public void testImportVisualPlan_3_13() throws Exception {
 		String resourcePath = "./step/core/export/3_13_visualPlan.json";
 		String originPlanId = "5e8d7edb4cf3ad5e290d77e9";
-		testOlderPlanImport(resourcePath, originPlanId);
+		testOlderPlanImport(resourcePath, originPlanId, true);
 	}
 
 	@Test
 	public void testImportVisualPlanWithAssert_3_13() throws Exception {
 		String resourcePath = "./step/core/export/ExportVisualPlan3_13.json";
 		String originPlanId = "5f87f3c83ff2d04dd8f9a3f7";
-		testOlderPlanImport(resourcePath, originPlanId);
+		testOlderPlanImport(resourcePath, originPlanId, true, TestSet.class);
 	}
 
-
-	//Not working in junit as working with tmp collection
-	// @Test
+	@Test
 	public void testImportVisualPlanWithAssert_3_12() throws Exception {
 		String resourcePath = "./step/core/export/TestWithAssert_3_12.json";
 		String originPlanId = "5f87f3c83ff2d04dd8f9a3f7";
-		testOlderPlanImport(resourcePath, originPlanId);
+		testOlderPlanImport(resourcePath, originPlanId, false);
 	}
 	
-	//@Test //not working in OS
+	// @Test //not working in OS
 	public void testImportTextPlan_3_13() throws Exception {
 		String resourcePath = "./step/core/export/3_13_textPlan.json";
 		String originPlanId = "5eb2789c117dff15d2bc8bc0";
-		testOlderPlanImport(resourcePath, originPlanId);
+		testOlderPlanImport(resourcePath, originPlanId, true);
 	}
 	
-	//@Test // not working in unit test as it stores data to a tmp mongo collection
-	public void testImportPlan_3_12() throws Exception {
-		String resourcePath = "step/core/export/3_13_ExportVisualPlanWithAssert.json";
-		String originPlanId = null;
-		testOlderPlanImport(resourcePath, originPlanId);
+	@Test
+	public void testImportPlan_3_12_() throws Exception {
+		String resourcePath = "step/core/export/3_12_and_before.json";
+		String originPlanId = "5c87c128958a7c000b6fb7d9";
+		testOlderPlanImport(resourcePath, originPlanId, false);
 	}
 	
-	protected void testOlderPlanImport(String resourcePath, String originPlanId) throws Exception {
-		GlobalContext c = createGlobalContext();
+	protected void testOlderPlanImport(String resourcePath, String originPlanId, boolean assertOverwrite) throws Exception {
+		testOlderPlanImport(resourcePath, originPlanId, assertOverwrite, Sequence.class);
+	}
+	
+	protected void testOlderPlanImport(String resourcePath, String originPlanId, boolean assertOverwrite, Class<?> planRootElementClass) throws Exception {
 		URL resource = getClass().getClassLoader().getResource(resourcePath);
 		File testImportFile = new File(resource.getFile());
 		
 		//create a new context to test the import
-		c = createGlobalContext();
-		ImportManager importManager = new ImportManager(c);
-		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(c), Arrays.asList("plans"), true));
+		ImportManager importManager = createNewContextAndGetImportManager();
+		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
 		
-		Plan actualPlan = c.getPlanAccessor().get(originPlanId);
-		Assert.assertEquals(originPlanId, actualPlan.getId().toString());
+		Plan actualPlan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, "Test"));
+		// Due to the migration from the collection artefacts to plans overwrite is not supported when importing from 3.12 and below
+		if(assertOverwrite) {
+			assertEquals(originPlanId, actualPlan.getId().toString());
+		}
+		assertEquals(planRootElementClass, actualPlan.getRoot().getClass());
+	}
+	
+	private ImportManager createNewContextAndGetImportManager() throws IOException {
+		before();
+		return new ImportManager(entityManager, migrationManager);
+	}
+	
+	private ImportManager newImportManager() throws IOException {
+		return new ImportManager(entityManager, migrationManager);
 	}
 }

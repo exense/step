@@ -16,16 +16,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.imports;
+package step.core.export;
 
-import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonMappingException;
+public class ExportResult {
 
-public interface Importer {
-	
-	public void importOne(JsonParser jParser) throws JsonParseException, JsonMappingException, IOException;
-	
+	private final Set<String> messages;
+
+	public ExportResult(Set<String> messages) {
+		super();
+		this.messages = new HashSet<>(messages);
+	}
+
+	public Set<String> getMessages() {
+		return messages;
+	}
+
 }

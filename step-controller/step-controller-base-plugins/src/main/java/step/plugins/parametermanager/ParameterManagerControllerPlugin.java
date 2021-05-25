@@ -32,8 +32,8 @@ import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.entities.Entity;
-import step.core.export.ExportConfiguration;
-import step.core.imports.ImportConfiguration;
+import step.core.export.ExportContext;
+import step.core.imports.ImportContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.TableRegistry;
@@ -75,8 +75,8 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				Parameter.ENTITY_NAME, 
 				parameterAccessor,
 				Parameter.class));
-		context.getEntityManager().registerExportHook(new ParameterExportBiConsumer(context));
-		context.getEntityManager().registerImportHook(new ParameterImportBiConsumer(context));
+		context.getEntityManager().registerExportHook(new ParameterExportBiConsumer());
+		context.getEntityManager().registerImportHook(new ParameterImportBiConsumer(encryptionManager));
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
 	}
@@ -144,47 +144,40 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 	public static String IMPORT_DECRYPT_NO_EM_WARN = "The export file contains encrypted parameters. The values of these parameters will be reset.";
 	public static String IMPORT_RESET_WARN = "The export file contains protected parameters. Their values must be reset.";
 
-	public static class ParameterExportBiConsumer implements BiConsumer<Object, ExportConfiguration> {
-
-		GlobalContext context;
-
-		public ParameterExportBiConsumer(GlobalContext context) {
-			this.context = context;
-		}
+	public static class ParameterExportBiConsumer implements BiConsumer<Object, ExportContext> {
 
 		@Override
-		public void accept(Object object_, ExportConfiguration exportConfiguration) {
+		public void accept(Object object_, ExportContext exportContext) {
 			if (object_ != null && object_ instanceof Parameter) {
 				Parameter param = (Parameter) object_;
 				//if protected and not encrypted, mask value by changing it to reset value
 				if (param.getProtectedValue() != null && param.getProtectedValue()) {
 					if (param.getValue() != null) {
 						param.setValue(ParameterManager.RESET_VALUE);
-						exportConfiguration.addMessage(EXPORT_PROTECT_PARAM_WARN);
+						exportContext.addMessage(EXPORT_PROTECT_PARAM_WARN);
 					} else {
-						exportConfiguration.addMessage(EXPORT_ENCRYPT_PARAM_WARN);
+						exportContext.addMessage(EXPORT_ENCRYPT_PARAM_WARN);
 					}
 				}
 			}
 		}
 	}
 
-	public static class ParameterImportBiConsumer implements BiConsumer<Object, ImportConfiguration> {
+	public static class ParameterImportBiConsumer implements BiConsumer<Object, ImportContext> {
 
-		GlobalContext context;
+		private final EncryptionManager encryptionManager;
 
-		public ParameterImportBiConsumer(GlobalContext context) {
-			this.context = context;
+		public ParameterImportBiConsumer(EncryptionManager encryptionManager) {
+			this.encryptionManager = encryptionManager;
 		}
 
 		@Override
-		public void accept(Object object_, ImportConfiguration importConfiguration) {
+		public void accept(Object object_, ImportContext importContext) {
 			if (object_ != null && object_ instanceof Parameter) {
 				Parameter param = (Parameter) object_;
 				//if importing protected and encrypted value
 				if (param.getProtectedValue() != null && param.getProtectedValue()) {
 					if (param.getValue() == null) {
-						EncryptionManager encryptionManager = context.get(EncryptionManager.class);
 						//if we have a valid encryption manager and can still decrypt keep encrypted value, else reset
 						if (encryptionManager != null && param.getEncryptedValue() != null) {
 							try {
@@ -192,16 +185,16 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 							} catch (EncryptionManagerException e) {
 								param.setValue(ParameterManager.RESET_VALUE);
 								param.setEncryptedValue(null);
-								importConfiguration.addMessage(IMPORT_DECRYPT_FAIL_WARN);
+								importContext.addMessage(IMPORT_DECRYPT_FAIL_WARN);
 							}
 						} else {
 							param.setValue(ParameterManager.RESET_VALUE);
 							param.setEncryptedValue(null);
-							importConfiguration.addMessage(IMPORT_DECRYPT_NO_EM_WARN);
+							importContext.addMessage(IMPORT_DECRYPT_NO_EM_WARN);
 						}
 					} else {
 						param.setValue(ParameterManager.RESET_VALUE);
-						importConfiguration.addMessage(IMPORT_RESET_WARN);
+						importContext.addMessage(IMPORT_RESET_WARN);
 					}
 				}
 			}

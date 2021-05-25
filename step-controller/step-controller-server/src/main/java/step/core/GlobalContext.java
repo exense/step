@@ -97,8 +97,7 @@ public class GlobalContext extends AbstractExecutionEngineContext {
 	}
 
 	public Version getCurrentVersion() {
-		// TODO read this from manifest
-		return new Version(3,17,0);
+		return Version.getCurrentVersion();
 	}
 
 	public EntityManager getEntityManager() {

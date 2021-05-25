@@ -45,7 +45,7 @@ public class MigrateArtefactsToPlansTest {
 		compositeFunction1.put("artefactId", artefact1.get(AbstractIdentifiableObject.ID).toString());
 		functionCollection.save(compositeFunction1);
 		
-		MigrateArtefactsToPlans migrationTask = new MigrateArtefactsToPlans(collectionFactory, new MigrationContext(null));
+		MigrateArtefactsToPlans migrationTask = new MigrateArtefactsToPlans(collectionFactory, new MigrationContext());
 		migrationTask.runUpgradeScript();
 	}
 

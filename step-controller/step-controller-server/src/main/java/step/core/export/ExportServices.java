@@ -34,6 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import step.core.GlobalContext;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;
@@ -63,11 +64,12 @@ public class ExportServices extends AbstractServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		accessor = getContext().getPlanAccessor();
-		exportTaskManager = getContext().get(ExportTaskManager.class);
-		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
-		exportManager = new ExportManager(getContext());
-		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
+		GlobalContext context = getContext();
+		accessor = context.getPlanAccessor();
+		exportTaskManager = context.get(ExportTaskManager.class);
+		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
+		exportManager = new ExportManager(context.getEntityManager(), context.getResourceManager());
+		objectHookRegistry = context.get(ObjectHookRegistry.class);
 	}
 
 	@GET
@@ -85,8 +87,8 @@ public class ExportServices extends AbstractServices {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
 				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata,objectPredicateFactory.getObjectPredicate(session),
 						entity, recursively, additionalEntities);
-				exportManager.exportById(exportConfig, id, objectPredicateFactory.getObjectPredicate(session));
-				status.setWarnings(exportConfig.getMessages());
+				ExportResult exportResult = exportManager.exportById(exportConfig, id);
+				status.setWarnings(exportResult.getMessages());
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}
@@ -116,8 +118,8 @@ public class ExportServices extends AbstractServices {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
 				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
 						metadata, objectPredicateFactory.getObjectPredicate(session), entity, recursively, additionalEntities);
-				exportManager.exportAll(exportConfig);
-				status.setWarnings(exportConfig.getMessages());
+				ExportResult exportResult = exportManager.exportAll(exportConfig);
+				status.setWarnings(exportResult.getMessages());
 				resourceContainer.save(null);
 				return resourceContainer.getResource();
 			}

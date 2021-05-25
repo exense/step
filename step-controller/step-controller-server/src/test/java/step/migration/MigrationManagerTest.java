@@ -38,32 +38,13 @@ public class MigrationManagerTest {
 	@Test
 	public void testUpgrade() {
 		MigrationManager m = getMigrationManager();
-		m.migrate(null, new Version(1, 2, 2), new Version(1, 2, 4), migrationContext());
+		m.migrate(null, new Version(1, 2, 2), new Version(1, 2, 4));
 		assertEquals("1.2.3,1.2.4,", s.toString());
 	}
 
-	public MigrationContext migrationContext() {
-		MigrationContext migrationContext = new MigrationContext(null);
-		migrationContext.put(StringBuilder.class, s);
-		return migrationContext;
-	}
-	
-	@Test
-	public void testUpgrade2() {
-		MigrationManager m = getMigrationManager();
-		m.migrate(null, new Version(1, 2, 2), new Version(5, 2, 4), migrationContext());
-		assertEquals("1.2.3,1.2.4,1.2.5,2.2.5,", s.toString());
-	}
-
-	@Test
-	public void testDowngrade() {
-		MigrationManager m = getMigrationManager();
-		m.migrate(null, new Version(1, 2, 4), new Version(1, 2, 2), migrationContext());
-		assertEquals("-1.2.4,-1.2.3,", s.toString());
-	}
-	
-	protected MigrationManager getMigrationManager() {
+	public MigrationManager getMigrationManager() {
 		MigrationManager m = new MigrationManager();
+		m.addBinding(StringBuilder.class, s);
 		m.register(TestMigrationTask_0_2_2.class);
 		m.register(TestMigrationTask_2_2_5.class);
 		m.register(TestMigrationTask_1_2_2.class);
@@ -71,6 +52,20 @@ public class MigrationManagerTest {
 		m.register(TestMigrationTask_1_2_4.class);
 		m.register(TestMigrationTask_1_2_5.class);
 		return m;
+	}
+	
+	@Test
+	public void testUpgrade2() {
+		MigrationManager m = getMigrationManager();
+		m.migrate(null, new Version(1, 2, 2), new Version(5, 2, 4));
+		assertEquals("1.2.3,1.2.4,1.2.5,2.2.5,", s.toString());
+	}
+
+	@Test
+	public void testDowngrade() {
+		MigrationManager m = getMigrationManager();
+		m.migrate(null, new Version(1, 2, 4), new Version(1, 2, 2));
+		assertEquals("-1.2.4,-1.2.3,", s.toString());
 	}
 	
 	private abstract static class TestMigrationTask extends MigrationTask {

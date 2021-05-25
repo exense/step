@@ -25,6 +25,7 @@ import step.core.GlobalContext;
 import step.core.Version;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.repositories.RepositoryObjectManager;
 import step.migration.tasks.MigrationManagerTasksPlugin;
 import step.versionmanager.ControllerLog;
 import step.versionmanager.VersionManager;
@@ -60,8 +61,8 @@ public class MigrationExecutionPlugin extends AbstractControllerPlugin {
 				logger.info("Starting controller with an older version. Current version is "
 						+context.getCurrentVersion()+". Version of last start was "+latestVersion);
 			}
-			migrationManager.migrate(context.getCollectionFactory(), latestVersion, context.getCurrentVersion(),
-					new MigrationContext(context.getRepositoryObjectManager()));
+			migrationManager.addBinding(RepositoryObjectManager.class, context.getRepositoryObjectManager());
+			migrationManager.migrate(context.getCollectionFactory(), latestVersion, context.getCurrentVersion());
 		}					
 	}
 }
