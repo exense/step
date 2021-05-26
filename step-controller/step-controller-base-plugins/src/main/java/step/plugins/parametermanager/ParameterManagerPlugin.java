@@ -62,11 +62,13 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		
 	protected final ParameterManager parameterManager;
 	protected final EncryptionManager encryptionManager;
+	private final boolean grantAccessToProtectedParametersWithinPlans;
 	
 	public ParameterManagerPlugin(ParameterManager parameterManager, EncryptionManager encryptionManager) {
 		super();
 		this.parameterManager = parameterManager;
 		this.encryptionManager = encryptionManager;
+		grantAccessToProtectedParametersWithinPlans = encryptionManager == null;
 	}
 
 	@Override
@@ -83,6 +85,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		
 		initializeParameterResolver(context, allParameters);
 		
+		
 		// Build the map of parameters by scope
 		Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = getAllParametersByScope(allParameters);
 		context.put(PARAMETERS_BY_SCOPE, parametersByScope);
@@ -97,10 +100,12 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	
 	@Override
 	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {
-		// Protected parameters
-		@SuppressWarnings("unchecked")
-		List<Parameter> protectedParameters = (List<Parameter>) context.get(PROTECTED_PARAMETERS);
-		addProtectedParametersToContext(context, node, protectedParameters);
+		if(!grantAccessToProtectedParametersWithinPlans) {
+			// Protected parameters
+			@SuppressWarnings("unchecked")
+			List<Parameter> protectedParameters = (List<Parameter>) context.get(PROTECTED_PARAMETERS);
+			addProtectedParametersToContext(context, node, protectedParameters);
+		}
 
 		// Function scoped parameters
 		@SuppressWarnings("unchecked")
@@ -132,7 +137,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = new HashMap<>();
 		allParameters.forEach((k,v)->{
 			Boolean isProtectedValue = v.getProtectedValue();
-			if(isProtectedValue == null || !isProtectedValue) {
+			if(grantAccessToProtectedParametersWithinPlans || (isProtectedValue == null || !isProtectedValue)) {
 				ParameterScope scope = v.getScope() != null ? v.getScope() : ParameterScope.GLOBAL;
 				String scopeValue = v.getScopeEntity() != null ? v.getScopeEntity() : PARAMETER_SCOPE_VALUE_DEFAULT;
 				parametersByScope.computeIfAbsent(scope, t->new HashMap<String, List<Parameter>>())
