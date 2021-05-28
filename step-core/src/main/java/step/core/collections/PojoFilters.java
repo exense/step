@@ -203,15 +203,15 @@ public class PojoFilters {
 			try {
 				Object beanProperty = getBeanProperty(t, regexFilter.getField());
 				if(beanProperty != null) {
-			Matcher matcher = pattern.matcher(beanProperty.toString());
-			return matcher.find();
-		} else {
-			return false;
+					Matcher matcher = pattern.matcher(beanProperty.toString());
+					return matcher.find();
+				} else {
+					return false;
+				}
+			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+				return false;
+			}
 		}
-	} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-		return false;
-	}
-}
 	}
 
 	public static class LtPojoFilter<T> implements PojoFilter<T> {
@@ -324,21 +324,6 @@ public class PojoFilters {
 	
 	private static Object getBeanProperty(Object t, String fieldName)
 			throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		try {
-			if(fieldName.equals("_class")) {
-				return t.getClass().getName();
-			} else if(fieldName.equals(AbstractIdentifiableObject.ID)) {
-				if(t instanceof Document) {
-					return ((Document) t).getId();
-				} else {
-					return PropertyUtils.getProperty(t, fieldName);
-				}
-			} else {
-				return PropertyUtils.getProperty(t, fieldName);
-			}
-		} catch (NestedNullException e) {
-			return null;
-		}
-		
+		return PojoUtils.getProperty(t, fieldName);
 	}
 }

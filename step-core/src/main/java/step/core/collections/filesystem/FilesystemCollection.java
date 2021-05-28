@@ -20,7 +20,6 @@ package step.core.collections.filesystem;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -30,18 +29,15 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.collections.Collection;
-import step.core.collections.Filter;
-import step.core.collections.PojoFilter;
+import step.core.collections.*;
 import step.core.collections.PojoFilters.PojoFilterFactory;
-import step.core.collections.SearchOrder;
 
 public class FilesystemCollection<T> extends AbstractCollection<T> implements Collection<T> {
 
@@ -54,7 +50,10 @@ public class FilesystemCollection<T> extends AbstractCollection<T> implements Co
 		super();
 		this.repository = repository;
 		this.entityClass = entityClass;
-		this.mapper = DefaultJacksonMapperProvider.getObjectMapper(new YAMLFactory());
+		YAMLFactory factory = new YAMLFactory();
+		// Disable native type id to enable conversion to generic Documents
+		factory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+		this.mapper = DefaultJacksonMapperProvider.getObjectMapper(factory);
 		if (!repository.exists()) {
 			repository.mkdirs();
 		}
@@ -99,15 +98,8 @@ public class FilesystemCollection<T> extends AbstractCollection<T> implements Co
 			}
 		});
 		if(order != null) {
-			Comparator<T> comparing = Comparator.comparing(e->{
-				try {
-					return PropertyUtils.getProperty(e, order.getAttributeName()).toString();
-				} catch (NoSuchMethodException e1) {
-					return "";
-				} catch (IllegalAccessException | InvocationTargetException e1) {
-					throw new RuntimeException(e1);
-				}
-			});
+			@SuppressWarnings("unchecked")
+			Comparator<T> comparing = (Comparator<T>) PojoUtils.comparator(order.getAttributeName());
 			if(order.getOrder()<0) {
 				comparing = comparing.reversed();
 			}

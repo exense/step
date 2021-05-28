@@ -18,25 +18,19 @@
  ******************************************************************************/
 package step.core.collections.inmemory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.collections.Collection;
-import step.core.collections.Document;
-import step.core.collections.Filter;
-import step.core.collections.PojoFilter;
+import step.core.collections.*;
 import step.core.collections.PojoFilters.PojoFilterFactory;
-import step.core.collections.SearchOrder;
 import step.core.collections.filesystem.AbstractCollection;
 
 public class InMemoryCollection<T> extends AbstractCollection<T> implements Collection<T> {
@@ -68,15 +62,7 @@ public class InMemoryCollection<T> extends AbstractCollection<T> implements Coll
 	public Stream<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
 		Stream<T> stream = filteredStream(filter);
 		if(order != null) {
-			Comparator<T> comparing = Comparator.comparing(e->{
-				try {
-					return PropertyUtils.getProperty(e, order.getAttributeName()).toString();
-				} catch (NoSuchMethodException e1) {
-					return "";
-				} catch (IllegalAccessException | InvocationTargetException e1) {
-					throw new RuntimeException(e1);
-				}
-			});
+			Comparator<T> comparing = (Comparator<T>) PojoUtils.comparator(order.getAttributeName());
 			if(order.getOrder()<0) {
 				comparing = comparing.reversed();
 			}
@@ -102,11 +88,11 @@ public class InMemoryCollection<T> extends AbstractCollection<T> implements Coll
 	private Stream<T> filteredStream(Filter filter) {
 		PojoFilter<T> pojoFilter = new PojoFilterFactory<T>().buildFilter(filter);
 		return entityStream().filter(pojoFilter::test).sorted(new Comparator<T>() {
-				@Override
-				public int compare(T o1, T o2) {
-					return getId(o1).compareTo(getId(o2));
-				}
-			});
+			@Override
+			public int compare(T o1, T o2) {
+				return getId(o1).compareTo(getId(o2));
+			}
+		});
 	}
 
 	private Stream<T> entityStream() {

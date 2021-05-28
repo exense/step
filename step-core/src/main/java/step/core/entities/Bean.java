@@ -7,6 +7,10 @@ import org.json.JSONObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.serialization.DottedKeyMap;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+
+@JsonTypeInfo(use=Id.CLASS,property="_class")
 public class Bean extends AbstractOrganizableObject {
 
     private String property1;
@@ -18,6 +22,8 @@ public class Bean extends AbstractOrganizableObject {
     private JSONObject jsonOrgObject;
 
     private DottedKeyMap<String, String> map;
+
+    private Bean nested;
 
     public Bean() {
         super();
@@ -74,6 +80,14 @@ public class Bean extends AbstractOrganizableObject {
 
     public void setJsonOrgObject(JSONObject jsonOrgObject) {
         this.jsonOrgObject = jsonOrgObject;
+    }
+
+    public Bean getNested() {
+        return nested;
+    }
+
+    public void setNested(Bean nested) {
+        this.nested = nested;
     }
 
     @Override

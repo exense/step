@@ -145,6 +145,11 @@ public abstract class AbstractCollectionTest {
 				.collect(Collectors.toList());
 		assertEquals(List.of(bean1, bean2, bean3), result);
 
+		// Sort ascending by ID
+		result = beanCollection.find(Filters.empty(), new SearchOrder(AbstractIdentifiableObject.ID, 1), null, null, 0)
+				.collect(Collectors.toList());
+		assertEquals(List.of(bean1, bean2, bean3), result);
+
 		// Sort descending
 		result = beanCollection.find(Filters.empty(), new SearchOrder(PROPERTY1, -1), null, null, 0)
 				.collect(Collectors.toList());
@@ -210,6 +215,32 @@ public abstract class AbstractCollectionTest {
 		result = collection.find(Filters.and(List.of(Filters.gt("longProperty", 11),Filters.lte("longProperty",21))), new SearchOrder("MyAtt1", 1), null, null, 0).collect(Collectors.toList());
 		assertEquals(bean2.getId(), result.get(0).getId());
 		assertEquals(1, result.size());
+	}
+
+	@Test
+	public void testFindBySpecialFilters() throws Exception {
+		// Bean collection
+		Collection<Bean> beanCollection = collectionFactory.getCollection(COLLECTION, Bean.class);
+		beanCollection.remove(Filters.empty());
+		Bean bean1 = new Bean(VALUE1);
+		bean1.setNested(new Bean());
+		beanCollection.save(bean1);
+
+		// Special field _class
+		Bean actualBean = beanCollection.find(Filters.regex("_class", "Bean", true), null, null, null, 0).findFirst().get();
+		assertEquals(bean1, actualBean);
+
+		// Special field _class nested
+		beanCollection.find(Filters.regex("nested._class", "Bean", true), null, null, null, 0).findFirst().get();
+		assertEquals(bean1, actualBean);
+
+		// Special field id
+		actualBean = beanCollection.find(Filters.equals("id", bean1.getId()), null, null, null, 0).findFirst().get();
+		assertEquals(bean1, actualBean);
+
+		// Special field id nested
+		actualBean = beanCollection.find(Filters.equals("nested.id", bean1.getNested().getId()), null, null, null, 0).findFirst().get();
+		assertEquals(bean1, actualBean);
 	}
 
 	@Test

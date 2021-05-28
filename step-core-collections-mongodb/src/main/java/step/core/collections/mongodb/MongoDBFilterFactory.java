@@ -40,7 +40,7 @@ import step.core.collections.Filters.True;
 public class MongoDBFilterFactory implements FilterFactory<Bson> {
 
 	@Override
-	public Bson buildFilter(step.core.collections.Filter filter) {
+	public Bson buildFilter(Filter filter) {
 		List<Bson> childerPojoFilters;
 		List<Filter> children = filter.getChildren();
 		if(children != null) {
@@ -64,6 +64,12 @@ public class MongoDBFilterFactory implements FilterFactory<Bson> {
 			Object expectedValue = equalsFilter.getExpectedValue();
 			if(field.equals("id")) {
 				field = "_id";
+				if (expectedValue instanceof String) {
+					expectedValue = new ObjectId((String) expectedValue);
+				}
+			} else if(field.contains(".id")) {
+				// Nested fields
+				field = field.replace(".id", "._id");
 				if (expectedValue instanceof String) {
 					expectedValue = new ObjectId((String) expectedValue);
 				}
