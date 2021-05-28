@@ -33,21 +33,6 @@
 
 	<dependencies>
 		<dependency>
-		  <groupId>com.fasterxml.jackson.core</groupId>
-		  <artifactId>jackson-annotations</artifactId>
-		  <version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-		  <groupId>com.fasterxml.jackson.core</groupId>
-		  <artifactId>jackson-databind</artifactId>
-		  <version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-		    <groupId>org.mongodb</groupId>
-		    <artifactId>bson</artifactId>
-		    <version>${mongodb.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.glassfish</groupId>
 			<artifactId>javax.json</artifactId>
 			<version>1.0</version>
@@ -58,11 +43,10 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-		    <groupId>javax.persistence</groupId>
-		    <artifactId>javax.persistence-api</artifactId>
-		    <version>2.2</version>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-framework-model</artifactId>
+			<version>${step-framework.version}</version>
 		</dependency>
-		
 	</dependencies>
 
 	<build>

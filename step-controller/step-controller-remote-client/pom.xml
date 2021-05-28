@@ -45,8 +45,8 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-core</artifactId>
-			<version>${project.version}</version>
+			<artifactId>step-framework-collections</artifactId>
+			<version>${step-framework.version}</version>
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
