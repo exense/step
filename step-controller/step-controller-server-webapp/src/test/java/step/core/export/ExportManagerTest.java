@@ -191,7 +191,6 @@ public class ExportManagerTest {
 		metadata.put("export-time" , "1589542872475");
 		metadata.put("user", "admin");
 		return metadata;
-				}
 	}
 
 	private ExportManager newExportManager() {

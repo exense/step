@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import ch.exense.commons.core.collections.filesystem.FilesystemCollectionFactory;
+import step.core.collections.filesystem.FilesystemCollectionFactory;
 import ch.exense.commons.io.FileHelper;
 import step.core.Version;
 import step.resources.LocalResourceManagerImpl;
