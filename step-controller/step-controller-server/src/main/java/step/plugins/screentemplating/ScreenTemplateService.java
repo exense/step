@@ -41,7 +41,7 @@ import org.bson.types.ObjectId;
 import step.core.GlobalContext;
 import step.core.access.AccessManager;
 import step.core.access.Role;
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;

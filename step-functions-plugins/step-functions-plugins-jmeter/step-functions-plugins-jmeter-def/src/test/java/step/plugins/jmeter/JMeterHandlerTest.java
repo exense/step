@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;

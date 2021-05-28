@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
 
 import step.attachments.FileResolver;
 import step.core.AbstractStepContext;
-import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
-import ch.exense.commons.core.accessors.Accessor;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.export.ExportContext;
 import step.core.imports.ImportContext;

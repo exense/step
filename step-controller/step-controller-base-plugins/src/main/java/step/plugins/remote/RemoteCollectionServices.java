@@ -2,10 +2,10 @@ package step.plugins.remote;
 
 import com.fasterxml.jackson.databind.type.CollectionType;
 import step.client.collections.remote.FindRequest;
-import ch.exense.commons.core.accessors.DefaultJacksonMapperProvider;
-import ch.exense.commons.core.collections.Collection;
-import ch.exense.commons.core.collections.CollectionFactory;
-import ch.exense.commons.core.collections.Filter;
+import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Filter;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Unfiltered;

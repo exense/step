@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.plans;
 
-import ch.exense.commons.core.accessors.Accessor;
+import step.core.accessors.Accessor;
 
 public interface PlanAccessor extends Accessor<Plan> {
 

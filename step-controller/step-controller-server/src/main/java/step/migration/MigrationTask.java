@@ -22,9 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.Version;
-import ch.exense.commons.core.collections.Collection;
-import ch.exense.commons.core.collections.CollectionFactory;
-import ch.exense.commons.core.collections.Document;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
 
 public abstract class MigrationTask {
 

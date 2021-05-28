@@ -31,7 +31,7 @@ import java.util.stream.StreamSupport;
 import org.bson.types.ObjectId;
 
 import step.artefacts.CallFunction;
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectPredicate;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;

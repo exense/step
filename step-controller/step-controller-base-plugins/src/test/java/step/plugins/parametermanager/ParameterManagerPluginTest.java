@@ -27,8 +27,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
-import ch.exense.commons.core.accessors.InMemoryAccessor;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.InMemoryAccessor;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.execution.ExecutionContext;

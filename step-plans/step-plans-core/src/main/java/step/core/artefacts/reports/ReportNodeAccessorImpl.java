@@ -26,11 +26,11 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 
-import ch.exense.commons.core.accessors.AbstractAccessor;
-import ch.exense.commons.core.collections.Collection;
-import ch.exense.commons.core.collections.Filter;
-import ch.exense.commons.core.collections.Filters;
-import ch.exense.commons.core.collections.SearchOrder;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.core.collections.SearchOrder;
 
 
 public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> implements ReportTreeAccessor, ReportNodeAccessor {

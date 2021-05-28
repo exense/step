@@ -1,6 +1,6 @@
 package step.core.controller;
 
-import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
+import step.core.collections.inmemory.InMemoryCollection;
 
 public class InMemoryControllerSettingAccessor extends ControllerSettingAccessorImpl implements ControllerSettingAccessor {
 

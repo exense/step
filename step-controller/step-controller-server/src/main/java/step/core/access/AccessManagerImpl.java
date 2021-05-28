@@ -20,7 +20,7 @@ package step.core.access;
 
 import java.util.NoSuchElementException;
 
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.Session;
 
 public class AccessManagerImpl implements AccessManager {

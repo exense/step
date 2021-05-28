@@ -19,9 +19,9 @@
 package step.core.objectenricher;
 
 import step.core.AbstractContext;
-import ch.exense.commons.core.collections.Filter;
-import ch.exense.commons.core.collections.PojoFilter;
-import ch.exense.commons.core.collections.PojoFilters.PojoFilterFactory;
+import step.core.collections.Filter;
+import step.core.collections.PojoFilter;
+import step.core.collections.PojoFilters.PojoFilterFactory;
 import step.core.ql.OQLFilterBuilder;
 
 public class ObjectPredicateFactory {

@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *
+ *  
  * This file is part of STEP
- *
+ *  
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ *  
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *
+ *  
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -27,11 +27,11 @@ public class DynamicValue<T> {
 	T value;
 	
 	@JsonIgnore
-	public EvaluationResult evalutationResult;
+	EvaluationResult evalutationResult;
 	
-	public String expression;
+	String expression;
 	
-	public String expressionType;
+	String expressionType;
 
 	public DynamicValue() {
 		super();
@@ -72,7 +72,7 @@ public class DynamicValue<T> {
 			}
 		}
 	}
-
+	
 	public T get(Class<T> class_) {
 		T value = get();
 		return ValueConverter.convert(value, class_);
@@ -82,12 +82,12 @@ public class DynamicValue<T> {
 		T value = get();
 		return value != null ? value : defaultValue;
 	}
-
+	
 	public T getOrDefault(Class<T> class_, T defaultValue) {
 		T value = get(class_);
 		return value != null ? value : defaultValue;
 	}
-
+	
 	public DynamicValue<T> cloneValue() {
 		DynamicValue<T> clone = new DynamicValue<>();
 		clone.dynamic = dynamic;

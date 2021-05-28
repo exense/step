@@ -33,8 +33,8 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ch.exense.commons.core.accessors.DefaultJacksonMapperProvider;
-import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.DefaultJacksonMapperProvider;
 import ch.exense.commons.io.FileHelper;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;

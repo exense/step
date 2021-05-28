@@ -20,7 +20,7 @@ package step.plugins.datatable;
 
 import step.core.GlobalContext;
 import step.core.access.User;
-import ch.exense.commons.core.collections.Collection;
+import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;

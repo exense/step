@@ -24,8 +24,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import ch.exense.commons.core.collections.Filter;
-import ch.exense.commons.core.collections.Filters;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 
 public class DateRangeCriterium implements TableColumnSearchQueryFactory {
 	

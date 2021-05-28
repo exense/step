@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.plans;
 
-import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
+import step.core.collections.inmemory.InMemoryCollection;
 
 public class InMemoryPlanAccessor extends PlanAccessorImpl implements PlanAccessor {
 

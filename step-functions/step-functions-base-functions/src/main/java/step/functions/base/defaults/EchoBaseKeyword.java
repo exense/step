@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.functions.base.defaults;
 
-import ch.exense.commons.core.model.accessors.Attribute;
+import step.core.accessors.Attribute;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 

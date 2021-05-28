@@ -21,10 +21,10 @@ package step.plugins.parametermanager;
 import java.util.Iterator;
 import java.util.List;
 
-import ch.exense.commons.core.collections.Collection;
-import ch.exense.commons.core.collections.Filter;
-import ch.exense.commons.core.collections.Filters;
-import ch.exense.commons.core.collections.SearchOrder;
+import step.core.collections.Collection;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.core.collections.SearchOrder;
 import step.core.tables.AbstractTable;
 import step.core.tables.TableFindResult;
 import step.parameter.Parameter;

@@ -22,8 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import ch.exense.commons.core.collections.Filter;
-import ch.exense.commons.core.collections.Filters;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 
 public class MultiTextCriterium implements TableColumnSearchQueryFactory {
 

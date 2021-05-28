@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.resources;
 
-import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
+import step.core.collections.inmemory.InMemoryCollection;
 
 public class InMemoryResourceRevisionAccessor extends ResourceRevisionAccessorImpl {
 

@@ -27,7 +27,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ch.exense.commons.core.accessors.DefaultJacksonMapperProvider;
+import step.core.accessors.DefaultJacksonMapperProvider;
 
 public class MapDeserializerTest {
 

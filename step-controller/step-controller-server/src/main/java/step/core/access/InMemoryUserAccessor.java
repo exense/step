@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.access;
 
-import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
+import step.core.collections.inmemory.InMemoryCollection;
 
 public class InMemoryUserAccessor extends UserAccessorImpl {
 

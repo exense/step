@@ -23,8 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ch.exense.commons.core.accessors.serialization.MapDeserializer;
-import ch.exense.commons.core.accessors.serialization.MapSerializer;
 import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -34,8 +32,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
-
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.MapDeserializer;
+import step.core.accessors.MapSerializer;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;

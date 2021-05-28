@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.functions.accessor;
 
-import ch.exense.commons.core.accessors.AbstractAccessor;
-import ch.exense.commons.core.collections.Collection;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
 import step.functions.Function;
 
 public class FunctionAccessorImpl extends AbstractAccessor<Function> implements FunctionAccessor {

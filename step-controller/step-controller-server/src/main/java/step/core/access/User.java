@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.access;
 
-import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractIdentifiableObject;
 
 public class User extends AbstractIdentifiableObject {
 	

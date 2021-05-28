@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.functions.accessor;
 
-import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.functions.Function;
 
 public class InMemoryFunctionAccessorImpl extends FunctionAccessorImpl implements FunctionAccessor {

@@ -33,7 +33,7 @@ import javax.ws.rs.core.MediaType;
 import step.artefacts.reports.TestCaseReportNode;
 import step.common.managedoperations.Operation;
 import step.common.managedoperations.OperationDetails;
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;

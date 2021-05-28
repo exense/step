@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.resources;
 
-import ch.exense.commons.core.accessors.AbstractAccessor;
-import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.inmemory.InMemoryCollection;
 
 public class InMemoryResourceAccessor extends AbstractAccessor<Resource> implements ResourceAccessor {
 

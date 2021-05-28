@@ -21,7 +21,7 @@ package step.core.access;
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 
 public class Role extends AbstractOrganizableObject {
 

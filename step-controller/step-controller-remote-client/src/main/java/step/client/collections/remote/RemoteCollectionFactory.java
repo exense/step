@@ -2,8 +2,8 @@ package step.client.collections.remote;
 
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
-import ch.exense.commons.core.collections.Collection;
-import ch.exense.commons.core.collections.CollectionFactory;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
 
 import java.io.File;
 import java.io.IOException;

@@ -8,10 +8,10 @@ import org.junit.Test;
 
 import ch.exense.commons.app.Configuration;
 import step.artefacts.Assert;
-import ch.exense.commons.core.collections.CollectionFactory;
-import ch.exense.commons.core.collections.Document;
-import ch.exense.commons.core.collections.Filters;
-import ch.exense.commons.core.collections.inmemory.InMemoryCollectionFactory;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.Filters;
+import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.plans.Plan;
 
 public class MigrateAssertNegationTest {

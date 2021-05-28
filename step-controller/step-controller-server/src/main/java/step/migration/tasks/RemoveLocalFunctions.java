@@ -21,11 +21,11 @@ package step.migration.tasks;
 
 
 import step.core.Version;
-import ch.exense.commons.core.collections.Collection;
-import ch.exense.commons.core.collections.CollectionFactory;
-import ch.exense.commons.core.collections.Document;
-import ch.exense.commons.core.collections.Filters;
-import ch.exense.commons.core.collections.Filters.Equals;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.Filters;
+import step.core.collections.Filters.Equals;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 

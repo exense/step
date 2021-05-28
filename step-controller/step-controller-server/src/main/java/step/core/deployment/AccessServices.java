@@ -41,7 +41,7 @@ import step.core.access.AuthenticationManager;
 import step.core.access.Role;
 import step.core.access.RoleProvider;
 import step.core.access.User;
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.controller.errorhandling.ApplicationException;
 
 @Singleton

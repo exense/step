@@ -35,15 +35,15 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-core-collections-mongodb</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-controller-server</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.commons</groupId>
-			<artifactId>exense-core-collections-mongodb</artifactId>
-			<version>${exense-commons.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.viz</groupId>

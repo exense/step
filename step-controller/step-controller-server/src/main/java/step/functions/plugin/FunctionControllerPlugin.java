@@ -30,7 +30,7 @@ import step.attachments.FileResolver;
 import step.controller.grid.GridPlugin;
 import step.controller.grid.services.FunctionServices;
 import step.core.GlobalContext;
-import ch.exense.commons.core.collections.Collection;
+import step.core.collections.Collection;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.Entity;

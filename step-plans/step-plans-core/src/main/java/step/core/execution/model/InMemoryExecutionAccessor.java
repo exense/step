@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.execution.model;
 
-import ch.exense.commons.core.collections.inmemory.InMemoryCollection;
+import step.core.collections.inmemory.InMemoryCollection;
 
 public class InMemoryExecutionAccessor extends ExecutionAccessorImpl implements ExecutionAccessor {
 

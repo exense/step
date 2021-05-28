@@ -20,7 +20,7 @@ package step.resources;
 
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
-import ch.exense.commons.core.collections.Collection;
+import step.core.collections.Collection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;

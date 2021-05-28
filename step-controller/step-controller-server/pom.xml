@@ -60,9 +60,11 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>ch.exense.commons</groupId>
-			<artifactId>exense-core-collections-mongodb</artifactId>
-			<version>${exense-commons.version}</version>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-core</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
@@ -95,6 +97,12 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-server</artifactId>
 			<version>${step-grid.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-core-collections-mongodb</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>

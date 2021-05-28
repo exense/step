@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.functions.accessor;
 
-import ch.exense.commons.core.accessors.Accessor;
-import ch.exense.commons.core.accessors.CachedAccessor;
+import step.core.accessors.Accessor;
+import step.core.accessors.CachedAccessor;
 import step.functions.Function;
 
 public class CachedFunctionAccessor extends CachedAccessor<Function> implements FunctionAccessor {

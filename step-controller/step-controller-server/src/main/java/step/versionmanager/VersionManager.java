@@ -24,9 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
-import ch.exense.commons.core.collections.Collection;
-import ch.exense.commons.core.collections.Filters;
-import ch.exense.commons.core.collections.SearchOrder;
+import step.core.collections.Collection;
+import step.core.collections.Filters;
+import step.core.collections.SearchOrder;
 
 public class VersionManager {
 	

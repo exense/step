@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.scheduler;
 
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
 
 public class ExecutiontTaskParameters extends AbstractOrganizableObject {

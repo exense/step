@@ -24,10 +24,10 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 
-import ch.exense.commons.core.collections.Filter;
-import ch.exense.commons.core.collections.Filters;
-import ch.exense.commons.core.collections.PojoFilter;
-import ch.exense.commons.core.collections.PojoFilters.PojoFilterFactory;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.core.collections.PojoFilter;
+import step.core.collections.PojoFilters.PojoFilterFactory;
 import step.core.ql.OQLParser.ParseContext;
 
 public class OQLFilterBuilder {

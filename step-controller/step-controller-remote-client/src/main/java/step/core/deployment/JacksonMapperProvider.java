@@ -22,7 +22,7 @@ import javax.ws.rs.ext.ContextResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ch.exense.commons.core.accessors.DefaultJacksonMapperProvider;
+import step.core.accessors.DefaultJacksonMapperProvider;
 
 public class JacksonMapperProvider implements ContextResolver<ObjectMapper> {
 	 

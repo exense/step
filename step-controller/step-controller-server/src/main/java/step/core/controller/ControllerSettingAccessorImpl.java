@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.core.controller;
 
-import ch.exense.commons.core.accessors.AbstractAccessor;
-import ch.exense.commons.core.collections.Collection;
-import ch.exense.commons.core.collections.Filters;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
+import step.core.collections.Filters;
 
 public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSetting> implements ControllerSettingAccessor {
 	

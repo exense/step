@@ -24,11 +24,11 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
-import ch.exense.commons.core.accessors.serialization.EscapingDottedKeysMapDeserializer;
-import ch.exense.commons.core.accessors.serialization.EscapingDottedKeysMapSerializer;
+import step.core.collections.serialization.EscapingDottedKeysMapDeserializer;
+import step.core.collections.serialization.EscapingDottedKeysMapSerializer;
 import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
 

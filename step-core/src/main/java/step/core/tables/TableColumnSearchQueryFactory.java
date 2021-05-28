@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.tables;
 
-import ch.exense.commons.core.collections.Filter;
+import step.core.collections.Filter;
 
 public interface TableColumnSearchQueryFactory {
 

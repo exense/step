@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.dashboards;
 
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 
 public class DashboardSession extends AbstractOrganizableObject {
 	protected String name;

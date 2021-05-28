@@ -20,7 +20,7 @@ package step.functions.accessor;
 
 import java.util.List;
 
-import ch.exense.commons.core.accessors.LayeredAccessor;
+import step.core.accessors.LayeredAccessor;
 import step.functions.Function;
 
 public class LayeredFunctionAccessor extends LayeredAccessor<Function> implements FunctionAccessor {

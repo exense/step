@@ -21,7 +21,7 @@ package step.repositories.staging;
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.plans.Plan;
 
 public class StagingContext extends AbstractIdentifiableObject {

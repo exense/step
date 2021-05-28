@@ -36,8 +36,8 @@ import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
-import ch.exense.commons.core.collections.PojoFilter;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.collections.PojoFilter;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.ql.OQLFilterBuilder;
 

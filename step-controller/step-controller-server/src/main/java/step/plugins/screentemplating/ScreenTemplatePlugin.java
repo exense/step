@@ -21,7 +21,7 @@ package step.plugins.screentemplating;
 import java.util.Arrays;
 
 import step.core.GlobalContext;
-import ch.exense.commons.core.collections.Collection;
+import step.core.collections.Collection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;

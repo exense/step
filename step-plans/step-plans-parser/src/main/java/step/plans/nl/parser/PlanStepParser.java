@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import step.artefacts.CallFunction;
-import ch.exense.commons.core.model.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.repositories.parser.AbstractStep;

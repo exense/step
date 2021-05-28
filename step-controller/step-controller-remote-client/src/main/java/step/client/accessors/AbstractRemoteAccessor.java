@@ -20,9 +20,9 @@ package step.client.accessors;
 
 
 import step.client.collections.remote.RemoteCollectionFactory;
-import ch.exense.commons.core.accessors.AbstractAccessor;
-import ch.exense.commons.core.model.accessors.AbstractIdentifiableObject;
-import ch.exense.commons.core.accessors.Accessor;
+import step.core.accessors.AbstractAccessor;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.Accessor;
 
 public class AbstractRemoteAccessor<T extends AbstractIdentifiableObject> extends AbstractAccessor<T> implements Accessor<T>{
 

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.resources;
 
-import ch.exense.commons.core.accessors.Accessor;
+import step.core.accessors.Accessor;
 
 public interface ResourceAccessor extends Accessor<Resource> {
 

@@ -20,7 +20,7 @@ package step.core.execution;
 
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
-import ch.exense.commons.core.collections.Collection;
+import step.core.collections.Collection;
 import step.core.execution.table.ExecutionTable;
 import step.core.execution.table.ExecutionWrapper;
 import step.core.execution.table.LeafReportNodeTable;

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.plugins.views;
 
-import ch.exense.commons.core.accessors.Accessor;
+import step.core.accessors.Accessor;
 
 public interface ViewModelAccessor extends Accessor<ViewModel> {
 

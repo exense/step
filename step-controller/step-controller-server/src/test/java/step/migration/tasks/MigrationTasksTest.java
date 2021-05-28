@@ -1,8 +1,8 @@
 package step.migration.tasks;
 
 import ch.exense.commons.app.Configuration;
-import ch.exense.commons.core.collections.CollectionFactory;
-import ch.exense.commons.core.collections.mongodb.MongoDBCollectionFactory;
+import step.core.collections.CollectionFactory;
+import step.core.collections.mongodb.MongoDBCollectionFactory;
 
 public class MigrationTasksTest {
 

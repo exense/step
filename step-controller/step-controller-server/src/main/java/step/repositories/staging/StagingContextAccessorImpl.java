@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.repositories.staging;
 
-import ch.exense.commons.core.accessors.AbstractAccessor;
-import ch.exense.commons.core.collections.Collection;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
 
 public class StagingContextAccessorImpl extends AbstractAccessor<StagingContext> {
 

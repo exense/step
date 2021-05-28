@@ -38,7 +38,7 @@ import javax.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
 
 import step.core.artefacts.reports.ReportNode;
-import ch.exense.commons.core.collections.SearchOrder;
+import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.FindByCriteraParam;
 import step.core.deployment.Secured;
