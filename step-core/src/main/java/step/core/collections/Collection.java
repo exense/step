@@ -32,10 +32,12 @@ public interface Collection<T> {
 	 * @return
 	 */
 	Stream<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime);
+
+	Stream<T> findReduced(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime, List<String> reduceFields);
 	
 	/**
 	 * @param columnName the name of the column (field)
-	 * @param query: the query filter
+	 * @param filter: the query filter
 	 * @return the distinct values of the column 
 	 */
 	List<String> distinct(String columnName, Filter filter);

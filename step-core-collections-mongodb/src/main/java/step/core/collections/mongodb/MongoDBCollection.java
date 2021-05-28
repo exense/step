@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import com.mongodb.client.model.Projections;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
 import org.bson.conversions.Bson;
@@ -92,6 +93,15 @@ public class MongoDBCollection<T> extends AbstractCollection<T> implements Colle
 	
 	@Override
 	public Stream<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
+		return find(filter, order, skip, limit, maxTime, null);
+	}
+
+	@Override
+	public Stream<T> findReduced(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime, List<String> reduceFields ) {
+		return find(filter, order, skip, limit, maxTime, reduceFields);
+	}
+
+	private Stream<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime, List<String> reduceFields ) {
 		Bson query = filterToQuery(filter);
 		//long count = collection.estimatedDocumentCount();
 		
@@ -99,8 +109,11 @@ public class MongoDBCollection<T> extends AbstractCollection<T> implements Colle
 		//option.skip(0).limit(DEFAULT_LIMIT);
 		//long countResults = collection.countDocuments(query, option);
 		
-		FindIterable<T> find = collection.find(query).maxTime(maxTime, TimeUnit.SECONDS);
-		if(order!=null) {
+		FindIterable<T> find = (reduceFields != null && !reduceFields.isEmpty()) ?
+				collection.find(query).projection(Projections.include(reduceFields)).maxTime(maxTime, TimeUnit.SECONDS).batchSize(mongoClientSession.getBatchSize()) :
+				collection.find(query).maxTime(maxTime, TimeUnit.SECONDS).batchSize(mongoClientSession.getBatchSize());
+
+		if (order != null) {
 			String attributeName = fixAttributeName(order.getAttributeName());
 			Document sortDoc = new Document(attributeName, order.getOrder());
 			find.sort(sortDoc);

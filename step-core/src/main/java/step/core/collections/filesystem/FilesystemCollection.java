@@ -114,6 +114,11 @@ public class FilesystemCollection<T> extends AbstractCollection<T> implements Co
 		return stream;
 	}
 
+	@Override
+	public Stream<T> findReduced(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime, List<String> reduceFields) {
+		return find(filter, order, skip, limit, maxTime);
+	}
+
 	private Stream<FileAndEntity<T>> filteredStream(Filter filter) {
 		PojoFilter<T> pojoFilter = new PojoFilterFactory<T>().buildFilter(filter);
 		Iterator<FileAndEntity<T>> it = entityStream().iterator();

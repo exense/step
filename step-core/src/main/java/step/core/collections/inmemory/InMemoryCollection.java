@@ -85,6 +85,11 @@ public class InMemoryCollection<T> extends AbstractCollection<T> implements Coll
 		});
 	}
 
+	@Override
+	public Stream<T> findReduced(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime, List<String> reduceFields) {
+		return find(filter, order, skip, limit, maxTime);
+	}
+
 	private Stream<T> filteredStream(Filter filter) {
 		PojoFilter<T> pojoFilter = new PojoFilterFactory<T>().buildFilter(filter);
 		return entityStream().filter(pojoFilter::test).sorted(new Comparator<T>() {

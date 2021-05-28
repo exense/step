@@ -38,6 +38,7 @@ public class MongoClientSession implements Closeable {
 
 	protected final MongoClient mongoClient;
 	protected final String db;
+	protected final Integer batchSize;
 	
 	public MongoClientSession(Configuration configuration) {
 		super();
@@ -53,6 +54,7 @@ public class MongoClientSession implements Closeable {
 		Integer maintenanceFrequencyMs = configuration.getPropertyAsInteger("db.maintenanceFrequencyMs");
 		Integer maxConnectionLifeTimeMs = configuration.getPropertyAsInteger("db.maxConnectionLifeTimeMs");
 		Integer maxWaitTimeMs = configuration.getPropertyAsInteger("db.maxWaitTimeMs");
+		batchSize = configuration.getPropertyAsInteger("db.batchSize",1000);
 
 		db = configuration.getProperty("db.database","step");
 		
@@ -91,6 +93,10 @@ public class MongoClientSession implements Closeable {
 
 	public <T> Collection<T> getEntityCollection(String name, Class<T> entityClass) {
 		return new MongoDBCollection<T>(this, name, entityClass);
+	}
+
+	public Integer getBatchSize() {
+		return batchSize;
 	}
 
 	@Override

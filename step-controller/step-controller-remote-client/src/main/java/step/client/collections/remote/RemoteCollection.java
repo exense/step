@@ -87,6 +87,11 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
+    public Stream<T> findReduced(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime, List<String> reduceFields) {
+        throw new UnsupportedOperationException("This method is currently not implemented");
+    }
+
+    @Override
     public void remove(Filter filter) {
         Entity<Filter> entity = Entity.entity(filter, MediaType.APPLICATION_JSON);
         Invocation.Builder builder = client.requestBuilder(path + "/remove");
