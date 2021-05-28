@@ -47,15 +47,11 @@ import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.SearchOrder;
 import step.core.collections.filesystem.AbstractCollection;
-import step.core.objectenricher.ObjectFilter;
-import step.core.objectenricher.ObjectHookRegistry;
 
 public class MongoDBCollection<T> extends AbstractCollection<T> implements Collection<T> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MongoDBCollection.class);
 
-	private static final int DEFAULT_LIMIT = 1000;
-	
 	protected static final String CSV_DELIMITER = ";";
 	
 	private final MongoClientSession mongoClientSession;
@@ -65,8 +61,6 @@ public class MongoDBCollection<T> extends AbstractCollection<T> implements Colle
 	/**
 	 * @param collectionName the name of the mongo collection
 	 * @param entityClass the
-	 * if the context parameters delivered by the {@link ObjectFilter}s of the {@link ObjectHookRegistry}
-	 * may be appended to the queries run against this collection
 	 */
 	public MongoDBCollection(MongoClientSession mongoClientSession, String collectionName, Class<T> entityClass) {
 		this.mongoClientSession = mongoClientSession;
@@ -107,7 +101,8 @@ public class MongoDBCollection<T> extends AbstractCollection<T> implements Colle
 		
 		FindIterable<T> find = collection.find(query).maxTime(maxTime, TimeUnit.SECONDS);
 		if(order!=null) {
-			Document sortDoc = new Document(order.getAttributeName(), order.getOrder());
+			String attributeName = fixAttributeName(order.getAttributeName());
+			Document sortDoc = new Document(attributeName, order.getOrder());
 			find.sort(sortDoc);
 		}
 		if(skip!=null) {
@@ -140,7 +135,16 @@ public class MongoDBCollection<T> extends AbstractCollection<T> implements Colle
 		
 		return Streams.stream(enrichedIterator);
 	}
-	
+
+	private String fixAttributeName(String attributeName) {
+		if(attributeName.equals(AbstractIdentifiableObject.ID)) {
+			attributeName = "_id";
+		} else if (attributeName.contains("."+AbstractIdentifiableObject.ID)) {
+			attributeName = attributeName.replace("."+AbstractIdentifiableObject.ID, "._id");
+		}
+		return attributeName;
+	}
+
 	private void fixIdAfterRead(T next) {
 		if(next instanceof step.core.collections.Document) {
 			step.core.collections.Document document = (step.core.collections.Document) next;
