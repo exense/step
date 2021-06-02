@@ -1,22 +1,25 @@
 package step.client.collections.remote;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+
 import step.client.AbstractRemoteClient;
 import step.commons.iterators.SkipLimitIterator;
 import step.commons.iterators.SkipLimitProvider;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.SearchOrder;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class RemoteCollection<T> implements Collection<T> {
 
@@ -36,23 +39,7 @@ public class RemoteCollection<T> implements Collection<T> {
         FindRequest findRequest = new FindRequest(filter,order,skip,limit,maxTime);
         Invocation.Builder builder = client.requestBuilder(path + "/find");
 
-        ParameterizedType parameterizedGenericType = new ParameterizedType() {
-            public Type[] getActualTypeArguments() {
-                return new Type[] { entityClass };
-            }
-
-            public Type getRawType() {
-                return List.class;
-            }
-
-            public Type getOwnerType() {
-                return List.class;
-            }
-        };
-
-        GenericType<List<T>> genericType = new GenericType<List<T>>(
-                parameterizedGenericType) {
-        };
+        GenericType<List<T>> genericType = genericTypeForEntityList();
 
         Iterable<T> iterable = new Iterable<T>() {
             @Override
@@ -78,6 +65,31 @@ public class RemoteCollection<T> implements Collection<T> {
         return StreamSupport.stream(iterable.spliterator(), false);
 
     }
+
+	private GenericType<List<T>> genericTypeForEntityList() {
+		ParameterizedType parameterizedGenericType = getParametrizedTypeForEntityList();
+
+        GenericType<List<T>> genericType = new GenericType<List<T>>(
+                parameterizedGenericType) {
+        };
+		return genericType;
+	}
+
+	private ParameterizedType getParametrizedTypeForEntityList() {
+		return new ParameterizedType() {
+            public Type[] getActualTypeArguments() {
+                return new Type[] { entityClass };
+            }
+
+            public Type getRawType() {
+                return List.class;
+            }
+
+            public Type getOwnerType() {
+                return List.class;
+            }
+        };
+	}
 
     @Override
     public List<String> distinct(String columnName, Filter filter) {
@@ -107,7 +119,10 @@ public class RemoteCollection<T> implements Collection<T> {
 
     @Override
     public void save(Iterable<T> entities) {
-        Entity<Iterable<T>> entityPayload = Entity.entity(entities, MediaType.APPLICATION_JSON);
+    	List<T> arrayList = new ArrayList<T>();
+    	entities.forEach(e->arrayList.add(e));
+    	GenericEntity<List<T>> list = new GenericEntity<List<T>>(arrayList, getParametrizedTypeForEntityList());
+        Entity<GenericEntity<List<T>>> entityPayload = Entity.entity(list, MediaType.APPLICATION_JSON);
         Invocation.Builder builder = client.requestBuilder(path + "/saveMany");
         client.executeRequest(()->builder.post(entityPayload));
     }
