@@ -19,14 +19,21 @@
 package step.plugins.measurements.rtm;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 
+import ch.exense.commons.app.Configuration;
 import org.bson.Document;
-import org.eclipse.jetty.webapp.WebAppContext;
-import org.rtm.commons.Configuration;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.rtm.commons.MeasurementAccessor;
+
+import org.rtm.jetty.JettyStarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,49 +53,43 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		context.getServiceRegistrationCallback().registerService(RtmPluginServices.class);
-
-		Properties rtmProperties = Configuration.getInstance().getUnderlyingPropertyObject();
-		ch.exense.commons.app.Configuration stepProperties = context.getConfiguration();
+		String fileName = "rtm.properties";
+		InputStream inputStream = getClass().getClassLoader().getResourceAsStream(fileName);
+		File file = File.createTempFile(fileName + "-" + UUID.randomUUID(), fileName.substring(fileName.lastIndexOf(".")));
+		Files.copy(inputStream, file.toPath(), new CopyOption[]{StandardCopyOption.REPLACE_EXISTING});
+		file.deleteOnExit();
 		
-		String[] propArray = {"db.host", "db.port", "db.database", "db.username", "db.password"};
+		Configuration rtmConfig = new Configuration(file);
+		Properties rtmProperties = rtmConfig.getUnderlyingPropertyObject();
+		Configuration stepConfig = context.getConfiguration();
+		
+		String[] propArray = {"db.host", "db.port", "db.database", "db.username", "db.password","db.type"};
 		List<String> props = Arrays.asList(propArray);
-		
-		if(stepProperties.getPropertyAsBoolean("plugins.rtm.useLocalDB", true) == true){
+
+		if(stepConfig.getPropertyAsBoolean("plugins.rtm.useLocalDB", true) == true) {
 			logger.info("Property 'plugins.rtm.useLocalDB' is set to true, overriding rtm db properties with step ones:");
-			for(String prop : props) {
-				logger.info("["+prop+"] "+rtmProperties.getProperty(prop) + "->" + stepProperties.getProperty(prop));
-				cloneProperty(rtmProperties, stepProperties, prop);
+			for (String prop : props) {
+				logger.info("[" + prop + "] " + rtmProperties.getProperty(prop) + "->" + stepConfig.getProperty(prop));
+				cloneProperty(rtmProperties, stepConfig, prop);
 			}
-		}else {
+		} else {
 			logger.info("Property 'plugins.rtm.useLocalDB' is set to false, rtm will use it's own database connection info:");
 			for(String prop : props) {
 				logger.info("["+prop+"] "+rtmProperties.getProperty(prop));
 			}
 		}
-		
-		Collection<Document> collection = context.getCollectionFactory().getCollection("measurements", Document.class);
+		JettyStarter rtmJettyStarter = new JettyStarter(rtmConfig);
+		ServletContextHandler servletContextHandler = rtmJettyStarter.getServletContextHandler();
+		context.getServiceRegistrationCallback().registerHandler(servletContextHandler);
+
+		Collection<Document> collection = rtmJettyStarter.getContext().getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME,Document.class);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateIndex(MeasurementPlugin.BEGIN);
 		
-		WebAppContext webappCtx = new WebAppContext();
-		webappCtx.setContextPath("/rtm");
-		
-		String war = stepProperties.getProperty("plugins.rtm.war");
-		if(war==null) {
-			throw new RuntimeException("Property 'plugins.rtm.war' is null. Unable to start RTM.");
-		} else {
-			File warFile = new File(war);
-			if(!warFile.exists()||!warFile.canRead()) {
-				throw new RuntimeException("The file '"+war+"' with absolute path '"+warFile.getAbsolutePath()+"' set by the property 'plugins.rtm.war' doesn't exist or cannot be read. Unable to start RTM.");	
-			}
-		}
-		webappCtx.setWar(war);
-		webappCtx.setParentLoaderPriority(true);
-		context.getServiceRegistrationCallback().registerHandler(webappCtx);
-		
-		accessor = MeasurementAccessor.getInstance();
+
+		accessor = rtmJettyStarter.getContext().getMeasurementAccessor();
 		context.put(MeasurementAccessor.class, accessor);
 		
 		MeasurementPlugin.registerMeasurementHandlers(new RtmHandler(accessor));

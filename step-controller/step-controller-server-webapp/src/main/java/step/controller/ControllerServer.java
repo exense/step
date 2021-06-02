@@ -51,10 +51,10 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import ch.exense.commons.app.ArgumentParser;
 import ch.exense.commons.app.Configuration;
 import ch.exense.viz.persistence.accessors.GenericVizAccessor;
-import ch.exense.viz.persistence.mongodb.MongoClientSession;
 import ch.exense.viz.rest.VizServlet;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
+import step.core.collections.filesystem.FilesystemCollectionFactory;
 import step.core.controller.errorhandling.ErrorFilter;
 import step.core.deployment.AccessServices;
 import step.core.deployment.AdminServices;
@@ -187,6 +187,11 @@ public class ControllerServer {
 		controller = new Controller(configuration);
 		
 		controller.init(new ServiceRegistrationCallback() {
+			@Override
+			public void register(Object component) {
+				resourceConfig.register(component);
+			}
+
 			public void registerService(Class<?> serviceClass) {
 				resourceConfig.registerClasses(serviceClass);
 			}
@@ -226,14 +231,15 @@ public class ControllerServer {
 			}
 		});
 		
-		/*resourceConfig.registerClasses(VizServlet.class);
-		GenericVizAccessor accessor = new GenericVizAccessor(new MongoClientSession(configuration));
+		resourceConfig.registerClasses(VizServlet.class);
+		
+		GenericVizAccessor accessor = new GenericVizAccessor(new FilesystemCollectionFactory(controller.getContext().getConfiguration()));
 		resourceConfig.register(new AbstractBinder() {
 			@Override
 			protected void configure() {
 				bind(accessor).to(GenericVizAccessor.class);
 			}
-		});*/
+		});
 		
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);
 

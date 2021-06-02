@@ -59,16 +59,6 @@
 							<overWrite>true</overWrite>
 							<outputDirectory>${project.basedir}/template-controller/ext/groovy</outputDirectory>
 						</artifactItem>
-						<artifactItem>
-							<groupId>ch.exense.rtm</groupId>
-							<artifactId>rtm</artifactId>
-							<version>${rtm.version}</version>
-							<type>war</type>
-							<classifier>war</classifier>
-							<overWrite>true</overWrite>
-							<outputDirectory>${project.basedir}/template-controller/ext/</outputDirectory>
-							<destFileName>rtm.war</destFileName>
-						</artifactItem>
 					</artifactItems>
 					<outputDirectory>${project.build.directory}/wars</outputDirectory>
 					<overWriteReleases>true</overWriteReleases>

@@ -278,6 +278,8 @@ public class Controller {
 	}
 	
 	public interface ServiceRegistrationCallback {
+
+		public void register(Object component);
 		
 		public void registerService(Class<?> serviceClass);
 		

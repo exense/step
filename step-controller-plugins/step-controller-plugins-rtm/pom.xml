@@ -36,12 +36,12 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.rtm</groupId>
-			<artifactId>rtm-commons</artifactId>
+			<artifactId>rtm</artifactId>
 			<version>${rtm.version}</version>
 			<exclusions>
 				<exclusion>
-					<groupId>org.mongodb</groupId>
-					<artifactId>mongodb-driver</artifactId>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
