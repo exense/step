@@ -24,7 +24,6 @@ import java.util.Map;
 
 import javax.json.JsonObject;
 
-import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.SearchOrder;
 import step.core.objectenricher.ObjectFilter;

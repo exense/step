@@ -1,6 +1,28 @@
 package step.plugins.remote;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Singleton;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import com.fasterxml.jackson.databind.type.CollectionType;
+
+import step.client.collections.remote.CountRequest;
+import step.client.collections.remote.CountResponse;
 import step.client.collections.remote.FindRequest;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
@@ -10,19 +32,6 @@ import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Unfiltered;
 import step.core.entities.EntityManager;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
-import javax.ws.rs.*;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Singleton
 @Path("remote")
@@ -41,6 +50,31 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @PreDestroy
     public void destroy() {
     }
+    
+	@POST
+	@Path("/{id}/count")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right = "collection-read")
+	public Response count(@PathParam("id") String collectionId, CountRequest countRequest) {
+		@SuppressWarnings("unchecked")
+		Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId,
+				entityManager.resolveClass(collectionId));
+		long count = collectionDriver.count(countRequest.getFilter(), countRequest.getLimit());
+		return Response.status(200).entity(new CountResponse(count)).build();
+	}
+	
+	@GET
+	@Path("/{id}/count/estimated")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "collection-read")
+	public Response count(@PathParam("id") String collectionId) {
+		@SuppressWarnings("unchecked")
+		Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId,
+				entityManager.resolveClass(collectionId));
+		long count = collectionDriver.estimatedCount();
+		return Response.status(200).entity(new CountResponse(count)).build();
+	}
 
     @POST
     @Path("/{id}/find")

@@ -38,7 +38,9 @@ public class AbstractTable<T> implements Table<T> {
 	@Override
 	public TableFindResult<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
 		Iterator<T> iterator = collection.find(filter, order, skip, limit, maxTime).map(this::enrichEntity).iterator();
-		TableFindResult<T> enrichedResult = new TableFindResult<T>(0, 0, iterator);
+		long estimatedTotalCount = collection.estimatedCount();
+		long count = collection.count(filter, 1000);
+		TableFindResult<T> enrichedResult = new TableFindResult<T>(estimatedTotalCount, count, iterator);
 		return enrichedResult;
 	}
 

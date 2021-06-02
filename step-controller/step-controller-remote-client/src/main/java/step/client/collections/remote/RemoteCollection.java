@@ -150,4 +150,17 @@ public class RemoteCollection<T> implements Collection<T> {
     protected UnsupportedOperationException notImplemented()  {
         return new UnsupportedOperationException("This method is currently not implemented");
     }
+
+	@Override
+	public long count(Filter filter, Integer limit) {
+        Invocation.Builder builder = client.requestBuilder(path + "/count");
+        Entity<CountRequest> entity = Entity.entity(new CountRequest(filter, limit), MediaType.APPLICATION_JSON);
+        return client.executeRequest(()->builder.post(entity, CountResponse.class)).getCount();
+	}
+
+	@Override
+	public long estimatedCount() {
+		Invocation.Builder builder = client.requestBuilder(path + "/count/estimated");
+        return client.executeRequest(()->builder.get(CountResponse.class)).getCount();
+	}
 }

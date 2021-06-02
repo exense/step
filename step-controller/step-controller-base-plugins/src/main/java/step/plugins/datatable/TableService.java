@@ -107,30 +107,30 @@ public class TableService extends ApplicationServices {
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public DataTableResponse getTableData_Post(@PathParam("id") String collectionID, MultivaluedMap<String, String> form, @Context UriInfo uriInfo) throws Exception {
+	public DataTableResponse getTableData_Post(@PathParam("id") String tableID, MultivaluedMap<String, String> form, @Context UriInfo uriInfo) throws Exception {
 		if(uriInfo.getQueryParameters()!=null) {
 			form.putAll(uriInfo.getQueryParameters());
 		}
-		Filter sessionQueryFragment = getAdditionalQueryFragmentFromContext(collectionID);
-		return getTableData(collectionID, form, sessionQueryFragment);
+		Filter sessionQueryFragment = getAdditionalQueryFragmentFromContext(tableID);
+		return getTableData(tableID, form, sessionQueryFragment);
 	}
 	
 	@GET
 	@Path("/{id}/data")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public DataTableResponse getTableData_Get(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
-		Filter sessionQueryFragment = getAdditionalQueryFragmentFromContext(collectionID);
-		return getTableData(collectionID, uriInfo.getQueryParameters(), sessionQueryFragment);
+	public DataTableResponse getTableData_Get(@PathParam("id") String tableID, @Context UriInfo uriInfo) throws Exception {
+		Filter sessionQueryFragment = getAdditionalQueryFragmentFromContext(tableID);
+		return getTableData(tableID, uriInfo.getQueryParameters(), sessionQueryFragment);
 	}
 	
 	@GET
 	@Path("/{id}/column/{column}/distinct")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public List<String> getTableColumnDistinct(@PathParam("id") String collectionID, @PathParam("column") String column, @Context UriInfo uriInfo) throws Exception {
-		Table<?> collection = tableRegistry.get(collectionID);
-		return collection.distinct(column);
+	public List<String> getTableColumnDistinct(@PathParam("id") String tableID, @PathParam("column") String column, @Context UriInfo uriInfo) throws Exception {
+		Table<?> table = tableRegistry.get(tableID);
+		return table.distinct(column);
 	}
 	
 	@POST
@@ -138,21 +138,21 @@ public class TableService extends ApplicationServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured
-	public List<String> searchIdsBy(@PathParam("id") String collectionID, @PathParam("column") String columnName, String searchValue) throws Exception {
-		Table<?> collection = tableRegistry.get(collectionID);
-		Filter columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
-		return collection.distinct(AbstractIdentifiableObject.ID, columnQueryFragment);
+	public List<String> searchIdsBy(@PathParam("id") String tableID, @PathParam("column") String columnName, String searchValue) throws Exception {
+		Table<?> table = tableRegistry.get(tableID);
+		Filter columnQueryFragment = table.getQueryFragmentForColumnSearch(columnName, searchValue);
+		return table.distinct(AbstractIdentifiableObject.ID, columnQueryFragment);
 	}
 	
-	private DataTableResponse getTableData(@PathParam("id") String collectionID, MultivaluedMap<String, String> params, Filter sessionQueryFragment) throws Exception {		
-		Table<?> collection = tableRegistry.get(collectionID);
-		if(collection == null) {
-			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
+	private DataTableResponse getTableData(@PathParam("id") String tableID, MultivaluedMap<String, String> params, Filter sessionQueryFragment) throws Exception {		
+		Table<?> table = tableRegistry.get(tableID);
+		if(table == null) {
+			throw new RuntimeException("The table "+tableID+" doesn't exist");
 		}
 
 		Map<Integer, String> columnNames = getColumnNamesMap(params);
 		
-		List<Filter> queryFragments = createQueryFragments(params, columnNames, collection);
+		List<Filter> queryFragments = createQueryFragments(params, columnNames, table);
 		
 		int draw = Integer.parseInt(params.getFirst("draw"));
 		int skip = Integer.parseInt(params.getFirst("start"));
@@ -169,7 +169,7 @@ public class TableService extends ApplicationServices {
 			order = null;
 		}
 		
-		if(collection.isFiltered() && sessionQueryFragment != null) {
+		if(table.isFiltered() && sessionQueryFragment != null) {
 			queryFragments.add(sessionQueryFragment);
 		}
 		
@@ -178,14 +178,14 @@ public class TableService extends ApplicationServices {
 			JsonReader reader = Json.createReader(new StringReader(params.getFirst("params")));
 			queryParameters = reader.readObject();
 		}
-		List<Filter> additionalQueryFragments = collection.getAdditionalQueryFragments(queryParameters);
+		List<Filter> additionalQueryFragments = table.getAdditionalQueryFragments(queryParameters);
 		if(additionalQueryFragments != null) {
 			queryFragments.addAll(additionalQueryFragments);
 		}
 		
 		Filter query = queryFragments.size()>0?Filters.and(queryFragments):Filters.empty();
 		
-		TableFindResult<?> find = collection.find(query, order, skip, limit, maxTime);
+		TableFindResult<?> find = table.find(query, order, skip, limit, maxTime);
 
 		List<Object> objects = new ArrayList<>();
 		Iterator<?> iterator = find.getIterator();
@@ -217,12 +217,12 @@ public class TableService extends ApplicationServices {
 	@Path("/{id}/export")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured
-	public String createExport(@PathParam("id") String collectionID, @Context UriInfo uriInfo) throws Exception {
+	public String createExport(@PathParam("id") String tableID, @Context UriInfo uriInfo) throws Exception {
 		MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
 	
-		Table<?> collection = tableRegistry.get(collectionID);
-		if(collection == null) {
-			throw new RuntimeException("The collection "+collectionID+" doesn't exist");
+		Table<?> table = tableRegistry.get(tableID);
+		if(table == null) {
+			throw new RuntimeException("The table "+tableID+" doesn't exist");
 		}
 		
 		JsonObject queryParameters = null;
@@ -231,11 +231,11 @@ public class TableService extends ApplicationServices {
 			queryParameters = reader.readObject();
 		}
 		
-		List<Filter> queryFragments = collection.getAdditionalQueryFragments(queryParameters);
+		List<Filter> queryFragments = table.getAdditionalQueryFragments(queryParameters);
 		Filter query = queryFragments.size()>0?Filters.and(queryFragments):Filters.empty();
 		
 		String exportID = UUID.randomUUID().toString();
-		exportTaskManager.createExportTask(exportID, new ExportTask(collection, null, query));
+		exportTaskManager.createExportTask(exportID, new ExportTask(table, null, query));
 		
 		return "{\"exportID\":\"" + exportID + "\"}";
 	}
@@ -249,7 +249,7 @@ public class TableService extends ApplicationServices {
 	}
 	
 
-	private List<Filter> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames, Table<?> collection) {
+	private List<Filter> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames, Table<?> table) {
 		List<Filter> queryFragments = new ArrayList<>();
 		for(String key:params.keySet()) {
 			Matcher m = columnSearchPattern.matcher(key);
@@ -260,7 +260,7 @@ public class TableService extends ApplicationServices {
 				String searchValue = params.getFirst(key);
 
 				if(searchValue!=null && searchValue.length()>0) {
-					Filter columnQueryFragment = collection.getQueryFragmentForColumnSearch(columnName, searchValue);
+					Filter columnQueryFragment = table.getQueryFragmentForColumnSearch(columnName, searchValue);
 					queryFragments.add(columnQueryFragment);
 				}
 			} else if(searchMatcher.matches()) {
@@ -291,20 +291,20 @@ public class TableService extends ApplicationServices {
 		return columnNames;
 	}
 
-	private Filter getAdditionalQueryFragmentFromContext(String collectionID) {
+	private Filter getAdditionalQueryFragmentFromContext(String tableID) {
 		Filter query = OQLFilterBuilder.getFilter(objectHookRegistry.getObjectFilter(getSession()).getOQLFilter());
 		return query;
 	}
 
 	public static class ExportTask extends ExportRunnable {
 
-		protected Table<?> collection;
+		protected Table<?> table;
 		protected Map<String, TableColumn> columns;
 		protected Filter query;
 
-		public ExportTask(Table<?> collection, Map<String, TableColumn> columns, Filter query) {
+		public ExportTask(Table<?> table, Map<String, TableColumn> columns, Filter query) {
 			super();
-			this.collection = collection;
+			this.table = table;
 			this.columns = columns;
 			this.query = query;
 		}
@@ -315,7 +315,7 @@ public class TableService extends ApplicationServices {
 				PrintWriter writer = new PrintWriter(resourceContainer.getOutputStream());
 
 				try {
-					collection.export(query, columns,writer);
+					table.export(query, columns,writer);
 				} finally {
 					writer.close();
 					resourceContainer.save(null);
