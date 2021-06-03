@@ -82,7 +82,11 @@ public class ViewManager {
 		for(AbstractView<?> view:getViews()) {
 			try {
 				ViewModel model = view.removeModel(executionId);
-				accessor.save(model);
+				// model might be null if the execution was never started; for various reasons,
+				// the "ended" hook will still be executed in that case.
+				if (model != null) {
+					accessor.save(model);
+				}
 			} catch(Exception e) {
 				logger.error("Error while saving view "+view.getViewId(), e);
 			}
