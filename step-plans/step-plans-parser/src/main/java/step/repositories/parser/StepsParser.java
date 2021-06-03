@@ -110,13 +110,15 @@ public class StepsParser {
 			parseStep(parsingContext, step);
 		}
 
-		if(!parsingContext.isArtefactStackEmpty()) {
-			StackEntry stackEntry = parsingContext.pop();
-			if(!parsingContext.isArtefactStackEmpty()) {
-				parsingContext.addParsingError("Unclosed block " + stackEntry.step);
-			}			
-		} else {
+		if(parsingContext.isArtefactStackEmpty()) {
 			parsingContext.addParsingError("Unbalanced blocks");
+		} else {
+			StackEntry stackEntry = parsingContext.pop();
+			// there may be multiple unclosed blocks
+			while(!parsingContext.isArtefactStackEmpty()) {
+				parsingContext.addParsingError("Unclosed block " + stackEntry.step);
+				stackEntry = parsingContext.pop();
+			}
 		}
 		
 		if(parsingContext.parsingErrors.size()>0) {

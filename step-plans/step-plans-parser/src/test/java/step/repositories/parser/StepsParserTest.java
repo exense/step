@@ -147,26 +147,64 @@ public class StepsParserTest extends AbstractStepParserTest {
 		Assert.assertEquals("Echo 2",echo.getDescription());
 		
 	}
-	
-	
+
+
 	@Test
 	public void testUnclosedBlockError() {
 		List<AbstractStep> steps = new ArrayList<>();
 		steps.add(step("Start"));
 		steps.add(step("Echo"));
-		
+
 		ParsingException exception = null;
 		try {
-			parse(steps);			
+			parse(steps);
 		} catch(ParsingException e) {
 			exception = e;
 		}
 
 		Assert.assertNotNull(exception);
+		Assert.assertEquals(1 ,exception.getErrors().size());
 		Assert.assertEquals("Error in step Echo: Unclosed block Start",exception.getErrors().get(0).getError());
 	}
-	
-	
+
+	@Test
+	public void testUnclosedBlocksError() {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Start"));
+		steps.add(step("Start"));
+		steps.add(step("Echo"));
+
+		ParsingException exception = null;
+		try {
+			parse(steps);
+		} catch(ParsingException e) {
+			exception = e;
+		}
+
+		Assert.assertNotNull(exception);
+		Assert.assertEquals(2 ,exception.getErrors().size());
+		Assert.assertEquals("Error in step Echo: Unclosed block Start",exception.getErrors().get(0).getError());
+		Assert.assertEquals("Error in step Echo: Unclosed block Start",exception.getErrors().get(1).getError());
+	}
+
+	@Test
+	public void testTrailingEndError() {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Echo"));
+		steps.add(step("End"));
+
+		ParsingException exception = null;
+		try {
+			parse(steps);
+		} catch(ParsingException e) {
+			exception = e;
+		}
+
+		Assert.assertNotNull(exception);
+		Assert.assertEquals(1 ,exception.getErrors().size());
+		Assert.assertEquals("Error in step End: Unbalanced blocks",exception.getErrors().get(0).getError());
+	}
+
 	@Test
 	public void testParsingError() {
 		List<AbstractStep> steps = new ArrayList<>();
