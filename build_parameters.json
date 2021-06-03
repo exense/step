@@ -57,22 +57,42 @@
     	],
     
 		"URL_STAGING":  [
-      		"build@ftps.exense.ch","NOT_USED","docker-dev.exense.ch",
-      		"build@ftps.exense.ch","NOT_USED","docker-dev.exense.ch"
+      		"build@ftps.exense.ch",
+      		"NOT_USED",
+      		"docker-dev.exense.ch",
+      		"build@ftps.exense.ch",
+      		"NOT_USED",
+      		"docker-dev.exense.ch",
+      		"build@ftps.exense.ch"
     	],
       
 		"URL_PROD":     [
-			"build@ftps.exense.ch","NOT_USED","docker.exense.ch",
-			"build@ftps.exense.ch","NOT_USED","docker.exense.ch"
+			"build@ftps.exense.ch",
+			"NOT_USED",
+			"docker.exense.ch",
+			"build@ftps.exense.ch",
+			"NOT_USED",
+			"docker.exense.ch",
+			"build@ftps.exense.ch"
     	],
 		
 		"OS":[
-			"NOT_USED","NOT_USED", "LINUX",
-      		"NOT_USED","NOT_USED", "LINUX"
+			"NOT_USED",
+			"NOT_USED",
+			"LINUX",
+      		"NOT_USED",
+      		"NOT_USED",
+      		"LINUX",
+      		"NOT_USED"
     	],
 		"CONFIG":[
-			"public","NOT_USED","controller-dockerfile",
-			"public","NOT_USED","agent-dockerfile"
+			"public",
+			"NOT_USED",
+			"controller-dockerfile",
+			"public",
+			"NOT_USED",
+			"agent-dockerfile",
+			"public"
     	]
 	},
 	"INSTANCES":
