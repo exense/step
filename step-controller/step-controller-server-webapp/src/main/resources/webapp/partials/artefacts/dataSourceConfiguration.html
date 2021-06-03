@@ -42,6 +42,10 @@
 		<dynamic-textfield label="'Inc'" on-save="save()" dynamic-value="artefact.dataSource.inc" />
 	</div>
 	
+	<div ng-if="artefact.dataSourceType=='json-array'">
+		<dynamic-textfield label="'Json'" on-save="save()" dynamic-value="artefact.dataSource.json" />
+	</div>
+	
 	<div ng-if="artefact.dataSourceType=='json'">
 		<dynamic-textfield label="'Json string'" on-save="save()" dynamic-value="artefact.dataSource.json" />
 	</div>

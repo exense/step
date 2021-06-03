@@ -33,6 +33,8 @@ import step.datapool.inmemory.JsonStringDataPoolConfiguration;
 import step.datapool.inmemory.JsonStringDataPoolImpl;
 import step.datapool.jdbc.SQLTableDataPool;
 import step.datapool.jdbc.SQLTableDataPoolConfiguration;
+import step.datapool.json.JsonArrayDataPoolConfiguration;
+import step.datapool.json.JsonArrayDataPoolImpl;
 import step.datapool.sequence.IntSequenceDataPool;
 import step.datapool.sequence.IntSequenceDataPoolImpl;
 
@@ -55,7 +57,9 @@ public class DataPoolFactory {
 			result = new IntSequenceDataPoolImpl((IntSequenceDataPool) dataPoolConfiguration);
 		} else if(dataSourceType.equals("json")) {
 			result = new JsonStringDataPoolImpl((JsonStringDataPoolConfiguration) dataPoolConfiguration);
-		}else if(dataSourceType.equals("gsheet")) {
+		} else if(dataSourceType.equals("json-array")) {
+			result = new JsonArrayDataPoolImpl((JsonArrayDataPoolConfiguration) dataPoolConfiguration);
+		} else if(dataSourceType.equals("gsheet")) {
 			result = new GoogleSheetv4DataPool((GoogleSheetv4DataPoolConfiguration) dataPoolConfiguration);
 		} else {
 			throw new RuntimeException("Unsupported data source type: "+dataSourceType);
@@ -84,6 +88,8 @@ public class DataPoolFactory {
 				conf = new IntSequenceDataPool();
 			} else if(dataSourceType.equals("json")) {
 				conf = new JsonStringDataPoolConfiguration();
+			} else if(dataSourceType.equals("json-array")) {
+				conf = new JsonArrayDataPoolConfiguration();
 			} else if(dataSourceType.equals("gsheet")) {
 				conf = new GoogleSheetv4DataPoolConfiguration();
 			} else {
