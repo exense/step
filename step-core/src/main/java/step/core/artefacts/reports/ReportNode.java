@@ -174,6 +174,10 @@ public class ReportNode extends AbstractIdentifiableObject {
 	public void addAttachment(AttachmentMeta attachment) {
 		attachments.add(attachment);
 	}
+
+	public Map<String, String> getCustomAttributes() {
+		return customAttributes;
+	}
 	
 	public String getCustomAttribute(String key) {
 		if(customAttributes!=null) {
