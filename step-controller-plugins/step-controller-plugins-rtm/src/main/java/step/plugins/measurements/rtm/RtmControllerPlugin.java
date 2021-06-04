@@ -33,6 +33,7 @@ import org.bson.Document;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.rtm.commons.MeasurementAccessor;
 
+import org.rtm.commons.RtmContext;
 import org.rtm.jetty.JettyStarter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,36 +61,26 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 		file.deleteOnExit();
 		
 		Configuration rtmConfig = new Configuration(file);
-		Properties rtmProperties = rtmConfig.getUnderlyingPropertyObject();
 		Configuration stepConfig = context.getConfiguration();
-		
-		String[] propArray = {"db.host", "db.port", "db.database", "db.username", "db.password","db.type"};
-		List<String> props = Arrays.asList(propArray);
-
+		RtmContext rtmContext;
 		if(stepConfig.getPropertyAsBoolean("plugins.rtm.useLocalDB", true) == true) {
-			logger.info("Property 'plugins.rtm.useLocalDB' is set to true, overriding rtm db properties with step ones:");
-			for (String prop : props) {
-				logger.info("[" + prop + "] " + rtmProperties.getProperty(prop) + "->" + stepConfig.getProperty(prop));
-				cloneProperty(rtmProperties, stepConfig, prop);
-			}
+			logger.info("Property 'plugins.rtm.useLocalDB' is set to true, using step collection factory");
+			rtmContext = new RtmContext(rtmConfig, context.getCollectionFactory());
+			
 		} else {
-			logger.info("Property 'plugins.rtm.useLocalDB' is set to false, rtm will use it's own database connection info:");
-			for(String prop : props) {
-				logger.info("["+prop+"] "+rtmProperties.getProperty(prop));
-			}
+			logger.info("Property 'plugins.rtm.useLocalDB' is set to false, rtm will use it's own database connection info.");
+			rtmContext = new RtmContext(rtmConfig);
 		}
-		JettyStarter rtmJettyStarter = new JettyStarter(rtmConfig);
-		ServletContextHandler servletContextHandler = rtmJettyStarter.getServletContextHandler();
+		ServletContextHandler servletContextHandler = JettyStarter.getServletContextHandler(rtmContext);
 		context.getServiceRegistrationCallback().registerHandler(servletContextHandler);
 
-		Collection<Document> collection = rtmJettyStarter.getContext().getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME,Document.class);
+		Collection<Document> collection = rtmContext.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME,Document.class);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateIndex(MeasurementPlugin.BEGIN);
 		
-
-		accessor = rtmJettyStarter.getContext().getMeasurementAccessor();
+		accessor = rtmContext.getMeasurementAccessor();
 		context.put(MeasurementAccessor.class, accessor);
 		
 		MeasurementPlugin.registerMeasurementHandlers(new RtmHandler(accessor));
@@ -99,12 +90,6 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 	public void executionControllerDestroy(GlobalContext context) {
 		if(accessor !=null) {
 			accessor.close();
-		}
-	}
-
-	private void cloneProperty(Properties rtmProperties, ch.exense.commons.app.Configuration stepProperties, String property) {
-		if(stepProperties.getProperty(property)!=null) {
-			rtmProperties.put(property, stepProperties.getProperty(property));			
 		}
 	}
 }
