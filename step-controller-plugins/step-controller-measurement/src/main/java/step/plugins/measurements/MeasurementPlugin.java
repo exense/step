@@ -1,5 +1,7 @@
 package step.plugins.measurements;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.artefacts.reports.ThreadReportNode;
 import step.core.accessors.AbstractOrganizableObject;
@@ -38,6 +40,8 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	public static final String TASK_ID = "taskId";
 	public static final String PLAN_ID = "planId";
 	public static final String SCHEDULER_TASK_ID = "$schedulerTaskId";
+
+	private static final Logger logger = LoggerFactory.getLogger(MeasurementPlugin.class);
 
 	private static List<MeasurementHandler> measurementHandlers = new ArrayList<>();
 	private Map<String, Set<String[]>> labelsByExec = new ConcurrentHashMap<>();
@@ -174,7 +178,11 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
 	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
 		for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-			measurementHandler.processMeasurements(measurements);
+			try {
+				measurementHandler.processMeasurements(measurements);
+			} catch (Exception e) {
+				logger.error("Measurement count not be processed by " + measurementHandler.getClass().getSimpleName(),e);
+			}
 		}
 	}
 
