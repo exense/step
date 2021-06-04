@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import ch.exense.commons.app.Configuration;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
@@ -18,7 +17,7 @@ public class SetSchedulerTaskAttributesTest {
 
 	@Test
 	public void test() {
-		CollectionFactory collectionFactory = new InMemoryCollectionFactory(new Configuration());
+		CollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
 
 		Document task1 = new Document();
 		task1.put(AbstractOrganizableObject.NAME, NAME);

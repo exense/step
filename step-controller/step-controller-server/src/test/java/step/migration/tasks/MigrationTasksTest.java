@@ -1,16 +1,17 @@
 package step.migration.tasks;
 
-import ch.exense.commons.app.Configuration;
+import java.util.Properties;
+
 import step.core.collections.CollectionFactory;
 import step.core.collections.mongodb.MongoDBCollectionFactory;
 
 public class MigrationTasksTest {
 
 	public static void main(String[] args) {
-		Configuration configuration = new Configuration();
-		configuration.putProperty("db.host", "localhost");
-		configuration.putProperty("db.database", "step");
-		CollectionFactory collectionFactory = new MongoDBCollectionFactory(configuration);
+		Properties properties = new Properties();
+		properties.put("host", "localhost");
+		properties.put("database", "step310-1");
+		CollectionFactory collectionFactory = new MongoDBCollectionFactory(properties);
 		
 		//collectionFactory = new InMemoryCollectionFactory(new Configuration());
 

@@ -36,7 +36,7 @@ public class RemoveLocalFunctionsTest {
 	public RemoveLocalFunctionsTest() {
 		super();
 		
-		collectionFactory = new InMemoryCollectionFactory(new Configuration());
+		collectionFactory = new InMemoryCollectionFactory(null);
 	}
 
 	@Test

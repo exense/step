@@ -1,26 +1,25 @@
 package step.client.collections.remote;
 
+import java.io.IOException;
+import java.util.Properties;
+
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 
-import java.io.File;
-import java.io.IOException;
-import ch.exense.commons.app.Configuration;
-
 public class RemoteCollectionFactory implements CollectionFactory {
 
     private AbstractRemoteClient client;
-    private static String REMOTE_URL_PROP = "db.remote.url";
-    private static String REMOTE_USER_PROP = "db.remote.user";
-    private static String REMOTE_PWD_PROP = "db.remote.pwd";
+    private static String REMOTE_URL_PROP = "url";
+    private static String REMOTE_USER_PROP = "user";
+    private static String REMOTE_PWD_PROP = "pwd";
 
-    public RemoteCollectionFactory(Configuration configuration) {
+    public RemoteCollectionFactory(Properties properties) {
         this(new ControllerCredentials(
-                configuration.getProperty(RemoteCollectionFactory.REMOTE_URL_PROP),
-                configuration.getProperty(RemoteCollectionFactory.REMOTE_USER_PROP),
-                configuration.getProperty(RemoteCollectionFactory.REMOTE_PWD_PROP)
+                properties.getProperty(REMOTE_URL_PROP),
+                properties.getProperty(REMOTE_USER_PROP),
+                properties.getProperty(REMOTE_PWD_PROP)
         ));
     }
     public RemoteCollectionFactory() {

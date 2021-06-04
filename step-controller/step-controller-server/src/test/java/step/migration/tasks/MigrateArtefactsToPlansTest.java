@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import ch.exense.commons.app.Configuration;
 import step.artefacts.CallPlan;
 import step.artefacts.Sequence;
 import step.core.accessors.AbstractIdentifiableObject;
@@ -24,7 +23,7 @@ public class MigrateArtefactsToPlansTest {
 	public MigrateArtefactsToPlansTest() {
 		super();
 		
-		collectionFactory = new InMemoryCollectionFactory(new Configuration());
+		collectionFactory = new InMemoryCollectionFactory(null);
 		artefactCollection = collectionFactory.getCollection("artefacts", Document.class);
 		functionCollection = collectionFactory.getCollection("functions", Document.class);
 	}

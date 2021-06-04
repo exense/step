@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import ch.exense.commons.app.Configuration;
 import step.artefacts.Assert;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
@@ -18,7 +17,7 @@ public class MigrateAssertNegationTest {
 
 	@Test
 	public void test() {
-		CollectionFactory collectionFactory = new InMemoryCollectionFactory(new Configuration());
+		CollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
 		
 		Document assertNode = new Document();
 		assertNode.put("negate", true);

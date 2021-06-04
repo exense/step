@@ -233,7 +233,7 @@ public class ControllerServer {
 		
 		resourceConfig.registerClasses(VizServlet.class);
 		
-		GenericVizAccessor accessor = new GenericVizAccessor(new FilesystemCollectionFactory(controller.getContext().getConfiguration()));
+		GenericVizAccessor accessor = new GenericVizAccessor(controller.getContext().getCollectionFactory());
 		resourceConfig.register(new AbstractBinder() {
 			@Override
 			protected void configure() {
