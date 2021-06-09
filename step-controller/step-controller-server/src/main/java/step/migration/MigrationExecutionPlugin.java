@@ -61,7 +61,6 @@ public class MigrationExecutionPlugin extends AbstractControllerPlugin {
 				logger.info("Starting controller with an older version. Current version is "
 						+context.getCurrentVersion()+". Version of last start was "+latestVersion);
 			}
-			migrationManager.addBinding(RepositoryObjectManager.class, context.getRepositoryObjectManager());
 			migrationManager.migrate(context.getCollectionFactory(), latestVersion, context.getCurrentVersion());
 		}					
 	}

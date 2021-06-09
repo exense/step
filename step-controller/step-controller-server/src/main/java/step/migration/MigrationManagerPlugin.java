@@ -21,6 +21,7 @@ package step.migration;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.repositories.RepositoryObjectManager;
 import step.versionmanager.VersionManagerPlugin;
 
 @Plugin(dependencies= {VersionManagerPlugin.class})
@@ -32,6 +33,7 @@ public class MigrationManagerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		MigrationManager migrationManager = new MigrationManager();
+		migrationManager.addBinding(RepositoryObjectManager.class, context.getRepositoryObjectManager());
 		context.put(MigrationManager.class, migrationManager);
 		
 		super.executionControllerStart(context);
