@@ -48,12 +48,6 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		createOrUpdateCompoundIndex("executionID", "_class");
 	}
 
-	
-	protected void createOrUpdateCompoundIndex(String... string) {
-		// TODO Auto-generated method stub
-		
-	}
-
 	@Override
 	public List<ReportNode> getReportNodePath(ObjectId id) {
 		LinkedList<ReportNode> result = new LinkedList<>();
