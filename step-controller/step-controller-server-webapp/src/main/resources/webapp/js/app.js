@@ -103,9 +103,13 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 		return dashlets;
 	}
 
-	api.registerDashlet = function(path,label,template, id) {
-		api.getDashlets(path).push({label:label, template:template, id: id});
-	}  
+	api.registerDashlet = function(path,label,template, id, before) {
+		if (before) {
+			api.getDashlets(path).unshift({label: label, template: template, id: id});
+		} else {
+			api.getDashlets(path).push({label: label, template: template, id: id});
+		}
+	}
 
 	return api;
 })
