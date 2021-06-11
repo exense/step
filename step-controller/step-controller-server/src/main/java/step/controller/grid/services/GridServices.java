@@ -66,14 +66,18 @@ public class GridServices extends AbstractServices {
 	@GET
 	@Path("/agent")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Collection<AgentListEntry> getAgents() {
+	public Collection<AgentListEntry> getAgents(@QueryParam("notokens") String notokens) {
+		boolean skipTokens = Boolean.parseBoolean(notokens);
 		List<AgentListEntry> agents = new ArrayList<>();
 		
 		grid.getAgents().forEach(agent->{
 			AgentListEntry agentState = new AgentListEntry();
 			agentState.setAgentRef(agent);
-			agentState.setTokens(getAgentTokens(agent.getAgentId()));
-			agentState.setTokensCapacity(getTokensCapacity(agentState.getTokens()));
+			List<TokenWrapper> agentTokens = getAgentTokens(agent.getAgentId());
+			if (!skipTokens) {
+				agentState.setTokens(agentTokens);
+			}
+			agentState.setTokensCapacity(getTokensCapacity(agentTokens));
 			
 			agents.add(agentState);
 		});

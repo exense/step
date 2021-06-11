@@ -57,7 +57,7 @@ angular.module('gridControllers', ['step' ])
       $scope.datatable = {}
       
       $scope.loadTable = function loadTable() {
-        $http.get("rest/grid/agent").then(
+        $http.get("rest/grid/agent?notokens=true").then(
           function(response) {
             $scope.agents = []
             _.each(response.data, function(e) {
