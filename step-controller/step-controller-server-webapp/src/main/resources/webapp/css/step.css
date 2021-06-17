@@ -748,8 +748,8 @@ st-table table.dataTable tbody > tr {
 }
 
 execution-progress .tab-content,
-execution-progress div[active="tabs.selectedTab"],
-execution-progress div[active="tabs.selectedTab"] .tab-pane.active {
+execution-progress div[active="activeTab()"],
+execution-progress div[active="activeTab()"] .tab-pane.active {
 	display: flex !important;
 	flex-direction: column;
 	flex: 1 1 auto;

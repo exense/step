@@ -111,6 +111,11 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 		}
 	}
 
+	api.registerDashletAdvanced = function(path,label,template, id, position, isEnabledFct) {
+		api.getDashlets(path).splice(position,0,{label: label, template: template, id: id,
+		isEnabledFct: isEnabledFct});
+	}
+
 	return api;
 })
 

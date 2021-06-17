@@ -20,6 +20,16 @@ var initTestDashboard = false;
 
 var tecAdminControllers = angular.module('tecAdminControllers',['components','chart.js','step', 'views','ui.bootstrap','reportTree','reportTable','schedulerControllers', 'viz-dashboard-manager']);
 
+tecAdminControllers.run(function(ViewRegistry, EntityRegistry, AuthService) {
+	ViewRegistry.registerDashletAdvanced('executionTab', 'Execution steps', 'partials/execution/executionStep.html', 'steps',0, function(){return true});
+	ViewRegistry.registerDashletAdvanced('executionTab', 'Execution tree', 'partials/execution/executionTree.html', 'tree',1, function(){return true});
+	isDashletEnabled = function() {
+		return AuthService.getConf().displayLegacyPerfDashboard;
+	}
+	ViewRegistry.registerDashletAdvanced('executionTab', 'Performance', 'partials/execution/executionViz.html', 'viz',2, isDashletEnabled);
+	ViewRegistry.registerDashletAdvanced('executionTab', 'Errors', 'partials/execution/executionError.html', 'errors',3, function(){return true});
+})
+
 function escapeHtml(str) {
 	var div = document.createElement('div');
 	div.appendChild(document.createTextNode(str));
@@ -152,9 +162,25 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			var eId = $scope.eid;
 			$stateStorage.push($scope, eId,{});
 
-			$scope.tabs = {selectedTab:0};
+			$scope.tabs = ViewRegistry.getDashlets("executionTab")
+			$scope.tabs = _.filter($scope.tabs,function(dash) {return dash.isEnabledFct()});
+			
+			if($scope.$state == null) { $scope.$state = 'steps' };
 
-			$scope.addOnTabs = ViewRegistry.getDashlets("progressAddons");
+			// Returns the item number of the active tab
+			$scope.activeTab = function() {
+				return _.findIndex($scope.tabs,function(tab){return tab.id==$scope.$state});
+			}
+			
+			//steps and tree tabs are linked (handle to jump from steps to tree declared in report node directive need to be known in steps)
+			$scope.includeTab = function (entry){
+				return (entry.id == $scope.$state || (entry.id == 'steps' && $scope.$state=='tree') 
+					|| (entry.id == 'tree' & $scope.$state=='steps'));
+			}
+
+			$scope.onSelection = function(tabid) {
+				return $scope.$state=tabid;
+			}
 
 			var panels = {
 					"testCases":{label:"Test cases",show:false, enabled:false},
@@ -222,7 +248,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			var executionViewServices = {
 					showNodeInTree : function(nodeId) {
 						$http.get('/rest/controller/reportnode/'+nodeId+'/path').then(function(response) {
-							$scope.tabs.selectedTab = 1;
+							$scope.$state = 'tree';
 							var path = response.data;
 							path.shift();
 							$scope.reportTreeHandle.expandPath(path);
@@ -237,8 +263,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 									$scope.testCaseTable.select(node.resolvedArtefact.id);
 									$scope.enablePanel("testCases",true);
 								}
-							}); 
-							$scope.tabs.selectedTab = 0;
+							});
+							$scope.$state = 'steps';
 							$scope.scrollTo('testCases');
 						})
 					},
@@ -285,15 +311,6 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			}
 
 			$scope.reportTreeHandle = {};
-
-			//Deprecated
-			/*$scope.openRtm = function() {
-				$window.open($scope.rtmlink, '_blank');
-			}*/
-
-			$scope.openLink = function(link,target) {
-				$window.open(link, target);
-			}
 
 		},
 		link: function($scope, $element, $rootscope) {
@@ -368,7 +385,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 				$scope.stepColumnHandle={};
 				$scope.searchStepByError = function(error) {
-					$scope.tabs.selectedTab = 0;
+					$scope.$state='steps'
 					$scope.stepColumnHandle.set(escapeRegExp(error));
 				}
 
@@ -431,104 +448,15 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			}
 			$scope.autorefresh = {};
 
-			/* Viz Perf Dashboard */
-			$scope.displaymode = 'managed';
-			$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
-
-			$scope.dashboardsendpoint=[];
-
-			// default buttons
-			$scope.measurementtypemodel = 'keyword';
-			$scope.timeframe = '30s';
-
-			$scope.setTimeframe = function(timeframe){
-				if(timeframe === 'max'){
-					$scope.$broadcast('apply-global-setting', { key: '__from__', value : '0', isDynamic : false});	
-					$scope.$broadcast('apply-global-setting', { key: '__to__', value : '4078304655000', isDynamic : false});
-
-					$scope.$broadcast('reload-scales', { xAxis: ''});
-				}else{
-					// currently applying an offset of 10% to take in account the query execution time and make sure to visually "frame" the data
-					// this a temporary workaround to the fact that new Date() is called at different times for the scale & query input
-					var offset = Math.round(timeframe * 0.08);
-					var adjustedFrom = (timeframe * 1) + offset;
-
-					var effectiveFrom = 'new Date().getTime() - '+ timeframe;
-					var axisFrom = 'new Date().getTime() - '+ adjustedFrom;
-
-					var effectiveTo = 'new Date().getTime()';
-					var axisTo = 'new Date().getTime() - '+ offset;
-
-					$scope.$broadcast('apply-global-setting', { key: '__from__', value : effectiveFrom, isDynamic : true});	
-					$scope.$broadcast('apply-global-setting', { key: '__to__', value : effectiveTo, isDynamic : true});
-
-					$scope.$broadcast('reload-scales', { xAxis: '['+axisFrom+', '+axisTo+']'});
-				}
-			};
-
-			$scope.initTimelineWidget = function(){
-
-				// Timeline widget
-				$scope.globalsettingsPh =[
-					new Placeholder("__businessobjectid__", eId, false),
-					new Placeholder("__measurementType__", "keyword", false)
-					];
-
-				$scope.timelinewidget = new TimelineWidget($scope);
-				// 
-			}
-
-			$scope.setMeasurementType = function(input){
-				$scope.measurementtypemodel = input;
-				$scope.$broadcast('apply-global-setting', { key: '__measurementType__', value : input, isDynamic : false});	
-			}
-
-			$scope.switchToPermanent = function(){
-				$scope.isRealTime = '';
-				$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel)];
-				$scope.initTimelineWidget();
-			};
-
-			$scope.switchToRealtime = function(){
-				$scope.isRealTime = 'Realtime';
-				$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel, false)];
-			};
-
-			$scope.init = false;
-
 			$scope.$watch('execution.status',function(newStatus, oldStatus) {
 				if(newStatus) {
-					$scope.init = false;
-
 					if(newStatus === 'ENDED'){
-						$scope.switchToPermanent();
 						refreshFct();//perform final refresh
 						$scope.initAutoRefresh(false,0,0);
 						$scope.currentEndTime=$scope.execution.endTime;
 					}else{
-						$scope.switchToRealtime();
 						if (oldStatus == null) {
 							$scope.initAutoRefresh(true,100,5000)
-						}
-					}
-				}
-			});
-
-			$scope.$watch('autorefresh.enabled', function(newValue, oldStatus){
-				if($scope.init){
-					if(newValue){
-					  if ($scope.execution.status!=='ENDED') {
-						  $scope.switchToRealtime();
-						}
-					}else{
-						//already ended
-						if($scope.execution.status!=='ENDED'){
-							$scope.switchToPermanent();
-						}
-						if(oldStatus && $scope.autorefresh.enabled) {
-							refreshAll();
-						} else if (oldStatus == null) {
-							$scope.initAutoRefresh(false,0,0)
 						}
 					}
 				}
@@ -541,68 +469,9 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
       });
 
 
-			$scope.$on('dashboard-ready', function () {
-				if(!$scope.init){
-					$scope.init = true;
-				}
-			});
-
-			$scope.vizRelated = {lockdisplay: false};
-			$scope.unwatchlock = $scope.$watch('vizRelated.lockdisplay',function(newvalue) {
-				if($scope.displaymode === 'readonly'){
-					$scope.displaymode='managed';
-				}else{
-					if($scope.displaymode === 'managed'){
-						$scope.displaymode='readonly';
-					}
-				}
-			});
-
-      $scope.oldIntervalValue = -1;
-			$scope.$watch('tabs.selectedTab', function(newvalue, oldvalue){
-				//initializing dashboard only when hitting the performance tab
-				if(newvalue === 2){
-					if($scope.execution.status!=='ENDED') {
-						//must handle this here until we have a dedicated controller per tab
-
-            //change refresh interval to min 10 seconds (will use an auto increase) and start viz refreh
-	          $scope.oldIntervalValue=$scope.autorefresh.interval;
-	          $scope.oldAutoIncreaseTo=$scope.autorefresh.autoIncreaseTo;
-	          var minValue=10000;
-						$scope.autorefresh.setMinPresets(minValue);
-						if ($scope.oldIntervalValue<=minValue) {
-              $scope.autorefresh.interval=1000; // trigger the watcher to restart the timer
-              $scope.autorefresh.autoIncreaseTo=minValue;
-            }
-            $timeout(function() {
-              $scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });
-            });
-					}
-
-					$(document).ready(function () {
-						$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
-						$(document).ready(function () {
-							$scope.$broadcast('resize-widget');
-						});
-					});
-
-				}else{
-					//turning off refresh when clicking other views
-					$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
-					//reverting to previous interval (if changed on preformance tab)
-					//when opening the execution autorefresh is not defined yet
-					if ($scope.autorefresh && $scope.autorefresh.setMinPresets) {
-					  $scope.autorefresh.setMinPresets(0);
-					}
-					if ($scope.oldIntervalValue >= 0 ) {
-					  $scope.autorefresh.interval=$scope.oldIntervalValue;
-					  $scope.autorefresh.autoIncreaseTo=$scope.oldAutoIncreaseTo;
-					  $scope.oldIntervalValue=-1;
-					}
-				}
-			});
+			
 		},
-		templateUrl: 'partials/progress.html'
+		templateUrl: 'partials/execution/progress.html'
 	};
 }]);
 
@@ -775,3 +644,180 @@ tecAdminControllers.directive('autoRefreshCommands', ['$rootScope','$http','$loc
 		}
 	};
 }]);
+
+tecAdminControllers.directive('executionViz', ['$rootScope','$http','$location','$window','stateStorage','$uibModal','$timeout','AuthService','schedulerServices','executionServices','ngCopy',
+	function($rootScope, $http, $location,$window,$stateStorage,$uibModal,$timeout,AuthService,schedulerServices,executionServices,ngCopy) {
+		return {
+			restrict: 'E',
+			scope: {
+				eid: '=',
+				autorefresh: '=',
+				execution: '='
+			},
+			templateUrl: 'partials/execution/executionVizD.html',
+			controller : function($scope, $window) {
+				$scope.openLink = function(link,target) {
+					$window.open(link, target);
+				}
+				
+				
+			},
+			link: function($scope, $element, $attr,  $tabsCtrl) {
+				var eId = $scope.eid;
+				$scope.displaymode = 'managed';
+				$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
+
+				$scope.dashboardsendpoint=[];
+
+				// default buttons
+				$scope.measurementtypemodel = 'keyword';
+				$scope.timeframe = '30s';
+				
+				$(document).ready(function () {
+					$scope.topmargin = $element[0].parentNode.parentNode.getBoundingClientRect().top * 2;
+					$(document).ready(function () {
+						$scope.$broadcast('resize-widget');
+					});
+				});
+
+				$scope.$on('dashboard-ready', function () {
+					if(!$scope.init){
+						$scope.init = true;
+					}
+				});
+
+				$scope.vizRelated = {lockdisplay: false};
+				$scope.unwatchlock = $scope.$watch('vizRelated.lockdisplay',function(newvalue) {
+					if($scope.displaymode === 'readonly'){
+						$scope.displaymode='managed';
+					}else{
+						if($scope.displaymode === 'managed'){
+							$scope.displaymode='readonly';
+						}
+					}
+				});
+
+				$scope.setTimeframe = function(timeframe){
+					if(timeframe === 'max'){
+						$scope.$broadcast('apply-global-setting', { key: '__from__', value : '0', isDynamic : false});
+						$scope.$broadcast('apply-global-setting', { key: '__to__', value : '4078304655000', isDynamic : false});
+
+						$scope.$broadcast('reload-scales', { xAxis: ''});
+					}else{
+						// currently applying an offset of 10% to take in account the query execution time and make sure to visually "frame" the data
+						// this a temporary workaround to the fact that new Date() is called at different times for the scale & query input
+						var offset = Math.round(timeframe * 0.08);
+						var adjustedFrom = (timeframe * 1) + offset;
+
+						var effectiveFrom = 'new Date().getTime() - '+ timeframe;
+						var axisFrom = 'new Date().getTime() - '+ adjustedFrom;
+
+						var effectiveTo = 'new Date().getTime()';
+						var axisTo = 'new Date().getTime() - '+ offset;
+
+						$scope.$broadcast('apply-global-setting', { key: '__from__', value : effectiveFrom, isDynamic : true});
+						$scope.$broadcast('apply-global-setting', { key: '__to__', value : effectiveTo, isDynamic : true});
+
+						$scope.$broadcast('reload-scales', { xAxis: '['+axisFrom+', '+axisTo+']'});
+					}
+				};
+
+				$scope.initTimelineWidget = function(){
+
+					// Timeline widget
+					$scope.globalsettingsPh =[
+						new Placeholder("__businessobjectid__", eId, false),
+						new Placeholder("__measurementType__", "keyword", false)
+					];
+
+					$scope.timelinewidget = new TimelineWidget($scope);
+					// 
+				}
+
+				$scope.setMeasurementType = function(input){
+					$scope.measurementtypemodel = input;
+					$scope.$broadcast('apply-global-setting', { key: '__measurementType__', value : input, isDynamic : false});
+				}
+
+				$scope.switchToPermanent = function(){
+					$scope.isRealTime = '';
+					$scope.dashboardsendpoint=[new PerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel)];
+					$scope.initTimelineWidget();
+				};
+
+				$scope.switchToRealtime = function(){
+					$scope.isRealTime = 'Realtime';
+					$scope.dashboardsendpoint=[new RealtimePerformanceDashboard($scope.eid, $scope.measurementtypemodel, $scope.measurementtypemodel, false)];
+				};
+
+				$scope.init = false;
+
+				$scope.$watch('execution.status',function(newStatus, oldStatus) {
+					if(newStatus) {
+						$scope.init = false;
+						if(newStatus === 'ENDED'){
+							$scope.switchToPermanent();
+						}else{
+							$scope.switchToRealtime();
+						}
+					}
+				});
+
+				$scope.$watch('autorefresh.enabled', function(newValue, oldStatus){
+					if($scope.init){
+						if(newValue){
+							if ($scope.execution.status!=='ENDED') {
+								$scope.switchToRealtime();
+							}
+						}else{
+							//already ended
+							if($scope.execution.status!=='ENDED'){
+								$scope.switchToPermanent();
+							}
+						}
+					}
+				});
+				
+				$scope.oldIntervalValue = -1;
+				$scope.initFct = function() {
+					if($scope.execution.status!=='ENDED') {
+						$scope.switchToRealtime();
+						//change refresh interval to min 10 seconds (will use an auto increase) and start viz refreh
+						$scope.oldIntervalValue=$scope.autorefresh.interval;
+						$scope.oldAutoIncreaseTo=$scope.autorefresh.autoIncreaseTo;
+						var minValue=10000;
+						$scope.autorefresh.setMinPresets(minValue);
+						if ($scope.oldIntervalValue<=minValue) {
+							$scope.autorefresh.interval=1000; // trigger the watcher to restart the timer
+							$scope.autorefresh.autoIncreaseTo=minValue;
+						}
+						$timeout(function() {
+							$scope.$broadcast('globalsettings-globalRefreshToggle', { 'new': $scope.autorefresh.enabled });
+						});
+					} else {
+						$scope.switchToPermanent();
+					}
+				}
+				$scope.initFct();
+
+				$scope.cleanup = function() {
+					//turning off refresh when clicking other views
+					$scope.$broadcast('globalsettings-refreshToggle', { 'new': false });
+					//reverting to previous interval (if changed on preformance tab)
+					//when opening the execution autorefresh is not defined yet
+					if ($scope.autorefresh && $scope.autorefresh.setMinPresets) {
+						$scope.autorefresh.setMinPresets(0);
+					}
+					if ($scope.oldIntervalValue >= 0 ) {
+						$scope.autorefresh.interval=$scope.oldIntervalValue;
+						$scope.autorefresh.autoIncreaseTo=$scope.oldAutoIncreaseTo;
+						$scope.oldIntervalValue=-1;
+					}
+				}
+				$scope.$on('$destroy',  function() {
+						$scope.cleanup();
+					}
+				);
+			}
+		};
+	}]);

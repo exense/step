@@ -37,6 +37,10 @@ public class AccessConfiguration {
 	String defaultUrl;
 	
 	String title;
+	
+	boolean displayLegacyPerfDashboard;
+
+	boolean displayNewPerfDashboard;
 
 	public AccessConfiguration() {
 		super();
@@ -97,5 +101,21 @@ public class AccessConfiguration {
 
 	public void setTitle(String title) {
 		this.title = title;
+	}
+
+	public boolean isDisplayLegacyPerfDashboard() {
+		return displayLegacyPerfDashboard;
+	}
+
+	public void setDisplayLegacyPerfDashboard(boolean displayLegacyPerfDashboard) {
+		this.displayLegacyPerfDashboard = displayLegacyPerfDashboard;
+	}
+
+	public boolean isDisplayNewPerfDashboard() {
+		return displayNewPerfDashboard;
+	}
+
+	public void setDisplayNewPerfDashboard(boolean displayNewPerfDashboard) {
+		this.displayNewPerfDashboard = displayNewPerfDashboard;
 	}
 }
