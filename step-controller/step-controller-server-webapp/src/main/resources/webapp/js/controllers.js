@@ -165,11 +165,14 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.tabs = ViewRegistry.getDashlets("executionTab")
 			$scope.tabs = _.filter($scope.tabs,function(dash) {return dash.isEnabledFct()});
 			
-			if($scope.$state == null) { $scope.$state = 'steps' };
+			
+			if($scope.$state) {} else { $scope.$state = 'steps'; }
 
 			// Returns the item number of the active tab
 			$scope.activeTab = function() {
-				return _.findIndex($scope.tabs,function(tab){return tab.id==$scope.$state});
+				let idx = _.findIndex($scope.tabs,function(tab){
+					return tab.id==$scope.$state});
+				return idx;
 			}
 			
 			//steps and tree tabs are linked (handle to jump from steps to tree declared in report node directive need to be known in steps)
