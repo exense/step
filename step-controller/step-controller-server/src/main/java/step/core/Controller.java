@@ -253,7 +253,7 @@ public class Controller {
 		ExecutionAccessor accessor = context.getExecutionAccessor();
 		List<Execution> executions = accessor.getActiveTests();
 		if(executions!=null && executions.size()>0) {
-			logger.warn("Found " + executions.size() + " executions in an incosistent state. The system might not have been shutdown cleanly or crashed."
+			logger.warn("Found " + executions.size() + " executions in an inconsistent state. The system might not have been shutdown cleanly or crashed."
 					+ "Starting recovery...");
 			for(Execution e:executions) {
 				logger.warn("Recovering test execution " + e.toString());
