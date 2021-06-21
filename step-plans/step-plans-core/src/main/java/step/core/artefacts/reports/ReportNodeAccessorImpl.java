@@ -99,7 +99,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		filters.add(Filters.equals("executionID", executionID));
 		
 		if(customAttributes!=null) {
-			customAttributes.forEach((k, v)->filters.add(Filters.equals(k, v)));
+			customAttributes.forEach((k, v)->filters.add(Filters.equals("customAttributes."+k, v)));
 		}
 		return collectionDriver.find(Filters.and(filters), new SearchOrder("executionTime", 1), null, null, 0)
 				.iterator();
