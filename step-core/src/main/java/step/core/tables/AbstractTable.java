@@ -1,6 +1,5 @@
 package step.core.tables;
 
-import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -60,13 +59,13 @@ public class AbstractTable<T> implements Table<T> {
 	}
 
 	@Override
-	public void export(Filter query, Map<String, TableColumn> columns, PrintWriter writer) {
-		
+	public T enrichEntity(T entity) {
+		return entity;
 	}
 
 	@Override
-	public T enrichEntity(T entity) {
-		return entity;
+	public Map<String, TableColumn> getExportFields() {
+		return null;
 	}
 
 }

@@ -20,6 +20,7 @@ package step.plugins.datatable;
 
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -46,6 +47,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -298,6 +300,8 @@ public class TableService extends ApplicationServices {
 
 	public static class ExportTask extends ExportRunnable {
 
+		private static final String END_OF_LINE = "\n";
+		private static final String DELIMITER = ";";
 		protected Table<?> table;
 		protected Map<String, TableColumn> columns;
 		protected Filter query;
@@ -314,8 +318,34 @@ public class TableService extends ApplicationServices {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "export.csv");
 				PrintWriter writer = new PrintWriter(resourceContainer.getOutputStream());
 
+				Map<String, TableColumn> exportFields = table.getExportFields();
+				
+				// Write headers
+				exportFields.forEach((key, value) -> writer.append(value.getTitle()).append(DELIMITER));
+				writer.append(END_OF_LINE);
 				try {
-					table.export(query, columns,writer);
+					TableFindResult<?> find = table.find(query, null, null, null, 0);
+					find.getIterator().forEachRemaining(o -> {
+						// Write row
+						exportFields.forEach((key, value) -> {
+							Object property;
+							String formattedValue;
+							try {
+								property = PropertyUtils.getProperty(o, key);
+								if(property != null) {
+									formattedValue = value.getFormat().format(property);
+								} else {
+									formattedValue = "";
+								}
+							} catch (NoSuchMethodException e) {
+								formattedValue = "";
+							} catch (IllegalAccessException | InvocationTargetException e) {
+								throw new RuntimeException("Error while writing column "+key, e);
+							}
+							writer.append(formattedValue).append(DELIMITER);
+						});
+						writer.append(END_OF_LINE);
+					});
 				} finally {
 					writer.close();
 					resourceContainer.save(null);

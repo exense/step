@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.core.tables;
 
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 
@@ -65,7 +64,7 @@ public interface Table<T> {
 	 */
 	boolean isFiltered();
 
-	void export(Filter query, Map<String, TableColumn> columns, PrintWriter writer);
+	Map<String, TableColumn> getExportFields();
 
 	T enrichEntity(T entity);
 

@@ -68,7 +68,7 @@ public class LeafReportNodeTable extends ReportNodeTable {
 		return additionalQueryFragments;
 	}
 	
-	protected Map<String, TableColumn> getExportFields() {
+	public Map<String, TableColumn> getExportFields() {
 		Map<String, TableColumn> result = new LinkedHashMap<String,TableColumn> ();
 		result.put("executionTime",new TableColumn("executionTime","Begin",new DateFormatter("dd.MM.yyyy HH:mm:ss")));
 		result.put("name",new TableColumn("name","Name"));
@@ -78,7 +78,7 @@ public class LeafReportNodeTable extends ReportNodeTable {
 		result.put("input",new TableColumn("input","Input"));
 		result.put("output",new TableColumn("output","Output"));
 		result.put("duration",new TableColumn("duration","Duration"));
-		result.put("adapter",new TableColumn("adapter","Adapter"));
+		result.put("adapter",new TableColumn("agentUrl","Agent"));
 		return result;
 	}
 
