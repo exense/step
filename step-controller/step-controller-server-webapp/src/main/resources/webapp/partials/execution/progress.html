@@ -12,7 +12,7 @@
 	<div class="st-flex-row row" ng-if="execution">
 		<div class="flex sectionResizable section-execution-left " resizable r-directions="['right']" r-flex="true">
 			<div class="toolbar">
-				<auto-refresh-commands ng-if="$state!=='grafana'" autorefresh="autorefresh" />
+				<auto-refresh-commands ng-if="$stateExec!=='grafana'" autorefresh="autorefresh" />
 			</div>
 			<uib-tabset active="activeTab()">
 				<uib-tab ng-repeat="entry in tabs" heading="{{entry.label}}" select="onSelection(entry.id)">

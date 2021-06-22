@@ -166,23 +166,23 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.tabs = _.filter($scope.tabs,function(dash) {return dash.isEnabledFct()});
 			
 			
-			if($scope.$state) {} else { $scope.$state = 'steps'; }
+			if($scope.$stateExec) {} else { $scope.$stateExec = 'steps'; }
 
 			// Returns the item number of the active tab
 			$scope.activeTab = function() {
 				let idx = _.findIndex($scope.tabs,function(tab){
-					return tab.id==$scope.$state});
+					return tab.id==$scope.$stateExec});
 				return idx;
 			}
 			
 			//steps and tree tabs are linked (handle to jump from steps to tree declared in report node directive need to be known in steps)
 			$scope.includeTab = function (entry){
-				return (entry.id == $scope.$state || (entry.id == 'steps' && $scope.$state=='tree') 
-					|| (entry.id == 'tree' & $scope.$state=='steps'));
+				return (entry.id == $scope.$stateExec || (entry.id == 'steps' && $scope.$stateExec=='tree') 
+					|| (entry.id == 'tree' & $scope.$stateExec=='steps'));
 			}
 
 			$scope.onSelection = function(tabid) {
-				return $scope.$state=tabid;
+				return $scope.$stateExec=tabid;
 			}
 
 			var panels = {
@@ -251,7 +251,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			var executionViewServices = {
 					showNodeInTree : function(nodeId) {
 						$http.get('/rest/controller/reportnode/'+nodeId+'/path').then(function(response) {
-							$scope.$state = 'tree';
+							$scope.$stateExec = 'tree';
 							var path = response.data;
 							path.shift();
 							$scope.reportTreeHandle.expandPath(path);
@@ -267,7 +267,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 									$scope.enablePanel("testCases",true);
 								}
 							});
-							$scope.$state = 'steps';
+							$scope.$stateExec = 'steps';
 							$scope.scrollTo('testCases');
 						})
 					},
@@ -388,7 +388,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 				$scope.stepColumnHandle={};
 				$scope.searchStepByError = function(error) {
-					$scope.$state='steps'
+					$scope.$stateExec='steps'
 					$scope.stepColumnHandle.set(escapeRegExp(error));
 				}
 
