@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.threadmanager;
+package step.core.execution.threadmanager;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -39,10 +39,11 @@ import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
-import step.plugins.executiontypes.TestSetExecutionType;
 
 @Path("/threadmanager")
 public class ThreadManagerServices extends AbstractServices {
+
+	public static final String TestSetName = "TestSet";
 
 	private ThreadManager threadManager;
 
@@ -66,7 +67,7 @@ public class ThreadManagerServices extends AbstractServices {
 				String planName = plan.getAttributes().get(AbstractOrganizableObject.NAME);
 				String executionType = executionContext.getExecutionType();
 				// TODO implement this in a generic way
-				if(TestSetExecutionType.NAME.equals(executionType)) {
+				if(TestSetName.equals(executionType)) {
 					// in case of test set, get operations by test case
 					Iterator<ReportNode> iterator = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionId, 
 							TestCaseReportNode.class.getName());

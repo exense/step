@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.threadmanager;
+package step.core.execution.threadmanager;
 
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;

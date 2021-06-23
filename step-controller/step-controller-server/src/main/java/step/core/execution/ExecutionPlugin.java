@@ -21,10 +21,7 @@ package step.core.execution;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.Collection;
-import step.core.execution.table.ExecutionTable;
-import step.core.execution.table.ExecutionWrapper;
-import step.core.execution.table.LeafReportNodeTable;
-import step.core.execution.table.ReportNodeTable;
+import step.core.execution.table.*;
 import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -46,6 +43,7 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 		tableRegistry.register("executions", new ExecutionTable(context, collection));
 		tableRegistry.register("leafReports", new LeafReportNodeTable(context, reportsCollection));
 		tableRegistry.register("reports", new ReportNodeTable(context, reportsCollection));
+		tableRegistry.register("testcases", new TestcaseReportNodeTable(context, reportsCollection));
 		context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
 	}
 }

@@ -216,37 +216,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			$scope.getPanelId = function(viewId) {return eId+viewId};
 			$scope.getPanelTitle = function(viewId) {return panels[viewId].label};
 			$scope.panels = _.map(_.keys(panels),function(viewId){return {id:viewId,label:panels[viewId].label}});
-
-			$scope.testCaseTable = {};
-			$scope.drillDownTestcase = function(id) {
-				$scope.testCaseTable.deselectAll(false);
-				$scope.testCaseTable.select(id);
-				$scope.enablePanel("steps",true);
-				$scope.scrollTo("steps");
-			}
-			$scope.testCaseTableDefaultSelection = function(value) {
-				var execution = $scope.execution;
-				if(execution) {
-					var artefactFilter = execution.executionParameters.artefactFilter;
-					if(artefactFilter) {
-						if(artefactFilter.class=='step.artefacts.filters.TestCaseFilter') {
-							return _.contains(artefactFilter.includedNames,value.name);
-						} else if(artefactFilter.class=='step.artefacts.filters.TestCaseIdFilter') {
-							return _.contains(artefactFilter.includedIds,value.artefactID);
-						}
-					} else {
-						return true;
-					}
-				} else {
-					return true;
-				}
-			}
-
-			$scope.testCaseTableOnSelectionChange = function() {
-				$scope.refresh();
-			};
-
-			$scope.operationOptions = {'showAll':false};
+			
+			
 
 			var executionViewServices = {
 					showNodeInTree : function(nodeId) {
@@ -276,6 +247,12 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					}
 			}
 
+			$scope.testCaseTable = reportTableFactory.get(function() {
+				var filter = {'eid':eId};
+
+				return filter;
+			},$scope, executionViewServices);
+
 			$scope.stepsTable = reportTableFactory.get(function() {
 				var filter = {'eid':eId};
 				if($scope.testCaseTable.getSelection) {
@@ -290,6 +267,38 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 
 				return filter;   
 			},$scope, executionViewServices);
+
+			
+
+			$scope.drillDownTestcase = function(id) {
+				$scope.testCaseTable.deselectAll(false);
+				$scope.testCaseTable.select(id);
+				$scope.enablePanel("steps",true);
+				$scope.scrollTo("steps");
+			}
+			$scope.testCaseTableDefaultSelection = function(value) {
+				var execution = $scope.execution;
+				if(execution) {
+					var artefactFilter = execution.executionParameters.artefactFilter;
+					if(artefactFilter) {
+						if(artefactFilter.class=='step.artefacts.filters.TestCaseFilter') {
+							return _.contains(artefactFilter.includedNames,value.name);
+						} else if(artefactFilter.class=='step.artefacts.filters.TestCaseIdFilter') {
+							return _.contains(artefactFilter.includedIds,value.artefactID);
+						}
+					} else {
+						return true;
+					}
+				} else {
+					return true;
+				}
+			}
+
+			$scope.testCaseTableOnSelectionChange = function() {
+				$scope.refresh();
+			};
+
+			$scope.operationOptions = {'showAll':false};
 
 			$scope.getIncludedTestcases = function() {
 				var table = $scope.testCaseTable;
@@ -396,6 +405,10 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 					$scope.stepsTable.reload();
 				}
 
+				if($scope.testCaseTable && $scope.testCaseTable.reload) {
+					$scope.testCaseTable.reload();
+				}
+
 				viewFactory.getReportNodeStatisticCharts(eId).then(function(charts){
 					$scope.throughputchart = charts.throughputchart;
 					$scope.responseTimeByFunctionChart = charts.responseTimeByFunctionChart;
@@ -420,7 +433,8 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 			function refreshAll() {
 				refreshExecution();
 				refresh();
-				refreshTestCaseTable();
+				//still call it for now as it determine whether the panel is shown
+			  refreshTestCaseTable();
 			}
 
 			refreshAll();

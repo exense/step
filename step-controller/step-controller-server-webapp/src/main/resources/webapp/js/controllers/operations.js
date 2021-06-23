@@ -51,13 +51,19 @@ angular.module('operationsControllers',['step'])
     scope: {
       reportNodeId: '=',
       operationOptions: '=',
-      executionViewServices: '='
+      executionViewServices: '=',
+      operationList: '=?'
     },
     controller: function($scope) {
-      $http.get("rest/threadmanager/operations/"+$scope.reportNodeId).then(function(response) {
-        $scope.currentOperation = response.data;
-        
-      });
+      if ($scope.operationList) {
+        $scope.currentOperation = JSON.parse($scope.operationList);
+      } else {
+      
+        $http.get("rest/threadmanager/operations/" + $scope.reportNodeId).then(function (response) {
+          $scope.currentOperation = response.data;
+  
+        });
+      }
     },
       
     templateUrl: 'partials/operations/currentOperations.html'}
