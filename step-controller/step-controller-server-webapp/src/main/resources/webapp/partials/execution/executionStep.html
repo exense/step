@@ -21,25 +21,16 @@
       </div>
     </div>
     <div class="panel-body" ng-show="isShowPanel('testCases')">
-      <st-table collection="'testcases'" handle="testCaseTable"
+      <st-table data="testCases" handle="testCaseTable"
                 uid="'testCaseList'" persist-state="true"
                 selection-attribute="'artefactID'"
                 default-selection="testCaseTableDefaultSelection"
                 multiple-selection="true"
-                on-selection-change="testCaseTableOnSelectionChange"
-                server-side-parameters="stepsTableServerSideParameters"
-                order="[[0, &quot;desc&quot;]]">
+                on-selection-change="testCaseTableOnSelectionChange">
         <st-actions>
           <st-selection-actions/>
         </st-actions>
         <st-columns>
-          <st-column name="executionTime" width="'60px'">
-            <header>Begin</header>
-            <second-header></second-header>
-            <cell>
-              <time time="row.executionTime" />
-            </cell>
-          </st-column>
           <st-column name="name">
             <header>Name</header>
             <second-header>
@@ -58,7 +49,7 @@
                       action="search" initial-value="initialValue"></inputdropdown>
             </second-header>
             <cell>
-              <current-operations report-node-id="row.id" operation-list="row.customAttributes.operations"
+              <current-operations report-node-id="row.id"
                                   operation-options="operationOptions"
                                   execution-view-services="executionViewServices"/>
             </cell>
