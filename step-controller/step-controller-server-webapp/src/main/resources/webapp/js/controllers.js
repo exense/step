@@ -317,6 +317,7 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 				});
 			}
 
+			$scope.showTestCaseCurrentOperation = true;
 			var refreshExecution = function() {
 				$http.get('rest/executions/' + eId).then(function(response) {
 					var data = response.data;
@@ -326,6 +327,14 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 						}
 					}
 					$scope.execution = data;
+					var showTestCaseCurrentOperation = $scope.execution.parameters.find(o => o.key === 'step.executionView.testcases.current-operations');
+					if (showTestCaseCurrentOperation) {
+						if (showTestCaseCurrentOperation.value.toLowerCase() === 'true') {
+							$scope.showTestCaseCurrentOperation = true;
+						} else {
+							$scope.showTestCaseCurrentOperation = false;
+						}
+					}
 					// Set actual execution to the tab title
 					$scope.updateTabTitle()(eId,data);
 				});        
