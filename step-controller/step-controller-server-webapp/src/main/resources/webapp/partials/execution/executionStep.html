@@ -49,7 +49,7 @@
                       action="search" initial-value="initialValue"></inputdropdown>
             </second-header>
             <cell>
-              <current-operations report-node-id="row.id"
+              <current-operations ng-if="row.status==='RUNNING'" report-node-id="row.id"
                                   operation-options="operationOptions"
                                   execution-view-services="executionViewServices"/>
             </cell>
