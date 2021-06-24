@@ -35,7 +35,8 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
 	@Override
 	protected void createReportSkeleton_(WhileReportNode parentNode, While testArtefact) {
-		evaluateExpressionAndDelegate(parentNode, testArtefact, false);
+		//stop creating skeleton for while artefact as it may end up in infinite loop
+		//evaluateExpressionAndDelegate(parentNode, testArtefact, false);
 	}
 
 	@Override
