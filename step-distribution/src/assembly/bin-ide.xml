@@ -40,6 +40,7 @@
 				<include>ch.exense.step:step-functions-plugins-jmeter</include>
 				<include>ch.exense.step:step-functions-plugins-node</include>
 				<include>ch.exense.step:step-agent</include>
+				<include>ch.exense.step:step-ide</include>
 			</includes>
 			<binaries>
 				<dependencySets>
