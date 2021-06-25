@@ -43,6 +43,7 @@ import org.junit.Test;
 
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.Accessor;
+import step.core.artefacts.AbstractArtefact;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.accessors.AbstractOrganizableObject;
 import ch.exense.commons.io.FileHelper;
@@ -821,6 +822,29 @@ public class ExportManagerTest {
 	}
 	
 	@Test
+	public void testImport_3_12() throws Exception {
+		URL resource = getClass().getClassLoader().getResource("./step/core/export/3_12.json");
+		File testImportFile = new File(resource.getFile());
+		
+		testImport3_12(testImportFile, true);
+		testImport3_12(testImportFile, false);
+	}
+
+	private void testImport3_12(File testImportFile, boolean overwriteIds) throws IOException, Exception {
+		//create a new context to test the import
+		ImportManager importManager = createNewContextAndGetImportManager();
+		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+		
+		Plan actualPlan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, "DataSet_while"));
+		assertEquals(actualPlan, actualPlan);
+		AbstractArtefact root = actualPlan.getRoot();
+		assertEquals("DataSet_while", root.getAttribute(AbstractOrganizableObject.NAME));
+		
+		AbstractArtefact firstChild = root.getChildren().get(0);
+		assertEquals("DataSet", firstChild.getAttribute(AbstractOrganizableObject.NAME));
+	}
+	
+	@Test
 	public void testImportVisualPlan_3_13() throws Exception {
 		String resourcePath = "./step/core/export/3_13_visualPlan.json";
 		String originPlanId = "5e8d7edb4cf3ad5e290d77e9";
@@ -831,7 +855,10 @@ public class ExportManagerTest {
 	public void testImportVisualPlanWithAssert_3_13() throws Exception {
 		String resourcePath = "./step/core/export/ExportVisualPlan3_13.json";
 		String originPlanId = "5f87f3c83ff2d04dd8f9a3f7";
-		testOlderPlanImport(resourcePath, originPlanId, true, TestSet.class);
+		// Test without overwrite
+		testOlderPlanImport(resourcePath, originPlanId, false, TestSet.class, false);
+		// Test with overwrite
+		testOlderPlanImport(resourcePath, originPlanId, true, TestSet.class, true);
 	}
 
 	@Test
@@ -856,16 +883,19 @@ public class ExportManagerTest {
 	}
 	
 	protected void testOlderPlanImport(String resourcePath, String originPlanId, boolean assertOverwrite) throws Exception {
-		testOlderPlanImport(resourcePath, originPlanId, assertOverwrite, Sequence.class);
+		// Test without overwrite
+		testOlderPlanImport(resourcePath, originPlanId, false, Sequence.class, false);
+		// Test with overwrite
+		testOlderPlanImport(resourcePath, originPlanId, assertOverwrite, Sequence.class, true);
 	}
 	
-	protected void testOlderPlanImport(String resourcePath, String originPlanId, boolean assertOverwrite, Class<?> planRootElementClass) throws Exception {
+	protected void testOlderPlanImport(String resourcePath, String originPlanId, boolean assertOverwrite, Class<?> planRootElementClass, boolean overwrite) throws Exception {
 		URL resource = getClass().getClassLoader().getResource(resourcePath);
 		File testImportFile = new File(resource.getFile());
 		
 		//create a new context to test the import
 		ImportManager importManager = createNewContextAndGetImportManager();
-		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), overwrite));
 		
 		Plan actualPlan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, "Test"));
 		// Due to the migration from the collection artefacts to plans overwrite is not supported when importing from 3.12 and below

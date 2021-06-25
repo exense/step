@@ -143,7 +143,7 @@ public class ImportManager {
 			logger.info("Importing entities of type " + name);
 			if (jParser.nextToken().equals(JsonToken.START_ARRAY)) {
 				while (!jParser.nextToken().equals(JsonToken.END_ARRAY)) {
-					importOne(importContext, tempCollection, jParser);
+					importOne(importContext, tempCollection, jParser, importContext.getImportConfiguration().isOverwrite());
 				}
 			} else {
 				throw new RuntimeException("A JSON array was expected for entity '" + name + "'");
@@ -157,7 +157,7 @@ public class ImportManager {
 		importFromTempCollection(importConfig, importContext, entityByName);
 	}
 
-	private void importOne(ImportContext importContext, Collection<Document> tempCollection, JsonParser jParser)
+	private void importOne(ImportContext importContext, Collection<Document> tempCollection, JsonParser jParser, boolean overwriteIds)
 			throws JsonParseException, JsonMappingException, IOException {
 		Document o = mapper.readValue(jParser, Document.class);
 		// Normalize ID field for previous versions of STEP
@@ -165,7 +165,7 @@ public class ImportManager {
 			o.put(AbstractOrganizableObject.ID, o.get("_id"));
 			o.remove("_id");
 		}
-		if (!importContext.getImportConfiguration().isOverwrite()) {
+		if (!overwriteIds) {
 			// Generate new IDs
 			String origId = o.getId().toHexString();
 			ObjectId objectId;
@@ -227,12 +227,15 @@ public class ImportManager {
 		if (firstKey.equals("_class") && !skipEntityType(importConfig.getEntitiesFilter(), EntityManager.plans)) {
 			String collectionName;
 			Version version;
+			boolean overwriteId;
 			if (firstValue.startsWith("step.")) {
 				version = new Version(3, 13, 0);
 				collectionName = "plans";
+				overwriteId = importContext.getImportConfiguration().isOverwrite();
 			} else {
 				version = new Version(3, 12, 0);
 				collectionName = "artefacts";
+				overwriteId = true;
 			}
 			importContext.setVersion(version);
 			logger.info("Importing file: " + importConfig.getFile().getName()
@@ -245,7 +248,7 @@ public class ImportManager {
 				while ((line = reader.readLine()) != null) {
 					try (JsonParser jParser = mapper.getFactory().createParser(line)) {
 						jParser.nextToken();
-						importOne(importContext, tempCollection, jParser);
+						importOne(importContext, tempCollection, jParser, overwriteId);
 					}
 				}
 			}
