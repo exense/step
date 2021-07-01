@@ -62,6 +62,11 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-package</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-plans-base-artefacts</artifactId>
 			<version>${project.version}</version>
 		</dependency>

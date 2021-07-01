@@ -34,6 +34,8 @@
 		<module>step-functions-client</module>
 		<module>step-functions-client-api</module>
 		<module>step-functions-base-functions</module>
+		<module>step-functions-package</module>
+		<module>step-functions-package-client</module>
 	</modules>
 
 	<dependencies>
