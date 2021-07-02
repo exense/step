@@ -254,6 +254,6 @@ public class FunctionPackageManagerTest {
 		} catch (Exception e) {
 			actualException = e;
 		}
-		Assert.assertEquals("Unsupported package type", actualException.getMessage());
+		Assert.assertEquals("Unsupported package type: WRONG PACKAGE LOCATION", actualException.getMessage());
 	}
 }
