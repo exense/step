@@ -86,7 +86,7 @@ public class FunctionPackageManager implements Closeable {
 		try {
 			return packageHandlers.stream().filter(f->f.isValidForPackage(functionPackage)).findFirst().get();
 		} catch(NoSuchElementException e) {
-			throw new UnsupportedFunctionPackageType("Unsupported package type");
+			throw new UnsupportedFunctionPackageType("Unsupported package type: "+functionPackage.getPackageLocation());
 		}
 	}
 
