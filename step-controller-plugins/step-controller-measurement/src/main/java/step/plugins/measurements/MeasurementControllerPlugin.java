@@ -104,7 +104,7 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerDestroy(GlobalContext context) {
-
+		gaugeCollectorRegistry.stop();
 	}
 
 	@Override

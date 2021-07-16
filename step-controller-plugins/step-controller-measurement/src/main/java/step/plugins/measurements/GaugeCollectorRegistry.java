@@ -1,6 +1,5 @@
 package step.plugins.measurements;
 
-import io.prometheus.client.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,5 +50,9 @@ public class GaugeCollectorRegistry {
 		};
 		ScheduledFuture<?> collectHandle =
 				scheduler.scheduleAtFixedRate(collect, 15, interval, SECONDS);
+	}
+
+	public void stop() {
+		scheduler.shutdown();
 	}
 }
