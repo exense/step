@@ -18,11 +18,8 @@
  ******************************************************************************/
 package step.plugins.jmeter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -39,15 +36,11 @@ import step.functions.io.OutputBuilder;
 public class SampleListenerImpl extends AbstractTestElement implements SampleListener, Cloneable {
 
 	private static final long serialVersionUID = -4394201534114759490L;
-	
-	OutputBuilder outputBuilder;
+
+	private OutputBuilder outputBuilder;
 	
 	List<SampleResult> samples = Collections.synchronizedList(new ArrayList<>());
 	
-	public SampleListenerImpl() {
-		super();
-	}
-
 	public SampleListenerImpl(OutputBuilder outputBuilder) {
 		super();
 		this.outputBuilder = outputBuilder;
@@ -61,13 +54,19 @@ public class SampleListenerImpl extends AbstractTestElement implements SampleLis
 	}
 
 	private Map<String, Object> getDataMapForSample(SampleResult sample) {
-		Map<String, Object> data = new HashMap<>();
+		// Using a LinkedHashMap ensures that keys are enumerated in the order they were added.
+		Map<String, Object> data = new LinkedHashMap<>();
+
 		if(sample instanceof HTTPSampleResult) {
 			HTTPSampleResult httpSampleResult = (HTTPSampleResult) sample;
 			data.put("url", httpSampleResult.getUrlAsString());
 			data.put("httpMethod", httpSampleResult.getHTTPMethod());
 			data.put("responseCode", httpSampleResult.getResponseCode());
 		}
+
+		data.put("time", sample.getTime()); // this should be the elapsed time = duration for the full request
+		data.put("errorCount", sample.getErrorCount());
+
 		return data;
 	}
 
@@ -77,32 +76,37 @@ public class SampleListenerImpl extends AbstractTestElement implements SampleLis
 	@Override
 	public void sampleStopped(SampleEvent e) {}
 
-	public OutputBuilder getOut() {
-		return outputBuilder;
-	}
-
-	public void setOut(OutputBuilder out) {
-		this.outputBuilder = out;
-	}
-	
 	public void collect() {
 		JsonArrayBuilder array = Json.createArrayBuilder();
+		Map<String, Long> erroredSamples = new LinkedHashMap<>();
+
 		for(SampleResult sample:samples) {
 			JsonObjectBuilder object = Json.createObjectBuilder();
 			mapSampleAttributesToReturnObject(object, sample);
 			array.add(object.build());
+
+			if (sample.getErrorCount() > 0) {
+				erroredSamples.merge(sample.getSampleLabel(), (long) sample.getErrorCount(), Long::sum);
+			}
 		}
+
 		outputBuilder.getPayloadBuilder().add("samples", array.build());
+
+		// We consider the keyword call to be failed (with a business exception) if any sample returned an error.
+		if (!erroredSamples.isEmpty()) {
+			String message = "The following samples returned errors (error count in parentheses): ";
+			message += erroredSamples.entrySet().stream().map(e -> e.getKey() + " (" + e.getValue() + ")").collect(Collectors.joining(", "));
+			outputBuilder.setBusinessError(message);
+		}
 	}
 	
 	private void mapSampleAttributesToReturnObject(JsonObjectBuilder object, SampleResult sample) {
 		object.add("label", sample.getSampleLabel());
-		if(sample instanceof HTTPSampleResult) {
-			HTTPSampleResult httpSampleResult = (HTTPSampleResult) sample;
-			object.add("url", httpSampleResult.getUrlAsString());
-			object.add("method", httpSampleResult.getHTTPMethod());
-			object.add("responseCode", httpSampleResult.getResponseCode());
-		}
+		Map<String, Object> attributes = getDataMapForSample(sample);
+		attributes.forEach((key, valueObject) -> {
+			String value = Optional.ofNullable(valueObject).map(Object::toString).orElse("null");
+			object.add(key, value);
+		});
 	}
 
 	@Override
