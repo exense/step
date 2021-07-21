@@ -112,7 +112,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		} catch (AgentCallTimeoutException e) {
 			throw new FunctionExecutionServiceException("Timeout after "+e.getCallTimeout()+"ms while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties",e );
 		} catch (AgentSideException e) {
-			throw new FunctionExecutionServiceException("Unexepected error on the agent side while reserving the agent token: "+e.getMessage(),e);
+			throw new FunctionExecutionServiceException("Unexpected error on the agent side while reserving the agent token: "+e.getMessage(),e);
 		} catch (AgentCommunicationException e) {
 			throw new FunctionExecutionServiceException("Communication error between the controller and the agent while reserving the agent token",e);
 		} 
@@ -125,11 +125,11 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		} catch (AgentCallTimeoutException e) {
 			throw new FunctionExecutionServiceException("Timeout after "+e.getCallTimeout()+"ms while releasing the agent token. You can increase the call timeout by setting 'grid.client.token.release.timeout.ms' in step.properties",e );
 		} catch (AgentSideException e) {
-			throw new FunctionExecutionServiceException("Unexepected error on the agent side while releasing the agent token: "+e.getMessage(),e);
+			throw new FunctionExecutionServiceException("Unexpected error on the agent side while releasing the agent token: "+e.getMessage(),e);
 		} catch (AgentCommunicationException e) {
 			throw new FunctionExecutionServiceException("Communication error between the controller and the agent while releasing the agent token",e);
 		} catch (GridClientException e) {
-			throw new FunctionExecutionServiceException("Unexepected error while releasing the agent token: "+e.getMessage(),e);
+			throw new FunctionExecutionServiceException("Unexpected error while releasing the agent token: "+e.getMessage(),e);
 		} 
 	}
 	
@@ -210,7 +210,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 				} else if(errorCode.equals(AgentErrorCode.TOKEN_NOT_FOUND)) {
 					output.setError(newAgentError("The agent token doesn't exist on the agent side"));
 				} else if(errorCode.equals(AgentErrorCode.UNEXPECTED)) {
-					output.setError(newAgentError("Unexepected error while executing the keyword on the agent"));
+					output.setError(newAgentError("Unexpected error while executing the keyword on the agent"));
 				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER)) {
 					output.setError(newAgentError("Unexpected error on the agent side while building the execution context of the keyword"));
 				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_ERROR)) {

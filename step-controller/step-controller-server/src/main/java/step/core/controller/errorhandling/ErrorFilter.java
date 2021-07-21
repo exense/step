@@ -40,7 +40,7 @@ public class ErrorFilter extends AbstractServices implements ExceptionMapper<Exc
 			return Response.status(Response.Status.BAD_REQUEST).entity(((ApplicationException) exception).getErrorMessage()).type("text/plain").build();
 		} else {
 			logger.error("Unexpected error while processing request", exception);
-			return Response.status(500).entity("Unexepected server error occurred: "+exception.getClass().getName()+":"+exception.getMessage()).type("text/plain").build();
+			return Response.status(500).entity("Unexpected server error occurred: "+exception.getClass().getName()+":"+exception.getMessage()).type("text/plain").build();
 		}
 	}
 }

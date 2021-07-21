@@ -205,7 +205,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		Output<JsonObject> output = callFunctionWithDummyInput(f);
 		Assert.assertNotNull(output);
-		Assert.assertEquals("Unexepected error while executing the keyword on the agent", output.getError().getMsg());
+		Assert.assertEquals("Unexpected error while executing the keyword on the agent", output.getError().getMsg());
 	}
 
 	protected Output<JsonObject> callFunctionWithDummyInput(FunctionExecutionService f)
