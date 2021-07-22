@@ -18,10 +18,7 @@
  ******************************************************************************/
 package step.plugins.jmeter;
 
-import java.io.File;
-
-import javax.json.JsonObject;
-
+import ch.qos.logback.classic.Logger;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.save.SaveService;
@@ -29,38 +26,58 @@ import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
 import org.apache.jorphan.collections.HashTreeTraverser;
-
+import org.slf4j.LoggerFactory;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
+import step.grid.io.AttachmentHelper;
+
+import javax.json.JsonObject;
+import java.io.File;
+import java.util.Objects;
 
 public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
 	public static final String JMETER_TESTPLAN = "$jmeter.testplan.file";
 
 	public static final String JMETER_LIBRARIES = "$jmeter.libraries";
-	
+
 	protected String jmeterHome;
+	protected Logger rootLogger;
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> message) throws Exception {
+
 		ApplicationContext context = getCurrentContext();
+		StepAppender appender = null;
+
 		if(context.get("initialized")==null) {
+			try {
+				rootLogger = (Logger) LoggerFactory.getLogger("ROOT");
+			} catch (Exception e) {
+				System.err.println("Unable to obtain root logger, log capturing will not work!");
+				e.printStackTrace();
+			}
+
 			File jmeterLibFolder = retrieveFileVersion(JMETER_LIBRARIES, message.getProperties());
-			
+
 			jmeterHome = jmeterLibFolder.getAbsolutePath();
 			updateClasspathSystemProperty();
-			
+
 			JMeterUtils.setJMeterHome(jmeterHome);
 			JMeterUtils.loadJMeterProperties(jmeterHome+"/bin/jmeter.properties");
 			JMeterUtils.initLogging();
 			JMeterUtils.initLocale();
-			
+
 			context.put("initialized", true);
 		}
-		
+
+		if (rootLogger != null) {
+			appender = new StepAppender(rootLogger);
+		}
+
 		OutputBuilder out = new OutputBuilder();
 
 		File testPlanFile = retrieveFileVersion(JMETER_TESTPLAN, message.getProperties());
@@ -98,6 +115,15 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 			listener.collect();
 		}
 
+		if (appender != null) {
+			appender.dispose();
+			byte[] logData = appender.getData();
+			if (logData != null && logData.length > 0) {
+				out.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(logData, "log.txt"));
+			}
+		}
+
+
 		return out.build();
 
 	}
@@ -114,24 +140,23 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 	}
 
 	private void updateClasspathSystemProperty() {
-		// this ugly manipulation of the system property "" is a workaround to
+		// this ugly manipulation of the system property "java.class.path" is a workaround to
 		// the way how the plugins are discovered in jmeter:
 		// the method org.apache.jorphan.reflect.ClassFinder.getClasspathMatches
 		// relies on the system property "java.class.path"
 		// to filter out jar files of the jmeter/lib/ext folder. As this handler
 		// relies on URLClassLoader, the extension jars of jmeter
 		// are not in the property "java.class.path"
-		String cp = System.getProperty("java.class.path");
+		StringBuilder cp = new StringBuilder(System.getProperty("java.class.path"));
 
 		File extFolder = new File(jmeterHome+"/lib/ext");
 		if (extFolder.exists() && extFolder.isDirectory()) {
-			for (File jar : extFolder.listFiles()) {
-				cp = cp + ";" + jar.getAbsolutePath();
+			for (File jar : Objects.requireNonNull(extFolder.listFiles())) {
+				cp.append(File.pathSeparator).append(jar.getAbsolutePath());
 			}
 		}
 
-		System.setProperty("java.class.path", cp);
+		System.setProperty("java.class.path", cp.toString());
 	}
-
 
 }
