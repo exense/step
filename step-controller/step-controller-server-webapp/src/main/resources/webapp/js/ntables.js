@@ -287,7 +287,6 @@ angular.module('tables', ['export'])
           // and the data returned by colDef.render (See above) used for ordering and filtering are wrong
           // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
           // Waiting Xms or n cycles however doesn't give the guaranty that all the asynchronous call finished. Waiting longer would give a lagging effect
-					scope.table.draw(false);
           performInNCycles(function() {
         	  scope.table.draw(false);
           }, 50)
