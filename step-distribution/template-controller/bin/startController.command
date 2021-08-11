@@ -1,5 +1,8 @@
 #!/bin/sh
 
+ABSPATH=$(cd "$(dirname "$0")"; pwd)
+cd ${ABSPATH}
+
 JAVA_PATH=""
 #JAVA_PATH="/usr/sbin/jdk-11.0.10/bin/"
 
