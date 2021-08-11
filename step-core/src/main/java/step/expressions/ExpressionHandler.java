@@ -57,74 +57,81 @@ public class ExpressionHandler {
 	}
 
 	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings) {
-		Object result;
-		try {			
-			logger.debug("Groovy evaluation:\n" + expression);
-
-			Binding binding = new Binding(); 
-			
-			if(bindings!=null) {
-				for(Entry<String, Object> varEntry : bindings.entrySet()) {
-					Object value =  varEntry.getValue();
-					binding.setVariable(varEntry.getKey(), value);
-				}				
-			}
-
-			long t1 = System.currentTimeMillis();	
-			try {
-				GroovyPoolEntry entry = groovyPool.borrowShell(expression);
-				try {
-					Script script = entry.getScript();
-					script.setBinding(binding);
-					result = script.run();
-				} finally {
-					if(entry!=null && entry.getScript()!=null) {
-						// Release bindings to avoid references to be kept by the pool
-						entry.getScript().setBinding(new Binding());							
-					}
-					groovyPool.returnShell(entry);
+		try {
+			Object result;
+			try {			
+				if(logger.isDebugEnabled()) {
+					logger.debug("Groovy evaluation:\n" + expression);
 				}
-			} catch (MultipleCompilationErrorsException e) {
-				for (Object error : e.getErrorCollector().getErrors()) {
-					if(error instanceof SyntaxErrorMessage) {
-						String message = ((SyntaxErrorMessage) error).getCause().getMessage();
-						if(message.contains("unable to resolve class") && message.contains(scriptBaseClass)) {
-							throw new Exception("Unable to resolve groovy macro class '" + scriptBaseClass + 
-									"'. Please ensure that the groovy script containing your custom macros is available in the classpath.", e);
+				
+				Binding binding = new Binding(); 
+				
+				if(bindings!=null) {
+					for(Entry<String, Object> varEntry : bindings.entrySet()) {
+						Object value =  varEntry.getValue();
+						binding.setVariable(varEntry.getKey(), value);
+					}				
+				}
+				
+				long t1 = System.currentTimeMillis();	
+				try {
+					GroovyPoolEntry entry = groovyPool.borrowShell(expression);
+					try {
+						Script script = entry.getScript();
+						script.setBinding(binding);
+						result = script.run();
+					} finally {
+						if(entry!=null && entry.getScript()!=null) {
+							// Release bindings to avoid references to be kept by the pool
+							entry.getScript().setBinding(new Binding());							
+						}
+						groovyPool.returnShell(entry);
+					}
+				} catch (MultipleCompilationErrorsException e) {
+					for (Object error : e.getErrorCollector().getErrors()) {
+						if(error instanceof SyntaxErrorMessage) {
+							String message = ((SyntaxErrorMessage) error).getCause().getMessage();
+							if(message.contains("unable to resolve class") && message.contains(scriptBaseClass)) {
+								throw new Exception("Unable to resolve groovy macro class '" + scriptBaseClass + 
+										"'. Please ensure that the groovy script containing your custom macros is available in the classpath.", e);
+							}
 						}
 					}
+					throw e;
+				} catch (Exception e) {
+					throw e;
 				}
-				throw e;
-			} catch (Exception e) {
-				logger.error("An error occurred while evaluation groovy expression " + expression, e);
-				throw e;
-			}
-			long duration = System.currentTimeMillis()-t1;
-			
-			Integer warnThreshold = executionTimeWarningTreshold;
-			if(warnThreshold!=null && duration > warnThreshold) {
-				logger.warn("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
-			} else {
+				long duration = System.currentTimeMillis()-t1;
+				
+				Integer warnThreshold = executionTimeWarningTreshold;
+				if(warnThreshold!=null && duration > warnThreshold) {
+					logger.warn("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
+				} else {
+					if(logger.isDebugEnabled()) {
+						logger.debug("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
+					}
+				}
+				
 				if(logger.isDebugEnabled()) {
-					logger.debug("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
+					logger.debug("Groovy result:\n" + result);
 				}
+				
+				return result;
+			} catch (CompilationFailedException cfe) {
+				throw new RuntimeException(
+						"Error while compiling groovy expression: '" + expression + "'", cfe);
+			} catch (MissingPropertyException mpe) {
+				throw new RuntimeException(
+						"Error while resolving groovy properties in expression: '" + expression + "'. The property '" + mpe.getProperty() + "' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accesible in current scope.", mpe);
+			} catch (Exception e){
+				throw new RuntimeException(
+						"Error while running groovy expression: '" + expression + "'", e);
 			}
-			
+		} catch (Exception e) {
 			if(logger.isDebugEnabled()) {
-				logger.debug("Groovy result:\n" + result);
+				logger.error("An error occurred while evaluation groovy expression " + expression, e);
 			}
-			
-			return result;
-		} catch (CompilationFailedException cfe) {
-			throw new RuntimeException(
-					"Error while compiling groovy expression: '" + expression + "'", cfe);
-		} catch (MissingPropertyException mpe) {
-			throw new RuntimeException(
-					"Error while resolving groovy properties in expression: '" + expression + "'. The property '" + mpe.getProperty() + "' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accesible in current scope.", mpe);
-		} catch (Exception e){
-			throw new RuntimeException(
-					"Error while running groovy expression: '" + expression + "'", e);
+			throw e;
 		}
 	}
-
 }

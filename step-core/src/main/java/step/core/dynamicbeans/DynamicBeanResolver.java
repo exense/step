@@ -69,7 +69,9 @@ public class DynamicBeanResolver {
 					}
 				}
 			} catch (Exception e) {
-				logger.warn("Error while evaluating object: "+o.toString(), e);
+				if(logger.isDebugEnabled()) {
+					logger.debug("Error while evaluating object: "+o.toString(), e);
+				}
 			}			
 		}
 	}
