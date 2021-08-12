@@ -41,7 +41,9 @@ public class GroovyPool {
 			pool.setTimeBetweenEvictionRunsMillis(30000);
 			pool.setMinEvictableIdleTimeMillis(-1);
 		} catch(Exception e) {
-			logger.error("An error occurred while starting GroovyPool.", e);
+			String errorMessage = "An error occurred while starting GroovyPool.";
+			logger.error(errorMessage, e);
+			throw new RuntimeException(errorMessage, e);
 		}
 	}
 
@@ -52,7 +54,11 @@ public class GroovyPool {
 			entry = pool.borrowObject(key);
 			return entry;
 		} catch (Exception e) {
-			logger.error("An error occurred while borrowing script: " + script, e);
+			// Exceptions are thrown in case of invalid groovy expressions which is a
+			// standard path. Thus logging in debug level only  
+			if(logger.isDebugEnabled()) {
+				logger.debug("An error occurred while borrowing script: " + script, e);
+			}
 			throw e;
 		}
 	}
@@ -61,7 +67,7 @@ public class GroovyPool {
 		try {
 			pool.returnObject(entry.getKey(), entry);
 		} catch (Exception e) {
-			logger.error("An error occurred while returning script: " + (String)((entry!=null&&entry.key!=null)?entry.key.getScript():"N/A"), e);
+			logger.warn("An error occurred while returning script: " + (String)((entry!=null&&entry.key!=null)?entry.key.getScript():"N/A"), e);
 		}
 	}
 }
