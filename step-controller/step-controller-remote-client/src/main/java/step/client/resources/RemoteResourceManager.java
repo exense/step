@@ -116,8 +116,15 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	 * @return the {@link Response} containing an handle to the uploaded file
 	 */
 	public Attachment download(String resourceId) {
-		Builder b = requestBuilder("/rest/resources/"+resourceId+"/content");
-        return executeRequest(()-> AttachmentHelper.generateAttachmentFromByteArray(b.get(byte[].class), "unnamed"));
+		Builder b1 = requestBuilder("/rest/resources/"+resourceId);
+		Resource resource = executeRequest(()-> b1.get(Resource.class));
+		
+		if(resource != null) {
+			Builder b2 = requestBuilder("/rest/resources/"+resourceId+"/content");
+			return executeRequest(()-> AttachmentHelper.generateAttachmentFromByteArray(b2.get(byte[].class), resource.getResourceName()));
+		} else {
+			return null;
+		}
 	}
 
 	@Override
