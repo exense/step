@@ -76,7 +76,7 @@ public class ParameterManager {
 				try {
 					Activator.compileActivationExpression(p, defaultScriptEngine);
 				} catch (ScriptException e) {
-					logger.error("Error while compilating activation expression of parameter "+p, e);
+					logger.error("Error while compiling activation expression of parameter "+p, e);
 				}
 			}
 		});
