@@ -42,6 +42,7 @@ import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
+import step.core.execution.ExecutionContextWrapper;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
@@ -128,7 +129,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				Token gridToken = token.getToken();
 				if(gridToken.isLocal()) {
 					TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
-					session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, context);
+					session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, new ExecutionContextWrapper(context));
 				}
 				
 				node.setAgentUrl(token.getAgent().getAgentUrl());
