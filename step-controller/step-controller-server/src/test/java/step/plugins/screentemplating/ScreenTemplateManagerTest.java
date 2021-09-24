@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
+import java.util.stream.Stream;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;
@@ -88,6 +89,11 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
+			public Stream<ScreenInput> stream() {
+				return null;
+			}
+
+			@Override
 			public Spliterator<ScreenInput> findManyByAttributes(Map<String, String> attributes) {
 				return null;
 			}
@@ -106,6 +112,16 @@ public class ScreenTemplateManagerTest {
 			@Override
 			public ScreenInput get(String id) {
 				return get(new ObjectId(id));
+			}
+
+			@Override
+			public ScreenInput findByCriteria(Map<String, String> map) {
+				return null;
+			}
+
+			@Override
+			public Stream<ScreenInput> findManyByCriteria(Map<String, String> map) {
+				return null;
 			}
 
 			@Override
