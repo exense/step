@@ -145,7 +145,7 @@
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.0.0</version>
 				<configuration>
-					<header><meta name="viewport" content="width=device-width, initial-scale=1.0"></header>
+					<header>"<meta name='viewport' content='width=device-width, initial-scale=1.0'>"</header>
 					<!-- detectLinks MUST NOT be set to true in a production context, as it derives random domain names
 					from package names, then tries to download data from those random URLs. -->
 					<detectLinks>false</detectLinks>
