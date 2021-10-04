@@ -49,6 +49,11 @@ public abstract class AbstractFunctionType<T extends Function> {
 	protected GridFileService gridFileServices;
 	
 	protected FunctionTypeConfiguration functionTypeConfiguration;
+	
+	/**
+	 * Warning: this constant duplicates the one defined in FunctionMessageHandler which cannot be imported here
+	 */
+	public static final String FUNCTION_DEPENDENCIES_PACKAGE_KEY = "$functiondependencies";
 
 	protected void setFunctionTypeConfiguration(FunctionTypeConfiguration functionTypeConfiguration) {
 		this.functionTypeConfiguration = functionTypeConfiguration;
@@ -85,6 +90,12 @@ public abstract class AbstractFunctionType<T extends Function> {
 	public FileVersionId getHandlerPackage(T function) {
 		return null;
 	};
+	
+	public Map<String, String> registerDependencyPackage(T function) {
+		HashMap<String, String> props = new HashMap<String, String>();
+		registerFile(function.getDependencyPackage(), FUNCTION_DEPENDENCIES_PACKAGE_KEY, props);
+		return props;
+	}
 	
 	public abstract Map<String, String> getHandlerProperties(T function);
 	

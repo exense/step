@@ -50,6 +50,8 @@ public class Function extends AbstractOrganizableObject {
 	
 	protected String description;
 	
+	protected DynamicValue<String> dependencyPackage = new DynamicValue<>("");
+
 	public static final String APPLICATION = "application";
 	
 	public Map<String, String> getTokenSelectionCriteria() {
@@ -144,5 +146,13 @@ public class Function extends AbstractOrganizableObject {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+	
+	public DynamicValue<String> getDependencyPackage() {
+		return dependencyPackage;
+	}
+
+	public void setDependencyPackage(DynamicValue<String> dependencyPackage) {
+		this.dependencyPackage = dependencyPackage;
 	}
 }

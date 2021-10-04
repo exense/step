@@ -314,7 +314,7 @@ public class FunctionExecutionServiceImplTest {
 			
 			@Override
 			public FileVersion registerFile(File file) throws FileManagerException {
-				return new FileVersion(null, null, false);
+				return new FileVersion(file, new FileVersionId(UUID.randomUUID().toString(), "1"), false);
 			}
 
 			@Override

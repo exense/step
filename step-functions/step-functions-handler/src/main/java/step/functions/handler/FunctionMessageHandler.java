@@ -18,9 +18,13 @@
  ******************************************************************************/
 package step.functions.handler;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,12 +40,14 @@ import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
+import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
+	public static final String FUNCTION_DEPENDENCIES_PACKAGE_KEY = "$functiondependencies";
 	public static final String FUNCTION_HANDLER_PACKAGE_KEY = "$functionhandlerjar";
 	
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
@@ -52,6 +58,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	private ApplicationContextBuilder applicationContextBuilder;
 	
 	public FunctionHandlerFactory functionHandlerFactory;
+	private FunctionDependenciesInstaller functionDependenciesInstaller;
 	
 	public FunctionMessageHandler() {
 		super();
@@ -66,16 +73,30 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		
 		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
 		
-		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient());
+		FileManagerClient fileManagerClient = agentTokenServices.getFileManagerClient();
+		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, fileManagerClient);
+		
+		try {
+			functionDependenciesInstaller = new FunctionDependenciesInstaller(fileManagerClient,
+					new File("installedFunctionDependencies.json"));
+		} catch (DependencyInstallationException e) {
+			throw new RuntimeException("Error while starting function dependency installer", e);
+		}
 	}
 
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage inputMessage) throws Exception {
 		applicationContextBuilder.resetContext();
 		
+		FileManagerClient fileManagerClient = token.getServices().getFileManagerClient();
+		
+		FileVersionId functionDependenciesPackage = getFileVersionId(FUNCTION_DEPENDENCIES_PACKAGE_KEY,
+				inputMessage.getProperties());
+		functionDependenciesInstaller.installFunctionDependencies(functionDependenciesPackage);
+
 		FileVersionId functionPackage = getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties());
 		if(functionPackage != null) {
-			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties()));
+			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(fileManagerClient, getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties()));
 			applicationContextBuilder.pushContext(functionHandlerContext);
 		}
 		

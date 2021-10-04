@@ -160,6 +160,8 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 				inputMessageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
 			}
 			
+			// Register function dependency package
+			inputMessageProperties.putAll(functionType.registerDependencyPackage(function));
 			
 			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
 			if(handlerProperties!=null) {
