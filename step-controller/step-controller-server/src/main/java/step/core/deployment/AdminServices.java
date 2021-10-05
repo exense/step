@@ -18,9 +18,18 @@
  ******************************************************************************/
 package step.core.deployment;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.security.*;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -30,9 +39,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import org.slf4j.Logger;
 import step.core.access.Preferences;
 import step.core.access.User;
 import step.core.access.UserAccessor;
@@ -43,15 +56,31 @@ import step.core.controller.ControllerSettingAccessor;
 @Path("admin")
 public class AdminServices extends AbstractServices {
 	
+	private static final Logger logger = org.slf4j.LoggerFactory.getLogger(AdminServices.class);
+	private static String DEFAULT_ENCRYPTION_ALGORITHM = "RSA";
+	private static String DEFAULT_CIPHER_ALGORITHM = "RSA/ECB/PKCS1Padding";
+
 	protected ControllerSettingAccessor controllerSettingsAccessor;
 
 	private static final String MAINTENANCE_MESSAGE_KEY = "maintenance_message";
 	private static final String MAINTENANCE_TOGGLE_KEY = "maintenance_message_enabled";
+	private static final String CONFIG_KEY_PUBLIC_KEY = "service.account.public-key";
+	private final String defaultPks ="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCD9+GbO8RrNTaYEEzPIfewXwVUNIBTPIUZO8UyEWVUX7bfFht284S9Wl3wj2AZtemEGG6Ki80vwuGXxpSZFVJgkdP+U7v4i2vFqJvdBKNbUmXRPQHvW25Rp5m88aMO8a78uMMEaRAZNKEceB88IB/2/iXtT7pEkrk4V7LO7O4tPQIDAQAB";
+
+	private ThreadLocal<Cipher> ciphers;
+	private PublicKey pk;
 	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		controllerSettingsAccessor = getContext().require(ControllerSettingAccessor.class);
+		ciphers = ThreadLocal.withInitial(()->{
+			try {
+				return Cipher.getInstance(DEFAULT_CIPHER_ALGORITHM);
+			} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+				throw new RuntimeException("Error while loading cipher", e);
+			}
+		});
 	}
 
 	@POST
@@ -176,6 +205,60 @@ public class AdminServices extends AbstractServices {
 
 	protected User getCurrentUser() {
 		return getContext().getUserAccessor().get(getSession().getUser().getId());
+	}
+
+	@POST
+	@Path("/serviceaccount/resetpwd")
+	public Response resetAdminPassword(String requestEncrypted) {
+		PublicKey publicKey = getPublicKey();
+		if (publicKey == null){
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Operation not supported").type("text/plain").build();
+		}
+		String json = null;
+		try {
+			json = decrypt(publicKey, requestEncrypted);
+			ObjectMapper mapper = new ObjectMapper();
+			ChangePwdRequest request = mapper.readValue(json, ChangePwdRequest.class);
+			User admin = getContext().getUserAccessor().getByUsername("admin");
+			if(admin!=null) {
+				admin.setPassword(encryptPwd(request.getNewPwd()));
+				getContext().getUserAccessor().save(admin);
+				return Response.ok().build();
+			} else {
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("The default admin user is missing").type("text/plain").build();
+			}
+		} catch (InvalidKeyException e) {
+			logger.error("Decryption failed",e);
+			return Response.status(Response.Status.UNAUTHORIZED.getStatusCode()).entity("").type("text/plain").build();
+		} catch (JsonProcessingException e) {
+			logger.error("Json could not be deserialize. " + json ,e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Request payload incorrect").type("text/plain").build();
+		} catch (NoSuchPaddingException | IllegalBlockSizeException |NoSuchAlgorithmException |BadPaddingException e) {
+			logger.error("Decryption failed" ,e);
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Decryption failed").type("text/plain").build();
+		} 
+	}
+
+	public PublicKey getPublicKey(){
+		if (pk == null) {
+			String pks = getContext().getConfiguration().getProperty(CONFIG_KEY_PUBLIC_KEY,defaultPks);
+			try {
+				byte[] encodedPublicKey = org.apache.commons.codec.binary.Base64.decodeBase64(pks);//Files.readAllBytes(filePublicKey.toPath());
+				X509EncodedKeySpec X509publicKey = new X509EncodedKeySpec(encodedPublicKey);
+				KeyFactory kf = KeyFactory.getInstance(DEFAULT_ENCRYPTION_ALGORITHM);
+				pk = kf.generatePublic(X509publicKey);
+			} catch (Exception e) {
+				logger.error("Unable to load public key",e);
+			}
+		}
+		return pk;
+	}
+
+	private String decrypt(PublicKey pk, String encryptedValue) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+		Cipher cipher = ciphers.get();
+		cipher.init(Cipher.DECRYPT_MODE, pk);
+		String value = new String(cipher.doFinal(org.apache.commons.codec.binary.Base64.decodeBase64(encryptedValue)), StandardCharsets.UTF_8);
+		return value;
 	}
 	
 	@GET
