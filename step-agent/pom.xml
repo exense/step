@@ -22,7 +22,7 @@
 	<parent>
 		<groupId>ch.exense.step</groupId>
 		<artifactId>step-parent</artifactId>
-		<version>0.0.0-SNAPSHOT</version>
+		<version>3.17.2</version>
 		<relativePath>../step-parent</relativePath>
 	</parent>
 
