@@ -506,6 +506,14 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		});
 	};
 	$scope.logo = "images/logologin.png";
+	 
+	document.querySelectorAll('input[type=password]')[0].addEventListener('keyup', function (e) {
+     if (e.getModifierState('CapsLock')) {
+        $scope.capsWarning = true;
+     } else {
+        $scope.capsWarning = false;
+     }
+    });
 
 })
 
