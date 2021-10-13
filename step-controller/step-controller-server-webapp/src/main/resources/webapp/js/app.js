@@ -892,12 +892,18 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 .service('genericErrorInterceptor', function($q, $injector) {
 	var service = this;
 	service.responseError = function(response) {
-		if (response.status == 500) {
-			Dialogs = $injector.get('Dialogs');
-			if (response.data && response.data.metaMessage && response.data.metaMessage.indexOf("org.rtm.stream.UnknownStreamException")>=0) {
-				console.log('genericErrorInterceptor for rtm: ' + response.data.metaMessage);
-			} else {
-				Dialogs.showErrorMsg(response.data);
+		Dialogs = $injector.get('Dialogs');
+		var responsePayload = response.data;
+		if (response.status != 200 && responsePayload && responsePayload.errorMessage) {
+			Dialogs.showErrorMsg(responsePayload.errorMessage);
+		} else {
+			// Legacy error handling
+			if (response.status == 500) {
+				if (responsePayload && responsePayload.metaMessage && responsePayload.metaMessage.indexOf("org.rtm.stream.UnknownStreamException")>=0) {
+					console.log('genericErrorInterceptor for rtm: ' + responsePayload.metaMessage);
+				} else {
+					Dialogs.showErrorMsg(responsePayload);
+				}
 			}
 		}
 		return $q.reject(response);

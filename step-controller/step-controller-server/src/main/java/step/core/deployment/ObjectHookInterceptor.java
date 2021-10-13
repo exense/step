@@ -32,12 +32,14 @@ import javax.ws.rs.ext.ReaderInterceptorContext;
 import javax.ws.rs.ext.WriterInterceptor;
 import javax.ws.rs.ext.WriterInterceptorContext;
 
+import org.apache.http.HttpStatus;
 import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.PojoFilter;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.ql.OQLFilterBuilder;
 
@@ -61,20 +63,26 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 
 	@Override
 	public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
-		Object proceed = context.proceed();
+		Object entity = context.proceed();
 
 		// TODO implement right validation to prevent malicious usage of this header
 		if(!context.getHeaders().containsKey("ignoreContext") || !context.getHeaders().get("ignoreContext").contains("true")) {
 			Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
 			if(annotation == null) {
 				Session session = getSession();
-				objectHookRegistry.getObjectEnricher(session).accept(proceed);
+				
+				if (!objectHookRegistry.isObjectAcceptableInContext(session, entity)) {
+					throw newAccessDenierError();
+				} else {
+					ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
+					objectEnricher.accept(entity);
+				}
 			}
 		}
 
-		return proceed;
+		return entity;
 	}
-	
+
 	private Predicate<Object> isNotAbstractOrganizableObject = e->!(e instanceof AbstractOrganizableObject);
 
 	@Override
@@ -83,15 +91,24 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 		Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
 		if(annotation == null) {
 			Object entity = context.getEntity();
+			Session session = getSession();
+			String oqlFilter = objectHookRegistry.getObjectFilter(session).getOQLFilter();
+			PojoFilter<Object> filter = OQLFilterBuilder.getPojoFilter(oqlFilter);
+			Predicate<Object> predicate = isNotAbstractOrganizableObject.or(filter);
 			if(entity instanceof List) {
 				List<?> list = (List<?>)entity;
-				Session session = getSession();
-				String oqlFilter = objectHookRegistry.getObjectFilter(session).getOQLFilter();
-				PojoFilter<Object> filter = OQLFilterBuilder.getPojoFilter(oqlFilter);
-				final List<?> newList = list.stream().filter(isNotAbstractOrganizableObject.or(filter)).collect(Collectors.toList());
+				final List<?> newList = list.stream().filter(predicate).collect(Collectors.toList());
 				context.setEntity(newList);
+			} else {
+				if(!predicate.test(entity)) {
+					throw newAccessDenierError();
+				}
 			}
 		}
 		context.proceed();
+	}
+
+	private ControllerServiceException newAccessDenierError() {
+		return new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to access this object");
 	}
 }

@@ -44,6 +44,7 @@ import step.core.access.AccessManager;
 import step.core.accessors.Accessor;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
+import step.core.deployment.Unfiltered;
 import step.core.encryption.EncryptionManagerException;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -69,6 +70,7 @@ public class ParameterServices extends AbstractServices {
 	@GET
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Unfiltered
 	@Secured(right="param-write")
 	public Parameter newParameter() {
 		Parameter parameter =  new Parameter(new Expression(""), "", "", "");

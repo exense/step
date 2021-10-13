@@ -1,11 +1,11 @@
 package step.functions.packages.handlers;
 
-import java.io.*;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 
 import javax.json.Json;
@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.Attribute;
 import step.core.scanner.AnnotationScanner;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.LocalFileApplicationContextFactory;
@@ -83,13 +82,6 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					GeneralScriptFunction function = new GeneralScriptFunction();
 					function.setAttributes(new HashMap<>());
 					function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-					
-					List<Attribute> attributes = new ArrayList<>();
-					attributes.addAll(Arrays.asList(m.getDeclaringClass().getAnnotationsByType(Attribute.class)));
-					attributes.addAll(Arrays.asList(m.getAnnotationsByType(Attribute.class)));
-					for (Attribute attribute : attributes) {
-						function.getAttributes().put(attribute.key(), attribute.value());
-					}
 					
 					if(packageLibrariesFile != null) {
 						function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());

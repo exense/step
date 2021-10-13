@@ -25,6 +25,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.core.deployment.Session;
+import step.core.deployment.Unfiltered;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
@@ -173,6 +174,7 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 	@Path("/types/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Unfiltered
 	@Secured(right="read")
 	public Function newFunctionTypeConf(@PathParam("id") String type) {
 		Function newFunction = functionManager.newFunction(type);

@@ -1,5 +1,7 @@
 package step.functions.packages;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 import java.util.List;
 
@@ -36,20 +38,30 @@ public class EmbeddedFunctionPackageImporterTest {
 		FunctionManagerImpl functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
 		
 		FunctionPackageAccessor functionPackageAccessor = new InMemoryFunctionPackageAccessorImpl();
-		FunctionPackageManager functionPackageManager = new FunctionPackageManager(functionPackageAccessor, functionManager, resourceManager, fileResolver, configuration);
+		FunctionPackageManager functionPackageManager = new FunctionPackageManager(functionPackageAccessor,
+				functionManager, resourceManager, fileResolver, configuration);
 		functionPackageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration));
+		functionPackageManager.registerAttributeResolver("attribute1", v -> "value1");
 		
 		EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(functionManager, functionPackageAccessor, functionPackageManager);
 		File folder = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "");
 		List<String> ids = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
-		Assert.assertEquals(1, ids.size());
+		assertEquals(1, ids.size());
 		String packageId = ids.get(0);
 		FunctionPackage functionPackage = functionPackageManager.getFunctionPackage(packageId);
+		
+		// Assert that the function package contains the attributes defined in the meta file
+		assertEquals("value1", functionPackage.getAttribute("attribute1"));
+		assertEquals("value2", functionPackage.getAttribute("attribute2"));
+		
 		List<ObjectId> functionIDs = functionPackage.getFunctions();
 		Assert.assertEquals(2, functionIDs.size());
 		functionIDs.forEach(f->{
 			GeneralScriptFunction function = (GeneralScriptFunction) functionAccessor.get(f);
-			Assert.assertEquals(true, function.isExecuteLocally());
+			assertEquals(true, function.isExecuteLocally());
+			// Assert that the function contains the attributes defined in the meta file of the package
+			assertEquals("value1", function.getAttribute("attribute1"));
+			assertEquals("value2", function.getAttribute("attribute2"));
 		});
 
 	}

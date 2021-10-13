@@ -192,6 +192,12 @@ public class FunctionPackageManager implements Closeable {
 		// Auto detect the appropriate package handler
 		FunctionPackageHandler handler = getPackageHandler(newFunctionPackage);
 
+		// resolve the attribute values if necessary
+		if(newFunctionPackage.getAttributes() != null) {
+			newFunctionPackage.setAttributes(newFunctionPackage.getAttributes().entrySet().stream()
+					.collect(Collectors.toMap(Map.Entry::getKey, e -> resolveAttribute(e.getKey(), e.getValue()))));
+		}
+		
 		// set resourceId link as attribute for implicit lookup via resource
 		if(newFunctionPackage.getPackageLocation() != null) {
 			newFunctionPackage.addCustomField("resourceId", getResourceId(newFunctionPackage));
@@ -279,10 +285,6 @@ public class FunctionPackageManager implements Closeable {
 			newFunction.setTokenSelectionCriteria(newFunctionPackage.getTokenSelectionCriteria());
 			newFunction.setManaged(true);
 			newFunction.addCustomField("functionPackageId",newFunctionPackage.getId().toString());
-			
-			// resolve the attribute values if necessary
-			newFunction.setAttributes(newFunction.getAttributes().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                                  e -> resolveAttribute(e.getKey(), e.getValue()))));
 			
 			functionRepository.saveFunction(newFunction);
 			newFunctionIds.add(newFunction.getId());

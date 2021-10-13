@@ -142,6 +142,7 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/task/new")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Unfiltered
 	@Secured(right="task-write")
 	public ExecutiontTaskParameters createExecutionTask(@PathParam("id") String executionTaskID) {
 		ExecutiontTaskParameters taskParameters = new ExecutiontTaskParameters();
