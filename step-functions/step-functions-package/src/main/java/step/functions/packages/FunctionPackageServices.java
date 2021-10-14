@@ -81,17 +81,19 @@ public class FunctionPackageServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/resourcebased")
-	@Secured(right="kw-write")
+	@Secured(right = "kw-write")
 	public FunctionPackage update(FunctionPackage functionPackage, @Context UriInfo uriInfo) throws Exception {
-		return functionPackageManager.addOrUpdateResourceBasedFunctionPackage(functionPackage, objectHookRegistry.getObjectEnricher(getSession()));
+		throw new Exception(
+				"This service has been removed. Use POST /rest/functionpackages/ instead. Lookup by resourceName isn't supported anymore");
 	}
-	
+
 	@GET
 	@Path("/resourcebased/lookup/{resourceName}")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="kw-read")
+	@Secured(right = "kw-read")
 	public FunctionPackage lookupByResourceName(@PathParam("resourceName") String resourceName) throws Exception {
-		return functionPackageManager.getPackageByResourceName(resourceName);
+		throw new Exception(
+				"This service has been removed. Lookup by resourceName isn't supported anymore. Use GET /rest/functionpackages/{id} instead.");
 	}
 	
 	@GET

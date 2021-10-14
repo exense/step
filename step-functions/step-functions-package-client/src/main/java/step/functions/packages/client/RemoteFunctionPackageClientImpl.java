@@ -73,36 +73,16 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 	}
 
 	@Override
-	public FunctionPackage updateResourceBasedKeywordPackage(File packageLibraryFile, File packageFile, Map<String, String> packageAttributes) throws IOException {
-		FunctionPackage functionPackage = new FunctionPackage();
-		Resource packageLibraryResource = null;
-		if(packageLibraryFile != null) {
-			packageLibraryResource = upload(packageLibraryFile);
-			functionPackage.setPackageLibrariesLocation(FileResolver.RESOURCE_PREFIX+packageLibraryResource.getId().toString());
-		}
-
-		Resource packageResource = upload(packageFile);
-		functionPackage.setPackageLocation(FileResolver.RESOURCE_PREFIX+packageResource.getId().toString());
-
-		// adding resource name for implicit package management
-		functionPackage.addCustomField("resourceName", packageFile.getName());
-
-		functionPackage.setPackageAttributes(packageAttributes);
-		functionPackage.setWatchForChange(false);
-
-		Builder b = requestBuilder("/rest/functionpackages/resourcebased");
-		Entity<?> entity = Entity.entity(functionPackage, MediaType.APPLICATION_JSON);
-		functionPackage = executeRequest(()->b.post(entity)).readEntity(FunctionPackage.class);
-		
-		return functionPackage;		
+	public FunctionPackage updateResourceBasedKeywordPackage(File packageLibraryFile, File packageFile,
+			Map<String, String> packageAttributes) throws IOException {
+		throw new RuntimeException(
+				"This service has been removed. Lookup by resourceName isn't supported anymore. Use updateKeywordPackageById instead.");
 	}
-	
+
 	@Override
 	public FunctionPackage lookupPackageByResourceName(String resourceName) throws IOException {
-		Builder b = requestBuilder("/rest/functionpackages/resourcebased/lookup/"+resourceName);
-		FunctionPackage functionPackage = executeRequest(()->b.get()).readEntity(FunctionPackage.class);
-		
-		return functionPackage;		
+		throw new RuntimeException(
+				"This service has been removed. Lookup by resourceName isn't supported anymore. Use addOrUpdateKeywordPackage instead.");
 	}
 
 	protected Resource upload(File file) throws IOException {
