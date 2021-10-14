@@ -59,9 +59,6 @@ public class EmbeddedFunctionPackageImporterTest {
 		functionIDs.forEach(f->{
 			GeneralScriptFunction function = (GeneralScriptFunction) functionAccessor.get(f);
 			assertEquals(true, function.isExecuteLocally());
-			// Assert that the function contains the attributes defined in the meta file of the package
-			assertEquals("value1", function.getAttribute("attribute1"));
-			assertEquals("value2", function.getAttribute("attribute2"));
 		});
 
 	}
