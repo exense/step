@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.util.logging.LogManager;
 
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
 
 import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.server.Handler;
@@ -60,6 +62,7 @@ import step.core.controller.errorhandling.ErrorFilter;
 import step.core.deployment.AccessServices;
 import step.core.deployment.AdminServices;
 import step.core.deployment.ApplicationServices;
+import step.core.deployment.AuditLogger;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.HttpSessionFactory;
 import step.core.deployment.JacksonMapperProvider;
@@ -258,6 +261,14 @@ public class ControllerServer {
 		s.setSameSite(HttpCookie.SameSite.STRICT);
 		s.setHttpOnly(true);
 		context.setSessionHandler(s);
+		context.addEventListener(new HttpSessionListener() {
+			@Override
+			public void sessionCreated(HttpSessionEvent httpSessionEvent) {}
+			@Override
+			public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
+				AuditLogger.logSessionInvalidation(httpSessionEvent.getSession());
+			}
+		});
         
 		addHandler(context);
 	}

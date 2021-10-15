@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -30,6 +31,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Context;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,8 +193,9 @@ public class AccessServices extends AbstractServices {
 	@POST
 	@Secured
 	@Path("/logout")
-    public void logout() {
-		setSession(null);
+    public void logout(@Context HttpServletRequest req) {
+		AuditLogger.log(req, 200);//must be called before invalidation
+		invalidateSession();
     }
 	
 	public boolean isDemo() {
