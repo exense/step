@@ -177,11 +177,10 @@ angular.module('tables', ['export'])
 		controller : 'StTableController',
 		controllerAs: 'tableCtrl',
 		link : function(scope, element, attr, controller, transclude) {
-		  var serverSide = scope.collection?true:false;
-
+		  var serverSide = scope.collection ? true : false;
 		  var tableElement = angular.element(element).find('table');
 
-		  scope.showSpin=false;
+		  scope.showSpin = false;
 
 		  scope.selectionModel = new SelectionModel(function(){
 		    if(serverSide) {
@@ -214,20 +213,18 @@ angular.module('tables', ['export'])
         }
       }
 
-
-
-      scope.setSelection = function(id, selected) {
+      scope.setSelection = function (id, selected) {
         scope.selectionModel.setSelection(id, selected);
         sendSelectionChangeEvent();
       }
       
-      scope.setSelectionOnFilteredRows = function(value, sendEvent) {
+      scope.setSelectionOnFilteredRows = function (value, sendEvent) {
         if(!isTableFiltered()) {
           scope.selectionModel.setDefaultSelection(value);
           scope.selectionModel.setSelectionAll(value);
         } else {
           scope.selectionModel.setSelectionAll(false);
-          _.each(getFilteredData(),function(dataRow){
+          _.each(getFilteredData(), function (dataRow){
             scope.selectionModel.setSelectionForObject(dataRow,value);
           })
         }
@@ -238,16 +235,16 @@ angular.module('tables', ['export'])
       };
       
       controller.multipleSelection = scope.multipleSelection; 
-      controller.select = function(item) {
-        if(scope.onSelection) {
-          if(scope.selectionAttribute) {
+      controller.select = function (item) {
+        if (scope.onSelection) {
+          if (scope.selectionAttribute) {
             var selectedId = new Bean(item).getProperty(scope.selectionAttribute);
             scope.onSelection(selectedId);        
           }
         }
       }
       
-		  controller.selectionModelByInput = function(bean) {
+		  controller.selectionModelByInput = function (bean) {
 		    return function (value) {
 		      if (angular.isDefined(value)) {
 		        scope.selectionModel.setSelectionForObject(bean, value);
@@ -259,11 +256,11 @@ angular.module('tables', ['export'])
 		  }
 		  
 		  // Execute the function fn after n cycles
-		  function performInNCycles(fn, n) {
+		  function performInNCycles (fn, n) {
 		    if(n <= 0) {
 		      fn();
 		    } else {
-		      $timeout(function() {
+		      $timeout(function () {
 		        performInNCycles(fn, n-1)
 		      });
 		    }
@@ -272,11 +269,11 @@ angular.module('tables', ['export'])
 		  function loadTableData() {
 		    var value = scope.data;
 		    if(scope.table) {
-		      $timeout(function(){
+		      $timeout(function () {
             if (scope.useSpinner) {
               scope.showSpin =  true;
             }
-            });
+          });
           scope.table.clear();
           if (value && value.length > 0) {
             scope.table.rows.add(value);
@@ -295,9 +292,9 @@ angular.module('tables', ['export'])
     
 		  controller.reload = function() {
 		    var columns = controller.getDtColumns();
-		    if(columns && columns.length>0) {
+		    if (columns && columns.length>0) {
 		      // First destroy the previous table if any
-	        if(scope.table && scope.table.destroy) {
+	        if (scope.table && scope.table.destroy) {
 	          scope.table.destroy()
 	          // remove the headers added "manually" (see below)
 	          tableElement.empty();
@@ -316,7 +313,7 @@ angular.module('tables', ['export'])
 	          controller.newCycle();
 	        };
 	        tableOptions.columns = columns;
-	        if(scope.order) {
+	        if (scope.order) {
 	          tableOptions.order = scope.order;
 	        }
 
@@ -345,28 +342,27 @@ angular.module('tables', ['export'])
 	          }
 	        }
 
-	        if(serverSide) {
+	        if (serverSide) {
 	          var query = 'rest/table/' + scope.collection + '/data?';
-
-			  var loadRequestCount = 0;
+			      var loadRequestCount = 0;
 	          tableOptions.ajax = {'url':query,'type':'POST',beforeSend:function(a,b) {
-				// Avoid stacking of requests  
-				if(loadRequestCount >= 5) {
-					console.log("Table load request aborted to avoid stacking")
-					a.abort();
-				} else {
-					loadRequestCount++; 
-					if(scope.filter) {
-					  b.data += '&filter=' + encodeURIComponent(scope.filter);
-					}
-					if(scope.serverSideParameters) {
-					  b.data += "&params=" + encodeURIComponent(JSON.stringify(scope.serverSideParameters()))
-					}
-				}
+              // Avoid stacking of requests  
+              if (loadRequestCount >= 5) {
+                console.log("Table load request aborted to avoid stacking")
+                a.abort();
+              } else {
+                loadRequestCount++; 
+                if (scope.filter) {
+                  b.data += '&filter=' + encodeURIComponent(scope.filter);
+                }
+                if (scope.serverSideParameters) {
+                  b.data += "&params=" + encodeURIComponent(JSON.stringify(scope.serverSideParameters()))
+                }
+              }
 	          }, complete:function (qXHR, textStatus ) {
-				loadRequestCount--;
+				      loadRequestCount--;
 	          }, error: function(jqXHR, textStatus, errorThrown) {
-				loadRequestCount--;
+				      loadRequestCount--;
 	            if (jqXHR.status === 500 && jqXHR.responseText.indexOf("MongoExecutionTimeoutException") >= 0) {
 	              Dialogs.showErrorMsg("<strong>Timeout expired.</strong><Br/>The timeout period elapsed prior to completion of the DB query.");
 	            } 
@@ -376,7 +372,7 @@ angular.module('tables', ['export'])
 	          tableOptions.serverSide = true;
 	          tableOptions.sProcessing = '';
 	        }
-
+          
 	        // Initialize the DataTable with the built options
 	        var table = tableElement.DataTable(tableOptions);
 	        scope.table = table;
@@ -393,19 +389,19 @@ angular.module('tables', ['export'])
 	        }
 	        angular.element('<div class="pull-right"></div>').append(tableActions).appendTo(cmdDiv);
 
-	        if(!scope.handle) {
+	        if (!scope.handle) {
 	          scope.handle = {};
 	        }
 	        scope.handle.reload = function(showSpin) {
-	            scope.showSpin=showSpin;
-	            scope.isExternalReload=true;
-				table.ajax.reload(function () {
-					scope.showSpin = false;
-					scope.isExternalReload = false
-				}, false);
+            scope.showSpin=showSpin;
+            scope.isExternalReload=true;
+            table.ajax.reload(function () {
+              scope.showSpin = false;
+              scope.isExternalReload = false
+            }, false);
 	        }
 	        scope.handle.search = function(columnName, searchExpression) {
-              scope.showSpin = true;
+            scope.showSpin = true;
 	          var column = table.column(columnName+':name');
 	          column.search(searchExpression,true,false).draw();
 	        }
@@ -413,7 +409,7 @@ angular.module('tables', ['export'])
 	        scope.handle.getSelectedIds = scope.selectionModel.getSelectedIds.bind(scope.selectionModel);
 	        scope.handle.getSelection = scope.selectionModel.getSelection.bind(scope.selectionModel);
 	        scope.handle.getSelectionMode = scope.selectionModel.getSelectionMode.bind(scope.selectionModel);
-			scope.handle.areAllSelected = scope.selectionModel.areAllSelected.bind(scope.selectionModel);
+			    scope.handle.areAllSelected = scope.selectionModel.areAllSelected.bind(scope.selectionModel);
 
 	        scope.handle.setSelection = scope.setSelection;
 	        scope.handle.select = function(id) {
@@ -448,8 +444,8 @@ angular.module('tables', ['export'])
 	        });
 	        
 	        var defaultSelection = scope.defaultSelection;
-	        if(defaultSelection) {
-	          if(_.isFunction(defaultSelection)) {
+	        if (defaultSelection) {
+	          if (_.isFunction(defaultSelection)) {
 	            scope.selectionModel.setDefaultSelector(defaultSelection);
 	          } else if (defaultSelection=='all') {
 	            scope.selectionModel.setDefaultSelection(true);
@@ -465,7 +461,6 @@ angular.module('tables', ['export'])
 	          loadTableData();
 		      }
 		    }
-
 		  }
 
       controller.reload();
@@ -487,7 +482,7 @@ angular.module('tables', ['export'])
         });
       }
 		  
-		  if(!serverSide) {
+		  if (!serverSide) {
 		    // Listen to changes in the data collection
         scope.$watchCollection('data', function(value) {
           loadTableData();
@@ -495,7 +490,7 @@ angular.module('tables', ['export'])
       }
 		  
       scope.$on('$destroy', function() {
-        if(scope.table) {
+        if (scope.table) {
           scope.table.destroy();
         }
       });
