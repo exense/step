@@ -206,9 +206,18 @@ angular.module('adminControllers', ['step' ])
     function($scope, $rootScope, $interval, $http, helpers, $uibModal) {
       $scope.$state = 'myaccount';
       
+      $scope.token = "";
+      
       $scope.changePwd=function() {
         $uibModal.open({backdrop: 'static',animation: false,templateUrl: 'partials/changePasswordForm.html',
           controller: 'ChangePasswordModalCtrl', resolve: {}});  
+      }
+      
+      $scope.generateToken=function() {
+        var days = ($scope.lifetime) ? $scope.lifetime : 0;
+        $http.get("rest/access/service-account/token?lifetime="+ days).then(function(response) {
+          $scope.token = response.data;
+        });
       }
       
       $scope.user = {};

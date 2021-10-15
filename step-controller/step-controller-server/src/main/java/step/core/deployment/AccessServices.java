@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.deployment;
 
+
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -27,6 +28,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
@@ -42,7 +44,10 @@ import step.core.access.Role;
 import step.core.access.RoleProvider;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.authentication.AuthorizationServerManager;
 import step.core.controller.errorhandling.ApplicationException;
+
+import static step.core.authentication.JWTSettings.CONFIG_KEY_JWT_NOLOGIN;
 
 @Singleton
 @Path("/access")
@@ -52,6 +57,7 @@ public class AccessServices extends AbstractServices {
 	private RoleProvider roleProvider;
 	private AuthenticationManager authenticationManager;
 	private AccessManager accessManager;
+	private AuthorizationServerManager authorizationServerManager;
 	
 	public AccessServices() {
 		super();
@@ -65,6 +71,7 @@ public class AccessServices extends AbstractServices {
 		roleProvider = context.get(RoleProvider.class);
 		authenticationManager = context.get(AuthenticationManager.class);
 		accessManager = context.get(AccessManager.class);
+		authorizationServerManager = context.get(AuthorizationServerManager.class);
 	}
 	
 	public static class SessionResponse {
@@ -103,13 +110,36 @@ public class AccessServices extends AbstractServices {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed. Check the server logs for more details.").type("text/plain").build();
 		}
         if(authenticated) {
-        	SessionResponse sessionResponse = buildSessionResponse(session);
-        	return Response.ok(sessionResponse).build();            	
+			String token = authorizationServerManager.issueToken(credentials.getUsername(), session);
+			TokenResponse tokenResponse = new TokenResponse();
+			tokenResponse.setToken(token);
+			return Response.ok(tokenResponse).build(); 			
         } else {
         	return Response.status(Response.Status.UNAUTHORIZED.getStatusCode()).entity("Authentication failed: Invalid username/password").type("text/plain").build();
         }    
     }
 	
+	public static class TokenResponse {
+		String token;
+
+		public String getToken() {
+			return token;
+		}
+
+		public void setToken(String token) {
+			this.token = token;
+		}
+	}
+
+	@GET
+	@Secured
+	@Path("/service-account/token")
+	public String getServiceAccountToken(@QueryParam("lifetime") long days) {
+		Session session = getSession();
+		return authorizationServerManager.getServiceAccountToken(session, days);
+	}
+
+
 	@GET
 	@Secured
 	@Path("/session")
@@ -140,6 +170,7 @@ public class AccessServices extends AbstractServices {
 		AccessConfiguration conf = new AccessConfiguration();
 		conf.setDemo(isDemo());
 		conf.setAuthentication(authenticationManager.useAuthentication());
+		conf.setNoLoginMask(configuration.getPropertyAsBoolean(CONFIG_KEY_JWT_NOLOGIN, false));
 		conf.setRoles(roleProvider.getRoles().stream().map(r->r.getAttributes().get(AbstractOrganizableObject.NAME)).collect(Collectors.toList()));
 		
 		// conf should cover more than just AccessConfiguration but we'll store the info here for right now

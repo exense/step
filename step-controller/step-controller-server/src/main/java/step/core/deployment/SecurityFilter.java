@@ -41,7 +41,7 @@ import step.core.access.AccessManager;
 import step.core.access.AuthenticationManager;
 
 @Provider
-@Priority(Priorities.AUTHENTICATION)
+@Priority(Priorities.AUTHORIZATION)
 public class SecurityFilter extends AbstractServices implements ContainerRequestFilter {
 	
 	@Inject

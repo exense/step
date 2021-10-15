@@ -62,18 +62,20 @@ public class AuthenticationManager {
 	}
 
 	protected void setUserToSession(Session session, String username) {
-		session.setAuthenticated(true);
 		User user = userAccessor.getByUsername(username);
 		
 		if(user == null) {
 			throw new ApplicationException(100, "Unknow user '"+username+"': this user is not defined in step", null);
 		}
+		session.setAuthenticated(true);
 		session.setUser(user);
 	}
 	
 	protected void logoutSession(Session session) {
 		session.setUser(null);
 		session.setAuthenticated(false);
+		session.setToken(null);
+		session.setLocalToken(false);
 	}
 
 	public synchronized void authenticateDefaultUserIfAuthenticationIsDisabled(Session session) {

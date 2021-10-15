@@ -396,8 +396,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		return $http
 		.post('rest/access/login', credentials)
 		.then(function (res) {
-			var session = res.data;
-			setContext(session);
+			authService.getSession();
 			$rootScope.$broadcast('step.login.succeeded');
 			if($location.path().indexOf('login') !== -1) {
 				authService.gotoDefaultPage();
@@ -429,6 +428,10 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	authService.isAuthenticated = function () {
 		return $rootScope.context.userID && $rootScope.context.userID!='anonymous';
 	};
+
+	authService.isExtLoginAuth = function () {
+		return serviceContext.conf.noLoginMask;
+	}
 
 	authService.hasRight = function (right) {
 		return $rootScope.context&&$rootScope.context.rights?$rootScope.context.rights.indexOf(right) !== -1:false;

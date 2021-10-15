@@ -1,44 +1,69 @@
 <div class="container-fluid" id="MyAccountCtrl" ng-controller="MyAccountCtrl">
+	<h3 class="page-header">My account</h3>
 	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h4>Credentials</h4>
+		</div>
 		<div class="panel-body">
-			<div class="row">
-				<div class="col-md-12">
-					<h3 class="page-header">My account</h3>
-					<div class="col-md-6">
-						<ul class="list-unstyled attribute-list">
-							<li>
-								<p class="text-grey">Username</p>
-								<p>{{user.username}}</p>
-							</li>
-							<li>
-								<p class="text-grey">Role</p>
-								<p>{{user.role}}</p>
-							</li>
-							<li>
-								<p class="text-grey">
-									Preferences
-									<button class="btn btn-default btn-sm" ng-click="addPreference()">
-										<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-									</button>
-								</p> 
-								<ul class="list-unstyled">
-									<li ng-repeat="pref in preferences" style="margin-botton: 5px">
-										<input class="form-control"	ng-model="pref.key" placeholder="Key" ng-blur="savePreferences()"> 
-										<input class="form-control" ng-model="pref.value" placeholder="Value" ng-blur="savePreferences()">
-									</li>
-								</ul>
-							</li>
-						</ul>
-					</div>
-					<div class="col-md-6">
-						<ul class="list-unstyled attribute-list">
-							<li>
-								<a ng-click="changePwd()">Change password</a>
-							</li>
-						</ul>
-					</div>
-				</div>
+			<span class="text-grey">Username </span>
+			<span>{{user.username}}</span>
+			<div style="float: right">
+				<a class="btn btn-success" ng-click="changePwd()">Change password</a>
 			</div>
+		</div>
+		<div class="panel-body">
+			<span class="text-grey" style="vertical-align: top;">Api key </span>
+			<textarea readonly ng-show="token != ''" style="width:100%;">{{token}}</textarea>
+			<div ng-show="token == ''" style="float: right;margin-left:15px;display:inline-flex;">
+				<span style="margin-left:10px;" class="glyphicon glyphicon-question-sign" uib-tooltip="Specifies the validity time of the token in days. Keep it empty for unlimited validity" tooltip-append-to-body="true"></span>
+				<input style="margin-left:10px;width:100px;" class="input-group"	ng-model="lifetime" placeholder="lifetime">
+				<a class="btn btn-success" ng-click="generateToken()">Generate new key</a>
+			</div>
+			<div class="alert alert-warning" style="margin-top:15px;">
+				<bold>Important: </bold>
+				<ul>
+					<li>You will only be able to view this key here once! It is not stored in this form. So be sure to copy it now.</li>
+					<li>This key is linked to your account and own the same rights, use it and store it wisely!</li>
+					<li>You can authenticate request using the Authorization HTTP header, example: curl -H "Authorization: Bearer your_key"</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h4>Role</h4>
+		</div>
+		<div class="panel-body">
+			<div >
+				<span class="text-grey">Role </span>
+				<span>{{user.role}}</span>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+				<h4>Preferences 
+				<button style="float:right;" class="btn btn-default btn-sm" ng-click="addPreference()">
+					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+				</button>
+				</h4>
+		</div>
+		<div class="panel-body">
+			<table class="table">
+				<thead>
+				<tr><th>Key</th><th>Value</th></tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="pref in preferences" >
+						<td >
+							<input class="form-group" style="width:100%;"	ng-model="pref.key" placeholder="Key" ng-blur="savePreferences()"> 
+						</td>
+						<td>
+							<input class="form-group" style="width:100%;" ng-model="pref.value" placeholder="Value" ng-blur="savePreferences()">
+						</td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
 	</div>
 </div>
