@@ -95,7 +95,7 @@ public class EmbeddedFunctionPackageImporter {
 					
 					importedFunctionPackageIds.add(existingPackage.getId().toString());
 					
-					existingPackage = functionPackageManager.addOrUpdateFunctionPackage(existingPackage, null);
+					existingPackage = functionPackageManager.addOrUpdateFunctionPackage(existingPackage);
 					// Set the executeLocally flag of the imported functions accordingly
 					existingPackage.getFunctions().forEach(id -> {
 						Function function = functionManager.getFunctionById(id.toString());

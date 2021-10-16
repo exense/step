@@ -22,7 +22,7 @@ import org.junit.Test;
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.Function;
 import step.functions.manager.FunctionManager;
 import step.functions.packages.handlers.JavaFunctionPackageHandler;
@@ -46,7 +46,7 @@ public class FunctionPackageManagerTest {
 		resourceManager = new LocalResourceManagerImpl();
 		resolver = new FileResolver(resourceManager);
 		pm = new FunctionPackageManager(p, f, resourceManager,
-				resolver,new Configuration());
+				resolver,new Configuration(), new ObjectHookRegistry());
 	}
 	
 	@After
@@ -77,7 +77,7 @@ public class FunctionPackageManagerTest {
 		assertEquals(2, packagePreview.size());
 
 		// Add the function package
-		pm.addOrUpdateFunctionPackage(fp, null);
+		pm.addOrUpdateFunctionPackage(fp);
 
 		// Retrieve the created package
 		FunctionPackage actualFunctionPackage = pm.getFunctionPackage(fp.getId().toString());
@@ -106,7 +106,7 @@ public class FunctionPackageManagerTest {
 		packageManagerFunctions.add(f3);
 
 		// Update the function package
-		pm.addOrUpdateFunctionPackage(fp, null);
+		pm.addOrUpdateFunctionPackage(fp);
 
 		// assert that function2 has been deleted as it is not part of the package
 		// anymore
@@ -128,7 +128,7 @@ public class FunctionPackageManagerTest {
 		assertEquals(newIds, fp.getFunctions());
 		
 		packageManagerFunctions.clear();
-		pm.reloadFunctionPackage(fp.getId().toString(), null);
+		pm.reloadFunctionPackage(fp.getId().toString());
 		List<Function> packageFunctions = pm.getPackageFunctions(fp.getId().toString());
 		
 		assertEquals(0, packageFunctions.size());
@@ -155,7 +155,7 @@ public class FunctionPackageManagerTest {
 		pm.registerAttributeResolver("dynamicAttribute", t -> "ResolvedValue1");
 
 		// Add the function package
-		pm.addOrUpdateFunctionPackage(fp, null);
+		pm.addOrUpdateFunctionPackage(fp);
 
 		// Retrieve the created package
 		FunctionPackage actualFunctionPackage = pm.getFunctionPackage(fp.getId().toString());
@@ -166,39 +166,12 @@ public class FunctionPackageManagerTest {
 		fp.addAttribute("dynamicAttribute", "ConstantValue1");
 		
 		// Update the function package
-		pm.addOrUpdateFunctionPackage(fp, null);
+		pm.addOrUpdateFunctionPackage(fp);
 		
 		actualFunctionPackage = pm.getFunctionPackage(fp.getId().toString());
 		// Assert that the value hasn't been resolved
 		assertEquals("ConstantValue1", actualFunctionPackage.getAttribute("dynamicAttribute"));
 		
-	}
-	
-	@Test
-	public void testObjectEnricher() throws Exception {
-		Function f1 = function("f1");
-		registerPackageHandler(List.of(f1));
-
-		FunctionPackage fp = new FunctionPackage();
-		fp.setId(new ObjectId());
-		fp.setPackageLocation("testLocation.test");
-
-		// Add the function package
-		pm.addOrUpdateFunctionPackage(fp, new ObjectEnricher() {
-			@Override
-			public void accept(Object t) {
-				((Function)t).addAttribute("enricherAtt1", "val1");
-			}
-			
-			@Override
-			public Map<String, String> getAdditionalAttributes() {
-				return null;
-			}
-		});
-
-		// Assert that the object enricher attributes have been set
-		Function f1Repo = f.getFunctionById(f1.getId().toString());
-		assertEquals("val1", f1Repo.getAttribute("enricherAtt1"));
 	}
 	
 	@Test
@@ -215,7 +188,7 @@ public class FunctionPackageManagerTest {
 		Resource libraryResource1 = createTestResource(resourceFileName, resourceManager);
 		testPackage.setPackageLibrariesLocation(resolver.createPathForResourceId(libraryResource1.getId().toString()));
 
-		pm.addOrUpdateFunctionPackage(testPackage, null);
+		pm.addOrUpdateFunctionPackage(testPackage);
 		
 		// Retrieve the created package
 		FunctionPackage actualFunctionPackage = pm.getFunctionPackage(testPackage.getId().toString());
@@ -235,7 +208,7 @@ public class FunctionPackageManagerTest {
 		Resource libraryResource2 = createTestResource(resourceFileName, resourceManager);
 		testPackage2.setPackageLibrariesLocation(resolver.createPathForResourceId(libraryResource2.getId().toString()));
 		
-		pm.addOrUpdateFunctionPackage(testPackage2, null);
+		pm.addOrUpdateFunctionPackage(testPackage2);
 		
 		// Assert that the old resource has been deleted
 		Assert.assertThrows(RuntimeException.class, () -> resourceManager.getResource(testResource.getId().toString()));
@@ -345,7 +318,7 @@ public class FunctionPackageManagerTest {
 		functionPackage.setPackageLocation("WRONG PACKAGE LOCATION");
 		Exception actualException = null;
 		try {
-			pm.addOrUpdateFunctionPackage(functionPackage, null);
+			pm.addOrUpdateFunctionPackage(functionPackage);
 		} catch (Exception e) {
 			actualException = e;
 		}

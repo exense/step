@@ -19,7 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
+import step.core.AbstractContext;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.Function;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
@@ -51,17 +53,20 @@ public class FunctionPackageManager implements Closeable {
 	private final ResourceManager resourceManager;
 	private final FileResolver fileResolver;
 	private FunctionPackageChangeWatcher changeWatcher;
+	private final ObjectHookRegistry objectHookRegistry;
 
 	private final List<FunctionPackageHandler> packageHandlers = new ArrayList<>();
 	private final Map<String, java.util.function.Function<String, String>> attributeResolvers = new ConcurrentHashMap<>();
 
 	public FunctionPackageManager(FunctionPackageAccessor functionPackageAccessor, FunctionManager functionRepository,
-			ResourceManager resourceManager, FileResolver fileResolver, Configuration configuration) {
+			ResourceManager resourceManager, FileResolver fileResolver, Configuration configuration,
+			ObjectHookRegistry objectHookRegistry) {
 		super();
 		this.functionPackageAccessor = functionPackageAccessor;
 		this.functionRepository = functionRepository;
 		this.resourceManager = resourceManager;
 		this.fileResolver = fileResolver;
+		this.objectHookRegistry = objectHookRegistry;
 
 		if (configuration.getPropertyAsBoolean(WATCH_FOR_CHANGE, true)) {
 			int interval = configuration.getPropertyAsInteger(WATCHER_INTERVAL, 60000);
@@ -110,14 +115,14 @@ public class FunctionPackageManager implements Closeable {
 	 * @return the updated {@link FunctionPackage}
 	 * @throws Exception if any error occurs during loading
 	 */
-	public FunctionPackage addOrUpdateFunctionPackage(FunctionPackage newFunctionPackage, ObjectEnricher objectEnricher)
+	public FunctionPackage addOrUpdateFunctionPackage(FunctionPackage newFunctionPackage)
 			throws Exception {
 		FunctionPackage previousFunctionPackage = null;
 		if (newFunctionPackage.getId() != null) {
 			previousFunctionPackage = get(newFunctionPackage.getId());
 			cleanupObsoleteResource(previousFunctionPackage, newFunctionPackage);
 		}
-		return addOrUpdateFunctionPackage(previousFunctionPackage, newFunctionPackage, objectEnricher);
+		return addOrUpdateFunctionPackage(previousFunctionPackage, newFunctionPackage);
 	}
 
 	/**
@@ -128,12 +133,12 @@ public class FunctionPackageManager implements Closeable {
 	 * @return the updated {@link FunctionPackage}
 	 * @throws Exception if any error occurs during reloading
 	 */
-	public FunctionPackage reloadFunctionPackage(String functionPackageId, ObjectEnricher objectEnricher)
+	public FunctionPackage reloadFunctionPackage(String functionPackageId)
 			throws Exception {
 		assert functionPackageId != null;
 		FunctionPackage functionPackage = getFunctionPackage(functionPackageId);
 		assert functionPackage != null;
-		return addOrUpdateFunctionPackage(functionPackage, functionPackage, objectEnricher);
+		return addOrUpdateFunctionPackage(functionPackage, functionPackage);
 	}
 
 	public FunctionPackage getFunctionPackage(String id) {
@@ -203,7 +208,7 @@ public class FunctionPackageManager implements Closeable {
 	}
 
 	private FunctionPackage addOrUpdateFunctionPackage(FunctionPackage previousFunctionPackage,
-			FunctionPackage newFunctionPackage, ObjectEnricher objectEnricher) throws Exception {
+			FunctionPackage newFunctionPackage) throws Exception {
 		String packageLocation = newFunctionPackage.getPackageLocation();
 		if (packageLocation == null || packageLocation.trim().length() == 0) {
 			throw new Exception("Empty package file");
@@ -211,6 +216,16 @@ public class FunctionPackageManager implements Closeable {
 
 		// Auto detect the appropriate package handler
 		FunctionPackageHandler handler = getPackageHandler(newFunctionPackage);
+
+		// apply context attributes of the function package to the function
+		AbstractContext context = new AbstractContext() {};
+		objectHookRegistry.rebuildContext(context, newFunctionPackage);
+		ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(context);
+		
+		// Enriching the resource is only required for FunctionPackage migration. Remove
+		// these 2 lines as soon as the migration is implemented separately
+		enrichResource(objectEnricher, newFunctionPackage.getPackageLocation());
+		enrichResource(objectEnricher, newFunctionPackage.getPackageLibrariesLocation());
 
 		// resolve the attribute values if necessary
 		if (newFunctionPackage.getAttributes() != null) {
@@ -235,10 +250,7 @@ public class FunctionPackageManager implements Closeable {
 				newFunction.getAttributes().putAll(newFunctionPackage.getPackageAttributes());
 			}
 
-			// apply context attributes
-			if (objectEnricher != null) {
-				objectEnricher.accept(newFunction);
-			}
+			objectEnricher.accept(newFunction);
 
 			// search for an existing function with the same name and reuse its ID
 			// this is needed as long Plans refer to Functions by ID
@@ -250,7 +262,8 @@ public class FunctionPackageManager implements Closeable {
 			newFunction.setManaged(true);
 			newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally());
 			newFunction.setTokenSelectionCriteria(newFunctionPackage.getTokenSelectionCriteria());
-			newFunction.addCustomField(FunctionPackageEntity.FUNCTION_PACKAGE_ID, newFunctionPackage.getId().toString());
+			newFunction.addCustomField(FunctionPackageEntity.FUNCTION_PACKAGE_ID,
+					newFunctionPackage.getId().toString());
 
 			functionRepository.saveFunction(newFunction);
 			newFunctionIds.add(newFunction.getId());
@@ -269,6 +282,15 @@ public class FunctionPackageManager implements Closeable {
 		newFunctionPackage = functionPackageAccessor.save(newFunctionPackage);
 
 		return newFunctionPackage;
+	}
+
+	private void enrichResource(ObjectEnricher objectEnricher, String location) throws IOException {
+		if(fileResolver.isResource(location)) {
+			String resolveResourceId = fileResolver.resolveResourceId(location);
+			Resource resource = resourceManager.getResource(resolveResourceId);
+			objectEnricher.accept(resource);
+			resourceManager.saveResource(resource);
+		}
 	}
 
 	private String buildFunctionPackageName(FunctionPackage newFunctionPackage) {

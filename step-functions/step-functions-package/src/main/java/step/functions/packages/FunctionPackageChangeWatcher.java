@@ -41,7 +41,7 @@ public class FunctionPackageChangeWatcher implements Closeable {
 			fileWatchService.register(packageFile, ()->{
 				String packageId = functionPackage.getId().toString();
 				try {
-					packageManager.reloadFunctionPackage(packageId, null);
+					packageManager.reloadFunctionPackage(packageId);
 				} catch (Exception e) {
 					logger.error("Error while reloading function package "+packageId+" based on file " + packageFile.getAbsolutePath() , e);
 				}

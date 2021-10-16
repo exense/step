@@ -18,18 +18,15 @@
  ******************************************************************************/
 package step.core.entities;
 
-import step.core.objectenricher.ObjectPredicate;
+import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 
 public class ResolveReferencesHook {
 
-	protected EntityManager entityManager;
-	
-	public ResolveReferencesHook(EntityManager entityManager) {
+	public ResolveReferencesHook() {
 		super();
-		this.entityManager = entityManager;
 	}
 
-	public void accept(Object t, ObjectPredicate objectPredicate, EntityReferencesMap u) {
+	public void accept(Object t, EntityTreeVisitorContext context) {
 		throw new RuntimeException("Not implemented");
 		
 	}

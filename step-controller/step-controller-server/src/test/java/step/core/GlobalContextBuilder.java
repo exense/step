@@ -117,7 +117,7 @@ public class GlobalContextBuilder {
 			logger.error("Unable to create temp folder for the resource manager", e);
 		}
 		
-		context.setEntityManager(new EntityManager(context));
+		context.setEntityManager(new EntityManager());
 		context.getEntityManager()
 				.register(new Entity<Execution, ExecutionAccessor>(EntityManager.executions,
 						context.getExecutionAccessor(), Execution.class))

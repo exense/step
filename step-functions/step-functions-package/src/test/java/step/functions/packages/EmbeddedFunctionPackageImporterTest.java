@@ -12,6 +12,7 @@ import org.junit.Test;
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import step.attachments.FileResolver;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.manager.FunctionManagerImpl;
@@ -39,7 +40,7 @@ public class EmbeddedFunctionPackageImporterTest {
 		
 		FunctionPackageAccessor functionPackageAccessor = new InMemoryFunctionPackageAccessorImpl();
 		FunctionPackageManager functionPackageManager = new FunctionPackageManager(functionPackageAccessor,
-				functionManager, resourceManager, fileResolver, configuration);
+				functionManager, resourceManager, fileResolver, configuration, new ObjectHookRegistry());
 		functionPackageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration));
 		functionPackageManager.registerAttributeResolver("attribute1", v -> "value1");
 		

@@ -35,7 +35,6 @@ import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.access.UserAccessorImpl;
 import step.core.accessors.AbstractAccessor;
-import step.core.accessors.AbstractIdentifiableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
@@ -48,12 +47,13 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.entities.Bean;
 import step.core.entities.Entity;
+import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
+import step.core.entities.ResolveReferencesHook;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionStatus;
-import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.PlanAccessorImpl;
@@ -77,6 +77,7 @@ import step.expressions.ExpressionHandler;
 import step.resources.Resource;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceAccessorImpl;
+import step.resources.ResourceEntity;
 import step.resources.ResourceImporter;
 import step.resources.ResourceManager;
 import step.resources.ResourceManagerControllerPlugin;
@@ -178,10 +179,25 @@ public class Controller {
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
 		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 		
-		context.setEntityManager(new EntityManager(context));
+		context.setEntityManager(new EntityManager());
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
+		
+		Entity<Plan, PlanAccessor> planEntity = new Entity<>(EntityManager.plans, context.getPlanAccessor(),
+				Plan.class);
+		planEntity.addReferencesHook(new ResolveReferencesHook() {
+			@Override
+			public void accept(Object entity, EntityTreeVisitorContext context) {
+				if (entity instanceof CallPlan) {
+					Plan plan = planLocator.selectPlan((CallPlan) entity, context.getObjectPredicate(), null);
+					if (plan != null) {
+						context.visitEntity(EntityManager.plans, plan.getId().toString());
+					}
+				}
+			}
+		});
+		
 		EntityManager entityManager = context.getEntityManager();
 		entityManager
 				// Bean entity used for remote test
@@ -190,29 +206,13 @@ public class Controller {
 						Bean.class))
 				.register(new Entity<Execution, ExecutionAccessor>(EntityManager.executions,
 						context.getExecutionAccessor(), Execution.class))
-				.register(new Entity<Plan, PlanAccessor>(EntityManager.plans, context.getPlanAccessor(), Plan.class) {
-					@Override
-					public boolean shouldExport(AbstractIdentifiableObject a) {
-						return ((Plan) a).isVisible();
-					}
-
-					@Override
-					public String resolve(Object artefact, ObjectPredicate objectPredicate) {
-						if (artefact instanceof CallPlan) {
-							return planLocator.selectPlan((CallPlan) artefact, objectPredicate, null).getId()
-									.toHexString();
-						} else {
-							return null;
-						}
-					}
-				})
+				.register(planEntity)
 				.register(new Entity<ReportNode, ReportNodeAccessor>(EntityManager.reports, context.getReportAccessor(),
 						ReportNode.class))
 				.register(new Entity<ExecutiontTaskParameters, ExecutionTaskAccessor>(EntityManager.tasks,
 						context.getScheduleAccessor(), ExecutiontTaskParameters.class))
 				.register(new Entity<User, UserAccessor>(EntityManager.users, context.getUserAccessor(), User.class))
-				.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor,
-						Resource.class))
+				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver))
 				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
 						resourceRevisionAccessor, ResourceRevision.class))
 				.register(new Entity<DashboardSession, AbstractAccessor<DashboardSession>>("sessions",

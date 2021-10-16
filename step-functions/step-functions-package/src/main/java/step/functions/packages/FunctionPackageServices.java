@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.Function;
 
 @Path("/functionpackages")
@@ -28,12 +27,10 @@ public class FunctionPackageServices extends AbstractServices {
 	private static final Logger logger = LoggerFactory.getLogger(FunctionPackageServices.class);
 	
 	protected FunctionPackageManager functionPackageManager;
-	private ObjectHookRegistry objectHookRegistry;
 	
 	@PostConstruct
 	public void init() {
 		functionPackageManager = getContext().get(FunctionPackageManager.class);
-		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 	}
 	
 	@GET
@@ -74,7 +71,7 @@ public class FunctionPackageServices extends AbstractServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="kw-write")
 	public FunctionPackage save(FunctionPackage functionPackage, @Context UriInfo uriInfo) throws Exception {
-		return functionPackageManager.addOrUpdateFunctionPackage(functionPackage, objectHookRegistry.getObjectEnricher(getSession()));
+		return functionPackageManager.addOrUpdateFunctionPackage(functionPackage);
 	}
 	
 	@POST
@@ -110,7 +107,7 @@ public class FunctionPackageServices extends AbstractServices {
 	@Path("/{id}/reload")
 	@Secured(right="kw-write")
 	public FunctionPackage reload(@PathParam("id") String functionPackageId, @Context UriInfo uriInfo) throws Exception {
-		return functionPackageManager.reloadFunctionPackage(functionPackageId, objectHookRegistry.getObjectEnricher(getSession()));
+		return functionPackageManager.reloadFunctionPackage(functionPackageId);
 	}
 	
 	public static class PackagePreview {
