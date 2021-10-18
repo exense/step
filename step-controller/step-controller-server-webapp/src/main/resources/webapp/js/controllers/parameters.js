@@ -20,7 +20,7 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
 
 .run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerView('parameters','partials/parameters/parameterList.html');  
-  EntityRegistry.registerEntity('Parameter', 'parameter', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table', '/partials/parameters/parameterSelectionTable.html', null, 'glyphicon glyphicon-list-alt');
+  EntityRegistry.registerEntity('Parameter', 'parameters', 'parameters', 'rest/parameters/', 'rest/parameters/', 'st-table', '/partials/parameters/parameterSelectionTable.html', null, 'glyphicon glyphicon-list-alt');
 })
 
 .controller('ParameterListCtrl', function($rootScope, $scope, $http, $uibModal, stateStorage, ExportDialogs, Dialogs, ParameterDialogs, ImportDialogs, AuthService) {

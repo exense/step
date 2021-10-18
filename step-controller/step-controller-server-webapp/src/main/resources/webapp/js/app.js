@@ -629,6 +629,15 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		return dialogs.showWarning(msg);
 	}
 
+	dialogs.showInfo = function(msg) {
+		var modalInstance = $uibModal.open({backdrop: 'static', animation: false, templateUrl: 'partials/infoMessageDialog.html',
+			controller: 'DialogCtrl', 
+			resolve: {message:function(){
+				return msg
+			}}});
+		return modalInstance.result;
+	}
+
 	dialogs.showWarning = function(msg) {
 		var modalInstance = $uibModal.open({backdrop: 'static', animation: false, templateUrl: 'partials/confirmationDialog.html',
 			controller: 'DialogCtrl', 

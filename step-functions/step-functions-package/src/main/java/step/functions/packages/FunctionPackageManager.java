@@ -222,11 +222,6 @@ public class FunctionPackageManager implements Closeable {
 		objectHookRegistry.rebuildContext(context, newFunctionPackage);
 		ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(context);
 		
-		// Enriching the resource is only required for FunctionPackage migration. Remove
-		// these 2 lines as soon as the migration is implemented separately
-		enrichResource(objectEnricher, newFunctionPackage.getPackageLocation());
-		enrichResource(objectEnricher, newFunctionPackage.getPackageLibrariesLocation());
-
 		// resolve the attribute values if necessary
 		if (newFunctionPackage.getAttributes() != null) {
 			newFunctionPackage.setAttributes(newFunctionPackage.getAttributes().entrySet().stream()
@@ -282,15 +277,6 @@ public class FunctionPackageManager implements Closeable {
 		newFunctionPackage = functionPackageAccessor.save(newFunctionPackage);
 
 		return newFunctionPackage;
-	}
-
-	private void enrichResource(ObjectEnricher objectEnricher, String location) throws IOException {
-		if(fileResolver.isResource(location)) {
-			String resolveResourceId = fileResolver.resolveResourceId(location);
-			Resource resource = resourceManager.getResource(resolveResourceId);
-			objectEnricher.accept(resource);
-			resourceManager.saveResource(resource);
-		}
 	}
 
 	private String buildFunctionPackageName(FunctionPackage newFunctionPackage) {

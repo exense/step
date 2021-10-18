@@ -21,7 +21,7 @@ angular.module('adminControllers', ['step' ])
 .run(function(ViewRegistry, EntityRegistry, $timeout) {
   ViewRegistry.registerView('admin','partials/admin.html');
   ViewRegistry.registerView('settings','partials/settings.html');
-  EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/users/userSelectionTable.html');
+  EntityRegistry.registerEntity('User', 'users', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/users/userSelectionTable.html');
   ViewRegistry.registerDashlet('admin','Users','partials/users/users.html','users');
   $timeout(function() {ViewRegistry.registerDashlet('admin','Settings','partials/adminSettings.html','controller');})
 })

@@ -242,7 +242,7 @@ angular.module('artefacts',['step'])
   }
   
   $scope.selectFunction = function() {
-    Dialogs.selectEntityOfType('function', true).then(function(result) {
+    Dialogs.selectEntityOfType('functions', true).then(function(result) {
       var id = result.item;
       $scope.artefact.functionId = id;
       loadFunction(id, function() {$scope.save()});

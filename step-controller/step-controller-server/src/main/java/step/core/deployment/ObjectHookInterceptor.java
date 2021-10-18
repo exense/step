@@ -65,18 +65,15 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 	public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
 		Object entity = context.proceed();
 
-		// TODO implement right validation to prevent malicious usage of this header
-		if(!context.getHeaders().containsKey("ignoreContext") || !context.getHeaders().get("ignoreContext").contains("true")) {
-			Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
-			if(annotation == null) {
-				Session session = getSession();
-				
-				if (!objectHookRegistry.isObjectAcceptableInContext(session, entity)) {
-					throw newAccessDenierError();
-				} else {
-					ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
-					objectEnricher.accept(entity);
-				}
+		Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
+		if(annotation == null) {
+			Session session = getSession();
+			
+			if (!objectHookRegistry.isObjectAcceptableInContext(session, entity)) {
+				throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to edit this object from within this context");
+			} else {
+				ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
+				objectEnricher.accept(entity);
 			}
 		}
 
@@ -101,14 +98,10 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 				context.setEntity(newList);
 			} else {
 				if(!predicate.test(entity)) {
-					throw newAccessDenierError();
+					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to access this object");
 				}
 			}
 		}
 		context.proceed();
-	}
-
-	private ControllerServiceException newAccessDenierError() {
-		return new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to access this object");
 	}
 }

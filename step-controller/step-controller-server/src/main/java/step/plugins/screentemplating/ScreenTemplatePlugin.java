@@ -22,6 +22,7 @@ import java.util.Arrays;
 
 import step.core.GlobalContext;
 import step.core.collections.Collection;
+import step.core.entities.Entity;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;
@@ -44,6 +45,9 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 		context.put(ScreenInputAccessor.class, screenInputAccessor);
 		context.put(ScreenTemplateManager.class, screenTemplateManager);
 		context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
+		
+		context.getEntityManager().register(
+				new Entity<ScreenInput, ScreenInputAccessor>("screenInputs", screenInputAccessor, ScreenInput.class));
 		
 		Collection<ScreenInput> collectionDriver = context.getCollectionFactory().getCollection("screenInputs",
 				ScreenInput.class);
