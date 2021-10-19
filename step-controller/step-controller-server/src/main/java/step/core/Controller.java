@@ -49,7 +49,7 @@ import step.core.entities.Bean;
 import step.core.entities.Entity;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
-import step.core.entities.ResolveReferencesHook;
+import step.core.entities.DependencyTreeVisitorHook;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
@@ -186,9 +186,9 @@ public class Controller {
 		
 		Entity<Plan, PlanAccessor> planEntity = new Entity<>(EntityManager.plans, context.getPlanAccessor(),
 				Plan.class);
-		planEntity.addReferencesHook(new ResolveReferencesHook() {
+		planEntity.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 			@Override
-			public void accept(Object entity, EntityTreeVisitorContext context) {
+			public void onVisitEntity(Object entity, EntityTreeVisitorContext context) {
 				if (entity instanceof CallPlan) {
 					Plan plan = planLocator.selectPlan((CallPlan) entity, context.getObjectPredicate(), null);
 					if (plan != null) {

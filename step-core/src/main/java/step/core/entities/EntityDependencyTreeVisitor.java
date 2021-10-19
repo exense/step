@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -43,8 +41,10 @@ public class EntityDependencyTreeVisitor {
 	}
 
 	public void visitSingleObject(Object object, EntityTreeVisitor visitor) {
+		Entity<?,?> entityType = entityManager.getEntityByClass(object.getClass());
 		EntityTreeVisitorContext context = new EntityTreeVisitorContext(null, false, visitor);
 		resolveEntityDependencies(object, context);
+		entityType.getDependencyTreeVisitorHooks().forEach(h -> h.onVisitEntity(object, context));
 	}
 
 	public class EntityTreeVisitorContext {
@@ -65,17 +65,21 @@ public class EntityDependencyTreeVisitor {
 			return objectPredicate;
 		}
 
-		public EntityTreeVisitor getVisitor() {
-			return visitor;
-		}
-
 		public void visitEntity(String entityName, String entityId) {
 			if (recursive) {
 				EntityDependencyTreeVisitor.this.visitEntity(entityName, entityId, this);
 			}
 		}
+		
+		public String resolvedEntityId(String entityName, String entityId) {
+			return visitor.onResolvedEntityId(entityName, entityId);
+		}
 
-		protected boolean isRecursive() {
+		protected EntityTreeVisitor getVisitor() {
+			return visitor;
+		}
+
+		public boolean isRecursive() {
 			return recursive;
 		}
 
@@ -90,7 +94,7 @@ public class EntityDependencyTreeVisitor {
 
 		public void onResolvedEntity(String entityName, String entityId, Object entity);
 
-		public void onResolvedEntityId(String entityName, String entityId, Consumer<String> replaceIdCallback);
+		public String onResolvedEntityId(String entityName, String entityId);
 
 	}
 
@@ -116,7 +120,7 @@ public class EntityDependencyTreeVisitor {
 			} else {
 				visitor.onResolvedEntity(entityName, entityId, entity);
 				resolveEntityDependencies(entity, context);
-				entityType.getResolveReferencesHook().forEach(h -> h.accept(entity, context));
+				entityType.getDependencyTreeVisitorHooks().forEach(h -> h.onVisitEntity(entity, context));
 			}
 			stack.remove(entityId);
 		}
@@ -279,10 +283,8 @@ public class EntityDependencyTreeVisitor {
 
 	private Object updateAtomicReferenceIfNeeded(String entityName, String resolvedEntityId, Object atomicReference,
 			EntityTreeVisitorContext visitorContext) {
-		AtomicReference<String> newEntityIdRef = new AtomicReference<String>();
 		// Call the onResolvedEntityId hook
-		visitorContext.getVisitor().onResolvedEntityId(entityName, resolvedEntityId, id -> newEntityIdRef.set(id));
-		String newEntityId = newEntityIdRef.get();
+		String newEntityId = visitorContext.getVisitor().onResolvedEntityId(entityName, resolvedEntityId);
 		if (newEntityId != null) {
 			// The update entity Id callback has been called. Update the reference
 			// accordingly

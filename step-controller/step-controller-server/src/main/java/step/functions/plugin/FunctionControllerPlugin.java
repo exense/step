@@ -36,7 +36,7 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.Entity;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
-import step.core.entities.ResolveReferencesHook;
+import step.core.entities.DependencyTreeVisitorHook;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;
@@ -90,9 +90,9 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		final FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 		Entity<Function, FunctionAccessorImpl> functionEntity = new Entity<Function, FunctionAccessorImpl>(
 				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class);
-		functionEntity.getResolveReferencesHook().add(new ResolveReferencesHook() {
+		functionEntity.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 			@Override
-			public void accept(Object t, EntityTreeVisitorContext context) {
+			public void onVisitEntity(Object t, EntityTreeVisitorContext context) {
 				if (t instanceof CallFunction) {
 					Function function = functionLocator.getFunction((CallFunction) t, context.getObjectPredicate(),
 							null);

@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,8 +109,9 @@ public class EntityManager  {
 			}
 
 			@Override
-			public void onResolvedEntityId(String entityName, String resolvedEntityId,
-					Consumer<String> replaceIdCallback) {}
+			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
+				return null;
+			}
 		}, recursive);
 	}
 	
@@ -125,10 +125,6 @@ public class EntityManager  {
 	}
 
 	public void updateReferences(Object entity, Map<String, String> references) {
-		Entity<?,?> entityType = getEntityByClass(entity.getClass());
-		if (entityType != null) {
-			entityType.getUpdateReferencesHook().forEach(r->r.accept(entity, references));
-		}
 		if(entity!=null) {
 			EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this);
 			entityDependencyTreeVisitor.visitSingleObject(entity, new EntityTreeVisitor() {
@@ -142,10 +138,9 @@ public class EntityManager  {
 				}
 
 				@Override
-				public void onResolvedEntityId(String entityName, String resolvedEntityId,
-						Consumer<String> replaceIdCallback) {
+				public String onResolvedEntityId(String entityName, String resolvedEntityId) {
 					String newEntityId = references.get(resolvedEntityId);
-					replaceIdCallback.accept(newEntityId);
+					return newEntityId;
 				}
 			});
 		}

@@ -20,14 +20,22 @@ package step.core.entities;
 
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 
-public class ResolveReferencesHook {
+public interface DependencyTreeVisitorHook {
 
-	public ResolveReferencesHook() {
-		super();
-	}
+	/**
+	 * This hook is called for each visited entity when traversing an entity tree with
+	 * {@link EntityDependencyTreeVisitor}.<br>
+	 * <br>
+	 * 
+	 * This hook can be used to handle custom dependencies that cannot be handled by
+	 * the annotation {@link EntityReference}: to handle a custom dependency the
+	 * hook should call the method
+	 * {@link EntityTreeVisitorContext#visitEntity(String, String)} of the context
+	 * object
+	 * 
+	 * @param entity  the entity that has been visited
+	 * @param context
+	 */
+	public void onVisitEntity(Object entity, EntityTreeVisitorContext context);
 
-	public void accept(Object t, EntityTreeVisitorContext context) {
-		throw new RuntimeException("Not implemented");
-		
-	}
 }

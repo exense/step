@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.bson.types.ObjectId;
 import org.junit.Test;
@@ -35,9 +34,9 @@ public class EntityDependencyTreeVisitorTest {
 		accessor1.save(entity1);
 		
 		Entity<EntityType1, InMemoryAccessor<EntityType1>> entityType1 = new Entity<>(
-				ENTITY_TYPE1, accessor1, EntityType1.class).addReferencesHook(new ResolveReferencesHook() {
+				ENTITY_TYPE1, accessor1, EntityType1.class).addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 					@Override
-					public void accept(Object t, EntityTreeVisitorContext context) {
+					public void onVisitEntity(Object t, EntityTreeVisitorContext context) {
 						context.visitEntity(ENTITY_TYPE2, entity2.getId().toString());
 					}
 				});
@@ -71,9 +70,8 @@ public class EntityDependencyTreeVisitorTest {
 			}
 
 			@Override
-			public void onResolvedEntityId(String entityName, String resolvedEntityId,
-					Consumer<String> replaceIdCallback) {
-				
+			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
+				return null;
 			}
 		}, true);
 		
@@ -93,9 +91,9 @@ public class EntityDependencyTreeVisitorTest {
 		EntityType1 entity1 = new EntityType1(entity2.getId().toString());
 		accessor1.save(entity1);
 		
-		Entity<EntityType1, InMemoryAccessor<EntityType1>> entityType1 = new Entity<>(ENTITY_TYPE1, accessor1, EntityType1.class).addReferencesHook(new ResolveReferencesHook() {
+		Entity<EntityType1, InMemoryAccessor<EntityType1>> entityType1 = new Entity<>(ENTITY_TYPE1, accessor1, EntityType1.class).addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 			@Override
-			public void accept(Object t, EntityTreeVisitorContext context) {
+			public void onVisitEntity(Object t, EntityTreeVisitorContext context) {
 				context.visitEntity(ENTITY_TYPE2, entity2.getId().toString());
 			}
 		});
@@ -139,9 +137,8 @@ public class EntityDependencyTreeVisitorTest {
 			}
 
 			@Override
-			public void onResolvedEntityId(String entityName, String resolvedEntityId,
-					Consumer<String> replaceIdCallback) {
-				replaceIdCallback.accept(newIdString);
+			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
+				return newIdString;
 			}
 		});
 		

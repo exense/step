@@ -6,22 +6,20 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.Entity;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
-import step.core.entities.ResolveReferencesHook;
+import step.core.entities.DependencyTreeVisitorHook;
 
 public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 
 	private final FileResolver fileResolver;
-	private final ResourceManager resourceManager;
 	
 	public ResourceEntity(Accessor<Resource> accessor, ResourceManager resourceManager, FileResolver fileResolver) {
 		super(EntityManager.resources, accessor, Resource.class);
 		this.fileResolver = fileResolver;
-		this.resourceManager = resourceManager;
-		addReferencesHook(new ResolveReferencesHook() {
+		addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 			
 			@Override
-			public void accept(Object t, EntityTreeVisitorContext visitorContext) {
-				if(t instanceof Resource) {
+			public void onVisitEntity(Object t, EntityTreeVisitorContext visitorContext) {
+				if(visitorContext.isRecursive() && t instanceof Resource) {
 					String revisionId = resourceManager.getResourceRevisionByResourceId(((Resource) t).getId().toString()).getId().toHexString();
 					visitorContext.visitEntity(EntityManager.resourceRevisions, revisionId);
 				}
