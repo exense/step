@@ -60,7 +60,7 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
 		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(SCHEDULER_TABLE);
 		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-		nameInput.setValueHtmlTemplate("<entity-icon entity=\"stBean\" entity-name=\"'task'\"/> <scheduler-task-link scheduler-task=\"stBean\" />");
+		nameInput.setValueHtmlTemplate("<entity-icon entity=\"stBean\" entity-name=\"'tasks'\"/> <scheduler-task-link scheduler-task=\"stBean\" />");
 		AtomicBoolean inputExists = new AtomicBoolean(false);
 		// Force content of input 'attributes.name'
 		screenInputsByScreenId.forEach(i->{
