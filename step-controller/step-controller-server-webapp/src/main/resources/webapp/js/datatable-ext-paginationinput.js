@@ -41,7 +41,7 @@ $.fn.dataTableExt.oPagination.ellipsesInput = {
         
         var oPrevious = $('<li class="paginate_button"><a class="' + oClasses.sPageButton + ' ' + oClasses.sPagePrevious + '">' + oLang.sPrevious + '</a></li>'),
             oNumbers = $('<li class="' + oClasses.sPageNumbers + '"></li>'),
-            oInput = $('<li class="' + oClasses.sInputWrapper + '"><span><input style="margin-top:-1px; margin-bottom:-1px;width: 50px; " type="number" class="' + oClasses.sPageInput + '"></input> <span>of</span> <span class="' + oClasses.sPageTotal + '">' + oSettings._iTotalPages + '</span></span></li>'),
+            oInput = $('<li class="' + oClasses.sInputWrapper + '"><span><input style="margin-top:-1px; margin-bottom:-1px;width: 30px; " type="text" class="' + oClasses.sPageInput + '"></input> <span>of</span> <span class="' + oClasses.sPageTotal + '">' + oSettings._iTotalPages + '</span></span></li>'),
             oNext = $('<li class="paginate_button"><a class="' + oClasses.sPageButton + ' ' + oClasses.sPageNext + '">' + oLang.sNext + '</a></li>'),
             oPaginationList = $('<ul class="pagination"></ul>');
  
@@ -54,6 +54,21 @@ $.fn.dataTableExt.oPagination.ellipsesInput = {
         $(nPager).append(oPaginationList);
         
         $(oInput).find('.' + oClasses.sPageInput).keyup(function (e) {
+    
+          // 38 = up arrow, 39 = right arrow
+          if (e.which === 38 || e.which === 39) {
+              this.value++;
+          }
+          // 37 = left arrow, 40 = down arrow
+          else if ((e.which === 37 || e.which === 40) && this.value > 1) {
+              this.value--;
+          }
+
+          if (this.value === '' || this.value.match(/[^0-9]/)) {
+              /* Nothing entered or non-numeric character */
+              this.value = this.value.replace(/[^\d]/g, ''); // don't even allow anything but digits
+              return;
+          }
     
           var iNewStart = oSettings._iDisplayLength * (this.value - 1);
           if (iNewStart < 0) {
