@@ -372,7 +372,9 @@ angular.module('tables', ['export'])
 	          tableOptions.serverSide = true;
 	          tableOptions.sProcessing = '';
 	        }
-          
+	        
+          tableOptions.pagingType = 'ellipsesInput';
+                    
 	        // Initialize the DataTable with the built options
 	        var table = tableElement.DataTable(tableOptions);
 	        scope.table = table;
