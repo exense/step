@@ -20,7 +20,6 @@ package step.engine.plugins;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +28,6 @@ import java.util.Set;
 import org.bson.types.ObjectId;
 
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.Attribute;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
@@ -75,13 +73,6 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 			function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 			function.setClassName(m.getDeclaringClass().getName());
 
-			List<Attribute> attributes = new ArrayList<>();
-			attributes.addAll(Arrays.asList(m.getDeclaringClass().getAnnotationsByType(Attribute.class)));
-			attributes.addAll(Arrays.asList(m.getAnnotationsByType(Attribute.class)));
-			for (Attribute attribute : attributes) {
-				function.getAttributes().put(attribute.key(), attribute.value());
-			}
-			
 			functions.add(function);
 		}
 		return functions;

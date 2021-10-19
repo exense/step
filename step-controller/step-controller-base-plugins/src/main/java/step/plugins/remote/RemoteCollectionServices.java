@@ -132,6 +132,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @Path("/{id}/save")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
+    @Unfiltered
     @Secured(right="collection-write")
     public Response save(@PathParam("id") String collectionId, T entity) {
         Class<?> entityClass = entityManager.resolveClass(collectionId);
@@ -144,6 +145,7 @@ public class RemoteCollectionServices<T> extends AbstractServices {
     @POST
     @Path("/{id}/saveMany")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Unfiltered
     @Secured(right="collection-write")
     public  void saveBulk(@PathParam("id") String collectionId, List<T> entities) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
@@ -152,9 +154,5 @@ public class RemoteCollectionServices<T> extends AbstractServices {
         Object o = DefaultJacksonMapperProvider.getObjectMapper().convertValue(entities,collectionType);
         collectionDriver.save((List) o);
     }
-
-
-
-
 
 }

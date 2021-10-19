@@ -34,8 +34,9 @@ import step.core.collections.Collection;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.Entity;
+import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.entities.DependencyTreeVisitorHook;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;
@@ -87,17 +88,21 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		context.put(FunctionAccessor.class, functionAccessor);
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		final FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
-		context.getEntityManager().register(new Entity<Function, FunctionAccessorImpl>(
-				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class) {
+		Entity<Function, FunctionAccessorImpl> functionEntity = new Entity<Function, FunctionAccessorImpl>(
+				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class);
+		functionEntity.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 			@Override
-			public String resolve(Object artefact, ObjectPredicate objectPredicate) {
-				if (artefact instanceof CallFunction) {
-					return functionLocator.getFunction((CallFunction) artefact, objectPredicate, null).getId().toHexString();
-				} else {
-					return null;
+			public void onVisitEntity(Object t, EntityTreeVisitorContext context) {
+				if (t instanceof CallFunction) {
+					Function function = functionLocator.getFunction((CallFunction) t, context.getObjectPredicate(),
+							null);
+					if (function != null) {
+						context.visitEntity(EntityManager.functions, function.getId().toString());
+					}
 				}
 			}
 		});
+		context.getEntityManager().register(functionEntity);
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
 		

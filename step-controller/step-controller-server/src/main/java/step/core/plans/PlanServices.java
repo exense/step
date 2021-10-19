@@ -66,6 +66,7 @@ public class PlanServices extends AbstractServices {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
+	@Unfiltered
 	@Secured(right="plan-write")
 	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
 		PlanType<Plan> planType = planTypeRegistry.getPlanType(type);

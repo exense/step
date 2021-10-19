@@ -396,8 +396,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		return $http
 		.post('rest/access/login', credentials)
 		.then(function (res) {
-			var session = res.data;
-			setContext(session);
+			authService.getSession();
 			$rootScope.$broadcast('step.login.succeeded');
 			if($location.path().indexOf('login') !== -1) {
 				authService.gotoDefaultPage();
@@ -429,6 +428,10 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	authService.isAuthenticated = function () {
 		return $rootScope.context.userID && $rootScope.context.userID!='anonymous';
 	};
+
+	authService.isExtLoginAuth = function () {
+		return serviceContext.conf.noLoginMask;
+	}
 
 	authService.hasRight = function (right) {
 		return $rootScope.context&&$rootScope.context.rights?$rootScope.context.rights.indexOf(right) !== -1:false;
@@ -624,6 +627,15 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 			msg = 'Are you sure you want to delete these ' + i + ' items?'
 		}
 		return dialogs.showWarning(msg);
+	}
+
+	dialogs.showInfo = function(msg) {
+		var modalInstance = $uibModal.open({backdrop: 'static', animation: false, templateUrl: 'partials/infoMessageDialog.html',
+			controller: 'DialogCtrl', 
+			resolve: {message:function(){
+				return msg
+			}}});
+		return modalInstance.result;
 	}
 
 	dialogs.showWarning = function(msg) {
@@ -892,12 +904,18 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 .service('genericErrorInterceptor', function($q, $injector) {
 	var service = this;
 	service.responseError = function(response) {
-		if (response.status == 500) {
-			Dialogs = $injector.get('Dialogs');
-			if (response.data && response.data.metaMessage && response.data.metaMessage.indexOf("org.rtm.stream.UnknownStreamException")>=0) {
-				console.log('genericErrorInterceptor for rtm: ' + response.data.metaMessage);
-			} else {
-				Dialogs.showErrorMsg(response.data);
+		Dialogs = $injector.get('Dialogs');
+		var responsePayload = response.data;
+		if (response.status != 200 && responsePayload && responsePayload.errorMessage) {
+			Dialogs.showErrorMsg(responsePayload.errorMessage);
+		} else {
+			// Legacy error handling
+			if (response.status == 500) {
+				if (responsePayload && responsePayload.metaMessage && responsePayload.metaMessage.indexOf("org.rtm.stream.UnknownStreamException")>=0) {
+					console.log('genericErrorInterceptor for rtm: ' + responsePayload.metaMessage);
+				} else {
+					Dialogs.showErrorMsg(responsePayload);
+				}
 			}
 		}
 		return $q.reject(response);

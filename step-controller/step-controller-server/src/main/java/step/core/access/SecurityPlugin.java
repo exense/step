@@ -25,6 +25,10 @@ import ch.commons.auth.Authenticator;
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.GlobalContextAware;
+import step.core.authentication.AuthorizationServerManager;
+import step.core.authentication.JWTSettings;
+import step.core.authentication.AuthorizationServerManagerLocal;
+import step.core.authentication.ResourceServerManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
@@ -51,6 +55,12 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 		RoleResolver roleResolver = new RoleResolverImpl(context.getUserAccessor());
 		AccessManager accessManager = new AccessManagerImpl(roleProvider, roleResolver);
 		context.put(AccessManager.class, accessManager);
+
+		JWTSettings jwtSettings = new JWTSettings(context.getConfiguration());
+		AuthorizationServerManager authorizationServerManager = initAuthorizationServerManager(jwtSettings, accessManager);
+		ResourceServerManager resourceServerManager = new ResourceServerManager(jwtSettings, authorizationServerManager);
+		context.put(AuthorizationServerManager.class, authorizationServerManager);
+		context.put(ResourceServerManager.class, resourceServerManager);
 		
 		super.executionControllerStart(context);
 	}
@@ -91,5 +101,18 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 			((GlobalContextAware) roleProvider).setGlobalContext(context);
 		}
 		return roleProvider;
+	}
+
+	private AuthorizationServerManager initAuthorizationServerManager(JWTSettings jwtSettings, AccessManager accessManager) throws Exception {
+		AuthorizationServerManager authorizationServerManager;
+		String authorizationServerManagerClass = configuration.getProperty("authenticator.class","step.core.authentication.AuthorizationServerManagerLocal");
+		try {
+			authorizationServerManager = (AuthorizationServerManager) this.getClass().getClassLoader().loadClass(authorizationServerManagerClass)
+					.getConstructor(JWTSettings.class,AccessManager.class).newInstance(jwtSettings,accessManager);
+		} catch (Exception e) {
+			logger.error("Error while initializing authenticator '" + authorizationServerManagerClass + "'", e);
+			throw e;
+		}
+		return authorizationServerManager;
 	}
 }

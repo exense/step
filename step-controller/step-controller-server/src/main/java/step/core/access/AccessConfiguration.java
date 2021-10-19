@@ -30,6 +30,8 @@ public class AccessConfiguration {
 	
 	boolean debug;
 	
+	boolean noLoginMask;
+	
 	List<String> roles;
 	
 	Map<String,String> miscParams;
@@ -53,6 +55,14 @@ public class AccessConfiguration {
 
 	public void setDemo(boolean demo) {
 		this.demo = demo;
+	}
+
+	public boolean isNoLoginMask() {
+		return noLoginMask;
+	}
+
+	public void setNoLoginMask(boolean noLoginMask) {
+		this.noLoginMask = noLoginMask;
 	}
 
 	public boolean isDebug() {

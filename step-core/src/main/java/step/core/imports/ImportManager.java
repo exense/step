@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,9 +100,15 @@ public class ImportManager {
 									+ " with following metadata: " + metadata);
 							importContext.setVersion(version);
 							importContext.setMetadata(metadata);
+							
+							// First import all entities to the temporary collection
+							List<String> entityNames = new ArrayList<>();
 							while (jParser.nextToken() != JsonToken.END_OBJECT) {
-								importEntitiesByType(importConfig, importContext, jParser);
+								entityNames.add(importEntitiesByType(importConfig, importContext, jParser));
 							}
+							
+							// Then import them from the temporary collection
+							entityNames.forEach(entityName -> importFromTempCollection(importConfig, importContext, entityName));
 						} else {
 							throw new RuntimeException("Missing metadata in json file");
 						}
@@ -125,7 +132,7 @@ public class ImportManager {
 		return (entitiesFilter != null && !entitiesFilter.contains(entityName));
 	}
 
-	private void importEntitiesByType(ImportConfiguration importConfig, ImportContext importContext, JsonParser jParser)
+	private String importEntitiesByType(ImportConfiguration importConfig, ImportContext importContext, JsonParser jParser)
 			throws IOException, InstantiationException, IllegalAccessException {
 		String name = jParser.getCurrentName();
 
@@ -153,8 +160,8 @@ public class ImportManager {
 			// TODO: fix this
 			// mapper.readValue(jParser, BasicDBObject.class);
 		}
-
-		importFromTempCollection(importConfig, importContext, entityByName);
+		
+		return name;
 	}
 
 	private void importOne(ImportContext importContext, Collection<Document> tempCollection, JsonParser jParser, boolean overwriteIds)
@@ -185,7 +192,9 @@ public class ImportManager {
 	}
 
 	private void importFromTempCollection(ImportConfiguration importConfig, ImportContext importContext,
-			Entity<?, ?> entityByName) {
+			String entityName) {
+		Entity<?, ?> entityByName = entityManager.getEntityByName(entityName);
+		
 		final FilesystemCollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
 		// Perform migration tasks on temporary collections
 		migrationManager.migrate(tempCollectionFactory, importContext.getVersion(), Version.getCurrentVersion());
@@ -253,7 +262,7 @@ public class ImportManager {
 				}
 			}
 
-			importFromTempCollection(importConfig, importContext, entityManager.getEntityByName(EntityManager.plans));
+			importFromTempCollection(importConfig, importContext, EntityManager.plans);
 		} else {
 			logger.error("Import failed, the first property was unexpected '" + firstKey + "':'" + firstValue + "'");
 			throw new RuntimeException("Import failed, the first property was unexpected '" + firstKey + "':'"

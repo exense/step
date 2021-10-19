@@ -47,6 +47,7 @@ public interface FunctionPackageClient extends Closeable {
 	 * Warning: if multiple resources are created with the same name, or if multiple keyword packages reference the same resource,
 	 * only the first match will be updated.
 	 * 
+	 * @deprecated This service has been removed. Lookup by resourceName isn't supported anymore. Use updateKeywordPackageById instead.
 	 * @param packageLibraryFile a Zip
 	 * @param packageFile the Jar/DLL file containing the Keyword definitions. The file will be uploaded to the Controller
 	 * @param packageAttributes (optional) the attributes the keyword package can be identified with, by default the resource name will be used
@@ -61,6 +62,7 @@ public interface FunctionPackageClient extends Closeable {
 	 * Warning: if multiple resources are created with the same name, or if multiple keyword packages reference the same resource,
 	 * only the first match will be updated.
 	 * 
+	 * @deprecated This service has been removed. Lookup by resourceName isn't supported anymore. Use addOrUpdateKeywordPackage instead.
 	 * @param resourceName the name of the Resource that the searched {@link FunctionPackage} relies on
 	 * @return the corresponding {@link FunctionPackage}, if any match occurred
 	 * @throws IOException in case of any error

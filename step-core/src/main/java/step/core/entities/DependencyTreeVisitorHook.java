@@ -16,35 +16,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.functions.base.defaults;
+package step.core.entities;
 
-import step.core.accessors.Attribute;
-import step.handlers.javahandler.AbstractKeyword;
+import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 
-@Attribute(key="project", value="@Common")
-public class SleepKeyword extends AbstractKeyword{
-	
-	//@Keyword
-	@Attribute(key="htmlTemplate", value="<label>Sleep time in ms</label><dynamic-textfield dynamic-value=\"inputs.sleepTime\" default-value=\"{dynamic:false,value:0}\" on-save=\"save()\" />")
-	public void Sleep(){
-		int sleepDurationMs;
-		try {
-			sleepDurationMs  = input.getInt("sleepTime");
-		} catch (Exception e) {
-			try {
-				sleepDurationMs = Integer.parseInt(input.getString("sleepTime"));
-			} catch (Exception e2) {
-				throw new RuntimeException("Unable to parse attribute 'sleepTime' as long.",e2);
-			}
-		} 
+public interface DependencyTreeVisitorHook {
 
-		try {
-			Thread.sleep(sleepDurationMs);
-		} catch (InterruptedException e) {
-		} finally {
-			//
-		}	
-	}
-	
+	/**
+	 * This hook is called for each visited entity when traversing an entity tree with
+	 * {@link EntityDependencyTreeVisitor}.<br>
+	 * <br>
+	 * 
+	 * This hook can be used to handle custom dependencies that cannot be handled by
+	 * the annotation {@link EntityReference}: to handle a custom dependency the
+	 * hook should call the method
+	 * {@link EntityTreeVisitorContext#visitEntity(String, String)} of the context
+	 * object
+	 * 
+	 * @param entity  the entity that has been visited
+	 * @param context
+	 */
+	public void onVisitEntity(Object entity, EntityTreeVisitorContext context);
 
 }

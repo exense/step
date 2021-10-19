@@ -41,19 +41,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
 import org.junit.Test;
 
-import step.core.accessors.AbstractAccessor;
-import step.core.accessors.Accessor;
-import step.core.artefacts.AbstractArtefact;
-import step.core.collections.inmemory.InMemoryCollection;
-import step.core.accessors.AbstractOrganizableObject;
 import ch.exense.commons.io.FileHelper;
 import step.artefacts.CallFunction;
 import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
 import step.artefacts.TestSet;
 import step.attachments.FileResolver;
-import step.core.AbstractStepContext;
 import step.core.Version;
+import step.core.accessors.AbstractAccessor;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.Accessor;
+import step.core.artefacts.AbstractArtefact;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
@@ -84,6 +83,7 @@ import step.plugins.parametermanager.ParameterManagerControllerPlugin;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 import step.resources.ResourceAccessor;
+import step.resources.ResourceEntity;
 import step.resources.ResourceImporter;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevision;
@@ -139,17 +139,14 @@ public class ExportManagerTest {
 		resourceAccessor = resourceManager.getResourceAccessor();
 		resourceRevisionAccessor = resourceManager.getResourceRevisionAccessor();
 		
-		AbstractStepContext context = new AbstractStepContext() {};
-		context.setFileResolver(new FileResolver(resourceManager));
-		context.setResourceManager(resourceManager);
-		context.setResourceAccessor(resourceAccessor);
+		entityManager = new EntityManager();
 		
-		entityManager = new EntityManager(context);
+		FileResolver fileResolver = new FileResolver(resourceManager);
 		entityManager
 				.register(new Entity<Parameter, Accessor<Parameter>>(Parameter.ENTITY_NAME, parameterAccessor, Parameter.class))
 				.register(new Entity<Plan, PlanAccessor>(EntityManager.plans, planAccessor, Plan.class))
 				.register(new Entity<Function, FunctionAccessor>(EntityManager.functions, functionAccessor, Function.class))
-				.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor, Resource.class))
+				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver))
 				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions, resourceRevisionAccessor, 
 						ResourceRevision.class));
 		

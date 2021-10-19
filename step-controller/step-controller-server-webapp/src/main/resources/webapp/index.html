@@ -91,10 +91,10 @@ window.console.log = window.console.log || function(){};
 <script>step.bootstrap();</script>
 <div class="main-page">
 	
-	<header class="main-header" ng-if-start="isInitialized && (authService.isAuthenticated() || isPublicView())"><div ng-include="'partials/nav.html'" class="container main-header"></div></header>
+	<header class="main-header" ng-if-start="isInitialized && (authService.isAuthenticated() || isPublicView() || authService.isExtLoginAuth())"><div ng-include="'partials/nav.html'" class="container main-header"></div></header>
 	<div ng-if-end ng-include="'partials/main.html'" class="st-flex-row"></div>
 	
-	<div ng-if="isInitialized && !(authService.isAuthenticated() || isPublicView())" ng-include="'partials/loginForm.html'" class="st-flex-row">
+	<div ng-if="isInitialized && !(authService.isAuthenticated() || isPublicView() || authService.isExtLoginAuth())" ng-include="'partials/loginForm.html'" class="st-flex-row">
 	</div>
 
 	<footer class="main-footer">

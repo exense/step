@@ -92,6 +92,6 @@ public class Version implements Comparable<Version> {
 	
 	public static Version getCurrentVersion() {
 		// TODO read this from manifest
-		return new Version(3,17,0);
+		return new Version(3,18,0);
 	}
 }

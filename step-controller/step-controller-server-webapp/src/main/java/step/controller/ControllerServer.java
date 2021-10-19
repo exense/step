@@ -23,7 +23,10 @@ import java.io.IOException;
 import java.util.logging.LogManager;
 
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
 
+import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -54,11 +57,12 @@ import ch.exense.viz.persistence.accessors.GenericVizAccessor;
 import ch.exense.viz.rest.VizServlet;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
-import step.core.collections.filesystem.FilesystemCollectionFactory;
+import step.core.authentication.AuthenticationFilter;
 import step.core.controller.errorhandling.ErrorFilter;
 import step.core.deployment.AccessServices;
 import step.core.deployment.AdminServices;
 import step.core.deployment.ApplicationServices;
+import step.core.deployment.AuditLogger;
 import step.core.deployment.ControllerServices;
 import step.core.deployment.HttpSessionFactory;
 import step.core.deployment.JacksonMapperProvider;
@@ -218,6 +222,7 @@ public class ControllerServer {
 		resourceConfig.registerClasses(ControllerServices.class);
 		resourceConfig.registerClasses(InteractiveServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
+		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(SecurityFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
@@ -253,7 +258,17 @@ public class ControllerServer {
 		s.setMaxInactiveInterval(timeout);
         s.setUsingCookies(true);
         s.setSessionCookie("sessionid");
+		s.setSameSite(HttpCookie.SameSite.STRICT);
+		s.setHttpOnly(true);
 		context.setSessionHandler(s);
+		context.addEventListener(new HttpSessionListener() {
+			@Override
+			public void sessionCreated(HttpSessionEvent httpSessionEvent) {}
+			@Override
+			public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
+				AuditLogger.logSessionInvalidation(httpSessionEvent.getSession());
+			}
+		});
         
 		addHandler(context);
 	}

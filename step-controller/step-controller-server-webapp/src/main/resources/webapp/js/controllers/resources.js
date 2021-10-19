@@ -21,7 +21,7 @@ angular.module('resourcesControllers',['tables','step'])
 .run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerView('resources','partials/resources/resourceList.html');
   ViewRegistry.registerCustomMenuEntry('Resources','resources');
-  EntityRegistry.registerEntity('Resource', 'resource', 'resources', 'rest/resources/', 'rest/resources/', 'st-table', '/partials/resources/resourceSelectionTable.html');
+  EntityRegistry.registerEntity('Resource', 'resources', 'resources', 'rest/resources/', 'rest/resources/', 'st-table', '/partials/resources/resourceSelectionTable.html');
 })
 
 .controller('ResourceListCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService) {

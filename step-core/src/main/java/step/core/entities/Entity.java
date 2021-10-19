@@ -20,20 +20,17 @@ package step.core.entities;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
 
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.Accessor;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 
 public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>> {
-	
-	private String name;
-	private T accessor;
-	private Class<A> entityClass;
-	private List<ResolveReferencesHook> resolveReferencesHook = new ArrayList<ResolveReferencesHook>();
-	private List<BiConsumer<Object, Map<String, String>>> updateReferencesHook = new ArrayList<BiConsumer<Object, Map<String, String>>>();
+
+	private final String name;
+	private final T accessor;
+	private final Class<A> entityClass;
+	private final List<DependencyTreeVisitorHook> dependencyTreeVisitorHooks = new ArrayList<>();
 	private boolean byPassObjectPredicate = false;
 
 	public Entity(String name, T accessor, Class<A> entityClass) {
@@ -42,45 +39,17 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 		this.accessor = accessor;
 		this.entityClass = entityClass;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
-	
-	public void setName(String name) {
-		this.name = name;
-	}
-	
+
 	public T getAccessor() {
 		return accessor;
-	}
-	
-	public void setAccessor(T accessor) {
-		this.accessor = accessor;
 	}
 
 	public Class<A> getEntityClass() {
 		return entityClass;
-	}
-
-	public void setEntityClass(Class<A> entityClass) {
-		this.entityClass = entityClass;
-	}
-
-	public List<ResolveReferencesHook> getReferencesHook() {
-		return resolveReferencesHook;
-	}
-
-	public void setReferencesHook(List<ResolveReferencesHook> referencesHook) {
-		this.resolveReferencesHook = referencesHook;
-	}
-
-	public List<BiConsumer<Object, Map<String, String>>> getUpdateReferencesHook() {
-		return updateReferencesHook;
-	}
-
-	public void setUpdateReferencesHook(List<BiConsumer<Object, Map<String, String>>> updateReferencesHook) {
-		this.updateReferencesHook = updateReferencesHook;
 	}
 
 	public boolean isByPassObjectPredicate() {
@@ -90,12 +59,44 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 	public void setByPassObjectPredicate(boolean byPassObjectPredicate) {
 		this.byPassObjectPredicate = byPassObjectPredicate;
 	}
+	
+	/**
+	 * Register a {@link EntityDependencyTreeVisitor} hook 
+	 * @param hook the hook instance to be registered
+	 * @return this instance
+	 */
+	public Entity<A, T> addDependencyTreeVisitorHook(DependencyTreeVisitorHook hook) {
+		dependencyTreeVisitorHooks.add(hook);
+		return this;
+	}
+	
+	public List<DependencyTreeVisitorHook> getDependencyTreeVisitorHooks() {
+		return dependencyTreeVisitorHooks;
+	}
 
-	public String resolve(Object artefact, ObjectPredicate objectPredicate) {
+	/**
+	 * This method is responsible for the resolution of atomic references to entity
+	 * id
+	 * 
+	 * @param atomicReference the atomic reference to be resolved
+	 * @param visitorContext  the context object
+	 * @return the resolved entity id or null
+	 */
+	public String resolveAtomicReference(Object atomicReference, EntityTreeVisitorContext visitorContext) {
 		return null;
 	}
 
-	public boolean shouldExport(AbstractIdentifiableObject a) {
-		return true;
+	/**
+	 * This method is responsible for the update of atomic references with a new
+	 * entity id
+	 * 
+	 * @param atomicReference the atomic reference to be updated
+	 * @param newEntityId     the new entity if
+	 * @param visitorContext  the context object
+	 * @return the updated atomic reference
+	 */
+	public Object updateAtomicReference(Object atomicReference, String newEntityId,
+			EntityTreeVisitorContext visitorContext) {
+		return null;
 	}
 }

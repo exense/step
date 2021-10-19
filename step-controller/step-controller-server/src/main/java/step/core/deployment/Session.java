@@ -27,6 +27,10 @@ public class Session extends AbstractContext {
 	
 	protected User user;
 	
+	protected String token;
+	
+	protected boolean localToken;
+	
 	public Session() {
 		super();
 	}
@@ -45,5 +49,21 @@ public class Session extends AbstractContext {
 
 	public void setUser(User user) {
 		this.user = user;
+	}
+
+	public String getToken() {
+		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
+	}
+
+	public boolean isLocalToken() {
+		return localToken;
+	}
+
+	public void setLocalToken(boolean localToken) {
+		this.localToken = localToken;
 	}
 }

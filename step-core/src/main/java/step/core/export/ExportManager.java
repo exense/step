@@ -59,12 +59,8 @@ public class ExportManager {
 	public ExportResult exportById(ExportConfiguration exportConfig, String id)
 			throws FileNotFoundException, IOException {
 		return export(exportConfig, c -> {
-			EntityReferencesMap references = c.getReferences();
-			references.addElementTo(exportConfig.getEntityType(), id);
-			if (exportConfig.isRecursively()) {
-				entityManager.getAllEntities(exportConfig.getEntityType(), id, exportConfig.getObjectPredicate(),
-						references);
-			}
+			entityManager.getEntitiesReferences(exportConfig.getEntityType(), id,
+					exportConfig.getObjectPredicate(), c.getReferences(), exportConfig.isRecursively());
 		});
 	}
 

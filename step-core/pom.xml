@@ -154,35 +154,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>copy-test</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>ch.exense.step</groupId>
-									<artifactId>step-core-model</artifactId>
-									<version>${project.version}</version>
-									<classifier>tests</classifier>
-									<type>test-jar</type>
-									<overWrite>false</overWrite>
-									<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
-									<destFileName>step-core-model-test.jar</destFileName>
-								</artifactItem>
-							</artifactItems>
-							<overWriteReleases>true</overWriteReleases>
-							<overWriteSnapshots>true</overWriteSnapshots>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 </project>

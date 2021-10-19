@@ -142,6 +142,7 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/task/new")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Unfiltered
 	@Secured(right="task-write")
 	public ExecutiontTaskParameters createExecutionTask(@PathParam("id") String executionTaskID) {
 		ExecutiontTaskParameters taskParameters = new ExecutiontTaskParameters();
@@ -266,6 +267,7 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/types/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@Unfiltered
 	@Secured(right="plan-read")
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
 		return artefactHandlerRegistry.getArtefactTypeInstance(type);

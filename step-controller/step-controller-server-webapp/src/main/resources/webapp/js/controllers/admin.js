@@ -21,7 +21,7 @@ angular.module('adminControllers', ['step' ])
 .run(function(ViewRegistry, EntityRegistry, $timeout) {
   ViewRegistry.registerView('admin','partials/admin.html');
   ViewRegistry.registerView('settings','partials/settings.html');
-  EntityRegistry.registerEntity('User', 'user', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/users/userSelectionTable.html');
+  EntityRegistry.registerEntity('User', 'users', 'users', 'rest/admin/user/', 'rest/admin/user', 'st-table', '/partials/users/userSelectionTable.html');
   ViewRegistry.registerDashlet('admin','Users','partials/users/users.html','users');
   $timeout(function() {ViewRegistry.registerDashlet('admin','Settings','partials/adminSettings.html','controller');})
 })
@@ -206,9 +206,18 @@ angular.module('adminControllers', ['step' ])
     function($scope, $rootScope, $interval, $http, helpers, $uibModal) {
       $scope.$state = 'myaccount';
       
+      $scope.token = "";
+      
       $scope.changePwd=function() {
         $uibModal.open({backdrop: 'static',animation: false,templateUrl: 'partials/changePasswordForm.html',
           controller: 'ChangePasswordModalCtrl', resolve: {}});  
+      }
+      
+      $scope.generateToken=function() {
+        var days = ($scope.lifetime) ? $scope.lifetime : 0;
+        $http.get("rest/access/service-account/token?lifetime="+ days).then(function(response) {
+          $scope.token = response.data;
+        });
       }
       
       $scope.user = {};

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.controller.errorhandling;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -26,6 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.deployment.AbstractServices;
+import step.core.deployment.ControllerServiceError;
+import step.core.deployment.ControllerServiceException;
 import step.core.deployment.Secured;
 
 @Secured
@@ -36,7 +39,14 @@ public class ErrorFilter extends AbstractServices implements ExceptionMapper<Exc
 	
 	@Override
 	public Response toResponse(Exception exception) {
-		if(exception instanceof ApplicationException) {
+		if(exception instanceof ControllerServiceException) {
+			ControllerServiceException portalException = (ControllerServiceException) exception;
+			ControllerServiceError portalServiceError = new ControllerServiceError();
+			portalServiceError.setErrorName(portalException.getErrorName());
+			portalServiceError.setErrorMessage(portalException.getErrorMessage());
+			return Response.status(portalException.getHttpErrorCode()).entity(portalServiceError)
+					.type(MediaType.APPLICATION_JSON).build();
+		} else if(exception instanceof ApplicationException) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(((ApplicationException) exception).getErrorMessage()).type("text/plain").build();
 		} else {
 			logger.error("Unexpected error while processing request", exception);

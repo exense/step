@@ -40,4 +40,14 @@ public interface ObjectHook {
 	 * @throws Exception
 	 */
 	public void rebuildContext(AbstractContext context, Object object) throws Exception;
+	
+	/**
+	 * Check if the provided object is acceptable in the provided context
+	 * 
+	 * @param context
+	 * @param object
+	 * @return true if the provided object belongs to the provided context or
+	 *         doesn't belong to any context
+	 */
+	public boolean isObjectAcceptableInContext(AbstractContext context, Object object);
 }

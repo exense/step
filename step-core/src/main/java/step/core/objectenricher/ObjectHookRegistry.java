@@ -61,5 +61,15 @@ public class ObjectHookRegistry extends ArrayList<ObjectHook> {
 			}
 		});
 	}
+	
+	/**
+	 * @param context
+	 * @param object
+	 * @return true if the provided object belongs to the provided context or
+	 *         doesn't belong to any context
+	 */
+	public boolean isObjectAcceptableInContext(AbstractContext context, Object object) {
+		return this.stream().allMatch(hook -> hook.isObjectAcceptableInContext(context, object));
+	}
 
 }

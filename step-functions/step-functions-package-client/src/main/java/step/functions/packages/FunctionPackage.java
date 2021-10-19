@@ -21,8 +21,6 @@ public class FunctionPackage extends AbstractOrganizableObject {
 	
 	protected String packageLocation;
 
-	protected String referencePackageId;
-
 	protected boolean watchForChange;
 	
 	protected Map<String, String> packageAttributes;
@@ -54,16 +52,6 @@ public class FunctionPackage extends AbstractOrganizableObject {
 	@EntityReference(type=EntityManager.resources)
 	public String getPackageLocation() {
 		return packageLocation;
-	}
-
-	public void setReferencePackageId(String referencePackageId) {
-		this.referencePackageId = referencePackageId;
-	}
-	/**
-	 * @return the path to the package file. might be a {@link Resource}
-	 */
-	public String getReferencePackageId() {
-		return referencePackageId;
 	}
 
 	public void setPackageLocation(String packageLocation) {

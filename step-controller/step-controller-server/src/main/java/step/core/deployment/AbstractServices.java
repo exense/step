@@ -32,7 +32,7 @@ import step.core.scheduler.ExecutionScheduler;
 
 public abstract class AbstractServices {
 
-	private static final String SESSION = "session";
+	public static final String SESSION = "session";
 
 	@Inject
 	protected Controller controller;
@@ -78,6 +78,10 @@ public abstract class AbstractServices {
 	
 	protected void setSession(Session session) {
 		httpSession.setAttribute(SESSION, session);
+	}
+	
+	protected void invalidateSession(){
+		httpSession.invalidate();
 	}
 	
 	protected ObjectEnricher getObjectEnricher() {

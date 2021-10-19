@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.core.GlobalContext;
+import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
@@ -28,7 +30,7 @@ import step.plugins.screentemplating.ScreenTemplatePlugin;
 import step.resources.ResourceManager;
 import step.resources.ResourceManagerControllerPlugin;
 
-@Plugin(dependencies= {ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, ScreenTemplatePlugin.class, GeneralScriptFunctionControllerPlugin.class})
+@Plugin(dependencies= {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, ScreenTemplatePlugin.class, GeneralScriptFunctionControllerPlugin.class})
 public class FunctionPackagePlugin extends AbstractControllerPlugin {
 
 	public static final String FUNCTION_TABLE_EXTENSIONS = "functionTableExtensions";
@@ -47,7 +49,8 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 		
 		Configuration configuration = context.getConfiguration();
 		functionManager = context.get(FunctionManager.class);
-		packageManager = new FunctionPackageManager(packageAccessor, functionManager, resourceManager, fileResolver, configuration);
+		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
+		packageManager = new FunctionPackageManager(packageAccessor, functionManager, resourceManager, fileResolver, configuration, objectHookRegistry);
 		packageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration));
 		packageManager.registerFunctionPackageHandler(new RepositoryArtifactFunctionPackageHandler(resourceManager, fileResolver, configuration));
 

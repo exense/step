@@ -20,7 +20,7 @@ angular.module('executionsControllers',['step'])
 
 .run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerView('executions','partials/execution.html');
-  EntityRegistry.registerEntity('Execution', 'execution', 'executions', 'rest/executions/', 'rest/executions/', 'st-table', '/partials/executions/executionSelectionTable.html');
+  EntityRegistry.registerEntity('Execution', 'executions', 'executions', 'rest/executions/', 'rest/executions/', 'st-table', '/partials/executions/executionSelectionTable.html');
 //  ViewRegistry.registerDashlet('execution','History','partials/executions/latestExecutions.html','latestExecutions');
 })
 

@@ -13,51 +13,26 @@
     <div class="panel panel-default">
         <div class="panel-body">
             <div class="form-group form-group-sm">
-                <label>Import package file (Jar file, DLL file, or maven snippet)</label> <span class="glyphicon glyphicon-question-sign" uib-tooltip="Drag&drop your jar/DLL file containing keywords or copy-paste the maven snippet of the repository artifact"></span>
+                <label>Package file (Jar file, DLL file, or maven snippet)</label> <span class="glyphicon glyphicon-question-sign" uib-tooltip="Drag&drop your jar/DLL file containing keywords or copy-paste the maven snippet of the repository artifact"></span>
                 <resource-input st-type="'functions'" st-bounded="true" st-model="functionPackage.packageLocation" st-on-change="loadPackagePreview()" upload-only=true />
+            </div>
+            <div class="form-group form-group-sm">
+                <label>Package dependencies (Folder or Zip of Jars or DLLs/PDBs)</label>
+                <span class="glyphicon glyphicon-question-sign" uib-tooltip="Drag&drop your folder or zip containing Jars/DLLs/PDBs dependencies."></span>
+                <resource-input st-type="'functions'" st-bounded="true" st-model="functionPackage.packageLibrariesLocation" st-on-change="loadPackagePreview()" upload-only=true />
             </div>
         </div>
     </div>
 
     <div class="panel panel-default">
         <div class="panel-heading">
-            <a ng-click="showCustomAttributes = !showCustomAttributes">Custom attributes <span class="glyphicon glyphicon-question-sign" uib-tooltip="Custom attributes applied to all keywords and derived from the functionTable screenInput"></span></a>
+            <a ng-click="hideCustomAttributes = !hideCustomAttributes">Custom attributes <span class="glyphicon glyphicon-question-sign" uib-tooltip="Custom attributes applied to all keywords and derived from the functionTable screenInput"></span></a>
         </div>
-        <div class="panel-body ng-hide" ng-show="showCustomAttributes">
+        <div class="panel-body ng-hide" ng-show="!hideCustomAttributes">
             <div class="form-group form-group-sm">
                 <form ng-submit="save()">
                     <st-custom-form st-model="customAttributes" st-on-change="saveCustomAttributes()" st-screen="functionTable" st-exclude-fields="['attributes.name']" />
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <a ng-click="showOptionalAttributes = !showOptionalAttributes">Options</a>
-        </div>
-        <div class="panel-body ng-hide" ng-show="showOptionalAttributes">
-            <div class="form-group form-group-sm">
-                <label>Package libraries (Folder or Zip of Jars or DLLs/PDBs)</label>
-                <span class="glyphicon glyphicon-question-sign" uib-tooltip="Drag&drop your folder or zip containing Jars/DLLs/PDBs dependencies."></span>
-                <resource-input st-type="'functions'" st-bounded="true" st-model="functionPackage.packageLibrariesLocation" st-on-change="loadPackagePreview()" upload-only=true />
-            </div>
-
-            <div class="form-group form-group-sm">
-                <label>Reuse attributes from existing package</label> <span class="glyphicon glyphicon-question-sign" uib-tooltip="Each existing keyword attribute will be copied into the new one"></span>
-                <div class="input-group">
-                    <input type="text" class="form-control" ng-model="functionPackage.referencePackageId" ng-blur="blurStagingField()" readonly />
-                    <div class="input-group-btn">
-                        <button class="btn btn-default btn-auto-size" ng-click="selectPackage()">
-							<span class="glyphicon glyphicon-search" aria-hidden="true"
-								uib-tooltip="Select an existing keyword package"></span>
-						</button>
-                        <button class="btn btn-default btn-auto-size" ng-click="clearReferencePackage()">
-							<span class="glyphicon glyphicon-remove" aria-hidden="true"
-								uib-tooltip="Clear"></span>
-						</button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
