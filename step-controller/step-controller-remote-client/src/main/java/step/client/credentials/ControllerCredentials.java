@@ -20,40 +20,55 @@ package step.client.credentials;
 
 public class ControllerCredentials {
 
-	private final String serverUrl;
+	private String serverUrl;
 	
-	private final String username;
+	private String username;
 	
-	private final String password;
+	private String password;
+	
+	private String token;
 		
 	public ControllerCredentials(String hostname, int port, String username, String password) {
+		
+		init(computeServerUrl(hostname,port),username,password,null);
+	}
+
+	public ControllerCredentials(String hostname, int port, String token) {
+
+		init(computeServerUrl(hostname,port),null ,null,token);
+	}
+
+	private String computeServerUrl(String hostname, int port) {
 		if (hostname.startsWith("https://") || hostname.startsWith("http://"))
 		{
-			this.serverUrl = hostname+":"+port;
+			return hostname+":"+port;
 		} else {
-			this.serverUrl = "http://"+hostname+":"+port;
+			return "http://"+hostname+":"+port;
 		}
-		this.username = username;
-		this.password = password;
 	}
-	
+
 	public ControllerCredentials(String serverUrl, String username, String password) {
-		super();
-		
+		init(serverUrl, username, password, null);
+	}
+
+	public ControllerCredentials(String serverUrl, String token) {
+		init(serverUrl, null, null, token);
+	}
+
+	private void init(String serverUrl, String username, String password, String token) {
 		if(serverUrl == null || serverUrl.isEmpty()) {
 			throw new RuntimeException("Incorrect serverURL: " + serverUrl);
 		}
-		
 		if (serverUrl.endsWith("/")) {
 			serverUrl = serverUrl.substring(0,serverUrl.length()-1);
 		}
-		
 		this.serverUrl = serverUrl;
 		this.username = username;
 		this.password = password;
+		this.token = token;
 	}
 
-	
+
 	public String getServerUrl() {
 		return serverUrl;
 	}
@@ -64,5 +79,9 @@ public class ControllerCredentials {
 	
 	public String getPassword() {
 		return password;
+	}
+
+	public String getToken() {
+		return token;
 	}
 }

@@ -29,10 +29,12 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
+import org.glassfish.jersey.client.oauth2.OAuth2ClientSupport;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
@@ -56,6 +58,10 @@ public class AbstractRemoteClient implements Closeable {
 	public AbstractRemoteClient(ControllerCredentials credentials){
 		this.credentials = credentials;
 		createClient();
+		if (credentials.getToken() != null) {
+			Feature feature = OAuth2ClientSupport.feature(credentials.getToken());
+			client.register(feature);
+		}
 		if(credentials.getUsername()!=null && !credentials.getUsername().trim().isEmpty()) {
 			login();
 		}

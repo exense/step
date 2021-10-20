@@ -33,18 +33,33 @@ public class SyspropCredendialsBuilder {
 
 	public static ControllerCredentials build(){
 		if(System.getProperty("rcHostname")!=null) {
-			return new ControllerCredentials(
-					System.getProperty("rcHostname"),
-					Integer.parseInt(System.getProperty("rcPort")),
-					System.getProperty("rcUsername"),
-					System.getProperty("rcPassword")
-					);
+			if (System.getProperty("rcToken") != null ){
+				return new ControllerCredentials(
+						System.getProperty("rcHostname"),
+						Integer.parseInt(System.getProperty("rcPort")),
+						System.getProperty("rcToken")
+				);
+			} else {
+				return new ControllerCredentials(
+						System.getProperty("rcHostname"),
+						Integer.parseInt(System.getProperty("rcPort")),
+						System.getProperty("rcUsername"),
+						System.getProperty("rcPassword")
+				);
+			}
 		} else if(System.getProperty("rcServerUrl")!=null) {
-			return new ControllerCredentials(
-					System.getProperty("rcServerUrl"),
-					System.getProperty("rcUsername"),
-					System.getProperty("rcPassword")
-					);
+			if (System.getProperty("rcToken") != null ){
+				return new ControllerCredentials(
+						System.getProperty("rcServerUrl"),
+						System.getProperty("rcToken")
+				);
+			} else {
+				return new ControllerCredentials(
+						System.getProperty("rcServerUrl"),
+						System.getProperty("rcUsername"),
+						System.getProperty("rcPassword")
+				);
+			}
 		} else {
 			return new DefaultLocalCredentials();
 		}
