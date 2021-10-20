@@ -60,10 +60,15 @@ angular.module('adminControllers', ['step' ])
 
   $scope.loadTable();
   
+  //does not seem to be used anywhere
   $scope.resetPwd = function(id) {
     $http.post("rest/admin/user/"+id+"/resetpwd").then(function() {
       $scope.loadTable();
     });
+  }
+
+  $scope.resetUserPassword = function(id) {
+    $scope.showResetPasswordPopup(id);
   }
   
   $scope.askAndRemoveUser = function(username) {
@@ -90,6 +95,7 @@ angular.module('adminControllers', ['step' ])
   }
   
   $scope.showEditUserPopup = function(user) {
+    isNew = (user.username) ? false : true;
     var modalInstance = $uibModal.open({
       backdrop: 'static',
       animation: $scope.animationsEnabled,
@@ -102,7 +108,30 @@ angular.module('adminControllers', ['step' ])
       }
     });
       
-    modalInstance.result.then(function() {$scope.loadTable()}, function () {}); 
+    modalInstance.result.then(function(result) {
+      console.log(result);
+      if (isNew && result === 'save') {
+        $scope.showResetPasswordPopup(user);
+      } else {
+        $scope.loadTable();
+      }
+    }, function () {}); 
+  }
+
+  $scope.showResetPasswordPopup = function(user) {
+    var modalInstance = $uibModal.open({
+      backdrop: 'static',
+      animation: $scope.animationsEnabled,
+      templateUrl: 'partials/users/resetPasswordContent.html',
+      controller: 'resetPasswordModalCtrl',
+      resolve: {
+        user: function () {
+          return user;
+        }
+      }
+    });
+
+    modalInstance.result.then(function() {$scope.loadTable()}, function () {});
   }
 })
       
@@ -186,6 +215,7 @@ angular.module('adminControllers', ['step' ])
 .controller('editUserModalCtrl', function ($scope, $uibModalInstance, $http, $location, AuthService, user) {
    $scope.roles = AuthService.getConf().roles;
    $scope.user = user;
+   $scope.new = ($scope.user.username) ? false : true;
    
    if(!user.role) {
      user.role = $scope.roles[0];     
@@ -193,24 +223,32 @@ angular.module('adminControllers', ['step' ])
    
    $scope.save = function() {
      $http.post("rest/admin/user", user).then(function() {
-       $uibModalInstance.close();  
+       $uibModalInstance.close('save');
      });
    }
    
    $scope.cancel = function() {
-     $uibModalInstance.close();     
+     $uibModalInstance.close('cancel');     
    }
 })
 
+.controller('resetPasswordModalCtrl', function ($scope, $uibModalInstance, $http, $location, AuthService, user) {
+  $scope.user = user;
+  $http.post("rest/admin/user/" + user.username + "/resetpwd").then(function(response) {$scope.password = response.data.password});
+  
+  $scope.close = function() {
+      $uibModalInstance.close();
+  }
+})
+
 .controller('MyAccountCtrl',
-    function($scope, $rootScope, $interval, $http, helpers, $uibModal) {
+    function($scope, $rootScope, $interval, $http, helpers, $uibModal, AuthService) {
       $scope.$state = 'myaccount';
       
       $scope.token = "";
       
       $scope.changePwd=function() {
-        $uibModal.open({backdrop: 'static',animation: false,templateUrl: 'partials/changePasswordForm.html',
-          controller: 'ChangePasswordModalCtrl', resolve: {}});  
+        AuthService.showPasswordChangeDialog(false);
       }
       
       $scope.generateToken=function() {
@@ -250,24 +288,4 @@ angular.module('adminControllers', ['step' ])
       }
     })
 
-.controller('ChangePasswordModalCtrl', function ($scope, $rootScope, $uibModalInstance, $http, $location) {
-  
-  $scope.model = {newPwd:""};
-  $scope.repeatPwd = ""
-  
-  $scope.save = function () {  
-    if($scope.repeatPwd!=$scope.model.newPwd) {
-      $scope.error = "New password doesn't match"
-    } else {
-      $http.post("rest/admin/myaccount/changepwd",$scope.model).then(function() {
-        $uibModalInstance.close();
-      },function() {
-        $scope.error = "Unable to change password. Please contact your administrator.";
-      });      
-    }
-  };
 
-  $scope.cancel = function () {
-    $uibModalInstance.close();
-  };
-});

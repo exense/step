@@ -18,12 +18,19 @@
  ******************************************************************************/
 package step.core.access;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import ch.commons.auth.Authenticator;
 import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
+import org.apache.commons.codec.digest.DigestUtils;
 import step.core.controller.errorhandling.ApplicationException;
 import step.core.deployment.Session;
 
@@ -96,6 +103,33 @@ public class AuthenticationManager {
 		user.setRole("admin");
 		user.setPassword(UserAccessorImpl.encryptPwd("init"));
 		return user;
+	}
+
+	public String resetPwd(User user) {
+		String pwd = generateSecureRandomPassword();
+		user.setPassword(encryptPwd(pwd));
+		user.addCustomField("otp", true);
+		return pwd;
+	}
+
+	public String encryptPwd(String pwd) {
+		return DigestUtils.sha512Hex(pwd);
+	}
+
+	private String generateSecureRandomPassword() {
+		Stream<Character> pwdStream = Stream.concat(getRandomChars(2, 48, 57), Stream.concat(getRandomChars(2, 33, 45),
+				Stream.concat(getRandomChars(4, 65, 90), getRandomChars(4, 97, 122))));
+		List<Character> charList = pwdStream.collect(Collectors.toList());
+		Collections.shuffle(charList);
+		String password = charList.stream().collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+				.toString();
+		return password;
+	}
+
+	private Stream<Character> getRandomChars(int count, int lowerBound, int upperBound) {
+		Random random = new SecureRandom();
+		IntStream specialChars = random.ints(count, lowerBound, upperBound);
+		return specialChars.mapToObj(data -> (char) data);
 	}
 
 	public boolean registerListener(AuthenticationManagerListener e) {

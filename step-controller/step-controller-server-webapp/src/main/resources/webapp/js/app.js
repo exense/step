@@ -364,12 +364,12 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	return service;
 })
 
-.factory('AuthService', function ($http, $rootScope, $location, $window, Preferences) {
+.factory('AuthService', function ($http, $rootScope, $location, $window, Preferences, $uibModal) {
 	var authService = {};
 	var serviceContext = {};
 
 	function setContext(session) {
-		$rootScope.context = {'userID':session.username, 'rights':session.role.rights, 'role':session.role.attributes.name, 'session': {}};
+		$rootScope.context = {'userID':session.username, 'rights':session.role.rights, 'role':session.role.attributes.name, 'otp':session.otp, 'session': {}};
 		Preferences.load();
 	}
 
@@ -385,18 +385,28 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		})
 	}
 
-	authService.getSession = function() {
+	authService.getSession = function(callback) {
 		return $http.get('rest/access/session')
 		.then(function(res) {
-			setContext(res.data)
+			setContext(res.data);
+			if (callback) {
+				callback();
+			}
 		})
+	}
+	
+	var loginCallback = function() {
+		if (authService.getContext().otp) {
+			authService.showPasswordChangeDialog(true);
+			authService.getContext().otp = false;
+		}
 	}
 
 	authService.login = function (credentials) {
 		return $http
 		.post('rest/access/login', credentials)
 		.then(function (res) {
-			authService.getSession();
+			authService.getSession(loginCallback);
 			$rootScope.$broadcast('step.login.succeeded');
 			if($location.path().indexOf('login') !== -1) {
 				authService.gotoDefaultPage();
@@ -446,7 +456,43 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
     return conf?conf.debug:false;
   }
 	
+	authService.showPasswordChangeDialog = function (otp) {
+		var modalInstance = $uibModal.open({backdrop: 'static',animation: false,templateUrl: 'partials/changePasswordForm.html',
+			controller: 'ChangePasswordModalCtrl', resolve: {
+				otp: function () {
+					return otp;
+				}
+			}});
+		return modalInstance.result;
+	}
+	
 	return authService;
+})
+
+.controller('ChangePasswordModalCtrl', function ($scope, $rootScope, $uibModalInstance, $http, $location, otp) {
+	$scope.otp = otp;
+	$scope.model = {newPwd:""};
+	$scope.repeatPwd = ""
+
+	$scope.save = function () {
+		if($scope.repeatPwd!=$scope.model.newPwd) {
+			$scope.error = "New password doesn't match"
+		} else {
+			$http.post("rest/admin/myaccount/changepwd",$scope.model).then(function() {
+				$uibModalInstance.close();
+			},function() {
+				$scope.error = "Unable to change password. Please contact your administrator.";
+			});
+		}
+	};
+
+	$scope.cancel = function () {
+		$uibModalInstance.close();
+	};
+	
+	$scope.showCancel = function() {
+		return $scope.otp;
+	}
 })
 
 .factory('Preferences', function ($http) {

@@ -29,8 +29,11 @@ import step.core.authentication.AuthorizationServerManager;
 import step.core.authentication.JWTSettings;
 import step.core.authentication.AuthorizationServerManagerLocal;
 import step.core.authentication.ResourceServerManager;
+import step.core.deployment.Session;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+
+import java.util.Objects;
 
 @Plugin
 public class SecurityPlugin extends AbstractControllerPlugin {
@@ -48,6 +51,14 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 		Authenticator authenticator = initAuthenticator();
 		AuthenticationManager authenticationManager = new AuthenticationManager(configuration, authenticator, context.getUserAccessor());
 		context.put(AuthenticationManager.class, authenticationManager);
+		authenticationManager.registerListener(session -> {
+			boolean isOtp = (boolean) Objects.requireNonNullElse(session.getUser().getCustomField("otp"), false);
+			if (isOtp) { //make sure the password is only used once
+				User user = context.getUserAccessor().get(session.getUser().getId());
+				authenticationManager.resetPwd(user);
+				context.getUserAccessor().save(user);
+			}
+		});
 		
 		RoleProvider roleProvider = initAccessManager();
 		context.put(RoleProvider.class, roleProvider);

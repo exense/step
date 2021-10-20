@@ -31,8 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.apache.commons.codec.digest.DigestUtils;
-
+import step.core.access.AuthenticationManager;
 import step.core.access.Preferences;
 import step.core.access.User;
 import step.core.access.UserAccessor;
@@ -48,10 +47,13 @@ public class AdminServices extends AbstractServices {
 	private static final String MAINTENANCE_MESSAGE_KEY = "maintenance_message";
 	private static final String MAINTENANCE_TOGGLE_KEY = "maintenance_message_enabled";
 	
+	private AuthenticationManager authenticationManager;
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		controllerSettingsAccessor = getContext().require(ControllerSettingAccessor.class);
+		authenticationManager = getContext().require(AuthenticationManager.class);
 	}
 
 	@POST
@@ -62,12 +64,10 @@ public class AdminServices extends AbstractServices {
 		UserAccessor userAccessor = getContext().getUserAccessor();
 
 		User previousUser = userAccessor.get(user.getId());
-		if(previousUser == null) {
+		if (previousUser == null) {
 			// previousUser is null => we're creating a new user
-			// initializing password
-			resetPwd(user);
+			// initializing password, is now down in reset password
 		}
-		
 		userAccessor.save(user);
 	}
 
@@ -93,8 +93,6 @@ public class AdminServices extends AbstractServices {
 	public List<User> getUserList() {
 		return getContext().getUserAccessor().getAllUsers();
 	}
-	
-	private static String INITIAL_PWD = "init";
 	
 	public static class ChangePwdRequest {
 		
@@ -169,7 +167,8 @@ public class AdminServices extends AbstractServices {
 	public void resetMyPassword(ChangePwdRequest request) {
 		User user = getCurrentUser();
 		if(user!=null) {
-			user.setPassword(encryptPwd(request.getNewPwd()));
+			user.setPassword(authenticationManager.encryptPwd(request.getNewPwd()));
+			user.addCustomField("otp", false);
 			getContext().getUserAccessor().save(user);			
 		}
 	}
@@ -229,16 +228,24 @@ public class AdminServices extends AbstractServices {
 	@Secured(right="user-write")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/user/{id}/resetpwd")
-	public void resetPassword(@PathParam("id") String username) {
+	public Password resetPassword(@PathParam("id") String username) {
 		User user = getContext().getUserAccessor().getByUsername(username);
-		resetPwd(user);
+		String pwd = authenticationManager.resetPwd(user);
 		getContext().getUserAccessor().save(user);
+		Password password = new Password();
+		password.setPassword(pwd);
+		return password;
+	}
+	
+	public static class Password {
+		String password;
+		public String getPassword() {
+			return password;
+		}
+		public void setPassword(String password) {
+			this.password = password;
+		}
 	}
 
-	private void resetPwd(User user) {
-		user.setPassword(encryptPwd(INITIAL_PWD));
-	}
 
-	private String encryptPwd(String pwd) {
-		return DigestUtils.sha512Hex(pwd);
-	}}
+}

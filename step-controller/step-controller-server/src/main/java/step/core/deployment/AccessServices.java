@@ -19,6 +19,7 @@
 package step.core.deployment;
 
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -80,11 +81,13 @@ public class AccessServices extends AbstractServices {
 		
 		private String username;
 		private Role role;
+		private boolean otp;
 		
-		public SessionResponse(String username, Role role) {
+		public SessionResponse(String username, Role role, boolean otp) {
 			super();
 			this.username = username;
 			this.role = role;
+			this.otp = otp;
 		}
 
 		public String getUsername() {
@@ -93,6 +96,10 @@ public class AccessServices extends AbstractServices {
 
 		public Role getRole() {
 			return role;
+		}
+
+		public boolean isOtp() {
+			return otp;
 		}
 	}
 
@@ -163,7 +170,8 @@ public class AccessServices extends AbstractServices {
 	protected SessionResponse buildSessionResponse(Session session) {
 		User user = session.getUser();
 		Role role = accessManager.getRoleInContext(session);
-		return new SessionResponse(user.getUsername(), role);
+		boolean isOtp = (boolean) Objects.requireNonNullElse(session.getUser().getCustomField("otp"), false);
+		return new SessionResponse(user.getUsername(), role, isOtp);
 	}
 	
 	@GET
