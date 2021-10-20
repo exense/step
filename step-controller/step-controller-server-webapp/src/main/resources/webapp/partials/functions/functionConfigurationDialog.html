@@ -4,6 +4,7 @@
 
 <div class="modal-body">
 	<strong>{{description}}</strong>
+	<div ng-if="function_.managed" class="alert alert-warning">This keyword is part of a keyword package. All changes made will be lost when the package is updated.</div>
 	<form ng-submit="save(true)">
 		<st-custom-form st-model="function_" st-screen="{{dialogConfig.customScreenTable}}"/>
 		<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
