@@ -80,7 +80,7 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 		Configuration configuration = context.getConfiguration();
 		String embeddedPackageFolder = configuration.getProperty("plugins.FunctionPackagePlugin.embeddedpackages.folder");
 		if(embeddedPackageFolder != null) {
-			EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(functionManager, packageAccessor, packageManager);
+			EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(packageAccessor, packageManager);
 			embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(embeddedPackageFolder);
 		}
 	}

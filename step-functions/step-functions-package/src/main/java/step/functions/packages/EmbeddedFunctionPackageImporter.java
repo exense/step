@@ -17,11 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.functions.Function;
-import step.functions.manager.FunctionManager;
-import step.functions.type.FunctionTypeException;
-import step.functions.type.SetupFunctionException;
-
 /**
  * This class aims to import a set of {@link FunctionPackage} from the 
  * file system 
@@ -29,18 +24,18 @@ import step.functions.type.SetupFunctionException;
  */
 public class EmbeddedFunctionPackageImporter {
 
+	private static final String PACKAGE_TRACKING_FIELD = "embeddedPackage";
+
 	private static final String META_FILE_EXTENSION = ".json";
 
 	private static final Logger logger = LoggerFactory.getLogger(EmbeddedFunctionPackageImporter.class);
 	
-	private final FunctionManager functionManager;
 	private final FunctionPackageAccessor functionPackageAccessor;
 	private final FunctionPackageManager functionPackageManager;
 	
-	public EmbeddedFunctionPackageImporter(FunctionManager functionManager,
-			FunctionPackageAccessor functionPackageAccessor, FunctionPackageManager functionPackageManager) {
+	public EmbeddedFunctionPackageImporter(FunctionPackageAccessor functionPackageAccessor,
+			FunctionPackageManager functionPackageManager) {
 		super();
-		this.functionManager = functionManager;
 		this.functionPackageAccessor = functionPackageAccessor;
 		this.functionPackageManager = functionPackageManager;
 	}
@@ -76,36 +71,16 @@ public class EmbeddedFunctionPackageImporter {
 			})).forEach(f -> {
 				String packageLocation = f.getAbsolutePath();
 
-				// Search a function package with the same package location
-				FunctionPackage existingPackage = StreamSupport
-						.stream(Spliterators.spliteratorUnknownSize(functionPackageAccessor.getAll(), Spliterator.ORDERED),
-								false)
-						.filter(p -> {
-							return packageLocation.equals(p.getPackageLocation());
-						}).findFirst().orElse(null);
-
 				try {
-					// Create a new function package if it doesn't already exist
-					if (existingPackage == null) {
-						logger.info("Function package "+packageLocation+" doesn't exist. Creating it...");
-						existingPackage = newFunctionPackage(packageLocation);
-					} else {
-						logger.info("Function package "+packageLocation+" already exists. Updating it...");
-					}
+					FunctionPackage functionPackage = searchExistingFunctionPackage(f);
+					addAttributeFromMetaFileIfAny(packageLocation, functionPackage);
 					
-					importedFunctionPackageIds.add(existingPackage.getId().toString());
+					importedFunctionPackageIds.add(functionPackage.getId().toString());
+
+					functionPackage.addCustomField(PACKAGE_TRACKING_FIELD, f);
+					functionPackage.setExecuteLocally(localExecution);
 					
-					existingPackage = functionPackageManager.addOrUpdateFunctionPackage(existingPackage);
-					// Set the executeLocally flag of the imported functions accordingly
-					existingPackage.getFunctions().forEach(id -> {
-						Function function = functionManager.getFunctionById(id.toString());
-						function.setExecuteLocally(localExecution);
-						try {
-							functionManager.saveFunction(function);
-						} catch (SetupFunctionException | FunctionTypeException e) {
-							logger.error("Error while saving function " + id, e);
-						}
-					});
+					functionPackageManager.addOrUpdateFunctionPackage(functionPackage);
 				} catch (Exception e) {
 					logger.error("Error while importing function package " + f.getAbsolutePath(), e);
 				}
@@ -116,21 +91,47 @@ public class EmbeddedFunctionPackageImporter {
 		return importedFunctionPackageIds;
 	}
 
-	private FunctionPackage newFunctionPackage(String packageLocation) throws Exception {
-		FunctionPackage newFunctionPackage = new FunctionPackage();
-		newFunctionPackage.setPackageLocation(packageLocation);
-		
+	private FunctionPackage searchExistingFunctionPackage(File f) throws Exception {
+		String packageLocation = f.getAbsolutePath();
+		FunctionPackage existingFunctionPackage = StreamSupport
+				.stream(Spliterators.spliteratorUnknownSize(functionPackageAccessor.getAll(), Spliterator.ORDERED),
+						false)
+				.filter(p -> {
+					if(f.getName().equals(p.getCustomField(PACKAGE_TRACKING_FIELD))) {
+						return true;
+					} else {
+						// Support for versions < 3.18
+						String name = new File(p.getPackageLocation()).getName();
+						return f.getName().equals(name);
+					}
+				}).findFirst().orElse(null);
+		if (existingFunctionPackage == null) {
+			logger.info("Function package "+packageLocation+" doesn't exist. Creating it...");
+			return newFunctionPackage(packageLocation);
+		} else {
+			logger.info("Function package "+packageLocation+" already exists. Updating it...");
+			return existingFunctionPackage;
+		}
+	}
+
+	private void addAttributeFromMetaFileIfAny(String packageLocation, FunctionPackage functionPackage)
+			throws Exception {
 		String metaFileName = packageLocation + META_FILE_EXTENSION;
 		File metaFile = new File(metaFileName);
 		if(metaFile.exists()) {
 			try {
-				FunctionPackage functionPackage = new ObjectMapper().readValue(metaFile, FunctionPackage.class);
+				FunctionPackage metaFunctionPackage = new ObjectMapper().readValue(metaFile, FunctionPackage.class);
 				// Add all attributes defined in the meta file to the function package
-				functionPackage.getAttributes().forEach((key, value) -> newFunctionPackage.addAttribute(key, value));
+				metaFunctionPackage.getAttributes().forEach((key, value) -> functionPackage.addAttribute(key, value));
 			} catch (IOException e) {
 				throw new Exception("Error while reading meta file for package "+packageLocation, e);
 			}
 		}
+	}
+
+	private FunctionPackage newFunctionPackage(String packageLocation) throws Exception {
+		FunctionPackage newFunctionPackage = new FunctionPackage();
+		newFunctionPackage.setPackageLocation(packageLocation);
 		return newFunctionPackage;
 	}
 }

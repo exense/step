@@ -44,7 +44,7 @@ public class EmbeddedFunctionPackageImporterTest {
 		functionPackageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration));
 		functionPackageManager.registerAttributeResolver("attribute1", v -> "value1");
 		
-		EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(functionManager, functionPackageAccessor, functionPackageManager);
+		EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(functionPackageAccessor, functionPackageManager);
 		File folder = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "");
 		List<String> ids = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
 		assertEquals(1, ids.size());
@@ -61,7 +61,10 @@ public class EmbeddedFunctionPackageImporterTest {
 			GeneralScriptFunction function = (GeneralScriptFunction) functionAccessor.get(f);
 			assertEquals(true, function.isExecuteLocally());
 		});
-
+		
+		List<String> ids2 = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
+		// assert that the function package has been updated and thus the id kept
+		assertEquals(ids, ids2);
 	}
 
 }

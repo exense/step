@@ -216,17 +216,17 @@ public class FunctionPackageManager implements Closeable {
 
 		// Auto detect the appropriate package handler
 		FunctionPackageHandler handler = getPackageHandler(newFunctionPackage);
-
-		// apply context attributes of the function package to the function
-		AbstractContext context = new AbstractContext() {};
-		objectHookRegistry.rebuildContext(context, newFunctionPackage);
-		ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(context);
 		
 		// resolve the attribute values if necessary
 		if (newFunctionPackage.getAttributes() != null) {
 			newFunctionPackage.setAttributes(newFunctionPackage.getAttributes().entrySet().stream()
 					.collect(Collectors.toMap(Map.Entry::getKey, e -> resolveAttribute(e.getKey(), e.getValue()))));
 		}
+
+		// apply context attributes of the function package to the function
+		AbstractContext context = new AbstractContext() {};
+		objectHookRegistry.rebuildContext(context, newFunctionPackage);
+		ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(context);
 
 		// Remove functions from previous package
 		List<Function> previousFunctions = null;
