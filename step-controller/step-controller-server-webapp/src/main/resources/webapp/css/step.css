@@ -888,3 +888,11 @@ fieldset {
   border: none;
   color: #555 !important;
 }
+
+.pagination > li > a.active, .pagination > li > a.active:hover {
+    z-index: 2;
+    color: #fff;
+    cursor: default;
+    background-color: #337ab7;
+    border-color: #337ab7;
+}

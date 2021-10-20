@@ -4,12 +4,14 @@ $.extend($.fn.dataTableExt.oStdClasses, {
     'sPageNumbers': 'paginate_numbers',
     'sInputWrapper': 'paginate_input-wrapper',
     'sPageInput': 'paginate_input',
-    'sPageTotal': 'paginate_total'
+    'sPageTotal': 'paginate_total',
+    'sPagePreviousContainer': 'paginate_previous-container',    
+    'sPageNextContainer': 'paginate_next-container'
 });
  
 $.fn.dataTableExt.oPagination.ellipsesInput = {
     'oDefaults': {
-        'iShowPages': 2
+        'iShowPages': 7
     },
     'fnClickHandler': function(e) {
         var fnCallbackDraw = e.data.fnCallbackDraw,
@@ -31,23 +33,20 @@ $.fn.dataTableExt.oPagination.ellipsesInput = {
             oLang = oSettings.oLanguage.oPaginate,
             that = this;
  
-        var iShowPages = oSettings.oInit.iShowPages || this.oDefaults.iShowPages,
-            iShowPagesHalf = Math.floor(iShowPages / 2);
- 
+        var iShowPages = oSettings.oInit.iShowPages || this.oDefaults.iShowPages;
+         
         $.extend(oSettings, {
-            _iShowPages: iShowPages,
-            _iShowPagesHalf: iShowPagesHalf,
+            _iShowPages: iShowPages
         });
         
-        var oPrevious = $('<li class="paginate_button"><a class="' + oClasses.sPageButton + ' ' + oClasses.sPagePrevious + '">' + oLang.sPrevious + '</a></li>'),
+        var oPrevious = $('<li class="paginate_button ' + oClasses.sPagePreviousContainer + '"><a class="' + oClasses.sPageButton + ' ' + oClasses.sPagePrevious + '">' + oLang.sPrevious + '</a></li>'),
             oNumbers = $('<li class="' + oClasses.sPageNumbers + '"></li>'),
-            oInput = $('<li class="' + oClasses.sInputWrapper + '"><span><input style="margin-top:-1px; margin-bottom:-1px;width: 30px; " type="text" class="' + oClasses.sPageInput + '"></input> <span>of</span> <span class="' + oClasses.sPageTotal + '">' + oSettings._iTotalPages + '</span></span></li>'),
-            oNext = $('<li class="paginate_button"><a class="' + oClasses.sPageButton + ' ' + oClasses.sPageNext + '">' + oLang.sNext + '</a></li>'),
+            oInput = $('<li class="' + oClasses.sInputWrapper + '"><span><input style="margin-top:-2px; margin-bottom:-2px;width: 30px;height:24px;" type="text" class="' + oClasses.sPageInput + '"></input> <span>of</span> <span class="' + oClasses.sPageTotal + '">' + oSettings._iTotalPages + '</span></span></li>'),
+            oNext = $('<li class="paginate_button ' + oClasses.sPageNextContainer + '"><a class="' + oClasses.sPageButton + ' ' + oClasses.sPageNext + '">' + oLang.sNext + '</a></li>'),
             oPaginationList = $('<ul class="pagination"></ul>');
  
         oPrevious.click({ 'fnCallbackDraw': fnCallbackDraw, 'oSettings': oSettings, 'sPage': 'previous' }, that.fnClickHandler);
         oNext.click({ 'fnCallbackDraw': fnCallbackDraw, 'oSettings': oSettings, 'sPage': 'next' }, that.fnClickHandler);
-           console.log(oSettings);
 
         // Draw
         $(oPaginationList).append(oPrevious, oNumbers, oInput, oNext);
@@ -100,14 +99,18 @@ $.fn.dataTableExt.oPagination.ellipsesInput = {
  
         if (oSettings._iCurrentPage === 1) {
             $('.' + oClasses.sPagePrevious, tableWrapper).attr('disabled', true);
+            $('.' + oClasses.sPagePreviousContainer, tableWrapper).addClass('disabled');
         } else {
             $('.' + oClasses.sPagePrevious, tableWrapper).removeAttr('disabled');
+            $('.' + oClasses.sPagePreviousContainer, tableWrapper).removeClass('disabled');
         }
  
         if (oSettings._iTotalPages === 0 || oSettings._iCurrentPage === oSettings._iTotalPages) {
             $('.' + oClasses.sPageNext, tableWrapper).attr('disabled', true);
+            $('.' + oClasses.sPageNextContainer, tableWrapper).addClass('disabled');
         } else {
             $('.' + oClasses.sPageNext, tableWrapper).removeAttr('disabled');
+            $('.' + oClasses.sPageNextContainer, tableWrapper).removeClass('disabled');
         }
  
         var i, oNumber, oNumbers = $('.' + oClasses.sPageNumbers, tableWrapper), oInputWrapper = $('.' + oClasses.sInputWrapper, tableWrapper), oInput = $('.' + oClasses.sPageInput, tableWrapper), oPageTotal = $('.' + oClasses.sPageTotal, tableWrapper);
@@ -119,7 +122,8 @@ $.fn.dataTableExt.oPagination.ellipsesInput = {
             oNumber = $('<a class="' + oClasses.sPageButton + ' ' + oClasses.sPageNumber + '">' + oSettings.fnFormatNumber(i) + '</a>');
  
             if (oSettings._iCurrentPage === i) {
-                oNumber.attr('active', true).attr('disabled', true);
+                oNumber.attr('disabled', true);
+                oNumber.addClass('active');
             } else {
                 oNumber.click({ 'fnCallbackDraw': fnCallbackDraw, 'oSettings': oSettings, 'sPage': i - 1 }, that.fnClickHandler);
             }
@@ -127,7 +131,7 @@ $.fn.dataTableExt.oPagination.ellipsesInput = {
             // Draw
             oNumbers.append(oNumber);
         }
-       
+
         if (oSettings._iShowPages < oSettings._iTotalPages) {
           oNumbers.addClass('hide');
           oInputWrapper.removeClass('hide');
