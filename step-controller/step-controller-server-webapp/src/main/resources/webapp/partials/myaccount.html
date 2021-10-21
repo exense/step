@@ -12,8 +12,8 @@
 			</div>
 		</div>
 		<div class="panel-body">
-			<span class="text-grey" style="vertical-align: top;">Api key </span>
-			<textarea readonly ng-show="token != ''" style="width:100%;">{{token}}</textarea>
+			<label for="token" class="text-grey" style="vertical-align: top;">Api key </label>
+			<textarea name="token" id="token" readonly ng-show="token != ''" style="width:100%;">{{token}}</textarea>
 			<div ng-show="token == ''" style="float: right;margin-left:15px;display:inline-flex;">
 				<span style="margin-left:10px;" class="glyphicon glyphicon-question-sign" uib-tooltip="Specifies the validity time of the token in days. Keep it empty for unlimited validity" tooltip-append-to-body="true"></span>
 				<input style="margin-left:10px;width:100px;" class="input-group"	ng-model="lifetime" placeholder="lifetime">
@@ -56,10 +56,10 @@
 				<tbody>
 					<tr ng-repeat="pref in preferences" >
 						<td >
-							<input class="form-group" style="width:100%;"	ng-model="pref.key" placeholder="Key" ng-blur="savePreferences()"> 
+							<input class="form-control" style="width:100%;"	ng-model="pref.key" placeholder="Key" ng-blur="savePreferences()"> 
 						</td>
 						<td>
-							<input class="form-group" style="width:100%;" ng-model="pref.value" placeholder="Value" ng-blur="savePreferences()">
+							<input class="form-control" style="width:100%;" ng-model="pref.value" placeholder="Value" ng-blur="savePreferences()">
 						</td>
 					</tr>
 				</tbody>
