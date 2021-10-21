@@ -36,7 +36,7 @@
             			<button type="button" class="btn btn-default" ng-click="$parent.copyParameter(row.id)" ng-disabled="!authService.hasRight('param-write') || ( (!row.scope || row.scope=='GLOBAL') && !authService.hasRight('param-global-write'))" uib-tooltip="Copy parameter" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
             			</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.deleteParameter(row.id)" ng-disabled="!authService.hasRight('param-write') || ( (!row.scope || row.scope=='GLOBAL') && !authService.hasRight('param-global-write'))" uib-tooltip="Delete parameter" tooltip-append-to-body="true">
+            			<button type="button" class="btn btn-default" ng-click="$parent.deleteParameter(row.id, row.attributes.key)" ng-disabled="!authService.hasRight('param-write') || ( (!row.scope || row.scope=='GLOBAL') && !authService.hasRight('param-global-write'))" uib-tooltip="Delete parameter" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             			</button>
           			</div>

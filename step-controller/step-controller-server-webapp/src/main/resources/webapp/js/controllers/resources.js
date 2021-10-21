@@ -40,8 +40,8 @@ angular.module('resourcesControllers',['tables','step'])
       ResourceDialogs.editResource(id, function() {reload()});
     }
     
-    $scope.deleteResource = function(id) {
-      Dialogs.showDeleteWarning().then(function() {
+    $scope.deleteResource = function(id, name) {
+      Dialogs.showDeleteWarning(1, 'Resource "' + name + '"').then(function() {
         $http.delete("rest/resources/"+id).then(function() {
           reload();
         });

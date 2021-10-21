@@ -168,26 +168,6 @@ angular.module('schedulerControllers',[])
   $scope.saveTask = function(task) {
     $http.post("rest/controller/task",task).then()
   }
-
-	$scope.deleteSelected = function(remove) {
-	  var rows = $scope.datatable.getSelection().selectedItems;
-	  var itemCount = rows.length
-	  if(itemCount == 0) {
-	    Dialogs.showErrorMsg("You haven't selected any item")
-	  } else {
-	    var msg
-	    if(itemCount == 1) {
-	      msg = remove?'Are you sure you want to delete this item?':'Are you sure you want to disable this item?'
-	    } else {
-	      msg = remove?'Are you sure you want to delete these '+rows.length+' items?':'Are you sure you want to disable these '+rows.length+' items?'
-	    }
-      Dialogs.showWarning(msg).then(function() {
-        for(i=0;i<rows.length;i++) {
-          $scope.deleteTask(rows[i][0], remove);
-        }
-      })	    
-	  }
-	};
 	
 	$scope.executeTask = function(task) {
 	  $http.post("rest/controller/task/" + task.id + "/execute").then(
@@ -207,11 +187,10 @@ angular.module('schedulerControllers',[])
 	  SchedulerTaskDialogs.editSchedulerTask(id, function() {$scope.loadTable()});
 	}
 	
-	$scope.askAndDeleteTask = function(id, remove) {
-	  var msg = remove?'Are you sure you want to delete this item?':'Are you sure you want to disable this item?'
-	  Dialogs.showWarning(msg).then(function() {
-	    $scope.deleteTask(id, remove) 
-	  })
+	$scope.askAndDeleteTask = function(id, name) {
+	  Dialogs.showDeleteWarning(1, 'Task "' + name + '"').then(function() {
+	    $scope.deleteTask(id, true); 
+	  });
   }
 	
 	$scope.deleteTask = function(id, remove) {

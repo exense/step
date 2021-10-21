@@ -50,7 +50,7 @@
 													tooltip-append-to-body="true" tooltip-placement="bottom">
 										<span class="glyphicon glyphicon-export" aria-hidden="true"></span>
 									</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.deleteFunction(row.id)" ng-disabled="!authService.hasRight('kw-delete')" uib-tooltip="Delete keyword" tooltip-append-to-body="true">
+            			<button type="button" class="btn btn-default" ng-click="$parent.deleteFunction(row.id, row.attributes.name)" ng-disabled="!authService.hasRight('kw-delete')" uib-tooltip="Delete keyword" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             			</button>
           			</div>

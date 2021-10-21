@@ -102,8 +102,8 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       }
     }
     
-    $scope.deletePlan = function(id) {
-      Dialogs.showDeleteWarning().then(function() {
+    $scope.deletePlan = function(id, name) {
+      Dialogs.showDeleteWarning(1, 'Plan "' + name + '"').then(function() {
         $http.delete("rest/plans/"+id).then(function() {
           reload();
         });

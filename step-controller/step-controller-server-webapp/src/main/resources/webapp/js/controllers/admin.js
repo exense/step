@@ -72,7 +72,7 @@ angular.module('adminControllers', ['step' ])
   }
   
   $scope.askAndRemoveUser = function(username) {
-    Dialogs.showDeleteWarning().then(function() {
+    Dialogs.showDeleteWarning(1, 'User "' + username + '"').then(function() {
       $scope.removeUser(username)          
     })
   }

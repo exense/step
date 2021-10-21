@@ -113,8 +113,8 @@ angular.module('screenConfigurationControllers',['tables','step'])
       });
     }
     
-    $scope.deleteInput = function(id) {
-      Dialogs.showDeleteWarning().then(function() {
+    $scope.deleteInput = function(id, name) {
+      Dialogs.showDeleteWarning(1, 'Input "' + name + '"').then(function() {
         $http.delete("rest/screens/input/"+id).then(function() {
           reload();
         });

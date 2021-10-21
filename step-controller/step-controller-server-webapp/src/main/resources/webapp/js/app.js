@@ -665,13 +665,22 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 .factory('Dialogs', function ($rootScope, $uibModal, EntityRegistry,$sce) {
 	var dialogs = {};
 
-	dialogs.showDeleteWarning = function(i) {
+  /*
+   * i = number of items
+   * itemName (optional) the name of the item (often with the category in front)
+   */
+	dialogs.showDeleteWarning = function(i, itemName) {
 		var msg;
-		if(i == undefined || i==1) {
-			msg = 'Are you sure you want to delete this item?'
+		if (i == undefined || i==1) {
+      if (itemName) {
+        msg = 'Are you sure you want to delete the ' + itemName + '?';
+      } else {
+        msg = 'Are you sure you want to delete this item?';
+      }
 		} else {
-			msg = 'Are you sure you want to delete these ' + i + ' items?'
+			msg = 'Are you sure you want to delete these ' + i + ' items?';
 		}
+	
 		return dialogs.showWarning(msg);
 	}
 
@@ -753,6 +762,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	//Select entities knowing type
 	dialogs.selectEntityOfType = function(entityName, singleSelection){
+	  console.log(entityName, EntityRegistry);
 	  var entityType = EntityRegistry.getEntityByName(entityName);  
 	  
 		var modalInstance = $uibModal.open(

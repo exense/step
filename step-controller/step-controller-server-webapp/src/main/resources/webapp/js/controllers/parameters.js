@@ -39,8 +39,8 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
       ParameterDialogs.editParameter(id, function() {reload()});
     }
     
-    $scope.deleteParameter = function(id) {
-      Dialogs.showDeleteWarning().then(function() {
+    $scope.deleteParameter = function(id, name) {
+      Dialogs.showDeleteWarning(1, 'Parameter "' + id + '"').then(function() {
         $http.delete("rest/parameters/"+id).then(function() {
           reload();
         });

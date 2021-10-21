@@ -153,7 +153,7 @@ angular.module('functionPackages',['step'])
 
 			$scope.delete = function() {
 				$scope.isRefreshing = true
-				Dialogs.showDeleteWarning().then(function() {
+        Dialogs.showDeleteWarning(1, 'Keyword Package "' + $scope.functionPackage.attributes.name + '"').then(function() {
 					$http.delete("rest/functionpackages/"+$scope.id).then(function() {
 						reload()
 					}).finally(function() {
@@ -203,8 +203,8 @@ angular.module('functionPackages',['step'])
 		});
 	}
 
-	$scope.deleteFunctionPackage = function(id) {
-		Dialogs.showDeleteWarning().then(function() {
+	$scope.deleteFunctionPackage = function(id, name) {
+		Dialogs.showDeleteWarning(1, 'Keyword Package "' + name+'"').then(function() {
 			$http.delete("rest/functionpackages/"+id).then(function() {
 				reload();
 			});
