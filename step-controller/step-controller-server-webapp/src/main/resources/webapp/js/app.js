@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminControllers','plans','planEditor','planTree','artefacts','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','executionsControllers','parametersControllers','resourcesControllers','reportBrowserControllers','adminControllers','screenConfigurationControllers', 'dashboardsControllers','operationsControllers'])
+var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminControllers','plans','planEditor','planTree','artefacts','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','executionsControllers','parametersControllers','resourcesControllers','adminControllers','screenConfigurationControllers', 'dashboardsControllers', 'operationsControllers'])
 
 .config(['$locationProvider', function($locationProvider) {
 	$locationProvider.hashPrefix('');
@@ -81,15 +81,20 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 	}
 
 	api.registerCustomMenuEntry = function(label, viewId, mainMenu, menuIconClass, right) {
-		customMenuEntries.push({label: label, viewId: viewId, mainMenu: mainMenu, menuIconClass: menuIconClass, right: right})
+		customMenuEntries.push({label: label, viewId: viewId, mainMenu: mainMenu, menuIconClass: menuIconClass, right: right, 
+			isEnabledFct: function(){return true}})
+	}
+
+	api.registerCustomMenuEntryOptional = function(label, viewId, mainMenu, menuIconClass, right, isEnabledFct) {
+		customMenuEntries.push({label: label, viewId: viewId, mainMenu: mainMenu, menuIconClass: menuIconClass, right: right, isEnabledFct: isEnabledFct})
 	}
 
 	api.getCustomMenuEntries = function() {
-		return _.filter(customMenuEntries,function(e){return !e.mainMenu});
+		return _.filter(customMenuEntries,function(e){return !e.mainMenu && (e && e.isEnabledFct())});
 	}
 
 	api.getCustomMainMenuEntries = function() {
-		return _.filter(customMenuEntries,function(e){return e.mainMenu == true});
+		return _.filter(customMenuEntries,function(e){return e.mainMenu == true && (e && e.isEnabledFct())});
 	}
 
 	var customDashlets = {};

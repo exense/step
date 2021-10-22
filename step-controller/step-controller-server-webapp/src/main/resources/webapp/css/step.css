@@ -120,6 +120,10 @@ a { cursor: pointer; }
 	right: 20px;
 }
 
+.top {
+	top: 0px;
+}
+
 .status-UNKNOW {
 	background:#dadada;
 	color:#dadada
