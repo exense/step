@@ -702,10 +702,15 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		return modalInstance.result;
 	}
 
-	dialogs.showErrorMsg = function(msg) {
+	dialogs.showErrorMsg = function(msg, callback) {
 		var modalInstance = $uibModal.open({backdrop: 'static',animation: false, templateUrl: 'partials/messageDialog.html',
 			controller: 'DialogCtrl', 
-			resolve: {message:function(){return  $sce.trustAsHtml(msg)}}});
+			resolve: {message:function(){return  $sce.trustAsHtml(msg)}}}).result.then(
+				function () {
+					if(callback) {
+						callback();
+					}
+				});
 		return modalInstance.result;
 	}
 	
