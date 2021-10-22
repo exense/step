@@ -91,7 +91,7 @@ public class ExpressionHandler {
 					for (Object error : e.getErrorCollector().getErrors()) {
 						if(error instanceof SyntaxErrorMessage) {
 							String message = ((SyntaxErrorMessage) error).getCause().getMessage();
-							if(message != null && message.contains("unable to resolve class") && message.contains(scriptBaseClass)) {
+							if(message != null && message.contains("unable to resolve class") && scriptBaseClass != null && message.contains(scriptBaseClass)) {
 								throw new Exception("Unable to resolve groovy macro class '" + scriptBaseClass + 
 										"'. Please ensure that the groovy script containing your custom macros is available in the classpath.", e);
 							}
