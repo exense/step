@@ -187,7 +187,7 @@ angular.module('functionsControllers',['step'])
   }
   
   $scope.deleteFunction = function(id, name) {
-    Dialogs.showDeleteWarning(1, 'Keyword "' + name + '"').then(function() {
+    Dialogs.showDeleteWarning(1, 'element "' + name + '"').then(function() {
       $http.delete("rest/"+$scope.config.serviceRoot+"/"+id).then(function() {reload()});
     })
   }
