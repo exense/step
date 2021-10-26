@@ -390,28 +390,23 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		})
 	}
 
-	authService.getSession = function(callback) {
+	authService.getSession = function() {
 		return $http.get('rest/access/session')
 		.then(function(res) {
 			setContext(res.data);
-			if (callback) {
-				callback();
-			}
 		})
 	}
 	
-	var loginCallback = function() {
-		if (authService.getContext().otp) {
-			authService.showPasswordChangeDialog(true);
-			authService.getContext().otp = false;
-		}
-	}
-
 	authService.login = function (credentials) {
 		return $http
 		.post('rest/access/login', credentials)
 		.then(function (res) {
-			authService.getSession(loginCallback);
+			authService.getSession().then(() => {
+				if (authService.getContext().otp) {
+      			authService.showPasswordChangeDialog(true);
+      			authService.getContext().otp = false;
+        }
+      });
 			$rootScope.$broadcast('step.login.succeeded');
 			if($location.path().indexOf('login') !== -1) {
 				authService.gotoDefaultPage();
