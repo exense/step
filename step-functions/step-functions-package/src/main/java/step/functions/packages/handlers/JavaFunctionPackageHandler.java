@@ -11,6 +11,7 @@ import ch.exense.commons.processes.ExternalJVMLauncher;
 import ch.exense.commons.processes.ManagedProcess;
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.functions.packages.FunctionPackage;
 import step.plugins.java.GeneralScriptFunction;
@@ -30,7 +31,7 @@ public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 	}
 	
 	@Override
-	public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview) throws Exception {
+	public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception {
 		ExternalJVMLauncher launcher = new ExternalJVMLauncher(javaPath, processLogFolder);
 		
 		List<String> vmargs = new ArrayList<>();

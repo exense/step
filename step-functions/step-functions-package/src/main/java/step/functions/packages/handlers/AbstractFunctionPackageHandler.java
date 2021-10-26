@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.exense.commons.processes.ManagedProcess;
 import step.attachments.FileResolver;
+import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.functions.packages.FunctionPackage;
 import step.functions.packages.FunctionPackageHandler;
@@ -25,7 +26,7 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 	public abstract boolean isValidForPackage(FunctionPackage functionPackage);
 	
 	@Override
-	public abstract List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview) throws Exception;
+	public abstract List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception;
 
 	protected List<Function> getFunctionsFromDaemon(FunctionPackage functionPackage, ManagedProcess discovererDeamon)
 			throws Exception {

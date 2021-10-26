@@ -22,6 +22,7 @@ import org.junit.Test;
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.Function;
 import step.functions.manager.FunctionManager;
@@ -229,7 +230,7 @@ public class FunctionPackageManagerTest {
 	private void registerPackageHandler(List<Function> packageManagerFunctions) {
 		pm.registerFunctionPackageHandler(new FunctionPackageHandler() {
 			@Override
-			public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview) throws Exception {
+			public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception {
 				return packageManagerFunctions;
 			}
 			

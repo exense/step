@@ -37,6 +37,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.functions.packages.FunctionPackage;
 import step.resources.Resource;
@@ -117,7 +118,7 @@ public class RepositoryArtifactFunctionPackageHandler extends JavaFunctionPackag
 		return functionPackag.getPackageLocation().contains("<dependency>");
 	}
 
-	public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview) throws Exception {
+	public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception {
 		String packageLocation = functionPackage.getPackageLocation();
 		XmlMapper mapper = new XmlMapper();
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -132,11 +133,11 @@ public class RepositoryArtifactFunctionPackageHandler extends JavaFunctionPackag
 			functionPackage.setPackageLocation(artifactFile.getAbsolutePath());
 		} else {
 			// if it's not a preview, we save the temporary file as resource
-			Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(artifactFile), artifactFile.getName(), false, null);
+			Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(artifactFile), artifactFile.getName(), false, objectEnricher);
 			functionPackage.setPackageLocation(FileResolver.RESOURCE_PREFIX+resource.getId().toString());
 			functionPackage.addAttribute(AbstractOrganizableObject.VERSION, artifact.getVersion());
 		}
-		List<Function> functions = super.buildFunctions(functionPackage, preview);
+		List<Function> functions = super.buildFunctions(functionPackage, preview, objectEnricher);
 		return functions;
 	}
 

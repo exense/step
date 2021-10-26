@@ -103,7 +103,7 @@ public class FunctionPackageManager implements Closeable {
 	public List<Function> getPackagePreview(FunctionPackage functionPackage) throws Exception {
 		// Build the Functions with the corresponding handler
 		FunctionPackageHandler handler = getPackageHandler(functionPackage);
-		List<Function> functions = handler.buildFunctions(functionPackage, true);
+		List<Function> functions = handler.buildFunctions(functionPackage, true, null);
 		return functions;
 	}
 
@@ -236,7 +236,7 @@ public class FunctionPackageManager implements Closeable {
 		}
 
 		// Build the Functions with the appropriate handler
-		List<Function> functions = handler.buildFunctions(newFunctionPackage, false);
+		List<Function> functions = handler.buildFunctions(newFunctionPackage, false, objectEnricher);
 
 		List<ObjectId> newFunctionIds = new ArrayList<>();
 		for (Function newFunction : functions) {
