@@ -169,7 +169,8 @@ public class AdminServices extends AbstractServices {
 		if(user!=null) {
 			user.setPassword(authenticationManager.encryptPwd(request.getNewPwd()));
 			user.addCustomField("otp", false);
-			getContext().getUserAccessor().save(user);			
+			getContext().getUserAccessor().save(user);
+			getSession().setUser(user);
 		}
 	}
 
