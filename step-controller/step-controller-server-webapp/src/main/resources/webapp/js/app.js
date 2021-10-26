@@ -391,10 +391,20 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	}
 
 	authService.getSession = function() {
-		return $http.get('rest/access/session')
-		.then(function(res) {
-			setContext(res.data);
-		})
+		return new Promise((resolve, reject) => {
+      $http.get('rest/access/session').then(function(res) {
+            if (res.data.otp) {
+                authService.showPasswordChangeDialog(true).then(() => {
+                  res.data.otp = false;
+                  setContext(res.data);
+                  resolve();
+                });
+            } else {
+              setContext(res.data);
+              resolve();
+            }
+      })
+		});
 	}
 	
 	authService.login = function (credentials) {
@@ -402,15 +412,13 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		.post('rest/access/login', credentials)
 		.then(function (res) {
 			authService.getSession().then(() => {
-				if (authService.getContext().otp) {
-      			authService.showPasswordChangeDialog(true);
-      			authService.getContext().otp = false;
-        }
+				if (authService.getContext() && !authService.getContext().otp) {
+					$rootScope.$broadcast('step.login.succeeded');
+					if ($location.path().indexOf('login') !== -1) {
+						authService.gotoDefaultPage();
+					}
+				}
       });
-			$rootScope.$broadcast('step.login.succeeded');
-			if($location.path().indexOf('login') !== -1) {
-				authService.gotoDefaultPage();
-			}
 		});
 	};
 
