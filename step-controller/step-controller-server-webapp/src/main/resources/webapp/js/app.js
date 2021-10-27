@@ -133,15 +133,15 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 	stateStorage.push($scope, 'root',{});
 
 	$scope.isInitialized = false;
-	function finishInitialization() {
-		$scope.isInitialized = true;
-		$scope.logo = "images/logotopleft.png";
-		if(!$location.path()) {
-			AuthService.gotoDefaultPage();
-		}
-	}
 	AuthService.init().then(function() {
-		AuthService.getSession().then(finishInitialization,finishInitialization)
+		AuthService.getSession().then(() => {
+		  $scope.isInitialized = true;
+    	$scope.logo = "images/logotopleft.png";
+      if(!$location.path()) {
+        AuthService.gotoDefaultPage();
+      }
+      $scope.$apply();
+    })
 	})
 
 	$scope.setView = function (view) {
@@ -392,18 +392,18 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	authService.getSession = function() {
 		return new Promise((resolve, reject) => {
-      $http.get('rest/access/session').then(function(res) {
-            if (res.data.otp) {
-                authService.showPasswordChangeDialog(true).then(() => {
-                  res.data.otp = false;
-                  setContext(res.data);
-                  resolve();
-                });
-            } else {
+      return $http.get('rest/access/session').then((res) => {
+        if (res.data.otp) {
+            authService.showPasswordChangeDialog(true).then(() => {
+              res.data.otp = false;
               setContext(res.data);
-              resolve();
-            }
-      }, reject)
+              resolve(res);
+            });
+        } else {
+          setContext(res.data);
+          resolve(res);
+        }
+      }, resolve)
 		});
 	}
 	
@@ -436,6 +436,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};  
 
 	authService.gotoDefaultPage = function() {
+		console.log('gotoDefaultPage', serviceContext.conf.defaultUrl);
 		if(serviceContext.conf && serviceContext.conf.defaultUrl) {
 			$location.path(serviceContext.conf.defaultUrl)
 		} else {
