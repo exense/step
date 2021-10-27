@@ -403,7 +403,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
               setContext(res.data);
               resolve();
             }
-      })
+      }, reject)
 		});
 	}
 	
