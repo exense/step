@@ -68,7 +68,9 @@ angular.module('adminControllers', ['step' ])
   }
 
   $scope.resetUserPassword = function(id) {
-    $scope.showResetPasswordPopup(id);
+    Dialogs.showWarning('Are you sure you want to reset this users password?').then(() => {
+        $scope.showResetPasswordPopup(id);
+    });
   }
   
   $scope.askAndRemoveUser = function(username) {
