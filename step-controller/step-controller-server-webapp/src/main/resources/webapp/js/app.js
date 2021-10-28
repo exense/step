@@ -144,6 +144,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
     })
 	})
 
+  $scope.isAllTenant = $location.search().tenant === '[All]';
+
 	$scope.setView = function (view) {
 		$scope.$state = view;
 		stateStorage.store($scope, {lastview:view});

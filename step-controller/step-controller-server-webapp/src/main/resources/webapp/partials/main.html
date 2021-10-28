@@ -1,4 +1,5 @@
 <div class="container-fluid st-flex-column">
+	<div ng-if="isAllTenant" class="alert alert-warning" role="alert">The content of all projects is displayed in a read-only state. Select a project to make changes.</div>
 	<div ng-if="maintenanceService.displayMaintenanceMessage()==='true'" class="alert alert-warning" role="alert" ng-bind-html="maintenanceService.trustAsHtml(maintenanceService.getMaintenanceMessage())">
 	</div>
 	<div class="st-flex-row">
