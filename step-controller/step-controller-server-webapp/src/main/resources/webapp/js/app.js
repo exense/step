@@ -196,13 +196,21 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 
 angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
-.service('helpers', function() {
+.service('helpers', function($rootScope) {
 	this.formatAsKeyValueList = function(obj) {
 		var result='';
 		_.each(_.keys(obj),function(key){
 			result+=key+'='+JSON.stringify(obj[key])+', ';
 		})
 		return result;
+	}
+
+	this.getProjectById = (id) => {
+		for (let tenant of $rootScope.tenants) {
+			if (tenant.projectId === id) {
+				return tenant;
+			}
+		}
 	}
 })
 
@@ -782,8 +790,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	}
 
 	//Select entities knowing type
-	dialogs.selectEntityOfType = function(entityName, singleSelection){
+	dialogs.selectEntityOfType = function(entityName, singleSelection, id){
 	  console.log(entityName, EntityRegistry);
+	  console.log(id);
 	  var entityType = EntityRegistry.getEntityByName(entityName);  
 	  
 		var modalInstance = $uibModal.open(
@@ -797,7 +806,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 						}, 
 						singleSelection:function() {
 						  return singleSelection;
-						}
+						},
+						targetId: function() {return id;},
 					}
 				});
 
@@ -805,16 +815,15 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 	
 	//Select entity type only
-	dialogs.selectEntityType = function(excludeArray){
+	dialogs.selectEntityType = function(excludeArray, id){
 		var modalInstance = $uibModal.open(
 				{
 				  backdrop: 'static',
 					templateUrl: 'partials/selection/selectEntityType.html',
 					controller: 'SelectEntityTypeCtrl',
 					resolve: {
-						excludeArray:function(){
-							return excludeArray;
-						}
+						excludeArray:function(){return excludeArray;},
+						targetId: function() {return id;},
 					}
 				});
 
@@ -824,8 +833,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	
 	//Select Type and then entities immedately after
 	dialogs.selectEntityTypeForEntities = function(excludeArray, callback, arg){
-		dialogs.selectEntityType(excludeArray).then(function(result1){
-			dialogs.selectEntityOfType(result1.entity.entityName).then(function(result2){
+		dialogs.selectEntityType(excludeArray, arg).then(function(result1){
+			dialogs.selectEntityOfType(result1.entity.entityName, false, arg).then(function(result2){
 				callback(result2, arg);
 			});
 		});
@@ -834,7 +843,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	return dialogs;
 })  
 
-.controller('SelectEntityTypeCtrl', function ($scope, $uibModalInstance, EntityRegistry, excludeArray) {
+.controller('SelectEntityTypeCtrl', function ($scope, $rootScope, $uibModalInstance, EntityRegistry, helpers, excludeArray, targetId) {
 
 	$scope.excludeEntities = function (excludeArray){
 		var fullEntityList = EntityRegistry.getEntities();
@@ -851,6 +860,10 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		}
 	};
 
+	if (targetId) {
+		$scope.migrationTarget = helpers.getProjectById(targetId).name;
+		$scope.currentProject = $rootScope.tenant.name;
+	}
 	$scope.entities = $scope.excludeEntities(excludeArray);
 	$scope.result = {};
 
@@ -867,11 +880,17 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 })
 
-.controller('SelectSttableEntityCtrl', function ($scope, $uibModalInstance, entityType, singleSelection) {
+.controller('SelectSttableEntityCtrl', function ($scope, $rootScope, $uibModalInstance, helpers, entityType, singleSelection, targetId) {
   $scope.type = entityType.entityName;
 	$scope.multipleSelection = !singleSelection;
 	$scope.selectEntityHandle = {};
-	
+
+	console.log('targetId', targetId);
+	if (targetId) {
+		$scope.migrationTarget = helpers.getProjectById(targetId).name;
+		$scope.currentProject = $rootScope.tenant.name;
+	}
+
 	$scope.select = function(item) {
 	  $uibModalInstance.close({entity: entityType, item: item});
 	}
