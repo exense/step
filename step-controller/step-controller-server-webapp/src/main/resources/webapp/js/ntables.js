@@ -553,7 +553,8 @@ angular.module('tables', ['export'])
     controller: function($scope) {
     },
     link : function(scope, element, attrs, tableController, transclude) {
-      scope.selectionModelByInput = function() {
+
+	  scope.selectionModelByInput = function() {
         return tableController.selectionModelByInput;
       }
       scope.select = function() {
@@ -562,7 +563,15 @@ angular.module('tables', ['export'])
       scope.multipleSelection = function() {
         return tableController.multipleSelection;
       }
-    },
+      scope.toggleSelectAll = function() {
+      	if (scope.selectedAll) {
+			scope.$parent.$parent.setSelectionOnFilteredRows(false);
+		} else {
+			scope.$parent.$parent.setSelectionOnFilteredRows(true);
+		}
+      	scope.selectedAll = !scope.selectedAll;
+      }
+	},
     templateUrl: 'partials/table/selectionColumn.html'}
 })
 
