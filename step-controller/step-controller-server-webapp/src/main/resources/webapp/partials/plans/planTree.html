@@ -14,7 +14,7 @@
 			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="paste()" data-toggle="tooltip" data-placement="bottom" title="Paste selected node (ctrl+v)">Paste</button>
 		    		</div>
 			  		<div class="btn-group" ng-show="!readonly">
-			    		<button type="submit" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default btn-sm" ng-click="remove()" data-toggle="tooltip" data-placement="bottom" title="Delete selected node (del)">Delete</button>
+			    		<button type="submit" ng-disabled="!authService.hasRight('plan-delete')" class="btn btn-default btn-sm" ng-click="remove()" data-toggle="tooltip" data-placement="bottom" title="Delete selected node (del)">Delete</button>
 		    		</div>
 		    		<div ng-if="isInteractiveSessionActive()" class="btn-group">
 			    		<button type="submit" ng-disabled="!authService.hasRight('interactive')" class="btn btn-default btn-sm btn-info" ng-click="execute()" data-toggle="tooltip" data-placement="bottom" title="Executes the selected node in the interactive session (ctrl+enter)">Run interactively</button>

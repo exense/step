@@ -164,7 +164,7 @@ public class PlanServices extends AbstractServices {
 	@DELETE
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-write")
+	@Secured(right="plan-delete")
 	public void delete(@PathParam("id") String id) {
 		planAccessor.remove(new ObjectId(id));
 	}

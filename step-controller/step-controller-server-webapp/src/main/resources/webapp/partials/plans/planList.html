@@ -43,7 +43,7 @@
 													tooltip-append-to-body="true" tooltip-placement="bottom">
 										<span class="glyphicon glyphicon-export" aria-hidden="true"></span>
 									</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.deletePlan(row.id, row.attributes.name)" ng-disabled="!authService.hasRight('plan-write')" uib-tooltip="Delete plan">
+            			<button type="button" class="btn btn-default" ng-click="$parent.deletePlan(row.id, row.attributes.name)" ng-disabled="!authService.hasRight('plan-delete')" uib-tooltip="Delete plan">
             				<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             			</button>
           			</div>
