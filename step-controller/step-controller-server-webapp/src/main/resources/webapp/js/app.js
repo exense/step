@@ -885,7 +885,6 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	$scope.multipleSelection = !singleSelection;
 	$scope.selectEntityHandle = {};
 
-	console.log('targetId', targetId);
 	if (targetId) {
 		$scope.migrationTarget = helpers.getProjectById(targetId).name;
 		$scope.currentProject = $rootScope.tenant.name;
