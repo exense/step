@@ -463,8 +463,10 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	}
 
 	authService.hasRight = function (right) {
-	  // don't allow write-actions if user is in the [All] tenant 
-	  if ($rootScope.tenant && $rootScope.tenant.name === '[All]' && right.endsWith('-write')) {
+	  // don't allow write- or delete- actions in the [All] tenant except for user and project
+	  if ($rootScope.tenant && $rootScope.tenant.name === '[All]' &&
+		  !(right.startsWith('user') || right.startsWith('project')) &&
+		  (right.endsWith('-write') || right.endsWith('-delete'))) {
 	    return false;
 	  }
 	  
