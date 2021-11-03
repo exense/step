@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ControllerServer" type="Application" factoryName="Application" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="step.controller.ControllerServer" />
+    <module name="step-controller-server-webapp" />
+    <option name="PROGRAM_PARAMETERS" value="-config=&quot;src/test/resources/step.properties&quot;" />
+    <option name="VM_PARAMETERS" value="-Dhttp.keepAlive=true -Dhttp.maxConnections=50 -Dlogback.configurationFile=../../step-distribution/template-controller/bin/logback.xml" />
+    <option name="WORKING_DIRECTORY" value="$MODULE_WORKING_DIR$" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="step.controller.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
