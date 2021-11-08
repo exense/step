@@ -9,6 +9,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
@@ -55,21 +56,11 @@ public class PlanLocatorTest {
 	}
 
 	private ObjectPredicate objectPredicate() {
-		return new ObjectPredicate() {
-			@Override
-			public boolean test(Object t) {
-				return true;
-			}
-		};
+		return t -> true;
 	}
 	
 	private ObjectPredicate objectPredicate(String name) {
-		return new ObjectPredicate() {
-			@Override
-			public boolean test(Object t) {
-				return ((Plan)t).getAttribute(AbstractOrganizableObject.NAME).equals(name);
-			}
-		};
+		return t -> ((Plan)t).getAttribute(AbstractOrganizableObject.NAME).equals(name);
 	}
 
 }

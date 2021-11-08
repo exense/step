@@ -70,7 +70,6 @@ public class ParameterServices extends AbstractServices {
 	@GET
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Unfiltered
 	@Secured(right="param-write")
 	public Parameter newParameter() {
 		Parameter parameter =  new Parameter(new Expression(""), "", "", "");
@@ -80,6 +79,7 @@ public class ParameterServices extends AbstractServices {
 		} else {
 			parameter.setScope(ParameterScope.FUNCTION);
 		}
+		getObjectEnricher().accept(parameter);
 		return parameter;
 	}
 	

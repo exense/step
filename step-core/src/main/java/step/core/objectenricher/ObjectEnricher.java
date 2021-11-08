@@ -27,9 +27,9 @@ import step.core.accessors.AbstractOrganizableObject;
  * Instances of this class are responsible for the enrichment of 
  * entities with context parameters. Enrichment refers to the process of
  * adding context parameters to the entites that are subject to it 
- * (like {@link AbstractOrganizableObject} for instance) 
+ * (entities implementing {@link EnricheableObject})
  */
-public interface ObjectEnricher extends Consumer<Object> {
+public interface ObjectEnricher extends Consumer<EnricheableObject> {
 	
-	public Map<String, String> getAdditionalAttributes();
+	Map<String, String> getAdditionalAttributes();
 }

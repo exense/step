@@ -8,6 +8,7 @@ import org.bson.types.ObjectId;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
+import step.core.objectenricher.EnricheableObject;
 import step.functions.Function;
 import step.resources.Resource;
 
@@ -15,7 +16,7 @@ import step.resources.Resource;
  * Represents a package of {@link Function}
  *
  */
-public class FunctionPackage extends AbstractOrganizableObject {
+public class FunctionPackage extends AbstractOrganizableObject implements EnricheableObject {
 	
 	protected String packageLibrariesLocation;
 	

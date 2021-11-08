@@ -24,20 +24,17 @@ import java.util.List;
 public class ObjectFilterComposer {
 
 	public static ObjectFilter compose(List<ObjectFilter> list) {
-		return new ObjectFilter() {
-			@Override
-			public String getOQLFilter() {
-				String filter = "";
-				Iterator<ObjectFilter> iterator = list.iterator();
-				while(iterator.hasNext()) {
-					String nextFilter = iterator.next().getOQLFilter();
-					if (!filter.equals("") && !nextFilter.equals("")) {
-						filter += " and ";
-					}
-					filter += nextFilter;
+		return () -> {
+			String filter = "";
+			Iterator<ObjectFilter> iterator = list.iterator();
+			while(iterator.hasNext()) {
+				String nextFilter = iterator.next().getOQLFilter();
+				if (!filter.equals("") && !nextFilter.equals("")) {
+					filter += " and ";
 				}
-				return filter;
+				filter += nextFilter;
 			}
+			return filter;
 		};
 	}
 }

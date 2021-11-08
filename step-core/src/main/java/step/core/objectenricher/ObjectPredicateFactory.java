@@ -38,11 +38,6 @@ public class ObjectPredicateFactory {
 		String oqlFilter = objectFilter.getOQLFilter();
 		Filter filter = OQLFilterBuilder.getFilter(oqlFilter);
 		PojoFilter<Object> pojoFilter = new PojoFilterFactory<Object>().buildFilter(filter);
-		return new ObjectPredicate() {
-			@Override
-			public boolean test(Object t) {
-				return pojoFilter.test(t);
-			}
-		};
+		return t -> pojoFilter.test(t);
 	}
 }

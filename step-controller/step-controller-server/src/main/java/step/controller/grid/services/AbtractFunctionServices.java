@@ -174,13 +174,13 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 	@Path("/types/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Unfiltered
 	@Secured(right="read")
 	public Function newFunctionTypeConf(@PathParam("id") String type) {
 		Function newFunction = functionManager.newFunction(type);
 		newFunction.setAttributes(new HashMap<>());
 		newFunction.getAttributes().put(AbstractOrganizableObject.NAME, "");
 		newFunction.setSchema(Json.createObjectBuilder().build());
+		getObjectEnricher().accept(newFunction);
 		return newFunction;
 	}
 

@@ -58,7 +58,8 @@ public class PlanServices extends AbstractServices {
 	protected ObjectPredicateFactory objectPredicateFactory;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		planAccessor = getContext().getPlanAccessor();
 		planTypeRegistry = getContext().get(PlanTypeRegistry.class);
 		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
@@ -66,11 +67,13 @@ public class PlanServices extends AbstractServices {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Unfiltered
+	//@Unfiltered
 	@Secured(right="plan-write")
 	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
 		PlanType<Plan> planType = planTypeRegistry.getPlanType(type);
-		return planType.newPlan(template);
+		Plan plan = planType.newPlan(template);
+		getObjectEnricher().accept(plan);
+		return plan;
 	}
 	
 	@POST
@@ -192,7 +195,6 @@ public class PlanServices extends AbstractServices {
 	@Path("/artefacts/clone")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	@Unfiltered
 	public AbstractArtefact cloneArtefact(AbstractArtefact artefact) {
 		assignNewId(artefact);
 		return artefact;
@@ -202,7 +204,6 @@ public class PlanServices extends AbstractServices {
 	@Path("/artefacts/clonemany")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	@Unfiltered
 	public List<AbstractArtefact> cloneArtefact(List<AbstractArtefact> artefacts) {
 		return artefacts.stream().map(a->cloneArtefact(a)).collect(Collectors.toList());
 	}

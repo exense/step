@@ -26,6 +26,6 @@ import java.util.function.Predicate;
  * for the filter of objects according to the current context filters
  *
  */
-public interface ObjectPredicate extends Predicate<Object> {
+public interface ObjectPredicate extends Predicate<EnricheableObject> {
 
 }

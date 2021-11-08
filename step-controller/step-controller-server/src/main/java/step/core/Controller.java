@@ -71,6 +71,7 @@ import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.Executor;
 import step.core.tables.AbstractTable;
 import step.core.tables.TableRegistry;
+import step.core.tasks.AsyncTaskManager;
 import step.dashboards.DashboardSession;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
@@ -222,6 +223,8 @@ public class Controller {
 		
 		entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));
 		entityManager.getEntityByName("sessions").setByPassObjectPredicate(true);
+
+		context.put(AsyncTaskManager.class, new AsyncTaskManager());
 
 		createOrUpdateIndexes();
 

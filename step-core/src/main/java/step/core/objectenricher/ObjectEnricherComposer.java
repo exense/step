@@ -28,7 +28,7 @@ public class ObjectEnricherComposer {
 		return new ObjectEnricher() {
 
 			@Override
-			public void accept(Object o) {
+			public void accept(EnricheableObject o) {
 				list.forEach(enricher -> enricher.accept(o));
 			}
 

@@ -19,8 +19,9 @@
 package step.plugins.screentemplating;
 
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.objectenricher.EnricheableObject;
 
-public class ScreenInput extends AbstractOrganizableObject {
+public class ScreenInput extends AbstractOrganizableObject implements EnricheableObject {
 
 	protected String screenId;
 	

@@ -27,10 +27,11 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
+import step.core.objectenricher.EnricheableObject;
 import step.functions.Function;
 
 @JsonTypeInfo(use=Id.CLASS,property="_class")
-public class Plan extends AbstractOrganizableObject {
+public class Plan extends AbstractOrganizableObject implements EnricheableObject {
 
 	protected AbstractArtefact root;
 	

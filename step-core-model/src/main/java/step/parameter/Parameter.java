@@ -21,8 +21,9 @@ package step.parameter;
 import step.commons.activation.ActivableObject;
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractTrackedObject;
+import step.core.objectenricher.EnricheableObject;
 
-public class Parameter extends AbstractTrackedObject implements ActivableObject {
+public class Parameter extends AbstractTrackedObject implements ActivableObject, EnricheableObject {
 	
 	public static final String ENTITY_NAME = "parameters";
 	

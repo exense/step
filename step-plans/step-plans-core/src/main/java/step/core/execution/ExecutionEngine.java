@@ -30,10 +30,7 @@ import org.slf4j.LoggerFactory;
 import step.core.AbstractContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
-import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectHookRegistry;
-import step.core.objectenricher.ObjectPredicate;
-import step.core.objectenricher.ObjectPredicateFactory;
+import step.core.objectenricher.*;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.LayeredPlanAccessor;
 import step.core.plans.Plan;
@@ -222,8 +219,8 @@ public class ExecutionEngine {
 	}
 	
 	/**
-	 * Executes an {@link Execution} previously initialized by {@link ExecutionEngine#initializeExecution(ExecutionParameters, String)} 
-	 * @param executionId the ID of the {@link Execution} initialized and returned by {@link ExecutionEngine#initializeExecution(ExecutionParameters, String)}
+	 * Executes an {@link Execution} previously initialized by {@link ExecutionEngine#initializeExecution(ExecutionParameters)}
+	 * @param executionId the ID of the {@link Execution} initialized and returned by {@link ExecutionEngine#initializeExecution(ExecutionParameters)}
 	 * @return the result of the execution
 	 */
 	public PlanRunnerResult execute(String executionId) {
@@ -331,7 +328,7 @@ public class ExecutionEngine {
 		// Rebuild the Session based on the relevant object (ExecutionParameters or ExecutiontTaskParameters)
 		// This has to be done because the Session is not always available when running an execution
 		// (by Scheduled tasks for instance)
-		Object sessionRelevantObject;
+		EnricheableObject sessionRelevantObject;
 		if(executiontTaskParameters != null) {
 			sessionRelevantObject = executiontTaskParameters;
 		} else {

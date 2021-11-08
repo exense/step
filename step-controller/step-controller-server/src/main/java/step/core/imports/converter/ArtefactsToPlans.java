@@ -51,17 +51,11 @@ public class ArtefactsToPlans  {
 	
 	private final Map<ObjectId, ObjectId> artefactIdToPlanId;
 	private int nbPlans = 0;
-	private ObjectEnricher objectEnricher = null;
-
-	public ArtefactsToPlans(Collection<Document> artefacts, Collection<Document> plans) {
-		this(artefacts, plans, null);
-	}
 	
-	public ArtefactsToPlans(Collection<Document> artefacts, Collection<Document> plans, ObjectEnricher objectEnricher) {
+	public ArtefactsToPlans(Collection<Document> artefacts, Collection<Document> plans) {
 		artefactCollection = artefacts;
 		planCollection = plans;
-		
-		this.objectEnricher = objectEnricher;
+
 		artefactIdToPlanId = new HashMap<>();
 		generatePlanIds();
 	}
@@ -128,9 +122,6 @@ public class ArtefactsToPlans  {
 			plan.put("_class", "step.core.plans.Plan");
 			
 			logger.info("Migrated plan "+attributes);
-			if (objectEnricher != null) {
-				objectEnricher.accept(plan);
-			}
 			
 			plan = planCollection.save(plan);
 			if(successCount != null) {

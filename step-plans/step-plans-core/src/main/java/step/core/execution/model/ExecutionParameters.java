@@ -29,10 +29,11 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
 import step.core.collections.serialization.EscapingDottedKeysMapDeserializer;
 import step.core.collections.serialization.EscapingDottedKeysMapSerializer;
+import step.core.objectenricher.EnricheableObject;
 import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
 
-public class ExecutionParameters extends AbstractOrganizableObject {
+public class ExecutionParameters extends AbstractOrganizableObject implements EnricheableObject {
 	
 	private static final String DEFAULT_DESCRIPTION = "Unnamed";
 	private static final String DEFAULT_USERID = "dummy";

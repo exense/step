@@ -52,7 +52,7 @@ public class ObjectHookRegistry extends ArrayList<ObjectHook> {
 	 * @param object the object to base the context reconstruction on
 	 * @throws Exception
 	 */
-	public void rebuildContext(AbstractContext context, Object object) throws Exception {
+	public void rebuildContext(AbstractContext context, EnricheableObject object) throws Exception {
 		this.forEach(hook->{
 			try {
 				hook.rebuildContext(context, object);
@@ -68,7 +68,7 @@ public class ObjectHookRegistry extends ArrayList<ObjectHook> {
 	 * @return true if the provided object belongs to the provided context or
 	 *         doesn't belong to any context
 	 */
-	public boolean isObjectAcceptableInContext(AbstractContext context, Object object) {
+	public boolean isObjectAcceptableInContext(AbstractContext context, EnricheableObject object) {
 		return this.stream().allMatch(hook -> hook.isObjectAcceptableInContext(context, object));
 	}
 

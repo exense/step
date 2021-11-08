@@ -37,8 +37,8 @@ import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.PojoFilter;
+import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.ql.OQLFilterBuilder;
@@ -64,23 +64,23 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 	@Override
 	public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
 		Object entity = context.proceed();
-
-		Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
-		if(annotation == null) {
-			Session session = getSession();
-			
-			if (!objectHookRegistry.isObjectAcceptableInContext(session, entity)) {
-				throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to edit this object from within this context");
-			} else {
-				ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
-				objectEnricher.accept(entity);
+		if(entity instanceof EnricheableObject) {
+			EnricheableObject enricheableObject = (EnricheableObject) entity;
+			Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
+			if (annotation == null) {
+				Session session = getSession();
+				if (!objectHookRegistry.isObjectAcceptableInContext(session, enricheableObject)) {
+					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to edit this object from within this context");
+				} else {
+					ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
+					objectEnricher.accept(enricheableObject);
+				}
 			}
 		}
-
 		return entity;
 	}
 
-	private Predicate<Object> isNotAbstractOrganizableObject = e->!(e instanceof AbstractOrganizableObject);
+	private Predicate<Object> isNotEnricheable = e->!(e instanceof EnricheableObject);
 
 	@Override
 	public void aroundWriteTo(WriterInterceptorContext context) 
@@ -91,7 +91,7 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 			Session session = getSession();
 			String oqlFilter = objectHookRegistry.getObjectFilter(session).getOQLFilter();
 			PojoFilter<Object> filter = OQLFilterBuilder.getPojoFilter(oqlFilter);
-			Predicate<Object> predicate = isNotAbstractOrganizableObject.or(filter);
+			Predicate<Object> predicate = isNotEnricheable.or(filter);
 			if(entity instanceof List) {
 				List<?> list = (List<?>)entity;
 				final List<?> newList = list.stream().filter(predicate).collect(Collectors.toList());

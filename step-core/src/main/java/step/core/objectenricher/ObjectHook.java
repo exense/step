@@ -27,9 +27,9 @@ import step.core.AbstractContext;
  */
 public interface ObjectHook {
 
-	public ObjectFilter getObjectFilter(AbstractContext context);
+	ObjectFilter getObjectFilter(AbstractContext context);
 	
-	public ObjectEnricher getObjectEnricher(AbstractContext context);
+	ObjectEnricher getObjectEnricher(AbstractContext context);
 
 	/**
 	 * Rebuilds an {@link AbstractContext} based on an object that has been
@@ -39,7 +39,7 @@ public interface ObjectHook {
 	 * @param object the object to base the context reconstruction on
 	 * @throws Exception
 	 */
-	public void rebuildContext(AbstractContext context, Object object) throws Exception;
+	void rebuildContext(AbstractContext context, EnricheableObject object) throws Exception;
 	
 	/**
 	 * Check if the provided object is acceptable in the provided context
@@ -49,5 +49,5 @@ public interface ObjectHook {
 	 * @return true if the provided object belongs to the provided context or
 	 *         doesn't belong to any context
 	 */
-	public boolean isObjectAcceptableInContext(AbstractContext context, Object object);
+	boolean isObjectAcceptableInContext(AbstractContext context, EnricheableObject object);
 }

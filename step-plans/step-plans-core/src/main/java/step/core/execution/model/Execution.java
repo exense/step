@@ -26,13 +26,14 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.objectenricher.EnricheableObject;
 import step.core.plans.Plan;
 import step.core.repositories.ImportResult;
 import step.core.scheduler.ExecutiontTaskParameters;
 
 
 
-public class Execution extends AbstractOrganizableObject {
+public class Execution extends AbstractOrganizableObject implements EnricheableObject {
 	
 	Long startTime;
 	

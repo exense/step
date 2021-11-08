@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.json.JsonProviderCache;
+import step.core.objectenricher.EnricheableObject;
 
 /**
  * This class encapsulates all the configuration parameters of functions (aka Keywords)
@@ -35,7 +36,7 @@ import step.core.json.JsonProviderCache;
  *
  */
 @JsonTypeInfo(use=Id.CLASS,property="type")
-public class Function extends AbstractOrganizableObject {
+public class Function extends AbstractOrganizableObject implements EnricheableObject {
 	
 	protected DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
 	protected JsonObject schema = JsonProviderCache.createObjectBuilder().build();

@@ -11,6 +11,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectPredicate;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
@@ -91,20 +92,10 @@ public class FunctionLocatorTest {
 	}
 
 	private ObjectPredicate predicate() {
-		return new ObjectPredicate() {
-			@Override
-			public boolean test(Object t) {
-				return true;
-			}
-		};
+		return t -> true;
 	}
 	
 	private ObjectPredicate predicateFalse() {
-		return new ObjectPredicate() {
-			@Override
-			public boolean test(Object t) {
-				return false;
-			}
-		};
+		return t -> false;
 	}
 }

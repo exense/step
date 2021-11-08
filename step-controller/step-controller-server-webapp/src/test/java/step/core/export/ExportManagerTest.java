@@ -61,6 +61,7 @@ import step.core.entities.EntityManager;
 import step.core.imports.ImportConfiguration;
 import step.core.imports.ImportManager;
 import step.core.imports.ImportResult;
+import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
@@ -223,7 +224,7 @@ public class ExportManagerTest {
 		return new ObjectEnricher() {
 
 			@Override
-			public void accept(Object t) {
+			public void accept(EnricheableObject t) {
 			}
 
 			@Override
@@ -810,12 +811,7 @@ public class ExportManagerTest {
 	}
 
 	protected ObjectPredicate dummyObjectPredicate() {
-		return new ObjectPredicate() {
-			@Override
-			public boolean test(Object t) {
-				return true;
-			}
-		};
+		return t -> true;
 	}
 	
 	@Test

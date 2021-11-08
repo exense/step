@@ -35,6 +35,7 @@ import ch.exense.commons.app.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.core.objectenricher.EnricheableObject;
 import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.accessors.InMemoryAccessor;
@@ -84,12 +85,7 @@ public class ParameterManagerTest {
 		Assert.assertEquals(params.get("key2"),"defaultValue2");
 		Assert.assertEquals(params.get("key3"),"value3");
 
-		params = m.getAllParameterValues(bindings, new ObjectPredicate() {
-			@Override
-			public boolean test(Object t) {
-				return false;
-			}
-		});
+		params = m.getAllParameterValues(bindings, t -> false);
 		Assert.assertEquals(0, params.size());
 	}
 	

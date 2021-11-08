@@ -12,6 +12,7 @@ import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.functions.packages.FunctionPackage;
@@ -92,10 +93,8 @@ public class RepositoryArtifactFunctionPackageHandlerTest {
 		List<Function> functions = handler.buildFunctions(functionPackage, false, new ObjectEnricher() {
 			
 			@Override
-			public void accept(Object t) {
-				if(t instanceof AbstractOrganizableObject) {
-					((AbstractOrganizableObject) t).addAttribute("attribute1", "attributeValue1");
-				}
+			public void accept(EnricheableObject t) {
+				t.addAttribute("attribute1", "attributeValue1");
 			}
 			
 			@Override

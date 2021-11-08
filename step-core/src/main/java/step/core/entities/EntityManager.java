@@ -18,10 +18,7 @@
  ******************************************************************************/
 package step.core.entities;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
@@ -31,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitor;
 import step.core.export.ExportContext;
 import step.core.imports.ImportContext;
+import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectPredicate;
 
 public class EntityManager  {
@@ -58,6 +56,10 @@ public class EntityManager  {
 		entitiesByClass.put(entity.getEntityClass(), entity);
 		return this;
 	}
+
+	public Collection<Entity<?, ?>> getEntities() {
+		return entities.values();
+	}
 	
 	public Entity<?,?> getEntityByName(String entityName) {
 		return entities.get(entityName);
@@ -82,7 +84,7 @@ public class EntityManager  {
 			throw new RuntimeException("Entity of type " + entityType + " is not supported");
 		}
 		entity.getAccessor().getAll().forEachRemaining(a -> {
-			if ((entity.isByPassObjectPredicate() || objectPredicate.test(a))) {
+			if ((entity.isByPassObjectPredicate() || (!(a instanceof EnricheableObject) || objectPredicate.test((EnricheableObject) a)))) {
 				getEntitiesReferences(entityType,a.getId().toHexString(), objectPredicate, refs, recursively);	
 			}
 		});
@@ -160,8 +162,10 @@ public class EntityManager  {
 
 	public void runImportHooks(Object o, ImportContext importContext) {
 		importHook.forEach(h-> h.accept(o, importContext));
-		//apply session object enricher as well
-		importContext.getImportConfiguration().getObjectEnricher().accept(o);
+		if(o instanceof EnricheableObject) {
+			//apply session object enricher as well
+			importContext.getImportConfiguration().getObjectEnricher().accept((EnricheableObject) o);
+		}
 	}
 	
 }

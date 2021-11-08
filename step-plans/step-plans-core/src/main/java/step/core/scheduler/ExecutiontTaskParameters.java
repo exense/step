@@ -20,8 +20,9 @@ package step.core.scheduler;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
+import step.core.objectenricher.EnricheableObject;
 
-public class ExecutiontTaskParameters extends AbstractOrganizableObject {
+public class ExecutiontTaskParameters extends AbstractOrganizableObject implements EnricheableObject {
 	
 	// TODO remove this field and create a migration task to also remove it from the DB
 	public String name;

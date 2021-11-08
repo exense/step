@@ -21,8 +21,9 @@ package step.resources;
 import org.bson.types.ObjectId;
 
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.objectenricher.EnricheableObject;
 
-public class Resource extends AbstractOrganizableObject {
+public class Resource extends AbstractOrganizableObject implements EnricheableObject {
 
 	protected ObjectId currentRevisionId;
 	

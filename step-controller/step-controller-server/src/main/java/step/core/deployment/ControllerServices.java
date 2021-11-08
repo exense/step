@@ -42,6 +42,7 @@ import javax.ws.rs.core.Response;
 
 import org.bson.types.ObjectId;
 
+import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.ReportNode;
@@ -52,6 +53,7 @@ import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.tasks.AsyncTaskManager;
 import step.engine.execution.ExecutionLifecycleManager;
 
 @Singleton
@@ -59,11 +61,14 @@ import step.engine.execution.ExecutionLifecycleManager;
 public class ControllerServices extends AbstractServices {
 	
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
-	
+	private AsyncTaskManager taskManager;
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		artefactHandlerRegistry = getContext().getArtefactHandlerRegistry();
+		GlobalContext context = getContext();
+		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
+		taskManager = context.get(AsyncTaskManager.class);
 	}
 	
 	@POST
@@ -142,7 +147,6 @@ public class ControllerServices extends AbstractServices {
 	@GET
 	@Path("/task/new")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Unfiltered
 	@Secured(right="task-write")
 	public ExecutiontTaskParameters createExecutionTask(@PathParam("id") String executionTaskID) {
 		ExecutiontTaskParameters taskParameters = new ExecutiontTaskParameters();
@@ -152,6 +156,7 @@ public class ControllerServices extends AbstractServices {
 		executionsParameters.setRepositoryObject(new RepositoryObjectReference("local", repositoryParameters));
 		executionsParameters.setMode(ExecutionMode.RUN);
 		taskParameters.setExecutionsParameters(executionsParameters);
+		getObjectEnricher().accept(taskParameters);
 		return taskParameters;
 	}
 	
@@ -267,9 +272,17 @@ public class ControllerServices extends AbstractServices {
 	@Path("/artefact/types/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Unfiltered
 	@Secured(right="plan-read")
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
 		return artefactHandlerRegistry.getArtefactTypeInstance(type);
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/async-task/{id}")
+	@Secured()
+	public AsyncTaskManager.TaskStatus getAsyncTaskStatus(@PathParam("id") String asyncTaskId) {
+		AsyncTaskManager.TaskStatus status = taskManager.getTaskStatus(asyncTaskId);
+		return status;
 	}
 }
