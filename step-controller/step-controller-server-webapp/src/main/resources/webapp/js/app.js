@@ -721,10 +721,19 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	dialogs.showWarning = function(msg) {
 		var modalInstance = $uibModal.open({backdrop: 'static', animation: false, templateUrl: 'partials/confirmationDialog.html',
-			controller: 'DialogCtrl', 
+			controller: 'DialogCtrl',
 			resolve: {message:function(){
-				return msg
-			}}});
+					return msg
+				}}});
+		return modalInstance.result;
+	}
+
+	dialogs.showAssignmentWarning = function(msg) {
+		var modalInstance = $uibModal.open({backdrop: 'static', animation: false, templateUrl: 'partials/confirmAssignmentDialog.html',
+			controller: 'DialogCtrl',
+			resolve: {message:function(){
+					return msg
+				}}});
 		return modalInstance.result;
 	}
 
@@ -836,9 +845,14 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	//Select Type and then entities immedately after
 	dialogs.selectEntityTypeForEntities = function(excludeArray, callback, arg){
 		dialogs.selectEntityType(excludeArray, arg).then(function(result1){
-			dialogs.selectEntityOfType(result1.entity.entityName, false, arg).then(function(result2){
-				callback(result2, arg);
-			});
+			if (!result1.selectAll) {
+				dialogs.selectEntityOfType(result1.entity.entityName, false, arg).then(function(result2){
+					callback(result2, arg);
+				});
+			} else {
+				callback({entity: result1.entity, assignAll: true}, arg);
+			}
+
 		});
 	};
 	
@@ -873,8 +887,13 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		$scope.currentEntityType = newValue;
 	});
 
+	$scope.selectAll = 'false';
+	$scope.$watch('selectAll',function(newValue){
+		$scope.selectAll = newValue;
+	});
+
 	$scope.proceed = function () {
-		$uibModalInstance.close({ entity : $scope.currentEntityType});
+		$uibModalInstance.close({ entity: $scope.currentEntityType, selectAll: $scope.selectAll === 'true'});
 	};
 
 	$scope.cancel = function () {
@@ -984,8 +1003,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 .controller('DialogCtrl', function ($scope, $uibModalInstance, message) {
 	$scope.message = message;
 
-	$scope.ok = function() {
-		$uibModalInstance.close(); 
+	$scope.ok = function(value) {
+		$uibModalInstance.close(value);
 	}
 
 	$scope.cancel = function () {

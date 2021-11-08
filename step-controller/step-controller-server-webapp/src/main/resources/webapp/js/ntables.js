@@ -217,8 +217,18 @@ angular.module('tables', ['export'])
         scope.selectionModel.setSelection(id, selected);
         sendSelectionChangeEvent();
       }
-      
-      scope.setSelectionOnFilteredRows = function (value, sendEvent) {
+
+      scope.setSelectionFiltered = function (value, sendEvent) {
+		  scope.selectionModel.setDefaultSelection(value);
+		  scope.selectionModel.setSelectionAll(value);
+
+		  sendEvent = (typeof sendEvent !== 'undefined') ? sendEvent : true;
+		  if (sendEvent) {
+			  sendSelectionChangeEvent();
+		  }
+	  }
+
+	  scope.setSelectionOnFilteredRows = function (value, sendEvent) {
         if(!isTableFiltered()) {
           scope.selectionModel.setDefaultSelection(value);
           scope.selectionModel.setSelectionAll(value);
@@ -564,13 +574,9 @@ angular.module('tables', ['export'])
         return tableController.multipleSelection;
       }
       scope.toggleSelectAll = function() {
-      	if (scope.selectedAll) {
-			scope.$parent.$parent.setSelectionOnFilteredRows(false);
-		} else {
-			scope.$parent.$parent.setSelectionOnFilteredRows(true);
-		}
-      	scope.selectedAll = !scope.selectedAll;
-      }
+	  	scope.selectedAll = !scope.selectedAll;
+	  	scope.$parent.$parent.setSelectionFiltered(scope.selectedAll);
+	  }
 	},
     templateUrl: 'partials/table/selectionColumn.html'}
 })
