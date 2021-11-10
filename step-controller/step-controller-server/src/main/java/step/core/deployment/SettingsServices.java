@@ -20,12 +20,7 @@ package step.core.deployment;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 import step.core.controller.ControllerSetting;
@@ -55,6 +50,16 @@ public class SettingsServices extends AbstractServices {
 		}
 		setting.setValue(value);
 		controllerSettingsAccessor.save(setting);
+	}
+
+	@DELETE
+	@Path("/{id}")
+	@Secured(right="admin")
+	public void delete(@PathParam("id") String key) {
+		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
+		if(setting != null) {
+			controllerSettingsAccessor.remove(setting.getId());
+		}
 	}
 	
 	@GET

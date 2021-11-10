@@ -1,6 +1,8 @@
 package step.core.controller;
 
-public interface ControllerSettingAccessor {
+import step.core.accessors.Accessor;
+
+public interface ControllerSettingAccessor extends Accessor<ControllerSetting> {
 
 	ControllerSetting getSettingByKey(String key);
 	
