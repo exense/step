@@ -36,4 +36,6 @@ public interface ControllerPlugin {
 	public void afterInitializeData(GlobalContext context) throws Exception;
 
 	public void executionControllerDestroy(GlobalContext context);
+
+	boolean canBeDisabled();
 }

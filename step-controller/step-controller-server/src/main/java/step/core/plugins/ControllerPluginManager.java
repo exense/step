@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import ch.exense.commons.app.Configuration;
 import step.core.plugins.PluginManager.Builder;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.ExecutionEnginePlugin;
 
 public class ControllerPluginManager {
@@ -58,8 +59,13 @@ public class ControllerPluginManager {
 		return pluginManager.getPlugins().stream().map(ControllerPlugin::getWebPlugin).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
-	private boolean isPluginEnabled(Object plugin) {
-		return configuration.getPropertyAsBoolean("plugins." + plugin.getClass().getSimpleName() + ".enabled", true)
+	private boolean isPluginEnabled(ControllerPlugin plugin) {
+		String pluginName = plugin.getClass().getSimpleName();
+		boolean enabled = configuration.getPropertyAsBoolean("plugins." + pluginName + ".enabled", true)
 				&& (moduleChecker == null || moduleChecker.apply(plugin));
+		if (!enabled && !plugin.canBeDisabled()) {
+			throw new PluginCriticalException("The plugin " + pluginName + " cannot be disabled");
+		}
+		return enabled;
 	}
 }

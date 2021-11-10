@@ -49,7 +49,12 @@ public abstract class AbstractControllerPlugin extends AbstractPlugin implements
 	
 	@Override
 	public void executionControllerDestroy(GlobalContext context) {}
-	
+
+	@Override
+	public boolean canBeDisabled() {
+		return true;
+	}
+
 	protected void registerWebapp(GlobalContext context, String path) {
 		ResourceHandler bb = new ResourceHandler();
 		
