@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminControllers','plans','planEditor','planTree','artefacts','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','executionsControllers','parametersControllers','resourcesControllers','adminControllers','screenConfigurationControllers', 'dashboardsControllers', 'operationsControllers'])
+var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminControllers','plans','planEditor','planTree','artefacts','schedulerControllers','gridControllers','repositoryControllers','functionsControllers','executionsControllers','parametersControllers','resourcesControllers','adminControllers','screenConfigurationControllers', 'dashboardsControllers', 'operationsControllers', 'asyncTask'])
 
 .config(['$locationProvider', function($locationProvider) {
 	$locationProvider.hashPrefix('');
@@ -135,14 +135,15 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 	$scope.isInitialized = false;
 	AuthService.init().then(function() {
 		AuthService.getSession().then(() => {
-		  $scope.isInitialized = true;
-    	$scope.logo = "images/logotopleft.png";
-      if(!$location.path()) {
-        AuthService.gotoDefaultPage();
-      }
-      $scope.$apply();
-    })
-	})
+			$scope.isInitialized = true;
+
+			$scope.logo = "images/logotopleft.png";
+			if (!$location.path()) {
+				AuthService.gotoDefaultPage();
+			}
+			$scope.$apply();
+		})
+	});
 
   $scope.isAllTenant = $location.search().tenant === '[All]';
 
