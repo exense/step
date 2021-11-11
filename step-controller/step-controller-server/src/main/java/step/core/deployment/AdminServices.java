@@ -199,6 +199,7 @@ public class AdminServices extends AbstractServices {
 		try {
 			policies.verifyPassword(password);
 		} catch (PasswordPolicyViolation v) {
+			AuditLogger.logPasswordEvent("Password change failed (password policy violation)", user.getUsername());
 			return new ChangePasswordResponse(v.getMessage());
 		}
 
@@ -208,6 +209,7 @@ public class AdminServices extends AbstractServices {
 		getContext().getUserAccessor().save(user);
 		getSession().setUser(user);
 
+		AuditLogger.logPasswordEvent("Password changed", user.getUsername());
 		return new ChangePasswordResponse();
 	}
 
@@ -271,6 +273,7 @@ public class AdminServices extends AbstractServices {
 		getContext().getUserAccessor().save(user);
 		Password password = new Password();
 		password.setPassword(pwd);
+		AuditLogger.logPasswordEvent("Password reset", username);
 		return password;
 	}
 	

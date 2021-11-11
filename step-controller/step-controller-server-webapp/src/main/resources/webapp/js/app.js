@@ -511,7 +511,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 			        $scope.error = "Password could not be changed: " + response.data.message;
 			    } else {
 			        // all good. notify user that password was changed?
-				    //$uibModalInstance.close();
+				    $uibModalInstance.close();
 			    }
 			},function() {
 				$scope.error = "Unable to change password. Please contact your administrator.";
