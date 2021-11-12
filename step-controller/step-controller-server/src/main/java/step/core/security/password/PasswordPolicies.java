@@ -14,7 +14,8 @@ public class PasswordPolicies {
                 MinimumLengthPolicy.from(configuration),
                 RequireLowerCasePolicy.from(configuration),
                 RequireUpperCasePolicy.from(configuration),
-                RequireNumericPolicy.from(configuration)
+                RequireNumericPolicy.from(configuration),
+                RequireSpecialCharacterPolicy.from(configuration)
         );
 
         implementations = policies.stream().filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
