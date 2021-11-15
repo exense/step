@@ -27,24 +27,24 @@ public class EntityDependencyTreeVisitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(EntityDependencyTreeVisitor.class);
 	private final EntityManager entityManager;
+	private final ObjectPredicate objectPredicate;
 	private final Map<Class<?>, BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 
-	public EntityDependencyTreeVisitor(EntityManager entityManager) {
+	public EntityDependencyTreeVisitor(EntityManager entityManager, ObjectPredicate objectPredicate) {
 		super();
 		this.entityManager = entityManager;
+		this.objectPredicate = objectPredicate;
 	}
 
 	public void visitEntityDependencyTree(String entityName, String entityId, EntityTreeVisitor visitor,
 			boolean recursive) {
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(null, recursive, visitor);
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, recursive, visitor);
 		visitEntity(entityName, entityId, context);
 	}
 
 	public void visitSingleObject(Object object, EntityTreeVisitor visitor) {
-		Entity<?,?> entityType = entityManager.getEntityByClass(object.getClass());
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(null, false, visitor);
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, false, visitor);
 		resolveEntityDependencies(object, context);
-		entityType.getDependencyTreeVisitorHooks().forEach(h -> h.onVisitEntity(object, context));
 	}
 
 	public class EntityTreeVisitorContext {
@@ -88,13 +88,13 @@ public class EntityDependencyTreeVisitor {
 		}
 	}
 
-	public static interface EntityTreeVisitor {
+	public interface EntityTreeVisitor {
 
-		public void onWarning(String warningMessage);
+		void onWarning(String warningMessage);
 
-		public void onResolvedEntity(String entityName, String entityId, Object entity);
+		void onResolvedEntity(String entityName, String entityId, Object entity);
 
-		public String onResolvedEntityId(String entityName, String entityId);
+		String onResolvedEntityId(String entityName, String entityId);
 
 	}
 
@@ -120,7 +120,6 @@ public class EntityDependencyTreeVisitor {
 			} else {
 				visitor.onResolvedEntity(entityName, entityId, entity);
 				resolveEntityDependencies(entity, context);
-				entityType.getDependencyTreeVisitorHooks().forEach(h -> h.onVisitEntity(entity, context));
 			}
 			stack.remove(entityId);
 		}
@@ -130,10 +129,12 @@ public class EntityDependencyTreeVisitor {
 	private void resolveEntityDependencies(Object entity, EntityTreeVisitorContext context) {
 		if (entity != null) {
 			if (logger.isDebugEnabled()) {
-				logger.debug("Resolving dependencies for object " + entity.toString());
+				logger.debug("Resolving dependencies for object " + entity);
 			}
 			EntityTreeVisitor visitor = context.getVisitor();
 			BeanInfo beanInfo = getBeanInfo(entity.getClass(), visitor);
+
+			entityManager.getDependencyTreeVisitorHooks().forEach(h -> h.onVisitEntity(entity, context));
 
 			for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
 				Method method = descriptor.getReadMethod();
@@ -159,7 +160,7 @@ public class EntityDependencyTreeVisitor {
 							Collection<?> c = (Collection<?>) value;
 
 							AtomicBoolean listUpdated = new AtomicBoolean();
-							ArrayList<Object> newList = new ArrayList<Object>();
+							ArrayList<Object> newList = new ArrayList<>();
 							c.forEach(atomicReference -> {
 								// Resolve the entity id of the atomic reference
 								String resolvedEntityId = resolveEntityIdAndVisitResolvedEntity(entityType,
@@ -304,7 +305,7 @@ public class EntityDependencyTreeVisitor {
 	private Object updateAtomicReference(Object atomicReference, String newEntityId) {
 		Object newValue = null;
 		if (atomicReference instanceof DynamicValue && !((DynamicValue<?>) atomicReference).isDynamic()) {
-			newValue = new DynamicValue<String>(newEntityId);
+			newValue = new DynamicValue<>(newEntityId);
 		} else if (atomicReference instanceof String) {
 			newValue = newEntityId;
 		} else if (atomicReference instanceof ObjectId) {

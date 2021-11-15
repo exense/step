@@ -30,7 +30,6 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 	private final String name;
 	private final T accessor;
 	private final Class<A> entityClass;
-	private final List<DependencyTreeVisitorHook> dependencyTreeVisitorHooks = new ArrayList<>();
 	private boolean byPassObjectPredicate = false;
 
 	public Entity(String name, T accessor, Class<A> entityClass) {
@@ -58,20 +57,6 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 
 	public void setByPassObjectPredicate(boolean byPassObjectPredicate) {
 		this.byPassObjectPredicate = byPassObjectPredicate;
-	}
-	
-	/**
-	 * Register a {@link EntityDependencyTreeVisitor} hook 
-	 * @param hook the hook instance to be registered
-	 * @return this instance
-	 */
-	public Entity<A, T> addDependencyTreeVisitorHook(DependencyTreeVisitorHook hook) {
-		dependencyTreeVisitorHooks.add(hook);
-		return this;
-	}
-	
-	public List<DependencyTreeVisitorHook> getDependencyTreeVisitorHooks() {
-		return dependencyTreeVisitorHooks;
 	}
 
 	/**

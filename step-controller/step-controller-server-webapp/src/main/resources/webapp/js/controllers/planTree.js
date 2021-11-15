@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('planTree',['step','artefacts','reportTable','dynamicForms','export'])
 
-.directive('planTree', function(artefactTypes, $http,$timeout,$interval,stateStorage,$filter,$location, Dialogs) {
+.directive('planTree', function(artefactTypes, $http,$timeout,$interval,stateStorage,$filter,$location, Dialogs, ScreenTemplates) {
   return {
     restrict: 'E',
     scope: {
@@ -433,47 +433,61 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             var function_ = response.data;
     
             $http.get("rest/controller/artefact/types/CallKeyword").then(function(response) {
-              var newArtefact = response.data;
-              newArtefact.attributes.name=function_.attributes.name;
-              newArtefact.functionId=function_.id;
-              
-              if(AuthService.getConf().miscParams.enforceschemas === 'true'){
-                var targetObject = {};
-                
-                if(function_.schema && function_.schema.properties){
-                  _.each(Object.keys(function_.schema.properties), function(prop) {
-                    var value = "notype";
-                    if(function_.schema.properties[prop].type){
-                      var propValue = {};
-                      value = function_.schema.properties[prop].type;
-                      if(value === 'number' || value === 'integer')
-                        propValue = {"expression" : "<" + value + ">", "dynamic" : true};
-                      else
-                        propValue = {"value" : "<" + value + ">", "dynamic" : false};
-                      
-                      targetObject[prop] = propValue;
+              ScreenTemplates.getScreenInputsByScreenId('functionTable').then(inputs => {
+                var newArtefact = response.data;
+                newArtefact.attributes.name = function_.attributes.name;
+
+                var functionAttributes = {}
+                _.mapObject(inputs, input => {
+                  var attributeId = input.id.replace("attributes.","");
+                  if(attributeId) {
+                    var value = function_.attributes[attributeId];
+                    if(value) {
+                      functionAttributes[attributeId] = {"value":value, "dynamic": false}
                     }
-                  });
-                  
-                  if(function_.schema.required) {
-                    _.each(function_.schema.required, function(prop) {
-                      if(targetObject[prop] && targetObject[prop].value)
-                        targetObject[prop].value += " (REQ)";
-                      if(targetObject[prop] && targetObject[prop].expression)
-                        targetObject[prop].expression += " (REQ)";
-                    });
                   }
-                  
-                  newArtefact.argument = {  
-                      "dynamic":false,
-                      "value": JSON.stringify(targetObject),
-                      "expression":null,
-                      "expressionType":null
+                })
+                newArtefact.function = {value:JSON.stringify(functionAttributes), dynamic:false};
+
+                if(AuthService.getConf().miscParams.enforceschemas === 'true'){
+                  var targetObject = {};
+
+                  if(function_.schema && function_.schema.properties){
+                    _.each(Object.keys(function_.schema.properties), function(prop) {
+                      var value = "notype";
+                      if(function_.schema.properties[prop].type){
+                        var propValue = {};
+                        value = function_.schema.properties[prop].type;
+                        if(value === 'number' || value === 'integer')
+                          propValue = {"expression" : "<" + value + ">", "dynamic" : true};
+                        else
+                          propValue = {"value" : "<" + value + ">", "dynamic" : false};
+
+                        targetObject[prop] = propValue;
+                      }
+                    });
+
+                    if(function_.schema.required) {
+                      _.each(function_.schema.required, function(prop) {
+                        if(targetObject[prop] && targetObject[prop].value)
+                          targetObject[prop].value += " (REQ)";
+                        if(targetObject[prop] && targetObject[prop].expression)
+                          targetObject[prop].expression += " (REQ)";
+                      });
+                    }
+
+                    newArtefact.argument = {
+                        "dynamic":false,
+                        "value": JSON.stringify(targetObject),
+                        "expression":null,
+                        "expressionType":null
+                    }
                   }
                 }
-              }
-              
-              addArtefactToCurrentNode(newArtefact)
+
+                addArtefactToCurrentNode(newArtefact)
+              })
+
             });
           });
         }

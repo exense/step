@@ -29,13 +29,9 @@ public class CallFunction extends TokenSelector {
 	
 	public static final String ARTEFACT_NAME = "CallKeyword";
 
-	String functionId;
-	
-	DynamicValue<String> function = new DynamicValue<>("{}");
-	
-	DynamicValue<String> argument = new DynamicValue<>("{}");
-	
-	DynamicValue<String> resultMap = new DynamicValue<String>();
+	private DynamicValue<String> function = new DynamicValue<>("{}");
+	private DynamicValue<String> argument = new DynamicValue<>("{}");
+	private DynamicValue<String> resultMap = new DynamicValue<>();
 
 	public DynamicValue<String> getFunction() {
 		return function;
@@ -43,15 +39,6 @@ public class CallFunction extends TokenSelector {
 
 	public void setFunction(DynamicValue<String> function) {
 		this.function = function;
-	}
-
-	@EntityReference(type=EntityManager.functions)
-	public String getFunctionId() {
-		return functionId;
-	}
-
-	public void setFunctionId(String functionId) {
-		this.functionId = functionId;
 	}
 
 	public DynamicValue<String> getArgument() {

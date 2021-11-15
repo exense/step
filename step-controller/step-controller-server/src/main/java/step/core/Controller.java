@@ -57,6 +57,7 @@ import step.core.execution.model.ExecutionStatus;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.PlanAccessorImpl;
+import step.core.plans.PlanEntity;
 import step.core.plugins.ControllerInitializationPlugin;
 import step.core.plugins.ControllerPlugin;
 import step.core.plugins.ControllerPluginManager;
@@ -185,39 +186,21 @@ public class Controller {
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
 		
-		Entity<Plan, PlanAccessor> planEntity = new Entity<>(EntityManager.plans, context.getPlanAccessor(),
-				Plan.class);
-		planEntity.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
-			@Override
-			public void onVisitEntity(Object entity, EntityTreeVisitorContext context) {
-				if (entity instanceof CallPlan) {
-					Plan plan = planLocator.selectPlan((CallPlan) entity, context.getObjectPredicate(), null);
-					if (plan != null) {
-						context.visitEntity(EntityManager.plans, plan.getId().toString());
-					}
-				}
-			}
-		});
-		
 		EntityManager entityManager = context.getEntityManager();
 		entityManager
 				// Bean entity used for remote test
 				.register(new Entity<Bean, AbstractAccessor<Bean>>("beans",
 						new AbstractAccessor(context.getCollectionFactory().getCollection("beans", Bean.class)),
 						Bean.class))
-				.register(new Entity<Execution, ExecutionAccessor>(EntityManager.executions,
-						context.getExecutionAccessor(), Execution.class))
-				.register(planEntity)
-				.register(new Entity<ReportNode, ReportNodeAccessor>(EntityManager.reports, context.getReportAccessor(),
-						ReportNode.class))
-				.register(new Entity<ExecutiontTaskParameters, ExecutionTaskAccessor>(EntityManager.tasks,
-						context.getScheduleAccessor(), ExecutiontTaskParameters.class))
-				.register(new Entity<User, UserAccessor>(EntityManager.users, context.getUserAccessor(), User.class))
-				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver))
-				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
-						resourceRevisionAccessor, ResourceRevision.class))
-				.register(new Entity<DashboardSession, AbstractAccessor<DashboardSession>>("sessions",
-						new AbstractAccessor<DashboardSession>(
+				.register(new Entity<>(EntityManager.executions, context.getExecutionAccessor(), Execution.class))
+				.register(new PlanEntity(context.getPlanAccessor(), planLocator, entityManager))
+				.register(new Entity<>(EntityManager.reports, context.getReportAccessor(), ReportNode.class))
+				.register(new Entity<>(EntityManager.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class))
+				.register(new Entity<>(EntityManager.users, context.getUserAccessor(), User.class))
+				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
+				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class))
+				.register(new Entity<>("sessions",
+						new AbstractAccessor<>(
 								collectionFactory.getCollection("sessions", DashboardSession.class)),
 						DashboardSession.class));
 		

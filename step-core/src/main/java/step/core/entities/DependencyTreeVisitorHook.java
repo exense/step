@@ -36,6 +36,6 @@ public interface DependencyTreeVisitorHook {
 	 * @param entity  the entity that has been visited
 	 * @param context
 	 */
-	public void onVisitEntity(Object entity, EntityTreeVisitorContext context);
+	void onVisitEntity(Object entity, EntityTreeVisitorContext context);
 
 }

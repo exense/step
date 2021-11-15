@@ -3,19 +3,19 @@ package step.resources;
 import step.attachments.FileResolver;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.DependencyTreeVisitorHook;
 import step.core.entities.Entity;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
-import step.core.entities.DependencyTreeVisitorHook;
 
 public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 
 	private final FileResolver fileResolver;
 	
-	public ResourceEntity(Accessor<Resource> accessor, ResourceManager resourceManager, FileResolver fileResolver) {
+	public ResourceEntity(Accessor<Resource> accessor, ResourceManager resourceManager, FileResolver fileResolver, EntityManager entityManager) {
 		super(EntityManager.resources, accessor, Resource.class);
 		this.fileResolver = fileResolver;
-		addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
+		entityManager.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 			
 			@Override
 			public void onVisitEntity(Object t, EntityTreeVisitorContext visitorContext) {
@@ -54,7 +54,7 @@ public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 				String newPathForResourceId = newPathForResourceId(((DynamicValue<?>) atomicReference).get(),
 						resolvedEntityId);
 				if (newPathForResourceId != null) {
-					newValue = new DynamicValue<String>(newPathForResourceId);
+					newValue = new DynamicValue<>(newPathForResourceId);
 				}
 			}
 		}

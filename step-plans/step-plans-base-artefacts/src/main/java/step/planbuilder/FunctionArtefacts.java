@@ -19,6 +19,7 @@
 package step.planbuilder;
 
 import javax.json.Json;
+import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 
 import step.artefacts.Assert;
@@ -27,11 +28,12 @@ import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.core.dynamicbeans.DynamicValue;
 
+import java.util.Map;
+
 public class FunctionArtefacts {
 	
 	public static FunctionGroup session() {
-		FunctionGroup call = new FunctionGroup();
-		return call;
+		return new FunctionGroup();
 	}
 	
 	public static CallFunction keywordWithDynamicInput(String keywordName, String input) {
@@ -41,9 +43,9 @@ public class FunctionArtefacts {
 	
 	public static CallFunction keywordWithDynamicInput(String keywordName, boolean remote, String input) {
 		CallFunction call = new CallFunction();
-		call.setArgument(new DynamicValue<String>(input,""));
+		call.setArgument(new DynamicValue<>(input,""));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
-		call.setRemote(new DynamicValue<Boolean>(remote));
+		call.setRemote(new DynamicValue<>(remote));
 		return call;
 	}
 	
@@ -62,9 +64,9 @@ public class FunctionArtefacts {
 			}			
 		}
 		
-		call.setArgument(new DynamicValue<String>(builder.build().toString()));
+		call.setArgument(new DynamicValue<>(builder.build().toString()));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
-		call.setRemote(new DynamicValue<Boolean>(remote));
+		call.setRemote(new DynamicValue<>(remote));
 		return call;
 	}
 	
@@ -86,9 +88,9 @@ public class FunctionArtefacts {
 			}			
 		}
 		
-		call.setArgument(new DynamicValue<String>(builder.build().toString()));
+		call.setArgument(new DynamicValue<>(builder.build().toString()));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
-		call.setRemote(new DynamicValue<Boolean>(remote));
+		call.setRemote(new DynamicValue<>(remote));
 		return call;
 	}
 
@@ -99,10 +101,10 @@ public class FunctionArtefacts {
 	
 	public static CallFunction keyword(String keywordName, boolean remote, String input) {
 		CallFunction call = new CallFunction();
-		call.setArgument(new DynamicValue<String>(input));
+		call.setArgument(new DynamicValue<>(input));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
 		call.getAttributes().put("name", keywordName);
-		call.setRemote(new DynamicValue<Boolean>(remote));
+		call.setRemote(new DynamicValue<>(remote));
 		return call;
 	}
 	
@@ -117,19 +119,23 @@ public class FunctionArtefacts {
 	public static DynamicValue<String> dynamic(String dynamic) {
 		return new DynamicValue<>(dynamic, "");
 	}
-	
+
+	/**
+	 * @deprecated Calling keywords by ID is deprecated since 3.18. Use the call by attributes instead: keyword()
+	 */
+	@Deprecated
 	public static CallFunction keywordById(String keywordId, boolean remote, String input) {
-		CallFunction call = new CallFunction();
-		call.setArgument(new DynamicValue<String>(input));
-		call.setFunctionId(keywordId);
-		return call;
+		throw new RuntimeException("Calling keywords by ID is deprecated since 3.18.");
 	}
-	
+
+	/**
+	 * @deprecated Calling keywords by ID is deprecated since 3.18. Use the call by attributes instead: keyword()
+	 */
+	@Deprecated
 	public static CallFunction keywordById(String keywordId, String input) {
 		return keywordById(keywordId, true, input);
 	}
 
-	
 	public static CallFunction keyword(String keywordName) {
 		return keyword(keywordName, true);
 	}
@@ -138,4 +144,34 @@ public class FunctionArtefacts {
 		return keyword(keywordName, remote, "{}");
 	}
 
+	public static CallFunctionBuilder keyword(Map<String, String> attributes) {
+		JsonObjectBuilder attributeJson = Json.createObjectBuilder();
+		attributes.forEach((key, value) -> {
+			JsonObject dynamicExpression = Json.createObjectBuilder().add("value", value).add("dynamic", false).build();
+			attributeJson.add(key, dynamicExpression);
+		});
+		return new CallFunctionBuilder(attributeJson.build().toString());
+	}
+
+	public static class CallFunctionBuilder {
+
+		private final DynamicValue<String> argument;
+		private DynamicValue<String> input;
+
+		public CallFunctionBuilder(String argument) {
+			this.argument = new DynamicValue<>(argument);
+		}
+
+		public CallFunctionBuilder withInput(String input) {
+			this.input = new DynamicValue<>(input);
+			return this;
+		}
+
+		public CallFunction build() {
+			CallFunction callFunction = new CallFunction();
+			callFunction.setArgument(input);
+			callFunction.setArgument(argument);
+			return callFunction;
+		}
+	}
 }

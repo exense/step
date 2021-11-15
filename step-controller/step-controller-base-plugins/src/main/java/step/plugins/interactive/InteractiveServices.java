@@ -18,27 +18,6 @@
  ******************************************************************************/
 package step.plugins.interactive;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-
 import step.artefacts.ArtefactQueue;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
@@ -57,6 +36,8 @@ import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.PlanNavigator;
@@ -70,23 +51,37 @@ import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.parameter.ParameterManager;
 import step.planbuilder.FunctionArtefacts;
 import step.plugins.parametermanager.ParameterManagerPlugin;
+import step.plugins.screentemplating.FunctionTableScreenInputs;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Singleton;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.*;
 
 @Singleton
 @Path("interactive")
 public class InteractiveServices extends AbstractServices {
 
-	private Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
-	
-	private Timer sessionExpirationTimer; 
-	
+	private final Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
+	private final Timer sessionExpirationTimer;
 	private ExecutionEngine executionEngine;
-	
 	private final ExecutorService executorService;
-
 	private PlanAccessor planAccessor;
+	private ObjectPredicateFactory objectPredicateFactory;
+	private FunctionTableScreenInputs functionTableScreenInputs;
+	private FunctionManager functionManager;
 
-	private EncryptionManager encryptionManager;
-	
 	private static class InteractiveSession {
 		
 		long lasttouch;
@@ -142,7 +137,7 @@ public class InteractiveServices extends AbstractServices {
 		planAccessor = context.getPlanAccessor();
 		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
 		// the encryption manager might be null
-		encryptionManager = context.get(EncryptionManager.class);
+		EncryptionManager encryptionManager = context.get(EncryptionManager.class);
 		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
 				.withParentContext(context).withPluginsFromClasspath().withPlugin(new AbstractExecutionEnginePlugin() {
 
@@ -152,10 +147,13 @@ public class InteractiveServices extends AbstractServices {
 						executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
 					}
 				}).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class), encryptionManager)).withObjectHookRegistry(objectHookRegistry).build();
+		objectPredicateFactory = context.require(ObjectPredicateFactory.class);
+		functionTableScreenInputs = getContext().require(FunctionTableScreenInputs.class);
+		functionManager = getContext().get(FunctionManager.class);
 	}
 	
 	@PreDestroy
-	private void close() {
+	public void close() {
 		if(sessionExpirationTimer != null) {
 			sessionExpirationTimer.cancel();
 		}
@@ -209,8 +207,7 @@ public class InteractiveServices extends AbstractServices {
 		if(session!=null) {
 			AbstractArtefact artefact = findArtefactInPlan(planId, artefactId);
 			Future<ReportNode> future = session.getArtefactQueue().add(artefact);
-			ReportNode reportNode = future.get();
-			return reportNode;
+			return future.get();
 		} else {
 			 throw new RuntimeException("Session doesn't exist or expired.");
 		}
@@ -218,15 +215,14 @@ public class InteractiveServices extends AbstractServices {
 
 	protected AbstractArtefact findArtefactInPlan(String planId, String artefactId) {
 		Plan plan = planAccessor.get(planId);
-		AbstractArtefact artefact = new PlanNavigator(plan).findArtefactById(artefactId);
-		return artefact;
+		return new PlanNavigator(plan).findArtefactById(artefactId);
 	}
 	
 	public static class FunctionTestingSession {
 		
 		private String planId;
 		private String callFunctionId;
-		
+
 		public FunctionTestingSession() {
 			super();
 		}
@@ -246,19 +242,21 @@ public class InteractiveServices extends AbstractServices {
 		public void setCallFunctionId(String callFunctionId) {
 			this.callFunctionId = callFunctionId;
 		}
-		
+
 	}
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/functiontest/{keywordid}/start")
 	@Secured(right="interactive")
-	public FunctionTestingSession startFunctionTestingSession(@PathParam("keywordid") String keywordid) throws AgentCommunicationException {
-		
-		CallFunction callFunction = FunctionArtefacts.keywordById(keywordid,"{}");
-		
-		// TODO do this centrally. Currently the same logic is implemented in the UI
-		FunctionManager functionManager = getContext().get(FunctionManager.class);
+	public FunctionTestingSession startFunctionTestingSession(@PathParam("keywordid") String keywordid) {
 		Function function = functionManager.getFunctionById(keywordid);
+
+		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+		Map<String, String> functionAttributes = functionTableScreenInputs.getSelectionAttributes(function, null, objectPredicate);
+
+		CallFunction callFunction = FunctionArtefacts.keyword(functionAttributes).withInput("{}").build();
+
+		// TODO do this centrally. Currently the same logic is implemented in the UI
 		Map<String, String> attributes = new HashMap<>();
 		attributes.put("name", function.getAttributes().get(AbstractOrganizableObject.NAME));
 		callFunction.setAttributes(attributes);

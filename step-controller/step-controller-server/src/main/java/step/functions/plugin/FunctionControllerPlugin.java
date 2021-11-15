@@ -18,10 +18,7 @@
  ******************************************************************************/
 package step.functions.plugin;
 
-import java.util.List;
-
 import ch.exense.commons.app.Configuration;
-import step.artefacts.CallFunction;
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.FunctionRouter;
@@ -33,10 +30,7 @@ import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.entities.Entity;
-import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
-import step.core.entities.DependencyTreeVisitorHook;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;
@@ -44,6 +38,7 @@ import step.core.tables.TableRegistry;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionAccessorImpl;
+import step.functions.accessor.FunctionEntity;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceImpl;
@@ -58,6 +53,8 @@ import step.plugins.screentemplating.ScreenInput;
 import step.plugins.screentemplating.ScreenInputAccessor;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 import step.resources.ResourceManagerControllerPlugin;
+
+import java.util.List;
 
 @Plugin(dependencies= {ScreenTemplatePlugin.class, GridPlugin.class, ResourceManagerControllerPlugin.class})
 public class FunctionControllerPlugin extends AbstractControllerPlugin {
@@ -88,21 +85,8 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		context.put(FunctionAccessor.class, functionAccessor);
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		final FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
-		Entity<Function, FunctionAccessorImpl> functionEntity = new Entity<Function, FunctionAccessorImpl>(
-				EntityManager.functions, (FunctionAccessorImpl) functionAccessor, Function.class);
-		functionEntity.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
-			@Override
-			public void onVisitEntity(Object t, EntityTreeVisitorContext context) {
-				if (t instanceof CallFunction) {
-					Function function = functionLocator.getFunction((CallFunction) t, context.getObjectPredicate(),
-							null);
-					if (function != null) {
-						context.visitEntity(EntityManager.functions, function.getId().toString());
-					}
-				}
-			}
-		});
-		context.getEntityManager().register(functionEntity);
+		EntityManager entityManager = context.getEntityManager();
+		entityManager.register(new FunctionEntity(functionAccessor, functionLocator, entityManager));
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
 		

@@ -44,7 +44,7 @@ public class PlanLocator {
 	/**
 	 * Resolve a {@link CallPlan} artefact to the underlying {@link Plan}
 	 * 
-	 * @param callFunctionArtefact the {@link CallPlan} artefact
+	 * @param artefact the {@link CallPlan} artefact
 	 * @param objectPredicate the predicate to be used to filter the results out
 	 * @param bindings the bindings to be used for the evaluation of dynamic expressions (can be null)
 	 * @return the {@link Plan} referenced by the provided artefact

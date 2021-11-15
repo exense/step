@@ -18,21 +18,10 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-
+import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Test;
-
-import ch.exense.commons.io.FileHelper;
-import junit.framework.Assert;
 import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
@@ -51,7 +40,6 @@ import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.execution.FunctionExecutionService;
-import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.AbstractFunctionType;
@@ -63,6 +51,18 @@ import step.grid.TokenWrapperOwner;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.tokenpool.Interest;
+import step.planbuilder.FunctionArtefacts;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 	
@@ -81,24 +81,23 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 		ExecutionContext executionContext = buildExecutionContext();
 		
 		Function function = newFunction(FUNCTION_ID_SUCCESS);
-		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		executionContext.get(FunctionAccessor.class).save(function);
 		
 		CallFunctionHandler handler = new CallFunctionHandler();
 		handler.init(executionContext);
-		
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunctionId(function.getId().toString());
+
+		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
 		
 		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 
-		Assert.assertEquals(1, node.getAttachments().size());
+		assertEquals(1, node.getAttachments().size());
 		AttachmentMeta attachment = node.getAttachments().get(0);
-		Assert.assertEquals("Attachment1", attachment.getName());
+		assertEquals("Attachment1", attachment.getName());
 		
-		Assert.assertEquals(1, node.getMeasures().size());
+		assertEquals(1, node.getMeasures().size());
 		
-		Assert.assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
-		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
+		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 	}
 	
 	@Test
@@ -106,24 +105,24 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 		ExecutionContext executionContext = buildExecutionContext();
 		
 		Function function = newFunction("MyFunction");
-		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		executionContext.get(FunctionAccessor.class).save(function);
 		
 		CallFunctionHandler handler = new CallFunctionHandler();
 		handler.init(executionContext);
 		
 		CallFunction callFunction = new CallFunction();
-		callFunction.setFunction(new DynamicValue<String>("{\"name\":\"MyFunction\"}"));
+		callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
 		
 		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 
-		Assert.assertEquals(1, node.getAttachments().size());
+		assertEquals(1, node.getAttachments().size());
 		AttachmentMeta attachment = node.getAttachments().get(0);
-		Assert.assertEquals("Attachment1", attachment.getName());
+		assertEquals("Attachment1", attachment.getName());
 		
-		Assert.assertEquals(1, node.getMeasures().size());
+		assertEquals(1, node.getMeasures().size());
 		
-		Assert.assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
-		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
+		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 	}
 	
 	@Test
@@ -131,23 +130,22 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 		ExecutionContext executionContext = buildExecutionContext();
 		
 		Function function = newFunction(FUNCTION_ID_SUCCESS);
-		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		executionContext.get(FunctionAccessor.class).save(function);
 		
 		CallFunctionHandler handler = new CallFunctionHandler();
 		handler.init(executionContext);
 		
 		Map<String, String> map = new HashMap<>();
 		executionContext.getVariablesManager().putVariable(executionContext.getReport(),"map", map);
-		
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunctionId(function.getId().toString());
-		callFunction.setResultMap(new DynamicValue<String>("map"));
+
+		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
+		callFunction.setResultMap(new DynamicValue<>("map"));
 		
 		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 
-		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		
-		Assert.assertEquals("Value1", map.get("Output1"));
+		assertEquals("Value1", map.get("Output1"));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -156,7 +154,7 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 		ExecutionContext executionContext = buildExecutionContext();
 		
 		Function function = newFunction(FUNCTION_ID_SUCCESS);
-		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		executionContext.get(FunctionAccessor.class).save(function);
 		
 		CallFunctionHandler handler = new CallFunctionHandler();
 		handler.init(executionContext);
@@ -176,21 +174,21 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 			
 		};
 		executionContext.getVariablesManager().putVariable(executionContext.getReport(),"dataSet", dataSetHandle);
-		
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunctionId(function.getId().toString());
-		callFunction.setResultMap(new DynamicValue<String>("dataSet"));
+
+		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
+		callFunction.setResultMap(new DynamicValue<>("dataSet"));
 		
 		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 
-		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		
-		Assert.assertEquals("Value1", ((Map<String, String>)addedRows.get(0)).get("Output1"));
+		assertEquals("Value1", ((Map<String, String>)addedRows.get(0)).get("Output1"));
 	}
 
 	protected Function newFunction(ObjectId id) {
 		Function function = new Function();
 		function.setId(id);
+		function.addAttribute(AbstractOrganizableObject.NAME, id.toString());
 		return function;
 	}
 	
@@ -209,17 +207,16 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 		
 		Function function = newFunction(FUNCTION_ID_ERROR);
 		
-		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		executionContext.get(FunctionAccessor.class).save(function);
 		
 		CallFunctionHandler handler = new CallFunctionHandler();
 		handler.init(executionContext);
 		
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunctionId(function.getId().toString());
+		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
 		
 		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 		
-		Assert.assertEquals("My Error", node.getError().getMsg());
+		assertEquals("My Error", node.getError().getMsg());
 	}
 	
 	@Test
@@ -228,19 +225,18 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 		executionContext.getExecutionParameters().setMode(ExecutionMode.SIMULATION);
 		
 		Function function = newFunction(FUNCTION_ID_SUCCESS);
-		((InMemoryFunctionAccessorImpl)executionContext.get(FunctionAccessor.class)).save(function);
+		executionContext.get(FunctionAccessor.class).save(function);
 		
 		CallFunctionHandler handler = new CallFunctionHandler();
 		handler.init(executionContext);
 		
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunctionId(function.getId().toString());
-		
+		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
+
 		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 		
-		Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		Assert.assertEquals("{}", node.getOutput());
-		Assert.assertNull(node.getError());
+		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		assertEquals("{}", node.getOutput());
+		assertNull(node.getError());
 	}
 
 	protected ExecutionContext buildExecutionContext() {
@@ -267,13 +263,13 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 		return new FunctionExecutionService() {
 			
 			@Override
-			public void returnTokenHandle(String tokenId) throws FunctionExecutionServiceException {
+			public void returnTokenHandle(String tokenId) {
 				
 			}
 			
 			@Override
 			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+					boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
 				return token;
 			}
 			
@@ -288,7 +284,7 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 				return (Output<OUT>) newOutput(function.getId().toString());
 			}
 			
-			protected Output<JsonObject> newOutput(String functionId) {
+			private Output<JsonObject> newOutput(String functionId) {
 				if(functionId.equals(FUNCTION_ID_ERROR.toString())) {
 					return newErrorOutput();
 				} else {
@@ -296,8 +292,8 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 				}
 			}
 			
-			protected Output<JsonObject> newPassedOutput() {
-				Output<JsonObject> output = new Output<JsonObject>();
+			private Output<JsonObject> newPassedOutput() {
+				Output<JsonObject> output = new Output<>();
 				
 				List<Attachment> attachments = new ArrayList<>();
 				Attachment attachment = new Attachment();
@@ -315,8 +311,8 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 				return output;
 			}
 			
-			protected Output<JsonObject> newErrorOutput() {
-				Output<JsonObject> output = new Output<JsonObject>();
+			private Output<JsonObject> newErrorOutput() {
+				Output<JsonObject> output = new Output<>();
 				output.setError(new Error(ErrorType.TECHNICAL, "keyword", "My Error", 0, true));
 				return output;
 			}
@@ -350,19 +346,19 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 				return dummyFunctionType();
 			}
 
-			protected AbstractFunctionType<Function> dummyFunctionType() {
-				return new AbstractFunctionType<Function>() {
-					
+			private AbstractFunctionType<Function> dummyFunctionType() {
+				return new AbstractFunctionType<>() {
+
 					@Override
 					public Function newFunction() {
 						return null;
 					}
-					
+
 					@Override
 					public Map<String, String> getHandlerProperties(Function function) {
 						return null;
 					}
-					
+
 					@Override
 					public String getHandlerChain(Function function) {
 						return null;

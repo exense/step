@@ -1,21 +1,21 @@
 package step.artefacts.handlers;
 
-import static org.junit.Assert.*;
-
-import java.util.HashMap;
-
 import org.junit.Test;
-
 import step.artefacts.CallFunction;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectPredicate;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
+import step.planbuilder.FunctionArtefacts;
+
+import java.util.HashMap;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class FunctionLocatorTest {
 
@@ -32,14 +32,13 @@ public class FunctionLocatorTest {
 				new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler()))));
 
 		// by id
-		CallFunction testArtefact = new CallFunction();
-		testArtefact.setFunctionId(expectedFunction1.getId().toString());
+		CallFunction testArtefact = FunctionArtefacts.keyword("function1");
 		Function function = functionLocator.getFunction(testArtefact, predicate(), null);
 		assertEquals(expectedFunction1, function);
 		
 		// by attributes
 		CallFunction callFunction2 = new CallFunction();
-		callFunction2.setFunction(new DynamicValue<String>("{\"name\":\"function1\"}"));
+		callFunction2.setFunction(new DynamicValue<>("{\"name\":\"function1\"}"));
 		Function function2 = functionLocator.getFunction(callFunction2, predicate(), null);
 		assertEquals(expectedFunction1, function2);
 		
@@ -49,14 +48,14 @@ public class FunctionLocatorTest {
 			functionLocator.getFunction(callFunction2, predicateFalse(), null);	
 		} catch (Exception e) {
 			actual = e;
-		};
+		}
 		assertNotNull(actual);
 		
 		// by attributes with dynamic expressions
 		CallFunction callFunction4 = new CallFunction();
-		callFunction4.setFunction(new DynamicValue<String>("{\"name\" : \"function2\", \"version\":{\"dynamic\":true, \"expression\": \"binding1\"}}"));
+		callFunction4.setFunction(new DynamicValue<>("{\"name\" : \"function2\", \"version\":{\"dynamic\":true, \"expression\": \"binding1\"}}"));
 		Function function4;
-		HashMap<String, Object> bindings = new HashMap<String, Object>();
+		HashMap<String, Object> bindings = new HashMap<>();
 		bindings.put("binding1", "v1");
 		function4 = functionLocator.getFunction(callFunction4, predicate(), bindings);
 		assertEquals(expectedFunction2_v1, function4);
@@ -66,9 +65,9 @@ public class FunctionLocatorTest {
 		
 		// using the special binding KEYWORD_ACTIVE_VERSIONS
 		CallFunction callFunction5 = new CallFunction();
-		callFunction5.setFunction(new DynamicValue<String>("{\"name\":\"function2\"}"));
+		callFunction5.setFunction(new DynamicValue<>("{\"name\":\"function2\"}"));
 		Function function5;
-		HashMap<String, Object> bindings2 = new HashMap<String, Object>();
+		HashMap<String, Object> bindings2 = new HashMap<>();
 		bindings2.put(FunctionLocator.KEYWORD_ACTIVE_VERSIONS, "v1");
 		function5 = functionLocator.getFunction(callFunction5, predicate(), bindings2);
 		assertEquals(expectedFunction2_v1, function5);

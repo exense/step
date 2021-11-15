@@ -46,14 +46,14 @@ public class EntityManager  {
 	public final static String recursive = "recursive";
 
 	private final Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
-	private final Map<Class<?>, Entity<?,?>> entitiesByClass = new ConcurrentHashMap<Class<?>, Entity<?,?>>();
+
+	private final List<DependencyTreeVisitorHook> dependencyTreeVisitorHooks = new ArrayList<>();
 
 	private final List<BiConsumer<Object, ImportContext>> importHook = new ArrayList<>();
 	private final List<BiConsumer<Object, ExportContext>> exportHook = new ArrayList<>();
 
 	public EntityManager register(Entity<?,?> entity) {
 		entities.put(entity.getName(), entity);
-		entitiesByClass.put(entity.getEntityClass(), entity);
 		return this;
 	}
 
@@ -97,7 +97,7 @@ public class EntityManager  {
 	 * @param references the map of references to be populated
 	 */
 	public void getEntitiesReferences(String entityName, String entityId, ObjectPredicate objectPredicate, EntityReferencesMap references, boolean recursive) {
-		EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this);
+		EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
 		entityDependencyTreeVisitor.visitEntityDependencyTree(entityName, entityId, new EntityTreeVisitor() {
 			
 			@Override
@@ -116,19 +116,10 @@ public class EntityManager  {
 			}
 		}, recursive);
 	}
-	
-	public Entity<?,?> getEntityByClass(Class<?> c) {
-		Entity<?,?> result = entitiesByClass.get(c);
-		while (result == null && !c.equals(Object.class)) {
-			c = c.getSuperclass();
-			result = entitiesByClass.get(c);
-		}
-		return result;
-	}
 
-	public void updateReferences(Object entity, Map<String, String> references) {
+	public void updateReferences(Object entity, Map<String, String> references, ObjectPredicate objectPredicate) {
 		if(entity!=null) {
-			EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this);
+			EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
 			entityDependencyTreeVisitor.visitSingleObject(entity, new EntityTreeVisitor() {
 				
 				@Override
@@ -146,6 +137,20 @@ public class EntityManager  {
 				}
 			});
 		}
+	}
+
+	/**
+	 * Register a {@link EntityDependencyTreeVisitor} hook
+	 * @param hook the hook instance to be registered
+	 * @return this instance
+	 */
+	public EntityManager addDependencyTreeVisitorHook(DependencyTreeVisitorHook hook) {
+		dependencyTreeVisitorHooks.add(hook);
+		return this;
+	}
+
+	public List<DependencyTreeVisitorHook> getDependencyTreeVisitorHooks() {
+		return dependencyTreeVisitorHooks;
 	}
 
 	public void registerExportHook(BiConsumer<Object, ExportContext> exportBiConsumer) {

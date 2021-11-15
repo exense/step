@@ -18,25 +18,10 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-
-import org.bson.types.ObjectId;
 import org.junit.Test;
-
-import junit.framework.Assert;
-import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.CallFunction;
-import step.artefacts.Echo;
-import step.artefacts.FunctionGroup;
-import step.artefacts.RetryIfFails;
-import step.artefacts.Sequence;
-import step.artefacts.Sleep;
+import step.artefacts.*;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -63,6 +48,18 @@ import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.TokenWrapperOwner;
 import step.grid.tokenpool.Interest;
+import step.planbuilder.FunctionArtefacts;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class FunctionGroupHandlerTest {
 
@@ -94,15 +91,15 @@ public class FunctionGroupHandlerTest {
 		engine.execute(plan).printTree(writer);
 		
 		// Assert that the token have been returned after Session execution
-		Assert.assertTrue(localTokenReturned.get());
-		Assert.assertTrue(tokenReturned.get());
-		Assert.assertEquals("Session:PASSED:\n" + 
+		assertTrue(localTokenReturned.get());
+		assertTrue(tokenReturned.get());
+		assertEquals("Session:PASSED:\n" + 
 				" CheckArtefact:PASSED:\n" + 
 				" Echo:PASSED:\n" ,writer.toString());
 	}
 	
 	private ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction) {
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+		return ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 
 			@Override
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
@@ -116,7 +113,7 @@ public class FunctionGroupHandlerTest {
 
 					@Override
 					public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-							boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+							boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
 						return null;
 					}
 
@@ -134,11 +131,10 @@ public class FunctionGroupHandlerTest {
 							FunctionInput<IN> input, Class<OUT> outputClass) {
 						return null;
 					}
-					
+
 				});
 			}
 		}).build();
-		return engine;
 	}
 	
 	@Test
@@ -170,9 +166,9 @@ public class FunctionGroupHandlerTest {
 		engine.execute(plan).printTree(writer);
 		
 		// Assert that the token have been returned after Session execution
-		Assert.assertTrue(localTokenReturned.get());
-		Assert.assertTrue(tokenReturned.get());
-		Assert.assertEquals("Session:TECHNICAL_ERROR:Multiple errors occurred when releasing agent tokens: Test error, Test error\n" + 
+		assertTrue(localTokenReturned.get());
+		assertTrue(tokenReturned.get());
+		assertEquals("Session:TECHNICAL_ERROR:Multiple errors occurred when releasing agent tokens: Test error, Test error\n" + 
 				" CheckArtefact:PASSED:\n" + 
 				" Echo:PASSED:\n" ,writer.toString());
 	}
@@ -206,9 +202,9 @@ public class FunctionGroupHandlerTest {
 		engine.execute(plan).printTree(writer);
 		
 		// Assert that the token have been returned after Session execution
-		Assert.assertTrue(localTokenReturned.get());
-		Assert.assertTrue(tokenReturned.get());
-		Assert.assertEquals("Session:TECHNICAL_ERROR:Test error\n" + 
+		assertTrue(localTokenReturned.get());
+		assertTrue(tokenReturned.get());
+		assertEquals("Session:TECHNICAL_ERROR:Test error\n" + 
 				" CheckArtefact:PASSED:\n" + 
 				" Echo:PASSED:\n" ,writer.toString());
 	}
@@ -222,20 +218,20 @@ public class FunctionGroupHandlerTest {
 		AtomicInteger tokenReturned = new AtomicInteger();
 		
 		Sleep sleepArtefact = new Sleep();
-		sleepArtefact.setReleaseTokens(new DynamicValue<Boolean>(true));
-		sleepArtefact.setDuration(new DynamicValue<Long>(100L));
+		sleepArtefact.setReleaseTokens(new DynamicValue<>(true));
+		sleepArtefact.setDuration(new DynamicValue<>(100L));
 		
 		Function function = new Function();
-		function.setId(new ObjectId());
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunctionId(function.getId().toString());
+		String name = UUID.randomUUID().toString();
+		function.addAttribute(AbstractOrganizableObject.NAME, name);
+		CallFunction callFunction = FunctionArtefacts.keyword(name);
 
 		RetryIfFails retryIfFail = new RetryIfFails();
-		retryIfFail.setReleaseTokens(new DynamicValue<Boolean>(true));
-		retryIfFail.setMaxRetries(new DynamicValue<Integer>(3));
-		retryIfFail.setGracePeriod(new DynamicValue<Integer>(200));		
+		retryIfFail.setReleaseTokens(new DynamicValue<>(true));
+		retryIfFail.setMaxRetries(new DynamicValue<>(3));
+		retryIfFail.setGracePeriod(new DynamicValue<>(200));
 		Sequence sequence = new Sequence();
-		sequence.setContinueOnError(new DynamicValue<Boolean>(true));
+		sequence.setContinueOnError(new DynamicValue<>(true));
 		sequence.addChild(sleepArtefact);
 		sequence.addChild(callFunction);
 		sequence.addChild(retryIfFail);
@@ -270,12 +266,12 @@ public class FunctionGroupHandlerTest {
 
 							@Override
 							public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-									boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+									boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
 								return token("remote");
 							}
 
 							@Override
-							public void returnTokenHandle(String id) throws FunctionExecutionServiceException {
+							public void returnTokenHandle(String id) {
 								if(localToken.getID().equals(id)) {
 									localTokenReturned.incrementAndGet();
 								}
@@ -301,9 +297,9 @@ public class FunctionGroupHandlerTest {
 		engine.execute(plan).printTree(writer);
 		
 		// Assert that the token have been returned after Session execution
-		Assert.assertEquals(1,localTokenReturned.get());
-		Assert.assertEquals(3,tokenReturned.get());
-		Assert.assertEquals("Session:TECHNICAL_ERROR:\n" + 
+		assertEquals(1,localTokenReturned.get());
+		assertEquals(3,tokenReturned.get());
+		assertEquals(("Session:TECHNICAL_ERROR:\n" +
 				" CheckArtefact:PASSED:\n" + 
 				 " Sequence:TECHNICAL_ERROR:\n" +
 				"  Sleep:PASSED:\n" +
@@ -315,14 +311,13 @@ public class FunctionGroupHandlerTest {
 				"    CheckArtefact:FAILED:\n" +
 				"   Iteration3:FAILED:\n" +
 				"    CheckArtefact:FAILED:\n" +
-				"  CallKeyword:TECHNICAL_ERROR:null\n" ,writer.toString());
+				"  CallKeyword:TECHNICAL_ERROR:null\n").replace("CallKeyword", name) ,writer.toString());
 	}
 	
 	protected TokenWrapper token(String id) {
 		Token localToken_ = new Token();
 		localToken_.setId(id);
-		TokenWrapper localToken = new TokenWrapper(localToken_, new AgentRef());
-		return localToken;
+		return new TokenWrapper(localToken_, new AgentRef());
 	}
 	
 	protected FunctionTypeRegistry getFunctionTypeRepository() {
@@ -342,19 +337,19 @@ public class FunctionGroupHandlerTest {
 				return dummyFunctionType();
 			}
 
-			protected AbstractFunctionType<Function> dummyFunctionType() {
-				return new AbstractFunctionType<Function>() {
-					
+			private AbstractFunctionType<Function> dummyFunctionType() {
+				return new AbstractFunctionType<>() {
+
 					@Override
 					public Function newFunction() {
 						return null;
 					}
-					
+
 					@Override
 					public Map<String, String> getHandlerProperties(Function function) {
 						return null;
 					}
-					
+
 					@Override
 					public String getHandlerChain(Function function) {
 						return null;

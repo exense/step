@@ -10,9 +10,10 @@ public class MigrationTasksTest {
 	public static void main(String[] args) {
 		Properties properties = new Properties();
 		properties.put("host", "localhost");
-		properties.put("database", "step310-1");
+		properties.put("database", "step");
 		CollectionFactory collectionFactory = new MongoDBCollectionFactory(properties);
-		
+
+		new MigrateFunctionCallsById(collectionFactory, null).runUpgradeScript();
 		//collectionFactory = new InMemoryCollectionFactory(new Configuration());
 
 //		new ScreenTemplateMigrationTask(collectionFactory).runUpgradeScript();
@@ -25,7 +26,7 @@ public class MigrationTasksTest {
 //		new ScreenTemplateArtefactTableMigrationTask(collectionFactory).runUpgradeScript();
 //		new MigrateAssertNegation(collectionFactory).runUpgradeScript();
 		
-		new MigrateSeleniumFunctions(collectionFactory, null).runUpgradeScript();;
+		//new MigrateSeleniumFunctions(collectionFactory, null).runUpgradeScript();;
 	}
 
 }

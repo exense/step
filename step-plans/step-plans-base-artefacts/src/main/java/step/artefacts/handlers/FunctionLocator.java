@@ -18,23 +18,16 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import org.bson.types.ObjectId;
-
 import step.artefacts.CallFunction;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectPredicate;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class FunctionLocator {
 	
@@ -60,40 +53,33 @@ public class FunctionLocator {
 	public Function getFunction(CallFunction callFunctionArtefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) {
 		Objects.requireNonNull(callFunctionArtefact, "The artefact must not be null");
 		Objects.requireNonNull(objectPredicate, "The object predicate must not be null");
-		Function function = null;
-		if(callFunctionArtefact.getFunctionId()!=null) {
-			function = functionAccessor.get(new ObjectId(callFunctionArtefact.getFunctionId()));
+		Function function;
+		String selectionAttributesJson = callFunctionArtefact.getFunction().get();
+		Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, bindings);
+
+		Stream<Function> stream = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false);
+		stream = stream.filter(objectPredicate);
+		List<Function> matchingFunctions = stream.collect(Collectors.toList());
+
+		Set<String> activeKeywordVersions = getActiveKeywordVersions(bindings);
+		if(activeKeywordVersions != null && activeKeywordVersions.size()>0) {
+			// First try to find a function matching one of the active versions
+			function = matchingFunctions.stream().filter(f->{
+				String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
+				return version != null && activeKeywordVersions.contains(version);
+			}).findFirst().orElse(null);
+			// if no function has been found with one of the active versions, return the first function WITHOUT version
 			if(function == null) {
-				throw new RuntimeException("Unable to find keyword with id "+callFunctionArtefact.getFunctionId());
-			}
-		} else {
-			String selectionAttributesJson = callFunctionArtefact.getFunction().get();
-			Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, bindings);
-			
-			Stream<Function> stream = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false);
-			stream = stream.filter(objectPredicate);
-			List<Function> matchingFunctions = stream.collect(Collectors.toList());
-			
-			Set<String> activeKeywordVersions = getActiveKeywordVersions(bindings);
-			if(activeKeywordVersions != null && activeKeywordVersions.size()>0) {
-				// First try to find a function matching one of the active versions
 				function = matchingFunctions.stream().filter(f->{
 					String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
-					return version != null && activeKeywordVersions.contains(version);
-				}).findFirst().orElse(null);
-				// if no function has been found with one of the active versions, return the first function WITHOUT version
-				if(function == null) {
-					function = matchingFunctions.stream().filter(f->{
-						String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
-						return version == null || version.trim().isEmpty();
-					}).findFirst().orElseThrow(()->new RuntimeException("Unable to find keyword with attributes "+selectionAttributesJson+" matching on of the versions: "+activeKeywordVersions));
-				}
-			} else {
-				// No active versions defined. Return the first function
-				function = matchingFunctions.stream().findFirst().orElseThrow(()->new RuntimeException("Unable to find keyword with attributes "+selectionAttributesJson));
+					return version == null || version.trim().isEmpty();
+				}).findFirst().orElseThrow(()->new NoSuchElementException("Unable to find keyword with attributes "+selectionAttributesJson+" matching on of the versions: "+activeKeywordVersions));
 			}
+		} else {
+			// No active versions defined. Return the first function
+			function = matchingFunctions.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find keyword with attributes "+selectionAttributesJson));
 		}
-				
+
 		return function;
 	}
 	

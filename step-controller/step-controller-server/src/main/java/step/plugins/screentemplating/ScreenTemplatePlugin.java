@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.plugins.screentemplating;
 
-import java.util.Arrays;
-
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.entities.Entity;
@@ -27,6 +25,8 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;
 import step.core.tables.TableRegistry;
+
+import java.util.Arrays;
 
 @Plugin
 public class ScreenTemplatePlugin extends AbstractControllerPlugin {
@@ -39,15 +39,17 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 		screenInputAccessor = new ScreenInputAccessorImpl(
 				context.getCollectionFactory().getCollection("screenInputs", ScreenInput.class));
 		screenTemplateManager = new ScreenTemplateManager(screenInputAccessor, context.getConfiguration());
-		
+		FunctionTableScreenInputs functionTableScreenInputs = new FunctionTableScreenInputs(screenTemplateManager);
+
 		initializeScreenInputsIfNecessary();
 		
 		context.put(ScreenInputAccessor.class, screenInputAccessor);
 		context.put(ScreenTemplateManager.class, screenTemplateManager);
+		context.put(FunctionTableScreenInputs.class, functionTableScreenInputs);
 		context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
 		
 		context.getEntityManager().register(
-				new Entity<ScreenInput, ScreenInputAccessor>("screenInputs", screenInputAccessor, ScreenInput.class));
+				new Entity<>("screenInputs", screenInputAccessor, ScreenInput.class));
 		
 		Collection<ScreenInput> collectionDriver = context.getCollectionFactory().getCollection("screenInputs",
 				ScreenInput.class);
@@ -62,7 +64,7 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 			screenInputAccessor.save(new ScreenInput("executionTable", new Input(InputType.TEXT, "executionParameters.customParameters.env", "Environment", null)));
 		}
 		if(screenInputAccessor.getScreenInputsByScreenId("executionParameters").isEmpty()) {
-			screenInputAccessor.save(new ScreenInput("executionParameters", new Input(InputType.DROPDOWN, "env", "Environment", Arrays.asList(new Option[] {new Option("TEST"),new Option("PROD")}))));
+			screenInputAccessor.save(new ScreenInput("executionParameters", new Input(InputType.DROPDOWN, "env", "Environment", Arrays.asList(new Option("TEST"),new Option("PROD")))));
 		}
 	}
 }

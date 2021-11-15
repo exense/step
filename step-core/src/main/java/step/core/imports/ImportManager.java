@@ -18,27 +18,14 @@
  ******************************************************************************/
 package step.core.imports;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.bson.types.ObjectId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonParseException;
+import ch.exense.commons.io.FileHelper;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import ch.exense.commons.io.FileHelper;
+import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
@@ -51,6 +38,15 @@ import step.core.collections.filesystem.FilesystemCollectionFactory;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.migration.MigrationManager;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ImportManager {
 
@@ -90,8 +86,7 @@ public class ImportManager {
 						if (name.contentEquals("metadata")) {
 							// Read the metadata
 							jParser.nextToken();
-							TypeReference<HashMap<String, String>> typeRef = new TypeReference<HashMap<String, String>>() {
-							};
+							TypeReference<HashMap<String, String>> typeRef = new TypeReference<>() {};
 							Map<String, String> metadata = mapper.readValue(jParser, typeRef);
 							if (metadata.containsKey("version")) {
 								version = new Version(metadata.get("version"));
@@ -104,9 +99,9 @@ public class ImportManager {
 							// First import all entities to the temporary collection
 							List<String> entityNames = new ArrayList<>();
 							while (jParser.nextToken() != JsonToken.END_OBJECT) {
-								entityNames.add(importEntitiesByType(importConfig, importContext, jParser));
+								entityNames.add(importEntitiesToTemporaryCollection(importConfig, importContext, jParser));
 							}
-							
+
 							// Then import them from the temporary collection
 							entityNames.forEach(entityName -> importFromTempCollection(importConfig, importContext, entityName));
 						} else {
@@ -128,12 +123,32 @@ public class ImportManager {
 		}
 	}
 
+	private void replaceIds(ImportContext importContext, Collection<Document> collection) {
+		final Map<String, String> references = importContext.getReferences();
+		final Map<String, String> newToOldReferences = importContext.getNewToOldReferences();
+		collection.find(Filters.empty(), null, null, null, 0).forEach(entity -> {
+			String origId = entity.getId().toString();
+			ObjectId objectId;
+			// if the origId was already replaced, use the new one
+			if (references.containsKey(origId)) {
+				objectId = new ObjectId(references.get(origId));
+			} else {
+				objectId = new ObjectId();
+			}
+			entity.setId(objectId);
+			references.put(origId, objectId.toHexString());
+			newToOldReferences.put(objectId.toHexString(), origId);
+			collection.remove(Filters.id(origId));
+			collection.save(entity);
+		});
+	}
+
 	private boolean skipEntityType(List<String> entitiesFilter, String entityName) {
 		return (entitiesFilter != null && !entitiesFilter.contains(entityName));
 	}
 
-	private String importEntitiesByType(ImportConfiguration importConfig, ImportContext importContext, JsonParser jParser)
-			throws IOException, InstantiationException, IllegalAccessException {
+	private String importEntitiesToTemporaryCollection(ImportConfiguration importConfig, ImportContext importContext, JsonParser jParser)
+			throws IOException {
 		String name = jParser.getCurrentName();
 
 		Entity<?, ?> entityByName = entityManager.getEntityByName(name);
@@ -150,7 +165,7 @@ public class ImportManager {
 			logger.info("Importing entities of type " + name);
 			if (jParser.nextToken().equals(JsonToken.START_ARRAY)) {
 				while (!jParser.nextToken().equals(JsonToken.END_ARRAY)) {
-					importOne(importContext, tempCollection, jParser, importContext.getImportConfiguration().isOverwrite());
+					importOne(tempCollection, jParser);
 				}
 			} else {
 				throw new RuntimeException("A JSON array was expected for entity '" + name + "'");
@@ -164,29 +179,12 @@ public class ImportManager {
 		return name;
 	}
 
-	private void importOne(ImportContext importContext, Collection<Document> tempCollection, JsonParser jParser, boolean overwriteIds)
-			throws JsonParseException, JsonMappingException, IOException {
+	private void importOne(Collection<Document> tempCollection, JsonParser jParser)	throws IOException {
 		Document o = mapper.readValue(jParser, Document.class);
 		// Normalize ID field for previous versions of STEP
 		if (o.containsKey("_id")) {
 			o.put(AbstractOrganizableObject.ID, o.get("_id"));
 			o.remove("_id");
-		}
-		if (!overwriteIds) {
-			// Generate new IDs
-			String origId = o.getId().toHexString();
-			ObjectId objectId;
-			// if the origId was already replaced, use the new one
-			final Map<String, String> references = importContext.getReferences();
-			final Map<String, String> newToOldReferences = importContext.getNewToOldReferences();
-			if (references.containsKey(origId)) {
-				objectId = new ObjectId(references.get(origId));
-			} else {
-				objectId = new ObjectId();
-			}
-			o.setId(objectId);
-			references.put(origId, objectId.toHexString());
-			newToOldReferences.put(objectId.toHexString(), origId);
 		}
 		tempCollection.save(o);
 	}
@@ -199,6 +197,12 @@ public class ImportManager {
 		// Perform migration tasks on temporary collections
 		migrationManager.migrate(tempCollectionFactory, importContext.getVersion(), Version.getCurrentVersion());
 
+		// Replace IDs of all entities if overwriting is disabled
+		boolean generateNewObjectIds = !importConfig.isOverwrite();
+		if (generateNewObjectIds) {
+			replaceIds(importContext, tempCollectionFactory.getCollection(entityName, Document.class));
+		}
+
 		@SuppressWarnings("unchecked")
 		Accessor<AbstractIdentifiableObject> accessor = (Accessor<AbstractIdentifiableObject>) entityByName
 				.getAccessor();
@@ -206,8 +210,8 @@ public class ImportManager {
 				entityByName.getEntityClass());
 		collection.find(Filters.empty(), null, null, null, 0).forEach(document -> {
 			AbstractIdentifiableObject entity = mapper.convertValue(document, entityByName.getEntityClass());
-			if (!importConfig.isOverwrite()) {
-				entityManager.updateReferences(entity, importContext.getReferences());
+			if (generateNewObjectIds) {
+				entityManager.updateReferences(entity, importContext.getReferences(), o -> true);
 			}
 			// save the entity before running the import hooks. this is needed because
 			// the ResourceImporter relies on the ResourceManager that is backed by the
@@ -221,8 +225,7 @@ public class ImportManager {
 		});
 	}
 
-	private void importOlderPlans(ImportConfiguration importConfig, ImportContext importContext)
-			throws InstantiationException, IllegalAccessException, IOException {
+	private void importOlderPlans(ImportConfiguration importConfig, ImportContext importContext) throws IOException {
 		String firstKey = "undef";
 		String firstValue = "undef";
 		// Extract class to determine version
@@ -236,19 +239,16 @@ public class ImportManager {
 		if (firstKey.equals("_class") && !skipEntityType(importConfig.getEntitiesFilter(), EntityManager.plans)) {
 			String collectionName;
 			Version version;
-			boolean overwriteId;
 			if (firstValue.startsWith("step.")) {
 				version = new Version(3, 13, 0);
 				collectionName = "plans";
-				overwriteId = importContext.getImportConfiguration().isOverwrite();
 			} else {
 				version = new Version(3, 12, 0);
 				collectionName = "artefacts";
-				overwriteId = true;
 			}
 			importContext.setVersion(version);
 			logger.info("Importing file: " + importConfig.getFile().getName()
-					+ ". The file has no metadata, version detected: " + version.toString());
+					+ ". The file has no metadata, version detected: " + version);
 
 			Collection<Document> tempCollection = importContext.getTempCollectionFactory().getCollection(collectionName,
 					Document.class);
@@ -257,7 +257,7 @@ public class ImportManager {
 				while ((line = reader.readLine()) != null) {
 					try (JsonParser jParser = mapper.getFactory().createParser(line)) {
 						jParser.nextToken();
-						importOne(importContext, tempCollection, jParser, overwriteId);
+						importOne(tempCollection, jParser);
 					}
 				}
 			}

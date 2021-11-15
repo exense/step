@@ -17,8 +17,7 @@ public class FunctionPackageEntity extends Entity<FunctionPackage,FunctionPackag
 
 		//Add hooks for function entity
 		EntityManager entityManager = context.getEntityManager();
-		Entity<?, ?> functionEntity = entityManager.getEntityByName(EntityManager.functions);
-		functionEntity.addDependencyTreeVisitorHook(functionReferencesHook(entityManager));
+		entityManager.addDependencyTreeVisitorHook(functionReferencesHook(entityManager));
 	}
 
 	private static DependencyTreeVisitorHook functionReferencesHook(EntityManager em) {

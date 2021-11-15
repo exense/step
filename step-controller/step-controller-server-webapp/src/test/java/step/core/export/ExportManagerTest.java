@@ -18,34 +18,16 @@
  ******************************************************************************/
 package step.core.export;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static step.planbuilder.BaseArtefacts.callPlan;
-import static step.planbuilder.BaseArtefacts.sequence;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import ch.exense.commons.io.FileHelper;
 import org.junit.Before;
 import org.junit.Test;
-
-import ch.exense.commons.io.FileHelper;
 import step.artefacts.CallFunction;
 import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
 import step.artefacts.TestSet;
+import step.artefacts.handlers.FunctionLocator;
+import step.artefacts.handlers.PlanLocator;
+import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
 import step.core.Version;
 import step.core.accessors.AbstractAccessor;
@@ -53,6 +35,8 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.artefacts.AbstractArtefact;
 import step.core.collections.inmemory.InMemoryCollection;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
@@ -67,28 +51,36 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.plans.PlanEntity;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 import step.datapool.excel.ExcelDataPool;
+import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.FunctionEntity;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.migration.MigrationManager;
 import step.migration.tasks.MigrateArtefactsToPlans;
 import step.migration.tasks.MigrateAssertNegation;
+import step.migration.tasks.MigrateFunctionCallsById;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
+import step.planbuilder.FunctionArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
 import step.plugins.parametermanager.ParameterManagerControllerPlugin;
-import step.resources.LocalResourceManagerImpl;
-import step.resources.Resource;
-import step.resources.ResourceAccessor;
-import step.resources.ResourceEntity;
-import step.resources.ResourceImporter;
-import step.resources.ResourceManager;
-import step.resources.ResourceRevision;
-import step.resources.ResourceRevisionAccessor;
+import step.resources.*;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.*;
+import static step.planbuilder.BaseArtefacts.callPlan;
+import static step.planbuilder.BaseArtefacts.sequence;
 
 public class ExportManagerTest {
 
@@ -106,12 +98,12 @@ public class ExportManagerTest {
 	public void before() {
 		EncryptionManager encryptionManager = new EncryptionManager() {
 			@Override
-			public String encrypt(String value) throws EncryptionManagerException {
+			public String encrypt(String value) {
 				return "###"+value;
 			}
 			
 			@Override
-			public String decrypt(String encryptedValue) throws EncryptionManagerException {
+			public String decrypt(String encryptedValue) {
 				return encryptedValue.replaceFirst("###", "");
 			}
 			
@@ -134,7 +126,7 @@ public class ExportManagerTest {
 		
 		planAccessor = new InMemoryPlanAccessor();
 		functionAccessor = new InMemoryFunctionAccessorImpl();
-		parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<Parameter>());
+		parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
 		
 		resourceManager = new LocalResourceManagerImpl();
 		resourceAccessor = resourceManager.getResourceAccessor();
@@ -143,13 +135,14 @@ public class ExportManagerTest {
 		entityManager = new EntityManager();
 		
 		FileResolver fileResolver = new FileResolver(resourceManager);
+		SelectorHelper selectorHelper = new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())));
+		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 		entityManager
-				.register(new Entity<Parameter, Accessor<Parameter>>(Parameter.ENTITY_NAME, parameterAccessor, Parameter.class))
-				.register(new Entity<Plan, PlanAccessor>(EntityManager.plans, planAccessor, Plan.class))
-				.register(new Entity<Function, FunctionAccessor>(EntityManager.functions, functionAccessor, Function.class))
-				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver))
-				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions, resourceRevisionAccessor, 
-						ResourceRevision.class));
+				.register(new Entity<>(Parameter.ENTITY_NAME, parameterAccessor, Parameter.class))
+				.register(new PlanEntity(planAccessor, new PlanLocator(planAccessor, selectorHelper), entityManager))
+				.register(new FunctionEntity(functionAccessor, functionLocator, entityManager))
+				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
+				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
 		entityManager.registerExportHook(new ParameterManagerControllerPlugin.ParameterExportBiConsumer());
 		entityManager.registerImportHook(new ParameterManagerControllerPlugin.ParameterImportBiConsumer(encryptionManager));
@@ -158,6 +151,7 @@ public class ExportManagerTest {
 		migrationManager = new MigrationManager();
 		migrationManager.register(MigrateArtefactsToPlans.class);
 		migrationManager.register(MigrateAssertNegation.class);
+		migrationManager.register(MigrateFunctionCallsById.class);
 	}
 	
 	@Test
@@ -174,7 +168,7 @@ public class ExportManagerTest {
 			assertTrue(FileHelper.isArchive(testExportFile));
 			
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of("plans"), true));
 			
 			Plan actualPlan = planAccessor.get(plan.getId());
 			assertEquals(plan.getId(), actualPlan.getId());
@@ -185,7 +179,7 @@ public class ExportManagerTest {
 	}
 
 	private Map<String, String> buildMetadata() {
-		Map<String,String> metadata = new HashMap<String,String>();
+		Map<String,String> metadata = new HashMap<>();
 		metadata.put("version", Version.getCurrentVersion().toString());
 		metadata.put("export-time" , "1589542872475");
 		metadata.put("user", "admin");
@@ -210,7 +204,7 @@ public class ExportManagerTest {
 			assertTrue(FileHelper.isArchive(testExportFile));
 
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList(EntityManager.functions), true));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of(EntityManager.functions), true));
 			functionAccessor.save(function);
 			Function actualFunction = functionAccessor.get(function.getId());
 
@@ -250,7 +244,7 @@ public class ExportManagerTest {
 			exportManager.exportAll(exportConfig);
 			
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of("plans"), true));
 			
 			Plan actualPlan = planAccessor.get(plan.getId());
 			Plan actualPlan2 = planAccessor.get(plan2.getId());
@@ -286,7 +280,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			List<String> additionalEntities = new ArrayList<String>();
+			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
@@ -298,12 +292,12 @@ public class ExportManagerTest {
 
 			EncryptionManager encryptionManager = new EncryptionManager() {
 				@Override
-				public String encrypt(String value) throws EncryptionManagerException {
+				public String encrypt(String value) {
 					return "###"+value;
 				}
 				
 				@Override
-				public String decrypt(String encryptedValue) throws EncryptionManagerException {
+				public String decrypt(String encryptedValue) {
 					return encryptedValue.replaceFirst("###", "");
 				}
 				
@@ -336,10 +330,10 @@ public class ExportManagerTest {
 			assertEquals(savedParamProtected.getId(), actualParamProtected.getId());
 			assertEquals(true, actualParamProtected.getProtectedValue());
 			assertEquals(ParameterManager.RESET_VALUE, actualParamProtected.getValue());
-			assertEquals(null, actualParamProtected.getEncryptedValue());
+			assertNull(actualParamProtected.getEncryptedValue());
 			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
 			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			assertEquals(null, actualParamProtectedEncrypted.getValue());
+			assertNull(actualParamProtectedEncrypted.getValue());
 			assertEquals("###Value", actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
@@ -358,7 +352,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			List<String> additionalEntities = new ArrayList<String>();
+			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
@@ -370,7 +364,7 @@ public class ExportManagerTest {
 			//Override previous encryption manager to simulate new instance
 			EncryptionManager encryptionManagerNewInstance = new EncryptionManager() {
 				@Override
-				public String encrypt(String value) throws EncryptionManagerException {
+				public String encrypt(String value) {
 					return "###"+value;
 				}
 				@Override
@@ -415,7 +409,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			List<String> additionalEntities = new ArrayList<String>();
+			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
@@ -436,7 +430,7 @@ public class ExportManagerTest {
 			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
 			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
 			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
-			assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
+			assertNull(actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
 		}
@@ -452,7 +446,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			List<String> additionalEntities = new ArrayList<String>();
+			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
@@ -471,7 +465,7 @@ public class ExportManagerTest {
 			assertEquals(savedParamProtected.getId(), actualParamProtectedEncrypted.getId());
 			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
 			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
-			assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
+			assertNull(actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
 		}
@@ -484,8 +478,7 @@ public class ExportManagerTest {
 	}
 
 	private void testImportFromOlderVersion(final String testSet01Id, final String testCase01Id,
-			final String composite01Id, final String parameter01Id, String exportFileName) throws InstantiationException,
-			IllegalAccessException, ClassNotFoundException, CircularDependencyException, IOException, Exception {
+			final String composite01Id, final String parameter01Id, String exportFileName) throws Exception {
 		URL resource = getClass().getClassLoader().getResource("./step/core/export/"+exportFileName);
 		File testImportFile = new File(resource.getFile());
 
@@ -541,7 +534,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			List<String> additionalEntities = new ArrayList<String>();
+			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
 			exportManager.exportById(exportConfig, plan.getId().toString());
@@ -575,7 +568,7 @@ public class ExportManagerTest {
 			exportManager.exportById(exportConfig, plan.getId().toString());
 			
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of("plans"), true));
 			
 			Plan actualPlan = planAccessor.get(plan.getId());
 			assertEquals(plan.getId(), actualPlan.getId());
@@ -600,11 +593,13 @@ public class ExportManagerTest {
 		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(sequence()).endBlock().build();
 		planAccessor.save(plan);
 		Function function = new Function();
+		String functionName = UUID.randomUUID().toString();
+		function.addAttribute(AbstractOrganizableObject.NAME, functionName);
 		functionAccessor.save(function);
 		Sequence sequence = sequence();
 		sequence.addChild(callPlan(plan.getId().toString()));
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunctionId(function.getId().toString());
+
+		CallFunction callFunction = FunctionArtefacts.keyword(functionName);
 		sequence.addChild(callFunction);
 		Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(sequence).endBlock().build();
 		planAccessor.save(plan2);
@@ -623,7 +618,7 @@ public class ExportManagerTest {
 			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
 			
 			AtomicInteger nbPlans = new AtomicInteger(0);
-			planAccessor.getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
+			planAccessor.getAll().forEachRemaining(p-> nbPlans.incrementAndGet());
 			AtomicInteger nbFunctions = new AtomicInteger(0);
 			functionAccessor.getAll().forEachRemaining(f->nbFunctions.incrementAndGet());
 			assertEquals(2, nbPlans.intValue());
@@ -662,11 +657,12 @@ public class ExportManagerTest {
 		CompositeFunction function = compositeFunctionType.newFunction();
 		compositeFunctionType.setupFunction(function);
 		String compositePlanId = function.getPlanId();
+		String functionName = UUID.randomUUID().toString();
+		function.addAttribute(AbstractOrganizableObject.NAME, functionName);
 		functionAccessor.save(function);
 		
 		Sequence sequence = sequence();
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunctionId(function.getId().toString());
+		CallFunction callFunction = FunctionArtefacts.keyword(functionName);
 		sequence.addChild(callFunction);
 		Plan plan = PlanBuilder.create().startBlock(sequence()).add(sequence).endBlock().build();
 		planAccessor.save(plan);
@@ -684,7 +680,7 @@ public class ExportManagerTest {
 			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
 			
 			AtomicInteger nbPlans = new AtomicInteger(0);
-			planAccessor.getAll().forEachRemaining(p->{nbPlans.incrementAndGet();});
+			planAccessor.getAll().forEachRemaining(p-> nbPlans.incrementAndGet());
 			AtomicInteger nbFunctions = new AtomicInteger(0);
 			functionAccessor.getAll().forEachRemaining(f->nbFunctions.incrementAndGet());
 			assertEquals(2, nbPlans.intValue());
@@ -726,7 +722,7 @@ public class ExportManagerTest {
 			
 		ForEachBlock f = new ForEachBlock();
 		ExcelDataPool p = new ExcelDataPool();
-		p.setFile(new DynamicValue<String> (FileResolver.RESOURCE_PREFIX + resource.getId().toHexString()));
+		p.setFile(new DynamicValue<> (FileResolver.RESOURCE_PREFIX + resource.getId().toHexString()));
 		p.getHeaders().setValue(true);
 		f.setDataSource(p);
 		f.setDataSourceType("excel");
@@ -757,7 +753,7 @@ public class ExportManagerTest {
 			Plan actualPlan = planAccessor.get(plan.getId());
 
 			AtomicInteger nbPlans = new AtomicInteger(0);
-			planAccessor.getAll().forEachRemaining(pp->{nbPlans.incrementAndGet();});
+			planAccessor.getAll().forEachRemaining(pp-> nbPlans.incrementAndGet());
 			AtomicInteger nbResources = new AtomicInteger(0);
 			resourceAccessor.getAll().forEachRemaining(r->{
 				nbResources.incrementAndGet();
@@ -791,7 +787,7 @@ public class ExportManagerTest {
 				String newResourceId = getResourceIdOfExcelDatapool(newPlan);
 				// Assert that the referenced resource id has been updated properly
 				assertFalse(newResourceId.isBlank());
-				assertFalse(newResourceId.equals(resource.getId().toHexString()));
+				assertNotEquals(newResourceId, resource.getId().toHexString());
 				// Assert that the resource was imported properly under the new id
 				Resource actualResource = resourceManager.getResource(newResourceId);
 				assertNotNull(actualResource);
@@ -806,8 +802,7 @@ public class ExportManagerTest {
 		ForEachBlock forEach = (ForEachBlock)newPlan.getRoot().getChildren().get(0).getChildren().get(0);
 		ExcelDataPool dataPool = (ExcelDataPool) forEach.getDataSource();
 		String newResource = dataPool.getFile().get();
-		String newResourceId = newResource.replace(FileResolver.RESOURCE_PREFIX, "");
-		return newResourceId;
+		return newResource.replace(FileResolver.RESOURCE_PREFIX, "");
 	}
 
 	protected ObjectPredicate dummyObjectPredicate() {
@@ -823,12 +818,13 @@ public class ExportManagerTest {
 		testImport3_12(testImportFile, false);
 	}
 
-	private void testImport3_12(File testImportFile, boolean overwriteIds) throws IOException, Exception {
+	private void testImport3_12(File testImportFile, boolean overwriteIds) throws Exception {
 		//create a new context to test the import
 		ImportManager importManager = createNewContextAndGetImportManager();
-		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), true));
+		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), List.of("plans"), overwriteIds));
 		
 		Plan actualPlan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, "DataSet_while"));
+		assertNotEquals("5c3860fb66d4260008813172", actualPlan.getId().toString());
 		assertEquals(actualPlan, actualPlan);
 		AbstractArtefact root = actualPlan.getRoot();
 		assertEquals("DataSet_while", root.getAttribute(AbstractOrganizableObject.NAME));

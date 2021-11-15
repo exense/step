@@ -32,14 +32,13 @@ public class EntityDependencyTreeVisitorTest {
 		InMemoryAccessor<EntityType1> accessor1 = new InMemoryAccessor<EntityType1>();
 		EntityType1 entity1 = new EntityType1(entity2.getId().toString());
 		accessor1.save(entity1);
-		
-		Entity<EntityType1, InMemoryAccessor<EntityType1>> entityType1 = new Entity<>(
-				ENTITY_TYPE1, accessor1, EntityType1.class).addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
-					@Override
-					public void onVisitEntity(Object t, EntityTreeVisitorContext context) {
-						context.visitEntity(ENTITY_TYPE2, entity2.getId().toString());
-					}
-				});
+
+		entityManager.addDependencyTreeVisitorHook((t, context) -> {
+			if(t instanceof EntityType1) {
+				context.visitEntity(ENTITY_TYPE2, entity2.getId().toString());
+			}
+		});
+		Entity<EntityType1, InMemoryAccessor<EntityType1>> entityType1 = new Entity<>(ENTITY_TYPE1, accessor1, EntityType1.class);
 		
 		entityManager.register(entityType1);
 		entityManager
@@ -54,7 +53,7 @@ public class EntityDependencyTreeVisitorTest {
 					}
 
 				});
-		EntityDependencyTreeVisitor visitor = new EntityDependencyTreeVisitor(entityManager);
+		EntityDependencyTreeVisitor visitor = new EntityDependencyTreeVisitor(entityManager, null);
 		
 		List<String> entityIds = new ArrayList<>();
 		visitor.visitEntityDependencyTree(ENTITY_TYPE1, entity1.getId().toString(), new EntityTreeVisitor() {
@@ -91,7 +90,8 @@ public class EntityDependencyTreeVisitorTest {
 		EntityType1 entity1 = new EntityType1(entity2.getId().toString());
 		accessor1.save(entity1);
 		
-		Entity<EntityType1, InMemoryAccessor<EntityType1>> entityType1 = new Entity<>(ENTITY_TYPE1, accessor1, EntityType1.class).addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
+		Entity<EntityType1, InMemoryAccessor<EntityType1>> entityType1 = new Entity<>(ENTITY_TYPE1, accessor1, EntityType1.class);
+		entityManager.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 			@Override
 			public void onVisitEntity(Object t, EntityTreeVisitorContext context) {
 				context.visitEntity(ENTITY_TYPE2, entity2.getId().toString());
@@ -118,7 +118,7 @@ public class EntityDependencyTreeVisitorTest {
 			
 		});
 		
-		EntityDependencyTreeVisitor visitor = new EntityDependencyTreeVisitor(entityManager);
+		EntityDependencyTreeVisitor visitor = new EntityDependencyTreeVisitor(entityManager, null);
 		
 		ObjectId newId = new ObjectId();
 		String newIdString = newId.toHexString();
