@@ -133,6 +133,9 @@ public class EntityManager  {
 				@Override
 				public String onResolvedEntityId(String entityName, String resolvedEntityId) {
 					String newEntityId = references.get(resolvedEntityId);
+					if(logger.isDebugEnabled()) {
+						logger.debug("Replacing reference to entity: name = " + entityName + " oldReference = " + resolvedEntityId + " newReference = " + newEntityId);
+					}
 					return newEntityId;
 				}
 			});

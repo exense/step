@@ -96,14 +96,13 @@ public class ImportManager {
 							importContext.setVersion(version);
 							importContext.setMetadata(metadata);
 							
-							// First import all entities to the temporary collection
+							// First import all entities to the temporary collections
 							List<String> entityNames = new ArrayList<>();
 							while (jParser.nextToken() != JsonToken.END_OBJECT) {
 								entityNames.add(importEntitiesToTemporaryCollection(importConfig, importContext, jParser));
 							}
 
-							// Then import them from the temporary collection
-							entityNames.forEach(entityName -> importFromTempCollection(importConfig, importContext, entityName));
+							importEntitiesFromTemporaryCollection(importConfig, importContext, entityNames);
 						} else {
 							throw new RuntimeException("Missing metadata in json file");
 						}
@@ -123,7 +122,23 @@ public class ImportManager {
 		}
 	}
 
-	private void replaceIds(ImportContext importContext, Collection<Document> collection) {
+	private void importEntitiesFromTemporaryCollection(ImportConfiguration importConfig, ImportContext importContext, List<String> entityNames) {
+		// Perform migration tasks on temporary collections
+		final FilesystemCollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
+		migrationManager.migrate(tempCollectionFactory, importContext.getVersion(), Version.getCurrentVersion());
+
+		// Replace IDs of all entities if overwriting is disabled
+		boolean generateNewObjectIds = !importConfig.isOverwrite();
+		if (generateNewObjectIds) {
+			entityNames.forEach(entityName -> replaceIds(importContext, entityName));
+		}
+
+		// Then import them from the temporary collection
+		entityNames.forEach(entityName -> importFromTempCollection(importContext, entityName, generateNewObjectIds));
+	}
+
+	private void replaceIds(ImportContext importContext, String entityName) {
+		Collection<Document> collection = importContext.getTempCollectionFactory().getCollection(entityName, Document.class);
 		final Map<String, String> references = importContext.getReferences();
 		final Map<String, String> newToOldReferences = importContext.getNewToOldReferences();
 		collection.find(Filters.empty(), null, null, null, 0).forEach(entity -> {
@@ -134,6 +149,9 @@ public class ImportManager {
 				objectId = new ObjectId(references.get(origId));
 			} else {
 				objectId = new ObjectId();
+				if(logger.isDebugEnabled()) {
+					logger.debug("Replacing id of entity: entityName = " + entityName + ", previousId = " + origId + ", newId = " + objectId);
+				}
 			}
 			entity.setId(objectId);
 			references.put(origId, objectId.toHexString());
@@ -189,29 +207,22 @@ public class ImportManager {
 		tempCollection.save(o);
 	}
 
-	private void importFromTempCollection(ImportConfiguration importConfig, ImportContext importContext,
-			String entityName) {
+	private void importFromTempCollection(ImportContext importContext, String entityName, boolean generateNewObjectIds) {
 		Entity<?, ?> entityByName = entityManager.getEntityByName(entityName);
-		
-		final FilesystemCollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
-		// Perform migration tasks on temporary collections
-		migrationManager.migrate(tempCollectionFactory, importContext.getVersion(), Version.getCurrentVersion());
-
-		// Replace IDs of all entities if overwriting is disabled
-		boolean generateNewObjectIds = !importConfig.isOverwrite();
-		if (generateNewObjectIds) {
-			replaceIds(importContext, tempCollectionFactory.getCollection(entityName, Document.class));
-		}
 
 		@SuppressWarnings("unchecked")
 		Accessor<AbstractIdentifiableObject> accessor = (Accessor<AbstractIdentifiableObject>) entityByName
 				.getAccessor();
-		Collection<?> collection = tempCollectionFactory.getCollection(entityByName.getName(),
+		Collection<?> collection = importContext.getTempCollectionFactory().getCollection(entityByName.getName(),
 				entityByName.getEntityClass());
 		collection.find(Filters.empty(), null, null, null, 0).forEach(document -> {
 			AbstractIdentifiableObject entity = mapper.convertValue(document, entityByName.getEntityClass());
 			if (generateNewObjectIds) {
+				if(logger.isDebugEnabled()) {
+					logger.debug("Updating references for entity: entityName = " + entityName + ", id " + entity.getId());
+				}
 				entityManager.updateReferences(entity, importContext.getReferences(), o -> true);
+
 			}
 			// save the entity before running the import hooks. this is needed because
 			// the ResourceImporter relies on the ResourceManager that is backed by the
@@ -262,7 +273,7 @@ public class ImportManager {
 				}
 			}
 
-			importFromTempCollection(importConfig, importContext, EntityManager.plans);
+			importEntitiesFromTemporaryCollection(importConfig, importContext, List.of(EntityManager.plans));
 		} else {
 			logger.error("Import failed, the first property was unexpected '" + firstKey + "':'" + firstValue + "'");
 			throw new RuntimeException("Import failed, the first property was unexpected '" + firstKey + "':'"
