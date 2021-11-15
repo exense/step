@@ -91,7 +91,7 @@
 			"controller-dockerfile",
 			"public",
 			"NOT_USED",
-			"agent-dockerfile",
+			"agent-new-dockerfile",
 			"public"
     	]
 	},
