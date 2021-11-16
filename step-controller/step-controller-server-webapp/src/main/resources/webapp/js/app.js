@@ -503,10 +503,17 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	$scope.save = function () {
 		if($scope.repeatPwd!=$scope.model.newPwd) {
-			$scope.error = "New passwords don't match"
+			$scope.error = "Passwords don't match, please try again."
 		} else {
-			$http.post("rest/admin/myaccount/changepwd",$scope.model).then(function() {
-				$uibModalInstance.close();
+			$http.post("rest/admin/myaccount/changepwd",$scope.model).then(function(response) {
+			    console.log("changepwd returned response: "+ JSON.stringify(response));
+
+			    if (response.data.status == "KO") {
+			        $scope.error = "Password could not be changed: " + response.data.message;
+			    } else {
+			        // all good. notify user that password was changed?
+				    $uibModalInstance.close();
+			    }
 			},function() {
 				$scope.error = "Unable to change password. Please contact your administrator.";
 			});

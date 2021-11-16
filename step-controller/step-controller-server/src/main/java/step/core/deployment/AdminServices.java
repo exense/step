@@ -37,6 +37,8 @@ import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
+import step.core.security.password.PasswordPolicies;
+import step.core.security.password.PasswordPolicyViolation;
 
 @Singleton
 @Path("admin")
@@ -93,14 +95,14 @@ public class AdminServices extends AbstractServices {
 	public List<User> getUserList() {
 		return getContext().getUserAccessor().getAllUsers();
 	}
-	
-	public static class ChangePwdRequest {
-		
+
+	public static class ChangePasswordRequest {
+
 		private String oldPwd;
-		
+
 		private String newPwd;
 
-		public ChangePwdRequest() {
+		public ChangePasswordRequest() {
 			super();
 		}
 
@@ -120,7 +122,24 @@ public class AdminServices extends AbstractServices {
 			this.newPwd = newPwd;
 		}
 	}
-	
+
+	public static class ChangePasswordResponse {
+		public String status;
+		public String message;
+
+		/* password change rejected with given error message */
+		public ChangePasswordResponse(String errorMessage) {
+			this.status = "KO";
+			this.message = errorMessage;
+		}
+
+		/* password change accepted */
+		public ChangePasswordResponse() {
+			this.status = "OK";
+			this.message = "Password changed";
+		}
+	}
+
 	@GET
 	@Path("/maintenance/message")
 	public String getMaintenanceMessage() {
@@ -145,7 +164,7 @@ public class AdminServices extends AbstractServices {
 	@Path("/maintenance/message/toggle")
 	public boolean getMaintenanceMessageToggle() {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_TOGGLE_KEY);
-		return setting!=null?Boolean.parseBoolean(setting.getValue()):false;
+		return setting != null && Boolean.parseBoolean(setting.getValue());
 	}
 	
 	@POST
@@ -164,14 +183,34 @@ public class AdminServices extends AbstractServices {
 	@POST
 	@Secured
 	@Path("/myaccount/changepwd")
-	public void resetMyPassword(ChangePwdRequest request) {
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public ChangePasswordResponse changePassword(ChangePasswordRequest request) {
 		User user = getCurrentUser();
-		if(user!=null) {
-			user.setPassword(authenticationManager.encryptPwd(request.getNewPwd()));
-			user.addCustomField("otp", false);
-			getContext().getUserAccessor().save(user);
-			getSession().setUser(user);
+		if (user == null) {
+			// should never happen
+			return new ChangePasswordResponse("Unable to determine user");
 		}
+
+		String password = request.getNewPwd();
+
+		PasswordPolicies policies = new PasswordPolicies(configuration);
+
+		try {
+			policies.verifyPassword(password);
+		} catch (PasswordPolicyViolation v) {
+			AuditLogger.logPasswordEvent("Password change failed (password policy violation)", user.getUsername());
+			return new ChangePasswordResponse(v.getMessage());
+		}
+
+		// If no exception was thrown until here, the password change is accepted
+		user.setPassword(authenticationManager.encryptPwd(request.getNewPwd()));
+		user.addCustomField("otp", false);
+		getContext().getUserAccessor().save(user);
+		getSession().setUser(user);
+
+		AuditLogger.logPasswordEvent("Password changed", user.getUsername());
+		return new ChangePasswordResponse();
 	}
 
 	protected User getCurrentUser() {
@@ -183,8 +222,7 @@ public class AdminServices extends AbstractServices {
 	@Path("/myaccount")
 	@Produces(MediaType.APPLICATION_JSON)
 	public User getMyUser() {
-		User user = getCurrentUser();
-		return user;
+		return getCurrentUser();
 	}
 		
 	@GET
@@ -235,6 +273,7 @@ public class AdminServices extends AbstractServices {
 		getContext().getUserAccessor().save(user);
 		Password password = new Password();
 		password.setPassword(pwd);
+		AuditLogger.logPasswordEvent("Password reset", username);
 		return password;
 	}
 	

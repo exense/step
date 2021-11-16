@@ -12,8 +12,8 @@ import java.util.Objects;
 import static step.core.deployment.AbstractServices.SESSION;
 
 public class AuditLogger {
-    private static Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static void logResponse(HttpServletRequest req, int status) {
         if ((auditLogger.isTraceEnabled() || req.getRequestURI().equals("/rest/access/login")) &&
@@ -24,7 +24,7 @@ public class AuditLogger {
     
     public static void log(HttpServletRequest req, int status) {
         String log = getLogMessage(req, status);
-        if (status <=200 && status < 400){
+        if (status < 400){
             auditLogger.info(log);
         } else {
             auditLogger.warn(log);
@@ -39,11 +39,14 @@ public class AuditLogger {
         msg.req = "Session invalidation";
         msg.sesId = httpSession.getId();
         msg.user = user;
-        try {
-            auditLogger.info(objectMapper.writeValueAsString(msg));
-        } catch (JsonProcessingException e) {
-            auditLogger.info("Message could not be serialized for " + msg);
-        }
+        auditLogger.info(msg.toLogString());
+    }
+
+    public static void logPasswordEvent(String description, String user) {
+        AuditMessage msg = new AuditMessage();
+        msg.req = description;
+        msg.user = user;
+        auditLogger.info(msg.toLogString());
     }
     
     private static String getLogMessage(HttpServletRequest req, int status)  {
@@ -62,11 +65,8 @@ public class AuditLogger {
         msg.user = user;
         msg.agent = req.getHeader("User-Agent");
         msg.sc = status;
-        try {
-            return objectMapper.writeValueAsString(msg);
-        } catch (JsonProcessingException e) {
-            return "Message could not be serialized for " + msg;
-        }
+
+        return msg.toLogString();
     }
     
     public static class AuditMessage {
@@ -137,6 +137,14 @@ public class AuditLogger {
                     ", agent='" + agent + '\'' +
                     ", sc=" + sc +
                     '}';
+        }
+
+        public String toLogString() {
+            try {
+                return objectMapper.writeValueAsString(this);
+            } catch (JsonProcessingException e) {
+                return "Message could not be serialized for " + this;
+            }
         }
     }
 
