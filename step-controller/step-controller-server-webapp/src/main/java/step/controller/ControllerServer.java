@@ -20,12 +20,24 @@ package step.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.LogManager;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
+import io.swagger.v3.jaxrs2.integration.JaxrsOpenApiContextBuilder;
+import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
+import io.swagger.v3.oas.integration.OpenApiConfigurationException;
+import io.swagger.v3.oas.integration.SwaggerConfiguration;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -214,7 +226,7 @@ public class ControllerServer {
 				}
 			}
 		});
-		
+
 		resourceConfig.register(JacksonMapperProvider.class);
 		resourceConfig.register(MultiPartFeature.class);
 		
@@ -269,10 +281,45 @@ public class ControllerServer {
 				AuditLogger.logSessionInvalidation(httpSessionEvent.getSession());
 			}
 		});
-        
+
+		setupSwagger(resourceConfig);
+
 		addHandler(context);
 	}
-	
+
+	private void setupSwagger(ResourceConfig resourceConfig) {
+		OpenAPI oas = new OpenAPI();
+		Info info = new Info()
+				.title("step API")
+				.description("")
+				.contact(new Contact()
+						.email("support@exense.ch"))
+				.license(new License()
+						.name("GNU Affero General Public License")
+						.url("http://www.gnu.org/licenses/agpl-3.0.de.html"));
+
+		oas.info(info);
+
+		oas.servers(List.of(new io.swagger.v3.oas.models.servers.Server().url("/rest")));
+		// SecurityScheme api-key
+		SecurityScheme securitySchemeApiKey = new SecurityScheme();
+		securitySchemeApiKey.setName("api-key");
+		securitySchemeApiKey.setType(SecurityScheme.Type.APIKEY);
+		securitySchemeApiKey.setIn(SecurityScheme.In.HEADER);
+
+		OpenApiResource openApiResource = new OpenApiResource();
+
+		oas.schemaRequirement(securitySchemeApiKey.getName(), securitySchemeApiKey);
+		//oas.servers(List.of(new io.swagger.v3.oas.models.servers.Server().url()))
+
+		SwaggerConfiguration oasConfig = new SwaggerConfiguration()
+				.openAPI(oas)
+				.prettyPrint(true);
+
+		openApiResource.setOpenApiConfiguration(oasConfig);
+		resourceConfig.register(openApiResource);
+	}
+
 	private synchronized void addHandler(Handler handler) {
 		handlers.addHandler(handler);
 	}
