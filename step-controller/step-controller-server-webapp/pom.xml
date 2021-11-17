@@ -146,6 +146,7 @@
 				<executions>
 					<execution>
 						<id>swagger-ui</id>
+						<phase>generate-sources</phase>
 						<goals>
 							<goal>wget</goal>
 						</goals>
@@ -164,7 +165,7 @@
 				<executions>
 					<execution>
 						<id>copy-resources</id>
-						<phase>validate</phase>
+						<phase>generate-sources</phase>
 						<goals>
 							<goal>copy-resources</goal>
 						</goals>
