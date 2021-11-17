@@ -34,6 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
@@ -50,6 +51,7 @@ import step.resources.ResourceRevisionContainer;
 
 @Singleton
 @Path("staging")
+@Hidden
 public class StagingRepositoryServices extends AbstractServices {
 	
 	protected StagingContextAccessorImpl stagingContextAccessor ;

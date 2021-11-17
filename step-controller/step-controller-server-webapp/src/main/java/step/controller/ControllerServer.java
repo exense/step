@@ -248,7 +248,7 @@ public class ControllerServer {
 			}
 		});
 		
-		resourceConfig.registerClasses(VizServlet.class);
+		//resourceConfig.registerClasses(VizServlet.class);
 		
 		GenericVizAccessor accessor = new GenericVizAccessor(controller.getContext().getCollectionFactory());
 		resourceConfig.register(new AbstractBinder() {
@@ -290,7 +290,7 @@ public class ControllerServer {
 	private void setupSwagger(ResourceConfig resourceConfig) {
 		OpenAPI oas = new OpenAPI();
 		Info info = new Info()
-				.title("step API")
+				.title("step Controller REST API")
 				.description("")
 				.contact(new Contact()
 						.email("support@exense.ch"))

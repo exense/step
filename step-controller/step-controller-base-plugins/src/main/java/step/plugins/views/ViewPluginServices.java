@@ -26,10 +26,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import step.core.deployment.AbstractServices;
 
 @Singleton
 @Path("/views")
+@Hidden
 public class ViewPluginServices extends AbstractServices {
 
 	private ViewManager viewManager;

@@ -31,6 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.access.AuthenticationManager;
 import step.core.access.Preferences;
 import step.core.access.User;
@@ -42,6 +43,7 @@ import step.core.security.password.PasswordPolicyViolation;
 
 @Singleton
 @Path("admin")
+@Tag(name = "Admin")
 public class AdminServices extends AbstractServices {
 	
 	protected ControllerSettingAccessor controllerSettingsAccessor;

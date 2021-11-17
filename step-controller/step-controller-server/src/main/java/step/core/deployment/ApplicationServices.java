@@ -26,10 +26,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.plugins.WebPlugin;
 
 @Singleton
 @Path("/app")
+@Hidden
 public class ApplicationServices extends AbstractServices {
 
 	@GET

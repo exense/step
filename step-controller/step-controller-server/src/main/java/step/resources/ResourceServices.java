@@ -35,6 +35,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -46,6 +47,7 @@ import step.core.deployment.Secured;
 import step.core.objectenricher.ObjectEnricher;
 
 @Path("/resources")
+@Tag(name = "Resources")
 public class ResourceServices extends AbstractServices { 
 
 	protected ResourceManager resourceManager;

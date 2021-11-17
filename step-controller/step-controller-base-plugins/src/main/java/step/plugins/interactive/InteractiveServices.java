@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.interactive;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.artefacts.ArtefactQueue;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
@@ -71,6 +72,7 @@ import java.util.concurrent.*;
 
 @Singleton
 @Path("interactive")
+@Tag(name = "Interactive plan execution")
 public class InteractiveServices extends AbstractServices {
 
 	private final Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();

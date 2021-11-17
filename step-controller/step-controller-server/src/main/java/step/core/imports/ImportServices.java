@@ -32,6 +32,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.attachments.FileResolver;
 import step.attachments.FileResolver.FileHandle;
 import step.core.GlobalContext;
@@ -41,6 +42,7 @@ import step.migration.MigrationManager;
 
 @Singleton
 @Path("import")
+@Tag(name = "Imports")
 public class ImportServices extends AbstractServices {
 	
 	private FileResolver fileResolver;

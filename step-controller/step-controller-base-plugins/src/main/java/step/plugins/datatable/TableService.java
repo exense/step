@@ -47,6 +47,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +76,7 @@ import step.resources.ResourceRevisionContainer;
 
 @Singleton
 @Path("table")
+@Tag(name = "Tables")
 public class TableService extends ApplicationServices {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TableService.class);

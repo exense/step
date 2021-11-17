@@ -36,6 +36,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
@@ -50,6 +51,7 @@ import step.core.objectenricher.ObjectPredicateFactory;
 
 @Singleton
 @Path("screens")
+@Tag(name = "Screens")
 public class ScreenTemplateService extends AbstractServices {
 	
 	protected AccessManager accessManager;

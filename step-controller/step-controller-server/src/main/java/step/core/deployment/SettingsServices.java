@@ -23,11 +23,13 @@ import javax.inject.Singleton;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 
 @Singleton
 @Path("settings")
+@Tag(name = "Settings")
 public class SettingsServices extends AbstractServices {
 	
 	protected ControllerSettingAccessor controllerSettingsAccessor;

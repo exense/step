@@ -20,10 +20,12 @@ package step.controller.grid.services;
 
 import javax.ws.rs.Path;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.deployment.Secured;
 
 @Secured(right="kw-")
 @Path("/functions")
+@Tag(name = "Keywords")
 public class FunctionServices extends AbtractFunctionServices {
 
 

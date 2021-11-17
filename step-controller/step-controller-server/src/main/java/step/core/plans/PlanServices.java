@@ -35,6 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.artefacts.CallPlan;
@@ -51,6 +52,7 @@ import step.core.objectenricher.ObjectPredicateFactory;
 
 @Singleton
 @Path("plans")
+@Tag(name = "Plans")
 public class PlanServices extends AbstractServices {
 
 	protected PlanAccessor planAccessor;
@@ -64,10 +66,9 @@ public class PlanServices extends AbstractServices {
 		planTypeRegistry = getContext().get(PlanTypeRegistry.class);
 		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
 	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	//@Unfiltered
 	@Secured(right="plan-write")
 	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
 		PlanType<Plan> planType = planTypeRegistry.getPlanType(type);
@@ -75,7 +76,7 @@ public class PlanServices extends AbstractServices {
 		getObjectEnricher().accept(plan);
 		return plan;
 	}
-	
+
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -91,7 +92,7 @@ public class PlanServices extends AbstractServices {
 	public Plan get(@PathParam("id") String id) {
 		return planAccessor.get(id);
 	}
-	
+
 	@GET
 	@Path("/{id}/compile")
 	@Produces(MediaType.APPLICATION_JSON)

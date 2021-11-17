@@ -30,6 +30,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.artefacts.reports.TestCaseReportNode;
 import step.common.managedoperations.Operation;
 import step.common.managedoperations.OperationDetails;
@@ -42,6 +43,7 @@ import step.core.plans.Plan;
 import step.plugins.executiontypes.TestSetExecutionType;
 
 @Path("/threadmanager")
+@Tag(name = "System")
 public class ThreadManagerServices extends AbstractServices {
 
 	private ThreadManager threadManager;

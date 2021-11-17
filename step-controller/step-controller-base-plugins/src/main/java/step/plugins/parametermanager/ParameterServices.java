@@ -36,6 +36,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.commons.activation.Expression;
@@ -51,6 +53,7 @@ import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
 
 @Path("/parameters")
+@Tag(name = "Parameters")
 public class ParameterServices extends AbstractServices {
 	
 	private AccessManager accessManager;

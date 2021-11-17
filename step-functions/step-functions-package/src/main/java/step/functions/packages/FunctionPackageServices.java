@@ -14,6 +14,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,7 @@ import step.core.deployment.Secured;
 import step.functions.Function;
 
 @Path("/functionpackages")
+@Tag(name = "Keyword packages")
 public class FunctionPackageServices extends AbstractServices {
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionPackageServices.class);

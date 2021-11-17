@@ -35,6 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.core.artefacts.reports.ReportNode;
@@ -49,6 +50,7 @@ import step.core.repositories.RepositoryObjectReference;
 
 @Singleton
 @Path("executions")
+@Tag(name = "Executions")
 public class ExecutionServices extends AbstractServices {
 
 	protected ExecutionAccessor executionAccessor;

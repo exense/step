@@ -34,6 +34,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Context;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,7 @@ import static step.core.authentication.JWTSettings.CONFIG_KEY_JWT_NOLOGIN;
 
 @Singleton
 @Path("/access")
+@Tag(name = "Access")
 public class AccessServices extends AbstractServices {
 	private static Logger logger = LoggerFactory.getLogger(AccessServices.class);
 	

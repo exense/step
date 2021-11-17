@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.type.CollectionType;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.client.collections.remote.CountRequest;
 import step.client.collections.remote.CountResponse;
 import step.client.collections.remote.FindRequest;
@@ -35,6 +36,7 @@ import step.core.entities.EntityManager;
 
 @Singleton
 @Path("remote")
+@Tag(name = "Collections")
 public class RemoteCollectionServices<T> extends AbstractServices {
 
     protected CollectionFactory collectionFactory;

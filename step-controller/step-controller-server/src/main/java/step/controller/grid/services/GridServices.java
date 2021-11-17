@@ -39,6 +39,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
 import step.grid.GridImpl;
@@ -48,6 +49,7 @@ import step.grid.TokenWrapperState;
 import step.grid.reports.TokenGroupCapacity;
 
 @Path("/grid")
+@Tag(name = "Grid")
 public class GridServices extends AbstractServices {
 
 	protected GridImpl grid;

@@ -40,6 +40,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
@@ -58,6 +59,7 @@ import step.engine.execution.ExecutionLifecycleManager;
 
 @Singleton
 @Path("controller")
+@Tag(name = "Controller")
 public class ControllerServices extends AbstractServices {
 	
 	private ArtefactHandlerRegistry artefactHandlerRegistry;

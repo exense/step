@@ -34,6 +34,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
@@ -49,6 +50,7 @@ import step.resources.ResourceRevisionContainer;
 
 @Singleton
 @Path("export")
+@Tag(name = "Exports")
 public class ExportServices extends AbstractServices {
 	
 	ExportManager exportManager;
