@@ -13,10 +13,13 @@ public class RequireUpperCasePolicy extends RegexPolicy {
     }
 
     @Override
-    public void verify(String password) throws PasswordPolicyViolation {
-        if (!matches(password)) {
-            throw new PasswordPolicyViolation("The password must contain at least one uppercase character");
-        }
+    protected String getExceptionReason() {
+        return "The password must contain at least one uppercase character";
+    }
+
+    @Override
+    protected String getDescription() {
+        return "at least one uppercase character";
     }
 
     public static Optional<PasswordPolicy> from(Configuration configuration) {

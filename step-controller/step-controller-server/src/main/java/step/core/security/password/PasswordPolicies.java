@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class PasswordPolicies {
-    private final List<PasswordPolicy> implementations;
+    private final List<PasswordPolicy> activePolicies;
 
     public PasswordPolicies(Configuration configuration) {
         List<Optional<PasswordPolicy>> policies = List.of(
@@ -18,12 +18,16 @@ public class PasswordPolicies {
                 RequireSpecialCharacterPolicy.from(configuration)
         );
 
-        implementations = policies.stream().filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        activePolicies = policies.stream().filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
     }
 
     public void verifyPassword(String password) throws PasswordPolicyViolation {
-        for (PasswordPolicy policy: implementations) {
+        for (PasswordPolicy policy: activePolicies) {
             policy.verify(password);
         }
+    }
+
+    public List<PasswordPolicyDescriptor> getPolicyDescriptors() {
+        return activePolicies.stream().map(PasswordPolicy::getDescriptor).collect(Collectors.toList());
     }
 }

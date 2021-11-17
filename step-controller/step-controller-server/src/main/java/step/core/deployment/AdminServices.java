@@ -39,6 +39,7 @@ import step.core.access.UserAccessor;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.security.password.PasswordPolicies;
+import step.core.security.password.PasswordPolicyDescriptor;
 import step.core.security.password.PasswordPolicyViolation;
 
 @Singleton
@@ -181,7 +182,15 @@ public class AdminServices extends AbstractServices {
 		setting.setValue(Boolean.toString(enabled));
 		controllerSettingsAccessor.save(setting);
 	}
-	
+
+	@GET
+	@Secured
+	@Path("/security/passwordpolicies")
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<PasswordPolicyDescriptor> getPasswordPolicies() {
+		return new PasswordPolicies(configuration).getPolicyDescriptors();
+	}
+
 	@POST
 	@Secured
 	@Path("/myaccount/changepwd")

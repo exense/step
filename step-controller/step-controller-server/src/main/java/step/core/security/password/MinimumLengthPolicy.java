@@ -4,24 +4,28 @@ import ch.exense.commons.app.Configuration;
 
 import java.util.Optional;
 
-public class MinimumLengthPolicy extends PasswordPolicy {
+public class MinimumLengthPolicy extends RegexPolicy {
     private static final String KEY_MINIMUM_LENGTH = "minimumLength";
 
     private final int minimumLength;
 
     @Override
-    public void verify(String password) throws PasswordPolicyViolation {
-        if (password == null || password.length() < minimumLength) {
-            throw new PasswordPolicyViolation("The password must have a length of at least " + minimumLength + " characters");
-        }
+    protected String getExceptionReason() {
+        return "The password must have a length of at least " + minimumLength + " characters";
+    }
+
+    @Override
+    protected String getDescription() {
+        return "at least " + minimumLength + " characters";
     }
 
     public static Optional<PasswordPolicy> from(Configuration configuration) {
         Integer value = configuration.getPropertyAsInteger(getConfigurationKey(KEY_MINIMUM_LENGTH), null);
-        return Optional.ofNullable(value != null ? new MinimumLengthPolicy(value) : null);
+        return Optional.ofNullable(value != null ? new MinimumLengthPolicy(Math.max(0, value)) : null);
     }
 
     public MinimumLengthPolicy(int minimumLength) {
+        super(".{" + minimumLength + ",}");
         this.minimumLength = minimumLength;
     }
 }

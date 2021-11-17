@@ -8,4 +8,6 @@ public abstract class PasswordPolicy {
     }
 
     public abstract void verify(String password) throws PasswordPolicyViolation;
+
+    public abstract PasswordPolicyDescriptor getDescriptor();
 }

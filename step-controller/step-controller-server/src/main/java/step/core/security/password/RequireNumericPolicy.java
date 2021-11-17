@@ -12,10 +12,13 @@ public class RequireNumericPolicy extends RegexPolicy {
     }
 
     @Override
-    public void verify(String password) throws PasswordPolicyViolation {
-        if (!matches(password)) {
-            throw new PasswordPolicyViolation("The password must contain at least one numeric character");
-        }
+    protected String getExceptionReason() {
+        return "The password must contain at least one numeric character";
+    }
+
+    @Override
+    protected String getDescription() {
+        return "at least one numeric character";
     }
 
     public static Optional<PasswordPolicy> from(Configuration configuration) {
