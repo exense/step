@@ -107,6 +107,10 @@ angular.module('angularResizable', [])
                     document.removeEventListener('touchend', dragEnd, false);
                     document.removeEventListener('touchmove', dragging, false);
                     element.removeClass('no-transition');
+                    const iframes = document.getElementsByTagName('iframe');
+                    for (const iframe of iframes) {
+                        iframe.style['pointer-events'] = 'auto';
+                    }
                 };
                 var dragStart = function(e, direction) {
                     dragDir = direction;
@@ -118,6 +122,12 @@ angular.module('angularResizable', [])
                     
                     //prevent transition while dragging
                     element.addClass('no-transition');
+
+                    //prevent all click events for iframes - else the drag would behave weirdly when hovering over iframe
+                    const iframes = document.getElementsByTagName('iframe');
+                    for (const iframe of iframes) {
+                        iframe.style['pointer-events'] = 'none';
+                    }
 
                     document.addEventListener('mouseup', dragEnd, false);
                     document.addEventListener('mousemove', dragging, false);
