@@ -900,3 +900,21 @@ fieldset {
     background-color: #337ab7;
     border-color: #337ab7;
 }
+
+.password-hint .valid {
+	color: #0c7311;
+}
+.password-hint .invalid {
+	color: #6F1400;
+}
+
+.password-hint li {
+	list-style-type: none;
+}
+
+.password-hint li.valid:before {
+	content: '✔'; margin-left: -20px; margin-right: 5px;
+}
+.password-hint li.invalid:before {
+	content: '✖'; margin-left: -20px; margin-right: 5px;
+}

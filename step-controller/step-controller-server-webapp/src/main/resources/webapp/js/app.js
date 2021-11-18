@@ -501,6 +501,14 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	$scope.model = {newPwd:""};
 	$scope.repeatPwd = ""
 
+	$http.get("rest/admin/security/passwordpolicies").then(function ({data}) {
+		if (data.length > 0) {
+			$scope.passwordScheme = data.map(element => {
+				return {rule: new RegExp('^(?=' + element.rule + ')'), description: element.description}
+			});
+		}
+	});
+
 	$scope.save = function () {
 		if($scope.repeatPwd!=$scope.model.newPwd) {
 			$scope.error = "Passwords don't match, please try again."
