@@ -4,7 +4,7 @@ import ch.exense.commons.app.Configuration;
 
 import java.util.Optional;
 
-public class RequireNumericPolicy extends RegexPolicy {
+public class RequireNumericPolicy extends RegexPasswordPolicy {
     private static final String KEY_ENABLED = "requireNumeric";
 
     public RequireNumericPolicy() {

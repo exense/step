@@ -4,7 +4,7 @@ import ch.exense.commons.app.Configuration;
 
 import java.util.Optional;
 
-public class RequireUpperCasePolicy extends RegexPolicy {
+public class RequireUpperCasePolicy extends RegexPasswordPolicy {
     private static final String KEY_ENABLED = "requireUpperCase";
 
 

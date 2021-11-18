@@ -1,10 +1,10 @@
 package step.core.security.password;
 
-public abstract class RegexPolicy extends PasswordPolicy {
+public abstract class RegexPasswordPolicy extends PasswordPolicy {
 
     private final String regex;
 
-    public RegexPolicy(String regex) {
+    public RegexPasswordPolicy(String regex) {
         this.regex = regex;
     }
 

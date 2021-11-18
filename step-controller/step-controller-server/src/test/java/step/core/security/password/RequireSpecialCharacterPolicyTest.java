@@ -9,7 +9,21 @@ public class RequireSpecialCharacterPolicyTest {
     }
 
     @Test
-    public void testSpecialCharacterPolicyMet() throws Exception{
-        new RequireSpecialCharacterPolicy("!@#$%&*").verify("a*&b%c$d#@e!");
+    public void testSpecialCharacterPolicyMetSimple() throws Exception{
+        new RequireSpecialCharacterPolicy("!@#$%&*").verify("*");
+        new RequireSpecialCharacterPolicy("\\").verify("\\");
+        new RequireSpecialCharacterPolicy("[").verify("[");
     }
+
+    @Test
+    public void testSpecialCharacterPolicyMetExtended() throws Exception{
+        new RequireSpecialCharacterPolicy("Ä").verify("Ä");
+        new RequireSpecialCharacterPolicy("ß").verify("ß");
+    }
+
+    @Test
+    public void testSpecialCharacterPolicyMetUnicode() throws Exception{
+        new RequireSpecialCharacterPolicy("✔").verify("✔");
+    }
+
 }

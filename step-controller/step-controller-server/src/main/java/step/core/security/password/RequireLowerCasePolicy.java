@@ -4,7 +4,7 @@ import ch.exense.commons.app.Configuration;
 
 import java.util.Optional;
 
-public class RequireLowerCasePolicy extends RegexPolicy {
+public class RequireLowerCasePolicy extends RegexPasswordPolicy {
     private static final String KEY_ENABLED = "requireLowerCase";
 
     public RequireLowerCasePolicy() {

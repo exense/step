@@ -4,7 +4,7 @@ import ch.exense.commons.app.Configuration;
 
 import java.util.Optional;
 
-public class MinimumLengthPolicy extends RegexPolicy {
+public class MinimumLengthPolicy extends RegexPasswordPolicy {
     private static final String KEY_MINIMUM_LENGTH = "minimumLength";
 
     private final int minimumLength;
