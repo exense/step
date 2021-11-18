@@ -101,8 +101,8 @@ public class MigrateFunctionCallsById extends MigrationTask {
         }
         List<DocumentObject> children = tree.getArray("children");
         if(children != null) {
-            boolean childrenChanged = children.stream().map(this::handleArtefactTreeNode).anyMatch(r -> r);
-            if (childrenChanged) {
+            int countOfChildrenChanged = children.stream().map(this::handleArtefactTreeNode).map(r -> r ? 1:0).reduce(0, Integer::sum);
+            if (countOfChildrenChanged > 0) {
                 changed = true;
             }
         }
