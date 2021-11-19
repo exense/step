@@ -165,7 +165,9 @@ public class ExecutionEngine {
 			if(parentContext != null) {
 				executionEngineContext.useAllAttributesFromParentContext(parentContext);
 			}
-			executionEngineContext.put(ObjectHookRegistry.class, objectHookRegistry);
+			if(objectHookRegistry != null) {
+				executionEngineContext.put(ObjectHookRegistry.class, objectHookRegistry);
+			}
 			ExecutionEnginePlugin plugins = pluginManager.getProxy();
 			plugins.initializeExecutionEngineContext(parentContext, executionEngineContext);
 			
