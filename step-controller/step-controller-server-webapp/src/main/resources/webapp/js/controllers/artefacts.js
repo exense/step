@@ -510,7 +510,7 @@ angular.module('artefacts',['step'])
   }
 })
 .controller('ArtefactSelectionCtrl' , function($scope, $http, artefactTypes) {
-  $http.get("rest/controller/artefact/types").then(function(response){ 
+  $http.get("rest/plans/artefact/types").then(function(response){
     $scope.artefacts = _.filter(_.map(response.data, function(e) {return {name:e}}), function(artefact) {
       return artefactTypes.isSelectable(artefact.name)
     });

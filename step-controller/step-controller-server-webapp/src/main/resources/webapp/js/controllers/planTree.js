@@ -432,7 +432,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
           $http.get("rest/functions/"+id).then(function(response) {
             var function_ = response.data;
     
-            $http.get("rest/controller/artefact/types/CallKeyword").then(function(response) {
+            $http.get("rest/plans/artefact/types/CallKeyword").then(function(response) {
               ScreenTemplates.getScreenInputsByScreenId('functionTable').then(inputs => {
                 var newArtefact = response.data;
                 newArtefact.attributes.name = function_.attributes.name;
@@ -493,7 +493,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         }
         
         $scope.handle.addControl = function(id) {
-          $http.get("rest/controller/artefact/types/"+id).then(function(response) {
+          $http.get("rest/plans/artefact/types/"+id).then(function(response) {
             var artefact = response.data;
             addArtefactToCurrentNode(artefact);
           });
@@ -502,7 +502,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         $scope.handle.addPlan = function(id) {
           $http.get("rest/plans/"+id).then(function(response) {
             var plan = response.data;
-            $http.get("rest/controller/artefact/types/CallPlan").then(function(response) {
+            $http.get("rest/plans/artefact/types/CallPlan").then(function(response) {
               var newArtefact = response.data;
               newArtefact.attributes.name=plan.attributes.name;
               newArtefact.planId=id;

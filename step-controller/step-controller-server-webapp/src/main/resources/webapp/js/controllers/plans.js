@@ -166,7 +166,7 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
   $scope.planTypes = PlanTypeRegistry.getPlanTypes();
   $scope.planType = PlanTypeRegistry.getPlanType('step.core.plans.Plan');
   
-  $http.get("rest/controller/artefact/templates").then(function(response){
+  $http.get("rest/plans/artefact/templates").then(function(response){
     $scope.artefactTypes = response.data;
   })
   

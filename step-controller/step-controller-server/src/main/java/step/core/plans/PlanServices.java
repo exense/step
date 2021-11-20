@@ -18,37 +18,32 @@
  ******************************************************************************/
 package step.core.plans;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
-
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
+import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.deployment.AbstractServices;
 import step.core.deployment.Secured;
-import step.core.deployment.Unfiltered;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Singleton;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Singleton
 @Path("plans")
@@ -58,15 +53,19 @@ public class PlanServices extends AbstractServices {
 	protected PlanAccessor planAccessor;
 	protected PlanTypeRegistry planTypeRegistry;
 	protected ObjectPredicateFactory objectPredicateFactory;
-	
+	private ArtefactHandlerRegistry artefactHandlerRegistry;
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		planAccessor = getContext().getPlanAccessor();
-		planTypeRegistry = getContext().get(PlanTypeRegistry.class);
-		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
+		GlobalContext context = getContext();
+		planAccessor = context.getPlanAccessor();
+		planTypeRegistry = context.get(PlanTypeRegistry.class);
+		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
+		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
 	}
 
+	@Operation(description = "Returns a new plan instance as template.")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
@@ -77,6 +76,7 @@ public class PlanServices extends AbstractServices {
 		return plan;
 	}
 
+	@Operation(description = "Creates / updates the given plan.")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -85,6 +85,7 @@ public class PlanServices extends AbstractServices {
 		return planAccessor.save(plan);
 	}
 
+	@Operation(description = "Returns the plan with the given id.")
 	@GET
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -93,6 +94,7 @@ public class PlanServices extends AbstractServices {
 		return planAccessor.get(id);
 	}
 
+	@Operation(description = "Compiles the plan with the given id.")
 	@GET
 	@Path("/{id}/compile")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -105,7 +107,8 @@ public class PlanServices extends AbstractServices {
 		}
 		return planCompilationResult;
 	}
-	
+
+	@Operation(description = "Compiles the provided plan.")
 	@POST
 	@Path("/compile")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -124,7 +127,8 @@ public class PlanServices extends AbstractServices {
 		}
 		return planCompilationResult;
 	}
-	
+
+	@Operation(description = "Clones and returns the plan with the given id. The result of this method will have to be saved with the dedicated method.")
 	@GET
 	@Path("/{id}/clone")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -137,7 +141,8 @@ public class PlanServices extends AbstractServices {
 		assignNewId(clonePlan.getRoot());
 		return clonePlan;
 	}
-	
+
+	@Operation(description = "Returns the first plan matching the given attributes.")
 	@POST
 	@Path("/search")
 	@Secured(right="plan-read")
@@ -145,6 +150,7 @@ public class PlanServices extends AbstractServices {
 		return planAccessor.findByAttributes(attributes);
 	}
 
+	@Operation(description = "Returns the plans matching the given attributes.")
 	@POST
 	@Path("/find")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -153,6 +159,7 @@ public class PlanServices extends AbstractServices {
 		return StreamSupport.stream(planAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 	}
 
+	@Operation(description = "Returns all the plans.")
 	@GET
 	@Path("/all")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -165,6 +172,7 @@ public class PlanServices extends AbstractServices {
 		}
 	}
 
+	@Operation(description = "Deletes the plan with the given id.")
 	@DELETE
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -172,7 +180,8 @@ public class PlanServices extends AbstractServices {
 	public void delete(@PathParam("id") String id) {
 		planAccessor.remove(new ObjectId(id));
 	}
-	
+
+	@Operation(description = "Returns the plan referenced by the given artifact within the given plan.")
 	@GET
 	@Path("/{id}/artefacts/{artefactid}/lookup/plan")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -191,7 +200,8 @@ public class PlanServices extends AbstractServices {
 		} catch (RuntimeException e) {}
 		return result;
 	}
-	
+
+	@Operation(description = "Clones the provided artefact.")
 	@POST
 	@Path("/artefacts/clone")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -200,13 +210,44 @@ public class PlanServices extends AbstractServices {
 		assignNewId(artefact);
 		return artefact;
 	}
-	
+
+	@Operation(description = "Clones the provided artefacts.")
 	@POST
 	@Path("/artefacts/clonemany")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public List<AbstractArtefact> cloneArtefact(List<AbstractArtefact> artefacts) {
 		return artefacts.stream().map(a->cloneArtefact(a)).collect(Collectors.toList());
+	}
+
+	@Operation(description = "Returns the supported artefact types.")
+	@GET
+	@Path("/artefact/types")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
+	public Set<String> getArtefactTypes() {
+		return artefactHandlerRegistry.getArtefactNames();
+	}
+
+	@Operation(description = "Returns the artefact with the given id.")
+	@GET
+	@Path("/artefact/types/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
+	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
+		return artefactHandlerRegistry.getArtefactTypeInstance(type);
+	}
+
+	@Operation(description = "Returns the names of the supported artefacts.")
+	@GET
+	@Path("/artefact/templates")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-read")
+	public Set<String> getArtefactTemplates() {
+		return new TreeSet<>(artefactHandlerRegistry.getArtefactTemplateNames());
 	}
 	
 	private void assignNewId(AbstractArtefact artefact) {

@@ -141,33 +141,6 @@ public class ControllerServices extends AbstractServices {
 	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
 		return getContext().getRepositoryObjectManager().getReport(report);
 	}
-	
-	@GET
-	@Path("/artefact/types")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
-	public Set<String> getArtefactTypes() {
-		return artefactHandlerRegistry.getArtefactNames();
-	}
-
-	@GET
-	@Path("/artefact/templates")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
-	public Set<String> getArtefactTemplates() {
-		return new TreeSet<>(artefactHandlerRegistry.getArtefactTemplateNames());
-	}
-	
-	@GET
-	@Path("/artefact/types/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
-	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
-		return artefactHandlerRegistry.getArtefactTypeInstance(type);
-	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
