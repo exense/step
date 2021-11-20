@@ -18,34 +18,11 @@
  ******************************************************************************/
 package step.controller;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.logging.LogManager;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionEvent;
-import javax.servlet.http.HttpSessionListener;
-
-import io.swagger.v3.jaxrs2.integration.JaxrsOpenApiContextBuilder;
-import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
-import io.swagger.v3.oas.integration.OpenApiConfigurationException;
-import io.swagger.v3.oas.integration.SwaggerConfiguration;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Contact;
-import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.security.SecurityScheme;
+import ch.exense.commons.app.ArgumentParser;
+import ch.exense.commons.app.Configuration;
+import ch.exense.viz.persistence.accessors.GenericVizAccessor;
 import org.eclipse.jetty.http.HttpCookie;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
@@ -62,24 +39,20 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-
-import ch.exense.commons.app.ArgumentParser;
-import ch.exense.commons.app.Configuration;
-import ch.exense.viz.persistence.accessors.GenericVizAccessor;
-import ch.exense.viz.rest.VizServlet;
+import step.controller.swagger.Swagger;
 import step.core.Controller;
 import step.core.Controller.ServiceRegistrationCallback;
 import step.core.authentication.AuthenticationFilter;
 import step.core.controller.errorhandling.ErrorFilter;
-import step.core.deployment.AccessServices;
-import step.core.deployment.AdminServices;
-import step.core.deployment.ApplicationServices;
-import step.core.deployment.AuditLogger;
-import step.core.deployment.ControllerServices;
-import step.core.deployment.HttpSessionFactory;
-import step.core.deployment.JacksonMapperProvider;
-import step.core.deployment.SecurityFilter;
+import step.core.deployment.*;
 import step.plugins.interactive.InteractiveServices;
+
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.LogManager;
 
 
 public class ControllerServer {
@@ -282,42 +255,9 @@ public class ControllerServer {
 			}
 		});
 
-		setupSwagger(resourceConfig);
+		Swagger.setup(resourceConfig);
 
 		addHandler(context);
-	}
-
-	private void setupSwagger(ResourceConfig resourceConfig) {
-		OpenAPI oas = new OpenAPI();
-		Info info = new Info()
-				.title("step Controller REST API")
-				.description("")
-				.contact(new Contact()
-						.email("support@exense.ch"))
-				.license(new License()
-						.name("GNU Affero General Public License")
-						.url("http://www.gnu.org/licenses/agpl-3.0.de.html"));
-
-		oas.info(info);
-
-		oas.servers(List.of(new io.swagger.v3.oas.models.servers.Server().url("/rest")));
-		// SecurityScheme api-key
-		SecurityScheme securitySchemeApiKey = new SecurityScheme();
-		securitySchemeApiKey.setName("api-key");
-		securitySchemeApiKey.setType(SecurityScheme.Type.APIKEY);
-		securitySchemeApiKey.setIn(SecurityScheme.In.HEADER);
-
-		OpenApiResource openApiResource = new OpenApiResource();
-
-		oas.schemaRequirement(securitySchemeApiKey.getName(), securitySchemeApiKey);
-		//oas.servers(List.of(new io.swagger.v3.oas.models.servers.Server().url()))
-
-		SwaggerConfiguration oasConfig = new SwaggerConfiguration()
-				.openAPI(oas)
-				.prettyPrint(true);
-
-		openApiResource.setOpenApiConfiguration(oasConfig);
-		resourceConfig.register(openApiResource);
 	}
 
 	private synchronized void addHandler(Handler handler) {
