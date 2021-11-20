@@ -35,6 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
@@ -46,7 +47,9 @@ import step.core.deployment.Secured;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
+import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.RepositoryObjectReference;
+import step.engine.execution.ExecutionLifecycleManager;
 
 @Singleton
 @Path("executions")
@@ -59,7 +62,17 @@ public class ExecutionServices extends AbstractServices {
 	public void init() {
 		executionAccessor = getContext().getExecutionAccessor();
 	}
-	
+
+	@Operation(description = "Starts an execution with the given parameters.")
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/start")
+	@Secured(right="plan-execute")
+	public String execute(ExecutionParameters executionParams) {
+		return getScheduler().execute(executionParams);
+	}
+
+	@Operation(description = "Returns all executions.")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
@@ -70,7 +83,8 @@ public class ExecutionServices extends AbstractServices {
 			return getAll(0, 1000);
 		}
 	}
-	
+
+	@Operation(description = "Returns the execution with the given execution id.")
 	@GET
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -78,24 +92,37 @@ public class ExecutionServices extends AbstractServices {
 	public Execution get(@PathParam("id") String id) {
 		return executionAccessor.get(id);
 	}
-	
+
+	@Operation(description = "Stops the execution with the given execution id.")
+	@GET
+	@Path("/{id}/stop")
+	@Secured(right="plan-execute")
+	public Void abort(@PathParam("id") String executionID) {
+		ExecutionContext context = getExecutionRunnable(executionID);
+		if(context!=null) {
+			new ExecutionLifecycleManager(context).abort();
+		}
+		return null;
+	}
+
+	@Operation(description = "Returns the executions matching the provided attributes.")
 	@POST
 	@Path("/search")
 	@Secured(right="execution-read")
 	public Execution get(Map<String,String> attributes) {
 		return executionAccessor.findByAttributes(attributes);
 	}
-	
+
+	@Operation(description = "Returns the execution matching the provided repository object reference.")
 	@POST
 	@Path("/search/by/ref")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public List<Execution> getExecutionsByRepositoryObjectReference(RepositoryObjectReference objectReference) {
-		List<Execution> executionsByArtefactURL = getContext().getExecutionAccessor().getTestExecutionsByArtefactURL(objectReference);
-		return executionsByArtefactURL;
+		return getContext().getExecutionAccessor().getTestExecutionsByArtefactURL(objectReference);
 	}
-	
-	
+
+	@Operation(description = "Returns the execution matching the given criteria.")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -106,7 +133,8 @@ public class ExecutionServices extends AbstractServices {
 				param.getStart().getTime(), param.getEnd().getTime(), new SearchOrder("endTime", -1),
 				param.getSkip(), param.getLimit());
 	}
-	
+
+	@Operation(description = "Returns the report nodes of the given execution and matching the given class.")
 	@GET
 	@Path("/{id}/reportnodes")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -127,6 +155,7 @@ public class ExecutionServices extends AbstractServices {
 		return result;
 	}
 
+	@Operation(description = "Updates the provided execution.")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -134,7 +163,8 @@ public class ExecutionServices extends AbstractServices {
 	public Execution save(Execution execution) {
 		return executionAccessor.save(execution);
 	}
-	
+
+	@Operation(description = "Delete the execution with the given execution id.")
 	@DELETE
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)

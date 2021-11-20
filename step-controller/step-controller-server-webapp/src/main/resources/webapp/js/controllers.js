@@ -114,7 +114,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 			
 			$scope.copyExecutionServiceAsCurlToClipboard = function() {
 			  var location = window.location;
-			  var url = location.protocol + '//' + location.hostname + (location.port?':'+location.port:'') + '/rest/controller/execution';
+			  var url = location.protocol + '//' + location.hostname + (location.port?':'+location.port:'') + '/rest/executions/start';
 			  var payload = buildExecutionParams(false);
 			  var cmd = "curl -X POST " + url + " -H 'Content-Type: application/json' -d '" + JSON.stringify(payload) + "'";
 			  ngCopy(cmd);
@@ -123,7 +123,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 			$scope.execute = function(simulate) {
 				var executionParams = buildExecutionParams(simulate);
 
-				$http.post("rest/controller/execution",executionParams).then(
+				$http.post("rest/executions/start",executionParams).then(
 						function(response) {
 							var eId = response.data;
 
@@ -137,7 +137,7 @@ tecAdminControllers.directive('executionCommands', ['$rootScope','$http','$locat
 						});
 			};
 			$scope.stop = function() {
-				$http.get('rest/controller/execution/' + $scope.execution.id + '/stop');
+				$http.get('rest/executions/' + $scope.execution.id + '/stop');
 			};
 
 			$scope.schedule = function () {

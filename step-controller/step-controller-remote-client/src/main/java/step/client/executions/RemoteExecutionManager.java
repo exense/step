@@ -112,7 +112,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	 * @return the execution ID of the execution
 	 */
 	public String execute(ExecutionParameters executionParameterObject) {
-		Builder b = requestBuilder("/rest/controller/execution/");
+		Builder b = requestBuilder("/rest/executions/start");
 		Entity<?> entity = Entity.entity(executionParameterObject, MediaType.APPLICATION_JSON);
 		return executeRequest(()->b.post(entity, String.class));
 	}
@@ -123,7 +123,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	 * @param executionId the ID of the execution to be stopped 
 	 */
 	public void stop(String executionId) {
-		Builder b = requestBuilder("/rest/controller/execution/"+executionId+"/stop");
+		Builder b = requestBuilder("/rest/executions/"+executionId+"/stop");
 		executeRequest(()->b.get());
 	}
 	

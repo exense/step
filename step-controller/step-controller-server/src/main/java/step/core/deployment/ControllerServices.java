@@ -86,26 +86,6 @@ public class ControllerServices extends AbstractServices {
 		}.start();;
 	}
 	
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Path("/execution")
-	@Secured(right="plan-execute")
-	public String execute(ExecutionParameters executionParams) {
-		String executionID = getScheduler().execute(executionParams);
-		return executionID;
-	}
-	
-	@GET
-	@Path("/execution/{id}/stop")
-	@Secured(right="plan-execute")
-	public Void abort(@PathParam("id") String executionID) {
-		ExecutionContext context = getExecutionRunnable(executionID);
-		if(context!=null) {
-			new ExecutionLifecycleManager(context).abort();
-		}
-		return null;
-	}
-
 	@GET
 	@Path("/reportnode/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
