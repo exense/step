@@ -21,7 +21,7 @@ angular.module('schedulerControllers',[])
 .run(function(ViewRegistry, EntityRegistry) {
   ViewRegistry.registerView('scheduler','partials/scheduler.html');
   ViewRegistry.registerDashlet('admin/controller','Scheduler','partials/scheduler/schedulerConfiguration.html','scheduler');
-  EntityRegistry.registerEntity('Scheduler task', 'tasks', 'tasks', 'rest/controller/task/', 'rest/controller/task/', 'st-table', '/partials/scheduler/schedulerTaskSelectionTable.html', null, 'glyphicon glyphicon-time');
+  EntityRegistry.registerEntity('Scheduler task', 'tasks', 'tasks', 'rest/scheduler/task/', 'rest/scheduler/task/', 'st-table', '/partials/scheduler/schedulerTaskSelectionTable.html', null, 'glyphicon glyphicon-time');
 })
 
 .factory('SchedulerTaskDialogs', function ($rootScope, $uibModal, $http, Dialogs) {
@@ -40,7 +40,7 @@ angular.module('schedulerControllers',[])
   var dialogs = {};
   
   dialogs.editSchedulerTask = function(id, callback) {
-    $http.get("rest/controller/task/"+id).then(function(response) {
+    $http.get("rest/scheduler/task/"+id).then(function(response) {
       openModal(response.data).then(function() {
         if(callback){callback()};
       })
@@ -48,7 +48,7 @@ angular.module('schedulerControllers',[])
   }
   
   dialogs.addSchedulerTask = function(callback) {
-    $http.get("rest/controller/task/new").then(function(response) {
+    $http.get("rest/scheduler/task/new").then(function(response) {
       response.data.executionsParameters.userID = $rootScope.context.userID;
       openModal(response.data).then(function() {
         if(callback){callback()};
@@ -94,7 +94,7 @@ angular.module('schedulerControllers',[])
   }
   
   $scope.save = function () {  
-    $http.post("rest/controller/task",$scope.task).then(
+    $http.post("rest/scheduler/task",$scope.task).then(
       function(response) {
         $uibModalInstance.close(response.data);
       },function(error) {
@@ -138,7 +138,7 @@ angular.module('schedulerControllers',[])
   };
   
   $scope.loadTable = function loadTable() {
-    $http.get("rest/controller/task").then(function(response) {
+    $http.get("rest/scheduler/task").then(function(response) {
       $scope.schedulerTasks = response.data;
     });
   };
@@ -160,17 +160,17 @@ angular.module('schedulerControllers',[])
   }
   
   $scope.enableTask = function(id) {
-    $http.put("rest/controller/task/"+id).then(function() {
+    $http.put("rest/scheduler/task/"+id).then(function() {
       $scope.loadTable();
     });
   }
 
   $scope.saveTask = function(task) {
-    $http.post("rest/controller/task",task).then()
+    $http.post("rest/scheduler/task",task).then()
   }
 	
 	$scope.executeTask = function(task) {
-	  $http.post("rest/controller/task/" + task.id + "/execute").then(
+	  $http.post("rest/scheduler/task/" + task.id + "/execute").then(
       function(response) {
         var eId = response.data;
         
@@ -194,7 +194,7 @@ angular.module('schedulerControllers',[])
   }
 	
 	$scope.deleteTask = function(id, remove) {
-	  $http.delete("rest/controller/task/"+id+"?remove="+remove).then(function() {
+	  $http.delete("rest/scheduler/task/"+id+"?remove="+remove).then(function() {
 	    $scope.loadTable();
 	  });		
 	}
@@ -218,7 +218,7 @@ angular.module('schedulerControllers',[])
     });
     
     modalInstance.result.then(function (taskParams) {
-      $http.post("rest/controller/task",taskParams).then(
+      $http.post("rest/scheduler/task",taskParams).then(
           function() {
             $location.path('/root/scheduler/');
           });
@@ -244,7 +244,7 @@ angular.module('schedulerControllers',[])
   
   $scope.toggleSchedulerEnabled = function () {
 	$scope.model.schedulerEnabledToggle = !$scope.model.schedulerEnabledToggle;
-	$http.put("rest/controller/task/schedule?enabled=" + $scope.model.schedulerEnabledToggle.toString())
+	$http.put("rest/scheduler/task/schedule?enabled=" + $scope.model.schedulerEnabledToggle.toString())
   }
   
   $scope.save = function () {
@@ -253,7 +253,7 @@ angular.module('schedulerControllers',[])
 })
 
 .controller('SchedulerTaskSelectionCtrl', function ($scope, $http) {
-  $http.get("rest/controller/task").then(function(response) {
+  $http.get("rest/scheduler/task").then(function(response) {
     $scope.schedulerTasks = response.data;
   });
 })

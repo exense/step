@@ -45,6 +45,7 @@ import step.core.Controller.ServiceRegistrationCallback;
 import step.core.authentication.AuthenticationFilter;
 import step.core.controller.errorhandling.ErrorFilter;
 import step.core.deployment.*;
+import step.core.scheduler.SchedulerServices;
 import step.plugins.interactive.InteractiveServices;
 
 import javax.servlet.http.HttpSession;
@@ -205,6 +206,7 @@ public class ControllerServer {
 		
 		resourceConfig.registerClasses(ApplicationServices.class);
 		resourceConfig.registerClasses(ControllerServices.class);
+		resourceConfig.registerClasses(SchedulerServices.class);
 		resourceConfig.registerClasses(InteractiveServices.class);
 		resourceConfig.registerClasses(AccessServices.class);
 		resourceConfig.registerClasses(AuthenticationFilter.class);
