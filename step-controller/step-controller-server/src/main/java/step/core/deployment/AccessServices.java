@@ -19,6 +19,7 @@
 package step.core.deployment;
 
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -63,7 +64,8 @@ public class AccessServices extends AbstractServices {
 	private AuthenticationManager authenticationManager;
 	private AccessManager accessManager;
 	private AuthorizationServerManager authorizationServerManager;
-	
+	private WebApplicationConfigurationManager applicationConfigurationManager;
+
 	public AccessServices() {
 		super();
 	}
@@ -77,6 +79,7 @@ public class AccessServices extends AbstractServices {
 		authenticationManager = context.get(AuthenticationManager.class);
 		accessManager = context.get(AccessManager.class);
 		authorizationServerManager = context.get(AuthorizationServerManager.class);
+		applicationConfigurationManager = getContext().require(WebApplicationConfigurationManager.class);
 	}
 	
 	public static class SessionResponse {
@@ -187,7 +190,9 @@ public class AccessServices extends AbstractServices {
 		
 		// conf should cover more than just AccessConfiguration but we'll store the info here for right now
 		Configuration ctrlConf = getContext().getConfiguration();
-		conf.getMiscParams().put("enforceschemas", getContext().getConfiguration().getProperty("enforceschemas", "false"));
+		Map<String, String> miscParams = conf.getMiscParams();
+		miscParams.put("enforceschemas", getContext().getConfiguration().getProperty("enforceschemas", "false"));
+		miscParams.putAll(applicationConfigurationManager.getConfiguration(getSession()));
 
 		if(ctrlConf.hasProperty("ui.default.url")) {
 			conf.setDefaultUrl(ctrlConf.getProperty("ui.default.url"));

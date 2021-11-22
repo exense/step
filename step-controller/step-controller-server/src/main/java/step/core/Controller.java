@@ -41,6 +41,7 @@ import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.controller.ControllerSettingAccessor;
+import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -208,6 +209,7 @@ public class Controller {
 		entityManager.getEntityByName("sessions").setByPassObjectPredicate(true);
 
 		context.put(AsyncTaskManager.class, new AsyncTaskManager());
+		context.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
 
 		createOrUpdateIndexes();
 
