@@ -711,7 +711,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
    * i = number of items
    * itemName (optional) the name of the item (often with the category in front)
    */
-	dialogs.showDeleteWarning = function(i, itemName) {
+	dialogs.showDeleteWarning = function(i, itemName, secondaryText) {
 		var msg;
 		if (i == undefined || i==1) {
       if (itemName) {
@@ -722,7 +722,11 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		} else {
 			msg = 'Are you sure you want to delete these ' + i + ' items?';
 		}
-	
+
+		if (secondaryText) {
+			msg += '\n\n' + secondaryText;
+		}
+
 		return dialogs.showWarning(msg);
 	}
 

@@ -930,3 +930,7 @@ fieldset {
 :hover > .on-hover {
 	display: block;
 }
+
+.alert {
+	white-space: pre-line;
+}
