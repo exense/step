@@ -303,6 +303,7 @@ angular.module('adminControllers', ['step' ])
     $scope.copyToken=function() {
       navigator.clipboard.writeText($scope.token).then(function() {
         $scope.copied = true;
+        $scope.$apply();
       });
     }
 
