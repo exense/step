@@ -492,7 +492,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 			}});
 		return modalInstance.result;
 	}
-	
+
 	return authService;
 })
 

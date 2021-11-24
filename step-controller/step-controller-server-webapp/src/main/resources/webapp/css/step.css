@@ -918,3 +918,15 @@ fieldset {
 .password-hint li.invalid:before {
 	content: '✖'; margin-left: -20px; margin-right: 5px;
 }
+
+.mt-0 {
+	margin-top: 0!important;
+}
+
+.on-hover {
+	display: none;
+}
+
+:hover > .on-hover {
+	display: block;
+}

@@ -1,4 +1,4 @@
-<div class="container-fluid" id="MyAccountCtrl" ng-controller="MyAccountCtrl">
+<div class="container-fluid" id="MyAccountCtrl" style="min-width: 600px;" ng-controller="MyAccountCtrl">
 	<h3 class="page-header">My account</h3>
 	<div class="panel panel-default">
 		<div class="panel-heading">
@@ -12,20 +12,9 @@
 			</div>
 		</div>
 		<div class="panel-body">
-			<label for="token" class="text-grey" style="vertical-align: top;">Api key </label>
-			<textarea name="token" id="token" readonly ng-show="token != ''" style="width:100%;">{{token}}</textarea>
-			<div ng-show="token == ''" style="float: right;margin-left:15px;display:inline-flex;">
-				<span style="margin-left:10px;" class="glyphicon glyphicon-question-sign" uib-tooltip="Specifies the validity time of the token in days. Keep it empty for unlimited validity" tooltip-append-to-body="true"></span>
-				<input style="margin-left:10px;width:100px;" class="input-group"	ng-model="lifetime" placeholder="lifetime">
-				<a class="btn btn-success" ng-click="generateToken()">Generate new key</a>
-			</div>
-			<div class="alert alert-warning" style="margin-top:15px;">
-				<bold>Important: </bold>
-				<ul>
-					<li>You will only be able to view this key here once! It is not stored in this form. So be sure to copy it now.</li>
-					<li>This key is linked to your account and own the same rights, use it and store it wisely!</li>
-					<li>You can authenticate request using the Authorization HTTP header, example: curl -H "Authorization: Bearer your_key"</li>
-				</ul>
+			<label for="generate-key" class="text-grey" style="vertical-align: top;">Api key </label>
+			<div style="float: right">
+				<a class="btn btn-success" id="generate-key" ng-click="showGenerateApiKeyDialog()">Generate new Key</a>
 			</div>
 		</div>
 	</div>

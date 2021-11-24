@@ -252,12 +252,11 @@ angular.module('adminControllers', ['step' ])
       $scope.changePwd=function() {
         AuthService.showPasswordChangeDialog(false);
       }
-      
-      $scope.generateToken=function() {
-        var days = ($scope.lifetime) ? $scope.lifetime : 0;
-        $http.get("rest/access/service-account/token?lifetime="+ days).then(function(response) {
-          $scope.token = response.data;
-        });
+
+      $scope.showGenerateApiKeyDialog = function () {
+        var modalInstance = $uibModal.open({backdrop: 'static',animation: false,templateUrl: 'partials/generateApiKey.html',
+          controller: 'GenerateApiKeyModalCtrl'});
+        return modalInstance.result;
       }
       
       $scope.user = {};
@@ -289,5 +288,27 @@ angular.module('adminControllers', ['step' ])
         });  
       }
     })
+
+  .controller('GenerateApiKeyModalCtrl', function ($scope, $rootScope, $uibModalInstance, $http) {
+
+    $scope.token = '';
+
+    $scope.generateToken=function() {
+      const days = $scope.lifetime ? $scope.lifetime : 0;
+      $http.get("rest/access/service-account/token?lifetime="+ days).then(function(response) {
+        $scope.token = response.data;
+      });
+    }
+
+    $scope.copyToken=function() {
+      navigator.clipboard.writeText($scope.token).then(function() {
+        $scope.copied = true;
+      });
+    }
+
+    $scope.cancel = function () {
+      $uibModalInstance.close();
+    };
+  })
 
 
