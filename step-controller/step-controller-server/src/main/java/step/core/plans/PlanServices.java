@@ -145,6 +145,8 @@ public class PlanServices extends AbstractServices {
 	@Operation(description = "Returns the first plan matching the given attributes.")
 	@POST
 	@Path("/search")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public Plan get(Map<String,String> attributes) {
 		return planAccessor.findByAttributes(attributes);
@@ -153,6 +155,7 @@ public class PlanServices extends AbstractServices {
 	@Operation(description = "Returns the plans matching the given attributes.")
 	@POST
 	@Path("/find")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public List<Plan> findMany(Map<String,String> attributes) {
