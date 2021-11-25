@@ -23,10 +23,10 @@ import ch.exense.commons.app.Configuration;
 import ch.exense.viz.persistence.accessors.GenericVizAccessor;
 import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.server.*;
-import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.session.SessionHandler;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
@@ -48,11 +48,14 @@ import step.core.deployment.*;
 import step.core.scheduler.SchedulerServices;
 import step.plugins.interactive.InteractiveServices;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.logging.LogManager;
 
 
@@ -104,7 +107,6 @@ public class ControllerServer {
 		handlers = new ContextHandlerCollection();
 
 		initController();
-		initWebapp();
 		
 		setupConnectors();
 
@@ -159,22 +161,17 @@ public class ControllerServer {
 		server.addConnector(connector);
 	}
 
-	private void initWebapp() throws Exception {
-		ResourceHandler bb = new ResourceHandler();
-		bb.setResourceBase(Resource.newClassPathResource("webapp").getURI().toString());
-		bb.setEtags(true);
-
-		ContextHandler ctx = new ContextHandler("/"); /* the server uri path */
-		ctx.setHandler(bb);
-
-		addHandler(ctx);
-	}
-
 	private void initController() throws Exception {
 		ResourceConfig resourceConfig = new ResourceConfig();
 		resourceConfig.packages(ControllerServices.class.getPackage().getName());
 
 		controller = new Controller(configuration);
+
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		context.setBaseResource(Resource.newClassPathResource("webapp"));
+		context.setContextPath("/");
+		addHandler(context);
+
 		
 		controller.init(new ServiceRegistrationCallback() {
 			@Override
@@ -189,6 +186,16 @@ public class ControllerServer {
 			@Override
 			public void registerHandler(Handler handler) {
 				addHandler(handler);
+			}
+
+			@Override
+			public void registerServlet(ServletHolder servletHolder, String subPath) {
+				context.addServlet(servletHolder, subPath);
+			}
+
+			@Override
+			public FilterHolder registerServletFilter(Class<? extends Filter> filterClass, String pathSpec, EnumSet<DispatcherType> dispatches) {
+				return context.addFilter(filterClass, pathSpec, dispatches);
 			}
 
 			@Override
@@ -222,9 +229,6 @@ public class ControllerServer {
                 .proxy(true).proxyForSameScope(false).in(RequestScoped.class);
 			}
 		});
-		
-		//resourceConfig.registerClasses(VizServlet.class);
-		
 		GenericVizAccessor accessor = new GenericVizAccessor(controller.getContext().getCollectionFactory());
 		resourceConfig.register(new AbstractBinder() {
 			@Override
@@ -236,15 +240,14 @@ public class ControllerServer {
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);
 
 		ServletHolder sh = new ServletHolder(servletContainer);
-		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		context.setContextPath("/rest");
-		context.addServlet(sh, "/*");
-		
+		context.addServlet(sh, "/rest/*");
+
+		//Http session management
 		SessionHandler s = new SessionHandler();
 		Integer timeout = configuration.getPropertyAsInteger("ui.sessiontimeout.minutes", 180)*60;
 		s.setMaxInactiveInterval(timeout);
-        s.setUsingCookies(true);
-        s.setSessionCookie("sessionid");
+		s.setUsingCookies(true);
+		s.setSessionCookie("sessionid");
 		s.setSameSite(HttpCookie.SameSite.STRICT);
 		s.setHttpOnly(true);
 		context.setSessionHandler(s);
@@ -257,9 +260,13 @@ public class ControllerServer {
 			}
 		});
 
+		// Lastly, the default servlet for root content (always needed, to satisfy servlet spec)
+		// It is important that this is last.
+		ServletHolder holderPwd = new ServletHolder("default", DefaultServlet.class);
+		holderPwd.setInitParameter("dirAllowed","true");
+		context.addServlet(holderPwd,"/");
+		
 		Swagger.setup(resourceConfig);
-
-		addHandler(context);
 	}
 
 	private synchronized void addHandler(Handler handler) {

@@ -20,14 +20,16 @@ package step.core;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
-import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
@@ -88,6 +90,9 @@ import step.resources.ResourceManagerImpl;
 import step.resources.ResourceRevision;
 import step.resources.ResourceRevisionAccessor;
 import step.resources.ResourceRevisionAccessorImpl;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
 
 public class Controller {
 	
@@ -269,8 +274,13 @@ public class Controller {
 		public void registerService(Class<?> serviceClass);
 		
 		public void registerHandler(Handler handler);
+
+		public void registerServlet(ServletHolder servletHolder, String subPath);
+
+        public FilterHolder registerServletFilter(Class<? extends Filter> filterClass, String pathSpec, EnumSet<DispatcherType> dispatches);
+
+        public void stop();
 		
-		public void stop();
 	}
 	
 }
