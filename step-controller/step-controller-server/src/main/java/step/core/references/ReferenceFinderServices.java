@@ -55,11 +55,11 @@ public class ReferenceFinderServices extends AbstractServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public List<FindReferencesResponse> findReferences(FindReferencesRequest request) {
-        if (request.referenceType == null) {
-            throw new IllegalArgumentException("A valid referenceType must be provided");
+        if (request.searchType == null) {
+            throw new IllegalArgumentException("A valid searchType must be provided");
         }
-        if (request.value == null || request.value.trim().isEmpty()) {
-            throw new IllegalArgumentException("A non-empty value must be provided");
+        if (request.searchValue == null || request.searchValue.trim().isEmpty()) {
+            throw new IllegalArgumentException("A non-empty searchValue must be provided");
         }
 
         List<FindReferencesResponse> results = new ArrayList<>();
@@ -143,21 +143,21 @@ public class ReferenceFinderServices extends AbstractServices {
     private boolean doesRequestMatch(FindReferencesRequest req, Object o) {
         if (o instanceof Plan) {
             Plan p = (Plan) o;
-            switch (req.referenceType) {
+            switch (req.searchType) {
                 case PLAN_NAME:
-                    return p.getAttribute(AbstractOrganizableObject.NAME).equals(req.value);
+                    return p.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
                 case PLAN_ID:
-                    return p.getId().toString().equals(req.value);
+                    return p.getId().toString().equals(req.searchValue);
                 default:
                     return false;
             }
         } else if (o instanceof Function) {
             Function f = (Function) o;
-            switch (req.referenceType) {
+            switch (req.searchType) {
                 case KEYWORD_NAME:
-                    return f.getAttribute(AbstractOrganizableObject.NAME).equals(req.value);
+                    return f.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
                 case KEYWORD_ID:
-                    return f.getId().toString().equals(req.value);
+                    return f.getId().toString().equals(req.searchValue);
                 default:
                     return false;
             }

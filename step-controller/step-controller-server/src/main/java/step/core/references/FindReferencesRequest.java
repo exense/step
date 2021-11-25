@@ -8,8 +8,8 @@ public class FindReferencesRequest {
         KEYWORD_NAME
     }
 
-    public Type referenceType;
-    public String value;
+    public Type searchType;
+    public String searchValue;
     public boolean includeEphemerals;
 
     // Needed for Jax-WS
@@ -17,8 +17,8 @@ public class FindReferencesRequest {
     }
 
     // Convenience constructor
-    public FindReferencesRequest(Type referenceType, String value) {
-        this.referenceType = referenceType;
-        this.value = value;
+    public FindReferencesRequest(Type searchType, String searchValue) {
+        this.searchType = searchType;
+        this.searchValue = searchValue;
     }
 }
