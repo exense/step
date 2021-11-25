@@ -12,8 +12,7 @@
 			</p>
 		</div>
 		<div ng-show="token == ''" class="form-group" style="display: flex;">
-			<input autofocus type="number" class="form-control" name="lifetime" placeholder="lifetime in days" required=""
-				   ng-model="lifetime" title="lifetime" />
+			<input autofocus type="number" class="form-control" name="lifetime" placeholder="lifetime in days" ng-model="lifetime" title="lifetime" />
 			<span style="margin: 8px;" class="glyphicon glyphicon-question-sign" uib-tooltip="Specifies the validity time of the token in days. Keep it empty for unlimited validity" tooltip-append-to-body="true"></span>
 		</div>
 		<div class="alert alert-warning" style="margin-top:15px;">
