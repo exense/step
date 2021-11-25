@@ -2,12 +2,14 @@ package step.core.references;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
+import step.functions.Function;
 
 public class FindReferencesResponse {
 
     // might be extended in the future, for now only plans are supported
     enum ReferrerType {
         PLAN,
+        KEYWORD,
     }
 
     public final ReferrerType type;
@@ -22,9 +24,14 @@ public class FindReferencesResponse {
         this.projectId = projectId;
     }
 
-    // convenience constructor
+    // convenience constructors
     public FindReferencesResponse(Plan plan) {
         this(ReferrerType.PLAN, plan.getId().toString(), plan.getAttribute(AbstractOrganizableObject.NAME), plan.getAttribute("project"));
     }
+
+    public FindReferencesResponse(Function function) {
+        this(ReferrerType.KEYWORD, function.getId().toString(), function.getAttribute(AbstractOrganizableObject.NAME), function.getAttribute("project"));
+    }
+
 
 }
