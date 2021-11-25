@@ -12,7 +12,7 @@ public class AuthorizationServerTest {
     
     @Test
     public void jwtTests(){
-        JWTSettings jwtSettings = new JWTSettings(new Configuration());
+        JWTSettings jwtSettings = new JWTSettings(new Configuration(),"mysecret");
         AccessManager accessManager = new AccessManager() {
             @Override
             public void setRoleResolver(RoleResolver roleResolver) {

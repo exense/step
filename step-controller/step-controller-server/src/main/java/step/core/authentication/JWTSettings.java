@@ -6,7 +6,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 public class JWTSettings {
 
     private static String CONFIG_KEY_JWT_ALGO="authenticator.jwt.algo";
-    private static String CONFIG_KEY_JWT_SECRET="authenticator.jwt.secret";
     private static String CONFIG_KEY_JWT_CLOCKSKEW="authenticator.jwt.clock-skew";
     private static String CONFIG_KEY_JWT_AUDIENCE="controller.url";
     private static String CONFIG_KEY_JWT_ISSUER="authenticator.jwt.issuer";
@@ -29,10 +28,10 @@ public class JWTSettings {
     private final boolean checkAudience;
     
 
-    public JWTSettings(Configuration configuration) {
-        String algoStr = configuration.getProperty(CONFIG_KEY_JWT_ALGO,"HS256"); 
+    public JWTSettings(Configuration configuration, String secret) {
+        String algoStr = configuration.getProperty(CONFIG_KEY_JWT_ALGO,"HS256");
         algo = SignatureAlgorithm.valueOf(algoStr);
-        secret = configuration.getProperty(CONFIG_KEY_JWT_SECRET,"ZGVmYXVsdCBzZWNyZXQga2V5IGZvciBzdGVwIGNvbnRyb2xsZXIK");
+        this.secret = secret;
         clockSkew = configuration.getPropertyAsLong(CONFIG_KEY_JWT_CLOCKSKEW,10l);
         audience = configuration.getProperty(CONFIG_KEY_JWT_AUDIENCE,"controller.url.prop.not.set");
         issuer = configuration.getProperty(CONFIG_KEY_JWT_ISSUER,audience); //if not set the controller is also the issuer

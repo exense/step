@@ -29,23 +29,31 @@ import step.core.authentication.AuthorizationServerManager;
 import step.core.authentication.JWTSettings;
 import step.core.authentication.AuthorizationServerManagerLocal;
 import step.core.authentication.ResourceServerManager;
-import step.core.deployment.Session;
+import step.core.controller.ControllerSetting;
+import step.core.controller.ControllerSettingAccessor;
+import step.core.controller.ControllerSettingPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Objects;
 
-@Plugin
+@Plugin(dependencies = ControllerSettingPlugin.class)
 public class SecurityPlugin extends AbstractControllerPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(SecurityPlugin.class);
 	
 	private GlobalContext context;
 	private Configuration configuration;
+	private ControllerSettingAccessor settingAccessor;
 	
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		this.context = context;
+		settingAccessor = context.require(ControllerSettingAccessor.class);
 		this.configuration = context.getConfiguration();
 		
 		Authenticator authenticator = initAuthenticator();
@@ -66,14 +74,28 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 		RoleResolver roleResolver = new RoleResolverImpl(context.getUserAccessor());
 		AccessManager accessManager = new AccessManagerImpl(roleProvider, roleResolver);
 		context.put(AccessManager.class, accessManager);
-
-		JWTSettings jwtSettings = new JWTSettings(context.getConfiguration());
+		
+		JWTSettings jwtSettings = new JWTSettings(context.getConfiguration(),getOrInitSecret( ));
 		AuthorizationServerManager authorizationServerManager = initAuthorizationServerManager(jwtSettings, accessManager);
 		ResourceServerManager resourceServerManager = new ResourceServerManager(jwtSettings, authorizationServerManager);
 		context.put(AuthorizationServerManager.class, authorizationServerManager);
 		context.put(ResourceServerManager.class, resourceServerManager);
 		
 		super.executionControllerStart(context);
+	}
+
+	private String getOrInitSecret() throws NoSuchAlgorithmException {
+		ControllerSetting secretSetting = settingAccessor.getSettingByKey("authenticator.jwt.secret");
+		if (secretSetting == null || secretSetting.getValue() == null) {
+			KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+			keyGenerator.init(128);
+			SecretKey secretKey = keyGenerator.generateKey();
+			byte[] rawData = secretKey.getEncoded();
+			String encodedKey = Base64.getEncoder().encodeToString(rawData);
+			secretSetting = new ControllerSetting("authenticator.jwt.secret", encodedKey);
+			settingAccessor.save(secretSetting);
+		} 
+		return secretSetting.getValue();
 	}
 
 	private Authenticator initAuthenticator() throws Exception {
