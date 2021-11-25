@@ -20,6 +20,9 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static step.core.references.FindReferencesRequest.Type.KEYWORD_NAME;
+import static step.core.references.FindReferencesRequest.Type.PLAN_NAME;
+
 @Singleton
 @Path("references")
 @Tag(name = "References")
@@ -47,7 +50,7 @@ public class ReferenceFinderServices extends AbstractServices {
 //        result.addAll(findReferences(new FindReferencesRequest(KEYWORD_ID, "60cca3488b81b227a5fe92d9")));
         return result;
     }
-     //*/
+    //*/
 
     @Path("/findReferences")
     @POST
@@ -66,31 +69,36 @@ public class ReferenceFinderServices extends AbstractServices {
 
         PlanAccessor planAccessor = (PlanAccessor) entityManager.getEntityByName(EntityManager.plans).getAccessor();
 
-        // Find plans containing usages
-        List<Plan> plansToConsider = planAccessor.stream().filter(p -> request.includeEphemerals || !isEphemeral(p)).collect(Collectors.toList());
-
-        plansToConsider.forEach(plan -> {
-            List<Object> matchingObjects = getReferencedObjectsMatchingRequest(plan, request);
-            if (!matchingObjects.isEmpty()) {
-                results.add(new FindReferencesResponse(plan));
-            }
-        });
-
         // Find composite keywords containing requested usages; composite KWs are really just plans in disguise :-)
         FunctionAccessor functionAccessor = (FunctionAccessor) entityManager.getEntityByName(EntityManager.functions).getAccessor();
 
         // we don't have access to the composite functions plugin from here, so we use class names and reflection.
+        List<Plan> plansInComposites = new ArrayList<>();
+
         List<Function> compositeFunctions = functionAccessor.stream().filter(f -> f.getClass().getName().equals("step.plugins.functions.types.CompositeFunction")).collect(Collectors.toList());
         compositeFunctions.forEach(function -> {
             String planId = getPlanIdForCompositeFunction(function);
             if (planId != null) {
                 Plan plan = planAccessor.get(planId);
                 if (plan != null) {
+                    plansInComposites.add(plan);
                     List<Object> matchingObjects = getReferencedObjectsMatchingRequest(plan, request);
                     if (!matchingObjects.isEmpty()) {
                         results.add(new FindReferencesResponse(function));
                     }
                 }
+            }
+        });
+
+        // Find plans containing usages
+        List<Plan> plansToConsider = planAccessor.stream().filter(p ->
+                !plansInComposites.contains(p) && (request.includeEphemerals || !isEphemeral(p))
+        ).collect(Collectors.toList());
+
+        plansToConsider.forEach(plan -> {
+            List<Object> matchingObjects = getReferencedObjectsMatchingRequest(plan, request);
+            if (!matchingObjects.isEmpty()) {
+                results.add(new FindReferencesResponse(plan));
             }
         });
 
