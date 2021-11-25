@@ -1058,6 +1058,24 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 })
 
+
+.service('DashboardService', function($http) {
+
+	this.isGrafanaAvailable = false;
+
+	$http.get("rest/g-dashboards/isGrafanaAvailable").then(response => {
+		this.isGrafanaAvailable = !!response.data.available;
+	});
+
+	this.getDashboardLink = taskId => {
+		if (this.isGrafanaAvailable) {
+			return '/#/root/grafana?d=3JB9j357k/step-scheduled-executions-overview-prom-embedded&orgId=1&var-taskId_current=' + taskId;
+		} else {
+			return '/#/root/dashboards/__pp__RTMDashboard?__filter1__=text,taskId,' + taskId;
+		}
+	}
+})
+
 //The following functions are missing in IE11
 
 if (!String.prototype.endsWith) {

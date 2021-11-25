@@ -122,16 +122,16 @@ angular.module('schedulerControllers',[])
   }
 })
 
-.controller('SchedulerCtrl', function($rootScope,$scope, $http, $location, stateStorage, $uibModal,AuthService, Dialogs, SchedulerTaskDialogs) {
+.controller('SchedulerCtrl', function($rootScope,$scope, $http, $location, stateStorage, $uibModal,AuthService, Dialogs, SchedulerTaskDialogs, DashboardService) {
   stateStorage.push($scope, 'scheduler', {});
-    
+
   $scope.authService = AuthService;
+  $scope.DashboardService = DashboardService;
   $scope.model = {};
-    
+
   $http.get("rest/settings/scheduler_enabled").then(function(response){
-      $scope.model.schedulerEnabledToggle = response.data?response.data=='true':false;
-	  })
-  
+    $scope.model.schedulerEnabledToggle = response.data?response.data=='true':false;
+  })
   
   $scope.configureScheduler = function() {
     $location.path("/root/admin/controller/scheduler")
