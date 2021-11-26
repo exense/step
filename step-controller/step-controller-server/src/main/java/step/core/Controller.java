@@ -124,14 +124,17 @@ public class Controller {
 		ControllerPlugin pluginProxy = pluginManager.getProxy();
 		logger.info("Starting controller...");
 		pluginProxy.executionControllerStart(context);
+		
+		scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context));
+		context.put(ExecutionScheduler.class, scheduler);
+		
 		logger.info("Executing migration tasks...");
 		pluginProxy.migrateData(context);
 		logger.info("Initializing data...");
 		pluginProxy.initializeData(context);
 		logger.info("Calling post data initialization scripts...");
 		pluginProxy.afterInitializeData(context);
-			
-		scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context));
+		
 		scheduler.start();
 	}
 	

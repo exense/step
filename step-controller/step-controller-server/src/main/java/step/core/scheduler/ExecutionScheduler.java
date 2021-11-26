@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.scheduler;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -37,6 +38,7 @@ public class ExecutionScheduler {
 	private final ControllerSettingAccessor controllerSettingAccessor;
 	private final ExecutionTaskAccessor executionTaskAccessor;		
 	private final Executor executor;
+	private List<ExecutionSchedulerHook> executionSchedulerHooks = new ArrayList<>();
 	
 	public static final String SETTING_SCHEDULER_ENABLED = "scheduler_enabled";
 		
@@ -88,6 +90,7 @@ public class ExecutionScheduler {
 		ExecutiontTaskParameters task = get(executionTaskID);
 		remove(task);
 		executor.deleteSchedule(task);
+		runOnRemoveExecutionTasks(executionTaskID);
 	}
 	
 	public void enableExecutionTask(String executionTaskID) {
@@ -180,5 +183,13 @@ public class ExecutionScheduler {
 			logger.info("Disabling schedule for task '" + task.getAttribute(AbstractOrganizableObject.NAME) + "' having for id : " + task.getId());
 			executor.deleteSchedule(task);
 		}
+	}
+	
+	public void registerExecutionSchedulerHook(ExecutionSchedulerHook executionSchedulerHook) {
+		executionSchedulerHooks.add(executionSchedulerHook);
+	}
+	
+	private void runOnRemoveExecutionTasks(String executionTaskId){
+		executionSchedulerHooks.forEach(e -> e.onRemoveExecutionTask(executionTaskId));
 	}
 }
