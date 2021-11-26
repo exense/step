@@ -155,11 +155,11 @@ public class FunctionArtefacts {
 
 	public static class CallFunctionBuilder {
 
-		private final DynamicValue<String> argument;
+		private final DynamicValue<String> function;
 		private DynamicValue<String> input;
 
-		public CallFunctionBuilder(String argument) {
-			this.argument = new DynamicValue<>(argument);
+		public CallFunctionBuilder(String function) {
+			this.function = new DynamicValue<>(function);
 		}
 
 		public CallFunctionBuilder withInput(String input) {
@@ -169,8 +169,8 @@ public class FunctionArtefacts {
 
 		public CallFunction build() {
 			CallFunction callFunction = new CallFunction();
+			callFunction.setFunction(function);
 			callFunction.setArgument(input);
-			callFunction.setArgument(argument);
 			return callFunction;
 		}
 	}
