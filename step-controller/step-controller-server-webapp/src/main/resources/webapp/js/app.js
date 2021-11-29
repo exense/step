@@ -1069,7 +1069,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	this.getDashboardLink = taskId => {
 		if (this.isGrafanaAvailable) {
-			return '/#/root/grafana?d=3JB9j357k/step-scheduled-executions-overview-prom-embedded&orgId=1&var-taskId_current=' + taskId;
+			return '/#/root/grafana?d=3JB9j357k&orgId=1&var-taskId_current=' + taskId;
 		} else {
 			return '/#/root/dashboards/__pp__RTMDashboard?__filter1__=text,taskId,' + taskId;
 		}
