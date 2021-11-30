@@ -147,6 +147,8 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 
   $scope.isAllTenant = $location.search().tenant === '[All]';
 
+	$scope.isNoTenant = $location.search().tenant === '[None]';
+
 	$scope.setView = function (view) {
 		$scope.$state = view;
 		stateStorage.store($scope, {lastview:view});
@@ -465,9 +467,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	authService.hasRight = function (right) {
 	  // don't allow write- or delete- actions in the [All] tenant except for user and project
-	  if ($rootScope.tenant && $rootScope.tenant.name === '[All]' &&
+	  if ($rootScope.tenant && ($rootScope.tenant.name === '[All]' || $rootScope.tenant.name === '[None]') &&
 		  !(right.startsWith('user') || right.startsWith('project')) &&
-		  (right.endsWith('-write') || right.endsWith('-delete'))) {
+		  (right.endsWith('-write') || right.endsWith('-delete')  || right.endsWith('-execute'))) {
 	    return false;
 	  }
 	  

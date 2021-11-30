@@ -101,7 +101,7 @@ angular.module('adminControllers', ['step' ])
     var modalInstance = $uibModal.open({
       backdrop: 'static',
       animation: $scope.animationsEnabled,
-      templateUrl: 'editUserModalContent.html',
+      templateUrl: 'partials/users/editUserModalContent.html',
       controller: 'editUserModalCtrl',
       resolve: {
         user: function () {
