@@ -219,6 +219,7 @@ public class ControllerServer {
 		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(SecurityFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);
+		resourceConfig.registerClasses(CORSResponseFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	
