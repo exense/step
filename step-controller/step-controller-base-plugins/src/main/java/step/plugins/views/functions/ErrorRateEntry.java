@@ -18,13 +18,18 @@
  ******************************************************************************/
 package step.plugins.views.functions;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class ErrorRateEntry {
 
 	protected int count;
-	
+
+	@JsonSerialize(using = ErrorMapSerializer.class)
+	@JsonDeserialize(using = ErrorMapDeserializer.class)
 	protected Map<String, Integer> countByErrorMsg = new HashMap<>();
 	
 	public ErrorRateEntry() {
