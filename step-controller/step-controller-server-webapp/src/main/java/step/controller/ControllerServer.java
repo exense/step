@@ -249,7 +249,7 @@ public class ControllerServer {
 		s.setMaxInactiveInterval(timeout);
 		s.setUsingCookies(true);
 		s.setSessionCookie("sessionid");
-		s.setSameSite(HttpCookie.SameSite.STRICT);
+		s.setSameSite(HttpCookie.SameSite.LAX);
 		s.setHttpOnly(true);
 		context.setSessionHandler(s);
 		context.addEventListener(new HttpSessionListener() {
