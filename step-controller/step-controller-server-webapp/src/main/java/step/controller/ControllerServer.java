@@ -219,7 +219,7 @@ public class ControllerServer {
 		resourceConfig.registerClasses(AuthenticationFilter.class);
 		resourceConfig.registerClasses(SecurityFilter.class);
 		resourceConfig.registerClasses(ErrorFilter.class);
-		resourceConfig.registerClasses(CORSResponseFilter.class);
+		resourceConfig.registerClasses(CORSRequestResponseFilter.class);
 		resourceConfig.registerClasses(AdminServices.class);
 		
 		resourceConfig.register(new AbstractBinder() {	
@@ -250,6 +250,7 @@ public class ControllerServer {
 		s.setUsingCookies(true);
 		s.setSessionCookie("sessionid");
 		s.setSameSite(HttpCookie.SameSite.LAX);
+		//s.getSessionCookieConfig().setSecure(true);
 		s.setHttpOnly(true);
 		context.setSessionHandler(s);
 		context.addEventListener(new HttpSessionListener() {
