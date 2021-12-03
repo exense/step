@@ -1062,13 +1062,17 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 })
 
 
-.service('DashboardService', function($http) {
+.service('DashboardService', function($http,AuthService,ViewRegistry) {
 
 	this.isGrafanaAvailable = false;
 
-	$http.get("rest/g-dashboards/isGrafanaAvailable").then(response => {
-		this.isGrafanaAvailable = !!response.data.available;
-	});
+	try {
+		if (AuthService.getConf().displayNewPerfDashboard && ViewRegistry.getCustomView('grafana')) {
+			$http.get("rest/g-dashboards/isGrafanaAvailable").then(response => {
+				this.isGrafanaAvailable = !!response.data.available;
+			});
+		}
+	} catch (e) {}
 
 	this.getDashboardLink = taskId => {
 		if (this.isGrafanaAvailable) {
