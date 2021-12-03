@@ -145,9 +145,10 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 		})
 	});
 
-  $scope.isAllTenant = $location.search().tenant === '[All]';
-
-	$scope.isNoTenant = $location.search().tenant === '[None]';
+	$scope.$watch(function() {
+		$scope.isAllTenant = $location.search().tenant === '[All]';
+		$scope.isNoTenant = $location.search().tenant === '[None]';
+	})
 
 	$scope.setView = function (view) {
 		$scope.$state = view;
