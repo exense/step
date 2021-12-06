@@ -1066,9 +1066,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	this.isGrafanaAvailable = false;
 
-	this.checkAvailability = () => {
+	this.checkAvailability = (override = false) => {
 		try {
-			if (AuthService.getConf().displayNewPerfDashboard && ViewRegistry.getCustomView('grafana')) {
+			if (override || (AuthService.getConf().displayNewPerfDashboard && ViewRegistry.getCustomView('grafana'))) {
 				$http.get("rest/g-dashboards/isGrafanaAvailable").then(response => {
 					this.isGrafanaAvailable = !!response.data.available;
 					if (this.isGrafanaAvailable) {
@@ -1092,8 +1092,10 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		}
 	}
 
-	this.whenGrafanaAvailable = () => {
-		return new Promise((resolve,reject) => {
+	this.whenGrafanaAvailable = (override = false) => {
+		return new Promise((resolve, reject) => {
+			this.checkAvailability(override);
+
 			if (this.isGrafanaAvailable) {
 				resolve();
 			}
