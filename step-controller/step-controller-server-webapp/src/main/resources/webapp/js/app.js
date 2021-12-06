@@ -56,7 +56,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 
 	var customMenuEntries = [];
 
-	function getCustomView(view) {
+	api.getCustomView = (view) => {
 		var customView = customViews[view];
 		if(customView) {
 			return customView;
@@ -66,11 +66,11 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 	}
 
 	api.getViewTemplate = function (view) {
-		return getCustomView(view).template;
+		return api.getCustomView(view).template;
 	}
 
 	api.isPublicView = function (view) {
-		return getCustomView(view).isPublicView;
+		return api.getCustomView(view).isPublicView;
 	}  
 
 	api.registerView = function(viewId,template,isPublicView) {
@@ -129,7 +129,7 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 	ViewRegistry.registerView('login','partials/loginForm.html',true);
 })
 
-.controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, MaintenanceService, ViewRegistry) {
+.controller('AppController', function($rootScope, $scope, $location, $http, stateStorage, AuthService, MaintenanceService, ViewRegistry, DashboardService) {
 	stateStorage.push($scope, 'root',{});
 
 	$scope.isInitialized = false;
@@ -1062,17 +1062,27 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 })
 
 
-.service('DashboardService', function($http,AuthService,ViewRegistry) {
+.service('DashboardService', function($http,$rootScope,AuthService,ViewRegistry) {
 
 	this.isGrafanaAvailable = false;
 
-	try {
-		if (AuthService.getConf().displayNewPerfDashboard && ViewRegistry.getCustomView('grafana')) {
-			$http.get("rest/g-dashboards/isGrafanaAvailable").then(response => {
-				this.isGrafanaAvailable = !!response.data.available;
-			});
-		}
-	} catch (e) {}
+	this.checkAvailability = () => {
+		try {
+			if (AuthService.getConf().displayNewPerfDashboard && ViewRegistry.getCustomView('grafana')) {
+				$http.get("rest/g-dashboards/isGrafanaAvailable").then(response => {
+					this.isGrafanaAvailable = !!response.data.available;
+					if (this.isGrafanaAvailable) {
+						$rootScope.$broadcast('step.grafana.available');
+					}
+				});
+			}
+		} catch (e) {}
+	}
+	this.checkAvailability();
+
+	$rootScope.$on('step.login.succeeded', () => {
+		this.checkAvailability();
+	});
 
 	this.getDashboardLink = taskId => {
 		if (this.isGrafanaAvailable) {
@@ -1080,6 +1090,18 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		} else {
 			return '/#/root/dashboards/__pp__RTMDashboard?__filter1__=text,taskId,' + taskId;
 		}
+	}
+
+	this.whenGrafanaAvailable = () => {
+		return new Promise((resolve,reject) => {
+			if (this.isGrafanaAvailable) {
+				resolve();
+			}
+
+			$rootScope.$on('step.grafana.available', () => {
+				resolve();
+			});
+		});
 	}
 })
 
