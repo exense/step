@@ -1,5 +1,5 @@
-<uib-tabset> 
-	<uib-tab heading="Table">
+<uib-tabset active="0">
+	<uib-tab index="0"" heading="Table">
 		<div class="panel-body">
 			<div class="form-group form-group-sm">
 				<table class="table">
@@ -38,7 +38,7 @@
 			</button>  -->
 		</div>
 	</uib-tab>
-	<uib-tab heading="Raw (JSON)">
+	<uib-tab index="1" heading="Raw (JSON)">
 		<div class="panel-body">
 			<textarea ng-blur="onJsonFieldBlur()" ng-model="localModel.json" class="form-control form-control-sm" rows="5"></textarea>
 		</div>
