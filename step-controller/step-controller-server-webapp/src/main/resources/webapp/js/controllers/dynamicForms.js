@@ -265,7 +265,7 @@ dynamicForms.directive('dynamicCheckbox', function() {
 
                 resolve(keyword);
               } else {
-                resolve({errorCss: 'ng-scope glyphicon glyphicon-exclamation-sign red', error: 'Not found', displayNames: getDisplayNames($scope.argumentAsTable)});
+                resolve({errorCss: 'ng-scope glyphicon glyphicon-exclamation-sign red', error: 'Keyword not found', displayNames: getDisplayNames($scope.argumentAsTable)});
               }
             });
 
@@ -275,7 +275,7 @@ dynamicForms.directive('dynamicCheckbox', function() {
         function getDisplayNames(parameters) {
           return parameters
             .map((parameter) => ({
-              value: ((parameter.value && parameter.value.dynamic) ? 'DYNAMIC' :
+              value: ((parameter.value && parameter.value.dynamic) ? 'dynamic-parameter' :
                 (typeof parameter.value === 'object') ?  parameter.value.value :  parameter.value),
               key: ((parameter.value && parameter.value.dynamic) ? parameter.key + ' (expression: ' + parameter.value.expression + ')' : parameter.key)}));
         }
