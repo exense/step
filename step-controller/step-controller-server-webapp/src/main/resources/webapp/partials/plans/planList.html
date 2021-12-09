@@ -28,7 +28,7 @@
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
 				<cell>{{row.root._class}}</cell>
 			</st-column>
-			<st-column width="'150px'">
+			<st-column width="'180px'">
 				<cell>
 					<div class="btn-group btn-group-sm">
 						<button type="button" class="btn btn-default" ng-click="$parent.editPlan(row.id)" ng-disabled="!authService.hasRight('plan-write')"  uib-tooltip="Edit plan">
@@ -39,10 +39,14 @@
             			<button type="button" class="btn btn-default" ng-click="$parent.copyPlan(row.id)" ng-disabled="!authService.hasRight('plan-write')" uib-tooltip="Copy plan">
             				<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
             			</button>
-									<button type="button" class="btn btn-default" ng-click="$parent.exportPlan(row.id,row.attributes.name)" ng-disabled="!authService.hasRight('plan-read')" uib-tooltip="Export plan"
-													tooltip-append-to-body="true" tooltip-placement="bottom">
-										<span class="glyphicon glyphicon-export" aria-hidden="true"></span>
-									</button>
+						<button type="button" class="btn btn-default" ng-click="$parent.exportPlan(row.id,row.attributes.name)" ng-disabled="!authService.hasRight('plan-read')" uib-tooltip="Export plan"
+								tooltip-append-to-body="true" tooltip-placement="bottom">
+							<span class="glyphicon glyphicon-export" aria-hidden="true"></span>
+						</button>
+						<button type="button" class="btn btn-default" ng-click="$parent.lookUp(row.id)" ng-disabled="!authService.hasRight('plan-read')" uib-tooltip="Where is this plan used"
+								tooltip-append-to-body="true" tooltip-placement="bottom">
+							<span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+						</button>
             			<button type="button" class="btn btn-default" ng-click="$parent.deletePlan(row.id, row.attributes.name)" ng-disabled="!authService.hasRight('plan-delete')" uib-tooltip="Delete plan">
             				<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             			</button>

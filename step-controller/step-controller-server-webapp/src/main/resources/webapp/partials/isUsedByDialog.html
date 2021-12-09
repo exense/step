@@ -1,0 +1,20 @@
+<div class="modal-header">
+	<h3 class="modal-title">{{title}}</h3>
+</div>
+
+<div class="modal-body">
+	<div class="section">
+		<div class="section-content section-highlight">
+			<table ng-if="result && result.length > 0" style="width: 100%">
+				<tr><th>Used by</th><th>Type</th></tr>
+				<tr ng-repeat="result in result">
+					<td>{{result.name}}</td><td>{{result.type}}</td>
+				</tr>
+			</table>
+			<h3 ng-if="result && result.length == 0">Component is not used by other components.</h3>
+		</div>
+	</div>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="close()">Close</button>
+</div>

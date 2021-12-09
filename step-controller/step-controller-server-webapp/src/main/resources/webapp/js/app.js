@@ -1062,49 +1062,105 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 })
 
 
+.factory('IsUsedByDialogs', function ($rootScope, $uibModal, IsUsedByService) {
+	var dialogs = {};
+
+	dialogs.displayDialog = function(title, type, id) {
+		var modalInstance = $uibModal.open({
+			backdrop: 'static',
+			templateUrl: 'partials/isUsedByDialog.html',
+			controller: 'isUsedByDialogCtrl',
+			resolve: {
+				title: function () {
+					return title;
+				},
+				type: function () {
+					return type;
+				},
+				id: function () {
+					return id;
+				}
+			}
+		});
+		return modalInstance.result;
+	}
+
+	return dialogs;
+})
+
+.service('IsUsedByService', function($http,$rootScope) {
+
+	this.type = {
+		PLAN_ID: 'PLAN_ID',
+		KEYWORD_ID: 'KEYWORD_ID'
+	};
+
+	this.lookUp = (value, searchType) => {
+		return $http.post("rest/references/findReferences", {"searchType":searchType, "searchValue": value});
+	}
+
+})
+
+
+.controller('isUsedByDialogCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs, ExportService, title, type, id, IsUsedByService) {
+	$scope.title = title;
+	$scope.type = type;
+	$scope.id = id;
+
+	IsUsedByService.lookUp(id, type).then(
+		(result) => {
+			$scope.result = result.data;
+		}
+	);
+
+	$scope.close = function () {
+		$uibModalInstance.close();
+	};
+})
+
 .service('DashboardService', function($http,$rootScope,AuthService,ViewRegistry) {
 
-	this.isGrafanaAvailable = false;
+this.isGrafanaAvailable = false;
 
-	this.checkAvailability = (override = false) => {
-		try {
-			if (override || (AuthService.getConf().displayNewPerfDashboard && ViewRegistry.getCustomView('grafana'))) {
-				$http.get("rest/g-dashboards/isGrafanaAvailable").then(response => {
-					this.isGrafanaAvailable = !!response.data.available;
-					if (this.isGrafanaAvailable) {
-						$rootScope.$broadcast('step.grafana.available');
-					}
-				});
-			}
-		} catch (e) {}
-	}
-	this.checkAvailability();
-
-	$rootScope.$on('step.login.succeeded', () => {
-		this.checkAvailability();
-	});
-
-	this.getDashboardLink = taskId => {
-		if (this.isGrafanaAvailable) {
-			return '/#/root/grafana?d=3JB9j357k&orgId=1&var-taskId_current=' + taskId;
-		} else {
-			return '/#/root/dashboards/__pp__RTMDashboard?__filter1__=text,taskId,' + taskId;
-		}
-	}
-
-	this.whenGrafanaAvailable = (override = false) => {
-		return new Promise((resolve, reject) => {
-			this.checkAvailability(override);
-
-			if (this.isGrafanaAvailable) {
-				resolve();
-			}
-
-			$rootScope.$on('step.grafana.available', () => {
-				resolve();
+this.checkAvailability = (override = false) => {
+	try {
+		if (override || (AuthService.getConf().displayNewPerfDashboard && ViewRegistry.getCustomView('grafana'))) {
+			$http.get("rest/g-dashboards/isGrafanaAvailable").then(response => {
+				this.isGrafanaAvailable = !!response.data.available;
+				if (this.isGrafanaAvailable) {
+					$rootScope.$broadcast('step.grafana.available');
+				}
 			});
-		});
+		}
+	} catch (e) {}
+}
+this.checkAvailability();
+
+$rootScope.$on('step.login.succeeded', () => {
+	this.checkAvailability();
+});
+
+this.getDashboardLink = taskId => {
+	if (this.isGrafanaAvailable) {
+		return '/#/root/grafana?d=3JB9j357k&orgId=1&var-taskId_current=' + taskId;
+	} else {
+		return '/#/root/dashboards/__pp__RTMDashboard?__filter1__=text,taskId,' + taskId;
 	}
+}
+
+this.whenGrafanaAvailable = (override = false) => {
+	return new Promise((resolve, reject) => {
+		this.checkAvailability(override);
+
+		if (this.isGrafanaAvailable) {
+			resolve();
+		}
+
+		$rootScope.$on('step.grafana.available', () => {
+			resolve();
+		});
+	});
+}
 })
 
 //The following functions are missing in IE11

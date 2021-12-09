@@ -62,7 +62,7 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
   });
 })
 
-.controller('PlanListCtrl', function($rootScope, $scope, $http, $location, $uibModal, stateStorage, Dialogs, PlanDialogs, ImportDialogs, ExportDialogs, AuthService) {
+.controller('PlanListCtrl', function($rootScope, $scope, $http, $location, $uibModal, stateStorage, Dialogs, PlanDialogs, ImportDialogs, ExportDialogs, AuthService, IsUsedByService, IsUsedByDialogs) {
     stateStorage.push($scope, 'list', {});	
     $scope.authService = AuthService;
     
@@ -122,6 +122,10 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
 
     $scope.exportPlan = function(id, name) {
       ExportDialogs.displayExportDialog('Plans export','plans/'+id, name+'.sta', true, false).then(function () {})
+    }
+
+    $scope.lookUp = function(id) {
+      IsUsedByDialogs.displayDialog('Plan is used by', IsUsedByService.type.PLAN_ID, id);
     }
     
   })

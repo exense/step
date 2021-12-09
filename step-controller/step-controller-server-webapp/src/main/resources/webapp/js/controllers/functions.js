@@ -129,7 +129,7 @@ angular.module('functionsControllers',['step'])
   return dialogs;
 })
 
-.controller('FunctionListCtrl', function($scope, $rootScope, $compile, $http, $interval, $uibModal, stateStorage, Dialogs, FunctionDialogs, FunctionDialogsConfig, ImportDialogs, ExportDialogs, $location, AuthService, FunctionTypeRegistry) {
+.controller('FunctionListCtrl', function($scope, $rootScope, $compile, $http, $interval, $uibModal, stateStorage, Dialogs, FunctionDialogs, FunctionDialogsConfig, ImportDialogs, ExportDialogs, $location, AuthService, FunctionTypeRegistry, IsUsedByService, IsUsedByDialogs) {
   stateStorage.push($scope, 'functions', {});	
   
   $scope.authService = AuthService;
@@ -204,6 +204,10 @@ angular.module('functionsControllers',['step'])
   
   $scope.exportFunctions = function() {
     ExportDialogs.displayExportDialog('Keywords export','functions', 'allKeywords.sta', true).then(function () {})
+  }
+
+  $scope.lookUp = function(id) {
+    IsUsedByDialogs.displayDialog('Keyword is used by', IsUsedByService.type.KEYWORD_ID, id);
   }
   
   $scope.functionTypeLabel = function(type) {

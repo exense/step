@@ -31,7 +31,7 @@
 				<cell>{{$parent.functionTypeLabel(row.type)}}</cell>
 			</st-column>
 			<st-custom-columns st-screen="functionTableExtensions" st-exclude-fields="[]" st-search-disable="false"/>
-			<st-column width="'180px'">
+			<st-column width="'210px'">
 				<cell>
 					<div class="btn-group btn-group-sm">
 						<button type="button" class="btn btn-default" ng-click="$parent.editFunction(row.id)" ng-disabled="!authService.hasRight('kw-write')"  uib-tooltip="Configure keyword" tooltip-append-to-body="true">
@@ -46,10 +46,13 @@
             			<button type="button" class="btn btn-default" ng-click="$parent.copyFunction(row.id)" ng-disabled="!authService.hasRight('kw-write')" uib-tooltip="Copy keyword" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
             			</button>
-									<button type="button" class="btn btn-default" ng-click="$parent.exportFunction(row.id,row.attributes.name)" ng-disabled="!authService.hasRight('kw-read')" uib-tooltip="Export keyword"
-													tooltip-append-to-body="true" tooltip-placement="bottom">
-										<span class="glyphicon glyphicon-export" aria-hidden="true"></span>
-									</button>
+						<button type="button" class="btn btn-default" ng-click="$parent.exportFunction(row.id,row.attributes.name)" ng-disabled="!authService.hasRight('kw-read')" uib-tooltip="Export keyword"
+										tooltip-append-to-body="true" tooltip-placement="bottom">
+							<span class="glyphicon glyphicon-export" aria-hidden="true"></span>
+						</button>
+						<button type="button" class="btn btn-default" ng-click="$parent.lookUp(row.id)" ng-disabled="!authService.hasRight('kw-read')" uib-tooltip="Where is this keyword used" tooltip-append-to-body="true">
+							<span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+						</button>
             			<button type="button" class="btn btn-default" ng-click="$parent.deleteFunction(row.id, row.attributes.name)" ng-disabled="!authService.hasRight('kw-delete')" uib-tooltip="Delete keyword" tooltip-append-to-body="true">
             				<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
             			</button>
