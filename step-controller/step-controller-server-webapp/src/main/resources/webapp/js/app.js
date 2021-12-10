@@ -1106,6 +1106,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	$scope.title = title;
 	$scope.type = type;
 	$scope.id = id;
+	$scope.result = false;
 
 	IsUsedByService.lookUp(id, type).then(
 		(result) => {

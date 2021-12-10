@@ -1,17 +1,57 @@
+<style>
+	.lds-ring {
+		position: relative;
+		width: 80px;
+		height: 80px;
+		margin: 16px auto;
+		display: block;
+	}
+	.lds-ring div {
+		box-sizing: border-box;
+		display: block;
+		position: absolute;
+		width: 64px;
+		height: 64px;
+		margin: 8px;
+		border: 8px solid #000;
+		border-radius: 50%;
+		animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+		border-color: #000 transparent transparent transparent;
+	}
+	.lds-ring div:nth-child(1) {
+		animation-delay: -0.45s;
+	}
+	.lds-ring div:nth-child(2) {
+		animation-delay: -0.3s;
+	}
+	.lds-ring div:nth-child(3) {
+		animation-delay: -0.15s;
+	}
+	@keyframes lds-ring {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+</style>
 <div class="modal-header">
 	<h3 class="modal-title">{{title}}</h3>
 </div>
 
 <div class="modal-body">
 	<div class="section">
-		<div class="section-content section-highlight">
-			<table ng-if="result && result.length > 0" style="width: 100%">
+		<div class="section-content section-highlight" style="max-height: 500px; overflow-y: auto;">
+			<div ng-if="!result" class="lds-ring"><div></div><div></div><div></div><div></div></div>
+			<table ng-if="result && result.length > 0" style="width: 100%;" class="table table-striped">
 				<tr><th>Used by</th><th>Type</th></tr>
 				<tr ng-repeat="result in result">
 					<td>{{result.name}}</td><td>{{result.type}}</td>
 				</tr>
 			</table>
-			<h3 ng-if="result && result.length == 0">Component is not used by other components.</h3>
+			<p ng-if="result && result.length == 0">Component is not used by other components.</p>
 		</div>
 	</div>
 </div>
