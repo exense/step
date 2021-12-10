@@ -40,10 +40,10 @@
 		<h4 class="parameter" ng-repeat="displayName in keyword.displayNames" title="{{displayName.key}}" >{{displayName.value}}</h4>
 		<h5 class="parent" ng-if="keyword.description"><i ng-if="keyword.iconCss" style="display:inline-block" uib-tooltip="{{keyword.iconTooltip}}" ng-class="keyword.iconCss"></i> {{keyword.description}}</h5>
 		<h5 class="error" ng-if="keyword.error"><i style="display:inline-block" uib-tooltip="{{keyword.error}}" ng-class="keyword.errorCss"></i> {{keyword.error}}</h5>
-		<div class="btn btn-default btn-sm {{editKeyword.editing ? 'active' : ''}}" ng-click="editKeyword.editing = !editKeyword.editing" style="margin-left: auto;">
+		<div class="btn btn-default btn-xs {{editKeyword.editing ? 'active' : ''}}" ng-click="editKeyword.editing = !editKeyword.editing" style="margin-left: auto; height: 22px;">
 			<i class="glyphicon glyphicon-pencil"></i>
 		</div>
 	</div>
-	<label style="padding-top: 8px;" ng-if="editKeyword.editing">Keyword selection parameters</label>
+	<label style="padding-top: 24px;" ng-if="editKeyword.editing">Keyword selection parameters</label>
 	<json-editor ng-if="editKeyword.editing" model="editKeyword.value" type="keyword" on-change="editKeyword.save(json)" />
 </div>
