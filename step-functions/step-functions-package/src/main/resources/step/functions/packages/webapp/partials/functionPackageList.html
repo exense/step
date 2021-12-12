@@ -29,13 +29,14 @@
 			<st-column width="'150px'">
 				<cell>
 					<div class="btn-group btn-group-sm">
-						<button ng-disabled="isRefreshing" type="button" class="btn btn-default" ng-click="refreshFunctionPackage(row.id)" uib-tooltip="Refresh package">
+						<button ng-disabled="isRefreshing || !authService.hasRight('kw-write')" type="button" class="btn btn-default" ng-click="refreshFunctionPackage(row.id)" uib-tooltip="Refresh package">
                   			<span class="glyphicon glyphicon glyphicon-refresh" aria-hidden="true"></span>
                   		</button>
-						<button ng-disabled="isRefreshing" type="button" class="btn btn-default" ng-click="editFunctionPackage(row.id)" uib-tooltip="Edit package">
+						<button ng-disabled="isRefreshing || !authService.hasRight('kw-write')" type="button" class="btn btn-default" ng-click="editFunctionPackage(row.id)" uib-tooltip="Edit package">
                   			<span class="glyphicon glyphicon glyphicon-wrench" aria-hidden="true"></span>
                   		</button>
-						<button ng-disabled="isRefreshing" type="button" class="btn btn-default" ng-click="deleteFunctionPackage(row.id, row.attributes.name)" uib-tooltip="Delete package">
+						<button ng-disabled="isRefreshing || !authService.hasRight('kw-write')" type="button" class="btn btn-default"  
+										ng-click="deleteFunctionPackage(row.id, row.attributes.name)" uib-tooltip="Delete package">
                   			<span class="glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>
                   		</button>
           			</div>
