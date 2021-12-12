@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import javax.json.JsonObject;
 
+import org.bson.types.ObjectId;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
@@ -45,7 +46,11 @@ public class AbstractTable<T> implements Table<T> {
 
 	@Override
 	public Filter getQueryFragmentForColumnSearch(String columnName, String searchValue) {
-		return Filters.regex(columnName, searchValue, false);
+		if (columnName.equals("id") && ObjectId.isValid(searchValue)) {
+			return Filters.equals(columnName, searchValue);	
+		} else {
+			return Filters.regex(columnName, searchValue, false);
+		}
 	}
 
 	@Override
