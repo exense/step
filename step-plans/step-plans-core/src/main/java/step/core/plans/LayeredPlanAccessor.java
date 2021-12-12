@@ -19,6 +19,7 @@
 package step.core.plans;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import step.core.accessors.LayeredAccessor;
 
@@ -32,4 +33,8 @@ public class LayeredPlanAccessor extends LayeredAccessor<Plan> implements PlanAc
 		super(accessors);
 	}
 
+	@Override
+	public Stream<Plan> getVisiblePlans() {
+		throw new RuntimeException("getVisiblePlans not implemented in layered accessor");
+	}
 }

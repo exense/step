@@ -24,7 +24,7 @@ angular.module('resourcesControllers',['tables','step'])
   EntityRegistry.registerEntity('Resource', 'resources', 'resources', 'rest/resources/', 'rest/resources/', 'st-table', '/partials/resources/resourceSelectionTable.html');
 })
 
-.controller('ResourceListCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService) {
+.controller('ResourceListCtrl', function($rootScope, $scope, $http, stateStorage, Dialogs, ResourceDialogs, AuthService, IsUsedByService, IsUsedByDialogs) {
     stateStorage.push($scope, 'resources', {});	
     $scope.authService = AuthService;
     
@@ -38,6 +38,10 @@ angular.module('resourcesControllers',['tables','step'])
 
     $scope.editResource = function(id) {
       ResourceDialogs.editResource(id, function() {reload()});
+    }
+
+    $scope.lookUp = function(id) {
+      IsUsedByDialogs.displayDialog('Resource is used by', IsUsedByService.type.RESOURCE_ID, id);
     }
     
     $scope.deleteResource = function(id, name) {

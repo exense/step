@@ -5,12 +5,14 @@ public class FindReferencesRequest {
         PLAN_ID,
         PLAN_NAME,
         KEYWORD_ID,
-        KEYWORD_NAME
+        KEYWORD_NAME,
+        RESOURCE_ID,
+        RESOURCE_NAME
     }
 
     public Type searchType;
     public String searchValue;
-    public boolean includeEphemerals;
+    public boolean includeHiddenPlans;
 
     // Needed for Jax-WS
     public FindReferencesRequest() {

@@ -11,6 +11,7 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+import step.resources.Resource;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -19,9 +20,7 @@ import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static step.core.references.FindReferencesRequest.Type.KEYWORD_NAME;
-import static step.core.references.FindReferencesRequest.Type.PLAN_NAME;
+import java.util.stream.Stream;
 
 @Singleton
 @Path("references")
@@ -75,8 +74,7 @@ public class ReferenceFinderServices extends AbstractServices {
         // we don't have access to the composite functions plugin from here, so we use class names and reflection.
         List<Plan> plansInComposites = new ArrayList<>();
 
-        List<Function> compositeFunctions = functionAccessor.stream().filter(f -> f.getClass().getName().equals("step.plugins.functions.types.CompositeFunction")).collect(Collectors.toList());
-        compositeFunctions.forEach(function -> {
+        functionAccessor.findManyByCriteria(Map.of("type","step.plugins.functions.types.CompositeFunction")).forEach(function -> {
             String planId = getPlanIdForCompositeFunction(function);
             if (planId != null) {
                 Plan plan = planAccessor.get(planId);
@@ -91,17 +89,14 @@ public class ReferenceFinderServices extends AbstractServices {
         });
 
         // Find plans containing usages
-        List<Plan> plansToConsider = planAccessor.stream().filter(p ->
-                !plansInComposites.contains(p) && (request.includeEphemerals || !isEphemeral(p))
-        ).collect(Collectors.toList());
-
-        plansToConsider.forEach(plan -> {
+        Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.stream() : planAccessor.getVisiblePlans();
+        stream.filter(p -> !plansInComposites.contains(p)).forEach( plan -> {
             List<Object> matchingObjects = getReferencedObjectsMatchingRequest(plan, request);
             if (!matchingObjects.isEmpty()) {
                 results.add(new FindReferencesResponse(plan));
             }
         });
-
+        
         // Sort the results by name
         results.sort(Comparator.comparing(f -> f.name));
         return results;
@@ -120,11 +115,6 @@ public class ReferenceFinderServices extends AbstractServices {
         List<Object> referencedObjects = getReferencedObjects(plan).stream().filter(o -> !o.equals(plan)).collect(Collectors.toList());
         //System.err.println("objects referenced from plan: " + planToString(plan) + ": "+ referencedObjects.stream().map(ReferenceFinderServices::objectToString).collect(Collectors.toList()));
         return referencedObjects.stream().filter(o -> doesRequestMatch(request, o)).collect(Collectors.toList());
-    }
-
-
-    private boolean isEphemeral(Plan plan) {
-        return !plan.hasAttribute("project");
     }
 
     // returns a (generic) set of objects referenced by a plan
@@ -166,6 +156,16 @@ public class ReferenceFinderServices extends AbstractServices {
                     return f.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
                 case KEYWORD_ID:
                     return f.getId().toString().equals(req.searchValue);
+                default:
+                    return false;
+            }
+        } else if (o instanceof Resource) {
+            Resource r = (Resource) o;
+            switch (req.searchType) {
+                case RESOURCE_NAME:
+                    return r.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
+                case RESOURCE_ID:
+                    return r.getId().toString().equals(req.searchValue);
                 default:
                     return false;
             }

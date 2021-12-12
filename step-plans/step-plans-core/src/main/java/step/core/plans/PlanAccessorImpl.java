@@ -20,10 +20,18 @@ package step.core.plans;
 
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
+import step.core.collections.Filters;
+
+import java.util.stream.Stream;
 
 public class PlanAccessorImpl extends AbstractAccessor<Plan> implements PlanAccessor {
 
 	public PlanAccessorImpl(Collection<Plan> collectionDriver) {
 		super(collectionDriver);
+	}
+
+	@Override
+	public Stream<Plan> getVisiblePlans() {
+		return collectionDriver.find(Filters.equals("visible", true), null, null, null, 0);
 	}
 }

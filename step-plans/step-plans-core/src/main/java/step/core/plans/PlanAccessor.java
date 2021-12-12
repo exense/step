@@ -20,6 +20,10 @@ package step.core.plans;
 
 import step.core.accessors.Accessor;
 
+import java.util.stream.Stream;
+
 public interface PlanAccessor extends Accessor<Plan> {
+
+    Stream<Plan> getVisiblePlans();
 
 }

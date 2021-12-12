@@ -1092,7 +1092,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	this.type = {
 		PLAN_ID: 'PLAN_ID',
-		KEYWORD_ID: 'KEYWORD_ID'
+		KEYWORD_ID: 'KEYWORD_ID',
+		RESOURCE_ID: 'RESOURCE_ID'
 	};
 
 	this.lookUp = (value, searchType) => {
