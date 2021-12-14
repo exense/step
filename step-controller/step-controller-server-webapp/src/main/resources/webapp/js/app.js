@@ -470,7 +470,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	  // don't allow write- or delete- actions in the [All] tenant except for user and project
 	  if ($rootScope.tenant && ($rootScope.tenant.name === '[All]' || $rootScope.tenant.name === '[None]') &&
 		  !(right.startsWith('user') || right.startsWith('project')) &&
-		  (right.endsWith('-write') || right.endsWith('-delete')  || right.endsWith('-execute'))) {
+		  (right.endsWith('-write') || right.endsWith('-delete')  || right.endsWith('-execute') || right.endsWith('dashboard-configure'))) {
 	    return false;
 	  }
 	  
