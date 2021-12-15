@@ -31,34 +31,43 @@
 				<cell>{{$parent.functionTypeLabel(row.type)}}</cell>
 			</st-column>
 			<st-custom-columns st-screen="functionTableExtensions" st-exclude-fields="[]" st-search-disable="false"/>
-			<st-column width="'210px'">
+			<st-column width="'80px'">
 				<cell>
 					<div class="btn-group btn-group-sm">
 						<button type="button" class="btn btn-default" ng-click="$parent.editFunction(row.id)" ng-disabled="!authService.hasRight('kw-write')"  uib-tooltip="Configure keyword" tooltip-append-to-body="true">
-            				<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-            			</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.openFunctionEditor(row.id)" ng-disabled="!authService.hasRight('kw-write')" uib-tooltip="Edit keyword" tooltip-append-to-body="true">
-	            			<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
-	            		</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.executeFunction(row.id)" ng-disabled="!authService.hasRight('kw-execute')" uib-tooltip="Execute keyword" tooltip-append-to-body="true">
-            				<span class="glyphicon glyphicon-play" aria-hidden="true"></span>
-            			</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.copyFunction(row.id)" ng-disabled="!authService.hasRight('kw-write')" uib-tooltip="Copy keyword" tooltip-append-to-body="true">
-            				<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
-            			</button>
-						<button type="button" class="btn btn-default" ng-click="$parent.exportFunction(row.id,row.attributes.name)" ng-disabled="!authService.hasRight('kw-read')" uib-tooltip="Export keyword"
-										tooltip-append-to-body="true" tooltip-placement="bottom">
-							<span class="glyphicon glyphicon-export" aria-hidden="true"></span>
+							<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
 						</button>
-						<button type="button" class="btn btn-default" ng-click="$parent.lookUp(row.id)" ng-disabled="!authService.hasRight('kw-read')" uib-tooltip="Where is this keyword used" tooltip-append-to-body="true">
-							<span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+						<button type="button" class="btn btn-default" ng-click="$parent.openFunctionEditor(row.id)" ng-disabled="!authService.hasRight('kw-write')" uib-tooltip="Edit keyword" tooltip-append-to-body="true">
+							<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
 						</button>
-            			<button type="button" class="btn btn-default" ng-click="$parent.deleteFunction(row.id, row.attributes.name)" ng-disabled="!authService.hasRight('kw-delete')" uib-tooltip="Delete keyword" tooltip-append-to-body="true">
-            				<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-            			</button>
-          			</div>
-          		</cell>
+						<button type="button" class="btn btn-default" uib-popover-template="'contextMenu.html'"
+										popover-placement="left" popover-append-to-body="true"
+										popover-trigger="'outsideClick'" popover-is-open="popOver.isOpen">
+							<span class="glyphicon glyphicon-option-horizontal" aria-hidden="true"></span>
+						</button>
+					</div>
+				</cell>
 			</st-column>
 		</st-columns>
 	</st-table>
 </div>
+
+<script type="text/ng-template" id="contextMenu.html">
+	<div class="btn-group-vertical btn-group-sm">
+		<button type="button" class="btn btn-default" ng-click="$parent.executeFunction(row.id)" ng-mouseup="popOver.isOpen=false;" ng-disabled="!authService.hasRight('kw-execute')" style="text-align: left;">
+			<span class="glyphicon glyphicon-play" aria-hidden="true"></span><span> Execute keyword</span>
+		</button>
+		<button type="button" class="btn btn-default" ng-click="$parent.copyFunction(row.id)" ng-mouseup="popOver.isOpen=false;" ng-disabled="!authService.hasRight('kw-write')" style="text-align: left;">
+			<span class="glyphicon glyphicon-copy" aria-hidden="true"></span><span> Copy keyword</span>
+		</button>
+		<button type="button" class="btn btn-default" ng-click="$parent.exportFunction(row.id,row.attributes.name)" ng-mouseup="popOver.isOpen=false;" ng-disabled="!authService.hasRight('kw-read')" style="text-align: left;">
+			<span class="glyphicon glyphicon-export" aria-hidden="true"></span><span> Export keyword</span>
+		</button>
+		<button type="button" class="btn btn-default btn-sm" ng-click="$parent.lookUp(row.id)" ng-mouseup="popOver.isOpen=false;" ng-disabled="!authService.hasRight('kw-read')" style="text-align: left;">
+			<span class="glyphicon glyphicon-search" aria-hidden="true"></span><span> Search for usages</span>
+		</button>
+		<button type="button" class="btn btn-default btn-sm" ng-click="$parent.deleteFunction(row.id, row.attributes.name)" ng-mouseup="popOver.isOpen=false;" ng-disabled="!authService.hasRight('kw-delete')" style="text-align: left;">
+			<span class="glyphicon glyphicon-remove" aria-hidden="true"></span><span> Delete keyword</span>
+		</button>
+	</div>
+</script>
