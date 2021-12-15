@@ -98,7 +98,7 @@ public class ObjectHookInterceptor extends AbstractServices implements ReaderInt
 				context.setEntity(newList);
 			} else {
 				if(!predicate.test(entity)) {
-					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to access this object");
+					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to access this object from within this context");
 				}
 			}
 		}

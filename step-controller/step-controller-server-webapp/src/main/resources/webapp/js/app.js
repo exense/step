@@ -1103,7 +1103,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 })
 
 
-.controller('isUsedByDialogCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs, ExportService, title, type, id, IsUsedByService) {
+.controller('isUsedByDialogCtrl', function ($scope, $http, $uibModalInstance, Upload, Dialogs, ExportService, title, type, id, IsUsedByService, EntityScopeResolver, $rootScope) {
 	$scope.title = title;
 	$scope.type = type;
 	$scope.id = id;
@@ -1111,9 +1111,21 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	IsUsedByService.lookUp(id, type).then(
 		(result) => {
+			$scope.hasProject = result.data.some(e => e.attributes && e.attributes.project);
 			$scope.result = result.data;
 		}
 	);
+	
+	$scope.getTenantName = function(e) {
+		var resolved = EntityScopeResolver.getScope(e);
+		if (resolved) {
+			return resolved.tenantName;
+		} else if ($rootScope.tenant) {
+			return $rootScope.tenant.name;
+		} else {
+			return "";
+		}
+	}
 
 	$scope.close = function () {
 		$uibModalInstance.close();
