@@ -48,9 +48,9 @@
 			<table ng-if="result && result.length > 0" style="width: 100%;" class="table table-striped">
 				<tr><th ng-if="hasProject">Project</th></th><th>Used by</th><th>Type</th></tr>
 				<tr ng-repeat="result in result">
-					<td ng-if="hasProject">{{getTenantName(result)}}</td>
-					<td ng-if="result.type == 'KEYWORD'"> <function-link function_="result" st-options="stOptions" /></td>
-					<td ng-if="result.type == 'PLAN'"> <plan-link plan-id="result.id" description="result.name" st-options="stOptions"/></td>
+					<td ng-if="hasProject">{{result.tenantName}}</td>
+					<td ng-if="result.type == 'KEYWORD'"> <function-link ng-if="result.showLink" function_="result" st-options="stOptions" /><span ng-if="!result.showLink">{{result.name}}</span></td>
+					<td ng-if="result.type == 'PLAN'"> <plan-link ng-if="result.showLink" plan-id="result.id" description="result.name" st-options="stOptions"/><span ng-if="!result.showLink">{{result.name}}</span></td>
 					<td ng-if="result.type != 'PLAN' && result.type != 'KEYWORD'">{{result.name}}</td>
 					<td>{{result.type}}</td>
 				</tr>

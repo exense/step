@@ -1111,21 +1111,29 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	IsUsedByService.lookUp(id, type).then(
 		(result) => {
-			$scope.hasProject = result.data.some(e => e.attributes && e.attributes.project);
+			$scope.hasProject = false;//result.data.some(e => e.attributes && e.attributes.project);
+			if (result.data && result.data.length) {
+				$scope.result = [];
+				//enrich data
+				result.data.forEach(e => {
+					e.showLink = true;
+					if (e.attributes && e.attributes.project) {
+						$scope.hasProject = true;
+						var resolved = EntityScopeResolver.getScope(e);
+						if (resolved) {
+							e.tenantName = resolved.tenantName;
+							e.showLink = ($rootScope.tenant.name === "[All]");
+						} else if ($rootScope.tenant) {
+							e.tenantName = $rootScope.tenant.name;
+						} else {
+							e.tenantName = "";
+						}
+					}
+				})
+			}
 			$scope.result = result.data;
 		}
 	);
-	
-	$scope.getTenantName = function(e) {
-		var resolved = EntityScopeResolver.getScope(e);
-		if (resolved) {
-			return resolved.tenantName;
-		} else if ($rootScope.tenant) {
-			return $rootScope.tenant.name;
-		} else {
-			return "";
-		}
-	}
 
 	$scope.close = function () {
 		$uibModalInstance.close();
