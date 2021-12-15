@@ -46,6 +46,7 @@ public class SynchronizedHandler extends ArtefactHandler<Synchronized, ReportNod
 
 	@Override
 	public void createReportSkeleton_(ReportNode node, Synchronized testArtefact) {
+		sh.init(context);
 		sh.createReportSkeleton_(node, testArtefact);
 	}
 	

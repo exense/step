@@ -31,7 +31,9 @@ public class SetHandler extends ArtefactHandler<Set, SetReportNode> {
 	
 	@Override
 	protected void createReportSkeleton_(SetReportNode parentNode, Set testArtefact) {
-		executeSet(parentNode, testArtefact);
+		try {
+			executeSet(parentNode, testArtefact);
+		} catch (Exception e) {}
 	}
 
 	@Override
