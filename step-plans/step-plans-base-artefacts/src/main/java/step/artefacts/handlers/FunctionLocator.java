@@ -55,7 +55,12 @@ public class FunctionLocator {
 		Objects.requireNonNull(objectPredicate, "The object predicate must not be null");
 		Function function;
 		String selectionAttributesJson = callFunctionArtefact.getFunction().get();
-		Map<String, String> attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, bindings);
+		Map<String, String> attributes;
+		try {
+			attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, bindings);
+		} catch (Exception e) {
+			throw new NoSuchElementException("Unable to find keyword with attributes "+selectionAttributesJson + ". Cause: " + e.getMessage());
+		}
 
 		if(attributes.size()>0) {
 
