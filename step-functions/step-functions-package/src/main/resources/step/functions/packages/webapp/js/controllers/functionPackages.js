@@ -221,6 +221,7 @@ angular.module('functionPackages',['step'])
 		// So we can cancel
 		$scope.initPackage = functionPackage.packageLocation;
 		$scope.initLibraries = functionPackage.packageLibrariesLocation;
+		$scope.isFunctionPackageReady=true;
 	} else {
 		// So we can cancel
 		$scope.initPackage = null;
