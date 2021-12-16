@@ -46,13 +46,13 @@
 		<div class="section-content section-highlight" style="max-height: 500px; overflow-y: auto;">
 			<div ng-if="!result" class="lds-ring"><div></div><div></div><div></div><div></div></div>
 			<table ng-if="result && result.length > 0" style="width: 100%;" class="table table-striped">
-				<tr><th ng-if="hasProject">Project</th></th><th>Used by</th><th>Type</th></tr>
+				<tr></th><th>Used by</th><th>Type</th><th ng-if="hasProject">Project</th></tr>
 				<tr ng-repeat="result in result">
-					<td ng-if="hasProject">{{result.tenantName}}</td>
 					<td ng-if="result.type == 'KEYWORD'"> <function-link ng-if="result.showLink" function_="result" st-options="stOptions" /><span ng-if="!result.showLink">{{result.name}}</span></td>
 					<td ng-if="result.type == 'PLAN'"> <plan-link ng-if="result.showLink" plan-id="result.id" description="result.name" st-options="stOptions"/><span ng-if="!result.showLink">{{result.name}}</span></td>
 					<td ng-if="result.type != 'PLAN' && result.type != 'KEYWORD'">{{result.name}}</td>
 					<td>{{result.type}}</td>
+					<td ng-if="hasProject">{{result.tenantName}}</td>
 				</tr>
 			</table>
 			<p ng-if="result && result.length == 0">Component is not used by other components.</p>
