@@ -49,7 +49,7 @@ angular.module('adminControllers', ['step' ])
       $scope.autorefresh = true;
    }])   
 
-.controller('UserListCtrl', function($scope, $interval, $http, helpers, $uibModal, Dialogs) {
+.controller('UserListCtrl', function($scope, $interval, $http, helpers, $uibModal, Dialogs, AuthService) {
   
   $scope.loadTable = function loadTable() {
     $http.get("rest/admin/users").then(function(response) {
@@ -112,7 +112,7 @@ angular.module('adminControllers', ['step' ])
       
     modalInstance.result.then(function(result) {
       console.log(result);
-      if (isNew && result === 'save') {
+      if (isNew && result === 'save' && AuthService.getConf().authenticatorName === 'DefaultAuthenticator') {
         $scope.showResetPasswordPopup(user);
       } else {
         $scope.loadTable();

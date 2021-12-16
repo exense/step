@@ -25,6 +25,8 @@ import java.util.Map;
 public class AccessConfiguration {
 	
 	boolean authentication;
+
+	private String authenticatorName;
 	
 	boolean demo;
 	
@@ -127,5 +129,13 @@ public class AccessConfiguration {
 
 	public void setDisplayNewPerfDashboard(boolean displayNewPerfDashboard) {
 		this.displayNewPerfDashboard = displayNewPerfDashboard;
+	}
+
+    public void setAuthenticatorName(String authenticatorName) {
+		this.authenticatorName = authenticatorName;
+    }
+
+	public String getAuthenticatorName() {
+		return authenticatorName;
 	}
 }

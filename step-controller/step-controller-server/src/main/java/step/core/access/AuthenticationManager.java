@@ -51,6 +51,10 @@ public class AuthenticationManager {
 	public boolean useAuthentication() {
 		return configuration.getPropertyAsBoolean("authentication", true);
 	}
+	
+	public String getAuthenticatorName(){
+		return authenticator.getClass().getSimpleName();
+	}
 
 	public boolean authenticate(Session session, Credentials credentials) throws Exception {
 		boolean authenticated = authenticator.authenticate(credentials);

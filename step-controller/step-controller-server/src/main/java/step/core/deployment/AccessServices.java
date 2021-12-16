@@ -185,6 +185,7 @@ public class AccessServices extends AbstractServices {
 		AccessConfiguration conf = new AccessConfiguration();
 		conf.setDemo(isDemo());
 		conf.setAuthentication(authenticationManager.useAuthentication());
+		conf.setAuthenticatorName(authenticationManager.getAuthenticatorName());
 		conf.setNoLoginMask(configuration.getPropertyAsBoolean(CONFIG_KEY_JWT_NOLOGIN, false));
 		conf.setRoles(roleProvider.getRoles().stream().map(r->r.getAttributes().get(AbstractOrganizableObject.NAME)).collect(Collectors.toList()));
 		
