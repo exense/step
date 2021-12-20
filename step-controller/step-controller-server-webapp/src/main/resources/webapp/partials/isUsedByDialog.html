@@ -45,16 +45,35 @@
 	<div class="section">
 		<div class="section-content section-highlight" style="max-height: 500px; overflow-y: auto;">
 			<div ng-if="!result" class="lds-ring"><div></div><div></div><div></div><div></div></div>
-			<table ng-if="result && result.length > 0" style="width: 100%;" class="table table-striped">
-				<tr></th><th>Used by</th><th>Type</th><th ng-if="hasProject">Project</th></tr>
-				<tr ng-repeat="result in result">
-					<td ng-if="result.type == 'KEYWORD'"> <function-link ng-if="result.showLink" function_="result" st-options="stOptions" /><span ng-if="!result.showLink">{{result.name}}</span></td>
-					<td ng-if="result.type == 'PLAN'"> <plan-link ng-if="result.showLink" plan-id="result.id" description="result.name" st-options="stOptions"/><span ng-if="!result.showLink">{{result.name}}</span></td>
-					<td ng-if="result.type != 'PLAN' && result.type != 'KEYWORD'">{{result.name}}</td>
-					<td>{{result.type}}</td>
-					<td ng-if="hasProject">{{result.tenantName}}</td>
-				</tr>
-			</table>
+			<st-table ng-if="result && result.length > 0" data="result" uid="'usedByList'">
+				<st-columns>
+					<st-column name="usedBy">
+						<header>Used by</header>
+						<second-header>
+							<inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+						</second-header>
+						<cell>
+							<span ng-if="row.type == 'KEYWORD'"> <function-link ng-if="row.showLink" function_="result" st-options="stOptions" /><span ng-if="!row.showLink">{{row.name}}</span></span>
+							<span ng-if="row.type == 'PLAN'"> <plan-link ng-if="row.showLink" plan-id="row.id" description="row.name" st-options="stOptions"/><span ng-if="!row.showLink">{{row.name}}</span></span>
+							<span ng-if="row.type != 'PLAN' && row.type != 'KEYWORD'">{{row.name}}</span>
+						</cell>
+					</st-column>
+					<st-column name="type">
+						<header>Type</header>
+						<second-header>
+							<inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+						</second-header>
+						<cell><span>{{row.type}}</span></cell>
+					</st-column>
+					<st-column name="project">
+						<header>Project</header>
+						<second-header>
+							<inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+						</second-header>
+						<cell><span ng-if="hasProject">{{row.tenantName}}</span></cell>
+					</st-column>
+				</st-columns>
+			</st-table>
 			<p ng-if="result && result.length == 0">Component is not used by other components.</p>
 		</div>
 	</div>
