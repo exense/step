@@ -1,4 +1,4 @@
 <span>
 	<a ng-click="editSchedulerTask()" ng-disabled="!authService.hasRight('task-write')" uib-tooltip="Edit task" tooltip-append-to-body="true">{{schedulerTask.attributes.name}}</a>
-	<plan-link plan-ref="schedulerTask.executionsParameters.repositoryObject" link-only="true" />
+	<plan-link entity-ref="schedulerTask.executionsParameters.repositoryObject" link-only="true" />
 </span>

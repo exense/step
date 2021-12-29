@@ -199,18 +199,27 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
   return {
     restrict: 'E',
     scope: {
-      planRef: '=?',
-      planId: '=?',
+      entityRef: '=?',
+      entityId: '=?',
+      entityTenant: '=?',
       description: '=?',
       linkOnly: '=?',
       stOptions: '=?'
     },
     templateUrl: 'partials/components/planLink.html',
-    controller: function($scope, $http) {
+    controller: function($scope, LinkProcessor, $location, Dialogs) {
       $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
-      if($scope.planRef && $scope.planRef.repositoryID=='local') {
-        $scope.planId = $scope.planRef.repositoryParameters.planid
+      if ($scope.entityRef && $scope.entityRef.repositoryID === 'local') {
+        $scope.entityId = $scope.entityRef.repositoryParameters.planid
       }
+      $scope.openLink = () => LinkProcessor.process($scope).then(() => {
+        $location.path('/root/plans/editor/' + $scope.entityId);
+        $scope.$apply();
+      }).catch((errorMessage) => {
+        if (errorMessage) {
+          Dialogs.showErrorMsg(errorMessage);
+        }
+      });
     }
   };
 })

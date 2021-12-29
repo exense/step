@@ -50,7 +50,7 @@ public class ScreenTemplateArtefactTableMigrationTask extends MigrationTask {
 			
 			String inputId = input.getString("id");
 			if(inputId.equals("attributes.name")) {
-				input.put("valueHtmlTemplate", "<plan-link plan-id=\"stBean.id\" description=\"stBean.attributes.name\" />");
+				input.put("valueHtmlTemplate", "<plan-link entity-id=\"stBean.id\" description=\"stBean.attributes.name\" />");
 			}
 			
 			if(!inputExist(inputId)) {

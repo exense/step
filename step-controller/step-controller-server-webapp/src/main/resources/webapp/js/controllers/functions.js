@@ -378,14 +378,22 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_, di
     restrict: 'E',
     scope: {
       function_: '=',
+      entityTenant: '=?',
       stOptions: '=?'
     },
     templateUrl: 'partials/functions/functionLink.html',
     controller: function($scope, FunctionDialogs, FunctionDialogsConfig) {
-      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
+      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink");
       $scope.openFunctionEditor = function() {
         FunctionDialogs.openFunctionEditor($scope.function_.id, FunctionDialogsConfig.getConfigObject('Keyword','functions',[],false,'functionTable'))
-      }
+      };
+      $scope.openLink = () => LinkProcessor.process($scope).then(() => {
+        $scope.openFunctionEditor();
+      }).catch((errorMessage) => {
+        if (errorMessage) {
+          Dialogs.showErrorMsg(errorMessage);
+        }
+      });
     }
   };
 })
