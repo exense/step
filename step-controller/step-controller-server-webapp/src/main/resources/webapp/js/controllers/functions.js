@@ -155,18 +155,12 @@ angular.module('functionsControllers',['step'])
   $scope.editFunction = function(id) {
     FunctionDialogs.editFunction(id, function() {reload()}, $scope.config);
   }
-  
-  $scope.copyFunction = function(id) {
-    $rootScope.clipboard = {object:"function",id:id};
+
+  $scope.duplicateFunction = function(id) {
+    $http.post("rest/" + $scope.config.serviceRoot + "/" + id + "/copy")
+      .then(() => reload());
   }
-  
-  $scope.pasteFunction = function() {
-    if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
-      $http.post("rest/"+$scope.config.serviceRoot+"/"+$rootScope.clipboard.id+"/copy")
-      .then(function() {reload()});
-    }
-  }
-  
+
   $scope.openFunctionEditor = function(functionid) {
     FunctionDialogs.openFunctionEditor(functionid, $scope.config);
   }
@@ -213,6 +207,7 @@ angular.module('functionsControllers',['step'])
   $scope.functionTypeLabel = function(type) {
     return FunctionTypeRegistry.getLabel(type);
   }
+
 })
 
 .controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'dialogConfig', 'Dialogs', 'AuthService','FunctionTypeRegistry',

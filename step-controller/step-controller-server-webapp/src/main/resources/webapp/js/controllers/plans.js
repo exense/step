@@ -86,20 +86,14 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       $location.path('/root/repository').search({repositoryId:'local',planid:id});
     }
     
-    $scope.copyPlan = function(id) {
-      $rootScope.clipboard = {object:"plan",id:id};
-    }
-    
-    $scope.pastePlan = function() {
-      if($rootScope.clipboard && $rootScope.clipboard.object=="plan") {
-        $http.get("rest/plans/"+$rootScope.clipboard.id+"/clone").then(function(response) {
-          var clone = response.data;
-          clone.attributes.name = clone.attributes.name + "_Copy" 
-          $http.post("rest/plans", clone).then(function(response) {
-            reload();
-          })
-        });
-      }
+    $scope.duplicatePlan = function(id) {
+      $http.get("rest/plans/" + id + "/clone").then(function(response) {
+        const clone = response.data;
+        clone.attributes.name = clone.attributes.name + "_Copy"
+        $http.post("rest/plans", clone).then(function(response) {
+          reload();
+        })
+      });
     }
     
     $scope.deletePlan = function(id, name) {
