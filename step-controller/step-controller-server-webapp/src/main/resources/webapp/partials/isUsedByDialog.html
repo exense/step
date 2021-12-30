@@ -53,8 +53,8 @@
 							<inputdropdown action="search" initial-value="initialValue"></inputdropdown>
 						</second-header>
 						<cell>
-							<span ng-if="row.type == 'KEYWORD'"> <function-link function_="result" entity-tenant="row.tenantName" st-options="stOptions" /></span>
-							<span ng-if="row.type == 'PLAN'"> <plan-link entity-tenant="row.tenantName" entity-id="row.id" description="row.name" st-options="stOptions"/></span>
+							<span ng-if="row.type == 'KEYWORD'"> <function-link ng-click="close()" function_="result" entity-tenant="row.tenantName" st-options="stOptions" /></span>
+							<span ng-if="row.type == 'PLAN'"> <plan-link ng-click="close()" entity-tenant="row.tenantName" entity-id="row.id" description="row.name" st-options="stOptions"/></span>
 							<span ng-if="row.type != 'PLAN' && row.type != 'KEYWORD'">{{row.name}}</span>
 						</cell>
 					</st-column>
