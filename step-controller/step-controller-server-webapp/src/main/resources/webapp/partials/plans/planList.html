@@ -54,7 +54,7 @@
 		<button type="button" class="btn btn-default" ng-click="$parent.exportPlan(row.id,row.attributes.name)" ng-disabled="!authService.hasRight('plan-read')" ng-mouseup="popOver.isOpen=false;" style="text-align: left;">
 			<span class="glyphicon glyphicon-export" aria-hidden="true"></span><span> Export plan</span>
 		</button>
-		<button type="button" class="btn btn-default" ng-click="$parent.lookUp(row.id)" ng-disabled="!authService.hasRight('plan-read')" ng-mouseup="popOver.isOpen=false;" style="text-align: left;">
+		<button type="button" class="btn btn-default" ng-click="$parent.lookUp(row.id, row.attributes.name)" ng-disabled="!authService.hasRight('plan-read')" ng-mouseup="popOver.isOpen=false;" style="text-align: left;">
 			<span class="glyphicon glyphicon-search" aria-hidden="true"></span><span> Find usages</span>
 		</button>
 	</div>

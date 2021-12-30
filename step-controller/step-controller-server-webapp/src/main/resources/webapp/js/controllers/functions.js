@@ -200,8 +200,8 @@ angular.module('functionsControllers',['step'])
     ExportDialogs.displayExportDialog('Keywords export','functions', 'allKeywords.sta', true).then(function () {})
   }
 
-  $scope.lookUp = function(id) {
-    IsUsedByDialogs.displayDialog('Keyword is used by', IsUsedByService.type.KEYWORD_ID, id);
+  $scope.lookUp = function(id, name) {
+    IsUsedByDialogs.displayDialog('Keyword "' + name + '" is used by', IsUsedByService.type.KEYWORD_ID, id);
   }
   
   $scope.functionTypeLabel = function(type) {

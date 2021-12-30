@@ -118,8 +118,8 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       ExportDialogs.displayExportDialog('Plans export','plans/'+id, name+'.sta', true, false).then(function () {})
     }
 
-    $scope.lookUp = function(id) {
-      IsUsedByDialogs.displayDialog('Plan is used by', IsUsedByService.type.PLAN_ID, id);
+    $scope.lookUp = function(id, name) {
+      IsUsedByDialogs.displayDialog('Plan "' + name + '" is used by', IsUsedByService.type.PLAN_ID, id);
     }
     
   })

@@ -61,7 +61,7 @@
 		<button type="button" class="btn btn-default" ng-click="$parent.exportFunction(row.id,row.attributes.name)" ng-mouseup="popOver.isOpen=false;" ng-disabled="!authService.hasRight('kw-read')" style="text-align: left;">
 			<span class="glyphicon glyphicon-export" aria-hidden="true"></span><span> Export keyword</span>
 		</button>
-		<button type="button" class="btn btn-default btn-sm" ng-click="$parent.lookUp(row.id)" ng-mouseup="popOver.isOpen=false;" ng-disabled="!authService.hasRight('kw-read')" style="text-align: left;">
+		<button type="button" class="btn btn-default btn-sm" ng-click="$parent.lookUp(row.id, row.attributes.name)" ng-mouseup="popOver.isOpen=false;" ng-disabled="!authService.hasRight('kw-read')" style="text-align: left;">
 			<span class="glyphicon glyphicon-search" aria-hidden="true"></span><span> Find usages</span>
 		</button>
 	</div>
