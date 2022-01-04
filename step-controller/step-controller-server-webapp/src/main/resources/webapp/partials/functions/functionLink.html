@@ -1,5 +1,5 @@
 <span>
-	<a title="Edit keyword" ng-if="!noLink" ng-click="openFunctionEditor()">{{function_.attributes.name}}</a>
+	<a title="Edit keyword" ng-if="!noLink" ng-click="openLink()">{{function_.attributes.name}}</a>
 	<span ng-if="noLink">{{function_.attributes.name}}</span>
 	<span class="glyphicon glyphicon-question-sign" ng-if="function_.description" uib-tooltip="{{function_.description}}"></span>
 </span>

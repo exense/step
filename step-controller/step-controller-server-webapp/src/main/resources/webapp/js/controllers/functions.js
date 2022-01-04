@@ -377,7 +377,8 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_, di
       stOptions: '=?'
     },
     templateUrl: 'partials/functions/functionLink.html',
-    controller: function($scope, FunctionDialogs, FunctionDialogsConfig) {
+    controller: function($scope, FunctionDialogs, FunctionDialogsConfig, LinkProcessor) {
+
       $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink");
       $scope.openFunctionEditor = function() {
         FunctionDialogs.openFunctionEditor($scope.function_.id, FunctionDialogsConfig.getConfigObject('Keyword','functions',[],false,'functionTable'))
