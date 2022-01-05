@@ -177,16 +177,21 @@ angular.module('artefacts',['step'])
     },
     templateUrl: 'partials/artefacts/abstractArtefact.html'}
 })
-.controller('CallPlanCtrl' , function($scope,$location,$http, PlanDialogs) {
-  $scope.gotoPlan = function() {
+.controller('CallPlanCtrl' , function($scope,$location,$http, PlanDialogs, LinkProcessor, Dialogs) {
+  $scope.gotoPlan = () => LinkProcessor.process($scope.planProject).then(() => {
     $location.path('/root/plans/editor/' + $scope.artefact.planId);
-  }
+  }).catch((errorMessage) => {
+    if (errorMessage) {
+      Dialogs.showErrorMsg(errorMessage);
+    }
+  });
 
   $scope.$watch('artefact.planId', function(planId) {
     if(planId) {
       $http.get('rest/plans/'+planId).then(function(response) {
     	if (response.data) {
-            $scope.planName = response.data.attributes.name;
+        $scope.planName = response.data.attributes.name;
+        $scope.planProject = response.data.attributes.project;
     	} else {
     		$scope.planName = "";
     	}
