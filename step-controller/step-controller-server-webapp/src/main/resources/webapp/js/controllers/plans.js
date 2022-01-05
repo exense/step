@@ -206,7 +206,7 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       if ($scope.entityRef && $scope.entityRef.repositoryID === 'local') {
         $scope.entityId = $scope.entityRef.repositoryParameters.planid
       }
-      $scope.openLink = () => LinkProcessor.process($scope).then(() => {
+      $scope.openLink = () => LinkProcessor.process($scope.entityTenant).then(() => {
         $location.path('/root/plans/editor/' + $scope.entityId);
         $scope.$apply();
       }).catch((errorMessage) => {

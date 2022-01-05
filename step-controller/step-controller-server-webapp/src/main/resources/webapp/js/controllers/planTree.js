@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('planTree',['step','artefacts','reportTable','dynamicForms','export'])
 
-.directive('planTree', function(artefactTypes, $http,$timeout,$interval,stateStorage,$filter,$location, Dialogs, ScreenTemplates) {
+.directive('planTree', function(artefactTypes, $http, $timeout, $interval, stateStorage, $filter, $location, Dialogs, ScreenTemplates, LinkProcessor) {
   return {
     restrict: 'E',
     scope: {
@@ -613,9 +613,15 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         });
       }
 
-      openPlan = function(planId) {
-        $timeout(function() {
+      function openPlan(planId) {
+        console.log('openPlan', $scope.plan.attributes.project);
+        LinkProcessor.process($scope.plan.attributes.project).then(() => {
           $location.path('/root/plans/editor/' + planId);
+          $scope.$apply();
+        }).catch((errorMessage) => {
+          if (errorMessage) {
+            Dialogs.showErrorMsg(errorMessage);
+          }
         });
       }
       
