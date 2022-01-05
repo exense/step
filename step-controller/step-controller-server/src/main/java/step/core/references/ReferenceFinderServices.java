@@ -74,24 +74,29 @@ public class ReferenceFinderServices extends AbstractServices {
         // we don't have access to the composite functions plugin from here, so we use class names and reflection.
         List<Plan> plansInComposites = new ArrayList<>();
 
-        functionAccessor.findManyByCriteria(Map.of("type","step.plugins.functions.types.CompositeFunction")).forEach(function -> {
+        functionAccessor.stream().forEach(function -> {
             String planId = getPlanIdForCompositeFunction(function);
             if (planId != null) {
                 Plan plan = planAccessor.get(planId);
                 if (plan != null) {
                     plansInComposites.add(plan);
-                    List<Object> matchingObjects = getReferencedObjectsMatchingRequest(plan, request);
+                    List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.plans, plan, request);
                     if (!matchingObjects.isEmpty()) {
                         results.add(new FindReferencesResponse(function));
                     }
                 }
+            } else {
+                    List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.functions, function, request);
+                    if (!matchingObjects.isEmpty()) {
+                        results.add(new FindReferencesResponse(function));
+                    }
             }
         });
 
         // Find plans containing usages
         Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.stream() : planAccessor.getVisiblePlans();
         stream.filter(p -> !plansInComposites.contains(p)).forEach( plan -> {
-            List<Object> matchingObjects = getReferencedObjectsMatchingRequest(plan, request);
+            List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.plans, plan, request);
             if (!matchingObjects.isEmpty()) {
                 results.add(new FindReferencesResponse(plan));
             }
@@ -111,14 +116,14 @@ public class ReferenceFinderServices extends AbstractServices {
         }
     }
 
-    private List<Object> getReferencedObjectsMatchingRequest(Plan plan, FindReferencesRequest request) {
-        List<Object> referencedObjects = getReferencedObjects(plan).stream().filter(o -> !o.equals(plan)).collect(Collectors.toList());
+    private List<Object> getReferencedObjectsMatchingRequest(String entityType, AbstractOrganizableObject object, FindReferencesRequest request) {
+        List<Object> referencedObjects = getReferencedObjects(entityType, object).stream().filter(o -> !o.equals(object)).collect(Collectors.toList());
         //System.err.println("objects referenced from plan: " + planToString(plan) + ": "+ referencedObjects.stream().map(ReferenceFinderServices::objectToString).collect(Collectors.toList()));
         return referencedObjects.stream().filter(o -> doesRequestMatch(request, o)).collect(Collectors.toList());
     }
 
     // returns a (generic) set of objects referenced by a plan
-    private Set<Object> getReferencedObjects(Plan plan) {
+    private Set<Object> getReferencedObjects(String entityType, AbstractOrganizableObject object) {
         Set<Object> referencedObjects = new HashSet<>();
 
         // The references can be filled in three different ways due to the implementation:
@@ -133,7 +138,7 @@ public class ReferenceFinderServices extends AbstractServices {
 
         EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(entityManager, visitedObjectPredicate);
         FindReferencesTreeVisitor entityTreeVisitor = new FindReferencesTreeVisitor(entityManager, referencedObjects);
-        entityDependencyTreeVisitor.visitEntityDependencyTree(EntityManager.plans, plan.getId().toString(), entityTreeVisitor, false);
+        entityDependencyTreeVisitor.visitEntityDependencyTree(entityType, object.getId().toString(), entityTreeVisitor, false);
 
         return referencedObjects;
     }

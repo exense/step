@@ -53,7 +53,7 @@
 							<inputdropdown action="search" initial-value="initialValue"></inputdropdown>
 						</second-header>
 						<cell>
-							<span ng-if="row.type == 'KEYWORD'"> <function-link ng-if="row.showLink" function_="result" st-options="stOptions" /><span ng-if="!row.showLink">{{row.name}}</span></span>
+							<span ng-if="row.type == 'KEYWORD'"> <function-link ng-if="row.showLink" function_="row" st-options="stOptions" /><span ng-if="!row.showLink">{{row.name}}</span></span>
 							<span ng-if="row.type == 'PLAN'"> <plan-link ng-if="row.showLink" plan-id="row.id" description="row.name" st-options="stOptions"/><span ng-if="!row.showLink">{{row.name}}</span></span>
 							<span ng-if="row.type != 'PLAN' && row.type != 'KEYWORD'">{{row.name}}</span>
 						</cell>
