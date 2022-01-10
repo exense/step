@@ -51,6 +51,13 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
               tree.open_all();
               setupInitialState(root);
               overrideJSTreeKeyFunctions();
+              if ($location.search().artefactId) {
+                $timeout(() => {
+                  tree.deselect_all(true);
+                  tree.select_node($location.search().artefactId);
+                  $scope.openSelectedArtefact();
+                });
+              }
             });
           } else {
             load(function(root) {});
@@ -401,7 +408,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
           tree.refresh();
         }
       }
-      
+
       function focusOnNode(nodeId) {
         var node = tree.get_node(nodeId, true);
         if (typeof node.children === "function" && (child = node.children('.jstree-anchor')) !== "undefined") { 
@@ -614,7 +621,6 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       }
 
       function openPlan(planId) {
-        console.log('openPlan', $scope.plan.attributes.project);
         LinkProcessor.process($scope.plan.attributes.project).then(() => {
           $location.path('/root/plans/editor/' + planId);
           $scope.$apply();

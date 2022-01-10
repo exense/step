@@ -4,7 +4,10 @@
 		<div ng-show="!hideSource">{{node.resolvedArtefact.customAttributes.source}}</div>
 	</div>
 	<div style="margin-top:10px;" ng-include="reportNodeType.template"></div>
-	<div class="section-header2 node-link"><a ng-click="showArtefact = !showArtefact">Plan node</a></div>
+	<div class="section-header2 node-link"><a ng-click="showArtefact = !showArtefact">
+		<span ng-show="!showArtefact" class="glyphicon glyphicon glyphicon-triangle-right"></span>
+		<span ng-show="showArtefact" class="glyphicon glyphicon glyphicon-triangle-bottom"></span>
+		Plan node</a> (<a ng-click="openPlan(node)">Show in plan</a>)</div>
 	<div class="panel panel-default" style="margin-top:10px;" ng-show="showArtefact">
 		<div class="panel-body" ng-if="showArtefact">			
 			<artefact-details artefact="node.resolvedArtefact" readonly="true" />

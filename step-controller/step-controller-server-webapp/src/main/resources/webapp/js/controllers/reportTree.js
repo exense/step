@@ -23,8 +23,7 @@ angular.module('reportTree',['step','artefacts'])
     restrict: 'E',
     scope: {
       nodeid: '=',
-      handle: '='
-    
+      handle: '=',
     },
     controller: function($scope) {
       $scope.reportTreeSettings = {
