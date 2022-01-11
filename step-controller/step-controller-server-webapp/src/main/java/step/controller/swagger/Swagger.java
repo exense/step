@@ -20,6 +20,7 @@ public class Swagger {
         Info info = new Info()
                 .title("step Controller REST API")
                 .description("")
+                .version("3.19.0")
                 .contact(new Contact()
                         .email("support@exense.ch"))
                 .license(new License()
