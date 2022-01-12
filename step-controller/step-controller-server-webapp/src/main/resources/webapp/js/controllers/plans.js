@@ -198,7 +198,8 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       entityTenant: '=?',
       description: '=?',
       linkOnly: '=?',
-      stOptions: '=?'
+      stOptions: '=?',
+      continueOnCancel: '=?'
     },
     templateUrl: 'partials/components/planLink.html',
     controller: function($scope, LinkProcessor, $location, Dialogs) {
@@ -206,14 +207,22 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       if ($scope.entityRef && $scope.entityRef.repositoryID === 'local') {
         $scope.entityId = $scope.entityRef.repositoryParameters.planid
       }
-      $scope.openLink = () => LinkProcessor.process($scope.entityTenant).then(() => {
-        $location.path('/root/plans/editor/' + $scope.entityId);
-        $scope.$apply();
-      }).catch((errorMessage) => {
-        if (errorMessage) {
-          Dialogs.showErrorMsg(errorMessage);
-        }
-      });
+      $scope.openLink = () => {
+        LinkProcessor.process($scope.entityTenant).then(() => {
+            $location.path('/root/plans/editor/' + $scope.entityId);
+            $scope.$apply();
+          }, () => {
+            if ($scope.continueOnCancel) {
+              $location.path('/root/plans/editor/' + $scope.entityId);
+              $scope.$apply();
+            }
+          }
+        ).catch((errorMessage) => {
+          if (errorMessage) {
+            Dialogs.showErrorMsg(errorMessage);
+          }
+        });
+      }
     }
   };
 })
