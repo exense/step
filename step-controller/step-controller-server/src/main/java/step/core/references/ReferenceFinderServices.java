@@ -112,7 +112,7 @@ public class ReferenceFinderServices extends AbstractServices {
     }
 
     private List<Object> getReferencedObjectsMatchingRequest(Plan plan, FindReferencesRequest request) {
-        List<Object> referencedObjects = getReferencedObjects(plan).stream().filter(o -> !o.equals(plan)).collect(Collectors.toList());
+        List<Object> referencedObjects = getReferencedObjects(plan).stream().filter(o -> (o != null &&  !o.equals(plan))).collect(Collectors.toList());
         //System.err.println("objects referenced from plan: " + planToString(plan) + ": "+ referencedObjects.stream().map(ReferenceFinderServices::objectToString).collect(Collectors.toList()));
         return referencedObjects.stream().filter(o -> doesRequestMatch(request, o)).collect(Collectors.toList());
     }
