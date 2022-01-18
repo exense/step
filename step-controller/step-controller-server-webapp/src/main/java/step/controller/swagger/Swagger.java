@@ -10,6 +10,7 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.glassfish.jersey.server.ResourceConfig;
+import step.core.Version;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class Swagger {
         Info info = new Info()
                 .title("step Controller REST API")
                 .description("")
-                .version("3.19.0")
+                .version(Version.getCurrentVersion().toString())
                 .contact(new Contact()
                         .email("support@exense.ch"))
                 .license(new License()
