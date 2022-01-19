@@ -621,13 +621,15 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       }
 
       function openPlan(planId) {
-        LinkProcessor.process($scope.plan.attributes.project).then(() => {
-          $location.path('/root/plans/editor/' + planId);
-          $scope.$apply();
-        }).catch((errorMessage) => {
-          if (errorMessage) {
-            Dialogs.showErrorMsg(errorMessage);
-          }
+        $http.get('rest/plans/' + planId).then(function(response) {
+          LinkProcessor.process(response.data.attributes.project).then(() => {
+            $location.path('/root/plans/editor/' + planId);
+            $scope.$apply();
+          }).catch((errorMessage) => {
+            if (errorMessage) {
+              Dialogs.showErrorMsg(errorMessage);
+            }
+          });
         });
       }
       
