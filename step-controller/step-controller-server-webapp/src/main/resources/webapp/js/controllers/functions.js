@@ -383,7 +383,7 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_, di
       $scope.openFunctionEditor = function() {
         FunctionDialogs.openFunctionEditor($scope.function_.id, FunctionDialogsConfig.getConfigObject('Keyword','functions',[],false,'functionTable'))
       };
-      $scope.openLink = () => LinkProcessor.process($scope.entityTenant).then(() => {
+      $scope.openLink = () => LinkProcessor.process($scope.function_.attributes.project).then(() => {
         $scope.openFunctionEditor();
       }).catch((errorMessage) => {
         if (errorMessage) {
