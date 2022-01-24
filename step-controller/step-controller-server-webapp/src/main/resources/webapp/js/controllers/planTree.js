@@ -459,7 +459,9 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
 
                   if (function_.schema && function_.schema.properties) {
                     _.each(Object.keys(function_.schema.properties), function(prop) {
-                      if (function_.schema.properties[prop].type) {
+                      if (function_.schema.properties[prop].default) {
+                        targetObject[prop] = {"value" : function_.schema.properties[prop].default, "dynamic" : false};
+                      } else if (function_.schema.properties[prop].type) {
                         let propValue = {};
                         const value = function_.schema.properties[prop].type;
                         if (value === 'number' || value === 'integer') {
