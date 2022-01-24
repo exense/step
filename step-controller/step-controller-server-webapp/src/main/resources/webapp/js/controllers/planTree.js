@@ -432,44 +432,41 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         $scope.fireChangeEvent();
       }
       
-      if($scope.handle) {
+      if ($scope.handle) {
         $scope.handle.addFunction = function(id) {
-          var selectedArtefact = tree.get_selected(true);
-          
           $http.get("rest/functions/"+id).then(function(response) {
             var function_ = response.data;
     
             $http.get("rest/plans/artefact/types/CallKeyword").then(function(response) {
               ScreenTemplates.getScreenInputsByScreenId('functionTable').then(inputs => {
-                var newArtefact = response.data;
+                const newArtefact = response.data;
                 newArtefact.attributes.name = function_.attributes.name;
 
-                var functionAttributes = {}
+                const functionAttributes = {}
                 _.mapObject(inputs, input => {
-                  var attributeId = input.id.replace("attributes.","");
-                  if(attributeId) {
-                    var value = function_.attributes[attributeId];
-                    if(value) {
+                  const attributeId = input.id.replace("attributes.","");
+                  if (attributeId) {
+                    const value = function_.attributes[attributeId];
+                    if (value) {
                       functionAttributes[attributeId] = {"value":value, "dynamic": false}
                     }
                   }
                 })
                 newArtefact.function = {value:JSON.stringify(functionAttributes), dynamic:false};
 
-                if(AuthService.getConf().miscParams.enforceschemas === 'true'){
-                  var targetObject = {};
+                if (AuthService.getConf().miscParams.enforceschemas === 'true') {
+                  const targetObject = {};
 
-                  if(function_.schema && function_.schema.properties){
+                  if (function_.schema && function_.schema.properties) {
                     _.each(Object.keys(function_.schema.properties), function(prop) {
-                      var value = "notype";
-                      if(function_.schema.properties[prop].type){
-                        var propValue = {};
-                        value = function_.schema.properties[prop].type;
-                        if(value === 'number' || value === 'integer')
+                      if (function_.schema.properties[prop].type) {
+                        let propValue = {};
+                        const value = function_.schema.properties[prop].type;
+                        if (value === 'number' || value === 'integer') {
                           propValue = {"expression" : "<" + value + ">", "dynamic" : true};
-                        else
+                        } else {
                           propValue = {"value" : "<" + value + ">", "dynamic" : false};
-
+                        }
                         targetObject[prop] = propValue;
                       }
                     });
