@@ -148,7 +148,7 @@ public class ControllerServer {
 			HttpConfiguration https = new HttpConfiguration();
 			https.addCustomizer(new SecureRequestCustomizer());
 			
-			SslContextFactory sslContextFactory = new SslContextFactory();
+			SslContextFactory sslContextFactory = new SslContextFactory.Server();
 			sslContextFactory.setKeyStorePath(configuration.getProperty("ui.ssl.keystore.path"));
 			sslContextFactory.setKeyStorePassword(configuration.getProperty("ui.ssl.keystore.password"));
 			sslContextFactory.setKeyManagerPassword(configuration.getProperty("ui.ssl.keymanager.password"));
