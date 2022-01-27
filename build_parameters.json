@@ -33,7 +33,7 @@
 	},
 	"DISTRIBUTIONS":
 	{
-		"TYPE": ["FTP","GITHUB", "DOCKER", "FTP","GITHUB", "DOCKER","FTP"],
+		"TYPE": ["FTP","GITHUB", "DOCKER", "FTP","GITHUB", "DOCKER","FTP","GITHUB"],
 		
 		"ORIGIN_FILE": [
       		"step-distribution/target/step-controller-${VERSION}.zip",
@@ -42,18 +42,20 @@
       		"step-distribution/target/step-agent-${VERSION}.zip",
       		"step-distribution/target/step-agent-${VERSION}.zip",
       		"step-distribution/target/step-agent-${VERSION}.zip",
+      		"step-distribution/target/step-ide-${VERSION}.zip",
       		"step-distribution/target/step-ide-${VERSION}.zip"
     	],
 		"DESTINATION_NAME": [
-			"step/${VERSION}/step-controller-${VERSION}.zip",
+					"step/${VERSION}/step-controller-${VERSION}.zip",
       		"step-controller-${VERSION}.zip",
-			"step:k8s-step-controller-${VERSION}-java-11",
+					"step:k8s-step-controller-${VERSION}-java-11",
       
 	      	"step/${VERSION}/step-agent-${VERSION}.zip",
       		"step-agent-${VERSION}.zip",
       		"step:k8s-step-agent-${VERSION}-java-11",
       		
       		"step/${VERSION}/step-ide-${VERSION}.zip"
+      		"step-ide-${VERSION}.zip"
     	],
     
 		"URL_STAGING":  [
