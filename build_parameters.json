@@ -54,7 +54,7 @@
       		"step-agent-${VERSION}.zip",
       		"step:k8s-step-agent-${VERSION}-java-11",
       		
-      		"step/${VERSION}/step-ide-${VERSION}.zip"
+      		"step/${VERSION}/step-ide-${VERSION}.zip",
       		"step-ide-${VERSION}.zip"
     	],
     
