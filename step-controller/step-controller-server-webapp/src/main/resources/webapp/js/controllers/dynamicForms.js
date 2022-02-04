@@ -37,10 +37,12 @@ function initDynamicFormsCtrl($scope) {
   }
 
   $scope.useDynamicExpression = function() {
-    $scope.dynamicValue.dynamic = true;
-    $scope.dynamicValue.expression = $scope.dynamicValue.value;
-    delete $scope.dynamicValue.value;
-    $scope.onSave();
+    if ($scope.dynamicValue) {
+      $scope.dynamicValue.dynamic = true;
+      $scope.dynamicValue.expression = $scope.dynamicValue.value;
+      delete $scope.dynamicValue.value;
+      $scope.onSave();
+    }
   }
 
   $scope.keydownUseDynamicExpression = function(event) {

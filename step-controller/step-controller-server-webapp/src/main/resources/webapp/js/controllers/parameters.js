@@ -47,17 +47,11 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
       })
     }
 
-    $scope.copyParameter = function(id) {
-      $rootScope.clipboard = {object:"parameter",id:id};
-    }
-    
-    $scope.pasteParameter = function() {
-      if($rootScope.clipboard && $rootScope.clipboard.object=="parameter") {
-        $http.post("rest/parameters/"+$rootScope.clipboard.id+"/copy")
-        .then(function() {
-          reload();
-        });
-      }
+    $scope.duplicateParameter = function(id) {
+      $http.post("rest/parameters/" + id + "/copy")
+      .then(function() {
+        reload();
+      });
     }
     
     $scope.importParameters = function() {

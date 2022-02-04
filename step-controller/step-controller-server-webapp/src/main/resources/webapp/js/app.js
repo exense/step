@@ -450,7 +450,6 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};  
 
 	authService.gotoDefaultPage = function() {
-		console.log('gotoDefaultPage', serviceContext.conf.defaultUrl);
 		if(serviceContext.conf && serviceContext.conf.defaultUrl) {
 			$location.path(serviceContext.conf.defaultUrl)
 		} else {
@@ -576,10 +575,9 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 			$rootScope.context = {'userID':'anonymous'};
 		}
 		if (response.status == 403){
-			// Fail silently for security reasons
-			// or implement something like:
-			//TODO: Dialogs.showErrorMsg("You are not authorized to perform this action.");
+			// error will be handled by genericErrorInterceptor
 		}
+
 		return $q.reject(response);
 	};
 })
@@ -733,6 +731,17 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 		return dialogs.showWarning(msg);
 	}
 
+	dialogs.showEntityInAnotherProject = function(newProjectName) {
+		var msg;
+		if (newProjectName) {
+			msg = 'This entity is part of the project "' + newProjectName + '". Do you wish to switch to this project?';
+		} else {
+			msg = 'This entity is part of another project. Do you wish to switch to this project?';
+		}
+
+		return dialogs.showWarning(msg);
+	}
+
 	dialogs.showInfo = function(msg) {
 		var modalInstance = $uibModal.open({backdrop: 'static', animation: false, templateUrl: 'partials/infoMessageDialog.html',
 			controller: 'DialogCtrl', 
@@ -825,8 +834,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 
 	//Select entities knowing type
 	dialogs.selectEntityOfType = function(entityName, singleSelection, id){
-	  console.log(entityName, EntityRegistry);
-	  console.log(id);
+
 	  var entityType = EntityRegistry.getEntityByName(entityName);  
 	  
 		var modalInstance = $uibModal.open(
@@ -1140,7 +1148,26 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	};
 })
 
-.service('DashboardService', function($http,$rootScope,AuthService,ViewRegistry) {
+.factory('LinkProcessor', function(Dialogs) {
+	const processors = [];
+
+	/*
+	 * processor: function that will called before link is opened, needs to return a promise
+	 */
+	this.registerProcessor = function(processor) {
+		processors.push(processor);
+	}
+
+	this.process = async function(scope) {
+		const promises = processors.map((processor) => processor(scope));
+		return Promise.all(promises);
+	};
+
+	return this;
+})
+
+
+	.service('DashboardService', function($http,$rootScope,AuthService,ViewRegistry) {
 
 this.checkAvailability = (override = false) => {
 	try {

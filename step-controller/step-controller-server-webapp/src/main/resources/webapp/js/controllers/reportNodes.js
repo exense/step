@@ -40,10 +40,10 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
     restrict: 'E',
     scope: {
       id: '=',
-      showArtefact: '='
+      showArtefact: '=',
     },
     templateUrl: 'partials/reportnodes/reportNode.html',
-    controller: function($scope, $http) {
+    controller: function($scope, $http, Dialogs, LinkProcessor, $location) {
       var reportNodeTypes = {
           "step.artefacts.reports.CallFunctionReportNode":{template:"partials/reportnodes/callFunctionReportNode.html"},
           "step.artefacts.reports.EchoReportNode":{template:"partials/reportnodes/echo.html"},
@@ -65,6 +65,21 @@ angular.module('reportNodes',['step','artefacts','screenConfigurationControllers
           })
         }
       })
+
+      $scope.openPlan = function(node) {
+        $http.get('rest/executions/' + node.executionID).then(function(response) {
+          LinkProcessor.process(response.data.attributes.project).then(() => {
+            $location.search('artefactId', node.artefactID);
+            $location.path('/root/plans/editor/' + response.data.planId);
+            $scope.$apply();
+          }).catch((errorMessage) => {
+            if (errorMessage) {
+              console.error('reportNodes.openPlan', errorMessage);
+              Dialogs.showErrorMsg(errorMessage);
+            }
+          });
+        });
+      }
     }
   };
 })

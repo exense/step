@@ -18,7 +18,7 @@
  *******************************************************************************/
 angular.module('planTree',['step','artefacts','reportTable','dynamicForms','export'])
 
-.directive('planTree', function(artefactTypes, $http,$timeout,$interval,stateStorage,$filter,$location, Dialogs, ScreenTemplates) {
+.directive('planTree', function(artefactTypes, $http, $timeout, $interval, stateStorage, $filter, $location, Dialogs, ScreenTemplates, LinkProcessor) {
   return {
     restrict: 'E',
     scope: {
@@ -51,6 +51,13 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
               tree.open_all();
               setupInitialState(root);
               overrideJSTreeKeyFunctions();
+              if ($location.search().artefactId) {
+                $timeout(() => {
+                  tree.deselect_all(true);
+                  tree.select_node($location.search().artefactId);
+                  $scope.openSelectedArtefact();
+                });
+              }
             });
           } else {
             load(function(root) {});
@@ -401,7 +408,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
           tree.refresh();
         }
       }
-      
+
       function focusOnNode(nodeId) {
         var node = tree.get_node(nodeId, true);
         if (typeof node.children === "function" && (child = node.children('.jstree-anchor')) !== "undefined") { 
@@ -425,44 +432,43 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         $scope.fireChangeEvent();
       }
       
-      if($scope.handle) {
+      if ($scope.handle) {
         $scope.handle.addFunction = function(id) {
-          var selectedArtefact = tree.get_selected(true);
-          
           $http.get("rest/functions/"+id).then(function(response) {
             var function_ = response.data;
     
             $http.get("rest/plans/artefact/types/CallKeyword").then(function(response) {
               ScreenTemplates.getScreenInputsByScreenId('functionTable').then(inputs => {
-                var newArtefact = response.data;
+                const newArtefact = response.data;
                 newArtefact.attributes.name = function_.attributes.name;
 
-                var functionAttributes = {}
+                const functionAttributes = {}
                 _.mapObject(inputs, input => {
-                  var attributeId = input.id.replace("attributes.","");
-                  if(attributeId) {
-                    var value = function_.attributes[attributeId];
-                    if(value) {
+                  const attributeId = input.id.replace("attributes.","");
+                  if (attributeId) {
+                    const value = function_.attributes[attributeId];
+                    if (value) {
                       functionAttributes[attributeId] = {"value":value, "dynamic": false}
                     }
                   }
                 })
                 newArtefact.function = {value:JSON.stringify(functionAttributes), dynamic:false};
 
-                if(AuthService.getConf().miscParams.enforceschemas === 'true'){
-                  var targetObject = {};
+                if (AuthService.getConf().miscParams.enforceschemas === 'true') {
+                  const targetObject = {};
 
-                  if(function_.schema && function_.schema.properties){
+                  if (function_.schema && function_.schema.properties) {
                     _.each(Object.keys(function_.schema.properties), function(prop) {
-                      var value = "notype";
-                      if(function_.schema.properties[prop].type){
-                        var propValue = {};
-                        value = function_.schema.properties[prop].type;
-                        if(value === 'number' || value === 'integer')
+                      if (function_.schema.properties[prop].default) {
+                        targetObject[prop] = {"value" : function_.schema.properties[prop].default, "dynamic" : false};
+                      } else if (function_.schema.properties[prop].type) {
+                        let propValue = {};
+                        const value = function_.schema.properties[prop].type;
+                        if (value === 'number' || value === 'integer') {
                           propValue = {"expression" : "<" + value + ">", "dynamic" : true};
-                        else
+                        } else {
                           propValue = {"value" : "<" + value + ">", "dynamic" : false};
-
+                        }
                         targetObject[prop] = propValue;
                       }
                     });
@@ -613,9 +619,16 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
         });
       }
 
-      openPlan = function(planId) {
-        $timeout(function() {
-          $location.path('/root/plans/editor/' + planId);
+      function openPlan(planId) {
+        $http.get('rest/plans/' + planId).then(function(response) {
+          LinkProcessor.process(response.data.attributes.project).then(() => {
+            $location.path('/root/plans/editor/' + planId);
+            $scope.$apply();
+          }).catch((errorMessage) => {
+            if (errorMessage) {
+              Dialogs.showErrorMsg(errorMessage);
+            }
+          });
         });
       }
       

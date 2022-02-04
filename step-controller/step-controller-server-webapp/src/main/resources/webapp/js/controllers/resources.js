@@ -40,8 +40,10 @@ angular.module('resourcesControllers',['tables','step'])
       ResourceDialogs.editResource(id, function() {reload()});
     }
 
-    $scope.lookUp = function(id) {
-      IsUsedByDialogs.displayDialog('Resource is used by', IsUsedByService.type.RESOURCE_ID, id);
+    $scope.lookUp = function(id, name) {
+      console.log(name);
+      const namePlaceholder = name ? '"' + name + '" ' : '';
+      IsUsedByDialogs.displayDialog('Resource ' + namePlaceholder + 'is used by', IsUsedByService.type.RESOURCE_ID, id);
     }
     
     $scope.deleteResource = function(id, name) {

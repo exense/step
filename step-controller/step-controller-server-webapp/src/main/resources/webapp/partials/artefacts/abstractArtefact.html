@@ -5,28 +5,15 @@
 	</div>
 	<div class="panel-body" ng-show="showAttributes">
 		<fieldset ng-disabled="readonly">
-			<div ng-if="!artefact.useDynamicName" class="form-group form-group-sm">
+			<div ng-if="!artefact.dynamicName.dynamic" class="form-group form-group-sm">
 				<label>Name</label>
-				<button class="btn btn-default btn-xs pull-right" ng-class="(artefact.useDynamicName) ? 'active' :''" style="margin-bottom:2px" type="button"
-								title="Use an expression to replace dynamically the step name at execution time" ng-click="artefact.useDynamicName=!artefact.useDynamicName;save()">
+				<button class="btn btn-default btn-xs pull-right" style="margin-bottom:2px" type="button"
+								title="Use an expression to replace dynamically the step name at execution time" ng-click="artefact.dynamicName.dynamic=true;save()">
 					<span class="glyphicon glyphicon-flash" ></span>
 				</button>
-				<input ng-if="!artefact.useDynamicName" type="text" class="form-control" ng-blur="save()" ng-model="artefact.attributes.name" />
-
-
-				<dynamic-textfield ng-if="artefact.useDynamicName" label="'Dynamic Name'" on-save="save()" dynamic-value="artefact.dynamicName"
-				  default-value=""></dynamic-textfield>
+				<input type="text" class="form-control" ng-blur="save()" ng-model="artefact.attributes.name" />
 			</div>
-			<div ng-if="artefact.useDynamicName" class="form-group form-group-sm">
-				<label class="smaller">Name</label>
-				<button class="btn btn-default btn-xs pull-right" ng-class="(artefact.useDynamicName) ? 'active' :''" type="button"
-								title="Use an expression to replace dynamically the step name at execution time" ng-click="artefact.useDynamicName=!artefact.useDynamicName;save()">
-					<span class="glyphicon glyphicon-flash" ></span>
-				</button>
-				<dynamic-textfield label="'Dynamic Name'" on-save="save()" dynamic-value="artefact.dynamicName"></dynamic-textfield>
-			</div>
-
-
+			<dynamic-textfield ng-if="artefact.dynamicName.dynamic" label="'Name'" on-save="save()" dynamic-value="artefact.dynamicName" />
 			<div class="form-group">
 				<label>Description</label>
 				<textarea ng-blur="save()" ng-model="artefact.description" class="form-control" rows="5"></textarea>

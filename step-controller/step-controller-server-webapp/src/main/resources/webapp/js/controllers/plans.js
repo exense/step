@@ -86,20 +86,14 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       $location.path('/root/repository').search({repositoryId:'local',planid:id});
     }
     
-    $scope.copyPlan = function(id) {
-      $rootScope.clipboard = {object:"plan",id:id};
-    }
-    
-    $scope.pastePlan = function() {
-      if($rootScope.clipboard && $rootScope.clipboard.object=="plan") {
-        $http.get("rest/plans/"+$rootScope.clipboard.id+"/clone").then(function(response) {
-          var clone = response.data;
-          clone.attributes.name = clone.attributes.name + "_Copy" 
-          $http.post("rest/plans", clone).then(function(response) {
-            reload();
-          })
-        });
-      }
+    $scope.duplicatePlan = function(id) {
+      $http.get("rest/plans/" + id + "/clone").then(function(response) {
+        const clone = response.data;
+        clone.attributes.name = clone.attributes.name + "_Copy"
+        $http.post("rest/plans", clone).then(function(response) {
+          reload();
+        })
+      });
     }
     
     $scope.deletePlan = function(id, name) {
@@ -124,8 +118,8 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
       ExportDialogs.displayExportDialog('Plans export','plans/'+id, name+'.sta', true, false).then(function () {})
     }
 
-    $scope.lookUp = function(id) {
-      IsUsedByDialogs.displayDialog('Plan is used by', IsUsedByService.type.PLAN_ID, id);
+    $scope.lookUp = function(id, name) {
+      IsUsedByDialogs.displayDialog('Plan "' + name + '" is used by', IsUsedByService.type.PLAN_ID, id);
     }
     
   })
@@ -199,17 +193,35 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
   return {
     restrict: 'E',
     scope: {
-      planRef: '=?',
-      planId: '=?',
+      entityRef: '=?',
+      entityId: '=?',
+      entityTenant: '=?',
       description: '=?',
       linkOnly: '=?',
-      stOptions: '=?'
+      stOptions: '=?',
+      continueOnCancel: '=?'
     },
     templateUrl: 'partials/components/planLink.html',
-    controller: function($scope, $http) {
+    controller: function($scope, LinkProcessor, $location, Dialogs) {
       $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
-      if($scope.planRef && $scope.planRef.repositoryID=='local') {
-        $scope.planId = $scope.planRef.repositoryParameters.planid
+      if ($scope.entityRef && $scope.entityRef.repositoryID === 'local') {
+        $scope.entityId = $scope.entityRef.repositoryParameters.planid
+      }
+      $scope.openLink = () => {
+        LinkProcessor.process($scope.entityTenant).then(() => {
+            $location.path('/root/plans/editor/' + $scope.entityId);
+            $scope.$apply();
+          }, () => {
+            if ($scope.continueOnCancel) {
+              $location.path('/root/plans/editor/' + $scope.entityId);
+              $scope.$apply();
+            }
+          }
+        ).catch((errorMessage) => {
+          if (errorMessage) {
+            Dialogs.showErrorMsg(errorMessage);
+          }
+        });
       }
     }
   };

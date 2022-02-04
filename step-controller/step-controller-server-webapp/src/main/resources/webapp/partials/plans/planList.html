@@ -2,12 +2,6 @@
 	<st-table collection="'plans'" handle="tableHandle" uid="'planList'" persist-state="true">
 		<st-actions>
 			<div class="btn-group btn-group-menu">
-				<button type="button" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default" ng-click="pastePlan()" uib-tooltip="Paste plan"
-					tooltip-append-to-body="true" tooltip-placement="bottom">
-					<span class="glyphicon glyphicon-paste"></span>
-				</button>
-			</div>
-			<div class="btn-group btn-group-menu">
 				<button type="button" ng-disabled="!authService.hasRight('plan-write')" class="btn btn-default" ng-click="importPlans()" uib-tooltip="Import plan"
 					tooltip-append-to-body="true" tooltip-placement="bottom">
 					<span class="glyphicon glyphicon-import"></span>
@@ -34,8 +28,8 @@
 						<button type="button" class="btn btn-default" ng-click="$parent.executePlan(row.id)" ng-disabled="!authService.hasRight('plan-execute')" uib-tooltip="Execute plan">
 							<span class="glyphicon glyphicon glyphicon glyphicon-play" aria-hidden="true"></span>
 						</button>
-						<button type="button" class="btn btn-default" ng-click="$parent.copyPlan(row.id)" ng-disabled="!authService.hasRight('plan-write')" uib-tooltip="Copy plan">
-							<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
+						<button type="button" class="btn btn-default" ng-click="$parent.duplicatePlan(row.id)" ng-disabled="!authService.hasRight('plan-write')" uib-tooltip="Duplicate plan">
+							<span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span>
 						</button>
 						<button type="button" class="btn btn-default" ng-click="$parent.deletePlan(row.id, row.attributes.name)" ng-disabled="!authService.hasRight('plan-delete')" uib-tooltip="Delete plan">
 							<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
@@ -60,7 +54,7 @@
 		<button type="button" class="btn btn-default" ng-click="$parent.exportPlan(row.id,row.attributes.name)" ng-disabled="!authService.hasRight('plan-read')" ng-mouseup="popOver.isOpen=false;" style="text-align: left;">
 			<span class="glyphicon glyphicon-export" aria-hidden="true"></span><span> Export plan</span>
 		</button>
-		<button type="button" class="btn btn-default" ng-click="$parent.lookUp(row.id)" ng-disabled="!authService.hasRight('plan-read')" ng-mouseup="popOver.isOpen=false;" style="text-align: left;">
+		<button type="button" class="btn btn-default" ng-click="$parent.lookUp(row.id, row.attributes.name)" ng-disabled="!authService.hasRight('plan-read')" ng-mouseup="popOver.isOpen=false;" style="text-align: left;">
 			<span class="glyphicon glyphicon-search" aria-hidden="true"></span><span> Find usages</span>
 		</button>
 	</div>

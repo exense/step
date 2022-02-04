@@ -155,18 +155,12 @@ angular.module('functionsControllers',['step'])
   $scope.editFunction = function(id) {
     FunctionDialogs.editFunction(id, function() {reload()}, $scope.config);
   }
-  
-  $scope.copyFunction = function(id) {
-    $rootScope.clipboard = {object:"function",id:id};
+
+  $scope.duplicateFunction = function(id) {
+    $http.post("rest/" + $scope.config.serviceRoot + "/" + id + "/copy")
+      .then(() => reload());
   }
-  
-  $scope.pasteFunction = function() {
-    if($rootScope.clipboard && $rootScope.clipboard.object=="function") {
-      $http.post("rest/"+$scope.config.serviceRoot+"/"+$rootScope.clipboard.id+"/copy")
-      .then(function() {reload()});
-    }
-  }
-  
+
   $scope.openFunctionEditor = function(functionid) {
     FunctionDialogs.openFunctionEditor(functionid, $scope.config);
   }
@@ -206,13 +200,14 @@ angular.module('functionsControllers',['step'])
     ExportDialogs.displayExportDialog('Keywords export','functions', 'allKeywords.sta', true).then(function () {})
   }
 
-  $scope.lookUp = function(id) {
-    IsUsedByDialogs.displayDialog('Keyword is used by', IsUsedByService.type.KEYWORD_ID, id);
+  $scope.lookUp = function(id, name) {
+    IsUsedByDialogs.displayDialog('Keyword "' + name + '" is used by', IsUsedByService.type.KEYWORD_ID, id);
   }
   
   $scope.functionTypeLabel = function(type) {
     return FunctionTypeRegistry.getLabel(type);
   }
+
 })
 
 .controller('newFunctionModalCtrl', [ '$rootScope', '$scope', '$uibModalInstance', '$http', '$location', 'function_', 'dialogConfig', 'Dialogs', 'AuthService','FunctionTypeRegistry',
@@ -378,14 +373,23 @@ function ($rootScope, $scope, $uibModalInstance, $http, $location, function_, di
     restrict: 'E',
     scope: {
       function_: '=',
+      entityTenant: '=?',
       stOptions: '=?'
     },
     templateUrl: 'partials/functions/functionLink.html',
-    controller: function($scope, FunctionDialogs, FunctionDialogsConfig) {
-      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink")
+    controller: function($scope, FunctionDialogs, FunctionDialogsConfig, LinkProcessor) {
+
+      $scope.noLink = $scope.stOptions && $scope.stOptions.includes("noEditorLink");
       $scope.openFunctionEditor = function() {
         FunctionDialogs.openFunctionEditor($scope.function_.id, FunctionDialogsConfig.getConfigObject('Keyword','functions',[],false,'functionTable'))
-      }
+      };
+      $scope.openLink = () => LinkProcessor.process($scope.function_.attributes.project).then(() => {
+        $scope.openFunctionEditor();
+      }).catch((errorMessage) => {
+        if (errorMessage) {
+          Dialogs.showErrorMsg(errorMessage);
+        }
+      });
     }
   };
 })

@@ -1,5 +1,5 @@
-<a ng-if="planId && !noLink" ng-href="#/root/plans/editor/{{planId}}">
+<a ng-if="entityId && !noLink" ng-click="openLink()" ng-href="">
 	<span ng-if="!linkOnly">{{description}}</span>
 	<span ng-if="linkOnly" uib-tooltip="Go to plan" tooltip-append-to-body="true" class="glyphicon glyphicon-file" aria-hidden="true"></span>
 </a>
-<span ng-if="(!planId && !linkOnly) || noLink">{{description}}</span>
+<span ng-if="(!entityId && !linkOnly) || noLink">{{description}}</span>
