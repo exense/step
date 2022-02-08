@@ -1,5 +1,7 @@
 package step.resources;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicValue;
@@ -9,6 +11,8 @@ import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
 
 public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
+
+	private final Logger logger = LoggerFactory.getLogger(ResourceEntity.class);
 
 	private final FileResolver fileResolver;
 	
@@ -33,8 +37,19 @@ public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 			if(atomicReferene instanceof String) {
 				return resolveResourceId(atomicReferene);
 			} else if (atomicReferene instanceof DynamicValue<?>) {
-				Object value = ((DynamicValue<?>) atomicReferene).get();
-				return resolveResourceId(value);
+				DynamicValue<?> dynamicValue = (DynamicValue<?>) atomicReferene;
+				try {
+					Object value = dynamicValue.get();
+					return resolveResourceId(value);
+				} catch (Exception e) {
+					String warningMessage = "Unable to resolve resource referenced by dynamic expression '" + dynamicValue.getExpression() + "'.";
+					if (logger.isDebugEnabled()) {
+						logger.debug(warningMessage, e);
+					} else {
+						logger.warn(warningMessage + " Enable debug to get full error message.");
+					}
+					return null;
+				}
 			} else {
 				return null;
 			}
