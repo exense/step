@@ -33,22 +33,28 @@
 	},
 	"DISTRIBUTIONS":
 	{
-		"TYPE": ["FTP","GITHUB", "DOCKER", "FTP","GITHUB", "DOCKER","FTP","GITHUB"],
+		"TYPE": [
+			"FTP","GITHUB", "DOCKER",
+			"FTP","GITHUB", "DOCKER",
+			"FTP","GITHUB"
+		],
 		
 		"ORIGIN_FILE": [
       		"step-distribution/target/step-controller-${VERSION}.zip",
       		"step-distribution/target/step-controller-${VERSION}.zip",
       		"step-distribution/target/step-controller-${VERSION}.zip",
+
       		"step-distribution/target/step-agent-${VERSION}.zip",
       		"step-distribution/target/step-agent-${VERSION}.zip",
       		"step-distribution/target/step-agent-${VERSION}.zip",
+
       		"step-distribution/target/step-ide-${VERSION}.zip",
       		"step-distribution/target/step-ide-${VERSION}.zip"
     	],
 		"DESTINATION_NAME": [
-					"step/${VERSION}/step-controller-${VERSION}.zip",
+			"step/${VERSION}/step-controller-${VERSION}.zip",
       		"step-controller-${VERSION}.zip",
-					"step:k8s-step-controller-${VERSION}-java-11",
+			"step:k8s-step-controller-${VERSION}-java-11",
       
 	      	"step/${VERSION}/step-agent-${VERSION}.zip",
       		"step-agent-${VERSION}.zip",
@@ -62,39 +68,51 @@
       		"build@ftps.exense.ch",
       		"NOT_USED",
       		"docker-dev.exense.ch",
+
       		"build@ftps.exense.ch",
       		"NOT_USED",
       		"docker-dev.exense.ch",
-      		"build@ftps.exense.ch"
-    	],
+
+      		"build@ftps.exense.ch",
+			"NOT_USED"
+		],
       
 		"URL_PROD":     [
 			"build@ftps.exense.ch",
 			"NOT_USED",
 			"docker.exense.ch",
+
 			"build@ftps.exense.ch",
 			"NOT_USED",
 			"docker.exense.ch",
-			"build@ftps.exense.ch"
+
+			"build@ftps.exense.ch",
+			"NOT_USED"
     	],
 		
 		"OS":[
 			"NOT_USED",
 			"NOT_USED",
 			"LINUX",
+
       		"NOT_USED",
       		"NOT_USED",
       		"LINUX",
-      		"NOT_USED"
+
+      		"NOT_USED",
+			"NOT_USED"
     	],
 		"CONFIG":[
 			"public",
 			"NOT_USED",
 			"controller-dockerfile",
+
 			"public",
 			"NOT_USED",
 			"agent-new-dockerfile",
-			"public"
+
+			"public",
+			"NOT_USED"
     	]
 	},
 	"INSTANCES":
