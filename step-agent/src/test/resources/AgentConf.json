@@ -1,5 +1,5 @@
 {
-   "gridHost":"http://localhost:8081",
+   "gridHost":"http://localhost:8084",
    "registrationPeriod":1000,
    "gridReadTimeout":20000,
    "workingDir":"src/test/work",
