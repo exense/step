@@ -61,7 +61,7 @@ public class ResourceImporter implements BiConsumer<Object, ImportContext> {
 				Resource newResource = resourceManager.saveResourceContent(resource.getId().toString(), fileInputStream, resource.getResourceName());
 				// Update the revision id
 				resource.setCurrentRevisionId(newResource.getCurrentRevisionId());
-			} catch (IOException e) {
+			} catch (IOException | InvalidResourceFormatException e) {
 				throw new RuntimeException("Error while updating resource content for resource "+origResourceId, e);
 			}
 		}

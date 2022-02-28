@@ -320,6 +320,7 @@ angular.module('components',['step'])
     scope: {
       stType: '=',
       stBounded: "=?",
+      stDirectory: "=?",
       stModel: '=',
       stOnChange: '&?',
       saveButton: '@?',
@@ -383,7 +384,7 @@ angular.module('components',['step'])
           // do not perform any duplicate check for bounded resources as we do not want to link bounded resources 
           // to any other resource
           Upload.upload({
-            url: url+"?type="+$scope.stType+"&duplicateCheck="+!$scope.stBounded,
+            url: url+"?type="+$scope.stType+"&duplicateCheck="+!$scope.stBounded+"&directory="+$scope.stDirectory,
             data: {file: file}
           }).then(function (resp) {
             $scope.uploading = false;

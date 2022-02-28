@@ -94,16 +94,17 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart) {
-		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, true);
+		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, true);
 	}
 	
-	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean checkForDuplicates) {
+	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, boolean checkForDuplicates) {
 		MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
         multiPart.bodyPart(bodyPart);
         
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
+		params.put("directory", Boolean.toString(isDirectory));
         params.put("duplicateCheck", Boolean.toString(checkForDuplicates));
         Builder b = requestBuilder("/rest/resources/content", params);
         return executeRequest(()->b.post(Entity.entity(multiPart, multiPart.getMediaType()), ResourceUploadResponse.class));
@@ -130,8 +131,14 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	@Override
 	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName,
 			boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
-		 StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
-		ResourceUploadResponse upload = upload(bodyPart, resourceType, checkForDuplicates);
+		return createResource(resourceType, false, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+	}
+
+	@Override
+	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName,
+								   boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
+		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
+		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates);
 		return upload.getResource();
 	}
 
@@ -209,23 +216,18 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
-	public ResourceRevision getResourceRevisionByResourceId(String resourceId) {
+	public ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException {
 		throw new RuntimeException("Not implemented");
 	}
 
 	@Override
-	public ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException {
+	public ResourceRevision getResourceRevision(String resourceRevisionId) {
 		throw new RuntimeException("Not implemented");
 	}
 
 	@Override
 	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName)
 			throws IOException {
-		throw new RuntimeException("Not implemented");
-	}
-
-	@Override
-	public Resource lookupResourceByName(String resourcename) {
 		throw new RuntimeException("Not implemented");
 	}
 
@@ -241,12 +243,6 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public String getResourcesRootPath() {
-		throw new RuntimeException("Not implemented");
-	}
-
-	@Override
-	public Resource updateResourceContent(Resource resource, InputStream resourceStream, String resourceFileName,
-			ResourceRevision revision) throws IOException {
 		throw new RuntimeException("Not implemented");
 	}
 

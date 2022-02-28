@@ -8,10 +8,10 @@
 			</div>
 		</st-actions>
 		<st-columns>
-			<st-column name="resourceName">
+			<st-column name="attributes.name">
 				<header>Name</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><span><a href="#" ng-click="$event.preventDefault();$parent.editResource(row.id);" uib-tooltip="Edit resource" tooltip-append-to-body="true">{{row.resourceName}}</a></span></cell>
+				<cell><span><a href="#" ng-click="$event.preventDefault();$parent.editResource(row.id);" uib-tooltip="Edit resource" tooltip-append-to-body="true">{{row.attributes.name}}</a></span></cell>
 			</st-column>
 			<st-column name="resourceType">
 				<header>Type</header>

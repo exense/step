@@ -28,10 +28,7 @@ import step.functions.Function;
 import step.functions.manager.FunctionManager;
 import step.functions.packages.handlers.JavaFunctionPackageHandler;
 import step.functions.type.FunctionTypeException;
-import step.resources.LocalResourceManagerImpl;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.SimilarResourceExistingException;
+import step.resources.*;
 
 public class FunctionPackageManagerTest {
 
@@ -252,7 +249,7 @@ public class FunctionPackageManagerTest {
 		return f1;
 	}
 
-	private Resource createTestResource(String resourceFileName, ResourceManager resourceManager) throws IOException, SimilarResourceExistingException {
+	private Resource createTestResource(String resourceFileName, ResourceManager resourceManager) throws Exception {
 		FileInputStream fis = new FileInputStream(new File("src/test/resources/" + resourceFileName));
 
 		// Create a resource

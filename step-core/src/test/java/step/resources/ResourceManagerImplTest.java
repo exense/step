@@ -18,42 +18,54 @@
  ******************************************************************************/
 package step.resources;
 
+import ch.exense.commons.io.FileHelper;
+import com.google.common.io.ByteStreams;
+import org.junit.Before;
+import org.junit.Test;
+import step.core.accessors.AbstractOrganizableObject;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Scanner;
 
-import org.junit.Test;
-
-import junit.framework.Assert;
-import ch.exense.commons.io.FileHelper;
+import static org.junit.Assert.*;
 
 public class ResourceManagerImplTest {
 
+	private File rootFolder;
+	private ResourceManager resourceManager;
+	private ResourceAccessor resourceAccessor;
+	private ResourceRevisionAccessor resourceRevisionAccessor;
+
+	@Before
+	public void before() throws IOException {
+		rootFolder = FileHelper.createTempFolder();
+
+		resourceAccessor = new InMemoryResourceAccessor();
+		resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
+		resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
+	}
+
 	@Test
-	public void test() throws IOException, SimilarResourceExistingException {
-		File rootFolder = FileHelper.createTempFolder();
-		
-		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
-		ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
-		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
-		
+	public void test() throws Exception {
 		// Create a resource
 		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false, null);
-		Assert.assertNotNull(resource);
+		assertNotNull(resource);
 		
 		// Assert that the resource has been persisted
 		Resource resourceActual = resourceAccessor.get(resource.getId());
-		Assert.assertEquals(resource, resourceActual);
-		
-		// Assert that the resource can be looked up by name
-		Resource resourceFoundByName = resourceManager.lookupResourceByName("TestResource.txt");
-		Assert.assertEquals(resource, resourceFoundByName);
+		assertEquals(resource, resourceActual);
+		assertEquals("TestResource.txt", resourceActual.getResourceName());
+		assertEquals("TestResource.txt", resourceActual.getAttribute(AbstractOrganizableObject.NAME));
 		
 		// Assert that the revision has been persisted
 		ResourceRevision fisrtResourceRevisionFromDB = resourceRevisionAccessor.get(resource.getCurrentRevisionId());
-		Assert.assertNotNull(fisrtResourceRevisionFromDB);
-		Assert.assertEquals("TestResource.txt", fisrtResourceRevisionFromDB.getResourceFileName());
+		assertNotNull(fisrtResourceRevisionFromDB);
+		assertEquals("TestResource.txt", fisrtResourceRevisionFromDB.getResourceFileName());
 		
 		String resourceId = resource.getId().toString();
 		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
@@ -62,27 +74,38 @@ public class ResourceManagerImplTest {
 		resourceContent = resourceManager.getResourceRevisionContent(resource.getCurrentRevisionId().toString());
 		assertResourceContent(resourceContent);
 		
-		// Update the resource content
-		resourceManager.saveResourceContent(resourceId, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt");
-		ResourceRevision secondResourceRevision = resourceManager.getResourceRevisionByResourceId(resourceId);
-		Assert.assertNotNull(secondResourceRevision);
-		
-		ResourceRevision secondResourceRevisionFromResource = resourceManager.getResourceRevisionByResourceId(resourceId);
-		Assert.assertEquals(secondResourceRevisionFromResource, secondResourceRevision);
-		Assert.assertNotSame(fisrtResourceRevisionFromDB, secondResourceRevision);
-		
-		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/functions/"+resourceId+"/"+secondResourceRevisionFromResource.getId().toString()+"/"+secondResourceRevisionFromResource.getResourceFileName());
-		Assert.assertTrue(resourceFileActual.exists());
-		
+		// Update the resource content with another name
+		resourceManager.saveResourceContent(resourceId, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource2.txt");
+		Resource actualResource = resourceManager.getResource(resourceId);
+		// Assert that the resource name matches with the new uploaded content
+		assertEquals("TestResource2.txt", actualResource.getResourceName());
+		assertEquals("TestResource2.txt", actualResource.getAttribute(AbstractOrganizableObject.NAME));
+
+		ResourceRevision secondResourceRevision = resourceManager.getResourceRevision(actualResource.getCurrentRevisionId().toString());
+		assertNotNull(secondResourceRevision);
+		assertEquals("TestResource2.txt", secondResourceRevision.getResourceFileName());
+
+		assertNotSame(fisrtResourceRevisionFromDB, secondResourceRevision);
+
+		// Try to force renaming the resource
+		actualResource.addAttribute(AbstractOrganizableObject.NAME, "newResourceName");
+		resourceManager.saveResource(actualResource);
+		// Ensure that the name of the resource remained in sync with the resourceName
+		actualResource = resourceManager.getResource(resourceId);
+		assertEquals("TestResource2.txt", actualResource.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestResource2.txt", actualResource.getResourceName());
+
+		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/functions/"+resourceId+"/"+secondResourceRevision.getId().toString()+"/"+secondResourceRevision.getResourceFileName());
+		assertTrue(resourceFileActual.exists());
 		
 		// Delete the resource
 		resourceManager.deleteResource(resourceId);
 		
 		// And assert that the file and all the revisions have been deleted
-		resourceFileActual = new File(rootFolder.getAbsolutePath()+"/"+secondResourceRevisionFromResource.getId().toString()+"/"+secondResourceRevisionFromResource.getResourceFileName());
-		Assert.assertFalse(resourceFileActual.exists());
-		Assert.assertEquals(false, resourceAccessor.getAll().hasNext());
-		Assert.assertEquals(false, resourceRevisionAccessor.getAll().hasNext());
+		resourceFileActual = new File(rootFolder.getAbsolutePath()+"/"+secondResourceRevision.getId().toString()+"/"+secondResourceRevision.getResourceFileName());
+		assertFalse(resourceFileActual.exists());
+		assertFalse(resourceAccessor.getAll().hasNext());
+		assertFalse(resourceRevisionAccessor.getAll().hasNext());
 		
 		
 		// Assert that the resource doesn't exist anymore and that the correct exception is thrown
@@ -92,18 +115,25 @@ public class ResourceManagerImplTest {
 		} catch (Exception e) {
 			actualException = e;
 		}
-		Assert.assertNotNull(actualException);
-		Assert.assertEquals("The resource with ID "+resourceId+" doesn't exist", actualException.getMessage());
+		assertNotNull(actualException);
+		assertEquals("The resource with ID "+resourceId+" doesn't exist", actualException.getMessage());
 	}
-	
+
 	@Test
-	public void testDuplicateResource() throws IOException, SimilarResourceExistingException {
-		File rootFolder = FileHelper.createTempFolder();
-		
-		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
-		ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
-		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
-		
+	public void testResourceContainer() throws Exception {
+		ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_FUNCTIONS, "TestResource.txt");
+		ByteStreams.copy(this.getClass().getResourceAsStream("TestResource.txt"), resourceContainer.getOutputStream());
+		resourceContainer.save(null);
+
+		Resource actualResource = resourceManager.getResource(resourceContainer.getResource().getId().toString());
+		assertNotNull(actualResource);
+
+		assertEquals("TestResource.txt", actualResource.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestResource.txt", actualResource.getResourceName());
+	}
+
+	@Test
+	public void testDuplicateResource() throws Exception {
 		// Create a resource
 		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
 		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource2.txt"), "TestResource2.txt", true, null);
@@ -114,24 +144,16 @@ public class ResourceManagerImplTest {
 		} catch (SimilarResourceExistingException e) {
 			actualException = e;
 		}
-		Assert.assertNotNull(actualException);
-		Assert.assertEquals(2, actualException.getSimilarResources().size());
-		
+		assertNotNull(actualException);
+		assertEquals(2, actualException.getSimilarResources().size());
 	}
 	
 	@Test
-	public void testDeletedResourceException() throws IOException, SimilarResourceExistingException {
-		File rootFolder = FileHelper.createTempFolder();
-		
-		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
-		ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
-		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
-		
+	public void testDeletedResourceException() throws Exception {
 		// Create a resource
 		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
 		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/"+ResourceManager.RESOURCE_TYPE_FUNCTIONS+"/"+resource.getId().toString()+"/"+resource.getCurrentRevisionId().toString()+"/TestResource.txt");
 		resourceFileActual.delete();
-		
 		
 		Exception actualException = null;
 		try {
@@ -139,18 +161,12 @@ public class ResourceManagerImplTest {
 		} catch (Exception e) {
 			actualException = e;
 		}
-		Assert.assertNotNull(actualException);
-		Assert.assertEquals("The resource revision file " +resourceFileActual.getAbsolutePath() +" doesn't exist or cannot be read", actualException.getMessage());
+		assertNotNull(actualException);
+		assertEquals("The resource revision file " +resourceFileActual.getAbsolutePath() +" doesn't exist or cannot be read", actualException.getMessage());
 	}
 	
 	@Test
-	public void testEphemeralResources() throws IOException, SimilarResourceExistingException {
-		File rootFolder = FileHelper.createTempFolder();
-		
-		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
-		ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
-		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
-		
+	public void testEphemeralResources() throws Exception {
 		// Create a resource
 		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
 		
@@ -164,18 +180,12 @@ public class ResourceManagerImplTest {
 		} catch (Exception e) {
 			actualException = e;
 		}
-		Assert.assertNotNull(actualException);
-		Assert.assertEquals("The resource with ID "+resourceId+" doesn't exist" , actualException.getMessage());
+		assertNotNull(actualException);
+		assertEquals("The resource with ID "+resourceId+" doesn't exist" , actualException.getMessage());
 	}
 	
 	@Test
-	public void testEphemeralResources2() throws IOException, SimilarResourceExistingException {
-		File rootFolder = FileHelper.createTempFolder();
-		
-		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
-		ResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
-		ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
-		
+	public void testEphemeralResources2() throws Exception {
 		// Create a resource
 		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
 		
@@ -189,22 +199,69 @@ public class ResourceManagerImplTest {
 		} catch (Exception e) {
 			actualException = e;
 		}
-		Assert.assertNotNull(actualException);
-		Assert.assertEquals("The resource with ID "+resourceId+" doesn't exist" , actualException.getMessage());
+		assertNotNull(actualException);
+		assertEquals("The resource with ID "+resourceId+" doesn't exist" , actualException.getMessage());
 	}
 
 	protected void assertResourceContent(ResourceRevisionContent resourceContent) throws IOException {
-		Assert.assertNotNull(resourceContent);
-		Assert.assertEquals("TestResource.txt", resourceContent.getResourceName());
+		assertNotNull(resourceContent);
+		assertEquals("TestResource.txt", resourceContent.getResourceName());
 		
 		// Assert that the content is the correct one
-		String text = null;
+		String text;
 	    try (Scanner scanner = new Scanner(resourceContent.getResourceStream(), StandardCharsets.UTF_8.name())) {
 	        text = scanner.useDelimiter("\\A").next();
 	    }
-		Assert.assertEquals("TEST", text);
+		assertEquals("TEST", text);
 		
 		resourceContent.close();
+	}
+
+	@Test
+	public void testDirectoryResource() throws Exception {
+		// Create a folder
+		File tempFolder = FileHelper.createTempFolder();
+		tempFolder.toPath().resolve("TestResource").toFile().mkdir();
+		tempFolder.toPath().resolve("TestResource/file1").toFile().createNewFile();
+		tempFolder.toPath().resolve("TestResource/file2").toFile().createNewFile();
+		File zippedFolder = FileHelper.createTempFile();
+
+		// Zip the folder
+		FileHelper.zip(tempFolder, zippedFolder);
+
+		// Create a directory resource
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, true, new FileInputStream(zippedFolder), "TestResource.zip", true, null);
+		assertEquals("TestResource", resource.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestResource", resource.getResourceName());
+
+		// Assert that the resource has been created
+		String resourceId = resource.getId().toString();
+		assertTrue(resourceManager.resourceExists(resourceId));
+
+		// Assert that the resource can be retrieved and is the same as the one returned at creation
+		Resource actualResource = resourceManager.getResource(resourceId);
+		assertSame(resource, actualResource);
+
+		// Assert that the resource has been extracted and saved as directory
+		ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resourceId);
+		assertTrue(resourceFile.getResourceFile().isDirectory());
+
+		// Get the content and assert that it has been returned as Zip
+		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
+		File resourceContentFile = FileHelper.createTempFile();
+		Files.copy(resourceContent.getResourceStream(), resourceContentFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		assertTrue(FileHelper.isArchive(resourceContentFile));
+
+		ResourceRevision resourceRevision = resourceManager.getResourceRevision(actualResource.getCurrentRevisionId().toString());
+		assertEquals("TestResource", resourceRevision.getResourceFileName());
+
+		Resource updatedResource = resourceManager.saveResourceContent(resourceId, new FileInputStream(resourceContentFile), "newName.zip");
+		// Assert that the name of the resource and the resourceName have been updated accordingly
+		assertEquals("newName", updatedResource.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("newName", updatedResource.getResourceName());
+
+		resourceRevision = resourceManager.getResourceRevision(updatedResource.getCurrentRevisionId().toString());
+		assertEquals("newName", resourceRevision.getResourceFileName());
 	}
 
 }
