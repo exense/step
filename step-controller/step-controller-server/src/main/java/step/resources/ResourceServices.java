@@ -43,6 +43,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import ch.exense.commons.io.FileHelper;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractServices;
+import step.core.deployment.ControllerServiceException;
 import step.core.deployment.Secured;
 import step.core.objectenricher.ObjectEnricher;
 
@@ -67,7 +68,8 @@ public class ResourceServices extends AbstractServices {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType, @QueryParam("duplicateCheck") Boolean checkForDuplicate) throws Exception {
+			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType,
+												 @QueryParam("duplicateCheck") Boolean checkForDuplicate, @QueryParam("directory") Boolean isDirectory) throws IOException {
 		ObjectEnricher objectEnricher = getObjectEnricher();
 		
 		if(checkForDuplicate == null) {
@@ -79,20 +81,26 @@ public class ResourceServices extends AbstractServices {
 			throw new RuntimeException("Missing resource type query parameter 'type'");
 		
 		try {
-			Resource resource = resourceManager.createResource(resourceType, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, objectEnricher);
+			Resource resource = resourceManager.createResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, objectEnricher);
 			return new ResourceUploadResponse(resource, null);
 		} catch (SimilarResourceExistingException e) {
 			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());
+		} catch (InvalidResourceFormatException e) {
+			throw uploadFileNotAnArchive();
 		}
 	}
-	
+
+	private ControllerServiceException uploadFileNotAnArchive() {
+		return new ControllerServiceException("The uploaded file is not an archive. Please upload a zip of the folder.");
+	}
+
 	@POST
 	@Secured
 	//@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Resource saveResource(Resource resource) {
-		return resourceAccessor.save(resource);
+	public Resource saveResource(Resource resource) throws IOException {
+		return resourceManager.saveResource(resource);
 	}
 	
 	@POST
@@ -103,9 +111,13 @@ public class ResourceServices extends AbstractServices {
 			@FormDataParam("file") FormDataContentDisposition fileDetail) throws Exception {
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
-		
-		Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName() );
-		return new ResourceUploadResponse(resource, null);
+
+		try {
+			Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName() );
+			return new ResourceUploadResponse(resource, null);
+		} catch (InvalidResourceFormatException e) {
+			throw uploadFileNotAnArchive();
+		}
 	}
 	
 	@GET

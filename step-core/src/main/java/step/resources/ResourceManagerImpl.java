@@ -18,31 +18,29 @@
  ******************************************************************************/
 package step.resources;
 
+import ch.exense.commons.io.FileHelper;
+import com.google.common.hash.Hashing;
+import org.apache.commons.io.FileUtils;
+import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.objectenricher.ObjectEnricher;
+
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.io.FileUtils;
-import org.bson.types.ObjectId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.hash.Hashing;
-
-import ch.exense.commons.io.FileHelper;
-import step.core.objectenricher.ObjectEnricher;
-
 public class ResourceManagerImpl implements ResourceManager {
 
+	private static final String ZIP_EXTENSION = ".zip";
 	protected final File resourceRootFolder;
 	protected final ResourceAccessor resourceAccessor;
 	protected final ResourceRevisionAccessor resourceRevisionAccessor;
@@ -65,7 +63,6 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceTypes.put(RESOURCE_TYPE_DATASOURCE, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_SECRET, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_PDF_TEST_SCENARIO_FILE, new CustomResourceType(false));
-
 	}
 
 	public void registerResourceType(String name, ResourceType resourceType) {
@@ -74,55 +71,75 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException {
-		Resource resource = createResource(resourceType, resourceFileName);
-		ResourceRevision revision = createResourceRevision(resourceFileName, resource.getId().toString());
-		createResourceRevisionContainer(resource, revision);
-		File file = getResourceRevisionFile(resource, revision);
-		FileOutputStream fileOutputStream = new FileOutputStream(file);
-		return new ResourceRevisionContainer(resource, revision, fileOutputStream, this);
-	}
-
-	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
-		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
-		String checksum = getMD5Checksum(resourceRevisionFile);
-		resourceRevision.setChecksum(checksum);
-		resourceRevisionAccessor.save(resourceRevision);
-
-		resource.setCurrentRevisionId(resourceRevision.getId());
-		
-		if(objectEnricher != null) {
-			objectEnricher.accept(resource);
-		}
-		resourceAccessor.save(resource);
-
-		if(checkForDuplicates) {
-			List<Resource> resourcesWithSameChecksum = getSimilarResources(resource, resourceRevision);
-			if(resourcesWithSameChecksum.size()>0) {
-				throw new SimilarResourceExistingException(resource, resourcesWithSameChecksum);
-			}
-		}
+		return createResourceContainer(resourceType, resourceFileName, false);
 	}
 
 	@Override
-	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName);
+	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+		return createResource(resourceType, false, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+	}
+
+	@Override
+	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(checkForDuplicates, objectEnricher);
 		return resourceContainer.getResource();
 	}
 
-	@Override
-	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName) throws IOException {
-		Resource resource = getResource(resourceId);
-		createResourceRevisionAndSaveContent(resourceStream, resourceFileName, resource);
-		updateResourceFileNameIfNecessary(resourceFileName, resource);
-		return resource;
+	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory) throws IOException {
+		Resource resource = createResource(resourceType, resourceFileName, isDirectory);
+		ResourceRevision revision = createResourceRevisionContainer(resourceFileName, resource);
+		return new ResourceRevisionContainer(resource, revision, this);
 	}
-	
+
+	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
+		String checksum = getMD5Checksum(resourceRevisionFile);
+		resourceRevision.setChecksum(checksum);
+
+		resource.setCurrentRevisionId(resourceRevision.getId());
+
+		if(objectEnricher != null) {
+			objectEnricher.accept(resource);
+		}
+
+		resourceRevisionAccessor.save(resourceRevision);
+		resourceAccessor.save(resource);
+
+		List<Resource> resourcesWithSameChecksum = null;
+		if(checkForDuplicates) {
+			resourcesWithSameChecksum = getSimilarResources(resource, resourceRevision);
+		}
+
+		if(resource.isDirectory()) {
+			boolean isArchive = FileHelper.isArchive(resourceRevisionFile);
+			if(isArchive) {
+				File revisionFileToUnzip = new File(resourceRevisionFile.getAbsolutePath() + "_beforeUnzip");
+				// Rename the revision file before unzipping to avoid naming conflicts
+				resourceRevisionFile.renameTo(revisionFileToUnzip);
+				FileHelper.unzip(revisionFileToUnzip, resourceRevisionFile.toPath().getParent().toFile());
+				revisionFileToUnzip.delete();
+				resourceRevisionAccessor.save(resourceRevision);
+				resourceAccessor.save(resource);
+			} else {
+				throw new InvalidResourceFormatException();
+			}
+		}
+
+		if(checkForDuplicates && resourcesWithSameChecksum.size()>0) {
+			throw new SimilarResourceExistingException(resource, resourcesWithSameChecksum);
+		}
+	}
+
 	@Override
-	public Resource updateResourceContent(Resource resource, InputStream resourceStream, String resourceFileName, ResourceRevision revision) throws IOException {
-		saveResource(resource);
-		updateContent(resourceStream, resourceFileName, resource, revision);
+	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName) throws IOException, InvalidResourceFormatException {
+		Resource resource = getResource(resourceId);
+		String resourceName = getResourceName(resourceFileName, resource.isDirectory());
+		// Keep resourceName and name attribute in sync
+		resource.setResourceName(resourceName);
+		resource.addAttribute(AbstractOrganizableObject.NAME, resourceName);
+		createResourceRevisionAndSaveContent(resourceStream, resourceFileName, resource);
 		return resource;
 	}
 
@@ -130,9 +147,8 @@ public class ResourceManagerImpl implements ResourceManager {
 	public void deleteResource(String resourceId) {
 		Resource resource = getResource(resourceId);
 
-		resourceRevisionAccessor.getResourceRevisionsByResourceId(resourceId).forEachRemaining(revision->{
-			resourceRevisionAccessor.remove(revision.getId());
-		});
+		resourceRevisionAccessor.getResourceRevisionsByResourceId(resourceId).forEachRemaining(
+				revision-> resourceRevisionAccessor.remove(revision.getId()));
 
 		File resourceContainer = getResourceContainer(resource);
 		if(resourceContainer.exists()) {
@@ -185,13 +201,6 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public ResourceRevision getResourceRevisionByResourceId(String resourceId) {
-		Resource resource = getResource(resourceId);
-		ResourceRevision resourceRevision = getCurrentResourceRevision(resource);
-		return resourceRevision;
-	}
-
-	@Override
 	public ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException {
 		ResourceRevision resourceRevision = getResourceRevision(new ObjectId(resourceRevisionId));
 		Resource resource = getResource(resourceRevision.getResourceId());
@@ -212,8 +221,20 @@ public class ResourceManagerImpl implements ResourceManager {
 		if(!resourceRevisionFile.exists() || !resourceRevisionFile.canRead()) {
 			throw new IOException("The resource revision file "+resourceRevisionFile.getAbsolutePath()+" doesn't exist or cannot be read");
 		}
-		FileInputStream resourceRevisionStream = new FileInputStream(resourceRevisionFile);
-		return new ResourceRevisionContentImpl(this, resource, resourceRevisionStream, resourceRevision.getResourceFileName());
+
+		String resourceFileName;
+		File file;
+		if(resource.isDirectory()) {
+			file = Files.createTempFile(resourceRevisionFile.getName(), ZIP_EXTENSION).toFile();
+			FileHelper.zip(resourceRevisionFile.getParentFile(), file);
+			resourceFileName = resourceRevision.getResourceFileName() + ZIP_EXTENSION;
+		} else {
+			file = resourceRevisionFile;
+			resourceFileName = resourceRevision.getResourceFileName();
+		}
+
+		FileInputStream resourceRevisionStream = new FileInputStream(file);
+		return new ResourceRevisionContentImpl(this, resource, resourceRevisionStream, resourceFileName);
 	}
 
 	private ResourceRevision getCurrentResourceRevision(Resource resource) {
@@ -237,13 +258,16 @@ public class ResourceManagerImpl implements ResourceManager {
 		return resource;
 	}
 
-	private File getResourceRevisionFile(Resource resource, ResourceRevision revision) {
+	public ResourceRevision getResourceRevision(String resourceRevisionId) {
+		return getResourceRevision(new ObjectId(resourceRevisionId));
+	}
+
+	protected File getResourceRevisionFile(Resource resource, ResourceRevision revision) {
 		return new File(getResourceRevisionContainer(resource, revision).getPath()+"/"+revision.getResourceFileName());
 	}
 
 	private File getResourceRevisionContainer(Resource resource, ResourceRevision revision) {
-		File containerFile = new File(getResourceContainer(resource).getPath()+"/"+revision.getId().toString());
-		return containerFile;
+		return new File(getResourceContainer(resource).getPath()+"/"+revision.getId().toString());
 	}
 
 	private File getResourceContainer(Resource resource) {
@@ -251,83 +275,58 @@ public class ResourceManagerImpl implements ResourceManager {
 		return containerFile;
 	}
 
-	private File createResourceRevisionContainer(Resource resource, ResourceRevision revision) throws IOException {
+	private ResourceRevision createResourceRevisionContainer(String filename, Resource resource) throws IOException {
+		ResourceRevision revision = createResourceRevision(filename, resource.getId().toString(), resource.isDirectory());
 		File containerFile = getResourceRevisionContainer(resource, revision);
 		boolean containerDirectoryCreated = containerFile.mkdirs();
 		if(!containerDirectoryCreated) {
 			throw new IOException("Unable to create container for resource "+resource.getId()+" in "+containerFile.getAbsolutePath());
 		}
-		return containerFile;
-	}
-
-	private ResourceRevision createResourceRevisionAndSaveContent(InputStream resourceStream, String resourceFileName,
-			Resource resource) throws IOException {
-		ResourceRevision revision = createResourceRevision(resourceFileName, resource.getId().toString());
-		createResourceRevisionContainer(resource, revision);
-
-		File resourceFile = saveResourceRevisionContent(resourceStream, resource, revision);
-
-		String checksum = getMD5Checksum(resourceFile);
-		revision.setChecksum(checksum);
-		resourceRevisionAccessor.save(revision);
-
-		resource.setCurrentRevisionId(revision.getId());
-
-		resourceAccessor.save(resource);
 		return revision;
 	}
-	
-	private ResourceRevision updateContent(InputStream resourceStream, String resourceFileName,
-			Resource resource, ResourceRevision revision) throws IOException {
-		File resourceFile =  updateResourceRevisionContent(resourceStream, resource, revision);
-		String checksum = getMD5Checksum(resourceFile);
-		revision.setChecksum(checksum);
-		resourceRevisionAccessor.save(revision);
 
-		resource.setCurrentRevisionId(revision.getId());
-
-		resourceAccessor.save(resource);
+	private ResourceRevision createResourceRevisionAndSaveContent(InputStream resourceStream, String contentFilename, Resource resource)
+			throws IOException, InvalidResourceFormatException {
+		ResourceRevision revision = createResourceRevisionContainer(contentFilename, resource);
+		saveResourceRevisionContent(resourceStream, resource, revision);
+		try {
+			closeResourceContainer(resource, revision, false, null);
+		} catch (SimilarResourceExistingException e) {
+			throw new RuntimeException("Should never occur", e);
+		}
 		return revision;
 	}
 
 	private String getMD5Checksum(File file) throws IOException {
-		String hash = com.google.common.io.Files.hash(file, Hashing.md5()).toString();
-		return hash;
+		return com.google.common.io.Files.hash(file, Hashing.md5()).toString();
 	}
 
-	private void updateResourceFileNameIfNecessary(String resourceFileName, Resource resource) {
-		if(!resource.getResourceName().equals(resourceFileName)) {
-			Map<String, String> currentAttributes = resource.getAttributes();
-			if(currentAttributes == null) {
-				currentAttributes = new HashMap<String, String>();
-			}
-			currentAttributes.put("name", resourceFileName);
-			resource.setAttributes(currentAttributes);
-			resource.setResourceName(resourceFileName);
-			resourceAccessor.save(resource);
-		}
-	}
-
-	private Resource createResource(String resourceTypeId, String name) {
+	private Resource createResource(String resourceTypeId, String name, boolean isDirectory) {
 		ResourceType resourceType = resourceTypes.get(resourceTypeId);
 		if(resourceType ==  null) {
 			throw new RuntimeException("Unknown resource type "+resourceTypeId);
 		}
 
+		String resourceName;
+		resourceName = getResourceName(name, isDirectory);
+
 		Resource resource = new Resource();
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put("name", name);
-		resource.setAttributes(attributes);
-		resource.setResourceName(name);
+		resource.addAttribute(AbstractOrganizableObject.NAME, resourceName);
+		resource.setResourceName(resourceName);
 		resource.setResourceType(resourceTypeId);
 		resource.setEphemeral(resourceType.isEphemeral());
+		resource.setDirectory(isDirectory);
 
 		return resource;
 	}
 
-	private ResourceRevision createResourceRevision(String resourceFileName, String resourceId) {
+	private String getResourceName(String contentFilename, boolean isDirectory) {
+		return isDirectory ? contentFilename.replace(ZIP_EXTENSION, "") : contentFilename;
+	}
+
+	private ResourceRevision createResourceRevision(String resourceFileName, String resourceId, boolean isDirectory) {
 		ResourceRevision revision = new ResourceRevision();
-		revision.setResourceFileName(resourceFileName);
+		revision.setResourceFileName(getResourceName(resourceFileName, isDirectory));
 		revision.setResourceId(resourceId);
 		return revision;
 	}
@@ -335,22 +334,7 @@ public class ResourceManagerImpl implements ResourceManager {
 	private File saveResourceRevisionContent(InputStream resourceStream, Resource resource, ResourceRevision revision) throws IOException {
 		File resourceFile = getResourceRevisionFile(resource, revision);
 		Files.copy(resourceStream, resourceFile.toPath());
-
 		return resourceFile;
-	}
-	
-	private File updateResourceRevisionContent(InputStream resourceStream, Resource resource, ResourceRevision revision) throws IOException {
-		File resourceFile = getResourceRevisionFile(resource, revision);
-		Files.copy(resourceStream, resourceFile.toPath(),StandardCopyOption.REPLACE_EXISTING);
-
-		return resourceFile;
-	}
-
-	@Override
-	public Resource lookupResourceByName(String resourceName) {
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put("name", resourceName);
-		return resourceAccessor.findByAttributes(attributes);
 	}
 
 	@Override
@@ -361,6 +345,8 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public Resource saveResource(Resource resource) throws IOException {
+		// Ensure that the name remains in sync with resourceName
+		resource.addAttribute(AbstractOrganizableObject.NAME, resource.getResourceName());
 		return resourceAccessor.save(resource);
 	}
 	

@@ -24,7 +24,7 @@ public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 			@Override
 			public void onVisitEntity(Object t, EntityTreeVisitorContext visitorContext) {
 				if(visitorContext.isRecursive() && t instanceof Resource) {
-					String revisionId = resourceManager.getResourceRevisionByResourceId(((Resource) t).getId().toString()).getId().toHexString();
+					String revisionId = ((Resource) t).getCurrentRevisionId().toString();
 					visitorContext.visitEntity(EntityManager.resourceRevisions, revisionId);
 				}
 			}

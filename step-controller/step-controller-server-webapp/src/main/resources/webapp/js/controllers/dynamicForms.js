@@ -307,6 +307,7 @@ dynamicForms.directive('dynamicCheckbox', function() {
         dynamicValue: '=',
         label: '=',
         type: '=',
+        directory: '=?',
         tooltip: '=',
         onSave: '&'
       },

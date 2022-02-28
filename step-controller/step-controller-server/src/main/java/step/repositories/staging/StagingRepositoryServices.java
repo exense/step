@@ -90,7 +90,7 @@ public class StagingRepositoryServices extends AbstractServices {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String uploadFile(@PathParam("id") String id, @FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail) throws IOException {
+			@FormDataParam("file") FormDataContentDisposition fileDetail) throws Exception {
 		StagingContext context = stagingContextAccessor.get(id);
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");

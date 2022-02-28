@@ -44,6 +44,7 @@ import step.core.export.ExportTaskManager.ExportStatus;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.PlanAccessor;
+import step.resources.InvalidResourceFormatException;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
@@ -85,7 +86,7 @@ public class ExportServices extends AbstractServices {
 		Map<String,String> metadata = getMetadata();
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
-			public Resource runExport() throws IOException {
+			public Resource runExport() throws IOException, InvalidResourceFormatException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
 				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata,objectPredicateFactory.getObjectPredicate(session),
 						entity, recursively, additionalEntities);
@@ -116,7 +117,7 @@ public class ExportServices extends AbstractServices {
 		Map<String,String> metadata = getMetadata();
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
-			public Resource runExport() throws FileNotFoundException, IOException {
+			public Resource runExport() throws FileNotFoundException, IOException, InvalidResourceFormatException {
 				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
 				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
 						metadata, objectPredicateFactory.getObjectPredicate(session), entity, recursively, additionalEntities);

@@ -31,6 +31,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.variables.UndefinedVariableException;
 import step.core.variables.VariablesManager;
+import step.resources.InvalidResourceFormatException;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
@@ -137,7 +138,7 @@ public class ReportNodeAttachmentManager {
 			} finally {
 				try {
 					container.save();
-				} catch (IOException e) {
+				} catch (IOException | InvalidResourceFormatException e) {
 					logger.error("Error while closing resource container", e);
 				}
 			}

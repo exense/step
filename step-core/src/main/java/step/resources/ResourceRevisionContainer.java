@@ -18,8 +18,7 @@
  ******************************************************************************/
 package step.resources;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 import step.core.objectenricher.ObjectEnricher;
 
@@ -30,12 +29,14 @@ public class ResourceRevisionContainer {
 	protected final OutputStream outputStream;
 	private final ResourceManagerImpl resourceManagerImpl;
 
-	protected ResourceRevisionContainer(Resource resource, ResourceRevision resourceRevision, OutputStream outputStream, ResourceManagerImpl resourceManagerImpl) {
+	protected ResourceRevisionContainer(Resource resource, ResourceRevision resourceRevision, ResourceManagerImpl resourceManagerImpl) throws FileNotFoundException {
 		super();
 		this.resource = resource;
 		this.resourceRevision = resourceRevision;
-		this.outputStream = outputStream;
 		this.resourceManagerImpl = resourceManagerImpl;
+
+		File file = resourceManagerImpl.getResourceRevisionFile(resource, resourceRevision);
+		this.outputStream = new FileOutputStream(file);
 	}
 
 	public OutputStream getOutputStream() {
@@ -50,7 +51,7 @@ public class ResourceRevisionContainer {
 		return resourceRevision;
 	}
 
-	public void save(boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
+	public void save(boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
 		try {
 			outputStream.close();
 		} catch (IOException e) {
@@ -59,7 +60,7 @@ public class ResourceRevisionContainer {
 		resourceManagerImpl.closeResourceContainer(resource, resourceRevision, checkForDuplicates, objectEnricher);
 	}
 	
-	public void save(ObjectEnricher objectEnricher) throws IOException {
+	public void save(ObjectEnricher objectEnricher) throws IOException, InvalidResourceFormatException {
 		try {
 			save(false, objectEnricher);
 		} catch (SimilarResourceExistingException e) {
@@ -67,7 +68,7 @@ public class ResourceRevisionContainer {
 		}
 	}
 
-	public void save() throws IOException {
+	public void save() throws IOException, InvalidResourceFormatException {
 		save(null);
 	}
 }

@@ -30,6 +30,8 @@ public class Resource extends AbstractOrganizableObject implements EnricheableOb
 	protected String resourceType;
 	
 	protected String resourceName;
+
+	protected boolean directory;
 	
 	protected boolean ephemeral;
 	
@@ -63,5 +65,13 @@ public class Resource extends AbstractOrganizableObject implements EnricheableOb
 
 	public void setEphemeral(boolean ephemeral) {
 		this.ephemeral = ephemeral;
+	}
+
+	public boolean isDirectory() {
+		return directory;
+	}
+
+	public void setDirectory(boolean directory) {
+		this.directory = directory;
 	}
 }
