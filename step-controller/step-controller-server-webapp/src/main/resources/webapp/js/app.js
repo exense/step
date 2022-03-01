@@ -953,6 +953,10 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 	  });
 		$uibModalInstance.close({entity: entityType, array: resultArray});
 	};
+	
+  $scope.proceedFiltered = function () {
+    $uibModalInstance.close({entity: entityType, filterQuery: $scope.selectEntityHandle.getFilter()});
+  };
 
 	$scope.cancel = function () {
 		$uibModalInstance.dismiss('cancel');
@@ -966,7 +970,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
       type: '=',
       multipleSelection: '=?',
       onSelection: '=?',
-      handle: '=?'
+      handle: '=?',
     },
     template: '<ng-include src="templateUrl" />',
     controller: function($scope, EntityRegistry) {
@@ -977,14 +981,34 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
       $scope.templateUrl = entityType.templateUrl;
       
       $scope.notifySelection = function(selection) {
-        if($scope.onSelection) {
+        if ($scope.onSelection) {
           $scope.onSelection(selection);
         }
       }
+            
+      if ($scope.handle) {
       
-      if($scope.handle) {
         $scope.handle.getSelection = function() {
           return $scope.tableHandle.getSelectedIds();
+        }
+        
+        $scope.handle.getFilter = function() {
+          const searchQuery = {}; 
+          for (const i in $scope.tableHandle.columns()[0]) {
+            let oAjaxData = $scope.tableHandle.columns(i).context[0].oAjaxData;
+            searchQuery['columns['+i+'][data]'] = oAjaxData.columns[i].data;
+            searchQuery['columns['+i+'][name]'] = oAjaxData.columns[i].name;
+            searchQuery['columns['+i+'][searchable]'] = oAjaxData.columns[i].searchable;
+            searchQuery['columns['+i+'][orderable]'] = oAjaxData.columns[i].orderable;
+            searchQuery['columns['+i+'][search][value]'] = oAjaxData.columns[i].search.value;
+            searchQuery['columns['+i+'][search][regex]'] = oAjaxData.columns[i].search.regex;
+            searchQuery['order[0][column]'] = oAjaxData.order[0].column;
+            searchQuery['order[0][dir]'] = oAjaxData.order[0].dir;
+            searchQuery['draw'] = oAjaxData.draw;
+            searchQuery['start'] = oAjaxData.start;
+            searchQuery['length'] = oAjaxData.length;
+          }
+          return searchQuery;
         }
       }
     }
