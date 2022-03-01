@@ -219,17 +219,20 @@ angular.module('tables', ['export'])
       }
 
       scope.setSelectionFiltered = function (value, sendEvent) {
-		  scope.selectionModel.setDefaultSelection(value);
-		  scope.selectionModel.setSelectionAll(value);
+      
+        //setDefaultSelection selects all shown entities after navigating in the pagination to "value"
+        //scope.selectionModel.setDefaultSelection(value);
+        
+        scope.selectionModel.setSelectionAll(value);
+  
+        sendEvent = (typeof sendEvent !== 'undefined') ? sendEvent : true;
+        if (sendEvent) {
+          sendSelectionChangeEvent();
+        }
+      }
 
-		  sendEvent = (typeof sendEvent !== 'undefined') ? sendEvent : true;
-		  if (sendEvent) {
-			  sendSelectionChangeEvent();
-		  }
-	  }
-
-	  scope.setSelectionOnFilteredRows = function (value, sendEvent) {
-        if(!isTableFiltered()) {
+	    scope.setSelectionOnFilteredRows = function (value, sendEvent) {
+        if (!isTableFiltered()) {
           scope.selectionModel.setDefaultSelection(value);
           scope.selectionModel.setSelectionAll(value);
         } else {
@@ -288,8 +291,8 @@ angular.module('tables', ['export'])
           if (value && value.length > 0) {
             scope.table.rows.add(value);
           }
-          // Ugly workound: Perform the table draw after 10 angular digest cycles in order to let angular render all the cells  (See comment in colDef.render above)
-          // When using angular directives in a cell that require an aynchron operation
+          // Ugly workaround: Perform the table draw after 10 angular digest cycles in order to let angular render all the cells  (See comment in colDef.render above)
+          // When using angular directives in a cell that require an asynchron operation
           // to load (HTTP call to retrieve the template for instance), the cell cannot be rendered in the current angular digest cycle
           // and the data returned by colDef.render (See above) used for ordering and filtering are wrong
           // To fix this we postpone the draw in order to give angular time to perform the asynchronous calls required by the directives
@@ -422,6 +425,8 @@ angular.module('tables', ['export'])
 	        scope.handle.getSelection = scope.selectionModel.getSelection.bind(scope.selectionModel);
 	        scope.handle.getSelectionMode = scope.selectionModel.getSelectionMode.bind(scope.selectionModel);
 			    scope.handle.areAllSelected = scope.selectionModel.areAllSelected.bind(scope.selectionModel);
+			    scope.handle.columns = scope.table.columns;
+			    scope.handle.column = scope.table.column;
 
 	        scope.handle.setSelection = scope.setSelection;
 	        scope.handle.select = function(id) {
@@ -564,8 +569,8 @@ angular.module('tables', ['export'])
     },
     link : function(scope, element, attrs, tableController, transclude) {
 
-	  scope.selectionModelByInput = function() {
-        return tableController.selectionModelByInput;
+      scope.selectionModelByInput = function() {
+          return tableController.selectionModelByInput;
       }
       scope.select = function() {
         return tableController.select;
@@ -574,8 +579,8 @@ angular.module('tables', ['export'])
         return tableController.multipleSelection;
       }
       scope.toggleSelectAll = function() {
-	  	scope.selectedAll = !scope.selectedAll;
-	  	scope.$parent.$parent.setSelectionFiltered(scope.selectedAll);
+        scope.selectedAll = !scope.selectedAll;
+        scope.$parent.$parent.setSelectionFiltered(scope.selectedAll);
 	  }
 	},
     templateUrl: 'partials/table/selectionColumn.html'}
