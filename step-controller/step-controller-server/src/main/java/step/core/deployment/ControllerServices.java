@@ -44,6 +44,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
+import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.ReportNode;
@@ -64,6 +65,7 @@ public class ControllerServices extends AbstractServices {
 	
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
 	private AsyncTaskManager taskManager;
+	private Version currentVersion;
 
 	@PostConstruct
 	public void init() throws Exception {
@@ -71,6 +73,7 @@ public class ControllerServices extends AbstractServices {
 		GlobalContext context = getContext();
 		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
 		taskManager = context.get(AsyncTaskManager.class);
+		currentVersion = context.getCurrentVersion();
 	}
 	
 	@POST
@@ -149,5 +152,13 @@ public class ControllerServices extends AbstractServices {
 	public AsyncTaskManager.TaskStatus getAsyncTaskStatus(@PathParam("id") String asyncTaskId) {
 		AsyncTaskManager.TaskStatus status = taskManager.getTaskStatus(asyncTaskId);
 		return status;
+	}
+
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/version")
+	public Version getVersion() {
+		return this.currentVersion;
 	}
 }
