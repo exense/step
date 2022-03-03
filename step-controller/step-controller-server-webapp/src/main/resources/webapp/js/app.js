@@ -71,14 +71,21 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 
 	api.isPublicView = function (view) {
 		return api.getCustomView(view).isPublicView;
-	}  
+	}
+
+	api.isStaticView = function (view) {
+		return api.getCustomView(view).isStaticView;
+	}
 
 	api.registerView = function(viewId,template,isPublicView) {
-		if(!isPublicView) {
-			isPublicView = false;
-		}
-		customViews[viewId] = {template:template, isPublicView:isPublicView}
+	  api.registerViewWithConfig(viewId, template, {isPublicView:isPublicView})
 	}
+
+	api.registerViewWithConfig = function(viewId,template,config) {
+	    var isPublicView = config.isPublicView || false;
+	    var isStaticView = config.isStaticView || false;
+  		customViews[viewId] = {template:template, isPublicView:isPublicView, isStaticView:isStaticView}
+  	}
 
 	api.registerCustomMenuEntry = function(label, viewId, mainMenu, menuIconClass, right) {
 		customMenuEntries.push({label: label, viewId: viewId, mainMenu: mainMenu, menuIconClass: menuIconClass, right: right, 
@@ -165,6 +172,10 @@ var tecAdminApp = angular.module('tecAdminApp', ['step','entities','tecAdminCont
 
 	$scope.isPublicView = function () {
 		return ViewRegistry.isPublicView($scope.$state);
+	};
+
+	$scope.isStaticView = function () {
+		return ViewRegistry.isStaticView($scope.$state);
 	};
 
 	$scope.authService = AuthService;

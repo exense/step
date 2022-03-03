@@ -19,7 +19,7 @@
 angular.module('repositoryControllers', ['step'])
 
 .run(function(ViewRegistry, EntityRegistry) {
-  ViewRegistry.registerView('repository','partials/repository.html');
+  ViewRegistry.registerViewWithConfig('repository','partials/repository.html',{isStaticView:true});
   EntityRegistry.registerEntity('Repository', 'repository', null, null, null, null, null, null);
 })
 
