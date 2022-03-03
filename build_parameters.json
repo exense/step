@@ -77,7 +77,6 @@
 				{
 					"TYPE": "DOCKER",
 					"OS": "LINUX",
-					"PARALLELISM": "2",
 					"PARAMETERS": [
 						{
 							"NAME": "DEVELOPMENT",
