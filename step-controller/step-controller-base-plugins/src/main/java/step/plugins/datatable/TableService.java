@@ -89,9 +89,7 @@ public class TableService extends ApplicationServices {
 
 	private ObjectMapper webLayerObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 	
-	private Pattern columnSearchPattern = Pattern.compile("columns\\[([0-9]+)\\]\\[search\\]\\[value\\]");
-	private Pattern searchPattern = Pattern.compile("search\\[value\\]");
-	private Pattern namePattern = Pattern.compile("columns\\[([0-9]+)\\]\\[name\\]");
+	private TableServiceHelper tableServiceHelper;
 	
 	@PostConstruct
 	public void init() throws Exception {
@@ -100,6 +98,7 @@ public class TableService extends ApplicationServices {
 		maxTime = controller.getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 		exportTaskManager = new ExportTaskManager(getContext().getResourceManager());
+		tableServiceHelper = new TableServiceHelper();
 	}
 	
 	@PreDestroy
@@ -154,9 +153,9 @@ public class TableService extends ApplicationServices {
 			throw new RuntimeException("The table "+tableID+" doesn't exist");
 		}
 
-		Map<Integer, String> columnNames = getColumnNamesMap(params);
+		Map<Integer, String> columnNames = tableServiceHelper.getColumnNamesMap(params);
 		
-		List<Filter> queryFragments = createQueryFragments(params, columnNames, table);
+		List<Filter> queryFragments = tableServiceHelper.createQueryFragments(params, columnNames, table);
 		
 		int draw = Integer.parseInt(params.getFirst("draw"));
 		int skip = Integer.parseInt(params.getFirst("start"));
@@ -250,49 +249,6 @@ public class TableService extends ApplicationServices {
 	@Secured
 	public ExportStatus getExport(@PathParam("id") String reportID) throws Exception {
 		return exportTaskManager.getExportStatus(reportID);
-	}
-	
-
-	private List<Filter> createQueryFragments(MultivaluedMap<String, String> params, Map<Integer, String> columnNames, Table<?> table) {
-		List<Filter> queryFragments = new ArrayList<>();
-		for(String key:params.keySet()) {
-			Matcher m = columnSearchPattern.matcher(key);
-			Matcher searchMatcher = searchPattern.matcher(key);
-			if(m.matches()) {
-				int columnID = Integer.parseInt(m.group(1));
-				String columnName = columnNames.get(columnID);
-				String searchValue = params.getFirst(key);
-
-				if(searchValue!=null && searchValue.length()>0) {
-					Filter columnQueryFragment = table.getQueryFragmentForColumnSearch(columnName, searchValue);
-					queryFragments.add(columnQueryFragment);
-				}
-			} else if(searchMatcher.matches()) {
-				String searchValue = params.getFirst(key);
-				if(searchValue!=null && searchValue.length()>0) {
-					// TODO implement full text search
-				}
-			}
-		}
-		if(params.containsKey("filter")) {
-			Filter filter = OQLFilterBuilder.getFilter(params.getFirst("filter"));
-			queryFragments.add(filter);
-		}
-		return queryFragments;
-	}
-
-	private Map<Integer, String> getColumnNamesMap(MultivaluedMap<String, String> params) {
-		Map<Integer, String> columnNames = new HashMap<>();
-		
-		for(String key:params.keySet()) {
-			Matcher m = namePattern.matcher(key);
-			if(m.matches()) {
-				int columnID = Integer.parseInt(m.group(1));
-				String columnName = params.getFirst(key);
-				columnNames.put(columnID, columnName);
-			}
-		}
-		return columnNames;
 	}
 
 	private Filter getAdditionalQueryFragmentFromContext(String tableID) {
