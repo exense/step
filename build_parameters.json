@@ -39,7 +39,6 @@
 		},
 		{
 			"ACTION": "PUSH",
-			"PARALLELISM": "4",
 			"ACTIONS": [
 				{
 					"TYPE": "GITHUB",
@@ -78,6 +77,7 @@
 				{
 					"TYPE": "DOCKER",
 					"OS": "LINUX",
+					"PARALLELISM": "2",
 					"PARAMETERS": [
 						{
 							"NAME": "DEVELOPMENT",
