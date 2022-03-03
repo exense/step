@@ -1,110 +1,105 @@
 {
-	"NAME": "Step OSS",
+	"NAME": "Step OSS backend - New build",
 	"OS": "LINUX",
-	"JAVA_VERSION": "JDK11",
-	"LOCK": "STEP",
-	
-	"SUBPROJECTS":
-	{
-		"TYPE":
-		["POM", "NPM"],
-		
-		"FOLDER":
-		["step-parent/", "step-node/step-node-agent/"],
-    
-		"AFTER":
-		["step-oss-java-after-compile", ""],
-		
-		"URL_STAGING":
-		[ 
-			"nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/",
-			"nexus-staging https://nexus-enterprise.exense.ch/repository/staging-npm/"
-		],
-		"URL_PROD":
-		[
-			"sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2",
-			"exense https://registry.npmjs.org/"
-		],
-		
-		"CONFIG_STAGING":
-		[ "DefaultBuild", "" ],
-		"CONFIG_PROD":
-		[ "DefaultBuild", "" ]
-	},
-	"DISTRIBUTIONS":
-	{
-		"TYPE": ["FTP","GITHUB", "DOCKER", "FTP","GITHUB", "DOCKER","FTP","GITHUB"],
-		
-		"ORIGIN_FILE": [
-      		"step-distribution/target/step-controller-${VERSION}.zip",
-      		"step-distribution/target/step-controller-${VERSION}.zip",
-      		"step-distribution/target/step-controller-${VERSION}.zip",
-      		"step-distribution/target/step-agent-${VERSION}.zip",
-      		"step-distribution/target/step-agent-${VERSION}.zip",
-      		"step-distribution/target/step-agent-${VERSION}.zip",
-      		"step-distribution/target/step-ide-${VERSION}.zip",
-      		"step-distribution/target/step-ide-${VERSION}.zip"
-    	],
-		"DESTINATION_NAME": [
-					"step/${VERSION}/step-controller-${VERSION}.zip",
-      		"step-controller-${VERSION}.zip",
-					"step:k8s-step-controller-${VERSION}-java-11",
-      
-	      	"step/${VERSION}/step-agent-${VERSION}.zip",
-      		"step-agent-${VERSION}.zip",
-      		"step:k8s-step-agent-${VERSION}-java-11",
-      		
-      		"step/${VERSION}/step-ide-${VERSION}.zip",
-      		"step-ide-${VERSION}.zip"
-    	],
-    
-		"URL_STAGING":  [
-      		"build@ftps.exense.ch",
-      		"NOT_USED",
-      		"docker-dev.exense.ch",
-      		"build@ftps.exense.ch",
-      		"NOT_USED",
-      		"docker-dev.exense.ch",
-      		"build@ftps.exense.ch"
-    	],
-      
-		"URL_PROD":     [
-			"build@ftps.exense.ch",
-			"NOT_USED",
-			"docker.exense.ch",
-			"build@ftps.exense.ch",
-			"NOT_USED",
-			"docker.exense.ch",
-			"build@ftps.exense.ch"
-    	],
-		
-		"OS":[
-			"NOT_USED",
-			"NOT_USED",
-			"LINUX",
-      		"NOT_USED",
-      		"NOT_USED",
-      		"LINUX",
-      		"NOT_USED"
-    	],
-		"CONFIG":[
-			"public",
-			"NOT_USED",
-			"controller-dockerfile",
-			"public",
-			"NOT_USED",
-			"agent-new-dockerfile",
-			"public"
-    	]
-	},
-	"INSTANCES":
-	{
-		"ENVIRONMENT":		[ "bld" ],
-	    "INSTANCE":			[ "lst" ],
-	    "APPLICATION":		[ "stepos" ],
-	    "DOMAIN":			[ "exense.ch" ],
-		"IMAGE_REPOSITORY": ["docker-dev.exense.ch/step"],
-	    "PERSISTENCE":		[ "false" ],
-	    "WHEN":				[ "STAGING" ]
-  	}
+	"LOCK": "NEW_STEP_BUILD",
+
+	"ACTIONS": [
+		{
+			"ACTION": "COMPILE",
+			"TYPE": "POM",
+			"FOLDER": "step-parent/",
+			"PARAMETERS": [
+				{
+					"NAME": "DEVELOPMENT",
+					"URL": "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/",
+					"CONFIG": "DefaultBuild"
+				},
+				{
+					"NAME": "PRODUCTION",
+					"URL": "sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2",
+					"CONFIG": "DefaultBuild"
+				}
+			]
+		},
+		{
+			"ACTION": "COMPILE",
+			"TYPE": "NPM",
+			"FOLDER": "step-node/step-node-agent/",
+			"PARAMETERS": [
+				{
+					"NAME": "DEVELOPMENT",
+					"URL": "nexus-staging https://nexus-enterprise.exense.ch/repository/staging-npm/"
+				},
+				{
+					"NAME": "PRODUCTION",
+					"URL": "exense https://registry.npmjs.org/"
+				}
+			]
+		},
+		{
+			"ACTION": "PUSH",
+			"ACTIONS": [
+				{
+					"TYPE": "GITHUB",
+					"ACTIONS": [
+						{
+							"ORIGIN": "step-distribution/target/step-controller-${VERSION}.zip",
+							"DESTINATION": "step-controller-${VERSION}.zip"
+						},
+						{
+							"ORIGIN": "step-distribution/target/step-agent-${VERSION}.zip",
+							"DESTINATION": "step-agent-${VERSION}.zip"
+						},
+						{
+							"ORIGIN": "step-distribution/target/step-ide-${VERSION}.zip",
+							"DESTINATION": "step-ide-${VERSION}.zip"
+						}
+					]
+				},
+				{
+					"TYPE": "FTP",
+					"ACTIONS": [
+						{
+							"ORIGIN": "step-distribution/target/step-controller-${VERSION}.zip",
+							"DESTINATION": "step/${VERSION}/step-controller-${VERSION}.zip"
+						},
+						{
+							"ORIGIN": "step-distribution/target/step-agent-${VERSION}.zip",
+							"DESTINATION": "step/${VERSION}/step-agent-${VERSION}.zip"
+						},
+						{
+							"ORIGIN": "step-distribution/target/step-ide-${VERSION}.zip",
+							"DESTINATION": "step/${VERSION}/step-ide-${VERSION}.zip"
+						}
+					]
+				},
+				{
+					"TYPE": "DOCKER",
+					"OS": "LINUX",
+					"PARAMETERS": [
+						{
+							"NAME": "DEVELOPMENT",
+							"URL": "docker-dev.exense.ch"
+						},
+						{
+							"NAME": "PRODUCTION",
+							"URL": "docker.exense.ch"
+						}
+					],
+					"ACTIONS": [
+						{
+							"ORIGIN": "step-distribution/target/step-controller-${VERSION}.zip",
+							"DESTINATION": "step:k8s-step-controller-${VERSION}-java-11",
+							"CONFIG": "controller-dockerfile"
+						},
+						{
+							"ORIGIN": "step-distribution/target/step-agent-${VERSION}.zip",
+							"DESTINATION": "step:k8s-step-agent-${VERSION}-java-11",
+							"CONFIG": "agent-dockerfile"
+						}
+					]
+				}
+			]
+		}
+	]
 }
