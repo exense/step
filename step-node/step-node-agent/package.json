@@ -7,7 +7,9 @@
     "debug": "node --inspect-brk server.js",
     "eslint": "node_modules/.bin/eslint .",
     "start": "node server.js",
-    "test": "node test/test.js"
+    "test": "node test/test.js",
+    "build": "",
+    "pack": ""
   },
   "author": "Jerome Comte",
   "license": "AGPL-3.0",
