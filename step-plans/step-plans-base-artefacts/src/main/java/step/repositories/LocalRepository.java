@@ -30,14 +30,9 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
-import step.core.repositories.ArtefactInfo;
-import step.core.repositories.ImportResult;
-import step.core.repositories.Repository;
-import step.core.repositories.RepositoryObjectReference;
-import step.core.repositories.TestRunStatus;
-import step.core.repositories.TestSetStatusOverview;
+import step.core.repositories.*;
 
-public class LocalRepository implements Repository {
+public class LocalRepository extends AbstractRepository {
 
 	private final PlanAccessor planAccessor;
 	

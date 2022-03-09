@@ -21,10 +21,8 @@ package step.repositories.staging;
 import java.util.Map;
 
 import step.core.execution.ExecutionContext;
-import step.core.repositories.ArtefactInfo;
-import step.core.repositories.ImportResult;
-import step.core.repositories.Repository;
-import step.core.repositories.TestSetStatusOverview;
+import step.core.plans.Plan;
+import step.core.repositories.*;
 import step.functions.accessor.FunctionAccessor;
 
 /**
@@ -33,7 +31,7 @@ import step.functions.accessor.FunctionAccessor;
  *             thus making the Staging repository useless.
  *
  */
-public class StagingRepository implements Repository {
+public class StagingRepository extends AbstractRepository {
 
 	protected StagingContextAccessorImpl stagingContextAccessor;
 	
@@ -54,13 +52,15 @@ public class StagingRepository implements Repository {
 	@Override
 	public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
 		StagingContext stagingContext = stagingContextAccessor.get(repositoryParameters.get("contextid"));
-		
-		context.getPlanAccessor().save(stagingContext.plan);
+
+		Plan plan = stagingContext.plan;
+		enrichPlan(context, plan);
+		context.getPlanAccessor().save(plan);
 		
 		ImportResult result = new ImportResult();
-		result.setPlanId(stagingContext.plan.getId().toString());
+		result.setPlanId(plan.getId().toString());
 		
-		stagingContext.plan.getFunctions().iterator().forEachRemaining(f->(context.get(FunctionAccessor.class)).save(f));
+		plan.getFunctions().iterator().forEachRemaining(f->(context.get(FunctionAccessor.class)).save(f));
 		
 		result.setSuccessful(true);
 	
