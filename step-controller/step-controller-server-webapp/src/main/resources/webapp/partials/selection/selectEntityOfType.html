@@ -6,7 +6,7 @@
 	<select-entity type="type" multiple-selection="multipleSelection" on-selection="select" handle="selectEntityHandle" />
 </div>
 <div class="modal-footer">
-	<button class="btn" type="button" ng-click="proceedFiltered()">Proceed Filtered</button>
-	<button class="btn btn-primary" type="button" ng-click="proceed()">Proceed</button>
+	<button class="btn" type="button" ng-click="proceedFiltered()" title="Proceed with all entities matching the current filter">Proceed Filtered</button>
+	<button class="btn btn-primary" type="button" ng-click="proceed()" title="Proceed with selected entities">Proceed</button>
 	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
 </div>
