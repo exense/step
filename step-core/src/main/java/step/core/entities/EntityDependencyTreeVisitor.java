@@ -134,7 +134,14 @@ public class EntityDependencyTreeVisitor {
 			EntityTreeVisitor visitor = context.getVisitor();
 			BeanInfo beanInfo = getBeanInfo(entity.getClass(), visitor);
 
-			entityManager.getDependencyTreeVisitorHooks().forEach(h -> h.onVisitEntity(entity, context));
+			entityManager.getDependencyTreeVisitorHooks().forEach(h ->  {
+				try {
+					h.onVisitEntity(entity, context);
+				} catch (Exception e) {
+					visitor.onWarning("TreeVisitorHook failed for entitiy " + entity.getClass() + ", error: " + e.getMessage());
+				}
+				
+			});
 
 			for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
 				Method method = descriptor.getReadMethod();
