@@ -1,7 +1,7 @@
 {
-	"NAME": "Step OSS backend - New build",
+	"NAME": "Step OSS backend",
 	"OS": "LINUX",
-	"LOCK": "NEW_STEP_BUILD",
+	"LOCK": "STEP",
 
 	"ACTIONS": [
 		{
