@@ -1,4 +1,0 @@
-# keep the correct end of line for the scripts
-*.bat		eol=crlf
-*.command	eol=lf
-*.sh		eol=lf
