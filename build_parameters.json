@@ -96,7 +96,7 @@
 						{
 							"ORIGIN": "step-distribution/target/step-agent-${VERSION}.zip",
 							"DESTINATION": "step/agent:${VERSION}-java-11",
-							"CONFIG": "agent-dockerfile"
+							"CONFIG": "agent-new-dockerfile"
 						}
 					]
 				}
