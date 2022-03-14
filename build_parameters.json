@@ -90,12 +90,12 @@
 					"ACTIONS": [
 						{
 							"ORIGIN": "step-distribution/target/step-controller-${VERSION}.zip",
-							"DESTINATION": "step:step-controller-${VERSION}-java-11",
+							"DESTINATION": "step/controller:${VERSION}-java-11",
 							"CONFIG": "controller-dockerfile"
 						},
 						{
 							"ORIGIN": "step-distribution/target/step-agent-${VERSION}.zip",
-							"DESTINATION": "step:step-agent-${VERSION}-java-11",
+							"DESTINATION": "step/agent:${VERSION}-java-11",
 							"CONFIG": "agent-dockerfile"
 						}
 					]
