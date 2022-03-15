@@ -1,8 +1,0 @@
-<div style="position: relative">
-	<!-- We're using the ng-transclude here instead of an explicit call to the transclude function in the linking function
-	of the stTable directive as calling the transclude function doesn't seem to work: when call the transclude function
-	the stColumn cannot find the required controller of stTable. No idea why... -->
-	<ng-transclude ng-show="false" ng-transclude-slot="stColumns"> </ng-transclude>
-	<div class="loader loader-nTable" ng-if="showSpin"></div>
-	<table dataArray="data" selectionmode="single" columns="columns" width="100%" class="table"></table>
-</div>

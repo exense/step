@@ -1,7 +1,7 @@
 {
-	"NAME": "Step OSS backend - New build",
+	"NAME": "Step OSS backend",
 	"OS": "LINUX",
-	"LOCK": "NEW_STEP_BUILD",
+	"LOCK": "STEP",
 
 	"ACTIONS": [
 		{
@@ -36,71 +36,8 @@
 					"URL": "exense https://registry.npmjs.org/"
 				}
 			]
-		},
-		{
-			"ACTION": "PUSH",
-			"ACTIONS": [
-				{
-					"TYPE": "GITHUB",
-					"ACTIONS": [
-						{
-							"ORIGIN": "step-distribution/target/step-controller-${VERSION}.zip",
-							"DESTINATION": "step-controller-${VERSION}.zip"
-						},
-						{
-							"ORIGIN": "step-distribution/target/step-agent-${VERSION}.zip",
-							"DESTINATION": "step-agent-${VERSION}.zip"
-						},
-						{
-							"ORIGIN": "step-distribution/target/step-ide-${VERSION}.zip",
-							"DESTINATION": "step-ide-${VERSION}.zip"
-						}
-					]
-				},
-				{
-					"TYPE": "FTP",
-					"ACTIONS": [
-						{
-							"ORIGIN": "step-distribution/target/step-controller-${VERSION}.zip",
-							"DESTINATION": "step/${VERSION}/step-controller-${VERSION}.zip"
-						},
-						{
-							"ORIGIN": "step-distribution/target/step-agent-${VERSION}.zip",
-							"DESTINATION": "step/${VERSION}/step-agent-${VERSION}.zip"
-						},
-						{
-							"ORIGIN": "step-distribution/target/step-ide-${VERSION}.zip",
-							"DESTINATION": "step/${VERSION}/step-ide-${VERSION}.zip"
-						}
-					]
-				},
-				{
-					"TYPE": "DOCKER",
-					"OS": "LINUX",
-					"PARAMETERS": [
-						{
-							"NAME": "DEVELOPMENT",
-							"URL": "docker-dev.exense.ch"
-						},
-						{
-							"NAME": "PRODUCTION",
-							"URL": "docker.exense.ch"
-						}
-					],
-					"ACTIONS": [
-						{
-							"ORIGIN": "step-distribution/target/step-controller-${VERSION}.zip",
-							"DESTINATION": "step/controller:${VERSION}-java-11",
-							"CONFIG": "controller-dockerfile"
-						},
-						{
-							"ORIGIN": "step-distribution/target/step-agent-${VERSION}.zip",
-							"DESTINATION": "step/agent:${VERSION}-java-11",
-							"CONFIG": "agent-new-dockerfile"
-						}
-					]
-				}
-			]
 		}
-	]
+	],
+	"AFTER": "step-oss-upgrade-distribution"
 }
+

@@ -117,7 +117,6 @@
 		<module>../step-controller</module>
 		<module>../step-controller-plugins</module>
 		<module>../step-ide</module>
-		<module>../step-distribution</module>
 		<module>../step-junit</module>
 	</modules>
 
