@@ -169,14 +169,11 @@ public class ControllerServer {
 
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setBaseResource(Resource.newSystemResource("/dist/step-frontend"));
+		context.setBaseResource(Resource.newClassPathResource("webapp"));
 		context.setContextPath("/");
 		addHandler(context);
 
-		ServletContextHandler contextSwagger = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		context.setBaseResource(Resource.newClassPathResource("webapp/doc"));
-		contextSwagger.setContextPath("/doc");
-		addHandler(contextSwagger);
-
+		
 		controller.init(new ServiceRegistrationCallback() {
 			@Override
 			public void register(Object component) {
