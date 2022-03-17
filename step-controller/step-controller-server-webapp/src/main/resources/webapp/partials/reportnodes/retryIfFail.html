@@ -1,0 +1,10 @@
+<div ng-if="node.tries"><span class="text-muted small">Number of tries</span> <span class="node-detail-text text-margin-left">{{node.tries}}</span></div>
+<div ng-if="(node.skipped && node.skipped>0) || node.releasedToken">
+	<span class="text-muted small">Advanced</span>
+	<ul>
+		<li ng-if="node.skipped && node.skipped>0"><span class="node-detail-text">Number of tries
+			skipped from reporting</span> <span class="node-detail-text text-margin-left">{{node.skipped}}</span>
+		</li>
+		<li ng-if="node.releasedToken"><span class="node-detail-text">Agent tokens were released</span></li>
+	</ul>
+</div>

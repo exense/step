@@ -1,0 +1,7 @@
+<div ng-controller="AdminCtrl">
+	<uib-tabset active="activeTab()">
+		<uib-tab ng-repeat="entry in tabs" heading="{{entry.label}}" select="onSelection(entry.id)">
+			<ng-include src="entry.template"></ng-include>
+		</uib-tab>
+	</uib-tabset>
+</div>

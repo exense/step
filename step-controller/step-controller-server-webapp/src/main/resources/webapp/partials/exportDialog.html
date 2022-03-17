@@ -1,0 +1,67 @@
+<div class="modal-header">
+	<h3 class="modal-title">{{title}}</h3>
+</div>
+
+<div class="modal-body">
+	<div class="section">
+		<div class="section-content section-highlight">
+			<div class="form-group form-group-sm">
+				<form class="form-inline">
+					<label ng-class="{'label-normal': stInline}">File name</label>
+					<input class="form-control" type="text" ng-model="filename" >
+				</form>
+			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<a ng-click="hideAttributes = !hideAttributes">Options</a>
+				</div>
+				<div class="panel-body" ng-show="!hideAttributes">
+					<fieldset>
+						<div class="form-group form-group-sm">
+							<label>
+								<input type="checkbox" ng-model="recursively">
+								<span class="ng-binding">Export all entities recursively</span>
+							</label>
+							<span class="glyphicon glyphicon-question-sign pull-right"
+										uib-tooltip="Defines if all referenced entities get exported as well (note that indirect references are not supported, this includes parameters in dynamic expression, call plan and call keyword by attributes...)."></span>
+						</div>
+						<div ng-show="parameters!==undefined" class="form-group form-group-sm">
+							<label>
+								<input type="checkbox" ng-model="parameters">
+								<span class="ng-binding">Include an export of all parameters</span>
+							</label>
+							<span class="glyphicon glyphicon-question-sign pull-right"
+										uib-tooltip="Defines if all parameters should be exported as well."></span>
+						</div>
+					</fieldset>
+				</div>
+			</div>
+		</div>
+		<div class="section-content section-content-border">
+			<strong>Notes: </strong>Please consider following remarks and limitations:
+			<ul>
+				<li>Export all entities will also export entities from accessible 'global' projects</li>
+				<li>Entities are exported recursively by default (see advanced options)</li>
+				<li>Indirect references are not resolved, this includes:
+					<ul>
+						<li>Plans and keywords called by attributes</li>
+						<li>Parameters used in plans and composite keywords (You can 'Include an export of all parameters' in advanced options)</li>
+					</ul>
+				</li>
+				<li>Only step resources are exported meaning that keyword libraries or dataset's files defined with a path are not included</li>
+				<li>Password parameters are exported with obfuscated values</li>
+			</ul>
+		</div>
+	</div>
+
+
+
+	
+		
+	
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="save()">Export</button>
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

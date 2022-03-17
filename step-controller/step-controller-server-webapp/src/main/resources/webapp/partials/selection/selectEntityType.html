@@ -1,0 +1,20 @@
+<div id="SelectEntityTypeCtrl" class="modal-header">
+    <h3 class="modal-title">Select entities</h3>
+    <span ng-if="currentProject && migrationTarget">Assign from <b>{{currentProject}}</b> to <b>{{migrationTarget}}</b></span>
+</div>
+
+<div class="modal-body">
+    <h4>Select entity type</h4>
+    <select ng-model="selectedEntity" ng-options="option as option.displayName for option in entities" class="form-control" />
+
+    <h4>Selection</h4>
+    <select ng-model="selectAll" class="form-control">
+        <option value=false>Select entities to assign</option>
+        <option value=true>Assign all entities</option>
+    </select>
+
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" type="button" ng-click="proceed()">Proceed</button>
+    <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

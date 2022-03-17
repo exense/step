@@ -1,0 +1,6 @@
+<div ng-if="isObject(operation.details)">
+<div ng-repeat="(key,value) in operation.details">
+	<small>{{key}}: {{value}}</small>
+</div>
+</div>
+<div ng-if="!isObject(operation.details)"><small>{{operation.details}}</small></div>

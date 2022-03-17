@@ -1,0 +1,60 @@
+<div ng-controller="DataSourceCtrl">
+	<div class="form-group">
+		<label>Source type</label> 
+		<select ng-change="loadInitialDataSourceConfiguration()"  ng-model="artefact.dataSourceType" ng-change="save()" ng-options="option.name as option.label for option in dataSourceTypes" class="form-control" />	
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='excel'">
+		<!-- <div class="input-group input-group-sm">
+			<input type="text" class="form-control" ng-model="artefact.dataSource.file" ng-blur="save()" /> 
+			<span class="input-group-btn">
+				<button class="btn btn-default" type="button" ng-click="selectSource()">Select</button>
+			</span>
+		</div> -->
+		<dynamic-resource-input label="'Excel file'" type="'datasource'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+		<dynamic-textfield label="'Worksheet'" on-save="save()" dynamic-value="artefact.dataSource.worksheet" />
+		<dynamic-checkbox label="'Headers'" on-save="save()" dynamic-value="artefact.dataSource.headers" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='csv'">
+		<dynamic-resource-input label="'CSV file'" type="'datasource'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+		<dynamic-textfield label="'Delimiter'" on-save="save()" dynamic-value="artefact.dataSource.delimiter" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='sql'">
+		<dynamic-textfield label="'Connection string'" on-save="save()" dynamic-value="artefact.dataSource.connectionString" />
+		<dynamic-textfield label="'Driver class'" on-save="save()" dynamic-value="artefact.dataSource.driverClass" />
+		<dynamic-textfield label="'Query'" on-save="save()" dynamic-value="artefact.dataSource.query" />
+		<dynamic-textfield label="'User'" on-save="save()" dynamic-value="artefact.dataSource.user" />
+		<dynamic-textfield label="'Password'" on-save="save()" dynamic-value="artefact.dataSource.password" />
+		<dynamic-textfield label="'Primary write key'" on-save="save()" dynamic-value="artefact.dataSource.writePKey" />
+	</div>
+	
+		<div ng-if="artefact.dataSourceType=='gsheet'">
+		<dynamic-resource-input label="'Service Account Key File'" type="'secret'" on-save="save()" dynamic-value="artefact.dataSource.serviceAccountKey" />
+		<dynamic-textfield label="'File Id'" on-save="save()" dynamic-value="artefact.dataSource.fileId" />
+		<dynamic-textfield label="'Tab Name'" on-save="save()" dynamic-value="artefact.dataSource.tabName" />
+		</div>
+	
+	<div ng-if="artefact.dataSourceType=='sequence'">
+		<dynamic-textfield label="'Start'" on-save="save()" dynamic-value="artefact.dataSource.start" />
+		<dynamic-textfield label="'End'" on-save="save()" dynamic-value="artefact.dataSource.end" />
+		<dynamic-textfield label="'Inc'" on-save="save()" dynamic-value="artefact.dataSource.inc" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='json-array'">
+		<dynamic-textfield label="'Json'" on-save="save()" dynamic-value="artefact.dataSource.json" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='json'">
+		<dynamic-textfield label="'Json string'" on-save="save()" dynamic-value="artefact.dataSource.json" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='file'">
+		<dynamic-resource-input label="'Flat file'" type="'datasource'" on-save="save()" dynamic-value="artefact.dataSource.file" />
+	</div>
+	
+	<div ng-if="artefact.dataSourceType=='folder'">
+		<dynamic-textfield label="'Directory'" on-save="save()" dynamic-value="artefact.dataSource.folder" />
+	</div>
+</div>

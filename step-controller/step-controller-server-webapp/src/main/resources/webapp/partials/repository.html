@@ -1,0 +1,67 @@
+<div class="container" ng-controller="RepositoryLoadCtrl">
+<div class="panel panel-default" >
+	<div class="panel-heading">
+		Repository plan
+	</div>
+	<div class="panel-body" ng-controller="RepositoryCtrl" ng-if="reload">
+		<div ng-show="error">
+			<div class="alert alert-danger" role="alert">
+  				<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+  				<span class="sr-only">Error:</span>
+  				{{error}}
+			</div>
+		</div>
+		<div ng-show="loading" class="row"><div class="col-md-6"><i class="glyphicon glyphicon-refresh icon-refresh-animate"/> Loading...</div></div>
+		<div ng-show="artefactInfo" class="row">
+			<div class="col-md-8">
+				<h4>{{artefactInfo.name}}</h4>
+				<div>
+					<div>
+						<span>Type</span>
+						<span>{{artefactInfo.type}}</span>
+					</div>
+					<div>
+						<span>Repository</span>
+						<span>{{repoRef.repositoryID}}{{test}}</span>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="panel panel-default">
+					<div class="panel-body">
+						<execution-commands description="artefactInfo.name" artefact="repoRef" isolate-execution="isolateExecution" included-testcases="functions.getIncludedTestcases()" />
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="row">&nbsp;</div>
+		
+		<div ng-if="artefactInfo.type=='TestSet'" ng-controller="TestSetOverviewCtrl">
+			<div>
+				<div ng-show="!testCases" class="row"><div class="col-md-6"><i class="glyphicon glyphicon-refresh icon-refresh-animate"/> Loading...</div></div>
+				<div ng-show="testCases">
+					<st-table data="testCases" handle="tableHandle" uid="'testCaseList'" persist-state="true" selection-attribute="trackTestcasesBy" default-selection="'all'" multiple-selection="true">
+						<st-actions>
+							<st-selection-actions />
+						</st-actions>
+						<st-columns>
+							<st-column name="testplanName">
+								<header>Name</header>
+								<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+								<cell>{{row.testplanName}}</cell>
+							</st-column>
+							<st-column name="status" width="'80px'">
+								<header>Status</header>
+								<second-header><inputdropdown options="statusOptions" action="search" initial-value="initialValue" ></inputdropdown></second-header>
+								<cell><div class="text-center reportNodeStatus status-{{row.status}}">{{row.status}}</div></cell>
+							</st-column>
+							<st-selection-column />
+						</st-columns>
+					</st-table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</div>

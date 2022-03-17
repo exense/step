@@ -1,0 +1,10 @@
+<div class="panel panel-default">	
+	<div class="panel-heading">
+		<a ng-click="showAdvancedAttributes = !showAdvancedAttributes">Advanced</a>
+	</div>
+	<div class="panel-body ng-hide" ng-show="showAdvancedAttributes">
+		<div class="form-group form-group-sm">
+			<dynamic-checkbox tooltip="'Caution! When enabled this option releases all agent tokens before entering a waiting state. New Tokens will have to be reserved to continue the execution. This also means that the session context will be deleted, if any objects were stored in session, they will have to be recreated and stored again.'" label="'Release Tokens'" on-save="save()" dynamic-value="artefact.releaseTokens"/>
+		</div>
+	</div>
+</div>

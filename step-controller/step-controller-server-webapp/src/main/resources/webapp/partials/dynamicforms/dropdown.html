@@ -1,0 +1,21 @@
+<div class="form-group">
+	<label>
+		<input type="checkbox" ng-if="!isDynamic()" ng-change="onSave()" ng-model="dynamicValue.value"> 
+		<span class="ng-binding">{{label}}</span>
+		<button ng-if="!isDynamic()" class="btn btn-default btn-xs" type="button" title="Use a dynamic expression to set this attribute" ng-click="useDynamicExpression()"><span class="glyphicon glyphicon-flash" ></span></button>
+	</label>
+	
+	<div ng-if="isDynamic()" class="input-group">
+		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.expression" />
+		<span class="input-group-btn">
+			<button class="btn btn-default btn-sm active" type="button" title="Use a constant value to set this attribute" ng-click="useConstantValue()"><span class="glyphicon glyphicon-flash"></span></button>
+		</span>
+	</div>
+
+</div>
+<div ng-if="isDynamic()" class="form-group">
+	<label>{{label}}</label> 
+	<select ng-if="!isDynamic()" ng-model="dynamicValue.value" ng-change="onSave()" ng-options="option.name as option.label for option in dataSourceTypes" class="form-control" />
+	<button ng-if="!isDynamic()" class="btn btn-default btn-xs" type="button" title="Use a dynamic expression to set this attribute" ng-click="useDynamicExpression()"><span class="glyphicon glyphicon-flash" ></span></button>
+</div>
+<expression-input />

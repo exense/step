@@ -1,0 +1,70 @@
+<div class="panel-body">
+  <div class="row">
+    <div class="col-md-4" tyle="display: inline;">
+      <button class="btn btn-default btn-xs" type="button" uib-tooltip="Open a new interactive session with persistence" tooltip-append-to-body="true"
+              ng-click="openLink('/#/root/dashboards/__pp__RTMDashboard?__filter1__=text,eId,'+eid+',Off&__filter2__=text,type,keyword,Off','_blank')">
+        Interactive session <span class="glyphicon glyphicon-new-window"></span>
+      </button>
+    </div>
+    <div class="col-md-4"></div>
+    <div class="col-md-4">
+      <div class="btn-group viz-btn-group form-radio" style="float: right;">
+        <button type="button" class="btn btn-default btn-xs"
+                ng-model="vizRelated.lockdisplay" uib-btn-checkbox
+                tooltip-placement="bottom" uib-tooltip="Unlock charts" tooltip-append-to-body="true">
+          <span class="glyphicon glyphicon-lock" />
+        </button>
+      </div>
+      <div class="btn-group viz-btn-group form-radio" style="float: right;">&nbsp;</div>
+      <div class="btn-group viz-btn-group form-radio" ng-if="execution.status !== 'ENDED' && autorefresh.enabled" style="float: right;">
+        <label class="btn btn-success viz-btn-success"
+               ng-model="timeframe" uib-btn-radio="'5s'"
+               ng-click="setTimeframe('5000')" uib-tooltip="Display data from the last 5 seconds" tooltip-append-to-body="true">5s</label> <label
+              class="btn btn-success viz-btn-success" ng-model="timeframe"
+              uib-btn-radio="'30s'" ng-click="setTimeframe('30000')" uib-tooltip="Display data from the last 30 seconds" tooltip-append-to-body="true">30s</label>
+        <label class="btn btn-success viz-btn-success"
+               ng-model="timeframe" uib-btn-radio="'5m'"
+               ng-click="setTimeframe('300000')" uib-tooltip="Display data from the last 5 minutes" tooltip-append-to-body="true">5m</label> <label
+              class="btn btn-success viz-btn-success" ng-model="timeframe"
+              uib-btn-radio="'1h'" ng-click="setTimeframe('1800000')" uib-tooltip="Display data from the last 30 minutes" tooltip-append-to-body="true">30m</label>
+        <label
+                class="btn btn-success viz-btn-success" ng-model="timeframe"
+                uib-btn-radio="'max'" ng-click="setTimeframe('max')" uib-tooltip="Display all-time data for this execution" tooltip-append-to-body="true">all</label>
+      </div>
+      <div class="btn-group viz-btn-group form-radio"
+           style="float: right;">&nbsp;</div>
+      <div class="btn-group viz-btn-group form-radio"
+           style="float: right;">
+        <label class="btn btn-success viz-btn-success" ng-model="measurementtypemodel" uib-btn-radio="'keyword'" ng-click="setMeasurementType('keyword')" uib-tooltip="Display keyword statistics only" tooltip-append-to-body="true">Keywords</label>
+        <label class="btn btn-success viz-btn-success" ng-model="measurementtypemodel" uib-btn-radio="'custom'" ng-click="setMeasurementType('custom')" uib-tooltip="Display custom measurements only" tooltip-append-to-body="true">Custom</label>
+      </div>
+    </div>
+  </div>
+  <div class="row" style="display: flex;"
+       ng-if="timelinewidget && timelinewidget.state && (execution.status === 'ENDED' || !autorefresh.enabled)">
+    <div class="col-md-12">
+      <hr style="margin-top: 5px; margin-bottom: -15px; background: black; height: 2px;" />
+      <viz-dashlet state="timelinewidget.state"
+                   widgetid="timelinewidget.oid" displaytype="'aggregated'"
+                   displaymode="'readonly'" presets="presets"
+                   restprefix="restprefix" inputsettingscol="globalsettingsPh" class="timelinewidget" ></viz-dashlet>
+      <hr style="margin-bottom: 0; margin-top: -15px; background: black; height: 2px;" />
+      <!-- 
+    <viz-mgd-widget displaymode="readonly"
+      state="timelinewidget.state" wstate="timelinewidget.wstate"
+      widgetid="timelinewidget.state.oid"
+      headersheightinput="'250'" charttocontainerinput=""
+      presets="presets" restprefix="restprefix"
+      inputsettingscol="globalsettingsPh">
+           -->
+
+    </div>
+  </div>
+  <div class="row" >
+    <div>
+      <viz-dashboard-manager displaymode="displaymode"
+                             presets="staticPresets" dashboards="dashboardsendpoint"
+                             headermargin="200" restprefix="'/rest'"></viz-dashboard-manager>
+    </div>
+  </div>
+</div>

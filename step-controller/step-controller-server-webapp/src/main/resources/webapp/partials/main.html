@@ -1,0 +1,10 @@
+<div class="container-fluid st-flex-column">
+	<div ng-if="isAllTenant" class="alert alert-warning" role="alert">The content of all projects is displayed in a read-only state. Select a project to make changes.</div>
+	<div ng-if="isNoTenant" class="alert alert-warning" role="alert">You don't have access to any project, only the content of global projects are displayed in a read-only state. Contact your administrator to request access.</div>
+	<div ng-if="authService.hasRight('admin') && hasUnassignedEntities" class="alert alert-warning" role="alert">Your database contains entities that are not assigned to any project. The reason might be that you've recently activated multi-tenancy or that entities were created within the [all] tenant prior to 3.18. These entities will have to be assigned to a project. <a href style="margin-left: 8px" class="btn btn-primary btn-sm" ng-click="assignEntities()">Start migration</a></div>
+	<div ng-if="maintenanceService.displayMaintenanceMessage()==='true'" class="alert alert-warning" role="alert" ng-bind-html="maintenanceService.trustAsHtml(maintenanceService.getMaintenanceMessage())">
+	</div>
+	<div class="st-flex-row">
+		<div ng-include="getViewTemplate()" class="st-flex-column" style="overflow-y:unset;"></div>
+	</div>
+</div>

@@ -1,0 +1,58 @@
+<div class="container-fluid" id="MyAccountCtrl" style="min-width: 600px;" ng-controller="MyAccountCtrl">
+	<h3 class="page-header">My account</h3>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h4>Credentials</h4>
+		</div>
+		<div class="panel-body">
+			<span class="text-grey">Username </span>
+			<span>{{user.username}}</span>
+			<div style="float: right">
+				<a class="btn btn-success" ng-click="changePwd()">Change password</a>
+			</div>
+		</div>
+		<div class="panel-body">
+			<label for="generate-key" class="text-grey" style="vertical-align: top;">Api key </label>
+			<div style="float: right">
+				<a class="btn btn-success" id="generate-key" ng-click="showGenerateApiKeyDialog()">Generate new Key</a>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h4>Role</h4>
+		</div>
+		<div class="panel-body">
+			<div >
+				<span class="text-grey">Role </span>
+				<span>{{user.role}}</span>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+				<h4>Preferences 
+				<button style="float:right;" class="btn btn-default btn-sm" ng-click="addPreference()">
+					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+				</button>
+				</h4>
+		</div>
+		<div class="panel-body">
+			<table class="table">
+				<thead>
+				<tr><th>Key</th><th>Value</th></tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="pref in preferences" >
+						<td >
+							<input class="form-control" style="width:100%;"	ng-model="pref.key" placeholder="Key" ng-blur="savePreferences()"> 
+						</td>
+						<td>
+							<input class="form-control" style="width:100%;" ng-model="pref.value" placeholder="Value" ng-blur="savePreferences()">
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

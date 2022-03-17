@@ -1,0 +1,43 @@
+<div id="OperationListCtrl" ng-controller="OperationListCtrl" class="panel panel-default">
+	<div class="toolbar">
+		<auto-refresh-commands autorefresh="autorefresh" />
+	</div>
+	<div class="panel-heading">Current operations</div>	
+	<div class="panel-body">
+		<st-table data="operationList" handle="tableHandle" uid="'operationsList'" persist-state="true" use-spinner="true">
+			<st-columns>
+			<st-column name="tid">
+					<header>Thread ID</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell>{{row.operation.tid}}</cell>
+				</st-column>
+				<st-column name="planName">
+					<header>Plan Name</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell><a href="#/root/plans/editor/{{row.planId}}">{{row.planName}}</a></cell>
+				</st-column>
+				<st-column name="execution">
+					<header>Execution</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell><a href="#/root/executions/{{row.execId}}">{{row.execId}}</a></cell>
+				</st-column>
+				<st-column name="testcase">
+					<header>Testcase</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell>{{row.testcase}}</cell>
+				</st-column>
+				<st-column name="operation">
+					<header>Operation Name</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell>{{row.operation.name}}</cell>
+				</st-column>
+				<st-column name="operationDetails">
+					<header>Operation Details</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell><operation operation="row.operation" execution-view-services="executionViewServices" show-only-details="true"/></cell>
+				</st-column>
+				
+			</st-columns>
+		</st-table>	
+	</div>
+</div>

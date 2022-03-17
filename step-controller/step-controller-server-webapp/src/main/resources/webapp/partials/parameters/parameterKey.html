@@ -1,0 +1,5 @@
+<span>
+	<a ng-click="editParameter(parameter.id)"  ng-if="!noLink" ng-disabled="!authService.hasRight('param-write') || ( (!parameter.scope || parameter.scope=='GLOBAL') && !authService.hasRight('param-global-write'))" uib-tooltip="Edit parameter" tooltip-append-to-body="true">{{parameter.key}}</a>
+	<span ng-if="noLink">{{parameter.key}}</span>
+	<span class="glyphicon glyphicon-question-sign" ng-if="parameter.description" uib-tooltip="{{parameter.description}}" tooltip-append-to-body="true"></span>
+</span>

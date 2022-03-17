@@ -1,0 +1,21 @@
+<div class="wrapper">
+	<form name="loginForm" ng-controller="LoginController" ng-submit="login(credentials)" class="form-signin">
+		<div style="margin: 0 auto 20px; width: 200px;">
+			<img alt="" style="max-width: 200px; margin: 0 auto;" ng-src="{{logo}}">
+		</div>
+		<div class="alert alert-danger" ng-if="error">{{error}}</div>
+		<div class="form-group">
+			<input type="text" class="form-control" name="username"	placeholder="Username" required="" autofocus=""
+				ng-model="credentials.username" />
+		</div>
+		<div class="form-group" style="position: relative">
+			<span ng-show="capsWarning" style="position: absolute;background: white;border: 1px solid #ccc;border-radius: 4px;height: 34px;padding: 7px;right: 0;">Caps lock is on</span>
+			<input type="password" class="form-control" name="password"	placeholder="Password" required="" ng-model="credentials.password" />
+		</div>
+		<div class="form-group">
+			<span class="input-group-btn">
+				<button class="btn btn-lg btn-default btn-block" type="submit">Login</button>
+			</span>
+		</div>
+	</form>
+</div>

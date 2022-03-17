@@ -1,0 +1,5 @@
+<st-column ng-repeat="input in attributes" name="{{input.id}}">
+	<header>{{input.label}} <span class="glyphicon glyphicon-question-sign" ng-if="input.description" uib-tooltip="{{input.description}}" tooltip-append-to-body="true"></span></header>
+	<second-header><st-custom-form-inputdropdown ng-if="!stSearchDisable" st-input="input" action="search" initial-value="initialValue"></st-custom-form-inputdropdown></second-header>
+	<cell><st-custom-form-value st-input="input" st-bean="row" st-options="stOptions"></st-custom-form-value></cell>
+</st-column>

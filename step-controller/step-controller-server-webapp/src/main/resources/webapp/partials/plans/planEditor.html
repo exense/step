@@ -1,0 +1,92 @@
+<div id="PlanEditorCtrl" ng-controller="PlanEditorCtrl" class="container-fluid st-flex-column">
+	<div ng-if="isInteractiveSessionActive()" class="alert alert-info" role="alert">Welcome to the interactive mode. In this mode you can select tree nodes and run them directly by clicking the button 'Run interactively'</div>
+	<div class="row st-flex-row">
+		<div class="flex sectionResizable sectionViewPlanEditor" resizable r-directions="['right']" r-flex="true">
+			<div class="st-flex-column panel panel-default overflow-x-auto overflow-y-hidden">
+				<div class="panel-heading st-flex-fixed">{{model.plan.root?model.plan.root._class:''}} - {{model.plan.attributes.name}}
+					<div class="pull-right">
+						<div class="btn-group btn-group-menu">
+							<button type="button" ng-if="hasUndo()" ng-type="submit" class="btn btn-default btn-xs" ng-click="discardAll()" uib-tooltip="revert all changes" tooltip-append-to-body="true" tooltip-placement="bottom">
+								<span>Discard All</span>
+							</button>
+							<button type="button" ng-disabled="!hasUndo()" ng-type="submit" class="btn btn-default btn-xs" ng-click="undo()" uib-tooltip="Undo (ctrl+z)" tooltip-append-to-body="true" tooltip-placement="bottom">
+								<span class="icon-flipped glyphicon glyphicon-repeat"></span>
+							</button>
+							<button type="button" ng-disabled="!hasRedo()" ng-type="submit" class="btn btn-default btn-xs" ng-click="redo()" uib-tooltip="Redo (ctrl+y)" tooltip-append-to-body="true" tooltip-placement="bottom">
+								<span class="glyphicon glyphicon-repeat"></span>
+							</button>
+						</div>
+						<button type="submit" class="btn btn-default btn-xs" ng-click="clonePlan()">Clone</button>
+						<button type="submit" class="btn btn-default btn-xs" ng-click="exportPlan()">Export</button>
+						<div class="btn-group" style="margin-right:5px;">
+							<button ng-disabled="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="startInteractive()">Start interactive session</button>
+							<button ng-if="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="resetInteractive()">Reset</button>
+							<button ng-if="isInteractiveSessionActive()" type="submit" class="btn btn-default btn-xs" ng-click="stopInteractive()">Stop</button>						
+							<button ng-if="isInteractiveSessionActive()" type="button" class="btn btn-default btn-xs" uib-popover-template="'executionParametersPopover.html'" popover-placement="bottom" popover-trigger="'outsideClick'" popover-append-to-body="true">Session parameters</button>					
+						</div>
+						<div class="btn-group">
+							<button uib-popover-template="'executionCommandsPopover.html'" popover-placement="bottom-right" popover-trigger="'outsideClick'" popover-append-to-body="true" type="submit" class="btn btn-default btn-xs btn-run" title="Execute this plan" ng-click="execute()"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
+				  		</div>
+				  	</div>
+				 </div>
+				<div class="panel-body st-flex-column">
+					<div class="panel panel-default st-flex-fixed">
+						<div class="panel-body">
+							<st-custom-form st-model="model.plan" st-on-change="save()" st-screen="planTable" st-inline="true" st-disabled="!authService.hasRight('plan-write')"/>
+						</div>
+					</div>
+					<div ng-include="getEditorView()" class="st-flex-row"></div>
+				</div>
+			</div>	
+		</div>
+		<div class="st-flex-column sectionResizable resizable-panel-right">
+			<div class="panel panel-default">
+				<div class="panel-heading flex flex-row p1">
+					<div class="auto-margin">Available components</div>
+				</div>
+				<div class="panel-body">
+						<uib-tabset  active="componentTabs.selectedTab">
+							<uib-tab heading="Controls">
+								<div class="panel-body">
+									<div class="row">
+										<select-entity type="'artefact'" on-selection="addControl" />
+									</div>								
+								</div>	
+							</uib-tab>
+							<uib-tab heading="Keywords">
+								<div class="row">
+									<div class="panel-body">
+										<select-entity type="'functions'" on-selection="addFunction" />
+									</div>		
+								</div>				
+							</uib-tab>
+							<uib-tab heading="Other plans">
+								<div class="row">
+									<div class="panel-body">
+										<select-entity type="'plans'" on-selection="addPlan" />
+									</div>
+								</div>				
+							</uib-tab>
+							<uib-tab heading="Console" ng-if="isInteractiveSessionActive()">
+								<div class="row">
+									<div class="panel-body">
+										<ng-include src="'partials/executions/keywordCalls.html'" />
+									</div>		
+								</div>				
+							</uib-tab>
+						</uib-tabset>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/ng-template" id="executionParametersPopover.html">
+<st-custom-form st-model="executionParameters" st-screen="executionParameters"/>
+</script>
+<script type="text/ng-template" id="executionCommandsPopover.html">
+<div style="width:250px">
+	<execution-commands description="model.plan.attributes.name" artefact="artefactRef()" />
+</div>
+</script>

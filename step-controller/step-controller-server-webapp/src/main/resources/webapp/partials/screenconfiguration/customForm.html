@@ -1,0 +1,7 @@
+<form ng-class="{'form-inline': stInline}">
+	<div ng-repeat="input in attributes" class="form-group form-group-sm">
+		<label ng-class="{'label-normal': stInline}">{{input.label}}</label>
+		<span ng-if="input.description" class="glyphicon glyphicon-question-sign" uib-tooltip="{{input.description}}" tooltip-append-to-body="true"></span>
+		<st-custom-form-input autofocus="$first" st-input="input" st-bean="stModel" ng-disabled="stDisabled" ng-on-change="saveAttributes()"></st-custom-form-input>
+	</div>
+</form>

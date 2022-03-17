@@ -1,0 +1,30 @@
+<div class="modal-header">
+	<h3 class="modal-title">File already exists</h3>
+</div>
+<div class="modal-body">
+	<div class="alert alert-warning">The same file has already been uploaded to the following resource(s). Do you want to link to an existing resource?</div>
+	
+	<st-table data="similarResources">
+		<st-columns>
+			<st-column name="resourceName">
+				<header>Name</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell><span>{{row.resourceName}}</span></cell>
+			</st-column>
+			<st-column>
+				<header></header>
+				<cell>
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary btn-xs" ng-click="$parent.selectResource(row.id)" uib-tooltip="Select this resource" tooltip-append-to-body="true">
+            				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Use this resource
+            			</button>
+          			</div>
+          		</cell>
+			</st-column>
+		</st-columns>
+	</st-table>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="createNewResource()">Don't link and create a new resource</button>
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

@@ -1,0 +1,22 @@
+<div class="form-group-sm">
+<fieldset ng-disabled="readonly">
+	<form>		
+		<dynamic-textfield label="'Start'" tooltip="'Initial loop value'" on-save="save()" dynamic-value="artefact.dataSource.start" />
+		<dynamic-textfield label="'End'" tooltip="'Final loop value (exit condition)'" on-save="save()" dynamic-value="artefact.dataSource.end" />
+		<dynamic-textfield label="'Increment'" tooltip="'Increment value, done at the end of each iteration'" on-save="save()" dynamic-value="artefact.dataSource.inc" />
+		<dynamic-textfield label="'Number of threads'" tooltip="'Number of threads to use in order to parallelize the loop'" on-save="save()" dynamic-value="artefact.threads" />
+		<dynamic-textfield label="'Maximum number of failures'" tooltip="'The number of failures before the loop is stopped. If empty, the loop will not stop due to failure'" on-save="save()" dynamic-value="artefact.maxFailedLoops" />
+		
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="showHandles = !showHandles">Handles</a>
+			</div>
+			<div class="panel-body" ng-show="showHandles">
+				<dynamic-textfield label="'Counter variable (handle)'" on-save="save()" dynamic-value="artefact.item" />
+				<dynamic-textfield label="'UserId variable (handle)'" on-save="save()" dynamic-value="artefact.userItem" />
+				<dynamic-textfield label="'Global counter variable (handle)'" on-save="save()" dynamic-value="artefact.globalCounter" />
+			</div>
+		</div>
+	</form>
+</fieldset>
+</div>

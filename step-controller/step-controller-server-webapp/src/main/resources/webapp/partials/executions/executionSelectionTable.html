@@ -1,0 +1,21 @@
+<st-table collection="'executions'" handle="tableHandle" uid="'executionSelectionTable'" order="[[2, &quot;desc&quot;]]"
+				multiple-selection="multipleSelection" on-selection="notifySelection" selection-attribute="'id'">
+	<st-columns>
+		<st-column name="description">
+			<header>Description</header>
+			<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+			<cell><report-node-icon node="row.RootReportNode" /> {{row.description}}</cell>
+		</st-column>
+		<st-column name="startTime">
+			<header>Start time</header>
+			<second-header><dateinput action="search"/></second-header>
+			<cell><date time="row.startTime" /></cell>
+		</st-column>
+		<st-column name="executionParameters.userID">
+			<header>User</header>
+			<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+			<cell>{{row.executionParameters.userID}}</cell>
+		</st-column>
+		<st-selection-column />
+	</st-columns>
+</st-table>

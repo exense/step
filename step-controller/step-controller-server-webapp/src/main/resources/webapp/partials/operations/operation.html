@@ -1,0 +1,9 @@
+<div >
+	<strong ng-if="!showOnlyDetails">{{operation.name}}</strong>
+	<button ng-if="operation.reportNodeId && executionViewServices" type="button" class="btn btn-default btn-xs ml2 v-btm" 
+			uib-tooltip="Show this node in the tree view" tooltip-append-to-body="true"
+					ng-click="executionViewServices.showNodeInTree(operation.reportNodeId)">
+		<span class="icon-tree" />
+	</button>
+	<div style="margin-top:0px;" ng-include="detailsTemplate"></div>
+</div>

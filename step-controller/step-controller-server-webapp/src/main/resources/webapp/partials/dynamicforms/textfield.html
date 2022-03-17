@@ -1,0 +1,12 @@
+<div ng-if="!isDynamic()"class="form-group form-group-sm">
+	<label ng-if="label">{{label}}</label>
+	<span ng-if="tooltip" class="glyphicon glyphicon-question-sign" uib-tooltip="{{tooltip}}" tooltip-append-to-body="true"></span>
+	<div class="input-group">
+		<input type="text" class="form-control" ng-blur="onSave()" ng-model="dynamicValue.value" />
+		<span class="input-group-btn">
+			<button class="btn btn-default btn-sm" type="button" ng-model="dynamicValue.value" ng-mousedown="editConstantValue()" ng-keydown="keydownEditConstantValue($event)"><span class="glyphicon glyphicon-pencil"></span></button>
+			<button class="btn btn-default btn-sm" type="button" ng-blur="onSave()" title="Use a dynamic expression to set this attribute" ng-mousedown="useDynamicExpression()" ng-keydown="keydownUseDynamicExpression($event)"><span class="glyphicon glyphicon-flash"></span></button>
+		</span>
+	</div>
+</div>
+<expression-input />

@@ -1,0 +1,46 @@
+<div ng-if="children && children.length>0">
+	<assert-report-node-short ng-repeat="child in children" ng-if="(child._class=='step.artefacts.reports.AssertReportNode' || 
+				child._class=='step.artefacts.reports.PerformanceAssertReportNode')" node ="child"/>
+</div>
+<div ng-show="node.measures">
+	<div class="section-header2 node-link"><a ng-click="hideMeasurements = !hideMeasurements">Measurements ({{node.measures.length}})</a></div>
+	<div ng-show="!hideMeasurements" class="node-detail-text">
+		<st-table data="node.measures" uid="'measurementList'" persist-state="false" dom="node.measures.length>10?'rtp':'rt'" class="table-compact">
+			<st-columns>
+				<st-column name="name">
+					<header>Begin</header>
+					<cell><date time='row.begin' /></cell>
+				</st-column>
+				<st-column name="name">
+					<header>Name</header>
+					<cell>{{row.name}}</cell>
+				</st-column>
+				<st-column name="duration">
+					<header>Duration</header>
+					<cell>{{row.duration}} ms</cell>
+				</st-column>
+				<st-column name="data">
+					<header>Custom data</header>
+					<cell>
+						<span ng-repeat="(key, value) in row.data">{{key}}={{value}} </span>
+					</cell>
+				</st-column>
+				<st-column width="'20px'">
+					<cell>
+						<a href="/#/root/dashboards/__pp__RTMDashboard?__filter1__=text,eId,{{node.executionID}},Off&__filter2__=text,name,{{row.name}},Off"
+							uib-tooltip="Search in interactive session" tooltip-append-to-body="true" target="_blank">
+							<span class="glyphicon glyphicon-new-window"></span>
+						</a>
+	          		</cell>
+				</st-column>
+			</st-columns>
+		</st-table>
+	</div>
+</div>
+
+
+<div class="section-header2 node-link"><a ng-click="showDetails = !showDetails">Keyword routing</a></div>
+<div ng-show="showDetails">
+	<div ng-if="node.agentUrl" class="node-detail-text">Agent: <span>{{node.agentUrl}}</span></div>
+	<div ng-if="node.tokenId" class="node-detail-text">Token ID: <span>{{node.tokenId}}</span></div>
+</div>

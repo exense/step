@@ -1,0 +1,38 @@
+<div ng-controller="AdapterListCtrl">
+    <div class="toolbar">
+        <auto-refresh-commands autorefresh="autorefresh" />
+    </div>
+
+    <div class="panel-body">
+        <div>
+            <form class="form-inline">
+                <label>Group by:</label>
+                <div class="checkbox" style="margin-left: 10px" ng-repeat="key in keys">
+                    <label> <input type="checkbox" ng-model="keySelectioModel[key]"/> {{key}}
+                    </label>
+                </div>
+            </form>
+        </div>
+        <div style="margin-top:10px;">
+            <st-table data="tokenGroups" uid="'tokenGroups'" persist-state="true" use-spinner="true">
+                <st-actions>
+                </st-actions>
+                <st-columns>
+                    <st-column name="keyAsString">
+                        <header>Key</header>
+                        <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+                        <cell>
+                            <json-viewer json="row.key"/>
+                        </cell>
+                    </st-column>
+                    <st-column name="tokensCapacity">
+                        <header>Token states</header>
+                        <cell>
+                            <grid-status-distribution token-group="row.tokensCapacity" />
+                        </cell>
+                    </st-column>
+                </st-columns>
+            </st-table>
+        </div>
+    </div>
+</div>

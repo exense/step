@@ -1,0 +1,48 @@
+<div class="modal-header">
+	<h3 class="modal-title">{{mode=='edit'?'Edit':'New'}} Parameter</h3>
+</div>
+<div class="modal-body">
+	<strong>{{description}}</strong>
+	<form class="form-inline" style="margin-bottom: 15px;" ng-submit="save()">
+		<div class="form-group">
+			<div class="btn-group" uib-dropdown>
+				<button type="button" class="btn" ng-class="scopeCssClass(parameter.scope)">{{scopeLabel(parameter.scope)}}</button>
+				<button type="button" class="btn" uib-dropdown-toggle>
+					<span class="caret"></span>
+				</button>
+				<ul uib-dropdown-menu>
+					<li role="menuitem" ng-if="AuthService.hasRight('param-global-write')">
+						<a ng-click="selectScope('GLOBAL')"><i class="glyphicon {{scopeIcon('GLOBAL')}} {{scopeSpanCssClass('GLOBAL')}}"></i> {{scopeLabel('GLOBAL')}}</a>
+					</li>
+					<li role="menuitem" ng-if="isApplicationScopeEnabled">
+						<a ng-click="selectScope('APPLICATION')"><i class="glyphicon {{scopeIcon('APPLICATION')}} {{scopeSpanCssClass('APPLICATION')}}"></i> {{scopeLabel('APPLICATION')}}</a>
+					</li>
+					<li role="menuitem">
+						<a ng-click="selectScope('FUNCTION')"><i class="glyphicon {{scopeIcon('FUNCTION')}} {{scopeSpanCssClass('FUNCTION')}}"></i> {{scopeLabel('FUNCTION')}}</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div ng-if="parameter.scope=='APPLICATION'" class="form-group">
+			<st-custom-form-input st-screen="'functionTable'" st-input-id="'attributes.application'" ng-model="parameter.scopeEntity"></st-custom-form-input>
+			<span class="glyphicon glyphicon-question-sign" uib-tooltip="The name of the application this parameter is restricted to" tooltip-append-to-body="true"></span>
+		</div>
+		<div ng-if="parameter.scope=='FUNCTION'" class="form-group">
+			<input class="form-control"	ng-model="parameter.scopeEntity">
+			<span class="glyphicon glyphicon-question-sign" uib-tooltip="The name of the Keyword this parameter is restricted to" tooltip-append-to-body="true"></span>
+		</div>
+	</form>
+	<form ng-submit="save()">
+		<st-custom-form st-model="parameter" st-screen="parameterDialog"/>
+		<div class="form-group" ng-if="parameter.lastModificationDate">
+			<label>Last modification</label>
+			<span><date time="parameter.lastModificationDate" /> by {{parameter.lastModificationUser}}</span>
+		</div>
+		
+		<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
+	</form>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="save()">Save</button>
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

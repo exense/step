@@ -1,0 +1,6 @@
+<div class="input-group input-group-sm">
+	<input type="text" class="form-control" uib-datepicker-popup="dd.MM.yyyy" ng-model="dt" is-open="open" max-date="maxDate" ng-required="true" close-text="Close" ng-change="onEnter()" ng-keypress="($event.which === 13)?onEnter():0" />
+	<span class="input-group-btn">
+	  <button type="button" class="btn btn-default" ng-click="open=!open"><i class="glyphicon glyphicon-calendar"></i></button>
+	</span>
+</div>

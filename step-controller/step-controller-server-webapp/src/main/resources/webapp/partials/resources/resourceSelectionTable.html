@@ -1,0 +1,20 @@
+<st-table collection="'resources'" handle="tableHandle" uid="'resourcesSelectionTable'" filter="'not(resourceType=attachment)'"
+			multiple-selection="multipleSelection" on-selection="notifySelection" selection-attribute="'id'">
+	<st-columns>
+		<st-column name="id">
+			<header>ID</header>
+			<cell><span>{{row.id}}</span></cell>
+		</st-column>
+		<st-column name="resourceName">
+			<header>Name</header>
+			<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+			<cell><span>{{row.resourceName}}</span></cell>
+		</st-column>
+		<st-column name="resourceType">
+			<header>Type</header>
+			<second-header><inputdropdown options ="[{text:'functions'},{text:'datasource'}]" action="search" initial-value="initialValue"></inputdropdown></second-header>
+			<cell><span>{{row.resourceType}}</span></cell>
+		</st-column>
+		<st-selection-column />
+	</st-columns>
+</st-table>

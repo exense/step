@@ -1,0 +1,11 @@
+<div class="panel-body">
+  <div ng-attr-id="{{getPanelId('reportTree')}}"
+       class="panel panel-default">
+    <div class="panel-heading">
+      <a ng-click="toggleShowPanel('reportTree')">{{getPanelTitle('reportTree')}}</a>
+    </div>
+    <div class="panel-body" ng-show="isShowPanel('reportTree')">
+      <report-tree nodeid="eid" handle="reportTreeHandle"/>
+    </div>
+  </div>
+</div>

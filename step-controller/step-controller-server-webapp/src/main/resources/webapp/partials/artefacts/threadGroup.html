@@ -1,0 +1,39 @@
+<div class="form-group-sm">
+<fieldset ng-disabled="readonly">
+	<form>		
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="hideLoadDistribution = !hideLoadDistribution">Load distribution parameters</a>
+			</div>
+			<div class="panel-body" ng-show="!hideLoadDistribution">
+				<dynamic-textfield label="'Number of threads'" tooltip="'Specifies the number of threads to be started.'" on-save="save()" dynamic-value="artefact.users" />
+				<dynamic-textfield label="'Pacing (ms)'" tooltip="'Specifies the amount of time between each iteration.'" on-save="save()" dynamic-value="artefact.pacing" />
+				<dynamic-textfield label="'Ramp-up (ms)'" tooltip="'Specifies the amount of time that should be taken to start all the threads. If left empty the ramp-up duration will be equal to the pacing.'" on-save="save()" dynamic-value="artefact.rampup" />
+				<dynamic-textfield label="'Pack'" tooltip="'Defines number of threads started together during the ramp-up (Optional, by default threads are started one by one)'" on-save="save()" dynamic-value="artefact.pack" />
+				<dynamic-textfield label="'Start offset (ms)'" tooltip="'Specifies the duration to wait before the ramp-up starts.'" on-save="save()" dynamic-value="artefact.startOffset" />
+			</div>
+		</div>
+		
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="hideDurationParameters = !hideDurationParameters">Duration parameters</a>
+			</div>
+			<div class="panel-body" ng-show="!hideDurationParameters">
+				<dynamic-textfield label="'Number of iterations per thread'" tooltip="'Specifies the number of iterations per thread. If left empty the execution will last until it reaches the specified maximum duration.'" on-save="save()" dynamic-value="artefact.iterations" />
+				<dynamic-textfield label="'Maximum duration (ms)'" tooltip="'Specifies the maximum duration of each thread. A zero-value means unlimited.'" on-save="save()" dynamic-value="artefact.maxDuration" />
+			</div>
+		</div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="showHandles = !showHandles">Handles</a>
+			</div>
+			<div class="panel-body" ng-show="showHandles">
+				<dynamic-textfield label="'Local iterationId variable (handle)'" on-save="save()" dynamic-value="artefact.localItem" />
+				<dynamic-textfield label="'UserId variable (handle)'" on-save="save()" dynamic-value="artefact.userItem" />
+				<dynamic-textfield label="'Global counter variable (handle)'" on-save="save()" dynamic-value="artefact.item" />
+			</div>
+		</div>
+	</form>
+</fieldset>
+</div>

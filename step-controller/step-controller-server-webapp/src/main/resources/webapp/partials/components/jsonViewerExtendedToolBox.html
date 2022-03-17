@@ -1,0 +1,10 @@
+<div class="inline " style="{{mouseover?'':'display: none;'}}">
+  <!--btn btn-default btn-xxs btn-no-border"-->
+  <a ng-show="format !== 'kv'" type="button" class="toolbox-link" uib-tooltip="Toggle key/value format" tooltip-append-to-body="true" ng-click="format='kv'">
+    <span>K/V</span>
+  </a>
+  <a ng-show="format !== 'json'" type="button" class="toolbox-link" uib-tooltip="Toggle json format" tooltip-append-to-body="true" ng-click="format='json'">
+    <span >JSON</span>
+  </a>
+  <copy-to-clipboard content="handle.getFormattedString()" />
+</div>

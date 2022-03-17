@@ -1,0 +1,53 @@
+<div class="modal-header">
+	<h3 class="modal-title">{{title}}</h3>
+</div>
+
+<div class="modal-body">
+	<div class="section">
+		<div class="section-content section-highlight">
+		<div class="form-group form-group-sm">
+			<resource-input st-type="'temp'" st-model="resourcePath" />
+		</div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="hideAttributes = hideAttributes">Options</a>
+			</div>
+			<div class="panel-body" ng-show="!hideAttributes">
+				<fieldset>
+					<div class="form-group form-group-sm">
+						<label>
+							<input type="checkbox" ng-model="importAll">
+							<span class="ng-binding">Import all entities</span>
+						</label>
+						<span class="glyphicon glyphicon-question-sign pull-right"
+							uib-tooltip="Defines if all entities contained in the provided file shall be imported. Otherwise only the {{path}} will be imported.">
+						</span>
+					</div>
+					<div class="form-group form-group-sm">
+						<label>
+							<input type="checkbox" ng-model="overwrite">
+							<span class="ng-binding">Overwrite existing entities</span>
+						</label>
+						<span class="glyphicon glyphicon-question-sign pull-right"
+							uib-tooltip="Defines if existing and matching entities get overwritten (typically if entities were exported from the same controller, you can replace their current content with the exported one).">
+						</span>
+					</div>
+				</fieldset>
+			</div>
+		</div>
+	</div>
+	<div class="section-content section-content-border">
+		<strong>Notes: </strong>Please consider following remarks:
+		<ul>
+			<li>By default all entities contained in the provided files are imported, you can choose to import only the {{path}} in advanced options.</li>
+			<li>By default entities are imported by generating new IDs, you can change this behavior by selecting the 'overwrite' option in advanced settings. The option is only relevant if you want to reimport the data into the same controller and overwrite the existing entities.</li>
+		</ul>
+	</div>
+</div>
+	
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="save()">Save</button>
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

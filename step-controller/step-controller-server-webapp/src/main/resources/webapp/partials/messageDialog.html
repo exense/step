@@ -1,0 +1,13 @@
+<div class="modal-header">
+	<h3 class="modal-title">Error</h3>
+</div>
+
+<form name="MessageDialog" ng-submit="ok()">
+	<div class="modal-body">
+		<div class="alert alert-danger"  ng-bind-html="message"></div>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-primary" type="submit" ng-click="ok()">OK</button>
+		<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+	</div>
+</form>

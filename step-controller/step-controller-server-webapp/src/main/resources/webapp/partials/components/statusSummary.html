@@ -1,0 +1,12 @@
+<div style="width: 160px;" class="progress" 
+	uib-tooltip="{{progress.label}} PASSED: {{progress.distribution.PASSED.count}}, FAILED: {{progress.distribution.FAILED.count}}, TECHNICAL_ERROR: {{progress.distribution.TECHNICAL_ERROR.count}} " tooltip-append-to-body="true">
+	<div class="progress-bar statusSummary status-PASSED"
+		ng-attr-style="width:{{progress.distribution.PASSED.count/progress.count*100}}%;">
+		{{progress.distribution.PASSED.count}}</div>
+	<div class="progress-bar statusSummary status-FAILED"
+		ng-attr-style="width:{{progress.distribution.FAILED.count/progress.count*100}}%;">
+		{{progress.distribution.FAILED.count}}</div>
+	<div class="progress-bar statusSummary status-TECHNICAL_ERROR"
+		ng-attr-style="width:{{progress.distribution.TECHNICAL_ERROR.count/progress.count*100}}%;">
+		{{progress.distribution.TECHNICAL_ERROR.count}}</div>
+</div>

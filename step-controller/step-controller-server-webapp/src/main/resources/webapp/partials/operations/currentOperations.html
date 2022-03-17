@@ -1,0 +1,8 @@
+<div ng-repeat="operation in currentOperation">
+	<operation ng-if="operationOptions.showAll || $index==0" operation="operation" execution-view-services="executionViewServices"/>
+</div>
+
+<button ng-if="currentOperation.length > 1" type="button" class="btn btn-default btn-xs pull-right" uib-tooltip="Show/hide all operations" tooltip-append-to-body="true" ng-click="operationOptions.showAll=!operationOptions.showAll">
+	<span class="glyphicon glyphicon-option-horizontal" />
+</button>
+

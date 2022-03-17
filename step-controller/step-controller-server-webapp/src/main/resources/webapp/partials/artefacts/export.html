@@ -1,0 +1,10 @@
+<div class="form-group-sm">
+<fieldset ng-disabled="readonly">
+	<form>
+		<dynamic-textfield label="'Value'" on-save="save()" dynamic-value="artefact.value" tooltip="'The value to be exported'" />
+		<dynamic-textfield label="'File'" on-save="save()" dynamic-value="artefact.file" tooltip="'The file or directory to export to'"/>
+		<dynamic-textfield label="'Prefix'" on-save="save()" dynamic-value="artefact.prefix" tooltip="'An optional prefix that will be preprended to the name of the exported files'" />
+		<dynamic-textfield label="'Filter'" on-save="save()" dynamic-value="artefact.filter" tooltip="'An optional regular expression to filter the files to be exported. If empty all the files will be exported.'" />
+	</form>
+</fieldset>
+</div>

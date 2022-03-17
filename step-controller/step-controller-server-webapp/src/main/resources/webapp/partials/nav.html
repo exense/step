@@ -1,0 +1,49 @@
+<nav class="navbar navbar-default">
+	<div class="container-fluid">
+		<div class="navbar-header">
+			<a class="navbar-brand">
+				<img alt="" ng-src="{{logo}}" style="max-width:100px; margin-top: -3px;">						
+			</a>
+		</div>
+		<div class="collapse navbar-collapse">
+			<ul class="nav navbar-nav">
+				<li ng-class="{ active: isViewActive('plans') }"><a href="#/root/plans/list"><span class="glyphicon glyphicon-file"></span> Plans</a></li>
+				<li ng-class="{ active: isViewActive('functions') }"><a ng-click="setView('functions')"><span class="glyphicon glyphicon-record"></span> Keywords</a></li>
+				<li ng-class="{ active: isViewActive('parameters') }"><a ng-click="setView('parameters')"><span class="glyphicon glyphicon-list-alt"></span> Parameters</a></li>
+				<li ng-class="{ active: isViewActive('executions') }"><a ng-click="setView('executions')"><span class="glyphicon glyphicon-tasks"></span> Executions</a></li>
+				<li ng-class="{ active: isViewActive('scheduler') }"><a ng-click="setView('scheduler')"><span class="glyphicon glyphicon-time"></span> Scheduler</a></li>
+				<li ng-class="{ active: isViewActive(entry.viewId) }" ng-repeat="entry in viewRegistry.getCustomMainMenuEntries()" ><a ng-click="setView(entry.viewId)"><span class="{{entry.menuIconClass}}"></span> {{entry.label}}</a></li>
+				<li ng-class="{ active: isViewActive('grid') }"><a ng-click="setView('grid')"><span class="glyphicon glyphicon-th"></span> Grid</a></li>
+				<li ng-if="authService.hasRight('admin')" ng-class="{ active: isViewActive('admin') }"><a ng-click="setView('admin')"><span class="glyphicon glyphicon-cog"></span> Admin</a></li>
+				<li ng-if="authService.hasRight('settings')" ng-class="{ active: isViewActive('settings') }"><a ng-click="setView('settings')"><span class="glyphicon glyphicon-cog"></span> Settings</a></li>
+				<li><a id="dropdownMenuHelp" data-toggle="dropdown"><span class="glyphicon glyphicon-question-sign"></span></a>
+					<ul class="dropdown-menu" aria-labelledby="dropdownMenuHelp">
+						<li><a target="_blank" href="https://step.exense.ch/knowledgebase">Documentation</a></li>
+						<li><a target="_blank" href="/doc/rest">REST API</a></li>
+						<li><a target="_blank" href="http://step.exense.ch/">About</a></li>
+					</ul>
+				</li>
+				<li>
+					<a id="otherDropdown" data-toggle="dropdown"><span class="glyphicon glyphicon-menu-hamburger"></span></a>
+					<ul class="dropdown-menu" aria-labelledby="otherDropdown">
+						<li ng-repeat="entry in viewRegistry.getCustomMenuEntries()" ng-if="!(entry.right && !authService.hasRight(entry.right))" ><a ng-click="setView(entry.viewId)">{{entry.label}}</a></li>
+					</ul>
+				</li>
+			</ul>
+			<ul class="nav navbar-nav navbar-right">
+				<li ng-repeat="entry in viewRegistry.getDashlets('/menu/navbar/right')" >
+					<div ng-include="entry.template"></div>
+				</li>
+				<li>
+					<a id="sessionDropdown" data-toggle="dropdown"><i class="glyphicon glyphicon-user" ></i> {{context.userID}} [{{context.role}}]</a>
+					<ul class="dropdown-menu" aria-labelledby="sessionDropdown">
+						<li><a ng-click="setView('myaccount')"><span class="glyphicon glyphicon-cog"></span> My account</a></li>
+						<li ng-if="authService.getConf().authentication && authService.isAuthenticated()"><a ng-click="authService.logout()"><span class="glyphicon glyphicon-off"></span> Logout</a></li>
+						<li ng-if="authService.getConf().authentication && !authService.isAuthenticated()"><a ng-click="authService.goToLoginPage()">Sign in</a></li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+	</div>
+	<!--/.container-fluid -->
+</nav>

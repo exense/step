@@ -1,0 +1,83 @@
+<div class="modal-header">
+	<h3 class="modal-title">{{mode=='edit'?'Edit':'New'}} {{dialogConfig.title}}</h3>
+</div>
+
+<div class="modal-body">
+	<strong>{{description}}</strong>
+	<div ng-if="function_.managed" class="alert alert-warning">This keyword is part of a keyword package. All changes made will be lost when the package is updated.</div>
+	<form ng-submit="save(true)">
+		<st-custom-form st-model="function_" st-screen="{{dialogConfig.customScreenTable}}"/>
+		<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" />
+		<div class="form-group form-group-sm">
+			<label>Description</label> 
+			<textarea ng-model="function_.description" class="form-control"></textarea>
+		</div>
+		<div ng-show="!dialogConfig.lightForm && isSchemaEnforced === 'true';" class="form-group form-group-sm">
+			<label>Schema</label> 
+			<textarea ng-model="schemaStr" class="form-control"></textarea>
+		</div>
+		<div ng-if="!dialogConfig.lightForm && function_.htmlTemplate" class="form-group form-group-sm">
+			<label></label> 
+			<label>
+				<input type="checkbox" ng-model="function_.useCustomTemplate"> 
+				<span class="ng-binding">Custom HTML template</span>
+			</label>
+			<span class="glyphicon glyphicon-question-sign pull-right" uib-tooltip="Used to overwrite the default HTML template."></span>
+			<textarea ng-model="function_.htmlTemplate" class="form-control form-control-sm"></textarea>
+		</div>
+		<hr class="separator">
+		
+		<div class="form-group form-group-sm">
+			<label>Type</label> 
+			<select ng-change="loadInitialFunction()" ng-model="function_.type" ng-options="option as functionTypeRegistry.getLabel(option) for option in getTypes()" class="form-control" />
+		</div>
+		
+		<div class="panel panel-default" style="margin-top: 20px">
+			<div class="panel-body" ng-include="functionTypeRegistry.getForm(function_.type)" ></div>
+		</div>
+	
+		<div class="panel panel-default" ng-show="!dialogConfig.lightForm">
+			<div class="panel-heading">
+				<a ng-click="showAdvanced = !showAdvanced">Advanced</a>
+			</div>
+			<div class="panel-body" ng-show="showAdvanced">
+				<dynamic-textfield label="'Call timeout (ms)'" dynamic-value="function_.callTimeout" />
+				<div class="form-group">
+					<label>
+						<input type="checkbox" ng-model="function_.executeLocally"> 
+						<span class="ng-binding">Execute on controller</span>
+					</label>
+					<span class="glyphicon glyphicon-question-sign pull-right" uib-tooltip="Defines if the Keyword has to be executed on an agent or locally on the controller. Please change this only if you really now what you're doing. In most of the cases the default setting doesn't have to be changed."></span>
+				</div>
+				<div ng-if="!function_.executeLocally">
+					<label>Agent token selection criteria
+						<button type="button" class="btn btn-default btn-xs" ng-click="addRoutingCriteria()">
+							<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+						</button>
+					</label>
+					<span class="glyphicon glyphicon-question-sign pull-right" uib-tooltip="Defines additional selection criteria for the agent token on which the keyword should be executed"></span>
+					<div class="panel panel-default">
+						<div class="panel-body">
+							<div>
+								<table style="width:100%">
+									<tbody>
+										<tr ng-repeat="criterion in criteria">
+											<td style="padding:2px;"><input class="form-control input-sm" ng-model="criterion.key" placeholder="Key" ng-blur="saveRoutingCriteria()"></td>
+											<td style="padding:2px;"><input class="form-control input-sm" ng-model="criterion.value" placeholder="Value" ng-blur="saveRoutingCriteria()"></td>
+											<td style="padding:2px;"><button class="btn btn-danger btn-xs" ng-click="removeRoutingCriteria(criterion.key)" type="button"><i class="glyphicon glyphicon-remove"></i></button></td>	
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="save(true)">Save and edit</button>
+	<button class="btn btn-primary" type="button" ng-click="save(false)">Save</button>
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

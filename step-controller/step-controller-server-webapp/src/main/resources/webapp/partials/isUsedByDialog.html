@@ -1,0 +1,83 @@
+<style>
+	.lds-ring {
+		position: relative;
+		width: 80px;
+		height: 80px;
+		margin: 16px auto;
+		display: block;
+	}
+	.lds-ring div {
+		box-sizing: border-box;
+		display: block;
+		position: absolute;
+		width: 64px;
+		height: 64px;
+		margin: 8px;
+		border: 8px solid #000;
+		border-radius: 50%;
+		animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+		border-color: #000 transparent transparent transparent;
+	}
+	.lds-ring div:nth-child(1) {
+		animation-delay: -0.45s;
+	}
+	.lds-ring div:nth-child(2) {
+		animation-delay: -0.3s;
+	}
+	.lds-ring div:nth-child(3) {
+		animation-delay: -0.15s;
+	}
+	@keyframes lds-ring {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+</style>
+<div class="modal-header">
+	<h3 class="modal-title">{{title}}</h3>
+</div>
+
+<div class="modal-body">
+	<div class="section">
+		<div class="section-content section-highlight">
+			<div ng-if="!result" class="lds-ring"><div></div><div></div><div></div><div></div></div>
+			<st-table ng-if="result && result.length > 0" data="result" uid="'usedByList'">
+				<st-columns>
+					<st-column name="usedBy">
+						<header>Used by</header>
+						<second-header>
+							<inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+						</second-header>
+						<cell>
+							<span ng-if="row.type == 'KEYWORD'"> <function-link ng-click="close()" function_="row" entity-tenant="row.tenantName" st-options="stOptions" /></span>
+							<span ng-if="row.type == 'PLAN'"> <plan-link ng-click="close()" entity-tenant="row.tenantName" entity-id="row.id" description="row.name" st-options="stOptions"/></span>
+							<span ng-if="row.type != 'PLAN' && row.type != 'KEYWORD'">{{row.name}}</span>
+						</cell>
+					</st-column>
+					<st-column name="type">
+						<header>Type</header>
+						<second-header>
+							<inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+						</second-header>
+						<cell><span>{{row.type}}</span></cell>
+					</st-column>
+					<st-column name="project">
+						<header>Project</header>
+						<second-header>
+							<inputdropdown action="search" initial-value="initialValue"></inputdropdown>
+						</second-header>
+						<cell><span ng-if="hasProject">{{row.tenantName}}</span></cell>
+					</st-column>
+				</st-columns>
+			</st-table>
+			<p ng-if="result && result.length == 0">Component is not used by other components.</p>
+		</div>
+	</div>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="close()">Close</button>
+</div>

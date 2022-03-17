@@ -1,0 +1,109 @@
+<div class="st-flex-column panel-body">
+	<div class="row"
+		ng-if="execution.importResult && !execution.importResult.successful">
+		<div class="alert alert-danger" role="alert">
+			<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+			Error while importing plan:
+			<ul>
+				<li ng-repeat="error in execution.importResult.errors">{{error}}</li>
+			</ul>
+		</div>
+	</div>
+	<div class="st-flex-row row" ng-if="execution">
+		<div class="flex sectionResizable section-execution-left " resizable r-directions="['right']" r-flex="true">
+			<div class="toolbar">
+				<auto-refresh-commands ng-show="$stateExec!=='grafana'" autorefresh="autorefresh" />
+			</div>
+			<uib-tabset active="activeTab()">
+				<uib-tab ng-repeat="entry in tabs" heading="{{entry.label}}" select="onSelection(entry.id)">
+					<ng-include class=st-flex-column ng-if="includeTab(entry)" src="entry.template"></ng-include>
+				</uib-tab>
+			</uib-tabset>
+		</div>
+		<div class="st-flex-column sectionResizable resizable-panel-right">
+			<div class="panel panel-default">
+				<div class="panel-body" ng-if="execution">
+					<execution-commands description="execution.description"
+						artefact="execution.executionParameters.repositoryObject"
+						included-testcases="getIncludedTestcases()"
+						on-execute="onTestExecutionStarted()" execution="execution" />
+				</div>
+			</div>
+
+			<div ng-attr-id="{{getPanelId('executionDetails')}}"
+				class="panel panel-default">
+				<div class="panel-heading">
+					<a ng-click="toggleShowPanel('executionDetails')">{{getPanelTitle('executionDetails')}}</a>
+					<div class="executionStatus status-{{execution.status}} pull-right">{{execution.status}}</div>
+				</div>
+				<div class="panel-body" ng-show="isShowPanel('executionDetails')">
+					<ul class="list-unstyled">
+						<li><strong>Plan</strong> <span><a
+								ng-href="#/root/plans/editor/{{execution.planId}}">{{execution.description}}</a></span>
+						</li>
+						<li
+							ng-repeat="(key, value) in execution.executionParameters.customParameters"><strong>{{key}}</strong>
+							<span>{{value}}</span></li>
+						<li><strong>Mode</strong> <span>{{execution.executionParameters.mode}}</span></li>
+						<li><strong>User</strong> <span>{{execution.executionParameters.userID}}</span></li>
+						<li><strong>Start</strong> <date time="execution.startTime" /></li>
+						<li><strong>End</strong> <date time="execution.endTime" /></li>
+						<li><strong>Execution ID</strong> <span>{{execution.id}}</span></li>
+						<li><strong>Origin</strong> <span>Repository={{execution.executionParameters.repositoryObject.repositoryID}}</span>
+							<span
+							ng-repeat="(key, value) in execution.executionParameters.repositoryObject.repositoryParameters">
+								{{key}}={{value}} </span></li>
+					</ul>
+				</div>
+			</div>
+
+			<div ng-repeat="entry in customPanels" ng-attr-id="{{entry.id}}"
+				class="panel panel-default">
+				<div class="panel-heading">
+					<a ng-click="toggleShowPanel(entry.id)">{{entry.label}}</a>
+				</div>
+				<div class="panel-body" ng-show="isShowPanel(entry.id)">
+					<div ng-include="entry.template"></div>
+				</div>
+			</div>
+
+			<div ng-attr-id="{{getPanelId('currentOperations')}}"
+				ng-if="execution.status != 'ENDED'" class="panel panel-default">
+				<div class="panel-heading">
+					<a ng-click="toggleShowPanel('currentOperations')">{{getPanelTitle('currentOperations')}}</a>
+				</div>
+				<div class="panel-body" ng-show="isShowPanel('currentOperations')">
+					<st-table data="currentOperations" uid="'currentOperations'">
+					<st-columns> <st-column name="operation">
+					<header></header> <cell> <operation operation="row"
+						execution-view-services="executionViewServices" /></cell> </st-column> </st-columns> </st-table>
+				</div>
+			</div>
+
+			<div ng-attr-id="{{getPanelId('throughput')}}"
+				ng-if="progress.count>1">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a ng-click="toggleShowPanel('throughput')">{{getPanelTitle('throughput')}}</a>
+					</div>
+					<div class="panel-body" ng-show="isShowPanel('throughput')">
+						<canvas id="throughput-chart" class="chart chart-line"
+							handle="throughputchart" legend="true" click="onClick" />
+					</div>
+				</div>
+			</div>
+			<div ng-attr-id="{{getPanelId('threadGroups')}}" ng-if="threadGroupsChart.series.length>0">
+					 <!--progress.count>1"-->
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a ng-click="toggleShowPanel('threadGroups')">{{getPanelTitle('threadGroups')}}</a>
+					</div>
+					<div class="panel-body" ng-show="isShowPanel('threadGroups')">
+						<canvas id="threadGroups-chart" class="chart chart-line"
+										handle="threadGroupsChart" legend="true" click="onClick" />
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

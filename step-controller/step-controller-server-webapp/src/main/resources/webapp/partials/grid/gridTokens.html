@@ -1,0 +1,77 @@
+<div ng-controller="TokenListCtrl">
+    <div class="toolbar">
+        <auto-refresh-commands autorefresh="autorefresh" />
+    </div>
+    <div class="panel-body">
+        <st-table data="tokens" uid="'tokenList'" use-spinner="true">
+            <st-actions>
+            </st-actions>
+            <st-columns>
+                <st-column name="id">
+                    <header>ID</header>
+                    <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+                    <cell><span><small>{{row.id}}</small></span></cell>
+                </st-column>
+                <st-column name="typeLabel">
+                    <header>Type</header>
+                    <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+                    <cell>
+                        <span class="agent-type agent-type-{{row.type}}"></span>
+                        <span>{{row.typeLabel}}</span>
+                    </cell>
+                </st-column>
+                <st-column name="agentUrl">
+                    <header>Agent</header>
+                    <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+                    <cell><span>{{row.agentUrl}}</span></cell>
+                </st-column>
+                <st-column name="attributesAsString">
+                    <header>Attributes</header>
+                    <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+                    <cell><json-viewer json="row.attributes"/></cell>
+                </st-column>
+
+                <st-column name="state">
+                    <header>State</header>
+                    <second-header><inputdropdown action="search" initial-value="initialValue" options="[{text:'IN_USE'},{text:'ERROR'},{text:'MAINTENANCE'},{text:'FREE'}]"></inputdropdown></second-header>
+                    <cell>
+                        <div ng-class="['text-center', 'token-status', 'token-status-' + row.state ]">{{row.state}}</div>
+                    </cell>
+                </st-column>
+                <st-column name="executionDescription">
+                    <header>Used by</header>
+                    <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+                    <cell>
+                        <span ng-if="row.executionId"><execution-link execution-id="row.executionId" execution-description="row.executionDescription"/></span>
+                        <span ng-if="row.currentOwner._class=='step.functions.services.FunctionServiceTokenWrapperOwner'">Remote client ({{row.currentOwner.username}}, {{row.currentOwner.ipAddress}})</span>
+                    </cell>
+                </st-column>
+                <st-column name="errorMessage">
+                    <header>Error</header>
+                    <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+                    <cell>
+                        <div ng-if="row.state=='ERROR'">
+                            <div>{{row.errorMessage}}</div>
+                            <div ng-if="row.tokenHealth.tokenWrapperOwner">Caused by: <execution-link execution-id="row.tokenHealth.tokenWrapperOwner.executionId" execution-description="tokenHealth.tokenWrapperOwner.executionDescription"/></div>
+                        </div>
+                    </cell>
+                </st-column>
+                <st-column width="'150px'">
+                    <cell>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-default" ng-disabled="!authService.hasRight('token-manage')" ng-if="row.state=='ERROR'" ng-click="removeTokenError(row.id)" uib-tooltip="Remove token error and set state to 'FREE'">
+                                <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="btn btn-default" ng-disabled="!authService.hasRight('token-manage')" ng-if="row.state!='MAINTENANCE'" ng-click="startTokenMaintenance(row.id)" uib-tooltip="" >
+                                <span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="btn btn-default" ng-disabled="!authService.hasRight('token-manage')" ng-if="row.state=='MAINTENANCE'" ng-click="stopTokenMaintenance(row.id)" uib-tooltip="">
+                                <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </cell>
+                </st-column>
+            </st-columns>
+        </st-table>
+    </div>
+</div>

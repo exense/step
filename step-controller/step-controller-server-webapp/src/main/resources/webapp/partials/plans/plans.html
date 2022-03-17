@@ -1,0 +1,4 @@
+<div id="PlansCtrl" ng-controller="PlansCtrl" class="st-flex-row">
+	<div ng-if="selectView=='list'" ng-include="'partials/plans/planList.html'" class="st-flex-column"></div>
+	<div ng-if="selectView=='editor'" ng-include="'partials/plans/planEditor.html'" class="st-flex-row"></div>
+</div>

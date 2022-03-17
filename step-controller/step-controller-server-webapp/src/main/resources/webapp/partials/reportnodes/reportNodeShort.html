@@ -1,0 +1,79 @@
+<div>
+	<!-- Header -->
+	<div style="height:25px">
+		<report-node-icon node="node"/>
+		<!-- node.resolvedArtefact has been introduced with 3.6.0. We're checking it here for retrocompatibility. Remove this check has soon as possible -->
+		<span>{{getHeaderText()}}</span>
+		<span ng-if="getHeaderText()!=node.name" class="text-margin-left text-muted small">{{node.name}}</span>
+		<span ng-if="includeStatus" class="pull-right text-margin-left" style="margin-bottom:10px;" ><reportnode-status status="node.status" /></span>
+		<span class="pull-right" style="margin-right:5px">
+			<div class="btn-group btn-group-menu">
+				<button type="button" class="btn btn-default btn-xs" uib-tooltip="Show this node in the tree view" tooltip-append-to-body="true" ng-click="executionViewServices.showNodeInTree(reportNodeId)">
+					<span class="icon-tree" />
+				</button>
+				<button ng-if="executionViewServices.getExecution()&&executionViewServices.getExecution().executionType=='TestSet'" type="button" class="btn btn-default btn-xs" uib-tooltip="Select the test case containing this node in the test case table" tooltip-append-to-body="true" ng-click="executionViewServices.showTestCase(reportNodeId)">
+					<span class="glyphicon glyphicon-list-alt" />
+				</button>
+			</div>
+		</span>
+		<span class="pull-right"><attachments node="node" /></span>
+	</div>
+	<!-- Specific content -->
+	<!-- CallFunction -->
+	<div ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
+		<div ng-show="showDetails" class="section-header2 node-link"><a ng-click="hideInput = !hideInput">Input</a></div>
+		<div ng-if="!isEmpty(node.input) && (!hideInput || !showDetails)" class="node-detail-row">
+			<div ng-show="!showDetails" class="node-detail-label">Input</div>
+			<json-viewer-extended class="node-detail-text" json="node.input" format="'kv'"/>
+		</div>
+		<div ng-show="showDetails" class="section-header2 node-link"><a ng-click="hideOutput = !hideOutput">Output</a></div>
+		<div ng-if="!isEmpty(node.output) && (!hideOutput || !showDetails)" class="node-detail-row">
+			<div ng-show="!showDetails" class="node-detail-label">Output</div>
+			<json-viewer-extended class="node-detail-text" json="node.output" format="'kv'"/>
+		</div>
+	</div>
+	<!-- Echo -->
+	<div ng-if="node._class=='step.artefacts.reports.EchoReportNode'">
+		<div ng-if="node.echo" class="text-wrapping-anywhere"><span class="text-muted small">Echo </span>
+			<span class="text-margin-left node-detail-text">{{node.echo}}</span>
+		</div>
+	</div>
+	<!-- Assert -->
+	<div ng-if="node._class=='step.artefacts.reports.AssertReportNode'">
+		<div ng-if="node.message" class="text-wrapping-anywhere node-detail-text">{{node.message}}</div>
+	</div>
+	<!-- Set -->
+	<div ng-if="node.resolvedArtefact._class=='Set'">
+		<div class="text-wrapping-anywhere">{{node.key}} = {{node.value}}</div>
+	</div>
+	<!-- Assertion Errors -->
+	<div ng-if="!showDetails && children && children.length>0" class="node-detail-row">
+		<div class="node-detail-label">Errors</div>
+		<div class="node-detail-text">
+			<assert-report-node-short ng-repeat="child in children" ng-if="(child._class=='step.artefacts.reports.AssertReportNode' || 
+				child._class=='step.artefacts.reports.PerformanceAssertReportNode') && child.status != 'PASSED'" node ="child"/>
+		</div>
+	</div>
+	<!-- Errors -->
+	<div ng-if="node.error" class="node-detail-row">
+		<div class="node-detail-label">Error</div>
+		<div class="node-detail-text">{{node.error.msg}}
+		{{(node.attachments && node.attachments.length>0)?'. Check the attachments for more details.':''}}</div>
+	</div>
+	<!-- Attachments -->
+	<div>
+		<attachments-preview attachments="node.attachments" />
+	</div>
+	<!-- Details -->
+	<div ng-if="showDetails">
+		<reportnode id="reportNodeId" show-artefact="false" />
+	</div>
+	<!-- Footer -->
+	<hr ng-if="showFooter" />
+	<div ng-if="showFooter">
+		<span class="text-muted small">Start: <datems time="node.executionTime" /></span>
+		<span class="text-muted small"> ¦ Duration (ms): {{node.duration}}</span>
+		<span class="text-muted small" ng-if="node._class=='step.artefacts.reports.CallFunctionReportNode'">
+			 ¦ Agent: {{node.agentUrl}}</span>
+	</div>
+</div>

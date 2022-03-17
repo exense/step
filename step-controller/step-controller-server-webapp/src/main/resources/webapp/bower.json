@@ -1,0 +1,39 @@
+{
+  "name": "step",
+  "authors": [
+    "exense GmbH <contact@exense.ch>"
+  ],
+  "description": "",
+  "main": "index.html",
+  "license": "GPL Affero",
+  "homepage": "http://step.exense.ch",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "#3.4.1",
+    "bootstrap": "#3.3.4",
+    "chart.js": "2.9.3",
+    "underscore": "^1.8.3",
+    "angular": "^1.7.8",
+    "ngstorage": "^0.3.11",
+    "angular-cookies": "^1.6.1",
+    "angular-bootstrap": "^2.4.0",
+    "datatables.net": "^1.10.15",
+    "datatables.net-bs": "^1.10.15",
+    "jstree": "^3.3.3",
+    "jquery-file-download": "^1.4.6",
+    "ng-file-upload": "^12.2.13",
+    "tachyons" : "#4.11.1",
+    "angular-resizable": "^1.2.0",
+    "exense-visualization": "alpha-068"
+  },
+  "resolutions": {
+    "angular": "^1.6.1"
+  }
+}

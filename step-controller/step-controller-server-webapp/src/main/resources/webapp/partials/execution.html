@@ -1,0 +1,19 @@
+<div ng-controller="ExecutionTabsCtrl" style="max-width:97vw">
+	<ul class="nav nav-tabs">
+	  <li role="presentation" ng-class="{active: isTabActive(tab.id)}" ng-repeat="tab in tabs track by tab.id">
+	  	<a ng-click="selectTab(tab.id)" ><execution-result ng-if="tab.id!='list'" execution="getTabExecution(tab.id)" /> {{tab.title}} <i class="glyphicon glyphicon-remove" ng-if="tab.id!='list'" ng-click="closeTab(tab.id)" aria-hidden="true"/> </a>
+	  </li>
+	</ul>
+	<div class="tab-content">
+		<div class="tab-pane ng-scope" ng-repeat="tab in tabs track by tab.id" ng-class="{active: isTabActive(tab.id)}">
+			<div ng-if="tab.type=='list'" >
+				<div class="panel-body">
+					<div ng-include="'partials/executions/executionList.html'"></div>
+				</div>
+			</div>
+			<div class="panel-body" ng-if="tab.type=='progress'">
+				<execution-progress eid="tab.id" title-update="updateTabTitle" close-tab="closeTab(tab.id)" active="isTabActive(tab.id)" />
+			</div>
+		</div>
+	</div>
+</div>

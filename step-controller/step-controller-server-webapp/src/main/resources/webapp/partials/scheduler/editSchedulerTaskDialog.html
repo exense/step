@@ -1,0 +1,66 @@
+<div class="modal-header">
+	<h3 class="modal-title">{{task.attributes.name?'Edit':'New'}} task</h3>
+</div>
+<div class="modal-body">
+	<form ng-submit="save()">
+		<div ng-if="error">{{error}}</div>
+		<div class="form-group">
+			<label for="desc">Name</label> <input class="form-control"
+				id="desc" ng-model="task.attributes.name" placeholder="Name" autofocus>
+		</div>
+		<div class="form-group">
+			<label for="comment">Plan</label>
+			<div class="input-group">
+				<input ng-disabled="true" type="text" class="form-control" ng-model="task.executionsParameters.description" />
+				<span class="input-group-btn">
+					<button class="btn btn-default" type="button" ng-disabled="readonly" ng-click="selectPlan()">Select</button>
+				</span>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="desc">CRON Expression</label> 			
+			<div class="input-group">
+				<input class="form-control" id="desc" ng-model="task.cronExpression" placeholder="CRON Expression" autofocus>
+
+				<div class="input-group-btn" uib-dropdown>
+					<button type="button" class="btn btn-primary" uib-dropdown-toggle>Presets <span class="caret"></span></button>
+					<ul class="dropdown-menu" uib-dropdown-menu role="menu">
+						<li role="menuitem"><a ng-click="applyPreset('0 0/1 * * * ?')">Every minute</a></li>
+						<li role="menuitem"><a ng-click="applyPreset('0 0/5 * * * ?')">Every 5 minutes</a></li>
+						<li role="menuitem"><a ng-click="applyPreset('0 0 0/1 * * ?')">Every hour</a></li>
+						<li role="menuitem"><a ng-click="applyPreset('0 0 0/2 * * ?')">Every 2 hours</a></li>
+						<li role="menuitem"><a ng-click="applyPreset('0 0 7 * * ?')">Every day at 07:00</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="desc">Parameters</label>
+			<div class="panel panel-default">
+				<div class="panel-body">
+					<st-custom-form st-model="task.executionsParameters.customParameters" st-screen="executionParameters" />
+				</div>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="desc">User</label> <input class="form-control" id="desc" ng-model="task.executionsParameters.userID"	placeholder="User">
+		</div>
+		
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<a ng-click="showParameters = !showParameters">Advanced</a>
+			</div>
+			<div class="panel-body" ng-show="showParameters">
+				<div class="form-group">
+					<label for="desc">Parameters</label>
+					<textarea ng-model="executionsParameters" rows="7"
+						ng-model-options="{ getterSetter: true }" class="form-control"></textarea>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+<div class="modal-footer">
+	<button class="btn btn-primary" type="button" ng-click="save()">Save</button>
+	<button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
+</div>

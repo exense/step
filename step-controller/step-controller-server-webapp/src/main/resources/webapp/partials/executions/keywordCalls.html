@@ -1,0 +1,41 @@
+<st-table collection="'leafReports'" handle="stepsTable" uid="'functionCallList'" server-side-parameters="stepsTableServerSideParameters" 
+order="[[0, &quot;desc&quot;]]">
+	<st-actions>
+		<a ng-click="$parent.showFooter=!$parent.showFooter">
+			<span ng-if="!$parent.showFooter">display details</span>
+			<span ng-if="$parent.showFooter">hide details</span>
+		</a>
+		<div class="btn-group btn-group-menu">
+			<button type="button" class="btn btn-default" ng-click="$parent.exportAsCSV()" uib-tooltip="Export as CSV" tooltip-append-to-body="true">
+				<span class="glyphicon glyphicon-export"></span>
+			</button>
+		</div>
+	</st-actions>
+	<st-columns>
+		<st-column name="executionTime" width="'60px'">
+			<header>Begin</header>
+			<second-header></second-header>
+			<cell>
+				<button ng-if="!rowScope.showDetails" type="button" class="btn btn-default btn-xxs" uib-tooltip="Show/hide details" tooltip-append-to-body="true" ng-click="rowScope.showDetails=!rowScope.showDetails">
+					<span class="glyphicon glyphicon-chevron-right" />
+				</button>
+				<button ng-if="rowScope.showDetails" type="button" class="btn btn-default btn-xxs" uib-tooltip="Show/hide details" tooltip-append-to-body="true" ng-click="rowScope.showDetails=!rowScope.showDetails">
+					<span class="glyphicon glyphicon-chevron-down" />
+				</button>
+				<time time="row.executionTime" />
+			</cell>
+		</st-column>
+		<st-column name="step">
+			<header>Step</header>
+			<second-header><inputdropdown action="search" initial-value="initialValue" handle=stepColumnHandle></inputdropdown></second-header>
+			<cell>
+				<reportnode-short node="row" execution-view-services="executionViewServices" show-details="rowScope.showDetails" show-footer="tableScope.showFooter"/>
+			</cell>
+		</st-column>
+		<st-column name="status" width="'80px'">
+			<header>Status</header>
+			<second-header><inputdropdown options="reportNodeStatusOptions" action="search" initial-value="initialValue"></inputdropdown></second-header>
+			<cell><reportnode-status status="row.status" /></cell>
+		</st-column>
+	</st-columns>
+</st-table>

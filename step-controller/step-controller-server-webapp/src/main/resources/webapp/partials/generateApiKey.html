@@ -1,0 +1,33 @@
+<div class="modal-header">
+	<h3 class="modal-title">Generate new API key</h3>
+</div>
+
+<form name="loginForm" ng-submit="generateToken()">
+	<div class="modal-body">
+		<div ng-show="token !== ''">
+			<label for="token" class="text-grey" style="vertical-align: top;">Api key </label>
+			<p contenteditable="true" name="token" id="token" readonly style="padding: 10px;" ng-click="copyToken()">
+				<span class="on-hover" style="position: absolute; top:15px;right: 15px;">{{copied ? 'Key copied to clipboard' : 'Click text to copy'}}</span>
+				{{token}}
+			</p>
+		</div>
+		<div ng-show="token == ''" class="form-group" style="display: flex;">
+			<input autofocus type="number" class="form-control" name="lifetime" placeholder="lifetime in days" ng-model="lifetime" title="lifetime" />
+			<span style="margin: 8px;" class="glyphicon glyphicon-question-sign" uib-tooltip="Specifies the validity time of the token in days. Keep it empty for unlimited validity" tooltip-append-to-body="true"></span>
+		</div>
+		<div class="alert alert-warning" style="margin-top:15px;">
+			<b>Important:</b>
+			<ul>
+				<li>You will only be able to view this key here once! It is not stored in this form. So be sure to copy it now.</li>
+				<li>This key is linked to your account and own the same rights, use it and store it wisely!</li>
+				<li>You can authenticate request using the Authorization HTTP header, example: curl -H "Authorization: Bearer your_key"</li>
+				<li>This key will be valid until its lifetime expires, so select it with care, generating another key will NOT invalidate previous keys.</li>
+			</ul>
+		</div>
+	</div>
+
+	<div class="modal-footer">
+		<button class="btn btn-primary" ng-hide="token !== ''" type="submit">Generate new key</button>
+		<button class="btn btn-warning" type="button" ng-click="cancel()">{{token === '' ? 'Cancel' : 'Close'}}</button>
+	</div>
+</form>

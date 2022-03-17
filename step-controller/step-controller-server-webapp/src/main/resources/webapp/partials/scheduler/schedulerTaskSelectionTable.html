@@ -1,0 +1,23 @@
+<div ng-controller="SchedulerTaskSelectionCtrl">
+	<st-table data="schedulerTasks" handle="tableHandle" uid="'schedulerTaskSelectionTable'" persist-state="false"
+				multiple-selection="multipleSelection" on-selection="notifySelection" selection-attribute="'id'">
+		<st-columns>
+			<st-column name="attributes.name">
+					<header>Name</header>
+					<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+					<cell><span>{{row.attributes.name}}</span></cell>
+				</st-column>
+			<st-column name="executionsParameters.customParameters.env">
+				<header>Environment</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell><span>{{row.executionsParameters.customParameters.env}}</span></cell>
+				</st-column>
+			<st-column name="cronExpression">
+				<header>CRON Expression</header>
+				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+				<cell><span>{{row.cronExpression}}</span></cell>
+			</st-column>
+			<st-selection-column />
+		</st-columns>
+	</st-table>
+</div>

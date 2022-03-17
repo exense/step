@@ -1,0 +1,18 @@
+<div class="rowResizable">
+	<div class="flex sectionResizable sectionResizableTree" resizable r-directions="['right']" r-flex="true">
+		<div class="panel panel-default st-flex-column ma0">
+			<div id="jstree_scroll_div" style="max-height: 75vh; height: 75vh;"
+				class="panel-body pre-scrollable">
+				<div id="jstree_div"></div>
+			</div>
+		</div>
+	</div>
+	<div class="flex sectionResizable resizable-panel-right">
+		<div class="panel panel-default st-flex-column ma0">
+			<div class="panel-body st-flex-column">
+				<reportnode-short ng-if="selectedNode" node='selectedNode' include-status="true"
+					show-details="true" show-footer="true" class="st-flex-auto"/>
+			</div>
+		</div>
+	</div>
+</div>

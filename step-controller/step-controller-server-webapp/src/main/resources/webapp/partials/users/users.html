@@ -1,0 +1,36 @@
+<div class="panel-body" id="UserListCtrl" ng-controller="UserListCtrl">
+  <st-table data="users" handle="tableHandle" uid="'userList'" use-spinner="true">
+    <st-actions>
+      <div class="btn-group btn-group-menu">
+        <button type="button" ng-disabled="!authService.hasRight('user-write')"	class="btn btn-success" ng-click="addUser()">Add user</button>
+      </div>
+    </st-actions>
+    <st-columns>
+      <st-column name="username">
+        <header>Username</header>
+        <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+        <cell><a ng-click="editUser(row.username)">{{row.username}}</a></cell>
+      </st-column>
+      <st-column name="role">
+        <header>Role</header>
+        <second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+        <cell>{{row.role}}</cell>
+      </st-column>
+      <st-column width="'150px'">
+        <cell>
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-default" aria-label="Left Align" ng-click="editUser(row.username)" uib-tooltip="Edit user">
+              <span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="btn btn-default" aria-label="Left Align" ng-click="resetUserPassword(row)" uib-tooltip="Reset user password">
+              <span class="glyphicon glyphicon glyphicon glyphicon-lock" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="btn btn-default" ng-disabled="context.userID === row.username" aria-label="Left Align" ng-click="askAndRemoveUser(row.username)" uib-tooltip="Delete user">
+              <span class="glyphicon glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>
+            </button>
+          </div>
+        </cell>
+      </st-column>
+    </st-columns>
+  </st-table>
+</div>

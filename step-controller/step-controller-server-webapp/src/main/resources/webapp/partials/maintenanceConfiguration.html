@@ -1,0 +1,30 @@
+<div class="form-group" ng-controller="MaintenanceSettingsCtrl">
+	 <div class="flex-ns items-center justify-start ma1">
+	 	<label class="mb0 mr1">Maintenance message</label>
+
+	
+		<span class="glyphicon glyphicon-question-sign"
+			uib-tooltip="The following message will be displayed as warning on the header to all users. 
+			Use the switch button on the right, or below radio buttons to toggle it on/off."
+					tooltip-append-to-body="true">
+		</span>
+		
+		<div class="btn-switch ml-auto" ng-class="{'btn-switch--on':toggle.switch}"
+			ng-model="toggle.switch" ng-click="switchToggle()">
+			<div class="btn-switch-circle"
+				ng-class="{'btn-switch-circle--on':toggle.switch}"
+				ng-model="toggle.switch" ng-click="switchToggle()">
+			</div>
+		</div>
+	</div>
+	<label>
+    <input type="radio" ng-model="toggle.switch" ng-value="false" ng-change="upateToggle()"> <!-- - -->
+    Do not display maintenance message
+  </label><br/>
+  <label>
+    <input type="radio" ng-model="toggle.switch" ng-value="true" ng-change="upateToggle()">
+    Display maintenance message
+  </label><br/>
+		<textarea ng-blur="saveMaintenanceMessage()"
+			ng-model="maintenanceMessage" class="form-control" rows="5"></textarea>
+</div>

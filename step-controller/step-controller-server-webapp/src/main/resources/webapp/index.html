@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+<script type="text/javascript">
+window.console = window.console || {};
+window.console.log = window.console.log || function(){};
+</script>
+
+<!-- bower:js -->
+<script src="bower_components/jquery/dist/jquery.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+<script src="bower_components/chart.js/dist/Chart.js"></script>
+<script src="bower_components/underscore/underscore.js"></script>
+<script src="bower_components/angular/angular.js"></script>
+<script src="bower_components/ngstorage/ngStorage.js"></script>
+<script src="bower_components/angular-cookies/angular-cookies.js"></script>
+<script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+<script src="bower_components/datatables.net/js/jquery.dataTables.js"></script>
+<script src="bower_components/datatables.net-bs/js/dataTables.bootstrap.js"></script>
+<script src="bower_components/datatables.net-select/js/dataTables.select.js"></script>
+<script src="bower_components/jstree/dist/jstree.js"></script>
+<script src="bower_components/jquery-file-download/src/Scripts/jquery.fileDownload.js"></script>
+<script src="bower_components/ng-file-upload/ng-file-upload.js"></script>
+<script src="js/angular-resizable.js"></script>
+
+<script src="bower_components/d3/d3.js"></script>
+<script src="bower_components/nvd3/build/nv.d3.js"></script>
+<script src="bower_components/angular-nvd3/dist/angular-nvd3.js"></script>
+<script src="bower_components/exense-visualization/dist/viz.js"></script>
+<!-- endbower -->
+
+<link rel="icon" type="image/png" href="favicon.png">
+
+<script src="js/bootstrap.js"></script>
+<script src="js/common.js"></script>
+<script src="js/app.js"></script>
+<script src="js/views.js"></script>
+<script src="js/ntables.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/export.js"></script>
+<script src="js/asyncTask.js"></script>
+<script src="js/controllers.js"></script>
+<script src="js/controllers/entities.js"></script>
+<script src="js/controllers/scheduler.js"></script>
+<script src="js/controllers/grid.js"></script>
+<script src="js/controllers/plans.js"></script>
+<script src="js/controllers/planEditor.js"></script>
+<script src="js/controllers/planTree.js"></script>
+<script src="js/controllers/artefacts.js"></script>
+<script src="js/controllers/functions.js"></script> 
+<script src="js/controllers/parameters.js"></script>
+<script src="js/controllers/resources.js"></script>
+<script src="js/controllers/dashboards.js"></script>
+<script src="js/controllers/executions.js"></script> 
+<script src="js/controllers/screenConfiguration.js"></script>
+<script src="js/controllers/repository.js"></script>
+<script src="js/controllers/reportNodes.js"></script>
+<script src="js/controllers/reportTree.js"></script>
+<script src="js/controllers/reportTable.js"></script>
+<script src="js/controllers/admin.js"></script>
+<script src="js/controllers/dynamicForms.js"></script>
+<script src="js/controllers/components.js"></script>
+<script src="js/controllers/operations.js"></script>
+	
+<script src="js/datatable-ext-paginationinput.js"></script>
+<script src="js/viz-presets-commons.js"></script>
+<script src="js/viz-presets-ext.js"></script>
+
+<!-- bower:css -->
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+<link rel="stylesheet" href="bower_components/datatables.net-bs/css/dataTables.bootstrap.css" />
+<link rel="stylesheet" href="bower_components/datatables.net-select-dt/css/select.dataTables.css" />
+<link rel="stylesheet" href="bower_components/jstree/dist/themes/default/style.css" />
+<link rel="stylesheet" href="bower_components/tachyons/css/tachyons.css" />
+<link rel="stylesheet" href="bower_components/angular-resizable/angular-resizable.min.css" />
+
+<link rel="stylesheet" href="bower_components/nvd3/build/nv.d3.css">
+<link rel="stylesheet" href="bower_components/exense-visualization/dist/viz.css">
+<!-- endbower -->
+<link rel="stylesheet" type="text/css" href="css/step.css">
+<link rel="stylesheet" type="text/css" href="css/step-variables.css">
+<link rel="stylesheet" type="text/css" href="js/chart.css">
+
+
+ <title>STEP</title>
+</head>
+
+<body ng-controller="AppController" ng-keydown="handleKeys($event)">
+<script>step.bootstrap();</script>
+<div class="main-page">
+	
+	<header class="main-header" ng-if-start="isInitialized && (authService.isAuthenticated() || isPublicView() || authService.isExtLoginAuth())"><div ng-include="'partials/nav.html'" class="container main-header"></div></header>
+	<div ng-if-end ng-include="'partials/main.html'" class="st-flex-row"></div>
+	
+	<div ng-if="isInitialized && !(authService.isAuthenticated() || isPublicView() || authService.isExtLoginAuth())" ng-include="'partials/loginForm.html'" class="st-flex-row">
+	</div>
+
+	<footer class="main-footer">
+		<div class="container main-footer">
+			<p style="text-align: center;margin-top:10px;">
+			STEP ${project.version} - Copyright &#169; exense GmbH
+			</p>
+		</div>
+	</footer>
+	
+</div>
+</body>
+</html>
