@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-angular.module('planTree',['step','artefacts','reportTable','dynamicForms','export'])
+angular.module('planTree',['step','artefacts','reportTable','dynamicForms','export','functionsControllers'])
 
-.directive('planTree', function(artefactTypes, $http, $timeout, $interval, stateStorage, $filter, $location, Dialogs, ScreenTemplates, LinkProcessor) {
+.directive('planTree', function(artefactTypes, $http,$timeout,$interval,stateStorage,$filter,$location, Dialogs, ScreenTemplates) {
   return {
     restrict: 'E',
     scope: {
@@ -28,7 +28,7 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
       interactiveSessionHandle: '=',
       readonly: '=',
     },
-    controller: function($scope,$location,$rootScope, AuthService) {
+    controller: function($scope,$location,$rootScope, AuthService, FunctionDialogs) {
       $scope.undoStackEntityId;
       $scope.undoStack=[];
       $scope.redoStack=[];
@@ -573,9 +573,9 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
           var artefact = getSelectedArtefact();
           $http.post("rest/functions/lookup",artefact).then(function(response) {
             if (response.data) {
-              var planId = response.data.planId;
-              if (planId) {
-                openPlan(planId);
+              var functionId = response.data.id;
+              if (functionId) {
+                openFunctionEditor(functionId);
               } else {
                 Dialogs.showErrorMsg("No editor configured for this function type");
               }
@@ -630,6 +630,10 @@ angular.module('planTree',['step','artefacts','reportTable','dynamicForms','expo
             }
           });
         });
+      }
+
+      openFunctionEditor = function(functionId) {
+        FunctionDialogs.openFunctionEditor(functionId);
       }
       
       $scope.rename = function() {
