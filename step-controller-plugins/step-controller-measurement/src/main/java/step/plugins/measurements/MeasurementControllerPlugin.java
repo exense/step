@@ -14,6 +14,7 @@ import step.grid.TokenWrapperState;
 import step.grid.reports.TokenGroupCapacity;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,7 +51,7 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 			gaugeCollectorRegistry.registerCollector(GridGaugeName, new GaugeCollector(GridGaugeName,
 					"step grid token usage and capacity", labels.stream().toArray(String[]::new)) {
 				final GridReportBuilder gridReportBuilder = new GridReportBuilder((Grid) context.get(Grid.class));
-				final Map<String, String[][]> urlToType = new HashMap<>();
+				final Map<String, String[][]> urlToType = new ConcurrentHashMap<>();
 
 				@Override
 				public List<Collector.MetricFamilySamples> collect() {

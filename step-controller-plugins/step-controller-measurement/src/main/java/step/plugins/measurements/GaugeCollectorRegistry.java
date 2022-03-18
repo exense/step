@@ -42,7 +42,8 @@ public class GaugeCollectorRegistry {
 		Runnable collect = () -> {
 			try {
 				collectors.forEach((c, t) -> {
-					handlers.forEach(h -> h.processGauges(t.collectAsMeasurements()));
+					List<Measurement> measurements = t.collectAsMeasurements();
+					handlers.forEach(h -> h.processGauges(measurements));
 				});
 			} catch (Exception e) {
 				logger.error("Exception occurred while processing gauge metrics", e);
