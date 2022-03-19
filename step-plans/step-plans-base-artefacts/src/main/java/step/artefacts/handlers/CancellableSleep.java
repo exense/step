@@ -46,7 +46,9 @@ public class CancellableSleep {
         while (true) {
             if (cancelCondition.get()) {
                 long actualDuration = System.currentTimeMillis() - startTimestamp;
-                logger.info(context + "Cancelled sleeping; intended duration=" + duration + ", actual duration=" + actualDuration);
+                if(logger.isDebugEnabled()) {
+                    logger.debug(context + "Cancelled sleeping; intended duration=" + duration + ", actual duration=" + actualDuration);
+                }
                 return false;
             }
 
