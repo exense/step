@@ -168,7 +168,7 @@ public class ControllerServer {
 		controller = new Controller(configuration);
 
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		context.setBaseResource(Resource.newClassPathResource("webapp"));
+		context.setBaseResource(Resource.newClassPathResource("dist/step-frontend"));
 		context.setContextPath("/");
 		addHandler(context);
 
