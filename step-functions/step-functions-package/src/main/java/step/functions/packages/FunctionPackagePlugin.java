@@ -68,7 +68,7 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 
 
 		
-		registerWebapp(context, "/functionpackages/");
+		//registerWebapp(context, "/functionpackages/");
 	}
 	
 

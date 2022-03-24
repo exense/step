@@ -38,7 +38,7 @@ public class GeneralScriptFunctionControllerPlugin extends AbstractControllerPlu
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		registerWebapp(context,"/javaplugin/");
+		//registerWebapp(context,"/javaplugin/");
 		FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);
 		functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(context.getConfiguration()));
 		super.executionControllerStart(context);

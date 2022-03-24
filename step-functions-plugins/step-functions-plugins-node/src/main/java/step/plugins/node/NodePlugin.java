@@ -34,7 +34,7 @@ public class NodePlugin extends AbstractControllerPlugin {
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		this.context = context;
 		
-		registerWebapp(context, "/node/");
+		//registerWebapp(context, "/node/");
 		
 		FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);
 		functionTypeRegistry.registerFunctionType(new NodeFunctionType());

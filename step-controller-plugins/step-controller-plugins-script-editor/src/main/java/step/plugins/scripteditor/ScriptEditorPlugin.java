@@ -34,7 +34,7 @@ public class ScriptEditorPlugin extends AbstractControllerPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		
-		registerWebapp(context, "/scripteditor/");
+		//registerWebapp(context, "/scripteditor/");
 		
 		context.getServiceRegistrationCallback().registerService(ScriptEditorServices.class);
 		

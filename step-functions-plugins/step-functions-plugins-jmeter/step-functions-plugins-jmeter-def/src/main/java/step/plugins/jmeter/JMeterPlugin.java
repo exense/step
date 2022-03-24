@@ -30,7 +30,7 @@ public class JMeterPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
-		registerWebapp(context,"/jmeterplugin/");
+		//registerWebapp(context,"/jmeterplugin/");
 		
 		FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);
 		functionTypeRegistry.registerFunctionType(new JMeterFunctionType(context.getConfiguration()));
