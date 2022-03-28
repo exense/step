@@ -84,10 +84,11 @@ public class ExportServices extends AbstractServices {
 										 @QueryParam("additionalEntities") List<String> additionalEntities) {
 		Session session = getSession();
 		Map<String,String> metadata = getMetadata();
+		String finalFilename = removeUnsupportedChars(filename);
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws IOException, InvalidResourceFormatException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
 				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata,objectPredicateFactory.getObjectPredicate(session),
 						entity, recursively, additionalEntities);
 				ExportResult exportResult = exportManager.exportById(exportConfig, id);
@@ -97,7 +98,11 @@ public class ExportServices extends AbstractServices {
 			}
 		});
 	}
-	
+
+	private String removeUnsupportedChars(String filename) {
+		return filename.replace("/","").replace("\\","");
+	}
+
 	private Map<String,String> getMetadata() {
 		Map<String,String> metadata = new HashMap<String,String>();
 		metadata.put("user",getSession().getUser().getUsername());
@@ -115,10 +120,11 @@ public class ExportServices extends AbstractServices {
 			@QueryParam("additionalEntities") List<String> additionalEntities) {
 		Session session = getSession();
 		Map<String,String> metadata = getMetadata();
+		String finalFilename = removeUnsupportedChars(filename);
 		return exportTaskManager.createExportTask(new ExportRunnable() {
 			@Override
 			public Resource runExport() throws FileNotFoundException, IOException, InvalidResourceFormatException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, filename);
+				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
 				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
 						metadata, objectPredicateFactory.getObjectPredicate(session), entity, recursively, additionalEntities);
 				ExportResult exportResult = exportManager.exportAll(exportConfig);
