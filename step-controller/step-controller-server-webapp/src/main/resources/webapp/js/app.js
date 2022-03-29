@@ -996,20 +996,24 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
         }
         
         $scope.handle.getFilter = function() {
-          const searchQuery = {}; 
+          const searchQuery = {};
           for (const i in $scope.tableHandle.columns()[0]) {
-            let oAjaxData = $scope.tableHandle.columns(i).context[0].oAjaxData;
-            searchQuery['columns['+i+'][data]'] = oAjaxData.columns[i].data;
-            searchQuery['columns['+i+'][name]'] = oAjaxData.columns[i].name;
-            searchQuery['columns['+i+'][searchable]'] = oAjaxData.columns[i].searchable;
-            searchQuery['columns['+i+'][orderable]'] = oAjaxData.columns[i].orderable;
-            searchQuery['columns['+i+'][search][value]'] = oAjaxData.columns[i].search.value;
-            searchQuery['columns['+i+'][search][regex]'] = oAjaxData.columns[i].search.regex;
-            searchQuery['order[0][column]'] = oAjaxData.order[0].column;
-            searchQuery['order[0][dir]'] = oAjaxData.order[0].dir;
-            searchQuery['draw'] = oAjaxData.draw;
-            searchQuery['start'] = oAjaxData.start;
-            searchQuery['length'] = oAjaxData.length;
+              let oAjaxData = $scope.tableHandle.columns(i).context[0].oAjaxData;
+              
+              let column = oAjaxData.columns[i];
+              let order = oAjaxData.order[0];
+
+              searchQuery['columns['+i+'][data]'] = column.data;
+              searchQuery['columns['+i+'][name]'] = column.name;
+              searchQuery['columns['+i+'][searchable]'] = column.searchable || true;
+              searchQuery['columns['+i+'][orderable]'] = column.orderable || true;
+              searchQuery['columns['+i+'][search][value]'] = column.search.value;
+              searchQuery['columns['+i+'][search][regex]'] = column.search.regex;
+              searchQuery['order[0][column]'] = (order && order.column) || 0;
+              searchQuery['order[0][dir]'] = (order && order.dir) || 'asc';
+              searchQuery['draw'] = (oAjaxData && oAjaxData.draw) || 1;
+              searchQuery['start'] = (oAjaxData && oAjaxData.start) || 0;
+              searchQuery['length'] = (oAjaxData && oAjaxData.length) || 10;
           }
           return searchQuery;
         }

@@ -252,12 +252,6 @@ angular.module('schedulerControllers',[])
   };
 })
 
-.controller('SchedulerTaskSelectionCtrl', function ($scope, $http) {
-  $http.get("rest/scheduler/task").then(function(response) {
-    $scope.schedulerTasks = response.data;
-  });
-})
-
 .directive('schedulerTaskLink', function() {
   return {
     restrict: 'E',
