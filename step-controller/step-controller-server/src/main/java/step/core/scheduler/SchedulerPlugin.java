@@ -22,15 +22,19 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import step.core.GlobalContext;
+import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.tables.AbstractTable;
+import step.core.tables.TableRegistry;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.InputType;
 import step.plugins.screentemplating.ScreenInput;
 import step.plugins.screentemplating.ScreenInputAccessor;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
+import step.resources.Resource;
 
 @Plugin(dependencies= {ScreenTemplatePlugin.class, ControllerSettingPlugin.class})
 public class SchedulerPlugin extends AbstractControllerPlugin {
@@ -43,6 +47,10 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void executionControllerStart(GlobalContext context) throws Exception {
 		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
+		Collection<ExecutiontTaskParameters> collectionDriver = context.getCollectionFactory().getCollection("tasks",
+				ExecutiontTaskParameters.class);
+		context.get(TableRegistry.class).register("tasks", new AbstractTable<>(collectionDriver, true));
+
 	}
 	
 	@Override
