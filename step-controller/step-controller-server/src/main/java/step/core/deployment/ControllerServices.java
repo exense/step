@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -43,14 +44,24 @@ import javax.ws.rs.core.Response;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
+import step.artefacts.CallPlan;
+import step.artefacts.handlers.PlanLocator;
+import step.artefacts.handlers.SelectorHelper;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeAccessor;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectPredicateFactory;
+import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
@@ -66,7 +77,9 @@ public class ControllerServices extends AbstractServices {
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
 	private AsyncTaskManager taskManager;
 	private Version currentVersion;
-
+	private PlanLocator planLocator;
+	private ObjectPredicate objectPredicate;
+			
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -74,6 +87,11 @@ public class ControllerServices extends AbstractServices {
 		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
 		taskManager = context.get(AsyncTaskManager.class);
 		currentVersion = context.getCurrentVersion();
+
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+		planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
+		objectPredicate = context.get(ObjectPredicateFactory.class).getObjectPredicate(getSession());
 	}
 	
 	@POST
@@ -105,6 +123,37 @@ public class ControllerServices extends AbstractServices {
 		List<ReportNode> path = getContext().getReportAccessor().getReportNodePath(new ObjectId(reportNodeId));
 		path.forEach((node) -> result.add(node));
 		return result;
+	}
+
+	@GET
+	@Path("/reportnode/{id}/plan")
+	@Secured(right="execution-read")
+	public Plan getReportNodeRootPlan(@PathParam("id") String reportNodeId) {
+		PlanAccessor planAccessor = getContext().getPlanAccessor();
+		ReportNode reportNode = getContext().getReportAccessor().get(reportNodeId);
+		Plan plan = planAccessor.get(getContext().getExecutionAccessor().get(reportNode.getExecutionID()).getPlanId());
+		if (reportNode.getParentID() != null) {
+			CallPlan callPlan = getParentCallPlan(reportNode.getParentID().toString());
+			if (callPlan != null) {
+				Plan locatedPlan = planLocator.selectPlan(callPlan, objectPredicate, null);
+				plan = (locatedPlan != null) ? locatedPlan : plan;
+			}
+		}
+		return plan;
+	}
+	
+	private CallPlan getParentCallPlan(String nodeId) {
+		ReportNode reportNode = (nodeId != null) ? getContext().getReportAccessor().get(nodeId): null;
+		if (reportNode != null) {
+			AbstractArtefact resolvedArtefact = reportNode.getResolvedArtefact();
+			if (resolvedArtefact != null && resolvedArtefact instanceof CallPlan) {
+				//get related plan
+				return (CallPlan) resolvedArtefact;
+			} else if (reportNode.getParentID() != null) {
+				return getParentCallPlan(reportNode.getParentID().toString());
+			}
+		}
+		return null;
 	}
 	
 	@GET
