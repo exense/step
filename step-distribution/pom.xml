@@ -28,25 +28,7 @@
 	<artifactId>step-distribution</artifactId>
 	<packaging>pom</packaging>
 	<name>Distribution</name>
-
-	<dependencies>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-controller-server-webapp</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-agent</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-ide</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-	</dependencies>
-
+	
 	<build>
 		<plugins>
 			<plugin>
