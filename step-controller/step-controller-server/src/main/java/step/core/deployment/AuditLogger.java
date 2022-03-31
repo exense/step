@@ -34,12 +34,13 @@ public class AuditLogger {
     //called by session invalidation (no request context)
     public static void logSessionInvalidation(HttpSession httpSession) {
         Session session = (Session) httpSession.getAttribute(SESSION);
-        String user = (session != null && session.getUser() != null) ? session.getUser().getUsername() : "unknown";
-        AuditMessage msg = new AuditMessage();
-        msg.req = "Session invalidation";
-        msg.sesId = httpSession.getId();
-        msg.user = user;
-        auditLogger.info(msg.toLogString());
+        if (session != null && session.getUser() != null) {
+            AuditMessage msg = new AuditMessage();
+            msg.req = "Session invalidation";
+            msg.sesId = httpSession.getId();
+            msg.user = session.getUser().getUsername();
+            auditLogger.info(msg.toLogString());
+        }
     }
 
     public static void logPasswordEvent(String description, String user) {
