@@ -59,15 +59,7 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 		Authenticator authenticator = initAuthenticator();
 		AuthenticationManager authenticationManager = new AuthenticationManager(configuration, authenticator, context.getUserAccessor());
 		context.put(AuthenticationManager.class, authenticationManager);
-		authenticationManager.registerListener(session -> {
-			boolean isOtp = (boolean) Objects.requireNonNullElse(session.getUser().getCustomField("otp"), false);
-			if (isOtp) { //make sure the password is only used once
-				User user = context.getUserAccessor().get(session.getUser().getId());
-				authenticationManager.resetPwd(user);
-				context.getUserAccessor().save(user);
-			}
-		});
-		
+
 		RoleProvider roleProvider = initAccessManager();
 		context.put(RoleProvider.class, roleProvider);
 
