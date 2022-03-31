@@ -8,7 +8,6 @@
 			"ACTION": "COMPILE",
 			"TYPE": "POM",
 			"FOLDER": "step-parent/",
-			"PARALLELISM": "1",
 			"PARAMETERS": [
 				{
 					"NAME": "DEVELOPMENT",
