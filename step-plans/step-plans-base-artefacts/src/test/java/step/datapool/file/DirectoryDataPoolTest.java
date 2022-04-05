@@ -75,14 +75,29 @@ public class DirectoryDataPoolTest extends AbstractArtefactTest {
 
     @Test
     public void testDirectoryDataPoolTestToString() {
-        Assert.assertTrue(pool.next().getValue().toString().endsWith("File.txt"));
+        // Since listFiles is not guaranteeing order (and mac sorts it differently) we check for both files in the folder
+
+        String value = pool.next().getValue().toString();
+        Assert.assertTrue(value.endsWith("File.txt") ||
+                value.toString().endsWith("File2.txt"));
     }
 
     @Test
     public void testDirectoryDataPoolTestGetName() {
+        // Since listFiles is not guaranteeing order (and mac sorts it differently) we check for both files in the folder
+
         ExtendedFile value = (ExtendedFile) pool.next().getValue();
-        Assert.assertEquals("File", value.getNameWithoutExtension());
-        Assert.assertEquals("File.txt",(value).getName());
+        Assert.assertTrue(value.getNameWithoutExtension().equals("File") ||
+                value.getNameWithoutExtension().equals("File2"));
+        Assert.assertTrue((value).getName().equals("File.txt") ||
+                (value).getName().equals("File2.txt"));
+
+        ExtendedFile value2 = (ExtendedFile) pool.next().getValue();
+        Assert.assertTrue(value2.getNameWithoutExtension().equals("File") ||
+                value2.getNameWithoutExtension().equals("File2"));
+        Assert.assertTrue((value2).getName().equals("File.txt") ||
+                (value2).getName().equals("File2.txt"));
+
     }
 
     @Test
