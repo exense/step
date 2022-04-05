@@ -144,7 +144,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.3.2</version>
 				<configuration>
 					<header><![CDATA[<meta name='viewport' content='width=device-width, initial-scale=1.0'>]]></header>
 					<!-- detectLinks MUST NOT be set to true in a production context, as it derives random domain names
