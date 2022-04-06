@@ -37,22 +37,8 @@
 					"URL": "exense https://registry.npmjs.org/"
 				}
 			]
-		},
-		{
-			"ACTION": "DEPLOY",
-			"TYPE": "CLUSTER",
-			"PARAMETERS": [
-				{
-					"NAME": "DEVELOPMENT",
-					"INSTANCE":	"lst" ,
-					"APPLICATION": "stepos",
-					"EDITION": "os",
-					"DOMAIN": "exense.ch",
-					"IMAGE_REPOSITORY": "docker-dev.exense.ch/step",
-					"PERSISTENCE": "false"
-				}
-			]
 		}
-	]
+	],
+	"AFTER": "step-oss-upgrade-distribution"
 }
 
