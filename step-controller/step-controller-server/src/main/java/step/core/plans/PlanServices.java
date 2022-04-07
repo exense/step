@@ -82,6 +82,9 @@ public class PlanServices extends AbstractServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public Plan save(Plan plan) {
+		@SuppressWarnings("unchecked")
+		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
+		planType.onBeforeSave(plan);
 		return planAccessor.save(plan);
 	}
 
