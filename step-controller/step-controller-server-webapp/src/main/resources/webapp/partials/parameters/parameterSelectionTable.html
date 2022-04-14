@@ -1,5 +1,10 @@
 <st-table collection="'parameters'" handle="tableHandle" uid="'parameterSelectionTable'"
-			multiple-selection="multipleSelection" on-selection="notifySelection" selection-attribute="'id'">
+		  multiple-selection="multipleSelection" on-selection="notifySelection" selection-attribute="'id'">
+	<st-column name="scope">
+		<header>Scope</header>
+		<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
+		<cell><parameter-scope parameter="row"></parameter-scope></cell>
+	</st-column>
 	<st-columns>
 		<st-custom-columns st-screen="parameterTable" st-exclude-fields="[]" st-options="'noEditorLink'"/>
 		<st-selection-column />
