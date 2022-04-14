@@ -7,7 +7,10 @@
 			<st-column name="description">
 				<header>Description</header>
 				<second-header><inputdropdown action="search" initial-value="initialValue"></inputdropdown></second-header>
-				<cell><report-node-icon node="row.rootReportNode" /> <a href="#/root/executions/{{row.id}}">{{row.description}}</a></cell>
+				<cell>
+					<entity-icon entity="row" entity-name="'executions'"/>
+					<report-node-icon node="row.rootReportNode" /> <a href="#/root/executions/{{row.id}}">{{row.description}}</a>
+				</cell>
 			</st-column>
 			<st-column name="startTime">
 				<header>Start time</header>
