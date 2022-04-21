@@ -73,6 +73,11 @@ public class PlanPlugin extends AbstractControllerPlugin {
 				newPlan.setVisible(true);
 				return newPlan;
 			}
+
+			@Override
+			public void onBeforeSave(Plan plan) {
+
+			}
 		});
 		context.put(PlanTypeRegistry.class, planTypeRegistry);
 		context.getServiceRegistrationCallback().registerService(PlanServices.class);
