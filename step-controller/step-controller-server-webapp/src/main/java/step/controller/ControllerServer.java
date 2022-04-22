@@ -30,6 +30,7 @@ import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.util.resource.ResourceCollection;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -168,11 +169,14 @@ public class ControllerServer {
 		controller = new Controller(configuration);
 
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		context.setBaseResource(Resource.newClassPathResource(configuration.getProperty("ui.resource.root","dist/step-app")));
+
+		ResourceCollection resources = new ResourceCollection(
+				Resource.newClassPathResource(configuration.getProperty("ui.resource.root","dist/step-app")),
+				Resource.newClassPathResource("webapp"));
+		context.setBaseResource(resources);
 		context.setContextPath("/");
 		addHandler(context);
 
-		
 		controller.init(new ServiceRegistrationCallback() {
 			@Override
 			public void register(Object component) {
