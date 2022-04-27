@@ -5,20 +5,22 @@ import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.handlers.CancellableSleep;
+import step.core.execution.ExecutionContext;
 
 public class Pacer {
 
 	private static final int MAX_ACCUMULATIONS = 100;
 	private static final Logger logger = LoggerFactory.getLogger(Pacer.class);
 
-	public static void scheduleAtConstantRate(Consumer<Integer> r, long executionsPerSecond, long maxDurationInSeconds) throws InterruptedException {
-		scheduleAtConstantPacing(r, 1000/executionsPerSecond, maxDurationInSeconds);
+	public static void scheduleAtConstantRate(Consumer<Integer> r, long executionsPerSecond, long maxDurationInSeconds, ExecutionContext executionContext) throws InterruptedException {
+		scheduleAtConstantPacing(r, 1000/executionsPerSecond, maxDurationInSeconds, executionContext);
 	
 	}
 	
-	public static void scheduleAtConstantPacing(Consumer<Integer> r, long pacingMs, long maxDurationInSeconds) throws InterruptedException {
+	public static void scheduleAtConstantPacing(Consumer<Integer> r, long pacingMs, long maxDurationInSeconds, ExecutionContext executionContext) throws InterruptedException {
 		long maxDurationInMs = 1000 * maxDurationInSeconds;
-		scheduleAtConstantPacing(r, pacingMs, c -> c.getDuration() < maxDurationInMs);
+		scheduleAtConstantPacing(r, pacingMs, c -> c.getDuration() < maxDurationInMs, executionContext);
 	}
 	
 	public static class Context {
@@ -41,7 +43,7 @@ public class Pacer {
 		}
 	}
 	
-	public static void scheduleAtConstantPacing(Consumer<Integer> r, long pacingMs, Predicate<Context> predicate) throws InterruptedException {
+	public static void scheduleAtConstantPacing(Consumer<Integer> r, long pacingMs, Predicate<Context> predicate, ExecutionContext executionContext) throws InterruptedException {
 		long start = System.currentTimeMillis();
 		long pacingNs = pacingMs * 1000000;
 		long accumulatedDelay = 0;
@@ -106,7 +108,7 @@ public class Pacer {
 			if (isDebugEnabled()) {
 				debug("Sleeping "+sleepTimeMs+"ms");
 			}
-			Thread.sleep(sleepTimeMs);
+			CancellableSleep.sleep(sleepTimeMs, executionContext::isInterrupted, Pacer.class);
 			expectedSleepOfPreviousIterationNs = sleepTime;
 		}
 		

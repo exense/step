@@ -253,7 +253,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 						}, pacing,
 								c -> !context.isInterrupted()
 										&& (maxDuration == 0 || c.getDuration() < maxDuration)
-										&& (numberOfIterations == 0 || c.getIterations() < numberOfIterations));
+										&& (numberOfIterations == 0 || c.getIterations() < numberOfIterations), context);
 					} catch (InterruptedException e) {
 						failWithException(sessionReportNode, e);
 						sessionReportNodeStatusComposer.addStatusAndRecompose(sessionReportNode.getStatus());

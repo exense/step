@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
 
 public class PacerTest {
 
@@ -16,6 +18,8 @@ public class PacerTest {
 
 	@Test
 	public void test() throws InterruptedException {
+		ExecutionEngine executionEngine = ExecutionEngine.builder().build();
+
 		int durationInSeconds = 5;
 
 		// Target throughput in 1/s
@@ -49,7 +53,7 @@ public class PacerTest {
 			if (atomicInteger.get() >= maxMaxSleep) {
 				atomicInteger.set(minSleep);
 			}
-		}, expectedThroughput, durationInSeconds);
+		}, expectedThroughput, durationInSeconds, executionEngine.newExecutionContext());
 		
 		// Calculate actual throughput
 		long count = executionCount.get();
