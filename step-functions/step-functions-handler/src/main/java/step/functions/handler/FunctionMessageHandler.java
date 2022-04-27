@@ -120,10 +120,12 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	protected void addCustomTypeToOutputMeasures(List<Measure> outputMeasures) {
 		if(outputMeasures!=null) {
 			outputMeasures.forEach(m->{
-				if(m.getData() == null) {
-					m.setData(new HashMap<>());
+				Map<String, Object> attributes = new HashMap<>();
+				if (m.getData() != null ) {
+					attributes.putAll(m.getData());
 				}
-				m.getData().put(MeasureTypes.ATTRIBUTE_TYPE, MeasureTypes.TYPE_CUSTOM);
+				attributes.putIfAbsent(MeasureTypes.ATTRIBUTE_TYPE, MeasureTypes.TYPE_CUSTOM);
+				m.setData(attributes);
 			});
 		}
 	}
