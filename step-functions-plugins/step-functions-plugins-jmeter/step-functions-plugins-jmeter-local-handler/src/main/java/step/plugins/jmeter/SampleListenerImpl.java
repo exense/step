@@ -40,7 +40,11 @@ public class SampleListenerImpl extends AbstractTestElement implements SampleLis
 	private OutputBuilder outputBuilder;
 	
 	List<SampleResult> samples = Collections.synchronizedList(new ArrayList<>());
-	
+
+	public SampleListenerImpl() {
+		super();
+	}
+
 	public SampleListenerImpl(OutputBuilder outputBuilder) {
 		super();
 		this.outputBuilder = outputBuilder;
@@ -116,5 +120,4 @@ public class SampleListenerImpl extends AbstractTestElement implements SampleLis
 		((SampleListenerImpl)clone).samples = samples;
 		return clone;
 	}
-
 }
