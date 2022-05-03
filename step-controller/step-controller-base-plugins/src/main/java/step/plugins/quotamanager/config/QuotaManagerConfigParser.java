@@ -51,6 +51,7 @@ public class QuotaManagerConfigParser {
 		XStream xstream = new XStream();
 		xstream.alias("QuotaManagerConfig", QuotaManagerConfig.class);
 		xstream.alias("Quota", Quota.class);
+		xstream.allowTypesByWildcard(new String[] {"step.plugins.quotamanager.**"});
 		return xstream;
 	}
 }
