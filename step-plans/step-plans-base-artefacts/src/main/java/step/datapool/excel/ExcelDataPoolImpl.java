@@ -245,7 +245,7 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 			row = sheet.createRow(cursor);
 		}
 		int cellNum = mapHeaderToCellNum(sheet, colName, false);
-		Cell cell = row.getCell(cellNum, Row.CREATE_NULL_AS_BLANK);
+		Cell cell = row.getCell(cellNum, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
 		
 		return cell;
 	}

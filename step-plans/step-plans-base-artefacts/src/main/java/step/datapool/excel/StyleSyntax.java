@@ -21,6 +21,7 @@ package step.datapool.excel;
 import java.awt.Color;
 
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
@@ -51,7 +52,7 @@ public class StyleSyntax {
     			/* Abhandlung des Schriftschnitts. Diese koennen alle zusammen auftreten und schliessen sich nicht aus */
     			if (str.matches("( *bold *| *italic *| *underline *| *strikeout *)*")){
     				if (str.contains("bold")){
-    					font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+						font.setBold(true);
     				}
     				if (str.contains("italic")){
     					font.setItalic(true);
@@ -113,7 +114,7 @@ public class StyleSyntax {
     							XSSFColor xssfColor = new XSSFColor(new Color(red, green, blue));
     							style.setFillForegroundColor(xssfColor);
     							style.setFillBackgroundColor(xssfColor); 
-    							style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+    							style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
     						}
     						
     						
