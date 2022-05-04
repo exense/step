@@ -1,2 +1,17 @@
 attachments/
 /resources/
+/src/main/resources/webapp/doc/rest/favicon-16x16.png
+/src/main/resources/webapp/doc/rest/favicon-32x32.png
+/src/main/resources/webapp/doc/rest/oauth2-redirect.html
+/src/main/resources/webapp/doc/rest/swagger-ui.css
+/src/main/resources/webapp/doc/rest/swagger-ui.css.map
+/src/main/resources/webapp/doc/rest/swagger-ui.js
+/src/main/resources/webapp/doc/rest/swagger-ui.js.map
+/src/main/resources/webapp/doc/rest/swagger-ui-bundle.js
+/src/main/resources/webapp/doc/rest/swagger-ui-bundle.js.map
+/src/main/resources/webapp/doc/rest/swagger-ui-es-bundle.js
+/src/main/resources/webapp/doc/rest/swagger-ui-es-bundle.js.map
+/src/main/resources/webapp/doc/rest/swagger-ui-es-bundle-core.js
+/src/main/resources/webapp/doc/rest/swagger-ui-es-bundle-core.js.map
+/src/main/resources/webapp/doc/rest/swagger-ui-standalone-preset.js
+/src/main/resources/webapp/doc/rest/swagger-ui-standalone-preset.js.map
