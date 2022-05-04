@@ -20,6 +20,7 @@ package step.datapool.excel;
 
 import java.awt.Color;
 
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -105,12 +106,12 @@ public class StyleSyntax {
     							} else if (red == 255 && green == 255 && blue == 255){
     								red = 0; green = 0; blue = 0;
     							}
-    							XSSFColor xssfColor = new XSSFColor(new Color(red, green, blue),null);
+    							XSSFColor xssfColor = new XSSFColor(new Color(red, green, blue));
     							font.setColor(xssfColor);
     						}
     						else{
     							// Vordergrund/Hintergrundfarbe der Zelle
-    							XSSFColor xssfColor = new XSSFColor(new Color(red, green, blue),null);
+    							XSSFColor xssfColor = new XSSFColor(new Color(red, green, blue));
     							style.setFillForegroundColor(xssfColor);
     							style.setFillBackgroundColor(xssfColor); 
     							style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -130,6 +131,7 @@ public class StyleSyntax {
     			/* Abhandlung der Schriftart */
     			if (!str.isEmpty()){
     				font.setFontName(str);
+    				continue;
     			}
     		}
     		style.setFont(font);
