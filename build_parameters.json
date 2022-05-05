@@ -20,7 +20,8 @@
 					"URL": "sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2",
 					"CONFIG": "DefaultBuild"
 				}
-			]
+			],
+			"AFTER": "step-oss-java-after-compile"
 		},
 		{
 			"ACTION": "COMPILE",
