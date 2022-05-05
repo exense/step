@@ -48,7 +48,7 @@
 			"ACTIONS": [
 				{
 					"ORIGIN": "step-parent/pom.xml",
-					"DESTINATION": "ch.exense.step:step-parent-${BRANCH}:${VERSION}",
+					"DESTINATION": "ch.exense.step:step-parent:${VERSION}_${BRANCH}_LATEST",
 					"PACKAGING": "pom"
 				}
 			]
