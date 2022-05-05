@@ -298,6 +298,14 @@
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
+			<!-- Local compilation - no signature -->
+		</profile>
+		<profile>
+			<id>DependencyCheck</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<!-- Profile use for checking security issues in external dependencies -->
 			<build>
 				<plugins>
 					<plugin>
@@ -314,7 +322,6 @@
 					</plugin>
 				</plugins>
 			</build>
-			<!-- Local compilation - no signature -->
 		</profile>
 		<profile>
 			<id>DefaultBuild</id>
