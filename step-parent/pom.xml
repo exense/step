@@ -303,7 +303,7 @@
 		<profile>
 			<id>DependencyCheck</id>
 			<activation>
-				<activeByDefault>true</activeByDefault>
+				<activeByDefault>false</activeByDefault>
 			</activation>
 			<!-- Profile use for checking security issues in external dependencies -->
 			<build>
