@@ -56,7 +56,9 @@ import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.logging.LogManager;
 
 
@@ -73,7 +75,7 @@ public class ControllerServer {
 	private Integer port;
 	
 	private static final Logger logger = LoggerFactory.getLogger(ControllerServer.class);
-	
+
 	public static void main(String[] args) throws Exception {
 		ArgumentParser arguments = new ArgumentParser(args);
 		
@@ -165,6 +167,8 @@ public class ControllerServer {
 	private void initController() throws Exception {
 		ResourceConfig resourceConfig = new ResourceConfig();
 		resourceConfig.packages(ControllerServices.class.getPackage().getName());
+		resourceConfig.addProperties(Map.of("produces", Arrays.asList("application/json")));
+		resourceConfig.addProperties(Map.of("consumes", Arrays.asList("application/json")));
 
 		controller = new Controller(configuration);
 
@@ -214,7 +218,6 @@ public class ControllerServer {
 
 		resourceConfig.register(JacksonMapperProvider.class);
 		resourceConfig.register(MultiPartFeature.class);
-		
 		resourceConfig.registerClasses(ApplicationServices.class);
 		resourceConfig.registerClasses(ControllerServices.class);
 		resourceConfig.registerClasses(SchedulerServices.class);

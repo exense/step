@@ -269,6 +269,7 @@ public class AdminServices extends AbstractServices {
 		
 	@GET
 	@Secured
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/myaccount/preferences")
 	public Preferences getPreferences() {
 		User user = getCurrentUser();
@@ -308,6 +309,7 @@ public class AdminServices extends AbstractServices {
 	@POST
 	@Secured(right="user-write")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/user/{id}/resetpwd")
 	public Password resetPassword(@PathParam("id") String username) {
 		User user = getContext().getUserAccessor().getByUsername(username);

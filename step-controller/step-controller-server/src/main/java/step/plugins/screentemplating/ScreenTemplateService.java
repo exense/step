@@ -26,12 +26,7 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -98,6 +93,7 @@ public class ScreenTemplateService extends AbstractServices {
 	@Secured
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	public List<Input> getInputsForScreen(@PathParam("id") String screenId, Object params) {		
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		Map<String, Object> contextBindings = getContextBindings(null);
@@ -152,6 +148,7 @@ public class ScreenTemplateService extends AbstractServices {
 	@Secured(right="screenInputs-write")
 	@Path("/input")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	public void saveInput(ScreenInput screenInput) {
 		screenInputAccessor.save(screenInput);
 		screenTemplateManager.notifyChange();

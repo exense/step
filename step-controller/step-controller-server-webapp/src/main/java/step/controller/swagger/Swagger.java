@@ -4,15 +4,19 @@ import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.servers.ServerVariables;
 import org.glassfish.jersey.server.ResourceConfig;
 import step.core.Version;
 
 import java.util.List;
+import java.util.Map;
 
 public class Swagger {
 
@@ -36,11 +40,12 @@ public class Swagger {
         securitySchemeApiKey.setScheme("bearer");
         securitySchemeApiKey.setType(SecurityScheme.Type.HTTP);
         securitySchemeApiKey.setIn(SecurityScheme.In.HEADER);
-
         OpenApiResource openApiResource = new OpenApiResource();
 
         oas.schemaRequirement(securitySchemeApiKey.getName(), securitySchemeApiKey);
-        oas.servers(List.of(new io.swagger.v3.oas.models.servers.Server().url("/rest")));
+
+        Server server = new Server().url("/rest");
+        oas.servers(List.of(server));
         oas.security(List.of(new SecurityRequirement().addList("Api key")));
 
         SwaggerConfiguration oasConfig = new SwaggerConfiguration()

@@ -57,10 +57,7 @@ import step.plugins.screentemplating.FunctionTableScreenInputs;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.*;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -202,6 +199,7 @@ public class InteractiveServices extends AbstractServices {
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{id}/execute/{planid}/{artefactid}")
 	@Secured(right="interactive")
 	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("planid") String planId, @PathParam("artefactid") String artefactId, @Context ContainerRequestContext crc) throws InterruptedException, ExecutionException {
@@ -248,6 +246,7 @@ public class InteractiveServices extends AbstractServices {
 	}
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/functiontest/{keywordid}/start")
 	@Secured(right="interactive")
 	public FunctionTestingSession startFunctionTestingSession(@PathParam("keywordid") String keywordid) {

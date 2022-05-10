@@ -117,6 +117,7 @@ public class ControllerServices extends AbstractServices {
 	
 	@GET
 	@Path("/reportnode/{id}/path")
+	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public List<ReportNode> getReportNodePath(@PathParam("id") String reportNodeId) {
 		List<ReportNode> result = new ArrayList<>();
@@ -127,6 +128,7 @@ public class ControllerServices extends AbstractServices {
 
 	@GET
 	@Path("/reportnode/{id}/plan")
+	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public Plan getReportNodeRootPlan(@PathParam("id") String reportNodeId) {
 		PlanAccessor planAccessor = getContext().getPlanAccessor();

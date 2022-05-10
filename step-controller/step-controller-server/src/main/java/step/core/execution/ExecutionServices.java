@@ -117,6 +117,7 @@ public class ExecutionServices extends AbstractServices {
 	@POST
 	@Path("/search/by/ref")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public List<Execution> getExecutionsByRepositoryObjectReference(RepositoryObjectReference objectReference) {
 		return getContext().getExecutionAccessor().getTestExecutionsByArtefactURL(objectReference);

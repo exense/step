@@ -115,6 +115,7 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 	@POST
 	@Path("/find")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="read")
 	public List<Function> findMany(Map<String,String> attributes) {
 		return StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
@@ -123,6 +124,7 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 	@POST
 	@Path("/lookup")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="read")
 	public Function lookupCallFunction(CallFunction callFunction) {
 		Function function = null;
@@ -186,6 +188,7 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/select")
 	@Secured(right="execute")
 	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter, @Context HttpServletRequest req) throws FunctionExecutionServiceException {

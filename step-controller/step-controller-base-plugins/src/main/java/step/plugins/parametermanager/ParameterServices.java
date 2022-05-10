@@ -188,6 +188,7 @@ public class ParameterServices extends AbstractServices {
 	
 	@GET
 	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
 	public Parameter get(@PathParam("id") String id) {
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
