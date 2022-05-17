@@ -36,6 +36,7 @@
 		<module>step-controller-measurement</module>
 		<module>step-controller-plugins-rtm</module>
 		<module>step-controller-plugins-script-editor</module>
+        <module>step-controller-plugins-timeseries</module>
     </modules>
 	
 	<dependencies>
