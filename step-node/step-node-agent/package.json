@@ -9,7 +9,8 @@
     "start": "node server.js",
     "test": "node test/test.js",
     "build": "",
-    "pack": ""
+    "pack": "",
+    "push": "npm publish"
   },
   "author": "Jerome Comte",
   "license": "AGPL-3.0",
