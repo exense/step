@@ -46,8 +46,8 @@
 							"URL": "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/"
 						}
 					],
-					"ORIGIN": "step-enterprise-parent/pom.xml",
-					"DESTINATION": "ch.exense.step-enterprise:step-enterprise-parent-${BRANCH}:${VERSION}",
+					"ORIGIN": "step-parent/pom.xml",
+					"DESTINATION": "ch.exense.step:step-parent-${BRANCH}:${VERSION}",
 					"PACKAGING": "pom"
 				},
 				{
