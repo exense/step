@@ -36,9 +36,9 @@ import javax.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.GlobalContext;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
-import step.core.deployment.Session;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
+import step.framework.server.Session;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
 import step.core.objectenricher.ObjectHookRegistry;
@@ -52,7 +52,7 @@ import step.resources.ResourceRevisionContainer;
 @Singleton
 @Path("export")
 @Tag(name = "Exports")
-public class ExportServices extends AbstractServices {
+public class ExportServices extends AbstractStepServices {
 	
 	ExportManager exportManager;
 	

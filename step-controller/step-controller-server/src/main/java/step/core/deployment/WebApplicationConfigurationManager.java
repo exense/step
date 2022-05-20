@@ -1,5 +1,7 @@
 package step.core.deployment;
 
+import step.framework.server.Session;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

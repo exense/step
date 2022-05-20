@@ -55,11 +55,13 @@ import step.core.controller.ControllerSettingAccessor;
 import step.core.security.password.PasswordPolicies;
 import step.core.security.password.PasswordPolicyDescriptor;
 import step.core.security.password.PasswordPolicyViolation;
+import step.framework.server.audit.AuditLogger;
+import step.framework.server.security.Secured;
 
 @Singleton
 @Path("admin")
 @Tag(name = "Admin")
-public class AdminServices extends AbstractServices {
+public class AdminServices extends AbstractStepServices {
 
 	private static final Logger logger = org.slf4j.LoggerFactory.getLogger(AdminServices.class);
 	private static String DEFAULT_ENCRYPTION_ALGORITHM = "RSA";

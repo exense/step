@@ -42,14 +42,14 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import ch.exense.commons.io.FileHelper;
 import step.core.GlobalContext;
-import step.core.deployment.AbstractServices;
+import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
-import step.core.deployment.Secured;
+import step.framework.server.security.Secured;
 import step.core.objectenricher.ObjectEnricher;
 
 @Path("/resources")
 @Tag(name = "Resources")
-public class ResourceServices extends AbstractServices { 
+public class ResourceServices extends AbstractStepServices {
 
 	protected ResourceManager resourceManager;
 	protected ResourceAccessor resourceAccessor;

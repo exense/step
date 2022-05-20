@@ -6,9 +6,9 @@ import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.core.controller.errorhandling.ApplicationException;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
-import step.core.deployment.Session;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
+import step.framework.server.Session;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Priority;
@@ -24,7 +24,7 @@ import java.util.Objects;
 @Secured
 @Provider
 @Priority(Priorities.AUTHENTICATION)
-public class AuthenticationFilter extends AbstractServices implements ContainerRequestFilter {
+public class AuthenticationFilter extends AbstractStepServices implements ContainerRequestFilter {
 
     private static Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 
@@ -70,14 +70,13 @@ public class AuthenticationFilter extends AbstractServices implements ContainerR
 
     private void initSessionIfRequired(AuthenticationTokenDetails authenticationTokenDetails) {
         //If step session is not yet set or not really initiated
-        if (getSession() == null || getSession().getUser() == null){
+        if (getSession() == null || getSession().getUser().getUsername() == null){
             Session session = Objects.requireNonNullElse(getSession(),new Session());
             String username = authenticationTokenDetails.getUsername();
             User user = userAccessor.getByUsername(username);
             if(user == null) {
                 throw new ApplicationException(100, "Unknow user '"+username+"': this user is not defined in step", null);
             }
-            session.setUser(user);
             session.setAuthenticated(true);
             session.setLocalToken(false);
             setSession(session);

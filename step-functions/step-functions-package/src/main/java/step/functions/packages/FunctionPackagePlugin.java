@@ -40,7 +40,7 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 	private FunctionPackageAccessor packageAccessor;
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		FileResolver fileResolver = context.getFileResolver();
 		ResourceManager resourceManager = context.getResourceManager();
 		
@@ -98,7 +98,7 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 	}
 	
 	@Override
-	public void executionControllerDestroy(GlobalContext context) {
+	public void serverStop(GlobalContext context) {
 		try {
 			packageManager.close();
 		} catch (IOException e) {

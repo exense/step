@@ -39,7 +39,7 @@ import step.plugins.screentemplating.ScreenTemplatePlugin;
 public class PlanPlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		PlanTypeRegistry planTypeRegistry = new PlanTypeRegistry();
 		planTypeRegistry.register(new PlanType<Plan>() {
 

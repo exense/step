@@ -40,7 +40,7 @@ public class QuotaManagerControllerPlugin extends AbstractControllerPlugin {
 	private QuotaManager quotaManager;
 
 	@Override
-	public void executionControllerStart(GlobalContext context) {
+	public void serverStart(GlobalContext context) {
 		context.getServiceRegistrationCallback().registerService(QuotaManagerServices.class);
 
 		String config = context.getConfiguration().getProperty("quotamanager.config");
@@ -50,6 +50,7 @@ public class QuotaManagerControllerPlugin extends AbstractControllerPlugin {
 			context.put(QuotaManager.class, manager);
 		}
 	}
+
 
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
@@ -75,7 +76,7 @@ public class QuotaManagerControllerPlugin extends AbstractControllerPlugin {
 	}
 
 	@Override
-	public void executionControllerDestroy(GlobalContext context) {
+	public void serverStop(GlobalContext context) {
 		if (fileWatchService != null) {
 			try {
 				fileWatchService.close();
@@ -83,6 +84,5 @@ public class QuotaManagerControllerPlugin extends AbstractControllerPlugin {
 				logger.error("Error while closing file watch service", e);
 			}
 		}
-		super.executionControllerDestroy(context);
 	}
 }

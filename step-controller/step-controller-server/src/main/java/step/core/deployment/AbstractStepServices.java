@@ -20,68 +20,48 @@ package step.core.deployment;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.servlet.http.HttpSession;
 
 import ch.exense.commons.app.Configuration;
-import step.core.Controller;
 import step.core.GlobalContext;
+import step.core.access.User;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.scheduler.ExecutionScheduler;
+import step.framework.server.AbstractServices;
 
-public abstract class AbstractServices {
+public abstract class AbstractStepServices extends AbstractServices<User> {
 
 	public static final String SESSION = "session";
 
-	@Inject
-	protected Controller controller;
-	
-	@Inject 
-	private HttpSession httpSession;
-	
 	protected Configuration configuration;
 
 	private ObjectHookRegistry objectHookRegistry;
 
-	public AbstractServices() {
+	@Inject
+	GlobalContext serverContext;
+
+	public AbstractStepServices() {
 		super();
 	}
 	
 	@PostConstruct
 	public void init() throws Exception {
-		GlobalContext context = controller.getContext();
-		configuration = context.getConfiguration();
-		objectHookRegistry = context.get(ObjectHookRegistry.class);
+		configuration = serverContext.getConfiguration();
+		objectHookRegistry = serverContext.get(ObjectHookRegistry.class);
 	}
 
 	protected GlobalContext getContext() {
-		return controller.getContext();
+		return serverContext;
 	}
 
 	protected ExecutionScheduler getScheduler() {
-		return controller.getScheduler();
+		return serverContext.getScheduler();
 	}
 	
 	protected ExecutionContext getExecutionRunnable(String executionID) {
 		return getScheduler().getCurrentExecutions().stream().filter(e->e.getExecutionId().equals(executionID))
 				.findFirst().orElse(null);
-	}
-	
-	protected Session getSession() {
-		if(httpSession != null) {
-			return (Session) httpSession.getAttribute(SESSION);
-		} else {
-			return null;
-		}
-	}
-	
-	protected void setSession(Session session) {
-		httpSession.setAttribute(SESSION, session);
-	}
-	
-	protected void invalidateSession(){
-		httpSession.invalidate();
 	}
 	
 	protected ObjectEnricher getObjectEnricher() {

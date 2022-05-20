@@ -28,8 +28,8 @@ public class StagingRepositoryPlugin extends AbstractControllerPlugin {
 	public static final String STAGING_REPOSITORY = "staging";
 	
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
-		super.executionControllerStart(context);
+	public void serverStart(GlobalContext context) throws Exception {
+		super.serverStart(context);
 		
 		StagingContextAccessorImpl registry = new StagingContextAccessorImpl(
 				context.getCollectionFactory().getCollection("staging", StagingContext.class));

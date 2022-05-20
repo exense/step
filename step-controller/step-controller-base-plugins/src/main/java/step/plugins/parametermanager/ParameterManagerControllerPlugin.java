@@ -56,7 +56,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 	private EncryptionManager encryptionManager;
 	
 	@Override
-	public void executionControllerStart(GlobalContext context) {
+	public void serverStart(GlobalContext context) {
 		// The encryption manager might be null
 		encryptionManager = context.get(EncryptionManager.class);
 

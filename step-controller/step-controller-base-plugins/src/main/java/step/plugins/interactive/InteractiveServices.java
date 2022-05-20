@@ -27,8 +27,8 @@ import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.core.encryption.EncryptionManager;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngine;
@@ -70,7 +70,7 @@ import java.util.concurrent.*;
 @Singleton
 @Path("interactive")
 @Tag(name = "Interactive plan execution")
-public class InteractiveServices extends AbstractServices {
+public class InteractiveServices extends AbstractStepServices {
 
 	private final Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
 	private final Timer sessionExpirationTimer;

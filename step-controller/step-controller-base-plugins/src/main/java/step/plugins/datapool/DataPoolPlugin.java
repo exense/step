@@ -27,7 +27,7 @@ import step.datapool.excel.ExcelFunctions;
 public class DataPoolPlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		context.getServiceRegistrationCallback().registerService(DataPoolPluginServices.class);
 		
 		// forced to set the configuration using the static method as long as ExcelFunction is used in a static way

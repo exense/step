@@ -21,6 +21,7 @@ package step.migration.tasks;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.repositories.RepositoryObjectManager;
 import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
 
@@ -31,8 +32,9 @@ import step.migration.MigrationManagerPlugin;
 public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		MigrationManager migrationManager = context.get(MigrationManager.class);
+		migrationManager.addBinding(RepositoryObjectManager.class, context.getRepositoryObjectManager());
 		migrationManager.register(SetSchedulerTaskAttributes.class);
 		migrationManager.register(MigrateArtefactsToPlans.class);
 		migrationManager.register(ScreenTemplateMigrationTask.class);
@@ -40,5 +42,25 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 		migrationManager.register(ScreenTemplateArtefactTableMigrationTask.class);
 		migrationManager.register(MigrateSeleniumFunctions.class);
 		migrationManager.register(MigrateFunctionCallsById.class);
+	}
+
+	@Override
+	public void migrateData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void afterInitializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void serverStop(GlobalContext context) {
+
 	}
 }

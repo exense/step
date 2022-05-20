@@ -29,15 +29,15 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Filter;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.core.deployment.Unfiltered;
 import step.core.entities.EntityManager;
 
 @Singleton
 @Path("remote")
 @Tag(name = "Collections")
-public class RemoteCollectionServices<T> extends AbstractServices {
+public class RemoteCollectionServices<T> extends AbstractStepServices {
 
     protected CollectionFactory collectionFactory;
     protected EntityManager entityManager;

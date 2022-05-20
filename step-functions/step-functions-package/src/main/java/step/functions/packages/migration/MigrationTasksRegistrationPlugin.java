@@ -13,7 +13,7 @@ import step.migration.tasks.MigrationManagerTasksPlugin;
 public class MigrationTasksRegistrationPlugin  extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		MigrationManager migrationManager = context.get(MigrationManager.class);
 		migrationManager.register(ScreenTemplateFunctionTableExtensionsMigrationTask.class);
 	}

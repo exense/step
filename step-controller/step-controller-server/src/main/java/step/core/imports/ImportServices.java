@@ -36,14 +36,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import step.attachments.FileResolver;
 import step.attachments.FileResolver.FileHandle;
 import step.core.GlobalContext;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.Version;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.migration.MigrationManager;
 
 @Singleton
 @Path("import")
 @Tag(name = "Imports")
-public class ImportServices extends AbstractServices {
+public class ImportServices extends AbstractStepServices {
 	
 	private FileResolver fileResolver;
 	private ImportManager importManager;
@@ -52,7 +53,8 @@ public class ImportServices extends AbstractServices {
 	public void init() throws Exception {
 		super.init();
 		GlobalContext context = getContext();
-		importManager = new ImportManager(context.getEntityManager(), context.require(MigrationManager.class));
+		importManager = new ImportManager(context.getEntityManager(), context.require(MigrationManager.class),
+				context.require(Version.class));
 		fileResolver = context.getFileResolver();
 	}
 

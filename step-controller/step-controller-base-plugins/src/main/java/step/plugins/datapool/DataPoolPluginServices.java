@@ -27,15 +27,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.Hidden;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
 
 @Singleton
 @Path("/datapool")
 @Hidden
-public class DataPoolPluginServices extends AbstractServices {
+public class DataPoolPluginServices extends AbstractStepServices {
 	
 	@GET
 	@Path("/types/{id}")

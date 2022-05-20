@@ -28,6 +28,7 @@ import org.junit.Test;
 import step.artefacts.IfBlock;
 import step.artefacts.RetryIfFails;
 import step.artefacts.Set;
+import step.artefacts.reports.RetryIfFailsReportNode;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -136,7 +137,12 @@ public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
 		execute(block);
 		
 		ReportNode child = getFirstReportNode();
-		Assert.assertTrue(child.getDuration()<=1100);
+		System.out.println("Assert child.getDuration()<=2000 with value: " + child.getDuration());
+		Assert.assertTrue(child.getDuration()<2000);
+		Assert.assertTrue(child instanceof RetryIfFailsReportNode);
+		RetryIfFailsReportNode retryIfFailsReportNode = (RetryIfFailsReportNode) child;
+		Assert.assertEquals(2, retryIfFailsReportNode.getTries());
+		Assert.assertEquals(1, retryIfFailsReportNode.getSkipped());
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		
 		assertEquals(1, getChildren(child).size());

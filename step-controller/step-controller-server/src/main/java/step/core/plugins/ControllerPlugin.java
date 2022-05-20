@@ -20,22 +20,11 @@ package step.core.plugins;
 
 import step.core.GlobalContext;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.framework.server.ServerPlugin;
 
-public interface ControllerPlugin {
+public interface ControllerPlugin extends ServerPlugin<GlobalContext> {
 
 	public ExecutionEnginePlugin getExecutionEnginePlugin();
 
 	public WebPlugin getWebPlugin();
-
-	public void executionControllerStart(GlobalContext context) throws Exception;
-
-	public void migrateData(GlobalContext context) throws Exception;
-	
-	public void initializeData(GlobalContext context) throws Exception;
-
-	public void afterInitializeData(GlobalContext context) throws Exception;
-
-	public void executionControllerDestroy(GlobalContext context);
-
-	boolean canBeDisabled();
 }

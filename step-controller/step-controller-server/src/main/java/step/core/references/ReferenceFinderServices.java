@@ -2,8 +2,8 @@ package step.core.references;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.core.entities.EntityDependencyTreeVisitor;
 import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectPredicate;
@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 @Singleton
 @Path("references")
 @Tag(name = "References")
-public class ReferenceFinderServices extends AbstractServices {
+public class ReferenceFinderServices extends AbstractStepServices {
 
     private EntityManager entityManager;
 

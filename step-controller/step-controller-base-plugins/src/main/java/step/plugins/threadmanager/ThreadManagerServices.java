@@ -36,15 +36,15 @@ import step.common.managedoperations.Operation;
 import step.common.managedoperations.OperationDetails;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 import step.plugins.executiontypes.TestSetExecutionType;
 
 @Path("/threadmanager")
 @Tag(name = "System")
-public class ThreadManagerServices extends AbstractServices {
+public class ThreadManagerServices extends AbstractStepServices {
 
 	private ThreadManager threadManager;
 

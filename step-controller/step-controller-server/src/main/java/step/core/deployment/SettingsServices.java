@@ -26,11 +26,12 @@ import javax.ws.rs.core.MediaType;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
+import step.framework.server.security.Secured;
 
 @Singleton
 @Path("settings")
 @Tag(name = "Settings")
-public class SettingsServices extends AbstractServices {
+public class SettingsServices extends AbstractStepServices {
 	
 	protected ControllerSettingAccessor controllerSettingsAccessor;
 

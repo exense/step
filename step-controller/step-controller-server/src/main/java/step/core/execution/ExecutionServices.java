@@ -41,9 +41,9 @@ import org.bson.types.ObjectId;
 
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.SearchOrder;
-import step.core.deployment.AbstractServices;
+import step.core.deployment.AbstractStepServices;
 import step.core.deployment.FindByCriteraParam;
-import step.core.deployment.Secured;
+import step.framework.server.security.Secured;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
@@ -54,7 +54,7 @@ import step.engine.execution.ExecutionLifecycleManager;
 @Singleton
 @Path("executions")
 @Tag(name = "Executions")
-public class ExecutionServices extends AbstractServices {
+public class ExecutionServices extends AbstractStepServices {
 
 	protected ExecutionAccessor executionAccessor;
 	

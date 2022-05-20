@@ -32,7 +32,7 @@ import step.core.tables.TableRegistry;
 public class TablePlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) {
+	public void serverStart(GlobalContext context) {
 		context.getServiceRegistrationCallback().registerService(TableService.class);
 		
 		Collection<User> collectionDriver = context.getCollectionFactory().getCollection("users", User.class);

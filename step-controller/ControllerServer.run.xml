@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="ControllerServer" type="Application" factoryName="Application" nameIsGenerated="true">
-    <option name="MAIN_CLASS_NAME" value="step.controller.ControllerServer" />
+    <option name="MAIN_CLASS_NAME" value="step.framework.server.ControllerServer" />
     <module name="step-controller-server-webapp" />
     <option name="PROGRAM_PARAMETERS" value="-config=&quot;src/test/resources/step.properties&quot;" />
     <option name="VM_PARAMETERS" value="-Dhttp.keepAlive=true -Dhttp.maxConnections=50 -Dlogback.configurationFile=../../step-distribution/template-controller/bin/logback.xml" />

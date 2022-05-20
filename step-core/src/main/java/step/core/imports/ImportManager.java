@@ -55,12 +55,16 @@ public class ImportManager {
 	private final EntityManager entityManager;
 	private final ObjectMapper mapper = DefaultJacksonMapperProvider.getObjectMapper();
 	private final MigrationManager migrationManager;
+	private final Version currentVersion;
 
-	public ImportManager(EntityManager entityManager, MigrationManager migrationManager) throws IOException {
+	public ImportManager(EntityManager entityManager, MigrationManager migrationManager, Version currentVersion) throws IOException {
 		super();
 		this.entityManager = entityManager;
 		this.migrationManager = migrationManager;
+		this.currentVersion = currentVersion;
+		
 	}
+
 
 	/**
 	 * Import entities included in provided file
@@ -125,7 +129,7 @@ public class ImportManager {
 	private void importEntitiesFromTemporaryCollection(ImportConfiguration importConfig, ImportContext importContext, List<String> entityNames) {
 		// Perform migration tasks on temporary collections
 		final FilesystemCollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
-		migrationManager.migrate(tempCollectionFactory, importContext.getVersion(), Version.getCurrentVersion());
+		migrationManager.migrate(tempCollectionFactory, importContext.getVersion(), currentVersion);
 
 		// Replace IDs of all entities if overwriting is disabled
 		boolean generateNewObjectIds = !importConfig.isOverwrite();

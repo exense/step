@@ -29,7 +29,7 @@ import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
-import step.core.Version;
+import step.core.Controller;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
@@ -180,7 +180,7 @@ public class ExportManagerTest {
 
 	private Map<String, String> buildMetadata() {
 		Map<String,String> metadata = new HashMap<>();
-		metadata.put("version", Version.getCurrentVersion().toString());
+		metadata.put("version", Controller.VERSION.toString());
 		metadata.put("export-time" , "1589542872475");
 		metadata.put("user", "admin");
 		return metadata;
@@ -896,10 +896,10 @@ public class ExportManagerTest {
 	
 	private ImportManager createNewContextAndGetImportManager() throws IOException {
 		before();
-		return new ImportManager(entityManager, migrationManager);
+		return new ImportManager(entityManager, migrationManager, Controller.VERSION);
 	}
 	
 	private ImportManager newImportManager() throws IOException {
-		return new ImportManager(entityManager, migrationManager);
+		return new ImportManager(entityManager, migrationManager, Controller.VERSION);
 	}
 }

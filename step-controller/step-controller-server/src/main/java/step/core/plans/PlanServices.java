@@ -27,8 +27,8 @@ import step.artefacts.handlers.SelectorHelper;
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.objectenricher.ObjectPredicate;
@@ -48,7 +48,7 @@ import java.util.stream.StreamSupport;
 @Singleton
 @Path("plans")
 @Tag(name = "Plans")
-public class PlanServices extends AbstractServices {
+public class PlanServices extends AbstractStepServices {
 
 	protected PlanAccessor planAccessor;
 	protected PlanTypeRegistry planTypeRegistry;

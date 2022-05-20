@@ -26,14 +26,14 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.deployment.AbstractServices;
+import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceError;
 import step.core.deployment.ControllerServiceException;
-import step.core.deployment.Secured;
+import step.framework.server.security.Secured;
 
 @Secured
 @Provider
-public class ErrorFilter extends AbstractServices implements ExceptionMapper<Exception>  {
+public class ErrorFilter extends AbstractStepServices implements ExceptionMapper<Exception>  {
 
 	private static final Logger logger = LoggerFactory.getLogger(ErrorFilter.class);
 	

@@ -40,8 +40,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import ch.exense.commons.io.FileHelper;
 import step.core.GlobalContext;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
@@ -52,7 +52,7 @@ import step.resources.ResourceRevisionContainer;
 @Singleton
 @Path("staging")
 @Hidden
-public class StagingRepositoryServices extends AbstractServices {
+public class StagingRepositoryServices extends AbstractStepServices {
 	
 	protected StagingContextAccessorImpl stagingContextAccessor ;
 	protected ResourceManager resourceManager;
@@ -129,7 +129,7 @@ public class StagingRepositoryServices extends AbstractServices {
 		params.setUserID("remote");
 		params.setCustomParameters(executionParameters);
 		
-		return controller.getScheduler().execute(params);
+		return this.getScheduler().execute(params);
 	}
 	
 	@POST

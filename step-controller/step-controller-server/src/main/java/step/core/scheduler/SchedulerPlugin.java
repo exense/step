@@ -25,6 +25,7 @@ import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
+import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.tables.AbstractTable;
@@ -34,31 +35,45 @@ import step.plugins.screentemplating.InputType;
 import step.plugins.screentemplating.ScreenInput;
 import step.plugins.screentemplating.ScreenInputAccessor;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
-import step.resources.Resource;
 
-@Plugin(dependencies= {ScreenTemplatePlugin.class, ControllerSettingPlugin.class})
+@Plugin(dependencies= {ScreenTemplatePlugin.class, ControllerSettingPlugin.class, ObjectHookControllerPlugin.class})
 public class SchedulerPlugin extends AbstractControllerPlugin {
 
 	private static final String SCHEDULER_TABLE = "schedulerTable";
 	
 	private ControllerSettingAccessor controllerSettingAccessor;
 
-
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
 		Collection<ExecutiontTaskParameters> collectionDriver = context.getCollectionFactory().getCollection("tasks",
 				ExecutiontTaskParameters.class);
 		context.get(TableRegistry.class).register("tasks", new AbstractTable<>(collectionDriver, true));
 
 	}
-	
+
+	@Override
+	public void migrateData(GlobalContext context) throws Exception {
+
+	}
+
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
 		createScreenInputDefinitionsIfNecessary(context);
 		createSchedulerSettingsIfNecessary(context);
 	}
-	
+
+	@Override
+	public void afterInitializeData(GlobalContext context) throws Exception {
+		ExecutionScheduler scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context));
+		context.put(ExecutionScheduler.class, scheduler);
+	}
+
+	@Override
+	public void serverStop(GlobalContext context) {
+
+	}
+
 	protected void createSchedulerSettingsIfNecessary(GlobalContext context) {
 		controllerSettingAccessor.createSettingIfNotExisting(ExecutionScheduler.SETTING_SCHEDULER_ENABLED, "true");
 	}

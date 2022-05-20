@@ -19,20 +19,14 @@
 package step.core.deployment;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -47,17 +41,14 @@ import org.bson.types.ObjectId;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
+import step.core.Controller;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.execution.ExecutionContext;
-import step.core.execution.model.ExecutionMode;
-import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.Plan;
@@ -65,20 +56,20 @@ import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
-import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.tasks.AsyncTaskManager;
-import step.engine.execution.ExecutionLifecycleManager;
+import step.framework.server.security.Secured;
 
 @Singleton
 @Path("controller")
 @Tag(name = "Controller")
-public class ControllerServices extends AbstractServices {
+public class ControllerServices extends AbstractStepServices {
 	
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
 	private AsyncTaskManager taskManager;
 	private Version currentVersion;
 	private PlanLocator planLocator;
 	private ObjectPredicate objectPredicate;
+	private Controller controller;
 			
 	@PostConstruct
 	public void init() throws Exception {
@@ -87,6 +78,7 @@ public class ControllerServices extends AbstractServices {
 		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
 		taskManager = context.get(AsyncTaskManager.class);
 		currentVersion = context.getCurrentVersion();
+		controller = context.require(Controller.class);
 
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);

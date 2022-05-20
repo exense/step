@@ -35,13 +35,33 @@ public class ObjectHookControllerPlugin extends AbstractControllerPlugin {
 	static final Logger logger = LoggerFactory.getLogger(ObjectHookControllerPlugin.class);
 
 	@Override
-	public void executionControllerStart(GlobalContext context) {
+	public void serverStart(GlobalContext context) throws Exception {
 		objectHookRegistry = new ObjectHookRegistry();
 		context.put(ObjectHookRegistry.class, objectHookRegistry);
-		
+
 		ObjectPredicateFactory objectPredicateFactory = new ObjectPredicateFactory(objectHookRegistry);
 		context.put(ObjectPredicateFactory.class, objectPredicateFactory);
-		
+
 		context.getServiceRegistrationCallback().registerService(ObjectHookInterceptor.class);
+	}
+
+	@Override
+	public void migrateData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void afterInitializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void serverStop(GlobalContext context) {
+
 	}
 }

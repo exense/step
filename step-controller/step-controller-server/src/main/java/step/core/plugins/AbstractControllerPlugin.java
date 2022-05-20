@@ -18,9 +18,6 @@
  ******************************************************************************/
 package step.core.plugins;
 
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.ResourceHandler;
-
 import step.core.GlobalContext;
 import step.engine.plugins.ExecutionEnginePlugin;
 
@@ -36,46 +33,33 @@ public abstract class AbstractControllerPlugin extends AbstractPlugin implements
 	}
 
 	@Override
-	public void executionControllerStart(GlobalContext context)  throws Exception {}
-
-	@Override
-	public void migrateData(GlobalContext context) throws Exception {}
-	
-	@Override
-	public void initializeData(GlobalContext context) throws Exception {}
-	
-	@Override
-	public void afterInitializeData(GlobalContext context) throws Exception {}
-	
-	@Override
-	public void executionControllerDestroy(GlobalContext context) {}
-
-	@Override
 	public boolean canBeDisabled() {
 		return true;
 	}
 
-	protected void registerWebapp(GlobalContext context, String path) {
-		ResourceHandler bb = new ResourceHandler();
-		
-		bb.setResourceBase(this.getClass().getResource("webapp").toExternalForm());
-		bb.setEtags(true);
-		
-		ContextHandler ctx = new ContextHandler(path);
-		ctx.setHandler(bb);
-		
-		context.getServiceRegistrationCallback().registerHandler(ctx);
+	@Override
+	public void serverStart(GlobalContext context) throws Exception {
+
 	}
 
-	protected void registerWebappFromClass(Class<?> baseClass, GlobalContext context, String path) {
-		ResourceHandler bb = new ResourceHandler();
+	@Override
+	public void serverStop(GlobalContext context) {
 
-		bb.setResourceBase(baseClass.getResource("webapp").toExternalForm());
-		bb.setEtags(true);
-
-		ContextHandler ctx = new ContextHandler(path);
-		ctx.setHandler(bb);
-
-		context.getServiceRegistrationCallback().registerHandler(ctx);
 	}
+
+	@Override
+	public void migrateData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void afterInitializeData(GlobalContext context) throws Exception {
+
+	}
+
 }

@@ -42,10 +42,12 @@ import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.ql.OQLFilterBuilder;
+import step.framework.server.Session;
+import step.framework.server.security.Secured;
 
 @Secured
 @Provider
-public class ObjectHookInterceptor extends AbstractServices implements ReaderInterceptor, WriterInterceptor  {
+public class ObjectHookInterceptor extends AbstractStepServices implements ReaderInterceptor, WriterInterceptor  {
 
 	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(ObjectHookInterceptor.class);

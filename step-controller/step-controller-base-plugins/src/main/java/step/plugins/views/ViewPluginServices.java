@@ -27,12 +27,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.Hidden;
-import step.core.deployment.AbstractServices;
+import step.core.deployment.AbstractStepServices;
 
 @Singleton
 @Path("/views")
 @Hidden
-public class ViewPluginServices extends AbstractServices {
+public class ViewPluginServices extends AbstractStepServices {
 
 	private ViewManager viewManager;
 

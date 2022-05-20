@@ -22,13 +22,10 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -60,7 +57,7 @@ import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
 import step.core.deployment.ApplicationServices;
-import step.core.deployment.Secured;
+import step.framework.server.security.Secured;
 import step.core.export.ExportTaskManager;
 import step.core.export.ExportTaskManager.ExportRunnable;
 import step.core.export.ExportTaskManager.ExportStatus;
@@ -95,7 +92,7 @@ public class TableService extends ApplicationServices {
 	public void init() throws Exception {
 		super.init();
 		tableRegistry = getContext().get(TableRegistry.class);
-		maxTime = controller.getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
+		maxTime = getContext().getConfiguration().getPropertyAsInteger("db.query.maxTime",30);
 		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
 		exportTaskManager = new ExportTaskManager(getContext().getResourceManager());
 		tableServiceHelper = new TableServiceHelper();

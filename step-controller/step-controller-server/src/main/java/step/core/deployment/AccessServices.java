@@ -44,7 +44,7 @@ import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.access.AccessConfiguration;
-import step.core.access.AccessManager;
+import step.framework.server.access.AccessManager;
 import step.core.access.AuthenticationManager;
 import step.core.access.Role;
 import step.core.access.RoleProvider;
@@ -52,13 +52,16 @@ import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.authentication.AuthorizationServerManager;
 import step.core.controller.errorhandling.ApplicationException;
+import step.framework.server.Session;
+import step.framework.server.audit.AuditLogger;
+import step.framework.server.security.Secured;
 
 import static step.core.authentication.JWTSettings.CONFIG_KEY_JWT_NOLOGIN;
 
 @Singleton
 @Path("/access")
 @Tag(name = "Access")
-public class AccessServices extends AbstractServices {
+public class AccessServices extends AbstractStepServices {
 	private static Logger logger = LoggerFactory.getLogger(AccessServices.class);
 	
 	private RoleProvider roleProvider;
@@ -74,7 +77,7 @@ public class AccessServices extends AbstractServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		GlobalContext context = controller.getContext();
+		GlobalContext context = getContext();
 		
 		roleProvider = context.get(RoleProvider.class);
 		authenticationManager = context.get(AuthenticationManager.class);
@@ -114,7 +117,7 @@ public class AccessServices extends AbstractServices {
     @Produces("application/json")
     @Consumes("application/json")
     public Response authenticateUser(Credentials credentials) {
-		Session session = getSession();
+		Session<User> session = getSession();
 		boolean authenticated = false;
 		try {
 			authenticated = authenticationManager.authenticate(session, credentials);
@@ -174,7 +177,7 @@ public class AccessServices extends AbstractServices {
 //	}
 
 	protected SessionResponse buildSessionResponse(Session session) {
-		User user = session.getUser();
+		User user = (User) session.getUser();
 		Role role = accessManager.getRoleInContext(session);
 		boolean isOtp = (boolean) Objects.requireNonNullElse(session.getUser().getCustomField("otp"), false);
 		return new SessionResponse(user.getUsername(), role, isOtp);

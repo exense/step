@@ -23,9 +23,6 @@ import java.io.InputStream;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
 
 import ch.exense.commons.app.Configuration;
@@ -52,7 +49,7 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 	private MeasurementAccessor accessor;
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		context.getServiceRegistrationCallback().registerService(RtmPluginServices.class);
 		String fileName = "rtm.properties";
 		InputStream inputStream = getClass().getClassLoader().getResourceAsStream(fileName);
@@ -87,7 +84,7 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 	}
 
 	@Override
-	public void executionControllerDestroy(GlobalContext context) {
+	public void serverStop(GlobalContext context) {
 		if(accessor !=null) {
 			accessor.close();
 		}

@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import step.core.AbstractContext;
-import step.core.AbstractStepContext;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;

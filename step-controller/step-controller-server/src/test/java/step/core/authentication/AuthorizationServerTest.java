@@ -2,11 +2,10 @@ package step.core.authentication;
 
 import ch.exense.commons.app.Configuration;
 import org.junit.Test;
-import step.core.access.AccessManager;
-import step.core.access.AccessManagerImpl;
+import step.framework.server.access.AccessManager;
 import step.core.access.Role;
 import step.core.access.RoleResolver;
-import step.core.deployment.Session;
+import step.framework.server.Session;
 
 public class AuthorizationServerTest {
     

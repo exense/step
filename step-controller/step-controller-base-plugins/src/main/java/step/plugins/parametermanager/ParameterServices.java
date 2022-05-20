@@ -36,25 +36,23 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.commons.activation.Expression;
 import step.core.GlobalContext;
-import step.core.access.AccessManager;
 import step.core.accessors.Accessor;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
-import step.core.deployment.Unfiltered;
+import step.core.deployment.AbstractStepServices;
 import step.core.encryption.EncryptionManagerException;
+import step.framework.server.access.AccessManager;
+import step.framework.server.security.Secured;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
 
 @Path("/parameters")
 @Tag(name = "Parameters")
-public class ParameterServices extends AbstractServices {
+public class ParameterServices extends AbstractStepServices {
 	
 	private AccessManager accessManager;
 	private Accessor<Parameter> parameterAccessor;

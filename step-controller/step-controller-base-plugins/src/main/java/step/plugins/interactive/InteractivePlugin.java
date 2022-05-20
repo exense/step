@@ -16,27 +16,18 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.migration;
+package step.plugins.interactive;
 
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.repositories.RepositoryObjectManager;
-import step.versionmanager.VersionManagerPlugin;
 
-@Plugin(dependencies= {VersionManagerPlugin.class})
-/**
- * This plugin is responsible for the registration of the MigrationManager
- */
-public class MigrationManagerPlugin extends AbstractControllerPlugin {
+@Plugin
+public class InteractivePlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
-		MigrationManager migrationManager = new MigrationManager();
-		migrationManager.addBinding(RepositoryObjectManager.class, context.getRepositoryObjectManager());
-		context.put(MigrationManager.class, migrationManager);
-		
-		super.executionControllerStart(context);
+	public void serverStart(GlobalContext context) throws Exception {
+		context.getServiceRegistrationCallback().registerService(InteractiveServices.class);
 	}
-	
+
 }

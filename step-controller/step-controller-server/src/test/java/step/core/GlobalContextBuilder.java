@@ -52,6 +52,7 @@ import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.core.tables.TableRegistry;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
+import step.framework.server.ServerPluginManager;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -81,8 +82,8 @@ public class GlobalContextBuilder {
 		context.setDynamicBeanResolver(dynamicBeanResolver);
 		
 		Configuration configuration = new Configuration();
-		ControllerPluginManager pluginManager = new ControllerPluginManager(configuration);
-		context.setPluginManager(pluginManager);
+		ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(configuration));
+		context.setContorllerPluginManager(pluginManager);
 		
 		context.setConfiguration(configuration);
 		

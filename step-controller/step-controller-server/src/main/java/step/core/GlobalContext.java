@@ -18,94 +18,89 @@
  ******************************************************************************/
 package step.core;
 
-import step.core.Controller.ServiceRegistrationCallback;
 import step.core.access.UserAccessor;
 import step.core.collections.CollectionFactory;
 import step.core.entities.EntityManager;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.ControllerPluginManager;
+import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
+import step.framework.server.ServiceRegistrationCallback;
 
+@OverrideServerContext
 public class GlobalContext extends AbstractExecutionEngineContext {
-	
-	private ControllerPluginManager pluginManager;
-	 
-	private CollectionFactory collectionFactory;
-	
-	private ExecutionAccessor executionAccessor;
-	
-	private ExecutionTaskAccessor scheduleAccessor;
-	
-	private UserAccessor userAccessor;
-	
-	private ServiceRegistrationCallback serviceRegistrationCallback;
-	
-	private EntityManager entityManager;
-	
+
 	public GlobalContext() {
 		super();
 	}
 
 	public CollectionFactory getCollectionFactory() {
-		return collectionFactory;
+		return this.get(CollectionFactory.class);
 	}
 
 	public void setCollectionFactory(CollectionFactory collectionFactory) {
-		this.collectionFactory = collectionFactory;
+		this.put(CollectionFactory.class,collectionFactory);
 	}
 
 	public ExecutionAccessor getExecutionAccessor() {
-		return executionAccessor;
+		return this.get(ExecutionAccessor.class);
 	}
 
 	public void setExecutionAccessor(ExecutionAccessor executionAccessor) {
-		this.executionAccessor = executionAccessor;
+		this.put(ExecutionAccessor.class,executionAccessor);
 	}
 
 	public ExecutionTaskAccessor getScheduleAccessor() {
-		return scheduleAccessor;
+		return this.get(ExecutionTaskAccessor.class);
 	}
 
 	public void setScheduleAccessor(ExecutionTaskAccessor scheduleAccessor) {
-		this.scheduleAccessor = scheduleAccessor;
+		this.put(ExecutionTaskAccessor.class,scheduleAccessor);
 	}
 
 	public UserAccessor getUserAccessor() {
-		return userAccessor;
+		return this.get(UserAccessor.class);
 	}
 
 	public void setUserAccessor(UserAccessor userAccessor) {
-		this.userAccessor = userAccessor;
+		this.put(UserAccessor.class,userAccessor);
 	}
 
-	public ControllerPluginManager getPluginManager() {
-		return pluginManager;
+	public ControllerPluginManager getControllerPluginManager() {
+		return this.get(ControllerPluginManager.class);
 	}
 
-	public void setPluginManager(ControllerPluginManager pluginManager) {
-		this.pluginManager = pluginManager;
+	public void setContorllerPluginManager(ControllerPluginManager pluginManager) {
+		this.put(ControllerPluginManager.class,pluginManager);
 	}
 	
 	public ServiceRegistrationCallback getServiceRegistrationCallback() {
-		return serviceRegistrationCallback;
+		return this.get(ServiceRegistrationCallback.class);
 	}
 
 	public void setServiceRegistrationCallback(
 			ServiceRegistrationCallback serviceRegistrationCallback) {
-		this.serviceRegistrationCallback = serviceRegistrationCallback;
+		this.put(ServiceRegistrationCallback.class,serviceRegistrationCallback);
 	}
 
 	public Version getCurrentVersion() {
-		return Version.getCurrentVersion();
+		return this.require(Version.class);
 	}
 
 	public EntityManager getEntityManager() {
-		return entityManager;
+		return this.get(EntityManager.class);
 	}
 
 	public void setEntityManager(EntityManager entityManager) {
-		this.entityManager = entityManager;
+		this.put(EntityManager.class,entityManager);
 	}
-	
+
+	public ExecutionScheduler getScheduler() {
+		return this.get(ExecutionScheduler.class);
+	}
+
+	public void setScheduler(ExecutionScheduler scheduler) {
+		this.put(ExecutionScheduler.class,scheduler);
+	}
 }

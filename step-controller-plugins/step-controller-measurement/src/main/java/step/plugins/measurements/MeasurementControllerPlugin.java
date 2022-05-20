@@ -31,8 +31,8 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 	GaugeCollectorRegistry gaugeCollectorRegistry;
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
-		super.executionControllerStart(context);
+	public void serverStart(GlobalContext context) throws Exception {
+		super.serverStart(context);
 		initGaugeCollectorRegistry(context);
 	}
 
@@ -104,7 +104,7 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 	}
 
 	@Override
-	public void executionControllerDestroy(GlobalContext context) {
+	public void serverStop(GlobalContext context) {
 		gaugeCollectorRegistry.stop();
 	}
 
