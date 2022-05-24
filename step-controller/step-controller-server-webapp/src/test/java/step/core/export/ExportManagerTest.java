@@ -577,18 +577,28 @@ public class ExportManagerTest {
 			testExportFile.delete();
 		}
 	}
-	
+
 	@Test
 	public void testExportPlanRecursively() throws Exception {
-		testExportPlansRecursively(true);
+		testExportPlansRecursively(false, true);
 	}
-	
+
 	@Test
 	public void testExportPlanRecursivelyNewReferences() throws Exception {
-		testExportPlansRecursively(false);
+		testExportPlansRecursively(false, false);
 	}
-	
-	private void testExportPlansRecursively(boolean overwrite) throws Exception {
+
+	@Test
+	public void testExportPlanRecursivelyWithPansOnly() throws Exception {
+		testExportPlansRecursively(true, true);
+	}
+
+	@Test
+	public void testExportPlanRecursivelyNewReferencesWithPansOnly() throws Exception {
+		testExportPlansRecursively(true, false);
+	}
+
+	private void testExportPlansRecursively(boolean plansOnly, boolean overwrite) throws Exception {
 		Sequence rootSequence = sequence();
 		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(sequence()).endBlock().build();
 		planAccessor.save(plan);
@@ -603,27 +613,23 @@ public class ExportManagerTest {
 		sequence.addChild(callFunction);
 		Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(sequence).endBlock().build();
 		planAccessor.save(plan2);
-		
+
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
 			exportManager.exportById(exportConfig, plan2.getId().toString());
-			
-			planAccessor.getAll().forEachRemaining(p->planAccessor.remove(p.getId()));
-			functionAccessor.getAll().forEachRemaining(p->functionAccessor.remove(p.getId()));
-			
+
+			planAccessor.getAll().forEachRemaining(p -> planAccessor.remove(p.getId()));
+			functionAccessor.getAll().forEachRemaining(p -> functionAccessor.remove(p.getId()));
+
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
-			
-			AtomicInteger nbPlans = new AtomicInteger(0);
-			planAccessor.getAll().forEachRemaining(p-> nbPlans.incrementAndGet());
-			AtomicInteger nbFunctions = new AtomicInteger(0);
-			functionAccessor.getAll().forEachRemaining(f->nbFunctions.incrementAndGet());
-			assertEquals(2, nbPlans.intValue());
-			assertEquals(1, nbFunctions.intValue());
-			
+			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), plansOnly ? List.of("plans") : null, overwrite));
+
+			assertEquals(2, planAccessor.stream().count());
+			assertEquals(plansOnly ? 0 : 1, functionAccessor.stream().count());
+
 			Plan actualPlan = planAccessor.get(plan.getId());
 			Plan actualPlan2 = planAccessor.get(plan2.getId());
 			Function actualFunction = functionAccessor.get(function.getId());
@@ -631,7 +637,11 @@ public class ExportManagerTest {
 				assertEquals(plan.getId(), actualPlan.getId());
 				assertEquals(plan.getRoot(), actualPlan.getRoot());
 				assertEquals(plan2.getId(), actualPlan2.getId());
-				assertEquals(function.getId(), actualFunction.getId());
+				if (plansOnly) {
+					assertNull(actualFunction);
+				} else {
+					assertEquals(function.getId(), actualFunction.getId());
+				}
 			} else {
 				assertNull(actualPlan);
 				assertNull(actualPlan2);
@@ -641,7 +651,7 @@ public class ExportManagerTest {
 			testExportFile.delete();
 		}
 	}
-	
+
 	@Test
 	public void testExportPlansWithCompo() throws Exception {
 		testExportPlansWithCompoFct(true);
