@@ -175,25 +175,26 @@ public class ImportManager {
 		FilesystemCollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
 		Collection<Document> tempCollection = tempCollectionFactory.getCollection(name, Document.class);
 
-		if (!skip) {
-			if (entityByName == null) {
-				throw new RuntimeException(
-						"The entity type with name '" + name + "' is unsupported in this version or license of step.");
+		if (entityByName == null) {
+			throw new RuntimeException(
+					"The entity type with name '" + name + "' is unsupported in this version or license of step.");
+		}
+		if (jParser.nextToken().equals(JsonToken.START_ARRAY)) {
+			if (!skip) {
+				logger.info("Importing entities of type " + name);
 			}
-			logger.info("Importing entities of type " + name);
-			if (jParser.nextToken().equals(JsonToken.START_ARRAY)) {
-				while (!jParser.nextToken().equals(JsonToken.END_ARRAY)) {
+			while (!jParser.nextToken().equals(JsonToken.END_ARRAY)) {
+				if (!skip) {
 					importOne(tempCollection, jParser);
+				} else {
+					// consume the json object when skipped
+					mapper.readValue(jParser, Document.class);
 				}
-			} else {
-				throw new RuntimeException("A JSON array was expected for entity '" + name + "'");
 			}
 		} else {
-			// consume the json object when skipped
-			// TODO: fix this
-			// mapper.readValue(jParser, BasicDBObject.class);
+			throw new RuntimeException("A JSON array was expected for entity '" + name + "'");
 		}
-		
+
 		return name;
 	}
 
