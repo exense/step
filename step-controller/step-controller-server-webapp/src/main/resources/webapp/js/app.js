@@ -625,7 +625,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 .factory('ImportDialogs', function ($rootScope, $uibModal, EntityRegistry,$sce) {
   var dialogs = {};
   
-  dialogs.displayImportDialog = function(title,path,importAll,overwrite) {
+  dialogs.displayImportDialog = function(title,path) {
     var modalInstance = $uibModal.open({
       backdrop: 'static',
       templateUrl: 'partials/importDialog.html',
@@ -633,8 +633,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
       resolve: {
         title: function() {return title;},
         path: function() {return path;},
-        importAll: function() {return importAll;},
-        overwrite: function() {return overwrite;}}
+        importAll: function() {return false;},
+        overwrite: function() {return false;}}
     });
     return modalInstance.result;
   }
@@ -651,6 +651,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   
   $scope.save = function() {
     if($scope.resourcePath) {
+      $scope.importing = true;
       $http({url:"rest/import/" + path,method:"POST",params:{path:$scope.resourcePath,importAll:$scope.importAll,overwrite:$scope.overwrite}}).then(function(response) {
         $uibModalInstance.close(response.data);
         if (response.data && response.data.length > 0) {
@@ -670,7 +671,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
 .factory('ExportDialogs', function ($rootScope, $uibModal, EntityRegistry,$sce) {
   var dialogs = {};
   
-  dialogs.displayExportDialog = function(title, path, filename, recursively, parameters) {
+  dialogs.displayExportDialog = function(title, path, filename) {
     var modalInstance = $uibModal.open({
       backdrop: 'static',
       templateUrl: 'partials/exportDialog.html',
@@ -679,8 +680,8 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
         title: function() {return title;},
         path: function() {return path;},
         filename: function() {return filename;},
-        recursively: function() {return recursively;},
-        parameters: function() {return parameters;}}
+        recursively: function() {return false;},
+        parameters: function() {return false;}}
     });
     return modalInstance.result;
   }
@@ -696,18 +697,13 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
   $scope.parameters = parameters;
   
   $scope.save = function() {
+    $scope.exporting = true;
     if($scope.filename) {
       urlParams = "?recursively=" + $scope.recursively + "&filename=" + $scope.filename;
       if ($scope.parameters) {
         urlParams += "&additionalEntities=parameters"
       }
-      ExportService.get("rest/export/" + $scope.path + urlParams);
-      $uibModalInstance.close();
-      
-      
-  /*    $http({url:"rest/import/" + path,method:"POST",params:{path:$scope.resourcePath,importAll:$scope.importAll,overwrite:$scope.overwrite}}).then(function(response) {
-        $uibModalInstance.close(response.data);
-      })*/      
+      ExportService.get("rest/export/" + $scope.path + urlParams, () => $uibModalInstance.close());
     } else {
       Dialogs.showErrorMsg("Upload not completed.");
     }

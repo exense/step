@@ -61,13 +61,13 @@ angular.module('parametersControllers',['tables','step','screenConfigurationCont
     }
     
     $scope.importParameters = function() {
-      ImportDialogs.displayImportDialog('Parameters import','parameters',true).then(function () {
+      ImportDialogs.displayImportDialog('Parameters import','parameters').then(function () {
         reload();
       });
     }
     
     $scope.exportParameters = function() {
-      ExportDialogs.displayExportDialog('Parameters export','parameters', 'allParameters.sta', true).then(function () {})
+      ExportDialogs.displayExportDialog('Parameters export','parameters', 'allParameters.sta').then(function () {})
     }
     
     $scope.$on("parameter.edited",function(evt,data){

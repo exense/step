@@ -21,13 +21,16 @@ angular.module('export',[])
 .factory('ExportService', function($http,$timeout, Dialogs) {  
   var factory = {};
 
-  factory.pollUrl = function(exportUrl) {
+  factory.pollUrl = function(exportUrl, callback) {
     var pollCount = 0;
     (function poll() {
       $http.get(exportUrl).then(function (response) {
         pollCount++;
         var status = response.data;
         if(status.ready) {
+          if(callback) {
+            callback();
+          }
           var attachmentID = status.attachmentID;
           if (status.warnings !== undefined && status.warnings !== null &&
               status.warnings.length > 0) {
@@ -63,14 +66,14 @@ angular.module('export',[])
     .fail(function () { alert('File download failed!'); });
   }
   
-  factory.poll = function(exportId) {
-    factory.pollUrl('rest/export/'+exportId+'/status');
+  factory.poll = function(exportId, callback) {
+    factory.pollUrl('rest/export/'+exportId+'/status', callback);
   }
   
-  factory.get = function (exportUrl) {
+  factory.get = function (exportUrl, callback) {
     $http.get(exportUrl).then(function(response){
       var exportStatus = response.data;
-      factory.poll(exportStatus.id);
+      factory.poll(exportStatus.id, callback);
     })
   };
 

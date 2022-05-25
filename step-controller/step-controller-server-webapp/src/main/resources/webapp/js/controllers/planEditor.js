@@ -86,7 +86,7 @@ angular.module('planEditor',['step','artefacts','reportTable','dynamicForms','ex
   });
 
   $scope.exportPlan = function() {
-    ExportDialogs.displayExportDialog('Plans export','plans/'+$scope.planId, $scope.model.plan.attributes.name+'.sta', true, false).then(function () {})
+    ExportDialogs.displayExportDialog('Plans export','plans/'+$scope.planId, $scope.model.plan.attributes.name+'.sta').then(function () {})
   }
   
   $scope.clonePlan = function() {
