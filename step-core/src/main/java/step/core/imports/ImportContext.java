@@ -18,17 +18,18 @@
  ******************************************************************************/
 package step.core.imports;
 
+import ch.exense.commons.io.FileHelper;
+import step.core.Version;
+import step.core.collections.CollectionFactory;
+import step.core.collections.inmemory.InMemoryCollectionFactory;
+import step.resources.LocalResourceManagerImpl;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import step.core.collections.filesystem.FilesystemCollectionFactory;
-import ch.exense.commons.io.FileHelper;
-import step.core.Version;
-import step.resources.LocalResourceManagerImpl;
 
 public class ImportContext implements AutoCloseable {
 
@@ -40,8 +41,7 @@ public class ImportContext implements AutoCloseable {
 	private final File workFolder;
 	private final LocalResourceManagerImpl localResourceMgr;
 
-	private final File tempWorkspace;
-	private final FilesystemCollectionFactory tempCollectionFactory;
+	private final CollectionFactory tempCollectionFactory;
 
 	private final Map<String, String> references = new HashMap<String, String>();
 	private final Map<String, String> newToOldReferences = new HashMap<String, String>();
@@ -51,8 +51,7 @@ public class ImportContext implements AutoCloseable {
 		super();
 		this.importConfiguration = importConfiguration;
 
-		tempWorkspace = FileHelper.createTempFolder();
-		tempCollectionFactory = new FilesystemCollectionFactory(tempWorkspace);
+		tempCollectionFactory = new InMemoryCollectionFactory(null);
 		workFolder = FileHelper.createTempFolder("step-import");
 		localResourceMgr = new LocalResourceManagerImpl(workFolder);
 	}
@@ -81,7 +80,7 @@ public class ImportContext implements AutoCloseable {
 		return localResourceMgr;
 	}
 
-	public FilesystemCollectionFactory getTempCollectionFactory() {
+	public CollectionFactory getTempCollectionFactory() {
 		return tempCollectionFactory;
 	}
 
@@ -108,6 +107,5 @@ public class ImportContext implements AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		FileHelper.deleteFolder(workFolder);
-		FileHelper.deleteFolder(tempWorkspace);
 	}
 }

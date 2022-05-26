@@ -32,9 +32,9 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
 import step.core.collections.Filters;
-import step.core.collections.filesystem.FilesystemCollectionFactory;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.migration.MigrationManager;
@@ -62,7 +62,7 @@ public class ImportManager {
 		this.entityManager = entityManager;
 		this.migrationManager = migrationManager;
 		this.currentVersion = currentVersion;
-		
+
 	}
 
 
@@ -128,7 +128,7 @@ public class ImportManager {
 
 	private void importEntitiesFromTemporaryCollection(ImportConfiguration importConfig, ImportContext importContext, List<String> entityNames) {
 		// Perform migration tasks on temporary collections
-		final FilesystemCollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
+		final CollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
 		migrationManager.migrate(tempCollectionFactory, importContext.getVersion(), currentVersion);
 
 		// Replace IDs of all entities if overwriting is disabled
@@ -176,7 +176,7 @@ public class ImportManager {
 		Entity<?, ?> entityByName = entityManager.getEntityByName(name);
 		boolean skip = skipEntityType(importConfig.getEntitiesFilter(), name);
 
-		FilesystemCollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
+		CollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
 		Collection<Document> tempCollection = tempCollectionFactory.getCollection(name, Document.class);
 
 		if (!skip) {

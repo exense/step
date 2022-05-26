@@ -115,7 +115,7 @@ public class ArtefactsToPlans  {
 			
 			Document plan = new Document();
 			
-			plan.put(AbstractIdentifiableObject.ID, artefactIdToPlanId.get(t.getId()));
+			plan.put(AbstractIdentifiableObject.ID, artefactIdToPlanId.get(t.getId().toString()));
 			plan.put("attributes", attributes);
 			plan.put("root", migrateArtefact(t));
 			plan.put("visible", visiblePlan);
