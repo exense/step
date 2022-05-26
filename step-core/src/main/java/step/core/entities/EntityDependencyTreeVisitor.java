@@ -28,7 +28,9 @@ public class EntityDependencyTreeVisitor {
 	private static final Logger logger = LoggerFactory.getLogger(EntityDependencyTreeVisitor.class);
 	private final EntityManager entityManager;
 	private final ObjectPredicate objectPredicate;
-	private final Map<Class<?>, BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
+	// Declared as static for performance reasons. In the current implementation, this class gets instantiated quite often
+	// TODO declare it as non-static to avoid potential leaks
+	private static final Map<Class<?>, BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 
 	public EntityDependencyTreeVisitor(EntityManager entityManager, ObjectPredicate objectPredicate) {
 		super();
