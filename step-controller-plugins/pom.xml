@@ -29,7 +29,7 @@
 	</parent>
 
 	<properties>
-		<prometheus-client.version>0.10.0</prometheus-client.version>
+		<prometheus-client.version>0.15.0</prometheus-client.version>
 	</properties>
 	
 	<modules>

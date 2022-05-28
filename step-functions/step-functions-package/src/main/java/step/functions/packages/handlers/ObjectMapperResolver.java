@@ -3,11 +3,12 @@ package step.functions.packages.handlers;
 
 import java.io.IOException;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.ext.ContextResolver;
-import javax.ws.rs.ext.Provider;
+import com.fasterxml.jackson.datatype.jsonp.JSONPModule;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.ext.ContextResolver;
+import jakarta.ws.rs.ext.Provider;
 
 import org.bson.types.ObjectId;
 
@@ -17,7 +18,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -39,7 +39,7 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
     	SimpleModule module = new SimpleModule("ObjectIdmodule");
     	module.addSerializer(ObjectId.class, new ObjectIdSerializer());
         mapper = new ObjectMapper();
-        mapper.registerModule(new JSR353Module());
+        mapper.registerModule(new JSONPModule());
         mapper.registerModule(module);
     }
 

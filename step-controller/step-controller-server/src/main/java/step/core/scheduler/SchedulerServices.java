@@ -28,10 +28,10 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.RepositoryObjectReference;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;

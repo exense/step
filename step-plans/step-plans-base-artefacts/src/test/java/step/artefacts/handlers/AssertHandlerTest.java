@@ -23,8 +23,8 @@ import static junit.framework.Assert.assertNull;
 
 import java.io.StringReader;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 
 import org.junit.Test;
 

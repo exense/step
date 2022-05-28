@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.core.deployment;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;

@@ -27,7 +27,8 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.functions.handler.FunctionInputOutputObjectMapperFactory;
+import step.functions.handler.FunctionIOJakartaObjectMapperFactory;
+import step.functions.handler.FunctionIOJavaxObjectMapperFactory;
 
 public class OutputSerializationTest {
 
@@ -36,8 +37,11 @@ public class OutputSerializationTest {
 		OutputBuilder builder = new OutputBuilder();
 		builder.add("test", "test");
 		Output<JsonObject> output = builder.build();
-		ObjectMapper mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();
+		ObjectMapper mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
 		String value = mapper.writeValueAsString(output);
 		mapper.readValue(value, new TypeReference<Output<JsonObject>>() {});
+
+		ObjectMapper jakartaMapper = FunctionIOJakartaObjectMapperFactory.createObjectMapper();
+		jakartaMapper.readValue(value, new TypeReference<Output<jakarta.json.JsonObject>>() {});
 	}
 }

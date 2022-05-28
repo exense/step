@@ -38,8 +38,9 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.functions.Function;
-import step.functions.handler.FunctionInputOutputObjectMapperFactory;
+import step.functions.handler.FunctionIOJavaxObjectMapperFactory;
 import step.functions.handler.FunctionMessageHandler;
+import step.functions.handler.FunctionIOJakartaObjectMapperFactory;
 import step.functions.io.FunctionInput;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -72,8 +73,9 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	private final DynamicBeanResolver dynamicBeanResolver;
 	
 	private final FileVersionId functionHandlerPackage;
-	
-	private final ObjectMapper mapper;
+
+	private final ObjectMapper jakartaMapper;
+	private final ObjectMapper javaxMapper;
 	
 	private static final String KEYWORD_NAME_PROP = "$keywordName";
 	private static final String KEYWORD_TIMEOUT_PROP = "$keywordTimeout";
@@ -94,8 +96,9 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		}
 		
 		functionHandlerPackage = functionHandlerPackageVersionId.getVersionId();
-		
-		mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();
+
+		jakartaMapper = FunctionIOJakartaObjectMapperFactory.createObjectMapper();
+		javaxMapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
 	}
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionExecutionServiceImpl.class);
@@ -184,7 +187,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			input.setFunctionCallTimeout(callTimeout-100l);
 
 			// Serialize the input object
-			JsonNode node = mapper.valueToTree(input);
+			JsonNode node = jakartaMapper.valueToTree(input);
 			
 			OutputMessage outputMessage;
 			try {
@@ -229,8 +232,12 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 					output.setError(newAgentError("Unknown agent error: "+agentError));
 				}
 			} else {
-				JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Output.class, Output.class, outputClass);
-				output = mapper.readValue(mapper.treeAsTokens(outputMessage.getPayload()), javaType);
+				JavaType javaType = jakartaMapper.getTypeFactory().constructParametrizedType(Output.class, Output.class, outputClass);
+				if (outputClass.getName().equals("javax.json.JsonObject")) {
+					output = javaxMapper.readValue(jakartaMapper.treeAsTokens(outputMessage.getPayload()), javaType);
+				} else {
+					output = jakartaMapper.readValue(jakartaMapper.treeAsTokens(outputMessage.getPayload()), javaType);
+				}
 			}
 			
 			if(outputMessage.getAttachments()!=null) {

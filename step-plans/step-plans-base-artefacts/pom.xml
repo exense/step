@@ -85,11 +85,6 @@
 			<version>v3-rev20181213-1.27.0</version>
 		</dependency>
 		<dependency>
-			<groupId>javax.annotation</groupId>
-			<artifactId>javax.annotation-api</artifactId>
-			<version>${annotation.version}</version>
-		</dependency>
-		<dependency>
 		    <groupId>com.jayway.jsonpath</groupId>
 		    <artifactId>json-path</artifactId>
 		    <version>2.3.0</version>

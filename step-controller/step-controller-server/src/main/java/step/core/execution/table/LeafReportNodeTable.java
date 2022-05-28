@@ -23,7 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import ch.exense.commons.app.Configuration;
 import step.artefacts.reports.CheckReportNode;

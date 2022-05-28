@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.controller.grid.services;
 
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.framework.server.security.Secured;

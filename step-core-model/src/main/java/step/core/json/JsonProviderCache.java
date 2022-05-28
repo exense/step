@@ -23,12 +23,12 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
-import javax.json.JsonWriter;
-import javax.json.spi.JsonProvider;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonWriter;
+import jakarta.json.spi.JsonProvider;
 
 /**
  * Calls to {@link JsonProvider#provider()} and thus {@link Json#createObjectBuilder()}

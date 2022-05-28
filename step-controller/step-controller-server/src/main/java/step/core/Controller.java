@@ -21,6 +21,7 @@ package step.core;
 import java.io.File;
 
 import ch.exense.commons.app.Configuration;
+import com.sun.xml.bind.v2.ContextFactory;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
@@ -84,6 +85,7 @@ public class Controller {
 		super();
 		this.context = context;
 		this.configuration = context.getConfiguration();
+		ContextFactory ctx;
 	}
 
 	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			

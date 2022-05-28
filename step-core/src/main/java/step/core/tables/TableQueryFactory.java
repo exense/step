@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.tables;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import step.core.collections.Filter;
 

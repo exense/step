@@ -4,7 +4,7 @@ import step.core.collections.Filter;
 import step.core.ql.OQLFilterBuilder;
 import step.core.tables.Table;
 
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

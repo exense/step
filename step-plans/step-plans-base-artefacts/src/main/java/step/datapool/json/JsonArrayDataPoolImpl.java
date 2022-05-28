@@ -22,11 +22,7 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import javax.json.JsonValue;
+import jakarta.json.*;
 
 import step.datapool.DataSet;
 
@@ -57,11 +53,12 @@ public class JsonArrayDataPoolImpl extends DataSet<JsonArrayDataPoolConfiguratio
 	public Object next_() {
 		if (cursor < array.size()) {
 			JsonValue jsonValue = array.get(cursor);
-			Map<String, Object> row = new HashMap<>();
+			Map<String, String> row = new HashMap<>();
 			if (jsonValue instanceof JsonObject) {
 				JsonObject jsonObject = (JsonObject) jsonValue;
 				jsonObject.forEach((key, value) -> {
-					row.put(key, value.toString());
+					String strValue = (value instanceof JsonString) ? ((JsonString) value).getString() : value.toString();
+					row.put(key, strValue);
 				});
 			} else {
 				throw new RuntimeException("Unexpected value in row " + cursor + ". " + expectedFormat());

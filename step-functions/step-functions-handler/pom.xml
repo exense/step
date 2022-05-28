@@ -41,6 +41,12 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-api-function</artifactId>
 			<version>${step-api.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.glassfish</groupId>
+					<artifactId>javax.json</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -54,10 +60,16 @@
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish</groupId>
-			<artifactId>javax.json</artifactId>
-			<version>1.0</version>
+			<artifactId>jakarta.json</artifactId>
+			<version>2.0.1</version>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jakarta-jsonp</artifactId>
+            <version>${jackson.version}</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 	
 	<build>
 		<plugins>

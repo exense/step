@@ -13,10 +13,10 @@ import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.resources.Resource;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;

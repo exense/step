@@ -33,7 +33,7 @@
 		<module>step-controller-api</module>
 		<module>step-controller-server</module>
 		<module>step-controller-base-plugins</module>
-		<module>step-controller-server-webapp</module>
+		<module>step-controller-backend</module>
 		<module>step-controller-remote-client</module>
 	</modules>
 

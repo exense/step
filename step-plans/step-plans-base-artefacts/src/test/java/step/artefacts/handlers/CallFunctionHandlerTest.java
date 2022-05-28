@@ -53,8 +53,8 @@ import step.grid.io.Attachment;
 import step.grid.tokenpool.Interest;
 import step.planbuilder.FunctionArtefacts;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;

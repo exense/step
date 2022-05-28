@@ -20,8 +20,8 @@ package step.functions.handler;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 
+import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 import step.functions.io.Input;
 import step.functions.io.Output;
 
@@ -30,7 +30,7 @@ import step.functions.io.Output;
  * {@link Input} and {@link Output} instances
  *
  */
-public class FunctionInputOutputObjectMapperFactory {
+public class FunctionIOJavaxObjectMapperFactory {
 
 	public static ObjectMapper createObjectMapper() {
 		ObjectMapper mapper = new ObjectMapper();
