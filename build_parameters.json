@@ -20,8 +20,7 @@
 					"URL": "sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2",
 					"CONFIG": "DefaultBuild"
 				}
-			],
-			"AFTER": "step-oss-java-after-compile"
+			]
 		},
 		{
 			"ACTION": "COMPILE",
@@ -37,8 +36,22 @@
 					"URL": "exense https://registry.npmjs.org/"
 				}
 			]
+		},
+		{
+			"ACTION": "PUSH",
+			"TYPE": "MAVEN",
+			"PARAMETERS": [
+				{
+					"URL": "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/"
+				}
+			],
+			"ACTIONS": [
+				{
+					"ORIGIN": "step-parent/pom.xml",
+					"DESTINATION": "ch.exense.step:step-parent-${BRANCH}:${VERSION}",
+					"PACKAGING": "pom"
+				}
+			]
 		}
-	],
-	"AFTER": "step-oss-upgrade-distribution"
+	]
 }
-
