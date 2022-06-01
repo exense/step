@@ -680,7 +680,7 @@ angular.module('step',['ngStorage','ngCookies','angularResizable'])
         title: function() {return title;},
         path: function() {return path;},
         filename: function() {return filename;},
-        recursively: function() {return false;},
+        recursively: function() {return true;},
         parameters: function() {return false;}}
     });
     return modalInstance.result;
