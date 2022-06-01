@@ -68,7 +68,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 					nextValue.commit();
 				}
 			}
-		} catch(Exception e) {
+		} catch(Throwable e) {
 			failWithException(node, e);
 		} finally {
 			if(dataSet!=null) {
@@ -145,7 +145,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 							if(forInterrupted || (maxFailedLoops!=null&&failedLoopsCounter.get()>=maxFailedLoops)) {
 								control.interrupt();
 							}
-						} catch(Exception e) {
+						} catch(Throwable e) {
 							failWithException(node, e);
 						} finally {
 							workItem.commit();
@@ -157,7 +157,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 			node.setErrorCount(failedLoopsCounter.get());
 			node.setCount(loopsCounter.get());
 			node.setStatus(reportNodeStatusComposer.getParentStatus());
-		} catch(Exception e) {
+		} catch(Throwable e) {
 			failWithException(node, e);
 		} finally {
 			if(dataSet!=null) {

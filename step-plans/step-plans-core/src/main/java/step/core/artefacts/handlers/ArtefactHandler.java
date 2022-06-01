@@ -187,7 +187,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				});
 				reportNode.setStatus(reportNodeStatusComposer.getParentStatus());
 			}
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			failWithException(reportNode, e);
 		}
 		long duration = System.currentTimeMillis() - t1;
