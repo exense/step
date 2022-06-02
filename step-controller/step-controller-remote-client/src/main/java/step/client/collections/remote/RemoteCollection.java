@@ -52,6 +52,9 @@ public class RemoteCollection<T> implements Collection<T> {
                         if (limit != null && ((calculatedSkip + limitIterator) > (skip + limit))) {
                             calculatedLimit = (skip + limit) - calculatedSkip;
                         }
+                        if (calculatedLimit<=0) {
+                            throw new RuntimeException("calculatedLimit ("+calculatedLimit+") is less than 1");
+                        }
                         findRequest.setSkip(calculatedSkip);
                         findRequest.setLimit(calculatedLimit);
                         Entity<FindRequest> entity = Entity.entity(findRequest, MediaType.APPLICATION_JSON);
