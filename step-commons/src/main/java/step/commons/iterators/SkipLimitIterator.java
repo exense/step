@@ -51,7 +51,7 @@ public class SkipLimitIterator<T> implements Iterator<T> {
 			currentBatchCount++;
 			next = currentBatchIt.next();
 		} else {
-			if(currentBatchCount>batchSize) {
+			if(currentBatchCount==batchSize) {
 				getNextBatch();
 				preloadNextElement();
 			} else {
