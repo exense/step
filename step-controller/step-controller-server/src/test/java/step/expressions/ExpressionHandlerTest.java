@@ -54,6 +54,13 @@ public class ExpressionHandlerTest {
 	}
 
 	@Test
+	public void testFunction() {
+		ExpressionHandler e = new ExpressionHandler("step.expressions.GroovyFunctions");
+		Object o = e.evaluateGroovyExpression("IsEmpty(\"sts\")", null);
+		Assert.assertFalse((boolean) o);
+	}
+
+	@Test
 	public void testScriptBaseClassWithArrays() {
 		ExpressionHandler e = new ExpressionHandler("step.expressions.GroovyTestFunctions");
 		Object o = e.evaluateGroovyExpression("\"${testArrays()[0]}\"", null);
