@@ -53,13 +53,14 @@ public class RemoteCollection<T> implements Collection<T> {
                 calculatedLimit = limit_value - calculatedSkip;
             }
 
-            findRequest.setSkip(calculatedSkip);
             if (calculatedLimit>0) {
+                findRequest.setSkip(calculatedSkip);
                 findRequest.setLimit(calculatedLimit);
+                Entity<FindRequest> entity = Entity.entity(findRequest, MediaType.APPLICATION_JSON);
+                return client.executeRequest(() -> builder.post(entity, genericType));
+            } else {
+                return new ArrayList<>();
             }
-            Entity<FindRequest> entity = Entity.entity(findRequest, MediaType.APPLICATION_JSON);
-            List<T> ts = client.executeRequest(() -> builder.post(entity, genericType));
-            return ts;
         });
         return StreamSupport.stream(iterable.spliterator(), false);
     }
