@@ -29,8 +29,6 @@
 		<relativePath>../step-parent</relativePath>
 	</parent>
 
-	<url>${homepage.url}</url>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.glassfish</groupId>

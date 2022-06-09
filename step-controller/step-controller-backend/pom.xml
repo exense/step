@@ -27,17 +27,12 @@
 		<version>0.0.0-SNAPSHOT</version>
 	</parent>
 
-	<properties>
-		<swagger-ui-version>4.1.0</swagger-ui-version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-controller-server</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-functions-package</artifactId>
@@ -83,9 +78,5 @@
 			<artifactId>step-controller-plugins-rtm</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-
-
 	</dependencies>
-
-
 </project>
