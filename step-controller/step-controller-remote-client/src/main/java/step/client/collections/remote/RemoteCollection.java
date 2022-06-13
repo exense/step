@@ -50,7 +50,7 @@ public class RemoteCollection<T> implements Collection<T> {
             int calculatedLimit = limitIterator;
 
             if (limit_value > 0 && calculatedSkip + limitIterator > skip_value + limit_value) {
-                calculatedLimit = limit_value - calculatedSkip;
+                calculatedLimit = (skip_value + limit_value) - calculatedSkip;
             }
 
             if (calculatedLimit>0) {
