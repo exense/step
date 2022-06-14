@@ -1,0 +1,22 @@
+{
+   "gridHost":"http://localhost:8081",
+   "registrationPeriod":1000,
+   "gridReadTimeout":20000,
+   "workingDir":"../work",
+   "tokenGroups":[
+      {
+         "capacity":10,
+         "tokenConf":{
+            "attributes":{
+               
+            },
+            "properties":{
+               
+            }
+         }
+      }
+   ],
+   "properties":{
+      "plugins.jmeter.home":"/path/to/jmeter"
+   }
+}
