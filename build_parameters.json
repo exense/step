@@ -1,7 +1,6 @@
 {
 	"NAME": "Step OSS - New build",
 	"OS": "LINUX",
-	"LOCK": "STEP",
 
 	"ACTIONS": [
 		{
