@@ -31,7 +31,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import org.bson.types.ObjectId;
 import org.junit.Assert;

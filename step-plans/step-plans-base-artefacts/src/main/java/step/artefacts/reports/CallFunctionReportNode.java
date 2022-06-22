@@ -21,7 +21,7 @@ package step.artefacts.reports;
 import java.util.List;
 import java.util.Map;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

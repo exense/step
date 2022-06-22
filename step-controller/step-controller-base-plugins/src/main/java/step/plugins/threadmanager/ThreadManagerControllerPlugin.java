@@ -29,7 +29,7 @@ public class ThreadManagerControllerPlugin extends AbstractControllerPlugin {
 	private ThreadManager threadManager;
 
 	@Override
-	public void executionControllerStart(GlobalContext context) {
+	public void serverStart(GlobalContext context) {
 		threadManager = new ThreadManager();
 		context.put(ThreadManager.class, threadManager);
 		context.getServiceRegistrationCallback().registerService(ThreadManagerServices.class);

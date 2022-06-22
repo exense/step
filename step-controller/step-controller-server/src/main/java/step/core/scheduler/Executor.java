@@ -61,7 +61,7 @@ public class Executor {
 		
 		configuration = globalContext.getConfiguration();
 		
-		List<ExecutionEnginePlugin> additionalPlugins = globalContext.getPluginManager().getExecutionEnginePlugins();
+		List<ExecutionEnginePlugin> additionalPlugins = globalContext.getControllerPluginManager().getExecutionEnginePlugins();
 		
 		ObjectHookRegistry objectHookRegistry = globalContext.require(ObjectHookRegistry.class);
 		

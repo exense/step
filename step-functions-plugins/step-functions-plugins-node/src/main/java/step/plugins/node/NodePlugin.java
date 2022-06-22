@@ -31,7 +31,7 @@ public class NodePlugin extends AbstractControllerPlugin {
 	protected GlobalContext context;
 	
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		this.context = context;
 		
 		//registerWebapp(context, "/node/");
@@ -41,7 +41,7 @@ public class NodePlugin extends AbstractControllerPlugin {
 		
 		context.put(NodePlugin.class.getName(), this);
 		
-		super.executionControllerStart(context);
+		super.serverStart(context);
 	}
 
 

@@ -52,9 +52,9 @@ public class GridPlugin extends AbstractControllerPlugin {
 	
 	private GridImpl grid;
 	private GridClient client;
-	
+
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		Configuration configuration = context.getConfiguration();
 		
 		Integer gridPort = configuration.getPropertyAsInteger("grid.port",8081);
@@ -127,7 +127,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 	}
 
 	@Override
-	public void executionControllerDestroy(GlobalContext context) {
+	public void serverStop(GlobalContext context) {
 		if(client!=null) {
 			client.close();
 		}

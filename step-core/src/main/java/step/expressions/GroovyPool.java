@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.expressions;
 
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +35,9 @@ public class GroovyPool {
 			pool = new GenericKeyedObjectPool<>(new GroovyPoolFactory(scriptBaseClass));
 			pool.setTestOnBorrow(true);
 			pool.setMaxTotal(poolMaxTotal);
-			pool.setMaxActive(-1);
-			pool.setMaxIdle(poolMaxIdle);
-			pool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
+			//pool.setMaxActive(-1);
+			pool.setMaxIdlePerKey(poolMaxIdle);
+			pool.setBlockWhenExhausted(true);
 			pool.setTimeBetweenEvictionRunsMillis(30000);
 			pool.setMinEvictableIdleTimeMillis(-1);
 		} catch(Exception e) {

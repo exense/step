@@ -20,7 +20,7 @@ package step.artefacts.handlers;
 
 import java.io.StringReader;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import step.artefacts.CallPlan;
 import step.core.artefacts.handlers.ArtefactHandler;

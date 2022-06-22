@@ -96,7 +96,7 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 			});
 			
 			node.setStatus(ReportNodeStatus.PASSED);
-		} catch(Exception e) {
+		} catch(Throwable e) {
 			failWithException(node, e);
 		}
 	}

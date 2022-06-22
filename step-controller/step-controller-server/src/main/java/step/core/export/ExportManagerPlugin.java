@@ -29,7 +29,7 @@ import step.resources.ResourceManagerControllerPlugin;
 public class ExportManagerPlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		ResourceManager resourceManager = context.getResourceManager();
 		ExportTaskManager exportTaskManager = new ExportTaskManager(resourceManager);
 		context.put(ExportTaskManager.class, exportTaskManager);
@@ -37,7 +37,7 @@ public class ExportManagerPlugin extends AbstractControllerPlugin {
 		context.getServiceRegistrationCallback().registerService(ExportServices.class);
 		context.getServiceRegistrationCallback().registerService(ImportServices.class);
 		
-		super.executionControllerStart(context);
+		super.serverStart(context);
 	}
 
 }

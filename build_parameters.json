@@ -1,7 +1,6 @@
 {
 	"NAME": "Step OSS backend",
 	"OS": "LINUX",
-	"LOCK": "STEP",
 
 	"ACTIONS": [
 		{

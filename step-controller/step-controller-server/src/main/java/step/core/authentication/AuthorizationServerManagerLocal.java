@@ -1,10 +1,9 @@
 package step.core.authentication;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import step.core.access.AccessManager;
+import step.framework.server.access.AccessManager;
 import step.core.access.Role;
-import step.core.deployment.Session;
+import step.framework.server.Session;
 
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -32,17 +31,17 @@ public class AuthorizationServerManagerLocal implements AuthorizationServerManag
     @Override
     public String refreshToken(Session session) {
         Role role = accessManager.getRoleInContext(session);
-        String token = generateToken(session.getUser().getUsername(), role.getAttribute("name"),
+        String token = generateToken(session.getUser().getSessionUsername(), role.getAttribute("name"),
                 Date.from(ZonedDateTime.now().plusHours(8).toInstant()));
         session.setToken(AuthenticationFilter.AUTHENTICATION_SCHEME + " " + token);
         return token;
     }
 
     @Override
-    public String getServiceAccountToken(Session session,long days) {
+    public String getServiceAccountToken(Session session, long days) {
         Role role = accessManager.getRoleInContext(session);
         days = (days <= 0) ? 36500 : days;
-        String token = generateToken(session.getUser().getUsername(), role.getAttribute("name"),
+        String token = generateToken(session.getUser().getSessionUsername(), role.getAttribute("name"),
                 Date.from(ZonedDateTime.now().plusDays(days).toInstant()));
         return token;
     }

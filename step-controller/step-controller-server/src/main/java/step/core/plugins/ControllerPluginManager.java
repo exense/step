@@ -21,51 +21,27 @@ package step.core.plugins;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import ch.exense.commons.app.Configuration;
-import step.core.plugins.PluginManager.Builder;
-import step.core.plugins.PluginManager.Builder.CircularDependencyException;
-import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.framework.server.ServerPluginManager;
 
-public class ControllerPluginManager {
-	
-	protected Configuration configuration;
-	
-	private ModuleChecker moduleChecker;
-	
-	protected PluginManager<ControllerPlugin> pluginManager;
-	
-	public ControllerPluginManager(Configuration configuration) throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-		this(configuration, null);
-	}
-	
-	public ControllerPluginManager(Configuration configuration, ModuleChecker moduleChecker) throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-		this.configuration = configuration;
-		this.moduleChecker = moduleChecker;
-		Builder<ControllerPlugin> builder = new PluginManager.Builder<ControllerPlugin>(ControllerPlugin.class);
-		this.pluginManager = builder.withPluginsFromClasspath().withPluginFilter(this::isPluginEnabled).build();
-	}
+public class ControllerPluginManager  {
 
-	public ControllerPlugin getProxy() {
-		return pluginManager.getProxy(ControllerPlugin.class);
+	List<ControllerPlugin> controllerPluginStream;
+
+	public ControllerPluginManager(ServerPluginManager parentPluginManager) {
+		Stream<ControllerPlugin> stream = parentPluginManager.getPluginManager().getPlugins().stream().filter(ControllerPlugin.class::isInstance).map(ControllerPlugin.class::cast);
+		controllerPluginStream = stream.collect(Collectors.toList());
 	}
 
 	public List<ExecutionEnginePlugin> getExecutionEnginePlugins() {
-		return pluginManager.getPlugins().stream().map(ControllerPlugin::getExecutionEnginePlugin).filter(Objects::nonNull).collect(Collectors.toList());
+		return controllerPluginStream.stream().map(ControllerPlugin::getExecutionEnginePlugin).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 	
 	public List<WebPlugin> getWebPlugins() {
-		return pluginManager.getPlugins().stream().map(ControllerPlugin::getWebPlugin).filter(Objects::nonNull).collect(Collectors.toList());
+		return controllerPluginStream.stream().map(ControllerPlugin::getWebPlugin).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
-	private boolean isPluginEnabled(ControllerPlugin plugin) {
-		String pluginName = plugin.getClass().getSimpleName();
-		boolean enabled = configuration.getPropertyAsBoolean("plugins." + pluginName + ".enabled", true)
-				&& (moduleChecker == null || moduleChecker.apply(plugin));
-		if (!enabled && !plugin.canBeDisabled()) {
-			throw new PluginCriticalException("The plugin " + pluginName + " cannot be disabled");
-		}
-		return enabled;
-	}
+
 }

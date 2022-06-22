@@ -1,7 +1,7 @@
 package step.core.authentication;
 
-import step.core.access.AccessManager;
-import step.core.deployment.Session;
+import step.framework.server.access.AccessManager;
+import step.framework.server.Session;
 
 public class AuthorizationServerManagerExt implements AuthorizationServerManager {
     private final JWTSettings jwtSettings;
@@ -21,7 +21,7 @@ public class AuthorizationServerManagerExt implements AuthorizationServerManager
     }
 
     @Override
-    public String getServiceAccountToken(Session session ,long days) {
+    public String getServiceAccountToken(Session session , long days) {
         throw new RuntimeException("generate token for external provider is not implemented");
     }
 

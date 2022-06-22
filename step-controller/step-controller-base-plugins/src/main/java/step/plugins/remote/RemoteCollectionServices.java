@@ -5,19 +5,19 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.type.CollectionType;
 
@@ -29,15 +29,15 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Filter;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.core.deployment.Unfiltered;
 import step.core.entities.EntityManager;
 
 @Singleton
 @Path("remote")
 @Tag(name = "Collections")
-public class RemoteCollectionServices<T> extends AbstractServices {
+public class RemoteCollectionServices<T> extends AbstractStepServices {
 
     protected CollectionFactory collectionFactory;
     protected EntityManager entityManager;

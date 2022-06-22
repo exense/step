@@ -30,8 +30,8 @@ import step.functions.plugin.FunctionControllerPlugin;
 public class CompositeFunctionTypeControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
-		super.executionControllerStart(context);
+	public void serverStart(GlobalContext context) throws Exception {
+		super.serverStart(context);
 
 		context.get(FunctionEditorRegistry.class).register(new FunctionEditor() {
 			@Override

@@ -23,11 +23,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
-import javax.json.JsonValue.ValueType;
-import javax.json.stream.JsonParsingException;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
+import jakarta.json.JsonValue.ValueType;
+import jakarta.json.stream.JsonParsingException;
 
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;

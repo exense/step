@@ -27,8 +27,6 @@
 		<artifactId>step-plans</artifactId>
 		<version>0.0.0-SNAPSHOT</version>
 	</parent>
-
-	<url>${homepage.url}</url>	
 	
 	<dependencies>
 		<dependency>

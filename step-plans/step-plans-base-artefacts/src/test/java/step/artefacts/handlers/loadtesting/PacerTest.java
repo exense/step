@@ -60,7 +60,7 @@ public class PacerTest {
 		double actualThroughput = throughputInCallsPerSeconds(start, count);
 
 		// Assert that the actual throughput is equal to the target throughput +- 1%
-		double tolerance = 0.01;
+		double tolerance = 0.05;
 		logger.info("Actual throughput [1/s]: " + actualThroughput);
 		assertTrue(expectedThroughput * (1 + tolerance) > actualThroughput
 				&& expectedThroughput * (1 - tolerance) < actualThroughput);

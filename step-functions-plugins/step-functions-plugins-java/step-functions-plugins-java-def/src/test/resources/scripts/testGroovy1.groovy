@@ -16,4 +16,4 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************/
-output.add("key1",input.key1.toString())
+output.add("key1",input.key1.getString())

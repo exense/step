@@ -75,6 +75,12 @@
 			<groupId>org.glassfish.jersey.media</groupId>
 			<artifactId>jersey-media-json-jackson</artifactId>
 			<version>${jersey.version}</version>
+			<exclusions><!-- this import databind 3.0.0 conflicting with required 3.0.4 -->
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-databind</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.jersey.media</groupId>
@@ -85,6 +91,11 @@
 			<groupId>org.glassfish.jersey.security</groupId>
 			<artifactId>oauth2-client</artifactId>
 			<version>${jersey.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.glassfish.jersey.media</groupId>
+					<artifactId>jersey-media-json-binding</artifactId>
+				</exclusion></exclusions>
 		</dependency>
     </dependencies>
 

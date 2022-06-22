@@ -20,7 +20,7 @@ package step.core.dynamicbeans;
 
 import java.util.Map;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import step.expressions.ExpressionHandler;
 

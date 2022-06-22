@@ -60,7 +60,7 @@ import java.util.List;
 public class FunctionControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		Configuration configuration = context.getConfiguration();
 		
 		GridClient gridClient = context.require(GridClient.class);

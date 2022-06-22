@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.repositories.parser.annotated;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;

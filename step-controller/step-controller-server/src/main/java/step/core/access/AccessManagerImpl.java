@@ -21,7 +21,8 @@ package step.core.access;
 import java.util.NoSuchElementException;
 
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.Session;
+import step.framework.server.Session;
+import step.framework.server.access.AccessManager;
 
 public class AccessManagerImpl implements AccessManager {
 

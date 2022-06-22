@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;

@@ -30,7 +30,7 @@ import step.core.tables.TableRegistry;
 public class ResourceManagerControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		context.getServiceRegistrationCallback().registerService(ResourceServices.class);
 		
 		Collection<Resource> collectionDriver = context.getCollectionFactory().getCollection("resources",

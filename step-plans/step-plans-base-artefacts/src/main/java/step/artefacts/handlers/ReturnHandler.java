@@ -20,8 +20,8 @@ package step.artefacts.handlers;
 
 import java.io.StringReader;
 
-import javax.json.JsonObject;
-import javax.json.stream.JsonParsingException;
+import jakarta.json.JsonObject;
+import jakarta.json.stream.JsonParsingException;
 
 import step.artefacts.Return;
 import step.core.artefacts.handlers.ArtefactHandler;

@@ -29,8 +29,8 @@ import step.plugins.views.ViewControllerPlugin;
 public class BaseExecutionTypePlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
-		super.executionControllerStart(context);
+	public void serverStart(GlobalContext context) throws Exception {
+		super.serverStart(context);
 		
 		ExecutionTypeManager executionTypeManager = context.get(ExecutionTypeManager.class);
 		executionTypeManager.put(new DefaultExecutionType(context));

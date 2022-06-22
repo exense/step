@@ -32,7 +32,7 @@ import step.plugins.java.GeneralScriptFunction;
 public class ScriptEditorPlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		
 		//registerWebapp(context, "/scripteditor/");
 		
@@ -53,7 +53,7 @@ public class ScriptEditorPlugin extends AbstractControllerPlugin {
 		
 		context.get(FunctionEditorRegistry.class).register(editor);
 		
-		super.executionControllerStart(context);
+		super.serverStart(context);
 	}
 
 

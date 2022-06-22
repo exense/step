@@ -24,8 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -128,8 +128,8 @@ public class CustomDescriptionStepParserTest extends AbstractStepParserTest {
 		CallFunction f = parseAndGetUniqueChild(steps, CallFunction.class);
 		Assert.assertEquals("{\"a\":\"b\",\"c\":\"d\"}",evaluateFunctionArgument(f));
 		JsonObject readObject = Json.createReader(new StringReader(f.getFunction().getValue())).readObject();
-		Assert.assertEquals("MyKeyword",readObject.get("name").toString());
-		Assert.assertEquals("MyApp",readObject.get("application").toString());
+		Assert.assertEquals("MyKeyword",readObject.getString("name"));
+		Assert.assertEquals("MyApp",readObject.getString("application"));
 	}
 	
 	@Test
@@ -140,8 +140,8 @@ public class CustomDescriptionStepParserTest extends AbstractStepParserTest {
 		CallFunction f = parseAndGetUniqueChild(steps, CallFunction.class);
 		Assert.assertEquals("{}",evaluateFunctionArgument(f));
 		JsonObject readObject = Json.createReader(new StringReader(f.getFunction().getValue())).readObject();
-		Assert.assertEquals("My Keyword with spaces",readObject.get("name").toString());
-		Assert.assertEquals("My App with space",readObject.get("application").toString());
+		Assert.assertEquals("My Keyword with spaces",readObject.getString("name"));
+		Assert.assertEquals("My App with space",readObject.getString("application"));
 	}
 	
 	@Test

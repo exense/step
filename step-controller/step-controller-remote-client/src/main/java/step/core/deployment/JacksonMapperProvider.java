@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.deployment;
 
-import javax.ws.rs.ext.ContextResolver;
+import jakarta.ws.rs.ext.ContextResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

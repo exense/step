@@ -18,24 +18,24 @@
  ******************************************************************************/
 package step.plugins.datapool;
 
-import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.Hidden;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
 
 @Singleton
 @Path("/datapool")
 @Hidden
-public class DataPoolPluginServices extends AbstractServices {
+public class DataPoolPluginServices extends AbstractStepServices {
 	
 	@GET
 	@Path("/types/{id}")

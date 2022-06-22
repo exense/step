@@ -1,9 +1,9 @@
 package step.core.authentication;
 
 import io.jsonwebtoken.*;
-import step.core.deployment.Session;
+import step.framework.server.Session;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 

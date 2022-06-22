@@ -29,7 +29,7 @@ public class ViewControllerPlugin extends AbstractControllerPlugin {
 	private ViewManager viewManager;
 
 	@Override
-	public void executionControllerStart(GlobalContext context) {
+	public void serverStart(GlobalContext context) {
 		ViewModelAccessor accessor = new ViewModelAccessorImpl(
 				context.getCollectionFactory().getCollection("views", ViewModel.class));
 		viewManager = new ViewManager(accessor);

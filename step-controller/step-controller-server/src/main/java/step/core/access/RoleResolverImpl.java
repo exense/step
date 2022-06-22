@@ -19,7 +19,7 @@
 package step.core.access;
 
 import step.core.controller.errorhandling.ApplicationException;
-import step.core.deployment.Session;
+import step.framework.server.Session;
 
 public class RoleResolverImpl implements RoleResolver {
 

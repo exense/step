@@ -33,8 +33,6 @@ import step.engine.execution.ExecutionManagerImpl;
 
 public abstract class AbstractExecutionEngineContext extends AbstractStepContext {
 
-	private Configuration configuration;
-
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
 
 	private PlanAccessor planAccessor;
@@ -51,7 +49,7 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 
 	protected void setDefaultAttributes() {
 		super.setDefaultAttributes();
-		configuration = new Configuration();
+		setConfiguration(new Configuration());
 
 		artefactHandlerRegistry = new ArtefactHandlerRegistry();
 
@@ -71,7 +69,7 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 	
 	protected void useStandardAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
 		super.useStandardAttributesFromParentContext(parentContext);
-		configuration = parentContext.getConfiguration();
+		setConfiguration(parentContext.getConfiguration());
 		repositoryObjectManager = parentContext.getRepositoryObjectManager();
 		artefactHandlerRegistry = parentContext.getArtefactHandlerRegistry();
 	}
@@ -88,11 +86,11 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 	}
 
 	public Configuration getConfiguration() {
-		return configuration;
+		return this.get(Configuration.class);
 	}
 
 	public void setConfiguration(Configuration configuration) {
-		this.configuration = configuration;
+		this.put(Configuration.class, configuration);
 	}
 
 	public ArtefactHandlerRegistry getArtefactHandlerRegistry() {

@@ -20,8 +20,8 @@ package step.core.dynamicbeans;
 
 import java.io.StringReader;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 
 import org.junit.Assert;
 import org.junit.Test;

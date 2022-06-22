@@ -27,9 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.MediaType;
 
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;

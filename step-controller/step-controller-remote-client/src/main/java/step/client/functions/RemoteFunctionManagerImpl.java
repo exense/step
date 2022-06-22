@@ -20,9 +20,9 @@ package step.client.functions;
 
 import java.util.Map;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.MediaType;
 
 import step.client.credentials.ControllerCredentials;
 import step.functions.Function;

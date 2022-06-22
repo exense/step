@@ -2,29 +2,29 @@ package step.functions.packages;
 
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
+import jakarta.annotation.PostConstruct;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.functions.Function;
 
 @Path("/functionpackages")
 @Tag(name = "Keyword packages")
-public class FunctionPackageServices extends AbstractServices {
+public class FunctionPackageServices extends AbstractStepServices {
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionPackageServices.class);
 	

@@ -23,8 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.GenericType;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.GenericType;
 
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;

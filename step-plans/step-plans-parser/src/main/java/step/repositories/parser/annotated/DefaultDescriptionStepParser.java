@@ -21,7 +21,7 @@ package step.repositories.parser.annotated;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

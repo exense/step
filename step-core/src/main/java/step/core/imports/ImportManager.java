@@ -32,9 +32,9 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
 import step.core.collections.Filters;
-import step.core.collections.filesystem.FilesystemCollectionFactory;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.migration.MigrationManager;
@@ -55,12 +55,16 @@ public class ImportManager {
 	private final EntityManager entityManager;
 	private final ObjectMapper mapper = DefaultJacksonMapperProvider.getObjectMapper();
 	private final MigrationManager migrationManager;
+	private final Version currentVersion;
 
-	public ImportManager(EntityManager entityManager, MigrationManager migrationManager) throws IOException {
+	public ImportManager(EntityManager entityManager, MigrationManager migrationManager, Version currentVersion) throws IOException {
 		super();
 		this.entityManager = entityManager;
 		this.migrationManager = migrationManager;
+		this.currentVersion = currentVersion;
+
 	}
+
 
 	/**
 	 * Import entities included in provided file
@@ -124,8 +128,8 @@ public class ImportManager {
 
 	private void importEntitiesFromTemporaryCollection(ImportConfiguration importConfig, ImportContext importContext, List<String> entityNames) {
 		// Perform migration tasks on temporary collections
-		final FilesystemCollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
-		migrationManager.migrate(tempCollectionFactory, importContext.getVersion(), Version.getCurrentVersion());
+		final CollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
+		migrationManager.migrate(tempCollectionFactory, importContext.getVersion(), currentVersion);
 
 		// Replace IDs of all entities if overwriting is disabled
 		boolean generateNewObjectIds = !importConfig.isOverwrite();
@@ -172,28 +176,29 @@ public class ImportManager {
 		Entity<?, ?> entityByName = entityManager.getEntityByName(name);
 		boolean skip = skipEntityType(importConfig.getEntitiesFilter(), name);
 
-		FilesystemCollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
+		CollectionFactory tempCollectionFactory = importContext.getTempCollectionFactory();
 		Collection<Document> tempCollection = tempCollectionFactory.getCollection(name, Document.class);
 
-		if (!skip) {
-			if (entityByName == null) {
-				throw new RuntimeException(
-						"The entity type with name '" + name + "' is unsupported in this version or license of step.");
+		if (entityByName == null) {
+			throw new RuntimeException(
+					"The entity type with name '" + name + "' is unsupported in this version or license of step.");
+		}
+		if (jParser.nextToken().equals(JsonToken.START_ARRAY)) {
+			if (!skip) {
+				logger.info("Importing entities of type " + name);
 			}
-			logger.info("Importing entities of type " + name);
-			if (jParser.nextToken().equals(JsonToken.START_ARRAY)) {
-				while (!jParser.nextToken().equals(JsonToken.END_ARRAY)) {
+			while (!jParser.nextToken().equals(JsonToken.END_ARRAY)) {
+				if (!skip) {
 					importOne(tempCollection, jParser);
+				} else {
+					// consume the json object when skipped
+					mapper.readValue(jParser, Document.class);
 				}
-			} else {
-				throw new RuntimeException("A JSON array was expected for entity '" + name + "'");
 			}
 		} else {
-			// consume the json object when skipped
-			// TODO: fix this
-			// mapper.readValue(jParser, BasicDBObject.class);
+			throw new RuntimeException("A JSON array was expected for entity '" + name + "'");
 		}
-		
+
 		return name;
 	}
 

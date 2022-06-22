@@ -54,7 +54,7 @@ public class ArtefactFunctionHandlerTest {
 		ExecutionContext context = newExecutionContext();
 
 		Return r = new Return();
-		r.setOutput(new DynamicValue<String>("{\"Result\":{\"dynamic\":true,\"expression\":\"input.Input1\"}}"));
+		r.setOutput(new DynamicValue<>("{\"Result\":{\"dynamic\":true,\"expression\":\"input.Input1\"}}"));
 		
 		Plan compositePlan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(r).endBlock().build();
 		context.getPlanAccessor().save(compositePlan);

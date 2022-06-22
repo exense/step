@@ -22,8 +22,8 @@ package step.core.execution;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.json.JsonObject;
-import javax.json.JsonString;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
 
 import step.core.collections.Filter;
 import step.core.collections.Filters;

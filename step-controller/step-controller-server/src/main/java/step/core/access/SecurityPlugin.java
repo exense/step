@@ -27,19 +27,18 @@ import step.core.GlobalContext;
 import step.core.GlobalContextAware;
 import step.core.authentication.AuthorizationServerManager;
 import step.core.authentication.JWTSettings;
-import step.core.authentication.AuthorizationServerManagerLocal;
 import step.core.authentication.ResourceServerManager;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.framework.server.access.AccessManager;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.Objects;
 
 @Plugin(dependencies = ControllerSettingPlugin.class)
 public class SecurityPlugin extends AbstractControllerPlugin {
@@ -49,9 +48,9 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 	private GlobalContext context;
 	private Configuration configuration;
 	private ControllerSettingAccessor settingAccessor;
-	
+
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		this.context = context;
 		settingAccessor = context.require(ControllerSettingAccessor.class);
 		this.configuration = context.getConfiguration();
@@ -72,8 +71,26 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 		ResourceServerManager resourceServerManager = new ResourceServerManager(jwtSettings, authorizationServerManager);
 		context.put(AuthorizationServerManager.class, authorizationServerManager);
 		context.put(ResourceServerManager.class, resourceServerManager);
-		
-		super.executionControllerStart(context);
+	}
+
+	@Override
+	public void migrateData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void afterInitializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void serverStop(GlobalContext context) {
+
 	}
 
 	private String getOrInitSecret() throws NoSuchAlgorithmException {

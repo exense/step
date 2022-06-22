@@ -102,7 +102,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 						newVariable.put(thread.threadGroup.getUserItem().get(), thread.groupId);
 						ReportNode threadReportNode = delegateExecute(thread, node, newVariable);
 						reportNodeStatusComposer.addStatusAndRecompose(threadReportNode.getStatus());
-					} catch (Exception e) {
+					} catch (Throwable e) {
 						failWithException(node, e);
 						reportNodeStatusComposer.addStatusAndRecompose(node.getStatus());
 					}
@@ -243,7 +243,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 								
 								iterationReportNode = delegateExecute(iterationTestCase, sessionReportNode, newVariable);
 								sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
-							} catch (Exception e) {
+							} catch (Throwable e) {
 								if(iterationReportNode!=null) {
 									failWithException(iterationReportNode, e);
 									sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());

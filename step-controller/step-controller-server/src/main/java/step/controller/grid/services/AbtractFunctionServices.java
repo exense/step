@@ -21,11 +21,11 @@ package step.controller.grid.services;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
+import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
-import step.core.deployment.Session;
-import step.core.deployment.Unfiltered;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
+import step.framework.server.Session;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
@@ -45,21 +45,21 @@ import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
 
-import javax.annotation.PostConstruct;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
+import jakarta.annotation.PostConstruct;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public abstract class AbtractFunctionServices extends AbstractServices {
+public abstract class AbtractFunctionServices extends AbstractStepServices {
 
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
@@ -192,7 +192,7 @@ public abstract class AbtractFunctionServices extends AbstractServices {
 	@Path("/executor/tokens/select")
 	@Secured(right="execute")
 	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter, @Context HttpServletRequest req) throws FunctionExecutionServiceException {
-		Session session = getSession();
+		Session<User> session = getSession();
 		if(!parameter.isLocal()) {
 			FunctionServiceTokenWrapperOwner tokenWrapperOwner = new FunctionServiceTokenWrapperOwner();
 			tokenWrapperOwner.setUsername(session.getUser().getUsername());

@@ -20,7 +20,7 @@ package step.functions;
 
 import java.util.Map;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;

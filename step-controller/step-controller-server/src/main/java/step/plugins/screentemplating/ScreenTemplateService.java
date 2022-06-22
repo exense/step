@@ -24,30 +24,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
-import step.core.access.AccessManager;
+import step.framework.server.access.AccessManager;
 import step.core.access.Role;
+import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
-import step.core.deployment.Session;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
+import step.framework.server.Session;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
 
 @Singleton
 @Path("screens")
 @Tag(name = "Screens")
-public class ScreenTemplateService extends AbstractServices {
+public class ScreenTemplateService extends AbstractStepServices {
 	
 	protected AccessManager accessManager;
 	protected ScreenTemplateManager screenTemplateManager;
@@ -156,8 +157,8 @@ public class ScreenTemplateService extends AbstractServices {
 
 	private Map<String, Object> getContextBindings(UriInfo uriInfo) {
 		Map<String, Object> contextBindings = new HashMap<>();
-		
-		Session session = getSession();
+
+		Session<User> session = getSession();
 		if(session!=null) {
 			contextBindings.put("user", session.getUser().getUsername());
 			Role roleInContext = accessManager.getRoleInContext(session);

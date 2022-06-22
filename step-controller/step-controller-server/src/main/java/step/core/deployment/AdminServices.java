@@ -26,21 +26,21 @@ import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,11 +55,13 @@ import step.core.controller.ControllerSettingAccessor;
 import step.core.security.password.PasswordPolicies;
 import step.core.security.password.PasswordPolicyDescriptor;
 import step.core.security.password.PasswordPolicyViolation;
+import step.framework.server.audit.AuditLogger;
+import step.framework.server.security.Secured;
 
 @Singleton
 @Path("admin")
 @Tag(name = "Admin")
-public class AdminServices extends AbstractServices {
+public class AdminServices extends AbstractStepServices {
 
 	private static final Logger logger = org.slf4j.LoggerFactory.getLogger(AdminServices.class);
 	private static String DEFAULT_ENCRYPTION_ALGORITHM = "RSA";

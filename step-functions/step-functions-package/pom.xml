@@ -47,17 +47,6 @@
 			<artifactId>step-functions-package-client</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-<!--		<dependency>
-			<groupId>ch.exense.step-enterprise</groupId>
-			<artifactId>step-functions-plugins-dotnet</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step-enterprise</groupId>
-			<artifactId>step-controller-multitenancy</artifactId>
-			<version>${project.version}</version>
-		</dependency> -->
-
 		<dependency>
 			<groupId>org.eclipse.aether</groupId>
 			<artifactId>aether-api</artifactId>

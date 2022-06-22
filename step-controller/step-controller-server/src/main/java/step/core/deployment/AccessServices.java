@@ -23,18 +23,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Context;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Context;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.access.AccessConfiguration;
-import step.core.access.AccessManager;
+import step.framework.server.access.AccessManager;
 import step.core.access.AuthenticationManager;
 import step.core.access.Role;
 import step.core.access.RoleProvider;
@@ -52,13 +52,16 @@ import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.authentication.AuthorizationServerManager;
 import step.core.controller.errorhandling.ApplicationException;
+import step.framework.server.Session;
+import step.framework.server.audit.AuditLogger;
+import step.framework.server.security.Secured;
 
 import static step.core.authentication.JWTSettings.CONFIG_KEY_JWT_NOLOGIN;
 
 @Singleton
 @Path("/access")
 @Tag(name = "Access")
-public class AccessServices extends AbstractServices {
+public class AccessServices extends AbstractStepServices {
 	private static Logger logger = LoggerFactory.getLogger(AccessServices.class);
 	
 	private RoleProvider roleProvider;
@@ -74,7 +77,7 @@ public class AccessServices extends AbstractServices {
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		GlobalContext context = controller.getContext();
+		GlobalContext context = getContext();
 		
 		roleProvider = context.get(RoleProvider.class);
 		authenticationManager = context.get(AuthenticationManager.class);
@@ -114,7 +117,7 @@ public class AccessServices extends AbstractServices {
     @Produces("application/json")
     @Consumes("application/json")
     public Response authenticateUser(Credentials credentials) {
-		Session session = getSession();
+		Session<User> session = getSession();
 		boolean authenticated = false;
 		try {
 			authenticated = authenticationManager.authenticate(session, credentials);
@@ -174,7 +177,7 @@ public class AccessServices extends AbstractServices {
 //	}
 
 	protected SessionResponse buildSessionResponse(Session session) {
-		User user = session.getUser();
+		User user = (User) session.getUser();
 		Role role = accessManager.getRoleInContext(session);
 		boolean isOtp = (boolean) Objects.requireNonNullElse(session.getUser().getCustomField("otp"), false);
 		return new SessionResponse(user.getUsername(), role, isOtp);
