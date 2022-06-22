@@ -28,8 +28,6 @@
 		<version>0.0.0-SNAPSHOT</version>
 	</parent>
 
-	<url>${homepage.url}</url>
-
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>

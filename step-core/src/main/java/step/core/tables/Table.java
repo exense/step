@@ -21,7 +21,7 @@ package step.core.tables;
 import java.util.List;
 import java.util.Map;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import step.core.collections.Filter;
 import step.core.collections.SearchOrder;

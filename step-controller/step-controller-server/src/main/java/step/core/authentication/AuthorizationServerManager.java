@@ -1,6 +1,6 @@
 package step.core.authentication;
 
-import step.core.deployment.Session;
+import step.framework.server.Session;
 
 public interface AuthorizationServerManager {
 

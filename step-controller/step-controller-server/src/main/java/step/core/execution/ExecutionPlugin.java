@@ -35,7 +35,7 @@ import step.plugins.screentemplating.ScreenTemplatePlugin;
 public class ExecutionPlugin extends AbstractControllerPlugin {
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		TableRegistry tableRegistry = context.get(TableRegistry.class);
 		
 		Collection<ExecutionWrapper> collection = context.getCollectionFactory().getCollection("executions",

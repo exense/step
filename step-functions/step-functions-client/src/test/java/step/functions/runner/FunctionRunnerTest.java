@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import org.bson.types.ObjectId;
 import org.junit.Assert;
@@ -46,5 +46,6 @@ public class FunctionRunnerTest {
 			Output<JsonObject> o = context.run(f, "{}");
 			Assert.assertEquals("tache", o.getPayload().getString("mous"));
 		}
+
 	}
 }

@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.core.GenericEntity;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.MediaType;
 
 import step.client.AbstractRemoteClient;
 import step.commons.iterators.SkipLimitIterator;
@@ -41,29 +41,28 @@ public class RemoteCollection<T> implements Collection<T> {
 
         GenericType<List<T>> genericType = genericTypeForEntityList();
 
-        Iterable<T> iterable = new Iterable<T>() {
-            @Override
-            public Iterator<T> iterator() {
-                return new SkipLimitIterator<T>(new SkipLimitProvider<T>() {
-                    @Override
-                    public List<T> getBatch(int skipIterator, int limitIterator) {
-                        int calculatedSkip = (skip != null) ? skip + skipIterator : skipIterator;
-                        int calculatedLimit = limitIterator;
-                        if (limit != null && ((calculatedSkip + limitIterator) > (skip + limit))) {
-                            calculatedLimit = (skip + limit) - calculatedSkip;
-                        }
-                        findRequest.setSkip(calculatedSkip);
-                        findRequest.setLimit(calculatedLimit);
-                        Entity<FindRequest> entity = Entity.entity(findRequest, MediaType.APPLICATION_JSON);
-                        List<T> ts = client.executeRequest(() -> builder.post(entity, genericType));
-                        return ts;
-                    }
-                });
+        Iterable<T> iterable = () -> new SkipLimitIterator<>((skipIterator, limitIterator) -> {
+            int skip_value =  (skip != null) ? skip : 0;
+            int limit_value =  (limit != null) ? limit : 0;
+
+            int calculatedSkip = skip_value + skipIterator;
+
+            int calculatedLimit = limitIterator;
+
+            if (limit_value > 0 && calculatedSkip + limitIterator > skip_value + limit_value) {
+                calculatedLimit = (skip_value + limit_value) - calculatedSkip;
             }
-        };
 
+            if (calculatedLimit>0) {
+                findRequest.setSkip(calculatedSkip);
+                findRequest.setLimit(calculatedLimit);
+                Entity<FindRequest> entity = Entity.entity(findRequest, MediaType.APPLICATION_JSON);
+                return client.executeRequest(() -> builder.post(entity, genericType));
+            } else {
+                return new ArrayList<>();
+            }
+        });
         return StreamSupport.stream(iterable.spliterator(), false);
-
     }
 
 	private GenericType<List<T>> genericTypeForEntityList() {

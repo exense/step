@@ -23,10 +23,8 @@ import java.io.InputStream;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 import ch.exense.commons.app.Configuration;
 import org.bson.Document;
@@ -51,8 +49,10 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 
 	private MeasurementAccessor accessor;
 
+	private RtmContext rtmContext;
+
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		context.getServiceRegistrationCallback().registerService(RtmPluginServices.class);
 		String fileName = "rtm.properties";
 		InputStream inputStream = getClass().getClassLoader().getResourceAsStream(fileName);
@@ -62,7 +62,6 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 		
 		Configuration rtmConfig = new Configuration(file);
 		Configuration stepConfig = context.getConfiguration();
-		RtmContext rtmContext;
 		if(stepConfig.getPropertyAsBoolean("plugins.rtm.useLocalDB", true) == true) {
 			logger.info("Property 'plugins.rtm.useLocalDB' is set to true, using step collection factory");
 			rtmContext = new RtmContext(rtmConfig, context.getCollectionFactory());
@@ -87,9 +86,13 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 	}
 
 	@Override
-	public void executionControllerDestroy(GlobalContext context) {
+	public void serverStop(GlobalContext context) {
 		if(accessor !=null) {
 			accessor.close();
+		}
+		ExecutorService cleanupExecutorService = rtmContext.getCleanupExecutorService();
+		if (cleanupExecutorService != null ) {
+			cleanupExecutorService.shutdown();
 		}
 	}
 }

@@ -33,9 +33,14 @@ import step.versionmanager.VersionManagerPlugin;
 public class InitializationPlugin extends AbstractControllerPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(InitializationPlugin.class);
-	
+
+	private void setupUsers(GlobalContext context) {
+		User user = AuthenticationManager.defaultAdminUser();
+		context.getUserAccessor().save(user);
+	}
+
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		VersionManager versionManager = context.get(VersionManager.class);
 
 		if(versionManager.getLatestControllerLog()==null) {
@@ -43,13 +48,26 @@ public class InitializationPlugin extends AbstractControllerPlugin {
 			logger.info("Initializing Users...");
 			setupUsers(context);
 		}
-						
-		super.executionControllerStart(context);
+
 	}
 
-	private void setupUsers(GlobalContext context) {
-		User user = AuthenticationManager.defaultAdminUser();
-		context.getUserAccessor().save(user);
+	@Override
+	public void migrateData(GlobalContext context) throws Exception {
+
 	}
 
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void afterInitializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void serverStop(GlobalContext context) {
+
+	}
 }

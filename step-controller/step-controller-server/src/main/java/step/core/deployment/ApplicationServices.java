@@ -20,25 +20,24 @@ package step.core.deployment;
 
 import java.util.List;
 
-import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.Hidden;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.plugins.WebPlugin;
 
 @Singleton
 @Path("/app")
 @Hidden
-public class ApplicationServices extends AbstractServices {
+public class ApplicationServices extends AbstractStepServices {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/plugins")
 	public List<WebPlugin> getWebPlugins() {
-		return getContext().getPluginManager().getWebPlugins();
+		return getContext().getControllerPluginManager().getWebPlugins();
 	}
 }

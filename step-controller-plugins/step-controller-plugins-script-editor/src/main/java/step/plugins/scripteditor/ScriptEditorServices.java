@@ -23,14 +23,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import step.core.deployment.AbstractServices;
+import step.core.deployment.AbstractStepServices;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeRegistry;
 import step.plugins.java.AbstractScriptFunctionType;
@@ -39,7 +39,7 @@ import step.plugins.java.GeneralScriptFunction;
 @Singleton
 @Path("/scripteditor")
 @Tag(name = "Keyword editor")
-public class ScriptEditorServices extends AbstractServices {
+public class ScriptEditorServices extends AbstractStepServices {
 
 	@GET
 	@Path("/file/{filename}")

@@ -56,7 +56,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	public FunctionMessageHandler() {
 		super();
 		
-		mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();
+		mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
 	}
 
 	@Override

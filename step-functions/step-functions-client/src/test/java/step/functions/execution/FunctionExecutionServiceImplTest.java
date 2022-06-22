@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,11 +39,10 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
-import step.functions.handler.FunctionInputOutputObjectMapperFactory;
+import step.functions.handler.FunctionIOJavaxObjectMapperFactory;
 import step.functions.io.FunctionInput;
 import step.functions.io.Input;
 import step.functions.io.Output;
-import step.functions.io.OutputBuilder;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionExecutionException;
 import step.functions.type.FunctionTypeRegistry;
@@ -169,7 +168,7 @@ public class FunctionExecutionServiceImplTest {
 	
 	@Test
 	public void testMeasures() throws FunctionExecutionServiceException {
-		OutputBuilder outputBuilder = new OutputBuilder();
+		JakartaOutputBuilder outputBuilder = new JakartaOutputBuilder();
 		
 		outputBuilder.startMeasure("Measure1");
 		outputBuilder.stopMeasure();
@@ -185,7 +184,7 @@ public class FunctionExecutionServiceImplTest {
 	
 	@Test
 	public void testError() throws FunctionExecutionServiceException {
-		OutputBuilder outputBuilder = new OutputBuilder();
+		JakartaOutputBuilder outputBuilder = new JakartaOutputBuilder();
 		Output<JsonObject> expectedOutput = outputBuilder.setError("My error").build();
 		
 		FunctionExecutionService f = getFunctionExecutionService(expectedOutput, null, null, null);
@@ -241,7 +240,7 @@ public class FunctionExecutionServiceImplTest {
 	protected FunctionExecutionService getFunctionExecutionService(Output<JsonObject> output, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
 		OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
 		
-		ObjectMapper mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();
+		ObjectMapper mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
 		outputMessageBuilder.setPayload(mapper.valueToTree(output));
 		
 		return getFunctionExecutionServiceForGridClientTest(outputMessageBuilder.build(), callException, reserveTokenException, returnTokenException);
@@ -364,7 +363,7 @@ public class FunctionExecutionServiceImplTest {
 				assert !properties.containsKey("inputProperty1");
 				assert !properties.containsKey("handlerProperty1");
 				
-				ObjectMapper mapper = FunctionInputOutputObjectMapperFactory.createObjectMapper();
+				ObjectMapper mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
 				Input<?> input = mapper.treeToValue(argument, Input.class);
 				assert input.getFunctionCallTimeout() == functionCallTimeout-100l;
 				assert input.getProperties().containsKey("inputProperty1");

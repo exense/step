@@ -18,19 +18,20 @@
  ******************************************************************************/
 package step.core.deployment;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
+import step.framework.server.security.Secured;
 
 @Singleton
 @Path("settings")
 @Tag(name = "Settings")
-public class SettingsServices extends AbstractServices {
+public class SettingsServices extends AbstractStepServices {
 	
 	protected ControllerSettingAccessor controllerSettingsAccessor;
 

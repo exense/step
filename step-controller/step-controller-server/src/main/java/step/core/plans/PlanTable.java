@@ -20,7 +20,7 @@ package step.core.plans;
 
 import java.util.List;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import step.core.collections.Collection;
 import step.core.collections.Filter;

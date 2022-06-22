@@ -22,8 +22,8 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.JsonObject;
-import javax.json.stream.JsonParsingException;
+import jakarta.json.JsonObject;
+import jakarta.json.stream.JsonParsingException;
 
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.json.JsonProviderCache;

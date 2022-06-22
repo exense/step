@@ -8,6 +8,7 @@ import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.BasePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.framework.server.ServerPluginManager;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class ControllerPluginManagerTest {
 
     @Test
     public void test() throws Exception {
-        ControllerPluginManager pluginManager = new ControllerPluginManager(new Configuration());
+        ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(new Configuration()));
         List<WebPlugin> plugins = pluginManager.getWebPlugins();
         assertTrue(plugins.contains(WEB_PLUGIN));
         List<ExecutionEnginePlugin> executionEnginePlugins = pluginManager.getExecutionEnginePlugins();
@@ -32,7 +33,7 @@ public class ControllerPluginManagerTest {
     public void testDisabling() throws Exception {
         Configuration configuration = new Configuration();
         configuration.putProperty("plugins.TestPlugin.enabled", "false");
-        assertThrows(PluginCriticalException.class, () -> new ControllerPluginManager(configuration));
+        assertThrows(PluginCriticalException.class, () -> new ControllerPluginManager(new ServerPluginManager(configuration)));
     }
 
     @Plugin

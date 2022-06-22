@@ -23,17 +23,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,9 +41,9 @@ import org.bson.types.ObjectId;
 
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.SearchOrder;
-import step.core.deployment.AbstractServices;
+import step.core.deployment.AbstractStepServices;
 import step.core.deployment.FindByCriteraParam;
-import step.core.deployment.Secured;
+import step.framework.server.security.Secured;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
@@ -54,7 +54,7 @@ import step.engine.execution.ExecutionLifecycleManager;
 @Singleton
 @Path("executions")
 @Tag(name = "Executions")
-public class ExecutionServices extends AbstractServices {
+public class ExecutionServices extends AbstractStepServices {
 
 	protected ExecutionAccessor executionAccessor;
 	

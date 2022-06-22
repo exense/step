@@ -32,7 +32,7 @@ import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
 import org.apache.commons.codec.digest.DigestUtils;
 import step.core.controller.errorhandling.ApplicationException;
-import step.core.deployment.Session;
+import step.framework.server.Session;
 
 public class AuthenticationManager {
 
@@ -56,7 +56,7 @@ public class AuthenticationManager {
 		return authenticator.getClass().getSimpleName();
 	}
 
-	public boolean authenticate(Session session, Credentials credentials) throws Exception {
+	public boolean authenticate(Session<User> session, Credentials credentials) throws Exception {
 		boolean authenticated = authenticator.authenticate(credentials);
 		if (authenticated) {
 			setUserToSession(session, credentials.getUsername());
@@ -142,6 +142,6 @@ public class AuthenticationManager {
 	
 	public static interface AuthenticationManagerListener {
 		
-		public void onSuccessfulAuthentication(Session session);
+		public void onSuccessfulAuthentication(Session<User> session);
 	}
 }

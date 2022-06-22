@@ -25,8 +25,8 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
@@ -85,11 +85,11 @@ public class FunctionRunner {
 			return Json.createReader(new StringReader(argument)).readObject();
 		}
 		
-		public Output<JsonObject> run(Function function, String argument) {	
+		public Output<JsonObject> run(Function function, String argument) {
 			return run(function, read(argument));
 		}
 		
-		public Output<JsonObject> run(Function function, JsonObject argument) {	
+		public Output<JsonObject> run(Function function, JsonObject argument) {
 			FunctionInput<JsonObject> input = new FunctionInput<>();
 			input.setPayload(argument);
 			input.setProperties(properties);

@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import org.junit.Test;
 

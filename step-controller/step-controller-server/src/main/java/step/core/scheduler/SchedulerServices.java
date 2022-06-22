@@ -20,17 +20,18 @@ package step.core.scheduler;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
-import step.core.deployment.Session;
+import step.core.access.User;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
+import step.framework.server.Session;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.RepositoryObjectReference;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,7 +40,7 @@ import java.util.List;
 @Singleton
 @Path("scheduler")
 @Tag(name = "Scheduler")
-public class SchedulerServices extends AbstractServices {
+public class SchedulerServices extends AbstractStepServices {
 
     private ExecutionScheduler scheduler;
 
@@ -110,7 +111,7 @@ public class SchedulerServices extends AbstractServices {
     @Path("/task/{id}/execute")
     @Secured(right = "plan-execute")
     public String execute(@PathParam("id") String executionTaskID) {
-        Session session = getSession();
+        Session<User> session = getSession();
         return scheduler.executeExecutionTask(executionTaskID, session.getUser().getUsername());
     }
 

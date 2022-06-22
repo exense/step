@@ -21,49 +21,54 @@ package step.expressions;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
-import org.apache.commons.pool.KeyedPoolableObjectFactory;
+
+import org.apache.commons.pool2.DestroyMode;
+import org.apache.commons.pool2.KeyedPooledObjectFactory;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GroovyPoolFactory implements KeyedPoolableObjectFactory<GroovyPoolKey, GroovyPoolEntry>{
+public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey, GroovyPoolEntry> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(GroovyPoolFactory.class);
 	
 	private CompilerConfiguration groovyCompilerConfiguration = new CompilerConfiguration();
-	
+
+
 	public GroovyPoolFactory(String scriptBaseClass) {
 		super();
 		if(scriptBaseClass!=null) {
-			groovyCompilerConfiguration.setScriptBaseClass(scriptBaseClass);				
+			groovyCompilerConfiguration.setScriptBaseClass(scriptBaseClass);
 		}
 	}
 
 	@Override
-	public void activateObject(GroovyPoolKey arg0, GroovyPoolEntry arg1)
-			throws Exception {}
-
-	@Override
-	public void destroyObject(GroovyPoolKey arg0, GroovyPoolEntry arg1)
-			throws Exception {	}
-
-	@Override
-	public GroovyPoolEntry makeObject(GroovyPoolKey arg0) throws Exception {
-		logger.debug("Creating new script: " + arg0.getScript());
+	public PooledObject<GroovyPoolEntry> makeObject(GroovyPoolKey groovyPoolKey) throws Exception {
+		logger.debug("Creating new script: " + groovyPoolKey.getScript());
 		GroovyShell shell = new GroovyShell(groovyCompilerConfiguration);
-		Script script = shell.parse(arg0.getScript());
-		
-		GroovyPoolEntry result = new GroovyPoolEntry(arg0, script);
-		return result;
+		Script script = shell.parse(groovyPoolKey.getScript());
+
+		GroovyPoolEntry result = new GroovyPoolEntry(groovyPoolKey, script);
+		return new DefaultPooledObject<>(result);
 	}
 
 	@Override
-	public void passivateObject(GroovyPoolKey arg0, GroovyPoolEntry arg1)
-			throws Exception {}
+	public void activateObject(GroovyPoolKey groovyPoolKey, PooledObject<GroovyPoolEntry> pooledObject) throws Exception {
+
+	}
 
 	@Override
-	public boolean validateObject(GroovyPoolKey arg0, GroovyPoolEntry arg1) {
+	public void destroyObject(GroovyPoolKey groovyPoolKey, PooledObject<GroovyPoolEntry> pooledObject) throws Exception {
+	}
+
+	@Override
+	public void passivateObject(GroovyPoolKey groovyPoolKey, PooledObject<GroovyPoolEntry> pooledObject) throws Exception {
+	}
+
+	@Override
+	public boolean validateObject(GroovyPoolKey groovyPoolKey, PooledObject<GroovyPoolEntry> pooledObject) {
 		return true;
 	}
-
 }

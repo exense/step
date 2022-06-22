@@ -7,7 +7,7 @@ import step.core.plugins.Plugin;
 @Plugin
 public class ReferenceFinderPlugin extends AbstractControllerPlugin {
     @Override
-    public void executionControllerStart(GlobalContext context) throws Exception {
+    public void serverStart(GlobalContext context) throws Exception {
         context.getServiceRegistrationCallback().registerService(ReferenceFinderServices.class);
     }
 }

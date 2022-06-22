@@ -18,10 +18,10 @@
  ******************************************************************************/
 package step.core.access;
 
-import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractUser;
 
-public class User extends AbstractIdentifiableObject {
-	
+public class User extends AbstractUser {
+
 	private String username;
 
 	private String password;
@@ -64,5 +64,10 @@ public class User extends AbstractIdentifiableObject {
 
 	public void setPreferences(Preferences preferences) {
 		this.preferences = preferences;
+	}
+
+	@Override
+	public String getSessionUsername() {
+		return username;
 	}
 }

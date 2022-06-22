@@ -18,21 +18,21 @@
  ******************************************************************************/
 package step.plugins.views;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.Hidden;
-import step.core.deployment.AbstractServices;
+import step.core.deployment.AbstractStepServices;
 
 @Singleton
 @Path("/views")
 @Hidden
-public class ViewPluginServices extends AbstractServices {
+public class ViewPluginServices extends AbstractStepServices {
 
 	private ViewManager viewManager;
 

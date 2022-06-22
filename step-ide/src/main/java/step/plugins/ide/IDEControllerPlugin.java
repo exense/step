@@ -41,7 +41,7 @@ public class IDEControllerPlugin extends AbstractControllerPlugin {
 	private static final Logger logger = LoggerFactory.getLogger(IDEControllerPlugin.class);
 
 	@Override
-	public void executionControllerStart(GlobalContext context) throws Exception {
+	public void serverStart(GlobalContext context) throws Exception {
 		ClassLoader initialContextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			File gridJar = ResourceExtractor.extractResource(AgentRunner.class.getClassLoader(), "step-grid-agent.jar");

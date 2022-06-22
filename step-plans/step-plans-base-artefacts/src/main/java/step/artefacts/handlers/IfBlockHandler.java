@@ -49,7 +49,7 @@ public class IfBlockHandler extends ArtefactHandler<IfBlock, IfBlockReportNode> 
 				node.setStatus(ReportNodeStatus.PASSED);	
 			} 
 			
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			failWithException(node, e);
 		}
 	}

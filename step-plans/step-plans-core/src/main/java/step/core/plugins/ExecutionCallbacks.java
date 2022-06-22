@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.plugins;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;

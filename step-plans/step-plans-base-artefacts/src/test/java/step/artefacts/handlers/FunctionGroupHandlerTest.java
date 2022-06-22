@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import org.junit.Test;
 import step.artefacts.*;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
@@ -52,6 +54,7 @@ import step.planbuilder.FunctionArtefacts;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -129,9 +132,16 @@ public class FunctionGroupHandlerTest {
 					@Override
 					public <IN, OUT> Output<OUT> callFunction(String id, Function function,
 							FunctionInput<IN> input, Class<OUT> outputClass) {
-						return null;
+						return (Output<OUT>) newOutput();
 					}
-
+					private Output<JsonObject> newOutput() {
+						Output<JsonObject> output = new Output<>();
+						JsonObject payload = Json.createObjectBuilder().build();
+						output.setPayload(payload);
+						output.setMeasures(new ArrayList<>());
+						output.setAttachments(new ArrayList<>());
+						return output;
+					}
 				});
 			}
 		}).build();
@@ -283,7 +293,15 @@ public class FunctionGroupHandlerTest {
 							@Override
 							public <IN, OUT> Output<OUT> callFunction(String id, Function function,
 									FunctionInput<IN> input, Class<OUT> outputClass) {
-								return null;
+								return (Output<OUT>) newOutput();
+							}
+							private Output<JsonObject> newOutput() {
+								Output<JsonObject> output = new Output<>();
+								JsonObject payload = Json.createObjectBuilder().build();
+								output.setPayload(payload);
+								output.setMeasures(new ArrayList<>());
+								output.setAttachments(new ArrayList<>());
+								return output;
 							}
 							
 						};
@@ -299,11 +317,11 @@ public class FunctionGroupHandlerTest {
 		// Assert that the token have been returned after Session execution
 		assertEquals(1,localTokenReturned.get());
 		assertEquals(3,tokenReturned.get());
-		assertEquals(("Session:TECHNICAL_ERROR:\n" +
+		assertEquals(("Session:FAILED:\n" +
 				" CheckArtefact:PASSED:\n" + 
-				 " Sequence:TECHNICAL_ERROR:\n" +
+				" Sequence:FAILED:\n" +
 				"  Sleep:PASSED:\n" +
-				"  CallKeyword:TECHNICAL_ERROR:null\n" +
+				"  CallKeyword:PASSED:\n" +
 				"  RetryIfFails:FAILED:\n" +
 				"   Iteration1:FAILED:\n" +
 				"    CheckArtefact:FAILED:\n" +
@@ -311,12 +329,13 @@ public class FunctionGroupHandlerTest {
 				"    CheckArtefact:FAILED:\n" +
 				"   Iteration3:FAILED:\n" +
 				"    CheckArtefact:FAILED:\n" +
-				"  CallKeyword:TECHNICAL_ERROR:null\n").replace("CallKeyword", name) ,writer.toString());
+				"  CallKeyword:PASSED:\n").replace("CallKeyword", name) ,writer.toString());
 	}
 	
 	protected TokenWrapper token(String id) {
 		Token localToken_ = new Token();
 		localToken_.setId(id);
+		localToken_.setAgentid(id);
 		return new TokenWrapper(localToken_, new AgentRef());
 	}
 	

@@ -22,28 +22,29 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.attachments.FileResolver;
 import step.attachments.FileResolver.FileHandle;
 import step.core.GlobalContext;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.Version;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.migration.MigrationManager;
 
 @Singleton
 @Path("import")
 @Tag(name = "Imports")
-public class ImportServices extends AbstractServices {
+public class ImportServices extends AbstractStepServices {
 	
 	private FileResolver fileResolver;
 	private ImportManager importManager;
@@ -52,7 +53,8 @@ public class ImportServices extends AbstractServices {
 	public void init() throws Exception {
 		super.init();
 		GlobalContext context = getContext();
-		importManager = new ImportManager(context.getEntityManager(), context.require(MigrationManager.class));
+		importManager = new ImportManager(context.getEntityManager(), context.require(MigrationManager.class),
+				context.require(Version.class));
 		fileResolver = context.getFileResolver();
 	}
 

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.artefacts;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.ContainsDynamicValues;

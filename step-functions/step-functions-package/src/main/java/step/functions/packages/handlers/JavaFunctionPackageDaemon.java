@@ -8,10 +8,10 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Set;
 
-import javax.json.Json;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.stream.JsonParsingException;
+import jakarta.json.Json;
+import jakarta.json.JsonException;
+import jakarta.json.JsonObject;
+import jakarta.json.stream.JsonParsingException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

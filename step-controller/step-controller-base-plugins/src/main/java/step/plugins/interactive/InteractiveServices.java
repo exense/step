@@ -27,8 +27,8 @@ import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
-import step.core.deployment.AbstractServices;
-import step.core.deployment.Secured;
+import step.core.deployment.AbstractStepServices;
+import step.framework.server.security.Secured;
 import step.core.encryption.EncryptionManager;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngine;
@@ -54,13 +54,13 @@ import step.planbuilder.FunctionArtefacts;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.plugins.screentemplating.FunctionTableScreenInputs;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Singleton;
-import javax.ws.rs.*;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -70,7 +70,7 @@ import java.util.concurrent.*;
 @Singleton
 @Path("interactive")
 @Tag(name = "Interactive plan execution")
-public class InteractiveServices extends AbstractServices {
+public class InteractiveServices extends AbstractStepServices {
 
 	private final Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
 	private final Timer sessionExpirationTimer;

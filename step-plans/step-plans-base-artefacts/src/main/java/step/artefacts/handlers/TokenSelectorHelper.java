@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 import step.artefacts.TokenSelector;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;

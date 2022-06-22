@@ -24,8 +24,8 @@ import step.core.plans.Plan;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 

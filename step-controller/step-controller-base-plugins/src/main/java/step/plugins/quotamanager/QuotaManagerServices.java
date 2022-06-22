@@ -20,18 +20,18 @@ package step.plugins.quotamanager;
 
 import java.io.StringWriter;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import step.core.deployment.AbstractServices;
+import step.core.deployment.AbstractStepServices;
 import step.plugins.quotamanager.QuotaHandlerStatus.QuotaHandlerStatusEntry;
 
 @Path("/quotamanager")
 @Tag(name = "Quota manager")
-public class QuotaManagerServices extends AbstractServices {
+public class QuotaManagerServices extends AbstractStepServices {
 
 	@GET
 	@Path("/status")
