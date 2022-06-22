@@ -8,6 +8,7 @@ public class FetchBucketsRequest {
     private long start;
     private long end;
     private Map<String, String> params;
+    private boolean threadGroupBuckets = false;
     private Set<String> groupDimensions = new HashSet<>();
     private Long numberOfBuckets;
     private long intervalSize; // in ms
@@ -26,6 +27,14 @@ public class FetchBucketsRequest {
 
     public void setEnd(long end) {
         this.end = end;
+    }
+
+    public boolean isThreadGroupBuckets() {
+        return threadGroupBuckets;
+    }
+
+    public void setThreadGroupBuckets(boolean threadGroupBuckets) {
+        this.threadGroupBuckets = threadGroupBuckets;
     }
 
     public Map<String, String> getParams() {

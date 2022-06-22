@@ -2,14 +2,11 @@ package step.plugins.timeseries.api;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.GlobalContext;
-import step.core.access.AccessManager;
 import step.core.deployment.AbstractServices;
-import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.timeseries.Bucket;
 import step.core.timeseries.Query;
+import step.core.timeseries.TimeSeriesChartResponse;
 import step.core.timeseries.accessor.BucketAccessor;
-import step.plugins.screentemplating.ScreenInputAccessor;
-import step.plugins.screentemplating.ScreenTemplateManager;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
@@ -39,17 +36,27 @@ public class TimeSeriesService extends AbstractServices {
     @Path("/buckets")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<Map<String, String>, Map<Long, Bucket>> getBuckets(FetchBucketsRequest request) {
+    public Map<Map<String, Object>, Map<Long, Bucket>> getBuckets(FetchBucketsRequest request) {
         Query query = mapToQuery(request);
         return bucketAccessor.collectBuckets(query);
+    }
+
+    @POST
+    @Path("/buckets-new")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public TimeSeriesChartResponse getBucketsNew(FetchBucketsRequest request) {
+        Query query = mapToQuery(request);
+        return bucketAccessor.collect(query);
     }
 
     private Query mapToQuery(FetchBucketsRequest request) {
         return new Query()
                 .range(request.getStart(), request.getEnd())
+                .withThreadGroupsBuckets(request.isThreadGroupBuckets())
+                .window(request.getIntervalSize())
                 .filter(request.getParams() != null ? request.getParams() : Collections.emptyMap())
-                .groupBy(request.getGroupDimensions())
                 .split(request.getNumberOfBuckets())
-                .window(request.getIntervalSize());
+                .groupBy(request.getGroupDimensions());
     }
 }

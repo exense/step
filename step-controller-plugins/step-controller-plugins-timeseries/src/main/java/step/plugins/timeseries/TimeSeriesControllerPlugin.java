@@ -11,6 +11,7 @@ import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.accessor.BucketAccessor;
 import step.core.timeseries.accessor.BucketAccessorImpl;
 import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.timeseries.api.TimeSeriesService;
 
 @Plugin
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
@@ -20,14 +21,14 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     @Override
     public void executionControllerStart(GlobalContext context) throws Exception {
         Configuration configuration = context.getConfiguration();
-        Long resolutionPeriod = configuration.getPropertyAsLong("plugins.timeseries.resolution.period", 100L);
+        Integer resolutionPeriod = configuration.getPropertyAsInteger("plugins.timeseries.resolution.period", 1000);
         Long flushPeriod = configuration.getPropertyAsLong("plugins.timeseries.flush.period", 1000L);
-        BucketAccessorImpl bucketAccessor = new BucketAccessorImpl(context.getCollectionFactory().getCollection(BucketAccessor.ENTITY_NAME, Bucket.class));
+        BucketAccessor bucketAccessor = new BucketAccessorImpl(context.getCollectionFactory().getCollection(BucketAccessor.ENTITY_NAME, Bucket.class), resolutionPeriod);
         TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(bucketAccessor, resolutionPeriod, flushPeriod);
-
         context.put(TimeSeriesIngestionPipeline.class, ingestionPipeline);
         context.put(BucketAccessor.class, bucketAccessor);
 
+        context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
         MeasurementPlugin.registerMeasurementHandlers(new TimeSeriesBucketingHandler(ingestionPipeline));
     }
 
