@@ -19,7 +19,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
 
     @Override
-    public void executionControllerStart(GlobalContext context) throws Exception {
+    public void serverStart(GlobalContext context) throws Exception {
         Configuration configuration = context.getConfiguration();
         Integer resolutionPeriod = configuration.getPropertyAsInteger("plugins.timeseries.resolution.period", 1000);
         Long flushPeriod = configuration.getPropertyAsLong("plugins.timeseries.flush.period", 1000L);
