@@ -42,7 +42,7 @@
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-framework-collections-mongodb</artifactId>
-            <version>2022.05.04-IDe0f6305</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
