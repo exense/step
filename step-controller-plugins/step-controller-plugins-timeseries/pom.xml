@@ -37,12 +37,12 @@
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-framework-timeseries</artifactId>
-            <version>${project.version}</version>
+            <version>${step-framework.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-framework-collections-mongodb</artifactId>
-            <version>${project.version}</version>
+            <version>${step-framework.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
