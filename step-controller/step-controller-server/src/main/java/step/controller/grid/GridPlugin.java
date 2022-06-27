@@ -1,34 +1,26 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package step.controller.grid;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import ch.exense.commons.app.Configuration;
 import step.controller.grid.services.GridServices;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
@@ -38,64 +30,78 @@ import step.functions.execution.ConfigurableTokenLifecycleStrategy;
 import step.grid.Grid;
 import step.grid.GridImpl;
 import step.grid.GridImpl.GridImplConfig;
-import step.grid.client.GridClient;
-import step.grid.client.GridClientConfiguration;
-import step.grid.client.LocalGridClientImpl;
-import step.grid.client.TokenLifecycleStrategy;
+import step.grid.client.*;
 import step.grid.io.AgentErrorCode;
 import step.resources.ResourceManagerControllerPlugin;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 @Plugin(dependencies= {ResourceManagerControllerPlugin.class})
 public class GridPlugin extends AbstractControllerPlugin {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
-	
+
 	private GridImpl grid;
 	private GridClient client;
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 		Configuration configuration = context.getConfiguration();
-		
-		Integer gridPort = configuration.getPropertyAsInteger("grid.port",8081);
-		Integer tokenTTL = configuration.getPropertyAsInteger("grid.ttl",60000);
-		
-		String fileManagerPath = configuration.getProperty("grid.filemanager.path", "filemanager");
-		
-		GridImplConfig gridConfig = new GridImplConfig();
-		gridConfig.setFileLastModificationCacheConcurrencyLevel(configuration.getPropertyAsInteger("grid.filemanager.cache.concurrencylevel", 4));
-		gridConfig.setFileLastModificationCacheMaximumsize(configuration.getPropertyAsInteger("grid.filemanager.cache.maximumsize", 1000));
-		gridConfig.setFileLastModificationCacheExpireAfter(configuration.getPropertyAsInteger("grid.filemanager.cache.expireafter.ms", 500));
-		gridConfig.setTtl(tokenTTL);
-		
-		gridConfig.setTokenAffinityEvaluatorClass(configuration.getProperty("grid.tokens.affinityevaluator.classname"));
-		Map<String, String> tokenAffinityEvaluatorProperties = configuration.getPropertyNames().stream().filter(p->(p instanceof String && p.toString().startsWith("grid.tokens.affinityevaluator")))
-			.collect(Collectors.toMap(p->p.toString().replace("grid.tokens.affinityevaluator.", ""), p->configuration.getProperty(p.toString())));
-		gridConfig.setTokenAffinityEvaluatorProperties(tokenAffinityEvaluatorProperties);
-		
-		grid = new GridImpl(new File(fileManagerPath), gridPort, gridConfig);
-        try {
-            grid.start();
-        } catch (Throwable e) {
-            try {
-                grid.stop();
-            } catch (Throwable t) {
-                //ignore
-            }
-            throw new PluginCriticalException("An exception occurred when trying to start the Grid plugin: " + e.getClass().getName() + ": " + e.getMessage());
-        }
 
+		// Initialize the embedded grid if needed
+		boolean gridEnabled = configuration.getPropertyAsBoolean("grid.enabled", true);
+		if (gridEnabled) {
+			Integer gridPort = configuration.getPropertyAsInteger("grid.port", 8081);
+			Integer tokenTTL = configuration.getPropertyAsInteger("grid.ttl", 60000);
+
+			String fileManagerPath = configuration.getProperty("grid.filemanager.path", "filemanager");
+
+			GridImplConfig gridConfig = new GridImplConfig();
+			gridConfig.setFileLastModificationCacheConcurrencyLevel(configuration.getPropertyAsInteger("grid.filemanager.cache.concurrencylevel", 4));
+			gridConfig.setFileLastModificationCacheMaximumsize(configuration.getPropertyAsInteger("grid.filemanager.cache.maximumsize", 1000));
+			gridConfig.setFileLastModificationCacheExpireAfter(configuration.getPropertyAsInteger("grid.filemanager.cache.expireafter.ms", 500));
+			gridConfig.setTtl(tokenTTL);
+
+			gridConfig.setTokenAffinityEvaluatorClass(configuration.getProperty("grid.tokens.affinityevaluator.classname"));
+			Map<String, String> tokenAffinityEvaluatorProperties = configuration.getPropertyNames().stream().filter(p -> (p instanceof String && p.toString().startsWith("grid.tokens.affinityevaluator")))
+					.collect(Collectors.toMap(p -> p.toString().replace("grid.tokens.affinityevaluator.", ""), p -> configuration.getProperty(p.toString())));
+			gridConfig.setTokenAffinityEvaluatorProperties(tokenAffinityEvaluatorProperties);
+
+			grid = new GridImpl(new File(fileManagerPath), gridPort, gridConfig);
+			try {
+				grid.start();
+			} catch (Throwable e) {
+				try {
+					grid.stop();
+				} catch (Throwable t) {
+					//ignore
+				}
+				throw new PluginCriticalException("An exception occurred when trying to start the Grid plugin: " + e.getClass().getName() + ": " + e.getMessage());
+			}
+
+			context.put(Grid.class, grid);
+			context.put(GridImpl.class, grid);
+			context.getServiceRegistrationCallback().registerService(GridServices.class);
+		}
+
+		// Initialize the grid client
 		TokenLifecycleStrategy tokenLifecycleStrategy = getTokenLifecycleStrategy(configuration);
-		
 		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration);
-		client = new LocalGridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
+
+		String remoteGridUrl = configuration.getProperty("grid.client.gridurl");
+		if (remoteGridUrl != null) {
+			client = new RemoteGridClientImpl(gridClientConfiguration, remoteGridUrl);
+		} else {
+			client = new LocalGridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
+		}
 
 		context.put(TokenLifecycleStrategy.class, tokenLifecycleStrategy);
-		context.put(Grid.class, grid);
-		context.put(GridImpl.class, grid);
 		context.put(GridClient.class, client);
-		
-		context.getServiceRegistrationCallback().registerService(GridServices.class);
 	}
 
 	protected ConfigurableTokenLifecycleStrategy getTokenLifecycleStrategy(Configuration configuration) {

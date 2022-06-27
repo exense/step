@@ -18,19 +18,27 @@
  ******************************************************************************/
 package step.controller.grid.services;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractStepServices;
-import step.framework.server.security.Secured;
-import step.framework.server.Session;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
+import step.framework.server.Session;
+import step.framework.server.security.Secured;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.editors.FunctionEditor;
@@ -43,16 +51,9 @@ import step.functions.manager.FunctionManager;
 import step.functions.services.GetTokenHandleParameter;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
+import step.grid.GenericTokenWrapperOwner;
 import step.grid.TokenWrapper;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -194,10 +195,10 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter, @Context HttpServletRequest req) throws FunctionExecutionServiceException {
 		Session<User> session = getSession();
 		if(!parameter.isLocal()) {
-			FunctionServiceTokenWrapperOwner tokenWrapperOwner = new FunctionServiceTokenWrapperOwner();
-			tokenWrapperOwner.setUsername(session.getUser().getUsername());
-			tokenWrapperOwner.setIpAddress(req.getRemoteAddr());
-			tokenWrapperOwner.setDescription(parameter.getReservationDescription());
+			GenericTokenWrapperOwner tokenWrapperOwner = new GenericTokenWrapperOwner();
+			tokenWrapperOwner.put("username", session.getUser().getUsername());
+			tokenWrapperOwner.put("ipAddress", req.getRemoteAddr());
+			tokenWrapperOwner.put("description", parameter.getReservationDescription());
 			return functionExecutionService.getTokenHandle(parameter.getAttributes(), parameter.getInterests(), parameter.isCreateSession(), tokenWrapperOwner);
 		} else {
 			return functionExecutionService.getLocalTokenHandle();

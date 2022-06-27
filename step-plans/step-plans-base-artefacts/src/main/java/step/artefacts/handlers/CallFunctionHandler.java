@@ -57,6 +57,7 @@ import step.functions.execution.FunctionExecutionService;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
+import step.grid.GenericTokenWrapperOwner;
 import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
@@ -123,8 +124,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
 			boolean releaseTokenAfterExecution = (o==null);
 			
-			CallFunctionTokenWrapperOwner tokenWrapperOwner = new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription());
-			TokenWrapper token = functionRouter.selectToken(testArtefact, function, (FunctionGroupContext)o, getBindings(), tokenWrapperOwner);
+			GenericTokenWrapperOwner owner = new GenericTokenWrapperOwner();
+			owner.put("reportNodeId", node.getId().toString());
+			owner.put("executionId", context.getExecutionId());
+			owner.put("executionDescription", context.getExecutionParameters().getDescription());
+
+			TokenWrapper token = functionRouter.selectToken(testArtefact, function, (FunctionGroupContext)o, getBindings(), owner);
 			try {
 				Token gridToken = token.getToken();
 				if(gridToken.isLocal()) {
