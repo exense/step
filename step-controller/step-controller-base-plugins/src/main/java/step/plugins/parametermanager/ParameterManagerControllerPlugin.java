@@ -110,7 +110,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
 		List<ScreenInput> parameterTable = screenInputAccessor.getScreenInputsByScreenId(PARAMETER_TABLE);
 		Input keyInput = new Input(InputType.TEXT, "key", "Key", "Keys containing 'pwd' or 'password' will be automatically protected", null);
-		keyInput.setValueHtmlTemplate("<entity-icon entity=\"stBean\" entity-name=\"'parameters'\"/> <parameter-key parameter=\"stBean\" st-options=\"stOptions\" />");
+		keyInput.setValueHtmlTemplate("<entity-icon [entity]=\"stBean\" entity-name=\"'parameters'\"/> <parameter-key parameter=\"stBean\" st-options=\"stOptions\" />");
 		if(parameterTable.isEmpty()) {
 			screenInputAccessor.save(new ScreenInput(0, PARAMETER_TABLE, keyInput));
 			screenInputAccessor.save(new ScreenInput(1, PARAMETER_TABLE, new Input(InputType.TEXT, "value", "Value", null, null)));
