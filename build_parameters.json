@@ -1,6 +1,7 @@
 {
 	"NAME": "Step OSS backend",
 	"OS": "LINUX",
+	"LOCK": "step-backend-${BRANCH}",
 
 	"ACTIONS": [
 		{
