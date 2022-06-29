@@ -42,26 +42,26 @@ import jakarta.ws.rs.core.MediaType;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.deployment.AbstractStepServices;
 import step.framework.server.security.Secured;
-import step.grid.GridImpl;
-import step.grid.GridReportBuilder;
 import step.grid.TokenWrapper;
 import step.grid.TokenWrapperState;
-import step.grid.reports.TokenGroupCapacity;
+import step.grid.client.GridClient;
+import step.grid.client.reports.GridReportBuilder;
+import step.grid.client.reports.TokenGroupCapacity;
 
 @Path("/grid")
 @Tag(name = "Grid")
 public class GridServices extends AbstractStepServices {
 
-	protected GridImpl grid;
+	protected GridClient gridClient;
 	
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		grid = getContext().get(GridImpl.class);
+		gridClient = getContext().get(GridClient.class);
 	}
 	
 	private GridReportBuilder getReportBuilder() {
-		return new GridReportBuilder(grid);
+		return new GridReportBuilder(gridClient);
 	}
 	
 
@@ -72,7 +72,7 @@ public class GridServices extends AbstractStepServices {
 		boolean skipTokens = Boolean.parseBoolean(notokens);
 		List<AgentListEntry> agents = new ArrayList<>();
 		
-		grid.getAgents().forEach(agent->{
+		gridClient.getAgents().forEach(agent->{
 			AgentListEntry agentState = new AgentListEntry();
 			agentState.setAgentRef(agent);
 			List<TokenWrapper> agentTokens = getAgentTokens(agent.getAgentId());
@@ -89,7 +89,7 @@ public class GridServices extends AbstractStepServices {
 	protected List<TokenWrapper> getAgentTokens(String agentId) {
 		List<TokenWrapper> agentTokens = new ArrayList<>();
 		
-		grid.getTokens().forEach(token->{
+		gridClient.getTokens().forEach(token->{
 			if(agentId.equals(token.getAgent().getAgentId())) {
 				agentTokens.add(token);
 			}
@@ -119,9 +119,9 @@ public class GridServices extends AbstractStepServices {
 	@Path("/agent/{id}/interrupt")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void interruptAgent(@PathParam("id") String agentId) {
-		grid.getTokens().forEach(token->{
+		gridClient.getTokens().forEach(token->{
 			if(agentId.equals(token.getAgent().getAgentId())) {
-				grid.startTokenMaintenance(token.getID());
+				gridClient.startTokenMaintenance(token.getID());
 			}
 		});
 	}
@@ -131,9 +131,9 @@ public class GridServices extends AbstractStepServices {
 	@Path("/agent/{id}/resume")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void resumeAgent(@PathParam("id") String agentId) {
-		grid.getTokens().forEach(token->{
+		gridClient.getTokens().forEach(token->{
 			if(agentId.equals(token.getAgent().getAgentId())) {
-				grid.stopTokenMaintenance(token.getID());
+				gridClient.stopTokenMaintenance(token.getID());
 			}
 		});
 	}
@@ -143,9 +143,9 @@ public class GridServices extends AbstractStepServices {
 	@Path("/agent/{id}/tokens/errors")
 	@Produces(MediaType.APPLICATION_JSON)
 	public void removeAgentTokenErrors(@PathParam("id") String agentId) {
-		grid.getTokens().forEach(token->{
+		gridClient.getTokens().forEach(token->{
 			if(token.getState().equals(TokenWrapperState.ERROR)) {
-				grid.removeTokenError(token.getID());
+				gridClient.removeTokenError(token.getID());
 			}
 		});
 	}
@@ -162,7 +162,7 @@ public class GridServices extends AbstractStepServices {
 	@Path("/token/{id}/error")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void removeTokenError(@PathParam("id") String tokenId) {
-		grid.removeTokenError(tokenId);
+		gridClient.removeTokenError(tokenId);
 	}
 	
 	@POST
@@ -170,7 +170,7 @@ public class GridServices extends AbstractStepServices {
 	@Path("/token/{id}/maintenance")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void startTokenMaintenance(@PathParam("id") String tokenId) {
-		grid.startTokenMaintenance(tokenId);
+		gridClient.startTokenMaintenance(tokenId);
 	}
 	
 	@DELETE
@@ -178,7 +178,7 @@ public class GridServices extends AbstractStepServices {
 	@Path("/token/{id}/maintenance")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void stopTokenMaintenance(@PathParam("id") String tokenId) {
-		grid.stopTokenMaintenance(tokenId);
+		gridClient.stopTokenMaintenance(tokenId);
 	}
 	
 	@GET

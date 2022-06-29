@@ -22,7 +22,7 @@ import java.util.List;
 
 import step.grid.AgentRef;
 import step.grid.TokenWrapper;
-import step.grid.reports.TokenGroupCapacity;
+import step.grid.client.reports.TokenGroupCapacity;
 
 public class AgentListEntry {
 

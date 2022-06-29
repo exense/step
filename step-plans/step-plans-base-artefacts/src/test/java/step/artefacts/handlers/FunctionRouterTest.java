@@ -21,6 +21,7 @@ package step.artefacts.handlers;
 import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -238,7 +239,27 @@ public class FunctionRouterTest extends AbstractArtefactTest {
 			public void returnTokenHandle(String arg0) throws AgentCommunicationException {
 				
 			}
-			
+
+			@Override
+			public void markTokenAsFailing(String s, String s1, Exception e) {
+
+			}
+
+			@Override
+			public void removeTokenError(String s) {
+
+			}
+
+			@Override
+			public void startTokenMaintenance(String s) {
+
+			}
+
+			@Override
+			public void stopTokenMaintenance(String s) {
+
+			}
+
 			@Override
 			public TokenWrapper getTokenHandle(Map<String, String> arg0, Map<String, Interest> arg1, boolean arg2)
 					throws AgentCommunicationException {
@@ -256,7 +277,17 @@ public class FunctionRouterTest extends AbstractArtefactTest {
 			public void close() {
 				
 			}
-			
+
+			@Override
+			public List<AgentRef> getAgents() {
+				return null;
+			}
+
+			@Override
+			public List<TokenWrapper> getTokens() {
+				return null;
+			}
+
 			@Override
 			public OutputMessage call(String arg0, JsonNode arg2, String arg3, FileVersionId arg4,
 					Map<String, String> arg5, int arg6) throws Exception {

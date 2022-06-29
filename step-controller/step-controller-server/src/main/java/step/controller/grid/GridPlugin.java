@@ -86,7 +86,6 @@ public class GridPlugin extends AbstractControllerPlugin {
 
 			context.put(Grid.class, grid);
 			context.put(GridImpl.class, grid);
-			context.getServiceRegistrationCallback().registerService(GridServices.class);
 		}
 
 		// Initialize the grid client
@@ -102,6 +101,8 @@ public class GridPlugin extends AbstractControllerPlugin {
 
 		context.put(TokenLifecycleStrategy.class, tokenLifecycleStrategy);
 		context.put(GridClient.class, client);
+
+		context.getServiceRegistrationCallback().registerService(GridServices.class);
 	}
 
 	protected ConfigurableTokenLifecycleStrategy getTokenLifecycleStrategy(Configuration configuration) {

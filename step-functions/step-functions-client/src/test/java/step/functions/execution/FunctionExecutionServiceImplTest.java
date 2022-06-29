@@ -21,6 +21,7 @@ package step.functions.execution;
 import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -327,7 +328,27 @@ public class FunctionExecutionServiceImplTest {
 					throw returnTokenException;
 				}
 			}
-			
+
+			@Override
+			public void markTokenAsFailing(String s, String s1, Exception e) {
+
+			}
+
+			@Override
+			public void removeTokenError(String s) {
+
+			}
+
+			@Override
+			public void startTokenMaintenance(String s) {
+
+			}
+
+			@Override
+			public void stopTokenMaintenance(String s) {
+
+			}
+
 			@Override
 			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
 					boolean createSession) throws AgentCommunicationException {
@@ -380,6 +401,16 @@ public class FunctionExecutionServiceImplTest {
 
 			@Override
 			public void close() {
+			}
+
+			@Override
+			public List<AgentRef> getAgents() {
+				return null;
+			}
+
+			@Override
+			public List<TokenWrapper> getTokens() {
+				return null;
 			}
 
 			@Override
