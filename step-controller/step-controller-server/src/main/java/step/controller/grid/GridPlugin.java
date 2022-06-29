@@ -21,22 +21,19 @@ package step.controller.grid;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.agentgrid.GridFactory;
 import step.controller.grid.services.GridServices;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.plugins.exceptions.PluginCriticalException;
 import step.functions.execution.ConfigurableTokenLifecycleStrategy;
 import step.grid.Grid;
 import step.grid.GridImpl;
-import step.grid.GridImpl.GridImplConfig;
 import step.grid.client.*;
 import step.grid.io.AgentErrorCode;
 import step.resources.ResourceManagerControllerPlugin;
 
-import java.io.File;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,33 +53,8 @@ public class GridPlugin extends AbstractControllerPlugin {
 		// Initialize the embedded grid if needed
 		boolean gridEnabled = configuration.getPropertyAsBoolean("grid.enabled", true);
 		if (gridEnabled) {
-			Integer gridPort = configuration.getPropertyAsInteger("grid.port", 8081);
-			Integer tokenTTL = configuration.getPropertyAsInteger("grid.ttl", 60000);
-
-			String fileManagerPath = configuration.getProperty("grid.filemanager.path", "filemanager");
-
-			GridImplConfig gridConfig = new GridImplConfig();
-			gridConfig.setFileLastModificationCacheConcurrencyLevel(configuration.getPropertyAsInteger("grid.filemanager.cache.concurrencylevel", 4));
-			gridConfig.setFileLastModificationCacheMaximumsize(configuration.getPropertyAsInteger("grid.filemanager.cache.maximumsize", 1000));
-			gridConfig.setFileLastModificationCacheExpireAfter(configuration.getPropertyAsInteger("grid.filemanager.cache.expireafter.ms", 500));
-			gridConfig.setTtl(tokenTTL);
-
-			gridConfig.setTokenAffinityEvaluatorClass(configuration.getProperty("grid.tokens.affinityevaluator.classname"));
-			Map<String, String> tokenAffinityEvaluatorProperties = configuration.getPropertyNames().stream().filter(p -> (p instanceof String && p.toString().startsWith("grid.tokens.affinityevaluator")))
-					.collect(Collectors.toMap(p -> p.toString().replace("grid.tokens.affinityevaluator.", ""), p -> configuration.getProperty(p.toString())));
-			gridConfig.setTokenAffinityEvaluatorProperties(tokenAffinityEvaluatorProperties);
-
-			grid = new GridImpl(new File(fileManagerPath), gridPort, gridConfig);
-			try {
-				grid.start();
-			} catch (Throwable e) {
-				try {
-					grid.stop();
-				} catch (Throwable t) {
-					//ignore
-				}
-				throw new PluginCriticalException("An exception occurred when trying to start the Grid plugin: " + e.getClass().getName() + ": " + e.getMessage());
-			}
+			GridFactory gridFactory = new GridFactory();
+			grid = gridFactory.initGrid(configuration);
 
 			context.put(Grid.class, grid);
 			context.put(GridImpl.class, grid);

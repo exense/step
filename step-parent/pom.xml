@@ -103,6 +103,7 @@
 	<modules>
 		<module>../step-commons</module>
 		<module>../step-agent</module>
+		<module>../step-agentgrid-common</module>
 		<module>../step-core-model</module>
 		<module>../step-core</module>
 		<module>../step-functions</module>
