@@ -5,7 +5,7 @@
 			<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
 			Error while importing plan:
 			<ul>
-				<li ng-repeat="error in execution.importResult.errors">{{error}}</li>
+				<li ng-repeat="error in execution.importResult.errors track by $index">{{error}}</li>
 			</ul>
 		</div>
 	</div>
