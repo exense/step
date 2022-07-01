@@ -55,6 +55,5 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     @Override
     public void afterExecutionEnd(ExecutionContext context) {
-        System.out.println("Execution ended");
     }
 }
