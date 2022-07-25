@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.core;
 
-import java.io.File;
-
 import ch.exense.commons.app.Configuration;
 import com.sun.xml.bind.v2.ContextFactory;
 import step.artefacts.handlers.PlanLocator;
@@ -51,25 +49,17 @@ import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
-import step.core.tables.AbstractTable;
-import step.core.tables.TableRegistry;
 import step.core.tasks.AsyncTaskManager;
 import step.dashboards.DashboardSession;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.ServiceRegistrationCallback;
-import step.resources.Resource;
-import step.resources.ResourceAccessor;
-import step.resources.ResourceAccessorImpl;
-import step.resources.ResourceEntity;
-import step.resources.ResourceImporter;
-import step.resources.ResourceManager;
-import step.resources.ResourceManagerControllerPlugin;
-import step.resources.ResourceManagerImpl;
-import step.resources.ResourceRevision;
-import step.resources.ResourceRevisionAccessor;
-import step.resources.ResourceRevisionAccessorImpl;
+import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.TableRegistry;
+import step.resources.*;
+
+import java.io.File;
 
 
 public class Controller {

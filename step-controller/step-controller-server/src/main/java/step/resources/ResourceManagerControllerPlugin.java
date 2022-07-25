@@ -23,8 +23,8 @@ import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.tables.AbstractTable;
-import step.core.tables.TableRegistry;
+import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.TableRegistry;
 
 @Plugin()
 public class ResourceManagerControllerPlugin extends AbstractControllerPlugin {
