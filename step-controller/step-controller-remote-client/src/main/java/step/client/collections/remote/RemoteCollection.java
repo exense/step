@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -132,7 +133,17 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
+    public void createOrUpdateIndex(String s, int i) {
+        throw notImplemented();
+    }
+
+    @Override
     public void createOrUpdateCompoundIndex(String... fields) {
+        throw notImplemented();
+    }
+
+    @Override
+    public void createOrUpdateCompoundIndex(Map<String, Integer> map) {
         throw notImplemented();
     }
 
