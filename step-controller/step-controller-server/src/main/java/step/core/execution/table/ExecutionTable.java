@@ -18,17 +18,15 @@
  ******************************************************************************/
 package step.core.execution.table;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.Collection;
-import step.core.collections.Filter;
 import step.core.execution.model.ExecutionStatus;
-import step.core.tables.AbstractTable;
-import step.core.tables.DateRangeCriterium;
+import step.framework.server.tables.AbstractTable;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExecutionTable extends AbstractTable<ExecutionWrapper> {
 	
@@ -59,16 +57,6 @@ public class ExecutionTable extends AbstractTable<ExecutionWrapper> {
 			return Arrays.asList(ExecutionStatus.values()).stream().map(Object::toString).collect(Collectors.toList());
 		} else {
 			return super.distinct(key);
-		}
-	}
-
-	@Override
-	public Filter getQueryFragmentForColumnSearch(String columnName, String searchValue) {
-		if(columnName.equals("startTime") || columnName.equals("endTime")) {
-			Filter queryFragment = new DateRangeCriterium("dd.MM.yyyy").createQuery(columnName, searchValue);
-			return queryFragment;
-		} else {
-			return super.getQueryFragmentForColumnSearch(columnName, searchValue);
 		}
 	}
 }

@@ -18,13 +18,6 @@
  ******************************************************************************/
 package step.core.execution.table;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import jakarta.json.JsonObject;
-
 import ch.exense.commons.app.Configuration;
 import step.artefacts.reports.CheckReportNode;
 import step.artefacts.reports.EchoReportNode;
@@ -35,8 +28,10 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.execution.LeafReportNodesFilter;
-import step.core.tables.TableColumn;
-import step.core.tables.formatters.DateFormatter;
+import step.framework.server.tables.service.TableParameters;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class LeafReportNodeTable extends ReportNodeTable {
 	
@@ -59,27 +54,13 @@ public class LeafReportNodeTable extends ReportNodeTable {
 	}
 
 	@Override
-	public List<Filter> getAdditionalQueryFragments(JsonObject queryParameters) {
-		List<Filter> additionalQueryFragments = super.getAdditionalQueryFragments(queryParameters);
-		if(additionalQueryFragments == null) {
-			additionalQueryFragments = new ArrayList<>();
+	public List<Filter> getTableFilters(TableParameters queryParameters) {
+		List<Filter> filters = super.getTableFilters(queryParameters);
+		if(filters == null) {
+			filters = new ArrayList<>();
 		}
-		additionalQueryFragments.add(new LeafReportNodesFilter(optionalReportNodesFilter).buildAdditionalQuery(queryParameters));
-		return additionalQueryFragments;
-	}
-	
-	public Map<String, TableColumn> getExportFields() {
-		Map<String, TableColumn> result = new LinkedHashMap<String,TableColumn> ();
-		result.put("executionTime",new TableColumn("executionTime","Begin",new DateFormatter("dd.MM.yyyy HH:mm:ss")));
-		result.put("name",new TableColumn("name","Name"));
-		result.put("functionAttributes",new TableColumn("functionAttributes","Keyword"));
-		result.put("status",new TableColumn("status","Status"));
-		result.put("error",new TableColumn("error","Error"));
-		result.put("input",new TableColumn("input","Input"));
-		result.put("output",new TableColumn("output","Output"));
-		result.put("duration",new TableColumn("duration","Duration"));
-		result.put("adapter",new TableColumn("agentUrl","Agent"));
-		return result;
+		filters.add(new LeafReportNodesFilter(optionalReportNodesFilter).buildAdditionalQuery((LeafReportNodesFilter.LeafReportNodesTableParameters) queryParameters));
+		return filters;
 	}
 
 }

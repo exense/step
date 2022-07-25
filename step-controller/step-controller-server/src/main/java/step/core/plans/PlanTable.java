@@ -18,14 +18,13 @@
  ******************************************************************************/
 package step.core.plans;
 
-import java.util.List;
-
-import jakarta.json.JsonObject;
-
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
-import step.core.tables.AbstractTable;
+import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.service.TableParameters;
+
+import java.util.List;
 
 public class PlanTable extends AbstractTable<Plan> {
 
@@ -34,7 +33,7 @@ public class PlanTable extends AbstractTable<Plan> {
 	}
 
 	@Override
-	public List<Filter> getAdditionalQueryFragments(JsonObject queryParameters) {
+	public List<Filter> getTableFilters(TableParameters tableParameters) {
 		return List.of(Filters.equals("visible", true));
 	}
 }

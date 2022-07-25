@@ -28,7 +28,7 @@ import step.core.execution.table.ReportNodeTable;
 import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.tables.TableRegistry;
+import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
 @Plugin(dependencies= {ExecutionTypePlugin.class, ScreenTemplatePlugin.class})
