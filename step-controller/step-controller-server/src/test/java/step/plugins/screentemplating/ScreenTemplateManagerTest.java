@@ -33,6 +33,7 @@ import org.junit.Test;
 import ch.exense.commons.app.Configuration;
 import junit.framework.Assert;
 import step.commons.activation.Expression;
+import step.core.collections.Collection;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectPredicate;
 
@@ -72,6 +73,11 @@ public class ScreenTemplateManagerTest {
 
 			@Override
 			public void save(Iterable<ScreenInput> entities) {
+			}
+
+			@Override
+			public Collection<ScreenInput> getCollectionDriver() {
+				return null;
 			}
 
 			@Override
