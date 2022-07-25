@@ -1,12 +1,8 @@
 package step.functions.packages;
 
-import java.io.IOException;
-import java.util.List;
-
+import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.core.GlobalContext;
 import step.core.deployment.ObjectHookControllerPlugin;
@@ -14,21 +10,20 @@ import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
-import step.core.tables.AbstractTable;
-import step.core.tables.Table;
-import step.core.tables.TableRegistry;
+import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.Table;
+import step.framework.server.tables.TableRegistry;
 import step.functions.manager.FunctionManager;
 import step.functions.packages.handlers.JavaFunctionPackageHandler;
 import step.functions.packages.handlers.RepositoryArtifactFunctionPackageHandler;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.plugins.java.GeneralScriptFunctionControllerPlugin;
-import step.plugins.screentemplating.Input;
-import step.plugins.screentemplating.InputType;
-import step.plugins.screentemplating.ScreenInput;
-import step.plugins.screentemplating.ScreenInputAccessor;
-import step.plugins.screentemplating.ScreenTemplatePlugin;
+import step.plugins.screentemplating.*;
 import step.resources.ResourceManager;
 import step.resources.ResourceManagerControllerPlugin;
+
+import java.io.IOException;
+import java.util.List;
 
 @Plugin(dependencies= {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, ScreenTemplatePlugin.class, GeneralScriptFunctionControllerPlugin.class})
 public class FunctionPackagePlugin extends AbstractControllerPlugin {

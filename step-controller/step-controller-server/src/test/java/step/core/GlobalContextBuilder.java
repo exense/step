@@ -18,14 +18,10 @@
  ******************************************************************************/
 package step.core;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.access.InMemoryUserAccessor;
 import step.core.access.User;
@@ -49,21 +45,17 @@ import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
-import step.core.tables.TableRegistry;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
+import step.framework.server.tables.TableRegistry;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
-import step.resources.InMemoryResourceAccessor;
-import step.resources.InMemoryResourceRevisionAccessor;
-import step.resources.Resource;
-import step.resources.ResourceAccessor;
-import step.resources.ResourceManager;
-import step.resources.ResourceManagerImpl;
-import step.resources.ResourceRevision;
-import step.resources.ResourceRevisionAccessor;
+import step.resources.*;
+
+import java.io.File;
+import java.io.IOException;
 
 public class GlobalContextBuilder {
 	
