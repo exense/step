@@ -1,8 +1,6 @@
 package step.plugins.timeseries.api;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class FetchBucketsRequest {
     private long start;
@@ -12,6 +10,7 @@ public class FetchBucketsRequest {
     private Set<String> groupDimensions = new HashSet<>();
     private Long numberOfBuckets;
     private long intervalSize; // in ms
+    private List<Integer> pclPrecisions = Collections.emptyList();
 
     public long getStart() {
         return start;
@@ -67,5 +66,14 @@ public class FetchBucketsRequest {
 
     public void setIntervalSize(long intervalSize) {
         this.intervalSize = intervalSize;
+    }
+
+    public List<Integer> getPclPrecisions() {
+        return pclPrecisions;
+    }
+
+    public FetchBucketsRequest setPclPrecisions(List<Integer> pclPrecisions) {
+        this.pclPrecisions = pclPrecisions;
+        return this;
     }
 }

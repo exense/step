@@ -37,9 +37,19 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     @Override
     public void processMeasurements(List<Measurement> measurements) {
         measurements.forEach(measurement -> {
+            long begin = measurement.getBegin();
+            long value = measurement.getValue();
             BucketAttributes bucketAttributes = new BucketAttributes(measurement);
+            bucketAttributes.remove("rnId");
+            bucketAttributes.remove("origin");
+            bucketAttributes.remove("planId");
+            bucketAttributes.remove("agentUrl");
+            bucketAttributes.remove("id");
+            bucketAttributes.remove("begin");
+            bucketAttributes.remove("value");
+
             // custom fields include all the attributes like execId and planId
-            this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
+            this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
         });
     }
 
@@ -48,6 +58,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
         measurements.forEach(measurement -> {
             if (measurement != null && Objects.equals(measurement.getType(), THREAD_GROUP_MEASUREMENT_TYPE)) {
                 BucketAttributes bucketAttributes = new BucketAttributes(measurement);
+                bucketAttributes.remove("taskId");
                 this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
         });

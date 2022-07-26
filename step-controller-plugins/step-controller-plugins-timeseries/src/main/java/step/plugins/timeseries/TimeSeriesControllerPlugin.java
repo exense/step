@@ -11,7 +11,6 @@ import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.accessor.BucketAccessor;
 import step.core.timeseries.accessor.BucketAccessorImpl;
 import step.plugins.measurements.MeasurementPlugin;
-import step.plugins.timeseries.api.TimeSeriesService;
 
 @Plugin
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
