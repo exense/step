@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.core.export;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -31,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
-public class ExportTaskManager {
+public class ExportTaskManager implements Closeable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ExportTaskManager.class);
 
@@ -77,7 +79,12 @@ public class ExportTaskManager {
 		});
 		return status;
 	}
-	
+
+	@Override
+	public void close() throws IOException {
+		exportExecutor.shutdown();
+	}
+
 	public static abstract class ExportRunnable {
 		
 		ExportStatus status;

@@ -21,6 +21,8 @@ package step.core.tasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
-public class AsyncTaskManager {
+public class AsyncTaskManager implements Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(AsyncTaskManager.class);
 
@@ -66,7 +68,12 @@ public class AsyncTaskManager {
 		}
 		return export;
 	}
-	
+
+	@Override
+	public void close() throws IOException {
+		executorService.shutdown();
+	}
+
 	public static class TaskStatus {
 		
 		private String id;
