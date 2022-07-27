@@ -108,10 +108,11 @@ public class ParameterServices extends AbstractStepServices {
 			newParameter.setProtectedValue(isPassword(newParameter));
 		} else {
 			// the parameter has been updated but the value hasn't been changed
-			if(newParameter.getValue().equals(PROTECTED_VALUE)) {
+			String newParameterValue = newParameter.getValue();
+			if(newParameterValue != null && newParameterValue.equals(PROTECTED_VALUE)) {
 				newParameter.setValue(sourceParameter.getValue());
 			}
-			
+
 			if(isProtected(sourceParameter)) {
 				// protected value should not be changed
 				newParameter.setProtectedValue(true);
