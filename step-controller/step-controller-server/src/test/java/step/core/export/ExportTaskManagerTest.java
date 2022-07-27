@@ -66,9 +66,9 @@ public class ExportTaskManagerTest {
         ExportTaskManager m = new ExportTaskManager(null);
         final ExportStatus s = m.createExportTask(handle -> {
             handle.setWarnings(Set.of("Warning 1"));
-            done.set(true);
             Resource resource = new Resource();
             resource.setId(resourceId);
+            done.set(true);
             return resource;
         });
         Poller.waitFor(done::get, 2000);
