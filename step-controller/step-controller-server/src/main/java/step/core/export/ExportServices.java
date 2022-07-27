@@ -18,51 +18,33 @@
  ******************************************************************************/
 package step.core.export;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import step.core.GlobalContext;
+import step.core.deployment.AbstractStepServices;
+import step.core.objectenricher.ObjectHookRegistry;
+import step.core.plans.PlanAccessor;
+import step.framework.server.Session;
+import step.framework.server.security.Secured;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevisionContainer;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Singleton;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-
-import io.swagger.v3.oas.annotations.tags.Tag;
-import step.core.GlobalContext;
-import step.core.deployment.AbstractStepServices;
-import step.framework.server.security.Secured;
-import step.framework.server.Session;
-import step.core.export.ExportTaskManager.ExportRunnable;
-import step.core.export.ExportTaskManager.ExportStatus;
-import step.core.objectenricher.ObjectHookRegistry;
-import step.core.objectenricher.ObjectPredicateFactory;
-import step.core.plans.PlanAccessor;
-import step.resources.InvalidResourceFormatException;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.ResourceRevisionContainer;
 
 @Singleton
 @Path("export")
 @Tag(name = "Exports")
 public class ExportServices extends AbstractStepServices {
 	
-	ExportManager exportManager;
-	
-	ExportTaskManager exportTaskManager;
-	
-	ObjectPredicateFactory objectPredicateFactory;
-	
-	PlanAccessor accessor;
-	
-	ObjectHookRegistry objectHookRegistry;
+	private ExportManager exportManager;
+	private ExportTaskManager exportTaskManager;
+	private PlanAccessor accessor;
+	private ObjectHookRegistry objectHookRegistry;
 	
 	@PostConstruct
 	public void init() throws Exception {
@@ -70,7 +52,6 @@ public class ExportServices extends AbstractStepServices {
 		GlobalContext context = getContext();
 		accessor = context.getPlanAccessor();
 		exportTaskManager = context.get(ExportTaskManager.class);
-		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 		exportManager = new ExportManager(context.getEntityManager(), context.getResourceManager());
 		objectHookRegistry = context.get(ObjectHookRegistry.class);
 	}
@@ -83,19 +64,16 @@ public class ExportServices extends AbstractStepServices {
 	public ExportStatus exportEntityById(@PathParam("entity") String entity, @PathParam("id") String id, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
 										 @QueryParam("additionalEntities") List<String> additionalEntities) {
 		Session session = getSession();
-		Map<String,String> metadata = getMetadata();
+		Map<String, String> metadata = getMetadata();
 		String finalFilename = removeUnsupportedChars(filename);
-		return exportTaskManager.createExportTask(new ExportRunnable() {
-			@Override
-			public Resource runExport() throws IOException, InvalidResourceFormatException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
-				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata,objectPredicateFactory.getObjectPredicate(session),
-						entity, recursively, additionalEntities);
-				ExportResult exportResult = exportManager.exportById(exportConfig, id);
-				status.setWarnings(exportResult.getMessages());
-				resourceContainer.save(null);
-				return resourceContainer.getResource();
-			}
+		return exportTaskManager.createExportTask(handle -> {
+			ResourceRevisionContainer resourceContainer = handle.getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
+			ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata, objectHookRegistry.getObjectPredicate(session),
+					entity, recursively, additionalEntities);
+			ExportResult exportResult = exportManager.exportById(exportConfig, id);
+			handle.setWarnings(exportResult.getMessages());
+			resourceContainer.save(null);
+			return resourceContainer.getResource();
 		});
 	}
 
@@ -104,7 +82,7 @@ public class ExportServices extends AbstractStepServices {
 	}
 
 	private Map<String,String> getMetadata() {
-		Map<String,String> metadata = new HashMap<String,String>();
+		Map<String,String> metadata = new HashMap<>();
 		metadata.put("user",getSession().getUser().getUsername());
 		metadata.put("version",getContext().getCurrentVersion().toString());
 		metadata.put("export-time",String.valueOf(System.currentTimeMillis()));
@@ -121,22 +99,17 @@ public class ExportServices extends AbstractStepServices {
 		Session session = getSession();
 		Map<String,String> metadata = getMetadata();
 		String finalFilename = removeUnsupportedChars(filename);
-		return exportTaskManager.createExportTask(new ExportRunnable() {
-			@Override
-			public Resource runExport() throws FileNotFoundException, IOException, InvalidResourceFormatException {
-				ResourceRevisionContainer resourceContainer = getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
-				ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
-						metadata, objectPredicateFactory.getObjectPredicate(session), entity, recursively, additionalEntities);
-				ExportResult exportResult = exportManager.exportAll(exportConfig);
-				status.setWarnings(exportResult.getMessages());
-				resourceContainer.save(null);
-				return resourceContainer.getResource();
-			}
+		return exportTaskManager.createExportTask(handle -> {
+			ResourceRevisionContainer resourceContainer = handle.getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
+			ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
+					metadata, objectHookRegistry.getObjectPredicate(session), entity, recursively, additionalEntities);
+			ExportResult exportResult = exportManager.exportAll(exportConfig);
+			handle.setWarnings(exportResult.getMessages());
+			resourceContainer.save(null);
+			return resourceContainer.getResource();
 		});
 	}
-	
-	
-	
+
 	@GET
 	@Path("/{id}/status")
 	@Consumes(MediaType.APPLICATION_JSON)
