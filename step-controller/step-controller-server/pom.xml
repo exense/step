@@ -101,6 +101,11 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-framework-collections-jdbc</artifactId>
+			<version>${step-framework.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20220320</version>

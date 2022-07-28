@@ -114,7 +114,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		functionTableInputs.forEach(i->{
 			Input input = i.getInput();
 			if(input.getId().equals("attributes.name")) {
-				input.setValueHtmlTemplate("<entity-icon entity=\"stBean\" entity-name=\"'functions'\"/> <function-link function_=\"stBean\" st-options=\"stOptions\" />");
+				input.setValueHtmlTemplate("<entity-icon [entity]=\"stBean\" entity-name=\"'functions'\"/> <function-link function_=\"stBean\" st-options=\"stOptions\" />");
 				screenInputAccessor.save(i);
 			}
 		});
