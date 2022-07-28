@@ -13,6 +13,7 @@ public class BucketResponse {
     private final long sum;
     private final long min;
     private final long max;
+    // TODO rename to pclValues
     private final Map<Integer, Long> pclPrecisions;
 
     public BucketResponse(long begin, BucketAttributes attributes, long count, long sum, long min, long max, Map<Integer, Long> pclPrecisions) {
