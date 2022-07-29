@@ -151,6 +151,7 @@ public class AccessServices extends AbstractStepServices {
 
 	@GET
 	@Secured
+	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/service-account/token")
 	public String getServiceAccountToken(@QueryParam("lifetime") long days) {
 		Session session = getSession();

@@ -137,6 +137,8 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	}
 	
 	@GET
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.TEXT_HTML)
 	@Path("/{id}/editor")
 	@Secured(right="read")
 	public String getFunctionEditor(@PathParam("id") String functionId) {
