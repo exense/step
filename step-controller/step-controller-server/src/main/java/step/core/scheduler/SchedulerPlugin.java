@@ -48,7 +48,7 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
 		Collection<ExecutiontTaskParameters> collectionDriver = context.getCollectionFactory().getCollection("tasks",
 				ExecutiontTaskParameters.class);
-		context.get(TableRegistry.class).register("tasks", new AbstractTable<>(collectionDriver, true));
+		context.get(TableRegistry.class).register("tasks", new AbstractTable<>(collectionDriver, "task-read", true));
 
 	}
 

@@ -53,7 +53,7 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 		
 		Collection<ScreenInput> collectionDriver = context.getCollectionFactory().getCollection("screenInputs",
 				ScreenInput.class);
-		context.get(TableRegistry.class).register("screenInputs", new AbstractTable<>(collectionDriver, true));
+		context.get(TableRegistry.class).register("screenInputs", new AbstractTable<>(collectionDriver, null, true));
 	}
 
 	private void initializeScreenInputsIfNecessary() {
