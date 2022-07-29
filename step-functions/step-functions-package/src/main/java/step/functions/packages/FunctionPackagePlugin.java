@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.GlobalContext;
+import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
@@ -52,17 +53,15 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 		packageManager.start();
 		
 		context.put(FunctionPackageManager.class, packageManager);
-		
-		Table<FunctionPackage> collection = new AbstractTable<>(
-				context.getCollectionFactory().getCollection("functionPackage", FunctionPackage.class), true);
+
+		Collection<FunctionPackage> functionPackageCollection = context.getCollectionFactory().getCollection("functionPackage", FunctionPackage.class);
+		Table<FunctionPackage> collection = new AbstractTable<>(functionPackageCollection, "kw-read", true);
 		context.get(TableRegistry.class).register("functionPackage", collection);
 
 		context.getServiceRegistrationCallback().registerService(FunctionPackageServices.class);
 		
 		context.getEntityManager().register(new FunctionPackageEntity(FunctionPackageEntity.entityName, packageAccessor, context));
 
-
-		
 		//registerWebapp(context, "/functionpackages/");
 	}
 	

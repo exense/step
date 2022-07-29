@@ -34,10 +34,6 @@ public class TablePlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStart(GlobalContext context) {
 		context.getServiceRegistrationCallback().registerService(TableService.class);
-		
-		Collection<User> collectionDriver = context.getCollectionFactory().getCollection("users", User.class);
-		Table<User> collection = new AbstractTable<>(collectionDriver, false);
-		context.get(TableRegistry.class).register("users", collection);
 	}
 
 }

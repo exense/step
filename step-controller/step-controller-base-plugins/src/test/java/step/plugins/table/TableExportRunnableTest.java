@@ -2,11 +2,15 @@ package step.plugins.table;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import step.core.access.Role;
+import step.core.access.RoleResolver;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.entities.SimpleBean;
 import step.core.export.ExportStatus;
 import step.core.export.ExportTaskManager;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.framework.server.Session;
+import step.framework.server.access.AccessManager;
 import step.framework.server.tables.AbstractTable;
 import step.framework.server.tables.TableRegistry;
 import step.framework.server.tables.service.TableRequest;
@@ -26,8 +30,8 @@ class TableExportRunnableTest {
         InMemoryCollection<SimpleBean> collection = new InMemoryCollection<>();
         collection.save(new SimpleBean("property 1"));
         collection.save(new SimpleBean("property 2"));
-        tableRegistry.register("test", new AbstractTable<>(collection, false));
-        TableService tableService = new TableService(tableRegistry, new ObjectHookRegistry());
+        tableRegistry.register("test", new AbstractTable<>(collection, null, false));
+        TableService tableService = new TableService(tableRegistry, new ObjectHookRegistry(), null);
         TableExportRequest exportRequest = new TableExportRequest();
         exportRequest.setTableRequest(new TableRequest());
         exportRequest.setFields(List.of("stringProperty"));

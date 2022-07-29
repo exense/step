@@ -29,7 +29,7 @@ import java.util.List;
 public class PlanTable extends AbstractTable<Plan> {
 
 	public PlanTable(Collection<Plan> collection) {
-		super(collection, true);
+		super(collection, "plan-read", true);
 	}
 
 	@Override

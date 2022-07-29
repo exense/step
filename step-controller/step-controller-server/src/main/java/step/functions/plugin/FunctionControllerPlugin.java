@@ -100,7 +100,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		
 		Collection<Function> functionCollection = context.getCollectionFactory()
 				.getCollection(EntityManager.functions, Function.class);
-		tableRegistry.register(EntityManager.functions, new AbstractTable<>(functionCollection, true));
+		tableRegistry.register(EntityManager.functions, new AbstractTable<>(functionCollection, "kw-read", true));
 	}
 	
 	@Override

@@ -27,9 +27,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.deployment.ApplicationServices;
-import step.core.export.ExportTaskManager;
 import step.core.export.ExportStatus;
+import step.core.export.ExportTaskManager;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.framework.server.access.AccessManager;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.TableRegistry;
 import step.framework.server.tables.service.TableRequest;
@@ -54,8 +55,9 @@ public class TableService extends ApplicationServices {
         GlobalContext context = getContext();
         TableRegistry tableRegistry = context.require(TableRegistry.class);
         ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
+        AccessManager accessManager = context.require(AccessManager.class);
         maxTime = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
-        tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry);
+        tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, accessManager);
         exportTaskManager = getContext().require(ExportTaskManager.class);
     }
 

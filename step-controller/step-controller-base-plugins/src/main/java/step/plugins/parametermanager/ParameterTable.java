@@ -30,7 +30,7 @@ import java.util.Iterator;
 public class ParameterTable extends AbstractTable<Parameter> {
 
     public ParameterTable(Collection<Parameter> collection) {
-        super(collection, true);
+        super(collection, "param-read", true);
     }
 
     @Override

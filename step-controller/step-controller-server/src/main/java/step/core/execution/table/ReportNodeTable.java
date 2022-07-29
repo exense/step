@@ -26,7 +26,7 @@ import step.framework.server.tables.AbstractTable;
 public class ReportNodeTable extends AbstractTable<ReportNode> {
 	
 	public ReportNodeTable(GlobalContext context, Collection<ReportNode> collection) {
-		super(collection, false);
+		super(collection, "execution-read", false);
 	}
 
 }

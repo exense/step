@@ -121,7 +121,7 @@ public class Controller {
 
 		Collection<User> userCollection = collectionFactory.getCollection("users", User.class);
 		context.setUserAccessor(new UserAccessorImpl(userCollection));
-		tableRegistry.register("users", new AbstractTable<User>(userCollection, false));
+		tableRegistry.register("users", new AbstractTable<User>(userCollection, "user-read",false));
 		
 		
 		context.setRepositoryObjectManager(new RepositoryObjectManager());

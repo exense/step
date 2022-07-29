@@ -34,7 +34,7 @@ public class ExecutionTable extends AbstractTable<ExecutionWrapper> {
 	private final RootReportNodeProvider rootReportNodeFormatter;
 
 	public ExecutionTable(GlobalContext context, Collection<ExecutionWrapper> collection) {
-		super(collection, true);
+		super(collection, "execution-read", true);
 		RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
 		ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
 		this.executionSummaryFormatter = executionSummaryFormatter;
@@ -47,16 +47,5 @@ public class ExecutionTable extends AbstractTable<ExecutionWrapper> {
 		Object executionSummary = executionSummaryFormatter.format(execution);
 		execution.setExecutionSummary(executionSummary);
 		return execution;
-	}
-
-	@Override
-	public List<String> distinct(String key) {
-		if(key.equals("result")) {
-			return Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList());
-		} else if(key.equals("status")) {
-			return Arrays.asList(ExecutionStatus.values()).stream().map(Object::toString).collect(Collectors.toList());
-		} else {
-			return super.distinct(key);
-		}
 	}
 }
