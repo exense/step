@@ -66,6 +66,7 @@ public class ExecutionServices extends AbstractStepServices {
 	@Operation(description = "Starts an execution with the given parameters.")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/start")
 	@Secured(right="plan-execute")
 	public String execute(ExecutionParameters executionParams) {
@@ -107,6 +108,8 @@ public class ExecutionServices extends AbstractStepServices {
 
 	@Operation(description = "Returns the executions matching the provided attributes.")
 	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/search")
 	@Secured(right="execution-read")
 	public Execution get(Map<String,String> attributes) {

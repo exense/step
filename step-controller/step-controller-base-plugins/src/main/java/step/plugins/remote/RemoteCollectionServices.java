@@ -116,7 +116,7 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right="collection-read")
-    public  List<String> distinctPost(@PathParam("id") String collectionId, @PathParam("id") String columnName, Filter filter) {
+    public  List<String> distinctPost(@PathParam("id") String collectionId, @PathParam("columnName") String columnName, Filter filter) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
         return collectionDriver.distinct(columnName,filter);
     }

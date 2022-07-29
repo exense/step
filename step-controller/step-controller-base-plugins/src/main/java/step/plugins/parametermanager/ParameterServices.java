@@ -207,6 +207,7 @@ public class ParameterServices extends AbstractStepServices {
 
 	@POST
 	@Path("/search")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
 	public Parameter get(Map<String,String> attributes) {
@@ -215,6 +216,7 @@ public class ParameterServices extends AbstractStepServices {
 
 	@POST
 	@Path("/find")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
 	public List<Parameter> findMany(Map<String, String> attributes) {

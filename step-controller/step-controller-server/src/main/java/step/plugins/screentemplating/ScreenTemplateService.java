@@ -132,6 +132,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 	@Secured(right="screenInputs-write")
 	@Path("/input/{id}/move")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	public void moveInput(@PathParam("id") String id, int offset) {
 		screenTemplateManager.moveInput(id, offset);
 	}

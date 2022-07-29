@@ -114,6 +114,7 @@ public class PlanServices extends AbstractStepServices {
 	@Operation(description = "Compiles the provided plan.")
 	@POST
 	@Path("/compile")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public PlanCompilationResult compilePlan(Plan plan) {
@@ -210,6 +211,7 @@ public class PlanServices extends AbstractStepServices {
 	@Operation(description = "Clones the provided artefact.")
 	@POST
 	@Path("/artefacts/clone")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public AbstractArtefact cloneArtefact(AbstractArtefact artefact) {
@@ -220,6 +222,7 @@ public class PlanServices extends AbstractStepServices {
 	@Operation(description = "Clones the provided artefacts.")
 	@POST
 	@Path("/artefacts/clonemany")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public List<AbstractArtefact> cloneArtefact(List<AbstractArtefact> artefacts) {

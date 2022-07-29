@@ -177,6 +177,7 @@ public class AdminServices extends AbstractStepServices {
 	}
 
 	@GET
+	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/maintenance/message")
 	public String getMaintenanceMessage() {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_MESSAGE_KEY);
@@ -184,6 +185,7 @@ public class AdminServices extends AbstractStepServices {
 	}
 	
 	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="admin")
 	@Path("/maintenance/message")
 	public void setMaintenanceMessage(String message) {
@@ -197,6 +199,7 @@ public class AdminServices extends AbstractStepServices {
 	}
 	
 	@GET
+	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/maintenance/message/toggle")
 	public boolean getMaintenanceMessageToggle() {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_TOGGLE_KEY);
@@ -205,6 +208,7 @@ public class AdminServices extends AbstractStepServices {
 	
 	@POST
 	@Secured(right="admin")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/maintenance/message/toggle")
 	public void setMaintenanceMessageToggle(boolean enabled) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_TOGGLE_KEY);
@@ -284,6 +288,7 @@ public class AdminServices extends AbstractStepServices {
 	
 	@POST
 	@Secured
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/myaccount/preferences/{id}")
 	public void putPreference(@PathParam("id") String preferenceName, Object value) {
 		User user = getCurrentUser();
@@ -299,6 +304,7 @@ public class AdminServices extends AbstractStepServices {
 	
 	@POST
 	@Secured
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/myaccount/preferences")
 	public void putPreference( Preferences preferences) {
 		User user = getCurrentUser();
@@ -334,6 +340,8 @@ public class AdminServices extends AbstractStepServices {
 	}
 
 	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/serviceaccount/resetpwd")
 	public Response resetAdminPassword(String requestEncrypted) {
 		PublicKey publicKey = getPublicKey();

@@ -106,6 +106,7 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	
 	@POST
 	@Path("/search")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="read")
 	public Function get(Map<String,String> attributes) {
@@ -214,6 +215,7 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	}
 	
 	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/{id}/execute/{functionId}")
 	@Secured(right="execute")
@@ -224,6 +226,7 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/{id}/execute")
 	@Secured(right="execute")
 	public Output<JsonObject> callFunction(@PathParam("id") String tokenId, FunctionInput<JsonObject> input, @Context UriInfo uriInfo) {
