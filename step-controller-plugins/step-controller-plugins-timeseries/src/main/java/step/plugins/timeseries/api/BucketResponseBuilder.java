@@ -12,7 +12,7 @@ public final class BucketResponseBuilder {
     private long sum;
     private long min;
     private long max;
-    private Map<Integer, Long> pclPrecisions;
+    private Map<Integer, Long> pclValues;
 
 
     public BucketResponseBuilder withBegin(long begin) {
@@ -45,13 +45,13 @@ public final class BucketResponseBuilder {
         return this;
     }
 
-    public BucketResponseBuilder withPclPrecisions(Map<Integer, Long> pclPrecisions) {
-        this.pclPrecisions = pclPrecisions;
+    public BucketResponseBuilder withPclValues(Map<Integer, Long> withPclValues) {
+        this.pclValues = withPclValues;
         return this;
     }
 
     public BucketResponse build() {
         Objects.requireNonNull(begin);
-        return new BucketResponse(begin, attributes, count, sum, min, max, pclPrecisions);
+        return new BucketResponse(begin, attributes, count, sum, min, max, pclValues);
     }
 }

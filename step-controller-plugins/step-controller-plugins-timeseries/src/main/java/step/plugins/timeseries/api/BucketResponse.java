@@ -2,7 +2,6 @@ package step.plugins.timeseries.api;
 
 import step.core.timeseries.BucketAttributes;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class BucketResponse {
@@ -14,16 +13,16 @@ public class BucketResponse {
     private final long min;
     private final long max;
     // TODO rename to pclValues
-    private final Map<Integer, Long> pclPrecisions;
+    private final Map<Integer, Long> pclValues;
 
-    public BucketResponse(long begin, BucketAttributes attributes, long count, long sum, long min, long max, Map<Integer, Long> pclPrecisions) {
+    public BucketResponse(long begin, BucketAttributes attributes, long count, long sum, long min, long max, Map<Integer, Long> getPclValues) {
         this.begin = begin;
         this.attributes = attributes;
         this.count = count;
         this.sum = sum;
         this.min = min;
         this.max = max;
-        this.pclPrecisions = pclPrecisions;
+        this.pclValues = getPclValues;
     }
 
     public long getBegin() {
@@ -50,7 +49,7 @@ public class BucketResponse {
         return max;
     }
 
-    public Map<Integer, Long> getPclPrecisions() {
-        return pclPrecisions;
+    public Map<Integer, Long> getPclValues() {
+        return pclValues;
     }
 }

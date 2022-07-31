@@ -14,7 +14,6 @@ import step.core.timeseries.Bucket;
 import step.core.timeseries.Query;
 import step.core.timeseries.TimeSeriesChartResponse;
 import step.core.timeseries.accessor.BucketAccessor;
-import step.framework.server.AbstractServices;
 import step.plugins.timeseries.api.*;
 
 import java.util.Collections;
@@ -67,7 +66,7 @@ public class TimeSeriesService extends AbstractStepServices {
                                                 .withMin(b.getMin())
                                                 .withMax(b.getMax())
                                                 .withSum(b.getSum())
-                                                .withPclPrecisions(request.getPclPrecisions().stream().collect(Collectors.toMap(p -> p, b::getPercentile)))
+                                                .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile)))
                                                 .build())
                                         .toArray(BucketResponse[]::new))
                         .collect(Collectors.toList()))
