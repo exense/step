@@ -57,7 +57,7 @@
 		<!-- internal dependencies -->
 		<exense-commons.version>2022.06.09-IDa516421</exense-commons.version>
 		<step-framework.version>2022.8.3-62ea54e987a528456072f31f</step-framework.version>
-		<step-grid.version>2022.06.09-ID360af45</step-grid.version>
+		<step-grid.version>2022.8.3-62ea6a5487a5284560755678</step-grid.version>
 		<step-api.version>2022.06.09-IDb0ca56d</step-api.version>
 		<viz.version>2022.7.28-62e2833087a528456038d181</viz.version>
 		<rtm.version>2022.7.28-62e284f887a5284560392336</rtm.version>
