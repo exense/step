@@ -56,7 +56,7 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
-import step.core.deployment.ApplicationServices;
+import step.core.deployment.AbstractStepServices;
 import step.framework.server.security.Secured;
 import step.core.export.ExportTaskManager;
 import step.core.export.ExportTaskManager.ExportRunnable;
@@ -74,7 +74,7 @@ import step.resources.ResourceRevisionContainer;
 @Singleton
 @Path("table")
 @Tag(name = "Tables")
-public class TableService extends ApplicationServices {
+public class TableService extends AbstractStepServices {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TableService.class);
 	

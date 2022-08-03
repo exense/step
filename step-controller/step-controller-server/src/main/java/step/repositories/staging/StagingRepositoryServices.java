@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.Consumes;
@@ -34,7 +35,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
@@ -51,7 +51,7 @@ import step.resources.ResourceRevisionContainer;
 
 @Singleton
 @Path("staging")
-@Hidden
+@Tag(name="Private Staging Repository")
 public class StagingRepositoryServices extends AbstractStepServices {
 	
 	protected StagingContextAccessorImpl stagingContextAccessor ;
@@ -114,7 +114,7 @@ public class StagingRepositoryServices extends AbstractStepServices {
 	@Path("/context/{id}/execute")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public String execute(@PathParam("id") String id, Map<String, String> executionParameters, @QueryParam("isolate") boolean isolate) {
+	public String executeInStagingContext(@PathParam("id") String id, Map<String, String> executionParameters, @QueryParam("isolate") boolean isolate) {
 		StagingContext context = stagingContextAccessor.get(id);
 		
 		ExecutionParameters params = new ExecutionParameters();
@@ -136,7 +136,7 @@ public class StagingRepositoryServices extends AbstractStepServices {
 	@Path("/context/{id}/destroy")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public void destroy(@PathParam("id") String id) {
+	public void destroyStagingContext(@PathParam("id") String id) {
 		StagingContext context = stagingContextAccessor.get(id);
 		
 		context.getAttachments().forEach(resourceId->{
