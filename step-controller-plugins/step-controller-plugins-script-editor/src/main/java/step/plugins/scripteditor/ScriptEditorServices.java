@@ -27,7 +27,6 @@ import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.ws.rs.core.MediaType;
 import step.core.deployment.AbstractStepServices;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeRegistry;
@@ -40,7 +39,6 @@ import step.plugins.java.GeneralScriptFunction;
 public class ScriptEditorServices extends AbstractStepServices {
 
 	@GET
-	@Produces({MediaType.TEXT_PLAIN})
 	@Path("/file/{filename}")
 	public String getScript(@PathParam("filename") String filename) throws IOException {
 		File scriptFIle = new File(configuration.getProperty("keywords.script.scriptdir")+"/"+filename);
@@ -49,7 +47,6 @@ public class ScriptEditorServices extends AbstractStepServices {
 	}
 	
 	@POST
-	@Consumes({MediaType.TEXT_PLAIN})
 	@Path("/file/{filename}")
 	public void saveScript(@PathParam("filename") String filename, String content) throws IOException {
 		File scriptFile = new File(configuration.getProperty("keywords.script.scriptdir")+"/"+filename);
@@ -57,7 +54,6 @@ public class ScriptEditorServices extends AbstractStepServices {
 	}
 	
 	@POST
-	@Consumes({MediaType.TEXT_PLAIN})
 	@Path("/function/{functionid}/file")
 	public void saveFunctionScript(@PathParam("functionid") String functionid, String content) throws IOException {
 		File scriptFile = getScriptFile(functionid);
@@ -65,7 +61,6 @@ public class ScriptEditorServices extends AbstractStepServices {
 	}
 	
 	@GET
-	@Produces({MediaType.TEXT_PLAIN})
 	@Path("/function/{functionid}/file")
 	public String getFunctionScript(@PathParam("functionid") String functionid) throws IOException {
 		File scriptFile = getScriptFile(functionid);

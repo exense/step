@@ -177,7 +177,6 @@ public class AdminServices extends AbstractStepServices {
 	}
 
 	@GET
-	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/maintenance/message")
 	public String getMaintenanceMessage() {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_MESSAGE_KEY);
@@ -199,7 +198,6 @@ public class AdminServices extends AbstractStepServices {
 	}
 	
 	@GET
-	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/maintenance/message/toggle")
 	public boolean getMaintenanceMessageToggle() {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_TOGGLE_KEY);
@@ -340,7 +338,6 @@ public class AdminServices extends AbstractStepServices {
 	}
 
 	@POST
-	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/serviceaccount/resetpwd")
 	public Response resetAdminPassword(String requestEncrypted) {

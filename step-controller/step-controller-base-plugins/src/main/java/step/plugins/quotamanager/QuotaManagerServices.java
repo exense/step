@@ -35,7 +35,6 @@ public class QuotaManagerServices extends AbstractStepServices {
 
 	@GET
 	@Path("/status")
-	@Produces(MediaType.TEXT_PLAIN)
 	public String getQuotaManagerStatus() {
 		StringWriter writer = new StringWriter();
 		QuotaManager quotaManager = getContext().get(QuotaManager.class);
