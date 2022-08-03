@@ -98,7 +98,7 @@ public class AdminServices extends AbstractStepServices {
 	@Secured(right="user-write")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/user")
-	public void save(User user) {
+	public void saveUser(User user) {
 		UserAccessor userAccessor = getContext().getUserAccessor();
 
 		User previousUser = userAccessor.get(user.getId());
@@ -112,7 +112,7 @@ public class AdminServices extends AbstractStepServices {
 	@DELETE
 	@Secured(right="user-write")
 	@Path("/user/{id}")
-	public void remove(@PathParam("id") String username) {
+	public void removeUser(@PathParam("id") String username) {
 		getContext().getUserAccessor().remove(username);
 	}
 	
@@ -306,7 +306,7 @@ public class AdminServices extends AbstractStepServices {
 	@Secured
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/myaccount/preferences")
-	public void putPreference( Preferences preferences) {
+	public void putPreferences( Preferences preferences) {
 		User user = getCurrentUser();
 		if(user!=null) {
 			user.setPreferences(preferences);

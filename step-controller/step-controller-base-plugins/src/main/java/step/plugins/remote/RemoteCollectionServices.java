@@ -70,7 +70,7 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
 	@Path("/{id}/count/estimated")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right = "collection-read")
-	public Response count(@PathParam("id") String collectionId) {
+	public Response countEstimated(@PathParam("id") String collectionId) {
 		@SuppressWarnings("unchecked")
 		Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId,
 				entityManager.resolveClass(collectionId));

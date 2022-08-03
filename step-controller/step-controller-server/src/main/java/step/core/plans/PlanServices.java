@@ -81,7 +81,7 @@ public class PlanServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public Plan save(Plan plan) {
+	public Plan savePlan(Plan plan) {
 		@SuppressWarnings("unchecked")
 		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
 		planType.onBeforeSave(plan);
@@ -93,7 +93,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public Plan get(@PathParam("id") String id) {
+	public Plan getPlanById(@PathParam("id") String id) {
 		return planAccessor.get(id);
 	}
 
@@ -102,11 +102,11 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/{id}/compile")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public PlanCompilationResult compilePlan(@PathParam("id") String id) {
+	public PlanCompilationResult compilePlanWithId(@PathParam("id") String id) {
 		Plan plan = planAccessor.get(id);
 		PlanCompilationResult planCompilationResult = compilePlan(plan);
 		if(!planCompilationResult.isHasError()) {
-			save(plan);
+			savePlan(plan);
 		}
 		return planCompilationResult;
 	}
@@ -152,7 +152,7 @@ public class PlanServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public Plan get(Map<String,String> attributes) {
+	public Plan getPlanByAttributes(Map<String,String> attributes) {
 		return planAccessor.findByAttributes(attributes);
 	}
 
@@ -162,7 +162,7 @@ public class PlanServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public List<Plan> findMany(Map<String,String> attributes) {
+	public List<Plan> findPlansByAttributes(Map<String,String> attributes) {
 		return StreamSupport.stream(planAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 	}
 
@@ -171,11 +171,11 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/all")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public List<Plan> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+	public List<Plan> getAllPlans(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
 		if(skip != null && limit != null) {
 			return planAccessor.getRange(skip, limit);
 		} else {
-			return getAll(0, 1000);
+			return getAllPlans(0, 1000);
 		}
 	}
 
@@ -184,7 +184,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-delete")
-	public void delete(@PathParam("id") String id) {
+	public void deletePlan(@PathParam("id") String id) {
 		planAccessor.remove(new ObjectId(id));
 	}
 
@@ -194,7 +194,7 @@ public class PlanServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
 	public Plan lookupPlan(@PathParam("id") String id, @PathParam("artefactid") String artefactId) {
-		Plan plan = get(id);
+		Plan plan = getPlanById(id);
 		Plan result = null;
 		PlanNavigator planNavigator = new PlanNavigator(plan);
 		CallPlan artefact = (CallPlan) planNavigator.findArtefactById(artefactId);
@@ -225,7 +225,7 @@ public class PlanServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public List<AbstractArtefact> cloneArtefact(List<AbstractArtefact> artefacts) {
+	public List<AbstractArtefact> cloneArtefacts(List<AbstractArtefact> artefacts) {
 		return artefacts.stream().map(a->cloneArtefact(a)).collect(Collectors.toList());
 	}
 

@@ -88,7 +88,7 @@ public class ParameterServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-write")
-	public Parameter save(Parameter newParameter) throws EncryptionManagerException {
+	public Parameter saveParameter(Parameter newParameter) throws EncryptionManagerException {
 		Parameter oldParameter;
 		if(newParameter.getId()!=null) {
 			oldParameter = parameterAccessor.get(newParameter.getId());
@@ -156,7 +156,7 @@ public class ParameterServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-write")
-	public Parameter copy(@PathParam("id") String id) throws EncryptionManagerException {
+	public Parameter copyParameter(@PathParam("id") String id) throws EncryptionManagerException {
 		Parameter sourceParameter = parameterAccessor.get(new ObjectId(id));
 		// Create a clone of the source parameter
 		Parameter newParameter = parameterAccessor.get(new ObjectId(id));
@@ -167,7 +167,7 @@ public class ParameterServices extends AbstractStepServices {
 	@DELETE
 	@Path("/{id}")
 	@Secured(right="param-delete")
-	public void delete(@PathParam("id") String id) {
+	public void deleteParameter(@PathParam("id") String id) {
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
 		assertRights(parameter);
 		
@@ -188,7 +188,7 @@ public class ParameterServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
-	public Parameter get(@PathParam("id") String id) {
+	public Parameter getParameterById(@PathParam("id") String id) {
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
 		return maskProtectedValue(parameter);
 	}
@@ -210,7 +210,7 @@ public class ParameterServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
-	public Parameter get(Map<String,String> attributes) {
+	public Parameter getParameterByAttributes(Map<String,String> attributes) {
 		return maskProtectedValue(parameterAccessor.findByAttributes(attributes));
 	}
 
@@ -219,7 +219,7 @@ public class ParameterServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
-	public List<Parameter> findMany(Map<String, String> attributes) {
+	public List<Parameter> findParametersByAttributes(Map<String, String> attributes) {
 		return maskProtectedValues(StreamSupport.stream(parameterAccessor.findManyByAttributes(attributes), false));
 	}
 
@@ -227,12 +227,12 @@ public class ParameterServices extends AbstractStepServices {
 	@Path("/all")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="param-read")
-	public List<Parameter> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+	public List<Parameter> getAllParameters(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
 		List<Parameter> range;
 		if(skip != null && limit != null) {
 			range = parameterAccessor.getRange(skip, limit);
 		} else {
-			range = getAll(0, 1000);
+			range = getAllParameters(0, 1000);
 		}
 		return maskProtectedValues(range.stream());
 	}

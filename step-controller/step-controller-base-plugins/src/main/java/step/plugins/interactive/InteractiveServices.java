@@ -164,7 +164,7 @@ public class InteractiveServices extends AbstractStepServices {
 	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/start")
 	@Secured(right="interactive")
-	public String start(ExecutionParameters executionParameters) throws AgentCommunicationException {
+	public String startInteractiveSession(ExecutionParameters executionParameters) throws AgentCommunicationException {
 		StreamingArtefact streamingArtefact = new StreamingArtefact();
 		Plan plan = PlanBuilder.create()
 						.startBlock(FunctionArtefacts.session())
@@ -186,7 +186,7 @@ public class InteractiveServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}/stop")
 	@Secured(right="interactive")
-	public void stop(@PathParam("id") String sessionId) throws FunctionExecutionServiceException, InterruptedException, ExecutionException {
+	public void stopInteractiveSession(@PathParam("id") String sessionId) throws FunctionExecutionServiceException, InterruptedException, ExecutionException {
 		InteractiveSession session = getAndTouchSession(sessionId);
 		if(session!=null) {
 			closeSession(session);		

@@ -39,7 +39,7 @@ public class FunctionPackageServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="kw-read")
-	public FunctionPackage get(@PathParam("id") String functionPackageId) {
+	public FunctionPackage getFunctionPackage(@PathParam("id") String functionPackageId) {
 		return functionPackageManager.getFunctionPackage(functionPackageId);
 	}
 	
@@ -47,7 +47,7 @@ public class FunctionPackageServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="kw-write")
-	public void delete(@PathParam("id") String functionPackageId) {
+	public void deleteFunctionPackage(@PathParam("id") String functionPackageId) {
 		functionPackageManager.removeFunctionPackage(functionPackageId);
 	}
 	
@@ -72,7 +72,7 @@ public class FunctionPackageServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="kw-write")
-	public FunctionPackage save(FunctionPackage functionPackage, @Context UriInfo uriInfo) throws Exception {
+	public FunctionPackage saveFunctionPackage(FunctionPackage functionPackage, @Context UriInfo uriInfo) throws Exception {
 		return functionPackageManager.addOrUpdateFunctionPackage(functionPackage);
 	}
 	
@@ -81,7 +81,7 @@ public class FunctionPackageServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/resourcebased")
 	@Secured(right = "kw-write")
-	public FunctionPackage update(FunctionPackage functionPackage, @Context UriInfo uriInfo) throws Exception {
+	public FunctionPackage updateFunctionPackage(FunctionPackage functionPackage, @Context UriInfo uriInfo) throws Exception {
 		throw new Exception(
 				"This service has been removed. Use POST /rest/functionpackages/ instead. Lookup by resourceName isn't supported anymore");
 	}
@@ -108,7 +108,7 @@ public class FunctionPackageServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{id}/reload")
 	@Secured(right="kw-write")
-	public FunctionPackage reload(@PathParam("id") String functionPackageId, @Context UriInfo uriInfo) throws Exception {
+	public FunctionPackage reloadFunctionPackage(@PathParam("id") String functionPackageId, @Context UriInfo uriInfo) throws Exception {
 		return functionPackageManager.reloadFunctionPackage(functionPackageId);
 	}
 	
