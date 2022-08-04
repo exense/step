@@ -19,6 +19,7 @@
 package step.core;
 
 import java.io.File;
+import java.io.IOException;
 
 import ch.exense.commons.app.Configuration;
 import com.sun.xml.bind.v2.ContextFactory;
@@ -80,6 +81,8 @@ public class Controller {
 	private GlobalContext context;
 	
 	private ServiceRegistrationCallback serviceRegistrationCallback;
+
+	private CollectionFactory collectionFactory;
 	
 	public Controller(GlobalContext context) {
 		super();
@@ -100,7 +103,7 @@ public class Controller {
 		//Set version here for now
 		context.put(Version.class, Controller.VERSION);
 		
-		CollectionFactory collectionFactory = CollectionFactoryConfigurationParser.parseConfiguration(configuration);
+		collectionFactory = CollectionFactoryConfigurationParser.parseConfiguration(configuration);
 		context.setCollectionFactory(collectionFactory);
 
 		context.setContorllerPluginManager(new ControllerPluginManager(context.require(ServerPluginManager.class)));
@@ -182,6 +185,10 @@ public class Controller {
 
 	public void destroy() {
 		serviceRegistrationCallback.stop();
+	}
+
+	public void postShutdownHook() throws IOException {
+		collectionFactory.close();
 	}
 
 	

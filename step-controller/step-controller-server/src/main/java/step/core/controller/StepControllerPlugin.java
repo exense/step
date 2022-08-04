@@ -20,6 +20,7 @@ import step.core.scheduler.SchedulerServices;
 import step.framework.server.CORSRequestResponseFilter;
 import step.framework.server.security.SecurityFilter;
 
+import java.io.IOException;
 import java.util.List;
 
 @Plugin
@@ -87,6 +88,17 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 		}
 
 	}
+
+	@Override
+	public void postShutdownHook(GlobalContext context) {
+		try {
+			controller.postShutdownHook();
+			logger.info("Collection factory shutdown");
+		} catch (IOException e) {
+			logger.error("Unable to gracefully shutdown the collection factory.",e);
+		}
+	}
+
 
 	@Override
 	public void serverStop(GlobalContext context) {
