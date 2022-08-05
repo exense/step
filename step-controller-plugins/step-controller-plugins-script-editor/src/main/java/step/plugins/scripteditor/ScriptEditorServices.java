@@ -39,6 +39,7 @@ import step.plugins.java.GeneralScriptFunction;
 public class ScriptEditorServices extends AbstractStepServices {
 
 	@GET
+	@Produces({MediaType.TEXT_PLAIN})
 	@Path("/file/{filename}")
 	public String getScript(@PathParam("filename") String filename) throws IOException {
 		File scriptFIle = new File(configuration.getProperty("keywords.script.scriptdir")+"/"+filename);
@@ -61,6 +62,7 @@ public class ScriptEditorServices extends AbstractStepServices {
 	}
 	
 	@GET
+	@Produces({MediaType.TEXT_PLAIN})
 	@Path("/function/{functionid}/file")
 	public String getFunctionScript(@PathParam("functionid") String functionid) throws IOException {
 		File scriptFile = getScriptFile(functionid);
