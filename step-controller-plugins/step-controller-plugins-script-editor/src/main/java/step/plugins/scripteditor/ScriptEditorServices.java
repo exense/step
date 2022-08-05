@@ -27,6 +27,7 @@ import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.core.MediaType;
 import step.core.deployment.AbstractStepServices;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeRegistry;
