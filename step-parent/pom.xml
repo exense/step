@@ -60,7 +60,7 @@
 		<step-grid.version>2022.8.3-62ea6a5487a5284560755678</step-grid.version>
 		<step-api.version>2022.06.09-IDb0ca56d</step-api.version>
 		<viz.version>2022.7.28-62e2833087a528456038d181</viz.version>
-		<rtm.version>2022.7.28-62e284f887a5284560392336</rtm.version>
+		<rtm.version>2022.8.5-62ed0bae87a5284560a7ec2f</rtm.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
