@@ -100,12 +100,12 @@
 						{
 							"ORIGIN": "step-distribution/target/step-controller-${VERSION}.zip",
 							"DESTINATION": "step:k8s-step-controller-${VERSION}-java-11",
-							"CONFIG": "controller-dockerfile"
+							"CONFIG": "controller-11-dockerfile"
 						},
 						{
 							"ORIGIN": "step-distribution/target/step-agent-${VERSION}.zip",
 							"DESTINATION": "step:k8s-step-agent-${VERSION}-java-11",
-							"CONFIG": "agent-dockerfile"
+							"CONFIG": "agent-11-dockerfile"
 						}
 					]
 				}
