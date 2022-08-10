@@ -66,6 +66,7 @@ public class ExecutionServices extends AbstractStepServices {
 	@Operation(description = "Starts an execution with the given parameters.")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/start")
 	@Secured(right="plan-execute")
 	public String execute(ExecutionParameters executionParams) {

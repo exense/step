@@ -161,6 +161,7 @@ public class InteractiveServices extends AbstractStepServices {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/start")
 	@Secured(right="interactive")
 	public String startInteractiveSession(ExecutionParameters executionParameters) throws AgentCommunicationException {

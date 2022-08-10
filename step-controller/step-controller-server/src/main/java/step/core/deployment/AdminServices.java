@@ -178,6 +178,7 @@ public class AdminServices extends AbstractStepServices {
 
 	@GET
 	@Path("/maintenance/message")
+	@Produces(MediaType.TEXT_PLAIN)
 	public String getMaintenanceMessage() {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_MESSAGE_KEY);
 		return setting!=null?setting.getValue():null;

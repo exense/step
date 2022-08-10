@@ -34,6 +34,7 @@ import step.plugins.quotamanager.QuotaHandlerStatus.QuotaHandlerStatusEntry;
 public class QuotaManagerServices extends AbstractStepServices {
 
 	@GET
+	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/status")
 	public String getQuotaManagerStatus() {
 		StringWriter writer = new StringWriter();

@@ -68,6 +68,7 @@ public class StagingRepositoryServices extends AbstractStepServices {
 	@GET
 	@Path("/context")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Secured(right="plan-write")
 	public String createContext() {
 		StagingContext context = new StagingContext();
@@ -88,7 +89,7 @@ public class StagingRepositoryServices extends AbstractStepServices {
 	@POST
 	@Path("/context/{id}/file")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	public String uploadFile(@PathParam("id") String id, @FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail) throws Exception {
 		StagingContext context = stagingContextAccessor.get(id);
@@ -113,6 +114,7 @@ public class StagingRepositoryServices extends AbstractStepServices {
 	@POST
 	@Path("/context/{id}/execute")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Secured(right="plan-write")
 	public String executeInStagingContext(@PathParam("id") String id, Map<String, String> executionParameters, @QueryParam("isolate") boolean isolate) {
 		StagingContext context = stagingContextAccessor.get(id);

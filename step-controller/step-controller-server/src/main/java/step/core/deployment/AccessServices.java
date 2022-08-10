@@ -152,6 +152,7 @@ public class AccessServices extends AbstractStepServices {
 	@GET
 	@Secured
 	@Path("/service-account/token")
+	@Produces(MediaType.TEXT_PLAIN)
 	public String getServiceAccountToken(@QueryParam("lifetime") long days) {
 		Session session = getSession();
 		return authorizationServerManager.getServiceAccountToken(session, days);
