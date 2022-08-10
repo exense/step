@@ -24,12 +24,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.*;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.core.MediaType;
 import step.core.deployment.AbstractStepServices;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeRegistry;
@@ -42,6 +40,7 @@ import step.plugins.java.GeneralScriptFunction;
 public class ScriptEditorServices extends AbstractStepServices {
 
 	@GET
+	@Produces({MediaType.TEXT_PLAIN})
 	@Path("/file/{filename}")
 	public String getScript(@PathParam("filename") String filename) throws IOException {
 		File scriptFIle = new File(configuration.getProperty("keywords.script.scriptdir")+"/"+filename);
@@ -64,6 +63,7 @@ public class ScriptEditorServices extends AbstractStepServices {
 	}
 	
 	@GET
+	@Produces({MediaType.TEXT_PLAIN})
 	@Path("/function/{functionid}/file")
 	public String getFunctionScript(@PathParam("functionid") String functionid) throws IOException {
 		File scriptFile = getScriptFile(functionid);

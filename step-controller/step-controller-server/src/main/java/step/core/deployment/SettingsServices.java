@@ -45,7 +45,7 @@ public class SettingsServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}")
 	@Secured(right="admin")
-	public void save(@PathParam("id") String key, String value) {
+	public void saveSetting(@PathParam("id") String key, String value) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
 		if(setting == null) {
 			setting = new ControllerSetting();
@@ -58,7 +58,7 @@ public class SettingsServices extends AbstractStepServices {
 	@DELETE
 	@Path("/{id}")
 	@Secured(right="admin")
-	public void delete(@PathParam("id") String key) {
+	public void deleteSetting(@PathParam("id") String key) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
 		if(setting != null) {
 			controllerSettingsAccessor.remove(setting.getId());
@@ -69,7 +69,7 @@ public class SettingsServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
 	@Secured(right="settings-read")
-	public String get(@PathParam("id") String key) {
+	public String getSetting(@PathParam("id") String key) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
 		if(setting != null) {
 			return setting.getValue();

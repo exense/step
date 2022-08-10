@@ -83,7 +83,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 	@Secured
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<Input> getInputsForScreen(@PathParam("id") String screenId, @Context UriInfo uriInfo) {		
+	public List<Input> getInputsForScreenGet(@PathParam("id") String screenId, @Context UriInfo uriInfo) {
 		Map<String, Object> contextBindings = getContextBindings(uriInfo);
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
@@ -95,7 +95,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public List<Input> getInputsForScreen(@PathParam("id") String screenId, Object params) {		
+	public List<Input> getInputsForScreenPost(@PathParam("id") String screenId, Object params) {
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		Map<String, Object> contextBindings = getContextBindings(null);
 		if(params != null && params instanceof Map) {
@@ -109,7 +109,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 	@Path("/{screenid}/{inputid}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Input getInputForScreen(@PathParam("screenid") String screenId, @PathParam("inputid") String inputId, @Context UriInfo uriInfo) {		
-		return getInputsForScreen(screenId, uriInfo).stream().filter(i->i.getId().equals(inputId)).findFirst().orElse(null);
+		return getInputsForScreenGet(screenId, uriInfo).stream().filter(i->i.getId().equals(inputId)).findFirst().orElse(null);
 	}
 	
 	@GET
@@ -132,6 +132,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 	@Secured(right="screenInputs-write")
 	@Path("/input/{id}/move")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	public void moveInput(@PathParam("id") String id, int offset) {
 		screenTemplateManager.moveInput(id, offset);
 	}

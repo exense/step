@@ -1,4 +1,4 @@
-package step.plugins.timeseries.api;
+package step.plugins.timeseries;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
@@ -15,9 +15,12 @@ import step.core.timeseries.Query;
 import step.core.timeseries.TimeSeriesChartResponse;
 import step.core.timeseries.accessor.BucketAccessor;
 import step.framework.server.AbstractServices;
+import step.plugins.timeseries.api.*;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 @Path("/time-series")
@@ -46,9 +49,29 @@ public class TimeSeriesService extends AbstractStepServices {
     @Path("/buckets-new")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TimeSeriesChartResponse getBucketsNew(FetchBucketsRequest request) {
+    public TimeSeriesAPIResponse getBucketsNew(FetchBucketsRequest request) {
         Query query = mapToQuery(request);
-        return bucketAccessor.collect(query);
+        TimeSeriesChartResponse chartResponse = bucketAccessor.collect(query);
+        return new TimeSeriesAPIResponseBuilder()
+                .withStart(chartResponse.getStart())
+                .withEnd(chartResponse.getEnd())
+                .withInterval(chartResponse.getInterval())
+                .withMatrixKeys(chartResponse.getMatrixKeys())
+                .withMatrix(chartResponse.getMatrix()
+                        .stream()
+                        .map(buckets ->
+                                Stream.of(buckets)
+                                        .map(b -> b == null ? null : new BucketResponseBuilder()
+                                                .withBegin(b.getBegin())
+                                                .withCount(b.getCount())
+                                                .withMin(b.getMin())
+                                                .withMax(b.getMax())
+                                                .withSum(b.getSum())
+                                                .withPclPrecisions(request.getPclPrecisions().stream().collect(Collectors.toMap(p -> p, b::getPercentile)))
+                                                .build())
+                                        .toArray(BucketResponse[]::new))
+                        .collect(Collectors.toList()))
+                .build();
     }
 
     private Query mapToQuery(FetchBucketsRequest request) {

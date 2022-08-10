@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.datapool;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -26,7 +27,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import step.core.deployment.AbstractStepServices;
 import step.framework.server.security.Secured;
 import step.datapool.DataPoolConfiguration;
@@ -34,7 +34,7 @@ import step.datapool.DataPoolFactory;
 
 @Singleton
 @Path("/datapool")
-@Hidden
+@Tag(name="Private DataPool Plugin")
 public class DataPoolPluginServices extends AbstractStepServices {
 	
 	@GET

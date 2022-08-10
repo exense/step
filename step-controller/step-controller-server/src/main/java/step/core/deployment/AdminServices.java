@@ -98,7 +98,7 @@ public class AdminServices extends AbstractStepServices {
 	@Secured(right="user-write")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/user")
-	public void save(User user) {
+	public void saveUser(User user) {
 		UserAccessor userAccessor = getContext().getUserAccessor();
 
 		User previousUser = userAccessor.get(user.getId());
@@ -112,7 +112,7 @@ public class AdminServices extends AbstractStepServices {
 	@DELETE
 	@Secured(right="user-write")
 	@Path("/user/{id}")
-	public void remove(@PathParam("id") String username) {
+	public void removeUser(@PathParam("id") String username) {
 		getContext().getUserAccessor().remove(username);
 	}
 	
@@ -178,12 +178,14 @@ public class AdminServices extends AbstractStepServices {
 
 	@GET
 	@Path("/maintenance/message")
+	@Produces(MediaType.TEXT_PLAIN)
 	public String getMaintenanceMessage() {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_MESSAGE_KEY);
 		return setting!=null?setting.getValue():null;
 	}
 	
 	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="admin")
 	@Path("/maintenance/message")
 	public void setMaintenanceMessage(String message) {
@@ -205,6 +207,7 @@ public class AdminServices extends AbstractStepServices {
 	
 	@POST
 	@Secured(right="admin")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/maintenance/message/toggle")
 	public void setMaintenanceMessageToggle(boolean enabled) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_TOGGLE_KEY);
@@ -284,6 +287,7 @@ public class AdminServices extends AbstractStepServices {
 	
 	@POST
 	@Secured
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/myaccount/preferences/{id}")
 	public void putPreference(@PathParam("id") String preferenceName, Object value) {
 		User user = getCurrentUser();
@@ -299,8 +303,9 @@ public class AdminServices extends AbstractStepServices {
 	
 	@POST
 	@Secured
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/myaccount/preferences")
-	public void putPreference( Preferences preferences) {
+	public void putPreferences( Preferences preferences) {
 		User user = getCurrentUser();
 		if(user!=null) {
 			user.setPreferences(preferences);
@@ -334,6 +339,7 @@ public class AdminServices extends AbstractStepServices {
 	}
 
 	@POST
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/serviceaccount/resetpwd")
 	public Response resetAdminPassword(String requestEncrypted) {
 		PublicKey publicKey = getPublicKey();

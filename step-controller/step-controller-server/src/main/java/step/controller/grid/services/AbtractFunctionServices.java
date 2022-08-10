@@ -88,11 +88,11 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="read")
-	public List<Function> getAll(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+	public List<Function> getAllFunctions(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
 		if(skip != null && limit != null) {
 			return functionAccessor.getRange(skip, limit);
 		} else {
-			return getAll(0, 1000);
+			return getAllFunctions(0, 1000);
 		}
 	}
 
@@ -100,15 +100,16 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="read")
-	public Function get(@PathParam("id") String functionId) {
+	public Function getFunction(@PathParam("id") String functionId) {
 		return functionManager.getFunctionById(functionId);
 	}
 	
 	@POST
 	@Path("/search")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="read")
-	public Function get(Map<String,String> attributes) {
+	public Function searchFunction(Map<String,String> attributes) {
 		return functionManager.getFunctionByAttributes(attributes);
 	}
 	
@@ -136,6 +137,7 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	}
 	
 	@GET
+	@Produces(MediaType.TEXT_HTML)
 	@Path("/{id}/editor")
 	@Secured(right="read")
 	public String getFunctionEditor(@PathParam("id") String functionId) {
@@ -152,7 +154,7 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="write")
-	public Function save(Function function) throws SetupFunctionException, FunctionTypeException {
+	public Function saveFunction(Function function) throws SetupFunctionException, FunctionTypeException {
 		return functionManager.saveFunction(function);
 	}
 	
@@ -168,7 +170,7 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	@DELETE
 	@Path("/{id}")
 	@Secured(right="delete")
-	public void delete(@PathParam("id") String functionId) throws FunctionTypeException {
+	public void deleteFunction(@PathParam("id") String functionId) throws FunctionTypeException {
 		functionManager.deleteFunction(functionId);
 	}
 	
@@ -214,19 +216,21 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	}
 	
 	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/{id}/execute/{functionId}")
 	@Secured(right="execute")
-	public Output<JsonObject> callFunction(@PathParam("id") String tokenId, @PathParam("functionId") String functionId, FunctionInput<JsonObject> input) {
+	public Output<JsonObject> callFunctionById(@PathParam("id") String tokenId, @PathParam("functionId") String functionId, FunctionInput<JsonObject> input) {
 		Function function = functionManager.getFunctionById(functionId);
 		return functionExecutionService.callFunction(tokenId, function, input, JsonObject.class);			
 	}
 	
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/{id}/execute")
 	@Secured(right="execute")
-	public Output<JsonObject> callFunction(@PathParam("id") String tokenId, FunctionInput<JsonObject> input, @Context UriInfo uriInfo) {
+	public Output<JsonObject> callFunctionByAttributes(@PathParam("id") String tokenId, FunctionInput<JsonObject> input, @Context UriInfo uriInfo) {
 		Map<String,String> functionAttributes = new HashMap<>();
 		uriInfo.getQueryParameters().entrySet().forEach(e->{
 			functionAttributes.put(e.getKey(), e.getValue().get(0));

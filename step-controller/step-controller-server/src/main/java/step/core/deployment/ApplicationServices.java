@@ -20,18 +20,18 @@ package step.core.deployment;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import step.core.plugins.WebPlugin;
 
 @Singleton
 @Path("/app")
-@Hidden
+@Tag(name="Private Application")
 public class ApplicationServices extends AbstractStepServices {
 
 	@GET

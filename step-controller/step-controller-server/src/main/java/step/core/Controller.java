@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.core;
 
+import java.io.IOException;
+
 import ch.exense.commons.app.Configuration;
 import com.sun.xml.bind.v2.ContextFactory;
 import step.artefacts.handlers.PlanLocator;
@@ -71,6 +73,8 @@ public class Controller {
 	
 	private ServiceRegistrationCallback serviceRegistrationCallback;
 	
+	private CollectionFactory collectionFactory;
+
 	public Controller(GlobalContext context) {
 		super();
 		this.context = context;
@@ -90,7 +94,7 @@ public class Controller {
 		//Set version here for now
 		context.put(Version.class, Controller.VERSION);
 		
-		CollectionFactory collectionFactory = CollectionFactoryConfigurationParser.parseConfiguration(configuration);
+		collectionFactory = CollectionFactoryConfigurationParser.parseConfiguration(configuration);
 		context.setCollectionFactory(collectionFactory);
 
 		context.setContorllerPluginManager(new ControllerPluginManager(context.require(ServerPluginManager.class)));
@@ -174,5 +178,9 @@ public class Controller {
 		serviceRegistrationCallback.stop();
 	}
 
-	
+	public void postShutdownHook() throws IOException {
+		collectionFactory.close();
+	}
+
+
 }
