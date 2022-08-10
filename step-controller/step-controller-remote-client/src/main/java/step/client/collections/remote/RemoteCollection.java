@@ -148,11 +148,6 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
-    public void createOrUpdateCompoundIndex(Map<String, Integer> fields) {
-        throw notImplemented();
-    }
-
-    @Override
     public void rename(String newName) {
         throw notImplemented();
     }
