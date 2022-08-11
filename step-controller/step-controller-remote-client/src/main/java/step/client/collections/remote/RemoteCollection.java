@@ -143,8 +143,8 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
-    public void createOrUpdateCompoundIndex(Map<String, Integer> fields) {
-
+    public void createOrUpdateCompoundIndex(Map<String, Integer> map) {
+        throw notImplemented();
     }
 
     @Override

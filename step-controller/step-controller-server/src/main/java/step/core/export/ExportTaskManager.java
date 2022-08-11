@@ -20,6 +20,7 @@ package step.core.export;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -37,45 +38,34 @@ public class ExportTaskManager implements Closeable {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ExportTaskManager.class);
 
-	protected ResourceManager resourceManager;
-	
-	protected Map<String, ExportStatus> exportStatusMap = new ConcurrentHashMap<>();
-	
-	protected ExecutorService exportExecutor = Executors.newFixedThreadPool(2);
+	private final ResourceManager resourceManager;
+	private final Map<String, ExportStatus> exportStatusMap = new ConcurrentHashMap<>();
+	private final ExecutorService exportExecutor = Executors.newFixedThreadPool(2);
 	
 	public ExportTaskManager(ResourceManager resourceManager) {
 		super();
 		this.resourceManager = resourceManager;
 	}
-	
-	public ExportStatus createExportTask(ExportRunnable runnable) {
+
+	public ExportStatus createExportTask(ExportTask exportTask) {
 		String exportId = UUID.randomUUID().toString();
-		return createExportTask(exportId, runnable);
-	}
-	
-	public ExportStatus createExportTask(String exportId, ExportRunnable runnable) {
 		ExportStatus status = new ExportStatus(exportId);
 		exportStatusMap.put(exportId, status);
-		runnable.setStatus(status);
-		runnable.setResourceManager(resourceManager);
-		exportExecutor.submit(new Runnable() {
 
-			@Override
-			public void run() {
-				Resource resource = null;
-				try {
-					resource = runnable.runExport();
-				} catch(Exception e) {
-					logger.error("Error while running export task "+exportId, e);
-				} finally {
-					if(resource!=null) {
-						status.setAttachmentID(resource.getId().toString());
-					}
-					status.ready = true;
+		ExportTaskHandle taskHandle = new ExportTaskHandle(resourceManager, status);
+
+		exportExecutor.submit(() -> {
+			Resource resource = null;
+			try {
+				resource = exportTask.apply(taskHandle);
+			} catch(Exception e) {
+				logger.error("Error while running export task "+exportId, e);
+			} finally {
+				if(resource!=null) {
+					status.setAttachmentID(resource.getId().toString());
 				}
-				
+				status.setReady(true);
 			}
-			
 		});
 		return status;
 	}
@@ -85,100 +75,35 @@ public class ExportTaskManager implements Closeable {
 		exportExecutor.shutdown();
 	}
 
-	public static abstract class ExportRunnable {
-		
-		ExportStatus status;
-		
-		private	ResourceManager resourceManager;
-		
-		public ExportStatus getStatus() {
-			return status;
-		}
-
-		private void setResourceManager(ResourceManager resourceManager) {
-			this.resourceManager = resourceManager;
-		}
-
-		protected ResourceManager getResourceManager() {
-			return resourceManager;
-		}
-
-		private void setStatus(ExportStatus status) {
-			this.status = status;
-		}
-		
-		protected abstract Resource runExport() throws Exception;
-		
-	}
-	
 	public ExportStatus getExportStatus(String exportID) {
 		ExportStatus export = exportStatusMap.get(exportID);
-		if(export.ready) {
+		if(export.isReady()) {
 			exportStatusMap.remove(exportID);
 		}
 		return export;
 	}
-	
-	
-	public class ExportStatus {
-		
-		String id;
-		
-		String attachmentID;
-		
-		volatile boolean ready = false;
-				
-		volatile float progress = 0;
-		
-		Set<String> warnings;
 
-		public ExportStatus() {
-			super();
+	public Collection<ExportStatus> getCurrentExportStatus() {
+		return exportStatusMap.values();
+	}
+
+	public static class ExportTaskHandle {
+
+		private final ExportStatus exportStatus;
+		private	final ResourceManager resourceManager;
+
+		public ExportTaskHandle(ResourceManager resourceManager, ExportStatus exportStatus) {
+			this.resourceManager = resourceManager;
+			this.exportStatus = exportStatus;
 		}
 
-		public ExportStatus(String id) {
-			super();
-			this.id = id;
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public void setId(String id) {
-			this.id = id;
-		}
-
-		public String getAttachmentID() {
-			return attachmentID;
-		}
-
-		public void setAttachmentID(String attachmentID) {
-			this.attachmentID = attachmentID;
-		}
-
-		public boolean isReady() {
-			return ready;
-		}
-
-		public void setReady(boolean ready) {
-			this.ready = ready;
-		}
-
-		public float getProgress() {
-			return progress;
-		}
-
-		public void setProgress(float progress) {
-			this.progress = progress;
-		}
-
-		public Set<String> getWarnings() {
-			return warnings;
+		public ResourceManager getResourceManager() {
+			return resourceManager;
 		}
 
 		public void setWarnings(Set<String> warnings) {
-			this.warnings = warnings;
+			exportStatus.setWarnings(warnings);
 		}
 	}
+
 }

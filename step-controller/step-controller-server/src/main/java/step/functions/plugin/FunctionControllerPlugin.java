@@ -33,8 +33,8 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.tables.AbstractTable;
-import step.core.tables.TableRegistry;
+import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.TableRegistry;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionAccessorImpl;
@@ -100,7 +100,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		
 		Collection<Function> functionCollection = context.getCollectionFactory()
 				.getCollection(EntityManager.functions, Function.class);
-		tableRegistry.register(EntityManager.functions, new AbstractTable<>(functionCollection, true));
+		tableRegistry.register(EntityManager.functions, new AbstractTable<>(functionCollection, "kw-read", true));
 	}
 	
 	@Override

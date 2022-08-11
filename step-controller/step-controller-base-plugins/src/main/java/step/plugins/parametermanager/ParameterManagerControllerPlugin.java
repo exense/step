@@ -18,12 +18,8 @@
  ******************************************************************************/
 package step.plugins.parametermanager;
 
-import java.util.List;
-import java.util.function.BiConsumer;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import step.core.GlobalContext;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.Accessor;
@@ -36,16 +32,15 @@ import step.core.export.ExportContext;
 import step.core.imports.ImportContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.tables.TableRegistry;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.framework.server.tables.TableRegistry;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
-import step.plugins.screentemplating.Input;
-import step.plugins.screentemplating.InputType;
-import step.plugins.screentemplating.ScreenInput;
-import step.plugins.screentemplating.ScreenInputAccessor;
-import step.plugins.screentemplating.ScreenTemplatePlugin;
+import step.plugins.screentemplating.*;
+
+import java.util.List;
+import java.util.function.BiConsumer;
 
 @Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class, EncryptionManagerDependencyPlugin.class})
 public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {

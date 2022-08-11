@@ -19,29 +19,29 @@
 package step.core.execution;
 
 
+import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.framework.server.tables.service.TableParameters;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.json.JsonObject;
-import jakarta.json.JsonString;
-
-import step.core.collections.Filter;
-import step.core.collections.Filters;
-import step.core.tables.TableQueryFactory;
-
-public class LeafReportNodesFilter implements TableQueryFactory {
+public class LeafReportNodesFilter {
 	
-	protected List<String[]> optionalReportNodesFilter = new ArrayList<String[]>() ;
+	protected List<String[]> optionalReportNodesFilter;
 	
 	public LeafReportNodesFilter(List<String[]> optionalReportNodesFilter) {
 		super();
 		this.optionalReportNodesFilter = optionalReportNodesFilter;
 	}
 
-	public Filter buildAdditionalQuery(JsonObject filter) {		
+	public Filter buildAdditionalQuery(LeafReportNodesTableParameters parameters) {
 		List<Filter> fragments = new ArrayList<>();
-		if(filter != null && filter.containsKey("eid")) {
-			fragments.add(Filters.equals("executionID", filter.getString("eid")));
+		if(parameters != null) {
+			String eid = parameters.getEid();
+			if(eid != null) {
+				fragments.add(Filters.equals("executionID", eid));
+			}
 		}
 		
 		List<Filter> nodeFilters = new ArrayList<>();
@@ -53,13 +53,15 @@ public class LeafReportNodesFilter implements TableQueryFactory {
 			}
 		}
 		fragments.add(Filters.or(nodeFilters));
-		if(filter != null && filter.containsKey("testcases")) {
-			//customAttributes.TestCase
-			List<String> testcaseIds = new ArrayList<>();
-			filter.getJsonArray("testcases").forEach(v->testcaseIds.add(((JsonString)v).getString()));
-			fragments.add(Filters.in("customAttributes.TestCase", testcaseIds));
+		if(parameters != null) {
+			List<String> testcases = parameters.getTestcases();
+			if(testcases != null) {
+				fragments.add(Filters.in("customAttributes.TestCase", testcases));
+			}
 		}
 		
 		return Filters.and(fragments);
 	}
+
+
 }
