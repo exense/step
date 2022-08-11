@@ -63,25 +63,5 @@ public class LeafReportNodesFilter {
 		return Filters.and(fragments);
 	}
 
-	public static class LeafReportNodesTableParameters extends TableParameters {
 
-		private String eid;
-		private List<String> testcases;
-
-		public String getEid() {
-			return eid;
-		}
-
-		public void setEid(String eid) {
-			this.eid = eid;
-		}
-
-		public List<String> getTestcases() {
-			return testcases;
-		}
-
-		public void setTestcases(List<String> testcases) {
-			this.testcases = testcases;
-		}
-	}
 }

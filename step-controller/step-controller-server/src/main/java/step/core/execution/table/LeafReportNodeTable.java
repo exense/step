@@ -28,6 +28,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.execution.LeafReportNodesFilter;
+import step.core.execution.LeafReportNodesTableParameters;
 import step.framework.server.tables.service.TableParameters;
 
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class LeafReportNodeTable extends ReportNodeTable {
 		if(filters == null) {
 			filters = new ArrayList<>();
 		}
-		filters.add(new LeafReportNodesFilter(optionalReportNodesFilter).buildAdditionalQuery((LeafReportNodesFilter.LeafReportNodesTableParameters) queryParameters));
+		filters.add(new LeafReportNodesFilter(optionalReportNodesFilter).buildAdditionalQuery((LeafReportNodesTableParameters) queryParameters));
 		return filters;
 	}
 
