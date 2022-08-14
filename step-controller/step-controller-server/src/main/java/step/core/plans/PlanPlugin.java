@@ -28,7 +28,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.tables.TableRegistry;
+import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.InputType;
 import step.plugins.screentemplating.ScreenInput;

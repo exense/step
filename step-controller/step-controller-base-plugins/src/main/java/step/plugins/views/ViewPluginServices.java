@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.views;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.GET;
@@ -26,12 +27,11 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import step.core.deployment.AbstractStepServices;
 
 @Singleton
 @Path("/views")
-@Hidden
+@Tag(name="Private View Plugin")
 public class ViewPluginServices extends AbstractStepServices {
 
 	private ViewManager viewManager;

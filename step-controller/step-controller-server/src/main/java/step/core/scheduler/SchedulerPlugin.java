@@ -28,8 +28,8 @@ import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.tables.AbstractTable;
-import step.core.tables.TableRegistry;
+import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.Input;
 import step.plugins.screentemplating.InputType;
 import step.plugins.screentemplating.ScreenInput;
@@ -48,7 +48,7 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
 		Collection<ExecutiontTaskParameters> collectionDriver = context.getCollectionFactory().getCollection("tasks",
 				ExecutiontTaskParameters.class);
-		context.get(TableRegistry.class).register("tasks", new AbstractTable<>(collectionDriver, true));
+		context.get(TableRegistry.class).register("tasks", new AbstractTable<>(collectionDriver, "task-read", true));
 
 	}
 

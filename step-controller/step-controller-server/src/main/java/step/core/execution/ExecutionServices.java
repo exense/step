@@ -66,6 +66,7 @@ public class ExecutionServices extends AbstractStepServices {
 	@Operation(description = "Starts an execution with the given parameters.")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/start")
 	@Secured(right="plan-execute")
 	public String execute(ExecutionParameters executionParams) {
@@ -89,7 +90,7 @@ public class ExecutionServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
-	public Execution get(@PathParam("id") String id) {
+	public Execution getExecutionById(@PathParam("id") String id) {
 		return executionAccessor.get(id);
 	}
 
@@ -107,9 +108,11 @@ public class ExecutionServices extends AbstractStepServices {
 
 	@Operation(description = "Returns the executions matching the provided attributes.")
 	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/search")
 	@Secured(right="execution-read")
-	public Execution get(Map<String,String> attributes) {
+	public Execution getExecutionByAttribute(Map<String,String> attributes) {
 		return executionAccessor.findByAttributes(attributes);
 	}
 
@@ -161,7 +164,7 @@ public class ExecutionServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-write")
-	public Execution save(Execution execution) {
+	public Execution saveExecution(Execution execution) {
 		return executionAccessor.save(execution);
 	}
 
@@ -170,7 +173,7 @@ public class ExecutionServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-delete")
-	public void delete(@PathParam("id") String id) {
+	public void deleteExecution(@PathParam("id") String id) {
 		executionAccessor.remove(new ObjectId(id));
 	}
 }

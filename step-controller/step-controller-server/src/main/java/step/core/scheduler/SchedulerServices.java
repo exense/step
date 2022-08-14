@@ -108,9 +108,10 @@ public class SchedulerServices extends AbstractStepServices {
     @Operation(description = "Execute the given scheduler task.")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @Path("/task/{id}/execute")
     @Secured(right = "plan-execute")
-    public String execute(@PathParam("id") String executionTaskID) {
+    public String executeTask(@PathParam("id") String executionTaskID) {
         Session<User> session = getSession();
         return scheduler.executeExecutionTask(executionTaskID, session.getUser().getUsername());
     }

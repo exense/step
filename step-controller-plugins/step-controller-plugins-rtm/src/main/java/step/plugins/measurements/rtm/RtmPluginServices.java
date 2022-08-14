@@ -21,6 +21,7 @@ package step.plugins.measurements.rtm;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
+@Tag(name = "RTM")
 @Path("rtm")
 public class RtmPluginServices {
 

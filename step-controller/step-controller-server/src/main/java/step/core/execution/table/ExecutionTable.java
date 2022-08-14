@@ -18,17 +18,15 @@
  ******************************************************************************/
 package step.core.execution.table;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.Collection;
-import step.core.collections.Filter;
 import step.core.execution.model.ExecutionStatus;
-import step.core.tables.AbstractTable;
-import step.core.tables.DateRangeCriterium;
+import step.framework.server.tables.AbstractTable;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExecutionTable extends AbstractTable<ExecutionWrapper> {
 	
@@ -36,7 +34,7 @@ public class ExecutionTable extends AbstractTable<ExecutionWrapper> {
 	private final RootReportNodeProvider rootReportNodeFormatter;
 
 	public ExecutionTable(GlobalContext context, Collection<ExecutionWrapper> collection) {
-		super(collection, true);
+		super(collection, "execution-read", true);
 		RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
 		ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
 		this.executionSummaryFormatter = executionSummaryFormatter;
@@ -49,26 +47,5 @@ public class ExecutionTable extends AbstractTable<ExecutionWrapper> {
 		Object executionSummary = executionSummaryFormatter.format(execution);
 		execution.setExecutionSummary(executionSummary);
 		return execution;
-	}
-
-	@Override
-	public List<String> distinct(String key) {
-		if(key.equals("result")) {
-			return Arrays.asList(ReportNodeStatus.values()).stream().map(Object::toString).collect(Collectors.toList());
-		} else if(key.equals("status")) {
-			return Arrays.asList(ExecutionStatus.values()).stream().map(Object::toString).collect(Collectors.toList());
-		} else {
-			return super.distinct(key);
-		}
-	}
-
-	@Override
-	public Filter getQueryFragmentForColumnSearch(String columnName, String searchValue) {
-		if(columnName.equals("startTime") || columnName.equals("endTime")) {
-			Filter queryFragment = new DateRangeCriterium("dd.MM.yyyy").createQuery(columnName, searchValue);
-			return queryFragment;
-		} else {
-			return super.getQueryFragmentForColumnSearch(columnName, searchValue);
-		}
 	}
 }

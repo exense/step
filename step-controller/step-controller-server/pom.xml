@@ -39,12 +39,6 @@
 			<artifactId>ldaptive</artifactId>
 			<version>2.1.1</version>
 		</dependency>
-
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-controller-api</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-commons</artifactId>
@@ -102,7 +96,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-framework-collections-jdbc</artifactId>
+			<artifactId>step-framework-collections-postgresql</artifactId>
 			<version>${step-framework.version}</version>
 		</dependency>
 		<dependency>

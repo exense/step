@@ -23,8 +23,8 @@ import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.tables.AbstractTable;
-import step.core.tables.TableRegistry;
+import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.TableRegistry;
 
 @Plugin()
 public class ResourceManagerControllerPlugin extends AbstractControllerPlugin {
@@ -35,7 +35,7 @@ public class ResourceManagerControllerPlugin extends AbstractControllerPlugin {
 		
 		Collection<Resource> collectionDriver = context.getCollectionFactory().getCollection("resources",
 				Resource.class);
-		context.get(TableRegistry.class).register("resources", new AbstractTable<>(collectionDriver, true));
+		context.get(TableRegistry.class).register("resources", new AbstractTable<>(collectionDriver, null, true));
 	}
 
 	public static String getResourceDir(Configuration configuration) {

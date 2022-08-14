@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.threadpool;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 
-public class ThreadPool {
+public class ThreadPool implements Closeable {
 	
 	private static final String EXECUTION_THREADS_AUTO = "execution_threads_auto";
 
@@ -52,7 +54,12 @@ public class ThreadPool {
 		super();
 		this.executionContext = context;
 	}
-	
+
+	@Override
+	public void close() throws IOException {
+		executorService.shutdown();
+	}
+
 	private static final class BatchContext {
 
 		private final ExecutionContext executionContext;

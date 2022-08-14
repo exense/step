@@ -30,7 +30,6 @@
 	</parent>
 	
 	<modules>
-		<module>step-controller-api</module>
 		<module>step-controller-server</module>
 		<module>step-controller-base-plugins</module>
 		<module>step-controller-backend</module>
