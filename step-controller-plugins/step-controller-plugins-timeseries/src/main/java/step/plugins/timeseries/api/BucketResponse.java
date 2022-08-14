@@ -14,8 +14,9 @@ public class BucketResponse {
     private final long max;
     // TODO rename to pclValues
     private final Map<Integer, Long> pclValues;
+    private final long throughputPerHour;
 
-    public BucketResponse(long begin, BucketAttributes attributes, long count, long sum, long min, long max, Map<Integer, Long> getPclValues) {
+    public BucketResponse(long begin, BucketAttributes attributes, long count, long sum, long min, long max, Map<Integer, Long> getPclValues, long throughputPerHour) {
         this.begin = begin;
         this.attributes = attributes;
         this.count = count;
@@ -23,6 +24,7 @@ public class BucketResponse {
         this.min = min;
         this.max = max;
         this.pclValues = getPclValues;
+        this.throughputPerHour = throughputPerHour;
     }
 
     public long getBegin() {
@@ -51,5 +53,9 @@ public class BucketResponse {
 
     public Map<Integer, Long> getPclValues() {
         return pclValues;
+    }
+
+    public long getThroughputPerHour() {
+        return throughputPerHour;
     }
 }

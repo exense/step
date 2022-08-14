@@ -66,6 +66,7 @@ public class TimeSeriesService extends AbstractStepServices {
                                                 .withMin(b.getMin())
                                                 .withMax(b.getMax())
                                                 .withSum(b.getSum())
+                                                .withThroughputPerHour(3600 * 1000 * b.getCount() / query.getIntervalSizeMs())
                                                 .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile)))
                                                 .build())
                                         .toArray(BucketResponse[]::new))

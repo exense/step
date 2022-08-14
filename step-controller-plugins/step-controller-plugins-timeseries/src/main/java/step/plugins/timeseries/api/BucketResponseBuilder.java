@@ -13,6 +13,7 @@ public final class BucketResponseBuilder {
     private long min;
     private long max;
     private Map<Integer, Long> pclValues;
+    private long throughputPerHour;
 
 
     public BucketResponseBuilder withBegin(long begin) {
@@ -50,8 +51,13 @@ public final class BucketResponseBuilder {
         return this;
     }
 
+    public BucketResponseBuilder withThroughputPerHour(long throughputPerHour) {
+        this.throughputPerHour = throughputPerHour;
+        return this;
+    }
+
     public BucketResponse build() {
         Objects.requireNonNull(begin);
-        return new BucketResponse(begin, attributes, count, sum, min, max, pclValues);
+        return new BucketResponse(begin, attributes, count, sum, min, max, pclValues, throughputPerHour);
     }
 }
