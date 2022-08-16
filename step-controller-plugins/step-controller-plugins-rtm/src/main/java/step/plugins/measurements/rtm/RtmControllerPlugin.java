@@ -75,6 +75,7 @@ public class RtmControllerPlugin extends AbstractControllerPlugin {
 
 		Collection<Document> collection = rtmContext.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME,Document.class);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
+		collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.TYPE, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateIndex(MeasurementPlugin.BEGIN);
