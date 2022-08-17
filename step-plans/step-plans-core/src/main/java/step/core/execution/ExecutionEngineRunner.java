@@ -137,6 +137,7 @@ public class ExecutionEngineRunner {
 		Collection<Function> planInnerFunctions = plan.getFunctions();
 		if(planInnerFunctions!=null && planInnerFunctions.size()>0) {
 			if(functionAccessor != null) {
+				planInnerFunctions.forEach(f -> this.executionContext.getObjectEnricher().accept(f));
 				functionAccessor.save(planInnerFunctions);
 			} else {
 				throw new RuntimeException("Unable to save inner functions because no function accessor is available");
