@@ -40,17 +40,16 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
             long begin = measurement.getBegin();
             long value = measurement.getValue();
             BucketAttributes bucketAttributes = new BucketAttributes(measurement);
-            bucketAttributes.remove("rnId");
-            bucketAttributes.remove("origin");
-            bucketAttributes.remove("planId");
-            bucketAttributes.remove("agentUrl");
-            bucketAttributes.remove("id");
-            bucketAttributes.remove("begin");
-            bucketAttributes.remove("value");
-
+            removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value");
             // custom fields include all the attributes like execId and planId
             this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
         });
+    }
+
+    private void removeKeys(Map<String, Object> map, String... attributes) {
+        for (String attribute : attributes) {
+            map.remove(attribute);
+        }
     }
 
     @Override

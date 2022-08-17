@@ -10,14 +10,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
-import step.core.timeseries.Bucket;
+import step.core.timeseries.BucketService;
 import step.core.timeseries.Query;
 import step.core.timeseries.TimeSeriesChartResponse;
-import step.core.timeseries.accessor.BucketAccessor;
 import step.plugins.timeseries.api.*;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,31 +24,22 @@ import java.util.stream.Stream;
 @Tag(name = "TimeSeries")
 public class TimeSeriesService extends AbstractStepServices {
 
-    protected BucketAccessor bucketAccessor;
+    protected BucketService bucketService;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
-        bucketAccessor = context.get(BucketAccessor.class);
+        bucketService = context.get(BucketService.class);
     }
 
     @POST
     @Path("/buckets")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<Map<String, Object>, Map<Long, Bucket>> getBuckets(FetchBucketsRequest request) {
-        Query query = mapToQuery(request);
-        return bucketAccessor.collectBuckets(query);
-    }
-
-    @POST
-    @Path("/buckets-new")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getBucketsNew(FetchBucketsRequest request) {
         Query query = mapToQuery(request);
-        TimeSeriesChartResponse chartResponse = bucketAccessor.collect(query);
+        TimeSeriesChartResponse chartResponse = bucketService.collect(query);
         return new TimeSeriesAPIResponseBuilder()
                 .withStart(chartResponse.getStart())
                 .withEnd(chartResponse.getEnd())
