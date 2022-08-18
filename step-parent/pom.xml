@@ -56,11 +56,11 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
 		<exense-commons.version>2022.06.09-IDa516421</exense-commons.version>
-		<step-framework.version>2022.8.17-62fcdfb70b329a4784fe254d</step-framework.version>
+		<step-framework.version>2022.8.18-62fde56f0b329a47840fb35c</step-framework.version>
 		<step-grid.version>2022.8.10-62f36ecf87a5284560ceb988</step-grid.version>
 		<step-api.version>2022.06.09-IDb0ca56d</step-api.version>
 		<viz.version>2022.7.28-62e2833087a528456038d181</viz.version>
-		<rtm.version>2022.8.5-62ed0bae87a5284560a7ec2f</rtm.version>
+		<rtm.version>2022.8.18-62fde64b0b329a47840ff646</rtm.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
