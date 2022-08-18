@@ -48,7 +48,7 @@ public class EntityServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured()
-    public Response get(@PathParam("type") String type, @PathParam("id") String id) {
+    public Response getEntity(@PathParam("type") String type, @PathParam("id") String id) {
         Entity<?, ?> entityType = entityManager.getEntityByName(type);
         AbstractIdentifiableObject entity = entityType.getAccessor().get(id);
         return Response.status(200).entity(entity).build();
@@ -59,7 +59,7 @@ public class EntityServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured()
-    public Response find(@PathParam("type") String type, Map<String, String> attributes) {
+    public Response findEntity(@PathParam("type") String type, Map<String, String> attributes) {
         Entity<?, ?> entityType = entityManager.getEntityByName(type);
         Spliterator<?> manyByAttributes = entityType.getAccessor().findManyByAttributes(attributes);
 
@@ -90,7 +90,7 @@ public class EntityServices extends AbstractStepServices {
     @DELETE
     @Path("/{type}/{id}")
     @Secured()
-    public void delete(@PathParam("type") String type, @PathParam("id") String id) {
+    public void deleteEntity(@PathParam("type") String type, @PathParam("id") String id) {
         Entity<?, ?> entityType = entityManager.getEntityByName(type);
         entityType.getAccessor().remove(new ObjectId(id));
     }
@@ -100,7 +100,7 @@ public class EntityServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured()
-    public Response save(@PathParam("type") String type, Object entity) {
+    public Response saveEntity(@PathParam("type") String type, Object entity) {
         Entity<?, ?> entityType = entityManager.getEntityByName(type);
         Class<? extends AbstractIdentifiableObject> entityClass = entityType.getEntityClass();
         AbstractIdentifiableObject value = DefaultJacksonMapperProvider.getObjectMapper().convertValue(entity, entityClass);
