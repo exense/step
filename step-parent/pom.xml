@@ -66,7 +66,7 @@
 		<groovy.version>2.2.1</groovy.version>
 		
 		<jackson.version>2.10.0</jackson.version>
-		<rtm.version>2022.8.10-62f3c93a0b329a47849ff25f</rtm.version>
+		<rtm.version>2022.8.18-62fde38e0b329a47840ef76a</rtm.version>
 		<jersey.version>2.29.1</jersey.version>
 		<jetty.version>9.4.30.v20200611</jetty.version>
 		<annotation.version>1.3.2</annotation.version>
