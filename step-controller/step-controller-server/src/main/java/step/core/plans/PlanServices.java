@@ -24,10 +24,16 @@ import org.bson.types.ObjectId;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
+import step.controller.services.bulk.BulkOperationManager;
+import step.controller.services.bulk.BulkOperationParameters;
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
+import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
+import step.core.export.ExportStatus;
+import step.core.export.ExportTaskManager;
+import step.core.objectenricher.ObjectFilter;
 import step.framework.server.security.Secured;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -38,6 +44,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,6 +61,8 @@ public class PlanServices extends AbstractStepServices {
 	protected PlanTypeRegistry planTypeRegistry;
 	protected ObjectPredicateFactory objectPredicateFactory;
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
+	protected ExportTaskManager exportTaskManager;
+	private BulkOperationManager bulkOperationManager;
 
 	@PostConstruct
 	public void init() throws Exception {
@@ -63,6 +72,8 @@ public class PlanServices extends AbstractStepServices {
 		planTypeRegistry = context.get(PlanTypeRegistry.class);
 		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
+		exportTaskManager = context.require(ExportTaskManager.class);
+		bulkOperationManager = new BulkOperationManager(exportTaskManager);
 	}
 
 	@Operation(description = "Returns a new plan instance as template.")
@@ -146,6 +157,19 @@ public class PlanServices extends AbstractStepServices {
 		return clonePlan;
 	}
 
+	@Operation(description = "Bulk clone plans according to the provided parameters")
+	@POST
+	@Path("/bulk/clone")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-write")
+	public ExportStatus clonePlans(BulkOperationParameters parameters) {
+		ObjectFilter contextObjectFilter = getObjectFilter();
+		Collection<Plan> collection = planAccessor.getCollectionDriver();
+		return bulkOperationManager.performBulkOperation(parameters, this::clonePlan, filter -> {
+			collection.find(filter, null, null, null, 0).forEach(plan -> clonePlan(plan.getId().toString()));
+		}, contextObjectFilter);
+	}
+
 	@Operation(description = "Returns the first plan matching the given attributes.")
 	@POST
 	@Path("/search")
@@ -186,6 +210,17 @@ public class PlanServices extends AbstractStepServices {
 	@Secured(right="plan-delete")
 	public void deletePlan(@PathParam("id") String id) {
 		planAccessor.remove(new ObjectId(id));
+	}
+
+	@Operation(description = "Bulk delete plans according to the provided parameters")
+	@POST
+	@Path("/bulk/delete")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-delete")
+	public ExportStatus deletePlans(BulkOperationParameters parameters) {
+		ObjectFilter contextObjectFilter = getObjectFilter();
+		Collection<Plan> collection = planAccessor.getCollectionDriver();
+		return bulkOperationManager.performBulkOperation(parameters, this::deletePlan, collection::remove, contextObjectFilter);
 	}
 
 	@Operation(description = "Returns the plan referenced by the given artifact within the given plan.")
