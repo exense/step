@@ -60,7 +60,7 @@ public class ScreenTemplateManager {
 				activeOptions = Activator.findAllMatches(contextBindings, options, defaultScriptEngine);
 			}
 			Input clone = new Input(input.getType(), input.getId(), input.getLabel(), input.getDescription(), activeOptions);
-			clone.setValueHtmlTemplate(input.getValueHtmlTemplate());
+			clone.setCustomUIComponents(input.getCustomUIComponents());
 			clone.setSearchMapperService(input.getSearchMapperService());
 			clone.setDefaultValue(input.getDefaultValue());
 			result.add(clone);

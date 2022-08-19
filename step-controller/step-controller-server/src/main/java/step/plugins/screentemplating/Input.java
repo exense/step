@@ -35,7 +35,7 @@ public class Input extends AbstractActivableObject {
 	
 	String description;
 	
-	String valueHtmlTemplate;
+	List<String> customUIComponents;
 	
 	String searchMapperService;
 	
@@ -108,12 +108,12 @@ public class Input extends AbstractActivableObject {
 		this.description = description;
 	}
 
-	public String getValueHtmlTemplate() {
-		return valueHtmlTemplate;
+	public List<String> getCustomUIComponents() {
+		return customUIComponents;
 	}
 
-	public void setValueHtmlTemplate(String valueHtmlTemplate) {
-		this.valueHtmlTemplate = valueHtmlTemplate;
+	public void setCustomUIComponents(List<String> customUIComponents) {
+		this.customUIComponents = customUIComponents;
 	}
 
 	public String getSearchMapperService() {
