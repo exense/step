@@ -54,10 +54,6 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 		this.context = context;
 		settingAccessor = context.require(ControllerSettingAccessor.class);
 		this.configuration = context.getConfiguration();
-		
-		Authenticator authenticator = initAuthenticator();
-		AuthenticationManager authenticationManager = new AuthenticationManager(configuration, authenticator, context.getUserAccessor());
-		context.put(AuthenticationManager.class, authenticationManager);
 
 		RoleProvider roleProvider = initAccessManager();
 		context.put(RoleProvider.class, roleProvider);
@@ -71,6 +67,11 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 		ResourceServerManager resourceServerManager = new ResourceServerManager(jwtSettings, authorizationServerManager);
 		context.put(AuthorizationServerManager.class, authorizationServerManager);
 		context.put(ResourceServerManager.class, resourceServerManager);
+
+		Authenticator authenticator = initAuthenticator();
+		AuthenticationManager authenticationManager = new AuthenticationManager(configuration, authenticator, context.getUserAccessor(),
+				authorizationServerManager);
+		context.put(AuthenticationManager.class, authenticationManager);
 	}
 
 	@Override
