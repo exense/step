@@ -31,6 +31,7 @@ import ch.commons.auth.Authenticator;
 import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
 import org.apache.commons.codec.digest.DigestUtils;
+import step.core.authentication.AuthorizationServerManager;
 import step.core.controller.errorhandling.ApplicationException;
 import step.core.deployment.Session;
 
@@ -40,12 +41,15 @@ public class AuthenticationManager {
 	private final Authenticator authenticator;
 	private final UserAccessor userAccessor;
 	private final List<AuthenticationManagerListener> listeners = new ArrayList<>();
+	
+	private final AuthorizationServerManager authorizationServerManager;
 
-	public AuthenticationManager(Configuration configuration, Authenticator authenticator, UserAccessor userAccessor) {
+	public AuthenticationManager(Configuration configuration, Authenticator authenticator, UserAccessor userAccessor, AuthorizationServerManager authorizationServerManager) {
 		super();
 		this.configuration = configuration;
 		this.authenticator = authenticator;
 		this.userAccessor = userAccessor;
+		this.authorizationServerManager = authorizationServerManager;
 	}
 
 	public boolean useAuthentication() {
@@ -66,6 +70,7 @@ public class AuthenticationManager {
 				logoutSession(session);
 				throw e;
 			}
+			authorizationServerManager.issueToken(credentials.getUsername(), session);
 			return true;
 		} else {
 			return false;
@@ -96,8 +101,9 @@ public class AuthenticationManager {
 				user = defaultAdminUser();
 				userAccessor.save(user);
 			}
-			
+
 			setUserToSession(session, "admin");
+			authorizationServerManager.issueToken("admin", session);
 		}
 	}
 	
