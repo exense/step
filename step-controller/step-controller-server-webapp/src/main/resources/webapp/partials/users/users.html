@@ -22,7 +22,8 @@
             <button type="button" class="btn btn-default" aria-label="Left Align" ng-click="editUser(row.username)" uib-tooltip="Edit user">
               <span class="glyphicon glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>
             </button>
-            <button type="button" class="btn btn-default" aria-label="Left Align" ng-click="resetUserPassword(row)" uib-tooltip="Reset user password">
+            <button type="button" class="btn btn-default" aria-label="Left Align" ng-click="resetUserPassword(row)" uib-tooltip="Reset user password"
+                ng-disabled="isResetButtonDisabled()">
               <span class="glyphicon glyphicon glyphicon glyphicon-lock" aria-hidden="true"></span>
             </button>
             <button type="button" class="btn btn-default" ng-disabled="context.userID === row.username" aria-label="Left Align" ng-click="askAndRemoveUser(row.username)" uib-tooltip="Delete user">

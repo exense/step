@@ -68,9 +68,17 @@ angular.module('adminControllers', ['step' ])
   }
 
   $scope.resetUserPassword = function(id) {
-    Dialogs.showWarning('Are you sure you want to reset this users password?').then(() => {
-        $scope.showResetPasswordPopup(id);
-    });
+    if (AuthService.getConf().authenticatorName === 'DefaultAuthenticator') {
+      Dialogs.showWarning('Are you sure you want to reset this users password?').then(() => {
+          $scope.showResetPasswordPopup(id);
+      });
+    } else {
+      Dialogs.showErrorMsg("Managing password is not supported by the " + AuthService.getConf().authenticatorName + ".");
+    }
+  }
+
+  $scope.isResetButtonDisabled = function() {
+    return (AuthService.getConf().authenticatorName !== 'DefaultAuthenticator')
   }
   
   $scope.askAndRemoveUser = function(username) {
