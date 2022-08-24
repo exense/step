@@ -154,6 +154,7 @@ public class PlanServices extends AbstractStepServices {
 		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
 		Plan clonePlan = planType.clonePlan(plan);
 		assignNewId(clonePlan.getRoot());
+		savePlan(clonePlan);
 		return clonePlan;
 	}
 
@@ -165,9 +166,9 @@ public class PlanServices extends AbstractStepServices {
 	public ExportStatus clonePlans(BulkOperationParameters parameters) {
 		ObjectFilter contextObjectFilter = getObjectFilter();
 		Collection<Plan> collection = planAccessor.getCollectionDriver();
-		return bulkOperationManager.performBulkOperation(parameters, this::clonePlan, filter -> {
-			collection.find(filter, null, null, null, 0).forEach(plan -> clonePlan(plan.getId().toString()));
-		}, contextObjectFilter);
+		return bulkOperationManager.performBulkOperation(parameters, this::clonePlan,
+				filter -> collection.find(filter, null, null, null, 0)
+						.forEach(plan -> clonePlan(plan.getId().toString())), contextObjectFilter);
 	}
 
 	@Operation(description = "Returns the first plan matching the given attributes.")
@@ -261,7 +262,7 @@ public class PlanServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
 	public List<AbstractArtefact> cloneArtefacts(List<AbstractArtefact> artefacts) {
-		return artefacts.stream().map(a->cloneArtefact(a)).collect(Collectors.toList());
+		return artefacts.stream().map(this::cloneArtefact).collect(Collectors.toList());
 	}
 
 	@Operation(description = "Returns the supported artefact types.")
@@ -296,7 +297,7 @@ public class PlanServices extends AbstractStepServices {
 	
 	private void assignNewId(AbstractArtefact artefact) {
 		artefact.setId(new ObjectId());
-		artefact.getChildren().forEach(a->assignNewId(a));
+		artefact.getChildren().forEach(this::assignNewId);
 	}
 	
 }
