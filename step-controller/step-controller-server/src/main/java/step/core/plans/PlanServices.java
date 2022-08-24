@@ -20,6 +20,10 @@ package step.core.plans;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
@@ -27,23 +31,19 @@ import step.artefacts.handlers.SelectorHelper;
 import step.controller.services.bulk.BulkOperationManager;
 import step.controller.services.bulk.BulkOperationParameters;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.export.ExportStatus;
 import step.core.export.ExportTaskManager;
 import step.core.objectenricher.ObjectFilter;
-import step.framework.server.security.Secured;
-import step.core.dynamicbeans.DynamicJsonObjectResolver;
-import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Singleton;
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
+import step.framework.server.security.Secured;
 
 import java.util.List;
 import java.util.Map;
@@ -150,10 +150,16 @@ public class PlanServices extends AbstractStepServices {
 	@Secured(right="plan-write")
 	public Plan clonePlan(@PathParam("id") String id) {
 		Plan plan = planAccessor.get(id);
+		// Delegate clone to plan type manager
 		@SuppressWarnings("unchecked")
 		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
 		Plan clonePlan = planType.clonePlan(plan);
 		assignNewId(clonePlan.getRoot());
+		// Append _Copy to new plan name
+		String planName = clonePlan.getAttribute(AbstractOrganizableObject.NAME);
+		String newPlanName = planName + "_Copy";
+		clonePlan.addAttribute(AbstractOrganizableObject.NAME, newPlanName);
+		// Save the cloned plan
 		savePlan(clonePlan);
 		return clonePlan;
 	}
