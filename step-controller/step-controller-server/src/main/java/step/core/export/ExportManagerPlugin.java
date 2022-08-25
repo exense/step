@@ -30,10 +30,6 @@ public class ExportManagerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
-		ResourceManager resourceManager = context.getResourceManager();
-		ExportTaskManager exportTaskManager = new ExportTaskManager(resourceManager);
-		context.put(ExportTaskManager.class, exportTaskManager);
-		
 		context.getServiceRegistrationCallback().registerService(ExportServices.class);
 		context.getServiceRegistrationCallback().registerService(ImportServices.class);
 		

@@ -18,22 +18,17 @@
  ******************************************************************************/
 package step.core.plans;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.bson.types.ObjectId;
-
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.TableRegistry;
-import step.plugins.screentemplating.Input;
-import step.plugins.screentemplating.InputType;
-import step.plugins.screentemplating.ScreenInput;
-import step.plugins.screentemplating.ScreenInputAccessor;
-import step.plugins.screentemplating.ScreenTemplatePlugin;
+import step.plugins.screentemplating.*;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Plugin(dependencies= {ScreenTemplatePlugin.class})
 public class PlanPlugin extends AbstractControllerPlugin {

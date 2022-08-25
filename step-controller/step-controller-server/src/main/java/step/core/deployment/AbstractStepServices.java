@@ -26,6 +26,7 @@ import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.scheduler.ExecutionScheduler;
 import step.framework.server.AbstractServices;
@@ -66,5 +67,9 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	
 	protected ObjectEnricher getObjectEnricher() {
 		return objectHookRegistry.getObjectEnricher(getSession());
+	}
+
+	protected ObjectFilter getObjectFilter() {
+		return objectHookRegistry.getObjectFilter(getSession());
 	}
 }

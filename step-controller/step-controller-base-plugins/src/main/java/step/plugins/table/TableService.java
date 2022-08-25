@@ -25,10 +25,10 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.controller.services.async.AsyncTaskManager;
+import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.deployment.ApplicationServices;
-import step.core.export.ExportStatus;
-import step.core.export.ExportTaskManager;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.framework.server.access.AccessManager;
 import step.framework.server.security.Secured;
@@ -36,6 +36,8 @@ import step.framework.server.tables.TableRegistry;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
 import step.framework.server.tables.service.TableServiceException;
+import step.resources.Resource;
+import step.resources.ResourceManager;
 
 @Singleton
 @Path("table")
@@ -45,9 +47,10 @@ public class TableService extends ApplicationServices {
     private static final Logger logger = LoggerFactory.getLogger(TableService.class);
 
     private step.framework.server.tables.service.TableService tableService;
-    protected int maxTime;
+    private AsyncTaskManager asyncTaskManager;
+    private ResourceManager resourceManager;
 
-    protected ExportTaskManager exportTaskManager;
+    private int maxTime;
 
     @PostConstruct
     public void init() throws Exception {
@@ -58,7 +61,8 @@ public class TableService extends ApplicationServices {
         AccessManager accessManager = context.require(AccessManager.class);
         maxTime = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
         tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, accessManager);
-        exportTaskManager = getContext().require(ExportTaskManager.class);
+        asyncTaskManager = getContext().require(AsyncTaskManager.class);
+        resourceManager = context.getResourceManager();
     }
 
     @POST
@@ -75,7 +79,7 @@ public class TableService extends ApplicationServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
-    public ExportStatus createExport(@PathParam("tableName") String tableName, TableExportRequest exportRequest) throws Exception {
-        return exportTaskManager.createExportTask(new TableExportTask(tableService, tableName, exportRequest, getSession()));
+    public AsyncTaskStatus<Resource> createExport(@PathParam("tableName") String tableName, TableExportRequest exportRequest) throws Exception {
+        return asyncTaskManager.scheduleAsyncTask(new TableExportTask(tableService, resourceManager, tableName, exportRequest, getSession()));
     }
 }

@@ -1,10 +1,11 @@
 package step.plugins.table;
 
 import org.apache.commons.beanutils.PropertyUtils;
-import step.core.export.ExportTask;
-import step.core.export.ExportTaskManager;
+import step.controller.services.async.AsyncTask;
+import step.controller.services.async.AsyncTaskManager;
 import step.framework.server.Session;
 import step.framework.server.tables.service.TableResponse;
+import step.framework.server.tables.service.TableService;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
@@ -13,25 +14,27 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-public class TableExportTask implements ExportTask {
+public class TableExportTask implements AsyncTask<Resource> {
 
     private static final String END_OF_LINE = "\n";
     private static final String DELIMITER = ";";
     private final TableExportRequest exportRequest;
     private final String tableName;
+    private final ResourceManager resourceManager;
     private final step.framework.server.tables.service.TableService tableService;
     private final Session session;
 
-    public TableExportTask(step.framework.server.tables.service.TableService tableService, String tableName, TableExportRequest exportRequest, Session session) {
+    public TableExportTask(TableService tableService, ResourceManager resourceManager, String tableName, TableExportRequest exportRequest, Session session) {
         this.tableService = tableService;
+        this.resourceManager = resourceManager;
         this.tableName = tableName;
         this.exportRequest = exportRequest;
         this.session = session;
     }
 
     @Override
-    public Resource apply(ExportTaskManager.ExportTaskHandle exportTaskHandle) throws Exception {
-        ResourceRevisionContainer resourceContainer = exportTaskHandle.getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "export.csv");
+    public Resource apply(AsyncTaskManager.AsyncTaskHandle exportTaskHandle) throws Exception {
+        ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "export.csv");
         PrintWriter writer = new PrintWriter(resourceContainer.getOutputStream());
 
         List<String> fields = exportRequest.getFields();

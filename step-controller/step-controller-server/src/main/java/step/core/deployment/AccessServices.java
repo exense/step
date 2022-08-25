@@ -128,10 +128,7 @@ public class AccessServices extends AbstractStepServices {
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed. Check the server logs for more details.").type("text/plain").build();
 		}
         if(authenticated) {
-			String token = authorizationServerManager.issueToken(credentials.getUsername(), session);
-			TokenResponse tokenResponse = new TokenResponse();
-			tokenResponse.setToken(token);
-			return Response.ok(tokenResponse).build(); 			
+			return Response.ok(null).build();
         } else {
         	return Response.status(Response.Status.UNAUTHORIZED.getStatusCode()).entity("Authentication failed: Invalid username/password").type("text/plain").build();
         }    
