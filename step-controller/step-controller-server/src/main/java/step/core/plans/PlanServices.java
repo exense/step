@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -28,6 +28,8 @@ import org.bson.types.ObjectId;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
+import step.controller.services.async.AsyncTaskManager;
+import step.controller.services.async.AsyncTaskStatus;
 import step.controller.services.bulk.BulkOperationManager;
 import step.controller.services.bulk.BulkOperationParameters;
 import step.core.GlobalContext;
@@ -38,8 +40,6 @@ import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.export.ExportStatus;
-import step.core.export.ExportTaskManager;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
@@ -61,7 +61,6 @@ public class PlanServices extends AbstractStepServices {
 	protected PlanTypeRegistry planTypeRegistry;
 	protected ObjectPredicateFactory objectPredicateFactory;
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
-	protected ExportTaskManager exportTaskManager;
 	private BulkOperationManager bulkOperationManager;
 
 	@PostConstruct
@@ -72,8 +71,8 @@ public class PlanServices extends AbstractStepServices {
 		planTypeRegistry = context.get(PlanTypeRegistry.class);
 		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
-		exportTaskManager = context.require(ExportTaskManager.class);
-		bulkOperationManager = new BulkOperationManager(exportTaskManager);
+		AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
+		bulkOperationManager = new BulkOperationManager(asyncTaskManager);
 	}
 
 	@Operation(description = "Returns a new plan instance as template.")
@@ -169,7 +168,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/bulk/clone")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-write")
-	public ExportStatus clonePlans(BulkOperationParameters parameters) {
+	public AsyncTaskStatus<Void> clonePlans(BulkOperationParameters parameters) {
 		ObjectFilter contextObjectFilter = getObjectFilter();
 		Collection<Plan> collection = planAccessor.getCollectionDriver();
 		return bulkOperationManager.performBulkOperation(parameters, this::clonePlan,
@@ -224,7 +223,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/bulk/delete")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-delete")
-	public ExportStatus deletePlans(BulkOperationParameters parameters) {
+	public AsyncTaskStatus<Void> deletePlans(BulkOperationParameters parameters) {
 		ObjectFilter contextObjectFilter = getObjectFilter();
 		Collection<Plan> collection = planAccessor.getCollectionDriver();
 		return bulkOperationManager.performBulkOperation(parameters, this::deletePlan, collection::remove, contextObjectFilter);
@@ -300,10 +299,10 @@ public class PlanServices extends AbstractStepServices {
 	public Set<String> getArtefactTemplates() {
 		return new TreeSet<>(artefactHandlerRegistry.getArtefactTemplateNames());
 	}
-	
+
 	private void assignNewId(AbstractArtefact artefact) {
 		artefact.setId(new ObjectId());
 		artefact.getChildren().forEach(this::assignNewId);
 	}
-	
+
 }

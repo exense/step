@@ -1,20 +1,21 @@
-package step.core.export;
+package step.controller.services.async;
 
 import java.util.Set;
 
-public class ExportStatus {
+public class AsyncTaskStatus<T> {
 
     private String id;
-    private String attachmentID;
     private volatile boolean ready = false;
     private volatile float progress = 0;
     private Set<String> warnings;
+    private String error;
+    private T result;
 
-    public ExportStatus() {
+    public AsyncTaskStatus() {
         super();
     }
 
-    public ExportStatus(String id) {
+    public AsyncTaskStatus(String id) {
         super();
         this.id = id;
     }
@@ -25,14 +26,6 @@ public class ExportStatus {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getAttachmentID() {
-        return attachmentID;
-    }
-
-    public void setAttachmentID(String attachmentID) {
-        this.attachmentID = attachmentID;
     }
 
     public boolean isReady() {
@@ -57,5 +50,21 @@ public class ExportStatus {
 
     public void setWarnings(Set<String> warnings) {
         this.warnings = warnings;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    public T getResult() {
+        return result;
+    }
+
+    public void setResult(T result) {
+        this.result = result;
     }
 }

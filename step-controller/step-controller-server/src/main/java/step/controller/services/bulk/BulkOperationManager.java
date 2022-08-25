@@ -1,10 +1,10 @@
 package step.controller.services.bulk;
 
+import step.controller.services.async.AsyncTaskManager;
+import step.controller.services.async.AsyncTaskStatus;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.deployment.ControllerServiceException;
-import step.core.export.ExportStatus;
-import step.core.export.ExportTaskManager;
 import step.core.objectenricher.ObjectFilter;
 import step.core.ql.OQLFilterBuilder;
 import step.framework.server.tables.service.TableFilter;
@@ -14,19 +14,19 @@ import java.util.function.Consumer;
 
 public class BulkOperationManager {
 
-    private final ExportTaskManager exportTaskManager;
+    private final AsyncTaskManager asyncTaskManager;
 
-    public BulkOperationManager(ExportTaskManager exportTaskManager) {
-        this.exportTaskManager = exportTaskManager;
+    public BulkOperationManager(AsyncTaskManager asyncTaskManager) {
+        this.asyncTaskManager = asyncTaskManager;
     }
 
-    public ExportStatus performBulkOperation(BulkOperationParameters parameters, Consumer<String> operationById, Consumer<Filter> operationByFilter, ObjectFilter contextObjectFilter) {
+    public AsyncTaskStatus<Void> performBulkOperation(BulkOperationParameters parameters, Consumer<String> operationById, Consumer<Filter> operationByFilter, ObjectFilter contextObjectFilter) {
         BulkOperationTargetType targetType = parameters.getTargetType();
         validateParameters(parameters, targetType);
         if(parameters.isSimulate()) {
             throw new ControllerServiceException(400, "Simulate mode currently not supported");
         }
-        return exportTaskManager.createExportTask(t -> {
+        return asyncTaskManager.scheduleAsyncTask(t -> {
             if (targetType == BulkOperationTargetType.LIST) {
                 List<String> ids = parameters.getIds();
                 if (ids != null && !ids.isEmpty()) {

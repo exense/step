@@ -23,12 +23,15 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import step.controller.services.async.AsyncTaskManager;
+import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.PlanAccessor;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContainer;
 
@@ -42,18 +45,20 @@ import java.util.Map;
 public class ExportServices extends AbstractStepServices {
 	
 	private ExportManager exportManager;
-	private ExportTaskManager exportTaskManager;
 	private PlanAccessor accessor;
 	private ObjectHookRegistry objectHookRegistry;
-	
+	private AsyncTaskManager asyncTaskManager;
+	private ResourceManager resourceManager;
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		GlobalContext context = getContext();
 		accessor = context.getPlanAccessor();
-		exportTaskManager = context.get(ExportTaskManager.class);
 		exportManager = new ExportManager(context.getEntityManager(), context.getResourceManager());
 		objectHookRegistry = context.get(ObjectHookRegistry.class);
+		asyncTaskManager = context.require(AsyncTaskManager.class);
+		resourceManager = context.getResourceManager();
 	}
 
 	@GET
@@ -61,13 +66,13 @@ public class ExportServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public ExportStatus exportEntityById(@PathParam("entity") String entity, @PathParam("id") String id, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
-										 @QueryParam("additionalEntities") List<String> additionalEntities) {
+	public AsyncTaskStatus<Resource> exportEntityById(@PathParam("entity") String entity, @PathParam("id") String id, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
+													  @QueryParam("additionalEntities") List<String> additionalEntities) {
 		Session session = getSession();
 		Map<String, String> metadata = getMetadata();
 		String finalFilename = removeUnsupportedChars(filename);
-		return exportTaskManager.createExportTask(handle -> {
-			ResourceRevisionContainer resourceContainer = handle.getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
+		return asyncTaskManager.scheduleAsyncTask(handle -> {
+			ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
 			ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata, objectHookRegistry.getObjectPredicate(session),
 					entity, recursively, additionalEntities);
 			ExportResult exportResult = exportManager.exportById(exportConfig, id);
@@ -94,13 +99,13 @@ public class ExportServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-read")
-	public ExportStatus exportEntities(@PathParam("entity") String entity, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
-			@QueryParam("additionalEntities") List<String> additionalEntities) {
+	public AsyncTaskStatus<Resource> exportEntities(@PathParam("entity") String entity, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
+													@QueryParam("additionalEntities") List<String> additionalEntities) {
 		Session session = getSession();
 		Map<String,String> metadata = getMetadata();
 		String finalFilename = removeUnsupportedChars(filename);
-		return exportTaskManager.createExportTask(handle -> {
-			ResourceRevisionContainer resourceContainer = handle.getResourceManager().createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
+		return asyncTaskManager.scheduleAsyncTask(handle -> {
+			ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
 			ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
 					metadata, objectHookRegistry.getObjectPredicate(session), entity, recursively, additionalEntities);
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
@@ -108,13 +113,5 @@ public class ExportServices extends AbstractStepServices {
 			resourceContainer.save(null);
 			return resourceContainer.getResource();
 		});
-	}
-
-	@GET
-	@Path("/{id}/status")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public ExportStatus getExportStatus(@PathParam("id") String id) {
-		return exportTaskManager.getExportStatus(id);
 	}
 }
