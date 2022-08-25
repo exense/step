@@ -66,7 +66,6 @@ public class TimeSeriesService extends AbstractStepServices {
     private Query mapToQuery(FetchBucketsRequest request) {
         return new Query()
                 .range(request.getStart(), request.getEnd())
-                .withThreadGroupsBuckets(request.isThreadGroupBuckets())
                 .window(request.getIntervalSize())
                 .filter(request.getParams() != null ? request.getParams() : Collections.emptyMap())
                 .split(request.getNumberOfBuckets())

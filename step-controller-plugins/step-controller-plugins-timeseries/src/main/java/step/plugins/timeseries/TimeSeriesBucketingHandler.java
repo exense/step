@@ -19,6 +19,9 @@ import java.util.Objects;
 public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private static final String THREAD_GROUP_MEASUREMENT_TYPE = "threadgroup";
+    private static final String METRIC_TYPE_KEY = "metricType";
+    private static final String METRIC_TYPE_RESPONSE_TIME = "response-time";
+    private static final String METRIC_TYPE_SAMPLER = "sampler";
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesBucketingHandler.class);
 
@@ -40,7 +43,8 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
             long begin = measurement.getBegin();
             long value = measurement.getValue();
             BucketAttributes bucketAttributes = new BucketAttributes(measurement);
-            removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value");
+            removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value", "type");
+            bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
             // custom fields include all the attributes like execId and planId
             this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
         });
@@ -58,6 +62,8 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
             if (measurement != null && Objects.equals(measurement.getType(), THREAD_GROUP_MEASUREMENT_TYPE)) {
                 BucketAttributes bucketAttributes = new BucketAttributes(measurement);
                 bucketAttributes.remove("taskId");
+                bucketAttributes.remove("type");
+                bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_SAMPLER);
                 this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
         });
