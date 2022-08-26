@@ -1,6 +1,6 @@
 package step.controller.services.async;
 
 @FunctionalInterface
-public interface AsyncTask<T extends Object> {
-    T apply(AsyncTaskManager.AsyncTaskHandle t) throws Exception;
+public interface AsyncTask<T> {
+    T apply(AsyncTaskHandle t) throws Exception;
 }

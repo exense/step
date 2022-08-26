@@ -25,7 +25,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -35,18 +34,18 @@ public class AsyncTaskManager implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(AsyncTaskManager.class);
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
-    private final Map<String, AsyncTaskStatus> tasks = new ConcurrentHashMap<>();
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final Map<String, AsyncTaskStatus<?>> tasks = new ConcurrentHashMap<>();
 
     public <T> AsyncTaskStatus<T> scheduleAsyncTask(AsyncTask<T> asyncTask) {
         String taskId = UUID.randomUUID().toString();
-        AsyncTaskStatus status = new AsyncTaskStatus(taskId);
+        AsyncTaskStatus<T> status = new AsyncTaskStatus<>(taskId);
         tasks.put(taskId, status);
 
         AsyncTaskHandle taskHandle = new AsyncTaskHandle(status);
 
         executorService.submit(() -> {
-            T result = null;
+            T result;
             try {
                 result = asyncTask.apply(taskHandle);
                 status.setResult(result);
@@ -54,6 +53,7 @@ public class AsyncTaskManager implements Closeable {
                 logger.error("Error while running async task " + taskId, e);
                 status.setError(e.getMessage());
             } finally {
+                status.setProgress(1);
                 status.setReady(true);
             }
         });
@@ -65,33 +65,20 @@ public class AsyncTaskManager implements Closeable {
         executorService.shutdown();
     }
 
-    public AsyncTaskStatus getAsyncTaskStatus(String id) {
+    public AsyncTaskStatus<?> getAsyncTaskStatus(String id) {
         return tasks.get(id);
     }
 
-    public AsyncTaskStatus removeReadyAsyncTaskStatus(String id) {
-        AsyncTaskStatus asyncTaskStatus = getAsyncTaskStatus(id);
+    public AsyncTaskStatus<?> removeReadyAsyncTaskStatus(String id) {
+        AsyncTaskStatus<?> asyncTaskStatus = getAsyncTaskStatus(id);
         if (asyncTaskStatus.isReady()) {
             tasks.remove(id);
         }
         return asyncTaskStatus;
     }
 
-    public Collection<AsyncTaskStatus> getCurrentAsyncTasks() {
+    public Collection<AsyncTaskStatus<?>> getCurrentAsyncTasks() {
         return tasks.values();
-    }
-
-    public static class AsyncTaskHandle {
-
-        private final AsyncTaskStatus asyncTaskStatus;
-
-        public AsyncTaskHandle(AsyncTaskStatus asyncTaskStatus) {
-            this.asyncTaskStatus = asyncTaskStatus;
-        }
-
-        public void setWarnings(Set<String> warnings) {
-            asyncTaskStatus.setWarnings(warnings);
-        }
     }
 
 }

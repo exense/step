@@ -17,11 +17,17 @@ class AsyncTaskManagerTest {
 
     @Test
     void test() throws InterruptedException, TimeoutException, IOException {
-        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+        CountDownLatch latch3 = new CountDownLatch(1);
+
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
-        AsyncTaskStatus<Object> task = asyncTaskManager.scheduleAsyncTask(h -> {
-            latch.await();
+        AsyncTaskStatus<?> task = asyncTaskManager.scheduleAsyncTask(h -> {
+            latch1.await();
             h.setWarnings(Set.of("My Warning"));
+            h.updateProgress(0.5f);
+            latch2.countDown();
+            latch3.await();
             return TEST;
         });
         String id = task.getId();
@@ -30,18 +36,25 @@ class AsyncTaskManagerTest {
         assertNull(task.getResult());
         assertEquals(0, task.getProgress());
 
-        latch.countDown();
+        latch1.countDown();
+        latch2.await();
+
+        task = asyncTaskManager.getAsyncTaskStatus(id);
+        assertEquals(0.5f, task.getProgress());
+
+        latch3.countDown();
 
         // Wait for the task to be ready
         Poller.waitFor(() -> asyncTaskManager.getAsyncTaskStatus(id).isReady(), 1000);
 
-        Collection<AsyncTaskStatus> currentAsyncTasks = asyncTaskManager.getCurrentAsyncTasks();
+        Collection<AsyncTaskStatus<?>> currentAsyncTasks = asyncTaskManager.getCurrentAsyncTasks();
         assertEquals(1, currentAsyncTasks.size());
 
         // Remove the ready task
         task = asyncTaskManager.removeReadyAsyncTaskStatus(id);
         // Assert it is ready
         assertTrue(task.isReady());
+        assertEquals(1, task.getProgress());
         assertEquals(TEST, task.getResult());
         assertEquals(Set.of("My Warning"), task.getWarnings());
 
@@ -57,7 +70,7 @@ class AsyncTaskManagerTest {
     @Test
     void testError() throws InterruptedException, TimeoutException, IOException {
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
-        AsyncTaskStatus<Object> task = asyncTaskManager.scheduleAsyncTask(h -> {
+        AsyncTaskStatus<?> task = asyncTaskManager.scheduleAsyncTask(h -> {
             throw new RuntimeException("My error");
         });
         String id = task.getId();

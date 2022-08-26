@@ -2,7 +2,7 @@ package step.plugins.table;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import step.controller.services.async.AsyncTask;
-import step.controller.services.async.AsyncTaskManager;
+import step.controller.services.async.AsyncTaskHandle;
 import step.framework.server.Session;
 import step.framework.server.tables.service.TableResponse;
 import step.framework.server.tables.service.TableService;
@@ -33,7 +33,7 @@ public class TableExportTask implements AsyncTask<Resource> {
     }
 
     @Override
-    public Resource apply(AsyncTaskManager.AsyncTaskHandle exportTaskHandle) throws Exception {
+    public Resource apply(AsyncTaskHandle exportTaskHandle) throws Exception {
         ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "export.csv");
         PrintWriter writer = new PrintWriter(resourceContainer.getOutputStream());
 

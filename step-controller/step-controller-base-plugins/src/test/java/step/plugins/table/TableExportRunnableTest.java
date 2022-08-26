@@ -2,7 +2,7 @@ package step.plugins.table;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import step.controller.services.async.AsyncTaskManager;
+import step.controller.services.async.AsyncTaskHandle;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.entities.SimpleBean;
@@ -33,7 +33,7 @@ class TableExportRunnableTest {
         exportRequest.setFields(List.of("stringProperty"));
         LocalResourceManagerImpl resourceManager = new LocalResourceManagerImpl();
         TableExportTask exportRunnable = new TableExportTask(tableService, resourceManager, "test", exportRequest, null);
-        Resource resource = exportRunnable.apply(new AsyncTaskManager.AsyncTaskHandle(new AsyncTaskStatus()));
+        Resource resource = exportRunnable.apply(new AsyncTaskHandle(new AsyncTaskStatus<>()));
         ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resource.getId().toString());
         List<String> allLines = Files.readAllLines(resourceFile.getResourceFile().toPath());
         Assertions.assertEquals(List.of("stringProperty;", "property 1;", "property 2;"), allLines);

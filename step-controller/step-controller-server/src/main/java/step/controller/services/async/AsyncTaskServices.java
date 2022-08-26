@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.controller.services.async;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
@@ -44,11 +45,12 @@ public class AsyncTaskServices extends AbstractStepServices {
         asyncTaskManager = context.require(AsyncTaskManager.class);
     }
 
-    @Secured
+    @Operation(description = "Retrieve the status of an async task by its Id")
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public AsyncTaskStatus getAsyncTaskStatus(@PathParam("id") String id) {
+    @Secured
+    public AsyncTaskStatus<?> getAsyncTaskStatus(@PathParam("id") String id) {
         return asyncTaskManager.getAsyncTaskStatus(id);
     }
 }
