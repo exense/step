@@ -43,7 +43,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
             long begin = measurement.getBegin();
             long value = measurement.getValue();
             BucketAttributes bucketAttributes = new BucketAttributes(measurement);
-            removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value", "type");
+            removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value");
             bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
             // custom fields include all the attributes like execId and planId
             this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
