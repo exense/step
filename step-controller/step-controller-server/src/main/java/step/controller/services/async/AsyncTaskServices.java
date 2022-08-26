@@ -45,12 +45,12 @@ public class AsyncTaskServices extends AbstractStepServices {
         asyncTaskManager = context.require(AsyncTaskManager.class);
     }
 
-    @Operation(description = "Retrieve the status of an async task by its Id")
+    @Operation(description = "Retrieve the status of an async task by its Id. Completed tasks will be removed when calling this service.")
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
     public AsyncTaskStatus<?> getAsyncTaskStatus(@PathParam("id") String id) {
-        return asyncTaskManager.getAsyncTaskStatus(id);
+        return asyncTaskManager.removeReadyAsyncTaskStatus(id);
     }
 }

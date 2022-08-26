@@ -18,26 +18,13 @@
  ******************************************************************************/
 package step.core.deployment;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
-
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
@@ -45,27 +32,27 @@ import step.core.Controller;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicate;
-import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
-import step.core.tasks.AsyncTaskManager;
 import step.framework.server.security.Secured;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 @Singleton
 @Path("controller")
 @Tag(name = "Controller")
 public class ControllerServices extends AbstractStepServices {
 	
-	private ArtefactHandlerRegistry artefactHandlerRegistry;
-	private AsyncTaskManager taskManager;
 	private Version currentVersion;
 	private PlanLocator planLocator;
 	private ObjectPredicate objectPredicate;
@@ -75,15 +62,13 @@ public class ControllerServices extends AbstractStepServices {
 	public void init() throws Exception {
 		super.init();
 		GlobalContext context = getContext();
-		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
-		taskManager = context.get(AsyncTaskManager.class);
 		currentVersion = context.getCurrentVersion();
 		controller = context.require(Controller.class);
 
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
-		objectPredicate = context.get(ObjectPredicateFactory.class).getObjectPredicate(getSession());
+		objectPredicate = context.get(ObjectHookRegistry.class).getObjectPredicate(getSession());
 	}
 	
 	@POST
@@ -91,12 +76,7 @@ public class ControllerServices extends AbstractStepServices {
 	@Path("/shutdown")
 	@Secured(right="admin")
 	public void shutdown() {
-		new Thread() {
-			@Override
-			public void run() {
-				controller.destroy();
-			}
-		}.start();;
+		new Thread(() -> controller.destroy()).start();
 	}
 	
 	@GET
@@ -112,10 +92,7 @@ public class ControllerServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public List<ReportNode> getReportNodePath(@PathParam("id") String reportNodeId) {
-		List<ReportNode> result = new ArrayList<>();
-		List<ReportNode> path = getContext().getReportAccessor().getReportNodePath(new ObjectId(reportNodeId));
-		path.forEach((node) -> result.add(node));
-		return result;
+		return getContext().getReportAccessor().getReportNodePath(new ObjectId(reportNodeId));
 	}
 
 	@GET
@@ -140,7 +117,7 @@ public class ControllerServices extends AbstractStepServices {
 		ReportNode reportNode = (nodeId != null) ? getContext().getReportAccessor().get(nodeId): null;
 		if (reportNode != null) {
 			AbstractArtefact resolvedArtefact = reportNode.getResolvedArtefact();
-			if (resolvedArtefact != null && resolvedArtefact instanceof CallPlan) {
+			if (resolvedArtefact instanceof CallPlan) {
 				//get related plan
 				return (CallPlan) resolvedArtefact;
 			} else if (reportNode.getParentID() != null) {
@@ -187,16 +164,6 @@ public class ControllerServices extends AbstractStepServices {
 	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
 		return getContext().getRepositoryObjectManager().getReport(report);
 	}
-
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/async-task/{id}")
-	@Secured()
-	public AsyncTaskManager.TaskStatus getAsyncTaskStatus(@PathParam("id") String asyncTaskId) {
-		AsyncTaskManager.TaskStatus status = taskManager.getTaskStatus(asyncTaskId);
-		return status;
-	}
-
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
