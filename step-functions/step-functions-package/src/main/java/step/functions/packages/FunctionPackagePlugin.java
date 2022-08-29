@@ -85,7 +85,7 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 		boolean inputExist = functionTableExtensions.stream().filter(i->i.getInput().getId().equals("customFields.functionPackageId")).findFirst().isPresent();
 		if(!inputExist) {
 			Input input = new Input(InputType.TEXT, "customFields.functionPackageId", "Package", "", null);
-			input.setValueHtmlTemplate("<function-package-link id='stBean.customFields.functionPackageId' />");
+			input.setCustomUIComponents(List.of("functionPackageLink"));
 			input.setSearchMapperService("rest/table/functionPackage/searchIdsBy/attributes.name");
 			screenInputAccessor.save(new ScreenInput(FUNCTION_TABLE_EXTENSIONS, input));
 		}
