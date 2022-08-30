@@ -28,19 +28,14 @@ import org.bson.types.ObjectId;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
-import step.controller.services.async.AsyncTaskManager;
-import step.controller.services.async.AsyncTaskStatus;
-import step.controller.services.bulk.BulkOperationManager;
-import step.controller.services.bulk.BulkOperationParameters;
+import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
-import step.core.collections.Collection;
-import step.core.deployment.AbstractStepServices;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.objectenricher.ObjectFilter;
+import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.framework.server.security.Secured;
@@ -50,18 +45,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Singleton
 @Path("plans")
 @Tag(name = "Plans")
-public class PlanServices extends AbstractStepServices {
+@Tag(name = "Entity=Plan")
+@Secured(right="plan-")
+public class PlanServices extends AbstractEntityServices<Plan> {
 
 	protected PlanAccessor planAccessor;
 	protected PlanTypeRegistry planTypeRegistry;
 	protected ObjectPredicateFactory objectPredicateFactory;
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
-	private BulkOperationManager bulkOperationManager;
+
+	public PlanServices() {
+		super(EntityManager.plans);
+	}
 
 	@PostConstruct
 	public void init() throws Exception {
@@ -71,14 +70,12 @@ public class PlanServices extends AbstractStepServices {
 		planTypeRegistry = context.get(PlanTypeRegistry.class);
 		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
-		AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
-		bulkOperationManager = new BulkOperationManager(asyncTaskManager);
 	}
 
 	@Operation(description = "Returns a new plan instance as template.")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-write")
+	@Secured(right="write")
 	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
 		PlanType<Plan> planType = planTypeRegistry.getPlanType(type);
 		Plan plan = planType.newPlan(template);
@@ -86,37 +83,23 @@ public class PlanServices extends AbstractStepServices {
 		return plan;
 	}
 
-	@Operation(description = "Creates / updates the given plan.")
-	@POST
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-write")
-	public Plan savePlan(Plan plan) {
-		@SuppressWarnings("unchecked")
-		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
-		planType.onBeforeSave(plan);
-		return planAccessor.save(plan);
-	}
-
-	@Operation(description = "Returns the plan with the given id.")
-	@GET
-	@Path("/{id}")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
-	public Plan getPlanById(@PathParam("id") String id) {
-		return planAccessor.get(id);
+	@Override
+	protected Plan beforeSave(Plan entity) {
+		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(entity.getClass());
+		planType.onBeforeSave(entity);
+		return super.beforeSave(entity);
 	}
 
 	@Operation(description = "Compiles the plan with the given id.")
 	@GET
 	@Path("/{id}/compile")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-write")
-	public PlanCompilationResult compilePlanWithId(@PathParam("id") String id) {
+	@Secured(right="write")
+	public PlanCompilationResult compilePlanWithId(@PathParam("id") String id) throws Exception {
 		Plan plan = planAccessor.get(id);
 		PlanCompilationResult planCompilationResult = compilePlan(plan);
 		if(!planCompilationResult.isHasError()) {
-			savePlan(plan);
+			save(plan);
 		}
 		return planCompilationResult;
 	}
@@ -126,7 +109,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/compile")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-write")
+	@Secured(right="write")
 	public PlanCompilationResult compilePlan(Plan plan) {
 		@SuppressWarnings("unchecked")
 		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
@@ -142,38 +125,14 @@ public class PlanServices extends AbstractStepServices {
 		return planCompilationResult;
 	}
 
-	@Operation(description = "Clones and returns the plan with the given id. The result of this method will have to be saved with the dedicated method.")
-	@GET
-	@Path("/{id}/clone")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-write")
-	public Plan clonePlan(@PathParam("id") String id) {
-		Plan plan = planAccessor.get(id);
+	@Override
+	protected Plan cloneEntity(Plan plan) {
 		// Delegate clone to plan type manager
 		@SuppressWarnings("unchecked")
 		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
 		Plan clonePlan = planType.clonePlan(plan);
 		assignNewId(clonePlan.getRoot());
-		// Append _Copy to new plan name
-		String planName = clonePlan.getAttribute(AbstractOrganizableObject.NAME);
-		String newPlanName = planName + "_Copy";
-		clonePlan.addAttribute(AbstractOrganizableObject.NAME, newPlanName);
-		// Save the cloned plan
-		savePlan(clonePlan);
 		return clonePlan;
-	}
-
-	@Operation(description = "Bulk clone plans according to the provided parameters")
-	@POST
-	@Path("/bulk/clone")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-write")
-	public AsyncTaskStatus<Void> clonePlans(BulkOperationParameters parameters) {
-		ObjectFilter contextObjectFilter = getObjectFilter();
-		Collection<Plan> collection = planAccessor.getCollectionDriver();
-		return bulkOperationManager.performBulkOperation(parameters, this::clonePlan,
-				filter -> collection.find(filter, null, null, null, 0)
-						.forEach(plan -> clonePlan(plan.getId().toString())), contextObjectFilter);
 	}
 
 	@Operation(description = "Returns the first plan matching the given attributes.")
@@ -181,26 +140,16 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/search")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
+	@Secured(right="read")
 	public Plan getPlanByAttributes(Map<String,String> attributes) {
 		return planAccessor.findByAttributes(attributes);
-	}
-
-	@Operation(description = "Returns the plans matching the given attributes.")
-	@POST
-	@Path("/find")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
-	public List<Plan> findPlansByAttributes(Map<String,String> attributes) {
-		return StreamSupport.stream(planAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 	}
 
 	@Operation(description = "Returns all the plans.")
 	@GET
 	@Path("/all")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
+	@Secured(right="read")
 	public List<Plan> getAllPlans(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
 		if(skip != null && limit != null) {
 			return planAccessor.getRange(skip, limit);
@@ -209,33 +158,13 @@ public class PlanServices extends AbstractStepServices {
 		}
 	}
 
-	@Operation(description = "Deletes the plan with the given id.")
-	@DELETE
-	@Path("/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-delete")
-	public void deletePlan(@PathParam("id") String id) {
-		planAccessor.remove(new ObjectId(id));
-	}
-
-	@Operation(description = "Bulk delete plans according to the provided parameters")
-	@POST
-	@Path("/bulk/delete")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-delete")
-	public AsyncTaskStatus<Void> deletePlans(BulkOperationParameters parameters) {
-		ObjectFilter contextObjectFilter = getObjectFilter();
-		Collection<Plan> collection = planAccessor.getCollectionDriver();
-		return bulkOperationManager.performBulkOperation(parameters, this::deletePlan, collection::remove, contextObjectFilter);
-	}
-
 	@Operation(description = "Returns the plan referenced by the given artifact within the given plan.")
 	@GET
 	@Path("/{id}/artefacts/{artefactid}/lookup/plan")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
+	@Secured(right="read")
 	public Plan lookupPlan(@PathParam("id") String id, @PathParam("artefactid") String artefactId) {
-		Plan plan = getPlanById(id);
+		Plan plan = get(id);
 		Plan result = null;
 		PlanNavigator planNavigator = new PlanNavigator(plan);
 		CallPlan artefact = (CallPlan) planNavigator.findArtefactById(artefactId);
@@ -254,7 +183,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/artefacts/clone")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-write")
+	@Secured(right="write")
 	public AbstractArtefact cloneArtefact(AbstractArtefact artefact) {
 		assignNewId(artefact);
 		return artefact;
@@ -265,7 +194,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/artefacts/clonemany")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-write")
+	@Secured(right="write")
 	public List<AbstractArtefact> cloneArtefacts(List<AbstractArtefact> artefacts) {
 		return artefacts.stream().map(this::cloneArtefact).collect(Collectors.toList());
 	}
@@ -275,7 +204,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/artefact/types")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
+	@Secured(right="read")
 	public Set<String> getArtefactTypes() {
 		return artefactHandlerRegistry.getArtefactNames();
 	}
@@ -285,7 +214,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/artefact/types/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
+	@Secured(right="read")
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
 		return artefactHandlerRegistry.getArtefactTypeInstance(type);
 	}
@@ -295,7 +224,7 @@ public class PlanServices extends AbstractStepServices {
 	@Path("/artefact/templates")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
+	@Secured(right="read")
 	public Set<String> getArtefactTemplates() {
 		return new TreeSet<>(artefactHandlerRegistry.getArtefactTemplateNames());
 	}

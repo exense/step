@@ -1,4 +1,4 @@
-package step.plugins.services;
+package step.controller.services.entities;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;

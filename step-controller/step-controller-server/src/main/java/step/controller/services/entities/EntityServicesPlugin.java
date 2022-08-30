@@ -16,13 +16,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.services;
+package step.controller.services.entities;
 
 import step.core.GlobalContext;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.plugins.table.TableService;
 
 @Plugin(dependencies= {ObjectHookControllerPlugin.class})
 public class EntityServicesPlugin extends AbstractControllerPlugin {
