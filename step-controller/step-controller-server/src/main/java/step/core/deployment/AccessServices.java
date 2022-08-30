@@ -121,8 +121,8 @@ public class AccessServices extends AbstractStepServices {
 		boolean authenticated = false;
 		try {
 			authenticated = authenticationManager.authenticate(session, credentials);
-		} catch(ApplicationException e) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed: "+e.getErrorMessage()).type("text/plain").build();
+		} catch(ApplicationException e) { // in our case all application exception are authorization error, to be refactored
+			return Response.status(Response.Status.FORBIDDEN.getStatusCode()).entity("Authorization failed: "+e.getErrorMessage()).type("text/plain").build();
 		}catch(Exception e) {
 			e.printStackTrace();
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity("Authentication failed. Check the server logs for more details.").type("text/plain").build();
@@ -177,7 +177,9 @@ public class AccessServices extends AbstractStepServices {
 	protected SessionResponse buildSessionResponse(Session session) {
 		User user = (User) session.getUser();
 		Role role = accessManager.getRoleInContext(session);
-		boolean isOtp = (boolean) Objects.requireNonNullElse(session.getUser().getCustomField("otp"), false);
+		boolean isOtp = (authenticationManager.implementOTP()) ?
+				(boolean) Objects.requireNonNullElse(session.getUser().getCustomField("otp"), false):
+				false;
 		return new SessionResponse(user.getUsername(), role, isOtp);
 	}
 	

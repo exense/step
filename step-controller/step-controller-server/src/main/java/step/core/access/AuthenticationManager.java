@@ -52,6 +52,10 @@ public class AuthenticationManager {
 		this.authorizationServerManager = authorizationServerManager;
 	}
 
+	public boolean implementOTP() {
+		return (authenticator.getClass().isAssignableFrom(DefaultAuthenticator.class));
+	}
+
 	public boolean useAuthentication() {
 		return configuration.getPropertyAsBoolean("authentication", true);
 	}
@@ -116,10 +120,14 @@ public class AuthenticationManager {
 	}
 
 	public String resetPwd(User user) {
-		String pwd = generateSecureRandomPassword();
-		user.setPassword(encryptPwd(pwd));
-		user.addCustomField("otp", true);
-		return pwd;
+		if (authenticator.getClass().isAssignableFrom(LdapAuthenticator.class)) {
+			throw new RuntimeException("Password management is not supported by the LdapAuthenticator");
+		} else {
+			String pwd = generateSecureRandomPassword();
+			user.setPassword(encryptPwd(pwd));
+			user.addCustomField("otp", true);
+			return pwd;
+		}
 	}
 
 	public String encryptPwd(String pwd) {
