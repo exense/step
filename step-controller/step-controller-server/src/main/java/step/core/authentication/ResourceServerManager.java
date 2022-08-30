@@ -51,21 +51,28 @@ public class ResourceServerManager {
 
         try {
 
-            Claims claims = Jwts.parser()
-                    .setSigningKey(jwtSettings.getSecret())
+            JwtParser parser = Jwts.parser();
+            SigningKeyResolver signingKeyResolver = authorizationServerManager.getSigningKeyResolver();
+            if (signingKeyResolver == null) {
+                parser.setSigningKey(jwtSettings.getSecret());
+            } else {
+                parser.setSigningKeyResolver(signingKeyResolver);
+            }
+            Claims claims = parser
                     .setAllowedClockSkewSeconds(jwtSettings.getClockSkew())
                     .parseClaimsJws(token)
                     .getBody();
 
+            //TODO make this configurable
             return new AuthenticationTokenDetails.Builder()
                     .withId(extractTokenIdFromClaims(claims))
                     .withUsername(extractUsernameFromClaims(claims))
                     .withRole(extractRoleFromClaims(claims))
                     .withIssuer(extractIssuerFromClaims(claims))
                     .withAudience(extractAudienceFromClaims(claims))
-                    .withNotBeforeDate(extractNotBeforeDateFromClaims(claims))
+                    //.withNotBeforeDate(extractNotBeforeDateFromClaims(claims))
                     .withIssuedDate(extractIssuedDateFromClaims(claims))
-                    .withExpirationDate(extractExpirationDateFromClaims(claims))
+                    //.withExpirationDate(extractExpirationDateFromClaims(claims))
                     //.withRefreshCount(extractRefreshCountFromClaims(claims))
                     //.withRefreshLimit(extractRefreshLimitFromClaims(claims))
                     .build();

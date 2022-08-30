@@ -30,7 +30,7 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
 
     private static final String REALM = "step";
     public static String AUTHENTICATION_SCHEME = "Bearer";
-    private AuthorizationServerManagerLocal authorizationServerManager;
+    private AuthorizationServerManager authorizationServerManager;
     private ResourceServerManager resourceServerManager;
     private UserAccessor userAccessor;
 
@@ -39,17 +39,23 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
         super.init();
         GlobalContext context = getContext();
         
-        authorizationServerManager = context.get(AuthorizationServerManagerLocal.class);
+        authorizationServerManager = context.get(AuthorizationServerManager.class);
         resourceServerManager = context.get(ResourceServerManager.class);
         userAccessor = context.getUserAccessor();
     }
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
+        boolean abort = authorizationServerManager.filter(requestContext,getSession());
+        if (abort) {
+            return;
+        }
         // Get the Authorization header from the request header or http session
         String authorizationHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
         authorizationHeader = (authorizationHeader != null)  ? authorizationHeader : 
                 getAuthorizationTokenFromSession();
+
+
         // Validate the Authorization header
         if (isTokenBasedAuthentication(authorizationHeader)) {
             // Extract the token from the Authorization header
@@ -59,7 +65,7 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
                 AuthenticationTokenDetails authenticationTokenDetails = resourceServerManager.parseAndValidateToken(token, getSession());
                 initSessionIfRequired(authenticationTokenDetails);
             } catch (Exception e) {
-                logger.error("Authorization failed",e);
+                logger.error("Authentication failed",e);
                 abortWithUnauthorized(requestContext);
             }   
         } else {
@@ -67,6 +73,7 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
             return;
         }
     }
+
 
     private void initSessionIfRequired(AuthenticationTokenDetails authenticationTokenDetails) {
         //If step session is not yet set or not really initiated

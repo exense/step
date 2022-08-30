@@ -5,16 +5,16 @@ import io.jsonwebtoken.SignatureAlgorithm;
 
 public class JWTSettings {
 
-    private static String CONFIG_KEY_JWT_ALGO="authenticator.jwt.algo";
-    private static String CONFIG_KEY_JWT_CLOCKSKEW="authenticator.jwt.clock-skew";
-    private static String CONFIG_KEY_JWT_AUDIENCE="controller.url";
-    private static String CONFIG_KEY_JWT_ISSUER="authenticator.jwt.issuer";
-    private static String CONFIG_KEY_JWT_ROLE_CLAIM_NAME ="authenticator.jwt.role-claim-name";
-    private static String CONFIG_KEY_JWT_REFRESH_COUNT_CLAIM_NAME="authenticator.jwt.refresh-count-claim-name";
-    private static String CONFIG_KEY_JWT_REFRESH_LIMIT_CLAIM_NAME="authenticator.jwt.refresh-limit-claim-name";
-    private static String CONFIG_KEY_JWT_ISSUER_CHECK="authenticator.jwt.issuer.check";
-    private static String CONFIG_KEY_JWT_AUDIENCE_CHECK="authenticator.jwt.audience.check";
-    public static String CONFIG_KEY_JWT_NOLOGIN="authenticator.jwt.no-login";
+    private static final String CONFIG_KEY_JWT_ALGO="authenticator.jwt.algo";
+    private static final String CONFIG_KEY_JWT_CLOCKSKEW="authenticator.jwt.clock-skew";
+    private static final String CONFIG_KEY_JWT_AUDIENCE="authenticator.jwt.audience";
+    private static final String CONFIG_KEY_JWT_ISSUER="authenticator.jwt.issuer";
+    private static final String CONFIG_KEY_JWT_ROLE_CLAIM_NAME ="authenticator.jwt.role-claim-name";
+    private static final String CONFIG_KEY_JWT_REFRESH_COUNT_CLAIM_NAME="authenticator.jwt.refresh-count-claim-name";
+    private static final String CONFIG_KEY_JWT_REFRESH_LIMIT_CLAIM_NAME="authenticator.jwt.refresh-limit-claim-name";
+    private static final String CONFIG_KEY_JWT_ISSUER_CHECK="authenticator.jwt.issuer.check";
+    private static final String CONFIG_KEY_JWT_AUDIENCE_CHECK="authenticator.jwt.audience.check";
+    public static final String CONFIG_KEY_JWT_NOLOGIN="authenticator.jwt.no-login";
     
     private final SignatureAlgorithm algo;
     private final String secret;
@@ -33,7 +33,7 @@ public class JWTSettings {
         algo = SignatureAlgorithm.valueOf(algoStr);
         this.secret = secret;
         clockSkew = configuration.getPropertyAsLong(CONFIG_KEY_JWT_CLOCKSKEW,10l);
-        audience = configuration.getProperty(CONFIG_KEY_JWT_AUDIENCE,"controller.url.prop.not.set");
+        audience = configuration.getProperty(CONFIG_KEY_JWT_AUDIENCE,configuration.getProperty("controller.url"));
         issuer = configuration.getProperty(CONFIG_KEY_JWT_ISSUER,audience); //if not set the controller is also the issuer
         roleClaimName = configuration.getProperty(CONFIG_KEY_JWT_ROLE_CLAIM_NAME,"role");
         refreshCountClaimName = configuration.getProperty(CONFIG_KEY_JWT_ROLE_CLAIM_NAME,"refreshCount");
@@ -81,4 +81,5 @@ public class JWTSettings {
     public boolean isCheckAudience() {
         return checkAudience;
     }
+
 }

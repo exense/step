@@ -1,6 +1,8 @@
 package step.core.authentication;
 
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SigningKeyResolver;
+import jakarta.ws.rs.container.ContainerRequestContext;
 import step.framework.server.access.AccessManager;
 import step.core.access.Role;
 import step.framework.server.Session;
@@ -44,6 +46,17 @@ public class AuthorizationServerManagerLocal implements AuthorizationServerManag
         String token = generateToken(session.getUser().getSessionUsername(), role.getAttribute("name"),
                 Date.from(ZonedDateTime.now().plusDays(days).toInstant()));
         return token;
+    }
+
+    @Override
+    public boolean filter(ContainerRequestContext requestContext, Session session) {
+        //nothing to be done for this local implementation
+        return false;
+    }
+
+    @Override
+    public SigningKeyResolver getSigningKeyResolver() {
+        return null;
     }
 
     private String generateToken(String username, String rolename, Date exp) {
