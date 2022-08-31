@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.core;
 
-import java.io.IOException;
-
 import ch.exense.commons.app.Configuration;
 import com.sun.xml.bind.v2.ContextFactory;
 import step.artefacts.handlers.PlanLocator;
@@ -51,7 +49,6 @@ import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
-import step.core.tasks.AsyncTaskManager;
 import step.dashboards.DashboardSession;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
@@ -62,6 +59,7 @@ import step.framework.server.tables.TableRegistry;
 import step.resources.*;
 
 import java.io.File;
+import java.io.IOException;
 
 
 public class Controller {
@@ -161,7 +159,6 @@ public class Controller {
 		entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));
 		entityManager.getEntityByName("sessions").setByPassObjectPredicate(true);
 
-		context.put(AsyncTaskManager.class, new AsyncTaskManager());
 		context.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
 
 		createOrUpdateIndexes();
