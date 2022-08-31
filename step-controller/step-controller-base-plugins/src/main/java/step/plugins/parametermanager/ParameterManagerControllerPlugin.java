@@ -44,7 +44,8 @@ import java.util.function.BiConsumer;
 
 @Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class, EncryptionManagerDependencyPlugin.class})
 public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
-	
+
+	public static final String ENTITY_PARAMETERS = "parameters";
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerControllerPlugin.class);
 
 	private ParameterManager parameterManager;
@@ -55,18 +56,18 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		// The encryption manager might be null
 		encryptionManager = context.get(EncryptionManager.class);
 
-		Collection<Parameter> collection = context.getCollectionFactory().getCollection("parameters", Parameter.class);
+		Collection<Parameter> collection = context.getCollectionFactory().getCollection(ENTITY_PARAMETERS, Parameter.class);
 
-		Accessor<Parameter> parameterAccessor = new AbstractAccessor<Parameter>(collection);
+		Accessor<Parameter> parameterAccessor = new AbstractAccessor<>(collection);
 		context.put("ParameterAccessor", parameterAccessor);
 		
-		context.get(TableRegistry.class).register("parameters", new ParameterTable(collection));
+		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new ParameterTable(collection));
 		
 		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getConfiguration());
 		context.put(ParameterManager.class, parameterManager);
 		this.parameterManager = parameterManager;
 		
-		context.getEntityManager().register(new Entity<Parameter, Accessor<Parameter>> (
+		context.getEntityManager().register(new Entity<> (
 				Parameter.ENTITY_NAME, 
 				parameterAccessor,
 				Parameter.class));
@@ -143,7 +144,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
 		@Override
 		public void accept(Object object_, ExportContext exportContext) {
-			if (object_ != null && object_ instanceof Parameter) {
+			if (object_ instanceof Parameter) {
 				Parameter param = (Parameter) object_;
 				//if protected and not encrypted, mask value by changing it to reset value
 				if (param.getProtectedValue() != null && param.getProtectedValue()) {
@@ -168,7 +169,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
 		@Override
 		public void accept(Object object_, ImportContext importContext) {
-			if (object_ != null && object_ instanceof Parameter) {
+			if (object_ instanceof Parameter) {
 				Parameter param = (Parameter) object_;
 				//if importing protected and encrypted value
 				if (param.getProtectedValue() != null && param.getProtectedValue()) {

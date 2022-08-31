@@ -48,39 +48,39 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         bulkOperationManager = new BulkOperationManager(context.require(AsyncTaskManager.class));
     }
 
-    @Operation(operationId = "get{Entity}ById")
+    @Operation(operationId = "get{Entity}ById", description = "Retrieves an entity by its Id")
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "read")
+    @Secured(right = "{entity}-read")
     public T get(@PathParam("id") String id) {
         return accessor.get(id);
     }
 
-    @Operation(operationId = "find{Entity}sByAttributes")
+    @Operation(operationId = "find{Entity}sByAttributes", description = "Returns the list of entities matching the provided attributes")
     @POST
     @Path("/find")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right = "read")
+    @Secured(right = "{entity}-read")
     public List<T> findManyByAttributes(Map<String, String> attributes) {
         Spliterator<T> manyByAttributes = accessor.findManyByAttributes(attributes);
         return StreamSupport.stream(manyByAttributes, false).collect(Collectors.toList());
     }
 
-    @Operation(operationId = "delete{Entity}")
+    @Operation(operationId = "delete{Entity}", description = "Deletes the entity with the given Id")
     @DELETE
     @Path("/{id}")
-    @Secured(right = "delete")
-    public void delete(@PathParam("id") String id) throws Exception {
+    @Secured(right = "{entity}-delete")
+    public void delete(@PathParam("id") String id) {
         accessor.remove(new ObjectId(id));
     }
 
-    @Operation(operationId = "clone{Entity}s")
+    @Operation(operationId = "clone{Entity}s", description = "Clones the entities according to the provided parameters")
     @POST
     @Path("/bulk/clone")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right = "write")
+    @Secured(right = "{entity}-write")
     public AsyncTaskStatus<Void> cloneEntities(BulkOperationParameters parameters) {
         ObjectFilter contextObjectFilter = getObjectFilter();
         Collection<T> collection = entityType.getAccessor().getCollectionDriver();
@@ -89,21 +89,21 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
                         .forEach(plan -> clone(plan.getId().toString())), contextObjectFilter);
     }
 
-    @Operation(operationId = "save{Entity}")
+    @Operation(operationId = "save{Entity}", description = "Saves the provided entity")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right = "write")
+    @Secured(right = "{entity}-write")
     public T save(T entity) {
         entity = beforeSave(entity);
         return accessor.save(entity);
     }
 
-    @Operation(operationId = "clone{Entity}")
+    @Operation(operationId = "clone{Entity}", description = "Clones the entity with the given Id")
     @GET
     @Path("/{id}/clone")
     @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "write")
+    @Secured(right = "{entity}-write")
     public T clone(@PathParam("id") String id) {
         T entity = get(id);
         if (entity == null) {
@@ -132,11 +132,11 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         return entity;
     }
 
-    @Operation(operationId = "delete{Entity}s")
+    @Operation(operationId = "delete{Entity}s", description = "Deletes the entities according to the provided parameters")
     @POST
     @Path("/bulk/delete")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right = "delete")
+    @Secured(right = "{entity}-delete")
     public AsyncTaskStatus<Void> bulkDelete(BulkOperationParameters parameters) {
         ObjectFilter contextObjectFilter = getObjectFilter();
         return bulkOperationManager.performBulkOperation(parameters, t -> {

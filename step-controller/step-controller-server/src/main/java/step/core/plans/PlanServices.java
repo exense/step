@@ -30,7 +30,6 @@ import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -39,6 +38,7 @@ import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.framework.server.security.Secured;
+import step.framework.server.security.SecuredContext;
 
 import java.util.List;
 import java.util.Map;
@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 @Path("plans")
 @Tag(name = "Plans")
 @Tag(name = "Entity=Plan")
-@Secured(right="plan-")
+@SecuredContext(key = "entity", value = "plan")
 public class PlanServices extends AbstractEntityServices<Plan> {
 
 	protected PlanAccessor planAccessor;
@@ -75,7 +75,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Operation(description = "Returns a new plan instance as template.")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="write")
+	@Secured(right="{entity}-write")
 	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
 		PlanType<Plan> planType = planTypeRegistry.getPlanType(type);
 		Plan plan = planType.newPlan(template);
@@ -94,7 +94,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@GET
 	@Path("/{id}/compile")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="write")
+	@Secured(right="{entity}-write")
 	public PlanCompilationResult compilePlanWithId(@PathParam("id") String id) throws Exception {
 		Plan plan = planAccessor.get(id);
 		PlanCompilationResult planCompilationResult = compilePlan(plan);
@@ -109,7 +109,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Path("/compile")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="write")
+	@Secured(right="{entity}-write")
 	public PlanCompilationResult compilePlan(Plan plan) {
 		@SuppressWarnings("unchecked")
 		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
@@ -140,7 +140,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Path("/search")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public Plan getPlanByAttributes(Map<String,String> attributes) {
 		return planAccessor.findByAttributes(attributes);
 	}
@@ -149,7 +149,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@GET
 	@Path("/all")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public List<Plan> getAllPlans(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
 		if(skip != null && limit != null) {
 			return planAccessor.getRange(skip, limit);
@@ -162,7 +162,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@GET
 	@Path("/{id}/artefacts/{artefactid}/lookup/plan")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public Plan lookupPlan(@PathParam("id") String id, @PathParam("artefactid") String artefactId) {
 		Plan plan = get(id);
 		Plan result = null;
@@ -183,7 +183,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Path("/artefacts/clone")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="write")
+	@Secured(right="{entity}-write")
 	public AbstractArtefact cloneArtefact(AbstractArtefact artefact) {
 		assignNewId(artefact);
 		return artefact;
@@ -194,7 +194,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Path("/artefacts/clonemany")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="write")
+	@Secured(right="{entity}-write")
 	public List<AbstractArtefact> cloneArtefacts(List<AbstractArtefact> artefacts) {
 		return artefacts.stream().map(this::cloneArtefact).collect(Collectors.toList());
 	}
@@ -204,7 +204,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Path("/artefact/types")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public Set<String> getArtefactTypes() {
 		return artefactHandlerRegistry.getArtefactNames();
 	}
@@ -214,7 +214,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Path("/artefact/types/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public AbstractArtefact getArtefactType(@PathParam("id") String type) throws Exception {
 		return artefactHandlerRegistry.getArtefactTypeInstance(type);
 	}
@@ -224,7 +224,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Path("/artefact/templates")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public Set<String> getArtefactTemplates() {
 		return new TreeSet<>(artefactHandlerRegistry.getArtefactTemplateNames());
 	}

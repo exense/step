@@ -18,19 +18,30 @@
  ******************************************************************************/
 package step.controller.grid.services;
 
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.annotation.PostConstruct;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
+import step.controller.services.entities.AbstractEntityServices;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.AbstractStepServices;
-import step.framework.server.security.Secured;
-import step.framework.server.Session;
+import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.entities.EntityManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
+import step.framework.server.Session;
+import step.framework.server.security.Secured;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.editors.FunctionEditor;
@@ -45,21 +56,11 @@ import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.UriInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
-public abstract class AbtractFunctionServices extends AbstractStepServices {
+public abstract class AbtractFunctionServices extends AbstractEntityServices<Function> {
 
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
@@ -71,6 +72,10 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 	protected SelectorHelper selectorHelper;
 	protected FunctionLocator functionLocator;
 	protected ObjectPredicateFactory objectPredicateFactory;
+
+	public AbtractFunctionServices() {
+		super(EntityManager.functions);
+	}
 
 	@PostConstruct
 	public void init() throws Exception {
@@ -85,9 +90,10 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
 	}
 
+	@Operation(operationId = "getAll{Entity}s")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public List<Function> getAllFunctions(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
 		if(skip != null && limit != null) {
 			return functionAccessor.getRange(skip, limit);
@@ -96,37 +102,22 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 		}
 	}
 
-	@GET
-	@Path("/{id}")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
-	public Function getFunction(@PathParam("id") String functionId) {
-		return functionManager.getFunctionById(functionId);
-	}
-	
+	@Operation(operationId = "search{Entity}")
 	@POST
 	@Path("/search")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public Function searchFunction(Map<String,String> attributes) {
 		return functionManager.getFunctionByAttributes(attributes);
 	}
-	
-	@POST
-	@Path("/find")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
-	public List<Function> findMany(Map<String,String> attributes) {
-		return StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
-	}
-	
+
+	@Operation(operationId = "lookupCall{Entity}")
 	@POST
 	@Path("/lookup")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public Function lookupCallFunction(CallFunction callFunction) {
 		Function function = null;
 		try {
@@ -135,11 +126,12 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 		} catch (RuntimeException e) {}
 		return function;
 	}
-	
+
+	@Operation(operationId = "get{Entity}Editor")
 	@GET
 	@Produces(MediaType.TEXT_HTML)
 	@Path("/{id}/editor")
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public String getFunctionEditor(@PathParam("id") String functionId) {
 		Function function = functionManager.getFunctionById(functionId);
 		FunctionEditor editor = getContext().get(FunctionEditorRegistry.class).getFunctionEditor(function);
@@ -149,36 +141,40 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 			return null;
 		}
 	}
-	
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="write")
-	public Function saveFunction(Function function) throws SetupFunctionException, FunctionTypeException {
-		return functionManager.saveFunction(function);
+
+	@Override
+	public Function save(Function function) {
+		try {
+			return functionManager.saveFunction(function);
+		} catch (SetupFunctionException | FunctionTypeException e) {
+			throw new ControllerServiceException(e.getMessage());
+		}
 	}
-	
-	@POST
-	@Path("/{id}/copy")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="write")
-	public void copyFunction(@PathParam("id") String id) throws FunctionTypeException {		
-		functionManager.copyFunction(id);
+
+	@Override
+	public Function clone(String id) {
+		try {
+			return functionManager.copyFunction(id);
+		} catch (FunctionTypeException e) {
+			throw new ControllerServiceException(e.getMessage());
+		}
 	}
-	
-	@DELETE
-	@Path("/{id}")
-	@Secured(right="delete")
-	public void deleteFunction(@PathParam("id") String functionId) throws FunctionTypeException {
-		functionManager.deleteFunction(functionId);
+
+	@Override
+	public void delete(String functionId) {
+		try {
+			functionManager.deleteFunction(functionId);
+		} catch (FunctionTypeException e) {
+			throw new ControllerServiceException(e.getMessage());
+		}
 	}
-	
+
+	@Operation(operationId = "new{Entity}TypeConf")
 	@GET
 	@Path("/types/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="read")
+	@Secured(right="{entity}-read")
 	public Function newFunctionTypeConf(@PathParam("id") String type) {
 		Function newFunction = functionManager.newFunction(type);
 		newFunction.setAttributes(new HashMap<>());
@@ -188,11 +184,12 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 		return newFunction;
 	}
 
+	@Operation(operationId = "get{Entity}TokenHandle")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/select")
-	@Secured(right="execute")
+	@Secured(right="{entity}-execute")
 	public TokenWrapper getTokenHandle(GetTokenHandleParameter parameter, @Context HttpServletRequest req) throws FunctionExecutionServiceException {
 		Session<User> session = getSession();
 		if(!parameter.isLocal()) {
@@ -207,29 +204,32 @@ public abstract class AbtractFunctionServices extends AbstractStepServices {
 		
 	}
 
+	@Operation(operationId = "return{Entity}TokenHandle")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/{id}/return")
-	@Secured(right="execute")
+	@Secured(right="{entity}-execute")
 	public void returnTokenHandle(@PathParam("id") String tokenId) throws FunctionExecutionServiceException {
 		functionExecutionService.returnTokenHandle(tokenId);
 	}
-	
+
+	@Operation(operationId = "call{Entity}ById")
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/{id}/execute/{functionId}")
-	@Secured(right="execute")
+	@Secured(right="{entity}-execute")
 	public Output<JsonObject> callFunctionById(@PathParam("id") String tokenId, @PathParam("functionId") String functionId, FunctionInput<JsonObject> input) {
 		Function function = functionManager.getFunctionById(functionId);
 		return functionExecutionService.callFunction(tokenId, function, input, JsonObject.class);			
 	}
-	
+
+	@Operation(operationId = "call{Entity}ByAttributes")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/executor/tokens/{id}/execute")
-	@Secured(right="execute")
+	@Secured(right="{entity}-execute")
 	public Output<JsonObject> callFunctionByAttributes(@PathParam("id") String tokenId, FunctionInput<JsonObject> input, @Context UriInfo uriInfo) {
 		Map<String,String> functionAttributes = new HashMap<>();
 		uriInfo.getQueryParameters().entrySet().forEach(e->{

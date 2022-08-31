@@ -20,29 +20,37 @@ package step.core.scheduler;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import step.core.access.User;
-import step.core.deployment.AbstractStepServices;
-import step.framework.server.security.Secured;
-import step.framework.server.Session;
-import step.core.execution.model.ExecutionMode;
-import step.core.execution.model.ExecutionParameters;
-import step.core.repositories.RepositoryObjectReference;
-
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import step.controller.services.entities.AbstractEntityServices;
+import step.core.access.User;
+import step.core.entities.EntityManager;
+import step.core.execution.model.ExecutionMode;
+import step.core.execution.model.ExecutionParameters;
+import step.core.repositories.RepositoryObjectReference;
+import step.framework.server.Session;
+import step.framework.server.security.Secured;
+import step.framework.server.security.SecuredContext;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 @Singleton
-@Path("scheduler")
+@Path("scheduler/task")
 @Tag(name = "Scheduler")
-public class SchedulerServices extends AbstractStepServices {
+@Tag(name = "Entity=ExecutionTask")
+@SecuredContext(key = "entity", value = "task")
+public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskParameters> {
 
     private ExecutionScheduler scheduler;
+
+    public SchedulerServices() {
+        super(EntityManager.tasks);
+    }
 
     @PostConstruct
     public void init() throws Exception {
@@ -52,9 +60,9 @@ public class SchedulerServices extends AbstractStepServices {
 
     @Operation(description = "Returns a new scheduler task instance as template. This instance will have to be saved using the dedicated service.")
     @GET
-    @Path("/task/new")
+    @Path("/new")
     @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "task-write")
+    @Secured(right = "{entity}-write")
     public ExecutiontTaskParameters createExecutionTask() {
         ExecutiontTaskParameters taskParameters = new ExecutiontTaskParameters();
         taskParameters.setActive(true);
@@ -67,34 +75,21 @@ public class SchedulerServices extends AbstractStepServices {
         return taskParameters;
     }
 
-    @Operation(description = "Create or update a scheduler task.")
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/task")
-    @Secured(right = "task-write")
-    public void schedule(ExecutiontTaskParameters schedule) {
+    @Override
+    public ExecutiontTaskParameters save(ExecutiontTaskParameters schedule) {
         // Enrich the execution parameters with the attributes of the task parameters.
         // The attributes of the execution parameters are then added to the Execution
         // This is for instance needed to run the execution within the same project as
         // the scheduler task
         getObjectEnricher().accept(schedule.getExecutionsParameters());
         scheduler.addExecutionTask(schedule);
-    }
-
-    @Operation(description = "Returns the scheduler task for the given ID.")
-    @GET
-    @Path("/task/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "task-read")
-    public ExecutiontTaskParameters getExecutionTask(@PathParam("id") String executionTaskID) {
-        return scheduler.get(executionTaskID);
+        return schedule;
     }
 
     @Operation(description = "Returns all the scheduled tasks.")
     @GET
-    @Path("/task")
     @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "task-read")
+    @Secured(right = "{entity}-read")
     public List<ExecutiontTaskParameters> getScheduledExecutions() {
         List<ExecutiontTaskParameters> result = new ArrayList<>();
         Iterator<ExecutiontTaskParameters> it = scheduler.getActiveAndInactiveExecutionTasks();
@@ -109,7 +104,7 @@ public class SchedulerServices extends AbstractStepServices {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    @Path("/task/{id}/execute")
+    @Path("/{id}/execute")
     @Secured(right = "plan-execute")
     public String executeTask(@PathParam("id") String executionTaskID) {
         Session<User> session = getSession();
@@ -118,7 +113,7 @@ public class SchedulerServices extends AbstractStepServices {
 
     @Operation(description = "Enable/disable all the scheduler tasks.")
     @PUT
-    @Path("/task/schedule")
+    @Path("/schedule")
     @Secured(right = "admin")
     public void enableAllExecutionTasksSchedule(@QueryParam("enabled") Boolean enabled) {
         if (enabled != null && enabled) {
@@ -130,22 +125,18 @@ public class SchedulerServices extends AbstractStepServices {
 
     @Operation(description = "Enable/disable the given scheduler task.")
     @PUT
-    @Path("/task/{id}")
-    @Secured(right = "task-write")
-    public void enableExecutionTask(@PathParam("id") String executionTaskID) {
-        scheduler.enableExecutionTask(executionTaskID);
-    }
-
-    @Operation(description = "Remove or disable the given scheduler task, depending on the 'remove' parameter.")
-    @DELETE
-    @Path("/task/{id}")
-    @Secured(right = "task-delete")
-    public void removeExecutionTask(@PathParam("id") String executionTaskID, @QueryParam("remove") Boolean remove) {
-        if (remove != null && remove) {
-            scheduler.removeExecutionTask(executionTaskID);
+    @Path("/{id}")
+    @Secured(right = "{entity}-write")
+    public void enableExecutionTask(@PathParam("id") String executionTaskID, @QueryParam("enabled") Boolean enabled) {
+        if (enabled != null && enabled) {
+            scheduler.enableExecutionTask(executionTaskID);
         } else {
             scheduler.disableExecutionTask(executionTaskID);
         }
     }
 
+    @Override
+    public void delete(String id) {
+        scheduler.removeExecutionTask(id);
+    }
 }
