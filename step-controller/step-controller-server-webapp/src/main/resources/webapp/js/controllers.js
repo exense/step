@@ -488,20 +488,20 @@ tecAdminControllers.directive('executionProgress', ['$http','$timeout','$interva
 }]);
 
 tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStorage',
-	function($scope, $http,$stateStorag) {
+	function($scope, $http,$stateStorage) {
 
-	$stateStorag.push($scope, 'executions',{tabs:[{id:'list',title:'Execution list',type:'list'}]});
+	$stateStorage.push($scope, 'executions',{tabs:[{id:'list',title:'Execution list',type:'list'}]});
 	if($scope.$state == null) { $scope.$state = 'list' };
 
 	$scope.isTabActive = function(id) {
 		return id == $scope.$state;
 	}
 
-	$scope.tabs = $stateStorag.get($scope).tabs;
+	$scope.tabs = $stateStorage.get($scope).tabs;
 
 	$scope.newTab = function(eid, title) {
 		$scope.tabs.push({id:eid,title:title,active:false,type:'progress'});
-		$stateStorag.store($scope,{tabs: $scope.tabs});
+		$stateStorage.store($scope,{tabs: $scope.tabs});
 		$scope.selectTab(eid);
 	}
 
@@ -537,7 +537,7 @@ tecAdminControllers.controller('ExecutionTabsCtrl', ['$scope','$http','stateStor
 		if($scope.$state==eid) {
 			$scope.$state=tabs[tabs.length-1].id;
 		}
-		$stateStorag.store($scope,{tabs: $scope.tabs});
+		$stateStorage.store($scope,{tabs: $scope.tabs});
 
 		$(document).ready(function(){
 			$scope.$broadcast('resize-widget');

@@ -54,6 +54,9 @@ angular.module('plans',['tables','step','screenConfigurationControllers'])
 
 .controller('PlansCtrl', function($rootScope, $scope, stateStorage) {
   stateStorage.push($scope, 'plans', {}); 
+  if ($scope.$state == null) {
+    $scope.$state = 'list';
+  }
 
   $scope.$watch('$state',function() {
     if($scope.$state!=null) {
