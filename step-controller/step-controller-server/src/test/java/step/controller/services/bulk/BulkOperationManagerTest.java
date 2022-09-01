@@ -27,11 +27,11 @@ class BulkOperationManagerTest {
     void performBulkOperation() throws InterruptedException, TimeoutException {
         BulkOperationParameters parameters = new BulkOperationParameters();
         parameters.setTargetType(BulkOperationTargetType.LIST);
-        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> ""));
+        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "", null));
 
         List<String> targetIds = List.of("id1", "id2");
         parameters.setIds(targetIds);
-        AsyncTaskStatus<Void> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "");
+        AsyncTaskStatus<Void> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "", null);
         Poller.waitFor(() -> exportStatus.isReady(), 2000);
         assertEquals(ids, targetIds);
     }
@@ -41,10 +41,10 @@ class BulkOperationManagerTest {
         BulkOperationParameters parameters = new BulkOperationParameters();
         parameters.setTargetType(BulkOperationTargetType.FILTER);
 
-        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> ""));
+        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "", null));
 
         parameters.setFilter(new FieldFilter("field", "value", true));
-        AsyncTaskStatus<Void> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "");
+        AsyncTaskStatus<Void> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "", null);
         Poller.waitFor(() -> exportStatus.isReady(), 2000);
         assertEquals(Filters.And.class, filters.get(0).getClass());
     }
@@ -55,18 +55,18 @@ class BulkOperationManagerTest {
         parameters.setTargetType(BulkOperationTargetType.ALL);
         parameters.setIds(List.of());
 
-        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> ""));
+        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "", null));
 
         parameters.setIds(null);
         parameters.setFilter(new FieldFilter());
 
-        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> ""));
+        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "", null));
 
         parameters.setIds(null);
         parameters.setFilter(null);
 
         ObjectFilter objectFilter = () -> "field = 'value'";
-        AsyncTaskStatus<Void> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, objectFilter);
+        AsyncTaskStatus<Void> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, objectFilter, null);
         Poller.waitFor(() -> exportStatus.isReady(), 2000);
         Filter actualFilter = filters.get(0);
         assertEquals(Filters.Equals.class, actualFilter.getClass());

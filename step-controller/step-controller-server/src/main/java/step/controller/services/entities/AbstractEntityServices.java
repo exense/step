@@ -10,19 +10,23 @@ import step.controller.services.async.AsyncTaskStatus;
 import step.controller.services.bulk.BulkOperationManager;
 import step.controller.services.bulk.BulkOperationParameters;
 import step.core.GlobalContext;
+import step.core.access.User;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.collections.Collection;
+import step.core.collections.Filter;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
 import step.core.objectenricher.ObjectFilter;
+import step.framework.server.Session;
 import step.framework.server.security.Secured;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -33,6 +37,11 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     private BulkOperationManager bulkOperationManager;
     private Accessor<T> accessor;
     private Collection<T> collection;
+    /**
+     * Associates {@link Session} to threads. This is used by requests that are executed
+     * outside the Jetty scope like for {@link BulkOperationManager}
+     */
+    private static final ThreadLocal<Session<User>> sessions = new ThreadLocal<>();
 
     public AbstractEntityServices(String entityName) {
         this.entityName = entityName;
@@ -46,6 +55,25 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         accessor = entityType.getAccessor();
         collection = accessor.getCollectionDriver();
         bulkOperationManager = new BulkOperationManager(context.require(AsyncTaskManager.class));
+    }
+
+    /**
+     * Set the current {@link Session} for the current thread. This is useful for request that are processed
+     * outside the Jetty scope like for {@link BulkOperationManager}
+     * @param session the current {@link Session}
+     */
+    public static void setCurrentSession(Session<User> session) {
+        sessions.set(session);
+    }
+
+    @Override
+    protected Session<User> getSession() {
+        Session<User> userSession = sessions.get();
+        if(userSession != null) {
+            return userSession;
+        } else {
+            return super.getSession();
+        }
     }
 
     @Operation(operationId = "get{Entity}ById", description = "Retrieves an entity by its Id")
@@ -85,8 +113,13 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         ObjectFilter contextObjectFilter = getObjectFilter();
         Collection<T> collection = entityType.getAccessor().getCollectionDriver();
         return bulkOperationManager.performBulkOperation(parameters, this::clone,
-                filter -> collection.find(filter, null, null, null, 0)
-                        .forEach(plan -> clone(plan.getId().toString())), contextObjectFilter);
+                getFilterConsumer(collection, this::clone), contextObjectFilter, getSession());
+    }
+
+    private Consumer<Filter> getFilterConsumer(Collection<T> collection, Consumer<String> action) {
+        return filter -> collection.find(filter, null, null, null, 0)
+                .map(e -> e.getId().toString())
+                .forEach(action);
     }
 
     @Operation(operationId = "save{Entity}", description = "Saves the provided entity")
@@ -139,12 +172,13 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-delete")
     public AsyncTaskStatus<Void> bulkDelete(BulkOperationParameters parameters) {
         ObjectFilter contextObjectFilter = getObjectFilter();
-        return bulkOperationManager.performBulkOperation(parameters, t -> {
+        Consumer<String> consumer = t -> {
             try {
                 delete(t);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }, collection::remove, contextObjectFilter);
+        };
+        return bulkOperationManager.performBulkOperation(parameters, consumer, getFilterConsumer(collection, consumer), contextObjectFilter, getSession());
     }
 }

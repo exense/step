@@ -2,11 +2,14 @@ package step.controller.services.bulk;
 
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
+import step.controller.services.entities.AbstractEntityServices;
+import step.core.access.User;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.deployment.ControllerServiceException;
 import step.core.objectenricher.ObjectFilter;
 import step.core.ql.OQLFilterBuilder;
+import step.framework.server.Session;
 import step.framework.server.tables.service.TableFilter;
 
 import java.util.List;
@@ -20,36 +23,41 @@ public class BulkOperationManager {
         this.asyncTaskManager = asyncTaskManager;
     }
 
-    public AsyncTaskStatus<Void> performBulkOperation(BulkOperationParameters parameters, Consumer<String> operationById, Consumer<Filter> operationByFilter, ObjectFilter contextObjectFilter) {
+    public AsyncTaskStatus<Void> performBulkOperation(BulkOperationParameters parameters, Consumer<String> operationById, Consumer<Filter> operationByFilter, ObjectFilter contextObjectFilter, Session<User> session) {
         BulkOperationTargetType targetType = parameters.getTargetType();
         validateParameters(parameters, targetType);
         if(parameters.isSimulate()) {
             throw new ControllerServiceException(400, "Simulate mode currently not supported");
         }
         return asyncTaskManager.scheduleAsyncTask(t -> {
-            if (targetType == BulkOperationTargetType.LIST) {
-                List<String> ids = parameters.getIds();
-                if (ids != null && !ids.isEmpty()) {
-                    ids.forEach(operationById);
-                }
-            } else if (targetType == BulkOperationTargetType.FILTER) {
-                TableFilter tableFilter = parameters.getFilter();
-                if (tableFilter != null) {
-                    Filter requestFilter = tableFilter.toFilter();
+            AbstractEntityServices.setCurrentSession(session);
+            try {
+                if (targetType == BulkOperationTargetType.LIST) {
+                    List<String> ids = parameters.getIds();
+                    if (ids != null && !ids.isEmpty()) {
+                        ids.forEach(operationById);
+                    }
+                } else if (targetType == BulkOperationTargetType.FILTER) {
+                    TableFilter tableFilter = parameters.getFilter();
+                    if (tableFilter != null) {
+                        Filter requestFilter = tableFilter.toFilter();
 
+                        Filter contextFilter = OQLFilterBuilder.getFilter(contextObjectFilter.getOQLFilter());
+
+                        Filters.And filter = Filters.and(List.of(contextFilter, requestFilter));
+
+                        operationByFilter.accept(filter);
+                    }
+                } else if (targetType == BulkOperationTargetType.ALL) {
                     Filter contextFilter = OQLFilterBuilder.getFilter(contextObjectFilter.getOQLFilter());
 
-                    Filters.And filter = Filters.and(List.of(contextFilter, requestFilter));
-
-                    operationByFilter.accept(filter);
+                    operationByFilter.accept(contextFilter);
                 }
-            } else if (targetType == BulkOperationTargetType.ALL) {
-                Filter contextFilter = OQLFilterBuilder.getFilter(contextObjectFilter.getOQLFilter());
 
-                operationByFilter.accept(contextFilter);
+                return null;
+            } finally {
+                AbstractEntityServices.setCurrentSession(null);
             }
-
-            return null;
         });
     }
 
