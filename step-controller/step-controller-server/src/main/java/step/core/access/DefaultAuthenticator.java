@@ -22,8 +22,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.commons.auth.Authenticator;
-import ch.commons.auth.Credentials;
+import step.core.auth.Authenticator;
+import step.core.auth.Credentials;
 import step.core.GlobalContext;
 import step.core.GlobalContextAware;
 

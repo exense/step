@@ -30,11 +30,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>ch.exense.commons</groupId>
-			<artifactId>exense-auth-core</artifactId>
-			<version>${exense-commons.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-core</artifactId>
 			<version>${project.version}</version>

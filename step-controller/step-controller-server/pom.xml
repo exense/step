@@ -30,11 +30,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>ch.exense.commons</groupId>
-			<artifactId>exense-auth-core</artifactId>
-			<version>${exense-commons.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.ldaptive</groupId>
 			<artifactId>ldaptive</artifactId>
 			<version>2.1.1</version>

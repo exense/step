@@ -40,7 +40,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.commons.auth.Credentials;
+import step.core.auth.Credentials;
 import step.client.credentials.ControllerCredentials;
 import step.client.credentials.SyspropCredendialsBuilder;
 import step.core.deployment.JacksonMapperProvider;
