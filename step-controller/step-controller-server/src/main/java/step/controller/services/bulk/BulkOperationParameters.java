@@ -6,19 +6,19 @@ import java.util.List;
 
 public class BulkOperationParameters {
 
-    private boolean simulate;
+    private boolean preview = true;
 
     private BulkOperationTargetType targetType;
 
     private List<String> ids;
     private TableFilter filter;
 
-    public boolean isSimulate() {
-        return simulate;
+    public boolean isPreview() {
+        return preview;
     }
 
-    public void setSimulate(boolean simulate) {
-        this.simulate = simulate;
+    public void setPreview(boolean preview) {
+        this.preview = preview;
     }
 
     public BulkOperationTargetType getTargetType() {

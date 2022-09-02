@@ -9,13 +9,13 @@ import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.controller.services.bulk.BulkOperationManager;
 import step.controller.services.bulk.BulkOperationParameters;
+import step.controller.services.bulk.BulkOperationReport;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.collections.Collection;
-import step.core.collections.Filter;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
@@ -33,10 +33,8 @@ import java.util.stream.StreamSupport;
 public abstract class AbstractEntityServices<T extends AbstractIdentifiableObject> extends AbstractStepServices {
 
     private final String entityName;
-    private Entity<T, Accessor<T>> entityType;
-    private BulkOperationManager bulkOperationManager;
+    private BulkOperationManager<T> bulkOperationManager;
     private Accessor<T> accessor;
-    private Collection<T> collection;
     /**
      * Associates {@link Session} to threads. This is used by requests that are executed
      * outside the Jetty scope like for {@link BulkOperationManager}
@@ -51,10 +49,10 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
-        entityType = (Entity<T, Accessor<T>>) context.getEntityManager().getEntityByName(entityName);
+        Entity<T, Accessor<T>> entityType = (Entity<T, Accessor<T>>) context.getEntityManager().getEntityByName(entityName);
         accessor = entityType.getAccessor();
-        collection = accessor.getCollectionDriver();
-        bulkOperationManager = new BulkOperationManager(context.require(AsyncTaskManager.class));
+        Collection<T> collection = accessor.getCollectionDriver();
+        bulkOperationManager = new BulkOperationManager<>(collection, context.require(AsyncTaskManager.class));
     }
 
     /**
@@ -109,17 +107,9 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("/bulk/clone")
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-write")
-    public AsyncTaskStatus<Void> cloneEntities(BulkOperationParameters parameters) {
+    public AsyncTaskStatus<BulkOperationReport> cloneEntities(BulkOperationParameters parameters) {
         ObjectFilter contextObjectFilter = getObjectFilter();
-        Collection<T> collection = entityType.getAccessor().getCollectionDriver();
-        return bulkOperationManager.performBulkOperation(parameters, this::clone,
-                getFilterConsumer(collection, this::clone), contextObjectFilter, getSession());
-    }
-
-    private Consumer<Filter> getFilterConsumer(Collection<T> collection, Consumer<String> action) {
-        return filter -> collection.find(filter, null, null, null, 0)
-                .map(e -> e.getId().toString())
-                .forEach(action);
+        return bulkOperationManager.performBulkOperation(parameters, this::clone, contextObjectFilter, getSession());
     }
 
     @Operation(operationId = "save{Entity}", description = "Saves the provided entity")
@@ -170,7 +160,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("/bulk/delete")
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-delete")
-    public AsyncTaskStatus<Void> bulkDelete(BulkOperationParameters parameters) {
+    public AsyncTaskStatus<BulkOperationReport> bulkDelete(BulkOperationParameters parameters) {
         ObjectFilter contextObjectFilter = getObjectFilter();
         Consumer<String> consumer = t -> {
             try {
@@ -179,6 +169,6 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
                 throw new RuntimeException(e);
             }
         };
-        return bulkOperationManager.performBulkOperation(parameters, consumer, getFilterConsumer(collection, consumer), contextObjectFilter, getSession());
+        return bulkOperationManager.performBulkOperation(parameters, consumer, contextObjectFilter, getSession());
     }
 }
