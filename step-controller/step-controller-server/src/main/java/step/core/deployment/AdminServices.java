@@ -182,7 +182,7 @@ public class AdminServices extends AbstractServices {
 	}
 	
 	@POST
-	@Secured(right="admin")
+	@Secured(right="maintenance-message-write")
 	@Path("/maintenance/message")
 	public void setMaintenanceMessage(String message) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_MESSAGE_KEY);
@@ -202,7 +202,7 @@ public class AdminServices extends AbstractServices {
 	}
 	
 	@POST
-	@Secured(right="admin")
+	@Secured(right="maintenance-message-write")
 	@Path("/maintenance/message/toggle")
 	public void setMaintenanceMessageToggle(boolean enabled) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_TOGGLE_KEY);

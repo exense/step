@@ -79,7 +79,7 @@ public class ControllerServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/shutdown")
-	@Secured(right="admin")
+	@Secured(right="controller-manage")
 	public void shutdown() {
 		new Thread() {
 			@Override

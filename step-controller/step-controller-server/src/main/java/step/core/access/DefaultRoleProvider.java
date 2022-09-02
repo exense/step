@@ -32,7 +32,7 @@ public class DefaultRoleProvider implements RoleProvider {
 	{
 		DEFAULT_ROLE = new Role();
 		DEFAULT_ROLE.addAttribute(AbstractOrganizableObject.NAME, "admin");
-		DEFAULT_ROLE.setRights(Arrays.asList(new String[]{"interactive","plan-read","plan-write","plan-delete","plan-execute","kw-read","kw-write","kw-delete","kw-execute","execution-read","execution-write","execution-delete","user-write","user-read","task-read","task-write","task-delete","admin","settings-read","param-read","param-write","param-delete","param-global-write","resource-read","resource-write","resource-delete","token-manage","screenInputs-read","screenInputs-write","screenInputs-delete","collection-read","collection-write","collection-delete"}));
+		DEFAULT_ROLE.setRights(Arrays.asList(new String[]{"plan-read","plan-write","plan-delete","plan-execute","kw-read","kw-write","kw-delete","kw-execute","execution-read","execution-write","execution-delete","user-write","user-read","task-read","task-write","task-delete","scheduler-manage","operations-read","controller-manage","maintenance-message-write","admin-ui-menu","settings-read","settings-write","settings-delete","param-read","param-write","param-delete","param-global-write","resource-read","resource-write","resource-delete","interactive","token-manage","screenInputs-read","screenInputs-write","screenInputs-delete","collection-read","collection-write","collection-delete"}));
 		
 		DEFAULT_ROLES.add(DEFAULT_ROLE);
 	}

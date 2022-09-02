@@ -55,7 +55,7 @@ public class ThreadManagerServices extends AbstractServices {
 	}
 
 	@GET
-	@Secured(right="admin")
+	@Secured(right="operations-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/operations/list")
 	public List<OperationDetails> getCurrentOperationsList() {

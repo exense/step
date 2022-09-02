@@ -6,7 +6,7 @@
 			</div>
 			
 			<div class="btn-group btn-group-menu">
-				<button ng-if="authService.hasRight('admin')" type="button" class="btn btn-default" ng-click="configureScheduler()" uib-tooltip="Configure scheduler" tooltip-append-to-body="true" tooltip-placement="bottom" >
+				<button ng-if="authService.hasRight('scheduler-manage')" type="button" class="btn btn-default" ng-click="configureScheduler()" uib-tooltip="Configure scheduler" tooltip-append-to-body="true" tooltip-placement="bottom" >
 					<span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
 				</button>
 			</div>							

@@ -43,7 +43,7 @@ public class SettingsServices extends AbstractServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/{id}")
-	@Secured(right="admin")
+	@Secured(right="settings-write")
 	public void save(@PathParam("id") String key, String value) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
 		if(setting == null) {
@@ -56,7 +56,7 @@ public class SettingsServices extends AbstractServices {
 
 	@DELETE
 	@Path("/{id}")
-	@Secured(right="admin")
+	@Secured(right="settings-delete")
 	public void delete(@PathParam("id") String key) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
 		if(setting != null) {
