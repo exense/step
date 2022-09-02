@@ -114,7 +114,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Operation(description = "Enable/disable all the scheduler tasks.")
     @PUT
     @Path("/schedule")
-    @Secured(right = "admin")
+    @Secured(right = "scheduler-manage")
     public void enableAllExecutionTasksSchedule(@QueryParam("enabled") Boolean enabled) {
         if (enabled != null && enabled) {
             scheduler.enableAllExecutionTasksSchedule();
