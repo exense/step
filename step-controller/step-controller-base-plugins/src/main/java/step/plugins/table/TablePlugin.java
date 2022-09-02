@@ -19,14 +19,9 @@
 package step.plugins.table;
 
 import step.core.GlobalContext;
-import step.core.access.User;
-import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.framework.server.tables.AbstractTable;
-import step.framework.server.tables.Table;
-import step.framework.server.tables.TableRegistry;
 
 @Plugin(dependencies= {ObjectHookControllerPlugin.class})
 public class TablePlugin extends AbstractControllerPlugin {

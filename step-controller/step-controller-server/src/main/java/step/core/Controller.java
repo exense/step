@@ -54,7 +54,7 @@ import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.ServiceRegistrationCallback;
-import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.resources.*;
 
@@ -123,7 +123,7 @@ public class Controller {
 
 		Collection<User> userCollection = collectionFactory.getCollection("users", User.class);
 		context.setUserAccessor(new UserAccessorImpl(userCollection));
-		tableRegistry.register("users", new AbstractTable<User>(userCollection, "user-read",false));
+		tableRegistry.register("users", new Table<>(userCollection, "user-read",false));
 		
 		
 		context.setRepositoryObjectManager(new RepositoryObjectManager());

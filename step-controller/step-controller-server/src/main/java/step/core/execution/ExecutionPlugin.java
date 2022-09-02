@@ -21,13 +21,14 @@ package step.core.execution;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.Collection;
-import step.core.execution.table.ExecutionTable;
+import step.core.execution.table.ExecutionSummaryProvider;
 import step.core.execution.table.ExecutionWrapper;
-import step.core.execution.table.LeafReportNodeTable;
-import step.core.execution.table.ReportNodeTable;
+import step.core.execution.table.LeafReportNodeTableFilterFactory;
+import step.core.execution.table.RootReportNodeProvider;
 import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
@@ -43,9 +44,19 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 		Collection<ReportNode> reportsCollection = context.getCollectionFactory().getCollection("reports",
 				ReportNode.class);
 
-		tableRegistry.register("executions", new ExecutionTable(context, collection));
-		tableRegistry.register("leafReports", new LeafReportNodeTable(context, reportsCollection));
-		tableRegistry.register("reports", new ReportNodeTable(context, reportsCollection));
+		RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
+		ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
+		tableRegistry.register("executions", new Table<>(collection, "execution-read", true).withResultItemEnricher(execution->{
+			execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
+			Object executionSummary = executionSummaryFormatter.format(execution);
+			execution.setExecutionSummary(executionSummary);
+			return execution;
+		}));
+
+
+		tableRegistry.register("leafReports", new Table<>(reportsCollection, "execution-read", false)
+				.withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)));
+		tableRegistry.register("reports", new Table<>(reportsCollection, "execution-read", false));
 		context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
 	}
 }

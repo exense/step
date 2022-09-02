@@ -50,8 +50,6 @@ public class TableService extends ApplicationServices {
     private AsyncTaskManager asyncTaskManager;
     private ResourceManager resourceManager;
 
-    private int maxTime;
-
     @PostConstruct
     public void init() throws Exception {
         super.init();
@@ -59,8 +57,9 @@ public class TableService extends ApplicationServices {
         TableRegistry tableRegistry = context.require(TableRegistry.class);
         ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
         AccessManager accessManager = context.require(AccessManager.class);
-        maxTime = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
-        tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, accessManager);
+        Integer maxRequestDuration = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
+        Integer maxResultCount = context.getConfiguration().getPropertyAsInteger("db.query.maxCount", 1000);
+        tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, accessManager, maxRequestDuration, maxResultCount);
         asyncTaskManager = getContext().require(AsyncTaskManager.class);
         resourceManager = context.getResourceManager();
     }
@@ -70,7 +69,7 @@ public class TableService extends ApplicationServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
-    public TableResponse<?> request(@PathParam("tableName") String tableName, TableRequest request) throws TableServiceException {
+    public TableResponse request(@PathParam("tableName") String tableName, TableRequest request) throws TableServiceException {
         return tableService.request(tableName, request, getSession());
     }
 

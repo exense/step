@@ -33,6 +33,7 @@ import step.core.imports.ImportContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -60,8 +61,9 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
 		Accessor<Parameter> parameterAccessor = new AbstractAccessor<>(collection);
 		context.put("ParameterAccessor", parameterAccessor);
-		
-		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new ParameterTable(collection));
+
+		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new Table<>(collection, "param-read", true)
+				.withResultItemEnricher(p -> ParameterServices.maskProtectedValue(p)));
 		
 		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getConfiguration());
 		context.put(ParameterManager.class, parameterManager);

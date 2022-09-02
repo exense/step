@@ -21,9 +21,12 @@ package step.core.plans;
 import org.bson.types.ObjectId;
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
+import step.core.collections.Collection;
+import step.core.collections.Filters;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.*;
 
@@ -76,8 +79,9 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		});
 		context.put(PlanTypeRegistry.class, planTypeRegistry);
 		context.getServiceRegistrationCallback().registerService(PlanServices.class);
-		context.get(TableRegistry.class).register("plans",
-				new PlanTable(context.getCollectionFactory().getCollection("plans", Plan.class)));
+		Collection<Plan> collection = context.getCollectionFactory().getCollection("plans", Plan.class);
+		context.get(TableRegistry.class).register("plans", new Table<>(collection, "plan-read", true)
+				.withTableFiltersFactory(e-> Filters.equals("visible", true)));
 	}
 	
 	@Override

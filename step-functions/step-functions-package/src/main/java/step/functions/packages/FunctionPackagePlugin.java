@@ -11,7 +11,7 @@ import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
-import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.Table;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.functions.manager.FunctionManager;
@@ -55,7 +55,7 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 		context.put(FunctionPackageManager.class, packageManager);
 
 		Collection<FunctionPackage> functionPackageCollection = context.getCollectionFactory().getCollection("functionPackage", FunctionPackage.class);
-		Table<FunctionPackage> collection = new AbstractTable<>(functionPackageCollection, "kw-read", true);
+		Table<FunctionPackage> collection = new Table<>(functionPackageCollection, "kw-read", true);
 		context.get(TableRegistry.class).register("functionPackage", collection);
 
 		context.getServiceRegistrationCallback().registerService(FunctionPackageServices.class);
