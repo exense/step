@@ -79,6 +79,7 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
             }
             session.setAuthenticated(true);
             session.setLocalToken(false);
+            session.setUser(user);
             setSession(session);
         }
     }
