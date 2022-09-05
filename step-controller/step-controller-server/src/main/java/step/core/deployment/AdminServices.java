@@ -186,7 +186,7 @@ public class AdminServices extends AbstractStepServices {
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="admin")
+	@Secured(right="maintenance-message-write")
 	@Path("/maintenance/message")
 	public void setMaintenanceMessage(String message) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(MAINTENANCE_MESSAGE_KEY);
@@ -206,7 +206,7 @@ public class AdminServices extends AbstractStepServices {
 	}
 	
 	@POST
-	@Secured(right="admin")
+	@Secured(right="maintenance-message-write")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/maintenance/message/toggle")
 	public void setMaintenanceMessageToggle(boolean enabled) {

@@ -74,7 +74,7 @@ public class ControllerServices extends AbstractStepServices {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/shutdown")
-	@Secured(right="admin")
+	@Secured(right="controller-manage")
 	public void shutdown() {
 		new Thread(() -> controller.destroy()).start();
 	}
