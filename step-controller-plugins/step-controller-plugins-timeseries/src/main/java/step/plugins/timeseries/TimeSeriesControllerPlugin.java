@@ -7,28 +7,44 @@ import step.core.GlobalContext;
 import step.core.collections.CollectionFactory;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.timeseries.BucketService;
+import step.core.timeseries.TimeSeries;
+import step.core.timeseries.TimeSeriesAggregationPipeline;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
+
+import java.util.Set;
 
 @Plugin
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
+    private TimeSeriesIngestionPipeline ingestionPipeline;
 
     @Override
-    public void serverStart(GlobalContext context) throws Exception {
+    public void serverStart(GlobalContext context) {
         Configuration configuration = context.getConfiguration();
         Integer resolutionPeriod = configuration.getPropertyAsInteger("plugins.timeseries.resolution.period", 1000);
         Long flushPeriod = configuration.getPropertyAsLong("plugins.timeseries.flush.period", 1000L);
         CollectionFactory collectionFactory = context.getCollectionFactory();
-        BucketService bucketService = new BucketService(collectionFactory, resolutionPeriod);
-        TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(collectionFactory, resolutionPeriod, flushPeriod);
+
+        TimeSeries timeSeries = new TimeSeries(collectionFactory, "timeseries", Set.of());
+
+        ingestionPipeline = timeSeries.newIngestionPipeline(resolutionPeriod, flushPeriod);
+        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline(resolutionPeriod);
+
         context.put(TimeSeriesIngestionPipeline.class, ingestionPipeline);
-        context.put(BucketService.class, bucketService);
+        context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
 
         context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
-        MeasurementPlugin.registerMeasurementHandlers(new TimeSeriesBucketingHandler(ingestionPipeline));
+        TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(ingestionPipeline);
+        MeasurementPlugin.registerMeasurementHandlers(handler);
+        GaugeCollectorRegistry.getInstance().registerHandler(handler);
+
     }
 
+    @Override
+    public void serverStop(GlobalContext context) {
+        ingestionPipeline.close();
+    }
 }

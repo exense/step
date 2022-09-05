@@ -10,9 +10,10 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
-import step.core.timeseries.BucketService;
-import step.core.timeseries.Query;
-import step.core.timeseries.TimeSeriesChartResponse;
+import step.core.timeseries.TimeSeriesAggregationPipeline;
+import step.core.timeseries.TimeSeriesAggregationQuery;
+import step.core.timeseries.TimeSeriesAggregationResponse;
+import step.framework.server.security.Secured;
 import step.plugins.timeseries.api.*;
 
 import java.util.Collections;
@@ -24,28 +25,29 @@ import java.util.stream.Stream;
 @Tag(name = "TimeSeries")
 public class TimeSeriesService extends AbstractStepServices {
 
-    protected BucketService bucketService;
+    private TimeSeriesAggregationPipeline aggregationPipeline;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
-        bucketService = context.get(BucketService.class);
+        aggregationPipeline = context.get(TimeSeriesAggregationPipeline.class);
     }
 
+    @Secured(right = "execution-read")
     @POST
     @Path("/buckets")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getBucketsNew(FetchBucketsRequest request) {
-        Query query = mapToQuery(request);
-        TimeSeriesChartResponse chartResponse = bucketService.collect(query);
+        TimeSeriesAggregationQuery query = mapToQuery(request);
+        TimeSeriesAggregationResponse response = query.run();
         return new TimeSeriesAPIResponseBuilder()
-                .withStart(chartResponse.getStart())
-                .withEnd(chartResponse.getEnd())
-                .withInterval(chartResponse.getInterval())
-                .withMatrixKeys(chartResponse.getMatrixKeys())
-                .withMatrix(chartResponse.getMatrix()
+                .withStart(response.getStart())
+                .withEnd(response.getEnd())
+                .withInterval(response.getInterval())
+                .withMatrixKeys(response.getMatrixKeys())
+                .withMatrix(response.getMatrix()
                         .stream()
                         .map(buckets ->
                                 Stream.of(buckets)
@@ -63,8 +65,8 @@ public class TimeSeriesService extends AbstractStepServices {
                 .build();
     }
 
-    private Query mapToQuery(FetchBucketsRequest request) {
-        return new Query()
+    private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request) {
+        return aggregationPipeline.newQuery()
                 .range(request.getStart(), request.getEnd())
                 .window(request.getIntervalSize())
                 .filter(request.getParams() != null ? request.getParams() : Collections.emptyMap())
