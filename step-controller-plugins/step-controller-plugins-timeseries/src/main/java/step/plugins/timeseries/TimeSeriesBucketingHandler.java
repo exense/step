@@ -34,15 +34,17 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     @Override
     public void processMeasurements(List<Measurement> measurements) {
-        measurements.forEach(measurement -> {
-            long begin = measurement.getBegin();
-            long value = measurement.getValue();
-            BucketAttributes bucketAttributes = new BucketAttributes(measurement);
-            removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value");
-            bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
-            // custom fields include all the attributes like execId and planId
-            this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
-        });
+        measurements.forEach(this::processMeasurement);
+    }
+
+    public void processMeasurement(Measurement measurement) {
+        long begin = measurement.getBegin();
+        long value = measurement.getValue();
+        BucketAttributes bucketAttributes = new BucketAttributes(measurement);
+        removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value");
+        bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
+        // custom fields include all the attributes like execId and planId
+        this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
     }
 
     private void removeKeys(Map<String, Object> map, String... attributes) {
