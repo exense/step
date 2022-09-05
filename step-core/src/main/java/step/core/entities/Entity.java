@@ -18,9 +18,6 @@
  ******************************************************************************/
 package step.core.entities;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.Accessor;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;

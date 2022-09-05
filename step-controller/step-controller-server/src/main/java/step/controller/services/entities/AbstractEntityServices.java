@@ -22,6 +22,10 @@ import step.core.entities.Entity;
 import step.core.objectenricher.ObjectFilter;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
+import step.framework.server.tables.service.TableRequest;
+import step.framework.server.tables.service.TableResponse;
+import step.framework.server.tables.service.TableService;
+import step.framework.server.tables.service.TableServiceException;
 
 import java.util.List;
 import java.util.Map;
@@ -35,6 +39,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     private final String entityName;
     private BulkOperationManager<T> bulkOperationManager;
     private Accessor<T> accessor;
+    private TableService tableService;
     /**
      * Associates {@link Session} to threads. This is used by requests that are executed
      * outside the Jetty scope like for {@link BulkOperationManager}
@@ -53,6 +58,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         accessor = entityType.getAccessor();
         Collection<T> collection = accessor.getCollectionDriver();
         bulkOperationManager = new BulkOperationManager<>(collection, context.require(AsyncTaskManager.class));
+        tableService = context.require(TableService.class);
     }
 
     /**
@@ -170,5 +176,15 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             }
         };
         return bulkOperationManager.performBulkOperation(parameters, consumer, contextObjectFilter, getSession());
+    }
+
+    @Operation(operationId = "get{Entity}Table", description = "Get the table view according to provided request")
+    @POST
+    @Path("/table")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public TableResponse<T> request(TableRequest request) throws TableServiceException {
+        return tableService.request(entityName, request, getSession());
     }
 }
