@@ -92,7 +92,11 @@ public class ControllerServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public List<ReportNode> getReportNodePath(@PathParam("id") String reportNodeId) {
-		return getContext().getReportAccessor().getReportNodePath(new ObjectId(reportNodeId));
+		// Forced to convert result to ArrayList to avoid error in Jackson
+		List<ReportNode> result = new ArrayList<>();
+		List<ReportNode> path = getContext().getReportAccessor().getReportNodePath(new ObjectId(reportNodeId));
+		path.forEach((node) -> result.add(node));
+		return result;
 	}
 
 	@GET
