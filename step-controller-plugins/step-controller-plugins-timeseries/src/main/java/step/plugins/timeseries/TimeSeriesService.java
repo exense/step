@@ -16,6 +16,7 @@ import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
+import step.core.collections.filters.Equals;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.timeseries.TimeSeriesAggregationPipeline;
@@ -102,7 +103,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public AsyncTaskStatus<Object> rebuildTimeSeries(TimeSeriesRebuildRequest request) {
         String executionId = Objects.requireNonNull(request.getExecutionId(), "executionId not specified");
-        Filters.Equals measurementFilter = Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId);
+        Equals measurementFilter = Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId);
         Measurement firstMeasurement = measurementCollection.find(measurementFilter,
                 new SearchOrder(MeasurementPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
         Measurement lastMeasurement = measurementCollection.find(measurementFilter,

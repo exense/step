@@ -56,7 +56,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
 		<exense-commons.version>2022.8.31-630f8527979c1e42d031a667</exense-commons.version>
-		<step-framework.version>2022.9.5-6315f028fd5f6139bc9b3e60</step-framework.version>
+		<step-framework.version>2022.9.6-63170b20fd5f6139bca5f361</step-framework.version>
 		<step-grid.version>2022.9.1-631047c2979c1e42d036122c</step-grid.version>
 		<step-api.version>2022.06.09-IDb0ca56d</step-api.version>
 		<viz.version>2022.7.28-62e2833087a528456038d181</viz.version>
