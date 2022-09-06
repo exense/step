@@ -3,6 +3,8 @@ package step.core.authentication;
 import ch.exense.commons.app.Configuration;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+import java.util.Objects;
+
 public class JWTSettings {
 
     private static final String CONFIG_KEY_JWT_ALGO="authenticator.jwt.algo";
@@ -10,6 +12,7 @@ public class JWTSettings {
     private static final String CONFIG_KEY_JWT_AUDIENCE="authenticator.jwt.audience";
     private static final String CONFIG_KEY_JWT_ISSUER="authenticator.jwt.issuer";
     private static final String CONFIG_KEY_JWT_ROLE_CLAIM_NAME ="authenticator.jwt.role-claim-name";
+    private static final String CONFIG_KEY_USER_CLAIM_NAME ="authenticator.jwt.user-claim-name";
     private static final String CONFIG_KEY_JWT_REFRESH_COUNT_CLAIM_NAME="authenticator.jwt.refresh-count-claim-name";
     private static final String CONFIG_KEY_JWT_REFRESH_LIMIT_CLAIM_NAME="authenticator.jwt.refresh-limit-claim-name";
     private static final String CONFIG_KEY_JWT_ISSUER_CHECK="authenticator.jwt.issuer.check";
@@ -26,15 +29,19 @@ public class JWTSettings {
     private final String refreshLimitClaimName;
     private final boolean checkIssuer;
     private final boolean checkAudience;
-    
+    private final String userClaimName;
+
 
     public JWTSettings(Configuration configuration, String secret) {
+        String audience1;
         String algoStr = configuration.getProperty(CONFIG_KEY_JWT_ALGO,"HS256");
         algo = SignatureAlgorithm.valueOf(algoStr);
         this.secret = secret;
         clockSkew = configuration.getPropertyAsLong(CONFIG_KEY_JWT_CLOCKSKEW,10l);
-        audience = configuration.getProperty(CONFIG_KEY_JWT_AUDIENCE,configuration.getProperty("controller.url"));
+        audience1 = configuration.getProperty(CONFIG_KEY_JWT_AUDIENCE,configuration.getProperty("controller.url"));
+        audience = Objects.requireNonNullElse(audience1, "local");
         issuer = configuration.getProperty(CONFIG_KEY_JWT_ISSUER,audience); //if not set the controller is also the issuer
+        userClaimName = configuration.getProperty(CONFIG_KEY_USER_CLAIM_NAME, "preferred_username");//"sub");
         roleClaimName = configuration.getProperty(CONFIG_KEY_JWT_ROLE_CLAIM_NAME,"role");
         refreshCountClaimName = configuration.getProperty(CONFIG_KEY_JWT_ROLE_CLAIM_NAME,"refreshCount");
         refreshLimitClaimName = configuration.getProperty(CONFIG_KEY_JWT_ROLE_CLAIM_NAME,"refreshLimit");
@@ -60,6 +67,10 @@ public class JWTSettings {
 
     public String getIssuer() {
         return issuer;
+    }
+
+    public String getUserClaimName() {
+        return userClaimName;
     }
 
     public String getRoleClaimName() {

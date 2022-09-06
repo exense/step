@@ -2,6 +2,7 @@ package step.core.authentication;
 
 import ch.exense.commons.app.Configuration;
 import org.junit.Test;
+import step.core.access.User;
 import step.framework.server.access.AccessManager;
 import step.core.access.Role;
 import step.core.access.RoleResolver;
@@ -33,7 +34,10 @@ public class AuthorizationServerTest {
         AuthorizationServerManager authorizationServerManager = new AuthorizationServerManagerLocal(jwtSettings, accessManager);
         ResourceServerManager resourceServerManager = new ResourceServerManager(jwtSettings, authorizationServerManager);
         Session session = new Session();
-        String token = authorizationServerManager.issueToken("myUser", session);
+        User user = new User();
+        user.setUsername("admin");
+        session.setUser(user);
+        String token = authorizationServerManager.getAccessToken(session, null, null);
         resourceServerManager.parseAndValidateToken(token, session);
                 
         

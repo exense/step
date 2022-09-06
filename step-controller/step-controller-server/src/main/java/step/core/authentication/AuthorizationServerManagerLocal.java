@@ -21,9 +21,9 @@ public class AuthorizationServerManagerLocal implements AuthorizationServerManag
     }
 
     @Override
-    public String issueToken(String username, Session session) {
+    public String getAccessToken(Session session, String code, String session_state) {
         Role role = accessManager.getRoleInContext(session);
-        String token = generateToken(username, role.getAttribute("name"),
+        String token = generateToken(session.getUser().getSessionUsername(), role.getAttribute("name"),
                 Date.from(ZonedDateTime.now().plusHours(8).toInstant()));
         session.setToken(AuthenticationFilter.AUTHENTICATION_SCHEME + " " + token);
         session.setLocalToken(true);
@@ -46,12 +46,6 @@ public class AuthorizationServerManagerLocal implements AuthorizationServerManag
         String token = generateToken(session.getUser().getSessionUsername(), role.getAttribute("name"),
                 Date.from(ZonedDateTime.now().plusDays(days).toInstant()));
         return token;
-    }
-
-    @Override
-    public boolean filter(ContainerRequestContext requestContext, Session session) {
-        //nothing to be done for this local implementation
-        return false;
     }
 
     @Override

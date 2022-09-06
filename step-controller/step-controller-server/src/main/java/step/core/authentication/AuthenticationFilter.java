@@ -46,10 +46,6 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        boolean abort = authorizationServerManager.filter(requestContext,getSession());
-        if (abort) {
-            return;
-        }
         // Get the Authorization header from the request header or http session
         String authorizationHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
         authorizationHeader = (authorizationHeader != null)  ? authorizationHeader : 

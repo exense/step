@@ -31,11 +31,18 @@ import ch.commons.auth.Authenticator;
 import ch.commons.auth.Credentials;
 import ch.exense.commons.app.Configuration;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.core.authentication.AuthenticationFilter;
+import step.core.authentication.AuthenticationTokenDetails;
 import step.core.authentication.AuthorizationServerManager;
+import step.core.authentication.ResourceServerManager;
 import step.core.controller.errorhandling.ApplicationException;
 import step.framework.server.Session;
 
 public class AuthenticationManager {
+
+	private static Logger logger = LoggerFactory.getLogger(AuthenticationManager.class);
 
 	private final Configuration configuration;
 	private final Authenticator authenticator;
@@ -43,13 +50,16 @@ public class AuthenticationManager {
 	private final List<AuthenticationManagerListener> listeners = new ArrayList<>();
 
 	private final AuthorizationServerManager authorizationServerManager;
+	private final ResourceServerManager resourceServerManager;
 
-	public AuthenticationManager(Configuration configuration, Authenticator authenticator, UserAccessor userAccessor, AuthorizationServerManager authorizationServerManager) {
+	public AuthenticationManager(Configuration configuration, Authenticator authenticator, UserAccessor userAccessor,
+								 AuthorizationServerManager authorizationServerManager, ResourceServerManager resourceServerManager) {
 		super();
 		this.configuration = configuration;
 		this.authenticator = authenticator;
 		this.userAccessor = userAccessor;
 		this.authorizationServerManager = authorizationServerManager;
+		this.resourceServerManager = resourceServerManager;
 	}
 
 	public boolean useAuthentication() {
@@ -70,7 +80,26 @@ public class AuthenticationManager {
 				logoutSession(session);
 				throw e;
 			}
-			authorizationServerManager.issueToken(credentials.getUsername(), session);
+			authorizationServerManager.getAccessToken(session, null, null); // TODO to be added as part of onSuccessfulAuthentication for default and LDAP auth
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public boolean authenticate(Session<User> session, String code, String sessionState) throws Exception {
+		String token = authorizationServerManager.getAccessToken(session, code, sessionState);
+		AuthenticationTokenDetails authenticationTokenDetails = resourceServerManager.parseAndValidateToken(token, session);
+		logger.info("authenticationTokenDetails: " + authenticationTokenDetails);
+		String user = createUserIfRequired(session, authenticationTokenDetails);
+		if (user != null) {
+			setUserToSession(session, user);
+			try {
+				listeners.forEach(l->l.onSuccessfulAuthentication(session));
+			} catch(Exception e) {
+				logoutSession(session);
+				throw e;
+			}
 			return true;
 		} else {
 			return false;
@@ -103,7 +132,7 @@ public class AuthenticationManager {
 			}
 			
 			setUserToSession(session, "admin");
-			authorizationServerManager.issueToken("admin", session);
+			authorizationServerManager.getAccessToken(session, null, null);
 		}
 	}
 	
@@ -149,5 +178,17 @@ public class AuthenticationManager {
 	public static interface AuthenticationManagerListener {
 		
 		public void onSuccessfulAuthentication(Session<User> session);
+	}
+
+	private String createUserIfRequired(Session s, AuthenticationTokenDetails authenticationTokenDetails) {
+		String username = authenticationTokenDetails.getUsername();
+		User byUsername = userAccessor.getByUsername(username);
+		if (byUsername == null) {
+			User user = new User();
+			user.setUsername(username);
+			user.setRole("admin");
+			userAccessor.save(user);
+		}
+		return username;
 	}
 }

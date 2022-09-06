@@ -58,10 +58,10 @@ public class ResourceServerManager {
             } else {
                 parser.setSigningKeyResolver(signingKeyResolver);
             }
-            Claims claims = parser
+            Jws<Claims> claimsJws = parser
                     .setAllowedClockSkewSeconds(jwtSettings.getClockSkew())
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseClaimsJws(token);
+            Claims claims = claimsJws.getBody();
 
             //TODO make this configurable
             return new AuthenticationTokenDetails.Builder()
@@ -105,7 +105,7 @@ public class ResourceServerManager {
      * @return Username from the JWT token
      */
     private String extractUsernameFromClaims(@NotNull Claims claims) {
-        return claims.getSubject();
+        return (String) claims.get(jwtSettings.getUserClaimName());
     }
 
     /**
@@ -170,4 +170,6 @@ public class ResourceServerManager {
     private int extractRefreshLimitFromClaims(@NotNull Claims claims) {
         return (int) claims.get(jwtSettings.getRefreshLimitClaimName());
     }
+
+
 }

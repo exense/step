@@ -151,4 +151,20 @@ public class AuthenticationTokenDetails {
         }
 
     }
+
+    @Override
+    public String toString() {
+        return "AuthenticationTokenDetails{" +
+                "id='" + id + '\'' +
+                ", username='" + username + '\'' +
+                ", role='" + role + '\'' +
+                ", issuer='" + issuer + '\'' +
+                ", audience='" + audience + '\'' +
+                ", issuedDate=" + issuedDate +
+                ", notBeforeDate=" + notBeforeDate +
+                ", expirationDate=" + expirationDate +
+                ", refreshCount=" + refreshCount +
+                ", refreshLimit=" + refreshLimit +
+                '}';
+    }
 }

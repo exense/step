@@ -70,7 +70,7 @@ public class SecurityPlugin extends AbstractControllerPlugin {
 
 		Authenticator authenticator = initAuthenticator();
 		AuthenticationManager authenticationManager = new AuthenticationManager(configuration, authenticator, context.getUserAccessor(),
-				authorizationServerManager);
+				authorizationServerManager, resourceServerManager);
 		context.put(AuthenticationManager.class, authenticationManager);
 	}
 
