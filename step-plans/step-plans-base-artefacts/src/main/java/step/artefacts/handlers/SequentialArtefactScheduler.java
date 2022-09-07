@@ -101,9 +101,15 @@ public class SequentialArtefactScheduler {
 			reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
 		} finally {
 			// Execute the AfterSequence artefacts
-			for (AbstractArtefact afterArtefact : afterArtefacts) {
-				ReportNode resultNode = artefactHandlerManager.execute(afterArtefact, reportNode);
-				reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
+			context.byPassInterruptInCurrentThread(true);
+			try{
+				for (AbstractArtefact afterArtefact : afterArtefacts) {
+					ReportNode resultNode = artefactHandlerManager.execute(afterArtefact, reportNode);
+					reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
+				}
+
+			} finally {
+				context.byPassInterruptInCurrentThread(false);
 			}
 		}
 		reportNode.setStatus(reportNodeStatusComposer.getParentStatus());
