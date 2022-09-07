@@ -87,7 +87,6 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-framework-collections-mongodb</artifactId>
 			<version>${step-framework.version}</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
