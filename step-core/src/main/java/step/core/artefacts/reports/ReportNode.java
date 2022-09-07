@@ -211,6 +211,10 @@ public class ReportNode extends AbstractIdentifiableObject {
 		isOrphan = orphan;
 	}
 
+	public boolean setVariableInParentScope() {
+		return false;
+	}
+
 //	@Override
 //	public String toString() {
 //		return "ReportNode [name=" + name + ", id=" + getId() + "]";
