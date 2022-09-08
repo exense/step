@@ -24,9 +24,9 @@ public enum ReportNodeStatus {
 	
 	FAILED,
 
-	PASSED,
-
 	INTERRUPTED,
+
+	PASSED,
 	
 	SKIPPED,
 	
