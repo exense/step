@@ -29,6 +29,7 @@ public class ExecutionContextBindings {
 		Map<String, Object> bindings = new HashMap<String, Object>();
 		bindings.putAll(context.getVariablesManager().getAllVariables());
 		bindings.put("context", context);
+		bindings.put("plan", context.getPlan());
 		bindings.put("variables", context.getVariablesManager());
 		bindings.put(BINDING_RESOURCE_MANAGER, context.getResourceManager());
 		return bindings;
