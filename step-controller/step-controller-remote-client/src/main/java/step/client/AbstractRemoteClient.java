@@ -103,6 +103,7 @@ public class AbstractRemoteClient implements Closeable {
 		}
 		Builder b = target.request();
 		b.accept(MediaType.APPLICATION_JSON);
+		b.accept(MediaType.TEXT_PLAIN);
 		if(cookies!=null) {
 			for(NewCookie c:cookies.values()) {
 				b.cookie(c);
