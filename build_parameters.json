@@ -14,6 +14,11 @@
 					"CONFIG": "DefaultBuild"
 				},
 				{
+					"NAME": "INTEGRATION",
+					"URL": "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/",
+					"CONFIG": "DefaultBuild"
+				},
+				{
 					"NAME": "PRODUCTION",
 					"URL": "sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2",
 					"CONFIG": "DefaultBuild"
@@ -27,6 +32,10 @@
 			"PARAMETERS": [
 				{
 					"NAME": "DEVELOPMENT",
+					"URL": "nexus-staging https://nexus-enterprise.exense.ch/repository/staging-npm/"
+				},
+				{
+					"NAME": "INTEGRATION",
 					"URL": "nexus-staging https://nexus-enterprise.exense.ch/repository/staging-npm/"
 				},
 				{
@@ -89,6 +98,10 @@
 					"PARAMETERS": [
 						{
 							"NAME": "DEVELOPMENT",
+							"URL": "docker-dev.exense.ch"
+						},
+						{
+							"NAME": "INTEGRATION",
 							"URL": "docker-dev.exense.ch"
 						},
 						{
