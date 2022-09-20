@@ -32,6 +32,8 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
+import java.util.ArrayList;
+
 @Plugin(dependencies= {ExecutionTypePlugin.class, ScreenTemplatePlugin.class})
 public class ExecutionPlugin extends AbstractControllerPlugin {
 
@@ -55,8 +57,9 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 
 
 		tableRegistry.register("leafReports", new Table<>(reportsCollection, "execution-read", false)
-				.withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)));
-		tableRegistry.register("reports", new Table<>(reportsCollection, "execution-read", false));
+				.withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)).withResultListFactory(()->new ArrayList<>(){}));
+		tableRegistry.register("reports", new Table<>(reportsCollection, "execution-read", false)
+				.withResultListFactory(()->new ArrayList<>(){}));
 		context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
 	}
 }
