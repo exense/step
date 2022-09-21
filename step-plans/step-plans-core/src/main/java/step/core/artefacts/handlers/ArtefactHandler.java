@@ -50,8 +50,11 @@ import step.resources.ResourceManager;
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 
 	protected static Logger logger = LoggerFactory.getLogger(ArtefactHandler.class);
-	
+
 	public static final String FILE_VARIABLE_PREFIX = "file:";
+	// Flag used to force the persistence of report nodes before execution of the artefact and bypass
+	// the persistbefore = false
+	public static final String FORCE_PERSIST_BEFORE = "forcePersistBefore";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTAFTER = "tec.execution.reportnodes.persistafter";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTBEFORE = "tec.execution.reportnodes.persistbefore";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
@@ -166,7 +169,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			if((filter!=null&&!filter.isSelected(artefact))) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
-				if(persistBefore && artefact.isPersistNode()) {
+				Object forcePersistBefore = artefact.getCustomAttribute(FORCE_PERSIST_BEFORE);
+				if(persistBefore && artefact.isPersistNode() || Boolean.TRUE.equals(forcePersistBefore)) {
 					saveReportNode(reportNode);					
 				}
 		

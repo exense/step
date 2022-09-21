@@ -231,7 +231,10 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 								thread.gcounter.increment();
 								
 								Sequence iterationTestCase = createWorkArtefact(Sequence.class, sessionArtefact, "Iteration "+i);
-								
+
+								// Force the persistence of the iteration report node before its execution to have it
+								// in the tree view (SED-1002)
+								iterationTestCase.addCustomAttribute(ArtefactHandler.FORCE_PERSIST_BEFORE, true);
 								for(AbstractArtefact child:newChildren) {
 									iterationTestCase.addChild(child);
 								}
