@@ -146,23 +146,6 @@
 			<version>${step-framework.version}</version>
 		</dependency>
 
-		<!-- all dependencies required for base plugins -->
-		<dependency>
-			<groupId>ch.exense.viz</groupId>
-			<artifactId>viz-servlet</artifactId>
-			<version>${viz.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.mongodb</groupId>
-					<artifactId>mongodb-driver</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>ch.exense</groupId>
-					<artifactId>exense-commons</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
     </dependencies>
 
 	<build>

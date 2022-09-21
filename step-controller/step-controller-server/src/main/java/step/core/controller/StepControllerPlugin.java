@@ -1,6 +1,5 @@
 package step.core.controller;
 
-import ch.exense.viz.persistence.accessors.GenericVizAccessor;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,13 +68,7 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 		context.getServiceRegistrationCallback().registerService(ErrorFilter.class);
 		context.getServiceRegistrationCallback().registerService(CORSRequestResponseFilter.class);
 
-		GenericVizAccessor accessor = new GenericVizAccessor(context.getCollectionFactory());
-		context.getServiceRegistrationCallback().register(new AbstractBinder() {
-			@Override
-			protected void configure() {
-				bind(accessor).to(GenericVizAccessor.class);
-			}
-		});
+
 	}
 
 	@Override
