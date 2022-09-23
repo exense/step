@@ -20,6 +20,7 @@ package step.plugins.scripteditor;
 
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
+import step.core.plugins.AbstractWebPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
 import step.functions.Function;
@@ -58,7 +59,7 @@ public class ScriptEditorPlugin extends AbstractControllerPlugin {
 
 
 	@Override
-	public WebPlugin getWebPlugin() {
+	public AbstractWebPlugin getWebPlugin() {
 		WebPlugin webPlugin = new WebPlugin();
 		webPlugin.getAngularModules().add("scriptEditor");
 		webPlugin.getScripts().add("scripteditor/js/controllers/scriptEditor.js");

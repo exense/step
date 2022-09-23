@@ -2,11 +2,8 @@ package step.core.plugins;
 
 import ch.exense.commons.app.Configuration;
 import org.junit.Test;
-import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.engine.plugins.BasePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.ServerPluginManager;
 
@@ -23,7 +20,7 @@ public class ControllerPluginManagerTest {
     @Test
     public void test() throws Exception {
         ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(new Configuration()));
-        List<WebPlugin> plugins = pluginManager.getWebPlugins();
+        List<AbstractWebPlugin> plugins = pluginManager.getWebPlugins();
         assertTrue(plugins.contains(WEB_PLUGIN));
         List<ExecutionEnginePlugin> executionEnginePlugins = pluginManager.getExecutionEnginePlugins();
         assertTrue(executionEnginePlugins.contains(EXECUTION_ENGINE_PLUGIN));
@@ -45,7 +42,7 @@ public class ControllerPluginManagerTest {
         }
 
         @Override
-        public WebPlugin getWebPlugin() {
+        public AbstractWebPlugin getWebPlugin() {
             return WEB_PLUGIN;
         }
 

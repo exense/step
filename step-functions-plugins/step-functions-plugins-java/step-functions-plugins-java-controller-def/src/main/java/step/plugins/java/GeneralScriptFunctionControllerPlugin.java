@@ -20,6 +20,7 @@ package step.plugins.java;
 
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
+import step.core.plugins.AbstractWebPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
 import step.functions.plugin.FunctionControllerPlugin;
@@ -29,7 +30,7 @@ import step.functions.type.FunctionTypeRegistry;
 public class GeneralScriptFunctionControllerPlugin extends AbstractControllerPlugin {
 	
 	@Override
-	public WebPlugin getWebPlugin() {
+	public AbstractWebPlugin getWebPlugin() {
 		WebPlugin webPlugin = new WebPlugin();
 		webPlugin.getAngularModules().add("javaPlugin");
 		webPlugin.getScripts().add("javaplugin/js/script.js");

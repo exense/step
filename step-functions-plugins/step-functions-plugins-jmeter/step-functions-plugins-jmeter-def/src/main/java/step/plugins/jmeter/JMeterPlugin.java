@@ -20,6 +20,7 @@ package step.plugins.jmeter;
 
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
+import step.core.plugins.AbstractWebPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.WebPlugin;
 import step.functions.plugin.FunctionControllerPlugin;
@@ -39,7 +40,7 @@ public class JMeterPlugin extends AbstractControllerPlugin {
 	}
 	
 	@Override
-	public WebPlugin getWebPlugin() {
+	public AbstractWebPlugin getWebPlugin() {
 		WebPlugin webPlugin = new WebPlugin();
 		webPlugin.getAngularModules().add("jmeterPlugin");
 		webPlugin.getScripts().add("jmeterplugin/js/jmeter.js");

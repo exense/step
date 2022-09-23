@@ -28,7 +28,7 @@ public abstract class AbstractControllerPlugin extends AbstractPlugin implements
 		return null;
 	}
 	
-	public WebPlugin getWebPlugin() {
+	public AbstractWebPlugin getWebPlugin() {
 		return null;
 	}
 

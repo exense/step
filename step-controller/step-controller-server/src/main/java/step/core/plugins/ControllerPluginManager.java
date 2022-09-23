@@ -39,7 +39,7 @@ public class ControllerPluginManager  {
 		return controllerPluginStream.stream().map(ControllerPlugin::getExecutionEnginePlugin).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 	
-	public List<WebPlugin> getWebPlugins() {
+	public List<AbstractWebPlugin> getWebPlugins() {
 		return controllerPluginStream.stream().map(ControllerPlugin::getWebPlugin).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
