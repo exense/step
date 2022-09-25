@@ -9,6 +9,7 @@ import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -64,6 +65,22 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
                 this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
         });
+    }
+
+    /**
+     * This method will handle existing measurements, and will check if it is a gauge or normal measurement
+     * @param measurement
+     */
+    public void ingestExistingMeasurement(Measurement measurement) {
+        if (measurement == null) {
+            return;
+        }
+        measurement.remove("_id"); // because these measurements come with a generated id and can't be grouped into buckets.
+        if (measurement.getType().equals(THREAD_GROUP_MEASUREMENT_TYPE)) {
+            this.processGauges(List.of(measurement));
+        } else {
+            this.processMeasurement(measurement);
+        }
     }
 
     @Override
