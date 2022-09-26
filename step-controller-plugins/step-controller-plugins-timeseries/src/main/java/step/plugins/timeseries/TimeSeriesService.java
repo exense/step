@@ -4,10 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.rtm.commons.MeasurementAccessor;
 import step.controller.services.async.AsyncTaskManager;
@@ -60,7 +57,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Path("/buckets")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TimeSeriesAPIResponse getBucketsNew(FetchBucketsRequest request) {
+    public TimeSeriesAPIResponse getBuckets(FetchBucketsRequest request) {
         TimeSeriesAggregationQuery query = mapToQuery(request);
         TimeSeriesAggregationResponse response = query.run();
         return new TimeSeriesAPIResponseBuilder()
@@ -103,32 +100,46 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public AsyncTaskStatus<Object> rebuildTimeSeries(TimeSeriesRebuildRequest request) {
         String executionId = Objects.requireNonNull(request.getExecutionId(), "executionId not specified");
-        Equals measurementFilter = Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId);
-        Measurement firstMeasurement = measurementCollection.find(measurementFilter,
-                new SearchOrder(MeasurementPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
-        Measurement lastMeasurement = measurementCollection.find(measurementFilter,
-                new SearchOrder(MeasurementPlugin.BEGIN, -1), 0, 1, 0).findFirst().orElse(null);
-        if (firstMeasurement != null && lastMeasurement != null) {
-            // Check if a time series already exist for this execution
-            TimeSeriesAggregationResponse aggregationResponse = aggregationPipeline.newQuery().range(firstMeasurement.getBegin(), lastMeasurement.getBegin())
-                    .filter(Map.of(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId)).split(1l).run();
-            long seriesCount = aggregationResponse.getMatrix().size();
-            if (seriesCount > 0) {
-                throw new ControllerServiceException("Time series already exist for this execution. Unable to rebuild it");
-            } else {
+        if (this.timeSeriesExists(executionId)) {
+            throw new ControllerServiceException("Time series already exist for this execution. Unable to rebuild it");
+        } else {
+            // we need to check if measurements exists
+            Equals measurementFilter = Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId);
+            Measurement firstMeasurement = measurementCollection.find(measurementFilter,
+                    new SearchOrder(MeasurementPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
+            Measurement lastMeasurement = measurementCollection.find(measurementFilter,
+                    new SearchOrder(MeasurementPlugin.BEGIN, -1), 0, 1, 0).findFirst().orElse(null);
+            if (firstMeasurement != null && lastMeasurement != null) {
                 return asyncTaskManager.scheduleAsyncTask(t -> {
                     TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline);
                     LongAdder count = new LongAdder();
+                    SearchOrder searchOrder = new SearchOrder("begin", 1);
                     // Iterate over each measurement and ingest it again
-                    measurementCollection.find(measurementFilter, null, null, null, 0).forEach(measurement -> {
+                    measurementCollection.find(measurementFilter, searchOrder, null, null, 0).forEach(measurement -> {
                         count.increment();
-                        timeSeriesBucketingHandler.processMeasurement(measurement);
+                        timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
                     });
                     return new TimeSeriesRebuildResponse(count.longValue());
                 });
+            } else {
+                throw new ControllerServiceException("No measurement found matching this execution id");
             }
-        } else {
-            throw new ControllerServiceException("No measurement found matching this execution id");
         }
+    }
+
+    @Operation(operationId = "checkTimeSeries", description = "Check if the time-series was created for a specific execution")
+    @Secured(right = "execution-read")
+    @GET
+    @Path("/execution/{executionId}/exists")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public boolean timeSeriesIsBuilt(@PathParam("executionId") String executionId) {
+        return timeSeriesExists(executionId);
+    }
+
+    private boolean timeSeriesExists(String executionId) {
+        TimeSeriesAggregationResponse aggregationResponse = aggregationPipeline.newQuery().range(0, System.currentTimeMillis())
+                .filter(Map.of(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId)).split(1L).run();
+        return aggregationResponse.getMatrix().size() > 0;
     }
 }
