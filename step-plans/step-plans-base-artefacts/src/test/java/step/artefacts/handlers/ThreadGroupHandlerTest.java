@@ -21,14 +21,7 @@ package step.artefacts.handlers;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static step.planbuilder.BaseArtefacts.afterSequence;
-import static step.planbuilder.BaseArtefacts.afterThread;
-import static step.planbuilder.BaseArtefacts.beforeSequence;
-import static step.planbuilder.BaseArtefacts.beforeThread;
-import static step.planbuilder.BaseArtefacts.check;
-import static step.planbuilder.BaseArtefacts.echo;
-import static step.planbuilder.BaseArtefacts.runnable;
-import static step.planbuilder.BaseArtefacts.threadGroup;
+import static step.planbuilder.BaseArtefacts.*;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -50,7 +43,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 
 public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
-	
+
 	@Test
 	public void testStatusReportingFailed() throws Exception {
 		ThreadGroup artefact = new ThreadGroup();
@@ -242,6 +235,41 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		
 		assertEquals(3, globalCounterActual.get());
 		assertArrayEquals(new String[] {"1","1"}, userIds.toArray());
+	}
+
+	@Test
+	public void testSetInBeforeThread() throws Exception {
+		final String value = "Value123";
+		final String tastVarname = "testVar";
+
+		final List<String> testVar = new ArrayList<>();
+		final List<String> testVarWithinAfter = new ArrayList<>();
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(threadGroup(1, 1))
+					.startBlock(beforeThread())
+						// the userId should be available in the beforeThread
+						.add(set(tastVarname,"\""+value+"\""))
+					.endBlock()
+					// the variable testVar should be available within the thread
+					.add(runnable(c -> {
+						testVar.add(c.getVariablesManager().getVariableAsString(tastVarname));
+					}))
+					.startBlock(afterThread())
+						// the variable testVar should be available within the afterThread
+						.add(runnable(c -> testVarWithinAfter.add(c.getVariablesManager().getVariableAsString(tastVarname))))
+					.endBlock()
+				.endBlock()
+				.build();
+
+		// Run the plan
+		PlanRunnerResult result = executionEngine.execute(plan);
+
+		result.waitForExecutionToTerminate();
+		result.printTree();
+
+		assertEquals(List.of(value), testVar);
+		assertEquals(List.of(value), testVarWithinAfter);
 	}
 	
 	@Test
