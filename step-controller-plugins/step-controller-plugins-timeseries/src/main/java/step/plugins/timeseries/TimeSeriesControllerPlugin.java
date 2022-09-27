@@ -18,17 +18,20 @@ import java.util.Set;
 @Plugin
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
+    public static String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
+    public static String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
+
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
     private TimeSeriesIngestionPipeline ingestionPipeline;
 
     @Override
     public void serverStart(GlobalContext context) {
         Configuration configuration = context.getConfiguration();
-        Integer resolutionPeriod = configuration.getPropertyAsInteger("plugins.timeseries.resolution.period", 1000);
+        Integer resolutionPeriod = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
         Long flushPeriod = configuration.getPropertyAsLong("plugins.timeseries.flush.period", 1000L);
         CollectionFactory collectionFactory = context.getCollectionFactory();
 
-        TimeSeries timeSeries = new TimeSeries(collectionFactory, "timeseries", Set.of());
+        TimeSeries timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of());
 
         ingestionPipeline = timeSeries.newIngestionPipeline(resolutionPeriod, flushPeriod);
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline(resolutionPeriod);
