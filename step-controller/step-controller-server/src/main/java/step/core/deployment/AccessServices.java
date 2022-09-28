@@ -205,9 +205,7 @@ public class AccessServices extends AbstractStepServices {
 		}
 		conf.setDebug(ctrlConf.getPropertyAsBoolean("ui.debug", false));
 		conf.setTitle(ctrlConf.getProperty("ui.title", "STEP"));
-		
-		conf.setDisplayLegacyPerfDashboard(ctrlConf.getPropertyAsBoolean("ui.performance.dashboard.legacy.enabled",true));
-		conf.setDisplayNewPerfDashboard(ctrlConf.getPropertyAsBoolean("ui.performance.dashboard.beta.enabled",true));
+
 		return conf;
 	}
 	
