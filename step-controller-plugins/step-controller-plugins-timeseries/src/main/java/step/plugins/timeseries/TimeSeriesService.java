@@ -43,7 +43,6 @@ public class TimeSeriesService extends AbstractStepServices {
     private TimeSeriesAggregationPipeline aggregationPipeline;
     private Collection<Measurement> measurementCollection;
     private TimeSeries timeSeries;
-    private Integer ingestionResolutionPeriod;
 
     @PostConstruct
     public void init() throws Exception {
@@ -52,9 +51,7 @@ public class TimeSeriesService extends AbstractStepServices {
         aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         asyncTaskManager = context.require(AsyncTaskManager.class);
         measurementCollection = context.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME, Measurement.class);
-        CollectionFactory collectionFactory = context.getCollectionFactory();
-        timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of());
-        ingestionResolutionPeriod = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
+        timeSeries = context.require(TimeSeries.class);
     }
 
     @Secured(right = "execution-read")
@@ -117,17 +114,19 @@ public class TimeSeriesService extends AbstractStepServices {
             if (firstMeasurement != null && lastMeasurement != null) {
                 return asyncTaskManager.scheduleAsyncTask(t -> {
                     // the flushing period can be a big value, because we will force flush every time.
-                    TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(ingestionResolutionPeriod, 30_000);// we create a new pipeline for every migration
-                    TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline);
-                    LongAdder count = new LongAdder();
-                    SearchOrder searchOrder = new SearchOrder("begin", 1);
-                    // Iterate over each measurement and ingest it again
-                    measurementCollection.find(measurementFilter, searchOrder, null, null, 0).forEach(measurement -> {
-                        count.increment();
-                        timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
-                    });
-                    ingestionPipeline.flush();
-                    return new TimeSeriesRebuildResponse(count.longValue());
+                    // we create a new pipeline for every migration
+                    try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline( 3000)) {
+                        TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline);
+                        LongAdder count = new LongAdder();
+                        SearchOrder searchOrder = new SearchOrder("begin", 1);
+                        // Iterate over each measurement and ingest it again
+                        measurementCollection.find(measurementFilter, searchOrder, null, null, 0).forEach(measurement -> {
+                            count.increment();
+                            timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
+                        });
+                        ingestionPipeline.flush();
+                        return new TimeSeriesRebuildResponse(count.longValue());
+                    }
                 });
             } else {
                 throw new ControllerServiceException("No measurement found matching this execution id");

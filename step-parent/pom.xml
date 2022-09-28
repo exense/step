@@ -1,18 +1,18 @@
 <!--
   Copyright (C) 2020, exense GmbH
-   
+
   This file is part of STEP
-   
+
   STEP is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-   
+
   STEP is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU Affero General Public License for more details.
-   
+
   You should have received a copy of the GNU Affero General Public License
   along with STEP.  If not, see <http://www.gnu.org/licenses/>.
 -->
@@ -56,7 +56,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
 		<exense-commons.version>2022.8.31-630f8527979c1e42d031a667</exense-commons.version>
-		<step-framework.version>2022.9.22-632c583cfd5f6139bcbfc546</step-framework.version>
+		<step-framework.version>2022.9.28-63343fb6fd5f6139bc5d3e58</step-framework.version>
 		<step-grid.version>2022.9.1-631047c2979c1e42d036122c</step-grid.version>
 		<step-api.version>2022.06.09-IDb0ca56d</step-api.version>
 		<rtm.version>2022.9.21-632b0cfffd5f6139bc9942f3</rtm.version>
@@ -244,7 +244,7 @@
 					<artifactId>maven-shade-plugin</artifactId>
 					<version>3.1.0</version>
 				</plugin>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
+				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
