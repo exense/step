@@ -11,15 +11,13 @@ import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
 import step.core.collections.filters.Equals;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
-import step.core.timeseries.TimeSeriesAggregationPipeline;
-import step.core.timeseries.TimeSeriesAggregationQuery;
-import step.core.timeseries.TimeSeriesAggregationResponse;
-import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.*;
 import step.framework.server.security.Secured;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementPlugin;
@@ -28,9 +26,13 @@ import step.plugins.timeseries.api.*;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.RESOLUTION_PERIOD_PROPERTY;
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_COLLECTION_PROPERTY;
 
 @Singleton
 @Path("/time-series")
@@ -39,17 +41,17 @@ public class TimeSeriesService extends AbstractStepServices {
 
     private AsyncTaskManager asyncTaskManager;
     private TimeSeriesAggregationPipeline aggregationPipeline;
-    private TimeSeriesIngestionPipeline ingestionPipeline;
     private Collection<Measurement> measurementCollection;
+    private TimeSeries timeSeries;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
         aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
-        ingestionPipeline = context.require(TimeSeriesIngestionPipeline.class);
         asyncTaskManager = context.require(AsyncTaskManager.class);
         measurementCollection = context.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME, Measurement.class);
+        timeSeries = context.require(TimeSeries.class);
     }
 
     @Secured(right = "execution-read")
@@ -111,15 +113,20 @@ public class TimeSeriesService extends AbstractStepServices {
                     new SearchOrder(MeasurementPlugin.BEGIN, -1), 0, 1, 0).findFirst().orElse(null);
             if (firstMeasurement != null && lastMeasurement != null) {
                 return asyncTaskManager.scheduleAsyncTask(t -> {
-                    TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline);
-                    LongAdder count = new LongAdder();
-                    SearchOrder searchOrder = new SearchOrder("begin", 1);
-                    // Iterate over each measurement and ingest it again
-                    measurementCollection.find(measurementFilter, searchOrder, null, null, 0).forEach(measurement -> {
-                        count.increment();
-                        timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
-                    });
-                    return new TimeSeriesRebuildResponse(count.longValue());
+                    // the flushing period can be a big value, because we will force flush every time.
+                    // we create a new pipeline for every migration
+                    try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline( 3000)) {
+                        TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline);
+                        LongAdder count = new LongAdder();
+                        SearchOrder searchOrder = new SearchOrder("begin", 1);
+                        // Iterate over each measurement and ingest it again
+                        measurementCollection.find(measurementFilter, searchOrder, null, null, 0).forEach(measurement -> {
+                            count.increment();
+                            timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
+                        });
+                        ingestionPipeline.flush();
+                        return new TimeSeriesRebuildResponse(count.longValue());
+                    }
                 });
             } else {
                 throw new ControllerServiceException("No measurement found matching this execution id");
