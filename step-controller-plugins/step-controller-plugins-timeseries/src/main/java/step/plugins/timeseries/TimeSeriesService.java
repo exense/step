@@ -11,7 +11,7 @@ import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
-import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
 import step.core.collections.filters.Equals;
@@ -24,14 +24,11 @@ import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.api.*;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.plugins.timeseries.TimeSeriesControllerPlugin.RESOLUTION_PERIOD_PROPERTY;
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_COLLECTION_PROPERTY;
 
 @Singleton
@@ -44,6 +41,8 @@ public class TimeSeriesService extends AbstractStepServices {
     private Collection<Measurement> measurementCollection;
     private TimeSeries timeSeries;
 
+    private Collection<Document> timeserieCollection;
+
     @PostConstruct
     public void init() throws Exception {
         super.init();
@@ -51,6 +50,7 @@ public class TimeSeriesService extends AbstractStepServices {
         aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         asyncTaskManager = context.require(AsyncTaskManager.class);
         measurementCollection = context.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME, Measurement.class);
+        timeserieCollection = context.getCollectionFactory().getCollection(TIME_SERIES_COLLECTION_PROPERTY, Document.class);
         timeSeries = context.require(TimeSeries.class);
     }
 
@@ -141,12 +141,17 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public boolean timeSeriesIsBuilt(@PathParam("executionId") String executionId) {
-        return timeSeriesExists(executionId);
+        return timeSeriesExists(executionId) || !hasRawMeasurements(executionId);
     }
 
+    private boolean hasRawMeasurements(String executionId) {
+        Measurement measurement = measurementCollection.find(Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId), null, null, 1, 0).findFirst().orElse(null);
+        return measurement != null;
+    }
+
+
     private boolean timeSeriesExists(String executionId) {
-        TimeSeriesAggregationResponse aggregationResponse = aggregationPipeline.newQuery().range(0, System.currentTimeMillis())
-                .filter(Map.of(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId)).split(1L).run();
-        return aggregationResponse.getMatrix().size() > 0;
+        Document document = timeserieCollection.find(Filters.equals("attributes."+MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId), null, null, 1, 0).findFirst().orElse(null);
+        return document != null;
     }
 }
