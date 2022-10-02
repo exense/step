@@ -9,7 +9,7 @@ public final class TimeSeriesAPIResponseBuilder {
     private Long start;
     private Long interval;
     private Long end;
-    private List<BucketResponse[]> matrix;
+    private List<List<BucketResponse>> matrix;
     private List<BucketAttributes> matrixKeys;
 
     public TimeSeriesAPIResponseBuilder withStart(long start) {
@@ -27,7 +27,7 @@ public final class TimeSeriesAPIResponseBuilder {
         return this;
     }
 
-    public TimeSeriesAPIResponseBuilder withMatrix(List<BucketResponse[]> matrix) {
+    public TimeSeriesAPIResponseBuilder withMatrix(List<List<BucketResponse>> matrix) {
         this.matrix = matrix;
         return this;
     }

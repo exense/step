@@ -23,11 +23,9 @@ import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.api.*;
 
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_COLLECTION_PROPERTY;
 
@@ -62,36 +60,66 @@ public class TimeSeriesService extends AbstractStepServices {
     public TimeSeriesAPIResponse getBuckets(FetchBucketsRequest request) {
         TimeSeriesAggregationQuery query = mapToQuery(request);
         TimeSeriesAggregationResponse response = query.run();
+
+        Map<BucketAttributes, Map<Long, Bucket>> series = response.getSeries();
+        List<Long> axis = response.getAxis();
+        Long start = axis.get(0);
+        Long end = axis.get(axis.size() - 1);
+
+        // TODO let the time series return this so that we don't have to calculate it
+        long intervalSize;
+        if (axis.size() > 1) {
+            intervalSize = axis.get(1) - axis.get(0);
+        } else {
+            intervalSize = Long.MAX_VALUE;
+        }
+
+        List<BucketAttributes> matrixKeys = new ArrayList<>();
+        List<List<BucketResponse>> matrix = new ArrayList<>();
+        series.keySet().forEach(key -> {
+            Map<Long, Bucket> currentSeries = series.get(key);
+            List<BucketResponse> bucketResponses = new ArrayList<>();
+            axis.forEach(index -> {
+                Bucket b = currentSeries.get(index);
+                BucketResponse bucketResponse = null;
+                if (b != null) {
+                    bucketResponse = new BucketResponseBuilder()
+                            .withBegin(b.getBegin())
+                            .withCount(b.getCount())
+                            .withMin(b.getMin())
+                            .withMax(b.getMax())
+                            .withSum(b.getSum())
+                            .withThroughputPerHour(3600 * 1000 * b.getCount() / intervalSize)
+                            .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile)))
+                            .build();
+                }
+                bucketResponses.add(bucketResponse);
+            });
+            matrix.add(bucketResponses);
+            matrixKeys.add(key);
+        });
+
         return new TimeSeriesAPIResponseBuilder()
-                .withStart(response.getStart())
-                .withEnd(response.getEnd())
-                .withInterval(response.getInterval())
-                .withMatrixKeys(response.getMatrixKeys())
-                .withMatrix(response.getMatrix()
-                        .stream()
-                        .map(buckets ->
-                                Stream.of(buckets)
-                                        .map(b -> b == null ? null : new BucketResponseBuilder()
-                                                .withBegin(b.getBegin())
-                                                .withCount(b.getCount())
-                                                .withMin(b.getMin())
-                                                .withMax(b.getMax())
-                                                .withSum(b.getSum())
-                                                .withThroughputPerHour(3600 * 1000 * b.getCount() / query.getIntervalSizeMs())
-                                                .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile)))
-                                                .build())
-                                        .toArray(BucketResponse[]::new))
-                        .collect(Collectors.toList()))
+                .withStart(start)
+                .withEnd(end)
+                .withInterval(intervalSize)
+                .withMatrixKeys(matrixKeys)
+                .withMatrix(matrix)
                 .build();
     }
 
     private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request) {
-        return aggregationPipeline.newQuery()
+        TimeSeriesAggregationQuery timeSeriesAggregationQuery = aggregationPipeline.newQuery()
                 .range(request.getStart(), request.getEnd())
-                .window(request.getIntervalSize())
                 .filter(request.getParams() != null ? request.getParams() : Collections.emptyMap())
-                .split(request.getNumberOfBuckets())
                 .groupBy(request.getGroupDimensions());
+        if (request.getIntervalSize() > 0) {
+            timeSeriesAggregationQuery.window(request.getIntervalSize());
+        }
+        if (request.getNumberOfBuckets() != null) {
+            timeSeriesAggregationQuery.split(request.getNumberOfBuckets());
+        }
+        return timeSeriesAggregationQuery;
     }
 
     @Operation(operationId = "rebuildTimeSeries", description = "Rebuild a time series based on the provided request")
@@ -115,7 +143,7 @@ public class TimeSeriesService extends AbstractStepServices {
                 return asyncTaskManager.scheduleAsyncTask(t -> {
                     // the flushing period can be a big value, because we will force flush every time.
                     // we create a new pipeline for every migration
-                    try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline( 3000)) {
+                    try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(3000)) {
                         TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline);
                         LongAdder count = new LongAdder();
                         SearchOrder searchOrder = new SearchOrder("begin", 1);
@@ -151,7 +179,7 @@ public class TimeSeriesService extends AbstractStepServices {
 
 
     private boolean timeSeriesExists(String executionId) {
-        Document document = timeserieCollection.find(Filters.equals("attributes."+MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId), null, null, 1, 0).findFirst().orElse(null);
+        Document document = timeserieCollection.find(Filters.equals("attributes." + MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId), null, null, 1, 0).findFirst().orElse(null);
         return document != null;
     }
 }
