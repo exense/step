@@ -62,17 +62,10 @@ public class TimeSeriesService extends AbstractStepServices {
         TimeSeriesAggregationResponse response = query.run();
 
         Map<BucketAttributes, Map<Long, Bucket>> series = response.getSeries();
+        long intervalSize = response.getResolution();
         List<Long> axis = response.getAxis();
         Long start = axis.get(0);
-        Long end = axis.get(axis.size() - 1);
-
-        // TODO let the time series return this so that we don't have to calculate it
-        long intervalSize;
-        if (axis.size() > 1) {
-            intervalSize = axis.get(1) - axis.get(0);
-        } else {
-            intervalSize = Long.MAX_VALUE;
-        }
+        Long end = axis.get(axis.size() - 1) + intervalSize;
 
         List<BucketAttributes> matrixKeys = new ArrayList<>();
         List<List<BucketResponse>> matrix = new ArrayList<>();
@@ -89,7 +82,7 @@ public class TimeSeriesService extends AbstractStepServices {
                             .withMin(b.getMin())
                             .withMax(b.getMax())
                             .withSum(b.getSum())
-                            .withThroughputPerHour(3600 * 1000 * b.getCount() / intervalSize)
+                            .withThroughputPerHour(3600 * 1000 * b.getCount() / (b.getEnd() - b.getBegin()))
                             .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile)))
                             .build();
                 }
