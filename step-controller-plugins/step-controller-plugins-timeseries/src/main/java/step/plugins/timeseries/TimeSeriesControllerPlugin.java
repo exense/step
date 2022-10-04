@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.collections.CollectionFactory;
+import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
@@ -13,6 +14,7 @@ import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 
+import java.util.Map;
 import java.util.Set;
 
 @Plugin
@@ -43,6 +45,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline);
         MeasurementPlugin.registerMeasurementHandlers(handler);
         GaugeCollectorRegistry.getInstance().registerHandler(handler);
+
+        WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
+        configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
 
     }
 
