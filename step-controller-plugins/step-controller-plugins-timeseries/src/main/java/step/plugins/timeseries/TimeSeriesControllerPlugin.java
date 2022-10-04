@@ -35,8 +35,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
         TimeSeries timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of(), resolutionPeriod);
         context.put(TimeSeries.class, timeSeries);
-        mainIngestionPipeline = timeSeries.newIngestionPipeline(resolutionPeriod, flushPeriod);
-        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline(resolutionPeriod);
+        mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
+        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
 
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
         context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
