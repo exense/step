@@ -11,12 +11,13 @@ import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
-import step.core.collections.Document;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
 import step.core.collections.filters.Equals;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.timeseries.*;
 import step.framework.server.security.Secured;
 import step.plugins.measurements.Measurement;
@@ -27,7 +28,7 @@ import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
-import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_COLLECTION_PROPERTY;
+import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 @Singleton
 @Path("/time-series")
@@ -39,7 +40,7 @@ public class TimeSeriesService extends AbstractStepServices {
     private Collection<Measurement> measurementCollection;
     private TimeSeries timeSeries;
 
-    private Collection<Document> timeserieCollection;
+    private ExecutionAccessor executionAccessor;
 
     @PostConstruct
     public void init() throws Exception {
@@ -48,8 +49,8 @@ public class TimeSeriesService extends AbstractStepServices {
         aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         asyncTaskManager = context.require(AsyncTaskManager.class);
         measurementCollection = context.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME, Measurement.class);
-        timeserieCollection = context.getCollectionFactory().getCollection(TIME_SERIES_COLLECTION_PROPERTY, Document.class);
         timeSeries = context.require(TimeSeries.class);
+        executionAccessor = context.getExecutionAccessor();
     }
 
     @Secured(right = "execution-read")
@@ -126,6 +127,10 @@ public class TimeSeriesService extends AbstractStepServices {
         if (this.timeSeriesExists(executionId)) {
             throw new ControllerServiceException("Time series already exist for this execution. Unable to rebuild it");
         } else {
+            //Update execution
+            Execution execution = executionAccessor.get(executionId);
+            execution.addCustomField(TIMESERIES_FLAG, true);
+            executionAccessor.save(execution);
             // we need to check if measurements exists
             Equals measurementFilter = Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId);
             Measurement firstMeasurement = measurementCollection.find(measurementFilter,
@@ -162,17 +167,15 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public boolean timeSeriesIsBuilt(@PathParam("executionId") String executionId) {
-        return timeSeriesExists(executionId) || !hasRawMeasurements(executionId);
+        return timeSeriesExists(executionId);
     }
-
-    private boolean hasRawMeasurements(String executionId) {
-        Measurement measurement = measurementCollection.find(Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId), null, null, 1, 0).findFirst().orElse(null);
-        return measurement != null;
-    }
-
 
     private boolean timeSeriesExists(String executionId) {
-        Document document = timeserieCollection.find(Filters.equals("attributes." + MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId), null, null, 1, 0).findFirst().orElse(null);
-        return document != null;
+        Execution execution = executionAccessor.get(executionId);
+        if (execution == null) {
+            throw new ControllerServiceException("No execution found matching this execution id");
+        }
+        Boolean hasTimeSeries = execution.getCustomField(TIMESERIES_FLAG, Boolean.class);
+        return hasTimeSeries!=null && hasTimeSeries;
     }
 }
