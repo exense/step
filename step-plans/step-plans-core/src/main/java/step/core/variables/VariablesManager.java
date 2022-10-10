@@ -73,9 +73,15 @@ public class VariablesManager {
 	
 	public void putVariable(ReportNode targetNode,VariableType type, String key, Object value) {
 		Map<String, Variable> variableMap;
-		variableMap = getVariableMap(targetNode.getId(), true);		
-		Variable variable = new Variable(value, type);
-		variableMap.put(key, variable);
+		ReportNode parentNode = null;
+		if (targetNode.setVariableInParentScope() &&
+				(parentNode = nodeCache.get(targetNode.getParentID())) != null) {
+			putVariable(parentNode, type, key, value);
+		} else {
+			variableMap = getVariableMap(targetNode.getId(), true);
+			Variable variable = new Variable(value, type);
+			variableMap.put(key, variable);
+		}
 	}
 	
 	public Object getVariable(String key) {

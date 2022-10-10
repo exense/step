@@ -43,7 +43,7 @@ public class TableExportTask implements AsyncTask<Resource> {
         fields.forEach(field -> writer.append(field).append(DELIMITER));
         writer.append(END_OF_LINE);
         try {
-            TableResponse<?> response = tableService.request(tableName, exportRequest.getTableRequest(), session);
+            TableResponse response = tableService.request(tableName, exportRequest.getTableRequest(), session);
             response.getData().forEach(o -> {
                 // Write row
                 fields.forEach(field -> {

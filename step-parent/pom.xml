@@ -1,18 +1,18 @@
 <!--
   Copyright (C) 2020, exense GmbH
-   
+
   This file is part of STEP
-   
+
   STEP is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-   
+
   STEP is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU Affero General Public License for more details.
-   
+
   You should have received a copy of the GNU Affero General Public License
   along with STEP.  If not, see <http://www.gnu.org/licenses/>.
 -->
@@ -55,12 +55,11 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
-		<exense-commons.version>2022.06.09-IDa516421</exense-commons.version>
-		<step-framework.version>2022.8.25-6307ec9c979c1e42d0e3a69b</step-framework.version>
-		<step-grid.version>2022.8.10-62f36ecf87a5284560ceb988</step-grid.version>
+		<exense-commons.version>2022.8.31-630f8527979c1e42d031a667</exense-commons.version>
+		<step-framework.version>2022.10.3-633a7e34fd5f6139bca25553</step-framework.version>
+		<step-grid.version>2022.9.1-631047c2979c1e42d036122c</step-grid.version>
 		<step-api.version>2022.06.09-IDb0ca56d</step-api.version>
-		<viz.version>2022.7.28-62e2833087a528456038d181</viz.version>
-		<rtm.version>2022.8.18-62fde64b0b329a47840ff646</rtm.version>
+		<rtm.version>2022.9.21-632b0cfffd5f6139bc9942f3</rtm.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
 		<mockito.version>1.9.5</mockito.version>
@@ -245,7 +244,7 @@
 					<artifactId>maven-shade-plugin</artifactId>
 					<version>3.1.0</version>
 				</plugin>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
+				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>

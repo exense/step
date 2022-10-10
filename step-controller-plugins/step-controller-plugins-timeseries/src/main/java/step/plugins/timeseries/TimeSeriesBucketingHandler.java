@@ -1,20 +1,17 @@
 package step.plugins.timeseries;
 
-import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.timeseries.BucketAttributes;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
-import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
@@ -29,7 +26,6 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     public TimeSeriesBucketingHandler(TimeSeriesIngestionPipeline ingestionPipeline) {
         this.ingestionPipeline = ingestionPipeline;
-        GaugeCollectorRegistry.getInstance().registerHandler(this);
     }
 
     @Override
@@ -39,18 +35,29 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     @Override
     public void processMeasurements(List<Measurement> measurements) {
-        measurements.forEach(measurement -> {
-            long begin = measurement.getBegin();
-            long value = measurement.getValue();
-            BucketAttributes bucketAttributes = new BucketAttributes(measurement);
-            removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value");
-            bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
-            // custom fields include all the attributes like execId and planId
-            this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
-        });
+        measurements.forEach(this::processMeasurement);
     }
 
-    private void removeKeys(Map<String, Object> map, String... attributes) {
+    public void processMeasurement(Measurement measurement) {
+        long begin = measurement.getBegin();
+        long value = measurement.getValue();
+
+        BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
+        removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value");
+        bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
+        // custom fields include all the attributes like execId and planId
+        this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
+    }
+
+    private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
+        return new BucketAttributes(measurement.entrySet().stream().collect(Collectors.toMap(k -> k.getKey(),
+                v -> {
+                    Object value = v.getValue();
+                    return value != null ? value.toString() : null;
+                })));
+    }
+
+    private void removeKeys(Map<String, String> map, String... attributes) {
         for (String attribute : attributes) {
             map.remove(attribute);
         }
@@ -59,14 +66,30 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     @Override
     public void processGauges(List<Measurement> measurements) {
         measurements.forEach(measurement -> {
-            if (measurement != null && Objects.equals(measurement.getType(), THREAD_GROUP_MEASUREMENT_TYPE)) {
-                BucketAttributes bucketAttributes = new BucketAttributes(measurement);
+            if (measurement != null && measurement.getType().equals(THREAD_GROUP_MEASUREMENT_TYPE)) {
+                BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
                 bucketAttributes.remove("taskId");
                 bucketAttributes.remove("type");
                 bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_SAMPLER);
                 this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
         });
+    }
+
+    /**
+     * This method will handle existing measurements, and will check if it is a gauge or normal measurement
+     * @param measurement
+     */
+    public void ingestExistingMeasurement(Measurement measurement) {
+        if (measurement == null) {
+            return;
+        }
+        measurement.remove("_id"); // because these measurements come with a generated id and can't be grouped into buckets.
+        if (measurement.getType().equals(THREAD_GROUP_MEASUREMENT_TYPE)) {
+            this.processGauges(List.of(measurement));
+        } else {
+            this.processMeasurement(measurement);
+        }
     }
 
     @Override

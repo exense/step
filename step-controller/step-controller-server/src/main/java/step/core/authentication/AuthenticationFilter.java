@@ -73,7 +73,7 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
 
     private void initSessionIfRequired(AuthenticationTokenDetails authenticationTokenDetails) {
         //If step session is not yet set or not really initiated
-        if (getSession() == null || getSession().getUser().getUsername() == null){
+        if (getSession() == null || getSession().getUser() == null || getSession().getUser().getUsername() == null){
             Session session = Objects.requireNonNullElse(getSession(),new Session());
             String username = authenticationTokenDetails.getUsername();
             User user = userAccessor.getByUsername(username);
@@ -82,6 +82,7 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
             }
             session.setAuthenticated(true);
             session.setLocalToken(false);
+            session.setUser(user);
             setSession(session);
         }
     }

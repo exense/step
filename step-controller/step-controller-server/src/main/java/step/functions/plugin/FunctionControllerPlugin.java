@@ -33,7 +33,7 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -54,6 +54,7 @@ import step.plugins.screentemplating.ScreenInputAccessor;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 import step.resources.ResourceManagerControllerPlugin;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(dependencies= {ScreenTemplatePlugin.class, GridPlugin.class, ResourceManagerControllerPlugin.class})
@@ -100,7 +101,8 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		
 		Collection<Function> functionCollection = context.getCollectionFactory()
 				.getCollection(EntityManager.functions, Function.class);
-		tableRegistry.register(EntityManager.functions, new AbstractTable<>(functionCollection, "kw-read", true));
+		tableRegistry.register(EntityManager.functions, new Table<>(functionCollection, "kw-read", true)
+				.withResultListFactory(()->new ArrayList<>(){}));
 	}
 	
 	@Override

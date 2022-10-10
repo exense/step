@@ -7,7 +7,7 @@ import step.controller.services.async.AsyncTaskStatus;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.entities.SimpleBean;
 import step.core.objectenricher.ObjectHookRegistry;
-import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableService;
@@ -26,7 +26,7 @@ class TableExportRunnableTest {
         InMemoryCollection<SimpleBean> collection = new InMemoryCollection<>();
         collection.save(new SimpleBean("property 1"));
         collection.save(new SimpleBean("property 2"));
-        tableRegistry.register("test", new AbstractTable<>(collection, null, false));
+        tableRegistry.register("test", new Table<>(collection, null, false));
         TableService tableService = new TableService(tableRegistry, new ObjectHookRegistry(), null);
         TableExportRequest exportRequest = new TableExportRequest();
         exportRequest.setTableRequest(new TableRequest());

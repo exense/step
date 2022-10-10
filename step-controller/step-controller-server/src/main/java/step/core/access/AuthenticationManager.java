@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import ch.commons.auth.Authenticator;
-import ch.commons.auth.Credentials;
+import step.core.auth.Authenticator;
+import step.core.auth.Credentials;
 import ch.exense.commons.app.Configuration;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -60,6 +60,10 @@ public class AuthenticationManager {
 		this.userAccessor = userAccessor;
 		this.authorizationServerManager = authorizationServerManager;
 		this.resourceServerManager = resourceServerManager;
+	}
+
+	public boolean implementOTP() {
+		return (authenticator.getClass().isAssignableFrom(DefaultAuthenticator.class));
 	}
 
 	public boolean useAuthentication() {
@@ -145,10 +149,14 @@ public class AuthenticationManager {
 	}
 
 	public String resetPwd(User user) {
-		String pwd = generateSecureRandomPassword();
-		user.setPassword(encryptPwd(pwd));
-		user.addCustomField("otp", true);
-		return pwd;
+		if (authenticator.getClass().isAssignableFrom(LdapAuthenticator.class)) {
+			throw new RuntimeException("Password management is not supported by the LdapAuthenticator");
+		} else {
+			String pwd = generateSecureRandomPassword();
+			user.setPassword(encryptPwd(pwd));
+			user.addCustomField("otp", true);
+			return pwd;
+		}
 	}
 
 	public String encryptPwd(String pwd) {

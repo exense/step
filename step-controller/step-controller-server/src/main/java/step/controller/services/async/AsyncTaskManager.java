@@ -71,7 +71,7 @@ public class AsyncTaskManager implements Closeable {
 
     public AsyncTaskStatus<?> removeReadyAsyncTaskStatus(String id) {
         AsyncTaskStatus<?> asyncTaskStatus = getAsyncTaskStatus(id);
-        if (asyncTaskStatus.isReady()) {
+        if (asyncTaskStatus != null && asyncTaskStatus.isReady()) {
             tasks.remove(id);
         }
         return asyncTaskStatus;

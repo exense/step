@@ -21,9 +21,13 @@ package step.core.plans;
 import org.bson.types.ObjectId;
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
+import step.core.collections.Collection;
+import step.core.collections.Filters;
+import step.core.entities.EntityManager;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.*;
 
@@ -36,7 +40,7 @@ public class PlanPlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 		PlanTypeRegistry planTypeRegistry = new PlanTypeRegistry();
-		planTypeRegistry.register(new PlanType<Plan>() {
+		planTypeRegistry.register(new PlanType<>() {
 
 			@Override
 			public Class<Plan> getPlanClass() {
@@ -45,28 +49,21 @@ public class PlanPlugin extends AbstractControllerPlugin {
 
 			@Override
 			public PlanCompiler<Plan> getPlanCompiler() {
-				return new PlanCompiler<Plan>() {
-					@Override
-					public Plan compile(Plan plan) {
-						return plan;
-					}
-				};
+				return plan -> plan;
 			}
 
 			@Override
 			public Plan newPlan(String template) throws Exception {
 				AbstractArtefact artefact = context.getArtefactHandlerRegistry().getArtefactTypeInstance(template);
-				Plan plan = PlanBuilder.create().startBlock(artefact).endBlock().build();
-				return plan;
+				return PlanBuilder.create().startBlock(artefact).endBlock().build();
 			}
 
 			@Override
 			public Plan clonePlan(Plan plan) {
-				Plan newPlan = plan;
-				newPlan.setId(new ObjectId());
-				newPlan.setCustomFields(null);
-				newPlan.setVisible(true);
-				return newPlan;
+				plan.setId(new ObjectId());
+				plan.setCustomFields(null);
+				plan.setVisible(true);
+				return plan;
 			}
 
 			@Override
@@ -76,8 +73,9 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		});
 		context.put(PlanTypeRegistry.class, planTypeRegistry);
 		context.getServiceRegistrationCallback().registerService(PlanServices.class);
-		context.get(TableRegistry.class).register("plans",
-				new PlanTable(context.getCollectionFactory().getCollection("plans", Plan.class)));
+		Collection<Plan> collection = context.getCollectionFactory().getCollection(EntityManager.plans, Plan.class);
+		context.get(TableRegistry.class).register(EntityManager.plans, new Table<>(collection, "plan-read", true)
+				.withTableFiltersFactory(e-> Filters.equals("visible", true)));
 	}
 	
 	@Override

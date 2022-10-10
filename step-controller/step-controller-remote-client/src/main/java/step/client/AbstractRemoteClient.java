@@ -40,7 +40,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.commons.auth.Credentials;
+import step.core.auth.Credentials;
 import step.client.credentials.ControllerCredentials;
 import step.client.credentials.SyspropCredendialsBuilder;
 import step.core.deployment.JacksonMapperProvider;
@@ -103,6 +103,7 @@ public class AbstractRemoteClient implements Closeable {
 		}
 		Builder b = target.request();
 		b.accept(MediaType.APPLICATION_JSON);
+		b.accept(MediaType.TEXT_PLAIN);
 		if(cookies!=null) {
 			for(NewCookie c:cookies.values()) {
 				b.cookie(c);

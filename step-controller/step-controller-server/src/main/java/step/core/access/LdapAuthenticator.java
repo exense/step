@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.core.access;
 
-import ch.commons.auth.Authenticator;
-import ch.commons.auth.Credentials;
+import step.core.auth.Authenticator;
+import step.core.auth.Credentials;
 import ch.exense.commons.app.Configuration;
 import org.ldaptive.*;
 import org.ldaptive.auth.AuthenticationRequest;

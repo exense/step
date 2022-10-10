@@ -16,10 +16,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.commons.datatable;
+package step.artefacts.handlers;
 
-public class ColumnDescriptor {
-	
-	
+import step.artefacts.Sequence;
+import step.artefacts.reports.BeforeThreadReportNode;
+import step.core.artefacts.reports.ReportNode;
+
+public class BeforeThreadHandler extends SequenceHandler {
+
+	@Override
+	public BeforeThreadReportNode createReportNode_(ReportNode parentNode, Sequence testArtefact) {
+		return new BeforeThreadReportNode();
+	}
 
 }

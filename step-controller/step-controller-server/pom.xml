@@ -30,11 +30,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>ch.exense.commons</groupId>
-			<artifactId>exense-auth-core</artifactId>
-			<version>${exense-commons.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.ldaptive</groupId>
 			<artifactId>ldaptive</artifactId>
 			<version>2.1.1</version>
@@ -92,7 +87,6 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-framework-collections-mongodb</artifactId>
 			<version>${step-framework.version}</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
@@ -150,23 +144,6 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-framework-server-plugins</artifactId>
 			<version>${step-framework.version}</version>
-		</dependency>
-
-		<!-- all dependencies required for base plugins -->
-		<dependency>
-			<groupId>ch.exense.viz</groupId>
-			<artifactId>viz-servlet</artifactId>
-			<version>${viz.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.mongodb</groupId>
-					<artifactId>mongodb-driver</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>ch.exense</groupId>
-					<artifactId>exense-commons</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
     </dependencies>

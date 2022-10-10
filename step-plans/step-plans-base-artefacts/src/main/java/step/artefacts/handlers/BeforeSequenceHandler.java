@@ -16,24 +16,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.plans;
+package step.artefacts.handlers;
 
-import step.core.collections.Collection;
-import step.core.collections.Filter;
-import step.core.collections.Filters;
-import step.framework.server.tables.AbstractTable;
-import step.framework.server.tables.service.TableParameters;
+import step.artefacts.Sequence;
+import step.artefacts.reports.BeforeSequenceReportNode;
+import step.core.artefacts.reports.ReportNode;
 
-import java.util.List;
-
-public class PlanTable extends AbstractTable<Plan> {
-
-	public PlanTable(Collection<Plan> collection) {
-		super(collection, "plan-read", true);
-	}
+public class BeforeSequenceHandler extends SequenceHandler {
 
 	@Override
-	public List<Filter> getTableFilters(TableParameters tableParameters) {
-		return List.of(Filters.equals("visible", true));
+	public BeforeSequenceReportNode createReportNode_(ReportNode parentNode, Sequence testArtefact) {
+		return new BeforeSequenceReportNode();
 	}
+
 }

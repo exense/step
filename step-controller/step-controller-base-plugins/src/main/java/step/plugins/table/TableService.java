@@ -29,10 +29,7 @@ import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.deployment.ApplicationServices;
-import step.core.objectenricher.ObjectHookRegistry;
-import step.framework.server.access.AccessManager;
 import step.framework.server.security.Secured;
-import step.framework.server.tables.TableRegistry;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
 import step.framework.server.tables.service.TableServiceException;
@@ -50,19 +47,13 @@ public class TableService extends ApplicationServices {
     private AsyncTaskManager asyncTaskManager;
     private ResourceManager resourceManager;
 
-    private int maxTime;
-
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
-        TableRegistry tableRegistry = context.require(TableRegistry.class);
-        ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
-        AccessManager accessManager = context.require(AccessManager.class);
-        maxTime = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
-        tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, accessManager);
-        asyncTaskManager = getContext().require(AsyncTaskManager.class);
+        asyncTaskManager = context.require(AsyncTaskManager.class);
         resourceManager = context.getResourceManager();
+        tableService = context.require(step.framework.server.tables.service.TableService.class);
     }
 
     @POST

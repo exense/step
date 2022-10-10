@@ -1,12 +1,13 @@
 package step.controller.services.bulk;
 
 import ch.exense.commons.io.Poller;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
-import step.core.collections.Filter;
-import step.core.collections.Filters;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.core.deployment.ControllerServiceException;
+import step.core.entities.Bean;
 import step.core.objectenricher.ObjectFilter;
 import step.framework.server.tables.service.FieldFilter;
 
@@ -19,21 +20,44 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BulkOperationManagerTest {
 
-    private BulkOperationManager bulkOperationManager = new BulkOperationManager(new AsyncTaskManager());
-    private ArrayList<String> ids = new ArrayList<>();
-    private ArrayList<Filter> filters = new ArrayList<>();
+    private final InMemoryCollection<Bean> collection = new InMemoryCollection<>();
+    private final Bean bean1 = new Bean("value1");
+    private final Bean bean2 = new Bean("value2");
+    private final BulkOperationManager<Bean> bulkOperationManager = new BulkOperationManager<>(collection, new AsyncTaskManager());
+    private final ArrayList<String> ids = new ArrayList<>();
+
+    @BeforeEach
+    public void before() {
+        collection.save(bean1);
+        collection.save(bean2);
+    }
 
     @Test
     void performBulkOperation() throws InterruptedException, TimeoutException {
         BulkOperationParameters parameters = new BulkOperationParameters();
         parameters.setTargetType(BulkOperationTargetType.LIST);
-        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> ""));
+        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, () -> "", null));
 
-        List<String> targetIds = List.of("id1", "id2");
+        List<String> targetIds = List.of(bean1.getId().toString(), bean2.getId().toString());
         parameters.setIds(targetIds);
-        AsyncTaskStatus<Void> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "");
-        Poller.waitFor(() -> exportStatus.isReady(), 2000);
+        AsyncTaskStatus<BulkOperationReport> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, () -> "", null);
+        Poller.waitFor(exportStatus::isReady, 2000);
         assertEquals(ids, targetIds);
+        assertEquals(2, exportStatus.getResult().getCount());
+    }
+
+    @Test
+    void performBulkOperationPreview() throws InterruptedException, TimeoutException {
+        BulkOperationParameters parameters = new BulkOperationParameters();
+        parameters.setTargetType(BulkOperationTargetType.LIST);
+        parameters.setPreview(true);
+
+        parameters.setIds(List.of(bean1.getId().toString(), bean2.getId().toString()));
+        AsyncTaskStatus<BulkOperationReport> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, () -> "", null);
+        Poller.waitFor(exportStatus::isReady, 2000);
+        // Ensure that no processing has been done in preview mode
+        assertEquals(ids, List.of());
+        assertEquals(2, exportStatus.getResult().getCount());
     }
 
     @Test
@@ -41,12 +65,14 @@ class BulkOperationManagerTest {
         BulkOperationParameters parameters = new BulkOperationParameters();
         parameters.setTargetType(BulkOperationTargetType.FILTER);
 
-        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> ""));
+        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, () -> "", null));
 
-        parameters.setFilter(new FieldFilter("field", "value", true));
-        AsyncTaskStatus<Void> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> "");
-        Poller.waitFor(() -> exportStatus.isReady(), 2000);
-        assertEquals(Filters.And.class, filters.get(0).getClass());
+        parameters.setFilter(new FieldFilter("property1", "value1", true));
+        AsyncTaskStatus<BulkOperationReport> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, () -> "", null);
+        Poller.waitFor(exportStatus::isReady, 2000);
+
+        assertEquals(List.of(bean1.getId().toString()), ids);
+        assertEquals(1, exportStatus.getResult().getCount());
     }
 
     @Test
@@ -55,20 +81,20 @@ class BulkOperationManagerTest {
         parameters.setTargetType(BulkOperationTargetType.ALL);
         parameters.setIds(List.of());
 
-        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> ""));
+        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, () -> "", null));
 
         parameters.setIds(null);
         parameters.setFilter(new FieldFilter());
 
-        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, () -> ""));
+        assertThrows(ControllerServiceException.class, () -> bulkOperationManager.performBulkOperation(parameters, ids::add, () -> "", null));
 
         parameters.setIds(null);
         parameters.setFilter(null);
 
-        ObjectFilter objectFilter = () -> "field = 'value'";
-        AsyncTaskStatus<Void> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, filters::add, objectFilter);
-        Poller.waitFor(() -> exportStatus.isReady(), 2000);
-        Filter actualFilter = filters.get(0);
-        assertEquals(Filters.Equals.class, actualFilter.getClass());
+        ObjectFilter objectFilter = () -> "property1 = 'value1'";
+        AsyncTaskStatus<BulkOperationReport> exportStatus = bulkOperationManager.performBulkOperation(parameters, ids::add, objectFilter, null);
+        Poller.waitFor(exportStatus::isReady, 2000);
+        assertEquals(List.of(bean1.getId().toString()), ids);
+        assertEquals(1, exportStatus.getResult().getCount());
     }
 }

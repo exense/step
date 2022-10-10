@@ -18,23 +18,20 @@
  ******************************************************************************/
 package step.core.scheduler;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.framework.server.tables.AbstractTable;
+import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.plugins.screentemplating.Input;
-import step.plugins.screentemplating.InputType;
-import step.plugins.screentemplating.ScreenInput;
-import step.plugins.screentemplating.ScreenInputAccessor;
-import step.plugins.screentemplating.ScreenTemplatePlugin;
+import step.plugins.screentemplating.*;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Plugin(dependencies= {ScreenTemplatePlugin.class, ControllerSettingPlugin.class, ObjectHookControllerPlugin.class})
 public class SchedulerPlugin extends AbstractControllerPlugin {
@@ -46,9 +43,9 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
-		Collection<ExecutiontTaskParameters> collectionDriver = context.getCollectionFactory().getCollection("tasks",
+		Collection<ExecutiontTaskParameters> collectionDriver = context.getCollectionFactory().getCollection(EntityManager.tasks,
 				ExecutiontTaskParameters.class);
-		context.get(TableRegistry.class).register("tasks", new AbstractTable<>(collectionDriver, "task-read", true));
+		context.get(TableRegistry.class).register(EntityManager.tasks, new Table<>(collectionDriver, "task-read", true));
 
 	}
 

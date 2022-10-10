@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# Exense policy hook -- should be stored as "commit-msg" in the git hooks folder
+#
+# This hook ensures that commit messages always start with an issue number followed by a space and at least one more character.
+# Only the first line of the commit message is checked.
+# If for some reason, this policy should be ignored for a commit, you may pass the --no-verify flag.
+
+filtered="$(head -n 1 "$1" | egrep '^[A-Z]{2,}-[0-9]+ .+$')"
+test "" = "$filtered" && {
+	echo >&2 "POLICY REJECT: Commit message must start with issue number followed by space and message (e.g. 'SED-123 bugfix')"
+	exit 1
+}
+exit 0

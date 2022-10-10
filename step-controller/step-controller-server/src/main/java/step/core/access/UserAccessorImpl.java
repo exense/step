@@ -26,7 +26,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
-import step.core.collections.Filters.Equals;
+import step.core.collections.filters.Equals;
 
 public class UserAccessorImpl extends AbstractAccessor<User> implements UserAccessor {
 

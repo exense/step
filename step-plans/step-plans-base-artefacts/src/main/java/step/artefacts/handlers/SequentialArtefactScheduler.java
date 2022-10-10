@@ -100,10 +100,22 @@ public class SequentialArtefactScheduler {
 			ReportNode resultNode = consumer.apply(newChildren);
 			reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
 		} finally {
-			// Execute the AfterSequence artefacts
-			for (AbstractArtefact afterArtefact : afterArtefacts) {
-				ReportNode resultNode = artefactHandlerManager.execute(afterArtefact, reportNode);
-				reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
+			// Execute the AfterSequence artefacts even when aborting
+			boolean byPassInterrupt = context.isInterrupted();
+			if (byPassInterrupt) {
+				context.byPassInterruptInCurrentThread(true);
+			}
+			try{
+				for (AbstractArtefact afterArtefact : afterArtefacts) {
+					ReportNode resultNode = artefactHandlerManager.execute(afterArtefact, reportNode);
+					reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
+				}
+
+			} finally {
+				//resume aborting if required
+				if (byPassInterrupt) {
+					context.byPassInterruptInCurrentThread(false);
+				}
 			}
 		}
 		reportNode.setStatus(reportNodeStatusComposer.getParentStatus());

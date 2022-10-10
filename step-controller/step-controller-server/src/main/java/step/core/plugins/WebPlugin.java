@@ -21,7 +21,7 @@ package step.core.plugins;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WebPlugin {
+public class WebPlugin extends AbstractWebPlugin {
 
 	List<String> scripts = new ArrayList<>();
 	

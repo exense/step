@@ -131,9 +131,19 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 	public ExecutionStatus getStatus() {
 		return status;
 	}
-	
+
+	private static final ThreadLocal<Boolean> interruptByPass = new ThreadLocal<>();
+
+	public static void byPassInterruptInCurrentThread(boolean bypass) {
+		if (bypass) {
+			interruptByPass.set(bypass);
+		} else {
+			interruptByPass.remove();
+		}
+	}
 	public boolean isInterrupted() {
-		return getStatus() == ExecutionStatus.ABORTING;
+		boolean byPass = interruptByPass.get() != null && interruptByPass.get();
+		return !byPass && getStatus() == ExecutionStatus.ABORTING;
 	}
 
 	public boolean isSimulation() {

@@ -27,6 +27,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
+import step.core.plugins.AbstractWebPlugin;
 import step.core.plugins.WebPlugin;
 
 @Singleton
@@ -37,7 +38,7 @@ public class ApplicationServices extends AbstractStepServices {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/plugins")
-	public List<WebPlugin> getWebPlugins() {
+	public List<AbstractWebPlugin> getWebPlugins() {
 		return getContext().getControllerPluginManager().getWebPlugins();
 	}
 }

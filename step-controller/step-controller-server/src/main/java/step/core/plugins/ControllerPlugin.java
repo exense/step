@@ -26,5 +26,5 @@ public interface ControllerPlugin extends ServerPlugin<GlobalContext> {
 
 	public ExecutionEnginePlugin getExecutionEnginePlugin();
 
-	public WebPlugin getWebPlugin();
+	public AbstractWebPlugin getWebPlugin();
 }
