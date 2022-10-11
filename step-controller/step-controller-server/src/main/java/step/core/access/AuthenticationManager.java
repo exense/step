@@ -194,8 +194,11 @@ public class AuthenticationManager {
 		if (byUsername == null) {
 			User user = new User();
 			user.setUsername(username);
-			user.setRole("admin");
+			user.setRole(authenticationTokenDetails.getRole());
 			userAccessor.save(user);
+		} else if (byUsername.getRole() != authenticationTokenDetails.getRole()) {
+			byUsername.setRole(authenticationTokenDetails.getRole());
+			userAccessor.save(byUsername);
 		}
 		return username;
 	}

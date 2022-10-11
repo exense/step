@@ -9,6 +9,8 @@ public class JWTSettings {
 
     private static final String CONFIG_KEY_JWT_ALGO="authenticator.jwt.algo";
     private static final String CONFIG_KEY_JWT_CLOCKSKEW="authenticator.jwt.clock-skew";
+
+    private static final String CONFIG_KEY_JWT_CLIENT_ID="authenticator.jwt.client_id";
     private static final String CONFIG_KEY_JWT_AUDIENCE="authenticator.jwt.audience";
     private static final String CONFIG_KEY_JWT_ISSUER="authenticator.jwt.issuer";
     private static final String CONFIG_KEY_JWT_ROLE_CLAIM_NAME ="authenticator.jwt.role-claim-name";
@@ -31,6 +33,8 @@ public class JWTSettings {
     private final boolean checkAudience;
     private final String userClaimName;
 
+    private final String clientId;
+
 
     public JWTSettings(Configuration configuration, String secret) {
         String audience1;
@@ -47,6 +51,7 @@ public class JWTSettings {
         refreshLimitClaimName = configuration.getProperty(CONFIG_KEY_JWT_ROLE_CLAIM_NAME,"refreshLimit");
         checkIssuer = configuration.getPropertyAsBoolean(CONFIG_KEY_JWT_ISSUER_CHECK, true);
         checkAudience = configuration.getPropertyAsBoolean(CONFIG_KEY_JWT_AUDIENCE_CHECK,true);
+        clientId = configuration.getProperty(CONFIG_KEY_JWT_CLIENT_ID,"step-local");
     }
 
     public SignatureAlgorithm getAlgo() {
@@ -93,4 +98,7 @@ public class JWTSettings {
         return checkAudience;
     }
 
+    public String getClientId() {
+        return clientId;
+    }
 }
