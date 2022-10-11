@@ -28,7 +28,7 @@ public class FunctionPackageUtils {
 
 	protected File resolveFile(String resource) {
 		File file = null;
-		if (resource != null) {
+		if (resource != null && !resource.isBlank()) {
 			file = fileResolver.resolve(resource);
 		}
 		return file;
