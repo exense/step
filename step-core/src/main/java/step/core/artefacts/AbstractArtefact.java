@@ -70,7 +70,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		attributes = defaultAttributes;
 		persistNode = true;
 		dynamicName = new DynamicValue<String>("");
-		dynamicName.setDynamic(true);
+		//dynamicName.setDynamic(true);
 		dynamicName.setExpression("");
 	}
 	
