@@ -9,9 +9,9 @@ import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
@@ -24,8 +24,11 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private final TimeSeriesIngestionPipeline ingestionPipeline;
 
-    public TimeSeriesBucketingHandler(TimeSeriesIngestionPipeline ingestionPipeline) {
+    private final List<String> attributes;
+
+    public TimeSeriesBucketingHandler(TimeSeriesIngestionPipeline ingestionPipeline, List<String> attributes) {
         this.ingestionPipeline = ingestionPipeline;
+        this.attributes = attributes;
     }
 
     @Override
@@ -50,11 +53,13 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     }
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
-        return new BucketAttributes(measurement.entrySet().stream().collect(Collectors.toMap(k -> k.getKey(),
-                v -> {
-                    Object value = v.getValue();
-                    return value != null ? value.toString() : null;
-                })));
+        Map<String, String> bucketAttributesMap = new HashMap<>();
+        attributes.forEach(a -> {
+            if (measurement.containsKey(a)) {
+                bucketAttributesMap.put(a,measurement.get(a).toString());
+            }
+        });
+        return new BucketAttributes(bucketAttributesMap);
     }
 
     private void removeKeys(Map<String, String> map, String... attributes) {

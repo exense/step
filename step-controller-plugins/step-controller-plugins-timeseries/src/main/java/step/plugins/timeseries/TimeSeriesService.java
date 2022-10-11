@@ -28,6 +28,8 @@ import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_ATTRIBUTES_DEFAULT;
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_ATTRIBUTES_PROPERTY;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 @Singleton
@@ -142,7 +144,8 @@ public class TimeSeriesService extends AbstractStepServices {
                     // the flushing period can be a big value, because we will force flush every time.
                     // we create a new pipeline for every migration
                     try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(3000)) {
-                        TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline);
+                        List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
+                        TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline, attributes);
                         LongAdder count = new LongAdder();
                         SearchOrder searchOrder = new SearchOrder("begin", 1);
                         // Iterate over each measurement and ingest it again
