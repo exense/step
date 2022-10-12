@@ -46,9 +46,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
         long value = measurement.getValue();
 
         BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-        removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value");
         bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
-        // custom fields include all the attributes like execId and planId
         this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
     }
 
@@ -62,19 +60,11 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
         return new BucketAttributes(bucketAttributesMap);
     }
 
-    private void removeKeys(Map<String, String> map, String... attributes) {
-        for (String attribute : attributes) {
-            map.remove(attribute);
-        }
-    }
-
     @Override
     public void processGauges(List<Measurement> measurements) {
         measurements.forEach(measurement -> {
             if (measurement != null && measurement.getType().equals(THREAD_GROUP_MEASUREMENT_TYPE)) {
                 BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-                bucketAttributes.remove("taskId");
-                bucketAttributes.remove("type");
                 bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_SAMPLER);
                 this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
