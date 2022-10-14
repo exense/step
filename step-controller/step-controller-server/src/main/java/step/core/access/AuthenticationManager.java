@@ -57,7 +57,7 @@ public class AuthenticationManager {
 	}
 
 	public boolean useAuthentication() {
-		return configuration.getPropertyAsBoolean("authentication", true);
+		return configuration.getPropertyAsBoolean("authentication", false);
 	}
 	
 	public String getAuthenticatorName(){
