@@ -1,8 +1,12 @@
 package step.core.authentication;
 
 import ch.exense.commons.app.Configuration;
+import com.jayway.jsonpath.JsonPath;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+import javax.json.Json;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class JWTSettings {
@@ -13,7 +17,7 @@ public class JWTSettings {
     private static final String CONFIG_KEY_JWT_CLIENT_ID="authenticator.jwt.client_id";
     private static final String CONFIG_KEY_JWT_AUDIENCE="authenticator.jwt.audience";
     private static final String CONFIG_KEY_JWT_ISSUER="authenticator.jwt.issuer";
-    private static final String CONFIG_KEY_JWT_ROLE_CLAIM_NAME ="authenticator.jwt.role-claim-name";
+    private static final String CONFIG_KEY_JWT_ROLE_PREFIX ="authenticator.jwt.roles.";
     private static final String CONFIG_KEY_USER_CLAIM_NAME ="authenticator.jwt.user-claim-name";
     private static final String CONFIG_KEY_JWT_REFRESH_COUNT_CLAIM_NAME="authenticator.jwt.refresh-count-claim-name";
     private static final String CONFIG_KEY_JWT_REFRESH_LIMIT_CLAIM_NAME="authenticator.jwt.refresh-limit-claim-name";
@@ -26,12 +30,12 @@ public class JWTSettings {
     private final Long clockSkew;
     private final String audience;
     private final String issuer;
-    private final String roleClaimName;
+    private final Map<String,JsonPath> roleClaimJsonPathMap;
     private final String refreshCountClaimName;
     private final String refreshLimitClaimName;
     private final boolean checkIssuer;
     private final boolean checkAudience;
-    private final String userClaimName;
+    private final JsonPath userClaimJsonPath;
 
     private final String clientId;
 
@@ -45,13 +49,23 @@ public class JWTSettings {
         audience1 = configuration.getProperty(CONFIG_KEY_JWT_AUDIENCE,configuration.getProperty("controller.url"));
         audience = Objects.requireNonNullElse(audience1, "local");
         issuer = configuration.getProperty(CONFIG_KEY_JWT_ISSUER,audience); //if not set the controller is also the issuer
-        userClaimName = configuration.getProperty(CONFIG_KEY_USER_CLAIM_NAME, "preferred_username");//"sub");
-        roleClaimName = configuration.getProperty(CONFIG_KEY_JWT_ROLE_CLAIM_NAME,"role");
-        refreshCountClaimName = configuration.getProperty(CONFIG_KEY_JWT_ROLE_CLAIM_NAME,"refreshCount");
-        refreshLimitClaimName = configuration.getProperty(CONFIG_KEY_JWT_ROLE_CLAIM_NAME,"refreshLimit");
+        userClaimJsonPath = JsonPath.compile(configuration.getProperty(CONFIG_KEY_USER_CLAIM_NAME, "preferred_username"));//"sub");
+        roleClaimJsonPathMap = parseRoleConfiguration(configuration);
+        refreshCountClaimName = configuration.getProperty(CONFIG_KEY_JWT_REFRESH_COUNT_CLAIM_NAME,"refreshCount");
+        refreshLimitClaimName = configuration.getProperty(CONFIG_KEY_JWT_REFRESH_LIMIT_CLAIM_NAME,"refreshLimit");
         checkIssuer = configuration.getPropertyAsBoolean(CONFIG_KEY_JWT_ISSUER_CHECK, true);
         checkAudience = configuration.getPropertyAsBoolean(CONFIG_KEY_JWT_AUDIENCE_CHECK,true);
         clientId = configuration.getProperty(CONFIG_KEY_JWT_CLIENT_ID,"step-local");
+    }
+
+    private Map<String, JsonPath> parseRoleConfiguration(Configuration configuration) {
+        Map<String, JsonPath> results = new LinkedHashMap();
+        configuration.getPropertyNames().stream().filter(n -> n.toString().startsWith(CONFIG_KEY_JWT_ROLE_PREFIX)).map(p -> p.toString().replaceAll(CONFIG_KEY_JWT_ROLE_PREFIX,""))
+                .distinct().forEach(role -> {
+                    JsonPath jsonPath = JsonPath.compile(configuration.getProperty(CONFIG_KEY_JWT_ROLE_PREFIX + role));
+                    results.put(role, jsonPath);
+                });
+        return results;
     }
 
     public SignatureAlgorithm getAlgo() {
@@ -74,12 +88,12 @@ public class JWTSettings {
         return issuer;
     }
 
-    public String getUserClaimName() {
-        return userClaimName;
+    public JsonPath getUserClaimJsonPath() {
+        return userClaimJsonPath;
     }
 
-    public String getRoleClaimName() {
-        return roleClaimName;
+    public Map<String, JsonPath> getRoleJsonPaths() {
+        return roleClaimJsonPathMap;
     }
 
     public String getRefreshCountClaimName() {

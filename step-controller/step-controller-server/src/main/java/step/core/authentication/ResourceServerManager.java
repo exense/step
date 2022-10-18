@@ -1,6 +1,8 @@
 package step.core.authentication;
 
+import com.jayway.jsonpath.JsonPath;
 import io.jsonwebtoken.*;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.deployment.AuthenticationException;
@@ -9,8 +11,8 @@ import step.framework.server.Session;
 import jakarta.validation.constraints.NotNull;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class ResourceServerManager {
@@ -111,7 +113,7 @@ public class ResourceServerManager {
      * @return Username from the JWT token
      */
     private String extractUsernameFromClaims(@NotNull Claims claims) {
-        return getRecursiveClaimValue(jwtSettings.getUserClaimName(), claims, "");
+        return Objects.requireNonNullElse(getValueForJsonPath(jwtSettings.getUserClaimJsonPath(), claims),"");
     }
 
     /**
@@ -121,7 +123,22 @@ public class ResourceServerManager {
      * @return User authorities from the JWT token
      */
     private String extractRoleFromClaims(@NotNull Claims claims) {
-        return getRecursiveClaimValue(jwtSettings.getRoleClaimName(), claims, "");
+        Map<String, JsonPath> roleJsonPaths = jwtSettings.getRoleJsonPaths();
+        if (roleJsonPaths == null ||roleJsonPaths.isEmpty()) {
+            return "";
+        }
+        return Objects.requireNonNullElse(getFirstKeyWithValidJsonPath(roleJsonPaths, claims),"");
+    }
+
+    private String getValueForJsonPath(JsonPath jsonPath, Claims claims) {
+        JSONObject jsonObject = new JSONObject(claims);
+        return jsonPath.read(jsonObject.toString());
+    }
+
+    private String getFirstKeyWithValidJsonPath(Map<String, JsonPath> jsonPathsMap, Claims claims) {
+        JSONObject jsonObject = new JSONObject(claims);
+        return jsonPathsMap.entrySet().stream().filter(e -> (e.getValue().read(jsonObject.toString()) != null))
+                .map(e -> e.getKey()).findFirst().orElse(null);
     }
 
     private String extractIssuerFromClaims(@NotNull Claims claims) {
@@ -174,31 +191,6 @@ public class ResourceServerManager {
      */
     private int extractRefreshLimitFromClaims(@NotNull Claims claims) {
         return (int) claims.get(jwtSettings.getRefreshLimitClaimName());
-    }
-
-    private String getRecursiveClaimValue(String path, Map<String, Object> claims, String defaultValue) {
-        Map<String, Object> current = claims;
-        String[] splitPath = claimsSplitPattern.split(path);
-        for (int i =0 ; i < splitPath.length ; i++ ) {
-            Object o = current.get(splitPath[i]);
-            if (i < (splitPath.length-1)) {
-               if  (o instanceof Map) {
-                   current = (Map) o;
-               } else {
-                   break;
-               }
-            } else if (i == (splitPath.length-1)){
-                if (o instanceof String) {
-                    return (String) o;
-                } else if (o instanceof List) {
-                    //TODO support returning list for list of roles?
-                    return ((List<String>) o).get(0);
-                }
-
-            }
-        }
-        logger.error("Unable to extract the claim with path " + path + ", from : " + claims);
-        return defaultValue;
     }
 
 }
