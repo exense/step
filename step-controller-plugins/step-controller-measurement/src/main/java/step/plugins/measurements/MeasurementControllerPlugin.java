@@ -23,8 +23,6 @@ import static step.plugins.measurements.MeasurementPlugin.*;
 public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
 	private static Logger logger = LoggerFactory.getLogger(MeasurementControllerPlugin.class);
-
-	public static String GridGaugeName = "step_grid_tokens";
 	public static String ThreadgroupGaugeName = "step_threadgroup";
 
 	GaugeCollectorRegistry gaugeCollectorRegistry;
@@ -36,55 +34,6 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 	}
 
 	protected void initGaugeCollectorRegistry(GlobalContext context) {
-		gaugeCollectorRegistry = GaugeCollectorRegistry.getInstance();
-
-		//Register grid gauge metrics
-		//Define grouping attributes and corresponds metric labels ($ not supported)
-		List<String> groupBy = new ArrayList<>(Arrays.asList(context.getConfiguration()
-				.getProperty("plugins.grid.monitoring.attributes", "$agenttype,type")
-				.split(",")));
-		if (!groupBy.contains("url")) {groupBy.add("url");}
-		List<String> labels = groupBy.stream().map(s->s.replace("$","")).collect(Collectors.toList());
-		labels.add("name");
-		if (context.get(Grid.class)!=null) {
-			gaugeCollectorRegistry.registerCollector(GridGaugeName, new GaugeCollector(GridGaugeName,
-					"step grid token usage and capacity", labels.stream().toArray(String[]::new)) {
-				final GridReportBuilder gridReportBuilder = new GridReportBuilder((Grid) context.get(Grid.class));
-				final Map<String, String[][]> urlToType = new HashMap<>();
-
-				@Override
-				public List<Collector.MetricFamilySamples> collect() {
-					List<TokenGroupCapacity> usageByIdentity = gridReportBuilder.getUsageByIdentity(groupBy);
-					Map<String, String[][]> newUrlToType = new HashMap<>();
-					for (TokenGroupCapacity tokenGroupCapacity : usageByIdentity) {
-						Integer free = tokenGroupCapacity.getCountByState().get(TokenWrapperState.FREE);
-						free = (free == null) ? 0 : free;
-						int capacity = tokenGroupCapacity.getCapacity();
-						String agentUrl = tokenGroupCapacity.getKey().get("url");
-						urlToType.remove(agentUrl);
-						List<String> labelValues = groupBy.stream().map(s -> Objects.requireNonNullElse(tokenGroupCapacity.getKey().get(s), "")).collect(Collectors.toList());
-						String[] lblValFree = Stream.concat(labelValues.stream(),Stream.of("free")).toArray(String[]::new);
-						String[] lblValCapacity = Stream.concat(labelValues.stream(),Stream.of("capacity")).toArray(String[]::new);
-						getGauge().labels(lblValFree).set(Double.valueOf(free));
-						getGauge().labels(lblValCapacity).set(Double.valueOf(capacity));
-						newUrlToType.put(agentUrl, new String[][]{lblValFree,lblValCapacity});
-					}
-					//Remaining urls from previous iteration doesn't exist anymore, cleaning-up metrics
-					for (String url : urlToType.keySet()) {
-						String[][] labelsAr = urlToType.remove(url);
-						for (int i=0; i < labelsAr.length; i++) {
-							getGauge().remove(labelsAr[i]);
-						}
-					}
-					//save set of agent urls from current iteration
-					urlToType.putAll(newUrlToType);
-					return getGauge().collect();
-				}
-			});
-		} else {
-			logger.warn("No grid instance found in context, the measurements of the grid token usage will be disabled");
-		}
-
 		gaugeCollectorRegistry = GaugeCollectorRegistry.getInstance();
 		final String[] labelsThreadGroup = {ATTRIBUTE_EXECUTION_ID,NAME,PLAN_ID,TASK_ID};
 		//Register thread group gauge metrics
