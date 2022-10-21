@@ -3,15 +3,15 @@ package step.plugins.timeseries.api;
 import java.util.*;
 
 public class FetchBucketsRequest {
-    private long start;
-    private long end;
+    private Long start;
+    private Long end;
     private Map<String, String> params;
     private Set<String> groupDimensions = new HashSet<>();
     private Long numberOfBuckets;
     private long intervalSize; // in ms
     private List<Integer> percentiles = Collections.emptyList();
 
-    public long getStart() {
+    public Long getStart() {
         return start;
     }
 
@@ -19,7 +19,7 @@ public class FetchBucketsRequest {
         this.start = start;
     }
 
-    public long getEnd() {
+    public Long getEnd() {
         return end;
     }
 
