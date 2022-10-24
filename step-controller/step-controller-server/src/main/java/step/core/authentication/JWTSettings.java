@@ -4,10 +4,13 @@ import ch.exense.commons.app.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import io.jsonwebtoken.SignatureAlgorithm;
 
-import javax.json.Json;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class JWTSettings {
 
@@ -17,7 +20,9 @@ public class JWTSettings {
     private static final String CONFIG_KEY_JWT_CLIENT_ID="authenticator.jwt.client_id";
     private static final String CONFIG_KEY_JWT_AUDIENCE="authenticator.jwt.audience";
     private static final String CONFIG_KEY_JWT_ISSUER="authenticator.jwt.issuer";
-    private static final String CONFIG_KEY_JWT_ROLE_PREFIX ="authenticator.jwt.roles.";
+    protected static final String CONFIG_KEY_JWT_ROLE_JSONPATH_PREFIX ="authenticator.jwt.roles.jsonpath.";
+
+    protected static final String CONFIG_KEY_JWT_ROLE_ORDER ="authenticator.jwt.roles.order";
     private static final String CONFIG_KEY_USER_CLAIM_NAME ="authenticator.jwt.user-claim-name";
     private static final String CONFIG_KEY_JWT_REFRESH_COUNT_CLAIM_NAME="authenticator.jwt.refresh-count-claim-name";
     private static final String CONFIG_KEY_JWT_REFRESH_LIMIT_CLAIM_NAME="authenticator.jwt.refresh-limit-claim-name";
@@ -60,9 +65,13 @@ public class JWTSettings {
 
     private Map<String, JsonPath> parseRoleConfiguration(Configuration configuration) {
         Map<String, JsonPath> results = new LinkedHashMap();
-        configuration.getPropertyNames().stream().filter(n -> n.toString().startsWith(CONFIG_KEY_JWT_ROLE_PREFIX)).map(p -> p.toString().replaceAll(CONFIG_KEY_JWT_ROLE_PREFIX,""))
-                .distinct().forEach(role -> {
-                    JsonPath jsonPath = JsonPath.compile(configuration.getProperty(CONFIG_KEY_JWT_ROLE_PREFIX + role));
+        //ordering (priority of roles) is required in case the user was assigned multiple Step roles in IDM.
+        //Last role in the list has the highest priority, the produced linked hashmap is created with the highest priority as first element
+        //The implementation handle role undefined in the priority list with be considered with the lowest priority
+        List<String> order = List.of(configuration.getProperty(CONFIG_KEY_JWT_ROLE_ORDER, "guest,tester,developer,admin").split(","));
+        configuration.getPropertyNames().stream().filter(n -> n.toString().startsWith(CONFIG_KEY_JWT_ROLE_JSONPATH_PREFIX)).map(p -> p.toString().replaceAll(CONFIG_KEY_JWT_ROLE_JSONPATH_PREFIX,""))
+                .distinct().sorted(Comparator.comparingInt(order::indexOf)).collect(Collectors.toCollection(LinkedList::new)).descendingIterator().forEachRemaining(role -> {
+                    JsonPath jsonPath = JsonPath.compile(configuration.getProperty(CONFIG_KEY_JWT_ROLE_JSONPATH_PREFIX + role));
                     results.put(role, jsonPath);
                 });
         return results;
@@ -92,7 +101,7 @@ public class JWTSettings {
         return userClaimJsonPath;
     }
 
-    public Map<String, JsonPath> getRoleJsonPaths() {
+    public Map<String, JsonPath> getRoleClaimJsonPathMap() {
         return roleClaimJsonPathMap;
     }
 

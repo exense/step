@@ -1,14 +1,18 @@
 package step.core.authentication;
 
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import io.jsonwebtoken.*;
-import org.json.JSONObject;
+import net.minidev.json.JSONValue;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.deployment.AuthenticationException;
 import step.framework.server.Session;
 
 import jakarta.validation.constraints.NotNull;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -123,7 +127,7 @@ public class ResourceServerManager {
      * @return User authorities from the JWT token
      */
     private String extractRoleFromClaims(@NotNull Claims claims) {
-        Map<String, JsonPath> roleJsonPaths = jwtSettings.getRoleJsonPaths();
+        Map<String, JsonPath> roleJsonPaths = jwtSettings.getRoleClaimJsonPathMap();
         if (roleJsonPaths == null ||roleJsonPaths.isEmpty()) {
             return "";
         }
@@ -132,13 +136,34 @@ public class ResourceServerManager {
 
     private String getValueForJsonPath(JsonPath jsonPath, Claims claims) {
         JSONObject jsonObject = new JSONObject(claims);
-        return jsonPath.read(jsonObject.toString());
+        try {
+            return jsonPath.read(jsonObject.toString());
+        } catch (PathNotFoundException e) {
+            logger.error("User was not found in JWT token with provided json path: " + jsonPath.getPath(), e);
+            return null;
+        }
     }
 
     private String getFirstKeyWithValidJsonPath(Map<String, JsonPath> jsonPathsMap, Claims claims) {
         JSONObject jsonObject = new JSONObject(claims);
-        return jsonPathsMap.entrySet().stream().filter(e -> (e.getValue().read(jsonObject.toString()) != null))
-                .map(e -> e.getKey()).findFirst().orElse(null);
+        return jsonPathsMap.entrySet().stream().filter(e -> {
+                Object read = null;
+                try {
+                    read = e.getValue().read(jsonObject.toString());
+                } catch (PathNotFoundException ex) {
+                    logger.warn("Json path with key " + e.getKey() + " and path " + e.getValue().getPath() + " was not found.", ex);
+                }
+                if (read == null) {
+                    return false;
+                } else if (read instanceof JSONArray) {
+                    return !((JSONArray) read).isEmpty();
+                } else if (read instanceof JSONObject) {
+                    return !((JSONObject) read).keySet().isEmpty();
+                } else if (read instanceof JSONValue) {
+                    return !read.toString().isBlank();
+                }
+            return false;
+        }).map(e -> e.getKey()).findFirst().orElse(null);
     }
 
     private String extractIssuerFromClaims(@NotNull Claims claims) {
