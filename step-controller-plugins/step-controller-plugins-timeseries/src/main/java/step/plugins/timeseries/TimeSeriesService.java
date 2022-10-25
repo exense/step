@@ -107,10 +107,10 @@ public class TimeSeriesService extends AbstractStepServices {
 
     private void validateFetchRequest(FetchBucketsRequest request) {
         if (request.getStart() == null || request.getEnd() == null) {
-            throw new IllegalArgumentException("Start and End parameters must be specified");
+            throw new ControllerServiceException("Start and End parameters must be specified");
         }
         if (request.getStart() > request.getEnd()) {
-            throw new IllegalArgumentException("Start value must be lower than End");
+            throw new ControllerServiceException("Start value must be lower than End");
         }
     }
 
