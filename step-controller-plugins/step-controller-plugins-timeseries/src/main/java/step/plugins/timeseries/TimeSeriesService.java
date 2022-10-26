@@ -61,6 +61,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getBuckets(FetchBucketsRequest request) {
+        validateFetchRequest(request);
         TimeSeriesAggregationQuery query = mapToQuery(request);
         TimeSeriesAggregationResponse response = query.run();
 
@@ -102,6 +103,15 @@ public class TimeSeriesService extends AbstractStepServices {
                 .withMatrixKeys(matrixKeys)
                 .withMatrix(matrix)
                 .build();
+    }
+
+    private void validateFetchRequest(FetchBucketsRequest request) {
+        if (request.getStart() == null || request.getEnd() == null) {
+            throw new ControllerServiceException("Start and End parameters must be specified");
+        }
+        if (request.getStart() > request.getEnd()) {
+            throw new ControllerServiceException("Start value must be lower than End");
+        }
     }
 
     private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request) {
