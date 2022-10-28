@@ -26,7 +26,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     public static String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
 
     public static String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
-    public static String TIME_SERIES_ATTRIBUTES_DEFAULT = "eId,taskId,metricType,name,rnStatus,project,type";
+    public static String TIME_SERIES_ATTRIBUTES_DEFAULT = "eId,taskId,planId,metricType,origin,name,rnStatus,project,type";
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
     private TimeSeriesIngestionPipeline mainIngestionPipeline;
