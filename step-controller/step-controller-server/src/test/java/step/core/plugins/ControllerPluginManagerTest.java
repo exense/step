@@ -19,7 +19,7 @@ public class ControllerPluginManagerTest {
 
     @Test
     public void test() throws Exception {
-        ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(new Configuration()));
+        ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(new Configuration(), null));
         List<AbstractWebPlugin> plugins = pluginManager.getWebPlugins();
         assertTrue(plugins.contains(WEB_PLUGIN));
         List<ExecutionEnginePlugin> executionEnginePlugins = pluginManager.getExecutionEnginePlugins();
@@ -30,7 +30,7 @@ public class ControllerPluginManagerTest {
     public void testDisabling() throws Exception {
         Configuration configuration = new Configuration();
         configuration.putProperty("plugins.TestPlugin.enabled", "false");
-        assertThrows(PluginCriticalException.class, () -> new ControllerPluginManager(new ServerPluginManager(configuration)));
+        assertThrows(PluginCriticalException.class, () -> new ControllerPluginManager(new ServerPluginManager(configuration, null)));
     }
 
     @Plugin
