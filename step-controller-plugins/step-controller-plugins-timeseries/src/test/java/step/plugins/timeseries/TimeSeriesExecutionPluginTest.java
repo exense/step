@@ -74,6 +74,11 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 			public void stop() {		}
 			@Override
 			public void registerPackage(Package aPackage) {			}
+
+			@Override
+			public void registerWebAppRoot(String webAppRoot) {}
+
+
 		});
 		globalContext.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
 		MeasurementControllerPlugin mc = new MeasurementControllerPlugin();
