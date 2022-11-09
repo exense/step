@@ -111,7 +111,6 @@
 		<module>../step-controller-plugins</module>
 		<module>../step-ide</module>
 		<module>../step-junit</module>
-		<module>../custom-step-plugins</module>
 	</modules>
 
 	<build>
