@@ -1,11 +1,9 @@
 package step.core.controller;
 
-import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Controller;
 import step.core.GlobalContext;
-import step.core.authentication.AuthenticationFilter;
 import step.core.controller.errorhandling.ErrorFilter;
 import step.core.deployment.ControllerServices;
 import step.core.execution.model.Execution;
@@ -17,7 +15,6 @@ import step.core.plugins.Plugin;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.SchedulerServices;
 import step.framework.server.CORSRequestResponseFilter;
-import step.framework.server.security.SecurityFilter;
 
 import java.io.IOException;
 import java.util.List;
@@ -63,8 +60,6 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 	public void serverStart(GlobalContext context) throws Exception {
 		context.getServiceRegistrationCallback().registerPackage(ControllerServices.class.getPackage());
 		context.getServiceRegistrationCallback().registerService(SchedulerServices.class);
-		context.getServiceRegistrationCallback().registerService(AuthenticationFilter.class);
-		context.getServiceRegistrationCallback().registerService(SecurityFilter.class);
 		context.getServiceRegistrationCallback().registerService(ErrorFilter.class);
 		context.getServiceRegistrationCallback().registerService(CORSRequestResponseFilter.class);
 

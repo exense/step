@@ -19,27 +19,59 @@
 package step.plugins.table;
 
 import step.core.GlobalContext;
-import step.core.access.SecurityPlugin;
+import step.core.access.Role;
+import step.core.access.RoleResolver;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.framework.server.Session;
 import step.framework.server.access.AccessManager;
 import step.framework.server.tables.TableRegistry;
 
-@Plugin(dependencies = {ObjectHookControllerPlugin.class, SecurityPlugin.class})
+import java.util.Objects;
+
+@Plugin(dependencies = {ObjectHookControllerPlugin.class})
 public class TablePlugin extends AbstractControllerPlugin {
+
+    private TableRegistry tableRegistry;
+    private ObjectHookRegistry objectHookRegistry;
+    private Integer maxRequestDuration;
+    private Integer maxResultCount;
 
     @Override
     public void serverStart(GlobalContext context) {
         context.getServiceRegistrationCallback().registerService(TableService.class);
-        TableRegistry tableRegistry = context.require(TableRegistry.class);
-        ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
-        AccessManager accessManager = context.require(AccessManager.class);
-        Integer maxRequestDuration = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
-        Integer maxResultCount = context.getConfiguration().getPropertyAsInteger("db.query.maxCount", 1000);
+        tableRegistry = context.require(TableRegistry.class);
+        objectHookRegistry = context.require(ObjectHookRegistry.class);
+        maxRequestDuration = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
+        maxResultCount = context.getConfiguration().getPropertyAsInteger("db.query.maxCount", 1000);
+    }
+
+    @Override
+    public void initializeData(GlobalContext context) throws Exception {
+        super.initializeData(context);
+        //Security plugin is part of enterprise edition.
+        AccessManager accessManager = Objects.requireNonNullElse(context.get(AccessManager.class), new NoAccessManager());
+
         step.framework.server.tables.service.TableService tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, accessManager, maxRequestDuration, maxResultCount);
         context.put(step.framework.server.tables.service.TableService.class, tableService);
     }
 
+    private class NoAccessManager implements AccessManager {
+        @Override
+        public void setRoleResolver(RoleResolver roleResolver) {
+
+        }
+
+        @Override
+        public boolean checkRightInContext(Session session, String s) {
+            return true;
+        }
+
+        @Override
+        public Role getRoleInContext(Session session) {
+            return null;
+        }
+    }
 }
