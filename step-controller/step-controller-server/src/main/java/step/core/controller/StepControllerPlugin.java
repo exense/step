@@ -15,6 +15,7 @@ import step.core.plugins.Plugin;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.SchedulerServices;
 import step.framework.server.CORSRequestResponseFilter;
+import step.versionmanager.VersionManager;
 
 import java.io.IOException;
 import java.util.List;

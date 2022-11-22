@@ -31,6 +31,7 @@ import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.CollectionFactoryConfigurationParser;
+import step.core.controller.SessionResponseBuilder;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -54,12 +55,15 @@ import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.ServiceRegistrationCallback;
+import step.framework.server.access.AccessManager;
+import step.framework.server.access.NoAccessManager;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.resources.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 
 public class Controller {
@@ -96,6 +100,14 @@ public class Controller {
 		context.setCollectionFactory(collectionFactory);
 
 		context.setContorllerPluginManager(new ControllerPluginManager(context.require(ServerPluginManager.class)));
+
+		NoAccessManager noAccessManager = new NoAccessManager();
+		context.put(AccessManager.class, noAccessManager);
+
+		SessionResponseBuilder sessionResponseBuilder = new SessionResponseBuilder();
+		context.put(SessionResponseBuilder.class, sessionResponseBuilder);
+		sessionResponseBuilder.registerHook(s -> Map.of("user", s.getUser().getSessionUsername()));
+		sessionResponseBuilder.registerHook(s -> Map.of("role", noAccessManager.getRoleInContext(s)));
 		
 		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
 		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(
