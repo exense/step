@@ -36,6 +36,8 @@ public class ApplicationConfiguration {
 	boolean passwordManagement;
 
 	boolean userManagement;
+	boolean roleManagement;
+	boolean projectMembershipManagement;
 	
 	List<String> roles;
 	
@@ -47,6 +49,7 @@ public class ApplicationConfiguration {
 
 	public ApplicationConfiguration(boolean authentication, String authenticatorName, boolean demo, boolean debug,
 									boolean noLoginMask, boolean passwordManagement, boolean userManagement,
+									boolean roleManagement, boolean projectMembershipManagement,
 									List<String> roles, Map<String, String> miscParams, String defaultUrl, String title) {
 		this.authentication = authentication;
 		this.authenticatorName = authenticatorName;
@@ -54,6 +57,8 @@ public class ApplicationConfiguration {
 		this.debug = debug;
 		this.noLoginMask = noLoginMask;
 		this.userManagement = userManagement;
+		this.roleManagement = roleManagement;
+		this.projectMembershipManagement = projectMembershipManagement;
 		this.passwordManagement = passwordManagement;
 		this.roles = roles;
 		this.miscParams = miscParams;
@@ -75,6 +80,14 @@ public class ApplicationConfiguration {
 
 	public boolean isUserManagement() {
 		return userManagement;
+	}
+
+	public boolean isRoleManagement() {
+		return roleManagement;
+	}
+
+	public boolean isProjectMembershipManagement() {
+		return projectMembershipManagement;
 	}
 
 	public boolean isDebug() {

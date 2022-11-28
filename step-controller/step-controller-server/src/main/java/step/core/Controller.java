@@ -55,8 +55,8 @@ import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.ServiceRegistrationCallback;
-import step.framework.server.access.AccessManager;
-import step.framework.server.access.NoAccessManager;
+import step.framework.server.access.AuthorizationManager;
+import step.framework.server.access.NoAuthorizationManager;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.resources.*;
@@ -101,13 +101,15 @@ public class Controller {
 
 		context.setContorllerPluginManager(new ControllerPluginManager(context.require(ServerPluginManager.class)));
 
-		NoAccessManager noAccessManager = new NoAccessManager();
-		context.put(AccessManager.class, noAccessManager);
+		NoAuthorizationManager noAccessManager = new NoAuthorizationManager();
+		context.put(AuthorizationManager.class, noAccessManager);
 
 		SessionResponseBuilder sessionResponseBuilder = new SessionResponseBuilder();
 		context.put(SessionResponseBuilder.class, sessionResponseBuilder);
-		sessionResponseBuilder.registerHook(s -> Map.of("user", s.getUser().getSessionUsername()));
-		sessionResponseBuilder.registerHook(s -> Map.of("role", noAccessManager.getRoleInContext(s)));
+		sessionResponseBuilder.registerHook(s -> Map.of("username", s.getUser().getSessionUsername()));
+		//AuthorizationManager might get overwritten by plugins, FE still need a default role in OS
+		sessionResponseBuilder.registerHook(s -> Map.of("role", context.get(AuthorizationManager.class).getRoleInContext(s)));
+		sessionResponseBuilder.registerHook(s -> Map.of("authenticated", s.isAuthenticated()));
 		
 		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
 		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(

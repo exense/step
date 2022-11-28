@@ -12,6 +12,8 @@ public class ApplicationConfigurationManager {
 				.setAuthentication(false)
 				.setNoLoginMask(true)
 				.setUserManagement(false)
+				.setRoleManagement(false)
+				.setProjectMembershipManagement(false)
 				.setPasswordManagement(false)
 				.setTitle(configuration.getProperty("ui.title", "Step"));
 	}

@@ -12,6 +12,8 @@ public class ApplicationConfigurationBuilder {
 	private boolean noLoginMask;
 	private boolean passwordManagement;
 	private boolean userManagement;
+	private boolean roleManagement;
+	private boolean projectMembershipManagement;
 	private List<String> roles;
 	private Map<String, String> miscParams = new HashMap<>();
 	private String defaultUrl;
@@ -48,6 +50,16 @@ public class ApplicationConfigurationBuilder {
 		return this;
 	}
 
+	public ApplicationConfigurationBuilder setRoleManagement(boolean roleManagement) {
+		this.roleManagement = roleManagement;
+		return this;
+	}
+
+	public ApplicationConfigurationBuilder setProjectMembershipManagement(boolean projectMembershipManagement) {
+		this.projectMembershipManagement = projectMembershipManagement;
+		return this;
+	}
+
 	public ApplicationConfigurationBuilder setPasswordManagement(boolean passwordManagement) {
 		this.passwordManagement = passwordManagement;
 		return this;
@@ -80,6 +92,6 @@ public class ApplicationConfigurationBuilder {
 
 	public ApplicationConfiguration build() {
 		return new ApplicationConfiguration(authentication, authenticatorName, demo, debug, noLoginMask,
-				passwordManagement, userManagement, roles, miscParams, defaultUrl, title);
+				passwordManagement, userManagement, roleManagement, projectMembershipManagement, roles, miscParams, defaultUrl, title);
 	}
 }

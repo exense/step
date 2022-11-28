@@ -23,11 +23,8 @@ import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.framework.server.Session;
-import step.framework.server.access.AccessManager;
+import step.framework.server.access.AuthorizationManager;
 import step.framework.server.tables.TableRegistry;
-
-import java.util.Objects;
 
 @Plugin(dependencies = {ObjectHookControllerPlugin.class})
 public class TablePlugin extends AbstractControllerPlugin {
@@ -37,10 +34,10 @@ public class TablePlugin extends AbstractControllerPlugin {
         context.getServiceRegistrationCallback().registerService(TableService.class);
         TableRegistry tableRegistry = context.require(TableRegistry.class);
         ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
-        AccessManager accessManager = context.require(AccessManager.class);
+        AuthorizationManager authorizationManager = context.require(AuthorizationManager.class);
         Integer maxRequestDuration = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
         Integer maxResultCount = context.getConfiguration().getPropertyAsInteger("db.query.maxCount", 1000);
-        step.framework.server.tables.service.TableService tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, accessManager, maxRequestDuration, maxResultCount);
+        step.framework.server.tables.service.TableService tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, authorizationManager, maxRequestDuration, maxResultCount);
         context.put(step.framework.server.tables.service.TableService.class, tableService);
     }
 
