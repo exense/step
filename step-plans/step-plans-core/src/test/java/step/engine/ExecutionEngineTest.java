@@ -18,34 +18,13 @@
  ******************************************************************************/
 package step.engine;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.junit.Test;
-
 import junit.framework.Assert;
+import org.junit.Test;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.handlers.CheckArtefactHandler;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.AbstractExecutionEngineContext;
-import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionEngine;
+import step.core.execution.*;
 import step.core.execution.ExecutionEngine.Builder;
-import step.core.execution.ExecutionEngineContext;
-import step.core.execution.ExecutionEngineException;
-import step.core.execution.OperationMode;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
@@ -56,13 +35,16 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
-import step.core.repositories.ArtefactInfo;
-import step.core.repositories.ImportResult;
-import step.core.repositories.Repository;
-import step.core.repositories.RepositoryObjectReference;
-import step.core.repositories.TestSetStatusOverview;
+import step.core.repositories.*;
 import step.engine.execution.ExecutionLifecycleManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class ExecutionEngineTest {
 
@@ -243,7 +225,7 @@ public class ExecutionEngineTest {
 		
 		@Override
 		public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-			context.getRepositoryObjectManager().registerRepository(TEST_REPOSITORY, new Repository() {
+			context.getRepositoryObjectManager().registerRepository(TEST_REPOSITORY, new AbstractRepository(Set.of()) {
 				
 				@Override
 				public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters)
