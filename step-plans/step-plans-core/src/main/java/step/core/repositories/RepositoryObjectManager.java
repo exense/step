@@ -18,15 +18,15 @@
  ******************************************************************************/
 package step.core.repositories;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ReportExport;
 import step.core.execution.model.ReportExportStatus;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RepositoryObjectManager {
 
@@ -88,5 +88,16 @@ public class RepositoryObjectManager {
 		String respositoryId = report.getRepositoryID();
 		Repository repository = getRepository(respositoryId);
 		return repository.getTestSetStatusOverview(report.getRepositoryParameters());
+	}
+
+	public boolean compareRepositoryObjectReference(RepositoryObjectReference ref1, RepositoryObjectReference ref2) {
+		String repositoryId1 = ref1.getRepositoryID();
+		String repositoryId2 = ref2.getRepositoryID();
+		if(Objects.equals(repositoryId1, repositoryId2)) {
+			Repository repository = getRepository(repositoryId1);
+			return repository.compareCanonicalRepositoryParameters(ref1.getRepositoryParameters(), ref2.getRepositoryParameters());
+		} else {
+			return false;
+		}
 	}
 }
