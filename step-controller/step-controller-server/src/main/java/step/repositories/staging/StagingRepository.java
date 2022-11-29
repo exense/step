@@ -18,12 +18,16 @@
  ******************************************************************************/
 package step.repositories.staging;
 
-import java.util.Map;
-
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
-import step.core.repositories.*;
+import step.core.repositories.AbstractRepository;
+import step.core.repositories.ArtefactInfo;
+import step.core.repositories.ImportResult;
+import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @deprecated The staging client is deprecated and will be removed in future
@@ -33,16 +37,17 @@ import step.functions.accessor.FunctionAccessor;
  */
 public class StagingRepository extends AbstractRepository {
 
+	public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
 	protected StagingContextAccessorImpl stagingContextAccessor;
 	
 	public StagingRepository(StagingContextAccessorImpl stagingContextRegistry) {
-		super();
+		super(Set.of(REPOSITORY_PARAM_CONTEXTID));
 		this.stagingContextAccessor = stagingContextRegistry;
 	}
 
 	@Override
 	public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception {
-		StagingContext stagingContext = stagingContextAccessor.get(repositoryParameters.get("contextid"));
+		StagingContext stagingContext = stagingContextAccessor.get(repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID));
 		ArtefactInfo info = new ArtefactInfo();
 		info.setType("testplan");
 		info.setName(stagingContext.getPlan().getRoot().getAttributes().get("name"));
@@ -78,5 +83,4 @@ public class StagingRepository extends AbstractRepository {
 		// TODO Auto-generated method stub
 		
 	}
-
 }

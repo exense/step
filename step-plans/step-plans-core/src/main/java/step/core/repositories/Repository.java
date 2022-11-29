@@ -24,12 +24,23 @@ import step.core.execution.ExecutionContext;
 
 public interface Repository {
 
-	public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception;
+	ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception;
 
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) throws Exception;
+	TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) throws Exception;
 
-	public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception;
+	ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception;
 
-	public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception;
+	void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception;
+
+	/**
+	 * Compares the canonical subset of the repository parameters.
+	 * The canonical subset of the parameters corresponds to the minimal entries that uniquely identify
+	 * the repository object in its repository
+	 *
+	 * @param repositoryParameters1
+	 * @param repositoryParameters2
+	 * @return true if the canonical subset of both repository parameters are the same
+	 */
+	boolean compareCanonicalRepositoryParameters(Map<String, String> repositoryParameters1, Map<String, String> repositoryParameters2);
 
 }
