@@ -29,6 +29,11 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 
 	@Override
 	public void checkPreconditions(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void init(GlobalContext context) throws Exception {
 		controller = new Controller(context);
 		controller.init(context.getServiceRegistrationCallback());
 		context.put(Controller.class, controller);

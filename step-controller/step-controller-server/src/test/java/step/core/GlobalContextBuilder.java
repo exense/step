@@ -74,7 +74,7 @@ public class GlobalContextBuilder {
 		context.setDynamicBeanResolver(dynamicBeanResolver);
 		
 		Configuration configuration = new Configuration();
-		ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(configuration));
+		ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(configuration, null));
 		context.setContorllerPluginManager(pluginManager);
 		
 		context.setConfiguration(configuration);

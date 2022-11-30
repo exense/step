@@ -28,6 +28,8 @@ import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_ATTRIBUTES_DEFAULT;
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_ATTRIBUTES_PROPERTY;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 @Singleton
@@ -59,6 +61,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getBuckets(FetchBucketsRequest request) {
+        validateFetchRequest(request);
         TimeSeriesAggregationQuery query = mapToQuery(request);
         TimeSeriesAggregationResponse response = query.run();
 
@@ -102,6 +105,15 @@ public class TimeSeriesService extends AbstractStepServices {
                 .build();
     }
 
+    private void validateFetchRequest(FetchBucketsRequest request) {
+        if (request.getStart() == null || request.getEnd() == null) {
+            throw new ControllerServiceException("Start and End parameters must be specified");
+        }
+        if (request.getStart() > request.getEnd()) {
+            throw new ControllerServiceException("Start value must be lower than End");
+        }
+    }
+
     private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request) {
         TimeSeriesAggregationQuery timeSeriesAggregationQuery = aggregationPipeline.newQuery()
                 .range(request.getStart(), request.getEnd())
@@ -142,7 +154,8 @@ public class TimeSeriesService extends AbstractStepServices {
                     // the flushing period can be a big value, because we will force flush every time.
                     // we create a new pipeline for every migration
                     try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(3000)) {
-                        TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline);
+                        List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
+                        TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline, attributes);
                         LongAdder count = new LongAdder();
                         SearchOrder searchOrder = new SearchOrder("begin", 1);
                         // Iterate over each measurement and ingest it again

@@ -9,9 +9,9 @@ import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
@@ -24,8 +24,11 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private final TimeSeriesIngestionPipeline ingestionPipeline;
 
-    public TimeSeriesBucketingHandler(TimeSeriesIngestionPipeline ingestionPipeline) {
+    private final List<String> attributes;
+
+    public TimeSeriesBucketingHandler(TimeSeriesIngestionPipeline ingestionPipeline, List<String> attributes) {
         this.ingestionPipeline = ingestionPipeline;
+        this.attributes = attributes;
     }
 
     @Override
@@ -43,33 +46,25 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
         long value = measurement.getValue();
 
         BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-        removeKeys(bucketAttributes,"rnId", "origin", "planId", "agentUrl", "id", "begin", "value");
         bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
-        // custom fields include all the attributes like execId and planId
         this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
     }
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
-        return new BucketAttributes(measurement.entrySet().stream().collect(Collectors.toMap(k -> k.getKey(),
-                v -> {
-                    Object value = v.getValue();
-                    return value != null ? value.toString() : null;
-                })));
-    }
-
-    private void removeKeys(Map<String, String> map, String... attributes) {
-        for (String attribute : attributes) {
-            map.remove(attribute);
-        }
+        Map<String, String> bucketAttributesMap = new HashMap<>();
+        attributes.forEach(a -> {
+            if (measurement.containsKey(a)) {
+                bucketAttributesMap.put(a,measurement.get(a).toString());
+            }
+        });
+        return new BucketAttributes(bucketAttributesMap);
     }
 
     @Override
     public void processGauges(List<Measurement> measurements) {
         measurements.forEach(measurement -> {
-            if (measurement != null && measurement.getType().equals(THREAD_GROUP_MEASUREMENT_TYPE)) {
+            if (measurement != null) {
                 BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-                bucketAttributes.remove("taskId");
-                bucketAttributes.remove("type");
                 bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_SAMPLER);
                 this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }

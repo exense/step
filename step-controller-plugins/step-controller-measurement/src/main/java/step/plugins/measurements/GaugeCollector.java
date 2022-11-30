@@ -41,9 +41,6 @@ public abstract class GaugeCollector {
 					measurement.put(sample.labelNames.get(i), sample.labelValues.get(i));
 				}
 				measurement.setValue(Math.round(sample.value));
-				if (measurement.getExecId() == null || measurement.getExecId().isEmpty()) {
-					measurement.setExecId(LocalDate.now().format(formatter));
-				}
 				measurements.add(measurement);
 			}
 		}

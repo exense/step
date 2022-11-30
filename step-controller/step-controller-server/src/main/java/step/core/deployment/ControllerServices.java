@@ -44,15 +44,16 @@ import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
 import step.framework.server.security.Secured;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.io.File;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Singleton
 @Path("controller")
 @Tag(name = "Controller")
 public class ControllerServices extends AbstractStepServices {
-	
+
 	private Version currentVersion;
 	private PlanLocator planLocator;
 	private ObjectPredicate objectPredicate;
@@ -174,5 +175,23 @@ public class ControllerServices extends AbstractStepServices {
 	@Path("/version")
 	public Version getVersion() {
 		return this.currentVersion;
+	}
+
+	private static final Pattern JAR_FILENAME_PATTERN = Pattern.compile("([^\\\\/]+)-(\\d+\\.\\d+\\.?[^.]+).jar");
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/lib/versions")
+	public Map<String, String> getLibVersions() {
+		HashMap<String, String> result = new HashMap<>();
+		Arrays.asList(System.getProperty("java.class.path").split(File.pathSeparator)).forEach(e -> {
+			Matcher matcher = JAR_FILENAME_PATTERN.matcher(e);
+			if (matcher.find()) {
+				String lib = matcher.group(1);
+				String version = matcher.group(2);
+				result.put(lib, version);
+			}
+		});
+		return result;
 	}
 }
