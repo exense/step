@@ -112,6 +112,7 @@
 		<module>../step-repositories</module>
 		<module>../step-ide</module>
 		<module>../step-junit</module>
+		<module>../step-libs-maven-client</module>
 	</modules>
 
 	<build>
