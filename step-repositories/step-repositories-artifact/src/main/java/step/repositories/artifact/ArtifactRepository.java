@@ -33,21 +33,25 @@ public class ArtifactRepository extends AbstractRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(ArtifactRepository.class);
 
-    protected static final String PARAM_ARTEFACT_ID = "artefactId";
+    protected static final String PARAM_ARTIFACT_ID = "artifactId";
     protected static final String PARAM_VERSION = "version";
     protected static final String PARAM_GROUP_ID = "groupId";
     protected static final String PARAM_CLASSIFIER = "classifier";
+    protected static final String PARAM_MAVEN_SETTINGS = "mavenSettings";
+    private static final String PARAM_THREAD_NUMBER = "threads";
 
-    private static final String PARAM_THREAD_NUMBER = "NbThreads";
-    public static final String MAVEN_SETTINGS_XML = "maven_settings_xml";
+    public static final String MAVEN_SETTINGS_PREFIX = "maven_settings_";
+    protected static final String MAVEN_SETTINGS_DEFAULT = "default";
+    protected static final String CONFIGURATION_MAVEN_FOLDER = "repository.artifact.maven.folder";
+    protected static final String DEFAULT_MAVEN_FOLDER = "maven";
 
     private final PlanAccessor planAccessor;
     private final ControllerSettingAccessor controllerSettingAccessor;
     private final File localRepository;
 
     public ArtifactRepository(PlanAccessor planAccessor, ControllerSettingAccessor controllerSettingAccessor, Configuration configuration) {
-        super(Set.of(PARAM_GROUP_ID, PARAM_ARTEFACT_ID, PARAM_VERSION));
-        localRepository = configuration.getPropertyAsFile("repository.artifact.maven.folder", new File("maven"));
+        super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION));
+        localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.planAccessor = planAccessor;
         this.controllerSettingAccessor = controllerSettingAccessor;
     }
@@ -55,7 +59,7 @@ public class ArtifactRepository extends AbstractRepository {
     @Override
     public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) {
         ArtefactInfo info = new ArtefactInfo();
-        info.setName(getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTEFACT_ID));
+        info.setName(getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTIFACT_ID));
         info.setType(TestSet.class.getSimpleName());
         return info;
     }
@@ -72,7 +76,8 @@ public class ArtifactRepository extends AbstractRepository {
     }
 
     private FileAndPlan getAndParseArtifact(Map<String, String> repositoryParameters) {
-        ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(MAVEN_SETTINGS_XML);
+        String mavenSettingsId = MAVEN_SETTINGS_PREFIX + repositoryParameters.getOrDefault(PARAM_MAVEN_SETTINGS, MAVEN_SETTINGS_DEFAULT);
+        ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
         File artifact = getArtifact(repositoryParameters, settingsXml);
         List<Plan> plans = parsePlan(artifact);
         return new FileAndPlan(artifact, plans);
@@ -81,9 +86,9 @@ public class ArtifactRepository extends AbstractRepository {
     private File getArtifact(Map<String, String> repositoryParameters, ControllerSetting settingsXml) {
         try {
             MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);
-            String groupId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_GROUP_ID);
-            String artifactId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTEFACT_ID);
+            String artifactId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTIFACT_ID);
             String version = getMandatoryRepositoryParameter(repositoryParameters, PARAM_VERSION);
+            String groupId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_GROUP_ID);
             String classifier = repositoryParameters.get(PARAM_CLASSIFIER);
             return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
         } catch (SettingsBuildingException | ArtifactResolutionException e) {
@@ -105,41 +110,40 @@ public class ArtifactRepository extends AbstractRepository {
         List<String> errors = new ArrayList<>();
         try {
             FileAndPlan fileAndPlan = getAndParseArtifact(repositoryParameters);
-
-            PlanBuilder planBuilder = PlanBuilder.create();
-            TestSet testSet = new TestSet(
-                    Integer.parseInt(repositoryParameters.getOrDefault(PARAM_THREAD_NUMBER, "0")));
-            testSet.getAttributes().put(AbstractArtefact.NAME, fileAndPlan.artifact.getName());
-
-            planBuilder.startBlock(testSet);
-
-            List<Function> functions = new ArrayList<>();
-            fileAndPlan.plans.forEach(plan -> {
-                String name = getPlanName(plan);
-                plan.setVisible(false);
-                functions.addAll(plan.getFunctions());
-                planAccessor.save(plan);
-                planBuilder.add(callPlan(plan.getId().toString(), name));
-            });
-
-            planBuilder.endBlock();
-
-            Plan plan = planBuilder.build();
-            plan.setVisible(false);
-            plan.setFunctions(functions);
-            enrichPlan(context, plan);
+            Plan plan = buildTestSetPlan(context, repositoryParameters, fileAndPlan);
             planAccessor.save(plan);
             result.setPlanId(plan.getId().toString());
-
         } catch (Exception e) {
-            logger.error("Error while importing artefact for " + context.getExecutionId(), e);
-            errors.add("General error when trying to create the test set. Exception: " + e.getMessage());
+            logger.error("Error while importing / parsing artifact for execution " + context.getExecutionId(), e);
+            errors.add("Error while importing / parsing artifact: " + e.getMessage());
         }
-
         result.setSuccessful(errors.isEmpty());
         result.setErrors(errors);
-
         return result;
+    }
+
+    private Plan buildTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, FileAndPlan fileAndPlan) {
+        PlanBuilder planBuilder = PlanBuilder.create();
+        int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(PARAM_THREAD_NUMBER, "0"));
+        TestSet testSet = new TestSet(numberOfThreads);
+        testSet.addAttribute(AbstractArtefact.NAME, fileAndPlan.artifact.getName());
+
+        planBuilder.startBlock(testSet);
+        List<Function> functions = new ArrayList<>();
+        fileAndPlan.plans.forEach(plan -> {
+            String name = getPlanName(plan);
+            plan.setVisible(false);
+            functions.addAll(plan.getFunctions());
+            planAccessor.save(plan);
+            planBuilder.add(callPlan(plan.getId().toString(), name));
+        });
+        planBuilder.endBlock();
+
+        Plan plan = planBuilder.build();
+        plan.setVisible(false);
+        plan.setFunctions(functions);
+        enrichPlan(context, plan);
+        return plan;
     }
 
     private String getPlanName(Plan plan) {
