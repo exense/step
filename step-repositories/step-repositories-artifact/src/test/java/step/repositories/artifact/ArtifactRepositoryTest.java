@@ -51,7 +51,7 @@ public class ArtifactRepositoryTest {
     public void before() {
         planAccessor = new InMemoryPlanAccessor();
         InMemoryControllerSettingAccessor controllerSettingAccessor = new InMemoryControllerSettingAccessor();
-        controllerSettingAccessor.createSettingIfNotExisting(ArtifactRepository.MAVEN_SETTINGS_DEFAULT, MAVEN_SETTINGS_NEXUS);
+        controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", MAVEN_SETTINGS_NEXUS);
 
         Configuration configuration = new Configuration();
         artifactRepository = new ArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
@@ -111,7 +111,7 @@ public class ArtifactRepositoryTest {
     public void testFormattingIssueInMavenSettings() {
         InMemoryPlanAccessor planAccessor = new InMemoryPlanAccessor();
         InMemoryControllerSettingAccessor controllerSettingAccessor = new InMemoryControllerSettingAccessor();
-        controllerSettingAccessor.createSettingIfNotExisting(ArtifactRepository.MAVEN_SETTINGS_DEFAULT, "settings> </settings>");
+        controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", "settings> </settings>");
         Configuration configuration = new Configuration();
         ArtifactRepository artifactRepository = new ArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
         ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext();
