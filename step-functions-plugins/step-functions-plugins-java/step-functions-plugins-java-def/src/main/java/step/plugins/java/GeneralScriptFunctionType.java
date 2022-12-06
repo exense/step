@@ -57,7 +57,7 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
 	public Map<String, String> getHandlerProperties(GeneralScriptFunction function) {
 		String language = getScriptLanguage(function);
 		if (language != null) {
-			String errorHandler = configuration.getProperty("script." + language + "_errorhandler", null);
+			String errorHandler = configuration.getProperty("plugins." + language + ".errorhandler", null);
 			if (errorHandler != null) {
 				function.setErrorHandlerFile(new DynamicValue<>(errorHandler));
 			}
