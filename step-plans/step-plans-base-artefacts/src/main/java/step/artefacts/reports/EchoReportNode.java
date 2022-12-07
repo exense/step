@@ -34,6 +34,6 @@ public class EchoReportNode extends ReportNode {
 
 	@Override
 	public String toString(){
-		return "EchoReportNode=[" + echo + "]";
+		return "EchoReportNode=[echo=" + echo + "]";
 	}
 }
