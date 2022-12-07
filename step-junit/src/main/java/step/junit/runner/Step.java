@@ -100,6 +100,9 @@ public class Step extends ParentRunner<StepClassParserResult> {
 				} else if (resultStatus != ReportNodeStatus.PASSED) {
 					notifyFailure(childNotifier, result, "The plan execution returned an unexpected status\" + result",
 							false);
+				}else {
+					// We actually also want to see results when tests complete successfully
+					result.printTree();
 				}
 			} else {
 				childNotifier.addFailure(initializingException);
