@@ -173,7 +173,7 @@ public class PlanRunnerResult {
 						bWriter.write(" ");
 				}
 				ReportNode node = event.getNode();
-				bWriter.write(node.getName()+":"+node.getStatus()+":"+(node.getError()!=null?node.getError().getMsg():""));
+				bWriter.write(node.getName()+":"+node.getStatus()+":"+(node.getError()!=null?node.getError().getMsg():"" + node.toString()));
 				bWriter.write("\n");
 				
 				if(printAttachments) {

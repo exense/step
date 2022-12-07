@@ -31,4 +31,9 @@ public class EchoReportNode extends ReportNode {
 	public void setEcho(String echo) {
 		this.echo = echo;
 	}
+
+	@Override
+	public String toString(){
+		return "EchoReportNode=[" + echo + "]";
+	}
 }
