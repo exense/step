@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
 import org.junit.runner.notification.RunNotifier;
@@ -87,7 +89,7 @@ public class Step extends ParentRunner<StepClassParserResult> {
 			Exception initializingException = child.getInitializingException();
 			if (initializingException == null) {
 				Plan plan = child.getPlan();
-				Map<String, String> executionParameters = getExecutionParametersForClass();
+				Map<String, String> executionParameters = getExecutionParameters();
 				PlanRunnerResult result = executionEngine.execute(plan, executionParameters);
 				ReportNodeStatus resultStatus = result.getResult();
 
@@ -113,7 +115,16 @@ public class Step extends ParentRunner<StepClassParserResult> {
 		}
 	}
 
-	protected Map<String, String> getExecutionParametersForClass() {
+	private Map<String, String> getExecutionParameters() {
+		// We favor system properties over hardcoded values (if they exist)
+		Map<String, String> execParamMap = getExecutionParametersBySystemParam();
+		if(execParamMap == null || execParamMap.isEmpty()) {
+			execParamMap = getExecutionParametersByAnnotation();
+		}
+		return execParamMap;
+	}
+
+	protected Map<String, String> getExecutionParametersByAnnotation() {
 		Map<String, String> executionParameters = new HashMap<String, String>();
 		ExecutionParameters params;
 		if ((params = klass.getAnnotation(ExecutionParameters.class)) != null) {
@@ -128,6 +139,26 @@ public class Step extends ParentRunner<StepClassParserResult> {
 			}
 		}
 		return executionParameters;
+	}
+
+	protected Map<String, String> getExecutionParametersBySystemParam() {
+		Map<String, String> executionParameters = null;
+
+		String execParamsValue = System.getProperty(ExecutionParameters.EXEC_PARAMS_KEY);
+
+		if (execParamsValue != null) {
+			executionParameters = extractJsonMap(execParamsValue);
+		}
+		return executionParameters;
+	}
+
+	private Map<String, String> extractJsonMap(String execParamsValue) {
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.readValue(execParamsValue, Map.class);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	protected void notifyFailure(EachTestNotifier childNotifier, PlanRunnerResult res, String errorMsg,
